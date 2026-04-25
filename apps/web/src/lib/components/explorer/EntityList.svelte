@@ -178,8 +178,18 @@
         bind:value={searchQuery}
         placeholder="Search entities..."
         aria-label="Search entities"
-        class="w-full rounded-lg border border-theme-border bg-theme-bg/50 py-2 pl-9 pr-3 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+        class="w-full rounded-lg border border-theme-border bg-theme-bg/50 py-2 pl-9 pr-9 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
       />
+      {#if searchQuery}
+        <button
+          onclick={() => (searchQuery = "")}
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-theme-muted hover:text-theme-text transition-colors"
+          title="Clear search"
+          aria-label="Clear search"
+        >
+          <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+        </button>
+      {/if}
     </div>
 
     <div

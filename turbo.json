@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turbo.build/schema.json",
+  "$schema": "https://v2-9-6.turborepo.dev/schema.json",
   "globalEnv": ["VITE_SHARED_GEMINI_KEY", "NODE_ENV"],
   "tasks": {
     "build": {
