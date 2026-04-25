@@ -14,6 +14,13 @@
     uiStore.openZenMode(entity.id);
   }
 
+  function onDragStart(event: DragEvent, entityId: string) {
+    if (event.dataTransfer) {
+      event.dataTransfer.setData("application/codex-entity", entityId);
+      event.dataTransfer.effectAllowed = "move";
+    }
+  }
+
   function handleFindInGraph(entity: Entity) {
     dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = entity.id;
@@ -130,6 +137,7 @@
       onSelect={handleSelect}
       onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
       onFindInGraph={handleFindInGraph}
+      onDragStart={explorerTab === "all" ? onDragStart : undefined}
       showDraftsOnly={explorerTab === "review"}
       onApproveDraft={explorerTab === "review" && !vault.isGuest
         ? handleApproveDraft

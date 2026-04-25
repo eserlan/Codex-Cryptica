@@ -142,7 +142,6 @@ export function createFlowEdgeFromConnection(
 
 export function resolveSpawnPosition(params: {
   screenToFlowPosition: (point: CanvasWorkspacePoint) => CanvasWorkspacePoint;
-  paletteVisible: boolean;
   windowSize: { width: number; height: number };
   screenPosition?: CanvasWorkspacePoint;
   flowPosition?: CanvasWorkspacePoint;
@@ -155,8 +154,7 @@ export function resolveSpawnPosition(params: {
     return params.flowPosition;
   }
 
-  const paletteWidth = params.paletteVisible ? 288 : 48;
-  const centerX = (params.windowSize.width - paletteWidth) / 2 + paletteWidth;
+  const centerX = params.windowSize.width / 2;
   const centerY = params.windowSize.height / 2;
   return params.screenToFlowPosition({ x: centerX, y: centerY });
 }
