@@ -354,6 +354,7 @@
                 type="submit"
                 class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || !newVaultName.trim()}
+                aria-busy={isLoading}
               >
                 {isLoading ? "CREATING..." : "CREATE"}
               </button>
@@ -362,6 +363,7 @@
                 class="px-6 py-2 bg-theme-accent hover:bg-theme-accent-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-accent-rgb),0.3)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 onclick={handleImport}
                 disabled={isLoading || !newVaultName.trim()}
+                aria-busy={isLoading}
               >
                 {#if isLoading && vault.status === "loading"}
                   <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
@@ -387,6 +389,7 @@
           onclick={handleLoadFromFolder}
           disabled={isLoading}
           title="Open a local folder as a new vault"
+          aria-busy={isLoading}
         >
           <span class="icon-[lucide--folder-open] w-4 h-4"></span> OPEN FOLDER
         </button>
