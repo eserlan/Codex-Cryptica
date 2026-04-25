@@ -107,4 +107,17 @@ describe("EntityList", () => {
     expect(screen.getByText("Broken Seal")).not.toBeNull();
     expect(uiStore.getCollapsedLabelGroups("vault-1").has("Quest")).toBe(false);
   });
+
+  it("clears the search query when the clear button is clicked", async () => {
+    render(EntityList);
+
+    const input = screen.getByLabelText("Search entities") as HTMLInputElement;
+    await fireEvent.input(input, { target: { value: "Mira" } });
+    expect(input.value).toBe("Mira");
+
+    const clearButton = screen.getByLabelText("Clear search");
+    await fireEvent.click(clearButton);
+
+    expect(input.value).toBe("");
+  });
 });
