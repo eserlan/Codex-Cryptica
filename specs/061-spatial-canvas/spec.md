@@ -17,7 +17,7 @@ As a Game Master, I want to manually place entity cards (NPCs, Locations, Items,
 
 **Acceptance Scenarios**:
 
-1. **Given** an empty canvas, **When** I drag an entity from the palette, **Then** a card representing that entity appears at the drop location.
+1. **Given** an empty canvas, **When** I drag an entity from the entity explorer, **Then** a card representing that entity appears at the drop location.
 2. **Given** two cards on the canvas, **When** I draw a connection between them, **Then** a persistent visual line is created.
 3. **Given** a customized layout, **When** I close and reopen the vault, **Then** all cards and links remain in their exact coordinates.
 
@@ -33,8 +33,10 @@ As a worldbuilder, I want to create multiple different canvases (e.g., "Main Que
 
 **Acceptance Scenarios**:
 
-1. **Given** a "Main Quest" canvas, **When** I create a new "Faction War" canvas, **Then** I am presented with a fresh empty workspace.
-2. **Given** multiple canvases, **When** I select one from a list, **Then** the workspace immediately updates to show that specific layout.
+1. **Given** a "Main Quest" canvas, **When** I open the canvas manager and create a new "Faction War" canvas, **Then** I am presented with a fresh empty workspace.
+2. **Given** multiple canvases, **When** I select one in the canvas manager, **Then** the workspace immediately updates to show that specific layout.
+3. **Given** an existing canvas, **When** I rename it in the canvas manager, **Then** the HUD name and URL slug update immediately.
+4. **Given** an existing canvas, **When** I delete it in the canvas manager, **Then** it is removed and the next available canvas becomes active (or an empty state is shown if none remain).
 
 ---
 
@@ -87,7 +89,7 @@ As a GM, I want a theme-aware interface for labeling my connections, so that the
 - **FR-001**: System MUST provide an infinite-pan and zoomable workspace.
 - **FR-002**: System MUST allow users to manually position entity cards anywhere on the canvas.
 - **FR-003**: System MUST persist card coordinates and connections in a dedicated `.canvas` file format.
-- **FR-004**: System MUST provide a "Palette" sidebar containing all entities available for placement, including a real-time filter/search bar to quickly find specific entities.
+- **FR-004**: System MUST support drag-and-drop from the entity explorer into the canvas. The existing entity explorer (already available in the sidebar) replaces a dedicated canvas-only palette — no separate panel is needed. _(Rationale: a palette would duplicate the explorer's search and filtering capabilities.)_
 - **FR-005**: System MUST allow users to draw visual connections (lines/arrows) between cards.
 - **FR-006**: Cards MUST display entity metadata (Title, Type, Summary, Image) as defined in the vault.
 - **FR-007**: System MUST support auto-expanding entity cards that resize themselves based on the amount of content (summary length, tags, image, etc.). Expansion MUST trigger on card load and whenever content is updated, respecting a maximum height limit before introducing internal scrolling.
@@ -99,6 +101,7 @@ As a GM, I want a theme-aware interface for labeling my connections, so that the
 - **FR-013**: System MUST use a custom themed modal for edge label editing instead of browser prompts.
 - **FR-014**: Edge labels MUST allow empty strings, in which case the label is not rendered.
 - **FR-015**: System MUST provide a themed HUD overlay in the top-left corner displaying the active workspace name and a disk synchronization status indicator.
+- **FR-016**: System MUST provide a canvas management modal (accessible from the HUD name or a dedicated button) that lists all canvases for the active vault and supports: create, rename, delete, and switch. The modal MUST confirm before deleting a canvas that contains nodes.
 
 ### Key Entities
 
@@ -113,7 +116,7 @@ As a GM, I want a theme-aware interface for labeling my connections, so that the
 - **SC-001**: Users can manipulate (pan/zoom/drag) a canvas with 100+ entities at a consistent 60fps.
 - **SC-002**: A canvas state (JSON) is saved and synchronized within 2 seconds of any change.
 - **SC-003**: Switching between any two canvases takes less than 300ms.
-- **SC-004**: Users can go from "Empty Canvas" to "Conspiracy Board with 5 entities and 3 links" in under 30 seconds.
+- **SC-004**: Users can go from "Empty Canvas" to "Conspiracy Board with 5 entities and 3 links" in under 30 seconds, using drag-and-drop from the entity explorer.
 
 ## Assumptions
 
