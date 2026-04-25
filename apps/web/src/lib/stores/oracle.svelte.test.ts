@@ -170,6 +170,7 @@ describe("OracleStore", () => {
       updateMessageEntity: vi.fn(),
       addTestImageMessage: vi.fn(),
       addProposal: vi.fn(),
+      destroy: vi.fn(),
     };
 
     mockSettings = {
@@ -754,6 +755,7 @@ describe("OracleStore", () => {
 
       expect(mockBus.close).toHaveBeenCalled();
       expect((oracle as any).eventBus).toBeNull();
+      expect(mockChatHistory.destroy).toHaveBeenCalled();
     });
 
     it("should ignore unhandled worker event types", () => {
