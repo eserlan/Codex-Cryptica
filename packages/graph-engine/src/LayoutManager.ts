@@ -434,10 +434,48 @@ export class LayoutManager {
 
     if (isFitOnly) {
       this.cy.resize();
-      this.animateFitAndStop(options, "ease-out-cubic");
-      // Safety: ensure any newly added nodes are visible even in fit-only paths
+
+      const pendingNodes = this.cy.nodes(".pending-layout");
+      if (pendingNodes.nonempty()) {
+        // Snap new nodes to sensible positions before revealing them so the
+        // viewport doesn't jump to include their far-away spiral seed positions.
+        const placedNodes = this.cy.nodes().not(pendingNodes);
+        let fallbackX = 0;
+        let fallbackY = 0;
+        if (placedNodes.nonempty()) {
+          placedNodes.forEach((n) => {
+            const p = n.position();
+            fallbackX += p.x;
+            fallbackY += p.y;
+          });
+          fallbackX /= placedNodes.length;
+          fallbackY /= placedNodes.length;
+        }
+
+        pendingNodes.forEach((node) => {
+          const neighbors = node.neighborhood().nodes().not(pendingNodes);
+          if (neighbors.nonempty()) {
+            let sumX = 0;
+            let sumY = 0;
+            neighbors.forEach((n) => {
+              const p = n.position();
+              sumX += p.x;
+              sumY += p.y;
+            });
+            node.position({
+              x: sumX / neighbors.length,
+              y: sumY / neighbors.length,
+            });
+          } else if (placedNodes.nonempty()) {
+            node.position({ x: fallbackX, y: fallbackY });
+          }
+          // If all nodes are new (initial load), keep spiral seed positions
+        });
+      }
+
       this.cy.nodes().removeData("isPendingLayout");
-      this.cy.nodes(".pending-layout").removeClass("pending-layout");
+      pendingNodes.removeClass("pending-layout");
+      this.animateFitAndStop(options, "ease-out-cubic");
       return;
     }
 

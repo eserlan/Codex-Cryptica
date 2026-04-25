@@ -87,6 +87,15 @@ describe("LayoutManager", () => {
     capturedPostMessage = null;
     vi.stubGlobal("Worker", FakeWorker);
 
+    const emptyCollection: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+
     const twoNodes = makeNodes([
       { x: 10, y: 10 },
       { x: 30, y: 30 },
@@ -94,12 +103,18 @@ describe("LayoutManager", () => {
     // Cytoscape collections returned by cy.nodes() need these in the fit-only path
     (twoNodes as any).removeData = vi.fn();
     (twoNodes as any).removeClass = vi.fn();
+    (twoNodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (twoNodes as any).not = vi.fn().mockReturnValue(emptyCollection);
 
     mockCy = {
       destroyed: vi.fn().mockReturnValue(false),
       resize: vi.fn(),
       batch: vi.fn((cb) => cb()),
-      nodes: vi.fn().mockReturnValue(twoNodes),
+      nodes: vi
+        .fn()
+        .mockImplementation((selector?: string) =>
+          selector === ".pending-layout" ? emptyCollection : twoNodes,
+        ),
       edges: vi.fn().mockReturnValue([]),
       $id: vi.fn().mockReturnValue({ length: 0 }),
       width: vi.fn().mockReturnValue(1000),
@@ -155,10 +170,22 @@ describe("LayoutManager", () => {
       { x: 100, y: 100 },
       { x: 200, y: 200 },
     ];
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
     const nodes = makeNodes(currentPositions);
     (nodes as any).removeData = vi.fn();
     (nodes as any).removeClass = vi.fn();
-    mockCy.nodes.mockReturnValue(nodes);
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : nodes,
+    );
 
     await layoutManager.apply(
       {
