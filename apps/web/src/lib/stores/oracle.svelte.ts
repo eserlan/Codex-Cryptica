@@ -164,6 +164,16 @@ export class OracleStore {
       this.eventBus = new BroadcastChannel("codex-oracle-events");
       this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
     }
+
+    // Reload chat history when the active vault changes
+    if (typeof window !== "undefined") {
+      window.addEventListener("vault-switched", (e: Event) => {
+        const newVaultId = (e as CustomEvent<{ id: string }>).detail?.id;
+        if (newVaultId && this.isInitialized) {
+          void this.chatHistoryService.switchVault(newVaultId);
+        }
+      });
+    }
   }
 
   /**
@@ -195,7 +205,10 @@ export class OracleStore {
   async init() {
     if (this.isInitialized) return;
 
-    await this.chatHistoryService.init(entityDb as any);
+    await this.chatHistoryService.init(
+      entityDb as any,
+      this.vault.activeVaultId ?? "default",
+    );
     await this.settingsService.init(entityDb as any);
 
     this.isInitialized = true;

@@ -27,12 +27,12 @@ describe("ChatHistoryService", () => {
   });
 
   it("should initialize with empty messages", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     expect(service.messages).toEqual([]);
   });
 
   it("should add a message and save to DB", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     const msg = { id: "1", role: "user", content: "hello" } as any;
     await service.addMessage(msg);
     expect(service.messages.length).toBe(1);
@@ -41,7 +41,7 @@ describe("ChatHistoryService", () => {
   });
 
   it("should remove a message", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     const msg = { id: "1", role: "user", content: "hello" } as any;
     await service.addMessage(msg);
     await service.removeMessage("1");
@@ -55,14 +55,14 @@ describe("ChatHistoryService", () => {
         { id: "1", role: "assistant", imageBlob: new Blob([]), content: "img" },
       ],
     });
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     expect(service.messages[0].imageUrl).toBe("restored-url");
     vi.unstubAllGlobals();
   });
 
   it("should handle removeMessage with blob URL", async () => {
     vi.stubGlobal("URL", { revokeObjectURL: vi.fn() });
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     const msg = { id: "1", role: "assistant", imageUrl: "blob:123" } as any;
     await service.addMessage(msg);
     await service.removeMessage("1");
@@ -71,7 +71,7 @@ describe("ChatHistoryService", () => {
   });
 
   it("should strip blob URLs when saving to DB", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     const msg = {
       id: "1",
       role: "assistant",
@@ -86,21 +86,21 @@ describe("ChatHistoryService", () => {
   });
 
   it("should start wizard", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     await service.startWizard("connection");
     expect(service.messages[0].type).toBe("wizard");
     expect(service.messages[0].wizardType).toBe("connection");
   });
 
   it("should update message entity", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     await service.addMessage({ id: "m1", role: "user", content: "c" } as any);
     service.updateMessageEntity("m1", "e1");
     expect(service.messages[0].archiveTargetId).toBe("e1");
   });
 
   it("should handle saveToDB error gracefully", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
     mockDB.appSettings.put.mockImplementation(() => {
       throw new Error("IDB fail");
     });
@@ -111,7 +111,7 @@ describe("ChatHistoryService", () => {
 
   it("should revoke blob URLs on destroy", async () => {
     vi.stubGlobal("URL", { revokeObjectURL: vi.fn() });
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
 
     const msg = { id: "1", role: "assistant", imageUrl: "blob:test123" } as any;
     await service.addMessage(msg);
@@ -123,7 +123,7 @@ describe("ChatHistoryService", () => {
   });
 
   it("should handle destroy with no blob URLs", async () => {
-    await service.init(mockDB);
+    await service.init(mockDB, "vault-1");
 
     const msg = { id: "1", role: "user", content: "hello" } as any;
     await service.addMessage(msg);
@@ -142,7 +142,7 @@ describe("ChatHistoryService", () => {
     });
 
     it("should add proposal to message and debounce persistence", async () => {
-      await service.init(mockDB);
+      await service.init(mockDB, "vault-1");
       const msg = { id: "m1", role: "assistant", content: "c" } as any;
       await service.addMessage(msg);
       mockDB.appSettings.put.mockClear();
@@ -160,7 +160,7 @@ describe("ChatHistoryService", () => {
     });
 
     it("should ignore duplicate proposals by title", async () => {
-      await service.init(mockDB);
+      await service.init(mockDB, "vault-1");
       const msg = {
         id: "m1",
         role: "assistant",
@@ -174,7 +174,7 @@ describe("ChatHistoryService", () => {
     });
 
     it("should clear debounce timeout on destroy", async () => {
-      await service.init(mockDB);
+      await service.init(mockDB, "vault-1");
       const msg = { id: "m1", role: "assistant", content: "c" } as any;
       await service.addMessage(msg);
 
