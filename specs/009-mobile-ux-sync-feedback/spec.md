@@ -23,7 +23,11 @@ To address the responsive layout requirements, we have implemented a dedicated m
     - Entity list component refactored for proper mobile scrolling with touch-action and overscroll behavior
     - Detail panel now supports native scroll with proper `overflow-y` and viewport height constraints
     - Embedded entity connections displayed in Zen-style view while sidebars remain accessible
-5.  **Zen Mode Enhancements** (Added 2026-04-09):
+5.  **Graph Controls Mobile Optimization** (Added 2026-04-25):
+    - Expansive desktop toolbar replaced with a single floating toggle button on mobile
+    - Full control set (zoom, fit, layout, filters) revealed in a compact overlaid menu
+    - Auto-closing logic ensures controls don't obstruct the view after an action is triggered
+6.  **Zen Mode Enhancements** (Added 2026-04-09):
     - `ZenContent.svelte` updated to show embedded entity connections within the content area
     - `ZenSidebar.svelte` refined for better mobile layout and tab organization
     - Entity detail view maintains sidebar visibility (Oracle, Explorer) while displaying full content
@@ -104,6 +108,19 @@ As a user viewing an entity in Zen mode, I want to see and navigate connected en
 2. **Given** I'm viewing connections, **When** I click a connected entity, **Then** the main content area updates to show that entity without closing sidebars.
 3. **Given** no connections exist, **When** I view the entity, **Then** a subtle "No connections yet" placeholder is shown.
 
+---
+
+### User Story 8 - Mobile Graph Control Access (Priority: P2)
+
+As a mobile user, I want to access graph controls through a single toggle button so that the UI remains clean and doesn't obstruct the graph visualization.
+
+**Independent Test**: Load the graph on a mobile device and verify a single "settings" icon button is visible instead of the full toolbar.
+
+**Acceptance Scenarios**:
+
+1. **Given** a mobile device, **When** I tap the graph control toggle, **Then** the full set of controls (zoom, fit, filters) appears in an overlaid menu.
+2. **Given** the mobile control menu is open, **When** I trigger a "Fit to Screen" action, **Then** the action executes and the control menu automatically closes.
+
 ## Requirements
 
 ### Functional Requirements
@@ -122,6 +139,7 @@ As a user viewing an entity in Zen mode, I want to see and navigate connected en
 - **FR-012**: Zen Mode MUST display embedded entity connections in the main content area in a visually distinct, navigable format.
 - **FR-013**: Clicking a connected entity in the embedded connections view MUST update the main content area while preserving sidebar state (Oracle, Explorer).
 - **FR-014**: Connections section MUST show an appropriate empty state when no connections exist for an entity.
+- **FR-015**: Graph controls MUST collapse into a single floating toggle button on mobile viewports, revealing a compact overlaid menu when activated.
 
 ### User Story 4 - Reliable Sync Consistency (Priority: P0)
 

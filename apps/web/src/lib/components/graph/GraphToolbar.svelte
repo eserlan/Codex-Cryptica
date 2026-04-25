@@ -21,7 +21,18 @@
   }>();
 
   let showMinimap = $state(false);
+  let isMobileMenuOpen = $state(false);
   let currentZoom = $state(1);
+
+  const closeMenuIfMobile = () => {
+    if (ui.isMobile) isMobileMenuOpen = false;
+  };
+
+  $effect(() => {
+    if (!ui.isMobile) {
+      isMobileMenuOpen = false;
+    }
+  });
 
   $effect(() => {
     if (cy) {
@@ -56,6 +67,190 @@
       : Math.min(64 + activeGuests.length * 48, 280),
   );
 </script>
+
+{#snippet toolbarItems()}
+  {#if !ui.isMobile}
+    <button
+      class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
+        ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+        : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+      onclick={() => (showMinimap = !showMinimap)}
+      title="Toggle Minimap"
+      aria-label="Toggle Minimap"
+      aria-pressed={showMinimap}
+    >
+      <span class="icon-[lucide--map] w-4 h-4"></span>
+    </button>
+    <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
+  {/if}
+  <TimelineControls
+    onApply={(isInitial, isForced, caller) => {
+      void onApplyLayout(isInitial, isForced, caller).catch((e: any) =>
+        console.error(e),
+      );
+      closeMenuIfMobile();
+    }}
+  />
+  <div class="h-6 w-px bg-theme-border/30 mx-2 flex-shrink-0"></div>
+  <div class="flex gap-1 items-center">
+    <button
+      class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+      onclick={() => cy?.zoom(cy.zoom() * 1.2)}
+      title="Zoom In"
+      aria-label="Zoom In"
+      ><span class="icon-[lucide--zoom-in] w-4 h-4"></span></button
+    >
+    <button
+      class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+      onclick={() => cy?.zoom(cy.zoom() / 1.2)}
+      title="Zoom Out"
+      aria-label="Zoom Out"
+      ><span class="icon-[lucide--zoom-out] w-4 h-4"></span></button
+    >
+    <button
+      class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+      onclick={() => {
+        graph.requestFit();
+        closeMenuIfMobile();
+      }}
+      title="Fit to Screen"
+      aria-label="Fit to Screen"
+      ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
+    >
+    <button
+      class="w-8 h-8 flex-shrink-0 {ui.isMobile
+        ? 'flex'
+        : 'hidden sm:flex'} items-center justify-center border transition {graph.stableLayout
+        ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+        : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+      onclick={() => {
+        void graph.toggleStableLayout().catch((e: any) => console.error(e));
+        closeMenuIfMobile();
+      }}
+      title={graph.stableLayout ? "Stable Layout: ON" : "Stable Layout: OFF"}
+      aria-label="Toggle Stable Layout"
+      aria-pressed={graph.stableLayout}
+      ><span
+        class="{graph.stableLayout
+          ? 'icon-[lucide--pin]'
+          : 'icon-[lucide--pin-off]'} w-4 h-4"
+      ></span></button
+    >
+    {#if !ui.isGuestMode}
+      <button
+        class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => {
+          if (canConnect) {
+            ui.showSelectionConnector = !ui.showSelectionConnector;
+          } else {
+            ui.toggleConnectMode();
+          }
+          closeMenuIfMobile();
+        }}
+        title={connectionTooltip}
+        aria-label={connectionTooltip}
+        aria-pressed={isConnecting}
+        ><span class="icon-[lucide--link] w-4 h-4"></span></button
+      >
+    {/if}
+    <button
+      class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+      onclick={() => {
+        void onApplyLayout(false, true, "UI Redraw Button", true).catch(
+          (e: any) => console.error(e),
+        );
+        closeMenuIfMobile();
+      }}
+      title="Redraw Layout"
+      aria-label="Redraw Layout"
+      ><span
+        class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
+          ? 'animate-spin'
+          : ''}"
+      ></span></button
+    >
+  </div>
+  <div
+    class="h-6 w-px bg-theme-border/30 mx-2 {ui.isMobile
+      ? ''
+      : 'hidden md:block'} flex-shrink-0"
+  ></div>
+  <button
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+      ? 'flex'
+      : 'hidden md:flex'} transition {ui.sharedMode
+      ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
+      : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+    onclick={() => {
+      ui.sharedMode = !ui.sharedMode;
+      closeMenuIfMobile();
+    }}
+    title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
+    data-testid="shared-mode-toggle"
+    aria-pressed={ui.sharedMode}
+    aria-label="Toggle player view mode"
+  >
+    <span
+      class={ui.sharedMode
+        ? "icon-[lucide--eye] w-4 h-4"
+        : "icon-[lucide--eye-off] w-4 h-4"}
+    ></span></button
+  >
+  <button
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+      ? 'flex'
+      : 'hidden md:flex'} transition {graph.showLabels
+      ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+      : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+    onclick={() => {
+      void graph.toggleLabels().catch((e: any) => console.error(e));
+      closeMenuIfMobile();
+    }}
+    title={graph.showLabels ? "Labels: ON" : "Labels: OFF"}
+    aria-label="Toggle Labels"
+    aria-pressed={graph.showLabels}
+    ><span class="icon-[lucide--type] w-4 h-4"></span></button
+  >
+  <button
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+      ? 'flex'
+      : 'hidden md:flex'} transition {graph.showImages
+      ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+      : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+    onclick={() => {
+      void graph.toggleImages().catch((e: any) => console.error(e));
+      closeMenuIfMobile();
+    }}
+    title={graph.showImages ? "Images: ON" : "Images: OFF"}
+    aria-label="Toggle Images"
+    aria-pressed={graph.showImages}
+    ><span class="icon-[lucide--image] w-4 h-4"></span></button
+  >
+
+  <div
+    class="{ui.isMobile
+      ? 'flex'
+      : 'hidden sm:flex'} items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
+  >
+    <span class="text-[11px] font-mono text-theme-primary font-bold"
+      >{currentZoom.toFixed(2)}x</span
+    >
+    <button
+      class="text-[10px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
+      onclick={() =>
+        cy?.animate({
+          zoom: 9,
+          duration: 500,
+          easing: "ease-in-out-cubic",
+        })}
+      title="Jump to Maximum Zoom (9x)"
+    >
+      MAX
+    </button>
+  </div>
+{/snippet}
 
 {#if !ui.isGuestMode}
   <div
@@ -127,148 +322,33 @@
     <div
       class="flex gap-1 items-center flex-wrap justify-center md:justify-start bg-theme-surface/60 md:bg-transparent p-1.5 md:p-0 rounded-full md:rounded-none border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none"
     >
-      <button
-        class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
-          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
-          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-        onclick={() => (showMinimap = !showMinimap)}
-        title="Toggle Minimap"
-        aria-label="Toggle Minimap"
-        aria-pressed={showMinimap}
-      >
-        <span class="icon-[lucide--map] w-4 h-4"></span>
-      </button>
-      <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
-      <TimelineControls onApply={onApplyLayout} />
-      <div class="h-6 w-px bg-theme-border/30 mx-2 flex-shrink-0"></div>
-      <div class="flex gap-1 items-center">
-        <button
-          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-          onclick={() => cy?.zoom(cy.zoom() * 1.2)}
-          title="Zoom In"
-          aria-label="Zoom In"
-          ><span class="icon-[lucide--zoom-in] w-4 h-4"></span></button
-        >
-        <button
-          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-          onclick={() => cy?.zoom(cy.zoom() / 1.2)}
-          title="Zoom Out"
-          aria-label="Zoom Out"
-          ><span class="icon-[lucide--zoom-out] w-4 h-4"></span></button
-        >
-        <button
-          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-          onclick={() => graph.requestFit()}
-          title="Fit to Screen"
-          aria-label="Fit to Screen"
-          ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
-        >
-        <button
-          class="w-8 h-8 flex-shrink-0 hidden sm:flex items-center justify-center border transition {graph.stableLayout
-            ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
-            : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-          onclick={() =>
-            void graph.toggleStableLayout().catch((e) => console.error(e))}
-          title={graph.stableLayout
-            ? "Stable Layout: ON"
-            : "Stable Layout: OFF"}
-          aria-label="Toggle Stable Layout"
-          aria-pressed={graph.stableLayout}
-          ><span
-            class="{graph.stableLayout
-              ? 'icon-[lucide--pin]'
-              : 'icon-[lucide--pin-off]'} w-4 h-4"
-          ></span></button
-        >
-        {#if !ui.isGuestMode}
-          <button
-            class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
-              ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
-              : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-            onclick={() => {
-              if (canConnect) {
-                ui.showSelectionConnector = !ui.showSelectionConnector;
-              } else {
-                ui.toggleConnectMode();
-              }
-            }}
-            title={connectionTooltip}
-            aria-label={connectionTooltip}
-            aria-pressed={isConnecting}
-            ><span class="icon-[lucide--link] w-4 h-4"></span></button
+      {#if !ui.isMobile}
+        {@render toolbarItems()}
+      {:else}
+        {#if isMobileMenuOpen}
+          <div
+            id="mobile-graph-controls"
+            class="flex gap-1 items-center flex-wrap justify-center bg-theme-surface/95 p-2 rounded-xl border border-theme-border shadow-xl backdrop-blur mb-2"
+            transition:fade
           >
+            {@render toolbarItems()}
+          </div>
         {/if}
         <button
-          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-          onclick={() => onApplyLayout(false, true, "UI Redraw Button", true)}
-          title="Redraw Layout"
-          aria-label="Redraw Layout"
-          ><span
-            class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
-              ? 'animate-spin'
-              : ''}"
-          ></span></button
+          onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
+          class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
+          class:rotate-45={isMobileMenuOpen}
+          aria-label="Graph Controls"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-graph-controls"
         >
-      </div>
-      <div
-        class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block flex-shrink-0"
-      ></div>
-      <button
-        class="w-8 h-8 flex-shrink-0 items-center justify-center border hidden md:flex transition {ui.sharedMode
-          ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
-          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-        onclick={() => (ui.sharedMode = !ui.sharedMode)}
-        title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
-        data-testid="shared-mode-toggle"
-        aria-pressed={ui.sharedMode}
-        aria-label="Toggle player view mode"
-      >
-        <span
-          class={ui.sharedMode
-            ? "icon-[lucide--eye] w-4 h-4"
-            : "icon-[lucide--eye-off] w-4 h-4"}
-        ></span></button
-      >
-      <button
-        class="w-8 h-8 flex-shrink-0 items-center justify-center border hidden md:flex transition {graph.showLabels
-          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
-          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-        onclick={() => void graph.toggleLabels().catch((e) => console.error(e))}
-        title={graph.showLabels ? "Labels: ON" : "Labels: OFF"}
-        aria-label="Toggle Labels"
-        aria-pressed={graph.showLabels}
-        ><span class="icon-[lucide--type] w-4 h-4"></span></button
-      >
-      <button
-        class="w-8 h-8 flex-shrink-0 items-center justify-center border hidden md:flex transition {graph.showImages
-          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
-          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-        onclick={() => void graph.toggleImages().catch((e) => console.error(e))}
-        title={graph.showImages ? "Images: ON" : "Images: OFF"}
-        aria-label="Toggle Images"
-        aria-pressed={graph.showImages}
-        ><span class="icon-[lucide--image] w-4 h-4"></span></button
-      >
-
-      <div
-        class="hidden sm:flex items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
-      >
-        <span class="text-[11px] font-mono text-theme-primary font-bold"
-          >{currentZoom.toFixed(2)}x</span
-        >
-        <button
-          class="text-[10px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
-          onclick={() =>
-            cy?.animate({
-              zoom: 9,
-              duration: 500,
-              easing: "ease-in-out-cubic",
-            })}
-          title="Jump to Maximum Zoom (9x)"
-        >
-          MAX
+          <span
+            class="{isMobileMenuOpen
+              ? 'icon-[lucide--x]'
+              : 'icon-[lucide--settings-2]'} w-5 h-5"
+          ></span>
         </button>
-      </div>
+      {/if}
     </div>
   </div>
 {/if}
