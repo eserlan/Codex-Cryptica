@@ -22,10 +22,12 @@
   let sourceName = $state(
     prefill?.sourceId ? vault.entities[prefill.sourceId]?.title : "",
   );
+  let sourceTitle = $derived(sourceId ? vault.entities[sourceId]?.title : "");
   let targetId = $state<string | null>(prefill?.targetId || null);
   let targetName = $state(
     prefill?.targetId ? vault.entities[prefill.targetId]?.title : "",
   );
+  let targetTitle = $derived(targetId ? vault.entities[targetId]?.title : "");
   let type = $state(prefill?.type || "related_to");
   let label = $state(prefill?.label || "");
   let explanation = $state("");
@@ -182,13 +184,13 @@
         <div class="flex gap-2">
           <span class="text-theme-muted w-12 shrink-0 text-right">FROM:</span>
           <span class="text-theme-text truncate"
-            >{vault.entities[sourceId!]?.title ?? "Unknown Entity"}</span
+            >{sourceTitle || "Unknown Entity"}</span
           >
         </div>
         <div class="flex gap-2">
           <span class="text-theme-muted w-12 shrink-0 text-right">TO:</span>
           <span class="text-theme-text truncate"
-            >{vault.entities[targetId!]?.title ?? "Unknown Entity"}</span
+            >{targetTitle || "Unknown Entity"}</span
           >
         </div>
       </div>
