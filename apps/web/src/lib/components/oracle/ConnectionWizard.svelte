@@ -66,18 +66,16 @@
   let isProposing = $state(false);
   const generateProposal = async () => {
     try {
-      const key = oracle.effectiveApiKey;
-      if (!key) return;
-
+      const key = oracle.effectiveApiKey || "";
       isProposing = true;
       const source = vault.entities[sourceId!];
       const target = vault.entities[targetId!];
 
       const modelName = TIER_MODES[oracle.tier];
-      
+
       const { ProposerService } = await import("@codex/proposer");
       const proposer = new ProposerService();
-      
+
       const proposal = await proposer.generateConnectionProposal(
         key,
         modelName,
