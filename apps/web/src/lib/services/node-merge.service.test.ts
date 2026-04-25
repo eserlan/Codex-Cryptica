@@ -142,7 +142,7 @@ describe("NodeMergeService", () => {
       expect(textGenerationService.generateMergeProposal).toHaveBeenCalled();
     });
 
-    it("should throw error if AI key is missing", async () => {
+    it("should allow AI merge even if AI key is missing (fallback to proxy)", async () => {
       (oracle as any).effectiveApiKey = null;
       vault.entities["t"] = {
         id: "t",
@@ -150,15 +150,34 @@ describe("NodeMergeService", () => {
         connections: [],
         tags: [],
         labels: [],
+        content: "T",
+      } as any;
+      vault.entities["s"] = {
+        id: "s",
+        title: "S",
+        connections: [],
+        tags: [],
+        labels: [],
+        content: "S",
       } as any;
 
-      await expect(
-        service.proposeMerge({
-          sourceNodeIds: ["t"],
-          targetNodeId: "t",
-          strategy: "ai",
-        }),
-      ).rejects.toThrow("AI API Key not configured");
+      vi.mocked(textGenerationService.generateMergeProposal).mockResolvedValue({
+        body: "AI Result",
+      });
+
+      const proposal = await service.proposeMerge({
+        sourceNodeIds: ["t", "s"],
+        targetNodeId: "t",
+        strategy: "ai",
+      });
+
+      expect(proposal.suggestedBody).toBe("AI Result");
+      expect(textGenerationService.generateMergeProposal).toHaveBeenCalledWith(
+        "",
+        expect.any(String),
+        expect.any(Object),
+        expect.any(Array),
+      );
     });
   });
 

@@ -75,12 +75,7 @@ export class NodeMergeService {
     let suggestedBody: string;
 
     if (strategy === "ai") {
-      const apiKey = oracle.effectiveApiKey;
-      if (!apiKey) {
-        throw new Error(
-          "AI API Key not configured. Please enable AI in settings or use Manual Merge.",
-        );
-      }
+      const apiKey = oracle.effectiveApiKey || "";
       const modelName = TIER_MODES[oracle.tier];
 
       // We pass the "raw" entity-like structure that aiService expects (title, type, content, lore)

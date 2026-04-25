@@ -20,6 +20,7 @@
   }>();
 
   let targetId = $state("");
+  let targetTitle = $derived(vault.entities[targetId]?.title || targetId);
   let previewContent = $state("");
   let proposal = $state<IMergedContentProposal | null>(null);
   let isLoading = $state(false);
@@ -94,7 +95,7 @@
 
 {#if isOpen}
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-theme-bg/80 backdrop-blur-sm p-4"
   >
     <div
       role="dialog"
@@ -106,8 +107,7 @@
         class="p-6 border-b border-theme-border flex justify-between items-center"
       >
         <h2 id="merge-nodes-title" class="text-xl font-bold text-theme-text">
-          Merge {sourceNodeIds.length}
-          {themeStore.resolveJargon("entity", sourceNodeIds.length)}
+          Merge into {targetTitle}
         </h2>
         <button
           onclick={() => onClose()}
