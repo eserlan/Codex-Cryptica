@@ -26,6 +26,7 @@ export class ChatHistoryService {
   private db: AppSettingsStore | null = null;
   private vaultId: string | null = null;
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+  private switchSequence = 0;
 
   private get key() {
     return `chat_history_${this.vaultId ?? "default"}`;
@@ -40,16 +41,26 @@ export class ChatHistoryService {
   async init(db: AppSettingsStore, vaultId: string) {
     this.db = db;
     this.vaultId = vaultId;
-    const savedMessages = await db.appSettings.get(this.key);
-    if (savedMessages?.value && Array.isArray(savedMessages.value)) {
-      // Restore blob URLs for persisted blobs
-      const messages = savedMessages.value.map((msg: ChatHistoryRecord) => {
+    let saved = await db.appSettings.get(this.key);
+    // One-time migration from the legacy flat key used before per-vault scoping
+    if (!saved?.value) {
+      const legacy = await db.appSettings.get("chat_history");
+      if (legacy?.value && Array.isArray(legacy.value)) {
+        saved = legacy;
+        await db.appSettings.put({
+          key: this.key,
+          value: legacy.value,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+    if (saved?.value && Array.isArray(saved.value)) {
+      this.messages = saved.value.map((msg: ChatHistoryRecord) => {
         if (msg.imageBlob && !msg.imageUrl) {
           msg.imageUrl = URL.createObjectURL(msg.imageBlob);
         }
         return msg;
       });
-      this.messages = messages;
     }
   }
 
@@ -58,18 +69,27 @@ export class ChatHistoryService {
    * chat history. Current messages are already persisted (saved on every mutation).
    */
   async switchVault(newVaultId: string) {
+    const seq = ++this.switchSequence;
+
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
       this.debounceTimeout = null;
       await this.saveToDB();
     }
+
+    if (seq !== this.switchSequence) return;
+
     this.messages.forEach((m) => {
       if (m.imageUrl?.startsWith("blob:")) URL.revokeObjectURL(m.imageUrl);
     });
     this.messages = [];
     this.vaultId = newVaultId;
     if (!this.db) return;
+
     const saved = await this.db.appSettings.get(this.key);
+
+    if (seq !== this.switchSequence) return;
+
     if (saved?.value && Array.isArray(saved.value)) {
       this.messages = saved.value.map((msg: ChatHistoryRecord) => {
         if (msg.imageBlob && !msg.imageUrl) {

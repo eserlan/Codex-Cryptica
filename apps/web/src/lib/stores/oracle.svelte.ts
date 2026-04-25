@@ -112,6 +112,8 @@ export class OracleStore {
   private undoRedo: UndoRedoService;
   private executor: OracleActionExecutor;
   private eventBus: BroadcastChannel | null = null;
+  private isChatHistoryReady = false;
+  private vaultSwitchedHandler: ((e: Event) => void) | null = null;
 
   constructor(
     deps: {
@@ -167,12 +169,13 @@ export class OracleStore {
 
     // Reload chat history when the active vault changes
     if (typeof window !== "undefined") {
-      window.addEventListener("vault-switched", (e: Event) => {
+      this.vaultSwitchedHandler = (e: Event) => {
         const newVaultId = (e as CustomEvent<{ id: string }>).detail?.id;
-        if (newVaultId && this.isInitialized) {
+        if (newVaultId && this.isChatHistoryReady) {
           void this.chatHistoryService.switchVault(newVaultId);
         }
-      });
+      };
+      window.addEventListener("vault-switched", this.vaultSwitchedHandler);
     }
   }
 
@@ -182,6 +185,11 @@ export class OracleStore {
   public destroy() {
     this.eventBus?.close();
     this.eventBus = null;
+    this.chatHistoryService.destroy();
+    if (this.vaultSwitchedHandler && typeof window !== "undefined") {
+      window.removeEventListener("vault-switched", this.vaultSwitchedHandler);
+      this.vaultSwitchedHandler = null;
+    }
   }
 
   private handleWorkerEvent(event: any) {
@@ -209,6 +217,7 @@ export class OracleStore {
       entityDb as any,
       this.vault.activeVaultId ?? "default",
     );
+    this.isChatHistoryReady = true;
     await this.settingsService.init(entityDb as any);
 
     this.isInitialized = true;

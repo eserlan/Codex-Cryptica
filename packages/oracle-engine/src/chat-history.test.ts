@@ -132,6 +132,124 @@ describe("ChatHistoryService", () => {
     expect(() => service.destroy()).not.toThrow();
   });
 
+  it("should save to DB using the per-vault scoped key", async () => {
+    await service.init(mockDB, "vault-abc");
+    await service.addMessage({
+      id: "1",
+      role: "user",
+      content: "hello",
+    } as any);
+    const putCall = mockDB.appSettings.put.mock.calls.at(-1)[0];
+    expect(putCall.key).toBe("chat_history_vault-abc");
+  });
+
+  it("should migrate messages from the legacy flat key on first init", async () => {
+    const legacyMessages = [
+      { id: "legacy-1", role: "user", content: "old msg" },
+    ];
+    mockDB.appSettings.get.mockImplementation(async (key: string) => {
+      if (key === "chat_history") return { value: legacyMessages };
+      return undefined;
+    });
+
+    await service.init(mockDB, "vault-1");
+
+    expect(service.messages).toHaveLength(1);
+    expect(service.messages[0].id).toBe("legacy-1");
+    expect(mockDB.appSettings.put).toHaveBeenCalledWith(
+      expect.objectContaining({ key: "chat_history_vault-1" }),
+    );
+  });
+
+  describe("switchVault", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should flush a pending debounced save before switching vault", async () => {
+      await service.init(mockDB, "vault-1");
+      const msg = { id: "m1", role: "assistant", content: "c" } as any;
+      await service.addMessage(msg);
+      mockDB.appSettings.put.mockClear();
+
+      // Trigger debounce (timer not yet fired)
+      await service.addProposal("m1", { title: "P1" });
+      expect(mockDB.appSettings.put).not.toHaveBeenCalled();
+
+      mockDB.appSettings.get.mockResolvedValue(undefined);
+      await service.switchVault("vault-2");
+
+      // Flush must have saved under the OLD vault key
+      expect(mockDB.appSettings.put).toHaveBeenCalledWith(
+        expect.objectContaining({ key: "chat_history_vault-1" }),
+      );
+    });
+
+    it("should load messages for the new vault after switching", async () => {
+      await service.init(mockDB, "vault-1");
+      mockDB.appSettings.get.mockResolvedValue({
+        value: [{ id: "m2", role: "user", content: "vault-2 msg" }],
+      });
+
+      await service.switchVault("vault-2");
+
+      expect(service.messages).toHaveLength(1);
+      expect(service.messages[0].id).toBe("m2");
+    });
+
+    it("should revoke blob URLs from the old vault on switch", async () => {
+      vi.stubGlobal("URL", {
+        revokeObjectURL: vi.fn(),
+        createObjectURL: vi.fn(() => "new-url"),
+      });
+
+      await service.init(mockDB, "vault-1");
+      service.messages = [
+        {
+          id: "old",
+          role: "assistant",
+          content: "c",
+          imageUrl: "blob:old",
+        } as any,
+      ];
+
+      mockDB.appSettings.get.mockResolvedValue(undefined);
+      await service.switchVault("vault-2");
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:old");
+      vi.unstubAllGlobals();
+    });
+
+    it("should only apply results from the last concurrent switch call", async () => {
+      await service.init(mockDB, "vault-1");
+
+      // Two rapid switches: vault-2 then vault-3
+      let resolveVault2: (v: any) => void;
+      const vault2Promise = new Promise((res) => (resolveVault2 = res));
+      mockDB.appSettings.get.mockImplementationOnce(() => vault2Promise);
+      mockDB.appSettings.get.mockResolvedValue({
+        value: [{ id: "v3-msg", role: "user", content: "from vault 3" }],
+      });
+
+      const switch2 = service.switchVault("vault-2");
+      const switch3 = service.switchVault("vault-3");
+
+      // Resolve vault-2 after vault-3 has already won the sequence
+      resolveVault2!({
+        value: [{ id: "v2-msg", role: "user", content: "from vault 2" }],
+      });
+
+      await Promise.all([switch2, switch3]);
+
+      // vault-3 wins; vault-2 result must be discarded
+      expect(service.messages.every((m) => m.id !== "v2-msg")).toBe(true);
+    });
+  });
+
   describe("addProposal", () => {
     beforeEach(() => {
       vi.useFakeTimers();
