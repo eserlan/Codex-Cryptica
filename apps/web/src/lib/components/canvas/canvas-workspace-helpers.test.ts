@@ -150,7 +150,6 @@ describe("canvas-workspace-helpers", () => {
     expect(
       resolveSpawnPosition({
         screenToFlowPosition,
-        paletteVisible: true,
         windowSize: { width: 1000, height: 800 },
         screenPosition: { x: 10, y: 20 },
       }),
@@ -159,7 +158,6 @@ describe("canvas-workspace-helpers", () => {
     expect(
       resolveSpawnPosition({
         screenToFlowPosition,
-        paletteVisible: false,
         windowSize: { width: 1000, height: 800 },
         flowPosition: { x: 7, y: 9 },
       }),
@@ -168,10 +166,9 @@ describe("canvas-workspace-helpers", () => {
     expect(
       resolveSpawnPosition({
         screenToFlowPosition,
-        paletteVisible: true,
         windowSize: { width: 1000, height: 800 },
       }),
-    ).toEqual({ x: 645, y: 402 });
+    ).toEqual({ x: 501, y: 402 });
   });
 
   it("staggered batch spawn positions respect the index offset", () => {

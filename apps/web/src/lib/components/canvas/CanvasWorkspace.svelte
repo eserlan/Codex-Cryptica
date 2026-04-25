@@ -17,7 +17,6 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
-  import EntityPalette from "$lib/components/canvas/EntityPalette.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
@@ -450,7 +449,6 @@
       eventPosition ||
       resolveSpawnPosition({
         screenToFlowPosition,
-        paletteVisible: uiStore.showCanvasPalette,
         windowSize: {
           width: window.innerWidth,
           height: window.innerHeight,
@@ -557,18 +555,7 @@
     flushSave();
   });
 
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key.toLowerCase() === "p" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      const target = e.target as HTMLElement;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable
-      )
-        return;
-      uiStore.showCanvasPalette = !uiStore.showCanvasPalette;
-    }
-  }
+  function handleKeyDown(_e: KeyboardEvent) {}
 </script>
 
 <div
@@ -579,8 +566,6 @@
   tabindex="-1"
   role="none"
 >
-  <EntityPalette />
-
   <div
     class="flex-1 relative"
     ondragover={onDragOver}
@@ -592,15 +577,20 @@
     <div
       class="absolute top-6 left-6 z-40 flex flex-col items-start gap-2 pointer-events-none select-none"
     >
-      <div
-        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 py-2 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group"
+      <button
+        onclick={() => (uiStore.showCanvasSelector = true)}
+        title="Manage canvases"
+        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 py-2 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group flex items-center gap-2"
       >
         <span
           class="text-xs font-black text-theme-primary uppercase tracking-[0.4em] group-hover:text-theme-accent transition-colors"
         >
           {canvas?.name || "Untitled Workspace"}
         </span>
-      </div>
+        <span
+          class="icon-[lucide--layout-grid] w-3 h-3 text-theme-primary/50 group-hover:text-theme-accent transition-colors shrink-0"
+        ></span>
+      </button>
 
       <CategoryFilter
         {activeCategories}
