@@ -1,5 +1,41 @@
 [
   {
+    "version": "0.21.0",
+    "title": "The Mobile Ergonomics Update",
+    "date": "2026-04-26",
+    "type": "minor",
+    "highlights": [
+      "Mobile Graph Controls: A compact toggle menu for graph actions, maximizing screen space for lore exploration on small devices.",
+      "Accurate Vault Analytics: The vault selector now correctly displays the real-time entity count for every campaign.",
+      "Search Performance: Drastically reduced memory overhead during synchronization via optimized array processing logic.",
+      "Keyless Node Merging: AI-powered node merging now functions via proxy, removing the need for a personal API key."
+    ]
+  },
+  {
+    "version": "0.20.0",
+    "title": "The Aesthetic Graph Update",
+    "date": "2026-04-21",
+    "type": "minor",
+    "highlights": [
+      "Themed Graph Nodes: Nodes now feature category-tinted ellipses for improved visual grouping and hierarchy.",
+      "Intelligent Clustering: Enhanced force-layout logic for tighter, more intuitive connectivity clouds.",
+      "Global Image Lightbox: A unified, popout-capable image viewer for all character and location art.",
+      "Compact Zen Mode: A streamlined writing interface with optimized spacing for distraction-free worldbuilding."
+    ]
+  },
+  {
+    "version": "0.19.0",
+    "title": "The Discovery Update",
+    "date": "2026-04-16",
+    "type": "minor",
+    "highlights": [
+      "Entity Alias Support: Register alternative names for entities with weighted search indexing and management UI.",
+      "Adjustable Workspace: Flexible, resizable sidebars to perfectly fit your editing and exploration workflow.",
+      "Interactive Label Filtering: Advanced 'AND' filtering in the entity explorer for multi-tag discovery.",
+      "Background AI Oracle: Generation and entity discovery now run in background workers for a faster UI."
+    ]
+  },
+  {
     "version": "0.18.0",
     "title": "The Tactical Explorer Update",
     "date": "2026-04-16",
