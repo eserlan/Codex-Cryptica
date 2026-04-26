@@ -320,7 +320,8 @@
     {/if}
 
     <div
-      class="flex gap-1 items-center flex-wrap justify-center md:justify-start bg-theme-surface/60 md:bg-transparent p-1.5 md:p-0 rounded-full md:rounded-none border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none"
+      class="flex flex-col md:flex-row gap-1 items-center justify-center md:justify-start p-1.5 md:p-0 rounded-full md:rounded-none
+             {ui.isMobile ? 'bg-transparent border-none backdrop-blur-none' : 'bg-theme-surface/60 md:bg-transparent border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none'}"
     >
       {#if !ui.isMobile}
         {@render toolbarItems()}
