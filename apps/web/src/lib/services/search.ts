@@ -80,9 +80,12 @@ export class SearchService {
           }
 
           case "SYNC_CHUNK_READY": {
-            const chunk = event.newOrChangedIds
-              .map((id) => event.entities[id])
-              .filter(Boolean);
+            // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
+            const chunk: any[] = [];
+            for (const id of event.newOrChangedIds) {
+              const entity = event.entities[id];
+              if (entity) chunk.push(entity);
+            }
             if (chunk.length > 0) {
               await this.indexBatch(chunk);
             }
