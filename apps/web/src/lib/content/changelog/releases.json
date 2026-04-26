@@ -6,9 +6,9 @@
     "type": "minor",
     "highlights": [
       "Mobile Graph Controls: A compact toggle menu for graph actions, maximizing screen space for lore exploration on small devices.",
-      "Accurate Vault Analytics: The vault selector now correctly displays the real-time entity count for every campaign.",
-      "Search Performance: Drastically reduced memory overhead during synchronization via optimized array processing logic.",
-      "Keyless Node Merging: AI-powered node merging now functions via proxy, removing the need for a personal API key."
+      "Real-time Vault Stats: The vault selector now correctly displays the actual number of entities stored in every campaign.",
+      "Performance Boost: Smoother vault loading and snappier search indexing, especially for large knowledge bases.",
+      "Keyless AI Node Merging: Core AI-powered organization features now work without requiring a personal API key."
     ]
   },
   {
@@ -17,10 +17,10 @@
     "date": "2026-04-21",
     "type": "minor",
     "highlights": [
-      "Themed Graph Nodes: Nodes now feature category-tinted ellipses for improved visual grouping and hierarchy.",
-      "Intelligent Clustering: Enhanced force-layout logic for tighter, more intuitive connectivity clouds.",
-      "Global Image Lightbox: A unified, popout-capable image viewer for all character and location art.",
-      "Compact Zen Mode: A streamlined writing interface with optimized spacing for distraction-free worldbuilding."
+      "Themed Graph Nodes: High-contrast, category-tinted nodes for better visual grouping and hierarchy at a glance.",
+      "Intelligent Graph Clustering: Improved layout logic that creates tighter, more intuitive connectivity clouds.",
+      "Unified Image Lightbox: A powerful new popout viewer for all character and location art across the application.",
+      "Compact Zen Mode: A more streamlined writing interface that prioritizes screen space for your content."
     ]
   },
   {
@@ -29,10 +29,10 @@
     "date": "2026-04-16",
     "type": "minor",
     "highlights": [
-      "Entity Alias Support: Register alternative names for entities with weighted search indexing and management UI.",
-      "Adjustable Workspace: Flexible, resizable sidebars to perfectly fit your editing and exploration workflow.",
-      "Interactive Label Filtering: Advanced 'AND' filtering in the entity explorer for multi-tag discovery.",
-      "Background AI Oracle: Generation and entity discovery now run in background workers for a faster UI."
+      "Entity Alias Support: Add multiple names to your characters and locations for more flexible search and cross-referencing.",
+      "Adjustable Workspace: Resizable sidebars allow you to customize the interface for your specific editing workflow.",
+      "Interactive Label Filtering: Easily discover related entities using advanced multi-label filtering in the explorer.",
+      "Responsive AI Oracle: A faster, more responsive AI chat experience that stays out of your way while you work."
     ]
   },
   {
