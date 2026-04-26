@@ -17,10 +17,13 @@ export class SearchStore {
           );
         } else if (event.type === "SYNC_CHUNK_READY") {
           const services = await this.serviceRegistry.ensureInitialized();
-          const entities = event.newOrChangedIds
-            .map((id) => event.entities[id])
-            .filter(Boolean);
-          await Promise.all(entities.map((e) => this.indexEntity(e, services)));
+          // ⚡ Bolt Optimization: Replace chained .map().filter().map() with a single imperative loop.
+          const promises: Promise<void>[] = [];
+          for (const id of event.newOrChangedIds) {
+            const entity = event.entities[id];
+            if (entity) promises.push(this.indexEntity(entity, services));
+          }
+          await Promise.all(promises);
         } else if (event.type === "BATCH_UPDATED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await Promise.all(
@@ -31,11 +34,13 @@ export class SearchStore {
         } else if (event.type === "CACHE_LOADED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await services.search.clear();
-          await Promise.all(
-            Object.values(event.entities).map((e) =>
-              this.indexEntity(e, services),
-            ),
-          );
+          // ⚡ Bolt Optimization: Replace Object.values().map() with an imperative loop
+          // to avoid allocating two large intermediate arrays.
+          const promises: Promise<void>[] = [];
+          for (const key in event.entities) {
+            promises.push(this.indexEntity(event.entities[key], services));
+          }
+          await Promise.all(promises);
         } else if (event.type === "VAULT_OPENING") {
           const services = await this.serviceRegistry.ensureInitialized();
           await services.search.clear();
