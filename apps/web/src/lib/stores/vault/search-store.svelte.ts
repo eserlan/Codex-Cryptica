@@ -18,7 +18,7 @@ export class SearchStore {
         } else if (event.type === "SYNC_CHUNK_READY") {
           const services = await this.serviceRegistry.ensureInitialized();
           // ⚡ Bolt Optimization: Replace chained .map().filter().map() with a single imperative loop.
-          const promises = [];
+          const promises: Promise<void>[] = [];
           for (const id of event.newOrChangedIds) {
             const entity = event.entities[id];
             if (entity) promises.push(this.indexEntity(entity, services));
@@ -36,7 +36,7 @@ export class SearchStore {
           await services.search.clear();
           // ⚡ Bolt Optimization: Replace Object.values().map() with an imperative loop
           // to avoid allocating two large intermediate arrays.
-          const promises = [];
+          const promises: Promise<void>[] = [];
           for (const key in event.entities) {
             promises.push(this.indexEntity(event.entities[key], services));
           }
