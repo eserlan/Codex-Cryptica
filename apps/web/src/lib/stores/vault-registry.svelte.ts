@@ -104,6 +104,16 @@ class VaultRegistryStore {
     await registry.updateLastOpened(id);
     await this.listVaults();
   }
+
+  async updateEntityCount(id: string, count: number): Promise<void> {
+    const db = await getDB();
+    const vaultRecord = await registry.getVault(id);
+    if (vaultRecord) {
+      vaultRecord.entityCount = count;
+      await db.put("vaults", vaultRecord);
+      await this.listVaults();
+    }
+  }
 }
 
 const REGISTRY_KEY = "__codex_vault_registry_instance__";

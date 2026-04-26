@@ -52,6 +52,7 @@ describe("SyncStore", () => {
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
     });
   });
 
@@ -91,6 +92,36 @@ describe("SyncStore", () => {
     expect((store as any).status).toBe("idle");
   });
 
+  it("calls updateEntityCount after a full filesystem sync", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+    const updateEntityCount = vi.fn().mockResolvedValue(undefined);
+
+    store = new SyncStore({
+      activeVaultId: () => "vault-1",
+      repository: repository as any,
+      getSyncCoordinator: vi.fn().mockResolvedValue(null),
+      getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+      getActiveSyncHandle: vi.fn().mockResolvedValue(null),
+      ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+      loadMaps: vi.fn().mockResolvedValue(undefined),
+      loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount,
+    });
+
+    // Simulate loadFiles triggering the callback which updates syncStats.created
+    repository.loadFiles.mockImplementation(
+      async (_vId, _handle, onProgress) => {
+        // total 5, current 5
+        await onProgress({}, 5, 5, { "entity-1": {} });
+      },
+    );
+
+    await store.loadFiles(false); // Force full sync
+
+    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", 5);
+    expect((store as any).status).toBe("idle");
+  });
+
   it("detects conflict files in the vault", async () => {
     const { fileIOAdapter } = await import("./adapters.svelte");
     vi.mocked(fileIOAdapter.walkDirectory).mockResolvedValue([
@@ -118,6 +149,7 @@ describe("SyncStore", () => {
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
     });
 
     await store.cleanupConflictFiles();

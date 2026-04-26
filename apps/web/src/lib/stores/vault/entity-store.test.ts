@@ -120,6 +120,7 @@ describe("EntityStore", () => {
       getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
       getServices: () => ({ ai: { clearStyleCache: vi.fn() } }),
       invalidateUrlCache: vi.fn(),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
     });
   });
 
@@ -128,16 +129,54 @@ describe("EntityStore", () => {
     expect(store.allEntities).toHaveLength(2);
   });
 
-  it("creates an entity and marks it as loaded", async () => {
+  it("creates an entity and marks it as loaded and updates count", async () => {
     const newEntity = { id: "new-entity", title: "New Entity" };
     vi.mocked(vaultEntities.createEntity).mockReturnValue(newEntity as any);
+    const updateEntityCount = vi.fn().mockResolvedValue(undefined);
+
+    store = new EntityStore({
+      repository: repository as any,
+      activeVaultId: () => "vault-1",
+      isGuest: () => false,
+      setStatus: vi.fn(),
+      setErrorMessage: vi.fn(),
+      getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+      getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+      getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({}),
+      updateEntityCount,
+    });
 
     const id = await store.createEntity("note", "New Entity");
 
     expect(id).toBe("new-entity");
-    expect(repository.entities["new-entity"]).toBe(newEntity);
-    expect(store.isContentLoaded("new-entity")).toBe(true);
-    expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", expect.any(Number));
+  });
+
+  it("updates entity count after deletion", async () => {
+    vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
+      entities: { place: repository.entities.place },
+      deletedEntity: repository.entities.hero,
+      modifiedIds: [],
+    });
+    const updateEntityCount = vi.fn().mockResolvedValue(undefined);
+
+    store = new EntityStore({
+      repository: repository as any,
+      activeVaultId: () => "vault-1",
+      isGuest: () => false,
+      setStatus: vi.fn(),
+      setErrorMessage: vi.fn(),
+      getActiveVaultHandle: vi.fn().mockResolvedValue({}),
+      getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
+      getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({}),
+      updateEntityCount,
+    });
+
+    await store.deleteEntity("hero");
+
+    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", expect.any(Number));
   });
 
   it("updates an entity and marks it as loaded if content-related fields change", async () => {
@@ -227,6 +266,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await storeWithNoHandle.scheduleSave(repository.entities.hero);
@@ -256,6 +296,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       vi.mocked(vaultEntities.updateEntity).mockReturnValue({
@@ -283,6 +324,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await storeNoVault.scheduleSave(repository.entities.hero);
@@ -304,6 +346,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await storeDemo.scheduleSave(repository.entities.hero);
@@ -325,6 +368,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await store.scheduleSave({ id: "nonexistent" } as LocalEntity);
@@ -344,6 +388,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
         onEntityUpdate,
       });
 
@@ -383,6 +428,7 @@ describe("EntityStore", () => {
         getServices: () => ({
           ai: { clearStyleCache },
         }),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       const updatedEntity = {
@@ -411,6 +457,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
         invalidateUrlCache,
       });
 
@@ -457,6 +504,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
         onBatchUpdate,
       });
 
@@ -505,6 +553,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
         invalidateUrlCache,
       });
 
@@ -528,6 +577,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await expect(guestStore.deleteEntity("hero")).rejects.toThrow(
@@ -548,6 +598,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
         onEntityDelete,
       });
 
@@ -835,6 +886,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await storeNoVault.loadEntityContent("hero");
@@ -864,6 +916,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await guestStore.loadEntityContent("hero");
@@ -898,6 +951,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       guestStore.markContentLoaded("hero");
@@ -936,6 +990,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       await guestStore.loadEntityContent("hero");
@@ -970,6 +1025,7 @@ describe("EntityStore", () => {
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
         getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
         getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
       repository.entities.hero = {

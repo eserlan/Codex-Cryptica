@@ -27,6 +27,7 @@ export interface EntityStoreDependencies {
   onEntityUpdate?: (entity: LocalEntity) => void;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
+  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
 }
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -229,9 +230,17 @@ export class EntityStore {
 
     await this.scheduleSave(newEntity);
 
+    const activeVaultId = this.deps.activeVaultId();
+    if (activeVaultId) {
+      await this.deps.updateEntityCount(
+        activeVaultId,
+        Object.keys(this.entities).length,
+      );
+    }
+
     vaultEventBus.emit({
       type: "BATCH_CREATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
+      vaultId: activeVaultId || "unknown",
       entities: [newEntity],
     });
 
@@ -408,6 +417,11 @@ export class EntityStore {
             vaultId: activeVaultId,
             entityId: id,
           });
+
+          await this.deps.updateEntityCount(
+            activeVaultId,
+            Object.keys(this.entities).length,
+          );
 
           // 2. Delete from Local FS
           if (localHandle) {
@@ -656,9 +670,17 @@ export class EntityStore {
 
     await Promise.all(savePromises);
 
+    const activeVaultId = this.deps.activeVaultId();
+    if (activeVaultId) {
+      await this.deps.updateEntityCount(
+        activeVaultId,
+        Object.keys(this.entities).length,
+      );
+    }
+
     vaultEventBus.emit({
       type: "BATCH_CREATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
+      vaultId: activeVaultId || "unknown",
       entities: created,
     });
   }

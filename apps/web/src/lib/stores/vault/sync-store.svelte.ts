@@ -14,6 +14,7 @@ export interface SyncStoreDependencies {
   ensureServicesInitialized: () => Promise<void>;
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
+  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
 }
 
 export class SyncStore {
@@ -214,6 +215,10 @@ export class SyncStore {
       if (this.status === "loading") {
         debugStore.log(
           `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+        );
+        await this.deps.updateEntityCount(
+          vaultIdAtStart,
+          this.syncStats.created,
         );
         this.status = "idle";
       }
