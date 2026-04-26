@@ -92,6 +92,37 @@ describe("SyncStore", () => {
     expect((store as any).status).toBe("idle");
   });
 
+  it("calls updateEntityCount when loading from a warm cache", async () => {
+    const updateEntityCount = vi.fn().mockResolvedValue(undefined);
+    store = new SyncStore({
+      activeVaultId: () => "vault-1",
+      repository: repository as any,
+      getSyncCoordinator: vi.fn().mockResolvedValue(null),
+      getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+      getActiveSyncHandle: vi.fn().mockResolvedValue(null),
+      ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+      loadMaps: vi.fn().mockResolvedValue(undefined),
+      loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount,
+    });
+
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(
+      new Map([
+        [
+          "hero-1",
+          {
+            lastModified: Date.now(),
+            entity: { id: "hero-1" } as any,
+          },
+        ],
+      ]),
+    );
+
+    await store.loadFiles(true); // Warm cache, skip sync
+
+    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", 1);
+  });
+
   it("calls updateEntityCount after a full filesystem sync", async () => {
     vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
     const updateEntityCount = vi.fn().mockResolvedValue(undefined);

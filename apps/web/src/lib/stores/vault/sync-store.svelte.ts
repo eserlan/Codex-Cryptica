@@ -111,6 +111,7 @@ export class SyncStore {
           debugStore.log(
             "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
+          await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
           await this.deps.loadMaps(vaultIdAtStart);
           await this.deps.loadCanvases(vaultIdAtStart);
           this.deps.getActiveVaultHandle(); // Background resolve
@@ -202,7 +203,16 @@ export class SyncStore {
             });
           }
         },
-      );
+      ).then(async () => {
+        if (this.isStale(vaultIdAtStart, signal)) return;
+        debugStore.log(
+          `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+        );
+        await this.deps.updateEntityCount(
+          vaultIdAtStart,
+          this.syncStats.created,
+        );
+      });
 
       if (this.status === "loading") {
         await syncPromise;
@@ -213,13 +223,6 @@ export class SyncStore {
       }
 
       if (this.status === "loading") {
-        debugStore.log(
-          `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
-        );
-        await this.deps.updateEntityCount(
-          vaultIdAtStart,
-          this.syncStats.created,
-        );
         this.status = "idle";
       }
 
