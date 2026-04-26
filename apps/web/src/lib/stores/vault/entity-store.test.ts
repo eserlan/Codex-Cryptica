@@ -150,7 +150,7 @@ describe("EntityStore", () => {
     const id = await store.createEntity("note", "New Entity");
 
     expect(id).toBe("new-entity");
-    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", expect.any(Number));
+    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", 3);
   });
 
   it("updates entity count after deletion", async () => {
@@ -176,7 +176,7 @@ describe("EntityStore", () => {
 
     await store.deleteEntity("hero");
 
-    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", expect.any(Number));
+    expect(updateEntityCount).toHaveBeenCalledWith("vault-1", 1);
   });
 
   it("updates an entity and marks it as loaded if content-related fields change", async () => {

@@ -228,9 +228,9 @@ export class EntityStore {
     this._contentLoadedIds.add(newEntity.id);
     this._contentVerifiedIds.add(newEntity.id);
 
+    const activeVaultId = this.deps.activeVaultId();
     await this.scheduleSave(newEntity);
 
-    const activeVaultId = this.deps.activeVaultId();
     if (activeVaultId) {
       await this.deps.updateEntityCount(
         activeVaultId,
@@ -668,9 +668,9 @@ export class EntityStore {
       await this.scheduleSave(entity);
     });
 
+    const activeVaultId = this.deps.activeVaultId();
     await Promise.all(savePromises);
 
-    const activeVaultId = this.deps.activeVaultId();
     if (activeVaultId) {
       await this.deps.updateEntityCount(
         activeVaultId,

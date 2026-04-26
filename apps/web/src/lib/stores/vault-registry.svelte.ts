@@ -107,11 +107,14 @@ class VaultRegistryStore {
 
   async updateEntityCount(id: string, count: number): Promise<void> {
     const db = await getDB();
-    const vaultRecord = await registry.getVault(id);
+    const vaultRecord = await db.get("vaults", id);
     if (vaultRecord) {
       vaultRecord.entityCount = count;
       await db.put("vaults", vaultRecord);
-      await this.listVaults();
+      // Update in-memory without a full DB round-trip
+      this.availableVaults = this.availableVaults.map((v) =>
+        v.id === id ? { ...v, entityCount: count } : v,
+      );
     }
   }
 }

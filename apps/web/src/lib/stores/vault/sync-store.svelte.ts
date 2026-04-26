@@ -183,36 +183,38 @@ export class SyncStore {
         this.status = "idle";
       }
 
-      const syncPromise = this.deps.repository.loadFiles(
-        vaultIdAtStart,
-        vaultDir,
-        async (_chunk, current, total, newOrChanged) => {
-          if (this.isStale(vaultIdAtStart, signal)) return;
-
-          this.syncStats.total = total;
-          this.syncStats.progress = Math.round((current / total) * 100);
-          this.syncStats.created = current;
-
-          const changedIds = Object.keys(newOrChanged);
-          if (changedIds.length > 0) {
-            vaultEventBus.emit({
-              type: "SYNC_CHUNK_READY",
-              vaultId: vaultIdAtStart,
-              entities: this.deps.repository.entities,
-              newOrChangedIds: changedIds,
-            });
-          }
-        },
-      ).then(async () => {
-        if (this.isStale(vaultIdAtStart, signal)) return;
-        debugStore.log(
-          `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
-        );
-        await this.deps.updateEntityCount(
+      const syncPromise = this.deps.repository
+        .loadFiles(
           vaultIdAtStart,
-          this.syncStats.created,
-        );
-      });
+          vaultDir,
+          async (_chunk, current, total, newOrChanged) => {
+            if (this.isStale(vaultIdAtStart, signal)) return;
+
+            this.syncStats.total = total;
+            this.syncStats.progress = Math.round((current / total) * 100);
+            this.syncStats.created = current;
+
+            const changedIds = Object.keys(newOrChanged);
+            if (changedIds.length > 0) {
+              vaultEventBus.emit({
+                type: "SYNC_CHUNK_READY",
+                vaultId: vaultIdAtStart,
+                entities: this.deps.repository.entities,
+                newOrChangedIds: changedIds,
+              });
+            }
+          },
+        )
+        .then(async () => {
+          if (this.isStale(vaultIdAtStart, signal)) return;
+          debugStore.log(
+            `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+          );
+          await this.deps.updateEntityCount(
+            vaultIdAtStart,
+            Object.keys(this.deps.repository.entities).length,
+          );
+        });
 
       if (this.status === "loading") {
         await syncPromise;
