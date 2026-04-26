@@ -139,10 +139,12 @@ describe("SyncStore", () => {
       updateEntityCount,
     });
 
-    // Simulate loadFiles triggering the callback which updates syncStats.created
+    // Simulate loadFiles populating repository.entities and triggering progress
     repository.loadFiles.mockImplementation(
       async (_vId, _handle, onProgress) => {
-        // total 5, current 5
+        repository.entities = Object.fromEntries(
+          Array.from({ length: 5 }, (_, i) => [`entity-${i + 1}`, {}]),
+        );
         await onProgress({}, 5, 5, { "entity-1": {} });
       },
     );
