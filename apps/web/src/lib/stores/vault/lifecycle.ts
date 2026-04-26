@@ -78,6 +78,12 @@ export class VaultLifecycleManager {
 
       const db = await getDB();
       await db.put("settings", handle, `syncHandle_${vaultId}`);
+
+      await this.deps.vaultRegistry.updateEntityCount(
+        vaultId,
+        Object.keys(entities).length,
+      );
+
       this.deps.syncStore.setStatus("idle");
     } catch (err: any) {
       console.error("[VaultStore] Persistence failed:", err);

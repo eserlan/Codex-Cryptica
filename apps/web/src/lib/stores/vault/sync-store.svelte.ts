@@ -14,6 +14,7 @@ export interface SyncStoreDependencies {
   ensureServicesInitialized: () => Promise<void>;
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
+  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
 }
 
 export class SyncStore {
@@ -110,6 +111,7 @@ export class SyncStore {
           debugStore.log(
             "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
+          await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
           await this.deps.loadMaps(vaultIdAtStart);
           await this.deps.loadCanvases(vaultIdAtStart);
           this.deps.getActiveVaultHandle(); // Background resolve
@@ -181,27 +183,38 @@ export class SyncStore {
         this.status = "idle";
       }
 
-      const syncPromise = this.deps.repository.loadFiles(
-        vaultIdAtStart,
-        vaultDir,
-        async (_chunk, current, total, newOrChanged) => {
+      const syncPromise = this.deps.repository
+        .loadFiles(
+          vaultIdAtStart,
+          vaultDir,
+          async (_chunk, current, total, newOrChanged) => {
+            if (this.isStale(vaultIdAtStart, signal)) return;
+
+            this.syncStats.total = total;
+            this.syncStats.progress = Math.round((current / total) * 100);
+            this.syncStats.created = current;
+
+            const changedIds = Object.keys(newOrChanged);
+            if (changedIds.length > 0) {
+              vaultEventBus.emit({
+                type: "SYNC_CHUNK_READY",
+                vaultId: vaultIdAtStart,
+                entities: this.deps.repository.entities,
+                newOrChangedIds: changedIds,
+              });
+            }
+          },
+        )
+        .then(async () => {
           if (this.isStale(vaultIdAtStart, signal)) return;
-
-          this.syncStats.total = total;
-          this.syncStats.progress = Math.round((current / total) * 100);
-          this.syncStats.created = current;
-
-          const changedIds = Object.keys(newOrChanged);
-          if (changedIds.length > 0) {
-            vaultEventBus.emit({
-              type: "SYNC_CHUNK_READY",
-              vaultId: vaultIdAtStart,
-              entities: this.deps.repository.entities,
-              newOrChangedIds: changedIds,
-            });
-          }
-        },
-      );
+          debugStore.log(
+            `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+          );
+          await this.deps.updateEntityCount(
+            vaultIdAtStart,
+            Object.keys(this.deps.repository.entities).length,
+          );
+        });
 
       if (this.status === "loading") {
         await syncPromise;
@@ -212,9 +225,6 @@ export class SyncStore {
       }
 
       if (this.status === "loading") {
-        debugStore.log(
-          `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
-        );
         this.status = "idle";
       }
 

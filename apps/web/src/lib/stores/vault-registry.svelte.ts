@@ -104,6 +104,19 @@ class VaultRegistryStore {
     await registry.updateLastOpened(id);
     await this.listVaults();
   }
+
+  async updateEntityCount(id: string, count: number): Promise<void> {
+    const db = await getDB();
+    const vaultRecord = await db.get("vaults", id);
+    if (vaultRecord) {
+      vaultRecord.entityCount = count;
+      await db.put("vaults", vaultRecord);
+      // Update in-memory without a full DB round-trip
+      this.availableVaults = this.availableVaults.map((v) =>
+        v.id === id ? { ...v, entityCount: count } : v,
+      );
+    }
+  }
 }
 
 const REGISTRY_KEY = "__codex_vault_registry_instance__";
