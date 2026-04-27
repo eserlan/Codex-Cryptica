@@ -79,7 +79,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 **Status:** ✅ **COMPLETED (2026-04-27)**
 **Summary:** Extracted workspace logic into `useCanvasLogic` and `useCanvasEvents` hooks. Moved overlay HUD to `CanvasHUD` component. The main component now acts as a clean orchestration shell for SvelteFlow.
-**Outcome:** Reduced from 780 lines to 326 lines. Improved separation between UI state, persistence, and event handling.
+**Outcome:** Reduced from 835 lines to 326 lines. Improved separation between UI state, persistence, and event handling.
 
 ---
 

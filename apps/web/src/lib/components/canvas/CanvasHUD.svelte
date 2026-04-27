@@ -3,17 +3,13 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 
-  let { 
-    canvasName, 
-    activeCategories, 
-    onToggleCategory, 
-    onClearCategories 
-  } = $props<{
-    canvasName: string;
-    activeCategories: Set<string>;
-    onToggleCategory: (categoryId: string) => void;
-    onClearCategories: () => void;
-  }>();
+  let { canvasName, activeCategories, onToggleCategory, onClearCategories } =
+    $props<{
+      canvasName: string;
+      activeCategories: Set<string>;
+      onToggleCategory: (categoryId: string) => void;
+      onClearCategories: () => void;
+    }>();
 </script>
 
 <div
@@ -35,11 +31,13 @@
     ></span>
   </button>
 
-  <CategoryFilter
-    {activeCategories}
-    onToggle={onToggleCategory}
-    onClear={onClearCategories}
-  />
+  <div class="pointer-events-auto">
+    <CategoryFilter
+      {activeCategories}
+      onToggle={onToggleCategory}
+      onClear={onClearCategories}
+    />
+  </div>
 
   {#if canvasRegistry.status === "saving"}
     <div

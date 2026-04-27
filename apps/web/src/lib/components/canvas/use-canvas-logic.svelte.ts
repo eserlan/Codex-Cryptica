@@ -1,14 +1,15 @@
 import { untrack, tick } from "svelte";
-import { 
-  addEdge as addXyEdge, 
+import {
+  addEdge as addXyEdge,
   useSvelteFlow,
-  type Node, 
-  type Edge, 
-  type Connection 
+  type Node,
+  type Edge,
+  type Connection,
 } from "@xyflow/svelte";
 import { CanvasStore } from "@codex/canvas-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { debugStore } from "$lib/stores/debug.svelte";
 import {
   buildCanvasSavePayload,
   createFlowEdgeFromConnection,
@@ -27,7 +28,7 @@ export function createCanvasLogic(engine: CanvasStore) {
   let activeCategories = $state(new Set<string>());
   let isConnecting = $state(false);
   let hasInitialized = $state(false);
-  
+
   let contextMenu = $state<{
     x: number;
     y: number;
@@ -81,14 +82,22 @@ export function createCanvasLogic(engine: CanvasStore) {
     explicitCanvasId?: string,
   ) {
     await tick();
-    const currentVaultId = explicitVaultId || targetVaultId || vault.activeVaultId;
+    const currentVaultId =
+      explicitVaultId || targetVaultId || vault.activeVaultId;
     const currentCanvasId = explicitCanvasId || targetCanvasId;
 
-    if (!currentVaultId || !currentCanvasId) return;
+    if (!currentVaultId || !currentCanvasId) {
+      debugStore.warn(
+        "[CanvasLogic] saveCanvas called before canvas initialization; skipping.",
+      );
+      return;
+    }
 
     const exportData = engine.export();
     const existing = untrack(() => vault.canvases[currentCanvasId] || {});
-    const canvas = canvasRegistry.allCanvases.find(c => c.id === currentCanvasId);
+    const canvas = canvasRegistry.allCanvases.find(
+      (c) => c.id === currentCanvasId,
+    );
 
     vault.canvases[currentCanvasId] = buildCanvasSavePayload({
       existing,
@@ -223,7 +232,7 @@ export function createCanvasLogic(engine: CanvasStore) {
   // Initialization & Sync logic (called by effects in the component)
   function initializeCanvas(canvasId: string) {
     if (!vault.isInitialized || !canvasRegistry.isLoaded) return;
-    
+
     if (targetCanvasId !== canvasId) {
       untrack(() => {
         hasInitialized = false;
@@ -272,7 +281,7 @@ export function createCanvasLogic(engine: CanvasStore) {
 
   function syncEngine() {
     if (!hasInitialized || !vault.isInitialized || !targetCanvasId) return;
-    
+
     // Sync edges
     const currentEdges = edges;
     engine.edges = currentEdges.map((e: Edge) => ({
@@ -296,25 +305,51 @@ export function createCanvasLogic(engine: CanvasStore) {
       width: n.data?.width as number,
       height: n.data?.height as number,
     }));
-    
+
     debouncedSave();
   }
 
   return {
-    get nodes() { return nodes; },
-    set nodes(val) { nodes = val; },
-    get edges() { return edges; },
-    set edges(val) { edges = val; },
-    get activeCategories() { return activeCategories; },
-    get isConnecting() { return isConnecting; },
-    set isConnecting(val) { isConnecting = val; },
-    get contextMenu() { return contextMenu; },
-    set contextMenu(val) { contextMenu = val; },
-    get labelModal() { return labelModal; },
-    set labelModal(val) { labelModal = val; },
-    get hasInitialized() { return hasInitialized; },
-    get screenToFlowPosition() { return screenToFlowPosition; },
-    
+    get nodes() {
+      return nodes;
+    },
+    set nodes(val) {
+      nodes = val;
+    },
+    get edges() {
+      return edges;
+    },
+    set edges(val) {
+      edges = val;
+    },
+    get activeCategories() {
+      return activeCategories;
+    },
+    get isConnecting() {
+      return isConnecting;
+    },
+    set isConnecting(val) {
+      isConnecting = val;
+    },
+    get contextMenu() {
+      return contextMenu;
+    },
+    set contextMenu(val) {
+      contextMenu = val;
+    },
+    get labelModal() {
+      return labelModal;
+    },
+    set labelModal(val) {
+      labelModal = val;
+    },
+    get hasInitialized() {
+      return hasInitialized;
+    },
+    get screenToFlowPosition() {
+      return screenToFlowPosition;
+    },
+
     toggleCategoryFilter,
     clearCategoryFilters,
     onConnect,
@@ -326,6 +361,6 @@ export function createCanvasLogic(engine: CanvasStore) {
     initializeCanvas,
     pruneNodes,
     syncEngine,
-    flushSave
+    flushSave,
   };
 }
