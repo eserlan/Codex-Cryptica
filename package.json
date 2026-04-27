@@ -19,7 +19,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "commitlint": "commitlint --edit",
     "prepare": "husky",
-    "assets:sync": "node scripts/upload-images.mjs"
+    "assets:sync": "node scripts/upload-images.mjs",
+    "deploy:pages": "npm run build --workspace=web && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
+    "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,svelte}": [

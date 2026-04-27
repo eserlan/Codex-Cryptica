@@ -148,6 +148,8 @@ export class VaultStore {
       onEntityDelete: (id) => this.onEntityDelete?.(id),
       onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
       onBatchUpdate: (updates) => this.onBatchUpdate?.(updates),
+      updateEntityCount: (vId, count) =>
+        vaultRegistry.updateEntityCount(vId, count),
     });
 
     this.syncStore = new SyncStore({
@@ -173,7 +175,8 @@ export class VaultStore {
       },
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
-      refreshVaults: () => vaultRegistry.refreshVaults(),
+      updateEntityCount: (vId, count) =>
+        vaultRegistry.updateEntityCount(vId, count),
     });
 
     this.assetStore = new AssetStore({
@@ -189,7 +192,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      loadFiles: () => this.loadFiles(),
+      loadFiles: (skipSync) => this.loadFiles(skipSync),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();

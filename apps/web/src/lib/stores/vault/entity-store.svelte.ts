@@ -29,6 +29,7 @@ export interface EntityStoreDependencies {
   onEntityUpdate?: (entity: LocalEntity) => void;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
+  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
 }
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -154,7 +155,9 @@ export class EntityStore {
   ): Promise<void> {
     // VAULT ID GUARD: Ensure we are still in the same vault before persisting
     if (this.deps.activeVaultId() !== vaultIdAtStart) {
-      debugStore.log(`[EntityStore] Discarding save for ${id} - vault changed.`);
+      debugStore.log(
+        `[EntityStore] Discarding save for ${id} - vault changed.`,
+      );
       return;
     }
 
@@ -223,11 +226,19 @@ export class EntityStore {
     this._contentLoadedIds.add(newEntity.id);
     this._contentVerifiedIds.add(newEntity.id);
 
+    const activeVaultId = this.deps.activeVaultId();
     await this.scheduleSave(newEntity);
+
+    if (activeVaultId) {
+      await this.deps.updateEntityCount(
+        activeVaultId,
+        Object.keys(this.entities).length,
+      );
+    }
 
     vaultEventBus.emit({
       type: "BATCH_CREATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
+      vaultId: activeVaultId || "unknown",
       entities: [newEntity],
     });
 
@@ -319,7 +330,9 @@ export class EntityStore {
             : current.metadata,
         content:
           patch.content !== undefined
-            ? preserveGuestContent ? current.content : patch.content
+            ? preserveGuestContent
+              ? current.content
+              : patch.content
             : current.content,
         lore: patch.lore !== undefined ? patch.lore : current.lore,
         updatedAt: Date.now(),
@@ -409,6 +422,11 @@ export class EntityStore {
             vaultId: activeVaultId,
             entityId: id,
           });
+
+          await this.deps.updateEntityCount(
+            activeVaultId,
+            Object.keys(this.entities).length,
+          );
 
           // 2. Delete from Local FS
           if (localHandle) {
@@ -655,11 +673,19 @@ export class EntityStore {
       await this.scheduleSave(entity);
     });
 
+    const activeVaultId = this.deps.activeVaultId();
     await Promise.all(savePromises);
+
+    if (activeVaultId) {
+      await this.deps.updateEntityCount(
+        activeVaultId,
+        Object.keys(this.entities).length,
+      );
+    }
 
     vaultEventBus.emit({
       type: "BATCH_CREATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
+      vaultId: activeVaultId || "unknown",
       entities: created,
     });
   }
@@ -823,7 +849,10 @@ export class EntityStore {
           );
         }
       } catch (err) {
-        debugStore.error(`[EntityStore] Failed to load content for ${id}:`, err);
+        debugStore.error(
+          `[EntityStore] Failed to load content for ${id}:`,
+          err,
+        );
       }
     })();
 

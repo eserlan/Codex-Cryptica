@@ -57,6 +57,7 @@ vi.mock("./vault-registry.svelte", () => {
       rootHandle: mockDirHandle,
       activeVaultId: "test-vault",
       setActiveVault: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
       listVaults: vi.fn().mockResolvedValue([]),
       availableVaults: [],
       vaults: [],

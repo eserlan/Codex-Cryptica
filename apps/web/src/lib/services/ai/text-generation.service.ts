@@ -11,7 +11,7 @@ import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
-import { isAIEnabled, assertAIEnabled } from "./capability-guard";
+import { isAIEnabled } from "./capability-guard";
 
 export class DefaultTextGenerationService implements TextGenerationService {
   constructor(
@@ -83,7 +83,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
     target: any,
     sources: any[],
   ): Promise<{ body: string; lore?: string }> {
-    assertAIEnabled();
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target)}`;
@@ -124,7 +123,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
     content: string;
     lore: string;
   }> {
-    assertAIEnabled();
     const model = await this.aiClientManager.getModel(apiKey, modelName);
     const prompt = buildEntityReconciliationPrompt(
       entity,
@@ -168,7 +166,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
     connectedEntities: any[],
     userQuery: string,
   ): Promise<string> {
-    assertAIEnabled();
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const MAX_SUBJECT_CONTEXT_CHARS = 2000;
@@ -234,7 +231,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
       existingEntities?: any[];
     },
   ): Promise<void> {
-    assertAIEnabled();
     const systemInstruction = buildSystemInstruction(demoMode, categories);
     const model = await this.aiClientManager.getModel(
       apiKey,

@@ -72,10 +72,12 @@ class VaultRegistryStore {
     // Only update if something changed (simple length and ID check)
     const currentIds = this.availableVaults.map((v) => v.id).join(",");
     const nextIds = nextVaults.map((v) => v.id).join(",");
-    
+
     // Also check timestamps for dirty tracking accuracy
     const currentInternal = this.activeVaultRecord?.lastInternalChange;
-    const nextInternal = nextVaults.find(v => v.id === this.activeVaultId)?.lastInternalChange;
+    const nextInternal = nextVaults.find(
+      (v) => v.id === this.activeVaultId,
+    )?.lastInternalChange;
 
     if (currentIds !== nextIds || currentInternal !== nextInternal) {
       this.availableVaults = nextVaults;
@@ -123,6 +125,19 @@ class VaultRegistryStore {
 
     await registry.updateLastOpened(id);
     await this.listVaults();
+  }
+
+  async updateEntityCount(id: string, count: number): Promise<void> {
+    const db = await getDB();
+    const vaultRecord = await db.get("vaults", id);
+    if (vaultRecord) {
+      vaultRecord.entityCount = count;
+      await db.put("vaults", vaultRecord);
+      // Update in-memory without a full DB round-trip
+      this.availableVaults = this.availableVaults.map((v) =>
+        v.id === id ? { ...v, entityCount: count } : v,
+      );
+    }
   }
 }
 

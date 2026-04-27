@@ -41,7 +41,7 @@ A global collection of all `VaultRecord` entries.
 CodexCryptica (v5)
 ├── settings        # key-value pairs (activeVaultId, defaultVisibility, etc.)
 ├── vault_cache     # file-level caching (path → lastModified + entity)
-├── chat_history    # oracle chat messages
+├── chat_history_{vaultId}  # oracle chat messages, scoped per vault (e.g. chat_history_abc123)
 ├── world_eras      # timeline era data
 └── vaults          # VaultRecord entries (keyPath: id)
 ```

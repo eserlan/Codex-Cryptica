@@ -1075,15 +1075,15 @@
   onwheel={onWheel}
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}
+  ondragover={onMapDragOver}
+  ondragleave={onMapDragLeave}
+  ondrop={onMapDrop}
 >
   <canvas
     bind:this={canvas}
     class="absolute inset-0 {mapSession.gridFitMode && mapStore.isGMMode
       ? 'cursor-crosshair'
       : ''} {mapSession.gridMoveMode && mapStore.isGMMode ? 'cursor-move' : ''}"
-    ondragover={onMapDragOver}
-    ondragleave={onMapDragLeave}
-    ondrop={onMapDrop}
   ></canvas>
 
   {#if !mapImage}
