@@ -715,7 +715,7 @@ describe("VaultStore", () => {
       expect(handle).toBeUndefined();
     });
 
-    it("should get active sync handle from IDB", async () => {
+    it("should get active folder handle from IDB", async () => {
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       const { getDB } = await import("../utils/idb");
       const mockDB = await getDB();

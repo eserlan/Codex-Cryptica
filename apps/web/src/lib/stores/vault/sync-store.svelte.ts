@@ -116,6 +116,7 @@ export class SyncStore {
           debugStore.log(
             "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
+          this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
           await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
           await this.deps.loadMaps(vaultIdAtStart);
           await this.deps.loadCanvases(vaultIdAtStart);

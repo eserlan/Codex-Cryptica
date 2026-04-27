@@ -42,8 +42,15 @@ export class VaultStorageManager {
         // Migrate from old key name
         handle = await db.get("settings", `syncHandle_${activeVaultId}`);
         if (handle) {
-          await db.put("settings", handle, `folderHandle_${activeVaultId}`);
-          await db.delete("settings", `syncHandle_${activeVaultId}`);
+          try {
+            await db.put("settings", handle, `folderHandle_${activeVaultId}`);
+            await db.delete("settings", `syncHandle_${activeVaultId}`);
+          } catch (err) {
+            debugStore.warn(
+              "[VaultStorage] Failed to migrate folder handle from legacy key",
+              err,
+            );
+          }
         }
       }
       return handle as FileSystemDirectoryHandle | undefined;

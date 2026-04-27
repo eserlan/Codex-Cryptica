@@ -49,7 +49,7 @@ export class VaultLifecycleManager {
       await this.deps.vaultRegistry.setActiveVault(vaultId);
       this.deps.clearStorageCache();
 
-      // Force a reload of files which will now find the sync handle we just put
+      // Force a reload of files which will now find the folder handle we just persisted
       await this.deps.loadFiles(false);
 
       this.deps.syncStore.setStatus("idle");
@@ -75,9 +75,6 @@ export class VaultLifecycleManager {
         await this.deps.repository.saveToDisk(handle, vaultId, entity, false);
         await this.deps.ensureAssetPersisted(entity.id, handle);
       }
-
-      const db = await getDB();
-      await db.put("settings", handle, `folderHandle_${vaultId}`);
 
       await this.deps.vaultRegistry.updateEntityCount(
         vaultId,
@@ -133,7 +130,7 @@ export class VaultLifecycleManager {
       const db = await getDB();
       await db.put("settings", handle, `folderHandle_${activeId}`);
     } catch {
-      console.warn("[VaultStore] Could not persist sync handle");
+      console.warn("[VaultStore] Could not persist folder handle");
     }
     return this.importFromFolder(handle);
   }

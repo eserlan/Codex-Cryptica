@@ -80,8 +80,12 @@ export const syncIOAdapter: ISyncIOAdapter = {
       // Migrate from old key name
       handle = await db.get("settings", `syncHandle_${vaultId}`);
       if (handle) {
-        await db.put("settings", handle, `folderHandle_${vaultId}`);
-        await db.delete("settings", `syncHandle_${vaultId}`);
+        try {
+          await db.put("settings", handle, `folderHandle_${vaultId}`);
+          await db.delete("settings", `syncHandle_${vaultId}`);
+        } catch {
+          // Best-effort migration — still return the handle
+        }
       }
     }
     return handle;
