@@ -33,6 +33,14 @@ import type { TextGenerationService } from "schema";
 
 export type { ChatMessage, UndoableAction };
 
+type OracleUiSnapshot = {
+  aiDisabled: boolean;
+  isDemoMode: boolean;
+  entityDiscoveryMode?: string;
+  connectionDiscoveryMode?: string;
+  autoArchive?: boolean;
+};
+
 export class OracleStore {
   // Reactive UI state
   isOpen = $state(false);
@@ -195,7 +203,10 @@ export class OracleStore {
   async init() {
     if (this.isInitialized) return;
 
-    await this.chatHistoryService.init(entityDb as any, this.vault.activeVaultId);
+    await this.chatHistoryService.init(
+      entityDb as any,
+      this.vault.activeVaultId,
+    );
     await this.settingsService.init(entityDb as any);
 
     this.isInitialized = true;
@@ -259,6 +270,16 @@ export class OracleStore {
     return this.apiKey || null;
   }
 
+  private createUiStoreSnapshot(): OracleUiSnapshot {
+    return {
+      aiDisabled: this.uiStore.aiDisabled,
+      isDemoMode: this.uiStore.isDemoMode,
+      entityDiscoveryMode: this.uiStore.entityDiscoveryMode,
+      connectionDiscoveryMode: this.uiStore.connectionDiscoveryMode,
+      autoArchive: (this.uiStore as any).autoArchive,
+    };
+  }
+
   getExecutionContext(): OracleExecutionContext {
     const isWorker = oracleBridge.isReady;
 
@@ -286,7 +307,7 @@ export class OracleStore {
         saveImageToVault: wrap(this.vault.saveImageToVault?.bind(this.vault)),
         loadEntityContent: wrap(this.vault.loadEntityContent?.bind(this.vault)),
       },
-      uiStore: $state.snapshot(this.uiStore),
+      uiStore: this.createUiStoreSnapshot(),
       chatHistory: {
         messages: $state.snapshot(this.chatHistoryService.messages),
         getMessages: wrap(() => [...this.chatHistoryService.messages]),

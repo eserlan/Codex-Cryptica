@@ -89,12 +89,14 @@ describe("SyncCoordinator", () => {
 
   describe("syncWithLocalFolder", () => {
     it("should handle local handle validation failure (NotFoundError)", async () => {
+      const err = new Error("not found");
+      err.name = "NotFoundError";
       const mockLocal = {
-        [Symbol.asyncIterator]: async function* () {
-          const err = new Error("not found");
-          err.name = "NotFoundError";
-          throw err;
-        },
+        [Symbol.asyncIterator]: () => ({
+          next: async () => {
+            throw err;
+          },
+        }),
         queryPermission: vi.fn().mockResolvedValue("granted"),
         requestPermission: vi.fn().mockResolvedValue("granted"),
       } as any;
@@ -169,7 +171,10 @@ describe("SyncCoordinator", () => {
 
       const failed = [{ path: "err.md", error: "fail" }];
       mockEngine.sync.mockResolvedValue({
-        created: [], updated: [], deleted: [], failed
+        created: [],
+        updated: [],
+        deleted: [],
+        failed,
       });
 
       const onStateChange = vi.fn();
@@ -183,9 +188,11 @@ describe("SyncCoordinator", () => {
         vi.fn(),
       );
 
-      expect(onStateChange).toHaveBeenCalledWith(expect.objectContaining({
-        failedFiles: failed
-      }));
+      expect(onStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          failedFiles: failed,
+        }),
+      );
     });
 
     it("should abort sync if signal is aborted", async () => {

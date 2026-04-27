@@ -126,6 +126,7 @@ vi.mock("../services/cache.svelte", () => ({
     getEntityContent: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
+    clearVault: vi.fn().mockResolvedValue(undefined),
     clear: vi.fn(),
   },
 }));
@@ -334,7 +335,10 @@ describe("VaultStore", () => {
     });
 
     it("should trigger migration if required", async () => {
-      vi.mocked(vaultMigration.checkForMigration).mockResolvedValueOnce({ required: true, handle: {} as any });
+      vi.mocked(vaultMigration.checkForMigration).mockResolvedValueOnce({
+        required: true,
+        handle: {} as any,
+      });
 
       await testVault.init();
       expect(testVault.migrationRequired).toBe(true);
@@ -359,7 +363,10 @@ describe("VaultStore", () => {
     });
 
     it("should fall back to guest mode when bootstrap fails", async () => {
-      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, json: async () => ({ entities: {} }) } as Response);
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ entities: {} }),
+      } as Response);
       vi.spyOn(vaultRegistry, "init").mockRejectedValueOnce(
         new Error("Bootstrap failed"),
       );
@@ -845,12 +852,10 @@ describe("VaultStore", () => {
 
     it("should handle syncWithLocalFolder", async () => {
       testVault.syncCoordinator = {
-        push: vi
-          .fn()
-          .mockImplementation((_id, _h, _e, _w, onState) => {
-            onState({ status: "saving", syncType: "local" });
-            return Promise.resolve();
-          }),
+        push: vi.fn().mockImplementation((_id, _h, _e, _w, onState) => {
+          onState({ status: "saving", syncType: "local" });
+          return Promise.resolve();
+        }),
       } as any;
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       vi.spyOn(testVault, "getActiveVaultHandle").mockResolvedValue({} as any);

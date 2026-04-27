@@ -25,7 +25,7 @@
     if (isRefreshing) return;
     isRefreshing = true;
     try {
-      await vault.loadFiles(false); // Force a full sync from disk
+      await vault.loadFiles();
     } finally {
       isRefreshing = false;
     }

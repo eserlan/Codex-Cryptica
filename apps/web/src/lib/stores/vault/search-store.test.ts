@@ -14,30 +14,22 @@ const mocks = vi.hoisted(() => {
   return { searchService };
 });
 
-vi.mock("./service-registry", () => ({
-  ServiceRegistry: class {
-    async ensureInitialized() {
-      return {
-        search: mocks.searchService,
-      };
-    }
-  },
-}));
-
 describe("SearchStore", () => {
+  let serviceRegistry: { ensureInitialized: ReturnType<typeof vi.fn> };
+  let store: SearchStore;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vaultEventBus.reset(false);
-    new SearchStore(
-      new (class {
-        async ensureInitialized() {
-          return { search: mocks.searchService };
-        }
-      })() as any,
-    );
+    serviceRegistry = {
+      ensureInitialized: vi
+        .fn()
+        .mockResolvedValue({ search: mocks.searchService }),
+    };
+    store = new SearchStore(serviceRegistry as any);
   });
 
-  it("indexes updated entities with derived keywords", async () => {
+  it("indexes entities with derived search fields", async () => {
     const entity: LocalEntity = {
       id: "hero-1",
       title: "Hero One",
@@ -47,251 +39,88 @@ describe("SearchStore", () => {
       status: "active",
       tags: ["tag-a", "tag-b"],
       labels: [],
-      aliases: [],
+      aliases: ["The Hero", "Champion"],
       connections: [],
       metadata: { region: ["north"], rarity: ["rare"] },
       _path: ["world", "hero-1.md"],
     } as any;
 
-    vaultEventBus.emit({
-      type: "ENTITY_UPDATED",
-      vaultId: "vault-1",
-      entity,
-      patch: { title: "Hero One" },
-    });
-
-    await vi.waitFor(() => {
-      expect(mocks.searchService.index).toHaveBeenCalled();
-    });
+    await (store as any).indexEntity(entity, { search: mocks.searchService });
 
     expect(mocks.searchService.index).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "hero-1",
         title: "Hero One",
+        aliases: "The Hero Champion",
         content: "Body",
         lore: "Lore",
         type: "character",
+        status: "active",
         path: "world/hero-1.md",
-        keywords: expect.stringContaining("tag-a"),
+        keywords: "tag-a tag-b Lore north rare",
+        updatedAt: expect.any(Number),
       }),
     );
   });
 
-  it("does not index coordinate-only entity updates", async () => {
+  it("falls back to an id-based path when entity paths are missing", async () => {
     const entity: LocalEntity = {
-      id: "hero-1",
-      title: "Hero One",
+      id: "hero-2",
+      title: "Hero Two",
+      content: "",
+      lore: "",
+      type: "location",
+      status: "draft",
+      tags: [],
+      labels: [],
+      aliases: [],
+      connections: [],
+      metadata: {},
+    } as any;
+
+    await (store as any).indexEntity(entity, { search: mocks.searchService });
+
+    expect(mocks.searchService.index).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "hero-2.md",
+        keywords: "",
+      }),
+    );
+  });
+
+  it("removes entities from the index through the service registry", async () => {
+    await (store as any).removeEntity("hero-3");
+
+    expect(serviceRegistry.ensureInitialized).toHaveBeenCalledTimes(1);
+    expect(mocks.searchService.remove).toHaveBeenCalledWith("hero-3");
+  });
+
+  it("does not subscribe to vault events because searchService owns indexing lifecycle", async () => {
+    const entity: LocalEntity = {
+      id: "hero-4",
+      title: "Hero Four",
       content: "Body",
-      lore: "Lore",
+      lore: "",
       type: "character",
       status: "active",
       tags: [],
       labels: [],
       aliases: [],
       connections: [],
-      metadata: { coordinates: { x: 10, y: 20 } },
+      metadata: {},
     } as any;
 
     vaultEventBus.emit({
       type: "ENTITY_UPDATED",
       vaultId: "vault-1",
       entity,
-      patch: { metadata: { coordinates: { x: 10, y: 20 } } },
+      patch: { title: "Hero Four" },
     });
 
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mocks.searchService.index).not.toHaveBeenCalled();
-  });
-
-  it("does not index coordinate-only batch updates", async () => {
-    const entities = [
-      {
-        id: "hero-1",
-        title: "Hero One",
-        content: "Body",
-        lore: "Lore",
-        type: "character",
-        status: "active",
-        tags: [],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: { coordinates: { x: 10, y: 20 } },
-      },
-      {
-        id: "hero-2",
-        title: "Hero Two",
-        content: "Body",
-        lore: "",
-        type: "location",
-        status: "active",
-        tags: [],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: { coordinates: { x: 30, y: 40 } },
-      },
-    ] as LocalEntity[];
-
-    vaultEventBus.emit({
-      type: "BATCH_UPDATED",
-      vaultId: "vault-1",
-      entities,
-      patches: {
-        "hero-1": { metadata: { coordinates: { x: 10, y: 20 } } },
-        "hero-2": { metadata: { coordinates: { x: 30, y: 40 } } },
-      },
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    expect(mocks.searchService.index).not.toHaveBeenCalled();
-  });
-
-  it("indexes batch updates when metadata includes searchable fields", async () => {
-    const entities = [
-      {
-        id: "hero-1",
-        title: "Hero One",
-        content: "Body",
-        lore: "Lore",
-        type: "character",
-        status: "active",
-        tags: [],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: {
-          coordinates: { x: 10, y: 20 },
-          region: ["north"],
-        } as any,
-      },
-    ] as any;
-
-    vaultEventBus.emit({
-      type: "BATCH_UPDATED",
-      vaultId: "vault-1",
-      entities,
-      patches: {
-        "hero-1": {
-          metadata: {
-            coordinates: { x: 10, y: 20 },
-            region: ["north"],
-          } as any,
-        },
-      },
-    });
-
-    await vi.waitFor(() => {
-      expect(mocks.searchService.index).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it("rebuilds the index from cold sync chunks", async () => {
-    const entities = {
-      "hero-1": {
-        id: "hero-1",
-        title: "Hero One",
-        content: "Body",
-        lore: "Lore",
-        type: "character",
-        status: "active",
-        tags: ["tag-a"],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: {},
-      } as LocalEntity,
-      "hero-2": {
-        id: "hero-2",
-        title: "Hero Two",
-        content: "Body",
-        lore: "",
-        type: "location",
-        status: "active",
-        tags: [],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: {},
-      } as LocalEntity,
-    };
-
-    vaultEventBus.emit({
-      type: "SYNC_CHUNK_READY",
-      vaultId: "vault-1",
-      entities,
-      newOrChangedIds: ["hero-1", "hero-2"],
-    });
-
-    await vi.waitFor(() => {
-      expect(mocks.searchService.index).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  it("clears and re-indexes cached entities when the vault cache is loaded", async () => {
-    const entities = {
-      "hero-1": {
-        id: "hero-1",
-        title: "Hero One",
-        content: "Body",
-        lore: "Lore",
-        type: "character",
-        status: "active",
-        tags: ["tag-a"],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: {},
-      } as LocalEntity,
-      "hero-2": {
-        id: "hero-2",
-        title: "Hero Two",
-        content: "Body",
-        lore: "",
-        type: "location",
-        status: "active",
-        tags: [],
-        labels: [],
-        aliases: [],
-        connections: [],
-        metadata: {},
-      } as LocalEntity,
-    };
-
-    vaultEventBus.emit({
-      type: "CACHE_LOADED",
-      vaultId: "vault-1",
-      entities,
-    });
-
-    await vi.waitFor(() => {
-      expect(mocks.searchService.clear).toHaveBeenCalled();
-      expect(mocks.searchService.index).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  it("removes deleted entities from the index", async () => {
-    vaultEventBus.emit({
-      type: "ENTITY_DELETED",
-      vaultId: "vault-1",
-      entityId: "hero-1",
-    });
-
-    await vi.waitFor(() => {
-      expect(mocks.searchService.remove).toHaveBeenCalledWith("hero-1");
-    });
-  });
-
-  it("clears the search index when a vault opens", async () => {
-    vaultEventBus.emit({
-      type: "VAULT_OPENING",
-      vaultId: "vault-1",
-    });
-
-    await vi.waitFor(() => {
-      expect(mocks.searchService.clear).toHaveBeenCalled();
-    });
+    expect(mocks.searchService.remove).not.toHaveBeenCalled();
+    expect(mocks.searchService.clear).not.toHaveBeenCalled();
   });
 });

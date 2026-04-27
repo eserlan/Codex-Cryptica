@@ -1,3 +1,5 @@
+import type { Core } from "cytoscape";
+
 export * from "./transformer";
 export * from "./layouts/timeline";
 export * from "./layouts/orbit";
