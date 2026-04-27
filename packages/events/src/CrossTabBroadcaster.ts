@@ -1,5 +1,19 @@
 import type { AppEventBus } from "./AppEventBus";
-import type { AppEvent } from "./types";
+import type { RuntimeAppEvent } from "./types";
+
+function isAppEventEnvelope(value: unknown): value is RuntimeAppEvent {
+  if (!value || typeof value !== "object") return false;
+
+  const candidate = value as Partial<RuntimeAppEvent>;
+  return (
+    typeof candidate.type === "string" &&
+    typeof candidate.domain === "string" &&
+    "payload" in candidate &&
+    !!candidate.metadata &&
+    typeof candidate.metadata === "object" &&
+    typeof candidate.metadata.timestamp === "number"
+  );
+}
 
 export class CrossTabBroadcaster {
   private channel: BroadcastChannel | null = null;
@@ -18,7 +32,7 @@ export class CrossTabBroadcaster {
 
       this.unsubscribe = this.bus.subscribe(
         "*",
-        (appEvent) => {
+        (appEvent: RuntimeAppEvent) => {
           if (appEvent.metadata.sync && !appEvent.metadata.remote) {
             this.broadcast(appEvent);
           }
@@ -28,7 +42,7 @@ export class CrossTabBroadcaster {
     }
   }
 
-  private broadcast(event: AppEvent): void {
+  private broadcast(event: RuntimeAppEvent): void {
     if (!this.channel) return;
     try {
       this.channel.postMessage(JSON.stringify(event));
@@ -39,14 +53,19 @@ export class CrossTabBroadcaster {
 
   private handleRemoteEvent(data: unknown): void {
     if (typeof data !== "string") return;
-    let event: AppEvent;
+    let parsed: unknown;
     try {
-      event = JSON.parse(data) as AppEvent;
+      parsed = JSON.parse(data);
     } catch {
       return;
     }
+    if (!isAppEventEnvelope(parsed)) return;
+
     // Loop prevention: mark as remote so the local subscriber won't re-broadcast
-    this.bus.emit({ ...event, metadata: { ...event.metadata, remote: true } });
+    this.bus.emit({
+      ...parsed,
+      metadata: { ...parsed.metadata, remote: true },
+    });
   }
 
   destroy(): void {

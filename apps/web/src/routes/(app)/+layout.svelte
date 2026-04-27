@@ -54,7 +54,8 @@
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
   let globalListenersCleanup: (() => void) | null = null;
-  let syncCoordinator: InstanceType<typeof CrossTabBroadcaster> | null = null;
+  let crossTabBroadcaster: InstanceType<typeof CrossTabBroadcaster> | null =
+    null;
 
   // Derived
   const isPopup = $derived(
@@ -77,8 +78,8 @@
   }
 
   onDestroy(() => {
-    syncCoordinator?.destroy();
-    syncCoordinator = null;
+    crossTabBroadcaster?.destroy();
+    crossTabBroadcaster = null;
   });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
@@ -109,7 +110,6 @@
           vault,
           uiStore,
           oracle,
-          eventBus: appEventBus,
         });
       }
     }
@@ -128,7 +128,7 @@
       registerServiceWorker();
 
       if (browser) {
-        syncCoordinator = new CrossTabBroadcaster(appEventBus);
+        crossTabBroadcaster = new CrossTabBroadcaster(appEventBus);
       }
 
       console.log("[Layout] Calling setupWindowGlobals");

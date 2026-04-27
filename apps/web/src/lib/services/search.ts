@@ -6,6 +6,7 @@ import type { SearchEngine } from "@codex/search-engine";
 import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { appEventBus } from "@codex/events";
+import { VAULT_EVENTS } from "@codex/vault-engine";
 
 const INDEX_BATCH_SIZE = 100;
 
@@ -38,7 +39,7 @@ export class SearchService {
 
       // Subscribe to vault lifecycle events via AppEventBus
       appEventBus.subscribe(
-        "vault:*",
+        "VAULT:*",
         async (event) => {
           // VALIDATION: All sync/load events MUST match the current active vault ID
           // to prevent cross-vault index contamination during rapid switches.
@@ -47,14 +48,14 @@ export class SearchService {
           if (
             vaultId &&
             vaultId !== this.activeVaultId &&
-            event.type !== "VAULT:VAULT_OPENING" &&
-            event.type !== "VAULT:VAULT_SWITCHED"
+            event.type !== VAULT_EVENTS.VAULT_OPENING &&
+            event.type !== VAULT_EVENTS.VAULT_SWITCHED
           ) {
             return;
           }
 
           switch (event.type) {
-            case "VAULT:VAULT_OPENING":
+            case VAULT_EVENTS.VAULT_OPENING:
               if (this.activeVaultId !== vaultId) {
                 this.activeVaultId = vaultId!;
                 this.isDirty = false;
@@ -62,7 +63,7 @@ export class SearchService {
               }
               break;
 
-            case "VAULT:CACHE_LOADED": {
+            case VAULT_EVENTS.CACHE_LOADED: {
               const restored = await this.loadIndex(vaultId!);
               if (!restored) {
                 debugStore.log(
@@ -80,7 +81,7 @@ export class SearchService {
               break;
             }
 
-            case "VAULT:SYNC_CHUNK_READY": {
+            case VAULT_EVENTS.SYNC_CHUNK_READY: {
               const { entities } = event.payload;
               if (entities.length > 0) {
                 await this.indexBatch(entities);
@@ -88,7 +89,7 @@ export class SearchService {
               break;
             }
 
-            case "VAULT:SYNC_COMPLETE":
+            case VAULT_EVENTS.SYNC_COMPLETE:
               if (this.needsFullContentSweep) {
                 setTimeout(() => {
                   this.indexContentInBackground(vaultId!);
@@ -97,7 +98,7 @@ export class SearchService {
               }
               break;
 
-            case "VAULT:VAULT_SWITCHED":
+            case VAULT_EVENTS.VAULT_SWITCHED:
               // Fallback: sync activeVaultId if VAULT_OPENING was missed
               if (this.activeVaultId !== event.payload.id) {
                 this.activeVaultId = event.payload.id;
@@ -106,7 +107,7 @@ export class SearchService {
               }
               break;
 
-            case "VAULT:ENTITY_UPDATED": {
+            case VAULT_EVENTS.ENTITY_UPDATED: {
               const { patch, entity } = event.payload;
               if (
                 patch.title !== undefined ||
@@ -120,11 +121,11 @@ export class SearchService {
               break;
             }
 
-            case "VAULT:ENTITY_DELETED":
+            case VAULT_EVENTS.ENTITY_DELETED:
               await this.remove(event.payload.entityId);
               break;
 
-            case "VAULT:BATCH_CREATED":
+            case VAULT_EVENTS.BATCH_CREATED:
               await this.indexBatch(event.payload.entities);
               break;
           }
