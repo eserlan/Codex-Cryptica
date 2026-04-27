@@ -14,7 +14,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 | 6    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 222     | UI Layout           | ✅ FIXED |
 | 7    | `apps/web/src/lib/components/map/MapView.svelte`            | ~~681~~ 448     | UI Component        | ✅ FIXED |
 | 8    | `packages/sync-engine/src/SyncService.ts`                   | 711             | Engine Core         | 🟡 SOON  |
-| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 835             | UI Component        |          |
+| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | ~~835~~ 326     | UI Component        | ✅ FIXED |
 | 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 629             | UI Component        |          |
 
 ---
@@ -74,6 +74,12 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 **Status:** ✅ **COMPLETED (2026-04-01)**
 **Summary:** Split into a thin composition shell with extracted loader, fog painter, pin popover, and pure interaction helpers. The remaining component now focuses on orchestration and rendering glue rather than owning every map concern directly.
 **Outcome:** Reduced from ~~681~~ 448 lines. The map-specific logic is now more testable and less tightly coupled.
+
+### 8. `CanvasWorkspace.svelte` (Refactored)
+
+**Status:** ✅ **COMPLETED (2026-04-27)**
+**Summary:** Extracted workspace logic into `useCanvasLogic` and `useCanvasEvents` hooks. Moved overlay HUD to `CanvasHUD` component. The main component now acts as a clean orchestration shell for SvelteFlow.
+**Outcome:** Reduced from 780 lines to 326 lines. Improved separation between UI state, persistence, and event handling.
 
 ---
 
