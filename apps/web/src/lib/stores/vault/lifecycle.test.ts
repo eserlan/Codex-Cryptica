@@ -257,7 +257,7 @@ describe("VaultLifecycleManager", () => {
   });
 
   describe("importFromFolder", () => {
-    it("should create vault and persist sync handle", async () => {
+    it("should create vault and persist folder handle", async () => {
       deps.vaultRegistry.createVault.mockResolvedValue("v-folder");
 
       const result = await manager.importFromFolder({ name: "my-dir" } as any);
@@ -266,7 +266,7 @@ describe("VaultLifecycleManager", () => {
       expect(mockDB.put).toHaveBeenCalledWith(
         "settings",
         expect.any(Object),
-        "syncHandle_v-folder",
+        "folderHandle_v-folder",
       );
       expect(deps.clearStorageCache).toHaveBeenCalled();
       expect(result).toBe("v-folder");
@@ -289,7 +289,7 @@ describe("VaultLifecycleManager", () => {
   });
 
   describe("setupSync", () => {
-    it("should persist sync handle and import from folder", async () => {
+    it("should persist folder handle and import from folder", async () => {
       deps.vaultRegistry.createVault.mockResolvedValue("v1");
       const handle = { name: "my-sync-folder" } as any;
 
@@ -298,7 +298,7 @@ describe("VaultLifecycleManager", () => {
       expect(mockDB.put).toHaveBeenCalledWith(
         "settings",
         handle,
-        "syncHandle_v1",
+        "folderHandle_v1",
       );
       expect(deps.loadFiles).toHaveBeenCalled();
     });
@@ -313,7 +313,7 @@ describe("VaultLifecycleManager", () => {
       expect(mockDB.put).not.toHaveBeenCalled();
     });
 
-    it("should warn but continue when persisting sync handle fails", async () => {
+    it("should warn but continue when persisting folder handle fails", async () => {
       const consoleWarnSpy = vi
         .spyOn(console, "warn")
         .mockImplementation(() => {});
@@ -327,7 +327,7 @@ describe("VaultLifecycleManager", () => {
       await manager.setupSync(handle);
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "[VaultStore] Could not persist sync handle",
+        "[VaultStore] Could not persist folder handle",
       );
       // Should still proceed to import
       expect(deps.loadFiles).toHaveBeenCalled();
