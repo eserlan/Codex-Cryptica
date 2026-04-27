@@ -123,6 +123,8 @@
         } else {
           mapSession.addToken(tokenInput);
         }
+      } else if (entity && activeMap && !uiStore.isGuestMode) {
+        mapStore.addPin(entityId, mapCoords);
       }
       return;
     }
