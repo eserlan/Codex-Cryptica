@@ -78,3 +78,7 @@ These can stay as implementation terms unless they continue to leak confusing la
 ## Practical Next Step
 
 Start with a focused terminology pass over the vault UI and help content, then add explicit `loadFromFolder` / `saveToFolder` wrappers at the vault boundary. After that, review whether the internal `sync` names are still acceptable or should be scheduled for a separate cleanup.
+
+## Current PR
+
+This branch implements the first phase described above. For the merge-ready summary of what is included now versus what should stay for a later PR, see [LOAD_SAVE_LANGUAGE_NEXT_PHASE.md](/home/espen/proj/Codex-Arcana/docs/refactoring/LOAD_SAVE_LANGUAGE_NEXT_PHASE.md).
