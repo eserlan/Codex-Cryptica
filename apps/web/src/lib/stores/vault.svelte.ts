@@ -198,7 +198,7 @@ export class VaultStore {
       activeVaultId: () => this.activeVaultId,
       isGuest: () => this.isGuest,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       getServices: () => this.services,
       invalidateUrlCache: (path) => this.releaseImageUrl(path),
       onEntityDelete: (id) => this.onEntityDelete?.(id),
