@@ -142,7 +142,7 @@
     {#if isOffline}
       <div
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
-        title="Sovereign data remains accessible. Cloud sync and Lore Oracle are suspended while offline."
+        title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
         <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
@@ -301,11 +301,11 @@
               : ''} {!vault.hasSyncHandle || !vault.isDirty
               ? 'opacity-50'
               : ''}"
-            onclick={() => vault.push()}
+            onclick={() => vault.saveToFolder()}
             title={!vault.hasSyncHandle
               ? "No folder linked — connect a local folder first to enable saving."
               : vault.isDirty
-                ? "Save to file system — writes all changes from the internal archive to your linked folder."
+                ? "Save to folder — writes all changes from the internal archive to your linked folder."
                 : "Up to date with local folder."}
             aria-label="SAVE TO FOLDER"
             aria-busy={vault.status === "saving"}

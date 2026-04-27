@@ -281,7 +281,7 @@
                 <button
                   type="button"
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                  onclick={() => vault.pull()}
+                  onclick={() => vault.loadFromFolder()}
                   title="Load from Folder — pulls changes from your linked folder into the archive."
                   aria-label="Load from Folder"
                   disabled={isLoading || !!editingId}

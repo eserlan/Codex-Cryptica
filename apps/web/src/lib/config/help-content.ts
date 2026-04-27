@@ -154,23 +154,23 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "local-folder-sync": {
     id: "local-folder-sync",
-    title: "Local Folder Mirroring",
+    title: "Load and Save Folders",
     content:
-      "Maintain an external mirror of your world data. Use the 'SAVE TO FOLDER' button to export your internal archive to a local directory for backups or editing in tools like Obsidian. Use 'LOAD FROM FOLDER' in the Vault Selector to pull external changes back into the app.",
+      "Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.",
     icon: "icon-[lucide--folder-sync]",
   },
   "vault-save": {
     id: "vault-save",
-    title: "Saving to Folder",
+    title: "Save to Folder",
     content:
-      "The 'SAVE TO FOLDER' button explicitly pushes your internal work to your linked local folder. It only enables when you have unsaved changes, ensuring your external backup stays current.",
+      "The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.",
     icon: "icon-[lucide--upload-cloud]",
   },
   "vault-load": {
     id: "vault-load",
-    title: "Loading from Folder",
+    title: "Load from Folder",
     content:
-      "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from your linked local directory. A safety gate will warn you if you have unsaved internal work that would be overwritten.",
+      "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.",
     icon: "icon-[lucide--download-cloud]",
   },
   "total-privacy": {

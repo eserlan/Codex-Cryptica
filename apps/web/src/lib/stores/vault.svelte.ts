@@ -192,7 +192,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      loadFiles: (skipSync) => this.syncStore.loadFiles(skipSync),
+      loadFiles: (skipSync) => this.loadFiles(skipSync),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
@@ -294,7 +294,7 @@ export class VaultStore {
     }
   }
 
-  // --- External Sync Methods ---
+  // --- External Folder Methods ---
 
   broadcastVaultUpdate() {
     this.messenger.broadcastVaultUpdate();
@@ -302,6 +302,14 @@ export class VaultStore {
 
   async loadFiles(skipSyncIfWarm = true) {
     return this.syncStore.loadFiles(skipSyncIfWarm);
+  }
+
+  async loadFromFolder() {
+    return this.pull();
+  }
+
+  async saveToFolder() {
+    return this.syncStore.push();
   }
 
   async push() {
@@ -312,9 +320,9 @@ export class VaultStore {
     return this.syncStore.pull();
   }
 
-  /** @deprecated use push() or pull() instead */
+  /** @deprecated use saveToFolder() instead */
   async syncWithLocalFolder() {
-    return this.syncStore.push();
+    return this.saveToFolder();
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {
