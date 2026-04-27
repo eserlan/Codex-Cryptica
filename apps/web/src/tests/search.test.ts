@@ -77,13 +77,10 @@ describe("SearchService", () => {
   });
 
   it("should initialize", async () => {
-    // Calling init directly should now trigger worker creation via ensureWorker
-    // or we can just call search/index to trigger it.
     await expect(service.init()).resolves.toBeUndefined();
-    // init() in search.ts returns void and doesn't call api.initIndex if api is null
-    // So we need to trigger ensureWorker
-    await (service as any).ensureWorker();
-    expect(mockApi.initIndex).toHaveBeenCalled();
+    expect(mockApi.setLogger).toHaveBeenCalledTimes(1);
+    expect(mockApi.setChangeCallback).toHaveBeenCalledTimes(1);
+    expect(mockApi.initIndex).not.toHaveBeenCalled();
   });
 
   it("should index an entry", async () => {

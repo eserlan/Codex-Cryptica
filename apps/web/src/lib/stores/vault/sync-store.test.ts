@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockOpfs } from "../../../tests/mocks/storage";
 import { cacheService } from "../../services/cache.svelte";
+import { uiStore } from "../ui.svelte";
 import { SyncStore } from "./sync-store.svelte";
 
 vi.hoisted(() => {
@@ -25,6 +26,12 @@ vi.mock("./adapters.svelte", () => ({
   },
 }));
 
+vi.mock("../ui.svelte", () => ({
+  uiStore: {
+    confirm: vi.fn(),
+  },
+}));
+
 describe("SyncStore", () => {
   let store: SyncStore;
   let repository: {
@@ -33,6 +40,7 @@ describe("SyncStore", () => {
     waitForAllSaves: ReturnType<typeof vi.fn>;
   };
   const opfsHandle = createMockOpfs();
+  let mockVaultRecord: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,8 +51,14 @@ describe("SyncStore", () => {
       waitForAllSaves: vi.fn().mockResolvedValue(undefined),
     };
 
+    mockVaultRecord = {
+      lastInternalChange: 0,
+      lastSavedToFolder: 0,
+    };
+
     store = new SyncStore({
       activeVaultId: () => "vault-1",
+      activeVaultRecord: () => mockVaultRecord,
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue(null),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
@@ -56,7 +70,49 @@ describe("SyncStore", () => {
     });
   });
 
-  it("loads cached entities and skips the full filesystem sync when the cache is warm", async () => {
+  it("identifies dirty state when internal changes are newer than last save", () => {
+    mockVaultRecord.lastInternalChange = 1000;
+    mockVaultRecord.lastSavedToFolder = 500;
+    expect(store.isDirty).toBe(true);
+
+    mockVaultRecord.lastSavedToFolder = 1500;
+    expect(store.isDirty).toBe(false);
+  });
+
+  it("prioritizes error status over pending-save derived saving state", () => {
+    (repository as any).pendingSaveCount = 2;
+    store.setStatus("error");
+
+    expect(store.status).toBe("error");
+  });
+
+  it("triggers safety gate on pull() when dirty", async () => {
+    mockVaultRecord.lastInternalChange = 1000;
+    mockVaultRecord.lastSavedToFolder = 500;
+
+    vi.mocked(uiStore.confirm).mockResolvedValue(false);
+    const pullSpy = vi.fn();
+
+    store = new SyncStore({
+      activeVaultId: () => "vault-1",
+      activeVaultRecord: () => mockVaultRecord,
+      repository: repository as any,
+      getSyncCoordinator: vi.fn().mockResolvedValue({ pull: pullSpy }),
+      getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+      getActiveSyncHandle: vi.fn().mockResolvedValue({}),
+      ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+      loadMaps: vi.fn().mockResolvedValue(undefined),
+      loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
+    });
+
+    await store.pull();
+
+    expect(uiStore.confirm).toHaveBeenCalled();
+    expect(pullSpy).not.toHaveBeenCalled();
+  });
+
+  it("loads cached entities immediately and skips filesystem sync by default", async () => {
     vi.mocked(cacheService.preloadVault).mockResolvedValue(
       new Map([
         [
@@ -80,7 +136,7 @@ describe("SyncStore", () => {
       ]),
     );
 
-    await store.loadFiles(true);
+    await store.loadFiles();
 
     expect(repository.entities["hero-1"]).toMatchObject({
       id: "hero-1",
@@ -96,6 +152,7 @@ describe("SyncStore", () => {
     const updateEntityCount = vi.fn().mockResolvedValue(undefined);
     store = new SyncStore({
       activeVaultId: () => "vault-1",
+      activeVaultRecord: () => mockVaultRecord,
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue(null),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
@@ -129,6 +186,7 @@ describe("SyncStore", () => {
 
     store = new SyncStore({
       activeVaultId: () => "vault-1",
+      activeVaultRecord: () => mockVaultRecord,
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue(null),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
@@ -173,6 +231,7 @@ describe("SyncStore", () => {
     const cleanupConflictFiles = vi.fn().mockResolvedValue(undefined);
     store = new SyncStore({
       activeVaultId: () => "vault-1",
+      activeVaultRecord: () => mockVaultRecord,
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue({
         cleanupConflictFiles,

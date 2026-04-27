@@ -5,6 +5,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import type { LocalEntity } from "$lib/stores/vault/types";
 
   import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { categories } from "$lib/stores/categories.svelte";
@@ -151,7 +152,13 @@
           }
         },
         onPositionsUpdated: (updates) => {
-          vault.batchUpdate(updates as any);
+          // Optimization: Only write back positions if this wasn't the initial load layout
+          // and the vault is not in a loading state. 
+          // Also verify that the graph has been marked as fully ready.
+          const isReady = _layoutReady && vault.status === "idle";
+          if (!isInitial && isReady) {
+            vault.batchUpdate(updates as Record<string, Partial<LocalEntity>>);
+          }
         },
       },
       isInitial,

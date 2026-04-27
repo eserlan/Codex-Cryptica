@@ -31,6 +31,7 @@ describe("SyncPlanner", () => {
         ],
       },
       [],
+      "pull"
     );
 
     expect(registry.getEntryByRemoteId).toHaveBeenCalledWith("remote-1");
@@ -42,6 +43,7 @@ describe("SyncPlanner", () => {
         handle: "remote-1",
       }),
       undefined,
+      "pull",
       undefined,
     );
   });
@@ -79,6 +81,7 @@ describe("SyncPlanner", () => {
           lastSyncedOpfsHash: "hash-1",
         },
       ],
+      "pull",
       "since-token",
     );
 
@@ -99,7 +102,30 @@ describe("SyncPlanner", () => {
         filePath: "notes/stable.md",
         remoteId: "remote-1",
       }),
+      "pull",
       undefined,
+    );
+  });
+
+  it("passes direction to DiffAlgorithm", async () => {
+    const registry = { getEntryByRemoteId: vi.fn() } as any;
+    const calculateAction = vi.fn().mockResolvedValue({ type: "SKIP", path: "test.md" });
+    const planner = new SyncPlanner(registry, { calculateAction } as any);
+
+    await planner.plan(
+      [{ path: "test.md", lastModified: 1, size: 1 }], 
+      { files: [] }, 
+      [], 
+      "push"
+    );
+
+    expect(calculateAction).toHaveBeenCalledWith(
+      "test.md",
+      expect.anything(),
+      undefined,
+      undefined,
+      "push",
+      undefined
     );
   });
 });

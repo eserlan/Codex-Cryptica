@@ -193,12 +193,28 @@
         </div>
       {:else if vault.status === "saving"}
         <span class="text-theme-accent">SAVING...</span>
-      {:else if vault.status === "error"}
-        <span
-          class="text-red-400 font-bold text-xs bg-red-900/20 px-2 py-1 rounded border border-red-900/50"
-        >
-          {vault.errorMessage || "ERROR"}
-        </span>
+      {:else if vault.status === "error" || vault.syncStore.failedFiles.length > 0}
+        <div class="flex items-center gap-1.5">
+          <span
+            class="text-red-400 font-bold text-[10px] bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
+            title={vault.syncStore.failedFiles.length > 0
+              ? vault.syncStore.failedFiles
+                  .map((f) => `${f.path}: ${f.error}`)
+                  .join("\n")
+              : vault.errorMessage || "ERROR"}
+          >
+            {vault.errorMessage ||
+              `${vault.syncStore.failedFiles.length} FAILURES`}
+          </span>
+          {#if vault.syncStore.failedFiles.length > 0}
+            <button
+              class="text-[9px] text-theme-muted hover:text-theme-text underline font-header"
+              onclick={() => (vault.syncStore.failedFiles = [])}
+            >
+              CLEAR
+            </button>
+          {/if}
+        </div>
       {:else if vault.allEntities.length > 0}
         <span
           class="text-theme-secondary font-header"
@@ -279,27 +295,37 @@
           <button
             class="{btnAccent} {isVertical
               ? 'py-3 text-sm justify-center gap-2'
-              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.syncType ===
-            'local'
+              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
+            'saving'
               ? 'opacity-75 cursor-wait'
+              : ''} {!vault.hasSyncHandle || !vault.isDirty
+              ? 'opacity-50'
               : ''}"
-            onclick={() => vault.syncWithLocalFolder()}
-            title="Mirror internal archive with a local folder."
-            aria-label={isVertical
-              ? "SYNC - Mirror internal archive with a local folder."
-              : "SYNC - Mirror internal archive with a local folder."}
-            aria-busy={vault.syncType === "local"}
-            disabled={vault.syncType === "local"}
+            onclick={() => vault.push()}
+            title={!vault.hasSyncHandle
+              ? "No folder linked — connect a local folder first to enable saving."
+              : vault.isDirty
+                ? "Save to file system — writes all changes from the internal archive to your linked folder."
+                : "Up to date with local folder."}
+            aria-label="SAVE TO FOLDER"
+            aria-busy={vault.status === "saving"}
+            disabled={vault.status === "saving" ||
+              !vault.hasSyncHandle ||
+              !vault.isDirty}
           >
-            {#if vault.syncType === "local"}
+            {#if vault.status === "saving"}
               <span
                 class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
                 aria-hidden="true"
               ></span>
-              {#if isVertical}SYNCING...{:else}SYNCING...{/if}
+              SAVING...
             {:else}
-              <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
-              {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+              <span
+                class={vault.isDirty
+                  ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                  : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
+              ></span>
+              {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
             {/if}
           </button>
 

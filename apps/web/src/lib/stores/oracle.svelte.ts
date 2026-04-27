@@ -33,6 +33,14 @@ import type { TextGenerationService } from "schema";
 
 export type { ChatMessage, UndoableAction };
 
+type OracleUiSnapshot = {
+  aiDisabled: boolean;
+  isDemoMode: boolean;
+  entityDiscoveryMode?: string;
+  connectionDiscoveryMode?: string;
+  autoArchive?: boolean;
+};
+
 export class OracleStore {
   // Reactive UI state
   isOpen = $state(false);
@@ -223,6 +231,16 @@ export class OracleStore {
     this.isInitialized = true;
   }
 
+  async loadForVault(vaultId: string) {
+    // If not initialized yet, standard init will pick up active vault
+    if (!this.isInitialized) {
+      return this.init();
+    }
+
+    // Already initialized, force a reload of history for the new vault
+    await this.chatHistoryService.switchVault(vaultId);
+  }
+
   get messages() {
     return this.chatHistoryService?.messages ?? [];
   }
@@ -271,6 +289,16 @@ export class OracleStore {
     return this.apiKey || null;
   }
 
+  private createUiStoreSnapshot(): OracleUiSnapshot {
+    return {
+      aiDisabled: this.uiStore.aiDisabled,
+      isDemoMode: this.uiStore.isDemoMode,
+      entityDiscoveryMode: this.uiStore.entityDiscoveryMode,
+      connectionDiscoveryMode: this.uiStore.connectionDiscoveryMode,
+      autoArchive: (this.uiStore as any).autoArchive,
+    };
+  }
+
   getExecutionContext(): OracleExecutionContext {
     const isWorker = oracleBridge.isReady;
 
@@ -298,7 +326,7 @@ export class OracleStore {
         saveImageToVault: wrap(this.vault.saveImageToVault?.bind(this.vault)),
         loadEntityContent: wrap(this.vault.loadEntityContent?.bind(this.vault)),
       },
-      uiStore: $state.snapshot(this.uiStore),
+      uiStore: this.createUiStoreSnapshot(),
       chatHistory: {
         messages: $state.snapshot(this.chatHistoryService.messages),
         getMessages: wrap(() => [...this.chatHistoryService.messages]),

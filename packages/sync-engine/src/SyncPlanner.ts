@@ -1,3 +1,4 @@
+import { type SyncDirection } from "schema";
 import { DiffAlgorithm, type SyncAction } from "./DiffAlgorithm";
 import { type FileMetadata, type SyncEntry } from "./types";
 import { SyncRegistry } from "./SyncRegistry";
@@ -12,6 +13,7 @@ export class SyncPlanner {
     fsFiles: FileMetadata[],
     opfsScan: { files: FileMetadata[]; nextToken?: string },
     registryEntries: SyncEntry[],
+    direction: SyncDirection = "pull",
     sinceToken?: string | null,
     validator?: (
       path: string,
@@ -82,6 +84,7 @@ export class SyncPlanner {
         fsMap.get(path),
         opfsMetadata,
         registryEntry,
+        direction,
         validator,
       );
 

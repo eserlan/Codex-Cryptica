@@ -277,11 +277,25 @@
                 {v.entityCount || 0} Items
               </div>
 
+              {#if v.id === vaultRegistry.activeVaultId}
+                <button
+                  type="button"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => vault.pull()}
+                  title="Load from Folder — pulls changes from your linked folder into the archive."
+                  aria-label="Load from Folder"
+                  disabled={isLoading || !!editingId}
+                >
+                  <span class="icon-[lucide--download-cloud] w-3.5 h-3.5"
+                  ></span>
+                </button>
+              {/if}
+
               <button
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => handleImportToVault(v)}
                 title="Restore from Folder"
-                aria-label="Restore from Folder"
+                aria-label="Restore {v.name} from Folder"
                 disabled={isLoading || !!editingId}
               >
                 <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
@@ -357,7 +371,10 @@
                 aria-busy={isLoading}
               >
                 {#if isLoading}
-                  <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+                  <span
+                    class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                    aria-hidden="true"
+                  ></span>
                   CREATING...
                 {:else}
                   CREATE

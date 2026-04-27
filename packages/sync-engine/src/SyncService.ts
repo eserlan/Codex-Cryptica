@@ -1,4 +1,5 @@
 import { type ISyncBackend, type SyncResult, type FileMetadata } from "./types";
+import { type SyncDirection } from "schema";
 import { SyncRegistry } from "./SyncRegistry";
 import { SyncPlanner } from "./SyncPlanner";
 import { type SyncAction } from "./DiffAlgorithm";
@@ -42,6 +43,7 @@ export class SyncService {
     vaultId: string,
     fsBackend: ISyncBackend,
     opfsBackend: ISyncBackend,
+    direction: SyncDirection = "pull",
     sinceToken?: string | null,
     validator?: (
       path: string,
@@ -68,7 +70,7 @@ export class SyncService {
 
     try {
       console.log(
-        `[${this.getTs()}] [Sync] Starting sync for vault: ${vaultId}`,
+        `[${this.getTs()}] [Sync] Starting sync for vault: ${vaultId} (Direction: ${direction})`,
       );
 
       const fsScan = await fsBackend.scan(vaultId);
@@ -93,6 +95,7 @@ export class SyncService {
         fsScan.files,
         opfsScan,
         registryEntries,
+        direction,
         sinceToken,
         validator,
         signal,

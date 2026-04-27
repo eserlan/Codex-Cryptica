@@ -92,7 +92,7 @@ export class FileSystemBackend implements ISyncBackend {
           /* may not exist yet if just created */
         });
 
-        const writable = await (fileHandle as any).createWritable({
+        const writable = await fileHandle.createWritable({
           keepExistingData: false,
         });
 
@@ -171,7 +171,7 @@ export class FileSystemBackend implements ISyncBackend {
     // Verify root handle permission on every resolution
     try {
       if (
-        (await (currentDir as any).queryPermission({ mode: "readwrite" })) !==
+        (await currentDir.queryPermission({ mode: "readwrite" })) !==
         "granted"
       ) {
         throw new Error("Permission to write to local directory was revoked.");

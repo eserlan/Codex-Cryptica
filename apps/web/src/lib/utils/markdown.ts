@@ -90,13 +90,13 @@ export function stringifyEntity(entity: Entity): string {
   const { content, updatedAt, ...metadata } = entity;
 
   // Ensure updatedAt is the FIRST property for optimized sync scanning
-  const orderedMetadata: any = { updatedAt };
+  const orderedMetadata: Record<string, unknown> = { updatedAt };
 
   // Remove runtime-only fields if they crept in
-  const cleanRest = { ...metadata };
-  delete (cleanRest as any)._fsHandle;
-  delete (cleanRest as any)._lastModified;
-  delete (cleanRest as any).connections;
+  const cleanRest: Record<string, unknown> = { ...metadata };
+  delete cleanRest._fsHandle;
+  delete cleanRest._lastModified;
+  delete cleanRest.connections;
 
   Object.assign(orderedMetadata, cleanRest);
   orderedMetadata.connections = entity.connections;

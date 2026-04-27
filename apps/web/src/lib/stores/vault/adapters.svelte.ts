@@ -56,13 +56,15 @@ export const fileIOAdapter: IFileIOAdapter = {
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
       title: parsed.metadata.title || id!,
+      status: parsed.metadata.status || "active",
       tags: parsed.metadata.tags || [],
       labels: parsed.metadata.labels || [],
+      aliases: parsed.metadata.aliases || [],
       connections,
       content: parsed.content,
-      lore: (parsed.metadata as any).lore || "",
+      lore: parsed.metadata.lore || "",
       _path: path,
-    } as any;
+    };
   },
   isNotFoundError: (err) => isNotFoundError(err),
 };
@@ -113,5 +115,5 @@ export const imageProcessor: IImageProcessor = {
 
 export async function createSyncEngine(): Promise<ISyncEngine> {
   const db = await getDB();
-  return new LocalSyncService(new SyncRegistry(db));
+  return new LocalSyncService(new SyncRegistry(db)) as unknown as ISyncEngine;
 }

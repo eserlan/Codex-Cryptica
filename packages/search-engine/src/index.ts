@@ -27,7 +27,8 @@ export class SearchEngine {
   }
 
   constructor() {
-    this.initIndex();
+    // Index initialization is deferred to explicit initIndex() calls 
+    // from the service layer or lazy-initialized during first write.
   }
 
   setLogger(

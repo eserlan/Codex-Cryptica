@@ -1,3 +1,5 @@
+import type { Core } from "cytoscape";
+
 export * from "./transformer";
 export * from "./layouts/timeline";
 export * from "./layouts/orbit";
@@ -46,7 +48,7 @@ export const initGraph = async (options: GraphOptions) => {
     (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),
   ).length;
 
-  return (cytoscape as any)({
+  return (cytoscape as unknown as (opt: any) => Core)({
     container: options.container,
     headless: options.headless,
     elements: options.elements || [],

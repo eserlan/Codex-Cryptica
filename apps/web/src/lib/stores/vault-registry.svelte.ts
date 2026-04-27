@@ -13,6 +13,10 @@ class VaultRegistryStore {
 
   #opfsRoot: FileSystemDirectoryHandle | undefined = undefined;
 
+  activeVaultRecord = $derived(
+    this.availableVaults.find((v) => v.id === this.activeVaultId),
+  );
+
   get rootHandle() {
     return this.#opfsRoot;
   }
@@ -29,20 +33,21 @@ class VaultRegistryStore {
 
       if (!this.activeVaultId && this.#opfsRoot) {
         // Initialize default vault if none active
-        this.activeVaultId = "default";
-        await db.put("settings", "default", "activeVaultId");
-        await createVaultDir(this.#opfsRoot, "default");
-
         const existing = await registry.getVault("default");
         if (!existing) {
+          await createVaultDir(this.#opfsRoot, "default");
           await db.put("vaults", {
             id: "default",
             name: "Default Vault",
             createdAt: Date.now(),
             lastOpenedAt: Date.now(),
             entityCount: 0,
+            lastInternalChange: Date.now(),
+            lastSavedToFolder: 0,
           });
         }
+        this.activeVaultId = "default";
+        await db.put("settings", "default", "activeVaultId");
       }
 
       const vaultRecord = this.activeVaultId
@@ -63,8 +68,13 @@ class VaultRegistryStore {
   }
 
   async listVaults(): Promise<VaultRecord[]> {
-    this.availableVaults = await registry.listVaults();
+    const nextVaults = await registry.listVaults();
+    this.availableVaults = nextVaults;
     return this.availableVaults;
+  }
+
+  async refreshVaults(): Promise<void> {
+    await this.listVaults();
   }
 
   async createVault(name: string): Promise<string> {
