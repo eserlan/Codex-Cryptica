@@ -53,13 +53,26 @@ export class EntityStore {
     persistence?: EntityPersistenceService,
     mutations?: EntityMutationService,
   ) {
-    if (depsOrRepository instanceof VaultRepository) {
-      this.repository = depsOrRepository;
-      this.loader = loader!;
-      this.persistence = persistence!;
-      this.mutations = mutations!;
+    // Determine if we are in the DI path by checking for the presence of the extra args.
+    // We check for loader OR persistence OR mutations to decide we're TRYING to use DI.
+    if (loader || persistence || mutations || (depsOrRepository && 'entities' in depsOrRepository && !('activeVaultId' in depsOrRepository))) {
+      if (!loader || !persistence || !mutations) {
+        const missing = [
+          !loader ? "loader" : null,
+          !persistence ? "persistence" : null,
+          !mutations ? "mutations" : null,
+        ].filter(Boolean);
+
+        throw new Error(
+          `EntityStore requires ${missing.join(", ")} when using the Dependency Injection constructor. Pass loader, persistence, and mutations, or use the EntityStoreDependencies object form.`
+        );
+      }
+      this.repository = depsOrRepository as VaultRepository;
+      this.loader = loader;
+      this.persistence = persistence;
+      this.mutations = mutations;
     } else {
-      const deps = depsOrRepository;
+      const deps = depsOrRepository as EntityStoreDependencies;
       this.repository = deps.repository;
       this.loader = new EntityContentLoader({
         repository: deps.repository,

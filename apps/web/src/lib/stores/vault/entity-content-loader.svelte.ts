@@ -19,9 +19,10 @@ export class EntityContentLoader {
   private _contentLoadedIds = $state(new Set<string>());
   private _contentVerifiedIds = $state(new Set<string>());
   private _loadingPromises = new Map<string, Promise<void>>();
+  private _unsubscribe: () => void;
 
   constructor(private deps: ContentLoaderDependencies) {
-    vaultEventBus.subscribe((event) => {
+    this._unsubscribe = vaultEventBus.subscribe((event) => {
       if (event.type === "VAULT_OPENING") {
         this._contentLoadedIds.clear();
         this._contentVerifiedIds.clear();
@@ -35,7 +36,11 @@ export class EntityContentLoader {
           }
         }
       }
-    }, "entity-store-content-tracker");
+    });
+  }
+
+  destroy() {
+    this._unsubscribe();
   }
 
   get entities() {
