@@ -31,13 +31,21 @@ export class VaultStorageManager {
     }
   }
 
-  async getActiveSyncHandle(
+  async getActiveFolderHandle(
     activeVaultId: string | null,
   ): Promise<FileSystemDirectoryHandle | undefined> {
     if (!activeVaultId) return undefined;
     try {
       const db = await getDB();
-      const handle = await db.get("settings", `syncHandle_${activeVaultId}`);
+      let handle = await db.get("settings", `folderHandle_${activeVaultId}`);
+      if (!handle) {
+        // Migrate from old key name
+        handle = await db.get("settings", `syncHandle_${activeVaultId}`);
+        if (handle) {
+          await db.put("settings", handle, `folderHandle_${activeVaultId}`);
+          await db.delete("settings", `syncHandle_${activeVaultId}`);
+        }
+      }
       return handle as FileSystemDirectoryHandle | undefined;
     } catch {
       return undefined;

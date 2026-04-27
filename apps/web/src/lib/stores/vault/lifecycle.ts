@@ -45,7 +45,7 @@ export class VaultLifecycleManager {
 
       const db = await getDB();
       const vaultId = await this.deps.vaultRegistry.createVault(handle.name);
-      await db.put("settings", handle, `syncHandle_${vaultId}`);
+      await db.put("settings", handle, `folderHandle_${vaultId}`);
       await this.deps.vaultRegistry.setActiveVault(vaultId);
       this.deps.clearStorageCache();
 
@@ -77,7 +77,7 @@ export class VaultLifecycleManager {
       }
 
       const db = await getDB();
-      await db.put("settings", handle, `syncHandle_${vaultId}`);
+      await db.put("settings", handle, `folderHandle_${vaultId}`);
 
       await this.deps.vaultRegistry.updateEntityCount(
         vaultId,
@@ -131,7 +131,7 @@ export class VaultLifecycleManager {
     if (!activeId) return;
     try {
       const db = await getDB();
-      await db.put("settings", handle, `syncHandle_${activeId}`);
+      await db.put("settings", handle, `folderHandle_${activeId}`);
     } catch {
       console.warn("[VaultStore] Could not persist sync handle");
     }

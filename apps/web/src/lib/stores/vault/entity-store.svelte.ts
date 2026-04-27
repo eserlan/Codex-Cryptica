@@ -20,7 +20,7 @@ export interface EntityStoreDependencies {
   getSpecificVaultHandle: (
     vaultId: string,
   ) => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   getServices: () => any;
   invalidateUrlCache?: (path: string) => void;
   setStatus: (status: "idle" | "loading" | "saving" | "error") => void;
@@ -390,7 +390,7 @@ export class EntityStore {
     const lockKey = id;
     return this.deps.repository.saveQueue.enqueue(lockKey, async () => {
       const vaultHandle = await this.deps.getActiveVaultHandle();
-      const localHandle = await this.deps.getActiveSyncHandle();
+      const localHandle = await this.deps.getActiveFolderHandle();
       const activeVaultId = this.deps.activeVaultId();
 
       if (vaultHandle && activeVaultId) {
@@ -786,7 +786,7 @@ export class EntityStore {
         // PRIORITY 3: Local FS fallback if OPFS had nothing
         if (!result) {
           const path = currentEntity._path || [`${id}.md`];
-          const localHandle = await this.deps.getActiveSyncHandle();
+          const localHandle = await this.deps.getActiveFolderHandle();
           if (localHandle) {
             try {
               if (
