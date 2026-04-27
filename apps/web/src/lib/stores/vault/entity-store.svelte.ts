@@ -8,8 +8,8 @@ import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { uiStore } from "../ui.svelte";
 import type { InboundMap } from "./relationships";
-import { readFileAsText } from "../../utils/opfs";
-import { parseMarkdown } from "../../utils/markdown";
+import { EntityContentLoader } from "./entity-content-loader.svelte";
+import { EntityPersistenceService } from "./entity-persistence";
 
 export interface EntityStoreDependencies {
   repository: VaultRepository;
@@ -32,14 +32,9 @@ export interface EntityStoreDependencies {
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
 }
 
-const SAVE_DEBOUNCE_MS = 400;
-
 export class EntityStore {
-  private _contentLoadedIds = $state(new Set<string>());
-  private _contentVerifiedIds = $state(new Set<string>());
-  private _saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
-  private _saveResolvers = new Map<string, Array<() => void>>();
-  private _loadingPromises = new Map<string, Promise<void>>();
+  private loader: EntityContentLoader;
+  private persistence: EntityPersistenceService;
 
   get entities() {
     return this.deps.repository.entities;
@@ -55,6 +50,28 @@ export class EntityStore {
   labelIndex: string[];
 
   constructor(private deps: EntityStoreDependencies) {
+    this.loader = new EntityContentLoader({
+      repository: this.deps.repository,
+      activeVaultId: this.deps.activeVaultId,
+      isGuest: this.deps.isGuest,
+      getGuestFile: this.deps.getGuestFile,
+      getActiveVaultHandle: this.deps.getActiveVaultHandle,
+      getActiveSyncHandle: this.deps.getActiveSyncHandle,
+    });
+
+    this.persistence = new EntityPersistenceService({
+      repository: this.deps.repository,
+      activeVaultId: this.deps.activeVaultId,
+      isGuest: this.deps.isGuest,
+      getSpecificVaultHandle: this.deps.getSpecificVaultHandle,
+      setStatus: this.deps.setStatus,
+      setErrorMessage: this.deps.setErrorMessage,
+      onEntityUpdate: this.deps.onEntityUpdate,
+      isContentLoaded: (id) => this.loader.isContentLoaded(id),
+      loadContent: (id) => this.loader.internalLoadContent(id),
+      markContentLoaded: (id) => this.loader.markContentLoaded(id),
+    });
+
     this.allEntities = $derived.by(() => Object.values(this.entities));
     this.allActiveEntities = $derived.by(() =>
       this.allEntities.filter((e) => e.status !== "draft"),
@@ -71,139 +88,38 @@ export class EntityStore {
       }
       return Array.from(labels).sort();
     });
-
-    vaultEventBus.subscribe((event) => {
-      if (event.type === "VAULT_OPENING") {
-        this._contentLoadedIds.clear();
-        this._contentVerifiedIds.clear();
-      }
-      if (event.type === "SYNC_CHUNK_READY") {
-        for (const id of event.newOrChangedIds) {
-          const entity = event.entities[id];
-          if (entity?.content) {
-            this._contentLoadedIds.add(id);
-            this._contentVerifiedIds.add(id);
-          }
-        }
-      }
-    }, "entity-store-content-tracker");
   }
 
-  // --- Save Coordination ---
+  // --- Persistence Delegation ---
 
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
-    if (this.deps.onEntityUpdate)
-      this.deps.onEntityUpdate(entity as LocalEntity);
-
-    const vaultIdAtStart = this.deps.activeVaultId();
-    if (!vaultIdAtStart) return Promise.resolve();
-
-    if (uiStore.isDemoMode) return Promise.resolve();
-
-    const id = entity.id;
-
-    // Debounce: cancel any pending timer for this entity and restart it.
-    // All callers that scheduled a save within the window share the same
-    // queue enqueue, so only one disk write fires per burst.
-    const existing = this._saveTimers.get(id);
-    if (existing) clearTimeout(existing);
-
-    return new Promise<void>((resolve) => {
-      // Collect resolvers so flushPendingSaves() can drain them immediately.
-      const resolvers = this._saveResolvers.get(id) ?? [];
-      resolvers.push(resolve);
-      this._saveResolvers.set(id, resolvers);
-
-      this._saveTimers.set(
-        id,
-        setTimeout(() => {
-          this._saveTimers.delete(id);
-          this._saveResolvers.delete(id);
-          this.deps.repository.saveQueue
-            .enqueue(id, () => this._persistEntity(id, vaultIdAtStart))
-            .then(() => resolvers.forEach((r) => r()))
-            .catch(() => resolvers.forEach((r) => r()));
-        }, SAVE_DEBOUNCE_MS),
-      );
-    });
+    return this.persistence.scheduleSave(entity);
   }
 
-  /**
-   * Flush all pending debounce timers immediately, then wait for the
-   * save queue to drain. Called by lifecycle before vault switching.
-   */
   async flushPendingSaves(): Promise<void> {
-    for (const [id, timer] of this._saveTimers) {
-      clearTimeout(timer);
-      this._saveTimers.delete(id);
-      const resolvers = this._saveResolvers.get(id) ?? [];
-      this._saveResolvers.delete(id);
-      const vaultId = this.deps.activeVaultId();
-      if (vaultId) {
-        await this.deps.repository.saveQueue.enqueue(id, () =>
-          this._persistEntity(id, vaultId),
-        );
-      }
-      resolvers.forEach((r) => r());
-    }
-    await this.deps.repository.waitForAllSaves();
+    return this.persistence.flushPendingSaves();
   }
 
-  private async _persistEntity(
-    id: string,
-    vaultIdAtStart: string,
-  ): Promise<void> {
-    // VAULT ID GUARD: Ensure we are still in the same vault before persisting
-    if (this.deps.activeVaultId() !== vaultIdAtStart) {
-      debugStore.log(
-        `[EntityStore] Discarding save for ${id} - vault changed.`,
-      );
-      return;
-    }
+  // --- Loader Delegation ---
 
-    let latestEntity = this.entities[id];
-    if (!latestEntity) return;
+  async loadEntityContent(id: string): Promise<void> {
+    return this.loader.loadEntityContent(id);
+  }
 
-    if (!this.isContentLoaded(id)) {
-      await this.internalLoadContent(id);
-      latestEntity = this.entities[id] || latestEntity;
-    }
+  async internalLoadContent(id: string): Promise<void> {
+    return this.loader.internalLoadContent(id);
+  }
 
-    this.deps.setStatus("saving");
-    try {
-      const vaultHandle =
-        await this.deps.getSpecificVaultHandle(vaultIdAtStart);
-      if (!vaultHandle) {
-        this.deps.setStatus("idle");
-        return;
-      }
+  isContentLoaded(id: string) {
+    return this.loader.isContentLoaded(id);
+  }
 
-      await this.deps.repository.saveToDisk(
-        vaultHandle,
-        vaultIdAtStart,
-        latestEntity,
-        this.deps.isGuest(),
-      );
+  isContentVerified(id: string) {
+    return this.loader.isContentVerified(id);
+  }
 
-      // Update dirty tracking timestamp
-      import("./registry").then((m) =>
-        m.updateLastInternalChange(vaultIdAtStart),
-      );
-
-      const path = latestEntity._path || [`${latestEntity.id}.md`];
-      await cacheService.set(
-        `${vaultIdAtStart}:${path.join("/")}`,
-        Date.now(),
-        latestEntity,
-      );
-
-      this.markContentLoaded(latestEntity.id);
-      this.deps.setStatus("idle");
-    } catch (error) {
-      debugStore.error("[EntityStore] Failed to save entity to disk", error);
-      this.deps.setStatus("error");
-      this.deps.setErrorMessage("Failed to access storage for saving.");
-    }
+  markContentLoaded(id: string) {
+    this.loader.markContentLoaded(id);
   }
 
   // --- CRUD Operations ---
@@ -223,8 +139,7 @@ export class EntityStore {
     updatedEntities[newEntity.id] = newEntity;
     this.entities = updatedEntities;
 
-    this._contentLoadedIds.add(newEntity.id);
-    this._contentVerifiedIds.add(newEntity.id);
+    this.loader.markContentLoaded(newEntity.id);
 
     const activeVaultId = this.deps.activeVaultId();
     await this.scheduleSave(newEntity);
@@ -275,8 +190,7 @@ export class EntityStore {
       updates.title !== undefined ||
       updates.tags !== undefined
     ) {
-      this._contentLoadedIds.add(id);
-      this._contentVerifiedIds.add(id);
+      this.loader.markContentLoaded(id);
     }
 
     if (updates.image && this.deps.invalidateUrlCache) {
@@ -348,8 +262,7 @@ export class EntityStore {
         patch.title !== undefined ||
         patch.tags !== undefined
       ) {
-        this._contentLoadedIds.add(id);
-        this._contentVerifiedIds.add(id);
+        this.loader.markContentLoaded(id);
       }
 
       if (patch.image && this.deps.invalidateUrlCache) {
@@ -668,8 +581,7 @@ export class EntityStore {
     this.entities = entities;
 
     const savePromises = created.map(async (entity) => {
-      this._contentLoadedIds.add(entity.id);
-      this._contentVerifiedIds.add(entity.id);
+      this.loader.markContentLoaded(entity.id);
       await this.scheduleSave(entity);
     });
 
@@ -688,233 +600,5 @@ export class EntityStore {
       vaultId: activeVaultId || "unknown",
       entities: created,
     });
-  }
-  // --- Content Loading ---
-
-  async loadEntityContent(id: string): Promise<void> {
-    if (!id) return;
-
-    // 1. Return existing in-flight promise if available (Deduplication)
-    const existing = this._loadingPromises.get(id);
-    if (existing) return existing;
-
-    const currentEntity = this.entities[id];
-    if (!currentEntity) return;
-
-    const isGuest = this.deps.isGuest();
-    if (
-      this._contentVerifiedIds.has(id) &&
-      (!isGuest || !!currentEntity.content)
-    )
-      return;
-
-    const loadPromise = (async () => {
-      const activeVaultId = this.deps.activeVaultId();
-      const guestFileFetcher = this.deps.getGuestFile;
-
-      if (isGuest) {
-        if (currentEntity.content) {
-          this._contentLoadedIds.add(id);
-          this._contentVerifiedIds.add(id);
-          return;
-        }
-
-        const path = currentEntity._path || [`${id}.md`];
-        const requestPath = path.join("/");
-        if (!guestFileFetcher || !requestPath) return;
-
-        try {
-          const file = await guestFileFetcher(requestPath);
-          const text = await file.text();
-          if (!text) {
-            this._contentVerifiedIds.add(id);
-            return;
-          }
-
-          const { content: freshContent } = parseMarkdown(text);
-          this.deps.repository.entities[id] = {
-            ...currentEntity,
-            content: freshContent || currentEntity.content || "",
-            lore: "",
-          };
-          this._contentLoadedIds.add(id);
-          this._contentVerifiedIds.add(id);
-        } catch (err) {
-          debugStore.warn(
-            `[EntityStore] Guest content fetch failed for ${id}`,
-            err,
-          );
-        }
-        return;
-      }
-
-      if (!activeVaultId) return;
-
-      // PRIORITY 1: Cache
-      let cached: { content: string; lore: string } | null = null;
-      let cacheErrored = false;
-      try {
-        cached = await cacheService.getEntityContent(activeVaultId, id);
-        if (cached !== null) {
-          const latest = this.entities[id];
-          if (latest && (!latest.content || latest.lore === undefined)) {
-            this.deps.repository.entities[id] = {
-              ...latest,
-              content: cached.content,
-              lore: cached.lore,
-            };
-            this._contentLoadedIds.add(id);
-            debugStore.log(
-              `[EntityStore] Priority 1 hit: Loaded chronicle/lore from cache for ${id}`,
-            );
-          }
-        }
-      } catch (cacheErr) {
-        cacheErrored = true;
-        debugStore.warn(
-          `[EntityStore] Priority 1 cache load failed for ${id}`,
-          cacheErr,
-        );
-      }
-
-      if (this._contentVerifiedIds.has(id)) return;
-
-      try {
-        // PRIORITY 2: OPFS (canonical source of truth)
-        let result = await this._readFromOpfs(id);
-
-        // PRIORITY 3: Local FS fallback if OPFS had nothing
-        if (!result) {
-          const path = currentEntity._path || [`${id}.md`];
-          const localHandle = await this.deps.getActiveSyncHandle();
-          if (localHandle) {
-            try {
-              if (
-                (await localHandle.queryPermission({ mode: "read" })) ===
-                "granted"
-              ) {
-                const text = await readFileAsText(localHandle, path);
-                if (text) {
-                  const { metadata, content } = parseMarkdown(text);
-                  result = { content, lore: metadata.lore || "" };
-                }
-              }
-            } catch (err) {
-              debugStore.warn(
-                `[EntityStore] Local FS fallback failed for ${id}`,
-                err,
-              );
-            }
-          }
-        }
-
-        if (result) {
-          const entityToUpdate = this.entities[id];
-          if (entityToUpdate) {
-            const finalContent = result.content || entityToUpdate.content || "";
-            const finalLore = result.lore || entityToUpdate.lore || "";
-            const path = entityToUpdate._path || [`${id}.md`];
-
-            const updatedEntity = {
-              ...entityToUpdate,
-              content: finalContent,
-              lore: finalLore,
-            };
-
-            this.deps.repository.entities[id] = updatedEntity;
-            this._contentLoadedIds.add(id);
-            this._contentVerifiedIds.add(id);
-
-            debugStore.log(
-              `[EntityStore] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
-            );
-
-            const isStale =
-              finalContent !== (cached?.content ?? null) ||
-              finalLore !== (cached?.lore ?? null);
-            const hasContent = finalContent || finalLore;
-
-            if (isStale && (cached !== null || hasContent)) {
-              cacheService.set(
-                `${activeVaultId}:${path.join("/")}`,
-                Date.now(),
-                updatedEntity,
-              );
-            }
-          }
-        } else if (cached === null && !cacheErrored) {
-          this._contentVerifiedIds.add(id);
-          debugStore.warn(
-            `[EntityStore] Content truly missing for ${id} in all tiers`,
-          );
-        }
-      } catch (err) {
-        debugStore.error(
-          `[EntityStore] Failed to load content for ${id}:`,
-          err,
-        );
-      }
-    })();
-
-    this._loadingPromises.set(id, loadPromise);
-
-    return loadPromise.finally(() => this._loadingPromises.delete(id));
-  }
-
-  /**
-   * Read an entity's content directly from OPFS. Returns null if the file
-   * cannot be found or read. Shared by loadEntityContent and internalLoadContent.
-   */
-  private async _readFromOpfs(
-    id: string,
-  ): Promise<{ content: string; lore: string } | null> {
-    const entity = this.entities[id];
-    if (!entity) return null;
-    const path = entity._path || [`${id}.md`];
-    const vaultDir = await this.deps.getActiveVaultHandle();
-    if (!vaultDir) return null;
-    const text = await readFileAsText(vaultDir, path).catch(() => null);
-    if (!text) return null;
-    const { metadata, content } = parseMarkdown(text);
-    return { content, lore: metadata.lore || "" };
-  }
-
-  /**
-   * Load content from OPFS without going through the task queue.
-   * Used as a pre-save hydration step inside scheduleSave.
-   */
-  async internalLoadContent(id: string): Promise<void> {
-    const currentEntity = this.entities[id];
-    if (!currentEntity) return;
-    try {
-      const result = await this._readFromOpfs(id);
-      if (result) {
-        this.deps.repository.entities[id] = {
-          ...currentEntity,
-          content: result.content,
-          lore: result.lore,
-        };
-        this._contentLoadedIds.add(id);
-        this._contentVerifiedIds.add(id);
-      }
-    } catch (err) {
-      debugStore.error(
-        `[EntityStore] internalLoadContent failed for ${id}:`,
-        err,
-      );
-    }
-  }
-
-  isContentLoaded(id: string) {
-    return this._contentLoadedIds.has(id);
-  }
-
-  isContentVerified(id: string) {
-    return this._contentVerifiedIds.has(id);
-  }
-
-  markContentLoaded(id: string) {
-    this._contentLoadedIds.add(id);
-    this._contentVerifiedIds.add(id);
   }
 }
