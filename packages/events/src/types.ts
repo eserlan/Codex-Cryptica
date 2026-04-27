@@ -20,7 +20,13 @@ export interface BaseAppEvent<
 
 // Domain-specific event unions (to be expanded)
 export type VaultAppEvent =
-  | BaseAppEvent<"VAULT:ENTITY_UPDATED", "vault", { id: string; patch: any }>
+  | BaseAppEvent<"VAULT:VAULT_OPENING", "vault", Record<string, never>>
+  | BaseAppEvent<"VAULT:CACHE_LOADED", "vault", { entities: any[] }>
+  | BaseAppEvent<
+      "VAULT:ENTITY_UPDATED",
+      "vault",
+      { id: string; patch: any; entity: any }
+    >
   | BaseAppEvent<"VAULT:VAULT_SWITCHED", "vault", { id: string }>
   | BaseAppEvent<"VAULT:ENTITY_DELETED", "vault", { entityId: string }>
   | BaseAppEvent<"VAULT:BATCH_CREATED", "vault", { entities: any[] }>
@@ -33,7 +39,7 @@ export type VaultAppEvent =
   | BaseAppEvent<
       "VAULT:SYNC_CHUNK_READY",
       "vault",
-      { newOrChangedIds: string[] }
+      { newOrChangedIds: string[]; entities: any[] }
     >;
 
 export type OracleAppEvent = BaseAppEvent<

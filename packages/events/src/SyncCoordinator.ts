@@ -3,7 +3,7 @@ import type { AppEvent } from "./types";
 
 export class SyncCoordinator {
   private channel: BroadcastChannel | null = null;
-  private isProcessingRemote = false;
+  private unsubscribe: (() => void) | null = null;
 
   constructor(
     private bus: AppEventBus,
@@ -14,10 +14,9 @@ export class SyncCoordinator {
       typeof BroadcastChannel !== "undefined"
     ) {
       this.channel = new BroadcastChannel(this.channelName);
-      this.channel.onmessage = (event) => this.handleRemoteEvent(event.data);
+      this.channel.onmessage = (msg) => this.handleRemoteEvent(msg.data);
 
-      // Subscribe to local events to broadcast them
-      this.bus.subscribe(
+      this.unsubscribe = this.bus.subscribe(
         "*",
         (appEvent) => {
           if (appEvent.metadata.sync && !appEvent.metadata.remote) {
@@ -30,26 +29,29 @@ export class SyncCoordinator {
   }
 
   private broadcast(event: AppEvent): void {
-    if (this.channel) {
-      this.channel.postMessage(event);
+    if (!this.channel) return;
+    try {
+      this.channel.postMessage(JSON.stringify(event));
+    } catch {
+      // Ignore events that are not JSON-serializable
     }
   }
 
-  private handleRemoteEvent(event: AppEvent): void {
-    // Loop prevention: events arriving here are by definition remote
-    // We mark them as remote so they don't get re-broadcasted by the local subscriber
-    const remoteEvent: AppEvent = {
-      ...event,
-      metadata: {
-        ...event.metadata,
-        remote: true,
-      },
-    };
-
-    this.bus.emit(remoteEvent);
+  private handleRemoteEvent(data: unknown): void {
+    if (typeof data !== "string") return;
+    let event: AppEvent;
+    try {
+      event = JSON.parse(data) as AppEvent;
+    } catch {
+      return;
+    }
+    // Loop prevention: mark as remote so the local subscriber won't re-broadcast
+    this.bus.emit({ ...event, metadata: { ...event.metadata, remote: true } });
   }
 
   destroy(): void {
+    this.unsubscribe?.();
+    this.unsubscribe = null;
     if (this.channel) {
       this.channel.close();
       this.channel = null;

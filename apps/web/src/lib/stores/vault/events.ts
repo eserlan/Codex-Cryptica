@@ -86,11 +86,31 @@ export class VaultEventBus {
     let appEvent: AppEvent | null = null;
 
     switch (event.type) {
+      case "VAULT_OPENING":
+        appEvent = {
+          type: "VAULT:VAULT_OPENING",
+          domain: "vault",
+          payload: {},
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "CACHE_LOADED":
+        appEvent = {
+          type: "VAULT:CACHE_LOADED",
+          domain: "vault",
+          payload: { entities: Object.values(event.entities) },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
       case "ENTITY_UPDATED":
         appEvent = {
           type: "VAULT:ENTITY_UPDATED",
           domain: "vault",
-          payload: { id: event.entity.id, patch: event.patch },
+          payload: {
+            id: event.entity.id,
+            patch: event.patch,
+            entity: event.entity,
+          },
           metadata: { timestamp, vaultId: event.vaultId },
         };
         break;
@@ -138,7 +158,12 @@ export class VaultEventBus {
         appEvent = {
           type: "VAULT:SYNC_CHUNK_READY",
           domain: "vault",
-          payload: { newOrChangedIds: event.newOrChangedIds },
+          payload: {
+            newOrChangedIds: event.newOrChangedIds,
+            entities: event.newOrChangedIds
+              .map((id) => event.entities[id])
+              .filter(Boolean),
+          },
           metadata: { timestamp, vaultId: event.vaultId },
         };
         break;

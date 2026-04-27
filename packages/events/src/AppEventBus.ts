@@ -54,7 +54,7 @@ export class AppEventBus {
       for (const set of registeredSets) {
         set.delete(listener);
       }
-      if (name) {
+      if (name && this.namedListeners.get(name) === listener) {
         this.namedListeners.delete(name);
       }
     };
@@ -102,7 +102,8 @@ export class AppEventBus {
     this.globalListeners.clear();
     this.domainListeners.clear();
     this.typeListeners.clear();
-    this.namedListeners.clear();
+    // Named listeners are intentionally preserved — they belong to long-lived
+    // services (SearchService, SyncCoordinator) that survive vault switches.
   }
 }
 

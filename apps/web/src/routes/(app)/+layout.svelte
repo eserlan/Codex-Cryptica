@@ -3,7 +3,7 @@
   import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -54,6 +54,7 @@
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
   let globalListenersCleanup: (() => void) | null = null;
+  let syncCoordinator: InstanceType<typeof SyncCoordinator> | null = null;
 
   // Derived
   const isPopup = $derived(
@@ -74,6 +75,11 @@
       themeStore.currentThemeId = requestedTheme;
     }
   }
+
+  onDestroy(() => {
+    syncCoordinator?.destroy();
+    syncCoordinator = null;
+  });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
@@ -122,7 +128,7 @@
       registerServiceWorker();
 
       if (browser) {
-        new SyncCoordinator(appEventBus);
+        syncCoordinator = new SyncCoordinator(appEventBus);
       }
 
       console.log("[Layout] Calling setupWindowGlobals");

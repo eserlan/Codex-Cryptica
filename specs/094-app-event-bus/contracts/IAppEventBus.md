@@ -26,7 +26,8 @@ export interface IAppEventBus {
   emit(event: AppEvent): void;
 
   /**
-   * Clear all non-named listeners.
+   * Clear all non-named listeners. Named listeners are preserved so that
+   * long-lived services (SearchService, SyncCoordinator) survive vault switches.
    */
   reset(): void;
 }
@@ -34,4 +35,4 @@ export interface IAppEventBus {
 
 ## Broadcasting Contract
 
-Events with `sync: true` will be serialized via `JSON.stringify` and sent over a `BroadcastChannel` named `codex-system-events`. Receiving tabs will re-emit these events locally with a `remote: true` flag added to the metadata.
+Events with `metadata.sync: true` will be serialized via `JSON.stringify` and sent over a `BroadcastChannel` named `codex-system-events`. Receiving tabs will parse the message and re-emit locally with `metadata.remote: true` to prevent re-broadcast loops.

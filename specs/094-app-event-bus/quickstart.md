@@ -29,7 +29,7 @@ appEventBus.emit({
   type: "UI:SIDEBAR_TOGGLED",
   domain: "ui",
   payload: { open: true },
-  timestamp: Date.now(),
+  metadata: { timestamp: Date.now() },
 });
 
 // Cross-tab synchronized event
@@ -37,7 +37,6 @@ appEventBus.emit({
   type: "ORACLE:UNDO_PERFORMED",
   domain: "oracle",
   payload: { messageId: "123" },
-  sync: true, // This will be sent to other tabs
-  timestamp: Date.now(),
+  metadata: { timestamp: Date.now(), sync: true }, // sync: true broadcasts to other tabs
 });
 ```

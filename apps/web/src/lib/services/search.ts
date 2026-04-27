@@ -42,17 +42,63 @@ export class SearchService {
         async (event) => {
           // VALIDATION: All sync/load events MUST match the current active vault ID
           // to prevent cross-vault index contamination during rapid switches.
+          // VAULT_OPENING and VAULT_SWITCHED are exempt — they drive the transition.
           const vaultId = event.metadata.vaultId;
           if (
             vaultId &&
             vaultId !== this.activeVaultId &&
-            event.type !== "VAULT:VAULT_OPENING"
+            event.type !== "VAULT:VAULT_OPENING" &&
+            event.type !== "VAULT:VAULT_SWITCHED"
           ) {
             return;
           }
 
           switch (event.type) {
-            case "VAULT:VAULT_SWITCHED": // Using bridged event type
+            case "VAULT:VAULT_OPENING":
+              if (this.activeVaultId !== vaultId) {
+                this.activeVaultId = vaultId!;
+                this.isDirty = false;
+                await this.clear();
+              }
+              break;
+
+            case "VAULT:CACHE_LOADED": {
+              const restored = await this.loadIndex(vaultId!);
+              if (!restored) {
+                debugStore.log(
+                  `[SearchService] Cold boot: Rebuilding index for ${vaultId}`,
+                );
+                await this.indexBatch(event.payload.entities);
+                this.needsFullContentSweep = true;
+                debugStore.log(`[SearchService] Metadata indexing complete.`);
+              } else {
+                this.needsFullContentSweep = false;
+                debugStore.log(
+                  `[SearchService] Warm boot: Restored index for ${vaultId}`,
+                );
+              }
+              break;
+            }
+
+            case "VAULT:SYNC_CHUNK_READY": {
+              const { entities } = event.payload;
+              if (entities.length > 0) {
+                await this.indexBatch(entities);
+              }
+              break;
+            }
+
+            case "VAULT:SYNC_COMPLETE":
+              if (this.needsFullContentSweep) {
+                setTimeout(() => {
+                  this.indexContentInBackground(vaultId!);
+                }, 3000);
+                this.needsFullContentSweep = false;
+              }
+              break;
+
+            case "VAULT:VAULT_SWITCHED":
+              // Fallback: sync activeVaultId if VAULT_OPENING was missed
               if (this.activeVaultId !== event.payload.id) {
                 this.activeVaultId = event.payload.id;
                 this.isDirty = false;
@@ -60,10 +106,8 @@ export class SearchService {
               }
               break;
 
-            // Note: Some events still coming through vaultEventBus bridge
-            // We will handle them as they are migrated.
             case "VAULT:ENTITY_UPDATED": {
-              const { patch, id } = event.payload;
+              const { patch, entity } = event.payload;
               if (
                 patch.title !== undefined ||
                 patch.aliases !== undefined ||
@@ -71,18 +115,7 @@ export class SearchService {
                 patch.tags !== undefined ||
                 patch.lore !== undefined
               ) {
-                // We need the full entity, which isn't in the AppEvent payload yet
-                // For US2, we'll assume the bridge provides what's needed or
-                // we fetch it. The bridge currently only sends id and patch.
-                // We'll update the bridge to send the full entity if needed,
-                // or let SearchService fetch from DB.
-                const entity = await entityDb.graphEntities.get(id);
-                if (entity) {
-                  const content = await entityDb.entityContent.get(id);
-                  await this.index(
-                    this.mapToSearchEntry({ ...entity, ...content }),
-                  );
-                }
+                await this.index(this.mapToSearchEntry(entity));
               }
               break;
             }
