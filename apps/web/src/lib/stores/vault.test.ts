@@ -397,8 +397,7 @@ describe("VaultStore", () => {
       await testVault.loadFiles();
 
       expect(testVault.entities["e1"]).toBeDefined();
-      // loadFiles is now backgrounded even if cache is hit
-      expect(mockRepository.loadFiles).toHaveBeenCalled();
+      expect(mockRepository.loadFiles).not.toHaveBeenCalled();
     });
 
     it("should perform full sync if cache is empty or skipSyncIfWarm is false", async () => {
