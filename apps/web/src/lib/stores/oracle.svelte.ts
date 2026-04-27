@@ -19,6 +19,7 @@ import {
   OracleActionExecutor,
   OracleSettingsService,
   UndoRedoService,
+  ORACLE_EVENTS,
   type ChatMessage,
   type UndoableAction,
   type OracleExecutionContext,
@@ -475,7 +476,7 @@ export class OracleStore {
     await this.undoRedo.undo((action) => {
       if (action?.messageId) {
         appEventBus.emit({
-          type: "ORACLE:UNDO_PERFORMED",
+          type: ORACLE_EVENTS.UNDO_PERFORMED,
           domain: "oracle",
           payload: { messageId: action.messageId },
           metadata: { timestamp: Date.now(), sync: true },

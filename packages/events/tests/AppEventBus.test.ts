@@ -90,6 +90,46 @@ describe("AppEventBus", () => {
     expect(listener2).toHaveBeenCalled();
   });
 
+  it("should preserve named listeners when reset is called", () => {
+    const namedListener = vi.fn();
+    const anonymousListener = vi.fn();
+
+    bus.subscribe("VAULT:*", namedListener, "long-lived-service");
+    bus.subscribe("VAULT:*", anonymousListener);
+
+    bus.reset();
+
+    bus.emit({
+      type: "VAULT:VAULT_SWITCHED",
+      domain: "vault",
+      payload: { id: "v1" },
+      metadata: { timestamp: Date.now() },
+    });
+
+    expect(namedListener).toHaveBeenCalledTimes(1);
+    expect(anonymousListener).not.toHaveBeenCalled();
+  });
+
+  it("should not let an old unsubscribe remove a newer named listener", () => {
+    const listener1 = vi.fn();
+    const listener2 = vi.fn();
+
+    const oldUnsubscribe = bus.subscribe("VAULT:*", listener1, "replaceable");
+    bus.subscribe("VAULT:*", listener2, "replaceable");
+
+    oldUnsubscribe();
+
+    bus.emit({
+      type: "VAULT:VAULT_SWITCHED",
+      domain: "vault",
+      payload: { id: "v1" },
+      metadata: { timestamp: Date.now() },
+    });
+
+    expect(listener1).not.toHaveBeenCalled();
+    expect(listener2).toHaveBeenCalledTimes(1);
+  });
+
   it("should cleanup listeners on unsubscribe", () => {
     const listener = vi.fn();
     const unsub = bus.subscribe("VAULT:*", listener);

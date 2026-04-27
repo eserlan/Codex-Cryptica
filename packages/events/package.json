@@ -8,7 +8,8 @@
   "scripts": {
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit --project tsconfig.test.json"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",

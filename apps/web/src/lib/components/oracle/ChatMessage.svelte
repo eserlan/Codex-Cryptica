@@ -27,6 +27,7 @@
   import { sanitizeId } from "$lib/utils/markdown";
   import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
   import { appEventBus } from "@codex/events";
+  import { ORACLE_EVENTS } from "@codex/oracle-engine";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
   const chatMessageActions = new ChatMessageActions({
@@ -54,9 +55,9 @@
   let lastParsedContent = "";
 
   onMount(() => {
-    return appEventBus.subscribe("ORACLE:UNDO_PERFORMED", (event) => {
+    return appEventBus.subscribe(ORACLE_EVENTS.UNDO_PERFORMED, (event) => {
       if (
-        event.type === "ORACLE:UNDO_PERFORMED" &&
+        event.type === ORACLE_EVENTS.UNDO_PERFORMED &&
         event.payload.messageId === message.id
       ) {
         isSaved = false;

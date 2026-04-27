@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./events";
 export * from "./oracle-parser";
 export * from "./oracle-executor";
 export * from "./oracle-generator";

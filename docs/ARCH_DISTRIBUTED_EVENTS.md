@@ -95,8 +95,10 @@ export type AppEventListener<Event extends RegisteredAppEvent> = (
 Important constraints:
 
 - Registry entries must include both `domain` and `payload`.
+- All transport-related fields (`timestamp`, `sync`, `remote`, `vaultId`) belong under `metadata`; they must not be modeled as top-level `AppEvent` fields.
 - The core package should use `unknown` only where truly unavoidable. It should not use `any` as a fallback for missing payload definitions.
 - `EventDomain` should be derived from registered events instead of maintained as a separate centralized union.
+- The core package must not rely on app-owned augmentations in its own runtime implementation. If the registry is empty inside `packages/events`, `RegisteredAppEvent` evaluates to `never`. Keep an internal runtime envelope type for implementation details, and use test-only module augmentations for type-level tests.
 
 ## 2. Typed Bus API
 
@@ -116,8 +118,20 @@ export class AppEventBus {
     name?: string,
   ): () => void;
 
+  subscribe<Type extends AppEventType>(
+    filter: readonly Type[],
+    listener: AppEventListener<AppEventOf<Type>>,
+    name?: string,
+  ): () => void;
+
   subscribe<Domain extends AppEventDomain>(
     filter: `${Uppercase<Domain>}:*`,
+    listener: AppEventListener<AppEventForDomain<Domain>>,
+    name?: string,
+  ): () => void;
+
+  subscribe<Domain extends AppEventDomain>(
+    filter: readonly `${Uppercase<Domain>}:*`[],
     listener: AppEventListener<AppEventForDomain<Domain>>,
     name?: string,
   ): () => void;
@@ -128,17 +142,26 @@ export class AppEventBus {
     name?: string,
   ): () => void;
 
+  subscribe(
+    filter: readonly EventWildcard[],
+    listener: AppEventListener<RegisteredAppEvent>,
+    name?: string,
+  ): () => void;
+
   // Implementation overload — most permissive, runtime-only.
   // The typed overloads above provide the public surface; this overload is
   // not part of the public API and should not be called directly.
   subscribe(
-    filter: AppEventType | EventWildcard | Array<AppEventType | EventWildcard>,
+    filter:
+      | AppEventType
+      | EventWildcard
+      | readonly (AppEventType | EventWildcard)[],
     listener: AppEventListener<RegisteredAppEvent>,
     name?: string,
   ): () => void {
     // Existing set/map dispatch can remain runtime-oriented (lowercase matching, etc.).
-    // The typed overloads guarantee callers pass valid filters; the implementation
-    // does not need to re-validate them at runtime.
+    // TypeScript catches normal invalid callers, but runtime validation may still be
+    // useful for JS callers, dynamic strings, casts, and stale plugin code.
   }
 
   emit<Type extends AppEventType>(event: AppEventOf<Type>): void {
@@ -168,9 +191,9 @@ export const VAULT_EVENTS = {
   VAULT_SWITCHED: "VAULT:VAULT_SWITCHED",
 } as const;
 
-// IMPORTANT: TypeScript does not allow computed property names in module augmentation.
-// The declare module block must use string literals directly, even though the
-// VAULT_EVENTS constants are used at call sites. Keep them in sync manually.
+// Prefer string literal keys in module augmentation unless type-level tests prove
+// computed keys preserve literal registry entries. Constants remain the public API
+// for callers; string-literal registry keys make the augmentation easier to audit.
 declare module "@codex/events" {
   interface AppEventRegistry {
     "VAULT:VAULT_OPENING": AppEventDefinition<"vault", Record<string, never>>;
@@ -208,9 +231,9 @@ export * from "./events";
 
 The consumer's `tsconfig.json` must also resolve the package via `paths` or workspace symlinks. In `apps/web/tsconfig.json`, verify `@codex/vault-engine` resolves to `packages/vault-engine/src/index.ts` (not a built `dist/`). If it resolves to a `dist/` that was compiled before augmentations were added, TypeScript will silently see stale types.
 
-**Requirement 2 — the augmenting module must be imported at runtime.**
+**Requirement 2 — the augmenting module must be included by a non-type-erased import.**
 
-A `declare module` block only widens the registry if the file containing it is part of the compiled program. Type-only imports (`import type`) do not guarantee this. Consumers must use a value import or side-effect import:
+A `declare module` block only widens the registry if the file containing it is part of the TypeScript program. Type-only imports (`import type`) do not reliably force that in application bundles because they can be erased. Consumers should use a value import or side-effect import when they depend on an augmentation being visible:
 
 ```typescript
 import { appEventBus } from "@codex/events";
@@ -230,8 +253,10 @@ For application-wide event availability, `apps/web` should have one explicit reg
 
 import "@codex/vault-engine";
 import "@codex/oracle-engine";
-import "@codex/graph-engine";
+import "graph-engine";
 ```
+
+The package names in this example should match the actual workspace package names. Some packages currently use scoped names such as `@codex/vault-engine`, while others use unscoped names such as `graph-engine`. Normalize package names separately if desired; do not hide naming drift inside the event registry migration.
 
 If this file is added, document why it exists and add a type-level test that verifies each augmentation is visible from this module. A pure `import type` of this file is not sufficient.
 
@@ -241,9 +266,10 @@ If this file is added, document why it exists and add a type-level test that ver
 2. Add compile-time tests for valid emits, invalid event names, exact payload inference, wildcard domain inference, and global wildcard inference.
 3. Add runtime tests proving the existing dispatch, named listener replacement, unsubscribe, error isolation, and reset behavior still work.
 4. Move Vault event constants and registry entries to the package that owns Vault behavior.
-5. Move Oracle, UI, Sync, Graph, and future domain events incrementally.
-6. Replace hardcoded event strings in app code with exported constants.
-7. Remove the old centralized event union after all domains are registered.
+5. Bridge all existing Vault lifecycle events before migrating consumers. This includes cold/warm boot and indexing events such as `VAULT_OPENING`, `CACHE_LOADED`, `SYNC_CHUNK_READY`, and `SYNC_COMPLETE`; otherwise services like search can lose initial indexing or background sweep behavior.
+6. Move Oracle, UI, Sync, Graph, and future domain events incrementally.
+7. Replace hardcoded event strings in app code with exported constants.
+8. Remove the old centralized event union after all domains are registered.
 
 ## 6. Fate Of The VaultEventBus Bridge
 
@@ -251,15 +277,35 @@ The current architecture has a legacy `VaultEventBus` in `apps/web/src/lib/store
 
 Once vault event definitions are registered in `vault-engine` (migration step 4), the bridge can be removed incrementally:
 
-1. **vault-engine emits directly.** Any code inside `vault-engine` that currently dispatches `VaultEvent`s should switch to emitting typed `AppEvent`s via an injected `AppEventBus` reference. `vault-engine` must not import the singleton `appEventBus` directly — it should receive the bus as a constructor argument or via a callback, preserving its testability.
+1. **vault-engine emits directly.** Any code inside `vault-engine` that currently dispatches `VaultEvent`s should switch to emitting typed `AppEvent`s through an injected event sink interface, not the concrete singleton. For example, accept `{ emit(event): void }` or a callback in constructors. `vault-engine` must not import the singleton `appEventBus` directly, preserving testability and keeping domain packages loosely coupled to the bus implementation.
 
-2. **Web app consumers migrate off VaultEventBus.** Components and services subscribed to `vaultEventBus` switch to `appEventBus.subscribe(VAULT_EVENTS.*, ...)`. The bridge continues to emit both while any legacy listener remains.
+2. **Bridge parity is proven first.** The bridge must emit AppEvent equivalents for every legacy `VaultEvent` that still drives behavior. In particular, search/indexing paths must continue to receive cache-load, vault-opening, sync-chunk, and sync-complete events with enough payload data to rebuild or update the index.
 
-3. **Bridge is removed.** Once no code subscribes to `vaultEventBus` directly, the bridge and the `VaultEventBus` class are deleted.
+3. **Web app consumers migrate off VaultEventBus.** Components and services subscribed to `vaultEventBus` switch to `appEventBus.subscribe(VAULT_EVENTS.*, ...)`. The bridge continues to emit both while any legacy listener remains.
+
+4. **Bridge is removed.** Once no code subscribes to `vaultEventBus` directly, the bridge and the `VaultEventBus` class are deleted.
 
 Do not delete `VaultEventBus` before all consumers are migrated. The bridge is a compatibility shim, not part of the target architecture.
 
-## 7. Testing Requirements
+## 7. Cross-Tab Transport
+
+`CrossTabBroadcaster` is the event bus adapter for browser tab synchronization. The target contract is JSON string transport over `BroadcastChannel`, not browser structured clone of raw event objects:
+
+1. Local events with `metadata.sync: true` and no `metadata.remote` are serialized with `JSON.stringify(event)` and sent over `codex-system-events`.
+2. Serialization failures are ignored so non-JSON-compatible payloads do not break local event dispatch.
+3. Remote messages are accepted only when they are strings that parse into valid event envelopes.
+4. Re-emitted remote events must set `metadata.remote: true` to prevent broadcast loops.
+5. The broadcaster must expose `destroy()` and callers must invoke it from component/service teardown, including Svelte `onDestroy` or an `onMount` cleanup return.
+
+This keeps the documented JSON-compatible payload rule enforceable. If the project later chooses structured clone semantics instead, update this document, the Speckit contract, and runtime tests in the same change.
+
+## 8. Listener Semantics
+
+Named listeners are globally unique by name across the bus, not scoped by domain or filter. Registering a new listener with an existing name replaces the previous registration everywhere.
+
+`reset()` clears non-named listeners and preserves named listeners. This is intentional: long-lived services such as search and cross-tab broadcasting should survive vault switches. Unsubscribe closures must only remove the named-listener mapping if it still points at the same listener instance, so an old unsubscribe cannot delete a newer replacement with the same name.
+
+## 9. Testing Requirements
 
 Runtime tests should cover:
 
@@ -267,9 +313,11 @@ Runtime tests should cover:
 - Domain wildcard subscribers receive events from that domain only.
 - Global subscribers receive all events.
 - Named listeners replace prior registrations without duplicate calls.
+- Old unsubscribe closures do not delete newer listeners registered with the same name.
 - `reset()` clears non-named listeners and preserves named long-lived listeners.
 - Listener errors do not stop other listeners.
-- Sync events remain serializable before `BroadcastChannel` forwarding.
+- Cross-tab forwarding uses JSON string transport, rejects malformed remote messages, tags remote events with `metadata.remote: true`, and unsubscribes/closes cleanly on `destroy()`.
+- Vault bridge parity covers lifecycle and indexing events before consumers migrate from `VaultEventBus`.
 
 Type-level tests should cover:
 
@@ -281,7 +329,7 @@ Type-level tests should cover:
 - Global wildcard `subscribe()` callbacks infer the full registered event union.
 - Domain augmentations are visible through package public entrypoints.
 
-## 8. Risks And Decisions
+## 10. Risks And Decisions
 
 ### Module augmentation visibility
 
@@ -297,9 +345,9 @@ Decision: keep runtime matching simple, but add explicit helper types and tests.
 
 ### Computed keys in declare module
 
-Risk: a developer writes `[VAULT_EVENTS.VAULT_OPENING]: AppEventDefinition<...>` inside `declare module "@codex/events"` and sees no immediate TypeScript error, but the augmentation silently produces an index signature instead of a literal key, breaking narrowing.
+Risk: a developer writes `[VAULT_EVENTS.VAULT_OPENING]: AppEventDefinition<...>` inside `declare module "@codex/events"` and assumes it preserves a literal registry key. Current TypeScript can preserve this when the constant is a literal, but the behavior depends on the expression staying simple and test-covered.
 
-Decision: `declare module` blocks must always use string literals as keys (e.g., `"VAULT:VAULT_OPENING"`). The `VAULT_EVENTS` constants are used only at call sites (`subscribe`, `emit`). Add a type-level test that asserts `AppEventRegistry["VAULT:VAULT_OPENING"]` is the expected `AppEventDefinition` shape — this catches the regression.
+Decision: prefer string literals as registry keys (e.g., `"VAULT:VAULT_OPENING"`) because they are easiest to audit and least likely to widen unexpectedly. Computed keys are allowed only if type-level tests prove `AppEventRegistry["VAULT:VAULT_OPENING"]` resolves to the expected `AppEventDefinition` shape.
 
 ### Payload type ownership
 

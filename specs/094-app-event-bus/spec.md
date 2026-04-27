@@ -5,6 +5,8 @@
 **Status**: Draft  
 **Input**: User description: "Implement a generalized AppEventBus as proposed in docs/ARCHITECTURE_EVENTS.md to unify VaultEventBus, BroadcastChannel, and custom DOM events."
 
+> Follow-up architecture note: `docs/ARCH_DISTRIBUTED_EVENTS.md` proposes replacing the current centralized `AppEvent` union with a distributed module-augmentation registry. This spec describes the current AppEventBus feature and must stay compatible with that migration path.
+
 ## Clarifications
 
 ### Session 2026-04-27
@@ -63,27 +65,38 @@ As a user with multiple tabs open, I want my actions in one tab (like undoing an
 ### Edge Cases
 
 - **Listener Failures**: How does the system handle an event listener that throws an error? (It should not crash the emitter or prevent other listeners from firing).
-- **Rapid Bursts**: How does the system handle hundreds of events firing in a few milliseconds? (Should support debouncing or batching for specific event types).
+- **Rapid Bursts**: How does the system handle hundreds of events firing in a few milliseconds? (System MUST support optional debouncing or throttling for specific listeners as per FR-008).
 - **Circular Dependencies**: What happens if listener A emits an event that listener B hears, which then emits an event listener A hears? (Should have safeguards or patterns to avoid infinite loops).
 - **Stale Listeners**: Ensuring listeners are properly cleaned up when components unmount to prevent memory leaks.
+- **Named Listener Replacement**: Replacing a named listener must not allow the old unsubscribe closure to remove the newer registration.
+- **Bridge Parity**: Legacy `VaultEventBus` lifecycle events must keep emitting AppEvent equivalents until all consumers migrate, including cache-load and sync progress events that drive search indexing.
+- **Untrusted Cross-Tab Messages**: Events received through `BroadcastChannel` must be parsed defensively and rejected if they are malformed.
 
 ## Requirements
 
 ### Functional Requirements
 
 - **FR-001**: System MUST provide a centralized `AppEventBus` that supports multiple event domains (Vault, Oracle, UI, System).
-- **FR-002**: Event payloads MUST be strictly typed using TypeScript union types.
+- **FR-002**: Event payloads MUST be strictly typed. The current implementation uses a centralized TypeScript union; the follow-up distributed registry MUST preserve equivalent or stronger payload inference without making `packages/events` import domain packages.
 - **FR-003**: System MUST allow listeners to subscribe to specific event types, entire domains (wildcards), or all events.
-- **FR-004**: System MUST support named listeners to prevent duplicate registrations and aid debugging.
-- **FR-005**: System MUST provide a mechanism to broadcast events marked with `sync: true` across browser tabs/windows (unifying `BroadcastChannel` usage).
+- **FR-004**: System MUST support globally unique named listeners to prevent duplicate registrations and aid debugging. Registering the same name again MUST replace the previous registration.
 - **FR-006**: Event emission MUST be synchronous by default, executing all registered listeners immediately on the same task.
 - **FR-007**: Event state MUST be transient and in-memory; events are not persisted across page reloads.
-- **FR-008**: System MUST only broadcast events explicitly marked with the `sync: true` property in their payload to prevent sync loops and redundant processing.
+- **FR-008**: System MUST support optional listener debouncing or throttling to handle high-frequency events without UI blocking.
 - **FR-009**: Subscribing to the bus MUST return an unsubscription function for clean lifecycle management.
+- **FR-010**: `reset()` MUST clear non-named listeners and preserve named long-lived listeners.
+- **FR-011**: System MUST provide a mechanism to broadcast events marked with `metadata.sync: true` across browser tabs/windows (unifying `BroadcastChannel` usage). Broadcasting MUST serialize events as JSON strings, reject malformed remote messages, and re-emit valid remote events with `metadata.remote: true`.
+- **FR-012**: Domain packages SHOULD own their event constants and payload types. A future distributed registry MUST expose those registrations through package public entrypoints and avoid `any` fallbacks.
+- **FR-013**: The distributed registry migration MUST preserve existing runtime behavior for dispatch, wildcard filters, named listeners, reset, cross-tab sync, and VaultEventBus bridge parity until the bridge is retired.
+- **FR-014**: `packages/events` MUST NOT import domain packages to discover event types. Domain packages MUST register events through TypeScript module augmentation.
+- **FR-015**: Consumers SHOULD use exported event constants for registered events instead of hardcoded event strings once the owning domain package exposes constants.
+- **FR-016**: The legacy centralized event union MUST NOT be removed until all first-party event domains are registered and type-level tests prove augmentation visibility from the web app.
 
 ### Key Entities
 
-- **AppEvent**: A unified data structure representing a change or action in the system, containing a type, domain, and payload.
+- **AppEvent**: A unified data structure representing a change or action in the system, containing `type`, `domain`, `payload`, and `metadata`.
+- **AppEventRegistry**: A TypeScript interface in `packages/events` that domain packages augment with their own event definitions.
+- **AppEventDefinition**: The registry entry shape containing a domain and payload type for one event type.
 - **EventListener**: A callback function or object that reacts to specific `AppEvent` instances.
 - **EventDomain**: A logical grouping of events (e.g., `vault`, `oracle`, `sync`, `ui`).
 
@@ -95,3 +108,7 @@ As a user with multiple tabs open, I want my actions in one tab (like undoing an
 - **SC-002**: Eliminate all direct `new BroadcastChannel()` calls in components, replacing them with a centralized service.
 - **SC-003**: 100% of event listeners catch and log errors without interrupting the main execution flow.
 - **SC-004**: System-wide "Vault Switch" duration (time from click to all stores reset) remains under 200ms despite moving to an event-based trigger.
+- **SC-005**: `packages/events` contains no domain-owned payload types after the distributed registry migration.
+- **SC-006**: Type-level tests prove exact payload inference for specific events, domain wildcard union inference, invalid event rejection, and augmentation visibility from app consumers.
+- **SC-007**: All first-party event domains used by the current app are registered through owning modules or explicitly documented app-owned modules.
+- **SC-008**: The legacy `VaultEventBus` bridge is removed only after an audit shows no runtime consumers remain.

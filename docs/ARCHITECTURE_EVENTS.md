@@ -2,33 +2,35 @@
 
 ## Overview
 
-Codex-Cryptica currently employs a hybrid event architecture to manage state synchronization, cross-tab coordination, and UI-to-logic signaling. This document assesses the current patterns and proposes a more unified strategy to improve maintainability and performance.
+Codex-Cryptica is migrating from a hybrid event architecture to a unified `@codex/events` package for application-wide coordination and cross-tab synchronization. This document describes the current state and the remaining migration direction.
 
 ## Current Patterns
 
-| Pattern                | Scope              | Primary Use Case                                                   | Example                                                      |
-| :--------------------- | :----------------- | :----------------------------------------------------------------- | :----------------------------------------------------------- |
-| **`VaultEventBus`**    | Internal (Svelte)  | Store-to-store coordination within the vault domain.               | `SYNC_CHUNK_READY` -> `SearchService` (re-indexing).         |
-| **`BroadcastChannel`** | Cross-Tab / Worker | Synchronizing state across multiple windows or background threads. | `UNDO_PERFORMED` in Oracle store -> `ChatMessage` component. |
-| **Custom DOM Events**  | Global (`window`)  | Signaling state changes to decoupled systems.                      | `vault-switched` -> `GraphView` (resetting camera).          |
-| **Prop Callbacks**     | Local (Component)  | Svelte 5 standard for parent-child interaction.                    | `onNodeTap` in `GraphView`.                                  |
+| Pattern                | Scope              | Primary Use Case                                   | Example                                                |
+| :--------------------- | :----------------- | :------------------------------------------------- | :----------------------------------------------------- |
+| **`AppEventBus`**      | App / package      | Store and service coordination across domains.     | `VAULT:ENTITY_UPDATED` -> `SearchService` re-indexing. |
+| **`VaultEventBus`**    | Legacy bridge      | Compatibility for existing vault-domain listeners. | `SYNC_CHUNK_READY` -> `VAULT:SYNC_CHUNK_READY`.        |
+| **`BroadcastChannel`** | Cross-Tab / Worker | Transport used behind `CrossTabBroadcaster`.       | `ORACLE:UNDO_PERFORMED` mirrored across tabs.          |
+| **Custom DOM Events**  | Global (`window`)  | Signaling state changes to decoupled systems.      | `vault-switched` -> `GraphView` (resetting camera).    |
+| **Prop Callbacks**     | Local (Component)  | Svelte 5 standard for parent-child interaction.    | `onNodeTap` in `GraphView`.                            |
 
 ---
 
 ## 1. The `VaultEventBus`
 
-The `VaultEventBus` is the most robust internal event system in the project. It uses a strongly-typed pattern that ensures subscribers handle predictable payloads.
+The `VaultEventBus` is now a compatibility bridge. It still supports existing vault-domain listeners, but it also emits AppEvent equivalents onto `AppEventBus`.
 
 - **Strengths**: Type-safety, predictable execution (async handling), and naming support (preventing duplicate listeners).
-- **Weaknesses**: Hard-coded to the "Vault" domain. Other systems (Oracle, Timeline, UI) lack a similarly structured bus and instead rely on more brittle DOM events.
+- **Weaknesses**: Hard-coded to the "Vault" domain and no longer the target architecture.
 
 ### Recommendation
 
-**Promote to a Core `AppEventBus`**. The project now includes a generalized `@codex/events` package that provides a type-safe, domain-based event bus.
+**Migrate consumers to `AppEventBus`**. The project now includes a generalized `@codex/events` package that provides a type-safe, domain-based event bus.
 
 - **Location**: `packages/events`
-- **Pattern**: Discriminated unions for payloads, Map-based listener sets for domains.
+- **Pattern**: Current implementation uses a centralized discriminated union for payloads and map-based listener sets for domains. The follow-up proposal in `docs/ARCH_DISTRIBUTED_EVENTS.md` moves payload ownership into domain packages through a distributed registry.
 - **Wildcards**: Supports `DOMAIN:*` for domain-wide listening and `*` for global listening.
+- **Named listeners**: Names are globally unique. Reusing a name replaces the previous registration; `reset()` preserves named long-lived listeners.
 
 ---
 
@@ -45,7 +47,9 @@ The `vault-switched` event is currently being migrated to the `AppEventBus` unde
 The `CrossTabBroadcaster` in `@codex/events` now unifies cross-tab communication.
 
 - **Mechanism**: Attaches to `AppEventBus` and listens for events with `metadata.sync: true`.
+- **Transport**: Serializes events with `JSON.stringify` before posting to `BroadcastChannel`, so synced payloads must be JSON-compatible.
 - **Loop Prevention**: Automatically marks received remote events with `metadata.remote: true` to prevent re-broadcasting.
+- **Validation**: Ignores non-string, invalid JSON, and malformed remote event envelopes.
 - **Usage**: Replace `new BroadcastChannel()` with `appEventBus.emit({ ..., metadata: { sync: true } })`.
 
 ---
@@ -66,7 +70,7 @@ Keep this pattern but **standardize the event naming and payload schema**. Use a
 
 ### Phase 1: Generalize the Event Bus
 
-Refactor `VaultEventBus` into a generic `EventBus<T>` and move it to a shared location.
+Completed in the current branch through `packages/events`.
 
 - Define a top-level `AppEvent` union type.
 - Migrate `vault-switched` from DOM events to the bus.
@@ -81,6 +85,15 @@ Move side effects that currently live inside store setters (like search indexing
 ### Phase 3: Centralized Cross-Tab Coordination
 
 Consolidate `BroadcastChannel` usage into a single service that mirrors specific `AppEventBus` events across tabs automatically based on a "sync" flag.
+
+### Phase 4: Distributed Event Registry
+
+Adopt `docs/ARCH_DISTRIBUTED_EVENTS.md` as the next architecture step:
+
+- Keep `packages/events` independent from domain packages.
+- Move event constants and payload definitions into owning packages.
+- Register events through TypeScript module augmentation and package public entrypoints.
+- Add type-level tests for exact payload inference, wildcard inference, and augmentation visibility.
 
 ## Why Do More?
 

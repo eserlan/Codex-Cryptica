@@ -11,6 +11,7 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@codex/events": "^0.0.0",
     "dice-engine": "*",
     "idb": "^8.0.3"
   },

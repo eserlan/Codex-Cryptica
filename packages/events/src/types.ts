@@ -1,5 +1,3 @@
-export type EventDomain = "vault" | "oracle" | "sync" | "ui" | "system";
-
 export interface AppEventMetadata {
   sync?: boolean;
   timestamp: number;
@@ -7,53 +5,83 @@ export interface AppEventMetadata {
   vaultId?: string;
 }
 
-export interface BaseAppEvent<
-  T extends string,
-  D extends EventDomain,
-  P = any,
-> {
-  type: T;
-  domain: D;
-  payload: P;
+export interface RuntimeAppEvent {
+  type: string;
+  domain: string;
+  payload: unknown;
   metadata: AppEventMetadata;
 }
 
-// Domain-specific event unions (to be expanded)
-export type VaultAppEvent =
-  | BaseAppEvent<"VAULT:VAULT_OPENING", "vault", Record<string, never>>
-  | BaseAppEvent<"VAULT:CACHE_LOADED", "vault", { entities: any[] }>
-  | BaseAppEvent<
-      "VAULT:ENTITY_UPDATED",
-      "vault",
-      { id: string; patch: any; entity: any }
-    >
-  | BaseAppEvent<"VAULT:VAULT_SWITCHED", "vault", { id: string }>
-  | BaseAppEvent<"VAULT:ENTITY_DELETED", "vault", { entityId: string }>
-  | BaseAppEvent<"VAULT:BATCH_CREATED", "vault", { entities: any[] }>
-  | BaseAppEvent<
-      "VAULT:BATCH_UPDATED",
-      "vault",
-      { entities: any[]; patches?: any }
-    >
-  | BaseAppEvent<"VAULT:SYNC_COMPLETE", "vault", Record<string, never>>
-  | BaseAppEvent<
-      "VAULT:SYNC_CHUNK_READY",
-      "vault",
-      { newOrChangedIds: string[]; entities: any[] }
-    >;
+export interface AppEventDefinition<
+  Domain extends string,
+  Payload = Record<string, never>,
+> {
+  domain: Domain;
+  payload: Payload;
+}
 
-export type OracleAppEvent = BaseAppEvent<
-  "ORACLE:UNDO_PERFORMED",
-  "oracle",
-  { messageId: string }
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface AppEventRegistry {
+  // Domain packages extend this interface with module augmentation.
+}
+
+type RegisteredAppEventRegistry = import("@codex/events").AppEventRegistry;
+
+export type AppEventType = Extract<keyof RegisteredAppEventRegistry, string>;
+
+export type AppEventDomainOf<Type extends AppEventType> =
+  RegisteredAppEventRegistry[Type] extends AppEventDefinition<
+    infer Domain,
+    unknown
+  >
+    ? Domain
+    : never;
+
+export type AppEventPayloadOf<Type extends AppEventType> =
+  RegisteredAppEventRegistry[Type] extends AppEventDefinition<
+    string,
+    infer Payload
+  >
+    ? Payload
+    : never;
+
+export type AppEventOf<Type extends AppEventType> = {
+  type: Type;
+  domain: AppEventDomainOf<Type>;
+  payload: AppEventPayloadOf<Type>;
+  metadata: AppEventMetadata;
+};
+
+export type AppEventsOf<Type extends AppEventType> = {
+  [EventType in Type]: AppEventOf<EventType>;
+}[Type];
+
+export type RegisteredAppEvent = {
+  [Type in AppEventType]: AppEventOf<Type>;
+}[AppEventType];
+
+export type AppEventDomain = Extract<RegisteredAppEvent["domain"], string>;
+
+export type EventDomain = AppEventDomain | "sync" | "system";
+
+export type AppEventForDomain<Domain extends AppEventDomain> = Extract<
+  RegisteredAppEvent,
+  { domain: Domain }
 >;
 
-export type UIAppEvent = BaseAppEvent<
-  "UI:SIDEBAR_TOGGLED",
-  "ui",
-  { open: boolean }
+export type DomainWildcard<Domain extends AppEventDomain = AppEventDomain> =
+  | `${Uppercase<Domain>}:*`
+  | `${Lowercase<Domain>}:*`;
+
+export type EventWildcard = "*" | DomainWildcard;
+
+export type DomainFromWildcard<Filter extends DomainWildcard> = Extract<
+  Lowercase<Filter extends `${infer Domain}:*` ? Domain : never>,
+  AppEventDomain
 >;
 
-export type AppEvent = VaultAppEvent | OracleAppEvent | UIAppEvent;
+export type AppEvent = RegisteredAppEvent;
 
-export type AppEventListener = (event: AppEvent) => void | Promise<void>;
+export type AppEventListener<Event extends RuntimeAppEvent = AppEvent> = (
+  event: Event,
+) => void | Promise<void>;

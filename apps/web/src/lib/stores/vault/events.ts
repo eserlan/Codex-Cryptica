@@ -1,4 +1,5 @@
 import { appEventBus, type AppEvent } from "@codex/events";
+import { VAULT_EVENTS } from "@codex/vault-engine";
 import type { LocalEntity } from "./types";
 
 export type VaultEvent =
@@ -88,7 +89,7 @@ export class VaultEventBus {
     switch (event.type) {
       case "VAULT_OPENING":
         appEvent = {
-          type: "VAULT:VAULT_OPENING",
+          type: VAULT_EVENTS.VAULT_OPENING,
           domain: "vault",
           payload: {},
           metadata: { timestamp, vaultId: event.vaultId },
@@ -96,7 +97,7 @@ export class VaultEventBus {
         break;
       case "CACHE_LOADED":
         appEvent = {
-          type: "VAULT:CACHE_LOADED",
+          type: VAULT_EVENTS.CACHE_LOADED,
           domain: "vault",
           payload: { entities: Object.values(event.entities) },
           metadata: { timestamp, vaultId: event.vaultId },
@@ -104,7 +105,7 @@ export class VaultEventBus {
         break;
       case "ENTITY_UPDATED":
         appEvent = {
-          type: "VAULT:ENTITY_UPDATED",
+          type: VAULT_EVENTS.ENTITY_UPDATED,
           domain: "vault",
           payload: {
             id: event.entity.id,
@@ -116,7 +117,7 @@ export class VaultEventBus {
         break;
       case "VAULT_SWITCHED":
         appEvent = {
-          type: "VAULT:VAULT_SWITCHED",
+          type: VAULT_EVENTS.VAULT_SWITCHED,
           domain: "vault",
           payload: { id: event.vaultId },
           metadata: { timestamp, vaultId: event.vaultId },
@@ -124,7 +125,7 @@ export class VaultEventBus {
         break;
       case "ENTITY_DELETED":
         appEvent = {
-          type: "VAULT:ENTITY_DELETED",
+          type: VAULT_EVENTS.ENTITY_DELETED,
           domain: "vault",
           payload: { entityId: event.entityId },
           metadata: { timestamp, vaultId: event.vaultId },
@@ -132,7 +133,7 @@ export class VaultEventBus {
         break;
       case "BATCH_CREATED":
         appEvent = {
-          type: "VAULT:BATCH_CREATED",
+          type: VAULT_EVENTS.BATCH_CREATED,
           domain: "vault",
           payload: { entities: event.entities },
           metadata: { timestamp, vaultId: event.vaultId },
@@ -140,7 +141,7 @@ export class VaultEventBus {
         break;
       case "BATCH_UPDATED":
         appEvent = {
-          type: "VAULT:BATCH_UPDATED",
+          type: VAULT_EVENTS.BATCH_UPDATED,
           domain: "vault",
           payload: { entities: event.entities, patches: event.patches },
           metadata: { timestamp, vaultId: event.vaultId },
@@ -148,7 +149,7 @@ export class VaultEventBus {
         break;
       case "SYNC_COMPLETE":
         appEvent = {
-          type: "VAULT:SYNC_COMPLETE",
+          type: VAULT_EVENTS.SYNC_COMPLETE,
           domain: "vault",
           payload: {},
           metadata: { timestamp, vaultId: event.vaultId },
@@ -156,7 +157,7 @@ export class VaultEventBus {
         break;
       case "SYNC_CHUNK_READY":
         appEvent = {
-          type: "VAULT:SYNC_CHUNK_READY",
+          type: VAULT_EVENTS.SYNC_CHUNK_READY,
           domain: "vault",
           payload: {
             newOrChangedIds: event.newOrChangedIds,
