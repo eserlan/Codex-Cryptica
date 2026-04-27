@@ -20,7 +20,8 @@ rank: 3
 Connect your geography directly to your notes:
 
 - **Double-Click** anywhere on the map to create a new pin.
-- Use the **Link Lore** search box to connect the pin to an existing NPC, Location, or Item.
+- **Drag an entity** from the **Entity Explorer** sidebar and drop it anywhere on the map to instantly create a pin linked to that entity.
+- Use the **Link Lore** search box on a pin to connect it to an existing NPC, Location, or Item.
 - **Click a Pin** to instantly open its associated chronicle in the side panel.
 
 ### Fog of War (GM Only)
