@@ -117,11 +117,8 @@ describe("EntityStore", () => {
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-      getServices: () =>
-        ({
-          ai: { clearStyleCache: vi.fn(), expandQuery: vi.fn() },
-        }) as any,
+      getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({ ai: { clearStyleCache: vi.fn() } }),
       invalidateUrlCache: vi.fn(),
       updateEntityCount: vi.fn().mockResolvedValue(undefined),
     });
@@ -145,8 +142,8 @@ describe("EntityStore", () => {
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-      getServices: () => null,
+      getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({}),
       updateEntityCount,
     });
 
@@ -172,8 +169,8 @@ describe("EntityStore", () => {
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({}),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-      getServices: () => null,
+      getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({}),
       updateEntityCount,
     });
 
@@ -267,8 +264,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -297,8 +294,8 @@ describe("EntityStore", () => {
         setErrorMessage,
         getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -325,8 +322,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -347,8 +344,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -369,8 +366,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -389,8 +386,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         onEntityUpdate,
       });
@@ -427,11 +424,10 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () =>
-          ({
-            ai: { clearStyleCache, expandQuery: vi.fn() },
-          }) as any,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({
+          ai: { clearStyleCache },
+        }),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -459,8 +455,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         invalidateUrlCache,
       });
@@ -506,8 +502,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         onBatchUpdate,
       });
@@ -555,8 +551,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         invalidateUrlCache,
       });
@@ -579,8 +575,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -600,8 +596,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         onEntityDelete,
       });
@@ -795,7 +791,7 @@ describe("EntityStore", () => {
     it("should track VAULT_OPENING events by clearing content sets", () => {
       const subscribeMock = vi
         .mocked(vaultEventBus.subscribe)
-        .mock.calls.find((c) => c[1] === "entity-content-loader")?.[0];
+        .mock.calls.find((c) => c[1] === "entity-store-content-tracker")?.[0];
       expect(subscribeMock).toBeDefined();
 
       // Mark some content as loaded
@@ -814,7 +810,7 @@ describe("EntityStore", () => {
     it("should track SYNC_CHUNK_READY events by marking content as loaded", () => {
       const subscribeMock = vi
         .mocked(vaultEventBus.subscribe)
-        .mock.calls.find((c) => c[1] === "entity-content-loader")?.[0];
+        .mock.calls.find((c) => c[1] === "entity-store-content-tracker")?.[0];
       expect(subscribeMock).toBeDefined();
 
       // Simulate SYNC_CHUNK_READY event
@@ -834,7 +830,7 @@ describe("EntityStore", () => {
     it("should only mark content as loaded when entity has content in SYNC_CHUNK_READY", () => {
       const subscribeMock = vi
         .mocked(vaultEventBus.subscribe)
-        .mock.calls.find((c) => c[1] === "entity-content-loader")?.[0];
+        .mock.calls.find((c) => c[1] === "entity-store-content-tracker")?.[0];
       expect(subscribeMock).toBeDefined();
 
       // Simulate SYNC_CHUNK_READY with entity that has no content
@@ -888,8 +884,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -918,8 +914,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -953,8 +949,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -992,8 +988,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -1027,8 +1023,8 @@ describe("EntityStore", () => {
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
-        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
-        getServices: () => null,
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 

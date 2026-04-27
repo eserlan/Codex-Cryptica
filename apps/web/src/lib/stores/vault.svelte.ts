@@ -87,8 +87,14 @@ export class VaultStore {
   get hasConflictFiles() {
     return this.syncStore.hasConflictFiles;
   }
-  get hasSyncHandle() {
-    return this.syncStore.hasSyncHandle;
+  get hasFolderHandle() {
+    return this.syncStore.hasFolderHandle;
+  }
+  get failedFiles() {
+    return this.syncStore.failedFiles;
+  }
+  set failedFiles(v: { path: string; error: string }[]) {
+    this.syncStore.failedFiles = v;
   }
   get isDirty() {
     return this.syncStore.isDirty;
@@ -142,7 +148,7 @@ export class VaultStore {
       isGuest: () => this.isGuest,
       getGuestFile: (path) => p2pGuestService.getFile(path),
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
     });
 
     this.syncStore = new SyncStore({
@@ -162,7 +168,7 @@ export class VaultStore {
         return this.syncCoordinator;
       },
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
       },
@@ -211,7 +217,7 @@ export class VaultStore {
     this.assetStore = new AssetStore({
       assetManager: this.assetManager,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       isGuest: () => this.isGuest,
     });
 
@@ -334,24 +340,11 @@ export class VaultStore {
   }
 
   async loadFromFolder() {
-    return this.pull();
+    return this.syncStore.loadFromFolder();
   }
 
   async saveToFolder() {
-    return this.syncStore.push();
-  }
-
-  async push() {
-    return this.syncStore.push();
-  }
-
-  async pull() {
-    return this.syncStore.pull();
-  }
-
-  /** @deprecated use saveToFolder() instead */
-  async syncWithLocalFolder() {
-    return this.saveToFolder();
+    return this.syncStore.saveToFolder();
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {
@@ -446,8 +439,8 @@ export class VaultStore {
   getActiveVaultHandle() {
     return this.storageManager.getActiveVaultHandle(this.activeVaultId);
   }
-  getActiveSyncHandle() {
-    return this.storageManager.getActiveSyncHandle(this.activeVaultId);
+  getActiveFolderHandle() {
+    return this.storageManager.getActiveFolderHandle(this.activeVaultId);
   }
   getSpecificVaultHandle(vaultId: string) {
     return this.storageManager.getSpecificVaultHandle(vaultId);

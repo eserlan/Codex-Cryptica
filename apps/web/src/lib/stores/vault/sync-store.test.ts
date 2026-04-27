@@ -62,7 +62,7 @@ describe("SyncStore", () => {
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue(null),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(null),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
@@ -99,14 +99,14 @@ describe("SyncStore", () => {
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue({ pull: pullSpy }),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue({}),
+      getActiveFolderHandle: vi.fn().mockResolvedValue({}),
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
       updateEntityCount: vi.fn().mockResolvedValue(undefined),
     });
 
-    await store.pull();
+    await store.loadFromFolder();
 
     expect(uiStore.confirm).toHaveBeenCalled();
     expect(pullSpy).not.toHaveBeenCalled();
@@ -156,7 +156,7 @@ describe("SyncStore", () => {
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue(null),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(null),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
@@ -190,7 +190,7 @@ describe("SyncStore", () => {
       repository: repository as any,
       getSyncCoordinator: vi.fn().mockResolvedValue(null),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(null),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
@@ -237,7 +237,7 @@ describe("SyncStore", () => {
         cleanupConflictFiles,
       } as any),
       getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(null),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),

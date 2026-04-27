@@ -289,7 +289,7 @@ describe("VaultStore", () => {
         return "";
       });
 
-      vi.spyOn(testVault, "getActiveSyncHandle").mockResolvedValue(
+      vi.spyOn(testVault, "getActiveFolderHandle").mockResolvedValue(
         mockLocalHandle as any,
       );
       vi.mocked(readFileAsText).mockImplementation(async (handle) => {
@@ -467,14 +467,14 @@ describe("VaultStore", () => {
       vi.spyOn(testVault, "getActiveVaultHandle").mockResolvedValue(
         mockOpfsHandle,
       );
-      vi.spyOn(testVault, "getActiveSyncHandle").mockResolvedValue(
+      vi.spyOn(testVault, "getActiveFolderHandle").mockResolvedValue(
         mockLocalHandle,
       );
 
       const deleteSpy = vi
         .spyOn(testVault.entityStore, "deleteEntity")
         .mockImplementation(async (_id) => {
-          const handle = await testVault.getActiveSyncHandle();
+          const handle = await testVault.getActiveFolderHandle();
           if (handle) {
             await handle.queryPermission({ mode: "readwrite" });
             try {
@@ -715,24 +715,24 @@ describe("VaultStore", () => {
       expect(handle).toBeUndefined();
     });
 
-    it("should get active sync handle from IDB", async () => {
+    it("should get active folder handle from IDB", async () => {
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       const { getDB } = await import("../utils/idb");
       const mockDB = await getDB();
       vi.mocked(mockDB.get).mockResolvedValueOnce({ kind: "directory" });
 
-      const handle = await testVault.getActiveSyncHandle();
+      const handle = await testVault.getActiveFolderHandle();
       expect(handle).toBeDefined();
-      expect(mockDB.get).toHaveBeenCalledWith("settings", "syncHandle_v1");
+      expect(mockDB.get).toHaveBeenCalledWith("settings", "folderHandle_v1");
     });
 
-    it("should handle error in getActiveSyncHandle", async () => {
+    it("should handle error in getActiveFolderHandle", async () => {
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       const { getDB } = await import("../utils/idb");
       const mockDB = await getDB();
       vi.mocked(mockDB.get).mockRejectedValueOnce(new Error("IDB Error"));
 
-      const handle = await testVault.getActiveSyncHandle();
+      const handle = await testVault.getActiveFolderHandle();
       expect(handle).toBeUndefined();
     });
   });

@@ -11,7 +11,7 @@ export interface ContentLoaderDependencies {
   isGuest: () => boolean;
   getGuestFile?: (path: string) => Promise<Blob>;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
 }
 
 export class EntityContentLoader {
@@ -35,7 +35,7 @@ export class EntityContentLoader {
           }
         }
       }
-    });
+    }, "entity-store-content-tracker");
   }
 
   destroy() {
@@ -154,7 +154,7 @@ export class EntityContentLoader {
         // PRIORITY 3: Local FS fallback if OPFS had nothing
         if (!result) {
           const path = currentEntity._path || [`${id}.md`];
-          const localHandle = await this.deps.getActiveSyncHandle();
+          const localHandle = await this.deps.getActiveFolderHandle();
           if (localHandle) {
             try {
               if (

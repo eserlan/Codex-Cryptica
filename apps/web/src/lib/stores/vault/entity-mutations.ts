@@ -17,7 +17,7 @@ export interface MutationDependencies {
   activeVaultId: () => string | null;
   isGuest: () => boolean;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
   invalidateUrlCache?: (path: string) => void;
   getServices: () => IVaultServices | null;
@@ -213,7 +213,7 @@ export class EntityMutationService {
     const lockKey = id;
     return this.deps.repository.saveQueue.enqueue(lockKey, async () => {
       const vaultHandle = await this.deps.getActiveVaultHandle();
-      const localHandle = await this.deps.getActiveSyncHandle();
+      const localHandle = await this.deps.getActiveFolderHandle();
       const activeVaultId = this.deps.activeVaultId();
 
       if (vaultHandle && activeVaultId) {

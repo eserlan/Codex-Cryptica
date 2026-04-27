@@ -13,7 +13,7 @@ export interface SyncStoreDependencies {
   repository: VaultRepository;
   getSyncCoordinator: () => Promise<SyncCoordinator | null>;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   ensureServicesInitialized: () => Promise<void>;
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
@@ -34,7 +34,7 @@ export class SyncStore {
   });
   failedFiles = $state<{ path: string; error: string }[]>([]);
   hasConflictFiles = $state(false);
-  hasSyncHandle = $state(false);
+  hasFolderHandle = $state(false);
 
   get status() {
     if (this._status === "loading") return "loading";
@@ -116,6 +116,7 @@ export class SyncStore {
           debugStore.log(
             "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
+          this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
           await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
           await this.deps.loadMaps(vaultIdAtStart);
           await this.deps.loadCanvases(vaultIdAtStart);
@@ -125,7 +126,7 @@ export class SyncStore {
       }
 
       const vaultDir = await this.deps.getActiveVaultHandle();
-      this.hasSyncHandle = !!(await this.deps.getActiveSyncHandle());
+      this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (!vaultDir) {
@@ -140,7 +141,7 @@ export class SyncStore {
         return;
       }
 
-      const localHandle = await this.deps.getActiveSyncHandle();
+      const localHandle = await this.deps.getActiveFolderHandle();
       if (localHandle) {
         debugStore.log(
           `[SyncStore] Local sync handle found for ${vaultIdAtStart}. Synchronizing...`,
@@ -260,7 +261,7 @@ export class SyncStore {
     }
   }
 
-  async push() {
+  async saveToFolder() {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;
@@ -295,7 +296,7 @@ export class SyncStore {
     }
   }
 
-  async pull() {
+  async loadFromFolder() {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;

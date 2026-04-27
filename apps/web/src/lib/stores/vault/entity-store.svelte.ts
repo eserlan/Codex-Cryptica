@@ -17,7 +17,7 @@ export interface EntityStoreDependencies {
   getSpecificVaultHandle: (
     vaultId: string,
   ) => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   getServices: () => IVaultServices | null;
   invalidateUrlCache?: (path: string) => void;
   setStatus: (status: "idle" | "loading" | "saving" | "error") => void;
@@ -31,7 +31,7 @@ export interface EntityStoreDependencies {
 
 export class EntityStore {
   private repository: VaultRepository;
-  private loader: EntityContentLoader;
+  public loader: EntityContentLoader;
   private persistence: EntityPersistenceService;
   private mutations: EntityMutationService;
 
@@ -56,7 +56,14 @@ export class EntityStore {
   ) {
     // Determine if we are in the DI path by checking for the presence of the extra args.
     // We check for loader OR persistence OR mutations to decide we're TRYING to use DI.
-    if (loader || persistence || mutations || (depsOrRepository && 'entities' in depsOrRepository && !('activeVaultId' in depsOrRepository))) {
+    if (
+      loader ||
+      persistence ||
+      mutations ||
+      (depsOrRepository &&
+        "entities" in depsOrRepository &&
+        !("activeVaultId" in depsOrRepository))
+    ) {
       if (!loader || !persistence || !mutations) {
         const missing = [
           !loader ? "loader" : null,
@@ -65,7 +72,7 @@ export class EntityStore {
         ].filter(Boolean);
 
         throw new Error(
-          `EntityStore requires ${missing.join(", ")} when using the Dependency Injection constructor. Pass loader, persistence, and mutations, or use the EntityStoreDependencies object form.`
+          `EntityStore requires ${missing.join(", ")} when using the Dependency Injection constructor. Pass loader, persistence, and mutations, or use the EntityStoreDependencies object form.`,
         );
       }
       this.repository = depsOrRepository as VaultRepository;
@@ -81,7 +88,7 @@ export class EntityStore {
         isGuest: deps.isGuest,
         getGuestFile: deps.getGuestFile,
         getActiveVaultHandle: deps.getActiveVaultHandle,
-        getActiveSyncHandle: deps.getActiveSyncHandle,
+        getActiveFolderHandle: deps.getActiveFolderHandle,
       });
 
       this.persistence = new EntityPersistenceService({
@@ -104,7 +111,7 @@ export class EntityStore {
         activeVaultId: deps.activeVaultId,
         isGuest: deps.isGuest,
         getActiveVaultHandle: deps.getActiveVaultHandle,
-        getActiveSyncHandle: deps.getActiveSyncHandle,
+        getActiveFolderHandle: deps.getActiveFolderHandle,
         getServices: deps.getServices,
         invalidateUrlCache: deps.invalidateUrlCache,
         onEntityDelete: deps.onEntityDelete,

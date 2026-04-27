@@ -6,7 +6,7 @@ import { base } from "$app/paths";
 export interface AssetStoreDependencies {
   assetManager: AssetManager;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   isGuest: () => boolean;
 }
 
@@ -28,7 +28,7 @@ export class AssetStore {
       await this.deps.getActiveVaultHandle(),
       path,
       effectiveFetcher,
-      await this.deps.getActiveSyncHandle(),
+      await this.deps.getActiveFolderHandle(),
     );
   }
 
@@ -69,7 +69,7 @@ export class AssetStore {
       path,
       vaultHandle,
       fetcher,
-      await this.deps.getActiveSyncHandle(),
+      await this.deps.getActiveFolderHandle(),
     );
   }
 
