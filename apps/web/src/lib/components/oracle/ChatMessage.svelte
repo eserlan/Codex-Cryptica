@@ -55,7 +55,10 @@
 
   onMount(() => {
     return appEventBus.subscribe("ORACLE:UNDO_PERFORMED", (event) => {
-      if (event.payload.messageId === message.id) {
+      if (
+        event.type === "ORACLE:UNDO_PERFORMED" &&
+        event.payload.messageId === message.id
+      ) {
         isSaved = false;
       }
     });
