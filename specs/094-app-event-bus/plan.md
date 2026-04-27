@@ -54,7 +54,7 @@ packages/
     │   ├── index.ts    # Main exports
     │   ├── AppEventBus.ts
     │   ├── types.ts    # AppEvent union and payload types
-    │   └── SyncCoordinator.ts # BroadcastChannel wrapper
+    │   └── CrossTabBroadcaster.ts # BroadcastChannel wrapper
     └── tests/
         └── AppEventBus.test.ts
 

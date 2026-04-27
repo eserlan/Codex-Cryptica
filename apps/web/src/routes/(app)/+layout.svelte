@@ -20,7 +20,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { appEventBus, SyncCoordinator } from "@codex/events";
+  import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
@@ -54,7 +54,7 @@
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
   let globalListenersCleanup: (() => void) | null = null;
-  let syncCoordinator: InstanceType<typeof SyncCoordinator> | null = null;
+  let syncCoordinator: InstanceType<typeof CrossTabBroadcaster> | null = null;
 
   // Derived
   const isPopup = $derived(
@@ -128,7 +128,7 @@
       registerServiceWorker();
 
       if (browser) {
-        syncCoordinator = new SyncCoordinator(appEventBus);
+        syncCoordinator = new CrossTabBroadcaster(appEventBus);
       }
 
       console.log("[Layout] Calling setupWindowGlobals");

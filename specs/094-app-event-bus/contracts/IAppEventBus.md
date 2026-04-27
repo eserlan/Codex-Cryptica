@@ -27,7 +27,7 @@ export interface IAppEventBus {
 
   /**
    * Clear all non-named listeners. Named listeners are preserved so that
-   * long-lived services (SearchService, SyncCoordinator) survive vault switches.
+   * long-lived services (SearchService, CrossTabBroadcaster) survive vault switches.
    */
   reset(): void;
 }

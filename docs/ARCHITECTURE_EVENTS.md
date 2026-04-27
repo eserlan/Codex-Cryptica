@@ -42,7 +42,7 @@ The `vault-switched` event is currently being migrated to the `AppEventBus` unde
 
 ## 3. `BroadcastChannel` for Cross-Tab Sync
 
-The `SyncCoordinator` in `@codex/events` now unifies cross-tab communication.
+The `CrossTabBroadcaster` in `@codex/events` now unifies cross-tab communication.
 
 - **Mechanism**: Attaches to `AppEventBus` and listens for events with `metadata.sync: true`.
 - **Loop Prevention**: Automatically marks received remote events with `metadata.remote: true` to prevent re-broadcasting.

@@ -1,7 +1,7 @@
 import type { AppEventBus } from "./AppEventBus";
 import type { AppEvent } from "./types";
 
-export class SyncCoordinator {
+export class CrossTabBroadcaster {
   private channel: BroadcastChannel | null = null;
   private unsubscribe: (() => void) | null = null;
 
@@ -23,7 +23,7 @@ export class SyncCoordinator {
             this.broadcast(appEvent);
           }
         },
-        "sync-coordinator",
+        "cross-tab-broadcaster",
       );
     }
   }

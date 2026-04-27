@@ -103,7 +103,7 @@ export class AppEventBus {
     this.domainListeners.clear();
     this.typeListeners.clear();
     // Named listeners are intentionally preserved — they belong to long-lived
-    // services (SearchService, SyncCoordinator) that survive vault switches.
+    // services (SearchService, CrossTabBroadcaster) that survive vault switches.
   }
 }
 

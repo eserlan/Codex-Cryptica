@@ -12,7 +12,7 @@
 
 ### 2. BroadcastChannel Integration
 
-- **Decision**: Implement a `SyncCoordinator` class that can be attached to the `AppEventBus`.
+- **Decision**: Implement a `CrossTabBroadcaster` class that can be attached to the `AppEventBus`.
 - **Rationale**: By separating the sync logic from the core bus, we keep the bus pure (transient). The coordinator will listen to specific events (marked with a `sync: true` flag in their type definition) and use `BroadcastChannel` to relay them to other tabs.
 - **Alternatives Considered**:
   - Manual `BroadcastChannel` in every store: Rejected (current pain point).

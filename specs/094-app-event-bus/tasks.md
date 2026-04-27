@@ -11,7 +11,7 @@
 
 - [x] T005 [P] Define `AppEvent`, `EventDomain`, and payload union types in `packages/events/src/types.ts`
 - [x] T006 Implement core `AppEventBus` class with subscription and emission logic in `packages/events/src/AppEventBus.ts`
-- [x] T007 [P] Implement `SyncCoordinator` with `BroadcastChannel` wrapper and loop prevention (ignoring same-origin remote events) in `packages/events/src/SyncCoordinator.ts`
+- [x] T007 [P] Implement `CrossTabBroadcaster` with `BroadcastChannel` wrapper and loop prevention (ignoring same-origin remote events) in `packages/events/src/CrossTabBroadcaster.ts`
 - [x] T008 Export public API from `packages/events/src/index.ts`
 
 ## Phase 3: [US1] Unified System Coordination
