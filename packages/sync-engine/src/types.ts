@@ -1,4 +1,5 @@
 import { type DBSchema } from "idb";
+import { type SyncDirection } from "schema";
 
 export interface FileMetadata {
   path: string;
@@ -67,6 +68,19 @@ export interface ILocalSyncService {
     vaultId: string,
     localHandle: FileSystemDirectoryHandle,
     opfsHandle: FileSystemDirectoryHandle,
+    direction?: SyncDirection,
+    validator?: (
+      path: string,
+      metadata: FileMetadata,
+    ) => boolean | Promise<boolean>,
+    onProgress?: (stats: {
+      updated: number;
+      created: number;
+      deleted: number;
+      failed: number;
+      total: number;
+    }) => void,
+    signal?: AbortSignal,
   ): Promise<SyncResult>;
 
   /**

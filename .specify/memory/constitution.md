@@ -26,10 +26,9 @@ Always prioritize client-side processing in the browser (OPFS, local library exe
 
 To maintain build integrity and code quality, AI agents MUST:
 
-1. Prefix unused variables/parameters with `_`.
-2. Avoid stale state warnings in Svelte 5 by using `$derived` instead of `$state(prop)`.
-3. Adhere to Tailwind 4 CSS syntax standards.
-4. Ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
+1.  **Style Guide**: Adhere strictly to `@docs/STYLE_GUIDE.md` for all visual, behavioral, and architectural patterns (including Svelte 5 Runes, Tailwind 4 tokens, and Data Safety).
+2.  **Implementation Hygiene**: Prefix unused variables/parameters with `_` and ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
+3.  **Validation**: Every code change MUST be verified with `npm run lint` and `npm test` before considering the task complete.
 
 ### VII. User Documentation
 

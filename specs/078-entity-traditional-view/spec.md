@@ -9,16 +9,16 @@
 
 ### User Story 1 - Quick Scanning via Entity Explorer (Priority: P1)
 
-As a Game Master, I want a persistent list of my entities in a left sidebar, styled similarly to the Canvas Entity Palette, so that I can quickly find and scan my characters and locations using a familiar interface.
+As a Game Master, I want a persistent list of my entities in a left sidebar so that I can quickly find and scan my characters and locations using a familiar interface.
 
-**Why this priority**: Core navigation improvement. Provides a high-density reference that complements the spatial visualizations and maintains UI consistency with the Canvas tools.
+**Why this priority**: Core navigation improvement. Provides a high-density reference that complements the spatial visualizations.
 
-**Independent Test**: Open the sidebar, verify the "Entity Explorer" appears to the right of the Oracle tool icons, and ensure its layout (search bar + entity cards) matches the aesthetic of the Canvas Entity Palette.
+**Independent Test**: Open the sidebar, verify the "Entity Explorer" appears to the right of the Oracle tool icons, and ensure its layout has a search bar at top with compact entity cards below.
 
 **Acceptance Scenarios**:
 
 1. **Given** the application is open, **When** I toggle the Explorer tool, **Then** a sidebar panel appears showing all entities in a compact list format.
-2. **Given** the Explorer is open, **When** I type in the search bar, **Then** the list filters in real-time exactly like the Canvas Entity Palette.
+2. **Given** the Explorer is open, **When** I type in the search bar, **Then** the list filters in real-time.
 
 ---
 
@@ -49,7 +49,7 @@ As a user, I want the UI tools to follow a logical hierarchy where the Oracle is
 
 - **Search Performance**: Real-time filtering must remain responsive even with 1,000+ entities (SC-002).
 - **Navigation State**: If I have an entity open in the center and I click another in the Explorer, the view should update to the new entity immediately.
-- **Empty States**: If no entities match the search, show a "No results" message similar to the Canvas palette.
+- **Empty States**: If no entities match the search, show a "No results" message.
 
 ## Requirements _(mandatory)_
 
@@ -57,7 +57,7 @@ As a user, I want the UI tools to follow a logical hierarchy where the Oracle is
 
 - **FR-001**: System MUST provide an "Entity Explorer" sidebar panel.
 - **FR-002**: The Explorer MUST be positioned to the right of the Oracle tool icons/panel.
-- **FR-003**: The Explorer UI MUST mirror the **Entity Palette** from the Canvas mode (Search Bar at top, compact list/cards below).
+- **FR-003**: The Explorer UI MUST provide a Search Bar at top with compact entity list/cards below.
 - **FR-004**: Each list item MUST show: Name, Category icon, and assigned Labels (metadata field).
 - **FR-005**: Users MUST be able to search and filter the Explorer list in real-time using the internal indexing service.
 - **FR-006**: System MUST provide an **Embedded Entity View** that renders in the main workspace area.
@@ -68,13 +68,13 @@ As a user, I want the UI tools to follow a logical hierarchy where the Oracle is
 
 ### Key Entities _(include if feature involves data)_
 
-- **Explorer Panel**: The left-sidebar UI container, styled like the Canvas Entity Palette.
+- **Explorer Panel**: The left-sidebar UI container housing search and entity list.
 - **Embedded Entity View**: The central workspace component for high-density entity management.
 
 ## Dependencies & Assumptions
 
 - **Dependency**: Relies on `UIStore` to manage `activeSidebarTool` and the `mainViewMode`.
-- **Dependency**: Reuses components from `packages/editor-core` or `apps/web` used in the Canvas Entity Palette.
+- **Dependency**: Reuses the shared `EntityList` component from `apps/web`.
 - **Assumption**: The search logic is shared with the existing `searchStore`.
 
 ## Success Criteria _(mandatory)_
@@ -83,5 +83,5 @@ As a user, I want the UI tools to follow a logical hierarchy where the Oracle is
 
 - **SC-001**: Transitioning from Graph to Embedded Entity View takes less than 200ms.
 - **SC-002**: Filtering a list of 1,000 entities in the Explorer takes less than 100ms.
-- **SC-003**: UI consistency: 100% match in styling between the Explorer list and the Canvas Entity Palette.
+- **SC-003**: UI consistency: Explorer list styling is consistent with the shared `EntityList` component.
 - **SC-004**: 100% of entity metadata remains editable within the embedded central view.

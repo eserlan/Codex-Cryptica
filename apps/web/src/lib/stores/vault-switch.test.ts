@@ -210,17 +210,23 @@ describe("VaultStore Multi-Vault", () => {
     unsubscribe();
   });
 
-  it("should dispatch vault-switched event when switching", async () => {
-    const dispatchSpy = vi.spyOn(window as any, "dispatchEvent");
+  it("should broadcast VAULT_SWITCHED event when switching", async () => {
+    const eventSpy = vi.fn();
+    const unsubscribe = vaultEventBus.subscribe(
+      eventSpy,
+      "test-listener-switched",
+    );
 
     await vault.switchVault("vault-b");
 
-    expect(dispatchSpy).toHaveBeenCalledWith(
+    expect(eventSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: "vault-switched",
-        detail: expect.objectContaining({ id: "vault-b" }),
+        type: "VAULT_SWITCHED",
+        vaultId: "vault-b",
       }),
     );
+
+    unsubscribe();
   });
 
   it("should call repository.clear when switching vaults", async () => {

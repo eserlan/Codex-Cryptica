@@ -12,14 +12,14 @@ Refresh the existing Classic/fantasy theme so the interface reads as a cohesive 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x, Svelte 5  
-**Primary Dependencies**: SvelteKit, Tailwind CSS 4, Playwright, workspace `schema` package  
+**Primary Dependencies**: SvelteKit, Tailwind CSS 4, Playwright, Cytoscape, workspace `schema` and `graph-engine` packages  
 **Storage**: Existing browser theme persistence only (`localStorage`, IndexedDB, OPFS via current theme flow); no new storage  
-**Testing**: Playwright E2E in `apps/web/tests/themes.spec.ts`  
+**Testing**: Playwright E2E in `apps/web/tests/themes.spec.ts`; Vitest graph style coverage in `packages/graph-engine`  
 **Target Platform**: Modern desktop and mobile browsers  
 **Project Type**: Web application monorepo  
 **Performance Goals**: Preserve current theme-switch speed, avoid visible layout shifts, and keep the refresh CSS-driven where possible  
-**Constraints**: Preserve non-fantasy themes, follow the existing shared theme system, maintain accessible contrast on parchment surfaces, avoid hardcoded one-off color logic spread across many components, keep the implementation focused on the screenshot-identified surfaces first, and enforce the simplified fantasy color rule consistently  
-**Scale/Scope**: Shared theme tokens plus a focused set of fantasy-facing UI surfaces in `apps/web`, especially the title area, icon rows, panel shells, borders, active/selected states, primary brown action surface, and entity-view hierarchy
+**Constraints**: Preserve non-fantasy themes, follow the existing shared theme system, maintain accessible contrast on parchment surfaces, avoid hardcoded one-off color logic spread across many components, use only supported Cytoscape style properties, keep the implementation focused on the screenshot-identified surfaces first, and enforce the simplified fantasy color rule consistently  
+**Scale/Scope**: Shared theme tokens plus a focused set of fantasy-facing UI surfaces in `apps/web`, especially the title area, icon rows, panel shells, borders, active/selected states, primary brown action surface, entity-view hierarchy, and graph node marker styling in `packages/graph-engine`
 
 ## Constitution Check
 
@@ -72,12 +72,18 @@ apps/
     │   └── tests/
     │       └── themes.spec.ts
 packages/
+├── graph-engine/
+│   ├── src/
+│   │   └── transformer.ts
+│   └── tests/
+│       ├── themes.test.ts
+│       └── transformer.test.ts
 └── schema/
     └── src/
         └── theme.ts
 ```
 
-**Structure Decision**: Keep shared fantasy token decisions centralized in `packages/schema/src/theme.ts`, map them through the existing theme store and global CSS in `apps/web/src/lib/stores/theme.svelte.ts` and `apps/web/src/app.css`, and make targeted component updates only where the current fantasy presentation breaks cohesion. The first target set is the exact screenshot-driven problem areas: cold title/highlight colors, multicolor icons, panel warmth, brown-vs-gold state treatment, firmer edges, the dominant brown action surface, and entity-view hierarchy.
+**Structure Decision**: Keep shared fantasy token decisions centralized in `packages/schema/src/theme.ts`, map them through the existing theme store and global CSS in `apps/web/src/lib/stores/theme.svelte.ts` and `apps/web/src/app.css`, and make targeted component updates only where the current fantasy presentation breaks cohesion. Graph-specific marker behavior belongs in `packages/graph-engine/src/transformer.ts` so Cytoscape style generation remains centralized and covered by graph-engine tests. The first target set is the exact screenshot-driven problem areas: cold title/highlight colors, multicolor icons, panel warmth, brown-vs-gold state treatment, firmer edges, the dominant brown action surface, entity-view hierarchy, and fantasy graph node marker treatment.
 
 ## Complexity Tracking
 

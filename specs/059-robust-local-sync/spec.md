@@ -1,8 +1,10 @@
+⚠️ **SUPERSEDED**: This specification has been superseded by [093-directional-vault-sync](../093-directional-vault-sync/spec.md). The bidirectional merge logic described here is deprecated in favor of explicit Save/Load operations.
+
 # Feature Specification: Robust Local File Syncing
 
 **Feature Branch**: `059-robust-local-sync`  
 **Created**: 2026-02-24  
-**Status**: Draft  
+**Status**: Superseded by 093-directional-vault-sync
 **Input**: User description: "more robust local file syncing https://github.com/eserlan/Codex-Cryptica/issues/250"
 
 ## User Scenarios & Testing _(mandatory)_

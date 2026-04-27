@@ -4,9 +4,12 @@ import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { SyncCoordinator, VaultRepository } from "@codex/vault-engine";
 import { fileIOAdapter } from "./adapters.svelte";
+import { uiStore } from "../ui.svelte";
+import type { VaultRecord } from "../../utils/idb";
 
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
+  activeVaultRecord: () => VaultRecord | undefined;
   repository: VaultRepository;
   getSyncCoordinator: () => Promise<SyncCoordinator | null>;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
@@ -14,10 +17,11 @@ export interface SyncStoreDependencies {
   ensureServicesInitialized: () => Promise<void>;
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
+  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
 }
 
 export class SyncStore {
-  status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  private _status = $state<"idle" | "loading" | "saving" | "error">("idle");
   errorMessage = $state<string | null>(null);
   syncType = $state<"local" | null>(null);
   syncStats = $state({
@@ -28,7 +32,24 @@ export class SyncStore {
     total: 0,
     progress: 0,
   });
+  failedFiles = $state<{ path: string; error: string }[]>([]);
   hasConflictFiles = $state(false);
+  hasSyncHandle = $state(false);
+
+  get status() {
+    if (this._status === "loading") return "loading";
+    if (this._status === "error") return "error";
+    if (this.deps.repository.pendingSaveCount > 0) return "saving";
+    return this._status;
+  }
+
+  get isDirty() {
+    const record = this.deps.activeVaultRecord();
+    if (!record) return false;
+    if (uiStore.isDemoMode || this.status === "loading") return false;
+    return (record.lastInternalChange || 0) > (record.lastSavedToFolder || 0);
+  }
+
   private syncAbortController: AbortController | null = null;
 
   constructor(private deps: SyncStoreDependencies) {}
@@ -42,14 +63,13 @@ export class SyncStore {
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;
 
-    // ABORT: Cancel any ongoing background sync from a previous vault switch
     if (this.syncAbortController) {
       this.syncAbortController.abort();
     }
     this.syncAbortController = new AbortController();
     const signal = this.syncAbortController.signal;
 
-    this.status = "loading";
+    this._status = "loading";
     this.errorMessage = null;
     this.syncStats = {
       updated: 0,
@@ -59,79 +79,67 @@ export class SyncStore {
       total: 0,
       progress: 0,
     };
+    this.failedFiles = [];
 
     try {
-      debugStore.log(`[SyncStore] Loading files for vault: ${vaultIdAtStart}`);
-
-      // Reset event bus to clear listeners from previous vault sessions
       vaultEventBus.reset();
-
-      // BROADCAST: Opening vault
       vaultEventBus.emit({
         type: "VAULT_OPENING",
         vaultId: vaultIdAtStart,
       });
 
-      // 1. Cache-First: Preload graph metadata from Dexie immediately.
-      const cachedMap = await cacheService.preloadVault(vaultIdAtStart);
+      this.deps.repository.entities = {};
 
-      // Race check after async preload
+      const isDemo = uiStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
+      const cachedMap = !isDemo
+        ? await cacheService.preloadVault(vaultIdAtStart)
+        : new Map();
+
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (cachedMap.size > 0) {
         const entityMap: Record<string, LocalEntity> = {};
-        for (const { entity: e } of cachedMap.values()) {
-          const existing = this.deps.repository.entities[e.id];
-          const finalContent =
-            existing?.content && !e.content ? existing.content : e.content;
-          const finalLore = existing?.lore && !e.lore ? existing.lore : e.lore;
-
-          entityMap[e.id] = {
-            ...e,
-            content: finalContent,
-            lore: finalLore,
-          };
+        for (const { entity } of cachedMap.values()) {
+          entityMap[entity.id] = { ...entity };
         }
         this.deps.repository.entities = entityMap;
-        debugStore.log(
-          `[SyncStore] Cache-First: Populated ${cachedMap.size} entities from Dexie.`,
-        );
 
-        // BROADCAST: Initial cache data ready
         vaultEventBus.emit({
           type: "CACHE_LOADED",
           vaultId: vaultIdAtStart,
           entities: entityMap,
         });
 
-        this.status = "idle";
+        this._status = "idle";
 
         if (skipSyncIfWarm) {
           debugStore.log(
             "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
+          await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
           await this.deps.loadMaps(vaultIdAtStart);
           await this.deps.loadCanvases(vaultIdAtStart);
-          this.deps.getActiveVaultHandle(); // Background resolve
+          void this.deps.getActiveVaultHandle();
           return;
         }
       }
 
-      // 2. FS-Sync: Resolve OPFS handle
       const vaultDir = await this.deps.getActiveVaultHandle();
+      this.hasSyncHandle = !!(await this.deps.getActiveSyncHandle());
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (!vaultDir) {
-        if (this.status !== "idle") {
-          this.status = cachedMap.size > 0 ? "idle" : "error";
-          if (this.status === "error") {
+        if (!isDemo) {
+          this._status = cachedMap.size > 0 ? "idle" : "error";
+          if (this._status === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
           }
+        } else {
+          this._status = "idle";
         }
         return;
       }
 
-      // 3. Local-Sync: If a local sync handle exists
       const localHandle = await this.deps.getActiveSyncHandle();
       if (localHandle) {
         debugStore.log(
@@ -144,21 +152,27 @@ export class SyncStore {
             await syncCoordinator.syncWithLocalFolder(
               vaultIdAtStart,
               vaultDir,
+              "pull",
               this.deps.repository.entities,
               () => this.deps.repository.waitForAllSaves(),
-              (state) => {
+              (state: {
+                status: "saving" | "loading" | "idle" | "error";
+                syncType: "local" | null;
+                errorMessage?: string;
+              }) => {
                 if (
                   this.deps.activeVaultId() === vaultIdAtStart &&
                   !signal.aborted
                 ) {
-                  this.status = state.status;
-                  if (state.errorMessage)
+                  this._status = state.status;
+                  if (state.errorMessage) {
                     this.errorMessage = state.errorMessage;
+                  }
                 }
               },
               () => this.checkForConflicts(),
               signal,
-              (stats) => {
+              (stats: any) => {
                 if (
                   this.deps.activeVaultId() === vaultIdAtStart &&
                   !signal.aborted
@@ -178,68 +192,75 @@ export class SyncStore {
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (cachedMap.size > 0) {
-        this.status = "idle";
+        this._status = "idle";
       }
 
-      const syncPromise = this.deps.repository.loadFiles(
-        vaultIdAtStart,
-        vaultDir,
-        async (_chunk, current, total, newOrChanged) => {
+      const syncPromise = this.deps.repository
+        .loadFiles(
+          vaultIdAtStart,
+          vaultDir,
+          async (_chunk, current, total, newOrChanged) => {
+            if (this.isStale(vaultIdAtStart, signal)) return;
+
+            this.syncStats.total = total;
+            this.syncStats.progress = Math.round((current / total) * 100);
+            this.syncStats.created = current;
+
+            const changedIds = Object.keys(newOrChanged);
+            if (changedIds.length > 0) {
+              vaultEventBus.emit({
+                type: "SYNC_CHUNK_READY",
+                vaultId: vaultIdAtStart,
+                entities: this.deps.repository.entities,
+                newOrChangedIds: changedIds,
+              });
+            }
+          },
+        )
+        .then(async () => {
           if (this.isStale(vaultIdAtStart, signal)) return;
-
-          this.syncStats.total = total;
-          this.syncStats.progress = Math.round((current / total) * 100);
-          this.syncStats.created = current;
-
-          const changedIds = Object.keys(newOrChanged);
-          if (changedIds.length > 0) {
-            vaultEventBus.emit({
-              type: "SYNC_CHUNK_READY",
-              vaultId: vaultIdAtStart,
-              entities: this.deps.repository.entities,
-              newOrChangedIds: changedIds,
-            });
-          }
-        },
-      );
-
-      if (this.status === "loading") {
-        await syncPromise;
-      } else {
-        syncPromise.catch((err: any) => {
-          debugStore.error("[SyncStore] Background sync failed", err);
+          debugStore.log(
+            `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+          );
+          await this.deps.updateEntityCount(
+            vaultIdAtStart,
+            Object.keys(this.deps.repository.entities).length,
+          );
         });
-      }
 
-      if (this.status === "loading") {
-        debugStore.log(
-          `[SyncStore] Load complete. Indexed ${this.syncStats.created} entities.`,
-        );
-        this.status = "idle";
-      }
+      await syncPromise;
 
-      await this.deps.loadMaps(vaultIdAtStart);
-      await this.deps.loadCanvases(vaultIdAtStart);
+      if (this.isStale(vaultIdAtStart, signal)) return;
+
+      await Promise.all([
+        this.deps.loadMaps(vaultIdAtStart),
+        this.deps.loadCanvases(vaultIdAtStart),
+      ]);
+
+      if (this._status === "loading") {
+        this._status = "idle";
+      }
 
       vaultEventBus.emit({
         type: "SYNC_COMPLETE",
         vaultId: vaultIdAtStart,
       });
     } catch (err: any) {
+      if (err.name === "AbortError" || err.message === "AbortError") return;
       debugStore.error("[SyncStore] Load failed", err);
-      this.status = "error";
+      this._status = "error";
       this.errorMessage = err.message;
     } finally {
       if (!signal.aborted) {
         await this.checkForConflicts(signal);
       }
-      if ((this.status as string) !== "error" && !signal.aborted) {
-        this.status = "idle";
+      if (this._status === "loading" && !signal.aborted) {
+        this._status = "idle";
       }
     }
   }
 
-  async syncWithLocalFolder() {
+  async push() {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;
@@ -250,20 +271,73 @@ export class SyncStore {
     const opfsHandle = await this.deps.getActiveVaultHandle();
     if (!opfsHandle) return;
 
-    await syncCoordinator.syncWithLocalFolder(
+    this.failedFiles = [];
+
+    await syncCoordinator.push(
       vaultIdAtStart,
       opfsHandle,
       this.deps.repository.entities,
       () => this.deps.repository.waitForAllSaves(),
       (state) => {
         if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this.status = state.status;
+          this._status = state.status;
           this.syncType = state.syncType;
           if (state.errorMessage) this.errorMessage = state.errorMessage;
+          if (state.failedFiles) this.failedFiles = state.failedFiles;
         }
       },
       () => this.checkForConflicts(),
     );
+
+    if (this._status !== "error") {
+      const { updateLastSavedToFolder } = await import("./registry");
+      await updateLastSavedToFolder(vaultIdAtStart);
+    }
+  }
+
+  async pull() {
+    const activeVaultId = this.deps.activeVaultId();
+    if (!activeVaultId) return;
+    const vaultIdAtStart = activeVaultId;
+
+    if (this.isDirty) {
+      const confirmed = await uiStore.confirm({
+        title: "Overwrite Internal Work?",
+        message:
+          "Warning: You have unsaved internal changes. Loading from the folder will overwrite your current work. Continue?",
+        confirmLabel: "Overwrite and Load",
+        isDangerous: true,
+      });
+      if (!confirmed) return;
+    }
+
+    const syncCoordinator = await this.deps.getSyncCoordinator();
+    if (!syncCoordinator) return;
+
+    const opfsHandle = await this.deps.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    this.failedFiles = [];
+
+    await syncCoordinator.pull(
+      vaultIdAtStart,
+      opfsHandle,
+      this.deps.repository.entities,
+      () => this.deps.repository.waitForAllSaves(),
+      (state) => {
+        if (this.deps.activeVaultId() === vaultIdAtStart) {
+          this._status = state.status;
+          this.syncType = state.syncType;
+          if (state.errorMessage) this.errorMessage = state.errorMessage;
+          if (state.failedFiles) this.failedFiles = state.failedFiles;
+        }
+      },
+      () => this.checkForConflicts(),
+    );
+
+    if (this._status !== "error") {
+      await this.loadFiles();
+    }
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {
@@ -280,7 +354,7 @@ export class SyncStore {
       activeVaultId,
       opfsHandle,
       (status) => {
-        if (!signal?.aborted) this.status = status;
+        if (!signal?.aborted) this._status = status;
       },
       () => this.loadFiles(),
       signal,
@@ -302,7 +376,7 @@ export class SyncStore {
   }
 
   setStatus(s: "idle" | "loading" | "saving" | "error") {
-    this.status = s;
+    this._status = s;
   }
 
   setErrorMessage(m: string | null) {

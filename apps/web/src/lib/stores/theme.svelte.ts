@@ -1,15 +1,8 @@
 import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
-if (
-  import.meta.env.DEV ||
-  (typeof window !== "undefined" && (window as any).__E2E__)
-) {
-  console.error("[ThemeStore] Script executing");
-}
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import { vault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
 import {
   getOpfsRoot,
@@ -42,6 +35,7 @@ export class ThemeStore {
   // Dependencies
   private uiStore: typeof defaultUiStore;
   private storage: IThemeStorage;
+  private getVault: () => any;
 
   activeTheme = $derived(
     this.previewThemeId
@@ -70,6 +64,7 @@ export class ThemeStore {
 
   constructor(
     uiStore: typeof defaultUiStore = defaultUiStore,
+    getVault?: () => any,
     storage: IThemeStorage = {
       loadLocal() {
         if (!browser) return null;
@@ -126,6 +121,8 @@ export class ThemeStore {
   ) {
     this.uiStore = uiStore;
     this.storage = storage;
+    this.getVault =
+      getVault || (() => import("./vault.svelte").then((m) => m.vault));
 
     // Apply initial theme
     const initial = this.storage.loadLocal();
@@ -150,7 +147,9 @@ export class ThemeStore {
     if (!browser) return;
 
     // Use current active vault if available, otherwise fall back to localStorage
-    const activeVaultId = vault.activeVaultId;
+    const vault = await Promise.resolve(this.getVault());
+    const activeVaultId = vault?.activeVaultId;
+
     if (activeVaultId) {
       await this.loadForVault(activeVaultId);
     } else {
@@ -210,7 +209,10 @@ export class ThemeStore {
       if (this.uiStore.isDemoMode) return;
 
       this.storage.saveLocal(id);
-      const activeVaultId = vault.activeVaultId;
+
+      const vault = await Promise.resolve(this.getVault());
+      const activeVaultId = vault?.activeVaultId;
+
       if (activeVaultId) {
         try {
           // 1. Save to IDB for fast local lookup

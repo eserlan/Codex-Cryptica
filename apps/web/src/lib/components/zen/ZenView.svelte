@@ -2,7 +2,6 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { clipboardService } from "$lib/services/ClipboardService";
-  import ZenImageLightbox from "./ZenImageLightbox.svelte";
   import { createEditState } from "$lib/hooks/useEditState.svelte";
   import { createZenModeActions } from "$lib/hooks/useZenModeActions.svelte";
   import ZenHeader from "./ZenHeader.svelte";
@@ -48,7 +47,6 @@
   });
 
   let activeTab = $derived(uiStore.zenModeActiveTab);
-  let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
@@ -105,6 +103,33 @@
     }
   };
 
+  let isDraftActioning = $state(false);
+
+  const handleApproveDraft = async () => {
+    if (!entity || isDraftActioning || vault.isGuest) return;
+    isDraftActioning = true;
+    try {
+      await vault.updateEntity(entity.id, { status: "active" });
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      isDraftActioning = false;
+    }
+  };
+
+  const handleRejectDraft = async () => {
+    if (!entity || isDraftActioning || vault.isGuest) return;
+    isDraftActioning = true;
+    try {
+      await vault.deleteEntity(entity.id);
+      onClose();
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      isDraftActioning = false;
+    }
+  };
+
   const navigateTo = async (id: string) => {
     if (editState.isEditing) {
       if (
@@ -151,11 +176,11 @@
 
   // Handle keyboard shortcuts
   const handleKeydown = async (e: KeyboardEvent) => {
-    if (showLightbox) {
+    if (uiStore.lightbox.show) {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        showLightbox = false;
+        uiStore.closeLightbox();
       }
       return;
     }
@@ -246,6 +271,9 @@
         : onPopOut
           ? handlePopOutClick
           : undefined}
+      onApproveDraft={handleApproveDraft}
+      onRejectDraft={handleRejectDraft}
+      {isDraftActioning}
     />
 
     <!-- Navigation Tabs -->
@@ -253,7 +281,7 @@
       role="tablist"
       aria-label="Entity Sections"
       style="background-image: var(--bg-texture-overlay)"
-      class="flex gap-4 md:gap-8 px-4 md:px-8 border-b border-theme-border bg-theme-surface shrink-0 overflow-x-auto no-scrollbar"
+      class="flex gap-4 md:gap-6 px-4 md:px-6 border-b border-theme-border bg-theme-surface shrink-0 overflow-x-auto no-scrollbar"
     >
       <button
         bind:this={tabOverview}
@@ -262,7 +290,7 @@
         aria-selected={activeTab === "overview"}
         aria-controls="panel-overview"
         tabindex={activeTab === "overview" ? 0 : -1}
-        class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
         'overview'
           ? 'text-theme-primary border-theme-primary'
           : 'text-theme-muted border-transparent hover:text-theme-text'}"
@@ -279,7 +307,7 @@
           aria-selected={activeTab === "inventory"}
           aria-controls="panel-inventory"
           tabindex={activeTab === "inventory" ? 0 : -1}
-          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
           'inventory'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
@@ -295,7 +323,7 @@
           aria-selected={activeTab === "map"}
           aria-controls="panel-map"
           tabindex={activeTab === "map" ? 0 : -1}
-          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
           'map'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
@@ -322,7 +350,8 @@
             bind:editState
             {resolvedImageUrl}
             {isPopout}
-            onShowLightbox={() => (showLightbox = true)}
+            onShowLightbox={() =>
+              uiStore.openLightbox(resolvedImageUrl, entity.title)}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />
@@ -360,12 +389,6 @@
         </div>
       {/if}
     </div>
-
-    <ZenImageLightbox
-      bind:show={showLightbox}
-      imageUrl={resolvedImageUrl}
-      title={entity.title}
-    />
   {:else}
     <div class="flex-1 flex items-center justify-center p-12 text-center">
       <div class="max-w-md space-y-4">

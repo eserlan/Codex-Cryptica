@@ -15,13 +15,17 @@ const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
 
 export class OracleAnalyzer implements OracleAnalyzerEngine {
-  private modelFactory: (modelName: string) => GenerativeModel;
+  private modelFactory: (
+    modelName: string,
+  ) => GenerativeModel | Promise<GenerativeModel>;
 
   /**
    * @param apiKeyOrFactory Either a Google Gemini API key string, or a factory function that returns a GenerativeModel.
    */
   constructor(
-    apiKeyOrFactory: string | ((modelName: string) => GenerativeModel),
+    apiKeyOrFactory:
+      | string
+      | ((modelName: string) => GenerativeModel | Promise<GenerativeModel>),
   ) {
     if (typeof apiKeyOrFactory === "string") {
       const genAI = new GoogleGenerativeAI(apiKeyOrFactory);
@@ -106,7 +110,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     for (const modelName of models) {
       try {
-        const model = this.modelFactory(modelName);
+        const model = await this.modelFactory(modelName);
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const rawText = response.text();

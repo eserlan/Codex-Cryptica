@@ -2,6 +2,8 @@ import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
 import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
+import { debugStore } from "./debug.svelte";
+import { vaultEventBus } from "./vault/events";
 import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
@@ -9,11 +11,66 @@ import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
+  private activeAnalysisCounts = new Map<string, number>();
+  private activeAnalysisTotal = 0;
+
+  constructor() {
+    vaultEventBus.subscribe((event) => {
+      if (event.type === "VAULT_DELETED") {
+        void this.clearVault(event.vaultId);
+      } else if (event.type === "CONNECTION_REMOVED") {
+        void this.handleManualRemoval(
+          event.vaultId,
+          event.sourceId,
+          event.targetId,
+          event.connectionType,
+        );
+      }
+    });
+  }
+
+  private async handleManualRemoval(
+    vaultId: string,
+    sourceId: string,
+    targetId: string,
+    type: string,
+  ) {
+    const forwardProposal: Proposal = {
+      id: `${vaultId}:${sourceId}:${targetId}`,
+      vaultId,
+      sourceId,
+      targetId,
+      type,
+      context: "",
+      reason: "Manually removed by user",
+      confidence: 1.0,
+      status: "rejected",
+      timestamp: Date.now(),
+    };
+    const reverseProposal: Proposal = {
+      ...forwardProposal,
+      id: `${vaultId}:${targetId}:${sourceId}`,
+      sourceId: targetId,
+      targetId: sourceId,
+    };
+
+    this.prependHistoryProposal(sourceId, forwardProposal);
+    this.prependHistoryProposal(targetId, reverseProposal);
+
+    const service = this.getService();
+    await service.saveProposals([forwardProposal, reverseProposal]);
+  }
+
   isAnalyzing = $state(false);
   isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
+  analysisErrors = $state<Record<string, string | null>>({});
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
+
+  allPendingProposals = $state<Proposal[]>([]);
+  allAcceptedProposals = $state<Proposal[]>([]);
+  allVerifiedProposals = $state<Proposal[]>([]);
 
   activeProposals = $derived.by(() => {
     if (!vault.selectedEntityId) return [];
@@ -63,10 +120,6 @@ class ProposerStore {
     );
   });
 
-  constructor() {
-    //
-  }
-
   private getService(): ProposerService {
     if (!this.service) {
       this.service = new ProposerService(DB_NAME, DB_VERSION, getDB());
@@ -74,17 +127,59 @@ class ProposerStore {
     return this.service;
   }
 
-  async loadProposals(entityId: string) {
+  isEntityAnalyzing(entityId: string) {
+    return (this.activeAnalysisCounts.get(entityId) ?? 0) > 0;
+  }
+
+  private setAnalysisError(entityId: string, error: string | null) {
+    this.analysisErrors = { ...this.analysisErrors, [entityId]: error };
+    if (!vault.selectedEntityId || vault.selectedEntityId === entityId) {
+      this.analysisError = error;
+    }
+  }
+
+  private beginAnalysis(entityId: string) {
+    this.activeAnalysisCounts.set(
+      entityId,
+      (this.activeAnalysisCounts.get(entityId) ?? 0) + 1,
+    );
+    this.activeAnalysisTotal += 1;
+    this.isAnalyzing = true;
+    this.setAnalysisError(entityId, null);
+  }
+
+  private finishAnalysis(entityId: string) {
+    const nextCount = (this.activeAnalysisCounts.get(entityId) ?? 1) - 1;
+    if (nextCount > 0) {
+      this.activeAnalysisCounts.set(entityId, nextCount);
+    } else {
+      this.activeAnalysisCounts.delete(entityId);
+    }
+
+    this.activeAnalysisTotal = Math.max(0, this.activeAnalysisTotal - 1);
+    this.isAnalyzing = this.activeAnalysisTotal > 0;
+  }
+
+  private prependHistoryProposal(entityId: string, proposal: Proposal) {
+    const existing = this.history[entityId] || [];
+    if (existing.some((p) => p.id === proposal.id)) return;
+    this.history[entityId] = [proposal, ...existing];
+  }
+
+  async loadProposals(entityId: string, requireSelection = true) {
     if (this.isLoadingProposals) return;
+
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) return;
 
     this.isLoadingProposals = true;
     try {
       const service = this.getService();
-      const p = await service.getProposals(entityId);
-      const h = await service.getHistory(entityId);
+      const p = await service.getProposals(vaultId, entityId);
+      const h = await service.getHistory(vaultId, entityId);
 
       // Guard against stale updates if navigation happened
-      if (vault.selectedEntityId !== entityId) return;
+      if (requireSelection && vault.selectedEntityId !== entityId) return;
 
       this.proposals[entityId] = p;
       this.history[entityId] = h;
@@ -93,48 +188,169 @@ class ProposerStore {
     }
   }
 
+  async loadGlobalProposals() {
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) {
+      this.allPendingProposals = [];
+      this.allAcceptedProposals = [];
+      this.allVerifiedProposals = [];
+      return;
+    }
+
+    this.isLoadingProposals = true;
+    try {
+      const service = this.getService();
+      this.allPendingProposals = await service.getAllPendingProposals(vaultId);
+      this.allAcceptedProposals =
+        await service.getAllAcceptedProposals(vaultId);
+      this.allVerifiedProposals =
+        await service.getAllVerifiedProposals(vaultId);
+    } finally {
+      this.isLoadingProposals = false;
+    }
+  }
+
+  async verify(proposal: Proposal) {
+    const service = this.getService();
+    await service.verifyProposal(proposal.id);
+    this.allAcceptedProposals = this.allAcceptedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+    const verifiedProposal = {
+      ...proposal,
+      status: "verified" as const,
+      timestamp: Date.now(),
+    };
+    this.allVerifiedProposals = [
+      verifiedProposal,
+      ...this.allVerifiedProposals,
+    ];
+
+    // Update per-entity cache if it exists
+    if (this.proposals[proposal.sourceId]) {
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
+    }
+
+    debugStore.log("[ProposerStore] Verified AI connection", {
+      proposalId: proposal.id,
+    });
+  }
+
+  async undo(proposal: Proposal) {
+    // Remove connection from vault
+    const removed = await vault.removeConnection(
+      proposal.sourceId,
+      proposal.targetId,
+      proposal.type,
+    );
+
+    if (!removed) {
+      debugStore.warn(
+        "[ProposerStore] Failed to remove vault connection for undo",
+        { proposal },
+      );
+    }
+
+    const service = this.getService();
+    await service.dismissProposal(proposal.id);
+
+    // Update state
+    this.allAcceptedProposals = this.allAcceptedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+    this.allVerifiedProposals = this.allVerifiedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+
+    if (this.proposals[proposal.sourceId]) {
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
+    }
+
+    // Add to history with updated status
+    const dismissedProposal = {
+      ...proposal,
+      status: "rejected" as const,
+      timestamp: Date.now(),
+    };
+    if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
+    this.history[proposal.sourceId] = [
+      dismissedProposal,
+      ...this.history[proposal.sourceId],
+    ];
+
+    debugStore.log("[ProposerStore] Undid AI connection", {
+      proposalId: proposal.id,
+    });
+  }
+
   async analyzeCurrentEntity() {
     if (uiStore.aiDisabled) return;
     const entityId = vault.selectedEntityId;
-    if (!entityId || this.isAnalyzing) return;
+    if (!entityId || this.isEntityAnalyzing(entityId)) return;
+    await this.analyzeEntityById(entityId, true);
+  }
 
-    this.analysisError = null;
+  async analyzeEntityById(
+    entityId: string,
+    requireSelection = false,
+    analysisText?: string,
+  ) {
+    if (uiStore.aiDisabled) return;
 
-    // Load existing proposals/history if not loaded
-    if (!this.proposals[entityId]) {
-      await this.loadProposals(entityId);
-      // If the user changed the selected entity while loading, abort this analysis
-      if (vault.selectedEntityId !== entityId) return;
+    if (this.isEntityAnalyzing(entityId)) {
+      debugStore.warn(
+        `[ProposerStore] Skipping duplicate connection analysis for ${entityId}: already running`,
+      );
+      return;
     }
 
-    const apiKey = oracle.effectiveApiKey;
-    if (!apiKey) return;
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) return;
 
-    const entity = vault.entities[entityId];
-    if (!entity) return;
+    this.beginAnalysis(entityId);
 
-    this.isAnalyzing = true;
     try {
+      // Load existing proposals/history if not loaded
+      if (!this.proposals[entityId]) {
+        await this.loadProposals(entityId, requireSelection);
+        // If the user changed the selected entity while loading, abort this analysis
+        if (requireSelection && vault.selectedEntityId !== entityId) return;
+      }
+
+      const apiKey = oracle.effectiveApiKey || "";
+
+      const entity = vault.entities[entityId];
+      if (!entity) {
+        debugStore.warn(
+          `[ProposerStore] Skipping connection analysis for ${entityId}: entity missing from vault`,
+        );
+        return;
+      }
+
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
       // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
-      const existingConnectedIds = new Set(
-        entity.connections.map((c) => c.target),
-      );
+      // Also exclude entities in rejected history to respect manual pruning (US4)
+      const excludeIds = new Set(entity.connections.map((c) => c.target));
       for (const inbound of vault.inboundConnections[entityId] || []) {
-        existingConnectedIds.add(inbound.sourceId);
+        excludeIds.add(inbound.sourceId);
+      }
+      for (const h of this.history[entityId] || []) {
+        excludeIds.add(h.targetId);
       }
 
       // ⚡ Bolt Optimization: Use a single imperative loop over vault.allEntities instead of chaining .filter().map().
-      // vault.allEntities is already Object.values(...), so we still pay for that pass, but we avoid extra arrays and
-      // two additional traversals over the entities, which reduces allocations and GC pressure.
       const allEntities = vault.allEntities;
       const count = allEntities.length;
       const targets: { id: string; name: string }[] = [];
 
       for (let i = 0; i < count; i++) {
         const e = allEntities[i];
-        if (e.id !== entityId && !existingConnectedIds.has(e.id)) {
+        if (e.id !== entityId && !excludeIds.has(e.id)) {
           targets.push({ id: e.id, name: e.title });
         }
       }
@@ -142,16 +358,32 @@ class ProposerStore {
       // Use the basic model for background tasks to save cost/latency
       const modelName = TIER_MODES["lite"];
 
+      const sourceText = analysisText?.trim()
+        ? analysisText.trim()
+        : `${entity.content || ""} 
+
+ ${entity.lore || ""}`.trim();
+
+      debugStore.log("[ProposerStore] Starting connection analysis", {
+        entityId,
+        title: entity.title,
+        targetCount: targets.length,
+        sourceTextLength: sourceText.length,
+        usedOverrideText: Boolean(analysisText?.trim()),
+        mode: apiKey ? "custom-key" : "system-proxy",
+      });
+
       const newProposals = await proposerBridge.analyzeEntity(
         apiKey,
         modelName,
+        vaultId,
         entityId,
-        `${entity.content || ""} \n\n ${entity.lore || ""}`.trim(),
+        sourceText,
         targets,
       );
 
       // Guard against stale updates
-      if (vault.selectedEntityId !== entityId) return;
+      if (requireSelection && vault.selectedEntityId !== entityId) return;
 
       const service = this.getService();
       await service.saveProposals(newProposals);
@@ -167,14 +399,67 @@ class ProposerStore {
       );
 
       this.proposals[entityId] = [...existing, ...toAdd];
+
+      debugStore.log("[ProposerStore] Connection analysis completed", {
+        entityId,
+        title: entity.title,
+        rawProposalCount: newProposals.length,
+        addedProposalCount: toAdd.length,
+      });
     } catch (err: any) {
-      console.error("Analysis failed", err);
-      this.analysisError = err.message || "Analysis failed";
+      debugStore.error("[ProposerStore] Connection analysis failed", {
+        entityId,
+        error: err,
+      });
+      this.setAnalysisError(entityId, err.message || "Analysis failed");
     } finally {
-      if (vault.selectedEntityId === entityId) {
-        this.isAnalyzing = false;
+      this.finishAnalysis(entityId);
+    }
+  }
+
+  async analyzeAndApplyEntityById(entityId: string, analysisText?: string) {
+    await this.analyzeEntityById(entityId, false, analysisText);
+
+    // Strict Limit: Only auto-apply the top 3 most relevant connections
+    // to prevent graph clutter.
+    const proposals = [...(this.proposals[entityId] || [])]
+      .sort((a, b) => {
+        if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+        return b.timestamp - a.timestamp;
+      })
+      .slice(0, 3);
+
+    let appliedCount = 0;
+    let failedCount = 0;
+
+    if (proposals.length === 0) {
+      debugStore.log("[ProposerStore] No connections found to auto-apply.", {
+        entityId,
+      });
+      return 0;
+    }
+
+    debugStore.log("[ProposerStore] Applying top-3 connection proposals", {
+      entityId,
+      proposalCount: proposals.length,
+    });
+
+    for (const proposal of proposals) {
+      const applied = await this.apply(proposal);
+      if (applied) {
+        appliedCount += 1;
+      } else {
+        failedCount += 1;
       }
     }
+
+    debugStore.log("[ProposerStore] Finished applying connection proposals", {
+      entityId,
+      appliedCount,
+      failedCount,
+    });
+
+    return appliedCount;
   }
 
   async apply(proposal: Proposal) {
@@ -185,11 +470,10 @@ class ProposerStore {
       proposal.type,
     );
     if (!connectionCreated) {
-      console.error(
-        "Failed to create connection in vault for proposal",
+      debugStore.warn("[ProposerStore] Failed to create vault connection", {
         proposal,
-      );
-      return;
+      });
+      return false;
     }
 
     const service = this.getService();
@@ -202,6 +486,13 @@ class ProposerStore {
         proposal.sourceId
       ].filter((p) => p.id !== proposal.id);
     }
+    debugStore.log("[ProposerStore] Applied connection proposal", {
+      proposalId: proposal.id,
+      sourceId: proposal.sourceId,
+      targetId: proposal.targetId,
+      type: proposal.type,
+    });
+    return true;
   }
 
   async dismiss(proposal: Proposal) {
@@ -212,10 +503,15 @@ class ProposerStore {
         proposal.sourceId
       ].filter((p) => p.id !== proposal.id);
     }
-    // Add to history
+    // Add to history with updated status
+    const dismissedProposal = {
+      ...proposal,
+      status: "rejected" as const,
+      timestamp: Date.now(),
+    };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [
-      proposal,
+      dismissedProposal,
       ...this.history[proposal.sourceId],
     ];
     if (this.history[proposal.sourceId].length > 20) {
@@ -238,6 +534,31 @@ class ProposerStore {
       ...this.proposals[proposal.sourceId],
       proposal,
     ];
+  }
+
+  async clearVault(vaultId: string) {
+    const service = this.getService();
+    await service.clearVault(vaultId);
+    // Clear in-memory caches if this was the active vault
+    if (vault.activeVaultId === vaultId) {
+      this.proposals = {};
+      this.history = {};
+      this.allPendingProposals = [];
+      this.allAcceptedProposals = [];
+      this.allVerifiedProposals = [];
+    }
+  }
+
+  /** @internal - For testing only */
+  reset() {
+    this.proposals = {};
+    this.history = {};
+    this.allPendingProposals = [];
+    this.allAcceptedProposals = [];
+    this.allVerifiedProposals = [];
+    this.isAnalyzing = false;
+    this.isLoadingProposals = false;
+    this.analysisError = null;
   }
 }
 

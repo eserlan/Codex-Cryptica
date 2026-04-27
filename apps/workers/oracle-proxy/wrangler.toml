@@ -13,7 +13,11 @@ minify = false
 [vars]
 # Comma-separated list of allowed origins
 # Leave empty to use defaults (codex-cryptica.com, staging, pages.dev)
+# CI/CD should override this per environment via deploy-worker.yml.
 ALLOWED_ORIGINS = ""
+# Set to "true" in CI/CD environments that should accept branch preview URLs
+# like https://feature.codex-cryptica.pages.dev.
+ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 
 # Secrets (must be set via `wrangler secret put`)
 # - GEMINI_API_KEY: Your Google Gemini API key

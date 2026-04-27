@@ -25,6 +25,9 @@ vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     isGuestMode: false,
     confirm: vi.fn().mockResolvedValue(true),
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

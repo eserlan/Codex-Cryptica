@@ -78,6 +78,12 @@ export class VaultLifecycleManager {
 
       const db = await getDB();
       await db.put("settings", handle, `syncHandle_${vaultId}`);
+
+      await this.deps.vaultRegistry.updateEntityCount(
+        vaultId,
+        Object.keys(entities).length,
+      );
+
       this.deps.syncStore.setStatus("idle");
     } catch (err: any) {
       console.error("[VaultStore] Persistence failed:", err);
@@ -117,6 +123,7 @@ export class VaultLifecycleManager {
 
     await this.deps.vaultRegistry.deleteVault(id);
     await cacheService.clearVault(id);
+    vaultEventBus.emit({ type: "VAULT_DELETED", vaultId: id });
   }
 
   async setupSync(handle: FileSystemDirectoryHandle) {
@@ -162,9 +169,12 @@ export class VaultLifecycleManager {
     this.switchLock = this.switchLock.then(async () => {
       if (this.deps.activeVaultId() === id) return;
 
+      this.deps.syncStore.setStatus("loading");
+
       // Flush debounced saves and drain the queue before clearing state
       await this.deps.flushPendingSaves();
 
+      // HARD CLEAR: Wipe all traces of the previous vault
       this.deps.repository.clear();
       this.deps.assetStore.clear();
       this.deps.mapRegistry.maps = {};
@@ -172,20 +182,22 @@ export class VaultLifecycleManager {
       this.deps.setSelectedEntityId(null);
       this.deps.syncStore.setHasConflictFiles(false);
 
+      // Invalidate cache preloads to ensure no leakage from previous vault
+      cacheService.invalidatePreload();
+
       await this.deps.vaultRegistry.setActiveVault(id);
       this.deps.clearStorageCache();
+
+      // Load Oracle chat history for the new vault
+      const { oracle } = await import("../oracle.svelte");
+      await oracle.loadForVault(id);
+
       await this.deps.themeStore.loadForVault(id);
-      await this.deps.loadFiles(true);
+      await this.deps.loadFiles();
       this.deps.setInitialized(true);
       this.deps.syncStore.setStatus("idle");
 
       vaultEventBus.emit({ type: "VAULT_SWITCHED", vaultId: id });
-      // TODO: migrate remaining window listeners to vaultEventBus and remove this
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("vault-switched", { detail: { id } }),
-        );
-      }
     });
 
     return this.switchLock;
@@ -196,6 +208,18 @@ export class VaultLifecycleManager {
     try {
       await this.deps.ensureServicesInitialized();
       this.deps.setDemoVaultName(name);
+
+      // Clear internal state
+      this.deps.repository.clear();
+      this.deps.assetStore.clear();
+
+      // IMPORTANT: Clear the cache for the active vault (which might be "default")
+      // to ensure demo data doesn't leak into it or vice versa.
+      const activeId = this.deps.activeVaultId();
+      if (activeId) {
+        await cacheService.clearVault(activeId);
+      }
+
       this.deps.repository.entities = entities;
       this.deps.setInitialized(true);
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { OracleActionExecutor } from "./oracle-executor";
 
 describe("OracleActionExecutor - Detailed", () => {
@@ -40,7 +40,11 @@ describe("OracleActionExecutor - Detailed", () => {
         setMessages: vi.fn(),
         messages: [],
       },
-      uiStore: { aiDisabled: false },
+      uiStore: {
+        aiDisabled: false,
+        entityDiscoveryMode: "suggest",
+        connectionDiscoveryMode: "suggest",
+      },
       vault: {
         isGuest: false,
         createEntity: vi.fn().mockResolvedValue("new-id"),
@@ -57,11 +61,13 @@ describe("OracleActionExecutor - Detailed", () => {
         generatePlotAnalysis: vi.fn(),
         expandQuery: vi.fn(),
         generateResponse: vi.fn(),
+        reconcileEntityUpdate: vi.fn(),
       },
       imageGeneration: {
         generateImage: vi.fn(),
         distillVisualPrompt: vi.fn(),
       },
+      proposeConnectionsForEntity: vi.fn().mockResolvedValue(undefined),
       contextRetrieval: {
         retrieveContext: vi.fn(),
       },
@@ -82,6 +88,15 @@ describe("OracleActionExecutor - Detailed", () => {
 
   describe("executeCreate", () => {
     it("should create an entity and notify history", async () => {
+      mockContext.proposeConnectionsForEntity.mockResolvedValue(2);
+      mockContext.chatHistory.messages = [
+        {
+          id: "m1",
+          role: "assistant",
+          content: "Orc serves the Red Hand and guards Blackstone Keep.",
+        },
+      ];
+
       await executor.execute(
         {
           type: "create",
@@ -97,11 +112,101 @@ describe("OracleActionExecutor - Detailed", () => {
         "Orc",
         expect.any(Object),
       );
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
+        "new-id",
+        {
+          apply: false,
+          analysisText: "Orc serves the Red Hand and guards Blackstone Keep.",
+        },
+      );
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           role: "system",
-          content: expect.stringContaining("Created node: **Orc**"),
+          content: expect.stringContaining(
+            "Created node: **Orc** (NPC) and queued connection suggestions",
+          ),
         }),
+      );
+      expect(mockContext.graph.requestFit).not.toHaveBeenCalled();
+    });
+
+    it("should auto-apply create connections when connection discovery is auto-apply", async () => {
+      mockContext.uiStore.connectionDiscoveryMode = "auto-apply";
+      mockContext.proposeConnectionsForEntity.mockResolvedValue(2);
+      mockContext.chatHistory.messages = [
+        {
+          id: "m1",
+          role: "assistant",
+          content: "Orc serves the Red Hand and guards Blackstone Keep.",
+        },
+      ];
+
+      await executor.execute(
+        {
+          type: "create",
+          entityName: "Orc",
+          entityType: "npc",
+          isDrawing: false,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
+        "new-id",
+        {
+          apply: true,
+          analysisText: "Orc serves the Red Hand and guards Blackstone Keep.",
+        },
+      );
+      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining("and added 2 connections"),
+        }),
+      );
+    });
+
+    it("should skip create connection analysis when connection discovery is off", async () => {
+      mockContext.uiStore.connectionDiscoveryMode = "off";
+
+      await executor.execute(
+        {
+          type: "create",
+          entityName: "Orc",
+          entityType: "npc",
+          isDrawing: false,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.proposeConnectionsForEntity).not.toHaveBeenCalled();
+    });
+
+    it("should still pass fallback analysis text when recent chat does not mention the new entity", async () => {
+      mockContext.proposeConnectionsForEntity.mockResolvedValue(0);
+      mockContext.chatHistory.messages = [
+        {
+          id: "m1",
+          role: "assistant",
+          content: "The Red Hand is mobilizing across the valley.",
+        },
+      ];
+
+      await executor.execute(
+        {
+          type: "create",
+          entityName: "Orc",
+          entityType: "npc",
+          isDrawing: false,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
+        "new-id",
+        {
+          apply: false,
+          analysisText: "Orc\n\nThe Red Hand is mobilizing across the valley.",
+        },
       );
     });
 
@@ -447,6 +552,227 @@ describe("OracleActionExecutor - Detailed", () => {
         "partial response",
       );
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
+    });
+
+    it("should reconcile existing entity updates during auto-archive", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.vault.entities = {
+        e1: {
+          id: "e1",
+          title: "Thay",
+          type: "location",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+      };
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            entityId: "e1",
+            title: "Thay",
+            type: "location",
+            draft: {
+              chronicle: "New chronicle",
+              lore: "New lore",
+            },
+            confidence: 0.95,
+          },
+        ]),
+      };
+      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+        content: "Reconciled chronicle",
+        lore: "Reconciled lore",
+      });
+      mockGenerator.generateChatResponse.mockResolvedValue({
+        primaryEntityId: "e1",
+        sourceIds: ["e1"],
+      });
+
+      await executor.execute(
+        { type: "chat", query: "tell me of thay", isAIIntent: true },
+        mockContext,
+      );
+
+      expect(
+        mockContext.textGeneration.reconcileEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        mockContext.vault.entities.e1,
+        {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        },
+        [],
+      );
+      expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
+        content: "Reconciled chronicle",
+        lore: "Reconciled lore",
+      });
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
+        "e1",
+        { apply: false, analysisText: undefined },
+      );
+    });
+
+    it("should seed connection proposals for newly auto-archived entities", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            title: "Valerius",
+            type: "npc",
+            draft: {
+              chronicle: "A reclusive alchemist",
+              lore: "Valerius works from a crystal tower.",
+            },
+            confidence: 0.92,
+          },
+        ]),
+      };
+      mockGenerator.generateChatResponse.mockResolvedValue({
+        primaryEntityId: "e1",
+        sourceIds: ["e1"],
+      });
+
+      await executor.execute(
+        {
+          type: "chat",
+          query: "There is a reclusive alchemist named Valerius",
+          isAIIntent: true,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.vault.createEntity).toHaveBeenCalledWith(
+        "npc",
+        "Valerius",
+        expect.objectContaining({
+          content: "A reclusive alchemist",
+          lore: "Valerius works from a crystal tower.",
+          status: "draft",
+        }),
+      );
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
+        "new-id",
+        { apply: false, analysisText: undefined },
+      );
+    });
+
+    it("should await connection seeding for each auto-archived discovery", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.vault.createEntity = vi
+        .fn()
+        .mockResolvedValueOnce("new-id-1")
+        .mockResolvedValueOnce("new-id-2");
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            title: "Valerius",
+            type: "npc",
+            draft: {
+              chronicle: "A reclusive alchemist",
+              lore: "Valerius works from a crystal tower.",
+            },
+            confidence: 0.92,
+          },
+          {
+            title: "Azure Wastes",
+            type: "location",
+            draft: {
+              chronicle: "A frozen frontier",
+              lore: "The wastes stretch beyond the last watchtower.",
+            },
+            confidence: 0.9,
+          },
+        ]),
+      };
+      mockGenerator.generateChatResponse.mockResolvedValue({
+        primaryEntityId: "e1",
+        sourceIds: ["e1"],
+      });
+
+      await executor.execute(
+        {
+          type: "chat",
+          query: "Valerius travels across the Azure Wastes",
+          isAIIntent: true,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenNthCalledWith(
+        1,
+        "new-id-1",
+        { apply: false, analysisText: undefined },
+      );
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenNthCalledWith(
+        2,
+        "new-id-2",
+        { apply: false, analysisText: undefined },
+      );
+    });
+
+    it("should suppress proactive discovery when entity discovery is off", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "off";
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            title: "Valerius",
+            type: "npc",
+            draft: {
+              chronicle: "A reclusive alchemist",
+              lore: "Valerius works from a crystal tower.",
+            },
+            confidence: 0.92,
+          },
+        ]),
+      };
+
+      await executor.execute(
+        {
+          type: "chat",
+          query: "There is a reclusive alchemist named Valerius",
+          isAIIntent: true,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.draftingEngine.propose).not.toHaveBeenCalled();
+      expect(mockContext.vault.createEntity).not.toHaveBeenCalled();
+      expect(mockContext.proposeConnectionsForEntity).not.toHaveBeenCalled();
+    });
+
+    it("should auto-apply connection discovery for auto-archived entities when enabled", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.connectionDiscoveryMode = "auto-apply";
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            title: "Valerius",
+            type: "npc",
+            draft: {
+              chronicle: "A reclusive alchemist",
+              lore: "Valerius works from a crystal tower.",
+            },
+            confidence: 0.92,
+          },
+        ]),
+      };
+
+      await executor.execute(
+        {
+          type: "chat",
+          query: "There is a reclusive alchemist named Valerius",
+          isAIIntent: true,
+        },
+        mockContext,
+      );
+
+      expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
+        "new-id",
+        { apply: true, analysisText: undefined },
+      );
     });
   });
 

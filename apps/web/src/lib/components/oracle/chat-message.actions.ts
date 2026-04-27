@@ -192,7 +192,8 @@ export class ChatMessageActions {
       this.vault.selectedEntityId = id;
       params.setSaved(true);
       this.oracle.updateMessageEntity(params.message.id, id);
-      this.graph.requestFit();
+      // Graph sync will trigger a real layout+fit after the node is added.
+      // Forcing an immediate fit here can zoom to temporary seed positions.
 
       this.oracle.pushUndoAction(
         `Create Node ${params.parsed.title}`,

@@ -57,9 +57,12 @@ vi.mock("./vault-registry.svelte", () => {
       rootHandle: mockDirHandle,
       activeVaultId: "test-vault",
       setActiveVault: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
       listVaults: vi.fn().mockResolvedValue([]),
       availableVaults: [],
       vaults: [],
+      activeVaultRecord: { lastInternalChange: 0, lastSavedToFolder: 0 },
+      refreshVaults: vi.fn().mockResolvedValue(undefined),
     },
   };
 });
@@ -124,6 +127,7 @@ vi.mock("../services/cache.svelte", () => ({
     getEntityContent: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
+    clearVault: vi.fn().mockResolvedValue(undefined),
     clear: vi.fn(),
   },
 }));
@@ -390,7 +394,7 @@ describe("VaultStore", () => {
       });
       vi.mocked(cacheService.preloadVault).mockResolvedValue(mockMap);
 
-      await testVault.loadFiles(true);
+      await testVault.loadFiles();
 
       expect(testVault.entities["e1"]).toBeDefined();
       expect(mockRepository.loadFiles).not.toHaveBeenCalled();
@@ -399,7 +403,7 @@ describe("VaultStore", () => {
     it("should perform full sync if cache is empty or skipSyncIfWarm is false", async () => {
       vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
 
-      await testVault.loadFiles(false);
+      await testVault.loadFiles();
 
       expect(mockRepository.loadFiles).toHaveBeenCalled();
     });
@@ -411,7 +415,7 @@ describe("VaultStore", () => {
         return new Map();
       });
 
-      const loadPromise = testVault.loadFiles(false);
+      const loadPromise = testVault.loadFiles();
 
       // Simulate rapid switch before preload finishes
       vi.mocked(vaultRegistry).activeVaultId = "new-vault" as any;
@@ -848,19 +852,17 @@ describe("VaultStore", () => {
 
     it("should handle syncWithLocalFolder", async () => {
       testVault.syncCoordinator = {
-        syncWithLocalFolder: vi
-          .fn()
-          .mockImplementation((_id, _h, _e, _w, onState) => {
-            onState({ status: "syncing", syncType: "local" });
-            return Promise.resolve();
-          }),
+        push: vi.fn().mockImplementation((_id, _h, _e, _w, onState) => {
+          onState({ status: "saving", syncType: "local" });
+          return Promise.resolve();
+        }),
       } as any;
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       vi.spyOn(testVault, "getActiveVaultHandle").mockResolvedValue({} as any);
 
       await testVault.syncWithLocalFolder();
-      expect(testVault.syncCoordinator!.syncWithLocalFolder).toHaveBeenCalled();
-      expect(testVault.status).toBe("syncing");
+      expect(testVault.syncCoordinator!.push).toHaveBeenCalled();
+      expect(testVault.status).toBe("saving");
     });
 
     it("should handle error in checkForConflicts", async () => {

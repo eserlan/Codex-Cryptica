@@ -37,11 +37,18 @@ vi.mock("./vault.svelte", () => ({
 }));
 
 // Mock ui store
-vi.mock("./ui.svelte", () => ({
-  ui: {
-    sharedMode: false,
-  },
-}));
+vi.mock("./ui.svelte", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+  const mockUi = new actual.UIStore();
+  // Ensure we can track calls if needed, though real logic is better for state tests
+  mockUi.toggleLabelFilter = vi.fn(mockUi.toggleLabelFilter.bind(mockUi));
+  mockUi.clearLabelFilters = vi.fn(mockUi.clearLabelFilters.bind(mockUi));
+
+  return {
+    ...actual,
+    ui: mockUi,
+  };
+});
 
 // Mock graph-engine
 vi.mock("graph-engine", () => ({

@@ -6,19 +6,26 @@
   import { fade } from "svelte/transition";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
+  import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
+  import {
+    dispatchSearchEntityFocus,
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+  } from "$lib/components/search/search-focus";
 
   let {
     entity,
     isEditing,
     editTitle = $bindable(),
+    editAliases = $bindable([]),
     onClose,
   } = $props<{
     entity: Entity;
     isEditing: boolean;
     editTitle: string;
+    editAliases: string[];
     onClose: () => void;
   }>();
 
@@ -37,16 +44,13 @@
   });
 
   const handleFindInGraph = () => {
+    const nodeId = vault.selectedEntityId;
+    if (!nodeId) return;
+
     ui.findInGraph();
 
-    const cy = (window as any).cy;
-    const nodeId = vault.selectedEntityId;
-    if (!cy || !nodeId) return;
-
-    const node = cy.$id(nodeId);
-    if (node.length > 0) {
-      cy.center(node);
-    }
+    // Trigger centering and zooming
+    dispatchSearchEntityFocus(nodeId, DEFAULT_SEARCH_ENTITY_ZOOM);
   };
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
@@ -95,16 +99,34 @@
           class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
           placeholder="Entity Title"
         />
+        <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
       </div>
     {:else}
-      <h2
-        class="{isFantasyTheme
-          ? 'text-2xl md:text-3xl font-header tracking-wider'
-          : 'text-2xl md:text-3xl font-body tracking-wide'} font-bold"
-        style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
-      >
-        {entity.title}
-      </h2>
+      <div class="flex flex-col gap-1">
+        <h2
+          class="{isFantasyTheme
+            ? 'text-2xl md:text-3xl font-header tracking-wider'
+            : 'text-2xl md:text-3xl font-body tracking-wide'} font-bold"
+          style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
+        >
+          {entity.title}
+        </h2>
+        {#if entity.aliases && entity.aliases.length > 0}
+          <div class="flex flex-wrap gap-1.5 mt-0.5">
+            <span
+              class="text-[9px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5"
+              >aka:</span
+            >
+            {#each entity.aliases as alias}
+              <div
+                class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
+              >
+                {alias}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
     {/if}
 
     <div class="flex items-center gap-1">

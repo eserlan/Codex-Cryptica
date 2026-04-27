@@ -61,24 +61,38 @@ jobs:
         id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Set per GitHub Environment (production/staging) for strict CORS allowlisting
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: ${{ vars.ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS }}
           # Worker name from wrangler.toml
           WORKER_NAME: oracle-proxy
         working-directory: apps/workers/oracle-proxy
         run: |
           echo "Deploying worker to ${{ github.event.inputs.environment || 'production' }}..."
-          wrangler deploy --commit-dirty=true
+          if [ -z "${ALLOWED_ORIGINS:-}" ]; then
+            echo "::error::Missing ALLOWED_ORIGINS for this GitHub environment."
+            echo "::error::Set ALLOWED_ORIGINS in the '${{ github.event.inputs.environment || 'production' }}' environment variables."
+            exit 1
+          fi
+
+          wrangler deploy \
+            --commit-dirty=true \
+            --var ALLOWED_ORIGINS:"$ALLOWED_ORIGINS" \
+            --var ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS:"${ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS:-false}"
           echo "worker_url=https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_OUTPUT
       
       - name: Verify Deployment
         run: |
           echo "Waiting 10 seconds for deployment to propagate..."
           sleep 10
+          HEALTH_CHECK_ORIGIN="${ALLOWED_ORIGINS%%,*}"
+          HEALTH_CHECK_ORIGIN="$(printf '%s' "$HEALTH_CHECK_ORIGIN" | xargs)"
           
           # Simple health check
           response=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
             -H "Content-Type: application/json" \
-            -H "Origin: https://codex-cryptica.com" \
+            -H "Origin: $HEALTH_CHECK_ORIGIN" \
             -d '{"contents":[{"role":"user","parts":[{"text":"health check"}]}],"generationConfig":{}}')
           
           echo "Health check response code: $response"

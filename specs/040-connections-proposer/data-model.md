@@ -24,4 +24,5 @@
 - `init`: AI scan finds a new link → `pending`.
 - `user_accept`: User clicks "Apply" → `accepted` (and real connection created).
 - `user_dismiss`: User clicks "Dismiss" → `rejected`.
+- `user_remove`: User manually deletes a connection → `rejected` (auto-created to prevent re-suggestions).
 - `user_retry`: User clicks "Re-evaluate" from history → `pending`.

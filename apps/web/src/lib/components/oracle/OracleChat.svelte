@@ -6,6 +6,7 @@
   import { chatCommands } from "../../config/chat-commands";
   import { fade } from "svelte/transition";
   import { tick } from "svelte";
+  import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -14,6 +15,9 @@
   let textArea = $state<HTMLTextAreaElement>();
   let commandMenu = $state<ReturnType<typeof CommandMenu>>();
   let showCommandMenu = $state(false);
+  let hasScrolledToInitialHistory = false;
+  let previousMessageCount = 0;
+  let wasNearBottom = true;
 
   // Command history for ArrowUp/Down navigation
   let commandHistory = $state<string[]>([]);
@@ -28,17 +32,16 @@
   };
 
   $effect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    input; // Reactive dependency
+    const currentInput = input;
     adjustHeight();
 
-    if (input.startsWith("/")) {
+    if (currentInput.startsWith("/")) {
       const isCmd = (cmd: string) =>
-        input === cmd || input.startsWith(cmd + " ");
+        currentInput === cmd || currentInput.startsWith(cmd + " ");
       // Keep menu open if we haven't typed a space yet (command selection)
       // OR if it's a command that can have arguments
       if (
-        !input.includes(" ") ||
+        !currentInput.includes(" ") ||
         isCmd("/connect") ||
         isCmd("/merge") ||
         isCmd("/draw") ||
@@ -142,16 +145,58 @@
     }
   };
 
+  const scheduleScrollToBottom = (
+    behavior: "auto" | "instant" | "smooth" = "auto",
+  ) => {
+    tick().then(() => {
+      const scroll = () => {
+        const didScroll = scrollChatToBottom(scrollContainer, { behavior });
+        if (didScroll) {
+          wasNearBottom = true;
+        }
+      };
+
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(scroll);
+      } else {
+        setTimeout(scroll);
+      }
+    });
+  };
+
   $effect(() => {
-    if (oracle.messages.length && scrollContainer) {
-      tick().then(() => {
-        scrollContainer?.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: "smooth",
-        });
-      });
+    const messageCount = oracle.messages.length;
+    const container = scrollContainer;
+
+    if (!container) return;
+
+    if (messageCount === 0) {
+      hasScrolledToInitialHistory = false;
+      previousMessageCount = 0;
+      return;
+    }
+
+    if (!hasScrolledToInitialHistory) {
+      hasScrolledToInitialHistory = true;
+      previousMessageCount = messageCount;
+      scheduleScrollToBottom("auto");
+      return;
+    }
+
+    const newMessageArrived = messageCount > previousMessageCount;
+    const shouldFollowNewMessages = newMessageArrived && wasNearBottom;
+
+    previousMessageCount = messageCount;
+
+    if (shouldFollowNewMessages) {
+      scheduleScrollToBottom("smooth");
     }
   });
+
+  const handleScroll = () => {
+    if (!scrollContainer) return;
+    wasNearBottom = isChatNearBottom(scrollContainer);
+  };
 </script>
 
 {#if !oracle.isEnabled}
@@ -199,8 +244,10 @@
 {:else}
   <!-- Messages -->
   <div
-    class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+    class="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 sm:space-y-4 scroll-smooth"
     bind:this={scrollContainer}
+    data-testid="oracle-chat-scroll-container"
+    onscroll={handleScroll}
   >
     {#if oracle.messages.length === 0}
       <div
@@ -221,10 +268,17 @@
           >
             The Archives are Open
           </h4>
-          <p class="text-xs text-theme-muted leading-relaxed font-body">
+          <p
+            class="text-xs text-theme-muted leading-relaxed font-body hidden sm:block"
+          >
             Greetings, Seeker. I am the Oracle, the keeper of your recorded
             lore. Ask of the robber, the mayor, or the shadows beyond the
             village... I shall consult the echoes of your vault.
+          </p>
+          <p
+            class="text-[10px] text-theme-muted leading-relaxed font-body sm:hidden"
+          >
+            Consult the echoes of your vault.
           </p>
         </div>
 
@@ -270,7 +324,7 @@
       </div>
     {/if}
 
-    {#each oracle.messages as _msg, i}
+    {#each oracle.messages as _msg, i (oracle.messages[i].id)}
       <ChatMessage bind:message={oracle.messages[i]} />
     {/each}
 
@@ -288,7 +342,7 @@
   <!-- Input -->
 
   <div
-    class="px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
+    class="px-2.5 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
     style:background-image="var(--bg-texture-overlay)"
   >
     {#if showCommandMenu}

@@ -1,4 +1,8 @@
+⚠️ **SUPERSEDED**: This specification has been superseded by [093-directional-vault-sync](../093-directional-vault-sync/spec.md). The bidirectional merge logic described here is deprecated in favor of explicit Save/Load operations.
+
 # SPEC-002: Svelte-Native Sync Engine (The "Pulse")
+
+**Status**: Superseded by 093-directional-vault-sync
 
 ## 1. The Goal
 

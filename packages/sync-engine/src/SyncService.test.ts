@@ -34,7 +34,7 @@ describe("SyncService", () => {
     service = new SyncService(mockRegistry);
   });
 
-  describe("sync", () => {
+  describe("sync (pull direction)", () => {
     it("should handle MATCH_INITIAL when contents are identical", async () => {
       const content = "same-content";
       const fsMetadata = {
@@ -56,7 +56,7 @@ describe("SyncService", () => {
       mockFsBackend.download.mockResolvedValue(new Blob([content]));
       mockOpfsBackend.download.mockResolvedValue(new Blob([content]));
 
-      await service.sync("v1", mockFsBackend, mockOpfsBackend);
+      await service.sync("v1", mockFsBackend, mockOpfsBackend, "pull");
 
       expect(mockRegistry.putEntry).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -65,7 +65,7 @@ describe("SyncService", () => {
       );
     });
 
-    it("should handle IMPORT_TO_OPFS when local changed (Update)", async () => {
+    it("should handle IMPORT_TO_OPFS when local changed", async () => {
       const registryEntry = {
         filePath: "changed.md",
         vaultId: "v1",
@@ -74,7 +74,6 @@ describe("SyncService", () => {
         lastSyncedOpfsHash: "h1",
       };
 
-      // fsMetadata must be > 2000ms newer than registry to be "changed"
       const fsMetadata = {
         path: "changed.md",
         lastModified: 3000,
@@ -102,13 +101,18 @@ describe("SyncService", () => {
         hash: "new-hash",
       });
 
-      const result = await service.sync("v1", mockFsBackend, mockOpfsBackend);
+      const result = await service.sync(
+        "v1",
+        mockFsBackend,
+        mockOpfsBackend,
+        "pull",
+      );
 
       expect(mockOpfsBackend.upload).toHaveBeenCalled();
       expect(result.updated).toContain("changed.md");
     });
 
-    it("should handle HANDLE_CONFLICT (Remote newer wins)", async () => {
+    it("should handle conflicts by preferring Folder state", async () => {
       const registryEntry = {
         filePath: "conflict.md",
         vaultId: "v1",
@@ -117,18 +121,15 @@ describe("SyncService", () => {
         lastSyncedOpfsHash: "old-hash",
       };
 
-      // Both sides changed relative to registry
-      // FS changed (3000 vs 500)
       const fsMetadata = {
         path: "conflict.md",
         lastModified: 3000,
         size: 10,
         handle: {},
       };
-      // OPFS changed (hash differs)
       const opfsMetadata = {
         path: "conflict.md",
-        lastModified: 4000, // Newer than FS
+        lastModified: 4000,
         size: 10,
         handle: "r1",
         hash: "new-remote-hash",
@@ -137,53 +138,97 @@ describe("SyncService", () => {
       mockFsBackend.scan.mockResolvedValue({ files: [fsMetadata] });
       mockOpfsBackend.scan.mockResolvedValue({ files: [opfsMetadata] });
       mockRegistry.getEntriesByVault.mockResolvedValue([registryEntry]);
+      mockFsBackend.download.mockResolvedValue(new Blob(["folder version"]));
 
-      mockFsBackend.download.mockResolvedValue(new Blob(["local"]));
-      mockOpfsBackend.download.mockResolvedValue(new Blob(["remote"]));
-
-      // Remote is newer, so it should EXPORT_TO_FS (mocking updatedFs)
-      mockFsBackend.upload.mockResolvedValue({
+      mockOpfsBackend.upload.mockResolvedValue({
         path: "conflict.md",
-        lastModified: 4000,
-        size: 10,
-        handle: {},
+        hash: "new-hash",
       });
-
-      const result = await service.sync("v1", mockFsBackend, mockOpfsBackend);
-
-      expect(result.updated).toContain("conflict.md");
-      expect(mockFsBackend.upload).toHaveBeenCalled();
-    });
-
-    it("should handle delta sync unchanged files", async () => {
-      const registryEntry = {
-        filePath: "stable.md",
-        vaultId: "v1",
-        remoteId: "r1",
-        lastSyncedFsModified: 100,
-        lastSyncedFsSize: 10,
-        lastSyncedOpfsHash: "h1",
-      };
-      mockRegistry.getEntriesByVault.mockResolvedValue([registryEntry]);
-      mockFsBackend.scan.mockResolvedValue({
-        files: [{ path: "stable.md", lastModified: 100, size: 10 }],
-      });
-      mockOpfsBackend.scan.mockResolvedValue({ files: [], nextToken: "t2" });
 
       const result = await service.sync(
         "v1",
         mockFsBackend,
         mockOpfsBackend,
-        "t1",
+        "pull",
       );
 
-      expect(result.updated).toHaveLength(0);
+      expect(result.updated).toContain("conflict.md");
+      expect(mockOpfsBackend.upload).toHaveBeenCalled();
     });
+  });
 
-    it("should handle sync error gracefully", async () => {
-      mockFsBackend.scan.mockRejectedValue(new Error("Crash"));
-      const result = await service.sync("v1", mockFsBackend, mockOpfsBackend);
-      expect(result.error).toBe("Crash");
+  describe("sync (push direction)", () => {
+    it("should handle EXPORT_TO_FS when internal changed", async () => {
+      const registryEntry = {
+        filePath: "app-changed.md",
+        vaultId: "v1",
+        lastSyncedFsModified: 500,
+        lastSyncedFsSize: 10,
+        lastSyncedOpfsHash: "h1",
+      };
+
+      const fsMetadata = {
+        path: "app-changed.md",
+        lastModified: 500,
+        size: 10,
+        handle: {},
+      };
+      const opfsMetadata = {
+        path: "app-changed.md",
+        lastModified: 3000,
+        size: 10,
+        handle: "r1",
+        hash: "new-h",
+      };
+
+      mockFsBackend.scan.mockResolvedValue({ files: [fsMetadata] });
+      mockOpfsBackend.scan.mockResolvedValue({ files: [opfsMetadata] });
+      mockRegistry.getEntriesByVault.mockResolvedValue([registryEntry]);
+      mockOpfsBackend.download.mockResolvedValue(new Blob(["app content"]));
+
+      mockFsBackend.upload.mockResolvedValue({ path: "app-changed.md" });
+
+      const result = await service.sync(
+        "v1",
+        mockFsBackend,
+        mockOpfsBackend,
+        "push",
+      );
+
+      expect(mockFsBackend.upload).toHaveBeenCalled();
+      expect(result.updated).toContain("app-changed.md");
     });
+  });
+
+  it("should handle delta sync unchanged files", async () => {
+    const registryEntry = {
+      filePath: "stable.md",
+      vaultId: "v1",
+      remoteId: "r1",
+      lastSyncedFsModified: 100,
+      lastSyncedFsSize: 10,
+      lastSyncedOpfsHash: "h1",
+    };
+    mockRegistry.getEntriesByVault.mockResolvedValue([registryEntry]);
+    mockFsBackend.scan.mockResolvedValue({
+      files: [{ path: "stable.md", lastModified: 100, size: 10 }],
+    });
+    mockOpfsBackend.scan.mockResolvedValue({ files: [], nextToken: "t2" });
+
+    const result = await service.sync(
+      "v1",
+      mockFsBackend,
+      mockOpfsBackend,
+      "pull",
+      "t1",
+    );
+
+    expect(result.updated).toHaveLength(0);
+  });
+
+  it("should handle sync error gracefully", async () => {
+    mockFsBackend.scan.mockRejectedValue(new Error("Crash"));
+    const result = await service.sync("v1", mockFsBackend, mockOpfsBackend);
+    expect(result.error).toBe("Crash");
   });
 });

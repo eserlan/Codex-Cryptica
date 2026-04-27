@@ -173,6 +173,9 @@ vi.mock("$lib/stores/ui.svelte", () => {
     toggleSidebarTool: vi.fn(),
     openZenMode: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   };
   store.dismissWorldPage.mockImplementation(() => {
     store.dismissedWorldPage = true;
@@ -298,14 +301,11 @@ describe("FrontPage", () => {
     );
 
     await fireEvent.click(screen.getByLabelText("Open cover image lightbox"));
-    await waitFor(() =>
-      expect(screen.getByRole("dialog", { name: "Image View" })).toBeTruthy(),
-    );
-    expect(screen.getByAltText("World cover")).toBeTruthy();
 
-    // Close button exists - actual close behavior is tested in
-    // ZenImageLightbox's own tests
-    expect(screen.getByLabelText("Close image view")).toBeTruthy();
+    expect(uiStore.openLightbox).toHaveBeenCalledWith(
+      "resolved://image",
+      "World cover",
+    );
   });
 
   it("opens the cover image editor when Change Image is clicked", async () => {

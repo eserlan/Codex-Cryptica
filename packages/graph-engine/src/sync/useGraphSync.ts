@@ -14,6 +14,7 @@ export interface SyncOptions {
     isInitial: boolean,
     isForced: boolean,
     caller: string,
+    hasNewNodes?: boolean,
   ) => void;
 }
 
@@ -113,6 +114,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         }
 
         const addedNodes = cy.add(newNodes);
+        addedNodes.addClass("pending-layout");
 
         addedNodes.forEach((n) => {
           elementMap.set(n.id(), n);
@@ -251,19 +253,19 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
 
     const isFirstElements = !initialLoaded && elements.length > 0;
     const hasDeletions = elementsToRemove.length > 0;
-    const hasNewEdges = newEdges.length > 0;
     const hasNewNodes = newNodes.length > 0;
 
-    if (hasNewNodes || hasNewEdges || hasDeletions || isFirstElements) {
+    if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
         const w = cy.width();
         const h = cy.height();
         cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
       } else if (!isVaultLoading || initialLoaded) {
-        // Force layout if we have deletions or new edges to ensure constraints are respected
-        const force = hasDeletions || hasNewEdges;
-        options.onLayoutUpdate?.(false, force, "Elements Update");
+        // Preserve current positions for edge-only updates. This avoids a second
+        // relayout when AI discovery adds connections right after creating a node.
+        const force = hasDeletions;
+        options.onLayoutUpdate?.(false, force, "Elements Update", hasNewNodes);
       }
     }
   } catch (err) {

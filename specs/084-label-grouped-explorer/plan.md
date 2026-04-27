@@ -1,36 +1,35 @@
-# Implementation Plan: Label-Grouped Entity Explorer
+# Implementation Plan: Label-Grouped Entity Explorer & Filtering
 
-**Branch**: `084-label-grouped-explorer` | **Date**: 2026-04-15 | **Spec**: [./spec.md](./spec.md)
+**Branch**: `issue/701-label-filtering` | **Date**: 2026-04-23 | **Spec**: [./spec.md](./spec.md)
 **Input**: Feature specification from `./spec.md`
 
 ## Summary
 
-Add label grouping as an alternate explorer layout on top of the existing flat list. Preserve the current explorer selection flow, let users collapse label sections, and persist both the chosen view mode and collapsed-group state in local storage.
+Add label grouping as an alternate explorer layout and implement a robust label-based filtering system. Make label pills interactive to allow quick drilling down into sub-collections using "AND" logic. Preserve the current explorer selection flow, let users collapse label sections, and persist both the chosen view mode and collapsed-group state.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 6.0.2, Svelte 5.55.2  
-**Primary Dependencies**: SvelteKit web app, Lucide Svelte, workspace `schema` types  
-**Storage**: Existing vault entity state in memory plus browser `localStorage` for the explorer view preference and per-vault collapsed label sections  
-**Testing**: Vitest unit tests plus manual explorer verification  
-**Target Platform**: Web application on desktop and mobile browsers  
-**Project Type**: Monorepo web application  
-**Performance Goals**: Explorer mode switches should feel immediate for normal vault browsing with no noticeable delay compared with the existing flat list  
-**Constraints**: Preserve search/category filtering, keep behavior client-side, and avoid introducing a new explorer subsystem for a UI-only enhancement  
-**Scale/Scope**: Sidebar explorer rendering, explorer UI state, and validation for label grouping and per-vault collapse behavior
+**Language/Version**: TypeScript 5.9.3, Svelte 5 (Runes)
+**Primary Dependencies**: SvelteKit web app, Lucide Svelte, workspace `schema` types, `uiStore`
+**Storage**: Existing vault entity state in memory plus browser `localStorage` for the explorer view preference, per-vault collapsed label sections, and active label filters (if persistence is desired).
+**Testing**: Vitest unit tests for filtering logic and UI interactions.
+**Target Platform**: Web application on desktop and mobile browsers.
+**Performance Goals**: Explorer mode switches and label filtering should feel immediate (<100ms) for normal vault browsing.
+**Constraints**: Preserve search/category filtering, keep behavior client-side, and avoid introducing a new explorer subsystem.
+**Scale/Scope**: Sidebar explorer rendering, explorer UI state, filtering logic in `EntityList.svelte`, and validation for label grouping and filtering behavior.
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-1. **Library-First**: Pass. This is an explorer presentation enhancement inside the existing web layer and does not introduce new domain logic that warrants a standalone workspace package.
-2. **TDD**: Pass. The implementation includes a dedicated grouping test for the new explorer grouping behavior.
-3. **Simplicity & YAGNI**: Pass. The feature extends the existing `uiStore` and `EntityList.svelte` instead of creating a separate explorer state system.
-4. **Privacy & Client-Side Processing**: Pass. Grouping and preference persistence remain entirely client-side.
-5. **User Documentation**: Pass for this scope. The existing entity explorer help entry remains the user-facing entry point, and the feature stays focused on label grouping without inventing new organizational concepts.
-6. **Dependency Injection**: Pass. No new services or stores requiring constructor DI were introduced.
-7. **Natural Language**: Pass. View labels remain simple and user-facing terms are limited to list and label.
-8. **Quality & Coverage Enforcement**: Pass. The feature adds focused automated coverage for the new grouping behavior and keeps the change set inside the existing explorer surface.
+1. **Library-First**: Pass. This is an explorer presentation and filtering enhancement inside the existing web layer.
+2. **TDD**: Pass. The implementation will include tests for the new "AND" filtering logic and label search integration.
+3. **Simplicity & YAGNI**: Pass. The feature extends the existing `EntityList.svelte` filtering logic instead of creating a separate system.
+4. **Privacy & Client-Side Processing**: Pass. Filtering and preference persistence remain entirely client-side.
+5. **User Documentation**: Pass. The feature stays focused on label discovery without inventing new concepts.
+6. **Dependency Injection**: Pass. Uses existing `uiStore` and `vault` store.
+7. **Natural Language**: Pass. Uses standard terminology like "labels" and "filters".
+8. **Quality & Coverage Enforcement**: Pass. Adds focused automated coverage for the new filtering behavior.
 
 ## Project Structure
 
@@ -58,12 +57,9 @@ apps/web/src/lib/components/explorer/
 
 apps/web/src/lib/stores/
 └── ui.svelte.ts
-
-apps/web/src/lib/config/
-└── help-content.ts
 ```
 
-**Structure Decision**: Keep the implementation inside the existing explorer component and shared UI store because the feature only changes explorer presentation and persisted UI preference. Supporting documentation lives entirely in the feature spec directory.
+**Structure Decision**: Keep the implementation inside the existing explorer component because the filtering logic is tightly coupled with the list rendering. Supporting documentation lives entirely in the feature spec directory.
 
 ## Generated Artifacts
 

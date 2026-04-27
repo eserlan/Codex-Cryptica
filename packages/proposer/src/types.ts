@@ -1,12 +1,13 @@
 export interface Proposal {
-  id: string; // ${sourceId}:${targetId}
+  id: string; // ${vaultId}:${sourceId}:${targetId}
+  vaultId: string;
   sourceId: string;
   targetId: string;
   type: string;
   context: string;
   reason: string;
   confidence: number;
-  status: "pending" | "accepted" | "rejected";
+  status: "pending" | "accepted" | "rejected" | "verified";
   timestamp: number;
 }
 
@@ -25,6 +26,7 @@ export interface IProposerService {
   analyzeEntity(
     apiKey: string,
     modelName: string,
+    vaultId: string,
     entityId: string,
     content: string,
     availableTargets: { id: string; name: string }[],
@@ -69,12 +71,17 @@ export interface IProposerService {
     targetName: string;
   }>;
 
-  getProposals(entityId: string): Promise<Proposal[]>;
-  getHistory(entityId: string): Promise<Proposal[]>;
+  getProposals(vaultId: string, entityId: string): Promise<Proposal[]>;
+  getHistory(vaultId: string, entityId: string): Promise<Proposal[]>;
+  getAllAcceptedProposals(vaultId: string): Promise<Proposal[]>;
+  getAllPendingProposals(vaultId: string): Promise<Proposal[]>;
+  getAllVerifiedProposals(vaultId: string): Promise<Proposal[]>;
 
   applyProposal(proposalId: string): Promise<void>;
   dismissProposal(proposalId: string): Promise<void>;
+  verifyProposal(proposalId: string): Promise<void>;
   reEvaluateProposal(proposalId: string): Promise<void>;
 
   saveProposals(proposals: Proposal[]): Promise<void>;
+  clearVault(vaultId: string): Promise<void>;
 }

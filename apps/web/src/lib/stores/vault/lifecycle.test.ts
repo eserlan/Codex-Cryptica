@@ -3,11 +3,14 @@ import { VaultLifecycleManager } from "./lifecycle";
 import { getDB } from "../../utils/idb";
 
 // Mock dependencies
-const { mockThemeStore } = vi.hoisted(() => {
+const { mockThemeStore, mockOracle } = vi.hoisted(() => {
   return {
     mockThemeStore: {
       loadForVault: vi.fn().mockResolvedValue(undefined),
       init: vi.fn().mockResolvedValue(undefined),
+    },
+    mockOracle: {
+      loadForVault: vi.fn().mockResolvedValue(undefined),
     },
   };
 });
@@ -19,6 +22,7 @@ vi.mock("../../utils/idb", () => ({
 vi.mock("../map-registry.svelte", () => ({
   mapRegistry: {
     maps: {},
+    init: vi.fn(),
   },
 }));
 
@@ -26,6 +30,7 @@ vi.mock("../canvas-registry.svelte", () => ({
   canvasRegistry: {
     canvases: {},
     clear: vi.fn(),
+    init: vi.fn(),
   },
 }));
 
@@ -35,6 +40,7 @@ vi.mock("../vault-registry.svelte", () => ({
     createVault: vi.fn(),
     deleteVault: vi.fn(),
     setActiveVault: vi.fn(),
+    updateEntityCount: vi.fn().mockResolvedValue(undefined),
     availableVaults: [],
     isInitialized: false,
   },
@@ -44,9 +50,36 @@ vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
 }));
 
+vi.mock("../oracle.svelte", () => ({
+  oracle: mockOracle,
+}));
+
+vi.mock("$app/environment", () => ({
+  browser: true,
+  dev: true,
+}));
+
+vi.mock("$app/paths", () => ({
+  base: "",
+}));
+
+vi.mock("$app/navigation", () => ({
+  goto: vi.fn(),
+  invalidateAll: vi.fn(),
+}));
+
+vi.mock("$lib/workers/oracle.worker?worker", () => ({
+  default: vi.fn(),
+}));
+
+vi.mock("../workers/search.worker?worker", () => ({
+  default: vi.fn(),
+}));
+
 vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     clearVault: vi.fn().mockResolvedValue(undefined),
+    invalidatePreload: vi.fn(),
   },
 }));
 
@@ -95,6 +128,7 @@ describe("VaultLifecycleManager", () => {
         createVault: vi.fn().mockResolvedValue("test-id"),
         deleteVault: vi.fn(),
         setActiveVault: vi.fn(),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
         availableVaults: [],
         isInitialized: false,
       },
@@ -115,10 +149,12 @@ describe("VaultLifecycleManager", () => {
     it("should switch to a new vault and reset state", async () => {
       await manager.switchVault("v2");
 
+      expect(deps.syncStore.setStatus).toHaveBeenCalledWith("loading");
       expect(deps.flushPendingSaves).toHaveBeenCalled();
       expect(deps.repository.clear).toHaveBeenCalled();
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
-      expect(deps.loadFiles).toHaveBeenCalledWith(true);
+      expect(mockOracle.loadForVault).toHaveBeenCalledWith("v2");
+      expect(deps.loadFiles).toHaveBeenCalled();
       expect(deps.themeStore.loadForVault).toHaveBeenCalledWith("v2");
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
     });
@@ -264,7 +300,7 @@ describe("VaultLifecycleManager", () => {
         handle,
         "syncHandle_v1",
       );
-      expect(deps.loadFiles).toHaveBeenCalledWith(false);
+      expect(deps.loadFiles).toHaveBeenCalled();
     });
 
     it("should return early when no active vault", async () => {
@@ -294,7 +330,7 @@ describe("VaultLifecycleManager", () => {
         "[VaultStore] Could not persist sync handle",
       );
       // Should still proceed to import
-      expect(deps.loadFiles).toHaveBeenCalledWith(false);
+      expect(deps.loadFiles).toHaveBeenCalled();
       consoleWarnSpy.mockRestore();
     });
   });

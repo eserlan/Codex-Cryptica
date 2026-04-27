@@ -30,6 +30,9 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
 vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     showDiceModal: false,
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

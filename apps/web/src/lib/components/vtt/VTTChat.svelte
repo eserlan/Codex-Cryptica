@@ -61,7 +61,7 @@
 
 <div class="flex-1 flex flex-col min-h-0 bg-theme-bg/10">
   <div
-    class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+    class="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 sm:space-y-4 scroll-smooth"
     bind:this={scrollContainer}
   >
     {#if mapSession.chatMessages.length === 0}
@@ -86,7 +86,7 @@
   </div>
 
   <div
-    class="p-3 border-t border-theme-border bg-theme-surface/50 shrink-0 relative z-20 overflow-visible"
+    class="p-2 sm:p-3 border-t border-theme-border bg-theme-surface/50 shrink-0 relative z-20 overflow-visible"
   >
     {#if showCommandMenu}
       <CommandMenu

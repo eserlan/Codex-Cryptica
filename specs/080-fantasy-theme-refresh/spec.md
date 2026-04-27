@@ -42,6 +42,23 @@ As a user, I want panels, cards, sidebars, and other surfaces to feel physically
 
 ---
 
+### User Story 2a - Themed Graph Nodes (Priority: P2)
+
+As a user exploring the graph in a themed vault, I want nodes to carry the theme's material and shape language so the graph feels like part of the same world instead of a generic diagram.
+
+**Why this priority**: The graph is a primary navigation surface. If nodes remain plain circles while the rest of the app reads as parchment or horror material, the theme loses immersion at the exact place users browse relationships.
+
+**Independent Test**: Activate fantasy and horror/vampire themes and inspect the graph. Fantasy nodes should render as shield-like parchment markers, image nodes should keep a prominent category border, non-fantasy themes should retain circular nodes unless explicitly themed otherwise, and horror/vampire blood textures should not repeat with the same obvious orientation on every node.
+
+**Acceptance Scenarios**:
+
+1. **Given** the fantasy theme is active, **When** a user views non-image graph nodes, **Then** they MUST render as shield-like markers using the fantasy material texture and category color without square texture or shadow artifacts.
+2. **Given** the fantasy theme is active, **When** a graph node has an image, **Then** the image MUST be clipped to the shield shape and the category border MUST remain thick enough to be clearly visible.
+3. **Given** another theme is active, **When** a user views graph nodes, **Then** nodes MAY keep the existing circular shape while still receiving supported theme texture treatment where that theme defines one.
+4. **Given** the horror/vampire theme is active, **When** a user views multiple non-image graph nodes, **Then** the blood-splatter texture orientation SHOULD vary between nodes so the pattern does not look mechanically repeated.
+
+---
+
 ### User Story 3 - Clearer Reading Hierarchy (Priority: P3)
 
 As a user reading an entity, I want stronger hierarchy between titles, section headers, metadata, and content so the page feels structured and authored instead of visually flat.
@@ -65,6 +82,7 @@ As a user reading an entity, I want stronger hierarchy between titles, section h
 - Interaction states MUST remain accessible on warm parchment surfaces without relying on color change alone.
 - If some surfaces cannot fully remove borders, the remaining borders MUST still stay within the warm fantasy tone family.
 - The color rule is strict: brown for UI and interaction, gold for focus and importance, and no other colors in the standard fantasy UI shell.
+- Cytoscape styles MUST use supported properties only; unsupported effects that create console warnings or square artifacts MUST be omitted.
 
 ### Assumptions
 
@@ -90,11 +108,16 @@ As a user reading an entity, I want stronger hierarchy between titles, section h
 - **FR-012**: Panels, cards, and controls in the fantasy theme MUST feel slightly firmer and less soft-mobile in their edge treatment.
 - **FR-013**: The refresh MUST preserve readability and accessible contrast across the affected fantasy-theme surfaces.
 - **FR-014**: The refresh MUST include automated verification for the most visible fantasy-theme behaviors affected by this change.
+- **FR-015**: Fantasy graph nodes MUST use a shield-like node shape with clipped theme texture and category-colored borders.
+- **FR-016**: Fantasy image graph nodes MUST retain a visibly thicker category border while clipping image content to the shield shape.
+- **FR-017**: Theme graph textures MUST avoid unsupported Cytoscape style properties and MUST NOT create square background or shadow artifacts around non-rectangular nodes.
+- **FR-018**: Horror/vampire graph node blood textures SHOULD vary orientation across nodes without requiring deterministic persistence.
 
 ### Key Entities _(include if feature involves data)_
 
 - **Fantasy Theme Profile**: The set of visual rules that defines colors, emphasis, and interaction behavior for the fantasy experience.
 - **Theme Surface**: Any visible panel, sidebar, card, or reading area that must feel materially aligned with the parchment background.
+- **Graph Node Marker**: The visual representation of an entity in the graph, including shape, texture, image clipping, category border, and selection treatment.
 - **Interaction State**: The hover, selected, focused, and active presentation of controls within the fantasy theme.
 
 ## Success Criteria _(mandatory)_
@@ -105,3 +128,4 @@ As a user reading an entity, I want stronger hierarchy between titles, section h
 - **SC-002**: In the fantasy theme, standard UI and interaction states read as brown, while active tabs, selected elements, and key highlights read as gold.
 - **SC-003**: Manual review of the main fantasy surfaces confirms that panels and sidebars read as parchment-adjacent materials rather than neutral app cards, and that cards and panels feel slightly firmer and less app-like.
 - **SC-004**: Automated theme checks cover the revised fantasy-theme palette, selected/focus treatment, and interaction behavior for the primary affected surfaces.
+- **SC-005**: Automated graph-engine checks cover fantasy shield node styling, image-node border hierarchy, supported texture application, and horror/vampire blood texture variants.

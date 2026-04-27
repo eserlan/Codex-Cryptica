@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { GraphTransformer, getGraphStyle } from "../src/transformer";
 import { CONNECTION_COLORS } from "../src/defaults";
 import type { Entity, StylingTemplate } from "schema";
@@ -240,29 +240,139 @@ describe("GraphTransformer", () => {
 
     const styles = getGraphStyle(mockTemplate, [], false);
 
-    // Tier 0: 0-1 connections -> 48px
-    const tier0 = styles.find((s: any) => s.selector === "node[weight <= 1]");
-    expect(tier0?.style.width).toBe(48);
+    // Tier 0: 0-2 connections -> 40px
+    const tier0 = styles.find((s: any) => s.selector === "node[weight <= 2]");
+    expect(tier0?.style.width).toBe(40);
 
-    // Tier 1: 2-5 connections -> 64px
+    // Tier 1: 3-11 connections -> 60px
     const tier1 = styles.find(
-      (s: any) => s.selector === "node[weight >= 2][weight <= 5]",
+      (s: any) => s.selector === "node[weight >= 3][weight <= 11]",
     );
-    expect(tier1?.style.width).toBe(64);
+    expect(tier1?.style.width).toBe(60);
 
-    // Tier 2: 6-10 connections -> 96px
-    const tier2 = styles.find(
-      (s: any) => s.selector === "node[weight >= 6][weight <= 10]",
-    );
+    // Tier 2: 12+ connections -> 96px (Capped)
+    const tier2 = styles.find((s: any) => s.selector === "node[weight >= 12]");
     expect(tier2?.style.width).toBe(96);
-
-    // Tier 3: 11+ connections -> 128px (Capped)
-    const tier3 = styles.find((s: any) => s.selector === "node[weight >= 11]");
-    expect(tier3?.style.width).toBe(128);
 
     // Verify transitions
     const baseNodeStyle = styles.find((s: any) => s.selector === "node");
     expect(baseNodeStyle?.style["transition-property"]).toContain("width");
     expect(baseNodeStyle?.style["transition-property"]).toContain("height");
+  });
+
+  it("should apply the fantasy shield shape to base graph nodes", () => {
+    const mockTemplate: StylingTemplate = {
+      id: "fantasy",
+      name: "Ancient Parchment",
+      description: "...",
+      tokens: {
+        background: "#fdf6e3",
+        primary: "#5e3018",
+        secondary: "#423830",
+        surface: "#f0ddb8",
+        text: "#2a2018",
+        border: "rgba(94, 48, 24, 0.52)",
+        accent: "#c8973a",
+        fontHeader: "'Alegreya', serif",
+        fontBody: "'Alegreya', serif",
+        texture: "parchment.svg",
+      },
+      graph: {
+        nodeBorderWidth: 2,
+        nodeShape: "ellipse",
+        edgeColor: "#6b3820",
+        edgeStyle: "solid",
+        edgeWidth: 3,
+      },
+    };
+
+    const styles = getGraphStyle(mockTemplate, [], false);
+    const baseNodeStyle = styles.find((s: any) => s.selector === "node");
+
+    expect(baseNodeStyle?.style.shape).toBe("polygon");
+    expect(baseNodeStyle?.style["background-image"]).toBe(
+      "url('/themes/parchment.svg')",
+    );
+    expect(baseNodeStyle?.style["background-fit"]).toBe("cover");
+    expect(baseNodeStyle?.style["background-clip"]).toBe("node");
+    expect(baseNodeStyle?.style["background-image-crossorigin"]).toBe("null");
+    expect(baseNodeStyle?.style["background-repeat"]).toBe("no-repeat");
+  });
+
+  it("should not set a node texture when the theme has no texture", () => {
+    const mockTemplate: StylingTemplate = {
+      id: "scifi",
+      name: "Sci-Fi Terminal",
+      description: "...",
+      tokens: {
+        background: "#000",
+        primary: "#f00",
+        secondary: "#0f0",
+        surface: "#111",
+        text: "#fff",
+        border: "#333",
+        accent: "#00f",
+        fontHeader: "Arial",
+        fontBody: "Arial",
+      },
+      graph: {
+        nodeBorderWidth: 1,
+        nodeShape: "ellipse",
+        edgeColor: "#555",
+        edgeStyle: "solid",
+        edgeWidth: 1,
+      },
+    };
+
+    const styles = getGraphStyle(mockTemplate, [], false);
+    const baseNodeStyle = styles.find((s: any) => s.selector === "node");
+
+    expect(baseNodeStyle?.style["background-image"]).toBeUndefined();
+  });
+
+  it("should include a random texture variant for graph nodes", () => {
+    const randomSpy = vi
+      .spyOn(Math, "random")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.33)
+      .mockReturnValueOnce(0.66)
+      .mockReturnValueOnce(0.99);
+    const mockEntities: Entity[] = [
+      {
+        id: "node-alpha",
+        title: "Alpha",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+      {
+        id: "node-beta",
+        title: "Beta",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+      {
+        id: "node-gamma",
+        title: "Gamma",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+      {
+        id: "node-delta",
+        title: "Delta",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+    ];
+
+    const nodes = GraphTransformer.entitiesToElements(mockEntities).filter(
+      (el) => el.group === "nodes",
+    );
+
+    expect(nodes.map((node) => node.data.textureVariant)).toEqual([0, 1, 2, 3]);
+    randomSpy.mockRestore();
   });
 });

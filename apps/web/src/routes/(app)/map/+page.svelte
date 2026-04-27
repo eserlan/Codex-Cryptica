@@ -109,20 +109,23 @@
       const entity = vault.entities[entityId];
       const activeMap = mapStore.activeMap;
 
-      if (entity && VTT_ENTITY_TYPES.includes(entity.type) && activeMap) {
-        const tokenInput = {
-          name: entity.title,
-          entityId: entity.id,
-          imageUrl: entity.image,
-          x: mapCoords.x,
-          y: mapCoords.y,
-        };
-
-        if (uiStore.isGuestMode) {
-          mapSession.requestTokenAdd(tokenInput);
-        } else {
-          mapSession.addToken(tokenInput);
+      if (mapSession.vttEnabled) {
+        if (entity && VTT_ENTITY_TYPES.includes(entity.type) && activeMap) {
+          const tokenInput = {
+            name: entity.title,
+            entityId: entity.id,
+            imageUrl: entity.image,
+            x: mapCoords.x,
+            y: mapCoords.y,
+          };
+          if (uiStore.isGuestMode) {
+            mapSession.requestTokenAdd(tokenInput);
+          } else {
+            mapSession.addToken(tokenInput);
+          }
         }
+      } else if (entity && activeMap && !uiStore.isGuestMode) {
+        mapStore.addPin(entityId, mapCoords);
       }
       return;
     }
@@ -143,21 +146,24 @@
     const dt = e.dataTransfer;
     if (isEntityDrag(dt)) {
       dt!.dropEffect = "copy";
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const mapCoords = mapStore.unproject({ x, y });
-      const entityId =
-        dt?.getData("application/codex-entity") ||
-        mapSession.dragPreview?.entityId;
 
-      if (!entityId) return;
+      if (mapSession.vttEnabled) {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const mapCoords = mapStore.unproject({ x, y });
+        const entityId =
+          dt?.getData("application/codex-entity") ||
+          mapSession.dragPreview?.entityId;
 
-      mapSession.setDragPreview({
-        entityId,
-        x: mapCoords.x,
-        y: mapCoords.y,
-      });
+        if (!entityId) return;
+
+        mapSession.setDragPreview({
+          entityId,
+          x: mapCoords.x,
+          y: mapCoords.y,
+        });
+      }
     }
   }
 

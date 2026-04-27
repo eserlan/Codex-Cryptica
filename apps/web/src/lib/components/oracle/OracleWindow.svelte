@@ -68,7 +68,7 @@
   >
     <!-- Header -->
     <div
-      class="px-4 py-2 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
+      class="px-3 py-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
     >
       <div class="flex items-center gap-2">
         <div
@@ -77,7 +77,7 @@
             : ''}"
         ></div>
         <span
-          class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+          class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
         {#if uiStore.aiDisabled}
@@ -92,19 +92,7 @@
         {#if oracle.messages.length > 0}
           <button
             class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
-            onclick={async () => {
-              if (
-                await uiStore.confirm({
-                  title: "Clear History",
-                  message:
-                    "Are you sure you want to clear the conversation history?",
-                  confirmLabel: "Clear",
-                  isDangerous: true,
-                })
-              ) {
-                oracle.clearMessages();
-              }
-            }}
+            onclick={() => oracle.clearMessages()}
             title="Clear conversation history"
             aria-label="Clear conversation history"
           >

@@ -22,11 +22,30 @@ export class VaultMessenger {
         }
       };
 
-      this.unsubscribe = vaultEventBus.subscribe((event) => {
-        if (event.type === "BATCH_CREATED" || event.type === "ENTITY_DELETED") {
-          this.deps.broadcastCallback();
-        }
-      }, "vault-update-broadcaster");
+      if (vaultEventBus) {
+        this.unsubscribe = vaultEventBus.subscribe((event) => {
+          if (
+            event.type === "BATCH_CREATED" ||
+            event.type === "ENTITY_DELETED"
+          ) {
+            this.deps.broadcastCallback();
+          }
+        }, "vault-update-broadcaster");
+      } else {
+        // Fallback for circular dependency during module init
+        void import("./events").then(({ vaultEventBus: bus }) => {
+          if (bus) {
+            this.unsubscribe = bus.subscribe((event) => {
+              if (
+                event.type === "BATCH_CREATED" ||
+                event.type === "ENTITY_DELETED"
+              ) {
+                this.deps.broadcastCallback();
+              }
+            }, "vault-update-broadcaster");
+          }
+        });
+      }
     }
   }
 

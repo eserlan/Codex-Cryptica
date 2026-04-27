@@ -7,11 +7,13 @@
  * Environment variables required:
  * - GEMINI_API_KEY: The system Gemini API key
  * - ALLOWED_ORIGINS: Comma-separated list of allowed origins for CORS
+ * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
  */
 
 interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
+  ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
 }
 
 // Allowed origins for CORS
@@ -254,25 +256,40 @@ function getCorsHeaders(
 export function isOriginAllowed(origin: string, env: Env): boolean {
   if (!origin) return false;
 
-  // When configured, ALLOWED_ORIGINS is an exact allowlist.
-  if (env.ALLOWED_ORIGINS) {
-    return env.ALLOWED_ORIGINS.split(",")
+  // 1. Check explicit allowlist if configured
+  if (env.ALLOWED_ORIGINS?.trim()) {
+    const explicitlyAllowedOrigins = env.ALLOWED_ORIGINS.split(",")
       .map((o) => o.trim())
-      .filter(Boolean)
-      .includes(origin);
+      .filter(Boolean);
+    if (explicitlyAllowedOrigins.includes(origin)) return true;
+
+    if (
+      isEnabled(env.ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS) &&
+      isCloudflarePagesPreviewOrigin(origin)
+    ) {
+      return true;
+    }
+
+    // When ALLOWED_ORIGINS is configured, treat it as authoritative.
+    return false;
   }
 
-  // Check default origins
+  // 2. Check default internal origins
   if (DEFAULT_ALLOWED_ORIGINS.includes(origin)) {
     return true;
   }
 
+  // 3. Allow Cloudflare Pages preview subdomains
   if (isCloudflarePagesPreviewOrigin(origin)) {
     return true;
   }
 
-  // Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
+  // 4. Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
   return isLoopbackOrigin(origin);
+}
+
+function isEnabled(value: string | undefined): boolean {
+  return value?.toLowerCase() === "true" || value === "1";
 }
 
 function isCloudflarePagesPreviewOrigin(origin: string): boolean {
@@ -282,9 +299,10 @@ function isCloudflarePagesPreviewOrigin(origin: string): boolean {
       return false;
     }
 
+    const hostname = url.hostname.toLowerCase();
     return (
-      url.hostname === "codex-cryptica.pages.dev" ||
-      url.hostname.endsWith(".codex-cryptica.pages.dev")
+      hostname === "codex-cryptica.pages.dev" ||
+      hostname.endsWith(".codex-cryptica.pages.dev")
     );
   } catch {
     return false;

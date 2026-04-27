@@ -1,3 +1,4 @@
+import { type SyncDirection } from "schema";
 import { type SyncEntry, type FileMetadata } from "./types";
 
 export type SyncActionType =
@@ -24,6 +25,7 @@ export class DiffAlgorithm {
     fs: FileMetadata | undefined,
     opfs: FileMetadata | undefined,
     registry: SyncEntry | undefined,
+    direction: SyncDirection = "pull", // Default to pull for safety if not provided
     validator?: (
       path: string,
       metadata: FileMetadata,
@@ -56,7 +58,7 @@ export class DiffAlgorithm {
       const timeMismatch =
         fsExists &&
         (registry.lastSyncedFsModified === undefined ||
-          Math.abs(fs.lastModified - registry.lastSyncedFsModified) > 2000);
+          Math.abs(fs.lastModified - registry.lastSyncedFsModified) > 1000);
 
       fsChanged = !!(fsExists && (sizeMismatch || timeMismatch));
     } else {
@@ -81,26 +83,27 @@ export class DiffAlgorithm {
 
     // 1. No Registry Entry (Initial Encounter)
     if (!registry) {
-      if (opfsExists && !fsExists)
+      if (opfsExists && !fsExists) {
+        if (direction === "pull") return { type: "SKIP", path };
         return {
           type: "EXPORT_TO_FS",
           path,
           opfsMetadata: opfs,
           registryEntry: registry,
         };
-      if (!opfsExists && fsExists)
+      }
+      if (!opfsExists && fsExists) {
+        if (direction === "push") return { type: "SKIP", path };
         return {
           type: "IMPORT_TO_OPFS",
           path,
           fsMetadata: fs,
           registryEntry: registry,
         };
+      }
       if (opfsExists && fsExists) {
-        // Exists in both but no record. Assume conflict unless sizes perfectly match.
-        // A true hash check would be ideal here, but we default to conflict for safety.
+        // Exists in both but no record.
         if (fs.size === opfs.size) {
-          // If sizes match on initial encounter, we assume they are identical
-          // to prevent mass-conflicts on first run.
           return {
             type: "MATCH_INITIAL",
             path,
@@ -109,14 +112,23 @@ export class DiffAlgorithm {
             registryEntry: registry,
           };
         }
-        return {
-          type: "HANDLE_CONFLICT",
-          path,
-          fsMetadata: fs,
-          opfsMetadata: opfs,
-          isConflict: true,
-          registryEntry: registry,
-        };
+
+        // Directional handling for conflicts on initial encounter
+        if (direction === "push") {
+          return {
+            type: "EXPORT_TO_FS",
+            path,
+            opfsMetadata: opfs,
+            registryEntry: registry,
+          };
+        } else {
+          return {
+            type: "IMPORT_TO_OPFS",
+            path,
+            fsMetadata: fs,
+            registryEntry: registry,
+          };
+        }
       }
 
       return { type: "SKIP", path };
@@ -124,6 +136,7 @@ export class DiffAlgorithm {
 
     // 2. A) Only OPFS changed -> Export to FS
     if (opfsChanged && !fsChanged && opfsExists && fsExists) {
+      if (direction === "pull") return { type: "SKIP", path };
       return {
         type: "EXPORT_TO_FS",
         path,
@@ -134,6 +147,7 @@ export class DiffAlgorithm {
 
     // 3. B) Only FS changed -> Import to OPFS
     if (!opfsChanged && fsChanged && opfsExists && fsExists) {
+      if (direction === "push") return { type: "SKIP", path };
       return {
         type: "IMPORT_TO_OPFS",
         path,
@@ -142,20 +156,28 @@ export class DiffAlgorithm {
       };
     }
 
-    // 4. C) Both changed -> Conflict
+    // 4. C) Both changed -> Conflict. In directional mode, one side "wins".
     if (opfsChanged && fsChanged && opfsExists && fsExists) {
-      return {
-        type: "HANDLE_CONFLICT",
-        path,
-        fsMetadata: fs,
-        opfsMetadata: opfs,
-        isConflict: true,
-        registryEntry: registry,
-      };
+      if (direction === "push") {
+        return {
+          type: "EXPORT_TO_FS",
+          path,
+          opfsMetadata: opfs,
+          registryEntry: registry,
+        };
+      } else {
+        return {
+          type: "IMPORT_TO_OPFS",
+          path,
+          fsMetadata: fs,
+          registryEntry: registry,
+        };
+      }
     }
 
     // 5. F) New file on FS (not in manifest) -> Import to OPFS
     if (!opfsExists && fsExists && fsChanged) {
+      if (direction === "push") return { type: "SKIP", path };
       return {
         type: "IMPORT_TO_OPFS",
         path,
@@ -166,6 +188,7 @@ export class DiffAlgorithm {
 
     // 6. G) New file in OPFS (exists in manifest but not in FS) -> Export to FS
     if (opfsExists && !fsExists && opfsChanged) {
+      if (direction === "pull") return { type: "SKIP", path };
       return {
         type: "EXPORT_TO_FS",
         path,
@@ -176,7 +199,7 @@ export class DiffAlgorithm {
 
     // 7. D) FS deleted (missing) and OPFS unchanged -> Recreate FS from OPFS
     if (opfsExists && !fsExists && !opfsChanged) {
-      // Treat FS deletion as "user removed replica". Recreate from primary OPFS.
+      if (direction === "pull") return { type: "SKIP", path };
       return {
         type: "EXPORT_TO_FS",
         path,
@@ -187,6 +210,7 @@ export class DiffAlgorithm {
 
     // 8. E) OPFS deleted and FS unchanged -> Delete in FS
     if (!opfsExists && fsExists && !fsChanged) {
+      if (direction === "pull") return { type: "SKIP", path };
       // OPFS is primary. If it's gone, the replica should be destroyed.
       // SAFETY: Never delete critical app directories.
       if (path.startsWith("images/") || path.startsWith(".cache/")) {

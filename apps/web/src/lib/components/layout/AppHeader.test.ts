@@ -32,10 +32,13 @@ vi.mock("$lib/stores/search.svelte", () => ({
 
 vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
-    isStaging: false,
-    showDiceModal: false,
     showSettings: false,
+    showDiceModal: false,
+    isStaging: false,
     toggleSettings: vi.fn(),
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

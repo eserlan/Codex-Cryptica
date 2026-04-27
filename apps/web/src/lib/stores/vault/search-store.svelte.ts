@@ -1,54 +1,11 @@
-import { vaultEventBus } from "./events";
 import { ServiceRegistry } from "./service-registry";
 import type { LocalEntity } from "./types";
-import { debugStore } from "../debug.svelte";
 
 export class SearchStore {
-  constructor(private serviceRegistry: ServiceRegistry) {
-    vaultEventBus.subscribe(async (event) => {
-      try {
-        if (event.type === "ENTITY_UPDATED") {
-          const services = await this.serviceRegistry.ensureInitialized();
-          await this.indexEntity(event.entity, services);
-        } else if (event.type === "BATCH_CREATED") {
-          const services = await this.serviceRegistry.ensureInitialized();
-          await Promise.all(
-            event.entities.map((e) => this.indexEntity(e, services)),
-          );
-        } else if (event.type === "SYNC_CHUNK_READY") {
-          const services = await this.serviceRegistry.ensureInitialized();
-          // ⚡ Bolt Optimization: Replace chained .map().filter().map() with a single imperative loop.
-          const promises: Promise<void>[] = [];
-          for (const id of event.newOrChangedIds) {
-            const entity = event.entities[id];
-            if (entity) promises.push(this.indexEntity(entity, services));
-          }
-          await Promise.all(promises);
-        } else if (event.type === "BATCH_UPDATED") {
-          const services = await this.serviceRegistry.ensureInitialized();
-          await Promise.all(
-            event.entities.map((e) => this.indexEntity(e, services)),
-          );
-        } else if (event.type === "ENTITY_DELETED") {
-          await this.removeEntity(event.entityId);
-        } else if (event.type === "CACHE_LOADED") {
-          const services = await this.serviceRegistry.ensureInitialized();
-          await services.search.clear();
-          // ⚡ Bolt Optimization: Replace Object.values().map() with an imperative loop
-          // to avoid allocating two large intermediate arrays.
-          const promises: Promise<void>[] = [];
-          for (const key in event.entities) {
-            promises.push(this.indexEntity(event.entities[key], services));
-          }
-          await Promise.all(promises);
-        } else if (event.type === "VAULT_OPENING") {
-          const services = await this.serviceRegistry.ensureInitialized();
-          await services.search.clear();
-        }
-      } catch (err) {
-        debugStore.warn("[SearchStore] Event handler failed", err);
-      }
-    }, "vault-search-store");
+  constructor(private _serviceRegistry: ServiceRegistry) {
+    // Note: Vault event handling (opening, loading, syncing) is managed by
+    // the canonical searchService in lib/services/search.ts to ensure
+    // consistent index persistence and worker lifecycle management.
   }
 
   private async indexEntity(entity: LocalEntity, services: any) {
@@ -62,6 +19,7 @@ export class SearchStore {
     await services.search.index({
       id: entity.id,
       title: entity.title,
+      aliases: (entity.aliases || []).join(" "),
       content: entity.content,
       lore: entity.lore,
       type: entity.type,
@@ -73,7 +31,7 @@ export class SearchStore {
   }
 
   private async removeEntity(id: string) {
-    const services = await this.serviceRegistry.ensureInitialized();
+    const services = await this._serviceRegistry.ensureInitialized();
     await services.search.remove(id);
   }
 }

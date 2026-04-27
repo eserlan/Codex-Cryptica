@@ -9,8 +9,9 @@ This document establishes the core design principles and component implementatio
 1.  **Library-First**: UI components should be built as reusable units.
 2.  **Svelte 5 Runes**: Strictly use `$state`, `$derived`, and `$props` for reactivity and component communication.
 3.  **Tailwind 4 Theming**: Use semantic theme variables (e.g., `--color-theme-primary`) for all styling to support dynamic themes.
-4.  **Accessibility**: Components must be navigable and usable by everyone, following standard ARIA patterns.
-5.  **Simplicity**: Prefer established patterns and avoid over-engineering (YAGNI).
+4.  **Iconography**: NEVER use `lucide-svelte` components. ALWAYS use Iconify utility classes (e.g., `icon-[lucide--name]`) to maintain styling consistency and reduce bundle size.
+5.  **Accessibility**: Components must be navigable and usable by everyone, following standard ARIA patterns.
+6.  **Simplicity**: Prefer established patterns and avoid over-engineering (YAGNI).
 
 ## Naming Conventions
 

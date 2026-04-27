@@ -34,6 +34,20 @@ GitHub Issue #606 asks for better organization inside the Entity Explorer once a
 - **Alternatives Considered**:
   - **Hide entities without grouping metadata**: Rejected because it would make grouped views incomplete and confusing.
 
+### Apply "AND" Logic for Multi-Label Filtering
+
+- **Decision**: Use "AND" logic when multiple labels are selected for filtering.
+- **Rationale**: Labels are used to categorize and tag entities with multiple traits. "AND" logic allows users to "drill down" into intersections (e.g., "NPC" and "Merchant"), whereas "OR" logic would broaden the results and make discovery harder in large vaults.
+- **Alternatives Considered**:
+  - **"OR" Logic**: Rejected because it doesn't support narrowing down results effectively.
+
+### Extend Search to Include Labels
+
+- **Decision**: Match the search query against entity labels.
+- **Rationale**: Users often remember a label but not the specific title. Extending search to labels makes the search bar a unified entry point for text-based discovery.
+- **Alternatives Considered**:
+  - **Strict title/content search**: Rejected because it misses a key metadata field that users deliberately assign.
+
 ## Validation Notes
 
 - The branch includes targeted automated coverage in `apps/web/src/lib/components/explorer/EntityListGrouping.test.ts` for label grouping.

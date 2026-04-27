@@ -1,8 +1,17 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-19
+Auto-generated from all feature plans. Last updated: 2026-04-25
 
 ## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb` (093-directional-vault-sync)
+- OPFS (Primary), IndexedDB (Metadata/Cache), Local Filesystem (Mirror via File System Access API) (093-directional-vault-sync)
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit web app, `zod` for schema validation, `flexsearch` via `@codex/search-engine`, `js-yaml` for frontmatter. (090-entity-aliases)
+- OPFS (via `VaultRepository`) using YAML frontmatter in Markdown files. (090-entity-aliases)
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4 (088-adjustable-sidebars)
+- `localStorage` (via existing `uiStore` integration) (088-adjustable-sidebars)
 
 - TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine` (087-gen-oracle-content)
 - OPFS (Primary Vault), IndexedDB (Registry & Draft Metadata), LocalStorage (Auto-Archive setting) (087-gen-oracle-content)
@@ -138,7 +147,9 @@ TypeScript: Follow standard conventions
 
 ## Implementation Guardrails (AI Guidelines)
 
-- **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`). Never use hardcoded hex codes or generic Tailwind colors for theme-sensitive elements.
+- **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`).
+- **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
+- **Reactive Snapshots**: Use `$state.snapshot(obj)` when passing state to non-reactive logic or async handlers to prevent stale references.
 - **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `npm test` passes with your changes.
 - **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
@@ -149,10 +160,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 087-gen-oracle-content: Added TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine`
+- 093-directional-vault-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb`
 
-- 0.18.0 - The Tactical Explorer Update: Added Label-Grouped Entity Explorer with persistence, VTT sidebar Entity List, and token drag-and-drop. Improved Zen Popout error handling and map coordinate bounds safety.
+- 090-entity-aliases: Added support for alternative names (aliases) to world entities with weighted search indexing and management UI in Zen Mode header.
 
-- 085-vtt-entity-list: Added VTT sidebar "Vault Entities" section with collapsible entity list, drag-to-map token placement (host add / guest request), canvas ghost-token drag preview, and persisted sidebar collapse state. Also added label-grouped explorer view mode with collapsible label groups and persisted view state.
+- 089-label-filtering: Added interactive label pills in entity explorer with "AND" filtering logic, active filter UI, and label-based search integration. (Refinement of 084)
 
 <!-- MANUAL ADDITIONS START -->

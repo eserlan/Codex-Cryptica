@@ -1,8 +1,10 @@
+⚠️ **SUPERSEDED**: This specification has been superseded by [093-directional-vault-sync](../093-directional-vault-sync/spec.md). The bidirectional merge logic described here is deprecated in favor of explicit Save/Load operations. (Note: GDrive sync is currently disabled).
+
 # Feature Specification: Robust GDrive Sync
 
 **Feature Branch**: `060-robust-gdrive-sync`  
 **Created**: 2026-02-25  
-**Status**: Draft  
+**Status**: Superseded by 093-directional-vault-sync
 **Input**: User description: "more robust gdrive sync https://github.com/eserlan/Codex-Cryptica/issues/262"
 
 ## User Scenarios & Testing _(mandatory)_

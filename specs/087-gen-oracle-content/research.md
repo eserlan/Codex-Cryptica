@@ -21,6 +21,20 @@
 2. **Vault Filtering**: The `VaultStore` and `GraphEngine` will be updated to exclude `status: 'draft'` entities by default. This prevents "auto-generated clutter" on the main canvas.
 3. **Entity Discovery UI**: `ChatMessage.svelte` will render "Detection Chips" for identified entities. Clicking a chip will open the standard Entity Preview with an "Approve/Merge" primary action.
 
+## Decision: User-Controlled Automation Policy
+
+**Rationale**: Automatic node and edge creation can feel intrusive, especially when the Oracle infers relationships from ambiguous prose. Entity persistence and graph mutation should be independently configurable so users can decide how much agency to delegate.
+
+1. **Separate Controls**: Entity Discovery and Connection Discovery will be separate settings. Users may want automatic entity drafts while still reviewing all graph edges.
+2. **Safe Defaults**: The default policy will suggest entity and connection discoveries without automatically creating graph edges.
+3. **Explicit Auto-Apply**: Connection edges may only be created automatically when the user has selected the `Auto-apply` connection mode.
+4. **Feature 040 Reuse**: Suggested connections will continue to use the existing Feature 040 proposal persistence, review, apply, and reject flow.
+
+**Alternatives considered**:
+
+- **Single "Auto-Archive" toggle**: Rejected because it hides the important distinction between saving records and mutating graph relationships.
+- **Always auto-apply after manual create/update**: Rejected because clicking "Create entity" is not the same as consenting to inferred connections.
+
 ## Decision: Contextual Mapping for Smart Updates
 
 **Rationale**: To achieve 95% precision for updates, we must disambiguate which entity the user is talking about.
@@ -33,3 +47,4 @@
 - **Parallel Extraction**: Handled via regex-based parsing of natural language markers in the assistant's response.
 - **UI Format**: Detection Chips at the bottom of messages.
 - **Auto-Archive**: Handled via a new `status` field in the entity schema.
+- **Automation Scope**: Controlled through `OracleAutomationPolicy` with independent entity and connection modes.

@@ -1,5 +1,4 @@
 import { oracle } from "../stores/oracle.svelte";
-import { uiStore } from "../stores/ui.svelte";
 
 export interface ChatCommand {
   name: string;
@@ -64,16 +63,6 @@ export const chatCommands: ChatCommand[] = [
   {
     name: "/clear",
     description: "Clear conversation history",
-    handler: async () => {
-      if (
-        await uiStore.confirm({
-          title: "Clear History",
-          message: "Are you sure you want to clear the conversation history?",
-          isDangerous: true,
-        })
-      ) {
-        oracle.clearMessages();
-      }
-    },
+    handler: () => oracle.clearMessages(),
   },
 ];

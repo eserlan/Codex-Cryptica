@@ -20,7 +20,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
     if (!isAIEnabled()) return query;
     if (!context) return query;
 
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     console.log(
       `[ImageGenerationService] Distilling visual prompt using: ${modelName}`,
@@ -57,7 +57,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
       console.log(
         `[ImageGenerationService] Generating image via proxy: ${modelName}`,
       );
-      const model = this.aiClientManager.getModel("", modelName);
+      const model = await this.aiClientManager.getModel("", modelName);
 
       const response = await (model as any).generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],

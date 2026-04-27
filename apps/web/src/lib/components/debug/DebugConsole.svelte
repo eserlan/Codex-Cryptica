@@ -51,18 +51,18 @@
           class="flex justify-between items-center mb-2 pb-2 border-b border-white/10"
         >
           <span
-            class="font-bold text-xs uppercase font-header tracking-widest text-theme-primary"
+            class="font-bold text-xs uppercase tracking-widest text-white/60"
             >Console Output</span
           >
           <div class="flex gap-2">
             <button
-              class="bg-sky-900/30 text-sky-400 hover:bg-sky-800/50 hover:text-sky-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold font-header border border-sky-500/30 transition-colors"
+              class="bg-white/10 text-white/70 hover:bg-white/20 hover:text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-white/20 transition-colors"
               onclick={copyLogsToClipboard}
             >
               Copy All
             </button>
             <button
-              class="bg-red-900/30 text-red-400 hover:bg-red-800/50 hover:text-red-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold font-header border border-red-500/30 transition-colors"
+              class="bg-white/10 text-white/70 hover:bg-white/20 hover:text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-white/20 transition-colors"
               onclick={() => debugStore.clear()}
             >
               Clear
@@ -72,7 +72,7 @@
         <div class="flex flex-col gap-1">
           {#each logs as log, index (`${log.timestamp}-${index}`)}
             <div class="flex gap-2 border-b border-white/5 pb-1 last:border-0">
-              <span class="text-gray-500 whitespace-nowrap">
+              <span class="text-white whitespace-nowrap">
                 {new Date(log.timestamp).toLocaleTimeString()}
               </span>
               <span
@@ -80,7 +80,7 @@
                   ? 'text-red-400 font-bold'
                   : log.level === 'warn'
                     ? 'text-amber-400'
-                    : 'text-green-400'} uppercase w-10 shrink-0"
+                    : 'text-white/50'} uppercase w-10 shrink-0"
               >
                 {log.level}
               </span>
@@ -89,13 +89,13 @@
                 {#if log.data}
                   <div class="relative mt-1">
                     <pre
-                      class="bg-white/5 p-2 rounded overflow-x-auto text-gray-300 max-h-32 text-[10px]">{JSON.stringify(
+                      class="bg-white/5 p-2 rounded overflow-x-auto text-white/60 max-h-32 text-[10px]">{JSON.stringify(
                         log.data,
                         null,
                         2,
                       )}</pre>
                     <button
-                      class="absolute top-1 right-1 bg-white/10 hover:bg-white/20 text-white text-[9px] px-1.5 py-0.5 rounded transition-colors"
+                      class="absolute top-1 right-1 bg-white/10 hover:bg-white/20 text-white/60 hover:text-white text-[9px] px-1.5 py-0.5 rounded transition-colors"
                       onclick={() => {
                         try {
                           navigator.clipboard.writeText(

@@ -4,6 +4,7 @@
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { onMount } from "svelte";
+  import { preloadCode } from "$app/navigation";
 
   // Stores
   import { helpStore } from "$lib/stores/help.svelte";
@@ -111,6 +112,10 @@
       helpStore.init();
       await themeStore.init();
       oracle.init();
+
+      // Preload heavy route chunks so first navigation is instant
+      preloadCode(`${base}/canvas`).catch(() => {});
+      preloadCode(`${base}/map`).catch(() => {});
 
       registerServiceWorker();
 

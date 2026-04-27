@@ -21,7 +21,8 @@ describe("ThemeStore", () => {
       saveToDisk: vi.fn().mockResolvedValue(undefined),
     };
     mockUiStore = { isDemoMode: false };
-    store = new ThemeStore(mockUiStore as any, mockStorage);
+    const mockVaultGetter = () => ({ activeVaultId: "v1" });
+    store = new ThemeStore(mockUiStore as any, mockVaultGetter, mockStorage);
   });
 
   describe("Jargon", () => {
@@ -65,11 +66,6 @@ describe("ThemeStore", () => {
     });
 
     it("should save to both cache and disk on setTheme", async () => {
-      // Mock vault.activeVaultId
-      vi.mock("./vault.svelte", () => ({
-        vault: { activeVaultId: "v1" },
-      }));
-
       await store.setTheme("cyberpunk");
       expect(store.currentThemeId).toBe("cyberpunk");
       expect(mockStorage.saveLocal).toHaveBeenCalledWith("cyberpunk");
