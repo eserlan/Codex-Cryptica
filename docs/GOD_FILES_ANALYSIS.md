@@ -81,6 +81,12 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 **Summary:** Extracted workspace logic into `useCanvasLogic` and `useCanvasEvents` hooks. Moved overlay HUD to `CanvasHUD` component. The main component now acts as a clean orchestration shell for SvelteFlow.
 **Outcome:** Reduced from 780 lines to 326 lines. Improved separation between UI state, persistence, and event handling.
 
+### 9. `entity-store.svelte.ts` (Refactored)
+
+**Status:** ✅ **COMPLETED (2026-04-27)**
+**Summary:** Extracted content loading, persistence coordination, and mutation logic into `EntityContentLoader`, `EntityPersistenceService`, and `EntityMutationService`. Implementation switched to full Dependency Injection.
+**Outcome:** Reduced from 920 lines to 210 lines. Established a clean separation between reactive state views and side-effectful operations.
+
 ---
 
 ## Conclusion
@@ -89,19 +95,9 @@ The biggest remaining risks are no longer the historically-fixed monoliths, but 
 
 ## Next Actions
 
-The next pass should focus on the four or five files below. Each one either concentrates too many responsibilities in one module or is likely to hide a reusable boundary that can be extracted cleanly.
+The next pass should focus on the files below. Each one either concentrates too many responsibilities in one module or is likely to hide a reusable boundary that can be extracted cleanly.
 
-### 1. `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte`
-
-**Why now:** This is the largest remaining file and the strongest signal that the canvas workspace still mixes rendering, pointer interaction, selection, keyboard shortcuts, tool dispatch, and workspace coordination in one place.
-**Recommended split:** Extract tool-specific interaction handlers, selection/command state, and rendering helpers into separate modules or child components. Keep the shell focused on composition and event wiring.
-
-### 2. `apps/web/src/lib/stores/vault/entity-store.svelte.ts`
-
-**Why now:** This store is the biggest vault-adjacent state module and likely carries entity lifecycle, indexing, sync hooks, and persistence boundaries.
-**Recommended split:** Separate pure entity CRUD/state from persistence and indexing concerns. If this file still knows too much about vault-wide coordination, move that logic into a dedicated service or coordinator.
-
-### 3. `packages/oracle-engine/src/oracle-executor.ts`
+### 1. `packages/oracle-engine/src/oracle-executor.ts`
 
 **Why now:** Engine code tends to accumulate orchestration, validation, and side effects behind a single entrypoint. It is a good candidate for clearer seams because the behavior is usually deterministic enough to test in layers.
 **Recommended split:** Isolate command routing, execution policy, and effectful integrations so the executor becomes a thin dispatcher instead of a multi-role coordinator.
