@@ -3,7 +3,6 @@ import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { readFileAsText } from "../../utils/opfs";
 import { parseMarkdown } from "../../utils/markdown";
-import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
 
 export interface ContentLoaderDependencies {

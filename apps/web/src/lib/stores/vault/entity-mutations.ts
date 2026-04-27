@@ -8,6 +8,7 @@ import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import type { EntityPersistenceService } from "./entity-persistence";
 import type { EntityContentLoader } from "./entity-content-loader.svelte";
+import type { IVaultServices } from "./service-registry";
 
 export interface MutationDependencies {
   repository: VaultRepository;
@@ -19,7 +20,7 @@ export interface MutationDependencies {
   getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
   invalidateUrlCache?: (path: string) => void;
-  getServices: () => any;
+  getServices: () => IVaultServices | null;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
 }

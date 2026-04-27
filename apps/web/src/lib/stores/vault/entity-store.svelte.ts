@@ -6,6 +6,7 @@ import type { InboundMap } from "./relationships";
 import { EntityContentLoader } from "./entity-content-loader.svelte";
 import { EntityPersistenceService } from "./entity-persistence";
 import { EntityMutationService } from "./entity-mutations";
+import type { IVaultServices } from "./service-registry";
 
 export interface EntityStoreDependencies {
   repository: VaultRepository;
@@ -17,7 +18,7 @@ export interface EntityStoreDependencies {
     vaultId: string,
   ) => Promise<FileSystemDirectoryHandle | undefined>;
   getActiveSyncHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getServices: () => any;
+  getServices: () => IVaultServices | null;
   invalidateUrlCache?: (path: string) => void;
   setStatus: (status: "idle" | "loading" | "saving" | "error") => void;
   setErrorMessage: (msg: string | null) => void;
