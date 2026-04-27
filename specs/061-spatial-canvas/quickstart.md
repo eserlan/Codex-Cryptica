@@ -35,11 +35,13 @@ The engine provides a rune-based store that plugs directly into `@xyflow/svelte`
 </div>
 ```
 
-### 3. Drag and Drop from Palette
+### 3. Drag and Drop from Entity Explorer
+
+Entities are dragged onto the canvas from the **Entity Explorer** sidebar using the `application/codex-entity` dataTransfer format.
 
 ```typescript
 function onDrop(event) {
-  const entityId = event.dataTransfer.getData("entity-id");
+  const entityId = event.dataTransfer.getData("application/codex-entity");
   const position = { x: event.clientX, y: event.clientY };
   engine.addNode(entityId, position);
 }

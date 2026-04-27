@@ -7,7 +7,15 @@ rank: 5
 
 ## Populating Your Boards
 
-You can quickly bring your lore onto a **Spatial Canvas** without leaving the **Knowledge Graph** or your search results. This allows for a seamless transition from discovering connections to designing custom spatial layouts.
+You can quickly bring your lore onto a **Spatial Canvas** in several ways — by dragging from the sidebar, right-clicking in the graph, or choosing from search results.
+
+### Drag from Entity Explorer
+
+The fastest way to add a single entity is to drag it directly from the **Entity Explorer** sidebar onto the canvas.
+
+1. **Open the Explorer**: Click the Explorer icon in the left activity bar.
+2. **Find your entity**: Use the search bar or browse the list.
+3. **Drag onto the canvas**: Click and drag the entity card onto the board. It will be placed wherever you drop it.
 
 ### Right-Click to Add
 
