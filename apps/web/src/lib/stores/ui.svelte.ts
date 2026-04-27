@@ -254,11 +254,6 @@ export class UIStore {
     } else {
       this.leftSidebarOpen = true;
       this.activeSidebarTool = tool;
-
-      // If we're opening the explorer, close the canvas palette
-      if (tool === "explorer") {
-        this.showCanvasPalette = false;
-      }
     }
   }
 
@@ -575,18 +570,6 @@ export class UIStore {
   lastConnectionLabel = $state("");
   recentConnectionLabels = $state<string[]>([]);
   showSelectionConnector = $state(false);
-
-  // Canvas Palette State
-  private _showCanvasPalette = $state(true);
-  get showCanvasPalette() {
-    return this._showCanvasPalette;
-  }
-  set showCanvasPalette(value: boolean) {
-    this._showCanvasPalette = value;
-    if (value && this.activeSidebarTool === "explorer") {
-      this.closeSidebar();
-    }
-  }
 
   // Find in Graph State
   findNodeCounter = $state(0);
