@@ -79,6 +79,13 @@ describe("SyncStore", () => {
     expect(store.isDirty).toBe(false);
   });
 
+  it("prioritizes error status over pending-save derived saving state", () => {
+    (repository as any).pendingSaveCount = 2;
+    store.setStatus("error");
+
+    expect(store.status).toBe("error");
+  });
+
   it("triggers safety gate on pull() when dirty", async () => {
     mockVaultRecord.lastInternalChange = 1000;
     mockVaultRecord.lastSavedToFolder = 500;

@@ -228,7 +228,7 @@ export class SyncCoordinator {
       onStateChange,
       checkForConflicts,
       signal,
-      onProgress
+      onProgress,
     );
   }
 
@@ -256,7 +256,7 @@ export class SyncCoordinator {
       onStateChange,
       checkForConflicts,
       signal,
-      onProgress
+      onProgress,
     );
   }
 
@@ -335,20 +335,18 @@ export class SyncCoordinator {
     }
 
     try {
-      if (direction === "push") {
-        await Promise.race([
-          waitForSaves(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Save queue timeout")), 10000),
-          ),
-        ]).catch((_err) =>
-          console.warn("Continuing sync despite save queue issues"),
-        );
-      }
+      await Promise.race([
+        waitForSaves(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
+        ),
+      ]).catch((_err) =>
+        console.warn("Continuing sync despite save queue issues"),
+      );
 
-      onStateChange({ 
-        status: direction === "push" ? "saving" : "loading", 
-        syncType: "local" 
+      onStateChange({
+        status: direction === "push" ? "saving" : "loading",
+        syncType: "local",
       });
 
       const pathToEntity = new Map<string, LocalEntity>();
@@ -416,17 +414,25 @@ export class SyncCoordinator {
           failedFiles: result.failed,
         });
       } else {
-        onStateChange({ 
-          status: "idle", 
+        onStateChange({
+          status: "idle",
           syncType: null,
           failedFiles: result.failed,
         });
         await checkForConflicts();
         const actionType = direction === "push" ? "Save" : "Load";
-        this.notifier.notify(
-          `${actionType} complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
-          "success",
-        );
+        const failureCount = result.failed?.length ?? 0;
+        const summary =
+          `${actionType} complete: ${result.created.length} created, ` +
+          `${result.updated.length} updated, ${result.deleted.length} deleted.`;
+        if (failureCount > 0) {
+          this.notifier.notify(
+            `${summary} ${failureCount} file${failureCount === 1 ? "" : "s"} failed.`,
+            "warning",
+          );
+        } else {
+          this.notifier.notify(summary, "success");
+        }
       }
     } catch (e: any) {
       if (e.name === "AbortError") {

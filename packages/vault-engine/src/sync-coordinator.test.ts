@@ -163,6 +163,27 @@ describe("SyncCoordinator", () => {
       warnSpy.mockRestore();
     });
 
+    it("should wait for pending saves before pull", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      const waitForSaves = vi.fn().mockResolvedValue(undefined);
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        "pull",
+        {},
+        waitForSaves,
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(waitForSaves).toHaveBeenCalled();
+    });
+
     it("should pass failed files in onStateChange", async () => {
       mockIO.getLocalHandle.mockResolvedValue({
         values: () => ({ next: vi.fn().mockResolvedValue({}) }),
@@ -192,6 +213,35 @@ describe("SyncCoordinator", () => {
         expect.objectContaining({
           failedFiles: failed,
         }),
+      );
+    });
+
+    it("should notify with a warning when sync partially fails", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      mockEngine.sync.mockResolvedValue({
+        created: [{}],
+        updated: [],
+        deleted: [],
+        failed: [{ path: "err.md", error: "fail" }],
+      });
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        "push",
+        {},
+        vi.fn().mockResolvedValue(undefined),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(mockNotifier.notify).toHaveBeenCalledWith(
+        expect.stringContaining("1 file failed"),
+        "warning",
       );
     });
 

@@ -192,7 +192,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      loadFiles: (skipSync) => this.loadFiles(skipSync),
+      loadFiles: (skipSync) => this.syncStore.loadFiles(skipSync),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
@@ -300,8 +300,8 @@ export class VaultStore {
     this.messenger.broadcastVaultUpdate();
   }
 
-  async loadFiles() {
-    return this.syncStore.loadFiles();
+  async loadFiles(skipSyncIfWarm = true) {
+    return this.syncStore.loadFiles(skipSyncIfWarm);
   }
 
   async push() {

@@ -69,19 +69,7 @@ class VaultRegistryStore {
 
   async listVaults(): Promise<VaultRecord[]> {
     const nextVaults = await registry.listVaults();
-    // Only update if something changed (simple length and ID check)
-    const currentIds = this.availableVaults.map((v) => v.id).join(",");
-    const nextIds = nextVaults.map((v) => v.id).join(",");
-
-    // Also check timestamps for dirty tracking accuracy
-    const currentInternal = this.activeVaultRecord?.lastInternalChange;
-    const nextInternal = nextVaults.find(
-      (v) => v.id === this.activeVaultId,
-    )?.lastInternalChange;
-
-    if (currentIds !== nextIds || currentInternal !== nextInternal) {
-      this.availableVaults = nextVaults;
-    }
+    this.availableVaults = nextVaults;
     return this.availableVaults;
   }
 

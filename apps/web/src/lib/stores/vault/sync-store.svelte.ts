@@ -38,6 +38,7 @@ export class SyncStore {
 
   get status() {
     if (this._status === "loading") return "loading";
+    if (this._status === "error") return "error";
     if (this.deps.repository.pendingSaveCount > 0) return "saving";
     return this._status;
   }
@@ -151,9 +152,14 @@ export class SyncStore {
             await syncCoordinator.syncWithLocalFolder(
               vaultIdAtStart,
               vaultDir,
+              "pull",
               this.deps.repository.entities,
               () => this.deps.repository.waitForAllSaves(),
-              (state) => {
+              (state: {
+                status: "saving" | "loading" | "idle" | "error";
+                syncType: "local" | null;
+                errorMessage?: string;
+              }) => {
                 if (
                   this.deps.activeVaultId() === vaultIdAtStart &&
                   !signal.aborted
@@ -166,7 +172,7 @@ export class SyncStore {
               },
               () => this.checkForConflicts(),
               signal,
-              (stats) => {
+              (stats: any) => {
                 if (
                   this.deps.activeVaultId() === vaultIdAtStart &&
                   !signal.aborted
