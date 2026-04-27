@@ -17,7 +17,7 @@
   function onDragStart(event: DragEvent, entityId: string) {
     if (event.dataTransfer) {
       event.dataTransfer.setData("application/codex-entity", entityId);
-      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.effectAllowed = "copyMove";
     }
   }
 
