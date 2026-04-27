@@ -8,6 +8,8 @@ import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { uiStore } from "../ui.svelte";
 import type { InboundMap } from "./relationships";
+import { readFileAsText } from "../../utils/opfs";
+import { parseMarkdown } from "../../utils/markdown";
 
 export interface EntityStoreDependencies {
   repository: VaultRepository;
@@ -36,14 +38,7 @@ export class EntityStore {
   private _contentVerifiedIds = $state(new Set<string>());
   private _saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _saveResolvers = new Map<string, Array<() => void>>();
-
-  /**
-   * Pre-loaded helper modules to avoid dynamic import overhead.
-   */
-  private _helpers: {
-    readFileAsText?: any;
-    parseMarkdown?: any;
-  } = {};
+  private _loadingPromises = new Map<string, Promise<void>>();
 
   get entities() {
     return this.deps.repository.entities;
@@ -75,16 +70,6 @@ export class EntityStore {
       }
       return Array.from(labels).sort();
     });
-
-    // BACKGROUND: Pre-load modules needed for content loading
-    if (typeof window !== "undefined") {
-      import("../../utils/opfs")
-        .then((m) => (this._helpers.readFileAsText = m.readFileAsText))
-        .catch(() => {});
-      import("../../utils/markdown")
-        .then((m) => (this._helpers.parseMarkdown = m.parseMarkdown))
-        .catch(() => {});
-    }
 
     vaultEventBus.subscribe((event) => {
       if (event.type === "VAULT_OPENING") {
@@ -167,6 +152,12 @@ export class EntityStore {
     id: string,
     vaultIdAtStart: string,
   ): Promise<void> {
+    // VAULT ID GUARD: Ensure we are still in the same vault before persisting
+    if (this.deps.activeVaultId() !== vaultIdAtStart) {
+      debugStore.log(`[EntityStore] Discarding save for ${id} - vault changed.`);
+      return;
+    }
+
     let latestEntity = this.entities[id];
     if (!latestEntity) return;
 
@@ -189,6 +180,11 @@ export class EntityStore {
         vaultIdAtStart,
         latestEntity,
         this.deps.isGuest(),
+      );
+
+      // Update dirty tracking timestamp
+      import("./registry").then((m) =>
+        m.updateLastInternalChange(vaultIdAtStart),
       );
 
       const path = latestEntity._path || [`${latestEntity.id}.md`];
@@ -312,6 +308,8 @@ export class EntityStore {
       const current = currentEntities[id];
 
       // SAFETY: Preserve content/lore if not in patch.
+      const preserveGuestContent =
+        this.deps.isGuest() && patch.content === "" && !!current.content;
       const merged = {
         ...current,
         ...patch,
@@ -321,9 +319,7 @@ export class EntityStore {
             : current.metadata,
         content:
           patch.content !== undefined
-            ? this.deps.isGuest() && patch.content === "" && current.content
-              ? current.content
-              : patch.content
+            ? preserveGuestContent ? current.content : patch.content
             : current.content,
         lore: patch.lore !== undefined ? patch.lore : current.lore,
         updatedAt: Date.now(),
@@ -395,6 +391,11 @@ export class EntityStore {
         if (deletedEntity) {
           this.entities = entities;
           if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
+
+          // Update dirty tracking timestamp
+          import("./registry").then((m) =>
+            m.updateLastInternalChange(activeVaultId),
+          );
 
           modifiedIds.forEach((mId) => {
             const modEntity = this.entities[mId];
@@ -666,6 +667,11 @@ export class EntityStore {
 
   async loadEntityContent(id: string): Promise<void> {
     if (!id) return;
+
+    // 1. Return existing in-flight promise if available (Deduplication)
+    const existing = this._loadingPromises.get(id);
+    if (existing) return existing;
+
     const currentEntity = this.entities[id];
     if (!currentEntity) return;
 
@@ -676,154 +682,154 @@ export class EntityStore {
     )
       return;
 
-    const activeVaultId = this.deps.activeVaultId();
-    const guestFileFetcher = this.deps.getGuestFile;
-    const parseMarkdown =
-      this._helpers.parseMarkdown ||
-      (await import("../../utils/markdown")).parseMarkdown;
+    const loadPromise = (async () => {
+      const activeVaultId = this.deps.activeVaultId();
+      const guestFileFetcher = this.deps.getGuestFile;
 
-    if (isGuest) {
-      if (currentEntity.content) {
-        this._contentLoadedIds.add(id);
-        this._contentVerifiedIds.add(id);
-        return;
-      }
-
-      const path = currentEntity._path || [`${id}.md`];
-      const requestPath = path.join("/");
-      if (!guestFileFetcher || !requestPath) return;
-
-      try {
-        const file = await guestFileFetcher(requestPath);
-        const text = await file.text();
-        if (!text) {
+      if (isGuest) {
+        if (currentEntity.content) {
+          this._contentLoadedIds.add(id);
           this._contentVerifiedIds.add(id);
           return;
         }
 
-        const { content: freshContent } = parseMarkdown(text);
-        this.deps.repository.entities[id] = {
-          ...currentEntity,
-          content: freshContent || currentEntity.content || "",
-          lore: "",
-        };
-        this._contentLoadedIds.add(id);
-        this._contentVerifiedIds.add(id);
-      } catch (err) {
-        debugStore.warn(
-          `[EntityStore] Guest content fetch failed for ${id}`,
-          err,
-        );
-      }
-      return;
-    }
-
-    if (!activeVaultId) return;
-
-    // PRIORITY 1: Cache
-    let cached: { content: string; lore: string } | null = null;
-    let cacheErrored = false;
-    try {
-      cached = await cacheService.getEntityContent(activeVaultId, id);
-      if (cached !== null) {
-        const latest = this.entities[id];
-        if (latest && (!latest.content || latest.lore === undefined)) {
-          this.deps.repository.entities[id] = {
-            ...latest,
-            content: cached.content,
-            lore: cached.lore,
-          };
-          this._contentLoadedIds.add(id);
-          debugStore.log(
-            `[EntityStore] Priority 1 hit: Loaded chronicle/lore from cache for ${id}`,
-          );
-        }
-      }
-    } catch (cacheErr) {
-      cacheErrored = true;
-      debugStore.warn(
-        `[EntityStore] Priority 1 cache load failed for ${id}`,
-        cacheErr,
-      );
-    }
-
-    if (this._contentVerifiedIds.has(id)) return;
-
-    try {
-      // PRIORITY 2: OPFS (canonical source of truth)
-      let result = await this._readFromOpfs(id);
-
-      // PRIORITY 3: Local FS fallback if OPFS had nothing
-      if (!result) {
         const path = currentEntity._path || [`${id}.md`];
-        const localHandle = await this.deps.getActiveSyncHandle();
-        if (localHandle) {
-          try {
-            if (
-              (await localHandle.queryPermission({ mode: "read" })) ===
-              "granted"
-            ) {
-              const readFileAsText =
-                this._helpers.readFileAsText ||
-                (await import("../../utils/opfs")).readFileAsText;
-              const text = await readFileAsText(localHandle, path);
-              if (text) {
-                const { metadata, content } = parseMarkdown(text);
-                result = { content, lore: (metadata as any).lore || "" };
-              }
-            }
-          } catch (err) {
-            debugStore.warn(
-              `[EntityStore] Local FS fallback failed for ${id}`,
-              err,
-            );
+        const requestPath = path.join("/");
+        if (!guestFileFetcher || !requestPath) return;
+
+        try {
+          const file = await guestFileFetcher(requestPath);
+          const text = await file.text();
+          if (!text) {
+            this._contentVerifiedIds.add(id);
+            return;
           }
-        }
-      }
 
-      if (result) {
-        const entityToUpdate = this.entities[id];
-        if (entityToUpdate) {
-          const finalContent = result.content || entityToUpdate.content || "";
-          const finalLore = result.lore || entityToUpdate.lore || "";
-          const path = entityToUpdate._path || [`${id}.md`];
-
-          const updatedEntity = {
-            ...entityToUpdate,
-            content: finalContent,
-            lore: finalLore,
+          const { content: freshContent } = parseMarkdown(text);
+          this.deps.repository.entities[id] = {
+            ...currentEntity,
+            content: freshContent || currentEntity.content || "",
+            lore: "",
           };
-
-          this.deps.repository.entities[id] = updatedEntity;
           this._contentLoadedIds.add(id);
           this._contentVerifiedIds.add(id);
-
-          debugStore.log(
-            `[EntityStore] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
+        } catch (err) {
+          debugStore.warn(
+            `[EntityStore] Guest content fetch failed for ${id}`,
+            err,
           );
+        }
+        return;
+      }
 
-          const isStale =
-            finalContent !== (cached?.content ?? null) ||
-            finalLore !== (cached?.lore ?? null);
-          const hasContent = finalContent || finalLore;
+      if (!activeVaultId) return;
 
-          if (isStale && (cached !== null || hasContent)) {
-            cacheService.set(
-              `${activeVaultId}:${path.join("/")}`,
-              Date.now(),
-              updatedEntity,
+      // PRIORITY 1: Cache
+      let cached: { content: string; lore: string } | null = null;
+      let cacheErrored = false;
+      try {
+        cached = await cacheService.getEntityContent(activeVaultId, id);
+        if (cached !== null) {
+          const latest = this.entities[id];
+          if (latest && (!latest.content || latest.lore === undefined)) {
+            this.deps.repository.entities[id] = {
+              ...latest,
+              content: cached.content,
+              lore: cached.lore,
+            };
+            this._contentLoadedIds.add(id);
+            debugStore.log(
+              `[EntityStore] Priority 1 hit: Loaded chronicle/lore from cache for ${id}`,
             );
           }
         }
-      } else if (cached === null && !cacheErrored) {
-        this._contentVerifiedIds.add(id);
+      } catch (cacheErr) {
+        cacheErrored = true;
         debugStore.warn(
-          `[EntityStore] Content truly missing for ${id} in all tiers`,
+          `[EntityStore] Priority 1 cache load failed for ${id}`,
+          cacheErr,
         );
       }
-    } catch (err) {
-      debugStore.error(`[EntityStore] Failed to load content for ${id}:`, err);
-    }
+
+      if (this._contentVerifiedIds.has(id)) return;
+
+      try {
+        // PRIORITY 2: OPFS (canonical source of truth)
+        let result = await this._readFromOpfs(id);
+
+        // PRIORITY 3: Local FS fallback if OPFS had nothing
+        if (!result) {
+          const path = currentEntity._path || [`${id}.md`];
+          const localHandle = await this.deps.getActiveSyncHandle();
+          if (localHandle) {
+            try {
+              if (
+                (await localHandle.queryPermission({ mode: "read" })) ===
+                "granted"
+              ) {
+                const text = await readFileAsText(localHandle, path);
+                if (text) {
+                  const { metadata, content } = parseMarkdown(text);
+                  result = { content, lore: metadata.lore || "" };
+                }
+              }
+            } catch (err) {
+              debugStore.warn(
+                `[EntityStore] Local FS fallback failed for ${id}`,
+                err,
+              );
+            }
+          }
+        }
+
+        if (result) {
+          const entityToUpdate = this.entities[id];
+          if (entityToUpdate) {
+            const finalContent = result.content || entityToUpdate.content || "";
+            const finalLore = result.lore || entityToUpdate.lore || "";
+            const path = entityToUpdate._path || [`${id}.md`];
+
+            const updatedEntity = {
+              ...entityToUpdate,
+              content: finalContent,
+              lore: finalLore,
+            };
+
+            this.deps.repository.entities[id] = updatedEntity;
+            this._contentLoadedIds.add(id);
+            this._contentVerifiedIds.add(id);
+
+            debugStore.log(
+              `[EntityStore] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
+            );
+
+            const isStale =
+              finalContent !== (cached?.content ?? null) ||
+              finalLore !== (cached?.lore ?? null);
+            const hasContent = finalContent || finalLore;
+
+            if (isStale && (cached !== null || hasContent)) {
+              cacheService.set(
+                `${activeVaultId}:${path.join("/")}`,
+                Date.now(),
+                updatedEntity,
+              );
+            }
+          }
+        } else if (cached === null && !cacheErrored) {
+          this._contentVerifiedIds.add(id);
+          debugStore.warn(
+            `[EntityStore] Content truly missing for ${id} in all tiers`,
+          );
+        }
+      } catch (err) {
+        debugStore.error(`[EntityStore] Failed to load content for ${id}:`, err);
+      }
+    })();
+
+    this._loadingPromises.set(id, loadPromise);
+
+    return loadPromise.finally(() => this._loadingPromises.delete(id));
   }
 
   /**
@@ -838,16 +844,10 @@ export class EntityStore {
     const path = entity._path || [`${id}.md`];
     const vaultDir = await this.deps.getActiveVaultHandle();
     if (!vaultDir) return null;
-    const readFileAsText =
-      this._helpers.readFileAsText ||
-      (await import("../../utils/opfs")).readFileAsText;
     const text = await readFileAsText(vaultDir, path).catch(() => null);
     if (!text) return null;
-    const parseMarkdown =
-      this._helpers.parseMarkdown ||
-      (await import("../../utils/markdown")).parseMarkdown;
     const { metadata, content } = parseMarkdown(text);
-    return { content, lore: (metadata as any).lore || "" };
+    return { content, lore: metadata.lore || "" };
   }
 
   /**

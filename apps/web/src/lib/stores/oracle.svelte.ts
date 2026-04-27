@@ -195,10 +195,20 @@ export class OracleStore {
   async init() {
     if (this.isInitialized) return;
 
-    await this.chatHistoryService.init(entityDb as any);
+    await this.chatHistoryService.init(entityDb as any, this.vault.activeVaultId);
     await this.settingsService.init(entityDb as any);
 
     this.isInitialized = true;
+  }
+
+  async loadForVault(vaultId: string) {
+    // If not initialized yet, standard init will pick up active vault
+    if (!this.isInitialized) {
+      return this.init();
+    }
+
+    // Already initialized, force a reload of history for the new vault
+    await this.chatHistoryService.init(entityDb as any, vaultId);
   }
 
   get messages() {

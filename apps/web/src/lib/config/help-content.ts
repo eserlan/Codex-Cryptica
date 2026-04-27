@@ -154,10 +154,24 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "local-folder-sync": {
     id: "local-folder-sync",
-    title: "Local Folder Sync",
+    title: "Local Folder Mirroring",
     content:
-      "Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your world data seamlessly.",
+      "Maintain an external mirror of your world data. Use the 'SAVE TO FOLDER' button to export your internal archive to a local directory for backups or editing in tools like Obsidian. Use 'LOAD FROM FOLDER' in the Vault Selector to pull external changes back into the app.",
     icon: "icon-[lucide--folder-sync]",
+  },
+  "vault-save": {
+    id: "vault-save",
+    title: "Saving to Folder",
+    content:
+      "The 'SAVE TO FOLDER' button explicitly pushes your internal work to your linked local folder. It only enables when you have unsaved changes, ensuring your external backup stays current.",
+    icon: "icon-[lucide--upload-cloud]",
+  },
+  "vault-load": {
+    id: "vault-load",
+    title: "Loading from Folder",
+    content:
+      "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from your linked local directory. A safety gate will warn you if you have unsaved internal work that would be overwritten.",
+    icon: "icon-[lucide--download-cloud]",
   },
   "total-privacy": {
     id: "total-privacy",

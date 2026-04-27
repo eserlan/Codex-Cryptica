@@ -19,7 +19,7 @@ export interface LayoutOptions {
   onLayoutStart?: () => void;
   onLayoutStop?: () => void;
   onLayoutComputed?: (durationMs: number) => void;
-  onPositionsUpdated?: (updates: Record<string, any>) => void;
+  onPositionsUpdated?: (updates: Record<string, Partial<Entity>>) => void;
 }
 
 const ORIENTATION_THRESHOLD = 1.2;
@@ -595,7 +595,7 @@ export class LayoutManager {
               x: Math.round(pos.x),
               y: Math.round(pos.y),
             },
-          } as any,
+          },
         };
       });
       options.onPositionsUpdated?.(updates);

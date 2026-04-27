@@ -46,7 +46,7 @@ export const initGraph = async (options: GraphOptions) => {
     (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),
   ).length;
 
-  return (cytoscape as any)({
+  return (cytoscape as unknown as (opt: any) => Core)({
     container: options.container,
     headless: options.headless,
     elements: options.elements || [],

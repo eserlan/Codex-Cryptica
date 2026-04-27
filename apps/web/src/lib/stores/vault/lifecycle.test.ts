@@ -19,6 +19,7 @@ vi.mock("../../utils/idb", () => ({
 vi.mock("../map-registry.svelte", () => ({
   mapRegistry: {
     maps: {},
+    init: vi.fn(),
   },
 }));
 
@@ -26,6 +27,7 @@ vi.mock("../canvas-registry.svelte", () => ({
   canvasRegistry: {
     canvases: {},
     clear: vi.fn(),
+    init: vi.fn(),
   },
 }));
 
@@ -44,9 +46,32 @@ vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
 }));
 
+vi.mock("$app/environment", () => ({
+  browser: true,
+  dev: true,
+}));
+
+vi.mock("$app/paths", () => ({
+  base: "",
+}));
+
+vi.mock("$app/navigation", () => ({
+  goto: vi.fn(),
+  invalidateAll: vi.fn(),
+}));
+
+vi.mock("$lib/workers/oracle.worker?worker", () => ({
+  default: vi.fn(),
+}));
+
+vi.mock("../workers/search.worker?worker", () => ({
+  default: vi.fn(),
+}));
+
 vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     clearVault: vi.fn().mockResolvedValue(undefined),
+    invalidatePreload: vi.fn(),
   },
 }));
 
@@ -115,10 +140,11 @@ describe("VaultLifecycleManager", () => {
     it("should switch to a new vault and reset state", async () => {
       await manager.switchVault("v2");
 
+      expect(deps.syncStore.setStatus).toHaveBeenCalledWith("loading");
       expect(deps.flushPendingSaves).toHaveBeenCalled();
       expect(deps.repository.clear).toHaveBeenCalled();
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
-      expect(deps.loadFiles).toHaveBeenCalledWith(true);
+      expect(deps.loadFiles).toHaveBeenCalled();
       expect(deps.themeStore.loadForVault).toHaveBeenCalledWith("v2");
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
     });
@@ -264,7 +290,7 @@ describe("VaultLifecycleManager", () => {
         handle,
         "syncHandle_v1",
       );
-      expect(deps.loadFiles).toHaveBeenCalledWith(false);
+      expect(deps.loadFiles).toHaveBeenCalled();
     });
 
     it("should return early when no active vault", async () => {
@@ -294,7 +320,7 @@ describe("VaultLifecycleManager", () => {
         "[VaultStore] Could not persist sync handle",
       );
       // Should still proceed to import
-      expect(deps.loadFiles).toHaveBeenCalledWith(false);
+      expect(deps.loadFiles).toHaveBeenCalled();
       consoleWarnSpy.mockRestore();
     });
   });

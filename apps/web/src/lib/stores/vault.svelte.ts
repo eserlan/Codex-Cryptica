@@ -84,6 +84,12 @@ export class VaultStore {
   get hasConflictFiles() {
     return this.syncStore.hasConflictFiles;
   }
+  get hasSyncHandle() {
+    return this.syncStore.hasSyncHandle;
+  }
+  get isDirty() {
+    return this.syncStore.isDirty;
+  }
   get inboundConnections() {
     return this.entityStore.inboundConnections;
   }
@@ -98,6 +104,9 @@ export class VaultStore {
   }
   get activeVaultId() {
     return vaultRegistry.activeVaultId;
+  }
+  get activeVaultRecord() {
+    return vaultRegistry.activeVaultRecord;
   }
   get vaultName() {
     return vaultRegistry.vaultName;
@@ -143,6 +152,7 @@ export class VaultStore {
 
     this.syncStore = new SyncStore({
       activeVaultId: () => this.activeVaultId,
+      activeVaultRecord: () => this.activeVaultRecord,
       repository: this.repository,
       getSyncCoordinator: async () => {
         await this.serviceRegistry.ensureInitialized();
@@ -163,6 +173,7 @@ export class VaultStore {
       },
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
+      refreshVaults: () => vaultRegistry.refreshVaults(),
     });
 
     this.assetStore = new AssetStore({
@@ -178,7 +189,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      loadFiles: (skipSync) => this.loadFiles(skipSync),
+      loadFiles: () => this.loadFiles(),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
@@ -286,12 +297,21 @@ export class VaultStore {
     this.messenger.broadcastVaultUpdate();
   }
 
-  async loadFiles(skipSyncIfWarm = true) {
-    return this.syncStore.loadFiles(skipSyncIfWarm);
+  async loadFiles() {
+    return this.syncStore.loadFiles();
   }
 
+  async push() {
+    return this.syncStore.push();
+  }
+
+  async pull() {
+    return this.syncStore.pull();
+  }
+
+  /** @deprecated use push() or pull() instead */
   async syncWithLocalFolder() {
-    return this.syncStore.syncWithLocalFolder();
+    return this.syncStore.push();
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {

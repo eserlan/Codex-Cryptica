@@ -25,15 +25,21 @@ export class ChatHistoryService {
   lastUpdated = $state<number>(0);
   private db: AppSettingsStore | null = null;
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+  private vaultId: string | null = null;
 
   /**
    * Initialize the chat history service by loading saved messages from IndexedDB.
    * Restores blob URLs for any persisted image blobs.
    * @param db - The EntityDb instance for persistence
+   * @param vaultId - Optional vault ID to scope history
    */
-  async init(db: AppSettingsStore) {
+  async init(db: AppSettingsStore, vaultId: string | null = null) {
     this.db = db;
-    const savedMessages = await db.appSettings.get("chat_history");
+    this.vaultId = vaultId;
+    
+    const key = vaultId ? `chat_history:${vaultId}` : "chat_history";
+    const savedMessages = await db.appSettings.get(key);
+    
     if (savedMessages?.value && Array.isArray(savedMessages.value)) {
       // Restore blob URLs for persisted blobs
       const messages = savedMessages.value.map((msg: ChatHistoryRecord) => {
@@ -43,7 +49,10 @@ export class ChatHistoryService {
         return msg;
       });
       this.messages = messages;
+    } else {
+      this.messages = [];
     }
+    this.lastUpdated = Date.now();
   }
 
   /**
@@ -149,8 +158,11 @@ export class ChatHistoryService {
         }
         return toPersist;
       });
+      
+      const key = this.vaultId ? `chat_history:${this.vaultId}` : "chat_history";
+      
       await this.db.appSettings.put({
-        key: "chat_history",
+        key,
         value: messagesToPersist,
         updatedAt: Date.now(),
       });

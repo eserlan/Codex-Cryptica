@@ -60,9 +60,9 @@ export const fileIOAdapter: IFileIOAdapter = {
       labels: parsed.metadata.labels || [],
       connections,
       content: parsed.content,
-      lore: (parsed.metadata as any).lore || "",
+      lore: parsed.metadata.lore || "",
       _path: path,
-    } as any;
+    };
   },
   isNotFoundError: (err) => isNotFoundError(err),
 };

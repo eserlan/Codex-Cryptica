@@ -8,6 +8,8 @@ export interface VaultRecord {
   createdAt: number;
   lastOpenedAt: number;
   entityCount: number;
+  lastInternalChange?: number;
+  lastSavedToFolder?: number;
   syncState?: {
     lastSyncMs: number | null;
     remoteHash: string | null;
@@ -111,8 +113,8 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 16 to support vault-scoping for AI proposals.
-export const DB_VERSION = 16;
+// DB_VERSION was bumped to 17 to support directional sync metadata.
+export const DB_VERSION = 17;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>> | null = null;
 

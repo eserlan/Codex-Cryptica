@@ -1,8 +1,10 @@
+⚠️ **PARTIALLY SUPERSEDED**: The synchronization state and lifecycle logic in this specification have been superseded by [093-directional-vault-sync](../093-directional-vault-sync/spec.md). The bidirectional local folder mirroring is deprecated in favor of explicit Save/Load operations.
+
 # Feature Specification: Vault Store Refactor
 
 **Feature Branch**: `068-vault-store-refactor`  
 **Created**: 2026-03-11  
-**Status**: Draft  
+**Status**: Partially Superseded by 093-directional-vault-sync
 **Input**: User description: "Refactor the monolithic VaultStore into modular services and a lean repository pattern."
 
 ## User Scenarios & Testing _(mandatory)_

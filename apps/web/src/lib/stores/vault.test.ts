@@ -60,6 +60,8 @@ vi.mock("./vault-registry.svelte", () => {
       listVaults: vi.fn().mockResolvedValue([]),
       availableVaults: [],
       vaults: [],
+      activeVaultRecord: { lastInternalChange: 0, lastSavedToFolder: 0 },
+      refreshVaults: vi.fn().mockResolvedValue(undefined),
     },
   };
 });
@@ -332,10 +334,7 @@ describe("VaultStore", () => {
     });
 
     it("should trigger migration if required", async () => {
-      vi.mocked(vaultMigration.checkForMigration).mockResolvedValueOnce({
-        required: true,
-        handle: {} as any,
-      });
+      vi.mocked(vaultMigration.checkForMigration).mockResolvedValueOnce({ required: true, handle: {} as any });
 
       await testVault.init();
       expect(testVault.migrationRequired).toBe(true);
@@ -360,10 +359,7 @@ describe("VaultStore", () => {
     });
 
     it("should fall back to guest mode when bootstrap fails", async () => {
-      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
-        ok: true,
-        json: async () => ({ entities: {} }),
-      } as Response);
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, json: async () => ({ entities: {} }) } as Response);
       vi.spyOn(vaultRegistry, "init").mockRejectedValueOnce(
         new Error("Bootstrap failed"),
       );
@@ -390,16 +386,17 @@ describe("VaultStore", () => {
       });
       vi.mocked(cacheService.preloadVault).mockResolvedValue(mockMap);
 
-      await testVault.loadFiles(true);
+      await testVault.loadFiles();
 
       expect(testVault.entities["e1"]).toBeDefined();
-      expect(mockRepository.loadFiles).not.toHaveBeenCalled();
+      // loadFiles is now backgrounded even if cache is hit
+      expect(mockRepository.loadFiles).toHaveBeenCalled();
     });
 
     it("should perform full sync if cache is empty or skipSyncIfWarm is false", async () => {
       vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
 
-      await testVault.loadFiles(false);
+      await testVault.loadFiles();
 
       expect(mockRepository.loadFiles).toHaveBeenCalled();
     });
@@ -411,7 +408,7 @@ describe("VaultStore", () => {
         return new Map();
       });
 
-      const loadPromise = testVault.loadFiles(false);
+      const loadPromise = testVault.loadFiles();
 
       // Simulate rapid switch before preload finishes
       vi.mocked(vaultRegistry).activeVaultId = "new-vault" as any;
@@ -848,10 +845,10 @@ describe("VaultStore", () => {
 
     it("should handle syncWithLocalFolder", async () => {
       testVault.syncCoordinator = {
-        syncWithLocalFolder: vi
+        push: vi
           .fn()
           .mockImplementation((_id, _h, _e, _w, onState) => {
-            onState({ status: "syncing", syncType: "local" });
+            onState({ status: "saving", syncType: "local" });
             return Promise.resolve();
           }),
       } as any;
@@ -859,8 +856,8 @@ describe("VaultStore", () => {
       vi.spyOn(testVault, "getActiveVaultHandle").mockResolvedValue({} as any);
 
       await testVault.syncWithLocalFolder();
-      expect(testVault.syncCoordinator!.syncWithLocalFolder).toHaveBeenCalled();
-      expect(testVault.status).toBe("syncing");
+      expect(testVault.syncCoordinator!.push).toHaveBeenCalled();
+      expect(testVault.status).toBe("saving");
     });
 
     it("should handle error in checkForConflicts", async () => {

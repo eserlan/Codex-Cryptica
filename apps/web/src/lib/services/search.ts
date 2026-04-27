@@ -50,11 +50,13 @@ export class SearchService {
 
         switch (event.type) {
           case "VAULT_OPENING":
-            this.activeVaultId = event.vaultId;
-            // Context switch: Clear dirty flag if we are switching vaults
-            this.isDirty = false;
-            // IMPORTANT: Clear the existing index in memory so we don't merge vaults!
-            await this.clear();
+            // Only reset the index if we are actually switching to a different vault
+            if (this.activeVaultId !== event.vaultId) {
+              this.activeVaultId = event.vaultId;
+              this.isDirty = false;
+              // IMPORTANT: Clear the existing index in memory so we don't merge vaults!
+              await this.clear();
+            }
             break;
 
           case "CACHE_LOADED": {
@@ -229,16 +231,9 @@ export class SearchService {
       }),
     );
 
-    // Initialize immediately
-    this.initPromise = this.api
-      .initIndex()
-      .then(() => {
-        this.isInitialized = true;
-      })
-      .catch((err) => {
-        debugStore.error("[SearchService] Worker initialization failed", err);
-        throw err;
-      });
+    // Initialize worker state (but defer FlexSearch init until clear/load)
+    this.isInitialized = true;
+    this.initPromise = Promise.resolve();
   }
 
   private async ensureWorker(): Promise<Comlink.Remote<SearchEngine>> {

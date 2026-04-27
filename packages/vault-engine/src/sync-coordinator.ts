@@ -1,6 +1,8 @@
 import type { LocalEntity } from "./types";
 import type { IAssetIOAdapter } from "./asset-manager";
 
+export type SyncDirection = "push" | "pull";
+
 export interface ISyncIOAdapter extends IAssetIOAdapter {
   walkDirectory(dir: FileSystemDirectoryHandle): Promise<any[]>;
   deleteOpfsEntry(
@@ -28,12 +30,13 @@ export interface ISyncEngine {
     vaultId: string,
     localHandle: FileSystemDirectoryHandle,
     opfsHandle: FileSystemDirectoryHandle,
+    direction: SyncDirection,
     validator: (path: string, meta: any) => Promise<boolean>,
     onProgress?: (stats: any) => void,
     signal?: AbortSignal,
   ): Promise<{
     error?: string;
-    failed?: { error: string }[];
+    failed?: { path: string; error: string }[];
     created: any[];
     updated: any[];
     deleted: any[];
@@ -50,7 +53,7 @@ export class SyncCoordinator {
   async cleanupConflictFiles(
     activeVaultId: string,
     opfsHandle: FileSystemDirectoryHandle,
-    onStatusChange: (status: "saving" | "idle" | "error") => void,
+    onStatusChange: (status: "saving" | "loading" | "idle" | "error") => void,
     reloadFiles: () => Promise<void>,
     signal?: AbortSignal,
   ) {
@@ -201,15 +204,73 @@ export class SyncCoordinator {
     }
   }
 
-  async syncWithLocalFolder(
+  async push(
     activeVaultId: string,
     opfsHandle: FileSystemDirectoryHandle | undefined,
     currentEntities: Record<string, LocalEntity>,
     waitForSaves: () => Promise<void>,
     onStateChange: (state: {
-      status: "saving" | "idle" | "error";
+      status: "saving" | "loading" | "idle" | "error";
       syncType: "local" | null;
       errorMessage?: string;
+      failedFiles?: { path: string; error: string }[];
+    }) => void,
+    checkForConflicts: () => Promise<void>,
+    signal?: AbortSignal,
+    onProgress?: (stats: any) => void,
+  ) {
+    return this.syncWithLocalFolder(
+      activeVaultId,
+      opfsHandle,
+      "push",
+      currentEntities,
+      waitForSaves,
+      onStateChange,
+      checkForConflicts,
+      signal,
+      onProgress
+    );
+  }
+
+  async pull(
+    activeVaultId: string,
+    opfsHandle: FileSystemDirectoryHandle | undefined,
+    currentEntities: Record<string, LocalEntity>,
+    waitForSaves: () => Promise<void>,
+    onStateChange: (state: {
+      status: "saving" | "loading" | "idle" | "error";
+      syncType: "local" | null;
+      errorMessage?: string;
+      failedFiles?: { path: string; error: string }[];
+    }) => void,
+    checkForConflicts: () => Promise<void>,
+    signal?: AbortSignal,
+    onProgress?: (stats: any) => void,
+  ) {
+    return this.syncWithLocalFolder(
+      activeVaultId,
+      opfsHandle,
+      "pull",
+      currentEntities,
+      waitForSaves,
+      onStateChange,
+      checkForConflicts,
+      signal,
+      onProgress
+    );
+  }
+
+  async syncWithLocalFolder(
+    activeVaultId: string,
+    opfsHandle: FileSystemDirectoryHandle | undefined,
+    direction: SyncDirection,
+    currentEntities: Record<string, LocalEntity>,
+    waitForSaves: () => Promise<void>,
+    onStateChange: (state: {
+      status: "saving" | "loading" | "idle" | "error";
+      syncType: "local" | null;
+      errorMessage?: string;
+      failedFiles?: { path: string; error: string }[];
     }) => void,
     checkForConflicts: () => Promise<void>,
     signal?: AbortSignal,
@@ -223,8 +284,10 @@ export class SyncCoordinator {
 
     if (localHandle) {
       try {
-        const iterator = (localHandle as any).values();
-        await iterator.next();
+        // Validate handle is still "hot" and accessible
+        for await (const _ of localHandle) {
+          break;
+        }
       } catch (validationErr: any) {
         if (
           validationErr.name === "NotFoundError" ||
@@ -272,16 +335,21 @@ export class SyncCoordinator {
     }
 
     try {
-      await Promise.race([
-        waitForSaves(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
-        ),
-      ]).catch((_err) =>
-        console.warn("Continuing sync despite save queue issues"),
-      );
+      if (direction === "push") {
+        await Promise.race([
+          waitForSaves(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Save queue timeout")), 10000),
+          ),
+        ]).catch((_err) =>
+          console.warn("Continuing sync despite save queue issues"),
+        );
+      }
 
-      onStateChange({ status: "saving", syncType: "local" });
+      onStateChange({ 
+        status: direction === "push" ? "saving" : "loading", 
+        syncType: "local" 
+      });
 
       const pathToEntity = new Map<string, LocalEntity>();
       for (const e of Object.values(currentEntities)) {
@@ -294,6 +362,7 @@ export class SyncCoordinator {
         activeVaultId,
         localHandle,
         opfsHandle,
+        direction,
         async (path, _meta) => {
           if (path.includes(".conflict-")) return false;
           if (!path.endsWith(".md") && !path.endsWith(".markdown")) return true;
@@ -344,12 +413,18 @@ export class SyncCoordinator {
           status: "error",
           syncType: null,
           errorMessage: result.error,
+          failedFiles: result.failed,
         });
       } else {
-        onStateChange({ status: "idle", syncType: null });
+        onStateChange({ 
+          status: "idle", 
+          syncType: null,
+          failedFiles: result.failed,
+        });
         await checkForConflicts();
+        const actionType = direction === "push" ? "Save" : "Load";
         this.notifier.notify(
-          `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
+          `${actionType} complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
           "success",
         );
       }
