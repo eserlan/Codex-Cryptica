@@ -121,7 +121,7 @@ describe("EntityStore", () => {
       getServices: () =>
         ({
           ai: { clearStyleCache: vi.fn(), expandQuery: vi.fn() },
-        } as any),
+        }) as any,
       invalidateUrlCache: vi.fn(),
       updateEntityCount: vi.fn().mockResolvedValue(undefined),
     });
@@ -431,7 +431,7 @@ describe("EntityStore", () => {
         getServices: () =>
           ({
             ai: { clearStyleCache, expandQuery: vi.fn() },
-          } as any),
+          }) as any,
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -795,7 +795,7 @@ describe("EntityStore", () => {
     it("should track VAULT_OPENING events by clearing content sets", () => {
       const subscribeMock = vi
         .mocked(vaultEventBus.subscribe)
-        .mock.calls.find((c) => !c[1])?.[0];
+        .mock.calls.find((c) => c[1] === "entity-content-loader")?.[0];
       expect(subscribeMock).toBeDefined();
 
       // Mark some content as loaded
@@ -814,7 +814,7 @@ describe("EntityStore", () => {
     it("should track SYNC_CHUNK_READY events by marking content as loaded", () => {
       const subscribeMock = vi
         .mocked(vaultEventBus.subscribe)
-        .mock.calls.find((c) => !c[1])?.[0];
+        .mock.calls.find((c) => c[1] === "entity-content-loader")?.[0];
       expect(subscribeMock).toBeDefined();
 
       // Simulate SYNC_CHUNK_READY event
@@ -834,7 +834,7 @@ describe("EntityStore", () => {
     it("should only mark content as loaded when entity has content in SYNC_CHUNK_READY", () => {
       const subscribeMock = vi
         .mocked(vaultEventBus.subscribe)
-        .mock.calls.find((c) => !c[1])?.[0];
+        .mock.calls.find((c) => c[1] === "entity-content-loader")?.[0];
       expect(subscribeMock).toBeDefined();
 
       // Simulate SYNC_CHUNK_READY with entity that has no content
