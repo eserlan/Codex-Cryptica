@@ -23,7 +23,7 @@
   import { useCanvasEvents } from "./use-canvas-events.svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
-  
+
   const canvasSlug = $derived(page.params.slug);
   const canvas = $derived(
     canvasRegistry.allCanvases.find(
@@ -33,18 +33,21 @@
   const canvasId = $derived(canvas?.id);
 
   const logic = createCanvasLogic(engine);
-  
+
   useCanvasEvents({
-    onQuickSpawn: (id, pos, screenPos) => logic.handleQuickSpawn(id, pos, screenPos),
+    onQuickSpawn: (id, pos, screenPos) =>
+      logic.handleQuickSpawn(id, pos, screenPos),
     onEditLabel: (edgeId, currentLabel) => {
       logic.labelModal = { isOpen: true, edgeId, currentLabel };
     },
-    onFlushSave: () => logic.flushSave()
+    onFlushSave: () => logic.flushSave(),
   });
 
   const filteredNodes = $derived.by(() => {
     if (logic.activeCategories.size === 0) return logic.nodes;
-    return logic.nodes.filter((n) => logic.activeCategories.has(n.data?.type as string));
+    return logic.nodes.filter((n) =>
+      logic.activeCategories.has(n.data?.type as string),
+    );
   });
 
   const nodeTypes = {
@@ -80,19 +83,46 @@
     }
   });
 
-  function onNodeContextMenu({ event, node }: { event: MouseEvent; node: any }) {
+  function onNodeContextMenu({
+    event,
+    node,
+  }: {
+    event: MouseEvent;
+    node: any;
+  }) {
     event.preventDefault();
-    logic.contextMenu = { x: event.clientX, y: event.clientY, type: "node", id: node.id };
+    logic.contextMenu = {
+      x: event.clientX,
+      y: event.clientY,
+      type: "node",
+      id: node.id,
+    };
   }
 
-  function onEdgeContextMenu({ event, edge }: { event: MouseEvent; edge: any }) {
+  function onEdgeContextMenu({
+    event,
+    edge,
+  }: {
+    event: MouseEvent;
+    edge: any;
+  }) {
     event.preventDefault();
-    logic.contextMenu = { x: event.clientX, y: event.clientY, type: "edge", id: edge.id };
+    logic.contextMenu = {
+      x: event.clientX,
+      y: event.clientY,
+      type: "edge",
+      id: edge.id,
+    };
   }
 
   function handlePaneContextMenu({ event }: { event: MouseEvent }) {
     event.preventDefault();
-    logic.contextMenu = { x: event.clientX, y: event.clientY, type: "pane", id: "pane" };
+    logic.contextMenu = {
+      x: event.clientX,
+      y: event.clientY,
+      type: "pane",
+      id: "pane",
+    };
   }
 
   function onEdgeClick({ event, edge }: { event: MouseEvent; edge: any }) {
@@ -118,7 +148,10 @@
     const entityId = event.dataTransfer?.getData("application/codex-entity");
     if (!entityId) return;
 
-    const position = logic.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    const position = logic.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
     logic.handleQuickSpawn(entityId, position);
   }
 
@@ -190,11 +223,11 @@
       targetType={logic.contextMenu.type}
       onDelete={logic.handleDelete}
       onRename={() => {
-        const edge = logic.edges.find(e => e.id === logic.contextMenu?.id);
+        const edge = logic.edges.find((e) => e.id === logic.contextMenu?.id);
         logic.labelModal = {
           isOpen: true,
           edgeId: logic.contextMenu!.id,
-          currentLabel: (edge?.label as string) || ""
+          currentLabel: (edge?.label as string) || "",
         };
         logic.contextMenu = null;
       }}

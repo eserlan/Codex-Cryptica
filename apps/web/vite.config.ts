@@ -76,7 +76,7 @@ export default defineConfig({
       ["src/lib/stores/canvas-registry*", "node"],
       ["src/lib/stores/vault-batch*", "node"],
       ["src/lib/stores/vault/entities*", "node"],
-      ["src/lib/stores/vault/entity-store*", "node"],
+      ["src/lib/stores/vault/entity-*", "node"],
       ["src/lib/stores/vault/events*", "node"],
       ["src/lib/stores/vault/lifecycle*", "node"],
       ["src/lib/stores/vault/messenger*", "node"],
