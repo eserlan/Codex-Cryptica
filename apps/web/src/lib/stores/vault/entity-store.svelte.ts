@@ -1,15 +1,11 @@
-import { vaultEventBus } from "./events";
 import * as vaultRelationships from "./relationships";
 import type { LocalEntity, BatchCreateInput } from "./types";
-import * as vaultEntities from "./entities";
 import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
-import { debugStore } from "../debug.svelte";
-import { cacheService } from "../../services/cache.svelte";
-import { uiStore } from "../ui.svelte";
 import type { InboundMap } from "./relationships";
 import { EntityContentLoader } from "./entity-content-loader.svelte";
 import { EntityPersistenceService } from "./entity-persistence";
+import { EntityMutationService } from "./entity-mutations";
 
 export interface EntityStoreDependencies {
   repository: VaultRepository;
@@ -33,15 +29,17 @@ export interface EntityStoreDependencies {
 }
 
 export class EntityStore {
+  private repository: VaultRepository;
   private loader: EntityContentLoader;
   private persistence: EntityPersistenceService;
+  private mutations: EntityMutationService;
 
   get entities() {
-    return this.deps.repository.entities;
+    return this.repository.entities;
   }
 
   set entities(val: Record<string, LocalEntity>) {
-    this.deps.repository.entities = val;
+    this.repository.entities = val;
   }
 
   allEntities: LocalEntity[];
@@ -49,28 +47,57 @@ export class EntityStore {
   inboundConnections: InboundMap;
   labelIndex: string[];
 
-  constructor(private deps: EntityStoreDependencies) {
-    this.loader = new EntityContentLoader({
-      repository: this.deps.repository,
-      activeVaultId: this.deps.activeVaultId,
-      isGuest: this.deps.isGuest,
-      getGuestFile: this.deps.getGuestFile,
-      getActiveVaultHandle: this.deps.getActiveVaultHandle,
-      getActiveSyncHandle: this.deps.getActiveSyncHandle,
-    });
+  constructor(
+    depsOrRepository: EntityStoreDependencies | VaultRepository,
+    loader?: EntityContentLoader,
+    persistence?: EntityPersistenceService,
+    mutations?: EntityMutationService,
+  ) {
+    if (depsOrRepository instanceof VaultRepository) {
+      this.repository = depsOrRepository;
+      this.loader = loader!;
+      this.persistence = persistence!;
+      this.mutations = mutations!;
+    } else {
+      const deps = depsOrRepository;
+      this.repository = deps.repository;
+      this.loader = new EntityContentLoader({
+        repository: deps.repository,
+        activeVaultId: deps.activeVaultId,
+        isGuest: deps.isGuest,
+        getGuestFile: deps.getGuestFile,
+        getActiveVaultHandle: deps.getActiveVaultHandle,
+        getActiveSyncHandle: deps.getActiveSyncHandle,
+      });
 
-    this.persistence = new EntityPersistenceService({
-      repository: this.deps.repository,
-      activeVaultId: this.deps.activeVaultId,
-      isGuest: this.deps.isGuest,
-      getSpecificVaultHandle: this.deps.getSpecificVaultHandle,
-      setStatus: this.deps.setStatus,
-      setErrorMessage: this.deps.setErrorMessage,
-      onEntityUpdate: this.deps.onEntityUpdate,
-      isContentLoaded: (id) => this.loader.isContentLoaded(id),
-      loadContent: (id) => this.loader.internalLoadContent(id),
-      markContentLoaded: (id) => this.loader.markContentLoaded(id),
-    });
+      this.persistence = new EntityPersistenceService({
+        repository: deps.repository,
+        activeVaultId: deps.activeVaultId,
+        isGuest: deps.isGuest,
+        getSpecificVaultHandle: deps.getSpecificVaultHandle,
+        setStatus: deps.setStatus,
+        setErrorMessage: deps.setErrorMessage,
+        onEntityUpdate: deps.onEntityUpdate,
+        isContentLoaded: (id) => this.loader.isContentLoaded(id),
+        loadContent: (id) => this.loader.internalLoadContent(id),
+        markContentLoaded: (id) => this.loader.markContentLoaded(id),
+      });
+
+      this.mutations = new EntityMutationService({
+        repository: deps.repository,
+        persistence: this.persistence,
+        loader: this.loader,
+        activeVaultId: deps.activeVaultId,
+        isGuest: deps.isGuest,
+        getActiveVaultHandle: deps.getActiveVaultHandle,
+        getActiveSyncHandle: deps.getActiveSyncHandle,
+        getServices: deps.getServices,
+        invalidateUrlCache: deps.invalidateUrlCache,
+        onEntityDelete: deps.onEntityDelete,
+        onBatchUpdate: deps.onBatchUpdate,
+        updateEntityCount: deps.updateEntityCount,
+      });
+    }
 
     this.allEntities = $derived.by(() => Object.values(this.entities));
     this.allActiveEntities = $derived.by(() =>
@@ -122,264 +149,31 @@ export class EntityStore {
     this.loader.markContentLoaded(id);
   }
 
-  // --- CRUD Operations ---
+  // --- Mutation Delegation ---
 
   async createEntity(
     type: Entity["type"],
     title: string,
     initialData: Partial<Entity> = {},
   ): Promise<string> {
-    const newEntity = vaultEntities.createEntity(
-      title,
-      type,
-      initialData,
-      this.entities,
-    );
-    const updatedEntities = { ...this.entities };
-    updatedEntities[newEntity.id] = newEntity;
-    this.entities = updatedEntities;
-
-    this.loader.markContentLoaded(newEntity.id);
-
-    const activeVaultId = this.deps.activeVaultId();
-    await this.scheduleSave(newEntity);
-
-    if (activeVaultId) {
-      await this.deps.updateEntityCount(
-        activeVaultId,
-        Object.keys(this.entities).length,
-      );
-    }
-
-    vaultEventBus.emit({
-      type: "BATCH_CREATED",
-      vaultId: activeVaultId || "unknown",
-      entities: [newEntity],
-    });
-
-    return newEntity.id;
+    return this.mutations.createEntity(type, title, initialData);
   }
 
   async updateEntity(
     id: string,
     updates: Partial<LocalEntity>,
   ): Promise<boolean> {
-    const existing = this.entities[id];
-    if (!existing) return false;
-
-    // SAFETY: Never overwrite existing content/lore with null/undefined from a partial update.
-    const safeUpdates = {
-      ...updates,
-      content:
-        updates.content !== undefined ? updates.content : existing.content,
-      lore: updates.lore !== undefined ? updates.lore : existing.lore,
-    };
-
-    const { entities, updated } = vaultEntities.updateEntity(
-      this.entities,
-      id,
-      safeUpdates,
-    );
-    if (!updated) return false;
-
-    this.entities = entities;
-
-    if (
-      updates.content !== undefined ||
-      updates.lore !== undefined ||
-      updates.title !== undefined ||
-      updates.tags !== undefined
-    ) {
-      this.loader.markContentLoaded(id);
-    }
-
-    if (updates.image && this.deps.invalidateUrlCache) {
-      this.deps.invalidateUrlCache(updates.image);
-    }
-
-    const services = this.deps.getServices();
-    if (
-      services?.ai &&
-      ["art style", "style", "visual aesthetic"].some((kw) =>
-        updated.title.toLowerCase().includes(kw),
-      )
-    ) {
-      services.ai.clearStyleCache();
-    }
-
-    await this.scheduleSave(updated);
-
-    vaultEventBus.emit({
-      type: "ENTITY_UPDATED",
-      vaultId: this.deps.activeVaultId() || "unknown",
-      entity: updated,
-      patch: updates,
-    });
-
-    return true;
+    return this.mutations.updateEntity(id, updates);
   }
 
   async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
-    let hasChanges = false;
-    const currentEntities = this.entities;
-    const newEntities = { ...currentEntities };
-    const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
-    const savePromises: Promise<void>[] = [];
-
-    for (const [id, patch] of Object.entries(updates)) {
-      if (!currentEntities[id]) continue;
-      const current = currentEntities[id];
-
-      // SAFETY: Preserve content/lore if not in patch.
-      const preserveGuestContent =
-        this.deps.isGuest() && patch.content === "" && !!current.content;
-      const merged = {
-        ...current,
-        ...patch,
-        metadata:
-          patch.metadata !== undefined
-            ? { ...(current.metadata ?? {}), ...patch.metadata }
-            : current.metadata,
-        content:
-          patch.content !== undefined
-            ? preserveGuestContent
-              ? current.content
-              : patch.content
-            : current.content,
-        lore: patch.lore !== undefined ? patch.lore : current.lore,
-        updatedAt: Date.now(),
-      } as LocalEntity;
-
-      newEntities[id] = merged;
-      appliedUpdates[id] = patch;
-      hasChanges = true;
-
-      if (
-        patch.content !== undefined ||
-        patch.lore !== undefined ||
-        patch.title !== undefined ||
-        patch.tags !== undefined
-      ) {
-        this.loader.markContentLoaded(id);
-      }
-
-      if (patch.image && this.deps.invalidateUrlCache) {
-        this.deps.invalidateUrlCache(patch.image);
-      }
-
-      savePromises.push(this.scheduleSave(merged));
-    }
-
-    if (hasChanges) {
-      this.entities = newEntities;
-      if (this.deps.onBatchUpdate) this.deps.onBatchUpdate(appliedUpdates);
-      await Promise.all(savePromises);
-
-      vaultEventBus.emit({
-        type: "BATCH_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entities: Object.keys(appliedUpdates).map((id) => newEntities[id]),
-        patches: appliedUpdates,
-      });
-
-      return true;
-    }
-    return false;
+    return this.mutations.batchUpdate(updates);
   }
 
   async deleteEntity(id: string) {
-    if (this.deps.isGuest())
-      throw new Error("Cannot delete entities in Guest Mode");
-    if (uiStore.isDemoMode) {
-      const updated = { ...this.entities };
-      delete updated[id];
-      this.entities = updated;
-      if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
-      return;
-    }
-
-    const lockKey = id;
-    return this.deps.repository.saveQueue.enqueue(lockKey, async () => {
-      const vaultHandle = await this.deps.getActiveVaultHandle();
-      const localHandle = await this.deps.getActiveSyncHandle();
-      const activeVaultId = this.deps.activeVaultId();
-
-      if (vaultHandle && activeVaultId) {
-        const entity = this.entities[id];
-        const path = entity?._path || [`${id}.md`];
-
-        // 1. Delete from memory and OPFS
-        const { entities, deletedEntity, modifiedIds } =
-          await vaultEntities.deleteEntity(vaultHandle, this.entities, id);
-
-        if (deletedEntity) {
-          this.entities = entities;
-          if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
-
-          // Update dirty tracking timestamp
-          import("./registry").then((m) =>
-            m.updateLastInternalChange(activeVaultId),
-          );
-
-          modifiedIds.forEach((mId) => {
-            const modEntity = this.entities[mId];
-            if (modEntity) {
-              this.scheduleSave(modEntity);
-            }
-          });
-
-          vaultEventBus.emit({
-            type: "ENTITY_DELETED",
-            vaultId: activeVaultId,
-            entityId: id,
-          });
-
-          await this.deps.updateEntityCount(
-            activeVaultId,
-            Object.keys(this.entities).length,
-          );
-
-          // 2. Delete from Local FS
-          if (localHandle) {
-            try {
-              const permission = await localHandle.queryPermission({
-                mode: "readwrite",
-              });
-              if (permission === "granted") {
-                const fileName = path[path.length - 1];
-                const dirPath = path.slice(0, -1);
-                let targetDir: FileSystemDirectoryHandle | undefined =
-                  localHandle;
-
-                for (const part of dirPath) {
-                  targetDir = await targetDir
-                    ?.getDirectoryHandle(part, { create: false })
-                    .catch(() => undefined);
-                  if (!targetDir) break;
-                }
-
-                if (targetDir) {
-                  await targetDir.removeEntry(fileName, { recursive: true });
-                  debugStore.log(
-                    `[EntityStore] Deleted ${path.join("/")} from local filesystem`,
-                  );
-                }
-              }
-            } catch (e) {
-              debugStore.warn(
-                `[EntityStore] Failed to delete ${path.join("/")} from local filesystem`,
-                e,
-              );
-            }
-          }
-
-          // 3. Remove from Dexie Cache
-          await cacheService.remove(`${activeVaultId}:${path.join("/")}`);
-        }
-      }
-    });
+    return this.mutations.deleteEntity(id);
   }
 
   async addConnection(
@@ -389,28 +183,13 @@ export class EntityStore {
     label?: string,
     strength: number = 1.0,
   ): Promise<boolean> {
-    const { entities, updatedSource } = vaultEntities.addConnection(
-      this.entities,
+    return this.mutations.addConnection(
       sourceId,
       targetId,
       type,
       label,
       strength,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.scheduleSave(updatedSource);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
-      return true;
-    }
-    return false;
   }
 
   async updateConnection(
@@ -420,28 +199,13 @@ export class EntityStore {
     newType: string,
     newLabel?: string,
   ): Promise<boolean> {
-    const { entities, updatedSource } = vaultEntities.updateConnection(
-      this.entities,
+    return this.mutations.updateConnection(
       sourceId,
       targetId,
       oldType,
       newType,
       newLabel,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.scheduleSave(updatedSource);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
-      return true;
-    }
-    return false;
   }
 
   async removeConnection(
@@ -449,156 +213,26 @@ export class EntityStore {
     targetId: string,
     type: string,
   ): Promise<boolean> {
-    const { entities, updatedSource } = vaultEntities.removeConnection(
-      this.entities,
-      sourceId,
-      targetId,
-      type,
-    );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.scheduleSave(updatedSource);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
-      vaultEventBus.emit({
-        type: "CONNECTION_REMOVED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        sourceId,
-        targetId,
-        connectionType: type,
-      });
-
-      return true;
-    }
-    return false;
+    return this.mutations.removeConnection(sourceId, targetId, type);
   }
 
   async addLabel(id: string, label: string): Promise<boolean> {
-    const { entities, updated } = vaultEntities.addLabel(
-      this.entities,
-      id,
-      label,
-    );
-    if (updated) {
-      this.entities = entities;
-      await this.scheduleSave(updated);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updated,
-        patch: { labels: updated.labels },
-      });
-
-      return true;
-    }
-    return false;
+    return this.mutations.addLabel(id, label);
   }
 
   async removeLabel(id: string, label: string): Promise<boolean> {
-    const { entities, updated } = vaultEntities.removeLabel(
-      this.entities,
-      id,
-      label,
-    );
-    if (updated) {
-      this.entities = entities;
-      await this.scheduleSave(updated);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updated,
-        patch: { labels: updated.labels },
-      });
-
-      return true;
-    }
-    return false;
+    return this.mutations.removeLabel(id, label);
   }
 
   async bulkAddLabel(ids: string[], label: string): Promise<number> {
-    const { entities, modifiedIds } = vaultEntities.bulkAddLabel(
-      this.entities,
-      ids,
-      label,
-    );
-    if (modifiedIds.length > 0) {
-      this.entities = entities;
-      const changed: LocalEntity[] = [];
-      for (const id of modifiedIds) {
-        const entity = entities[id];
-        if (entity) {
-          await this.scheduleSave(entity);
-          changed.push(entity);
-        }
-      }
-      vaultEventBus.emit({
-        type: "BATCH_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entities: changed,
-      });
-    }
-    return modifiedIds.length;
+    return this.mutations.bulkAddLabel(ids, label);
   }
 
   async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
-    const { entities, modifiedIds } = vaultEntities.bulkRemoveLabel(
-      this.entities,
-      ids,
-      label,
-    );
-    if (modifiedIds.length > 0) {
-      this.entities = entities;
-      const changed: LocalEntity[] = [];
-      for (const id of modifiedIds) {
-        const entity = entities[id];
-        if (entity) {
-          await this.scheduleSave(entity);
-          changed.push(entity);
-        }
-      }
-      vaultEventBus.emit({
-        type: "BATCH_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entities: changed,
-      });
-    }
-    return modifiedIds.length;
+    return this.mutations.bulkRemoveLabel(ids, label);
   }
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
-    const { entities, created } = vaultEntities.batchCreateEntities(
-      this.entities,
-      newEntitiesList,
-    );
-    this.entities = entities;
-
-    const savePromises = created.map(async (entity) => {
-      this.loader.markContentLoaded(entity.id);
-      await this.scheduleSave(entity);
-    });
-
-    const activeVaultId = this.deps.activeVaultId();
-    await Promise.all(savePromises);
-
-    if (activeVaultId) {
-      await this.deps.updateEntityCount(
-        activeVaultId,
-        Object.keys(this.entities).length,
-      );
-    }
-
-    vaultEventBus.emit({
-      type: "BATCH_CREATED",
-      vaultId: activeVaultId || "unknown",
-      entities: created,
-    });
+    return this.mutations.batchCreateEntities(newEntitiesList);
   }
 }

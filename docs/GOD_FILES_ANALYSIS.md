@@ -7,7 +7,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 | Rank | File Path                                                   | Line Count    | Type                | Status   |
 | :--- | :---------------------------------------------------------- | :------------ | :------------------ | :------- |
 | 1    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 780           | UI Component        |          |
-| 2    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`      | ~~920~~ 572   | Store (State/Logic) | ✅ FIXED |
+| 2    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`      | ~~920~~ 450   | Store (State/Logic) | ✅ FIXED |
 | 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 561 | UI Component        | ✅ FIXED |
 | 4    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 478 | Store (State/Logic) | ✅ FIXED |
 | 5    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 468           | UI Component        |          |
@@ -66,8 +66,8 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 ### 8. `entity-store.svelte.ts` (Refactored)
 
 **Status:** ✅ **COMPLETED (2026-04-27)**
-**Summary:** Extracted content loading and persistence coordination into `EntityContentLoader` and `EntityPersistenceService`.
-**Outcome:** Reduced from 920 lines to 572 lines. Improved modularity and separation of concerns.
+**Summary:** Extracted content loading, persistence coordination, and mutation logic into `EntityContentLoader`, `EntityPersistenceService`, and `EntityMutationService`. Implementation switched to full Dependency Injection.
+**Outcome:** Reduced from 920 lines to 450 lines. Established a clean separation between reactive state views and side-effectful operations.
 
 ---
 

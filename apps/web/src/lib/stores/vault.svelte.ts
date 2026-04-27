@@ -10,6 +10,9 @@ import type { Entity } from "schema";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
+import { EntityContentLoader } from "./vault/entity-content-loader.svelte";
+import { EntityPersistenceService } from "./vault/entity-persistence";
+import { EntityMutationService } from "./vault/entity-mutations";
 import { SyncStore } from "./vault/sync-store.svelte";
 import { AssetStore } from "./vault/asset-store.svelte";
 import { ServiceRegistry } from "./vault/service-registry";
@@ -133,23 +136,13 @@ export class VaultStore {
         vaultRegistry.rootHandle as FileSystemDirectoryHandle | undefined,
     });
 
-    this.entityStore = new EntityStore({
+    const loader = new EntityContentLoader({
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       isGuest: () => this.isGuest,
       getGuestFile: (path) => p2pGuestService.getFile(path),
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
       getActiveSyncHandle: () => this.getActiveSyncHandle(),
-      getServices: () => this.services,
-      invalidateUrlCache: (path) => this.releaseImageUrl(path),
-      setStatus: (s) => this.syncStore.setStatus(s),
-      setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
-      onEntityDelete: (id) => this.onEntityDelete?.(id),
-      onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
-      onBatchUpdate: (updates) => this.onBatchUpdate?.(updates),
-      updateEntityCount: (vId, count) =>
-        vaultRegistry.updateEntityCount(vId, count),
     });
 
     this.syncStore = new SyncStore({
@@ -178,6 +171,42 @@ export class VaultStore {
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
     });
+
+    const persistence = new EntityPersistenceService({
+      repository: this.repository,
+      activeVaultId: () => this.activeVaultId,
+      isGuest: () => this.isGuest,
+      getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
+      setStatus: (s) => this.syncStore.setStatus(s),
+      setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
+      onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
+      isContentLoaded: (id) => loader.isContentLoaded(id),
+      loadContent: (id) => loader.internalLoadContent(id),
+      markContentLoaded: (id) => loader.markContentLoaded(id),
+    });
+
+    const mutations = new EntityMutationService({
+      repository: this.repository,
+      persistence,
+      loader,
+      activeVaultId: () => this.activeVaultId,
+      isGuest: () => this.isGuest,
+      getActiveVaultHandle: () => this.getActiveVaultHandle(),
+      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getServices: () => this.services,
+      invalidateUrlCache: (path) => this.releaseImageUrl(path),
+      onEntityDelete: (id) => this.onEntityDelete?.(id),
+      onBatchUpdate: (updates) => this.onBatchUpdate?.(updates),
+      updateEntityCount: (vId, count) =>
+        vaultRegistry.updateEntityCount(vId, count),
+    });
+
+    this.entityStore = new EntityStore(
+      this.repository,
+      loader,
+      persistence,
+      mutations,
+    );
 
     this.assetStore = new AssetStore({
       assetManager: this.assetManager,
