@@ -3,11 +3,14 @@ import { VaultLifecycleManager } from "./lifecycle";
 import { getDB } from "../../utils/idb";
 
 // Mock dependencies
-const { mockThemeStore } = vi.hoisted(() => {
+const { mockThemeStore, mockOracle } = vi.hoisted(() => {
   return {
     mockThemeStore: {
       loadForVault: vi.fn().mockResolvedValue(undefined),
       init: vi.fn().mockResolvedValue(undefined),
+    },
+    mockOracle: {
+      loadForVault: vi.fn().mockResolvedValue(undefined),
     },
   };
 });
@@ -44,6 +47,10 @@ vi.mock("../vault-registry.svelte", () => ({
 
 vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
+}));
+
+vi.mock("../oracle.svelte", () => ({
+  oracle: mockOracle,
 }));
 
 vi.mock("$app/environment", () => ({
@@ -144,6 +151,7 @@ describe("VaultLifecycleManager", () => {
       expect(deps.flushPendingSaves).toHaveBeenCalled();
       expect(deps.repository.clear).toHaveBeenCalled();
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
+      expect(mockOracle.loadForVault).toHaveBeenCalledWith("v2");
       expect(deps.loadFiles).toHaveBeenCalled();
       expect(deps.themeStore.loadForVault).toHaveBeenCalledWith("v2");
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
