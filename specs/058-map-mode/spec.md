@@ -33,8 +33,9 @@ As a Lore Keeper, I want to drop pins on my map and link them directly to my exi
 **Acceptance Scenarios**:
 
 1. **Given** a map is active, **When** I double-click/long-press an area, **Then** a new pin is created at those coordinates.
-2. **Given** a pin exists, **When** I select an existing chronicle to link, **Then** the pin's metadata is updated and the link is persisted.
-3. **Given** a linked pin, **When** I click it, **Then** the linked note opens in the side-panel.
+2. **Given** a map is active, **When** I drag an entity from the Entity Explorer and drop it on the map, **Then** a pin pre-linked to that entity is created at the drop position.
+3. **Given** a pin exists, **When** I select an existing chronicle to link, **Then** the pin's metadata is updated and the link is persisted.
+4. **Given** a linked pin, **When** I click it, **Then** the linked note opens in the side-panel.
 
 ---
 
@@ -88,6 +89,7 @@ As a Lore Keeper, I want to attach maps to specific entities (like a city or a t
 - **FR-001**: System MUST support high-resolution image uploads (JPG, PNG, WebP).
 - **FR-002**: System MUST persist pin coordinates relative to map image dimensions.
 - **FR-003**: System MUST allow linking pins to exactly one primary Entity ID.
+- **FR-003a**: System MUST support creating a pre-linked pin by dragging an entity from the Entity Explorer onto the map.
 - **FR-004**: System MUST adapt UI borders and grids based on the active theme (Sci-Fi vs Fantasy).
 - **FR-005**: System MUST provide a toggleable tactical grid (Hex/Square) over the map.
 - **FR-006**: System MUST support "Jump to Location" search that pans/zooms to a specific pin.
