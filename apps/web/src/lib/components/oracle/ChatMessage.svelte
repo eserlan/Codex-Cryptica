@@ -26,6 +26,7 @@
   import { ChatMessageActions } from "./chat-message.actions";
   import { sanitizeId } from "$lib/utils/markdown";
   import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
+  import { appEventBus } from "@codex/events";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
   const chatMessageActions = new ChatMessageActions({
@@ -53,14 +54,11 @@
   let lastParsedContent = "";
 
   onMount(() => {
-    const channel = new BroadcastChannel("codex-oracle-sync");
-    channel.onmessage = (event) => {
-      const { type, data } = event.data;
-      if (type === "UNDO_PERFORMED" && data.messageId === message.id) {
+    return appEventBus.subscribe("ORACLE:UNDO_PERFORMED", (event) => {
+      if (event.payload.messageId === message.id) {
         isSaved = false;
       }
-    };
-    return () => channel.close();
+    });
   });
 
   let isLastAction = $derived(

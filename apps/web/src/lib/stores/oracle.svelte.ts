@@ -1,5 +1,6 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
+import { appEventBus } from "@codex/events";
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
@@ -473,12 +474,12 @@ export class OracleStore {
   async undo() {
     await this.undoRedo.undo((action) => {
       if (action?.messageId) {
-        const channel = new BroadcastChannel("codex-oracle-sync");
-        channel.postMessage({
-          type: "UNDO_PERFORMED",
-          data: { messageId: action.messageId },
+        appEventBus.emit({
+          type: "ORACLE:UNDO_PERFORMED",
+          domain: "oracle",
+          payload: { messageId: action.messageId },
+          metadata: { timestamp: Date.now(), sync: true },
         });
-        channel.close();
       }
     });
   }

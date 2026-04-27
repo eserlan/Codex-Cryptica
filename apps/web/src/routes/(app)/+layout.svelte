@@ -20,6 +20,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { appEventBus, SyncCoordinator } from "@codex/events";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
@@ -102,6 +103,7 @@
           vault,
           uiStore,
           oracle,
+          eventBus: appEventBus,
         });
       }
     }
@@ -119,6 +121,10 @@
 
       registerServiceWorker();
 
+      if (browser) {
+        new SyncCoordinator(appEventBus);
+      }
+
       console.log("[Layout] Calling setupWindowGlobals");
       setupWindowGlobals({
         searchStore,
@@ -132,6 +138,7 @@
         categories,
         uiStore,
         isEntityVisible,
+        eventBus: appEventBus,
       });
     })();
   });

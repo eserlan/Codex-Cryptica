@@ -15,12 +15,17 @@ export function bootSystem(stores: {
   vault: any;
   uiStore: any;
   oracle?: any;
+  eventBus?: any;
 }): boolean {
   debugStore.log("System booting: Initializing heavy stores...");
   stores.categories.init();
   stores.timeline.init();
   stores.graph.init();
   stores.calendar.init();
+
+  if (stores.eventBus) {
+    // SyncCoordinator could be initialized here if needed
+  }
 
   // Initialize staging state
   stores.uiStore.isStaging = IS_STAGING;
@@ -133,6 +138,7 @@ export function setupWindowGlobals(context: {
   categories: any;
   uiStore: any;
   isEntityVisible: any;
+  eventBus?: any;
 }) {
   if (!browser) return;
 
