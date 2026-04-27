@@ -9,6 +9,7 @@ import {
 import { CanvasStore } from "@codex/canvas-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { debugStore } from "$lib/stores/debug.svelte";
 import {
   buildCanvasSavePayload,
   createFlowEdgeFromConnection,
@@ -86,7 +87,7 @@ export function createCanvasLogic(engine: CanvasStore) {
     const currentCanvasId = explicitCanvasId || targetCanvasId;
 
     if (!currentVaultId || !currentCanvasId) {
-      console.warn(
+      debugStore.warn(
         "[CanvasLogic] saveCanvas called before canvas initialization; skipping.",
       );
       return;
