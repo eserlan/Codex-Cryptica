@@ -266,7 +266,7 @@ describe("VaultLifecycleManager", () => {
       expect(mockDB.put).toHaveBeenCalledWith(
         "settings",
         expect.any(Object),
-        "syncHandle_v-folder",
+        "folderHandle_v-folder",
       );
       expect(deps.clearStorageCache).toHaveBeenCalled();
       expect(result).toBe("v-folder");
@@ -298,7 +298,7 @@ describe("VaultLifecycleManager", () => {
       expect(mockDB.put).toHaveBeenCalledWith(
         "settings",
         handle,
-        "syncHandle_v1",
+        "folderHandle_v1",
       );
       expect(deps.loadFiles).toHaveBeenCalled();
     });

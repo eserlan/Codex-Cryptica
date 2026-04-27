@@ -723,7 +723,7 @@ describe("VaultStore", () => {
 
       const handle = await testVault.getActiveFolderHandle();
       expect(handle).toBeDefined();
-      expect(mockDB.get).toHaveBeenCalledWith("settings", "syncHandle_v1");
+      expect(mockDB.get).toHaveBeenCalledWith("settings", "folderHandle_v1");
     });
 
     it("should handle error in getActiveFolderHandle", async () => {
