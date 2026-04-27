@@ -554,15 +554,12 @@
   onDestroy(() => {
     flushSave();
   });
-
-  function handleKeyDown(_e: KeyboardEvent) {}
 </script>
 
 <div
   class="canvas-container {isConnecting
     ? 'is-connecting'
     : ''} flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
-  onkeydown={handleKeyDown}
   tabindex="-1"
   role="none"
 >
@@ -578,6 +575,7 @@
       class="absolute top-6 left-6 z-40 flex flex-col items-start gap-2 pointer-events-none select-none"
     >
       <button
+        type="button"
         onclick={() => (uiStore.showCanvasSelector = true)}
         title="Manage canvases"
         class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 py-2 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group flex items-center gap-2"
