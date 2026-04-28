@@ -223,7 +223,7 @@ export class SearchEngine {
           continue;
         }
 
-        const rankAdjustment = i * 0.0001;
+        const rankAdjustment = Math.min(i * 0.0001, 0.05);
         const currentScore = baseScore - rankAdjustment;
 
         const existing = resultsMap.get(id);

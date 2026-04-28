@@ -218,17 +218,17 @@ describe("Adapters", () => {
 
       const handle = await adapters.syncIOAdapter.getLocalHandle("v1");
       expect(handle).toBe("handle");
-      expect(mockDB.get).toHaveBeenCalledWith("settings", "syncHandle_v1");
+      expect(mockDB.get).toHaveBeenCalledWith("settings", "folderHandle_v1");
 
       await adapters.syncIOAdapter.setLocalHandle("v1", "new-handle" as any);
       expect(mockDB.put).toHaveBeenCalledWith(
         "settings",
         "new-handle",
-        "syncHandle_v1",
+        "folderHandle_v1",
       );
 
       await adapters.syncIOAdapter.deleteLocalHandle("v1");
-      expect(mockDB.delete).toHaveBeenCalledWith("settings", "syncHandle_v1");
+      expect(mockDB.delete).toHaveBeenCalledWith("settings", "folderHandle_v1");
     });
 
     it("should parse markdown", () => {

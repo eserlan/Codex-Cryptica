@@ -43,7 +43,7 @@ describe("AssetStore", () => {
     store = new AssetStore({
       assetManager: assetManager as any,
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(syncHandle),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(syncHandle),
       isGuest: vi.fn().mockReturnValue(false),
     });
   });
@@ -72,7 +72,7 @@ describe("AssetStore", () => {
           }),
       } as any,
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(syncHandle),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(syncHandle),
       isGuest: vi.fn().mockReturnValue(true),
     });
 
@@ -100,7 +100,7 @@ describe("AssetStore", () => {
     store = new AssetStore({
       assetManager: assetManager as any,
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
-      getActiveSyncHandle: vi.fn().mockResolvedValue(syncHandle),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(syncHandle),
       isGuest: vi.fn().mockReturnValue(false),
     });
 

@@ -1,3 +1,5 @@
+import { appEventBus, type AppEvent } from "@codex/events";
+import { VAULT_EVENTS } from "@codex/vault-engine";
 import type { LocalEntity } from "./types";
 
 export type VaultEvent =
@@ -61,7 +63,10 @@ export class VaultEventBus {
   }
 
   emit(event: VaultEvent) {
-    // Process listeners in background to avoid blocking the emitter
+    // 1. Bridge to AppEventBus
+    this.bridgeToAppEventBus(event);
+
+    // 2. Process legacy listeners
     const all = [...this.listeners, ...this.namedListeners.values()];
     for (const listener of all) {
       try {
@@ -74,6 +79,119 @@ export class VaultEventBus {
       } catch (err) {
         console.error("[VaultEventBus] listener error", err, event);
       }
+    }
+  }
+
+  private bridgeToAppEventBus(event: VaultEvent) {
+    const timestamp = Date.now();
+    let appEvent: AppEvent | null = null;
+
+    switch (event.type) {
+      case "VAULT_OPENING":
+        appEvent = {
+          type: VAULT_EVENTS.VAULT_OPENING,
+          domain: "vault",
+          payload: {},
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "CACHE_LOADED":
+        appEvent = {
+          type: VAULT_EVENTS.CACHE_LOADED,
+          domain: "vault",
+          payload: { entities: Object.values(event.entities) },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "ENTITY_UPDATED":
+        appEvent = {
+          type: VAULT_EVENTS.ENTITY_UPDATED,
+          domain: "vault",
+          payload: {
+            id: event.entity.id,
+            patch: event.patch,
+            entity: event.entity,
+          },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "VAULT_SWITCHED":
+        appEvent = {
+          type: VAULT_EVENTS.VAULT_SWITCHED,
+          domain: "vault",
+          payload: { id: event.vaultId },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "ENTITY_DELETED":
+        appEvent = {
+          type: VAULT_EVENTS.ENTITY_DELETED,
+          domain: "vault",
+          payload: { entityId: event.entityId },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "BATCH_CREATED":
+        appEvent = {
+          type: VAULT_EVENTS.BATCH_CREATED,
+          domain: "vault",
+          payload: { entities: event.entities },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "BATCH_UPDATED":
+        appEvent = {
+          type: VAULT_EVENTS.BATCH_UPDATED,
+          domain: "vault",
+          payload: { entities: event.entities, patches: event.patches },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "SYNC_COMPLETE":
+        appEvent = {
+          type: VAULT_EVENTS.SYNC_COMPLETE,
+          domain: "vault",
+          payload: {},
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "SYNC_CHUNK_READY":
+        appEvent = {
+          type: VAULT_EVENTS.SYNC_CHUNK_READY,
+          domain: "vault",
+          payload: {
+            newOrChangedIds: event.newOrChangedIds,
+            entities: event.newOrChangedIds
+              .map((id) => event.entities[id])
+              .filter(Boolean),
+          },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "VAULT_DELETED":
+        appEvent = {
+          type: VAULT_EVENTS.VAULT_DELETED,
+          domain: "vault",
+          payload: { vaultId: event.vaultId },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "CONNECTION_REMOVED":
+        appEvent = {
+          type: VAULT_EVENTS.CONNECTION_REMOVED,
+          domain: "vault",
+          payload: {
+            sourceId: event.sourceId,
+            targetId: event.targetId,
+            connectionType: event.connectionType,
+          },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+    }
+
+    if (appEvent) {
+      appEventBus.emit(appEvent);
     }
   }
 }

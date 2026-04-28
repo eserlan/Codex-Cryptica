@@ -142,7 +142,7 @@
     {#if isOffline}
       <div
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
-        title="Sovereign data remains accessible. Cloud sync and Lore Oracle are suspended while offline."
+        title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
         <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
@@ -193,23 +193,20 @@
         </div>
       {:else if vault.status === "saving"}
         <span class="text-theme-accent">SAVING...</span>
-      {:else if vault.status === "error" || vault.syncStore.failedFiles.length > 0}
+      {:else if vault.status === "error" || vault.failedFiles.length > 0}
         <div class="flex items-center gap-1.5">
           <span
             class="text-red-400 font-bold text-[10px] bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
-            title={vault.syncStore.failedFiles.length > 0
-              ? vault.syncStore.failedFiles
-                  .map((f) => `${f.path}: ${f.error}`)
-                  .join("\n")
+            title={vault.failedFiles.length > 0
+              ? vault.failedFiles.map((f) => `${f.path}: ${f.error}`).join("\n")
               : vault.errorMessage || "ERROR"}
           >
-            {vault.errorMessage ||
-              `${vault.syncStore.failedFiles.length} FAILURES`}
+            {vault.errorMessage || `${vault.failedFiles.length} FAILURES`}
           </span>
-          {#if vault.syncStore.failedFiles.length > 0}
+          {#if vault.failedFiles.length > 0}
             <button
               class="text-[9px] text-theme-muted hover:text-theme-text underline font-header"
-              onclick={() => (vault.syncStore.failedFiles = [])}
+              onclick={() => (vault.failedFiles = [])}
             >
               CLEAR
             </button>
@@ -298,19 +295,19 @@
               : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
             'saving'
               ? 'opacity-75 cursor-wait'
-              : ''} {!vault.hasSyncHandle || !vault.isDirty
+              : ''} {!vault.hasFolderHandle || !vault.isDirty
               ? 'opacity-50'
               : ''}"
-            onclick={() => vault.push()}
-            title={!vault.hasSyncHandle
+            onclick={() => vault.saveToFolder()}
+            title={!vault.hasFolderHandle
               ? "No folder linked — connect a local folder first to enable saving."
               : vault.isDirty
-                ? "Save to file system — writes all changes from the internal archive to your linked folder."
+                ? "Save to folder — writes all changes from the internal archive to your linked folder."
                 : "Up to date with local folder."}
             aria-label="SAVE TO FOLDER"
             aria-busy={vault.status === "saving"}
             disabled={vault.status === "saving" ||
-              !vault.hasSyncHandle ||
+              !vault.hasFolderHandle ||
               !vault.isDirty}
           >
             {#if vault.status === "saving"}

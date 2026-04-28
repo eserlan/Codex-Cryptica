@@ -10,6 +10,9 @@ import type { Entity } from "schema";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
+import { EntityContentLoader } from "./vault/entity-content-loader.svelte";
+import { EntityPersistenceService } from "./vault/entity-persistence";
+import { EntityMutationService } from "./vault/entity-mutations";
 import { SyncStore } from "./vault/sync-store.svelte";
 import { AssetStore } from "./vault/asset-store.svelte";
 import { ServiceRegistry } from "./vault/service-registry";
@@ -84,8 +87,14 @@ export class VaultStore {
   get hasConflictFiles() {
     return this.syncStore.hasConflictFiles;
   }
-  get hasSyncHandle() {
-    return this.syncStore.hasSyncHandle;
+  get hasFolderHandle() {
+    return this.syncStore.hasFolderHandle;
+  }
+  get failedFiles() {
+    return this.syncStore.failedFiles;
+  }
+  set failedFiles(v: { path: string; error: string }[]) {
+    this.syncStore.failedFiles = v;
   }
   get isDirty() {
     return this.syncStore.isDirty;
@@ -133,23 +142,13 @@ export class VaultStore {
         vaultRegistry.rootHandle as FileSystemDirectoryHandle | undefined,
     });
 
-    this.entityStore = new EntityStore({
+    const loader = new EntityContentLoader({
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       isGuest: () => this.isGuest,
       getGuestFile: (path) => p2pGuestService.getFile(path),
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
-      getServices: () => this.services,
-      invalidateUrlCache: (path) => this.releaseImageUrl(path),
-      setStatus: (s) => this.syncStore.setStatus(s),
-      setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
-      onEntityDelete: (id) => this.onEntityDelete?.(id),
-      onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
-      onBatchUpdate: (updates) => this.onBatchUpdate?.(updates),
-      updateEntityCount: (vId, count) =>
-        vaultRegistry.updateEntityCount(vId, count),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
     });
 
     this.syncStore = new SyncStore({
@@ -169,7 +168,7 @@ export class VaultStore {
         return this.syncCoordinator;
       },
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
       },
@@ -179,10 +178,46 @@ export class VaultStore {
         vaultRegistry.updateEntityCount(vId, count),
     });
 
+    const persistence = new EntityPersistenceService({
+      repository: this.repository,
+      activeVaultId: () => this.activeVaultId,
+      isGuest: () => this.isGuest,
+      getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
+      setStatus: (s) => this.syncStore.setStatus(s),
+      setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
+      onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
+      isContentLoaded: (id) => loader.isContentLoaded(id),
+      loadContent: (id) => loader.internalLoadContent(id),
+      markContentLoaded: (id) => loader.markContentLoaded(id),
+    });
+
+    const mutations = new EntityMutationService({
+      repository: this.repository,
+      persistence,
+      loader,
+      activeVaultId: () => this.activeVaultId,
+      isGuest: () => this.isGuest,
+      getActiveVaultHandle: () => this.getActiveVaultHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
+      getServices: () => this.services,
+      invalidateUrlCache: (path) => this.releaseImageUrl(path),
+      onEntityDelete: (id) => this.onEntityDelete?.(id),
+      onBatchUpdate: (updates) => this.onBatchUpdate?.(updates),
+      updateEntityCount: (vId, count) =>
+        vaultRegistry.updateEntityCount(vId, count),
+    });
+
+    this.entityStore = new EntityStore(
+      this.repository,
+      loader,
+      persistence,
+      mutations,
+    );
+
     this.assetStore = new AssetStore({
       assetManager: this.assetManager,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      getActiveSyncHandle: () => this.getActiveSyncHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       isGuest: () => this.isGuest,
     });
 
@@ -192,7 +227,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
-      loadFiles: (skipSync) => this.syncStore.loadFiles(skipSync),
+      loadFiles: (skipSync) => this.loadFiles(skipSync),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
@@ -294,7 +329,7 @@ export class VaultStore {
     }
   }
 
-  // --- External Sync Methods ---
+  // --- External Folder Methods ---
 
   broadcastVaultUpdate() {
     this.messenger.broadcastVaultUpdate();
@@ -304,17 +339,12 @@ export class VaultStore {
     return this.syncStore.loadFiles(skipSyncIfWarm);
   }
 
-  async push() {
-    return this.syncStore.push();
+  async loadFromFolder() {
+    return this.syncStore.loadFromFolder();
   }
 
-  async pull() {
-    return this.syncStore.pull();
-  }
-
-  /** @deprecated use push() or pull() instead */
-  async syncWithLocalFolder() {
-    return this.syncStore.push();
+  async saveToFolder() {
+    return this.syncStore.saveToFolder();
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {
@@ -409,8 +439,8 @@ export class VaultStore {
   getActiveVaultHandle() {
     return this.storageManager.getActiveVaultHandle(this.activeVaultId);
   }
-  getActiveSyncHandle() {
-    return this.storageManager.getActiveSyncHandle(this.activeVaultId);
+  getActiveFolderHandle() {
+    return this.storageManager.getActiveFolderHandle(this.activeVaultId);
   }
   getSpecificVaultHandle(vaultId: string) {
     return this.storageManager.getSpecificVaultHandle(vaultId);

@@ -75,14 +75,28 @@ export const syncIOAdapter: ISyncIOAdapter = {
   writeOpfsFile: writeOpfsFile as any,
   getLocalHandle: async (vaultId) => {
     const db = await getDB();
-    return await db.get("settings", `syncHandle_${vaultId}`);
+    let handle = await db.get("settings", `folderHandle_${vaultId}`);
+    if (!handle) {
+      // Migrate from old key name
+      handle = await db.get("settings", `syncHandle_${vaultId}`);
+      if (handle) {
+        try {
+          await db.put("settings", handle, `folderHandle_${vaultId}`);
+          await db.delete("settings", `syncHandle_${vaultId}`);
+        } catch {
+          // Best-effort migration — still return the handle
+        }
+      }
+    }
+    return handle;
   },
   setLocalHandle: async (vaultId, handle) => {
     const db = await getDB();
-    await db.put("settings", handle, `syncHandle_${vaultId}`);
+    await db.put("settings", handle, `folderHandle_${vaultId}`);
   },
   deleteLocalHandle: async (vaultId) => {
     const db = await getDB();
+    await db.delete("settings", `folderHandle_${vaultId}`);
     await db.delete("settings", `syncHandle_${vaultId}`);
   },
   parseMarkdown: (text) => parseMarkdown(text) as any,

@@ -91,6 +91,15 @@
         continue;
       }
 
+      const matchesType = filterAllTypes || typeFilters.has(e.type);
+      if (!matchesType) continue;
+
+      // AND logic for labels
+      const matchesLabels =
+        activeLabels.length === 0 ||
+        (e.labels && activeLabels.every((f) => e.labels?.includes(f)));
+      if (!matchesLabels) continue;
+
       const matchesSearch =
         !query ||
         e.title.toLowerCase().includes(query) ||
@@ -98,14 +107,7 @@
         e.labels?.some((l) => l.toLowerCase().includes(query)) ||
         e.aliases?.some((a) => a.toLowerCase().includes(query));
 
-      const matchesType = filterAllTypes || typeFilters.has(e.type);
-
-      // AND logic for labels
-      const matchesLabels =
-        activeLabels.length === 0 ||
-        (e.labels && activeLabels.every((f) => e.labels?.includes(f)));
-
-      if (matchesSearch && matchesType && matchesLabels) {
+      if (matchesSearch) {
         filtered.push(e);
       }
     }

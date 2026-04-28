@@ -100,9 +100,9 @@
         content: editContent,
         lore: editLore,
         image: editImage,
-        date: editDate,
-        start_date: editStartDate,
-        end_date: editEndDate,
+        date: $state.snapshot(editDate),
+        start_date: $state.snapshot(editStartDate),
+        end_date: $state.snapshot(editEndDate),
         type: editType,
       });
       isEditing = false;
