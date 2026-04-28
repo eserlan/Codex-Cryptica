@@ -98,6 +98,11 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
+
+  $effect(() => {
+    if (hoveredEntityId) vault.loadEntityContent(hoveredEntityId);
+  });
+
   let findNodeCounter = $derived(ui.findNodeCounter);
   let pendingSearchFocus: {
     entityId: string;
