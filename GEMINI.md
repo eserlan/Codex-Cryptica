@@ -4,8 +4,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-28
 
 ## Active Technologies
 
-- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine` (095-ai-regen-button)
-- OPFS (Vault Markdown Files), IndexedDB (Sync Metadata) (095-ai-regen-button)
+- TypeScript 6.0.3 + None (Browser Native APIs only) (094-app-event-bus)
+- N/A (Transient/In-memory) (094-app-event-bus)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb` (093-directional-vault-sync)
 - OPFS (Primary), IndexedDB (Metadata/Cache), Local Filesystem (Mirror via File System Access API) (093-directional-vault-sync)
@@ -166,6 +166,7 @@ TypeScript: Follow standard conventions
 ## Recent Changes
 
 - 095-ai-regen-button: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine`
+- 094-app-event-bus: Added TypeScript 5.9.3 + None (Browser Native APIs only)
 
 - 093-directional-vault-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb`
 

@@ -212,7 +212,10 @@ describe("VaultStore Multi-Vault", () => {
 
   it("should broadcast VAULT_SWITCHED event when switching", async () => {
     const eventSpy = vi.fn();
-    const unsubscribe = vaultEventBus.subscribe(eventSpy, "test-listener-switched");
+    const unsubscribe = vaultEventBus.subscribe(
+      eventSpy,
+      "test-listener-switched",
+    );
 
     await vault.switchVault("vault-b");
 
@@ -235,12 +238,19 @@ describe("VaultStore Multi-Vault", () => {
   });
 
   it("should reset content-loaded tracking when switching vaults", async () => {
-    (vault as any).entityStore._contentLoadedIds = new Set(["e1", "e2", "e3"]);
-    (vault as any).entityStore._contentVerifiedIds = new Set(["e1", "e2"]);
+    (vault as any).entityStore.loader._contentLoadedIds = new Set([
+      "e1",
+      "e2",
+      "e3",
+    ]);
+    (vault as any).entityStore.loader._contentVerifiedIds = new Set([
+      "e1",
+      "e2",
+    ]);
 
     await vault.switchVault("vault-b");
 
-    expect((vault as any).entityStore._contentLoadedIds.size).toBe(0);
-    expect((vault as any).entityStore._contentVerifiedIds.size).toBe(0);
+    expect((vault as any).entityStore.loader._contentLoadedIds.size).toBe(0);
+    expect((vault as any).entityStore.loader._contentVerifiedIds.size).toBe(0);
   });
 });

@@ -109,7 +109,7 @@ export async function updateLastInternalChange(id: string): Promise<void> {
   if (vault) {
     vault.lastInternalChange = Date.now();
     await db.put("vaults", vault);
-    
+
     // Trigger debounced refresh
     triggerRefresh();
   }

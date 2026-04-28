@@ -153,7 +153,7 @@
         },
         onPositionsUpdated: (updates) => {
           // Optimization: Only write back positions if this wasn't the initial load layout
-          // and the vault is not in a loading state. 
+          // and the vault is not in a loading state.
           // Also verify that the graph has been marked as fully ready.
           const isReady = _layoutReady && vault.status === "idle";
           if (!isInitial && isReady) {

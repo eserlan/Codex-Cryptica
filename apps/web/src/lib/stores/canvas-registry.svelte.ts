@@ -140,7 +140,9 @@ class CanvasRegistryStore {
       await deleteCanvasFromDisk(vaultDir, id);
 
       // Update dirty tracking timestamp
-      import("./vault/registry").then((m) => m.updateLastInternalChange(vaultRegistry.activeVaultId!));
+      import("./vault/registry").then((m) =>
+        m.updateLastInternalChange(vaultRegistry.activeVaultId!),
+      );
 
       const nextCanvases = { ...this.canvases };
       delete nextCanvases[id];
@@ -188,8 +190,10 @@ class CanvasRegistryStore {
         await saveCanvasToDisk(vaultDir, id, data);
 
         // Update dirty tracking timestamp
-        import("./vault/registry").then((m) => m.updateLastInternalChange(vaultId));
-        
+        import("./vault/registry").then((m) =>
+          m.updateLastInternalChange(vaultId),
+        );
+
         this.status = "idle";
       } catch (err) {
         console.error("[CanvasRegistryStore] Failed to save canvas", id, err);

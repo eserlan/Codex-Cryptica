@@ -101,7 +101,12 @@ describe("SyncService", () => {
         hash: "new-hash",
       });
 
-      const result = await service.sync("v1", mockFsBackend, mockOpfsBackend, "pull");
+      const result = await service.sync(
+        "v1",
+        mockFsBackend,
+        mockOpfsBackend,
+        "pull",
+      );
 
       expect(mockOpfsBackend.upload).toHaveBeenCalled();
       expect(result.updated).toContain("changed.md");
@@ -116,17 +121,36 @@ describe("SyncService", () => {
         lastSyncedOpfsHash: "old-hash",
       };
 
-      const fsMetadata = { path: "conflict.md", lastModified: 3000, size: 10, handle: {} };
-      const opfsMetadata = { path: "conflict.md", lastModified: 4000, size: 10, handle: "r1", hash: "new-remote-hash" };
+      const fsMetadata = {
+        path: "conflict.md",
+        lastModified: 3000,
+        size: 10,
+        handle: {},
+      };
+      const opfsMetadata = {
+        path: "conflict.md",
+        lastModified: 4000,
+        size: 10,
+        handle: "r1",
+        hash: "new-remote-hash",
+      };
 
       mockFsBackend.scan.mockResolvedValue({ files: [fsMetadata] });
       mockOpfsBackend.scan.mockResolvedValue({ files: [opfsMetadata] });
       mockRegistry.getEntriesByVault.mockResolvedValue([registryEntry]);
       mockFsBackend.download.mockResolvedValue(new Blob(["folder version"]));
-      
-      mockOpfsBackend.upload.mockResolvedValue({ path: "conflict.md", hash: "new-hash" });
 
-      const result = await service.sync("v1", mockFsBackend, mockOpfsBackend, "pull");
+      mockOpfsBackend.upload.mockResolvedValue({
+        path: "conflict.md",
+        hash: "new-hash",
+      });
+
+      const result = await service.sync(
+        "v1",
+        mockFsBackend,
+        mockOpfsBackend,
+        "pull",
+      );
 
       expect(result.updated).toContain("conflict.md");
       expect(mockOpfsBackend.upload).toHaveBeenCalled();
@@ -143,8 +167,19 @@ describe("SyncService", () => {
         lastSyncedOpfsHash: "h1",
       };
 
-      const fsMetadata = { path: "app-changed.md", lastModified: 500, size: 10, handle: {} };
-      const opfsMetadata = { path: "app-changed.md", lastModified: 3000, size: 10, handle: "r1", hash: "new-h" };
+      const fsMetadata = {
+        path: "app-changed.md",
+        lastModified: 500,
+        size: 10,
+        handle: {},
+      };
+      const opfsMetadata = {
+        path: "app-changed.md",
+        lastModified: 3000,
+        size: 10,
+        handle: "r1",
+        hash: "new-h",
+      };
 
       mockFsBackend.scan.mockResolvedValue({ files: [fsMetadata] });
       mockOpfsBackend.scan.mockResolvedValue({ files: [opfsMetadata] });
@@ -153,7 +188,12 @@ describe("SyncService", () => {
 
       mockFsBackend.upload.mockResolvedValue({ path: "app-changed.md" });
 
-      const result = await service.sync("v1", mockFsBackend, mockOpfsBackend, "push");
+      const result = await service.sync(
+        "v1",
+        mockFsBackend,
+        mockOpfsBackend,
+        "push",
+      );
 
       expect(mockFsBackend.upload).toHaveBeenCalled();
       expect(result.updated).toContain("app-changed.md");

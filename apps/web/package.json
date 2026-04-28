@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.20.1",
+  "version": "0.20.2",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@codex/canvas-engine": "^0.0.0",
+    "@codex/events": "^0.0.0",
     "@codex/importer": "*",
     "@codex/oracle-engine": "*",
     "@codex/proposer": "*",

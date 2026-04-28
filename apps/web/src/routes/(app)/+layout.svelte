@@ -3,7 +3,7 @@
   import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { preloadCode } from "$app/navigation";
 
   // Stores
@@ -20,6 +20,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
@@ -53,6 +54,8 @@
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
   let globalListenersCleanup: (() => void) | null = null;
+  let crossTabBroadcaster: InstanceType<typeof CrossTabBroadcaster> | null =
+    null;
 
   // Derived
   const isPopup = $derived(
@@ -73,6 +76,11 @@
       themeStore.currentThemeId = requestedTheme;
     }
   }
+
+  onDestroy(() => {
+    crossTabBroadcaster?.destroy();
+    crossTabBroadcaster = null;
+  });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
@@ -119,6 +127,10 @@
 
       registerServiceWorker();
 
+      if (browser) {
+        crossTabBroadcaster = new CrossTabBroadcaster(appEventBus);
+      }
+
       console.log("[Layout] Calling setupWindowGlobals");
       setupWindowGlobals({
         searchStore,
@@ -132,6 +144,7 @@
         categories,
         uiStore,
         isEntityVisible,
+        eventBus: appEventBus,
       });
     })();
   });

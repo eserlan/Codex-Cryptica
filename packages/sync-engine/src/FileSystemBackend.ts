@@ -171,8 +171,7 @@ export class FileSystemBackend implements ISyncBackend {
     // Verify root handle permission on every resolution
     try {
       if (
-        (await currentDir.queryPermission({ mode: "readwrite" })) !==
-        "granted"
+        (await currentDir.queryPermission({ mode: "readwrite" })) !== "granted"
       ) {
         throw new Error("Permission to write to local directory was revoked.");
       }

@@ -8,17 +8,17 @@
 
 ## Topic 2: "Dirty" Tracking for OPFS
 
-- **Decision**: Implement a `lastModified` timestamp at the Vault level (in `VaultRegistry` metadata) that updates whenever *any* entity, map, or canvas is successfully written to OPFS.
+- **Decision**: Implement a `lastModified` timestamp at the Vault level (in `VaultRegistry` metadata) that updates whenever _any_ entity, map, or canvas is successfully written to OPFS.
 - **Rationale**: Scanning thousands of files in OPFS to compare timestamps with the local folder is too slow for reactive UI state. A single "Master Timestamp" compared against a `lastSavedToFolder` timestamp provides a fast, constant-time `isDirty` derived state.
-- **Alternatives considered**: 
-    - Full scan on every change: Rejected due to performance.
-    - File-by-file dirty bits: Rejected as it doesn't easily summarize "Is the whole vault dirty?" for the primary Save button.
+- **Alternatives considered**:
+  - Full scan on every change: Rejected due to performance.
+  - File-by-file dirty bits: Rejected as it doesn't easily summarize "Is the whole vault dirty?" for the primary Save button.
 
 ## Topic 3: Vault ID Guard in `EntityStore`
 
 - **Decision**: Add an `activeVaultId` check inside the `_persistEntity` method, verified against the ID captured when the save was enqueued.
 - **Rationale**: If a user switches vaults quickly, a debounced save for "Vault A" might fire while "Vault B" is active. Without this guard, the data could be written into the wrong OPFS directory.
-- **Alternatives considered**: Canceling all pending saves on switch. Rejected because we *want* the work in the old vault to be saved, just in the correct location. The guard ensures it goes to the right directory handle or is discarded if the handle is no longer available.
+- **Alternatives considered**: Canceling all pending saves on switch. Rejected because we _want_ the work in the old vault to be saved, just in the correct location. The guard ensures it goes to the right directory handle or is discarded if the handle is no longer available.
 
 ## Topic 4: Per-Vault Oracle Chat Persistence
 

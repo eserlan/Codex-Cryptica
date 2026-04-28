@@ -112,7 +112,7 @@ export class DiffAlgorithm {
             registryEntry: registry,
           };
         }
-        
+
         // Directional handling for conflicts on initial encounter
         if (direction === "push") {
           return {
@@ -228,4 +228,3 @@ export class DiffAlgorithm {
     return { type: "SKIP", path };
   }
 }
-

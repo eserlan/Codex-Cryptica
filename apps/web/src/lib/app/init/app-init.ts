@@ -1,5 +1,6 @@
 import { browser } from "$app/environment";
 import { base } from "$app/paths";
+import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 
@@ -133,6 +134,7 @@ export function setupWindowGlobals(context: {
   categories: any;
   uiStore: any;
   isEntityVisible: any;
+  eventBus?: any;
 }) {
   if (!browser) return;
 
