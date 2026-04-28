@@ -168,6 +168,26 @@ export class VaultEventBus {
           metadata: { timestamp, vaultId: event.vaultId },
         };
         break;
+      case "VAULT_DELETED":
+        appEvent = {
+          type: VAULT_EVENTS.VAULT_DELETED,
+          domain: "vault",
+          payload: { vaultId: event.vaultId },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "CONNECTION_REMOVED":
+        appEvent = {
+          type: VAULT_EVENTS.CONNECTION_REMOVED,
+          domain: "vault",
+          payload: {
+            sourceId: event.sourceId,
+            targetId: event.targetId,
+            connectionType: event.connectionType,
+          },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
     }
 
     if (appEvent) {
