@@ -58,7 +58,22 @@ As a world-builder working in Zen Mode, I want to regenerate descriptions withou
 
 **Acceptance Scenarios**:
 
-1. **Given** I am in Zen Mode with an entity open, **When** I click the "AI Regenerate" icon in the entity header, **Then** the AI should generate the description variants.
+1. **Given** I am in Zen Mode with an entity open, **When** I click the "AI Regenerate" icon in the entity sidebar, **Then** the AI should generate the description variants.
+
+---
+
+### User Story 5 - Triggering from Visualization (Priority: P2)
+
+As a GM exploring the world graph or a spatial canvas, I want to regenerate entity content directly from the visual node so that I don't have to open the detail panel first.
+
+**Why this priority**: Improves efficiency for bulk or rapid world-building.
+
+**Independent Test**: Right-click a node in the graph or canvas and verify "Regenerate Content" appears and works.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am viewing the Knowledge Graph, **When** I right-click an entity node and select "Regenerate Content", **Then** the Oracle should begin generating new content for that entity.
+2. **Given** I am working on a Spatial Canvas, **When** I right-click an entity node and select "Regenerate Content", **Then** the Oracle should begin generating new content for that entity.
 
 ---
 
@@ -90,6 +105,8 @@ As a user, I want to choose whether to keep the generated descriptions or discar
 
 - **FR-001**: System MUST provide a visible "AI Regenerate" button in the Entity Detail view (Sidepanel) for users with **Host/GM permissions**.
 - **FR-002**: System MUST provide an "AI Regenerate" action in the Zen Mode entity interface for users with **Host/GM permissions**.
+- **FR-008**: System MUST provide a "Regenerate Content" option in the Knowledge Graph context menu for entity nodes.
+- **FR-009**: System MUST provide a "Regenerate Content" option in the Spatial Canvas context menu for entity nodes.
 - **FR-003**: The regeneration process MUST use the following as context for the AI prompt:
   - Entity name and type.
   - Assigned labels.
