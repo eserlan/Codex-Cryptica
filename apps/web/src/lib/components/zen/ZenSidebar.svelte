@@ -5,6 +5,8 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { isEntityVisible, type Entity } from "schema";
 
   let {
@@ -214,46 +216,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity}
-          <button
-            onclick={() => oracle.drawEntity(entity.id)}
-            disabled={isVisualizing}
-            class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden mt-1 md:mt-2"
-            aria-label="Draw visualization for {entity.title}"
-            aria-busy={isVisualizing}
-          >
-            {#if isVisualizing}
-              <span
-                class="icon-[lucide--loader-2] w-3 h-3 md:w-5 md:h-5 animate-spin text-theme-primary"
-                aria-hidden="true"
-              ></span>
-              <span
-                class="text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
-                aria-live="polite"
-              >
-                {#if oracle.activeStyleTitle}
-                  STYLE: {oracle.activeStyleTitle.toUpperCase()}
-                {:else}
-                  VISUALIZING...
-                {/if}
-              </span>
-            {:else}
-              <div
-                class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
-              ></div>
-              <span
-                class="icon-[lucide--palette] w-3 h-3 md:w-4 md:h-4 text-theme-primary"
-                aria-hidden="true"
-              ></span>
-              <span
-                class="text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
-                >DRAW VISUAL</span
-              >
-            {/if}
-          </button>
-        {/if}
-
-        {#if isVisualizing}
+        {#if isVisualizing || regenerationService.isGenerating}
           <div
             class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 border border-theme-primary/20"
           >
@@ -265,14 +228,69 @@
               class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
               aria-live="polite"
             >
-              {#if oracle.activeStyleTitle}
-                Visualizing in {oracle.activeStyleTitle}
+              {#if isVisualizing}
+                {#if oracle.activeStyleTitle}
+                  Visualizing in {oracle.activeStyleTitle}
+                {:else}
+                  Building Visual
+                {/if}
               {:else}
-                Building Visual
+                Expanding Lore
               {/if}
             </div>
           </div>
         {/if}
+      </div>
+    {/if}
+
+    {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity && !editState.isEditing}
+      <div class="flex flex-col gap-2 mt-4 w-full px-0">
+        <button
+          onclick={() => oracle.drawEntity(entity.id)}
+          disabled={isVisualizing}
+          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          aria-label="Draw visualization for {entity.title}"
+          aria-busy={isVisualizing}
+        >
+          {#if isVisualizing}
+            <span
+              class="icon-[lucide--loader-2] w-3 h-3 md:w-5 md:h-5 animate-spin text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
+              aria-live="polite"
+            >
+              {#if oracle.activeStyleTitle}
+                STYLE: {oracle.activeStyleTitle.toUpperCase()}
+              {:else}
+                VISUALIZING...
+              {/if}
+            </span>
+          {:else}
+            <div
+              class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
+            ></div>
+            <span
+              class="icon-[lucide--palette] w-3 h-3 md:w-4 md:h-4 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
+              >DRAW VISUAL</span
+            >
+          {/if}
+        </button>
+
+        <div
+          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+        >
+          <SidepanelRegenButton entityId={entity.id} />
+          <span
+            class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase pointer-events-none"
+            >REGENERATE</span
+          >
+        </div>
       </div>
     {/if}
   </div>

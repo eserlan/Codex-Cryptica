@@ -6,6 +6,7 @@ export class OracleCommandParser {
 
     if (q === "/help") return { type: "help" };
     if (q === "/clear") return { type: "clear" };
+    if (q === "/regenerate") return { type: "regenerate" };
 
     if (q.startsWith("/roll")) {
       const formula = query.slice(5).trim();

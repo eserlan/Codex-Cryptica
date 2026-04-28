@@ -7,6 +7,7 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -144,6 +145,7 @@
             <span class="icon-[lucide--target] w-5 h-5"></span>
           </button>
         {/if}
+        <SidepanelRegenButton entityId={entity.id} />
         <button
           onclick={() => ui.openZenMode(entity.id)}
           class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
