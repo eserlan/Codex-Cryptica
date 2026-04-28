@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./events";
 export * from "./queue";
 export * from "./repository.svelte";
 export * from "./sync-coordinator";

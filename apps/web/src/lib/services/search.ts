@@ -5,7 +5,8 @@ import SearchWorker from "../workers/search.worker?worker";
 import type { SearchEngine } from "@codex/search-engine";
 import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
-import { vaultEventBus } from "../stores/vault/events";
+import { appEventBus } from "@codex/events";
+import { VAULT_EVENTS } from "@codex/vault-engine";
 
 const INDEX_BATCH_SIZE = 100;
 
@@ -36,92 +37,101 @@ export class SearchService {
         }
       });
 
-      // Subscribe to vault lifecycle events
-      vaultEventBus.subscribe(async (event) => {
-        // VALIDATION: All sync/load events MUST match the current active vault ID
-        // to prevent cross-vault index contamination during rapid switches.
-        if (
-          "vaultId" in event &&
-          event.vaultId !== this.activeVaultId &&
-          event.type !== "VAULT_OPENING"
-        ) {
-          return;
-        }
-
-        switch (event.type) {
-          case "VAULT_OPENING":
-            // Only reset the index if we are actually switching to a different vault
-            if (this.activeVaultId !== event.vaultId) {
-              this.activeVaultId = event.vaultId;
-              this.isDirty = false;
-              // IMPORTANT: Clear the existing index in memory so we don't merge vaults!
-              await this.clear();
-            }
-            break;
-
-          case "CACHE_LOADED": {
-            // 1. Try to restore index from disk
-            const restored = await this.loadIndex(event.vaultId);
-
-            // 2. If not restored, perform initial metadata indexing
-            if (!restored) {
-              debugStore.log(
-                `[SearchService] Cold boot: Rebuilding index for ${event.vaultId}`,
-              );
-              await this.indexBatch(Object.values(event.entities));
-              this.needsFullContentSweep = true;
-              debugStore.log(`[SearchService] Metadata indexing complete.`);
-            } else {
-              this.needsFullContentSweep = false;
-              debugStore.log(
-                `[SearchService] Warm boot: Restored index for ${event.vaultId}`,
-              );
-            }
-            break;
+      // Subscribe to vault lifecycle events via AppEventBus
+      appEventBus.subscribe(
+        "VAULT:*",
+        async (event) => {
+          // VALIDATION: All sync/load events MUST match the current active vault ID
+          // to prevent cross-vault index contamination during rapid switches.
+          // VAULT_OPENING and VAULT_SWITCHED are exempt — they drive the transition.
+          const vaultId = event.metadata.vaultId;
+          if (
+            vaultId &&
+            vaultId !== this.activeVaultId &&
+            event.type !== VAULT_EVENTS.VAULT_OPENING &&
+            event.type !== VAULT_EVENTS.VAULT_SWITCHED
+          ) {
+            return;
           }
 
-          case "SYNC_CHUNK_READY": {
-            const chunk = event.newOrChangedIds
-              .map((id) => event.entities[id])
-              .filter(Boolean);
-            if (chunk.length > 0) {
-              await this.indexBatch(chunk);
+          switch (event.type) {
+            case VAULT_EVENTS.VAULT_OPENING:
+              if (this.activeVaultId !== vaultId) {
+                this.activeVaultId = vaultId!;
+                this.isDirty = false;
+                await this.clear();
+              }
+              break;
+
+            case VAULT_EVENTS.CACHE_LOADED: {
+              const restored = await this.loadIndex(vaultId!);
+              if (!restored) {
+                debugStore.log(
+                  `[SearchService] Cold boot: Rebuilding index for ${vaultId}`,
+                );
+                await this.indexBatch(event.payload.entities);
+                this.needsFullContentSweep = true;
+                debugStore.log(`[SearchService] Metadata indexing complete.`);
+              } else {
+                this.needsFullContentSweep = false;
+                debugStore.log(
+                  `[SearchService] Warm boot: Restored index for ${vaultId}`,
+                );
+              }
+              break;
             }
-            break;
+
+            case VAULT_EVENTS.SYNC_CHUNK_READY: {
+              const { entities } = event.payload;
+              if (entities.length > 0) {
+                await this.indexBatch(entities);
+              }
+              break;
+            }
+
+            case VAULT_EVENTS.SYNC_COMPLETE:
+              if (this.needsFullContentSweep) {
+                setTimeout(() => {
+                  this.indexContentInBackground(vaultId!);
+                }, 3000);
+                this.needsFullContentSweep = false;
+              }
+              break;
+
+            case VAULT_EVENTS.VAULT_SWITCHED:
+              // Fallback: sync activeVaultId if VAULT_OPENING was missed
+              if (this.activeVaultId !== event.payload.id) {
+                this.activeVaultId = event.payload.id;
+                this.isDirty = false;
+                await this.clear();
+              }
+              break;
+
+            case VAULT_EVENTS.ENTITY_UPDATED: {
+              const { patch, entity } = event.payload;
+              if (
+                patch.title !== undefined ||
+                patch.aliases !== undefined ||
+                patch.content !== undefined ||
+                patch.tags !== undefined ||
+                patch.lore !== undefined
+              ) {
+                await this.index(this.mapToSearchEntry(entity));
+              }
+              break;
+            }
+
+            case VAULT_EVENTS.ENTITY_DELETED:
+              await this.remove(event.payload.entityId);
+              break;
+
+            case VAULT_EVENTS.BATCH_CREATED:
+              await this.indexBatch(event.payload.entities);
+              break;
           }
-
-          case "SYNC_COMPLETE":
-            // Trigger full content indexing sweep in background ONLY if cold boot
-            if (this.needsFullContentSweep) {
-              // Delay the background sync to let the UI finish rendering first
-              setTimeout(() => {
-                this.indexContentInBackground(event.vaultId);
-              }, 3000);
-              this.needsFullContentSweep = false;
-            }
-            break;
-
-          case "ENTITY_UPDATED":
-            if (
-              event.patch.title !== undefined ||
-              event.patch.aliases !== undefined ||
-              event.patch.content !== undefined ||
-              event.patch.tags !== undefined ||
-              event.patch.lore !== undefined
-            ) {
-              await this.index(this.mapToSearchEntry(event.entity));
-            }
-            break;
-
-          case "ENTITY_DELETED":
-            await this.remove(event.entityId);
-            break;
-
-          case "BATCH_CREATED":
-            await this.indexBatch(event.entities);
-            break;
-        }
-      }, "search-service");
+        },
+        "search-service",
+      );
     }
   }
 

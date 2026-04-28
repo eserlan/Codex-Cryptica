@@ -1,5 +1,5 @@
 {
-  "name": "@codex/vault-engine",
+  "name": "@codex/events",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,20 +8,13 @@
   "scripts": {
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint \"src/**/*.ts\""
-  },
-  "dependencies": {
-    "@codex/events": "^0.0.0",
-    "idb": "^8.0.3",
-    "schema": "*"
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit --project tsconfig.test.json"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.5",
-    "jsdom": "^29.0.0",
-    "svelte": "^5.55.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "eslint": "^10.2.1"
   }
 }
