@@ -14,6 +14,7 @@
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
   } from "$lib/components/search/search-focus";
+  import SidepanelRegenButton from "../entity/SidepanelRegenButton.svelte";
 
   let {
     entity,
@@ -131,6 +132,7 @@
 
     <div class="flex items-center gap-1">
       {#if !isEditing}
+        <SidepanelRegenButton entityId={entity.id} />
         {#if isGraphView}
           <button
             onclick={handleFindInGraph}

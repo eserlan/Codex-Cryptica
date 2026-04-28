@@ -17,6 +17,7 @@
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
+  import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
     createEntityDetailTabIds,
     type EntityDetailTab,
@@ -316,6 +317,8 @@
       onDelete={handleDelete}
       onStartEdit={startEditing}
     />
+
+    <InlinePreviewOverlay />
   </aside>
 {/if}
 

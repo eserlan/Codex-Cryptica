@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-27
+Auto-generated from all feature plans. Last updated: 2026-04-28
 
 ## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine` (095-ai-regen-button)
+- OPFS (Vault Markdown Files), IndexedDB (Sync Metadata) (095-ai-regen-button)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb` (093-directional-vault-sync)
 - OPFS (Primary), IndexedDB (Metadata/Cache), Local Filesystem (Mirror via File System Access API) (093-directional-vault-sync)
@@ -162,12 +165,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 095-ai-regen-button: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine`
+
 - 093-directional-vault-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb`
 
 - 092-approve-draft-entities: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4
-
-- 090-entity-aliases: Added support for alternative names (aliases) to world entities with weighted search indexing and management UI in Zen Mode header.
-
-- 089-label-filtering: Added interactive label pills in entity explorer with "AND" filtering logic, active filter UI, and label-based search integration. (Refinement of 084)
 
 <!-- MANUAL ADDITIONS START -->
