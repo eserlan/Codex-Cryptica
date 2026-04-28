@@ -130,4 +130,71 @@ describe("OracleCommandParser", () => {
       ).toBe(false);
     });
   });
+
+  describe("parseRegenerationResponse", () => {
+    it("should parse well-formatted response", () => {
+      const response = `
+### CHRONICLE
+This is the chronicle.
+It has two sentences.
+
+### LORE
+This is the lore.
+It has multiple paragraphs.
+
+Paragraph 2.
+`;
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      expect(parsed.chronicle).toBe(
+        "This is the chronicle.\nIt has two sentences.",
+      );
+      expect(parsed.lore).toBe(
+        "This is the lore.\nIt has multiple paragraphs.\n\nParagraph 2.",
+      );
+    });
+
+    it("should handle missing sections", () => {
+      const response = "### CHRONICLE\nOnly chronicle here.";
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      expect(parsed.chronicle).toBe("Only chronicle here.");
+      expect(parsed.lore).toBe("");
+    });
+
+    it("should parse bold-marker format (**Chronicle:** / **Lore:**)", () => {
+      const response = `**Chronicle:** A brave hero stood at the gates.
+
+**Lore:** Born in the mountains, trained by the elders.
+Survived three wars.`;
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      expect(parsed.chronicle).toBe("A brave hero stood at the gates.");
+      expect(parsed.lore).toBe(
+        "Born in the mountains, trained by the elders.\nSurvived three wars.",
+      );
+    });
+
+    it("should prefer bold-marker format over legacy ### format when both are present", () => {
+      const response = `**Chronicle:** Bold chronicle.
+
+**Lore:** Bold lore.
+
+### CHRONICLE
+Legacy chronicle.
+
+### LORE
+Legacy lore.`;
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      expect(parsed.chronicle).toBe("Bold chronicle.");
+      expect(parsed.lore).toContain("Bold lore.");
+      expect(parsed.chronicle).not.toContain("Legacy");
+    });
+
+    it("should not treat mid-sentence **bold** as a section marker", () => {
+      const response = `**Chronicle:** Hero with **Chronicle:** in a sentence here.
+
+**Lore:** The real lore starts here.`;
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      // The second **Chronicle:** is mid-paragraph, not at line start — should not split lore
+      expect(parsed.lore).toContain("The real lore starts here.");
+    });
+  });
 });

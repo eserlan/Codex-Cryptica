@@ -7,6 +7,7 @@
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let {
     entity,
@@ -98,6 +99,11 @@
   });
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
+  const draft = $derived(
+    regenerationService.pendingDraft?.entityId === entity.id
+      ? regenerationService.pendingDraft
+      : null,
+  );
 </script>
 
 <div class="space-y-7 md:space-y-9">
@@ -169,7 +175,18 @@
       >
         {themeStore.jargon.chronicle_header}
       </h3>
-      <div class="prose-content">
+      <div
+        class="prose-content {draft
+          ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
+          : ''}"
+      >
+        {#if draft}
+          <div
+            class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+          >
+            Proposed
+          </div>
+        {/if}
         {#if !isVisible && vault.isGuest}
           <div
             class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
@@ -181,8 +198,10 @@
           <MarkdownEditor
             content={isEditing
               ? editContent
-              : entity.content || "No content yet."}
-            editable={isEditing}
+              : draft
+                ? draft.chronicle
+                : entity.content || "No content yet."}
+            editable={isEditing && !draft}
             onUpdate={(val) => {
               if (isEditing) editContent = val;
             }}

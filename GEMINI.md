@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-27
+Auto-generated from all feature plans. Last updated: 2026-04-28
 
 ## Active Technologies
 
@@ -165,6 +165,7 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 095-ai-regen-button: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine`
 - 094-app-event-bus: Added TypeScript 5.9.3 + None (Browser Native APIs only)
 
 - 093-directional-vault-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb`

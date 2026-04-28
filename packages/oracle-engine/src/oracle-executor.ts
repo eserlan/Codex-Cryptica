@@ -73,6 +73,13 @@ export class OracleActionExecutor {
           onPartialResponse,
         );
         break;
+      case "regenerate":
+        await this.executeRegenerate(
+          intent.entityId!,
+          context,
+          onPartialResponse,
+        );
+        break;
       case "error":
         await context.chatHistory.addMessage({
           id: crypto.randomUUID(),
@@ -131,6 +138,29 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 - \`Cmd/Ctrl + K\`: Search.\``,
     };
     await context.chatHistory.addMessage(msg);
+  }
+
+  private async executeRegenerate(
+    entityId: string,
+    context: OracleExecutionContext,
+    onPartialResponse?: (partial: string) => void,
+  ) {
+    try {
+      if (context.vault.isGuest)
+        throw new Error("Guest users cannot regenerate content.");
+
+      await this.generator.generateRegenerationResponse(
+        entityId,
+        context,
+        onPartialResponse || (() => {}),
+      );
+    } catch (err: any) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Regeneration failed: ${err.message}`,
+      });
+    }
   }
 
   private async executeRoll(formula: string, context: OracleExecutionContext) {

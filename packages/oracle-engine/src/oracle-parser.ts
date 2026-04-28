@@ -160,4 +160,40 @@ export class OracleCommandParser {
 
     return false;
   }
+
+  /**
+   * Parses a structured AI regeneration response into its constituent sections.
+   * Supports both the current format (**Chronicle:** / **Lore:**) and the
+   * legacy format (### CHRONICLE / ### LORE).
+   */
+  static parseRegenerationResponse(text: string): {
+    chronicle: string;
+    lore: string;
+  } {
+    // Primary format: **Chronicle:** / **Lore:** (matches /create system instruction)
+    // Anchored to line start (multiline) to prevent mid-text false matches.
+    // Lore regex uses no `m` flag so `$` binds to end-of-string, not end-of-line.
+    const boldChronicle = text.match(
+      /(?:^|\n)\s*\*\*Chronicle:\*\*\s*([\s\S]*?)(?=(?:^|\n)\s*\*\*Lore:\*\*|$)/im,
+    );
+    const boldLore = text.match(/(?:^|\n)\s*\*\*Lore:\*\*\s*([\s\S]*)$/i);
+
+    if (boldChronicle || boldLore) {
+      return {
+        chronicle: boldChronicle ? boldChronicle[1].trim() : "",
+        lore: boldLore ? boldLore[1].trim() : "",
+      };
+    }
+
+    // Legacy format: ### CHRONICLE / ### LORE
+    const chronicleMatch = text.match(
+      /###\s*CHRONICLE[:\s]*\n([\s\S]*?)(?=###|$)/i,
+    );
+    const loreMatch = text.match(/###\s*LORE[:\s]*\n([\s\S]*?)(?=###|$)/i);
+
+    return {
+      chronicle: chronicleMatch ? chronicleMatch[1].trim() : "",
+      lore: loreMatch ? loreMatch[1].trim() : "",
+    };
+  }
 }
