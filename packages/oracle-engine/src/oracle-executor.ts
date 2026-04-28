@@ -188,7 +188,9 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
         ...context.chatHistory.messages,
       ];
-      const idx = finalMsgs.findIndex((m) => m.id === assistantMsg.id);
+      const idx = finalMsgs.findIndex(
+        (m: ChatMessage) => m.id === assistantMsg.id,
+      );
       if (idx !== -1) {
         finalMsgs[idx].content = assistantMsg.content;
       }
@@ -1012,50 +1014,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     context: OracleExecutionContext,
     onPartialResponse?: (partial: string) => void,
   ) {
-    const entity = context.vault.entities[entityId];
-    if (!entity) return;
-
-    const assistantMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: "",
-      entityId,
-    };
-    await context.chatHistory.addMessage(assistantMsg);
-
-    const handlePartial = (partial: string) => {
-      assistantMsg.content = partial;
-      void context.chatHistory.updateMessage?.(
-        assistantMsg.id,
-        { content: partial },
-        false,
-      );
-      onPartialResponse?.(partial);
-    };
-
-    try {
-      await this.generator.generateRegenerationResponse(
-        entityId,
-        context,
-        handlePartial,
-      );
-
-      // Final update to set the proposals/metadata
-      const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
-        ...context.chatHistory.messages,
-      ];
-      const idx = finalMsgs.findIndex((m) => m.id === assistantMsg.id);
-      if (idx !== -1) {
-        finalMsgs[idx].content = assistantMsg.content;
-        // Optionally parse and add proposals here if we want proactive extraction during regen
-      }
-      await context.chatHistory.setMessages(finalMsgs);
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Regeneration failed for **${entity.title}**: ${err.message}`,
-      });
-    }
+    await this.executeRegenerate(entityId, context, onPartialResponse);
   }
 }

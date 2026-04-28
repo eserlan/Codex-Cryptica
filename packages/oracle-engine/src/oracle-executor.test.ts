@@ -18,6 +18,7 @@ describe("OracleActionExecutor - Detailed", () => {
         .mockResolvedValue({ primaryEntityId: "e1", sourceIds: ["e1"] }),
       generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateMessageVisualization: vi.fn().mockResolvedValue(new Blob([])),
+      generateRegenerationResponse: vi.fn().mockResolvedValue(undefined),
     };
     executor = new OracleActionExecutor(mockGenerator);
     mockContext = {
@@ -37,7 +38,12 @@ describe("OracleActionExecutor - Detailed", () => {
           }
         }),
         clearMessages: vi.fn().mockResolvedValue(undefined),
-        setMessages: vi.fn(),
+        setMessages: vi.fn().mockImplementation(async (messages) => {
+          mockContext.chatHistory.messages = messages;
+        }),
+        getMessages: vi
+          .fn()
+          .mockImplementation(async () => mockContext.chatHistory.messages),
         messages: [],
       },
       uiStore: {
@@ -298,6 +304,63 @@ describe("OracleActionExecutor - Detailed", () => {
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           content: expect.stringContaining("Restricted Mode Active"),
+        }),
+      );
+    });
+  });
+
+  describe("executeRegenerate", () => {
+    it("should regenerate an explicit entity id", async () => {
+      mockContext.vault.entities = {
+        e1: { id: "e1", title: "Hero" },
+      };
+
+      await executor.execute(
+        { type: "regenerate", entityId: "e1" },
+        mockContext,
+      );
+
+      expect(mockGenerator.generateRegenerationResponse).toHaveBeenCalledWith(
+        "e1",
+        mockContext,
+        expect.any(Function),
+      );
+      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: "assistant",
+          entityId: "e1",
+        }),
+      );
+      expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
+    });
+
+    it("should fall back to the selected entity id", async () => {
+      mockContext.vault.selectedEntityId = "e2";
+      mockContext.vault.entities = {
+        e2: { id: "e2", title: "Mage" },
+      };
+
+      await executor.execute({ type: "regenerate" }, mockContext);
+
+      expect(mockGenerator.generateRegenerationResponse).toHaveBeenCalledWith(
+        "e2",
+        mockContext,
+        expect.any(Function),
+      );
+    });
+
+    it("should show a system message when no entity is selected", async () => {
+      mockContext.vault.selectedEntityId = null;
+
+      await executor.execute({ type: "regenerate" }, mockContext);
+
+      expect(mockGenerator.generateRegenerationResponse).not.toHaveBeenCalled();
+      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining(
+            "Please select an entity in the graph or sidebar",
+          ),
         }),
       );
     });

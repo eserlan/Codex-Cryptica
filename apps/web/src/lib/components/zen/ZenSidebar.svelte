@@ -5,7 +5,6 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
-  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { isEntityVisible, type Entity } from "schema";
 
@@ -106,7 +105,7 @@
       <div class="space-y-2">
         {#if entity?.labels?.length}
           <div class="flex flex-wrap gap-1.5">
-            {#each entity.labels as label}
+            {#each entity.labels as label (label)}
               <LabelBadge
                 {label}
                 removable={!vault.isGuest}
@@ -126,7 +125,7 @@
 
         {#if entity?.aliases?.length}
           <div class="flex flex-wrap gap-1.5">
-            {#each entity.aliases as alias}
+            {#each entity.aliases as alias (alias)}
               <div
                 class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
               >
@@ -282,15 +281,22 @@
           {/if}
         </button>
 
-        <div
+        <button
+          type="button"
+          onclick={() => regenerationService.regenerate(entity.id)}
           class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          aria-label="Regenerate Chronicle and Lore"
+          title="Regenerate Chronicle and Lore"
         >
-          <SidepanelRegenButton entityId={entity.id} />
+          <span
+            class="icon-[lucide--sparkles] w-3 h-3 md:w-4 md:h-4 text-theme-primary"
+            aria-hidden="true"
+          ></span>
           <span
             class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase pointer-events-none"
             >REGENERATE</span
           >
-        </div>
+        </button>
       </div>
     {/if}
   </div>
@@ -308,7 +314,7 @@
         </h3>
         {#if allConnections.length > 0}
           <div class="space-y-2">
-            {#each allConnections as conn}
+            {#each allConnections as conn (conn.id)}
               <div
                 class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
               >

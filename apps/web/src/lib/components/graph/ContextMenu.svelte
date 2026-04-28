@@ -314,7 +314,13 @@
     imagePickerOpen = false;
 
     try {
-      await regenerationService.regenerate(nodesToUpdate[0]);
+      const ok = await regenerationService.regenerate(nodesToUpdate[0]);
+      if (!ok) {
+        ui.notify(
+          `Failed to regenerate content: ${regenerationService.error ?? "Unknown error"}`,
+          "error",
+        );
+      }
     } catch (err: any) {
       console.error("Failed to regenerate content", err);
       ui.notify(`Failed to regenerate content: ${err.message}`, "error");

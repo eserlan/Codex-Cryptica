@@ -25,11 +25,14 @@
   }>();
 
   const handleRegenerate = async () => {
-    if (targetId && targetType === "node") {
+    if (targetType !== "node") return;
+
+    if (targetId) {
       await regenerationService.regenerate(targetId);
       onClose();
     } else if (onRegenerate) {
       onRegenerate();
+      onClose();
     }
   };
 
@@ -132,7 +135,7 @@
     </button>
   {/if}
 
-  {#if targetType === "node"}
+  {#if targetType === "node" && (targetId || onRegenerate)}
     <button
       role="menuitem"
       class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
