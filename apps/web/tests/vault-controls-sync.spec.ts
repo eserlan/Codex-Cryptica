@@ -21,7 +21,7 @@ test.describe("Vault Controls Sync Button", () => {
     const saveButton = page.getByRole("button", { name: /SAVE/i }).first();
 
     await expect(saveButton).toBeVisible();
-    
+
     // In demo mode, it might be enabled or disabled depending on how demo entities are handled.
     // But it should exist.
   });

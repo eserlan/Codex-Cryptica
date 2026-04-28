@@ -31,7 +31,7 @@ describe("SyncPlanner", () => {
         ],
       },
       [],
-      "pull"
+      "pull",
     );
 
     expect(registry.getEntryByRemoteId).toHaveBeenCalledWith("remote-1");
@@ -109,14 +109,16 @@ describe("SyncPlanner", () => {
 
   it("passes direction to DiffAlgorithm", async () => {
     const registry = { getEntryByRemoteId: vi.fn() } as any;
-    const calculateAction = vi.fn().mockResolvedValue({ type: "SKIP", path: "test.md" });
+    const calculateAction = vi
+      .fn()
+      .mockResolvedValue({ type: "SKIP", path: "test.md" });
     const planner = new SyncPlanner(registry, { calculateAction } as any);
 
     await planner.plan(
-      [{ path: "test.md", lastModified: 1, size: 1 }], 
-      { files: [] }, 
-      [], 
-      "push"
+      [{ path: "test.md", lastModified: 1, size: 1 }],
+      { files: [] },
+      [],
+      "push",
     );
 
     expect(calculateAction).toHaveBeenCalledWith(
@@ -125,7 +127,7 @@ describe("SyncPlanner", () => {
       undefined,
       undefined,
       "push",
-      undefined
+      undefined,
     );
   });
 });

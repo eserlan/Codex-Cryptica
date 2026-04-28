@@ -8,6 +8,7 @@
 ## Clarifications
 
 ### Session 2026-04-25
+
 - Q: How should the system handle partial Load failures? → A: Keep already updated files and mark vault status as "Error" with a list of failed files for user retry.
 - Q: Does the "Dirty" state include changes to Maps and Canvases? → A: Any change to Entities, Maps, or Canvases marks the vault as Dirty.
 - Q: What should happen to the current bidirectional "SYNC" button logic? → A: Remove bidirectional code entirely; convert existing SYNC button to "SAVE TO FOLDER".

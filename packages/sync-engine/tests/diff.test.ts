@@ -38,7 +38,7 @@ describe("DiffAlgorithm", () => {
         fs,
         undefined,
         undefined,
-        "pull"
+        "pull",
       );
       expect(result.type).toBe("IMPORT_TO_OPFS");
     });
@@ -50,7 +50,7 @@ describe("DiffAlgorithm", () => {
         undefined,
         opfs,
         undefined,
-        "pull"
+        "pull",
       );
       expect(result.type).toBe("SKIP");
     });
@@ -63,7 +63,7 @@ describe("DiffAlgorithm", () => {
         fs,
         opfs,
         undefined,
-        "pull"
+        "pull",
       );
       expect(result.type).toBe("IMPORT_TO_OPFS");
     });
@@ -76,7 +76,7 @@ describe("DiffAlgorithm", () => {
         undefined,
         opfs,
         registry,
-        "pull"
+        "pull",
       );
       expect(result.type).toBe("SKIP");
     });
@@ -89,7 +89,7 @@ describe("DiffAlgorithm", () => {
         fs,
         undefined,
         registry,
-        "pull"
+        "pull",
       );
       expect(result.type).toBe("SKIP");
     });
@@ -103,7 +103,7 @@ describe("DiffAlgorithm", () => {
         fs,
         undefined,
         undefined,
-        "push"
+        "push",
       );
       expect(result.type).toBe("SKIP");
     });
@@ -115,7 +115,7 @@ describe("DiffAlgorithm", () => {
         undefined,
         opfs,
         undefined,
-        "push"
+        "push",
       );
       expect(result.type).toBe("EXPORT_TO_FS");
     });
@@ -129,7 +129,7 @@ describe("DiffAlgorithm", () => {
         fs,
         opfs,
         registry,
-        "push"
+        "push",
       );
       expect(result.type).toBe("EXPORT_TO_FS");
     });
@@ -142,7 +142,7 @@ describe("DiffAlgorithm", () => {
         fs,
         undefined,
         registry,
-        "push"
+        "push",
       );
       expect(result.type).toBe("DELETE_FS");
     });

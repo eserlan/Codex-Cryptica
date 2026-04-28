@@ -41,10 +41,12 @@ class MapRegistryStore {
       try {
         const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveMapsToDisk(vaultDir, this.maps);
-        
+
         // Update dirty tracking timestamp
-        import("./vault/registry").then((m) => m.updateLastInternalChange(vaultId));
-        
+        import("./vault/registry").then((m) =>
+          m.updateLastInternalChange(vaultId),
+        );
+
         this.status = "idle";
       } catch (err) {
         console.error("[MapRegistryStore] Failed to save maps", err);
@@ -100,7 +102,9 @@ class MapRegistryStore {
         await saveMapsToDisk(vaultDir, this.maps);
 
         // Update dirty tracking timestamp
-        import("./vault/registry").then((m) => m.updateLastInternalChange(activeVaultId));
+        import("./vault/registry").then((m) =>
+          m.updateLastInternalChange(activeVaultId),
+        );
       } catch (err: any) {
         console.error("[MapRegistryStore] Failed to delete map files", err);
         this.status = "error";

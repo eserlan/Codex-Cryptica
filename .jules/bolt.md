@@ -50,8 +50,8 @@
 
 ## 2026-04-26 - [Performance Insight: Avoid chained .map().filter()]
 
-**Learning:** Replace chained array methods like `.map().filter(Boolean)` (often used to map IDs to entities and remove nulls) with a single imperative loop. This eliminates the allocation and traversal of intermediate arrays, improving performance during chunk processing or event handling.
-**Action:** When mapping IDs to objects and filtering out missing ones, use a `for` loop instead of chained array methods to reduce allocations.
+**Learning:** Replace chained array methods like `.map().filter(Boolean)` (often used to map IDs to entities and remove nulls) or `Object.values().map()` with a single imperative loop (e.g., `for...of` or `for...in`). This eliminates the allocation and traversal of intermediate arrays, drastically reducing memory pressure and improving performance during chunk processing or event handling.
+**Action:** When handling large sets of data in event callbacks like `SYNC_CHUNK_READY` or `CACHE_LOADED`, always favor simple imperative loops over chained functional array transformations.
 
 ## 2026-04-26 - [Performance Insight: Caution with manual limit loops]
 
