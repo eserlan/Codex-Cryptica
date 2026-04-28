@@ -171,10 +171,12 @@ export class OracleCommandParser {
     lore: string;
   } {
     // Primary format: **Chronicle:** / **Lore:** (matches /create system instruction)
+    // Anchored to line start (multiline) to prevent mid-text false matches.
+    // Lore regex uses no `m` flag so `$` binds to end-of-string, not end-of-line.
     const boldChronicle = text.match(
-      /\*\*Chronicle:\*\*\s*([\s\S]*?)(?=\*\*Lore:\*\*|$)/i,
+      /(?:^|\n)\s*\*\*Chronicle:\*\*\s*([\s\S]*?)(?=(?:^|\n)\s*\*\*Lore:\*\*|$)/im,
     );
-    const boldLore = text.match(/\*\*Lore:\*\*\s*([\s\S]*?)$/i);
+    const boldLore = text.match(/(?:^|\n)\s*\*\*Lore:\*\*\s*([\s\S]*)$/i);
 
     if (boldChronicle || boldLore) {
       return {

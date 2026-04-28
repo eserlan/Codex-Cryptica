@@ -211,18 +211,21 @@ describe("OracleGenerator", () => {
         },
       };
       mockContext.vault.inboundConnections = {};
-      mockContext.uiStore.activeTheme = { id: "default" };
+      mockContext.uiStore.activeThemeId = "default";
 
       await generator.generateRegenerationResponse("e1", mockContext, vi.fn());
 
-      const prompt =
-        mockContext.textGeneration.generateResponse.mock.calls[0][1];
-      expect(prompt).toContain("Companion (npc)");
-      expect(prompt).toContain("Loyal companion");
-      expect(prompt).toContain("Aliases: Friend");
-      expect(prompt).toContain("Tags: loyal");
-      // lore of the connected entity must NOT be included in the context
-      expect(prompt).not.toContain("Secret GM lore that should not leak");
+      // Connection context is passed as the 4th arg (context) to generateResponse, not in the prompt
+      const connectionContext =
+        mockContext.textGeneration.generateResponse.mock.calls[0][3];
+      expect(connectionContext).toContain("Companion (npc)");
+      expect(connectionContext).toContain("Loyal companion");
+      expect(connectionContext).toContain("Aliases: Friend");
+      expect(connectionContext).toContain("Tags: loyal");
+      // lore of the connected entity must NOT be included
+      expect(connectionContext).not.toContain(
+        "Secret GM lore that should not leak",
+      );
     });
   });
 });

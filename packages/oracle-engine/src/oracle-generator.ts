@@ -220,10 +220,14 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       entityId,
       context.vault,
     );
-    const prompt = this.buildRegenerationPrompt(
-      entity,
-      connectionContext,
-      context,
+    const prompt = this.buildRegenerationPrompt(entity, context);
+
+    const categoryList = Array.from(
+      new Set(
+        (context.categories || [])
+          .map((c: any) => String(c?.id || "").trim())
+          .filter(Boolean),
+      ),
     );
 
     await context.textGeneration.generateResponse(
@@ -234,7 +238,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.modelName,
       onPartial,
       context.isDemoMode,
-      [],
+      categoryList,
       {
         requestId: crypto.randomUUID(),
         vaultId: context.vaultId,
@@ -300,10 +304,12 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 
   private buildRegenerationPrompt(
     entity: any,
-    connectionContext: string,
     context: OracleExecutionContext,
   ): string {
-    const theme = context.uiStore.activeTheme?.id || "default";
+    const theme =
+      context.uiStore.activeThemeId ||
+      context.uiStore.activeTheme?.id ||
+      "default";
     const aliasLine = entity.aliases?.length
       ? `\nAliases: ${entity.aliases.join(", ")}`
       : "";
@@ -316,7 +322,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 EXISTING CONTENT TO PRESERVE AND EXPAND:
 Chronicle: ${entity.content || "None"}
 Lore: ${entity.lore || "None"}
-${connectionContext ? `\nCONNECTED ENTITIES:\n${connectionContext}\n` : ""}
+
 THEME: ${theme}
 
 Output ONLY these two fields:
