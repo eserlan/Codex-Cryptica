@@ -1,6 +1,7 @@
 name: Merge Staging to Main After Promotion
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Promote Staging to Production"]
     types:
@@ -33,7 +34,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git fetch origin staging
-          git merge origin/staging --no-ff -m "🚀 promote: merge staging to main after production deployment"
+          # Use -X theirs to ensure staging's code content wins if there are minor conflicts, 
+          # but we'll re-bump version immediately after.
+          git merge origin/staging --no-ff -m "🚀 promote: merge staging to main after production deployment" -X theirs
           git push origin main
 
       - name: Setup Node.js
@@ -48,22 +51,26 @@ jobs:
         run: |
           # Find the most recently merged PR targeting staging
           PR_NUMBER=$(gh pr list \
+            --repo ${{ github.repository }} \
             --base staging \
             --state merged \
-            --limit 1000 \
-            --json number,mergedAt \
-            --jq 'sort_by(.mergedAt) | if length == 0 then empty else last.number end')
+            --limit 1 \
+            --json number \
+            --jq '.[0].number // ""')
+          
           if [ -z "$PR_NUMBER" ]; then
-            echo "No merged PRs found targeting staging" >&2
-            exit 1
+            echo "No merged PRs found targeting staging. Defaulting to patch bump."
+            echo "pr_number=" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "Found latest merged staging PR: #$PR_NUMBER"
           fi
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "Found latest merged staging PR: #$PR_NUMBER"
 
       - name: Bump web version and service worker cache
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.pr_number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: node scripts/bump-web-version.mjs
 
       - name: Commit and push version bump
@@ -76,12 +83,24 @@ jobs:
           git commit -m "chore(web): auto-bump version after staging promotion"
           git push origin main
 
+      - name: Sync version bump back to staging
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Syncing main back to staging to prevent future conflicts..."
+          git fetch origin staging
+          git checkout staging
+          git merge main --no-ff -m "chore: sync version bump back from main"
+          git push origin staging
+          # Switch back to main for subsequent steps
+          git checkout main
+
       - name: Trigger release workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Triggering release workflow on main..."
-          gh workflow run release.yml --ref main
+          gh workflow run release.yml --repo ${{ github.repository }} --ref main
 
       - name: Notify Discord on Main Merge
         if: success()
