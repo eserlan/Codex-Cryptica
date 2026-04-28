@@ -203,6 +203,127 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     );
   }
 
+  /**
+   * Orchestrates the construction of context and the generation of an AI regeneration response.
+   */
+  async generateRegenerationResponse(
+    entityId: string,
+    context: OracleExecutionContext,
+    onPartial: (partial: string) => void,
+  ): Promise<void> {
+    const entity = context.vault.entities[entityId];
+    if (!entity) throw new Error(`Entity ${entityId} not found.`);
+
+    const apiKey = context.effectiveApiKey || "";
+    const connectionContext = await this.buildSlimConnectionContext(
+      entity,
+      entityId,
+      context.vault,
+    );
+    const prompt = this.buildRegenerationPrompt(
+      entity,
+      connectionContext,
+      context,
+    );
+
+    await context.textGeneration.generateResponse(
+      apiKey,
+      prompt,
+      [],
+      connectionContext,
+      context.modelName,
+      onPartial,
+      context.isDemoMode,
+      [],
+      {
+        requestId: crypto.randomUUID(),
+        vaultId: context.vaultId,
+        existingEntities: Object.values(context.vault.entities || {}),
+      },
+    );
+  }
+
+  private async buildSlimConnectionContext(
+    entity: any,
+    entityId: string,
+    vault: any,
+  ): Promise<string> {
+    const outboundIds = (entity.connections || []).map((c: any) => c.target);
+    const inboundIds = (vault.inboundConnections?.[entityId] || []).map(
+      (i: any) => i.sourceId,
+    );
+    const allIds = [...new Set([...outboundIds, ...inboundIds])];
+
+    if (vault.loadEntityContent && allIds.length > 0) {
+      await Promise.all(
+        allIds.map((id: string) => vault.loadEntityContent(id)),
+      );
+    }
+
+    const parts: string[] = [];
+
+    for (const conn of entity.connections || []) {
+      const target = vault.entities[conn.target];
+      if (!target) continue;
+      parts.push(this.formatSlimEntity(target, conn.label || conn.type, "→"));
+    }
+
+    for (const item of vault.inboundConnections?.[entityId] || []) {
+      const source = vault.entities[item.sourceId];
+      if (!source) continue;
+      parts.push(
+        this.formatSlimEntity(
+          source,
+          item.connection.label || item.connection.type,
+          "←",
+        ),
+      );
+    }
+
+    return parts.join("\n\n");
+  }
+
+  private formatSlimEntity(
+    entity: any,
+    relationLabel: string,
+    direction: "→" | "←",
+  ): string {
+    const lines = [
+      `--- ${entity.title} (${entity.type}) [${direction} ${relationLabel}] ---`,
+    ];
+    if (entity.content?.trim()) lines.push(entity.content.trim());
+    if (entity.aliases?.length)
+      lines.push(`Aliases: ${entity.aliases.join(", ")}`);
+    if (entity.tags?.length) lines.push(`Tags: ${entity.tags.join(", ")}`);
+    return lines.join("\n");
+  }
+
+  private buildRegenerationPrompt(
+    entity: any,
+    connectionContext: string,
+    context: OracleExecutionContext,
+  ): string {
+    const theme = context.uiStore.activeTheme?.id || "default";
+    const aliasLine = entity.aliases?.length
+      ? `\nAliases: ${entity.aliases.join(", ")}`
+      : "";
+    const tagsLine = entity.tags?.length
+      ? `\nTags: ${entity.tags.join(", ")}`
+      : "";
+
+    return `Generate content for: **${entity.title}** (${entity.type})${aliasLine}${tagsLine}
+
+EXISTING CONTENT TO PRESERVE AND EXPAND:
+Chronicle: ${entity.content || "None"}
+Lore: ${entity.lore || "None"}
+${connectionContext ? `\nCONNECTED ENTITIES:\n${connectionContext}\n` : ""}
+THEME: ${theme}
+
+Output ONLY these two fields:
+**Chronicle:** [Polished 1-3 sentence player-facing summary]
+**Lore:** [Detailed GM-facing notes, may use markdown headings and lists]`;
+  }
+
   private getSentTitles(messages: ChatMessage[]): Set<string> {
     const titles = new Set<string>();
     messages.forEach((m) => {

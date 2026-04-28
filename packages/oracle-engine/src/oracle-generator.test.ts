@@ -31,6 +31,7 @@ describe("OracleGenerator", () => {
       vault: {
         entities: { e1: { id: "e1", title: "Entity 1", labels: [] } },
       },
+      uiStore: {},
       categories: [],
       modelName: "model",
       isDemoMode: false,
@@ -147,6 +148,81 @@ describe("OracleGenerator", () => {
         "model",
         false,
       );
+    });
+  });
+
+  describe("generateRegenerationResponse", () => {
+    it("should build correct prompt with existing content and theme", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Entity 1",
+        type: "npc",
+        content: "Old chronicle",
+        lore: "Old lore",
+        connections: [],
+      };
+      mockContext.vault.inboundConnections = {};
+      mockContext.uiStore.activeTheme = { id: "fantasy" };
+
+      await generator.generateRegenerationResponse("e1", mockContext, vi.fn());
+
+      expect(mockContext.textGeneration.generateResponse).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("Generate content for: **Entity 1** (npc)"),
+        [],
+        "", // empty connection context — no connections in this test
+        "model",
+        expect.any(Function),
+        false,
+        [],
+        expect.objectContaining({
+          existingEntities: expect.any(Array),
+        }),
+      );
+
+      const prompt =
+        mockContext.textGeneration.generateResponse.mock.calls[0][1];
+      expect(prompt).toContain("EXISTING CONTENT TO PRESERVE AND EXPAND:");
+      expect(prompt).toContain("Chronicle: Old chronicle");
+      expect(prompt).toContain("Lore: Old lore");
+      expect(prompt).toContain("THEME: fantasy");
+      expect(prompt).toContain("**Chronicle:**");
+      expect(prompt).toContain("**Lore:**");
+    });
+
+    it("should include slim connection context from outbound links", async () => {
+      mockContext.vault.entities = {
+        e1: {
+          id: "e1",
+          title: "Entity 1",
+          type: "npc",
+          content: "Hero",
+          lore: "Protagonist backstory",
+          connections: [{ target: "e2", label: "ally" }],
+        },
+        e2: {
+          id: "e2",
+          title: "Companion",
+          type: "npc",
+          content: "Loyal companion",
+          lore: "Secret GM lore that should not leak",
+          aliases: ["Friend"],
+          tags: ["loyal"],
+        },
+      };
+      mockContext.vault.inboundConnections = {};
+      mockContext.uiStore.activeTheme = { id: "default" };
+
+      await generator.generateRegenerationResponse("e1", mockContext, vi.fn());
+
+      const prompt =
+        mockContext.textGeneration.generateResponse.mock.calls[0][1];
+      expect(prompt).toContain("Companion (npc)");
+      expect(prompt).toContain("Loyal companion");
+      expect(prompt).toContain("Aliases: Friend");
+      expect(prompt).toContain("Tags: loyal");
+      // lore of the connected entity must NOT be included in the context
+      expect(prompt).not.toContain("Secret GM lore that should not leak");
     });
   });
 });

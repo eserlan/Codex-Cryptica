@@ -130,4 +130,34 @@ describe("OracleCommandParser", () => {
       ).toBe(false);
     });
   });
+
+  describe("parseRegenerationResponse", () => {
+    it("should parse well-formatted response", () => {
+      const response = `
+### CHRONICLE
+This is the chronicle.
+It has two sentences.
+
+### LORE
+This is the lore.
+It has multiple paragraphs.
+
+Paragraph 2.
+`;
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      expect(parsed.chronicle).toBe(
+        "This is the chronicle.\nIt has two sentences.",
+      );
+      expect(parsed.lore).toBe(
+        "This is the lore.\nIt has multiple paragraphs.\n\nParagraph 2.",
+      );
+    });
+
+    it("should handle missing sections", () => {
+      const response = "### CHRONICLE\nOnly chronicle here.";
+      const parsed = OracleCommandParser.parseRegenerationResponse(response);
+      expect(parsed.chronicle).toBe("Only chronicle here.");
+      expect(parsed.lore).toBe("");
+    });
+  });
 });
