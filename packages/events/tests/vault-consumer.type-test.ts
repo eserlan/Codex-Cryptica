@@ -1,4 +1,4 @@
-import { VAULT_EVENTS } from "../../vault-engine/src/events";
+import { VAULT_EVENTS } from "@codex/vault-engine";
 import type { AppEventOf } from "@codex/events";
 
 type Equal<Left, Right> =
@@ -13,7 +13,7 @@ type Expect<Value extends true> = Value;
 type _VaultEntityUpdatedPayload = Expect<
   Equal<
     AppEventOf<typeof VAULT_EVENTS.ENTITY_UPDATED>["payload"],
-    { id: string; patch: any; entity: any }
+    { id: string; patch: Record<string, unknown>; entity: unknown }
   >
 >;
 

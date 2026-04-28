@@ -69,27 +69,27 @@ export class AppEventBus {
     const filters = (Array.isArray(filter) ? filter : [filter]).map((f) =>
       f.toLowerCase(),
     );
-    const registeredSets: Set<AppEventListener<RuntimeAppEvent>>[] = [];
+    const domainKeys: string[] = [];
+    const typeKeys: string[] = [];
+    let usesGlobal = false;
 
     for (const f of filters) {
       if (f === "*") {
         this.globalListeners.add(listener);
-        registeredSets.push(this.globalListeners);
+        usesGlobal = true;
       } else if (f.endsWith(":*")) {
         const domain = f.split(":")[0];
         if (!this.domainListeners.has(domain)) {
           this.domainListeners.set(domain, new Set());
         }
-        const set = this.domainListeners.get(domain)!;
-        set.add(listener);
-        registeredSets.push(set);
+        this.domainListeners.get(domain)!.add(listener);
+        domainKeys.push(domain);
       } else {
         if (!this.typeListeners.has(f)) {
           this.typeListeners.set(f, new Set());
         }
-        const set = this.typeListeners.get(f)!;
-        set.add(listener);
-        registeredSets.push(set);
+        this.typeListeners.get(f)!.add(listener);
+        typeKeys.push(f);
       }
     }
 
@@ -98,8 +98,20 @@ export class AppEventBus {
     }
 
     return () => {
-      for (const set of registeredSets) {
-        set.delete(listener);
+      if (usesGlobal) this.globalListeners.delete(listener);
+      for (const key of domainKeys) {
+        const set = this.domainListeners.get(key);
+        if (set) {
+          set.delete(listener);
+          if (set.size === 0) this.domainListeners.delete(key);
+        }
+      }
+      for (const key of typeKeys) {
+        const set = this.typeListeners.get(key);
+        if (set) {
+          set.delete(listener);
+          if (set.size === 0) this.typeListeners.delete(key);
+        }
       }
       if (name && this.namedListeners.get(name) === listener) {
         this.namedListeners.delete(name);
@@ -109,7 +121,6 @@ export class AppEventBus {
 
   emit<Type extends AppEventType>(event: AppEventOf<Type>): void;
   emit(event: AppEvent): void;
-  emit(event: RuntimeAppEvent): void;
   emit(event: RuntimeAppEvent): void {
     const domain = event.domain.toLowerCase();
     const type = event.type.toLowerCase();

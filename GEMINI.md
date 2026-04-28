@@ -4,7 +4,7 @@ Auto-generated from all feature plans. Last updated: 2026-04-27
 
 ## Active Technologies
 
-- TypeScript 5.9.3 + None (Browser Native APIs only) (094-app-event-bus)
+- TypeScript 6.0.3 + None (Browser Native APIs only) (094-app-event-bus)
 - N/A (Transient/In-memory) (094-app-event-bus)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb` (093-directional-vault-sync)

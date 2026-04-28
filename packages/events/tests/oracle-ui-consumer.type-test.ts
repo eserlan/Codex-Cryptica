@@ -1,4 +1,4 @@
-import { ORACLE_EVENTS } from "../../oracle-engine/src/events";
+import { ORACLE_EVENTS } from "@codex/oracle-engine";
 import { UI_EVENTS } from "../../../apps/web/src/lib/events/ui";
 import type { AppEventOf } from "@codex/events";
 

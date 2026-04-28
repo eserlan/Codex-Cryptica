@@ -1,5 +1,5 @@
 import type { AppEventBus } from "./AppEventBus";
-import type { RuntimeAppEvent } from "./types";
+import type { AppEvent, RuntimeAppEvent } from "./types";
 
 function isAppEventEnvelope(value: unknown): value is RuntimeAppEvent {
   if (!value || typeof value !== "object") return false;
@@ -23,10 +23,7 @@ export class CrossTabBroadcaster {
     private bus: AppEventBus,
     private channelName = "codex-system-events",
   ) {
-    if (
-      typeof window !== "undefined" &&
-      typeof BroadcastChannel !== "undefined"
-    ) {
+    if (typeof BroadcastChannel !== "undefined") {
       this.channel = new BroadcastChannel(this.channelName);
       this.channel.onmessage = (msg) => this.handleRemoteEvent(msg.data);
 
@@ -65,7 +62,7 @@ export class CrossTabBroadcaster {
     this.bus.emit({
       ...parsed,
       metadata: { ...parsed.metadata, remote: true },
-    });
+    } as AppEvent);
   }
 
   destroy(): void {
