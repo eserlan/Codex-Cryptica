@@ -355,6 +355,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.",
     icon: "icon-[lucide--clipboard-check]",
   },
+  "ai-regeneration": {
+    id: "ai-regeneration",
+    title: "AI Description Regeneration",
+    content:
+      "Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.",
+    icon: "icon-[lucide--sparkles]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

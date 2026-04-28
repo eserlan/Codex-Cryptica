@@ -9,6 +9,7 @@ import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
+import { themeStore as defaultThemeStore } from "./theme.svelte";
 import { sessionActivity } from "../services/SessionActivityService";
 import {
   DraftingEngine,
@@ -41,6 +42,7 @@ type OracleUiSnapshot = {
   entityDiscoveryMode?: string;
   connectionDiscoveryMode?: string;
   autoArchive?: boolean;
+  activeThemeId?: string;
 };
 
 export class OracleStore {
@@ -54,6 +56,7 @@ export class OracleStore {
   // Dependencies
   private _vault?: typeof defaultVault;
   private _uiStore?: typeof defaultUiStore;
+  private _themeStore?: typeof defaultThemeStore;
   private _graph?: typeof defaultGraph;
   private _diceHistory?: typeof defaultDiceHistory;
   private _contextRetrieval?: typeof defaultContextRetrieval;
@@ -71,6 +74,9 @@ export class OracleStore {
   }
   private get uiStore() {
     return this._uiStore ?? defaultUiStore;
+  }
+  private get themeStore() {
+    return this._themeStore ?? defaultThemeStore;
   }
   private get graph() {
     return this._graph ?? defaultGraph;
@@ -298,6 +304,7 @@ export class OracleStore {
       entityDiscoveryMode: this.uiStore.entityDiscoveryMode,
       connectionDiscoveryMode: this.uiStore.connectionDiscoveryMode,
       autoArchive: (this.uiStore as any).autoArchive,
+      activeThemeId: this.themeStore.activeTheme?.id,
     };
   }
 
@@ -500,6 +507,14 @@ export class OracleStore {
   /** Alias for sendMessage used by chat commands */
   async ask(content: string) {
     return this.sendMessage(content);
+  }
+
+  async regenerate(entityId: string, onPartial?: (partial: string) => void) {
+    await this.executor.execute(
+      { type: "regenerate", entityId },
+      this.getExecutionContext(),
+      onPartial,
+    );
   }
 
   async drawEntity(entityId: string) {

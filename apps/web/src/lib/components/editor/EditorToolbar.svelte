@@ -1,6 +1,7 @@
 <script lang="ts">
   import { type Editor } from "@tiptap/core";
   import { onMount, onDestroy } from "svelte";
+  import ZenModeRegenAction from "../entity/ZenModeRegenAction.svelte";
 
   let { editor, isZenMode, onToggleZenMode } = $props<{
     editor: Editor | null;
@@ -240,6 +241,7 @@
     <!-- Utility -->
     <div class="flex gap-1">
       {#if isZenMode}
+        <ZenModeRegenAction />
         <button
           onclick={toggleZenMode}
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase font-header tracking-widest bg-theme-accent/10 rounded"
