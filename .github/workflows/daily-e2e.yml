@@ -28,14 +28,32 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: 'npm'
+          node-version: 24
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run: npm exec --workspace=web -- playwright install --with-deps chromium
+        run: pnpm --filter=web exec playwright install --with-deps chromium
 
       - name: Run E2E Tests
         env:
@@ -44,7 +62,7 @@ jobs:
         working-directory: apps/web
         # We use 'github' for annotations and 'list' for logs.
         # The HTML report is for the artifact.
-        run: npm exec --workspace=web -- playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
+        run: pnpm exec playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
 
       - name: Upload Playwright Report
         if: always()

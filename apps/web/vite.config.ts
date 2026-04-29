@@ -24,6 +24,7 @@ export default defineConfig({
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
     },
+    dedupe: ["svelte"],
   },
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),

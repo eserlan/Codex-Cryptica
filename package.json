@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.0.0",
-    "npm": ">=11.0.0"
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
   },
-  "packageManager": "npm@11.10.0",
+  "packageManager": "pnpm@10.5.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -15,12 +15,12 @@
     "test": "turbo run test",
     "test:affected": "turbo run test --filter=[origin/staging]...",
     "test:coverage": "turbo run test:coverage",
-    "test:e2e": "npm run test:e2e --workspace=web",
+    "test:e2e": "pnpm run test:e2e --filter=web",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "commitlint": "commitlint --edit",
     "prepare": "husky",
     "assets:sync": "node scripts/upload-images.mjs",
-    "deploy:pages": "npm run build --workspace=web && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
+    "deploy:pages": "pnpm run build --filter=web && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },
   "lint-staged": {
@@ -58,10 +58,6 @@
     "vitefu": "^1.1.3",
     "wrangler": "^4.84.1"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@tiptap/extension-bubble-menu": "^3.22.4"
