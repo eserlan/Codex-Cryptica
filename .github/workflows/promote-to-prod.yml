@@ -68,14 +68,14 @@ jobs:
       name: production
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ needs.find-staging-build.outputs.commit_sha }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download staging artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: staging-dist
           run-id: ${{ needs.find-staging-build.outputs.run_id }}
