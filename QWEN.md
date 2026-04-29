@@ -80,7 +80,7 @@ pnpm run dev
 turbo run dev
 
 # Start only the web app
-pnpm run dev --workspace=web
+pnpm --filter web run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to view the application.
@@ -107,7 +107,7 @@ pnpm run test:coverage
 pnpm run test:e2e
 
 # Test specific workspace
-pnpm test --workspace=@codex/vault-engine
+pnpm --filter @codex/vault-engine test
 ```
 
 ### Linting & Formatting

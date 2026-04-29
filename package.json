@@ -15,7 +15,7 @@
     "test": "turbo run test",
     "test:affected": "turbo run test --filter=[origin/staging]...",
     "test:coverage": "turbo run test:coverage",
-    "test:e2e": "pnpm run test:e2e --filter=web",
+    "test:e2e": "pnpm --filter=web run test:e2e",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "commitlint": "commitlint --edit",
     "prepare": "husky",

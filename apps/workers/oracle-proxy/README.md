@@ -67,15 +67,17 @@ If `ALLOWED_ORIGINS` is set, it is treated as the exact allowlist for the worker
 ### Unit Tests
 
 ```bash
-# Run unit tests (stubs for now)
-pnpm test -- workspace:oracle-proxy
+# From root directory:
+pnpm --filter oracle-proxy test
+# Or from this directory:
+pnpm test
 ```
 
 ### Integration Tests
 
 ```bash
-# Run E2E tests that verify proxy functionality
-pnpm exec playwright test oracle-proxy-integration
+# From root directory:
+pnpm --filter web exec playwright test oracle-proxy-integration
 ```
 
 ### Manual Testing
