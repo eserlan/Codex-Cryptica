@@ -85,13 +85,13 @@ As a game master, I want to share my Drive folder with a co-host so they can loa
 - **FR-005**: The system MUST silently refresh the OAuth access token using Google Identity Services without requiring the user to re-authenticate, unless the refresh fails.
 - **FR-006**: When Drive sync fails at any point, the local-only operation MUST still succeed. Drive failures MUST NOT block local reads or writes.
 - **FR-007**: The user MUST be able to disconnect the Drive integration from vault settings, which removes the folder association from IndexedDB without deleting data from Drive or OPFS.
-- **FR-008**: The system MUST emit an app event (`SYNC:DRIVE_CONNECTED`, `SYNC:DRIVE_SYNC_COMPLETE`, `SYNC:DRIVE_SYNC_FAILED`) so other components can react without coupling to the Drive service directly.
+- **FR-008**: The system MUST emit directional app events (`SYNC:DRIVE_CONNECTED`, `SYNC:DRIVE_PUSH_COMPLETE`, `SYNC:DRIVE_PULL_COMPLETE`, `SYNC:DRIVE_SYNC_FAILED`) so other components can react without coupling to the Drive service directly.
 - **FR-009**: The system MUST auto-create a `CodexCryptica/{vaultName}` folder hierarchy in Drive on first connect if no existing folder is supplied.
 - **FR-010**: The system MUST allow a user to supply an existing Drive folder ID (e.g., one shared by a co-host) instead of auto-creating a new folder.
 
 ### Non-Functional Requirements
 
-- **NFR-001**: Drive uploads and downloads MUST NOT block the UI thread.
+- **NFR-001**: Drive uploads and downloads MUST NOT block the UI thread. All API interactions MUST be asynchronous. Processing of large vaults (>100 entities) SHOULD be profiled to ensure main-thread scripting time remains below 50ms per frame.
 - **NFR-002**: Auth token MUST be kept in memory only; it MUST NOT be written to `localStorage` or IndexedDB.
 - **NFR-003**: The feature MUST be disabled/hidden when the app is in Guest/Demo mode.
 - **NFR-004**: The feature MUST be disabled when `navigator.onLine` is `false`, with no error thrown.
