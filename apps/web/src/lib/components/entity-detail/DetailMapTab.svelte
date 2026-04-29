@@ -9,9 +9,14 @@
 
   let linkedMap = $derived.by(() => {
     if (!entity) return undefined;
-    return Object.values(vault.maps).find(
-      (m) => m.parentEntityId === entity.id,
-    );
+    // ⚡ Bolt Optimization: Use imperative loop over keys instead of Object.values().find()
+    // to avoid allocating an intermediate array on every evaluation of this $derived block.
+    for (const key in vault.maps) {
+      if (vault.maps[key].parentEntityId === entity.id) {
+        return vault.maps[key];
+      }
+    }
+    return undefined;
   });
 
   let files = $state<FileList | null>(null);

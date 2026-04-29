@@ -57,3 +57,8 @@
 
 **Learning:** When manually optimizing `.slice(0, limit)` with an imperative loop condition like `result.length < limit`, explicitly handle cases where `limit` might be `undefined`. Native `.slice(0, undefined)` safely copies the array, but a manual loop condition `0 < undefined` evaluates to `false`, causing the loop to terminate immediately and introducing bugs.
 **Action:** Be careful when replacing standard library functions. Ensure that all edge cases (like `undefined` parameters) are correctly handled.
+
+## 2026-05-18 - [Performance Insight: Array allocation in object key search]
+
+**Learning:** Svelte 5 `$derived` blocks re-evaluate when their dependencies change. If a block uses `Object.values(obj).find(...)`, it allocates a new array of all values on every evaluation. When `obj` is large (e.g., `vault.maps`), this generates significant garbage collection pressure, especially if the block is evaluated frequently.
+**Action:** Replace `Object.values(obj).find(...)` with a `for...in` loop over the object's keys, checking the value directly and returning early. This completely avoids array allocation and is highly compatible with Svelte 5's fine-grained proxy tracking.
