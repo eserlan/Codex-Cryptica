@@ -11,8 +11,8 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "@codex/events": "^0.0.0",
-    "dice-engine": "*",
+    "@codex/events": "workspace:*",
+    "dice-engine": "workspace:*",
     "idb": "^8.0.3"
   },
   "devDependencies": {
