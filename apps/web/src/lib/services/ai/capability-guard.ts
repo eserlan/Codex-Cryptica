@@ -12,13 +12,20 @@ export function isAIEnabled(): boolean {
     typeof localStorage.getItem === "function";
 
   if (isBrowser) {
-    // Sync check from localStorage as used in UIStore
-    const disabled = localStorage.getItem("codex_ai_disabled");
-    if (disabled === "true") return false;
+    try {
+      // Sync check from localStorage as used in UIStore
+      const disabled = localStorage.getItem("codex_ai_disabled");
+      if (disabled === "true") return false;
 
-    // Fallback to old "lite" flag if present
-    const lite = localStorage.getItem("codex_ai_lite_mode");
-    if (lite === "true") return false;
+      // Fallback to old "lite" flag if present
+      const lite = localStorage.getItem("codex_ai_lite_mode");
+      if (lite === "true") return false;
+    } catch {
+      // If localStorage access throws (e.g. SecurityError in some browsers),
+      // we default to true to avoid breaking core functionality,
+      // similar to how we handle the worker/no-localStorage path.
+      return true;
+    }
   }
 
   // In workers or if no localStorage, we return true to avoid blocking
