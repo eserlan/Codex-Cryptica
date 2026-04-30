@@ -72,17 +72,16 @@ export function partitionAndSortRecentActivity<T extends RecentActivityLike>(
   unpinned.sort((a, b) => (b.lastModified ?? 0) - (a.lastModified ?? 0));
 
   // ⚡ Bolt Optimization: Replace [...pinned, ...unpinned].slice(0, limit) with an imperative loop
-  // to avoid redundant array allocations. Handled `undefined` limit as per past learnings.
+  // to avoid redundant array allocations.
   const result: T[] = [];
-  const hasLimit = limit !== undefined;
 
   for (let i = 0; i < pinned.length; i++) {
-    if (hasLimit && result.length >= limit) return result;
+    if (result.length >= limit) return result;
     result.push(pinned[i]);
   }
 
   for (let i = 0; i < unpinned.length; i++) {
-    if (hasLimit && result.length >= limit) return result;
+    if (result.length >= limit) return result;
     result.push(unpinned[i]);
   }
 
