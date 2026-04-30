@@ -157,7 +157,7 @@ export class VaultEventBus {
         break;
       case "SYNC_CHUNK_READY": {
         // ⚡ Bolt Optimization: Replace chained .map().filter() with a single imperative loop
-        const entitiesChunk = [];
+        const entitiesChunk: LocalEntity[] = [];
         for (let i = 0; i < event.newOrChangedIds.length; i++) {
           const entity = event.entities[event.newOrChangedIds[i]];
           if (entity) {

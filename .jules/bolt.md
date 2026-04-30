@@ -57,6 +57,7 @@
 
 **Learning:** When manually optimizing `.slice(0, limit)` with an imperative loop condition like `result.length < limit`, explicitly handle cases where `limit` might be `undefined`. Native `.slice(0, undefined)` safely copies the array, but a manual loop condition `0 < undefined` evaluates to `false`, causing the loop to terminate immediately and introducing bugs.
 **Action:** Be careful when replacing standard library functions. Ensure that all edge cases (like `undefined` parameters) are correctly handled.
+
 ## 2026-04-30 - Optimize event parsing with single pass loops
 
 **Learning:** When parsing large synchronization events in Svelte stores, using chained functional array methods like `.map().filter(Boolean)` creates intermediate arrays and increases garbage collection pressure.
