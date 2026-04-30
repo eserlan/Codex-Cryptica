@@ -7,7 +7,9 @@ export function assertAIEnabled() {
 export function isAIEnabled(): boolean {
   // Manual check for browser environment to avoid $app/environment in workers
   const isBrowser =
-    typeof window !== "undefined" && typeof localStorage !== "undefined";
+    typeof window !== "undefined" &&
+    typeof localStorage !== "undefined" &&
+    typeof localStorage.getItem === "function";
 
   if (isBrowser) {
     // Sync check from localStorage as used in UIStore
