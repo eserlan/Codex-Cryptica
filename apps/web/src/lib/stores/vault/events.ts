@@ -155,19 +155,26 @@ export class VaultEventBus {
           metadata: { timestamp, vaultId: event.vaultId },
         };
         break;
-      case "SYNC_CHUNK_READY":
+      case "SYNC_CHUNK_READY": {
+        // ⚡ Bolt Optimization: Replace chained .map().filter() with a single imperative loop
+        const entitiesChunk = [];
+        for (let i = 0; i < event.newOrChangedIds.length; i++) {
+          const entity = event.entities[event.newOrChangedIds[i]];
+          if (entity) {
+            entitiesChunk.push(entity);
+          }
+        }
         appEvent = {
           type: VAULT_EVENTS.SYNC_CHUNK_READY,
           domain: "vault",
           payload: {
             newOrChangedIds: event.newOrChangedIds,
-            entities: event.newOrChangedIds
-              .map((id) => event.entities[id])
-              .filter(Boolean),
+            entities: entitiesChunk,
           },
           metadata: { timestamp, vaultId: event.vaultId },
         };
         break;
+      }
       case "VAULT_DELETED":
         appEvent = {
           type: VAULT_EVENTS.VAULT_DELETED,
