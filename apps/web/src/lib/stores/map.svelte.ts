@@ -64,7 +64,14 @@ export class MapStore {
   });
 
   worldMap = $derived.by(() => {
-    return Object.values(vault.maps ?? {}).find((m) => m.isWorldMap) || null;
+    // ⚡ Bolt Optimization: Replace Object.values().find() with a loop over keys
+    // to prevent allocating a new array every time vault.maps changes.
+    const maps = vault.maps;
+    if (!maps) return null;
+    for (const key in maps) {
+      if (maps[key].isWorldMap) return maps[key];
+    }
+    return null;
   });
 
   canGoBack = $derived(this.navigationStack.length > 0);
@@ -570,7 +577,14 @@ export class MapStore {
   }
 
   getEntitySubMap(entityId: string): Map | undefined {
-    return Object.values(vault.maps).find((m) => m.parentEntityId === entityId);
+    // ⚡ Bolt Optimization: Replace Object.values().find() with an imperative loop over keys
+    // to avoid array allocation during this frequent lookup.
+    for (const key in vault.maps) {
+      if (vault.maps[key].parentEntityId === entityId) {
+        return vault.maps[key];
+      }
+    }
+    return undefined;
   }
 }
 

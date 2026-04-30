@@ -62,3 +62,8 @@
 
 **Learning:** When parsing large synchronization events in Svelte stores, using chained functional array methods like `.map().filter(Boolean)` creates intermediate arrays and increases garbage collection pressure.
 **Action:** Replace `Array.prototype.map().filter()` chains with a single imperative loop (`for` loop with `push`) when parsing batch payloads, especially in hot paths like `SYNC_CHUNK_READY` in the vault engine.
+
+## 2026-05-18 - [Performance Insight: Array allocation in object key search]
+
+**Learning:** Svelte 5 `$derived` blocks re-evaluate when their dependencies change. If a block uses `Object.values(obj).find(...)`, it allocates a new array of all values on every evaluation. When `obj` is large (e.g., `vault.maps`), this generates significant garbage collection pressure, especially if the block is evaluated frequently.
+**Action:** Replace `Object.values(obj).find(...)` with a `for...in` loop over the object's keys, checking the value directly and returning early. This completely avoids array allocation and is highly compatible with Svelte 5's fine-grained proxy tracking.
