@@ -11,9 +11,9 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "@codex/events": "^0.0.0",
+    "@codex/events": "workspace:*",
     "idb": "^8.0.3",
-    "schema": "*"
+    "schema": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",

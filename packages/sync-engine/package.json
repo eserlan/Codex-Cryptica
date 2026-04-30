@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "idb": "^8.0.3",
-    "schema": "*"
+    "schema": "workspace:*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",

@@ -4,15 +4,15 @@
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or pnpm
+- Node.js 24+
+- pnpm (Recommended) or npm
 
 ### Installation
 
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
 ### Running the App
@@ -20,7 +20,7 @@
 Start the development server:
 
 ```bash
-npm run dev
+pnpm run dev
 # or
 turbo run dev
 ```
@@ -65,13 +65,13 @@ Testing is managed by [Vitest](https://vitest.dev/). You can run tests for the e
 
 ```bash
 # Run all unit tests
-npm test
+pnpm test
 
 # Run tests with coverage reports
-npm run test:coverage
+pnpm run test:coverage
 
 # Run E2E tests (Playwright)
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 Coverage reports are generated in the `coverage/` directory of each package and the `apps/web/` directory. An HTML report is also available for visual inspection.

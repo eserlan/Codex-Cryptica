@@ -58,6 +58,11 @@
 **Learning:** When manually optimizing `.slice(0, limit)` with an imperative loop condition like `result.length < limit`, explicitly handle cases where `limit` might be `undefined`. Native `.slice(0, undefined)` safely copies the array, but a manual loop condition `0 < undefined` evaluates to `false`, causing the loop to terminate immediately and introducing bugs.
 **Action:** Be careful when replacing standard library functions. Ensure that all edge cases (like `undefined` parameters) are correctly handled.
 
+## 2026-04-30 - Optimize event parsing with single pass loops
+
+**Learning:** When parsing large synchronization events in Svelte stores, using chained functional array methods like `.map().filter(Boolean)` creates intermediate arrays and increases garbage collection pressure.
+**Action:** Replace `Array.prototype.map().filter()` chains with a single imperative loop (`for` loop with `push`) when parsing batch payloads, especially in hot paths like `SYNC_CHUNK_READY` in the vault engine.
+
 ## 2026-05-18 - [Performance Insight: Array allocation in object key search]
 
 **Learning:** Svelte 5 `$derived` blocks re-evaluate when their dependencies change. If a block uses `Object.values(obj).find(...)`, it allocates a new array of all values on every evaluation. When `obj` is large (e.g., `vault.maps`), this generates significant garbage collection pressure, especially if the block is evaluated frequently.
