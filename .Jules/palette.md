@@ -27,3 +27,6 @@
 
 **Learning:** Icon-only buttons that rely only on `title` are not announced reliably by screen readers, even when the hover tooltip looks correct for mouse users.
 **Action:** Always add an explicit `aria-label` to icon-only buttons, even if they already have a `title`, so assistive technology gets a stable accessible name.
+## 2024-05-18 - [Add aria-expanded to Submenu Triggers]
+**Learning:** Found that custom context menus and submenus in interactive canvas areas (like MapView) often lack standard accessibility attributes (`aria-haspopup`, `aria-expanded`). This makes it difficult for screen reader users to know if a button opens a menu and whether it is currently open.
+**Action:** Always add `aria-haspopup="menu"` and dynamically bind `aria-expanded={isOpen}` to buttons that toggle submenus or popups, especially in complex interactive components where standard HTML select/menu elements are not used.

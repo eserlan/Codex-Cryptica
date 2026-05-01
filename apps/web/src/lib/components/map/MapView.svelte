@@ -1315,6 +1315,8 @@
           >
             <button
               class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+              aria-haspopup="menu"
+              aria-expanded={showResizeSubmenu}
             >
               <div class="flex items-center gap-2">
                 <span class="icon-[lucide--maximize] w-3.5 h-3.5"></span>
@@ -1389,6 +1391,8 @@
             >
               <button
                 class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+                aria-haspopup="menu"
+                aria-expanded={showStatusSubmenu}
               >
                 <div class="flex items-center gap-2">
                   <span class="icon-[lucide--badge] w-3.5 h-3.5"></span>
