@@ -87,7 +87,25 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
   let finalFolderId = folderId;
 
   if (!finalFolderId) {
-    finalFolderId = await getOrCreateRootFolder(token);
+    const vaultName = vault.activeVaultRecord?.name || "Unnamed Vault";
+    const rootFolderId = await getOrCreateRootFolder(token);
+
+    const response = await fetch(DRIVE_FILES_API, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: vaultName,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [rootFolderId],
+      }),
+    });
+
+    if (!response.ok) throw new Error("Failed to create Drive vault folder");
+    const data = await response.json();
+    finalFolderId = data.id;
   } else {
     // Validate existing folder
     driveBackend.setVaultFolderId(finalFolderId);
