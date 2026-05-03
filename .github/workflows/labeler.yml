@@ -7,18 +7,18 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   label:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.LABELER_TOKEN || secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
 
       - name: Sync semantic labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.LABELER_TOKEN || secrets.GITHUB_TOKEN }}
         run: node scripts/pr-labeler.mjs
