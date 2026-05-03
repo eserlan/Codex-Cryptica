@@ -101,6 +101,9 @@
       style:box-shadow="var(--theme-glow)"
       transition:fly={{ y: 20, duration: 300 }}
       onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Zen Mode"
     >
       <ZenView
         bind:this={zenViewComponent}

@@ -41,8 +41,12 @@
     class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-sm w-full shadow-2xl relative"
     onclick={(e) => e.stopPropagation()}
     transition:fade={{ duration: 150 }}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="vtt-grid-settings-title"
   >
     <h3
+      id="vtt-grid-settings-title"
       class="text-lg font-bold text-theme-text mb-6 uppercase font-header tracking-wider flex items-center gap-2"
     >
       <span class="icon-[lucide--grid-3x3] w-5 h-5 text-theme-primary"></span>

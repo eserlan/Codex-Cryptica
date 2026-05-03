@@ -231,6 +231,9 @@
       class="bg-theme-surface border border-theme-border rounded-xl shadow-2xl w-full max-w-sm p-6"
       onclick={(e) => e.stopPropagation()}
       transition:scale={{ start: 0.95, duration: 200 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Select Icon"
     >
       <div class="flex justify-between items-center mb-4">
         <h5
