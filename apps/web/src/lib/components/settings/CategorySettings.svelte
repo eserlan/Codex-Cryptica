@@ -234,6 +234,7 @@
       role="dialog"
       aria-modal="true"
       aria-label="Select Icon"
+      tabindex="-1"
     >
       <div class="flex justify-between items-center mb-4">
         <h5

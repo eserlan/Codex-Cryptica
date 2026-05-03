@@ -44,6 +44,7 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="vtt-grid-settings-title"
+    tabindex="-1"
   >
     <h3
       id="vtt-grid-settings-title"
