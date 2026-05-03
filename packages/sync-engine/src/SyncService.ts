@@ -57,6 +57,7 @@ export class SyncService {
       total: number;
     }) => void,
     signal?: AbortSignal,
+    concurrency: number = 1,
   ): Promise<SyncResult & { nextToken?: string }> {
     if (signal?.aborted) throw new Error("AbortError");
 
@@ -128,7 +129,6 @@ export class SyncService {
         });
       };
 
-      const CONCURRENCY = 1; // Strict sequential for reliability on large local vaults
       let nextActionIndex = 0;
       const context: SyncExecutionContext = {
         vaultId,
@@ -138,7 +138,7 @@ export class SyncService {
       };
 
       await Promise.all(
-        Array.from({ length: CONCURRENCY }).map(async () => {
+        Array.from({ length: concurrency }).map(async () => {
           while (nextActionIndex < actions.length) {
             if (signal?.aborted) throw new Error("AbortError");
             const action = actions[nextActionIndex++];

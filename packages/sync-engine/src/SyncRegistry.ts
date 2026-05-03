@@ -91,4 +91,8 @@ export class SyncRegistry {
   async putCloudMetadata(metadata: CloudSyncMetadata): Promise<void> {
     await this.db.put("cloud_sync_metadata", metadata);
   }
+
+  async deleteCloudMetadata(vaultId: string): Promise<void> {
+    await this.db.delete("cloud_sync_metadata", vaultId);
+  }
 }

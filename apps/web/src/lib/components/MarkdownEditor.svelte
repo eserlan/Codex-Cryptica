@@ -62,7 +62,7 @@
           HTMLAttributes: {
             class: "text-theme-primary underline cursor-pointer",
           },
-        }),
+        }) as any,
         BubbleMenu.configure({
           element: menuDom,
           pluginKey: "bubbleMenu",

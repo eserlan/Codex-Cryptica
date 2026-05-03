@@ -475,6 +475,24 @@ export class LayoutManager {
 
       this.cy.nodes().removeData("isPendingLayout");
       pendingNodes.removeClass("pending-layout");
+
+      // Position persistence for newly placed nodes
+      if (!options.isGuest && pendingNodes.nonempty()) {
+        const updates: Record<string, Partial<any>> = {};
+        pendingNodes.forEach((node) => {
+          const pos = node.position();
+          updates[node.id()] = {
+            metadata: {
+              coordinates: {
+                x: Math.round(pos.x),
+                y: Math.round(pos.y),
+              },
+            },
+          };
+        });
+        options.onPositionsUpdated?.(updates);
+      }
+
       this.animateFitAndStop(options, "ease-out-cubic");
       return;
     }
