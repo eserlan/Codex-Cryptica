@@ -14,11 +14,6 @@ type MutableVaultMock = {
   switchVault: ReturnType<typeof vi.fn>;
 };
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 vi.mock("$app/environment", () => ({
   browser: true,
 }));

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import { render, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -20,10 +20,6 @@ import SelectionConnector from "./SelectionConnector.svelte";
 import { ui } from "$lib/stores/ui.svelte";
 
 // Mock Svelte client runtime
-vi.mock("svelte", async () => {
-  // @ts-ignore - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
 
 // Mock stores
 vi.mock("$lib/stores/ui.svelte", () => ({

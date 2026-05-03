@@ -3,6 +3,7 @@
   import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
@@ -303,6 +304,29 @@
     }
   };
 
+  const handleRegenerateContent = async () => {
+    const nodesToUpdate = $state.snapshot(selectedNodes);
+    if (nodesToUpdate.length !== 1) return;
+
+    contextMenuOpen = false;
+    canvasPickerOpen = false;
+    categoryPickerOpen = false;
+    imagePickerOpen = false;
+
+    try {
+      const ok = await regenerationService.regenerate(nodesToUpdate[0]);
+      if (!ok) {
+        ui.notify(
+          `Failed to regenerate content: ${regenerationService.error ?? "Unknown error"}`,
+          "error",
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to regenerate content", err);
+      ui.notify(`Failed to regenerate content: ${err.message}`, "error");
+    }
+  };
+
   const handleViewImage = async () => {
     const nodesToUpdate = $state.snapshot(selectedNodes);
     if (nodesToUpdate.length !== 1) return;
@@ -588,6 +612,14 @@
         >
           <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"></span>
           {imageActionLabel}
+        </button>
+        <button
+          role="menuitem"
+          class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
+          onclick={handleRegenerateContent}
+        >
+          <span class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"></span>
+          Regenerate Content
         </button>
       {/if}
     </div>

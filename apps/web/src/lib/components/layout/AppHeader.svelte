@@ -5,6 +5,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
+  import DriveStatus from "./DriveStatus.svelte";
   import { openFrontPage } from "./app-header-actions";
 
   let {
@@ -122,6 +123,7 @@
 
     <!-- Desktop: Right Controls -->
     <div class="hidden md:flex items-center gap-4 shrink-0">
+      <DriveStatus />
       <VaultControls />
       <button
         class="w-8 h-8 flex items-center justify-center border transition-all {uiStore.showSettings

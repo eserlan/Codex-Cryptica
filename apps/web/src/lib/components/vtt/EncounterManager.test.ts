@@ -2,11 +2,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EncounterManager from "./EncounterManager.svelte";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 if (!HTMLElement.prototype.animate) {
   Object.defineProperty(HTMLElement.prototype, "animate", {
     configurable: true,

@@ -1,12 +1,7 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import AliasInput from "./AliasInput.svelte";
-
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
 
 describe("AliasInput", () => {
   it("renders existing aliases", () => {

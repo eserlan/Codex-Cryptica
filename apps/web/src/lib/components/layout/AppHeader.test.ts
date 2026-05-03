@@ -5,11 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
 import { uiStore } from "$lib/stores/ui.svelte";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 vi.mock("$app/navigation", () => ({
   goto: vi.fn(),
 }));

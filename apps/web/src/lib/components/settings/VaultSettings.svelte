@@ -7,6 +7,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import DriveSettings from "./DriveSettings.svelte";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
@@ -171,6 +172,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Cloud Mirroring -->
+  {#if !uiStore.isDemoMode}
+    <div>
+      <DriveSettings />
+    </div>
+  {/if}
 
   <!-- Fog of War -->
   <div>

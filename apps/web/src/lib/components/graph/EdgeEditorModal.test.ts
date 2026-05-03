@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import { render, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 
@@ -18,10 +18,6 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 // Mock Svelte client runtime
-vi.mock("svelte", async () => {
-  // @ts-ignore - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {

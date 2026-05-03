@@ -11,8 +11,8 @@ export class RegenerationService {
   isGenerating = $state(false);
   error = $state<string | null>(null);
 
-  async regenerate(entityId: string) {
-    if (this.isGenerating) return;
+  async regenerate(entityId: string): Promise<boolean> {
+    if (this.isGenerating) return false;
 
     this.isGenerating = true;
     this.error = null;
@@ -36,9 +36,11 @@ export class RegenerationService {
         lore: parsed.lore,
         timestamp: Date.now(),
       };
+      return true;
     } catch (err: any) {
       this.error = err.message;
       console.error("[RegenerationService] Failed to regenerate:", err);
+      return false;
     } finally {
       this.isGenerating = false;
     }

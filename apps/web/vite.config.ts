@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { execSync } from "node:child_process";
+import { svelteTesting } from "@testing-library/svelte/vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(
@@ -19,11 +20,12 @@ try {
 }
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit() as any],
+  plugins: [tailwindcss(), sveltekit() as any, svelteTesting()],
   resolve: {
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
     },
+    dedupe: ["svelte"],
   },
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),

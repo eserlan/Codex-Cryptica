@@ -28,6 +28,21 @@ export class OracleActionExecutor {
       case "help":
         await this.executeHelp(context);
         break;
+      case "regenerate":
+        {
+          const entityId = intent.entityId || context.vault.selectedEntityId;
+          if (entityId) {
+            await this.executeRegenerate(entityId, context, onPartialResponse);
+          } else {
+            await context.chatHistory.addMessage({
+              id: crypto.randomUUID(),
+              role: "system",
+              content:
+                "❌ Please select an entity in the graph or sidebar to regenerate its content.",
+            });
+          }
+        }
+        break;
       case "clear":
         await context.chatHistory.clearMessages();
         break;
@@ -69,13 +84,6 @@ export class OracleActionExecutor {
         await this.executeChat(
           intent.query!,
           intent.isAIIntent!,
-          context,
-          onPartialResponse,
-        );
-        break;
-      case "regenerate":
-        await this.executeRegenerate(
-          intent.entityId!,
           context,
           onPartialResponse,
         );
@@ -145,20 +153,53 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     context: OracleExecutionContext,
     onPartialResponse?: (partial: string) => void,
   ) {
+    const entity = context.vault.entities[entityId];
+    if (!entity) return;
+
     try {
       if (context.vault.isGuest)
         throw new Error("Guest users cannot regenerate content.");
 
+      const assistantMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "",
+        entityId,
+      };
+      await context.chatHistory.addMessage(assistantMsg);
+
+      const handlePartial = (partial: string) => {
+        assistantMsg.content = partial;
+        void context.chatHistory.updateMessage?.(
+          assistantMsg.id,
+          { content: partial },
+          false,
+        );
+        onPartialResponse?.(partial);
+      };
+
       await this.generator.generateRegenerationResponse(
         entityId,
         context,
-        onPartialResponse || (() => {}),
+        handlePartial,
       );
+
+      // Final update to set the proposals/metadata
+      const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+        ...context.chatHistory.messages,
+      ];
+      const idx = finalMsgs.findIndex(
+        (m: ChatMessage) => m.id === assistantMsg.id,
+      );
+      if (idx !== -1) {
+        finalMsgs[idx].content = assistantMsg.content;
+      }
+      await context.chatHistory.setMessages(finalMsgs);
     } catch (err: any) {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
-        content: `❌ Regeneration failed: ${err.message}`,
+        content: `❌ Regeneration failed for **${entity.title}**: ${err.message}`,
       });
     }
   }
@@ -966,5 +1007,13 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         content: `❌ Image generation failed: ${err.message}`,
       });
     }
+  }
+
+  async regenerateEntity(
+    entityId: string,
+    context: OracleExecutionContext,
+    onPartialResponse?: (partial: string) => void,
+  ) {
+    await this.executeRegenerate(entityId, context, onPartialResponse);
   }
 }

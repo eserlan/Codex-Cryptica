@@ -6,11 +6,6 @@ import TokenDetail from "./TokenDetail.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { mapStore } from "$lib/stores/map.svelte";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     entities: {},

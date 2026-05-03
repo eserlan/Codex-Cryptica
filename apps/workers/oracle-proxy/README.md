@@ -14,7 +14,7 @@ Cloudflare Worker that proxies requests from Codex Cryptica clients to Google's 
 
 1. Cloudflare account with Workers access
 2. Google Gemini API key
-3. Wrangler CLI installed: `npm install -g wrangler`
+3. Wrangler CLI installed: `pnpm add -g wrangler`
 
 ### Manual Deployment (Development/Staging)
 
@@ -67,15 +67,17 @@ If `ALLOWED_ORIGINS` is set, it is treated as the exact allowlist for the worker
 ### Unit Tests
 
 ```bash
-# Run unit tests (stubs for now)
-npm test -- workspace:oracle-proxy
+# From root directory:
+pnpm --filter oracle-proxy test
+# Or from this directory:
+pnpm test
 ```
 
 ### Integration Tests
 
 ```bash
-# Run E2E tests that verify proxy functionality
-npx playwright test oracle-proxy-integration
+# From root directory:
+pnpm --filter web exec playwright test oracle-proxy-integration
 ```
 
 ### Manual Testing

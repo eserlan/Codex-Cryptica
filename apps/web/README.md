@@ -20,24 +20,24 @@ npx sv create --template minimal --types ts --no-install ./
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Once you've created a project and installed dependencies with `pnpm install`, start a development server:
 
-```sh
-npm run dev
+```bash
+pnpm run dev
 
 # or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm run dev -- --open
 ```
 
 ## Building
 
 To create a production version of your app:
 
-```sh
-npm run build
+```bash
+pnpm run build
 ```
 
-You can preview the production build with `npm run preview`.
+You can preview the production build with `pnpm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
@@ -88,4 +88,4 @@ The `rank` field in the frontmatter determines the order of articles in the help
 - Use spaced values (e.g., 10, 20, 30) to allow for future insertions without renumbering all articles.
 - If `rank` is missing, the article defaults to the end of the list.
 
-4. Verify by running `npm test`.
+4. Verify by running `pnpm test`.
