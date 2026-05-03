@@ -8,7 +8,7 @@ Ensure `packages/sync-engine` is updated with the new `SyncDirection` types.
 
 ```bash
 cd packages/sync-engine
-npm run build
+pnpm run build
 ```
 
 ### 2. Verify Store Dependencies

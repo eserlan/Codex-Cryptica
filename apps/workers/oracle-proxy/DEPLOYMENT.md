@@ -9,7 +9,7 @@ Quick start guide for deploying the Oracle Proxy Cloudflare Worker.
 ### Step 1: Install Wrangler CLI
 
 ```bash
-npm install -g wrangler
+pnpm add -g wrangler
 ```
 
 ### Step 2: Login to Cloudflare

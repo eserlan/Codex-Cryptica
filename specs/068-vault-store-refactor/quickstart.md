@@ -11,7 +11,7 @@
 
 - **Location**: `packages/vault-engine/src/repository.ts`
 - **Task**: Move `loadFiles`, `saveToDisk`, and `entities` state management. Wrap the `KeyedTaskQueue`.
-- **Verification**: Run `npm test` in the engine package.
+- **Verification**: Run `pnpm test` in the engine package.
 
 ### 3. Extract `AssetManager`
 

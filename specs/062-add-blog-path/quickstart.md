@@ -9,7 +9,7 @@
 
 ## Verification
 
-1. Run `npm run dev`.
+1. Run `pnpm run dev`.
 2. Navigate to `http://localhost:5173/blog` to see the index.
 3. Navigate to `http://localhost:5173/blog/gm-guide-data-sovereignty` to see the article.
 4. Verify metadata in the head of the page.

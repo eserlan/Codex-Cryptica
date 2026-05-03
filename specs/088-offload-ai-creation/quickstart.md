@@ -33,7 +33,7 @@ Always ensure you handle the case where the worker is not ready (e.g., during SS
 Run unit tests for the core logic in isolation:
 
 ```bash
-cd apps/web && npm test -- src/lib/services/ai/text-generation.service.test.ts
+cd apps/web && pnpm test -- src/lib/services/ai/text-generation.service.test.ts
 ```
 
 To test the bridge, use Playwright tests or manual verification in a browser environment.

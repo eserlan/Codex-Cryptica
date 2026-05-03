@@ -150,20 +150,20 @@ Before committing changes:
 
 ```bash
 # Run linter to catch style/formatting issues
-npm run lint
+pnpm run lint
 
 # Run tests to ensure no regressions
-npm test
+pnpm test
 
 # Run tests for affected workspace only (faster)
-npm test --workspace=<package-name>
+pnpm test --workspace=<package-name>
 
 # If tests fail, fix issues before proceeding
 ```
 
 **If lint fails:**
 
-- Run auto-fix if available: `npm run lint -- --fix`
+- Run auto-fix if available: `pnpm run lint -- --fix`
 - Manually address remaining issues
 
 **If tests fail:**
@@ -229,7 +229,7 @@ If commitlint fails:
 
 ```bash
 # Check what went wrong
-npm run commitlint -- --last
+pnpm run commitlint -- --last
 
 # If gitmoji is wrong, amend:
 git reset --soft HEAD~1
@@ -277,7 +277,7 @@ EOF
 # 4. Address comment #123456
 # Edit OracleChat.svelte, add aria-hidden to spinner
 git add apps/web/src/lib/components/oracle/OracleChat.svelte
-npm run lint && npm test
+pnpm run lint && pnpm test
 git commit -m "♿ fix: add aria-hidden to loading spinner
 
 - Addresses PR #502 Comment #123456: Decorative icon should be hidden from screen readers"
@@ -285,7 +285,7 @@ git commit -m "♿ fix: add aria-hidden to loading spinner
 # 5. Address comment #123457
 # Edit OracleChat.svelte, move aria-busy to form
 git add apps/web/src/lib/components/oracle/OracleChat.svelte
-npm run lint && npm test
+pnpm run lint && pnpm test
 git commit -m "♿ fix: move aria-busy to form element
 
 - Addresses PR #502 Comment #123457: Improve screen reader announcement"
@@ -293,7 +293,7 @@ git commit -m "♿ fix: move aria-busy to form element
 # 6. Address comment #123458
 # Revert formatting changes in prompt files
 git add apps/web/src/lib/services/ai/prompts/
-npm run lint && npm test
+pnpm run lint && pnpm test
 git commit -m "🔧 refactor: remove unrelated formatting changes
 
 - Addresses PR #502 Comment #123458: Keep PR focused on accessibility fixes"

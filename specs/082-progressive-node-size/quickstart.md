@@ -23,7 +23,7 @@ To verify the feature, you can create a test vault or use an existing one:
 Run the graph engine tests to ensure the sizing logic is correctly calculated:
 
 ```bash
-npm test -w packages/graph-engine
+pnpm test -w packages/graph-engine
 ```
 
 Verify the `weight` property is correctly assigned to nodes in the `transformer.ts` output.

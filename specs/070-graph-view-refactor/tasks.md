@@ -47,8 +47,8 @@
 
 ## Phase 5: Polish & Validation
 
-- [x] T015 [P] Run `npm run check` and fix any type mismatches.
-- [x] T016 [P] Run `npm test` to ensure zero regressions in graph logic.
+- [x] T015 [P] Run `pnpm run check` and fix any type mismatches.
+- [x] T016 [P] Run `pnpm test` to ensure zero regressions in graph logic.
 - [x] T017 Run Playwright E2E tests to verify full user journeys and auto-fit on load.
 
 ---

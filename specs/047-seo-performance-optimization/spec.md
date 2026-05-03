@@ -13,12 +13,12 @@ As a developer, I want to automatically audit the application's SEO and performa
 
 **Why this priority**: Ensures the application remains discoverable and performant as features are added.
 
-**Independent Test**: Run `npm run audit` and verify it generates a report.
+**Independent Test**: Run `pnpm run audit` and verify it generates a report.
 
 **Acceptance Scenarios**:
 
-1. **Given** a local development build, **When** I run `npm run audit`, **Then** Unlighthouse should scan the site and output a report to `./audit-report`.
-2. **Given** a CI environment, **When** I run `npm run build:audit`, **Then** the process should fail if scores drop below the defined budget (SEO < 90, Performance < 80).
+1. **Given** a local development build, **When** I run `pnpm run audit`, **Then** Unlighthouse should scan the site and output a report to `./audit-report`.
+2. **Given** a CI environment, **When** I run `pnpm run build:audit`, **Then** the process should fail if scores drop below the defined budget (SEO < 90, Performance < 80).
 
 ---
 

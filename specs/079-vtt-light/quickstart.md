@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Node.js 18+
-- Existing Codex-Cryptica development environment (`npm install` already run)
+- Existing Codex-Cryptica development environment (`pnpm install` already run)
 - At least one map uploaded to a vault for testing
 
 ## Getting Started
@@ -68,14 +68,14 @@ Add pointer event handling in `MapView.svelte` (or a new `TokenDragLayer.svelte`
 ### 6. Run tests
 
 ```bash
-npm test
-npm test -- --run map-session
+pnpm test
+pnpm test -- --run map-session
 ```
 
 ### 7. Manual testing
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 1. Open a vault with at least one map

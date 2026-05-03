@@ -58,7 +58,7 @@ As a developer and screen-reader user, I want the UI to follow clean coding stan
 
 **Why this priority**: Reduces technical debt and ensures compliance with standard accessibility expectations.
 
-**Independent Test**: Run `npm run lint` and verify no a11y warnings. Inspect CSS for `!important`.
+**Independent Test**: Run `pnpm run lint` and verify no a11y warnings. Inspect CSS for `!important`.
 
 **Acceptance Scenarios**:
 
@@ -86,4 +86,4 @@ As a developer and screen-reader user, I want the UI to follow clean coding stan
 - **SC-001**: Graph interaction latency remains <100ms in vaults with 100+ entities.
 - **SC-002**: Idle CPU usage for the web application is <1% on modern mobile browsers.
 - **SC-003**: Zero accessibility linter warnings in the `Minimap` component.
-- **SC-004**: `npm run lint` passes with no style or a11y violations in the affected files.
+- **SC-004**: `pnpm run lint` passes with no style or a11y violations in the affected files.

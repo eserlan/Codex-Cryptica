@@ -5,7 +5,7 @@
 The package is internal to the monorepo.
 
 ```bash
-npm install @codex/canvas-engine --workspace=web
+pnpm install @codex/canvas-engine --workspace=web
 ```
 
 ## Basic Usage

@@ -49,8 +49,8 @@
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [x] T024 Run `npm run lint` across the workspace and fix any issues
-- [x] T025 Run `npm test` across all affected packages (`events`, `web`)
+- [x] T024 Run `pnpm run lint` across the workspace and fix any issues
+- [x] T025 Run `pnpm test` across all affected packages (`events`, `web`)
 - [x] T026 Document `AppEventBus` usage in `docs/ARCHITECTURE_EVENTS.md` (Update with implementation details)
 - [ ] T027 Audit store imports in `apps/web/src/lib/stores/` to verify at least 20% reduction in direct dependencies (SC-001)
 - [x] T028 Update Speckit artifacts for the distributed registry follow-up described in `docs/ARCH_DISTRIBUTED_EVENTS.md`
@@ -140,10 +140,10 @@
 
 ## Phase 15: Final Validation
 
-- [x] T070 Run `npm run --prefix packages/events test`
-- [x] T071 Run `npm run --prefix packages/events lint`
+- [x] T070 Run `pnpm run --prefix packages/events test`
+- [x] T071 Run `pnpm run --prefix packages/events lint`
 - [x] T072 Run relevant web unit tests for search, vault events, Oracle undo, and app init
-- [x] T073 Run `npm run lint` across the workspace
-- [x] T074 Run `npm test` across affected workspaces
+- [x] T073 Run `pnpm run lint` across the workspace
+- [x] T074 Run `pnpm test` across affected workspaces
 - [ ] T075 [P] Verify SC-004: System-wide reaction time < 200ms using `performance.now()` in a "Vault Switch" event lifecycle test
 - [ ] T076 Verify final done definition from `specs/094-app-event-bus/plan.md`

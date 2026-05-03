@@ -83,7 +83,7 @@
 - [x] T014 [P] Refactor `saveImageToVault` in `apps/web/src/lib/stores/vault.svelte.ts` to delete old image/thumbnail files when replaced
 - [x] T015 [P] Ensure graph refit is requested after node deletion in `apps/web/src/lib/stores/vault.svelte.ts`
 - [x] T016 Add error notification using `uiStore.setGlobalError` in `apps/web/src/lib/stores/vault.svelte.ts` if file system deletion fails
-- [x] T017 Run `npm test` and `npm run lint` to verify project stability
+- [x] T017 Run `pnpm test` and `pnpm run lint` to verify project stability
 - [x] T018 **Offline Functionality Verification** (Verify deletion works with OPFS/Local handles without network)
 
 ---

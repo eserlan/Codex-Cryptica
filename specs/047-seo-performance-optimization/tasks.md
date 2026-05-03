@@ -35,7 +35,7 @@
 
 ## Phase 5: Verification & Success Criteria
 
-- [x] T019 [SC-001/SC-002] Run final `npm run build:audit` and confirm all scores meet or exceed budget
+- [x] T019 [SC-001/SC-002] Run final `pnpm run build:audit` and confirm all scores meet or exceed budget
 - [x] T020 [SC-003] Use browser devtools to verify TTI < 1.5s and LCP < 1.2s on landing page
 - [x] T021 [SC-004] Manually verify that `/features` is correctly indexed by simulated crawler agents
 - [x] T022 [CON-VII] Create 'apps/web/src/lib/content/help/landing-page.md' to document the new protocols.

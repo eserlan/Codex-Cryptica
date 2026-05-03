@@ -98,4 +98,4 @@ All high-priority targets from Phase 1, 2, 3, 4, and 5 have been successfully ad
 ---
 
 **Last Updated**: 2026-03-20
-**Data Source**: `npm run test:coverage`
+**Data Source**: `pnpm run test:coverage`

@@ -29,7 +29,7 @@
 
 **Goal**: Ensure search engine crawlers see full content of marketing pages without JS.
 
-**Independent Test**: Run `npm run build` and verify HTML files exist for all marketing routes. Use `curl` to verify content presence in static files.
+**Independent Test**: Run `pnpm run build` and verify HTML files exist for all marketing routes. Use `curl` to verify content presence in static files.
 
 ### Implementation for User Story 1
 
@@ -88,7 +88,7 @@
 
 - [ ] T018 [P] Create new E2E test `apps/web/tests/seo.spec.ts` to verify static route accessibility and metadata
 - [ ] T018a [P] Verify that non-prerendered routes (e.g., `/oracle`) correctly resolve via the SPA fallback in `apps/web/tests/seo.spec.ts`
-- [ ] T019 Run full build and validate with Unlighthouse using `npm run build:audit` in `apps/web/`
+- [ ] T019 Run full build and validate with Unlighthouse using `pnpm run build:audit` in `apps/web/`
 - [ ] T020 [P] Add "Search Engine Optimization" technical note to the help guide in `apps/web/src/lib/config/help-content.ts`
 - [ ] T021 [P] Final documentation update in `apps/web/README.md` regarding static build requirements
 
@@ -137,7 +137,7 @@ Task T008: Terms prerender
 1. Complete Phase 1: Setup
 2. Complete Phase 2: Foundational
 3. Complete Phase 3: User Story 1 (Prerendering core routes)
-4. **STOP and VALIDATE**: Run `npm run build` and `curl` local files.
+4. **STOP and VALIDATE**: Run `pnpm run build` and `curl` local files.
 
 ### Incremental Delivery
 

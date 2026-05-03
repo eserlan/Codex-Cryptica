@@ -60,7 +60,7 @@
 - [x] T029 [P] Add E2E tests for Save/Load and Safety Gate flows in `apps/web/tests/sync.e2e.ts`
 - [x] T030 Remove remaining `window.dispatchEvent` for vault switches in favor of `vaultEventBus` in `apps/web/src/lib/stores/vault/lifecycle.ts`
 - [x] T031 Final verification of all success criteria in `specs/093-directional-vault-sync/spec.md`
-- [x] T032 Run full test suite: `npm test` and `npm run lint`
+- [x] T032 Run full test suite: `pnpm test` and `pnpm run lint`
 
 ## Dependencies
 

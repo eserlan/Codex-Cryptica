@@ -6,7 +6,7 @@
 
 ```bash
 # Install Wrangler
-npm install -g wrangler
+pnpm add -g wrangler
 
 # Login to Cloudflare
 wrangler login
@@ -40,14 +40,14 @@ wrangler tail
 
 ```bash
 cd apps/workers/oracle-proxy
-npm test
+pnpm test
 ```
 
 ### Integration Tests
 
 ```bash
 # Run in CI or with env var
-RUN_PROXY_INTEGRATION_TEST=1 npx playwright test oracle-proxy-integration
+RUN_PROXY_INTEGRATION_TEST=1 pnpm exec playwright test oracle-proxy-integration
 ```
 
 ### Manual Test

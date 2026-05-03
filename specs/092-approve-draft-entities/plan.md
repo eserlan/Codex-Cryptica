@@ -26,7 +26,7 @@ Add UI controls to approve or reject AI-generated draft entities across three su
 - **Simplicity & YAGNI**: No new libraries needed. Using existing `vault` actions.
 - **AI-First Extraction**: N/A
 - **Privacy & Client-Side Processing**: Operates entirely on the local `vault` store.
-- **Clean Implementation**: Must use Iconify `icon-[lucide--...]` instead of `lucide-svelte` components. Must use `npm test` and `npm run lint`.
+- **Clean Implementation**: Must use Iconify `icon-[lucide--...]` instead of `lucide-svelte` components. Must use `pnpm test` and `pnpm run lint`.
 - **User Documentation**: Will add a feature hint if necessary, but UI should be self-explanatory.
 - **Dependency Injection (DI)**: N/A (using existing stores)
 - **Natural Language**: "Approve" and "Reject" are clear.

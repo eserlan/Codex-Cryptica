@@ -7,7 +7,7 @@
    ```bash
    mkdir -p packages/chronology-engine
    cd packages/chronology-engine
-   npm init -y
+   pnpm init -y
    ```
 
 2. **Core Logic**:
@@ -20,5 +20,5 @@
 
 ## Local Testing
 
-- Run unit tests: `npm test -w packages/chronology-engine`
+- Run unit tests: `pnpm test -w packages/chronology-engine`
 - Manual UI test: Open an entity in Zen Mode and try the new date picker.

@@ -9,7 +9,7 @@
 
 ### 2. Local Server Test
 
-1. Run the local dev server: `npm run dev --workspace=web`
+1. Run the local dev server: `pnpm run dev --workspace=web`
 2. Visit `http://localhost:5173/llms.txt` and `http://localhost:5173/llms-full.txt`.
 3. Verify the Content-Type header is `text/plain`.
 
@@ -29,7 +29,7 @@
 Run the E2E test suite:
 
 ```bash
-npm run test:e2e -- tests/seo.spec.ts
+pnpm run test:e2e -- tests/seo.spec.ts
 ```
 
 _(A new test case should be added to `seo.spec.ts` to verify these files exist and are correctly linked)_
