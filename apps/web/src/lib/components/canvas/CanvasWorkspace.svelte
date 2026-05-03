@@ -220,6 +220,7 @@
     <CanvasContextMenu
       x={logic.contextMenu.x}
       y={logic.contextMenu.y}
+      targetId={logic.contextMenu?.id}
       targetType={logic.contextMenu.type}
       onDelete={logic.handleDelete}
       onRename={() => {

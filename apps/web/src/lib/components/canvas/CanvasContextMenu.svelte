@@ -1,23 +1,40 @@
 <script lang="ts">
   import { Trash2, Type } from "lucide-svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let {
     x,
     y,
+    targetId,
     targetType = "node",
     onDelete,
     onRename,
+    onRegenerate,
     onCreateEntity,
     onClose,
   } = $props<{
     x: number;
     y: number;
+    targetId?: string;
     targetType?: "node" | "edge" | "pane";
     onDelete: () => void;
     onRename?: () => void;
+    onRegenerate?: () => void;
     onCreateEntity?: (type: string) => void;
     onClose: () => void;
   }>();
+
+  const handleRegenerate = async () => {
+    if (targetType !== "node") return;
+
+    if (targetId) {
+      await regenerationService.regenerate(targetId);
+      onClose();
+    } else if (onRegenerate) {
+      onRegenerate();
+      onClose();
+    }
+  };
 
   let menuEl = $state<HTMLDivElement>();
 
@@ -116,6 +133,18 @@
     >
       Create Lore
     </button>
+  {/if}
+
+  {#if targetType === "node" && (targetId || onRegenerate)}
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={handleRegenerate}
+    >
+      <span class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"></span>
+      Regenerate Content
+    </button>
+    <div class="border-t border-theme-border/30 my-1"></div>
   {/if}
 
   {#if targetType !== "pane"}
