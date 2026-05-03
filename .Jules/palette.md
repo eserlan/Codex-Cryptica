@@ -27,3 +27,6 @@
 
 **Learning:** Icon-only buttons that rely only on `title` are not announced reliably by screen readers, even when the hover tooltip looks correct for mouse users.
 **Action:** Always add an explicit `aria-label` to icon-only buttons, even if they already have a `title`, so assistive technology gets a stable accessible name.
+## 2026-05-03 - ARIA roles on Modals
+**Learning:** When creating or updating custom modal/dialog components (e.g., those using floating backdrops like `fixed inset-0`), strictly ensure screen reader accessibility by applying `role="dialog"`, `aria-modal="true"`, and an explicit `aria-label` or `aria-labelledby` directly to the main inner container element.
+**Action:** Add ARIA dialog roles, aria-modal, and appropriate labels to VTTGridSettings, CategorySettings icon picker sub-modal, and ZenModeModal.
