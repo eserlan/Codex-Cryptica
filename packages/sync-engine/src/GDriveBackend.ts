@@ -199,10 +199,8 @@ export class GDriveBackend implements ISyncBackend {
     }
 
     const url = isFullUrl ? endpoint : `${this.API_BASE}${endpoint}`;
-    const headers = {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    };
+    const headers = new Headers(options.headers);
+    headers.set("Authorization", `Bearer ${token}`);
 
     try {
       const response = await fetch(url, { ...options, headers });

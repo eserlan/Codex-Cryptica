@@ -79,8 +79,8 @@ As a game master, I want to share my Drive folder with a co-host so they can loa
 ### Functional Requirements
 
 - **FR-001**: The system MUST support connecting a Google Drive folder to a vault, storing the association in local IndexedDB so it persists across sessions and devices.
-- **FR-002**: When a Drive folder is connected, saving a vault MUST push changed entity files to Drive in the same operation as local sync.
-- **FR-003**: When a Drive folder is connected, loading a vault MUST pull entity files from Drive if the remote is ahead of the local state.
+- **FR-002**: When a Drive folder is connected, the user MUST be able to manually push changed entity files to Drive via a dedicated action.
+- **FR-003**: When a Drive folder is connected, the user MUST be able to manually pull entity files from Drive via a dedicated action.
 - **FR-004**: The system MUST use the `drive.file` OAuth scope so that the app only accesses files it created, and the user's other Drive content is never visible to the app.
 - **FR-005**: The system MUST silently refresh the OAuth access token using Google Identity Services without requiring the user to re-authenticate, unless the refresh fails.
 - **FR-006**: When Drive sync fails at any point, the local-only operation MUST still succeed. Drive failures MUST NOT block local reads or writes.

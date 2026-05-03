@@ -131,7 +131,8 @@ export async function disconnectVaultFromDrive(vaultId: string) {
  * Runs a sync operation via the Web Worker
  */
 async function runWorkerSync(vaultId: string, direction: "push" | "pull") {
-  if (isSyncing) return;
+  if (isSyncing || (typeof navigator !== "undefined" && !navigator.onLine))
+    return;
 
   const db = await getDB();
   const ms = new CloudSyncMetadataService(new SyncRegistry(db));

@@ -38,7 +38,7 @@
   };
 </script>
 
-{#if !uiStore.isDemoMode}
+{#if !uiStore.isDemoMode && !uiStore.isGuestMode}
   <button
     onclick={() => uiStore.toggleSettings("vault")}
     class="flex items-center justify-center p-1.5 rounded-md hover:bg-theme-primary/10 transition-all group relative"

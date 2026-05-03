@@ -137,8 +137,10 @@ export class SyncService {
         signal,
       };
 
+      const validConcurrency = Math.max(1, Math.floor(concurrency || 1));
+
       await Promise.all(
-        Array.from({ length: concurrency }).map(async () => {
+        Array.from({ length: validConcurrency }).map(async () => {
           while (nextActionIndex < actions.length) {
             if (signal?.aborted) throw new Error("AbortError");
             const action = actions[nextActionIndex++];
