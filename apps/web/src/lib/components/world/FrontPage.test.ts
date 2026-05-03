@@ -10,11 +10,6 @@ import FrontPage from "./FrontPage.svelte";
 import { uiStore } from "$lib/stores/ui.svelte";
 import { hexToRgb } from "$lib/utils/color";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
   saveDescription: vi.fn(),
