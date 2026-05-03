@@ -37,33 +37,38 @@ export async function initGDriveSync() {
 const ROOT_FOLDER_NAME = "CodexCryptica";
 const DRIVE_FILES_API = "https://www.googleapis.com/drive/v3/files";
 
-/**
- * Finds the "CodexCryptica" root folder in Drive, or creates it if missing.
- */
-async function getOrCreateRootFolder(token: string): Promise<string> {
-  const query = `name='${ROOT_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'root' in parents`;
+async function findOrCreateFolder(
+  token: string,
+  name: string,
+  parentId?: string,
+): Promise<string> {
+  const parentClause = parentId
+    ? `'${parentId}' in parents`
+    : `'root' in parents`;
+  const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`;
   const searchRes = await fetch(
     `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id)`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+    { headers: { Authorization: `Bearer ${token}` } },
   );
-  if (!searchRes.ok) throw new Error("Failed to search for root Drive folder");
+  if (!searchRes.ok)
+    throw new Error(`Failed to search Drive for folder "${name}"`);
   const { files } = await searchRes.json();
   if (files.length > 0) return files[0].id;
 
+  const body: Record<string, unknown> = {
+    name,
+    mimeType: "application/vnd.google-apps.folder",
+  };
+  if (parentId) body.parents = [parentId];
   const createRes = await fetch(DRIVE_FILES_API, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      name: ROOT_FOLDER_NAME,
-      mimeType: "application/vnd.google-apps.folder",
-    }),
+    body: JSON.stringify(body),
   });
-  if (!createRes.ok) throw new Error("Failed to create root Drive folder");
+  if (!createRes.ok) throw new Error(`Failed to create Drive folder "${name}"`);
   const data = await createRes.json();
   return data.id;
 }
@@ -88,24 +93,8 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
 
   if (!finalFolderId) {
     const vaultName = vault.activeVaultRecord?.name || "Unnamed Vault";
-    const rootFolderId = await getOrCreateRootFolder(token);
-
-    const response = await fetch(DRIVE_FILES_API, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: vaultName,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: [rootFolderId],
-      }),
-    });
-
-    if (!response.ok) throw new Error("Failed to create Drive vault folder");
-    const data = await response.json();
-    finalFolderId = data.id;
+    const rootFolderId = await findOrCreateFolder(token, ROOT_FOLDER_NAME);
+    finalFolderId = await findOrCreateFolder(token, vaultName, rootFolderId);
   } else {
     // Validate existing folder
     driveBackend.setVaultFolderId(finalFolderId);
