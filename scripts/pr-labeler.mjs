@@ -271,6 +271,11 @@ export async function main() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
+    if (error.message.includes('(401)')) {
+      console.warn(error.message);
+      console.warn("Skipping labeler due to 401 Bad Credentials.");
+      process.exit(0);
+    }
     console.error(error);
     process.exit(1);
   });
