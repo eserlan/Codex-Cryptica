@@ -96,18 +96,17 @@ export class ActivityServiceImplementation {
     // target array iteratively in O(N).
 
     const limitedRecent: GraphEntityRecord[] = [];
-    const targetLimit = limit === undefined ? Infinity : limit;
 
     // First add pinned records, up to the limit
     for (let i = 0; i < pinnedRecords.length; i++) {
-      if (limitedRecent.length >= targetLimit) break;
+      if (limitedRecent.length >= limit) break;
       limitedRecent.push(pinnedRecords[i]);
     }
 
     // Then fill the remaining slots with non-pinned recent candidates
     const len = recentCandidates.length;
     for (let i = 0; i < len; i++) {
-      if (limitedRecent.length >= targetLimit) break;
+      if (limitedRecent.length >= limit) break;
       const record = recentCandidates[i];
       if (!pinnedIds.has(record.id)) {
         limitedRecent.push(record);
