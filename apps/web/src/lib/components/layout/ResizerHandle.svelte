@@ -87,6 +87,8 @@
   });
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={handleRef}
   class="resizer-handle group absolute top-0 bottom-0 z-[100] w-6 cursor-col-resize transition-all focus:outline-none"
