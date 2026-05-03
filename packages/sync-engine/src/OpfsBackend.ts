@@ -12,6 +12,13 @@ export class OpfsBackend implements ISyncBackend {
     private registry: SyncRegistry,
   ) {}
 
+  /**
+   * Swaps the active directory handle.
+   */
+  setHandle(handle: FileSystemDirectoryHandle): void {
+    this.handle = handle;
+  }
+
   async scan(vaultId: string): Promise<{ files: FileMetadata[] }> {
     const results: FileMetadata[] = [];
     const start = performance.now();

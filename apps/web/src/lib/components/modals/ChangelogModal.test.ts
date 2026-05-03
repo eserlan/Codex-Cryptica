@@ -3,11 +3,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 import ChangelogModal from "./ChangelogModal.svelte";
 import { uiStore } from "$lib/stores/ui.svelte";
 import releases from "../../content/changelog/releases.json";

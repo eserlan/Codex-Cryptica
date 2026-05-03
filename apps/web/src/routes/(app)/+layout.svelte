@@ -22,6 +22,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
+  import { initGDriveSync } from "$lib/services/gdrive-sync";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";
@@ -120,6 +121,7 @@
       helpStore.init();
       await themeStore.init();
       oracle.init();
+      void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant
       preloadCode(`${base}/canvas`).catch(() => {});

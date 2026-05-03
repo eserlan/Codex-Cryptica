@@ -191,8 +191,6 @@
             ></div>
           </div>
         </div>
-      {:else if vault.status === "saving"}
-        <span class="text-theme-accent">SAVING...</span>
       {:else if vault.status === "error" || vault.failedFiles.length > 0}
         <div class="flex items-center gap-1.5">
           <span

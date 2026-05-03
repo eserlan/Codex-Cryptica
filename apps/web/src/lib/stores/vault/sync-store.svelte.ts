@@ -3,6 +3,7 @@ import type { LocalEntity } from "./types";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { SyncCoordinator, VaultRepository } from "@codex/vault-engine";
+import { appEventBus } from "@codex/events";
 import { fileIOAdapter } from "./adapters.svelte";
 import { uiStore } from "../ui.svelte";
 import type { VaultRecord } from "../../utils/idb";
@@ -184,6 +185,13 @@ export class SyncStore {
             );
             if (signal.aborted) return;
             debugStore.log("[SyncStore] Local sync complete.");
+
+            appEventBus.emit({
+              type: "SYNC:LOCAL_PULL_COMPLETE",
+              domain: "sync",
+              payload: { vaultId: vaultIdAtStart },
+              metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+            });
           } catch (err) {
             debugStore.error("[SyncStore] Local sync failed", err);
           }
@@ -293,6 +301,13 @@ export class SyncStore {
     if (this._status !== "error") {
       const { updateLastSavedToFolder } = await import("./registry");
       await updateLastSavedToFolder(vaultIdAtStart);
+
+      appEventBus.emit({
+        type: "SYNC:LOCAL_PUSH_COMPLETE",
+        domain: "sync",
+        payload: { vaultId: vaultIdAtStart },
+        metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+      });
     }
   }
 
@@ -337,6 +352,13 @@ export class SyncStore {
     );
 
     if (this._status !== "error") {
+      appEventBus.emit({
+        type: "SYNC:LOCAL_PULL_COMPLETE",
+        domain: "sync",
+        payload: { vaultId: vaultIdAtStart },
+        metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+      });
+
       await this.loadFiles();
     }
   }

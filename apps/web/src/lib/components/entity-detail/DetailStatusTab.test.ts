@@ -5,10 +5,6 @@ import DetailStatusTab from "./DetailStatusTab.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 
 // Mock Svelte client runtime
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
 
 // Mock stores
 vi.mock("$lib/stores/vault.svelte", () => ({

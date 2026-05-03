@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-04-28
 
 ## Active Technologies
 
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb` (096-gdrive-cloud-sync)
+- OPFS (Primary), IndexedDB (Metadata), Google Drive (Cloud Mirror) (096-gdrive-cloud-sync)
+
 - TypeScript 6.0.3 + None (Browser Native APIs only) (094-app-event-bus)
 - N/A (Transient/In-memory) (094-app-event-bus)
 
@@ -165,6 +168,7 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 096-gdrive-cloud-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb`
 - 095-ai-regen-button: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine`
 - 094-app-event-bus: Added TypeScript 5.9.3 + None (Browser Native APIs only)
 

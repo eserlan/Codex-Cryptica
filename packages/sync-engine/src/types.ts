@@ -19,6 +19,18 @@ export interface SyncResult {
   error?: string;
 }
 
+export interface IGDriveAuthService {
+  /**
+   * Returns a valid access token. Triggers refresh if necessary.
+   */
+  getAccessToken(): Promise<string | null>;
+
+  /**
+   * Signs the user out of the Drive session (clears in-memory token).
+   */
+  signOut(): Promise<void>;
+}
+
 export interface ISyncBackend {
   /**
    * Initializes the backend (auth, connection).
