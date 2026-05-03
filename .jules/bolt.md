@@ -67,3 +67,8 @@
 
 **Learning:** Svelte 5 `$derived` blocks re-evaluate when their dependencies change. If a block uses `Object.values(obj).find(...)`, it allocates a new array of all values on every evaluation. When `obj` is large (e.g., `vault.maps`), this generates significant garbage collection pressure, especially if the block is evaluated frequently.
 **Action:** Replace `Object.values(obj).find(...)` with a `for...in` loop over the object's keys, checking the value directly and returning early. This completely avoids array allocation and is highly compatible with Svelte 5's fine-grained proxy tracking.
+
+## 2026-05-18 - Replacing sort and slice with imperative bounded O(N) merge
+
+**Learning:** In contexts where we retrieve two separate lists from the database (`pinnedRecords` and `recentCandidates`), if both are already ordered by the target sorting metric (e.g., `lastModified` descending), combining them with array spreads followed by a full `.sort()` and `.slice()` is highly inefficient (`O(N log N)`).
+**Action:** Replace the spread and sort with sequential imperative loops that push directly into a target array, using early `break` statements to truncate exactly at the required limit (`O(N)`).
