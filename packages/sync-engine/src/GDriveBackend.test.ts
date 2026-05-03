@@ -41,11 +41,12 @@ describe("GDriveBackend", () => {
       await expect(backend.connect()).resolves.not.toThrow();
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/files/${folderId}`),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: "Bearer test-token",
-          }),
-        }),
+        expect.any(Object),
+      );
+      const callArgs = (global.fetch as any).mock.calls[0];
+      expect(callArgs[1].headers).toBeInstanceOf(Headers);
+      expect(callArgs[1].headers.get("Authorization")).toBe(
+        "Bearer test-token",
       );
     });
 
