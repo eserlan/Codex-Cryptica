@@ -104,6 +104,7 @@
   onkeydown={handleKeyDown}
   role="separator"
   aria-orientation="vertical"
+  aria-label="Resize {side} sidebar"
   aria-valuenow={currentWidth}
   aria-valuemin={minWidth}
   aria-valuemax={typeof window !== "undefined"

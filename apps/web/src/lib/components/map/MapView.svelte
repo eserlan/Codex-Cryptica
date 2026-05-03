@@ -1440,7 +1440,8 @@
                       class="w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2 {isActive
                         ? 'text-theme-primary hover:bg-theme-primary/20'
                         : 'text-theme-text hover:bg-theme-bg/50'}"
-                      role="menuitem"
+                      role="menuitemcheckbox"
+                      aria-checked={isActive}
                       onclick={() => {
                         if (contextMenu?.tokenId) {
                           const token = mapSession.tokens[contextMenu.tokenId];
