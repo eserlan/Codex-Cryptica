@@ -49,5 +49,21 @@ describe("capability-guard", () => {
       global.window = originalWindow;
       global.localStorage = originalLocalStorage;
     });
+
+    it("should return true if localStorage.getItem throws", () => {
+      const spy = vi
+        .spyOn(Storage.prototype, "getItem")
+        .mockImplementation(() => {
+          throw new Error("SecurityError");
+        });
+
+      expect(isAIEnabled()).toBe(true);
+      spy.mockRestore();
+    });
+
+    it("should treat empty string as enabled (not disabled)", () => {
+      localStorage.setItem("codex_ai_disabled", "");
+      expect(isAIEnabled()).toBe(true);
+    });
   });
 });
