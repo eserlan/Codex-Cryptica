@@ -160,7 +160,7 @@
           // Optimization: Only write back positions if this wasn't the initial load layout
           // and the vault is not in a loading state.
           // Also verify that the graph has been marked as fully ready.
-          const isReady = _layoutReady && vault.status === "idle";
+          const isReady = _layoutReady && vault.status !== "loading";
           if (!isInitial && isReady) {
             vault.batchUpdate(updates as Record<string, Partial<LocalEntity>>);
           }

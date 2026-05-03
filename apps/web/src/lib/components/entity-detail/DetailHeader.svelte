@@ -7,6 +7,7 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -14,7 +15,6 @@
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
   } from "$lib/components/search/search-focus";
-  import SidepanelRegenButton from "../entity/SidepanelRegenButton.svelte";
 
   let {
     entity,
@@ -118,7 +118,7 @@
               class="text-[9px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5"
               >aka:</span
             >
-            {#each entity.aliases as alias}
+            {#each entity.aliases as alias (alias)}
               <div
                 class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
               >
@@ -168,7 +168,7 @@
   <!-- Labels Section -->
   <div class="mt-4 mb-2 space-y-2">
     <div class="flex flex-wrap gap-1.5 min-h-[24px]">
-      {#each entity.labels || [] as label}
+      {#each entity.labels || [] as label (label)}
         <LabelBadge
           {label}
           removable={!vault.isGuest}

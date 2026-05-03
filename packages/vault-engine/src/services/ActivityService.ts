@@ -90,24 +90,28 @@ export class ActivityServiceImplementation {
       .limit(candidateLimit)
       .toArray()) as GraphEntityRecord[];
 
-    // ⚡ Bolt Optimization: Replace intermediate .filter() and spread with a single imperative loop
-    const recent = [...pinnedRecords];
-    const len = recentCandidates.length;
-    for (let i = 0; i < len; i++) {
-      const record = recentCandidates[i];
-      if (!pinnedIds.has(record.id)) {
-        recent.push(record);
-      }
+    // ⚡ Bolt Optimization: Replace chained spread/filter and O(N log N) sorting
+    // Since pinnedRecords and recentCandidates are already chronologically sorted
+    // from Dexie and sorted manually in fetchFrontpageRecords, we can fill our
+    // target array iteratively in O(N).
+
+    const limitedRecent: GraphEntityRecord[] = [];
+
+    // First add pinned records, up to the limit
+    for (let i = 0; i < pinnedRecords.length; i++) {
+      if (limitedRecent.length >= limit) break;
+      limitedRecent.push(pinnedRecords[i]);
     }
 
-    const limitedRecent = recent
-      .sort((a, b) => {
-        const aPinned = pinnedIds.has(a.id);
-        const bPinned = pinnedIds.has(b.id);
-        if (aPinned !== bPinned) return aPinned ? -1 : 1;
-        return (b.lastModified || 0) - (a.lastModified || 0);
-      })
-      .slice(0, limit);
+    // Then fill the remaining slots with non-pinned recent candidates
+    const len = recentCandidates.length;
+    for (let i = 0; i < len; i++) {
+      if (limitedRecent.length >= limit) break;
+      const record = recentCandidates[i];
+      if (!pinnedIds.has(record.id)) {
+        limitedRecent.push(record);
+      }
+    }
 
     const contents = await Promise.all(
       limitedRecent.map((record) =>

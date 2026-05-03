@@ -43,7 +43,7 @@ check_prerequisites() {
     # Check if wrangler is installed
     if ! command -v wrangler &> /dev/null; then
         print_error "Wrangler CLI is not installed"
-        print_info "Install with: npm install -g wrangler"
+        print_info "Install with: pnpm add -g wrangler"
         exit 1
     fi
     print_success "Wrangler CLI is installed ($(wrangler --version))"

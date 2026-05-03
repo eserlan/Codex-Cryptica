@@ -3,11 +3,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../../node_modules/svelte/src/index-client.js");
-});
-
 const vaultMock = vi.hoisted(() => ({
   allEntities: [
     { id: "char-1", title: "Alyx", type: "character", image: null },

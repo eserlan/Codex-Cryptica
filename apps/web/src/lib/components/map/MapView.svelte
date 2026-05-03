@@ -1303,7 +1303,6 @@
         {#if mapStore.isGMMode && !uiStore.isGuestMode}
           <div
             class="relative group"
-            role="presentation"
             onmouseenter={() => {
               showResizeSubmenu = true;
               showStatusSubmenu = false;
@@ -1317,6 +1316,19 @@
               class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
               aria-haspopup="menu"
               aria-expanded={showResizeSubmenu}
+              onclick={(e) => {
+                e.stopPropagation();
+                showResizeSubmenu = !showResizeSubmenu;
+                if (showResizeSubmenu) showStatusSubmenu = false;
+              }}
+              onkeydown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  showResizeSubmenu = !showResizeSubmenu;
+                  if (showResizeSubmenu) showStatusSubmenu = false;
+                }
+              }}
             >
               <div class="flex items-center gap-2">
                 <span class="icon-[lucide--maximize] w-3.5 h-3.5"></span>
@@ -1329,11 +1341,13 @@
             {#if showResizeSubmenu}
               <div
                 class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[100px]"
-                role="presentation"
+                role="menu"
+                aria-label="Resize options"
               >
                 {#each [1, 2, 3, 4] as scale (scale)}
                   <button
                     class="w-full text-left px-4 py-2 text-xs hover:bg-theme-primary/20 hover:text-theme-primary transition-colors font-mono"
+                    role="menuitem"
                     onclick={() => {
                       if (contextMenu?.tokenId) {
                         const gridSize = mapStore.gridSize || 50;
@@ -1379,7 +1393,6 @@
             {@const activeEffects = token?.statusEffects ?? []}
             <div
               class="relative group"
-              role="presentation"
               onmouseenter={() => {
                 showStatusSubmenu = true;
                 showResizeSubmenu = false;
@@ -1393,6 +1406,19 @@
                 class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
                 aria-haspopup="menu"
                 aria-expanded={showStatusSubmenu}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  showStatusSubmenu = !showStatusSubmenu;
+                  if (showStatusSubmenu) showResizeSubmenu = false;
+                }}
+                onkeydown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showStatusSubmenu = !showStatusSubmenu;
+                    if (showStatusSubmenu) showResizeSubmenu = false;
+                  }
+                }}
               >
                 <div class="flex items-center gap-2">
                   <span class="icon-[lucide--badge] w-3.5 h-3.5"></span>
@@ -1405,7 +1431,8 @@
               {#if showStatusSubmenu}
                 <div
                   class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[160px]"
-                  role="presentation"
+                  role="menu"
+                  aria-label="Status options"
                 >
                   {#each TOKEN_STATUS_EFFECTS as effect (effect.id)}
                     {@const isActive = activeEffects.includes(effect.id)}
@@ -1413,6 +1440,8 @@
                       class="w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2 {isActive
                         ? 'text-theme-primary hover:bg-theme-primary/20'
                         : 'text-theme-text hover:bg-theme-bg/50'}"
+                      role="menuitemcheckbox"
+                      aria-checked={isActive}
                       onclick={() => {
                         if (contextMenu?.tokenId) {
                           const token = mapSession.tokens[contextMenu.tokenId];

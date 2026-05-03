@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./events";
 export * from "./SyncRegistry";
 export * from "./DiffAlgorithm";
 export * from "./LocalSyncService";
@@ -7,6 +8,9 @@ export * from "./SyncActionExecutor";
 export * from "./SyncContentComparator";
 export * from "./FileSystemBackend";
 export * from "./OpfsBackend";
+export * from "./GDriveBackend";
+export * from "./CloudSyncMetadataService";
+export * from "./GDriveSyncService";
 export * from "./SyncPersistence";
 export * from "./SyncPlanner";
 export * from "./hash";

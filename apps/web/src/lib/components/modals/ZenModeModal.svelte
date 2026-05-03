@@ -101,6 +101,7 @@
       style:box-shadow="var(--theme-glow)"
       transition:fly={{ y: 20, duration: 300 }}
       onclick={(e) => e.stopPropagation()}
+      role="presentation"
     >
       <ZenView
         bind:this={zenViewComponent}

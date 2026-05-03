@@ -16,8 +16,14 @@ Navigate your lore through a dynamic, interactive web. Nodes grow visually large
 ### World Front Page
 Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.
 
-### Local Folder Sync
-Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your world data seamlessly.
+### Load and Save Folders
+Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
+
+### Save to Folder
+The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.
+
+### Load from Folder
+Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
 
 ### Total Privacy
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
@@ -97,6 +103,9 @@ Dynamically resize the left and right sidebars to suit your workspace needs. Hov
 ### Reviewing Drafts
 Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.
 
+### AI Description Regeneration
+Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
+
 
 ## Help Documentation
 
@@ -152,7 +161,8 @@ The bottom-left toolbar provides quick access to layout and visibility:
 Connect your geography directly to your notes:
 
 - **Double-Click** anywhere on the map to create a new pin.
-- Use the **Link Lore** search box to connect the pin to an existing NPC, Location, or Item.
+- **Drag an entity** from the **Entity Explorer** sidebar and drop it anywhere on the map to instantly create a pin linked to that entity.
+- Use the **Link Lore** search box on a pin to connect it to an existing NPC, Location, or Item.
 - **Click a Pin** to instantly open its associated chronicle in the side panel.
 
 ### Fog of War (GM Only)
@@ -186,6 +196,16 @@ The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intent
 - **Themed Components**: The **MiniMap** and all UI elements adapt to your active theme (Fantasy, Sci-Fi, etc.), ensuring a cohesive aesthetic.
 - **Readable URLs**: Each canvas uses a name-based **slug** in its URL (e.g., `/canvas/battle-at-the-docks`), making it easy to bookmark and identify specific workspaces.
 
+### Adding Entities
+
+The fastest way to populate a canvas is to drag entities directly from the **Entity Explorer** sidebar onto the board. Open the Explorer, find the entity you want, and drag it onto the canvas — it will be placed wherever you drop it.
+
+You can also right-click nodes in the **Knowledge Graph** and use **Add to Canvas** to send one or more entities to any of your boards without leaving the graph.
+
+### Managing Canvases
+
+Click the **workspace name** in the top-left HUD to open the **Canvas Manager**. From there you can create new canvases, rename or delete existing ones, and switch between boards.
+
 ### Managing Connections
 
 - **Custom Labels**: Double-click any connection (edge) to open a themed modal and enter a name for the relationship.
@@ -195,14 +215,22 @@ The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intent
 ### Tips for Organization
 
 1. **Use Multiple Canvases**: Create separate boards for different regions, plot lines, or character groups to avoid clutter.
-2. **Quick Spawn**: Use the **Entity Palette** to drag existing lore onto the board, or use the "Add to Canvas" action from global search results.
+2. **Drag from Explorer**: Open the Entity Explorer sidebar and drag lore directly onto the board for the fastest workflow.
 3. **Zen Integration**: Double-click any entity card to open it in **Zen Mode** (the full detail panel) for quick editing.
 
 ---
 
 ### ADDING ENTITIES TO CANVAS
 
-You can quickly bring your lore onto a **Spatial Canvas** without leaving the **Knowledge Graph** or your search results. This allows for a seamless transition from discovering connections to designing custom spatial layouts.
+You can quickly bring your lore onto a **Spatial Canvas** in several ways — by dragging from the sidebar, right-clicking in the graph, or choosing from search results.
+
+### Drag from Entity Explorer
+
+The fastest way to add a single entity is to drag it directly from the **Entity Explorer** sidebar onto the canvas.
+
+1. **Open the Explorer**: Click the Explorer icon in the left activity bar.
+2. **Find your entity**: Use the search bar or browse the list.
+3. **Drag onto the canvas**: Click and drag the entity card onto the board. It will be placed wherever you drop it.
 
 ### Right-Click to Add
 

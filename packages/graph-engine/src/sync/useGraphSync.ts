@@ -157,6 +157,11 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         for (const k in newData) {
           if (k === "id" || !Object.hasOwn(newData, k)) continue;
 
+          // Bugfix: Do not re-apply isPendingLayout to existing nodes.
+          // This prevents nodes that were already placed by LayoutManager from
+          // becoming invisible just because Svelte hasn't saved their coordinates yet.
+          if (k === "isPendingLayout") continue;
+
           const newVal = newData[k];
           const curVal = currentData[k];
           let isMatch = newVal === curVal;
@@ -194,7 +199,29 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
             hasChanges = true;
           }
         }
-        if (hasChanges) node.data(patch);
+
+        // Remove keys that no longer exist in newData (e.g. isPendingLayout)
+        for (const k in currentData) {
+          if (k !== "id" && !Object.hasOwn(newData, k)) {
+            // Bugfix: Do not strip internal cytoscape properties managed by other components
+            if (k === "resolvedImage") continue;
+
+            node.removeData(k);
+            // If the source image path is removed, clear the resolved image so ImageManager can clean up
+            if (k === "image" || k === "thumbnail") {
+              node.removeData("resolvedImage");
+            }
+          }
+        }
+
+        if (hasChanges) {
+          node.data(patch);
+          // If the image or thumbnail properties changed, clear the resolvedImage
+          // so that ImageManager is forced to re-fetch and apply the new one.
+          if ("image" in patch || "thumbnail" in patch) {
+            node.removeData("resolvedImage");
+          }
+        }
 
         // Apply Filtering Classes
         if (el.group === "nodes") {

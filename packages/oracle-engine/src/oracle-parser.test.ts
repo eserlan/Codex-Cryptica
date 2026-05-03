@@ -15,6 +15,12 @@ describe("OracleCommandParser", () => {
       });
     });
 
+    it("should parse /regenerate", () => {
+      expect(OracleCommandParser.parse("/regenerate", false)).toEqual({
+        type: "regenerate",
+      });
+    });
+
     it("should parse /roll", () => {
       expect(OracleCommandParser.parse("/roll 2d6+5", false)).toEqual({
         type: "roll",

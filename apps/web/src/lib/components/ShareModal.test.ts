@@ -4,11 +4,6 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ShareModal from "./ShareModal.svelte";
 
-vi.mock("svelte", async () => {
-  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
-  return await import("../../../../../node_modules/svelte/src/index-client.js");
-});
-
 vi.mock("$app/paths", () => ({
   base: "",
 }));
