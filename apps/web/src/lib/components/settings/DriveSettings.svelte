@@ -9,6 +9,7 @@
     pullVaultFromDrive,
     listDriveVaults,
     importVaultFromDrive,
+    joinSharedVault,
   } from "$lib/services/gdrive-sync";
   import { onMount } from "svelte";
   import { getDB } from "$lib/utils/idb";
@@ -25,6 +26,10 @@
   let isLoadingDriveVaults = $state(false);
   let driveVaults = $state<Array<{ id: string; name: string }> | null>(null);
   let isImporting = $state(false);
+
+  // Join shared vault state
+  let shareLink = $state("");
+  let isJoining = $state(false);
 
   const hasClientId = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -156,6 +161,23 @@
       uiStore.notify(e.message || "Failed to import vault", "error");
     } finally {
       isImporting = false;
+    }
+  }
+
+  async function handleJoinSharedVault() {
+    const link = shareLink.trim();
+    if (!link) return;
+    isJoining = true;
+    uiStore.notify("Connecting to shared vault…", "info");
+    try {
+      await joinSharedVault(link);
+      shareLink = "";
+      await loadMetadata();
+      uiStore.notify("Shared vault loaded successfully", "success");
+    } catch (e: any) {
+      uiStore.notify(e.message || "Failed to join shared vault", "error");
+    } finally {
+      isJoining = false;
     }
   }
 </script>
@@ -361,6 +383,38 @@
     </div>
   {/if}
 
+  <!-- Join a shared vault (co-GM flow) -->
+  {#if hasClientId}
+    <div class="border-t border-theme-border pt-4 space-y-3">
+      <div>
+        <h4 class="text-xs font-bold text-theme-text uppercase tracking-widest">
+          Join a Shared Vault
+        </h4>
+        <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
+          Paste a Drive share link from your GM to load their vault. Google will
+          ask you to grant access.
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <input
+          type="url"
+          bind:value={shareLink}
+          placeholder="https://drive.google.com/drive/folders/..."
+          disabled={isJoining}
+          onkeydown={(e) => e.key === "Enter" && handleJoinSharedVault()}
+          class="flex-1 px-3 py-2 bg-theme-bg border border-theme-border rounded-md text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-theme-primary/50 font-mono placeholder-theme-muted disabled:opacity-50"
+        />
+        <button
+          onclick={handleJoinSharedVault}
+          disabled={isJoining || !shareLink.trim()}
+          class="px-3 py-2 bg-theme-primary text-theme-bg text-xs font-bold rounded-md hover:bg-theme-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          {isJoining ? "Joining…" : "Join"}
+        </button>
+      </div>
+    </div>
+  {/if}
+
   <div class="rounded-lg bg-theme-primary/5 border border-theme-primary/10 p-4">
     <h4
       class="text-xs font-bold text-theme-primary uppercase tracking-widest mb-2"
@@ -379,8 +433,8 @@
         kept only in memory.
       </li>
       <li>
-        Sync is explicit: you choose when to push your changes or pull cloud
-        data.
+        Sync is explicit: you choose when to save your changes to the cloud or
+        load data from it.
       </li>
     </ul>
   </div>

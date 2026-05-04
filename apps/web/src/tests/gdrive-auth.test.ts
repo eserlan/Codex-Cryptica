@@ -4,22 +4,35 @@ import { GDriveAuthService } from "../lib/services/gdrive-auth";
 describe("GDriveAuthService", () => {
   let service: GDriveAuthService;
   let mockTokenClient: any;
+  let mockTokenClients: any[];
+  let callbacksByScope: Map<string, (response: any) => void>;
+  let scopes: string[];
+  const driveFileScope = "https://www.googleapis.com/auth/drive.file";
+  const driveMetadataReadonlyScope =
+    "https://www.googleapis.com/auth/drive.metadata.readonly";
 
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "test-client-id");
     Object.assign(import.meta.env, { VITE_GOOGLE_CLIENT_ID: "test-client-id" });
 
-    mockTokenClient = {
-      requestAccessToken: vi.fn(),
-    };
+    mockTokenClients = [];
+    callbacksByScope = new Map();
+    scopes = [];
 
     const mockGoogle = {
       accounts: {
         oauth2: {
-          initTokenClient: vi.fn().mockImplementation(({ callback }) => {
+          initTokenClient: vi.fn().mockImplementation(({ scope, callback }) => {
+            const client = {
+              requestAccessToken: vi.fn(),
+            };
+            mockTokenClients.push(client);
+            scopes.push(scope);
             (globalThis as any)._gisCallback = callback;
-            return mockTokenClient;
+            callbacksByScope.set(scope, callback);
+            mockTokenClient = client;
+            return client;
           }),
           revoke: vi.fn().mockImplementation((_token, callback) => callback()),
         },
@@ -80,6 +93,86 @@ describe("GDriveAuthService", () => {
 
     expect(token2).toBe("new-token");
     expect(mockTokenClient.requestAccessToken).toHaveBeenCalledTimes(2);
+  });
+
+  it("should request scoped tokens with the requested scope", async () => {
+    const tokenPromise = service.getTokenWithScope(driveMetadataReadonlyScope);
+
+    await vi.waitFor(() => {
+      expect(callbacksByScope.has(driveMetadataReadonlyScope)).toBe(true);
+      expect((service as any).resolvers.length).toBe(1);
+    });
+    callbacksByScope.get(driveMetadataReadonlyScope)?.({
+      access_token: "metadata-token",
+      expires_in: "3600",
+    });
+
+    await expect(tokenPromise).resolves.toBe("metadata-token");
+    expect(scopes).toEqual([driveMetadataReadonlyScope]);
+    expect(mockTokenClient.requestAccessToken).toHaveBeenCalledWith({
+      prompt: "consent",
+    });
+  });
+
+  it("should renew tokens with the active scoped token client", async () => {
+    const scopedTokenPromise = service.getTokenWithScope(
+      driveMetadataReadonlyScope,
+    );
+    await vi.waitFor(() => {
+      expect(callbacksByScope.has(driveMetadataReadonlyScope)).toBe(true);
+      expect((service as any).resolvers.length).toBe(1);
+    });
+    callbacksByScope.get(driveMetadataReadonlyScope)?.({
+      access_token: "metadata-token",
+      expires_in: "30",
+    });
+    await scopedTokenPromise;
+
+    const renewedTokenPromise = service.getAccessToken();
+    await vi.waitFor(() => {
+      expect(mockTokenClients[0].requestAccessToken).toHaveBeenCalledTimes(2);
+      expect((service as any).resolvers.length).toBe(1);
+    });
+    callbacksByScope.get(driveMetadataReadonlyScope)?.({
+      access_token: "renewed-metadata-token",
+      expires_in: "3600",
+    });
+
+    await expect(renewedTokenPromise).resolves.toBe("renewed-metadata-token");
+    expect(scopes).toEqual([driveMetadataReadonlyScope]);
+    expect(mockTokenClients[0].requestAccessToken).toHaveBeenLastCalledWith({
+      prompt: "",
+    });
+  });
+
+  it("should reset token renewal scope after signOut", async () => {
+    const scopedTokenPromise = service.getTokenWithScope(
+      driveMetadataReadonlyScope,
+    );
+    await vi.waitFor(() => {
+      expect(callbacksByScope.has(driveMetadataReadonlyScope)).toBe(true);
+      expect((service as any).resolvers.length).toBe(1);
+    });
+    callbacksByScope.get(driveMetadataReadonlyScope)?.({
+      access_token: "metadata-token",
+      expires_in: "3600",
+    });
+    await scopedTokenPromise;
+
+    await service.signOut();
+
+    const tokenPromise = service.getAccessToken();
+    await vi.waitFor(() => {
+      expect(callbacksByScope.has(driveFileScope)).toBe(true);
+      expect((service as any).resolvers.length).toBe(1);
+    });
+    callbacksByScope.get(driveFileScope)?.({
+      access_token: "drive-file-token",
+      expires_in: "3600",
+    });
+
+    await expect(tokenPromise).resolves.toBe("drive-file-token");
+    expect(scopes).toEqual([driveMetadataReadonlyScope, driveFileScope]);
   });
 
   it("should clear token on signOut", async () => {
