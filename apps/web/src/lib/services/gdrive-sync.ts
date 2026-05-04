@@ -251,7 +251,7 @@ export async function importVaultFromDrive(
     targetVaultId = newId;
 
     await metadataService.saveMetadata({
-      vaultId: targetVaultId,
+      vaultId: newId,
       remoteFolderId: driveFolderId,
       lastSyncTime: 0,
       lastSyncToken: null,
@@ -260,11 +260,11 @@ export async function importVaultFromDrive(
     appEventBus.emit({
       type: "SYNC:DRIVE_CONNECTED",
       domain: "sync",
-      payload: { vaultId: targetVaultId, folderId: driveFolderId },
-      metadata: { timestamp: Date.now(), vaultId: targetVaultId },
+      payload: { vaultId: newId, folderId: driveFolderId },
+      metadata: { timestamp: Date.now(), vaultId: newId },
     });
   }
 
   // Pull — DiffAlgorithm only downloads files newer than local (via registry)
-  return runWorkerSync(targetVaultId, "pull");
+  return runWorkerSync(targetVaultId!, "pull");
 }
