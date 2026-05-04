@@ -29,11 +29,12 @@
   );
   const hasSelectedToken = $derived(Boolean(mapSession.selectedToken));
   const VTT_ENTITY_TYPES = ["character", "creature", "item"];
-  const vttEntityCount = $derived.by(
-    () =>
-      vault.allEntities.filter((entity) =>
-        VTT_ENTITY_TYPES.includes(entity.type),
-      ).length,
+  // ⚡ Bolt Optimization: Replace .filter().length with .reduce() to avoid intermediate array allocation
+  const vttEntityCount = $derived(
+    vault.allEntities.reduce(
+      (count, e) => count + (VTT_ENTITY_TYPES.includes(e.type) ? 1 : 0),
+      0,
+    ),
   );
 
   let showUpload = $state(false);
