@@ -113,6 +113,43 @@ export class GDriveAuthService implements IGDriveAuthService {
   }
 
   /**
+   * Requests a token with an explicit scope, creating a one-off token client.
+   * Used when broader access is needed (e.g. reading a folder shared by another user).
+   */
+  async getTokenWithScope(scope: string): Promise<string> {
+    // Wait for GIS library
+    let retryCount = 0;
+    while (
+      (typeof google === "undefined" || !google.accounts?.oauth2) &&
+      retryCount < 50
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      retryCount++;
+    }
+    if (typeof google === "undefined" || !google.accounts?.oauth2) {
+      throw new Error("Google Identity Services library failed to load.");
+    }
+    if (!this.CLIENT_ID) {
+      throw new Error("VITE_GOOGLE_CLIENT_ID is not configured.");
+    }
+
+    return new Promise((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: this.CLIENT_ID,
+        scope,
+        callback: (response) => {
+          if (response.error) {
+            reject(new Error(response.error));
+          } else {
+            resolve(response.access_token);
+          }
+        },
+      });
+      client.requestAccessToken({ prompt: "consent" });
+    });
+  }
+
+  /**
    * Signs the user out (revokes token and clears memory).
    */
   async signOut(): Promise<void> {
