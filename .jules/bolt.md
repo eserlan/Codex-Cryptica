@@ -72,3 +72,7 @@
 
 **Learning:** In contexts where we retrieve two separate lists from the database (`pinnedRecords` and `recentCandidates`), if both are already ordered by the target sorting metric (e.g., `lastModified` descending), combining them with array spreads followed by a full `.sort()` and `.slice()` is highly inefficient (`O(N log N)`).
 **Action:** Replace the spread and sort with sequential imperative loops that push directly into a target array, using early `break` statements to truncate exactly at the required limit (`O(N)`).
+
+## 2026-05-04 - [Performance Insight: Avoid intermediate array allocation for counting elements]
+**Learning:** Using `.filter(...).length` in Svelte `$derived` blocks on large arrays (like `vault.allEntities`) allocates a completely unnecessary intermediate array in memory, creating excess garbage collection pressure on every reactivity tick. While a verbose imperative loop is extremely efficient, a declarative `.reduce((count, item) => count + (condition ? 1 : 0), 0)` is slightly slower than a `for` loop but completely avoids array allocation and is far more readable.
+**Action:** Use `.reduce()` instead of `.filter(...).length` when counting matching items in reactive blocks to eliminate intermediate array memory allocation without sacrificing code readability.
