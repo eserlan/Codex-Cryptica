@@ -7,6 +7,8 @@
     disconnectVaultFromDrive,
     pushVaultToDrive,
     pullVaultFromDrive,
+    listDriveVaults,
+    importVaultFromDrive,
   } from "$lib/services/gdrive-sync";
   import { onMount } from "svelte";
   import { getDB } from "$lib/utils/idb";
@@ -18,6 +20,11 @@
   let manualFolderId = $state("");
   let showManualInput = $state(false);
   let metadata = $state<any>(null);
+
+  // Vault importer state
+  let isLoadingDriveVaults = $state(false);
+  let driveVaults = $state<Array<{ id: string; name: string }> | null>(null);
+  let isImporting = $state(false);
 
   const hasClientId = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -122,6 +129,33 @@
       uiStore.notify(e.message || "Failed to pull from Drive", "error");
     } finally {
       isPulling = false;
+    }
+  }
+
+  async function handleShowDriveVaults() {
+    isLoadingDriveVaults = true;
+    driveVaults = null;
+    try {
+      driveVaults = await listDriveVaults();
+    } catch (e: any) {
+      uiStore.notify(e.message || "Failed to list Drive vaults", "error");
+    } finally {
+      isLoadingDriveVaults = false;
+    }
+  }
+
+  async function handleImportVault(id: string, name: string) {
+    isImporting = true;
+    uiStore.notify(`Importing vault "${name}" from Drive…`, "info");
+    try {
+      await importVaultFromDrive(id, name);
+      driveVaults = null;
+      await loadMetadata();
+      uiStore.notify(`Vault "${name}" loaded from Drive`, "success");
+    } catch (e: any) {
+      uiStore.notify(e.message || "Failed to import vault", "error");
+    } finally {
+      isImporting = false;
     }
   }
 </script>
@@ -278,6 +312,51 @@
             device.
           </p>
         </div>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Import vault from Drive -->
+  {#if hasClientId}
+    <div class="border-t border-theme-border pt-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h4 class="text-xs font-bold text-theme-text uppercase tracking-widest">
+          Import Vault from Drive
+        </h4>
+        <button
+          onclick={handleShowDriveVaults}
+          disabled={isLoadingDriveVaults || isImporting}
+          class="text-xs text-theme-primary hover:underline disabled:opacity-50"
+        >
+          {isLoadingDriveVaults ? "Loading…" : "Browse Drive"}
+        </button>
+      </div>
+
+      {#if driveVaults !== null}
+        {#if driveVaults.length === 0}
+          <p class="text-xs text-theme-muted italic">
+            No vaults found in CodexCryptica folder on Drive.
+          </p>
+        {:else}
+          <div class="space-y-1">
+            {#each driveVaults as v (v.id)}
+              <button
+                onclick={() => handleImportVault(v.id, v.name)}
+                disabled={isImporting}
+                class="w-full flex items-center justify-between px-3 py-2 rounded-md border border-theme-border bg-theme-surface hover:border-theme-primary/50 transition-all text-left disabled:opacity-50"
+              >
+                <span class="flex items-center gap-2 text-sm text-theme-text">
+                  <span class="icon-[lucide--folder] h-4 w-4 text-theme-primary"
+                  ></span>
+                  {v.name}
+                </span>
+                <span class="text-xs text-theme-muted">
+                  {isImporting ? "Importing…" : "Load"}
+                </span>
+              </button>
+            {/each}
+          </div>
+        {/if}
       {/if}
     </div>
   {/if}

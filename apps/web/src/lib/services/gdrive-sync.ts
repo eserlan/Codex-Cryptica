@@ -8,6 +8,7 @@ import {
 import { gdriveAuthService } from "./gdrive-auth";
 import { getDB } from "../utils/idb";
 import { vault } from "../stores/vault.svelte";
+import { listVaults } from "../stores/vault/registry";
 import type { GDriveSyncWorker } from "../workers/gdrive-sync.worker";
 
 let workerInstance: any = null;
@@ -196,4 +197,72 @@ export async function pushVaultToDrive(vaultId: string) {
  */
 export async function pullVaultFromDrive(vaultId: string) {
   return runWorkerSync(vaultId, "pull");
+}
+
+/**
+ * Lists all vault subfolders inside the CodexCryptica root on Drive.
+ */
+export async function listDriveVaults(): Promise<
+  Array<{ id: string; name: string }>
+> {
+  const token = await gdriveAuthService.getAccessToken();
+  if (!token) throw new Error("Authentication failed");
+
+  const rootFolderId = await findOrCreateFolder(token, ROOT_FOLDER_NAME);
+  const query = `'${rootFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const res = await fetch(
+    `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id,name)&orderBy=name`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) throw new Error("Failed to list Drive vaults");
+  const { files } = await res.json();
+  return files as Array<{ id: string; name: string }>;
+}
+
+/**
+ * Imports a vault from a Drive folder into a local vault.
+ * Finds an existing local vault connected to this folder, or creates a new one.
+ * Only downloads files that are newer than what's stored locally (via registry diff).
+ */
+export async function importVaultFromDrive(
+  driveFolderId: string,
+  folderName: string,
+) {
+  const db = await getDB();
+  const registry = new SyncRegistry(db);
+  const metadataService = new CloudSyncMetadataService(registry);
+
+  // Check if any local vault is already connected to this Drive folder
+  const localVaults = await listVaults();
+  let targetVaultId: string | null = null;
+
+  for (const v of localVaults) {
+    const meta = await metadataService.getMetadata(v.id);
+    if (meta?.remoteFolderId === driveFolderId) {
+      targetVaultId = v.id;
+      break;
+    }
+  }
+
+  if (!targetVaultId) {
+    // Create a new local vault and switch to it
+    targetVaultId = await vault.createVault(folderName);
+
+    await metadataService.saveMetadata({
+      vaultId: targetVaultId,
+      remoteFolderId: driveFolderId,
+      lastSyncTime: 0,
+      lastSyncToken: null,
+    });
+
+    appEventBus.emit({
+      type: "SYNC:DRIVE_CONNECTED",
+      domain: "sync",
+      payload: { vaultId: targetVaultId, folderId: driveFolderId },
+      metadata: { timestamp: Date.now(), vaultId: targetVaultId },
+    });
+  }
+
+  // Pull — DiffAlgorithm only downloads files newer than local (via registry)
+  return runWorkerSync(targetVaultId, "pull");
 }
