@@ -260,13 +260,16 @@ export async function importVaultFromDrive(
   const localVaults = await listVaults();
   let targetVaultId: string | null = null;
 
-  for (const v of localVaults) {
-    const meta = await metadataService.getMetadata(v.id);
-    if (meta?.remoteFolderId === driveFolderId) {
-      targetVaultId = v.id;
-      break;
-    }
-  }
+  const vaultMetas = await Promise.all(
+    localVaults.map(async (v) => ({
+      id: v.id,
+      meta: await metadataService.getMetadata(v.id),
+    })),
+  );
+  const matchingVault = vaultMetas.find(
+    (vm) => vm.meta?.remoteFolderId === driveFolderId,
+  );
+  if (matchingVault) targetVaultId = matchingVault.id;
 
   if (!targetVaultId) {
     // Create a new local vault and switch to it
@@ -303,7 +306,8 @@ export async function joinSharedVault(urlOrId: string): Promise<void> {
   if (!folderId)
     throw new Error("Could not extract a folder ID from that link.");
 
-  // Request drive scope — needed to read folders owned by other users.
+  // drive scope is required to read folders owned by another user.
+  // drive.file only covers files this app created in the current user's Drive.
   const token = await gdriveAuthService.getTokenWithScope(
     "https://www.googleapis.com/auth/drive",
   );

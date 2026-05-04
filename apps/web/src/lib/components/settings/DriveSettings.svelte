@@ -165,11 +165,12 @@
   }
 
   async function handleJoinSharedVault() {
-    if (!shareLink.trim()) return;
+    const link = shareLink.trim();
+    if (!link) return;
     isJoining = true;
     uiStore.notify("Connecting to shared vault…", "info");
     try {
-      await joinSharedVault(shareLink.trim());
+      await joinSharedVault(link);
       shareLink = "";
       await loadMetadata();
       uiStore.notify("Shared vault loaded successfully", "success");
@@ -432,8 +433,8 @@
         kept only in memory.
       </li>
       <li>
-        Sync is explicit: you choose when to push your changes or pull cloud
-        data.
+        Sync is explicit: you choose when to save your changes to the cloud or
+        load data from it.
       </li>
     </ul>
   </div>
