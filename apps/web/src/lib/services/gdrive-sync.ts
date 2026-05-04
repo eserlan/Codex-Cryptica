@@ -246,7 +246,9 @@ export async function importVaultFromDrive(
 
   if (!targetVaultId) {
     // Create a new local vault and switch to it
-    targetVaultId = await vault.createVault(folderName);
+    const newId = await vault.createVault(folderName);
+    if (!newId) throw new Error("Failed to create local vault");
+    targetVaultId = newId;
 
     await metadataService.saveMetadata({
       vaultId: targetVaultId,
