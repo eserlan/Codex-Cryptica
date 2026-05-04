@@ -141,6 +141,11 @@ export class GDriveAuthService implements IGDriveAuthService {
           if (response.error) {
             reject(new Error(response.error));
           } else {
+            // Cache as the active token — drive scope is a superset of drive.file,
+            // so all subsequent getAccessToken() calls (including the sync worker)
+            // will use this broader token automatically.
+            this.accessToken = response.access_token;
+            this.tokenExpiry = Date.now() + Number(response.expires_in) * 1000;
             resolve(response.access_token);
           }
         },
