@@ -12,6 +12,7 @@
 
   function handleSelect(entity: Entity) {
     uiStore.openZenMode(entity.id);
+    if (uiStore.isMobile) uiStore.closeSidebar();
   }
 
   function onDragStart(event: DragEvent, entityId: string) {

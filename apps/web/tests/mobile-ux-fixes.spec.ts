@@ -83,7 +83,7 @@ test.describe("Mobile UX Fixes", () => {
       timeout: 5000,
     });
 
-    const scrollShell = page.getByTestId("embedded-entity-scroll");
+    const scrollShell = page.getByTestId("zen-mobile-scroll-container");
     await expect(scrollShell).toBeVisible();
 
     const metrics = await scrollShell.evaluate((el) => {
