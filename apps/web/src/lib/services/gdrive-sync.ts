@@ -220,8 +220,7 @@ export async function listDriveVaults(): Promise<
 }
 
 /**
- * Extracts a Google Drive folder ID from a share URL or returns the input as-is
- * if it already looks like a bare folder ID.
+ * Extracts a Google Drive folder ID from a share URL or a bare folder ID.
  *
  * Handles formats:
  *   https://drive.google.com/drive/folders/FOLDER_ID
@@ -230,7 +229,6 @@ export async function listDriveVaults(): Promise<
  */
 export function parseDriveFolderUrl(input: string): string | null {
   const trimmed = input.trim();
-  // Try URL parse first
   try {
     const url = new URL(trimmed);
     const match = url.pathname.match(/\/folders\/([a-zA-Z0-9_-]+)/);
@@ -238,7 +236,6 @@ export function parseDriveFolderUrl(input: string): string | null {
   } catch {
     // Not a URL — treat as bare ID
   }
-  // Bare folder ID: alphanumeric + dashes/underscores, 20–60 chars
   if (/^[a-zA-Z0-9_-]{20,60}$/.test(trimmed)) return trimmed;
   return null;
 }
@@ -293,26 +290,28 @@ export async function importVaultFromDrive(
   }
 
   // Pull — DiffAlgorithm only downloads files newer than local (via registry)
-  return runWorkerSync(targetVaultId!, "pull");
+  await runWorkerSync(targetVaultId!, "pull");
+
+  // Reload the vault so the graph picks up files written to OPFS by the worker.
+  // createVault() already called switchVault() before the pull ran (empty state),
+  // so we need a second switch after the pull to call loadFiles() on the new data.
+  await vault.switchVault(targetVaultId!);
 }
 
 /**
  * Joins a vault shared by another user via a Drive folder link or bare folder ID.
- * Requests the broader "drive" scope so the app can read folders it didn't create,
- * fetches the folder name, then delegates to importVaultFromDrive.
+ * Uses drive.readonly scope — read-only access to any Drive file/folder, sensitive
+ * but not restricted, so Google verification is straightforward.
  */
 export async function joinSharedVault(urlOrId: string): Promise<void> {
   const folderId = parseDriveFolderUrl(urlOrId);
   if (!folderId)
     throw new Error("Could not extract a folder ID from that link.");
 
-  // drive scope is required to read folders owned by another user.
-  // drive.file only covers files this app created in the current user's Drive.
   const token = await gdriveAuthService.getTokenWithScope(
-    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/drive.readonly",
   );
 
-  // Fetch folder metadata to get its name
   const res = await fetch(
     `${DRIVE_FILES_API}/${folderId}?fields=id,name,trashed`,
     { headers: { Authorization: `Bearer ${token}` } },

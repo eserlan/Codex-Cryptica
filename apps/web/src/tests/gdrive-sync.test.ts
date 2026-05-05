@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const getTokenWithScope = vi.fn();
 const runSync = vi.fn();
 const createVault = vi.fn();
+const switchVault = vi.fn();
 const getActiveVaultHandle = vi.fn();
 const getSpecificVaultHandle = vi.fn();
 const getMetadata = vi.fn();
@@ -31,17 +32,10 @@ vi.mock("@codex/events", () => ({
 
 vi.mock("@codex/sync-engine", () => ({
   CloudSyncMetadataService: vi.fn().mockImplementation(function () {
-    return {
-      clearMetadata,
-      getMetadata,
-      saveMetadata,
-    };
+    return { clearMetadata, getMetadata, saveMetadata };
   }),
   GDriveBackend: vi.fn().mockImplementation(function () {
-    return {
-      connect: vi.fn(),
-      setVaultFolderId: vi.fn(),
-    };
+    return { connect: vi.fn(), setVaultFolderId: vi.fn() };
   }),
   SyncRegistry: vi.fn().mockImplementation(function () {
     return {};
@@ -55,6 +49,7 @@ vi.mock("../lib/stores/vault.svelte", () => ({
     activeVaultId: "new-vault-id",
     activeVaultRecord: { name: "New Vault" },
     createVault,
+    switchVault,
     getActiveVaultHandle,
     getSpecificVaultHandle,
   },
@@ -68,10 +63,11 @@ describe("gdrive-sync shared vault joins", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    getTokenWithScope.mockResolvedValue("drive-file-token");
+    getTokenWithScope.mockResolvedValue("readonly-token");
     getDB.mockResolvedValue({});
     listVaults.mockResolvedValue([]);
     createVault.mockResolvedValue("new-vault-id");
+    switchVault.mockResolvedValue(undefined);
     getMetadata.mockResolvedValue({
       remoteFolderId: "shared-folder-id-1234567890",
     });
@@ -89,10 +85,9 @@ describe("gdrive-sync shared vault joins", () => {
     vi.stubGlobal("navigator", { onLine: true });
   });
 
-  it("should join shared vaults with the broader drive scope", async () => {
+  it("uses drive.readonly scope and imports the folder", async () => {
     const { joinSharedVault } = await import("../lib/services/gdrive-sync");
-    const fetchMock = vi.mocked(fetch);
-    fetchMock.mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValue({
       ok: true,
       json: async () => ({
         id: "shared-folder-id-1234567890",
@@ -104,11 +99,7 @@ describe("gdrive-sync shared vault joins", () => {
     await joinSharedVault("shared-folder-id-1234567890");
 
     expect(getTokenWithScope).toHaveBeenCalledWith(
-      "https://www.googleapis.com/auth/drive",
-    );
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://www.googleapis.com/drive/v3/files/shared-folder-id-1234567890?fields=id,name,trashed",
-      { headers: { Authorization: "Bearer drive-file-token" } },
+      "https://www.googleapis.com/auth/drive.readonly",
     );
     expect(saveMetadata).toHaveBeenCalledWith({
       vaultId: "new-vault-id",
@@ -119,7 +110,7 @@ describe("gdrive-sync shared vault joins", () => {
     expect(runSync).toHaveBeenCalled();
   });
 
-  it("should reject invalid shared vault links before requesting auth", async () => {
+  it("rejects invalid links before requesting auth", async () => {
     const { joinSharedVault } = await import("../lib/services/gdrive-sync");
 
     await expect(joinSharedVault("not a drive folder")).rejects.toThrow(
@@ -128,5 +119,20 @@ describe("gdrive-sync shared vault joins", () => {
 
     expect(getTokenWithScope).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("throws a friendly error when the folder is not shared with the user", async () => {
+    const { joinSharedVault } = await import("../lib/services/gdrive-sync");
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({}),
+    } as Response);
+
+    await expect(
+      joinSharedVault(
+        "https://drive.google.com/drive/folders/shared-folder-id-1234567890",
+      ),
+    ).rejects.toThrow("Folder not found or not shared with you");
   });
 });

@@ -27,7 +27,6 @@
   let driveVaults = $state<Array<{ id: string; name: string }> | null>(null);
   let isImporting = $state(false);
 
-  // Join shared vault state
   let shareLink = $state("");
   let isJoining = $state(false);
 
@@ -392,7 +391,7 @@
         </h4>
         <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
           Paste a Drive share link from your GM to load their vault. Google will
-          ask you to grant access.
+          ask you to grant read access.
         </p>
       </div>
       <div class="flex gap-2">
