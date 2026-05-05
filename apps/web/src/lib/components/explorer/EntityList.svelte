@@ -343,7 +343,7 @@
         </button>
 
         {#if entity.labels && entity.labels.length > 0}
-          <div class="flex gap-1 shrink-0 px-2 flex-wrap justify-end">
+          <div class="flex gap-1 px-2 flex-wrap justify-end max-w-[50%]">
             {#each entity.labels as label}
               <button
                 type="button"
