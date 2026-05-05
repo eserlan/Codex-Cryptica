@@ -135,7 +135,7 @@ All commits must start with a [gitmoji](https://gitmoji.dev/) emoji:
 🔧 Configuration change
 ```
 
-Use `npx gitmoji -c` for interactive commit with emoji selection.
+Use `pnpm exec gitmoji -c` for interactive commit with emoji selection.
 
 ### Pre-commit Hooks
 

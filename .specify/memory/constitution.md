@@ -28,7 +28,7 @@ To maintain build integrity and code quality, AI agents MUST:
 
 1.  **Style Guide**: Adhere strictly to `@docs/STYLE_GUIDE.md` for all visual, behavioral, and architectural patterns (including Svelte 5 Runes, Tailwind 4 tokens, and Data Safety).
 2.  **Implementation Hygiene**: Prefix unused variables/parameters with `_` and ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
-3.  **Validation**: Every code change MUST be verified with `npm run lint` and `npm test` before considering the task complete.
+3.  **Validation**: Every code change MUST be verified with `pnpm run lint` and `pnpm test` before considering the task complete.
 
 ### VII. User Documentation
 

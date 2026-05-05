@@ -31,7 +31,7 @@ This plan outlines the steps to implement the Patreon support link in the applic
 
 ### Manual Verification
 
-- Start the dev server (`npm run dev`).
+- Start the dev server (`pnpm run dev`).
 - Scroll to the footer.
 - Visual check: Does it look like "Privacy Policy"?
 - Functional check: Click it, does it open the Patreon page?

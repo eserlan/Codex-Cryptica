@@ -24,7 +24,7 @@
 - [x] T003 Update `apps/web/svelte.config.js` to use `adapter-static` with `fallback: 'index.html'`
 - [x] T004 [P] Update `apps/web/svelte.config.js` to set `paths.base` to `'/Codex-Arcana'`
 - [x] T005 [P] Create `apps/web/src/routes/+layout.ts` with `export const prerender = false;` and `export const ssr = false;` to force SPA mode
-- [x] T006 Verify local build integrity by running `npm run build` in `apps/web/` and inspecting the `build/` directory
+- [x] T006 Verify local build integrity by running `pnpm run build` in `apps/web/` and inspecting the `build/` directory
 
 ## Phase 3: Web Access (User Story 1 - P1) 🎯 MVP
 

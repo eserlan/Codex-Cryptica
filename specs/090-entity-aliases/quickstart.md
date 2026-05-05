@@ -8,13 +8,13 @@ Run the unit tests included with this feature:
 
 ```bash
 # Test schema validation
-npm test -w packages/schema
+pnpm --filter schema test
 
 # Test search indexing
-npm test -w packages/search-engine
+pnpm --filter search-engine test
 
 # Test UI component
-npm test -w apps/web -- src/lib/components/labels/AliasInput.test.ts
+pnpm --filter web test -- src/lib/components/labels/AliasInput.test.ts
 ```
 
 ## 2. Manual Verification

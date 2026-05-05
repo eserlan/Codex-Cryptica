@@ -81,7 +81,7 @@
 
 **Goal**: Fix technical debt and accessibility issues.
 
-**Independent Test**: Run `npm run lint` and verify zero a11y warnings.
+**Independent Test**: Run `pnpm run lint` and verify zero a11y warnings.
 
 ### Implementation for User Story 4
 

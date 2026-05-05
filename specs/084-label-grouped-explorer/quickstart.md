@@ -7,8 +7,8 @@ This guide validates the explorer grouping feature against the current web app b
 Start the app locally:
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 ## Validation Steps
