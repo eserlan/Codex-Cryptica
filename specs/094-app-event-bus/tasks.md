@@ -140,8 +140,8 @@
 
 ## Phase 15: Final Validation
 
-- [x] T070 Run `pnpm run --prefix packages/events test`
-- [x] T071 Run `pnpm run --prefix packages/events lint`
+- [x] T070 Run `pnpm -C packages/events test`
+- [x] T071 Run `pnpm -C packages/events lint`
 - [x] T072 Run relevant web unit tests for search, vault events, Oracle undo, and app init
 - [x] T073 Run `pnpm run lint` across the workspace
 - [x] T074 Run `pnpm test` across affected workspaces

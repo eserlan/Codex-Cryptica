@@ -20,5 +20,5 @@
 
 ## Local Testing
 
-- Run unit tests: `pnpm test -w packages/chronology-engine`
+- Run unit tests: `pnpm --filter chronology-engine test`
 - Manual UI test: Open an entity in Zen Mode and try the new date picker.

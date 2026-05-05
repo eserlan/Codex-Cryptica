@@ -9,7 +9,7 @@
 
 ### 2. Local Server Test
 
-1. Run the local dev server: `pnpm run dev --workspace=web`
+1. Run the local dev server: `pnpm --filter web run dev`
 2. Visit `http://localhost:5173/llms.txt` and `http://localhost:5173/llms-full.txt`.
 3. Verify the Content-Type header is `text/plain`.
 

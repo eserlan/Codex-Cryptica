@@ -40,14 +40,14 @@ wrangler tail
 
 ```bash
 cd apps/workers/oracle-proxy
-pnpm test
+wrangler vitest run
 ```
 
 ### Integration Tests
 
 ```bash
 # Run in CI or with env var
-RUN_PROXY_INTEGRATION_TEST=1 pnpm exec playwright test oracle-proxy-integration
+RUN_PROXY_INTEGRATION_TEST=1 pnpm --filter web exec playwright test oracle-proxy-integration
 ```
 
 ### Manual Test

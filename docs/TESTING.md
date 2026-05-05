@@ -17,7 +17,7 @@ pnpm test
 To run tests for a specific package:
 
 ```bash
-pnpm test --workspace=@codex/vault-engine
+pnpm --filter @codex/vault-engine test
 ```
 
 ### Test Coverage

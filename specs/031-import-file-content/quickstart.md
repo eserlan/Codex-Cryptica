@@ -5,7 +5,7 @@
 The importer is a separate package.
 
 ```bash
-pnpm install @codex/importer
+pnpm add @codex/importer
 ```
 
 ## Basic Usage

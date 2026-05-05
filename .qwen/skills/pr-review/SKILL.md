@@ -156,7 +156,7 @@ pnpm run lint
 pnpm test
 
 # Run tests for affected workspace only (faster)
-pnpm test --workspace=<package-name>
+pnpm --filter <package-name> test
 
 # If tests fail, fix issues before proceeding
 ```

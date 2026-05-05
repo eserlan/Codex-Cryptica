@@ -77,7 +77,7 @@ description: "Task list for Dexie Entity Store implementation"
 
 - [x] T019 [P] `cache.ts` — remove bulk `entityContent` preload; keep only `graphEntities` scan to preserve lazy-loading goal (review feedback)
 - [x] T020 [P] `useEditState.svelte.ts` — extract `VaultLike` interface; accept optional `vaultInstance: VaultLike = defaultVault` DI parameter (review feedback, FR-010)
-- [x] T021 Verify all 127 unit tests pass (`pnpm test --workspace=apps/web`)
+- [x] T021 Verify all 127 unit tests pass (`pnpm --filter web test`)
 - [x] T022 Verify `svelte-check` reports 0 errors
 
 ---

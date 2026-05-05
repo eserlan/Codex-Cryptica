@@ -8,14 +8,14 @@ If you're seeing this, you've probably already done this step. Congrats!
 
 ```sh
 # create a new project
-pnpm exec sv create my-app
+pnpm dlx sv create my-app
 ```
 
 To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-pnpm exec sv create --template minimal --types ts --no-install ./
+pnpm dlx sv create --template minimal --types ts --no-install ./
 ```
 
 ## Developing

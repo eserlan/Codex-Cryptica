@@ -288,8 +288,8 @@ Phase 1 (Setup) → Phase 2 (Foundational) → Phase 3 (US1: Token P1)
 
 ```bash
 # Launch both test files in parallel:
-pnpm exec vitest run apps/web/tests/unit/stores/map-session.test.ts --testNamePattern "token placement"
-pnpm exec vitest run apps/web/tests/unit/lib/vtt-helpers.test.ts --testNamePattern "grid snapping"
+pnpm --filter web exec vitest run apps/web/tests/unit/stores/map-session.test.ts --testNamePattern "token placement"
+pnpm --filter web exec vitest run apps/web/tests/unit/lib/vtt-helpers.test.ts --testNamePattern "grid snapping"
 
 # Launch store + rendering in parallel:
 # Task T014: Add token add/remove methods to MapSession store
