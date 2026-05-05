@@ -345,6 +345,7 @@
           bind:this={mobileScroller}
           class="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden w-full h-full custom-scrollbar"
           data-testid="zen-mobile-scroll-container"
+          style="touch-action: pan-y;"
         >
           <ZenSidebar
             {entity}

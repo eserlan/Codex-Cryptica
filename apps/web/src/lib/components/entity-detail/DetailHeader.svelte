@@ -97,7 +97,7 @@
       <button
         onclick={onClose}
         class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
-        aria-label="Close"
+        aria-label="Back"
       >
         <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
       </button>
