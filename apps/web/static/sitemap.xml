@@ -37,6 +37,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/blog/gdrive-cloud-sync</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-04-30T10:00:00.000Z</lastmod>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/vtt-introduction</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
