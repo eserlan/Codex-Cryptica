@@ -37,3 +37,12 @@
 
 **Learning:** When creating or updating custom modal/dialog components (e.g., those using floating backdrops like `fixed inset-0`), strictly ensure screen reader accessibility by applying `role="dialog"`, `aria-modal="true"`, and an explicit `aria-label` or `aria-labelledby` directly to the main inner container element.
 **Action:** Add ARIA dialog roles, aria-modal, and appropriate labels to VTTGridSettings, CategorySettings icon picker sub-modal, and ZenModeModal.
+## 2026-05-07 - Focus vs Focus-Visible Accessibility
+
+**Learning:** When making components keyboard accessible, using standard `focus:` styles often results in ugly outlines appearing for mouse users after they click a button. This discourages developers from adding focus states at all.
+**Action:** Use Tailwind's `focus-visible:` utility classes (e.g., `focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none`) rather than standard `focus:` classes to guarantee clear focus rings for keyboard users without displaying them during mouse interactions.
+
+## 2026-05-07 - Button Types in Svelte
+
+**Learning:** Non-submit buttons in Svelte components can accidentally submit forms if they are ever wrapped in a `<form>` context and don't explicitly have a type.
+**Action:** Always explicitly define `type="button"` on generic buttons to prevent unexpected form submission behavior.
