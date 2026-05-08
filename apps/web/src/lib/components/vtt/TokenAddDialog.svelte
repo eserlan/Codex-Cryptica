@@ -14,7 +14,7 @@
     // This avoids intermediate array allocations and reduces GC pressure when typing in the search.
     const all = vault.allEntities;
     const term = query ? query.toLowerCase() : null;
-    const result = [];
+    const result: typeof all = [];
     const limit = 12;
 
     for (let i = 0; i < all.length; i++) {
