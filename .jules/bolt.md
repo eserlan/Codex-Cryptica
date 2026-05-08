@@ -76,3 +76,7 @@
 ## 2026-05-04 - [Performance Insight: Avoid intermediate array allocation for counting elements]
 **Learning:** Using `.filter(...).length` in Svelte `$derived` blocks on large arrays (like `vault.allEntities`) allocates a completely unnecessary intermediate array in memory, creating excess garbage collection pressure on every reactivity tick. While a verbose imperative loop is extremely efficient, a declarative `.reduce((count, item) => count + (condition ? 1 : 0), 0)` is slightly slower than a `for` loop but completely avoids array allocation and is far more readable.
 **Action:** Use `.reduce()` instead of `.filter(...).length` when counting matching items in reactive blocks to eliminate intermediate array memory allocation without sacrificing code readability.
+
+## 2024-10-27 - Early Exit Loops in `$derived`
+**Learning:** Chaining `.filter().slice()` in Svelte `$derived` blocks, especially for autocomplete features iterating over `vault.allEntities`, forces an O(N) intermediate array allocation on every keystroke.
+**Action:** Always replace `.filter(...).slice(0, limit)` with an imperative loop and an early exit (`if (result.length >= limit) break;`) for bounded search results to eliminate redundant processing and GC overhead.
