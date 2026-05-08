@@ -123,6 +123,106 @@ export class CalendarEngine {
 
     return value;
   }
+
+  /**
+   * Parse a string input into a TemporalMetadata structure.
+   * Supports:
+   * - DDMMYYYY (8 digits)
+   * - DD.MM.YYYY
+   * - DD/MM/YYYY
+   * - DD-MM-YYYY
+   * - YYYY
+   */
+  parse(
+    input: string,
+    config: CampaignCalendar = DEFAULT_CALENDAR,
+  ): TemporalMetadata | null {
+    const s = input.trim().toLowerCase();
+    if (!s) return null;
+
+    // Check if the whole string starts with a minus (e.g. -12.01.2024)
+    let isGlobalNegative = false;
+    let normalized = s;
+    if (s.startsWith("-") && s.length > 1 && !s.match(/^-\d+$/)) {
+      isGlobalNegative = true;
+      normalized = s.substring(1);
+    }
+
+    // Try DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY (Year can be negative like 12.01.-2024)
+    const dmyMatch = normalized.match(
+      /^(\d{1,2})[./-](\d{1,2})[./-](-?\d{1,6})$/,
+    );
+    if (dmyMatch) {
+      let year = parseInt(dmyMatch[3], 10);
+      if (isGlobalNegative) year = -Math.abs(year);
+      return {
+        day: parseInt(dmyMatch[1], 10),
+        month: parseInt(dmyMatch[2], 10),
+        year,
+      };
+    }
+
+    const months = this.getMonths(config);
+    const monthNames = months.map((m) => m.name.toLowerCase());
+
+    // Try DD Month YYYY (e.g. "12 January 1240" or "12 Jan -1240")
+    const ddMonthYearMatch = normalized.match(
+      /^(\d{1,2})\s+([a-z]+)\s+(-?\d{1,6})$/,
+    );
+    if (ddMonthYearMatch) {
+      const day = parseInt(ddMonthYearMatch[1], 10);
+      const monthName = ddMonthYearMatch[2];
+      let year = parseInt(ddMonthYearMatch[3], 10);
+      if (isGlobalNegative) year = -Math.abs(year);
+      const monthIndex = monthNames.findIndex(
+        (m) => m.startsWith(monthName) && monthName.length >= 3,
+      );
+      if (monthIndex !== -1) {
+        return { day, month: monthIndex + 1, year };
+      }
+    }
+
+    // Try "Month DD, YYYY" or "Month DD YYYY"
+    const monthDdYearMatch = normalized.match(
+      /^([a-z]+)\s+(\d{1,2})[,\s]+(-?\d{1,6})$/,
+    );
+    if (monthDdYearMatch) {
+      const monthName = monthDdYearMatch[1];
+      const day = parseInt(monthDdYearMatch[2], 10);
+      let year = parseInt(monthDdYearMatch[3], 10);
+      if (isGlobalNegative) year = -Math.abs(year);
+      const monthIndex = monthNames.findIndex(
+        (m) => m.startsWith(monthName) && monthName.length >= 3,
+      );
+      if (monthIndex !== -1) {
+        return { day, month: monthIndex + 1, year };
+      }
+    }
+
+    // Try DDMMYYYY (exactly 8 digits)
+    const ddmmyyyyMatch = normalized.match(/^(\d{2})(\d{2})(\d{4})$/);
+    if (ddmmyyyyMatch) {
+      let year = parseInt(ddmmyyyyMatch[3], 10);
+      if (isGlobalNegative) year = -Math.abs(year);
+      return {
+        day: parseInt(ddmmyyyyMatch[1], 10),
+        month: parseInt(ddmmyyyyMatch[2], 10),
+        year,
+      };
+    }
+
+    // Try YYYY (up to 6 digits, allows negative)
+    const yearMatch = normalized.match(/^-?(\d{1,6})$/);
+    if (yearMatch) {
+      let year = parseInt(yearMatch[0], 10);
+      if (isGlobalNegative) year = -Math.abs(year);
+      return {
+        year,
+      };
+    }
+
+    return null;
+  }
 }
 
 export const calendarEngine = new CalendarEngine();

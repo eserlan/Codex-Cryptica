@@ -122,4 +122,127 @@ describe("CalendarEngine", () => {
       expect(v1).toBe(-daysInYear);
     });
   });
+
+  describe("parse", () => {
+    it("should parse DD.MM.YYYY", () => {
+      expect(calendarEngine.parse("12.01.2024")).toEqual({
+        day: 12,
+        month: 1,
+        year: 2024,
+      });
+    });
+
+    it("should parse DD/MM/YYYY", () => {
+      expect(calendarEngine.parse("15/05/1240")).toEqual({
+        day: 15,
+        month: 5,
+        year: 1240,
+      });
+    });
+
+    it("should parse DD-MM-YYYY", () => {
+      expect(calendarEngine.parse("01-12-2025")).toEqual({
+        day: 1,
+        month: 12,
+        year: 2025,
+      });
+    });
+
+    it("should parse DDMMYYYY", () => {
+      expect(calendarEngine.parse("25122024")).toEqual({
+        day: 25,
+        month: 12,
+        year: 2024,
+      });
+    });
+
+    it("should parse simple year", () => {
+      expect(calendarEngine.parse("2024")).toEqual({
+        year: 2024,
+      });
+    });
+
+    it("should parse DD Month YYYY", () => {
+      expect(calendarEngine.parse("12 January 1240")).toEqual({
+        day: 12,
+        month: 1,
+        year: 1240,
+      });
+    });
+
+    it("should parse DD Month YYYY case-insensitive", () => {
+      expect(calendarEngine.parse("12 JANUARY 1240")).toEqual({
+        day: 12,
+        month: 1,
+        year: 1240,
+      });
+    });
+
+    it("should parse DD Month YYYY with abbreviation", () => {
+      expect(calendarEngine.parse("12 Jan 1240")).toEqual({
+        day: 12,
+        month: 1,
+        year: 1240,
+      });
+    });
+
+    it("should parse Month DD, YYYY", () => {
+      expect(calendarEngine.parse("May 15, 2024")).toEqual({
+        day: 15,
+        month: 5,
+        year: 2024,
+      });
+    });
+
+    it("should parse negative year", () => {
+      expect(calendarEngine.parse("-500")).toEqual({
+        year: -500,
+      });
+    });
+
+    it("should parse date with negative year (DD.MM.-YYYY)", () => {
+      expect(calendarEngine.parse("12.01.-2024")).toEqual({
+        day: 12,
+        month: 1,
+        year: -2024,
+      });
+    });
+
+    it("should parse date starting with minus (-DD.MM.YYYY)", () => {
+      expect(calendarEngine.parse("-12.01.2024")).toEqual({
+        day: 12,
+        month: 1,
+        year: -2024,
+      });
+    });
+
+    it("should parse textual date with negative year", () => {
+      expect(calendarEngine.parse("15 May -1240")).toEqual({
+        day: 15,
+        month: 5,
+        year: -1240,
+      });
+    });
+
+    it("should parse textual date starting with minus", () => {
+      expect(calendarEngine.parse("-15 May 1240")).toEqual({
+        day: 15,
+        month: 5,
+        year: -1240,
+      });
+    });
+
+    it("should return null for invalid format", () => {
+      expect(calendarEngine.parse("not a date")).toBeNull();
+      expect(calendarEngine.parse("12.01")).toBeNull();
+    });
+
+    it("should handle whitespace", () => {
+      expect(calendarEngine.parse("  12.01.2024  ")).toEqual({
+        day: 12,
+        month: 1,
+        year: 2024,
+      });
+    });
+  });
 });

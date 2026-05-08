@@ -53,10 +53,15 @@
   const formatDate = (date: any) => {
     if (!date || date.year === undefined) return "";
     if (date.label) return date.label;
-    let str = `${date.year}`;
-    if (date.month !== undefined) str += `/${date.month}`;
-    if (date.day !== undefined) str += `/${date.day}`;
-    return str;
+
+    const parts: string[] = [];
+    if (date.day !== undefined)
+      parts.push(date.day.toString().padStart(2, "0"));
+    if (date.month !== undefined)
+      parts.push(date.month.toString().padStart(2, "0"));
+    parts.push(date.year.toString());
+
+    return parts.join("/");
   };
 </script>
 

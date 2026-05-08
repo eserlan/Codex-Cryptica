@@ -26,6 +26,8 @@
   let selectedMonth = $state(value?.month);
   let selectedDay = $state(value?.day);
 
+  let quickInput = $state("");
+
   let precision = $state<"year" | "month" | "day">(
     (() => {
       return selectedDay !== undefined
@@ -205,6 +207,27 @@
     }
   };
 
+  const handleQuickInput = (e: Event) => {
+    const val = (e.target as HTMLInputElement).value;
+    quickInput = val;
+    const parsed = calendarEngine.parse(val, calendarStore.config);
+    if (parsed) {
+      selectedYear = parsed.year;
+      if (parsed.month !== undefined) {
+        selectedMonth = parsed.month;
+        precision = parsed.day !== undefined ? "day" : "month";
+      } else {
+        precision = "year";
+      }
+      if (parsed.day !== undefined) {
+        selectedDay = parsed.day;
+      }
+
+      // Update navigation view to match the new year
+      viewBaseYear = Math.floor(selectedYear / 10) * 10;
+    }
+  };
+
   const selectInGrid = (val: number) => {
     if (yearPickerView === "centuries") {
       viewBaseYear = val;
@@ -324,6 +347,29 @@
         aria-labelledby="manual-tab"
         class="space-y-3"
       >
+        <!-- Quick Entry -->
+        <div class="space-y-1">
+          <label
+            for="quick-date-input"
+            class="text-[9px] font-bold text-theme-muted uppercase font-header tracking-widest flex justify-between"
+          >
+            Quick Entry
+            <span class="text-[8px] normal-case font-normal italic"
+              >e.g. 12.01.2024</span
+            >
+          </label>
+          <input
+            id="quick-date-input"
+            type="text"
+            value={quickInput}
+            oninput={handleQuickInput}
+            placeholder="Paste date here..."
+            class="w-full bg-theme-bg border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text focus:border-theme-primary outline-none font-mono"
+          />
+        </div>
+
+        <div class="border-t border-theme-border/20 pt-1"></div>
+
         <!-- Precision Toggle -->
         <div
           class="flex bg-theme-bg p-0.5 rounded-md border border-theme-border/30"
