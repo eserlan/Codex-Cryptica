@@ -1,15 +1,8 @@
 import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
-if (
-  import.meta.env.DEV ||
-  (typeof window !== "undefined" && (window as any).__E2E__)
-) {
-  console.error("[ThemeStore] Script executing");
-}
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import { vault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
 import {
   getOpfsRoot,
@@ -42,6 +35,7 @@ export class ThemeStore {
   // Dependencies
   private uiStore: typeof defaultUiStore;
   private storage: IThemeStorage;
+  private getVault: () => any;
 
   activeTheme = $derived(
     this.previewThemeId
@@ -70,6 +64,7 @@ export class ThemeStore {
 
   constructor(
     uiStore: typeof defaultUiStore = defaultUiStore,
+    getVault?: () => any,
     storage: IThemeStorage = {
       loadLocal() {
         if (!browser) return null;
@@ -126,6 +121,8 @@ export class ThemeStore {
   ) {
     this.uiStore = uiStore;
     this.storage = storage;
+    this.getVault =
+      getVault || (() => import("./vault.svelte").then((m) => m.vault));
 
     // Apply initial theme
     const initial = this.storage.loadLocal();
@@ -150,7 +147,9 @@ export class ThemeStore {
     if (!browser) return;
 
     // Use current active vault if available, otherwise fall back to localStorage
-    const activeVaultId = vault.activeVaultId;
+    const vault = await Promise.resolve(this.getVault());
+    const activeVaultId = vault?.activeVaultId;
+
     if (activeVaultId) {
       await this.loadForVault(activeVaultId);
     } else {
@@ -210,7 +209,10 @@ export class ThemeStore {
       if (this.uiStore.isDemoMode) return;
 
       this.storage.saveLocal(id);
-      const activeVaultId = vault.activeVaultId;
+
+      const vault = await Promise.resolve(this.getVault());
+      const activeVaultId = vault?.activeVaultId;
+
       if (activeVaultId) {
         try {
           // 1. Save to IDB for fast local lookup
@@ -234,6 +236,7 @@ export class ThemeStore {
 
     const root = document.documentElement;
     const tokens = theme.tokens;
+    root.dataset.theme = theme.id;
 
     root.style.setProperty("--color-bg-primary", tokens.background);
     root.style.setProperty("--color-bg-surface", tokens.surface);
@@ -242,6 +245,9 @@ export class ThemeStore {
     root.style.setProperty("--color-accent-dark", tokens.secondary);
     root.style.setProperty("--color-accent-deep", tokens.background);
     root.style.setProperty("--color-border-primary", tokens.border);
+
+    // Base accent alias (for --color-theme-accent and --color-theme-danger)
+    root.style.setProperty("--color-accent", tokens.accent);
 
     // RGB versions for rgba() usage in shadows/overlays
     root.style.setProperty(
@@ -258,6 +264,65 @@ export class ThemeStore {
     root.style.setProperty("--color-text-dim", tokens.secondary);
 
     root.style.setProperty("--color-theme-accent", tokens.accent);
+    root.style.setProperty("--theme-title-ink", tokens.titleInk ?? tokens.text);
+    root.style.setProperty(
+      "--theme-section-title",
+      tokens.sectionTitle ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-meta-text",
+      tokens.metaText ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-icon-default",
+      tokens.iconDefault ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-icon-active",
+      tokens.iconActive ?? tokens.primary,
+    );
+    root.style.setProperty("--theme-focus", tokens.focus ?? tokens.accent);
+    root.style.setProperty(
+      "--theme-panel-fill",
+      tokens.panelFill ?? tokens.surface,
+    );
+    root.style.setProperty(
+      "--theme-panel-muted",
+      tokens.panelMuted ??
+        `color-mix(in srgb, ${tokens.surface}, ${tokens.background} 28%)`,
+    );
+    root.style.setProperty(
+      "--theme-selected-bg",
+      tokens.selectedBg ??
+        `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 86%)`,
+    );
+    root.style.setProperty(
+      "--theme-selected-border",
+      tokens.selectedBorder ??
+        `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 42%)`,
+    );
+    root.style.setProperty(
+      "--theme-focus-bg",
+      tokens.focusBg ??
+        `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 84%)`,
+    );
+    root.style.setProperty(
+      "--theme-focus-border",
+      tokens.focusBorder ??
+        `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 42%)`,
+    );
+    root.style.setProperty(
+      "--theme-action-bg",
+      tokens.actionBg ?? tokens.primary,
+    );
+    root.style.setProperty(
+      "--theme-action-hover",
+      tokens.actionHover ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-action-text",
+      tokens.actionText ?? tokens.background,
+    );
 
     root.style.setProperty("--color-oracle-primary", tokens.accent);
     root.style.setProperty(
@@ -276,17 +341,24 @@ export class ThemeStore {
       "--theme-border-width",
       `${theme.graph.nodeBorderWidth}px`,
     );
+    root.style.setProperty(
+      "--theme-edge-stroke-width",
+      `${theme.graph.edgeWidth}px`,
+    );
 
     // Theme specific visual behaviors
     let glow = "none";
     if (theme.id === "cyberpunk") glow = `0 0 15px ${tokens.primary}44`;
     if (theme.id === "horror") glow = `0 0 20px ${tokens.primary}33`;
+    // Warm candlelight/arcane glow using the gold accent — evokes magic without neon
+    if (theme.id === "fantasy") glow = `0 0 14px ${tokens.accent}44`;
     root.style.setProperty("--theme-glow", glow);
 
     let radius = "2px"; // Gothic/Terminal default
     if (theme.id === "modern") radius = "12px";
-    if (theme.id === "fantasy") radius = "6px"; // Softer look for fantasy
+    if (theme.id === "fantasy") radius = "3px"; // Firmer, less app-like fantasy
     if (theme.id === "horror") radius = "0px"; // Sharp corners for horror
+    if (tokens.borderRadius) radius = tokens.borderRadius;
     root.style.setProperty("--theme-border-radius", radius);
 
     if (tokens.texture) {

@@ -1,56 +1,113 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
+  import { groupEntitiesForExplorer } from "./entityListGrouping";
   import type { Entity } from "schema";
-  import { Search, Filter, LayoutGrid } from "lucide-svelte";
 
   let {
     onSelect,
     onDragStart,
+    onDragEnd,
+    onOpenZen,
+    onFindInGraph,
+    onApproveDraft,
+    onRejectDraft,
+    allowedTypes = null,
+    showDraftsOnly = false,
     class: className = "",
   }: {
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
+    onDragEnd?: () => void;
+    onOpenZen?: (entity: Entity) => void;
+    onFindInGraph?: (entity: Entity) => void;
+    onApproveDraft?: (entity: Entity) => void;
+    onRejectDraft?: (entity: Entity) => void;
+    allowedTypes?: string[] | null;
+    showDraftsOnly?: boolean;
     class?: string;
   } = $props();
 
   let searchQuery = $state("");
-  let typeFilters = $state<string[]>(["all"]);
+  let typeFilters = $state<Set<string>>(new Set());
+  const activeVaultId = $derived(vault.activeVaultId);
+  const labelFilters = $derived(uiStore.labelFilters);
+  const focusedEntityId = $derived(uiStore.focusedEntityId);
+  const viewMode = $derived(uiStore.explorerViewMode);
+  const allowedTypeSet = $derived.by(() =>
+    allowedTypes ? new Set(allowedTypes) : null,
+  );
+  const visibleCategories = $derived.by(() =>
+    categories.list.filter(
+      (cat) => !allowedTypeSet || allowedTypeSet.has(cat.id),
+    ),
+  );
+  const collapsedLabelGroups = $derived.by(() =>
+    uiStore.getCollapsedLabelGroups(activeVaultId),
+  );
 
-  const types = $derived.by(() => {
+  // ⚡ Bolt Optimization: Return the Map directly to avoid intermediate array allocations,
+  // mapping, and sorting. This also turns an O(N) .find into an O(1) Map .get lookup in the loop.
+  const typeCounts = $derived.by(() => {
     const allEntities = vault.allEntities;
-    const typesSet = new Set<string>(["all"]);
+    const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
-      typesSet.add(allEntities[i].type);
+      const e = allEntities[i];
+      if (allowedTypeSet && !allowedTypeSet.has(e.type)) {
+        continue;
+      }
+      if (showDraftsOnly && e.status !== "draft") {
+        continue;
+      }
+      if (!showDraftsOnly && e.status === "draft") {
+        continue;
+      }
+      counts.set(e.type, (counts.get(e.type) || 0) + 1);
     }
-    return Array.from(typesSet);
+    return counts;
   });
 
   const filteredEntities = $derived.by(() => {
     const allEntities = vault.allEntities;
     const filtered: Entity[] = [];
     const query = searchQuery.trim().toLowerCase();
-    const filterAll = typeFilters.includes("all");
-
-    if (!query) {
-      for (let i = 0; i < allEntities.length; i++) {
-        const e = allEntities[i];
-        if (filterAll || typeFilters.includes(e.type)) {
-          filtered.push(e);
-        }
-      }
-      return filtered.sort((a, b) => a.title.localeCompare(b.title));
-    }
+    const filterAllTypes = typeFilters.size === 0;
+    const activeLabels = Array.from(labelFilters);
 
     for (let i = 0; i < allEntities.length; i++) {
       const e = allEntities[i];
-      const matchesSearch =
-        e.title.toLowerCase().includes(query) ||
-        e.content.toLowerCase().includes(query);
-      const matchesType = filterAll || typeFilters.includes(e.type);
 
-      if (matchesSearch && matchesType) {
+      if (allowedTypeSet && !allowedTypeSet.has(e.type)) {
+        continue;
+      }
+
+      // Filter by draft status
+      if (showDraftsOnly && e.status !== "draft") {
+        continue;
+      }
+      if (!showDraftsOnly && e.status === "draft") {
+        continue;
+      }
+
+      const matchesType = filterAllTypes || typeFilters.has(e.type);
+      if (!matchesType) continue;
+
+      // AND logic for labels
+      const matchesLabels =
+        activeLabels.length === 0 ||
+        (e.labels && activeLabels.every((f) => e.labels?.includes(f)));
+      if (!matchesLabels) continue;
+
+      const matchesSearch =
+        !query ||
+        e.title.toLowerCase().includes(query) ||
+        e.content.toLowerCase().includes(query) ||
+        e.labels?.some((l) => l.toLowerCase().includes(query)) ||
+        e.aliases?.some((a) => a.toLowerCase().includes(query));
+
+      if (matchesSearch) {
         filtered.push(e);
       }
     }
@@ -58,114 +115,382 @@
     return filtered.sort((a, b) => a.title.localeCompare(b.title));
   });
 
+  const groupedEntities = $derived.by(() => {
+    return groupEntitiesForExplorer(filteredEntities, viewMode);
+  });
+
   function toggleTypeFilter(type: string, event: MouseEvent) {
+    if (allowedTypeSet && !allowedTypeSet.has(type)) {
+      return;
+    }
+
     const isMulti = event.ctrlKey || event.metaKey;
 
     if (type === "all") {
-      typeFilters = ["all"];
+      typeFilters = new Set();
+      uiStore.clearLabelFilters();
       return;
     }
 
     if (isMulti) {
-      let newFilters = typeFilters.filter((f) => f !== "all");
-      if (newFilters.includes(type)) {
-        newFilters = newFilters.filter((f) => f !== type);
+      const newFilters = new Set(typeFilters);
+      if (newFilters.has(type)) {
+        newFilters.delete(type);
       } else {
-        newFilters.push(type);
+        newFilters.add(type);
       }
-      typeFilters = newFilters.length === 0 ? ["all"] : newFilters;
+      typeFilters = newFilters;
     } else {
-      if (typeFilters.length === 1 && typeFilters[0] === type) {
-        typeFilters = ["all"];
+      if (typeFilters.has(type)) {
+        typeFilters = new Set();
       } else {
-        typeFilters = [type];
+        typeFilters = new Set([type]);
       }
     }
   }
+
+  function getIconToggleClasses(active: boolean) {
+    return active
+      ? "rounded-lg border border-theme-primary bg-theme-primary text-theme-bg shadow-sm transition-all hover:border-theme-secondary hover:bg-theme-secondary"
+      : "rounded-lg border border-theme-border bg-theme-bg/50 text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text";
+  }
+
+  $effect(() => {
+    if (!allowedTypeSet || typeFilters.size === 0) {
+      return;
+    }
+
+    const nextFilters = new Set(
+      Array.from(typeFilters).filter((type) => allowedTypeSet.has(type)),
+    );
+    if (nextFilters.size !== typeFilters.size) {
+      typeFilters = nextFilters;
+    }
+  });
 </script>
 
-<div class="flex flex-col h-full {className}">
-  <div class="p-4 border-b border-theme-border">
+<div class="flex flex-col h-full min-h-0 {className}">
+  <div class="p-4 border-b border-theme-border shrink-0">
     <div class="relative mb-3">
-      <Search
-        class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted"
-      />
+      <span
+        class="absolute left-3 top-1/2 -translate-y-1/2 icon-[lucide--search] w-3.5 h-3.5 text-theme-muted"
+      ></span>
       <input
         type="text"
         bind:value={searchQuery}
         placeholder="Search entities..."
         aria-label="Search entities"
-        class="w-full bg-theme-bg border border-theme-border rounded-md pl-9 pr-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary transition-colors"
+        class="w-full rounded-lg border border-theme-border bg-theme-bg/50 py-2 pl-9 pr-9 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
       />
+      {#if searchQuery}
+        <button
+          onclick={() => (searchQuery = "")}
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-theme-muted hover:text-theme-text transition-colors"
+          title="Clear search"
+          aria-label="Clear search"
+        >
+          <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+        </button>
+      {/if}
     </div>
 
-    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
-      <Filter class="w-3 h-3 text-theme-muted shrink-0 mr-1" />
-      {#each types as type}
-        <button
-          onclick={(e) => toggleTypeFilter(type, e)}
-          aria-label={`Filter by ${type}`}
-          title={type.toUpperCase()}
-          class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.includes(
-            type,
-          )
-            ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
-            : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-        >
-          {#if type === "all"}
-            <LayoutGrid class="w-4 h-4" />
-          {:else}
-            {@const cat = categories.getCategory(type)}
-            <span class="{getIconClass(cat?.icon)} w-4 h-4"></span>
-          {/if}
-        </button>
+    <div
+      class="flex items-center gap-1 rounded-xl border border-theme-border bg-theme-surface/50 px-2 py-1.5 shadow-sm"
+    >
+      <button
+        onclick={(e) => toggleTypeFilter("all", e)}
+        title="Show all categories"
+        aria-label="Show all categories"
+        aria-pressed={typeFilters.size === 0}
+        class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+          typeFilters.size === 0,
+        )}"
+      >
+        <span class="icon-[lucide--layout-grid] w-3.5 h-3.5"></span>
+      </button>
+
+      {#each visibleCategories as cat (cat.id)}
+        {@const count = typeCounts.get(cat.id) || 0}
+        {#if count > 0 || typeFilters.has(cat.id)}
+          <button
+            onclick={(e) => toggleTypeFilter(cat.id, e)}
+            title={cat.label}
+            aria-label={`Filter by ${cat.label}`}
+            aria-pressed={typeFilters.has(cat.id)}
+            class="relative flex items-center justify-center p-1.5 {getIconToggleClasses(
+              typeFilters.has(cat.id),
+            )}"
+          >
+            <span
+              class="{getIconClass(cat.icon)} w-3.5 h-3.5"
+              style={typeFilters.has(cat.id)
+                ? undefined
+                : `color: ${cat.color}`}
+            ></span>
+            {#if count > 0 && !typeFilters.has(cat.id)}
+              <span
+                class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-theme-primary/10 text-[7px] font-bold leading-none text-theme-primary"
+              >
+                {count > 9 ? "9+" : count}
+              </span>
+            {/if}
+          </button>
+        {/if}
       {/each}
+
+      <div class="w-px h-3.5 bg-theme-border mx-0.5 opacity-50"></div>
+
+      <button
+        onclick={() => uiStore.setExplorerViewMode("list")}
+        title="List View"
+        aria-label="List View"
+        aria-pressed={viewMode === "list"}
+        class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+          viewMode === 'list',
+        )}"
+      >
+        <span class="icon-[lucide--list] w-3.5 h-3.5"></span>
+      </button>
+
+      <button
+        onclick={() => uiStore.setExplorerViewMode("label")}
+        title="Group by Label"
+        aria-label="Group by Label"
+        aria-pressed={viewMode === "label"}
+        class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+          viewMode === 'label',
+        )}"
+      >
+        <span class="icon-[lucide--tag] w-3.5 h-3.5"></span>
+      </button>
     </div>
+
+    {#if labelFilters.size > 0}
+      <div
+        class="mt-3 flex flex-wrap gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
+      >
+        {#each Array.from(labelFilters).sort() as label}
+          <div
+            class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+          >
+            <span>{label}</span>
+            <button
+              onclick={() => uiStore.removeLabelFilter(label)}
+              class="hover:text-theme-text transition-colors flex items-center justify-center"
+              aria-label={`Remove ${label} filter`}
+            >
+              <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
+            </button>
+          </div>
+        {/each}
+        <button
+          onclick={() => uiStore.clearLabelFilters()}
+          class="px-2 py-0.5 text-[9px] font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
+        >
+          Clear All
+        </button>
+      </div>
+    {/if}
   </div>
 
-  <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-    {#each filteredEntities as entity}
+  <div
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
+    style="touch-action: pan-y;"
+  >
+    {#snippet entityItem(entity: Entity)}
       {@const cat = categories.getCategory(entity.type)}
-      <button
-        type="button"
-        draggable={!!onDragStart}
-        ondragstart={(e) => onDragStart?.(e, entity.id)}
-        onclick={() => onSelect?.(entity)}
+      <div
+        class="group relative flex items-center rounded-xl border transition-all {entity.id ===
+        focusedEntityId
+          ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
+          : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
         data-testid="entity-list-item"
         data-entity-id={entity.id}
-        class="w-full text-left p-2.5 bg-theme-bg border border-theme-border rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5 transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none"
       >
-        <div class="flex items-center gap-2">
+        <button
+          type="button"
+          draggable={!!onDragStart}
+          ondragstart={(e) => onDragStart?.(e, entity.id)}
+          ondragend={() => onDragEnd?.()}
+          onclick={() => onSelect?.(entity)}
+          title={`Select ${entity.title}`}
+          class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl"
+        >
           <span
             class="{getIconClass(
               cat?.icon,
-            )} w-3.5 h-3.5 shrink-0 text-theme-primary/70 group-hover:text-theme-primary transition-colors"
+            )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
           ></span>
-          <div class="flex-1 min-w-0">
+          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
             <div
-              class="text-xs font-bold text-theme-text group-hover:text-theme-primary transition-colors truncate uppercase font-header tracking-widest"
+              class="truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text transition-colors group-hover:text-theme-primary"
             >
               {entity.title}
             </div>
+            {#if entity.aliases && entity.aliases.length > 0}
+              <div
+                class="truncate text-[9px] text-theme-muted/70 font-mono italic"
+              >
+                aka: {entity.aliases.slice(0, 2).join(", ")}
+                {#if entity.aliases.length > 2}
+                  <span class="text-[8px] opacity-60">
+                    +{entity.aliases.length - 2} more
+                  </span>
+                {/if}
+              </div>
+            {/if}
           </div>
-          {#if entity.labels && entity.labels.length > 0}
-            <div class="flex gap-1 shrink-0 ml-auto flex-wrap justify-end">
-              {#each entity.labels as label}
-                <span
-                  class="text-[7px] px-1 bg-theme-primary/10 text-theme-primary rounded uppercase tracking-[0.1em] truncate max-w-[40px] font-mono"
-                >
-                  {label}
-                </span>
-              {/each}
-            </div>
-          {/if}
-        </div>
-      </button>
-    {:else}
-      <div class="text-center py-10 px-4" data-testid="no-entities-found">
-        <p class="text-xs text-theme-muted">No entities found</p>
+        </button>
+
+        {#if entity.labels && entity.labels.length > 0}
+          <div
+            class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0"
+          >
+            {#each entity.labels.slice(0, 2) as label}
+              <button
+                type="button"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  uiStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
+                }}
+                class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
+                  label,
+                )
+                  ? 'bg-theme-primary text-theme-bg border-theme-primary'
+                  : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
+              >
+                {label}
+              </button>
+            {/each}
+            {#if entity.labels.length > 2}
+              <div
+                class="text-[7px] text-theme-muted font-mono flex items-center"
+              >
+                +{entity.labels.length - 2}
+              </div>
+            {/if}
+          </div>
+        {/if}
+
+        {#if onFindInGraph}
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onFindInGraph(entity);
+            }}
+            title="Find in Graph"
+            aria-label="Find {entity.title} in Graph"
+            class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100"
+          >
+            <span class="icon-[lucide--target] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
+        {#if onOpenZen}
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onOpenZen(entity);
+            }}
+            title="Open in Zen Mode"
+            aria-label="Open {entity.title} in Zen Mode"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 {!(
+              onApproveDraft &&
+              onRejectDraft &&
+              entity.status === 'draft'
+            )
+              ? 'rounded-r-xl'
+              : ''}"
+          >
+            <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
+        {#if onApproveDraft && onRejectDraft && entity.status === "draft"}
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onApproveDraft(entity);
+            }}
+            title="Approve draft"
+            aria-label="Approve {entity.title}"
+            class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-emerald-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100"
+          >
+            <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+          </button>
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onRejectDraft(entity);
+            }}
+            title="Reject draft"
+            aria-label="Reject {entity.title}"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-red-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
+          >
+            <span class="icon-[lucide--trash-2] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
       </div>
-    {/each}
+    {/snippet}
+
+    {#snippet sectionHeader(title: string)}
+      <div
+        class="py-1 px-2 mt-4 first:mt-0 text-[10px] font-bold text-theme-muted uppercase tracking-[0.2em] border-b border-theme-border/30 mb-1"
+      >
+        {title}
+      </div>
+    {/snippet}
+
+    {#if viewMode === "list"}
+      {#each filteredEntities as entity (entity.id)}
+        {@render entityItem(entity)}
+      {:else}
+        <div class="text-center py-10 px-4" data-testid="no-entities-found">
+          <p class="text-xs text-theme-muted">No entities found</p>
+        </div>
+      {/each}
+    {:else if viewMode === "label" && groupedEntities?.type === "label"}
+      {#each groupedEntities.sortedKeys as label}
+        {@const labelEntities = groupedEntities.groups.get(label) ?? []}
+        {@const isCollapsed = collapsedLabelGroups.has(label)}
+        <button
+          type="button"
+          onclick={() => uiStore.toggleExplorerLabelGroup(activeVaultId, label)}
+          aria-expanded={!isCollapsed}
+          class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+        >
+          <span class="flex items-center gap-1.5">
+            {#if isCollapsed}
+              <span class="icon-[lucide--chevron-right] h-3 w-3"></span>
+            {:else}
+              <span class="icon-[lucide--chevron-down] h-3 w-3"></span>
+            {/if}
+            <span>{label}</span>
+          </span>
+          <span class="text-[9px] text-theme-muted/80"
+            >{labelEntities.length}</span
+          >
+        </button>
+        {#if !isCollapsed}
+          {#each labelEntities as entity (`${entity.id}:${label}`)}
+            {@render entityItem(entity)}
+          {/each}
+        {/if}
+      {/each}
+      {#if groupedEntities.unlabeled && groupedEntities.unlabeled.length > 0}
+        {@render sectionHeader("Unlabeled")}
+        {#each groupedEntities.unlabeled as entity (entity.id)}
+          {@render entityItem(entity)}
+        {/each}
+      {/if}
+      {#if filteredEntities.length === 0}
+        <div class="text-center py-10 px-4" data-testid="no-entities-found">
+          <p class="text-xs text-theme-muted">No entities found</p>
+        </div>
+      {/if}
+    {/if}
   </div>
 </div>
 

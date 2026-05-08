@@ -110,4 +110,89 @@ describe("OpfsBackend", () => {
       }),
     ]);
   });
+
+  it("handles NotFoundError gracefully during scan", async () => {
+    const backend = new OpfsBackend(
+      {
+        [Symbol.asyncIterator]: async function* () {
+          const entry = {
+            kind: "file",
+            getFile: async () => {
+              const err = new Error("Not Found");
+              err.name = "NotFoundError";
+              throw err;
+            },
+          };
+          yield ["ghost.md", entry];
+        },
+      } as any,
+      registry,
+    );
+
+    const result = await backend.scan("vault-1");
+    expect(result.files).toHaveLength(0);
+  });
+
+  it("uploads a file correctly with directory creation", async () => {
+    const mockFileHandle = {
+      createWritable: vi.fn().mockResolvedValue({
+        write: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+      }),
+      getFile: vi.fn().mockResolvedValue(makeBlob("new content", 300)),
+    };
+
+    const mockDirHandle = {
+      getDirectoryHandle: vi.fn().mockReturnThis(),
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+    };
+
+    const backend = new OpfsBackend(mockDirHandle as any, registry);
+    const content = new Blob(["new content"]);
+    const result = await backend.upload("path/to/file.md", content);
+
+    expect(mockDirHandle.getDirectoryHandle).toHaveBeenCalledWith("path", {
+      create: true,
+    });
+    expect(mockDirHandle.getDirectoryHandle).toHaveBeenCalledWith("to", {
+      create: true,
+    });
+    expect(mockFileHandle.createWritable).toHaveBeenCalled();
+    expect(result.path).toBe("path/to/file.md");
+  });
+
+  it("downloads a file correctly", async () => {
+    const blob = makeBlob("content", 400);
+    const mockFileHandle = {
+      getFile: vi.fn().mockResolvedValue(blob),
+    };
+
+    const mockDirHandle = {
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+    };
+
+    const backend = new OpfsBackend(mockDirHandle as any, registry);
+    const result = await backend.download("file.md");
+
+    expect(result).toBe(blob);
+    expect(mockDirHandle.getFileHandle).toHaveBeenCalledWith("file.md", {
+      create: false,
+    });
+  });
+
+  it("deletes a file correctly", async () => {
+    const mockDirHandle = {
+      getDirectoryHandle: vi.fn().mockReturnThis(),
+      removeEntry: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const backend = new OpfsBackend(mockDirHandle as any, registry);
+    await backend.delete("path/to/file.md");
+
+    expect(mockDirHandle.getDirectoryHandle).toHaveBeenCalledWith("path");
+    expect(mockDirHandle.getDirectoryHandle).toHaveBeenCalledWith("to");
+    expect(mockDirHandle.removeEntry).toHaveBeenCalledWith("file.md", {
+      recursive: true,
+    });
+  });
 });

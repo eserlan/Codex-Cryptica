@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { themeStore } from "$lib/stores/theme.svelte";
   let { data } = $props();
 </script>
 
@@ -9,6 +10,7 @@
     name="description"
     content="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
   />
+  <link rel="canonical" href={data.canonicalUrl} />
 </svelte:head>
 
 <div
@@ -28,7 +30,7 @@
     </header>
 
     <div class="grid gap-12 md:gap-20">
-      {#each data.articles as article}
+      {#each data.articles as article (article.slug)}
         <article class="group relative flex flex-col gap-4">
           <div
             class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-2"
@@ -42,7 +44,7 @@
               })}
             </time>
             <span class="w-8 h-px bg-theme-border"></span>
-            <span>Intel Report</span>
+            <span>{themeStore.resolveJargon("blog_entry")}</span>
           </div>
 
           <h2
@@ -63,7 +65,7 @@
           <div
             class="mt-2 flex items-center gap-2 text-theme-primary font-bold uppercase text-xs tracking-[0.2em] group-hover:gap-4 transition-all"
           >
-            Decrypt Full Entry
+            {themeStore.resolveJargon("blog_action")}
             <span class="icon-[lucide--arrow-right] w-4 h-4"></span>
           </div>
         </article>

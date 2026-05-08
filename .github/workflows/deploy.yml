@@ -1,55 +1,76 @@
-name: Deploy to GitHub Pages
+name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: ["**"]
+    branches: [main, staging]
+    paths-ignore:
+      - "apps/web/src/lib/content/blog/**"
+      - "scripts/publish-blog-content.mjs"
+      - ".github/workflows/deploy-blog-content.yml"
+      - "docs/**"
+  pull_request:
+    branches: [main, staging]
+    paths-ignore:
+      - "docs/**"
   workflow_dispatch:
 
 concurrency:
-  group: "pages"
+  group: "cloudflare-pages"
   cancel-in-progress: true
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-  actions: write
+  deployments: write
+  pull-requests: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [production, staging]
     env:
       HUSKY: 0
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          # Production always builds from main; Staging builds from the current ref
-          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.5.0
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: "npm"
+          node-version: 24
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm install --frozen-lockfile
 
       - name: Lint and Test
         run: |
-          npm run lint
-          npm run test:coverage
+          pnpm run lint
+          pnpm run test:coverage
 
       - name: Upload Coverage Reports
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: coverage-${{ matrix.environment }}
+          name: coverage
           path: |
             apps/*/coverage/
             packages/*/coverage/
@@ -57,65 +78,154 @@ jobs:
 
       - name: Build Application
         env:
-          BASE_PATH: ${{ matrix.environment == 'staging' && '/staging' || '' }}
+          VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
+          VITE_ROBOTS_DIRECTIVE: "index, follow"
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        run: |
-          npm run build --workspace=web
-          cp apps/web/build/index.html apps/web/build/404.html
+          VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: pnpm run build --filter=web
 
       - name: Upload intermediate artifact
         uses: actions/upload-artifact@v7
         with:
-          name: dist-${{ matrix.environment }}
+          name: dist
           path: apps/web/build/
           include-hidden-files: true
           retention-days: 1
 
+      - name: Upload staging artifact for promotion
+        if: github.ref_name == 'staging'
+        uses: actions/upload-artifact@v7
+        with:
+          name: staging-dist
+          path: apps/web/build/
+          include-hidden-files: true
+          retention-days: 30
+
   deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Download Production Build
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.5.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download Build
         uses: actions/download-artifact@v8
         with:
-          name: dist-production
+          name: dist
           path: dist/
 
-      - name: Download Staging Build
-        uses: actions/download-artifact@v8
-        with:
-          name: dist-staging
-          path: dist/staging/
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: "dist/"
-
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v5
-
-      - name: Notify Staging
-        if: success() && github.ref != 'refs/heads/main'
+      - name: Deploy Production to Cloudflare Pages
+        if: github.ref_name == 'main' && github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
-        run: |
-          ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}staging"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica
 
-      - name: Notify Production
-        if: success() && github.ref == 'refs/heads/main'
+      - name: Deploy Staging to Cloudflare Pages
+        if: github.ref_name == 'staging' && github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=staging
+
+      - name: Deploy Preview to Cloudflare Pages
+        if: github.event_name == 'pull_request'
+        id: deploy_preview
+        uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Construct the preview URL using Cloudflare Pages branch slugging rules:
+          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
+          BRANCH="${{ github.head_ref }}"
+          CF_BRANCH=$(printf '%s' "$BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//' \
+            | cut -c1-28 \
+            | sed -E 's/-+$//')
+          DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
+
+          COMMENT="🚀 **Preview Deployment Ready!**
+
+          **URL:** ${DEPLOYMENT_URL}
+          **Branch:** \`${BRANCH}\`
+
+          _Changes will be live shortly._"
+
+          # Check if a comment already exists to avoid spamming
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -f body="$COMMENT"
+          fi
+
+      - name: Notify Discord on Production Deploy
+        if: github.ref_name == 'main' && success() && github.event_name == 'push'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}"
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
+
+      - name: Notify Discord on Staging Deploy
+        if: github.ref_name == 'staging' && success() && github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"

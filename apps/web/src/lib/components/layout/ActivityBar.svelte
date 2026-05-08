@@ -1,6 +1,14 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
-  import { Sparkles, Database, Network, Compass, Layout } from "lucide-svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import {
+    Sparkles,
+    Database,
+    Network,
+    Compass,
+    Layout,
+    ShieldCheck,
+  } from "lucide-svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
 
@@ -33,26 +41,41 @@
     },
   ];
 
-  const tools: NavItem[] = [
-    {
-      id: "oracle",
-      icon: Sparkles,
-      label: "Lore Oracle",
-      action: () => uiStore.toggleSidebarTool("oracle"),
-    },
-    {
-      id: "explorer",
-      icon: Database,
-      label: "Entity Explorer",
-      action: () => uiStore.toggleSidebarTool("explorer"),
-    },
-  ];
+  const tools = $derived.by<NavItem[]>(() => {
+    const list: NavItem[] = [
+      {
+        id: "oracle",
+        icon: Sparkles,
+        label: "Lore Oracle",
+        action: () => uiStore.toggleSidebarTool("oracle"),
+      },
+      {
+        id: "explorer",
+        icon: Database,
+        label: "Entity Explorer",
+        action: () => uiStore.toggleSidebarTool("explorer"),
+      },
+    ];
+
+    if (!uiStore.aiDisabled && uiStore.connectionDiscoveryMode !== "off") {
+      list.push({
+        id: "ai-assessment",
+        icon: ShieldCheck,
+        label: "AI Assessment",
+        action: () => uiStore.toggleSidebarTool("ai-assessment"),
+      });
+    }
+
+    return list;
+  });
 
   const isViewActive = (item: NavItem) => {
     if (!item.href) return false;
     if (item.id === "graph") return page.url.pathname === `${base}/`;
     return page.url.pathname.startsWith(item.href);
   };
+
+  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 </script>
 
 <nav
@@ -61,6 +84,7 @@
     w-full md:w-14 h-14 md:h-full border-t md:border-t-0 md:border-r"
   aria-label="Activity Bar"
   data-testid="activity-bar"
+  style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Main Views -->
   {#each views as view}
@@ -68,9 +92,16 @@
     {@const active = isViewActive(view)}
     <a
       href={view.href}
-      class="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 group relative {active
-        ? 'bg-theme-primary/10 text-theme-primary border border-theme-primary/30 shadow-sm'
-        : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
+      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+        ? isFantasyTheme
+          ? 'text-[color:var(--theme-focus)] border-[color:var(--theme-focus-border)] shadow-none'
+          : 'bg-theme-primary/10 text-theme-primary border-theme-primary/30 shadow-sm'
+        : isFantasyTheme
+          ? 'text-[color:var(--theme-icon-default)] border-transparent hover:text-[color:var(--theme-title-ink)]'
+          : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
+      style:background-color={active && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
       aria-label={view.label}
       title={view.label}
       data-testid={`activity-bar-${view.id}`}
@@ -84,6 +115,9 @@
           class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
                  bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
                  bg-theme-primary rounded-t-full md:rounded-r-full md:rounded-t-none"
+          style:background-color={isFantasyTheme
+            ? "var(--theme-focus)"
+            : undefined}
         ></div>
       {/if}
     </a>
@@ -100,9 +134,16 @@
     {@const active = uiStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
-      class="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 group relative {active
-        ? 'bg-theme-primary/10 text-theme-primary border border-theme-primary/30 shadow-sm'
-        : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
+      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+        ? isFantasyTheme
+          ? 'text-[color:var(--theme-focus)] border-[color:var(--theme-focus-border)] shadow-none'
+          : 'bg-theme-primary/10 text-theme-primary border-theme-primary/30 shadow-sm'
+        : isFantasyTheme
+          ? 'text-[color:var(--theme-icon-default)] border-transparent hover:text-[color:var(--theme-title-ink)]'
+          : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
+      style:background-color={active && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
       aria-label={tool.label}
       title={tool.label}
       data-testid={`activity-bar-${tool.id}`}
@@ -116,6 +157,9 @@
           class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
                  bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
                  bg-theme-primary rounded-t-full md:rounded-r-full md:rounded-t-none"
+          style:background-color={isFantasyTheme
+            ? "var(--theme-focus)"
+            : undefined}
         ></div>
       {/if}
     </button>

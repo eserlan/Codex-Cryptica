@@ -119,10 +119,15 @@ test.describe("Category Architecture Modal", () => {
     // Delete character category naturally
     const characterRow = page.getByTestId("category-row-character");
     await characterRow.hover();
-    // Handle the confirm dialog
-    page.once("dialog", (dialog) => dialog.accept());
     await characterRow.getByTitle("Delete Category").click();
 
+    // Accept the Svelte confirmation dialog
+    await page
+      .locator('[class*="z-\\[200\\]"]')
+      .getByRole("button", { name: "Delete" })
+      .click();
+
+    // Verify row is gone
     await expect(characterRow).not.toBeVisible();
 
     // Click Reset to Defaults

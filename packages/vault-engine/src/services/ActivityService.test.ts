@@ -118,4 +118,80 @@ describe("ActivityServiceImplementation", () => {
     expect(result[0].image).toBe("images/front.webp");
     expect(result[0].thumbnail).toBe("images/front-thumb.webp");
   });
+
+  it("truncates correctly when the limit is less than the number of pinned records", async () => {
+    const entityContent = {
+      get: vi.fn().mockResolvedValue({ content: "test body" }),
+    };
+
+    const service = new ActivityServiceImplementation({
+      db: {
+        graphEntities: createGraphEntitiesMock({
+          tagRecords: [
+            {
+              id: "front1",
+              title: "Front 1",
+              type: "npc",
+              lastModified: 3,
+              labels: ["frontpage"],
+            },
+            {
+              id: "front2",
+              title: "Front 2",
+              type: "npc",
+              lastModified: 5,
+              labels: ["frontpage"],
+            },
+          ],
+          recentRecords: [
+            { id: "new", title: "New", type: "location", lastModified: 6 },
+          ],
+        }) as any,
+        entityContent,
+      },
+    });
+
+    // Request limit 1: Should only get the highest sorted pinned record (front2)
+    const result = await service.getRecentActivity("vault-1", 1);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("front2");
+  });
+
+  it("skips recent candidates that are already pinned", async () => {
+    const entityContent = {
+      get: vi.fn().mockResolvedValue({ content: "test body" }),
+    };
+
+    const service = new ActivityServiceImplementation({
+      db: {
+        graphEntities: createGraphEntitiesMock({
+          tagRecords: [
+            {
+              id: "pinned1",
+              title: "Pinned 1",
+              type: "npc",
+              lastModified: 3,
+              labels: ["frontpage"],
+            },
+          ],
+          recentRecords: [
+            // Pinned record appears in recent as well
+            { id: "pinned1", title: "Pinned 1", type: "npc", lastModified: 3 },
+            {
+              id: "unpinned1",
+              title: "Unpinned 1",
+              type: "location",
+              lastModified: 1,
+            },
+          ],
+        }) as any,
+        entityContent,
+      },
+    });
+
+    const result = await service.getRecentActivity("vault-1", 5);
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("pinned1");
+    expect(result[1].id).toBe("unpinned1");
+  });
 });

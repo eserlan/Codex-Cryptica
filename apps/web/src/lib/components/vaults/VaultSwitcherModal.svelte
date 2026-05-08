@@ -1,6 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
 
@@ -11,7 +12,6 @@
   let newVaultName = $state("");
   let editingId = $state<string | null>(null);
   let editName = $state("");
-  let deletingId = $state<string | null>(null);
 
   const handleLoadFromFolder = async () => {
     isLoading = true;
@@ -58,16 +58,27 @@
     }
   };
 
-  const handleDelete = async () => {
-    if (!deletingId) return;
-    isLoading = true;
-    try {
-      await vaultRegistry.deleteVault(deletingId);
-      deletingId = null;
-    } catch (e) {
-      console.error(e);
-    } finally {
-      isLoading = false;
+  const handleDelete = async (id: string) => {
+    const v = vaultRegistry.availableVaults.find((v) => v.id === id);
+    if (!v) return;
+
+    const confirmed = await uiStore.confirm({
+      title: "Delete Vault",
+      message: `Are you sure you want to permanently delete "${v.name}" and all its files? This action cannot be undone.`,
+      confirmLabel: "Delete Forever",
+      cancelLabel: "Cancel",
+      isDangerous: true,
+    });
+
+    if (confirmed) {
+      isLoading = true;
+      try {
+        await vaultRegistry.deleteVault(id);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        isLoading = false;
+      }
     }
   };
 
@@ -243,7 +254,7 @@
             <button
               class="flex-1 text-left disabled:opacity-50"
               onclick={() => handleSwitch(v.id)}
-              disabled={isLoading || !!deletingId || !!editingId}
+              disabled={isLoading || !!editingId}
             >
               <div class="font-bold text-sm flex items-center gap-2">
                 {v.name}
@@ -266,12 +277,26 @@
                 {v.entityCount || 0} Items
               </div>
 
+              {#if v.id === vaultRegistry.activeVaultId}
+                <button
+                  type="button"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => vault.loadFromFolder()}
+                  title="Load from Folder — pulls changes from your linked folder into the archive."
+                  aria-label="Load from Folder"
+                  disabled={isLoading || !!editingId}
+                >
+                  <span class="icon-[lucide--download-cloud] w-3.5 h-3.5"
+                  ></span>
+                </button>
+              {/if}
+
               <button
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => handleImportToVault(v)}
                 title="Restore from Folder"
-                aria-label="Restore from Folder"
-                disabled={isLoading || !!deletingId || !!editingId}
+                aria-label="Restore {v.name} from Folder"
+                disabled={isLoading || !!editingId}
               >
                 <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
               </button>
@@ -281,7 +306,7 @@
                 onclick={() => startRename(v)}
                 title="Rename"
                 aria-label="Rename"
-                disabled={isLoading || !!deletingId || !!editingId}
+                disabled={isLoading || !!editingId}
               >
                 <span class="icon-[lucide--edit-2] w-3.5 h-3.5"></span>
               </button>
@@ -289,10 +314,10 @@
               {#if v.id !== vaultRegistry.activeVaultId}
                 <button
                   class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                  onclick={() => (deletingId = v.id)}
+                  onclick={() => handleDelete(v.id)}
                   title="Delete"
                   aria-label="Delete"
-                  disabled={isLoading || !!deletingId || !!editingId}
+                  disabled={isLoading || !!editingId}
                 >
                   <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
                 </button>
@@ -301,42 +326,6 @@
           {/if}
         </div>
       {/each}
-
-      {#if deletingId}
-        <div
-          class="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[1px] z-50 p-4 rounded"
-          transition:fade={{ duration: 100 }}
-        >
-          <div
-            class="bg-theme-surface border border-red-500/50 rounded-lg p-4 shadow-2xl max-w-xs w-full animate-in zoom-in-95"
-          >
-            <h3
-              class="text-red-500 font-bold mb-2 flex items-center gap-2 text-sm tracking-wider"
-            >
-              <span class="icon-[lucide--alert-triangle] w-4 h-4"></span> DELETE VAULT?
-            </h3>
-            <p class="text-xs text-theme-text mb-4 leading-relaxed">
-              This will permanently delete "<strong
-                >{vaultRegistry.availableVaults.find((v) => v.id === deletingId)
-                  ?.name}</strong
-              >" and all its files. This action cannot be undone.
-            </p>
-            <div class="flex justify-end gap-2">
-              <button
-                class="px-3 py-1.5 rounded text-xs border border-theme-border hover:bg-theme-bg text-theme-text font-bold"
-                onclick={() => (deletingId = null)}>CANCEL</button
-              >
-              <button
-                class="px-3 py-1.5 rounded text-xs bg-red-600 text-white hover:bg-red-700 font-bold"
-                onclick={handleDelete}
-                disabled={isLoading}
-              >
-                {isLoading ? "DELETING..." : "DELETE FOREVER"}
-              </button>
-            </div>
-          </div>
-        </div>
-      {/if}
     </div>
 
     <div
@@ -377,10 +366,19 @@
             <div class="flex gap-2">
               <button
                 type="submit"
-                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 disabled={isLoading || !newVaultName.trim()}
+                aria-busy={isLoading}
               >
-                {isLoading ? "CREATING..." : "CREATE"}
+                {#if isLoading}
+                  <span
+                    class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                    aria-hidden="true"
+                  ></span>
+                  CREATING...
+                {:else}
+                  CREATE
+                {/if}
               </button>
               <button
                 type="button"

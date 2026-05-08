@@ -52,7 +52,7 @@
     onFileSelect([file]);
 
     // Clear
-    if (editorRef) editorRef.innerHTML = "";
+    if (editorRef) editorRef.textContent = "";
     content = "";
   };
 </script>

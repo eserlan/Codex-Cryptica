@@ -8,12 +8,14 @@ vi.mock("./vault-registry.svelte", () => ({
   vaultRegistry: {
     rootHandle: { kind: "directory" },
     activeVaultId: "test-vault",
+    updateEntityCount: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
 vi.mock("./ui.svelte", () => ({
   uiStore: {
     notify: vi.fn(),
+    confirm: vi.fn().mockResolvedValue(true),
   },
 }));
 

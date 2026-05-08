@@ -1,0 +1,84 @@
+name: Deploy Blog Content
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "apps/web/src/lib/content/blog/**"
+      - "scripts/publish-blog-content.mjs"
+      - ".github/workflows/deploy-blog-content.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: blog-content
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.5.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish Blog Content
+        run: node scripts/publish-blog-content.mjs
+
+      - name: Commit and Push Blog Branch
+        id: commit_step
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HUSKY: 0
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -C blog-content
+          git add blog
+          if git diff --cached --quiet; then
+            echo "No blog content changes to publish."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit --no-verify -m "📝 Update blog content"
+          git push --no-verify --force-with-lease origin blog-content
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Main App Deployment
+        if: steps.commit_step.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deploy.yml --ref ${{ github.ref_name }}

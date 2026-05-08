@@ -6,19 +6,27 @@
   import { fade } from "svelte/transition";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
+  import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
+  import {
+    dispatchSearchEntityFocus,
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+  } from "$lib/components/search/search-focus";
 
   let {
     entity,
     isEditing,
     editTitle = $bindable(),
+    editAliases = $bindable([]),
     onClose,
   } = $props<{
     entity: Entity;
     isEditing: boolean;
     editTitle: string;
+    editAliases: string[];
     onClose: () => void;
   }>();
 
@@ -29,24 +37,24 @@
   });
 
   let isObscured = $derived.by(() => {
-    if (!entity || !ui.sharedMode) return false;
+    if (!entity || !vault.isGuest) return false;
     return !isEntityVisible(entity, {
-      sharedMode: ui.sharedMode,
-    } as any);
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
   });
 
   const handleFindInGraph = () => {
+    const nodeId = vault.selectedEntityId;
+    if (!nodeId) return;
+
     ui.findInGraph();
 
-    const cy = (window as any).cy;
-    const nodeId = vault.selectedEntityId;
-    if (!cy || !nodeId) return;
-
-    const node = cy.$id(nodeId);
-    if (node.length > 0) {
-      cy.center(node);
-    }
+    // Trigger centering and zooming
+    dispatchSearchEntityFocus(nodeId, DEFAULT_SEARCH_ENTITY_ZOOM);
   };
+
+  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 </script>
 
 {#if isObscured}
@@ -78,31 +86,68 @@
   </div>
 {/if}
 
-<div class="p-4 md:p-6 border-b border-theme-border bg-theme-surface">
-  <div class="flex justify-between items-start mb-2">
-    {#if isEditing}
-      <div class="flex flex-col gap-2 w-full mr-4">
-        <input
-          type="text"
-          bind:value={editTitle}
-          class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
-          placeholder="Entity Title"
-        />
-      </div>
-    {:else}
-      <h2
-        class="text-2xl md:text-3xl font-bold text-theme-text font-body tracking-wide"
+<div
+  class="p-4 md:p-6 border-b border-theme-border bg-theme-surface"
+  style:background-color="var(--theme-panel-fill)"
+  style:background-image="var(--bg-texture-overlay)"
+>
+  <div class="flex justify-between items-center mb-2">
+    <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+      <!-- Mobile-only close button -->
+      <button
+        onclick={onClose}
+        class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+        aria-label="Back"
       >
-        {entity.title}
-      </h2>
-    {/if}
+        <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+      </button>
 
-    <div class="flex items-center gap-1">
+      {#if isEditing}
+        <div class="flex flex-col gap-2 w-full mr-4">
+          <input
+            type="text"
+            bind:value={editTitle}
+            class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
+            placeholder="Entity Title"
+          />
+          <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
+        </div>
+      {:else}
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <h2
+            class="{isFantasyTheme
+              ? 'text-xl md:text-3xl font-header tracking-wider'
+              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold truncate"
+            style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
+          >
+            {entity.title}
+          </h2>
+          {#if entity.aliases && entity.aliases.length > 0}
+            <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
+              <span
+                class="text-[8px] md:text-[9px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
+                >aka:</span
+              >
+              {#each entity.aliases as alias (alias)}
+                <div
+                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
+                >
+                  {alias}
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
+
+    <div class="flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4">
       {#if !isEditing}
+        <SidepanelRegenButton entityId={entity.id} />
         {#if isGraphView}
           <button
             onclick={handleFindInGraph}
-            class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
+            class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
             aria-label="Find in Graph"
             title="Find in Graph"
             data-testid="find-in-graph-button"
@@ -112,7 +157,7 @@
         {/if}
         <button
           onclick={() => ui.openZenMode(entity.id)}
-          class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
+          class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
           aria-label="Enter Zen Mode"
           title="Zen Mode (Full Screen)"
           data-testid="enter-zen-mode-button"
@@ -120,9 +165,11 @@
           <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
         </button>
       {/if}
+
+      <!-- Desktop-only close button -->
       <button
         onclick={onClose}
-        class="text-theme-muted hover:text-theme-primary transition flex items-center justify-center p-1"
+        class="hidden md:flex transition items-center justify-center p-1 text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Close panel"
         title="Close"
       >
@@ -134,7 +181,7 @@
   <!-- Labels Section -->
   <div class="mt-4 mb-2 space-y-2">
     <div class="flex flex-wrap gap-1.5 min-h-[24px]">
-      {#each entity.labels || [] as label}
+      {#each entity.labels || [] as label (label)}
         <LabelBadge
           {label}
           removable={!vault.isGuest}

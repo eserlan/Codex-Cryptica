@@ -331,18 +331,20 @@ export async function deleteVaultDir(
   }
 
   // Best-effort cache cleanup for the entire vault
-  // Use cursor with sequential deletes to avoid transaction timeout on large vaults
   try {
     const db = await getDB();
     const tx = db.transaction("opfs_file_state", "readwrite");
     const index = tx.store.index("by-vault");
-    const cursor = await index.openKeyCursor(normalized);
-    if (cursor) {
-      // Iterate through all keys using cursor, deleting sequentially to keep transaction alive
-      do {
-        await tx.store.delete(cursor.primaryKey);
-      } while (await cursor.continue());
 
+    // ⚡ Bolt Optimization: Use getAllKeys and concurrent Promise.all deletions to eliminate N+1 bottleneck
+    const keys = await index.getAllKeys(normalized);
+    if (keys.length > 0) {
+      // Process in bounded batches to avoid overwhelming the IndexedDB queue or transaction
+      const batchSize = 1000;
+      for (let i = 0; i < keys.length; i += batchSize) {
+        const batch = keys.slice(i, i + batchSize);
+        await Promise.all(batch.map((key) => tx.store.delete(key)));
+      }
       await tx.done;
     }
   } catch (err) {

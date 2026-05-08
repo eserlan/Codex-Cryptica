@@ -214,8 +214,21 @@ export class VaultRepository {
       });
   }
 
-  async waitForAllSaves() {
-    await this.saveQueue.waitForAll();
+  async waitForAllSaves(timeoutMs = 8000): Promise<void> {
+    const timeout = new Promise<void>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("waitForAllSaves timed out")),
+        timeoutMs,
+      ),
+    );
+    try {
+      await Promise.race([this.saveQueue.waitForAll(), timeout]);
+    } catch (err) {
+      console.warn(
+        "[VaultRepository] Save drain timed out — proceeding anyway",
+        err,
+      );
+    }
   }
 
   clear() {

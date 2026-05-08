@@ -1,5 +1,7 @@
 import { uiStore as defaultUiStore } from "$lib/stores/ui.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
+import { base } from "$app/paths";
+import { openEntityPopout } from "$lib/utils/zen-popout";
 import type { Entity } from "schema";
 
 export interface ZenModeActionsDependencies {
@@ -30,6 +32,7 @@ export function createZenModeActions(
         content: editState.content,
         lore: editState.lore,
         image: editState.image,
+        aliases: editState.aliases,
         date: editState.date,
         start_date: editState.startDate,
         end_date: editState.endDate,
@@ -45,9 +48,11 @@ export function createZenModeActions(
 
   const handleDelete = async (entity: Entity, onDeleted: () => void) => {
     if (
-      confirm(
-        `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
-      )
+      await uiStore.confirm({
+        title: "Delete Entity",
+        message: `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
+        isDangerous: true,
+      })
     ) {
       try {
         await vault.deleteEntity(entity.id);
@@ -61,13 +66,67 @@ export function createZenModeActions(
     }
   };
 
-  const handleClose = (onClose: () => void) => {
+  const handleClose = async (onClose: () => void) => {
     const editState = getEditState();
     if (editState.isEditing) {
-      if (!confirm("Discard unsaved changes?")) return;
+      if (
+        !(await uiStore.confirm({
+          title: "Discard Changes",
+          message: "Discard unsaved changes?",
+          isDangerous: true,
+        }))
+      ) {
+        return;
+      }
     }
     onClose();
     editState.isEditing = false;
+  };
+
+  const handlePopOut = async (entityId: string) => {
+    const entity = vault.entities[entityId];
+    if (!entity) return;
+
+    let entityForPopout = entity;
+
+    if (vault.isGuest && !entity.content) {
+      await vault.loadEntityContent(entityId);
+      entityForPopout = vault.entities[entityId] ?? entityForPopout;
+    }
+
+    // Convert blob URL → data URL so the image survives cross-tab
+    if (entityForPopout.image) {
+      try {
+        const resolvedImageUrl = await vault.resolveImageUrl(
+          entityForPopout.image,
+        );
+        const resp = await fetch(resolvedImageUrl);
+        const blob = await resp.blob();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        entityForPopout = { ...entityForPopout, image: dataUrl };
+      } catch {
+        // silently skip
+      }
+    }
+
+    openEntityPopout(
+      vault.activeVaultId ?? "guest",
+      entityForPopout,
+      base,
+      vault.isGuest,
+    );
+
+    // Close whatever view we're in
+    if (uiStore.showZenMode) {
+      uiStore.closeZenMode();
+    } else if (uiStore.mainViewMode === "focus") {
+      uiStore.focusEntity(null);
+    }
   };
 
   return {
@@ -77,5 +136,6 @@ export function createZenModeActions(
     saveChanges,
     handleDelete,
     handleClose,
+    handlePopOut,
   };
 }

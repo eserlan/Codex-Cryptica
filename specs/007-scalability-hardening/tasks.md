@@ -21,4 +21,4 @@
 - [ ] **Quality Assurance** <!-- id: 5 -->
   - [ ] **Offline Functionality Verification**: Ensure caching works without network (Constitution VIII). <!-- id: 5.1 -->
   - [ ] Performance Test: Load a vault, reload page, verify 2nd load is faster. <!-- id: 5.2 -->
-  - [ ] Verify `npm run lint` and `npm run test` pass. <!-- id: 5.3 -->
+  - [ ] Verify `pnpm run lint` and `pnpm run test` pass. <!-- id: 5.3 -->

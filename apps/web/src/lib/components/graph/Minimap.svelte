@@ -51,7 +51,9 @@
 
   const updateProjection = () => {
     if (!cy) return;
-    const eles = cy.elements().filter((el) => el.isNode()); // Only nodes for projection
+    // ⚡ Bolt Optimization: Use cy.nodes() directly instead of cy.elements().filter()
+    // to avoid allocating a full collection of nodes + edges and the overhead of filtering.
+    const eles = cy.nodes();
 
     // If there are no nodes, avoid calling boundingBox and reset to safe defaults
     if (!eles || eles.length === 0) {

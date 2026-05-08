@@ -17,3 +17,63 @@
 
 **Learning:** Replacing multiple `.filter()` calls on the same array with a single imperative `for...of` loop to partition elements into multiple destination arrays reduces iterations from 2N to N and avoids redundant closures. For a 100-item array, this yielded a ~2.4x speed improvement. Additionally, parallelizing IndexedDB deletions with `Promise.all` instead of sequential `await` in a loop eliminates the N+1 performance bottleneck.
 **Action:** Use a single-pass loop when partitioning or filtering the same collection into multiple buckets. Always use `Promise.all` for independent database operations in loops to ensure concurrent execution.
+
+## 2026-04-09 - [Performance Insight: Concurrent IndexedDB Delete]
+
+**Learning:** Deleting records sequentially using an IndexedDB cursor is a known N+1 anti-pattern because awaiting `store.delete()` on each record sequentially is notoriously slow due to the event loop overhead for every single deletion.
+**Action:** Replaced the sequential cursor deletion with `index.getAllKeys()`, followed by batched concurrent `Promise.all` deletions.
+
+## 2026-04-12 - [Performance Insight: Array allocation and Indexing batches]
+
+**Learning:** When indexing many entities in `SearchEngine.add` inside a loop, an individual `this.notifyChange()` call for every entity forces UI re-renders and slows down indexing. Replacing individual `add()` calls with a batched `addBatch()` that iterates over the docs and calls `notifyChange()` only once at the end significantly reduces overhead.
+**Action:** When performing bulk updates on state or indexing services, create batch APIs (like `addBatch`) to minimize reactive or event-based notifications, calling the notification only once per batch.
+
+## 2026-04-13 - [Performance Insight: Array derived vs Map for templates]
+
+**Learning:** Returning an array from a `$derived.by` block just to be used in a template's nested `.find()` loop results in `O(N)` lookups inside an `O(M)` loop (e.g. iterating over `categories` and calling `.find()` on `typeCounts`). Additionally, converting a `Map` to an `Array` using `.map()` and `.sort()` on every reactivity update generates GC pressure for arrays whose sort order isn't actually used.
+**Action:** In Svelte 5 `$derived.by` blocks computing keyed data for `#each` loops, return the `Map` directly. Then use `.get(id)` inside the `#each` loop to turn the `O(N)` array lookup into an `O(1)` Map lookup and eliminate intermediate array allocations.
+
+## 2026-04-16 - Avoid `.indexOf()` in Array Transformations in Svelte Reactive Blocks
+
+**Learning:** In highly reactive Svelte blocks (e.g., `$derived.by`), using `.indexOf()` inside array transformation callbacks like `.map()` degrades performance to O(N²).
+**Action:** Replace `.map().filter()` with an imperative `for` loop and use the loop index directly instead of calling `.indexOf()` on the parent array to achieve O(N) performance.
+
+## 2026-04-19 - [Performance Insight: Array allocation in Svelte 5 nested deriveds]
+
+**Learning:** Caching `Object.values(state)` on a class as a `$derived` property (e.g., `allTokens = $derived.by(() => Object.values(this.tokens));`) and then accessing it inside another `$derived` block (e.g., `MapView`'s `$derived.by` using `mapSession.allTokens`) avoids recursive array allocation issues and minimizes garbage collection overhead, compared to calling `Object.values(mapSession.tokens)` repeatedly within each dependent block.
+**Action:** Expose an `allX = $derived.by(() => Object.values(this.X))` property on store classes whenever `Object.values` is needed by multiple external reactive derivations, and use this cached property instead of calling `Object.values` inline.
+
+## 2026-04-21 - Avoid chaining array allocation operations for recent updates
+
+**Learning:** Svelte 5 stores often manage small bounded arrays like "recent searches" or "recent labels". Using `[newItem, ...arr.filter(...)]` or `.slice()` allocates multiple intermediate arrays on every update, increasing overhead for simple insertions.
+**Action:** Replace `...arr.filter()` or `.slice()` patterns for managing small, bounded recent lists with a single imperative loop that caps the array size.
+
+## 2026-04-26 - [Performance Insight: Avoid chained .map().filter()]
+
+**Learning:** Replace chained array methods like `.map().filter(Boolean)` (often used to map IDs to entities and remove nulls) or `Object.values().map()` with a single imperative loop (e.g., `for...of` or `for...in`). This eliminates the allocation and traversal of intermediate arrays, drastically reducing memory pressure and improving performance during chunk processing or event handling.
+**Action:** When handling large sets of data in event callbacks like `SYNC_CHUNK_READY` or `CACHE_LOADED`, always favor simple imperative loops over chained functional array transformations.
+
+## 2026-04-26 - [Performance Insight: Caution with manual limit loops]
+
+**Learning:** When manually optimizing `.slice(0, limit)` with an imperative loop condition like `result.length < limit`, explicitly handle cases where `limit` might be `undefined`. Native `.slice(0, undefined)` safely copies the array, but a manual loop condition `0 < undefined` evaluates to `false`, causing the loop to terminate immediately and introducing bugs.
+**Action:** Be careful when replacing standard library functions. Ensure that all edge cases (like `undefined` parameters) are correctly handled.
+
+## 2026-04-30 - Optimize event parsing with single pass loops
+
+**Learning:** When parsing large synchronization events in Svelte stores, using chained functional array methods like `.map().filter(Boolean)` creates intermediate arrays and increases garbage collection pressure.
+**Action:** Replace `Array.prototype.map().filter()` chains with a single imperative loop (`for` loop with `push`) when parsing batch payloads, especially in hot paths like `SYNC_CHUNK_READY` in the vault engine.
+
+## 2026-05-18 - [Performance Insight: Array allocation in object key search]
+
+**Learning:** Svelte 5 `$derived` blocks re-evaluate when their dependencies change. If a block uses `Object.values(obj).find(...)`, it allocates a new array of all values on every evaluation. When `obj` is large (e.g., `vault.maps`), this generates significant garbage collection pressure, especially if the block is evaluated frequently.
+**Action:** Replace `Object.values(obj).find(...)` with a `for...in` loop over the object's keys, checking the value directly and returning early. This completely avoids array allocation and is highly compatible with Svelte 5's fine-grained proxy tracking.
+
+## 2026-05-18 - Replacing sort and slice with imperative bounded O(N) merge
+
+**Learning:** In contexts where we retrieve two separate lists from the database (`pinnedRecords` and `recentCandidates`), if both are already ordered by the target sorting metric (e.g., `lastModified` descending), combining them with array spreads followed by a full `.sort()` and `.slice()` is highly inefficient (`O(N log N)`).
+**Action:** Replace the spread and sort with sequential imperative loops that push directly into a target array, using early `break` statements to truncate exactly at the required limit (`O(N)`).
+
+## 2026-05-04 - [Performance Insight: Avoid intermediate array allocation for counting elements]
+
+**Learning:** Using `.filter(...).length` in Svelte `$derived` blocks on large arrays (like `vault.allEntities`) allocates a completely unnecessary intermediate array in memory, creating excess garbage collection pressure on every reactivity tick. While a verbose imperative loop is extremely efficient, a declarative `.reduce((count, item) => count + (condition ? 1 : 0), 0)` is slightly slower than a `for` loop but completely avoids array allocation and is far more readable.
+**Action:** Use `.reduce()` instead of `.filter(...).length` when counting matching items in reactive blocks to eliminate intermediate array memory allocation without sacrificing code readability.

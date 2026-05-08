@@ -11,17 +11,18 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "dice-engine": "*",
+    "@codex/events": "workspace:*",
+    "dice-engine": "workspace:*",
     "idb": "^8.0.3"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@testing-library/svelte": "^5.3.1",
-    "@vitest/coverage-v8": "^4.1.2",
-    "jsdom": "^29.0.0",
-    "svelte": "^5.55.1",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.3",
+    "@vitest/coverage-v8": "^4.1.5",
+    "jsdom": "^29.1.1",
+    "svelte": "^5.55.4",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
     "vitest": "^4.1.2"
   }
 }

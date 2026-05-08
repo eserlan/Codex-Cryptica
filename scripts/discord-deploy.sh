@@ -37,7 +37,7 @@ COMMIT_AUTHOR=$(git log -1 --pretty=%an "$REAL_COMMIT")
 
 if [ "$TYPE" == "production" ]; then
   # Find the previous successful deployment commit using gh CLI
-  LAST_SUCCESS_SHA=$(gh run list --workflow "Deploy to GitHub Pages" --branch main --status success --limit 1 --json headSha --jq '.[0].headSha' || echo "")
+  LAST_SUCCESS_SHA=$(gh run list --workflow "Deploy to Cloudflare Pages" --branch main --status success --limit 1 --json headSha --jq '.[0].headSha' || echo "")
   
   if [ -n "$LAST_SUCCESS_SHA" ]; then
     # List meaningful changes since the last deployment
@@ -74,7 +74,7 @@ else
   MESSAGE="${EMOJI} **${TITLE}**
 
 **Environment:** ${TYPE}
-**URL:** ${PAGE_URL:-"https://eserlan.github.io/Codex-Cryptica/"}
+**URL:** ${PAGE_URL:-"https://staging.codexcryptica.com/"}
 **Commit:** \`${REAL_HASH}\` by **${COMMIT_AUTHOR}**
 **Message:** ${COMMIT_MSG}
 

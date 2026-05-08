@@ -52,11 +52,27 @@ As a lore keeper, I want to see a history of connections I previously dismissed,
 
 ---
 
+### User Story 4 - Learning from Manual Removals (Priority: P2)
+
+As a lore keeper, I want the system to stop suggesting connections I have previously removed manually, so that I don't have to repeatedly dismiss the same AI hallucinations.
+
+**Why this priority**: Significant UX improvement. Ensures the AI respects manual "lore pruning" as a strong signal of intent.
+
+**Independent Test**: Manually remove a connection between A and B, then run an AI scan on A. Verify that B is not suggested.
+
+**Acceptance Scenarios**:
+
+1. **Given** a manually created connection between "Eldrin" and "The Void", **When** I delete that connection, **Then** a "rejected" proposal is automatically created for that pair.
+2. **Given** a rejected proposal created from a manual removal, **When** the AI runs a new scan, **Then** it must not suggest a connection between those two entities.
+
+---
+
 ### Edge Cases
 
 - **AI Hallucinations**: How does the system handle suggestions that are semantically weak or incorrect? (Solved via confidence thresholds).
 - **Redundant Links**: If A is already connected to B, the system must not suggest B to A.
 - **Worker Collisions**: Ensuring background scans don't fight with active user edits or saves.
+- **Undoing Pruning**: If a user wants to "un-blacklist" a pair, they can re-evaluate it from the Rejected History.
 
 ## Requirements _(mandatory)_
 
@@ -70,6 +86,8 @@ As a lore keeper, I want to see a history of connections I previously dismissed,
 - **FR-006**: System MUST maintain a "Rejected History" log of the last 20 dismissed proposals per entity.
 - **FR-007**: System MUST prevent suggesting a connection that already exists in the vault.
 - **FR-008**: System MUST include a user-facing help article and feature hint explaining the proposer's logic and how to manage suggestions.
+- **FR-009**: System MUST automatically apply a MAXIMUM of the top 3 most relevant connections per entity during automated scans to ensure a balance of quality and connectivity without cluttering the graph.
+- **FR-010**: System MUST automatically create a "rejected" proposal when a user manually removes a connection, to prevent future AI suggestions for that pair.
 
 ### Key Entities _(include if feature involves data)_
 

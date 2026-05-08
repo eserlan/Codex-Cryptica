@@ -1,4 +1,5 @@
 import { type DBSchema } from "idb";
+import { type SyncDirection } from "schema";
 
 export interface FileMetadata {
   path: string;
@@ -16,6 +17,18 @@ export interface SyncResult {
   conflicts: string[];
   failed: Array<{ path: string; error: string }>;
   error?: string;
+}
+
+export interface IGDriveAuthService {
+  /**
+   * Returns a valid access token. Triggers refresh if necessary.
+   */
+  getAccessToken(): Promise<string | null>;
+
+  /**
+   * Signs the user out of the Drive session (clears in-memory token).
+   */
+  signOut(): Promise<void>;
 }
 
 export interface ISyncBackend {
@@ -67,6 +80,19 @@ export interface ILocalSyncService {
     vaultId: string,
     localHandle: FileSystemDirectoryHandle,
     opfsHandle: FileSystemDirectoryHandle,
+    direction?: SyncDirection,
+    validator?: (
+      path: string,
+      metadata: FileMetadata,
+    ) => boolean | Promise<boolean>,
+    onProgress?: (stats: {
+      updated: number;
+      created: number;
+      deleted: number;
+      failed: number;
+      total: number;
+    }) => void,
+    signal?: AbortSignal,
   ): Promise<SyncResult>;
 
   /**

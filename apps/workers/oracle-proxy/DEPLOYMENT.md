@@ -9,7 +9,7 @@ Quick start guide for deploying the Oracle Proxy Cloudflare Worker.
 ### Step 1: Install Wrangler CLI
 
 ```bash
-npm install -g wrangler
+pnpm add -g wrangler
 ```
 
 ### Step 2: Login to Cloudflare
@@ -131,7 +131,7 @@ Edit `wrangler.toml` to customize allowed origins:
 
 ```toml
 [vars]
-ALLOWED_ORIGINS = "https://codex-cryptica.com,https://staging.codex-cryptica.com"
+ALLOWED_ORIGINS = "https://codex-cryptica.com,https://staging.codexcryptica.com"
 ```
 
 Or set via Wrangler:

@@ -36,7 +36,7 @@
 - [x] T012 [P] Add a `FeatureHint` for the new Import button in `apps/web/src/lib/components/VaultControls.svelte`
 - [x] T013 [P] Add `import-feature` help content to `apps/web/src/lib/config/help-content.ts`
 - [x] T014 Replace embedded import section in `SettingsModal.svelte` with a CTA to launch the dedicated terminal
-- [x] T015 Run final verification suite: `npm run lint` and all E2E tests
+- [x] T015 Run final verification suite: `pnpm run lint` and all E2E tests
 
 ## Dependencies
 

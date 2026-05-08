@@ -1,4 +1,5 @@
 import { type ISyncBackend, type SyncResult, type FileMetadata } from "./types";
+import { type SyncDirection } from "schema";
 import { SyncRegistry } from "./SyncRegistry";
 import { SyncPlanner } from "./SyncPlanner";
 import { type SyncAction } from "./DiffAlgorithm";
@@ -42,6 +43,7 @@ export class SyncService {
     vaultId: string,
     fsBackend: ISyncBackend,
     opfsBackend: ISyncBackend,
+    direction: SyncDirection = "pull",
     sinceToken?: string | null,
     validator?: (
       path: string,
@@ -55,6 +57,7 @@ export class SyncService {
       total: number;
     }) => void,
     signal?: AbortSignal,
+    concurrency: number = 1,
   ): Promise<SyncResult & { nextToken?: string }> {
     if (signal?.aborted) throw new Error("AbortError");
 
@@ -68,7 +71,7 @@ export class SyncService {
 
     try {
       console.log(
-        `[${this.getTs()}] [Sync] Starting sync for vault: ${vaultId}`,
+        `[${this.getTs()}] [Sync] Starting sync for vault: ${vaultId} (Direction: ${direction})`,
       );
 
       const fsScan = await fsBackend.scan(vaultId);
@@ -93,6 +96,7 @@ export class SyncService {
         fsScan.files,
         opfsScan,
         registryEntries,
+        direction,
         sinceToken,
         validator,
         signal,
@@ -125,7 +129,6 @@ export class SyncService {
         });
       };
 
-      const CONCURRENCY = 1; // Strict sequential for reliability on large local vaults
       let nextActionIndex = 0;
       const context: SyncExecutionContext = {
         vaultId,
@@ -134,8 +137,10 @@ export class SyncService {
         signal,
       };
 
+      const validConcurrency = Math.max(1, Math.floor(concurrency || 1));
+
       await Promise.all(
-        Array.from({ length: CONCURRENCY }).map(async () => {
+        Array.from({ length: validConcurrency }).map(async () => {
           while (nextActionIndex < actions.length) {
             if (signal?.aborted) throw new Error("AbortError");
             const action = actions[nextActionIndex++];

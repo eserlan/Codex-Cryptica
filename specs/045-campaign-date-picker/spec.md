@@ -74,7 +74,7 @@ As a user, I want to decide if an event needs a specific day/month or just a yea
 
 ### Key Entities
 
-- **CampaignCalendar**: Represents the chronological rules of the world (Month names, days per month, etc).
+- **WorldCalendar**: Represents the chronological rules of the world (Month names, days per month, etc).
 - **WorldEra**: Existing entity; used as a grouping mechanism for years in the picker.
 - **TemporalMetadata**: The data structure being edited (Year, Month, Day, Label).
 

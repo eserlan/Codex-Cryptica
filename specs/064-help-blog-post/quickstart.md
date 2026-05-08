@@ -4,7 +4,7 @@
 
 ### 1. Development Server
 
-1. Start the development server: `npm run dev` in `apps/web/`.
+1. Start the development server: `pnpm run dev` in `apps/web/`.
 2. Navigate to `http://localhost:5173/blog/comprehensive-help-guide`.
 3. Verify the title, table of contents, and all sections are rendered correctly.
 4. Check the blog index page `http://localhost:5173/blog` to ensure the new post is listed.

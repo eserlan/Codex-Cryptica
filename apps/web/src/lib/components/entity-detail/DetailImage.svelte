@@ -5,6 +5,7 @@
   import { debugStore } from "$lib/stores/debug.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { isEntityVisible } from "schema";
 
   let {
     entity,
@@ -17,8 +18,17 @@
   }>();
 
   let resolvedImageUrl = $state("");
-  let showLightbox = $state(false);
   let isDraggingOver = $state(false);
+  const isVisualizing = $derived(oracle.isVisualizingEntity(entity?.id));
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 
   $effect(() => {
     const imagePath = entity?.image;
@@ -105,14 +115,6 @@
   }
 </script>
 
-<svelte:window
-  onkeydown={(e) => {
-    if (e.key === "Escape") {
-      if (showLightbox) showLightbox = false;
-    }
-  }}
-/>
-
 <div
   class="relative {isDraggingOver
     ? 'ring-2 ring-oracle-primary ring-offset-4 ring-offset-black bg-oracle-primary/10'
@@ -137,10 +139,23 @@
         placeholder="https://..."
       />
     </div>
+  {:else if !isVisible && vault.isGuest}
+    <div class="px-4 md:px-6">
+      <div
+        class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-bg/30"
+      >
+        <span class="icon-[lucide--lock] w-4 h-4 md:w-6 md:h-6 opacity-30"
+        ></span>
+        <span
+          class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+          >Image Hidden</span
+        >
+      </div>
+    </div>
   {:else if entity.image}
     <div class="px-4 md:px-6">
       <button
-        onclick={() => (showLightbox = true)}
+        onclick={() => uiStore.openLightbox(resolvedImageUrl, entity.title)}
         class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
       >
         <img
@@ -149,7 +164,7 @@
           class="w-full h-auto max-h-48 md:max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
         />
         <div
-          class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
+          class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
         >
           Click to enlarge
         </div>
@@ -158,32 +173,33 @@
   {:else}
     <div class="px-4 md:px-6">
       <div
-        class="mb-4 w-full h-32 md:h-40 py-4 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
+        class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
       >
-        <div class="flex flex-col items-center justify-center gap-2 mt-2">
-          <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
+        <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
+          <span class="icon-[lucide--image] w-4 h-4 md:w-8 md:h-8 opacity-20"
           ></span>
-          <span class="text-[9px] font-bold uppercase font-header opacity-40"
+          <span
+            class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
             >No Image</span
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.liteMode}
-          <div class="mb-2">
+        {#if oracle.tier === "advanced" && !uiStore.aiDisabled}
+          <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
-              disabled={oracle.isLoading}
-              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
+              disabled={isVisualizing}
+              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
               aria-label="Draw visualization for {entity.title}"
-              aria-busy={oracle.isLoading}
+              aria-busy={isVisualizing}
             >
-              {#if oracle.isLoading}
+              {#if isVisualizing}
                 <span
-                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-primary"
+                  class="icon-[lucide--loader-2] w-3 h-3 md:w-4 md:h-4 animate-spin text-theme-primary"
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="text-[8px] font-bold tracking-widest text-theme-primary text-center px-2"
+                  class="text-[7px] md:text-[8px] font-bold tracking-widest text-theme-primary text-center px-2"
                   aria-live="polite"
                 >
                   {#if oracle.activeStyleTitle}
@@ -197,15 +213,36 @@
                   class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
                 ></div>
                 <span
-                  class="icon-[lucide--palette] w-3.5 h-3.5 text-theme-primary opacity-80"
+                  class="icon-[lucide--palette] w-3 h-3 md:w-3.5 md:h-3.5 text-theme-primary opacity-80"
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
+                  class="text-[8px] md:text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
                   >DRAW VISUAL</span
                 >
               {/if}
             </button>
+          </div>
+        {/if}
+
+        {#if isVisualizing}
+          <div
+            class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 border border-theme-primary/20"
+          >
+            <span
+              class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <div
+              class="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-4"
+              aria-live="polite"
+            >
+              {#if oracle.activeStyleTitle}
+                Visualizing in {oracle.activeStyleTitle}
+              {:else}
+                Building Visual
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
@@ -229,17 +266,3 @@
     </div>
   {/if}
 </div>
-
-{#if showLightbox && entity.image}
-  <button
-    class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 cursor-zoom-out"
-    onclick={() => (showLightbox = false)}
-    transition:fade={{ duration: 200 }}
-  >
-    <img
-      src={resolvedImageUrl}
-      alt={entity.title}
-      class="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300"
-    />
-  </button>
-{/if}

@@ -26,6 +26,7 @@ export function createEditState(
   let editLore = $state(_initialEntity?.lore || "");
   let editType = $state(_initialEntity?.type ?? "");
   let editImage = $state(_initialEntity?.image || "");
+  let editAliases = $state<string[]>(_initialEntity?.aliases || []);
   let editDate = $state<Entity["date"]>(_initialEntity?.date);
   let editStartDate = $state<Entity["start_date"]>(_initialEntity?.start_date);
   let editEndDate = $state<Entity["end_date"]>(_initialEntity?.end_date);
@@ -38,6 +39,7 @@ export function createEditState(
     editLore = entity.lore || "";
     editType = entity.type;
     editImage = entity.image || "";
+    editAliases = entity.aliases || [];
     editDate = entity.date;
     editStartDate = entity.start_date;
     editEndDate = entity.end_date;
@@ -119,6 +121,12 @@ export function createEditState(
     },
     set image(v) {
       editImage = v;
+    },
+    get aliases() {
+      return editAliases;
+    },
+    set aliases(v) {
+      editAliases = v;
     },
     get date() {
       return editDate;

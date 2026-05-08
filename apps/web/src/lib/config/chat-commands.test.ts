@@ -83,18 +83,10 @@ describe("chatCommands", () => {
   });
 
   describe("/clear", () => {
-    it("should clear messages if confirmed", () => {
-      vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    it("should clear messages", async () => {
       const cmd = chatCommands.find((c) => c.name === "/clear");
-      cmd?.handler("");
+      await cmd?.handler("");
       expect(oracle.clearMessages).toHaveBeenCalled();
-    });
-
-    it("should NOT clear messages if cancelled", () => {
-      vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
-      const cmd = chatCommands.find((c) => c.name === "/clear");
-      cmd?.handler("");
-      expect(oracle.clearMessages).not.toHaveBeenCalled();
     });
   });
 });

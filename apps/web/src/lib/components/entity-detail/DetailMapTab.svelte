@@ -9,9 +9,14 @@
 
   let linkedMap = $derived.by(() => {
     if (!entity) return undefined;
-    return Object.values(vault.maps).find(
-      (m) => m.parentEntityId === entity.id,
-    );
+    // ⚡ Bolt Optimization: Use imperative loop over keys instead of Object.values().find()
+    // to avoid allocating an intermediate array on every evaluation of this $derived block.
+    for (const key in vault.maps) {
+      if (vault.maps[key].parentEntityId === entity.id) {
+        return vault.maps[key];
+      }
+    }
+    return undefined;
   });
 
   let files = $state<FileList | null>(null);
@@ -44,9 +49,12 @@
   async function handleDeleteMap() {
     if (!linkedMap) return;
     if (
-      confirm(
-        "Are you sure you want to delete this map? This action cannot be undone.",
-      )
+      await uiStore.confirm({
+        title: "Clear Points",
+        message:
+          "Are you sure you want to delete this map? This action cannot be undone.",
+        isDangerous: true,
+      })
     ) {
       try {
         await vault.deleteMap(linkedMap.id);
@@ -126,10 +134,10 @@
             class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
           />
         {/await}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 cursor-pointer"
+        <button
+          type="button"
+          aria-label="Enter Location: {linkedMap.name}"
+          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity bg-black/40 cursor-pointer focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 focus:outline-none"
           onclick={() => {
             mapStore.selectMap(linkedMap!.id, true);
             uiStore.closeZenMode();
@@ -141,7 +149,7 @@
           >
             Enter Location
           </span>
-        </div>
+        </button>
       </div>
     </div>
   {:else}

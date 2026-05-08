@@ -7,7 +7,7 @@
   import { renderMarkdown } from "$lib/utils/markdown";
   import { Edit2, Check, X } from "lucide-svelte";
 
-  let { data }: NodeProps = $props();
+  let { data, selected }: NodeProps = $props();
 
   const entityId = $derived(data?.entityId as string | undefined);
   const entity = $derived(entityId ? vault.entities[entityId] : undefined);
@@ -100,7 +100,12 @@
       ? 'nodrag border-[3px] border-amber-400 ring-4 ring-amber-400/50 cursor-crosshair'
       : isCtrlPressed
         ? 'nodrag border-theme-border'
-        : 'border-theme-border hover:border-theme-primary focus:ring-2 focus:ring-theme-primary'}"
+        : selected
+          ? 'border-2 border-[color:var(--theme-focus-border)] ring-2 ring-[color:var(--theme-focus-border)]/50'
+          : 'border-theme-border hover:border-theme-primary focus:ring-2 focus:ring-theme-primary'}"
+  style:box-shadow={selected
+    ? "var(--theme-glow), 0 10px 15px -3px rgb(0 0 0 / 0.1)"
+    : undefined}
   style:width={data?.width ? `${data.width}px` : "auto"}
   style:height={data?.height ? `${data.height}px` : "auto"}
   ondblclick={onDoubleClick}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { categories } from "$lib/stores/categories.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { sanitizeId } from "$lib/utils/markdown";
   import { getIconClass } from "$lib/utils/icon";
   import { fade, scale } from "svelte/transition";
@@ -144,16 +145,19 @@
 
         <!-- Delete -->
         <button
-          onclick={() => {
+          onclick={async () => {
             if (
-              confirm(
-                `Delete category "${cat.label}"? Entities using this category will fallback to default style.`,
-              )
+              await uiStore.confirm({
+                title: "Delete Category",
+                message: `Delete category "${cat.label}"? Entities using this category will fallback to default style.`,
+                confirmLabel: "Delete",
+                isDangerous: true,
+              })
             ) {
               categories.removeCategory(cat.id);
             }
           }}
-          class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-500 transition-all p-1"
+          class="opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-600 hover:text-red-500 transition-all p-1"
           aria-label="Delete category {cat.label}"
           title="Delete Category"
         >
@@ -227,6 +231,10 @@
       class="bg-theme-surface border border-theme-border rounded-xl shadow-2xl w-full max-w-sm p-6"
       onclick={(e) => e.stopPropagation()}
       transition:scale={{ start: 0.95, duration: 200 }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Select Icon"
+      tabindex="-1"
     >
       <div class="flex justify-between items-center mb-4">
         <h5

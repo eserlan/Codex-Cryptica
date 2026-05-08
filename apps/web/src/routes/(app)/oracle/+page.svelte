@@ -16,7 +16,9 @@
   />
 </svelte:head>
 
-<div class="fixed inset-0 bg-theme-bg flex flex-col overflow-hidden">
+<div
+  class="fixed top-0 left-0 w-full h-[100dvh] bg-theme-bg flex flex-col overflow-hidden"
+>
   <!-- Standalone Header -->
   <div
     class="px-4 py-3 border-b border-oracle-dim/30 bg-oracle-dark/20 flex justify-between items-center shrink-0"
@@ -36,15 +38,7 @@
       {#if oracle.messages.length > 0}
         <button
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
-          onclick={() => {
-            if (
-              confirm(
-                "Are you sure you want to clear the conversation history?",
-              )
-            ) {
-              oracle.clearMessages();
-            }
-          }}
+          onclick={() => oracle.clearMessages()}
           aria-label="Clear conversation history"
         >
           <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>

@@ -29,6 +29,7 @@ export interface FeatureHint {
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   FRONT_PAGE: "front-page-hint-seen",
+  VTT_MODE: "vtt-mode-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -37,7 +38,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: "body",
     title: "Welcome to Codex Cryptica",
     content:
-      "This tool gives you absolute control over your campaign notes. Everything stays on your computer for total privacy.",
+      "This tool gives you absolute control over your world notes. Everything stays on your computer for total privacy.",
     position: "bottom",
   },
   {
@@ -45,7 +46,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="open-vault-button"]',
     title: "Vault Management",
     content:
-      "This is your active story. Click here to switch between different campaigns or create a new vault.",
+      "This is your active story. Click here to switch between different worlds or create a new vault.",
     position: "bottom",
   },
   {
@@ -61,7 +62,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="nav-map"]',
     title: "Tactical Maps",
     content:
-      "Plot your campaign data onto geographic or tactical canvases with persistent pins and Fog of War.",
+      "Plot your world data onto geographic or tactical canvases with persistent pins and Fog of War.",
     position: "bottom",
   },
   {
@@ -141,22 +142,36 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "visual-graph",
     title: "Visual Graph",
     content:
-      "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
+      "Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
     icon: "icon-[lucide--share-2]",
   },
   "front-page": {
     id: "front-page",
-    title: "Campaign Front Page",
+    title: "World Front Page",
     content:
-      "Use the summary field to edit the campaign blurb directly. If it is empty, the Generate Summary button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Summary. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
+      "Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
     icon: "icon-[lucide--house]",
   },
   "local-folder-sync": {
     id: "local-folder-sync",
-    title: "Local Folder Sync",
+    title: "Load and Save Folders",
     content:
-      "Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.",
+      "Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.",
     icon: "icon-[lucide--folder-sync]",
+  },
+  "vault-save": {
+    id: "vault-save",
+    title: "Save to Folder",
+    content:
+      "The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.",
+    icon: "icon-[lucide--upload-cloud]",
+  },
+  "vault-load": {
+    id: "vault-load",
+    title: "Load from Folder",
+    content:
+      "Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.",
+    icon: "icon-[lucide--download-cloud]",
   },
   "total-privacy": {
     id: "total-privacy",
@@ -204,7 +219,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vault-switcher",
     title: "Switching Stories",
     content:
-      "Change your campaign. Click the folder name at the top to switch to a different story.",
+      "Change your world. Click the folder name at the top to switch to a different story.",
     icon: "icon-[lucide--folder-sync]",
   },
   "era-date-picker": {
@@ -239,14 +254,14 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "demo-mode",
     title: "Demo Mode",
     content:
-      "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.",
+      "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
   },
-  "lite-mode": {
-    id: "lite-mode",
-    title: "Lite Mode (No AI)",
+  "ai-disabled": {
+    id: "ai-disabled",
+    title: "AI Disabled",
     content:
-      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
+      "Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI-powered features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
     icon: "icon-[lucide--zap-off]",
   },
   "seo-prerendering": {
@@ -260,8 +275,22 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "map-mode",
     title: "Map Mode",
     content:
-      "Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
+      "Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
     icon: "icon-[lucide--map]",
+  },
+  "vtt-mode": {
+    id: "vtt-mode",
+    title: "VTT Mode",
+    content:
+      "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.",
+    icon: "icon-[lucide--swords]",
+  },
+  "vtt-entity-list": {
+    id: "vtt-entity-list",
+    title: "VTT Entity List",
+    content:
+      "Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.",
+    icon: "icon-[lucide--panel-right]",
   },
   "spatial-canvas": {
     id: "spatial-canvas",
@@ -288,7 +317,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your campaign entities via the persistent sidebar. Clicking an entity opens it in Focus Mode, replacing the main view with a spacious detail panel.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {
@@ -296,7 +325,42 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     title: "Navigation Hub",
     content:
       "Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.",
-    icon: "icon-[lucide--layout-sidebar]",
+    icon: "icon-[lucide--layout-panel-left]",
+  },
+  "proactive-discovery": {
+    id: "proactive-discovery",
+    title: "Proactive Discovery",
+    content:
+      "While you chat, the Oracle can identify new characters, locations, and items. In Settings, choose whether discoveries are off, shown as chips for review, or saved automatically as drafts.",
+    icon: "icon-[lucide--search-check]",
+  },
+  "oracle-automation": {
+    id: "oracle-automation",
+    title: "Oracle Automation",
+    content:
+      "Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.",
+    icon: "icon-[lucide--sliders-horizontal]",
+  },
+  "adjustable-sidebars": {
+    id: "adjustable-sidebars",
+    title: "Adjustable Sidebars",
+    content:
+      "Dynamically resize the left and right sidebars to suit your workspace needs. Hover over the inner edge of a sidebar and drag left or right. Your custom widths are automatically saved across sessions.",
+    icon: "icon-[lucide--separator-vertical]",
+  },
+  "draft-review": {
+    id: "draft-review",
+    title: "Reviewing Drafts",
+    content:
+      "Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.",
+    icon: "icon-[lucide--clipboard-check]",
+  },
+  "ai-regeneration": {
+    id: "ai-regeneration",
+    title: "AI Description Regeneration",
+    content:
+      "Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.",
+    icon: "icon-[lucide--sparkles]",
   },
 };
 

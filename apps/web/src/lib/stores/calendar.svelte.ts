@@ -1,10 +1,10 @@
 import { DEFAULT_CALENDAR } from "chronology-engine";
-import type { CampaignCalendar } from "chronology-engine";
+import type { WorldCalendar } from "chronology-engine";
 import { vault } from "./vault.svelte";
 import { getDB } from "../utils/idb";
 
 class CalendarStore {
-  config = $state<CampaignCalendar>(DEFAULT_CALENDAR);
+  config = $state<WorldCalendar>(DEFAULT_CALENDAR);
 
   constructor() {
     // Initialized by vault switch
@@ -31,7 +31,7 @@ class CalendarStore {
     }
   }
 
-  async setConfig(newConfig: CampaignCalendar) {
+  async setConfig(newConfig: WorldCalendar) {
     const previousConfig = this.config;
     this.config = newConfig;
     try {

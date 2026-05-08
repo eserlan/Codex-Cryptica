@@ -15,13 +15,24 @@ vi.mock("./prompts/query-expansion", () => ({
   ),
 }));
 vi.mock("./prompts/system-instructions", () => ({
-  buildSystemInstruction: vi.fn((demo) => `system:${demo}`),
+  buildSystemInstruction: vi.fn(
+    (demo, categories) => `system:${demo}:${categories?.join(",") || ""}`,
+  ),
 }));
 vi.mock("./prompts/merge-proposal", () => ({
   buildMergeProposalPrompt: vi.fn((t, s) => `merge:${t}:${s}`),
 }));
 vi.mock("./prompts/plot-analysis", () => ({
   buildPlotAnalysisPrompt: vi.fn((s, c, q) => `plot:${s}:${c}:${q}`),
+}));
+vi.mock("./prompts/context-distillation", () => ({
+  buildContextDistillationPrompt: vi.fn((context) => `distill:${context}`),
+}));
+vi.mock("./prompts/entity-reconciliation", () => ({
+  buildEntityReconciliationPrompt: vi.fn(
+    (entity, incoming) =>
+      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}`,
+  ),
 }));
 
 describe("DefaultTextGenerationService", () => {
@@ -92,6 +103,37 @@ describe("DefaultTextGenerationService", () => {
     });
   });
 
+  describe("distillContext", () => {
+    it("should distill a long context block", async () => {
+      const result = await service.distillContext(
+        "key",
+        "Raw campaign context",
+        "model",
+      );
+
+      expect(result).toBe("Generated content");
+      expect(mockAiClientManager.getModel).toHaveBeenCalledWith("key", "model");
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "distill:Raw campaign context",
+      );
+    });
+
+    it("should return the original context if distillation fails", async () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      mockModel.generateContent.mockRejectedValue(new Error("AI error"));
+
+      const result = await service.distillContext(
+        "key",
+        "Raw campaign context",
+        "model",
+      );
+
+      expect(result).toBe("Raw campaign context");
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe("generateMergeProposal", () => {
     it("should generate a merge proposal JSON", async () => {
       mockModel.generateContent.mockResolvedValue({
@@ -156,6 +198,65 @@ describe("DefaultTextGenerationService", () => {
       const subject = { title: "Subject", type: "npc" };
       await service.generatePlotAnalysis("key", "model", subject, [], "Q");
       expect(mockModel.generateContent).toHaveBeenCalled();
+    });
+  });
+
+  describe("reconcileEntityUpdate", () => {
+    it("should reconcile an existing entity into updated content and lore", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Updated chronicle","lore":"Updated lore"}',
+            ),
+        },
+      });
+
+      const result = await service.reconcileEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "Thay",
+          type: "location",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+        {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        },
+        [
+          {
+            title: "Szass Tam",
+            type: "npc",
+            relation: "rules",
+            summary: "The lich-regent of Thay.",
+          },
+        ],
+      );
+
+      expect(result).toEqual({
+        content: "Updated chronicle",
+        lore: "Updated lore",
+      });
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "reconcile:Thay:New chronicle:New lore",
+      );
+    });
+
+    it("should throw when reconciliation fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Network fail"));
+
+      await expect(
+        service.reconcileEntityUpdate!(
+          "key",
+          "model",
+          { title: "Thay", type: "location", content: "", lore: "" },
+          { chronicle: "New chronicle", lore: "New lore" },
+          [],
+        ),
+      ).rejects.toThrow("Entity reconciliation failed: Network fail");
     });
   });
 
@@ -232,6 +333,29 @@ describe("DefaultTextGenerationService", () => {
         service.generateResponse("key", "Q", [], "C", "m", onUpdate),
       ).rejects.toThrow("Lore Oracle Error: Generic AI error");
     });
+
+    it("should pass categories to buildSystemInstruction", async () => {
+      const onUpdate = vi.fn();
+      const categories = ["cat1", "cat2"];
+      await service.generateResponse(
+        "key",
+        "Q",
+        [],
+        "C",
+        "m",
+        onUpdate,
+        false,
+        categories,
+      );
+
+      // Verify that the model was initialized with the instruction containing categories
+      // aiClientManager.getModel is called with systemInstruction
+      expect(mockAiClientManager.getModel).toHaveBeenCalledWith(
+        "key",
+        "m",
+        "system:false:cat1,cat2",
+      );
+    });
   });
 
   describe("failure cases", () => {
@@ -247,6 +371,68 @@ describe("DefaultTextGenerationService", () => {
       await expect(
         service.generatePlotAnalysis("key", "model", {}, [], "Q"),
       ).rejects.toThrow("Plot analysis failed: Timeout");
+    });
+  });
+
+  describe("expandQuery", () => {
+    it("should return expanded query from model", async () => {
+      const mockText = vi.fn().mockReturnValue("Expanded query");
+      mockModel.generateContent.mockResolvedValue({
+        response: { text: mockText },
+      });
+
+      const result = await service.expandQuery("key", "original query", []);
+      expect(result).toBe("Expanded query");
+    });
+
+    it("should return original query if expansion fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Fail"));
+      const result = await service.expandQuery("key", "original query", []);
+      expect(result).toBe("original query");
+    });
+  });
+
+  describe("distillContext", () => {
+    it("should return distilled context", async () => {
+      const mockText = vi.fn().mockReturnValue("distilled context");
+      mockModel.generateContent.mockResolvedValue({
+        response: { text: mockText },
+      });
+
+      const result = await service.distillContext("key", "context", "model");
+      expect(result).toBe("distilled context");
+    });
+
+    it("should return raw context if distillContext fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Timeout"));
+      const result = await service.distillContext("key", "context", "model");
+      expect(result).toBe("context");
+    });
+  });
+
+  describe("merge and reconcile failure paths", () => {
+    it("should handle error in generateMergeProposal catch block", async () => {
+      mockModel.generateContent.mockImplementationOnce(() => {
+        throw new Error("Direct throw");
+      });
+      await expect(
+        service.generateMergeProposal("key", "model", {}, []),
+      ).rejects.toThrow("Merge failed: Direct throw");
+    });
+
+    it("should handle error in reconcileEntityUpdate catch block", async () => {
+      mockModel.generateContent.mockImplementationOnce(() => {
+        throw new Error("Direct throw");
+      });
+      await expect(
+        service.reconcileEntityUpdate!(
+          "key",
+          "model",
+          { title: "T", type: "npc", content: "", lore: "" },
+          { chronicle: "C", lore: "L" },
+          [],
+        ),
+      ).rejects.toThrow("Entity reconciliation failed: Direct throw");
     });
   });
 });

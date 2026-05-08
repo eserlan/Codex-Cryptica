@@ -10,7 +10,21 @@ vi.mock("$app/paths", () => ({
 }));
 
 vi.mock("./vault.svelte", () => ({
-  vault: { selectedEntityId: null },
+  vault: {
+    selectedEntityId: null,
+    isGuest: false,
+    entities: {},
+    loadEntityContent: vi.fn(),
+  },
+}));
+
+vi.mock("../utils/idb", () => ({
+  getDB: vi.fn().mockResolvedValue({
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn(),
+  }),
 }));
 
 // Mock matchMedia
@@ -28,39 +42,40 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-import { uiStore } from "./ui.svelte";
+import { UIStore, uiStore } from "./ui.svelte";
+import { vault } from "./vault.svelte";
+
+const mockedVault = vault as any;
 
 describe("UIStore", () => {
   beforeEach(() => {
     // Reset state before each test
+    localStorage.removeItem("codex_explorer_view_mode");
+    localStorage.removeItem("codex_explorer_collapsed_label_groups");
+    localStorage.removeItem("codex_vtt_sidebar_collapsed");
+    localStorage.removeItem("codex_vtt_entity_list_collapsed");
+    localStorage.removeItem("codex_entity_discovery_mode");
+    localStorage.removeItem("codex_connection_discovery_mode");
+    localStorage.removeItem("codex_auto_archive");
+    localStorage.removeItem("codex_world_page_dismissed_at");
+    localStorage.removeItem("codex_dismissed_landing");
+
     uiStore.closeSettings();
     uiStore.activeSettingsTab = "vault";
     uiStore.skipWelcomeScreen = false;
     uiStore.dismissedLandingPage = false;
-    uiStore.dismissedCampaignPage = false;
+    uiStore.dismissedWorldPage = false;
+    uiStore.explorerViewMode = "list";
+    uiStore.entityDiscoveryMode = "suggest";
+    uiStore.connectionDiscoveryMode = "suggest";
+    uiStore.autoArchive = false;
+    uiStore.explorerCollapsedLabelGroups = {};
     uiStore.closeSidebar();
-    uiStore.showCanvasPalette = true;
-  });
-
-  it("should make Entity Explorer and Canvas Palette mutually exclusive", () => {
-    // 1. Initial state: Palette is open, Sidebar is closed
-    expect(uiStore.showCanvasPalette).toBe(true);
-    expect(uiStore.activeSidebarTool).toBe("none");
-
-    // 2. Open Explorer -> Palette should close
-    uiStore.toggleSidebarTool("explorer");
-    expect(uiStore.activeSidebarTool).toBe("explorer");
-    expect(uiStore.showCanvasPalette).toBe(false);
-
-    // 3. Open Palette -> Explorer should close
-    uiStore.showCanvasPalette = true;
-    expect(uiStore.showCanvasPalette).toBe(true);
-    expect(uiStore.activeSidebarTool).toBe("none");
-
-    // 4. Opening Oracle should NOT close Palette (they are NOT mutually exclusive)
-    uiStore.toggleSidebarTool("oracle");
-    expect(uiStore.activeSidebarTool).toBe("oracle");
-    expect(uiStore.showCanvasPalette).toBe(true);
+    uiStore.vttSidebarCollapsed = false;
+    uiStore.vttEntityListCollapsed = false;
+    mockedVault.isGuest = false;
+    mockedVault.entities = {};
+    mockedVault.loadEntityContent.mockClear();
   });
 
   it("should open settings to a specific tab", () => {
@@ -143,15 +158,72 @@ describe("UIStore", () => {
     openSpy.mockRestore();
   });
 
+  it("should preserve the active theme when opening the dice window", () => {
+    window.localStorage.setItem("codex-cryptica-active-theme", "cyberpunk");
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    uiStore.openDiceWindow();
+
+    expect(openSpy).toHaveBeenCalled();
+    expect(openSpy.mock.calls[0][0]).toContain("/dice?theme=cyberpunk");
+    openSpy.mockRestore();
+  });
+
   it("should handle notifications with timeout", () => {
     vi.useFakeTimers();
     uiStore.notify("Success!", "success");
     expect(uiStore.notification).toEqual({
       message: "Success!",
       type: "success",
+      persistent: false,
     });
 
     vi.advanceTimersByTime(5000);
+    expect(uiStore.notification).toBe(null);
+    vi.useRealTimers();
+  });
+
+  it("should persist oracle automation modes", () => {
+    uiStore.setEntityDiscoveryMode("auto-create");
+    uiStore.setConnectionDiscoveryMode("auto-apply");
+
+    expect(uiStore.entityDiscoveryMode).toBe("auto-create");
+    expect(uiStore.connectionDiscoveryMode).toBe("auto-apply");
+    expect(uiStore.autoArchive).toBe(true);
+    expect(localStorage.getItem("codex_entity_discovery_mode")).toBe(
+      "auto-create",
+    );
+    expect(localStorage.getItem("codex_connection_discovery_mode")).toBe(
+      "auto-apply",
+    );
+    expect(localStorage.getItem("codex_auto_archive")).toBe("true");
+  });
+
+  it("should keep the legacy auto-archive toggle in sync with entity discovery", () => {
+    uiStore.toggleAutoArchive(true);
+    expect(uiStore.entityDiscoveryMode).toBe("auto-create");
+    expect(uiStore.autoArchive).toBe(true);
+
+    uiStore.toggleAutoArchive(false);
+    expect(uiStore.entityDiscoveryMode).toBe("suggest");
+    expect(uiStore.autoArchive).toBe(false);
+  });
+
+  it("should not let an older timeout clear a newer persistent notification", () => {
+    vi.useFakeTimers();
+
+    uiStore.notify("Short lived", "success");
+    uiStore.notify("Persistent", "info", true);
+
+    vi.advanceTimersByTime(5000);
+
+    expect(uiStore.notification).toEqual({
+      message: "Persistent",
+      type: "info",
+      persistent: true,
+    });
+
+    uiStore.clearNotification();
     expect(uiStore.notification).toBe(null);
     vi.useRealTimers();
   });
@@ -196,6 +268,52 @@ describe("UIStore", () => {
     );
   });
 
+  it("should persist explorer view mode changes", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    uiStore.setExplorerViewMode("label");
+
+    expect(uiStore.explorerViewMode).toBe("label");
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_explorer_view_mode",
+      "label",
+    );
+
+    setItemSpy.mockRestore();
+  });
+
+  it("should persist collapsed explorer label groups per vault", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    uiStore.toggleExplorerLabelGroup("vault-1", "Quest");
+
+    expect(uiStore.getCollapsedLabelGroups("vault-1")).toEqual(
+      new Set(["Quest"]),
+    );
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_explorer_collapsed_label_groups",
+      JSON.stringify({ "vault-1": ["Quest"] }),
+    );
+
+    uiStore.toggleExplorerLabelGroup("vault-1", "Quest");
+    expect(uiStore.getCollapsedLabelGroups("vault-1")).toEqual(new Set());
+
+    setItemSpy.mockRestore();
+  });
+
+  it("should restore collapsed explorer label groups from localStorage", () => {
+    localStorage.setItem(
+      "codex_explorer_collapsed_label_groups",
+      JSON.stringify({ "vault-1": ["Quest", "NPC"] }),
+    );
+
+    const store = new UIStore();
+
+    expect(store.getCollapsedLabelGroups("vault-1")).toEqual(
+      new Set(["NPC", "Quest"]),
+    );
+  });
+
   it("should handle Zen Mode operations", () => {
     uiStore.openZenMode("entity-1", "inventory");
     expect(uiStore.showZenMode).toBe(true);
@@ -222,11 +340,11 @@ describe("UIStore", () => {
     expect(uiStore.bulkLabelDialog.open).toBe(false);
   });
 
-  it("should toggle lite mode and save to localStorage", () => {
+  it("should toggle AI disabled and save to localStorage", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
-    uiStore.toggleLiteMode(true);
-    expect(uiStore.liteMode).toBe(true);
-    expect(setItemSpy).toHaveBeenCalledWith("codex_lite_mode", "true");
+    uiStore.toggleAiDisabled(true);
+    expect(uiStore.aiDisabled).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_ai_disabled", "true");
   });
 
   it("should toggle welcome screen preference", () => {
@@ -234,6 +352,86 @@ describe("UIStore", () => {
     uiStore.toggleWelcomeScreen(true);
     expect(uiStore.skipWelcomeScreen).toBe(true);
     expect(setItemSpy).toHaveBeenCalledWith("codex_skip_landing", "true");
+  });
+
+  it("should persist landing page dismissal to localStorage", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.dismissedLandingPage = false;
+    uiStore.dismissLandingPage();
+    expect(uiStore.dismissedLandingPage).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_dismissed_landing", "true");
+  });
+
+  it("should restore dismissedLandingPage from localStorage on init", () => {
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_dismissed_landing") return "true";
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedLandingPage).toBe(true);
+    spy.mockRestore();
+  });
+
+  it("should dismiss world page and persist timestamp", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.dismissedWorldPage = false;
+    uiStore.dismissWorldPage();
+    expect(uiStore.dismissedWorldPage).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_world_page_dismissed_at",
+      expect.any(String),
+    );
+  });
+
+  it("should restore world page and clear timestamp", () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+    uiStore.dismissedWorldPage = true;
+    uiStore.restoreWorldPage();
+    expect(uiStore.dismissedWorldPage).toBe(false);
+    expect(removeItemSpy).toHaveBeenCalledWith("codex_world_page_dismissed_at");
+  });
+
+  it("should auto-dismiss world page on init when dismissed within 24h", () => {
+    const recentTimestamp = String(Date.now() - 30 * 60 * 1000); // 30 min ago
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return recentTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(true);
+    spy.mockRestore();
+  });
+
+  it("should not auto-dismiss world page on init when dismissed over 24h ago", () => {
+    const oldTimestamp = String(Date.now() - 25 * 60 * 60 * 1000); // 25h ago
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return oldTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(false);
+    spy.mockRestore();
+  });
+
+  it("should clear invalid/future world page timestamp on init", () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+    const futureTimestamp = String(Date.now() + 60 * 60 * 1000); // 1h in the future
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return futureTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(false);
+    expect(removeItemSpy).toHaveBeenCalledWith("codex_world_page_dismissed_at");
+    spy.mockRestore();
   });
 
   it("should calculate landing page visibility", () => {
@@ -247,5 +445,91 @@ describe("UIStore", () => {
     uiStore.skipWelcomeScreen = false;
     uiStore.dismissedLandingPage = true;
     expect(uiStore.isLandingPageVisible).toBe(false);
+  });
+
+  it("should close the sidebar when focusing an entity on mobile", () => {
+    // 1. Setup mobile state
+    uiStore.isMobile = true;
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+
+    // 2. Focus an entity
+    uiStore.focusEntity("hero-123");
+
+    // 3. Verify sidebar is closed
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+  });
+
+  it("should close the sidebar even when re-focusing the same entity on mobile", () => {
+    // 1. Setup mobile state with an entity already focused
+    uiStore.isMobile = true;
+    uiStore.focusEntity("hero-123");
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+
+    // 2. Focus the SAME entity again
+    uiStore.focusEntity("hero-123");
+
+    // 3. Verify sidebar is closed even if the entity didn't change
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+  });
+
+  it("should NOT close the sidebar when focusing an entity on desktop", () => {
+    // 1. Setup desktop state
+    uiStore.isMobile = false;
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+
+    // 2. Focus an entity
+    uiStore.focusEntity("hero-456");
+
+    // 3. Verify sidebar is still open
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("explorer");
+    expect(uiStore.focusedEntityId).toBe("hero-456");
+  });
+
+  it("should load persisted VTT sidebar state from localStorage", () => {
+    localStorage.setItem("codex_vtt_sidebar_collapsed", "true");
+    localStorage.setItem("codex_vtt_entity_list_collapsed", "true");
+
+    const store = new UIStore();
+
+    expect(store.vttSidebarCollapsed).toBe(true);
+    expect(store.vttEntityListCollapsed).toBe(true);
+  });
+
+  it("should persist VTT sidebar toggles", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    uiStore.toggleVttSidebar(true);
+    uiStore.toggleVttEntityList(true);
+
+    expect(uiStore.vttSidebarCollapsed).toBe(true);
+    expect(uiStore.vttEntityListCollapsed).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_vtt_sidebar_collapsed",
+      "true",
+    );
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_vtt_entity_list_collapsed",
+      "true",
+    );
+  });
+
+  it("should migrate codex_lite_mode to codex_ai_disabled on initialization", () => {
+    localStorage.setItem("codex_lite_mode", "true");
+    localStorage.removeItem("codex_ai_disabled");
+
+    const store = new UIStore();
+
+    expect(store.aiDisabled).toBe(true);
+    expect(localStorage.getItem("codex_ai_disabled")).toBe("true");
+    expect(localStorage.getItem("codex_lite_mode")).toBe(null);
   });
 });

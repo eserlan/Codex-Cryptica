@@ -108,7 +108,7 @@ description: "Task list template for feature implementation"
 - [x] T017 [P] Add user-facing help description for multi-vault sync in `apps/web/src/lib/config/help-content.ts`
 - [x] T018 Handle GDrive 401/403 errors across all active vault contexts and trigger re-authorization UI flow in `apps/web/src/lib/stores/sync.ts` and `apps/web/src/lib/components/settings/GDriveSettings.svelte`
 - [x] T019 Implement GDrive metadata cleanup upon local vault deletion in `packages/editor-core/src/storage/registry.ts`
-- [x] T020 Run all Vitest and Playwright test suites (e.g., `npm run test` in repository root) to ensure full coverage and no regressions
+- [x] T020 Run all Vitest and Playwright test suites (e.g., `pnpm run test` in repository root) to ensure full coverage and no regressions
 
 ---
 

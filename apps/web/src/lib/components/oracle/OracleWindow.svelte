@@ -48,7 +48,7 @@
 {#if oracle.isOpen}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
   <div
-    class="fixed inset-0 bg-black/40 z-40 {oracle.isModal
+    class="fixed inset-0 bg-black/40 z-[89] {oracle.isModal
       ? 'block'
       : 'md:hidden'}"
     onclick={() => oracle.toggle()}
@@ -57,10 +57,10 @@
   ></div>
 
   <div
-    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-50 flex flex-col bg-theme-surface border border-theme-border shadow-2xl
+    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-[90] flex flex-col bg-theme-surface border border-theme-border shadow-2xl
     {oracle.isModal
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
-      : 'bottom-0 left-0 w-full h-full rounded-t-xl'}"
+      : 'bottom-0 left-0 w-full h-[100dvh] rounded-t-xl'}"
     transition:fly={{ y: 50, duration: 300 }}
     role={oracle.isModal ? "dialog" : "region"}
     aria-modal={oracle.isModal ? "true" : undefined}
@@ -68,7 +68,7 @@
   >
     <!-- Header -->
     <div
-      class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
+      class="px-3 py-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
     >
       <div class="flex items-center gap-2">
         <div
@@ -77,13 +77,13 @@
             : ''}"
         ></div>
         <span
-          class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+          class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
-        {#if uiStore.liteMode}
+        {#if uiStore.aiDisabled}
           <span
             class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
-            >LITE</span
+            >AI DISABLED</span
           >
         {/if}
       </div>
@@ -92,15 +92,7 @@
         {#if oracle.messages.length > 0}
           <button
             class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
-            onclick={() => {
-              if (
-                confirm(
-                  "Are you sure you want to clear the conversation history?",
-                )
-              ) {
-                oracle.clearMessages();
-              }
-            }}
+            onclick={() => oracle.clearMessages()}
             title="Clear conversation history"
             aria-label="Clear conversation history"
           >
@@ -137,7 +129,7 @@
           onclick={() => oracle.toggle()}
           aria-label="Close oracle window"
         >
-          ✕
+          <span class="icon-[lucide--x] w-4 h-4"></span>
         </button>
       </div>
     </div>
@@ -161,7 +153,7 @@
         <button
           onclick={async () => {
             try {
-              const _id = await demoService.convertToCampaign();
+              const _id = await demoService.convertToWorld();
               const url = new URL(page.url.href);
               url.searchParams.delete("demo");
               goto(url.toString(), { replaceState: true });

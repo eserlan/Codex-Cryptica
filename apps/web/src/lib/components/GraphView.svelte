@@ -5,6 +5,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import type { LocalEntity } from "$lib/stores/vault/types";
 
   import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { categories } from "$lib/stores/categories.svelte";
@@ -26,6 +27,7 @@
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
+  import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     consumePendingSearchEntityFocus,
@@ -96,6 +98,11 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
+
+  $effect(() => {
+    if (hoveredEntityId) vault.loadEntityContent(hoveredEntityId);
+  });
+
   let findNodeCounter = $derived(ui.findNodeCounter);
   let pendingSearchFocus: {
     entityId: string;
@@ -120,6 +127,7 @@
     isForced = false,
     caller = "unknown",
     randomizeForced = false,
+    hasNewNodes = false,
   ) => {
     if (!layoutManager) return;
 
@@ -135,23 +143,34 @@
         onLayoutStart: () => {
           isLayoutRunning = true;
         },
+        onLayoutComputed: (ms) => {
+          debugStore.log(`Layout: ${ms}ms`, {
+            nodes: graph.stats.nodeCount,
+            caller,
+          });
+        },
         onLayoutStop: () => {
           isLayoutRunning = false;
           graphVisible = true;
           if (isInitial) {
-            setTimeout(() => {
-              _layoutReady = true;
-            }, 1000);
+            _layoutReady = true;
           }
         },
         onPositionsUpdated: (updates) => {
-          vault.batchUpdate(updates as any);
+          // Optimization: Only write back positions if this wasn't the initial load layout
+          // and the vault is not in a loading state.
+          // Also verify that the graph has been marked as fully ready.
+          const isReady = _layoutReady && vault.status !== "loading";
+          if (!isInitial && isReady) {
+            vault.batchUpdate(updates as Record<string, Partial<LocalEntity>>);
+          }
         },
       },
       isInitial,
       isForced,
       caller,
       randomizeForced,
+      hasNewNodes,
     );
   };
 
@@ -168,7 +187,20 @@
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = async (e: KeyboardEvent) => {
+    const handledDelete = await handleGraphDeleteShortcut(e, {
+      cy,
+      selectedId,
+      isGuest: vault.isGuest,
+      confirm: (params) => ui.confirm(params),
+      deleteEntity: (id) => vault.deleteEntity(id),
+      clearSelectedId: () => {
+        selectedId = null;
+      },
+    });
+
+    if (handledDelete) return;
+
     const target = document.activeElement;
     if (
       target?.tagName === "INPUT" ||
@@ -474,7 +506,9 @@
           initialLoaded = true;
           graphVisible = true;
         },
-        onLayoutUpdate: applyCurrentLayout,
+        onLayoutUpdate: (isInitial, isForced, caller, hasNewNodes) => {
+          applyCurrentLayout(isInitial, isForced, caller, false, hasNewNodes);
+        },
       });
     }
     // Optimization: Keep graph visible if we have data and it was already loaded
@@ -636,5 +670,22 @@
   :global(.selected-source) {
     box-shadow: 0 0 20px #facc15;
     z-index: 1000 !important;
+  }
+
+  /* Discovery Pulse Animation */
+  @keyframes discovery-pulse {
+    0% {
+      opacity: 0.15;
+    }
+    50% {
+      opacity: 0.35;
+    }
+    100% {
+      opacity: 0.15;
+    }
+  }
+
+  :global(node[status="draft"]) {
+    animation: discovery-pulse 2s infinite ease-in-out;
   }
 </style>

@@ -4,7 +4,11 @@
     saveGuestDisplayName,
   } from "$lib/utils/guest-name-storage";
 
-  let { onJoin }: { onJoin: (username: string) => void } = $props();
+  let {
+    onJoin,
+    rejectionMessage = null,
+  }: { onJoin: (username: string) => void; rejectionMessage?: string | null } =
+    $props();
 
   const getGuestStorage = () => {
     if (typeof window === "undefined") return null;
@@ -17,6 +21,12 @@
 
   let username = $state(loadGuestDisplayName(getGuestStorage()));
   let error = $state<string | null>(null);
+
+  $effect(() => {
+    if (rejectionMessage) {
+      error = rejectionMessage;
+    }
+  });
 
   const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
@@ -34,6 +44,20 @@
     if (error) error = null;
   };
 </script>
+
+<svelte:window
+  onkeydown={(e) => {
+    if (
+      e.key === "Enter" &&
+      document.activeElement?.tagName !== "INPUT" &&
+      document.activeElement?.tagName !== "TEXTAREA"
+    ) {
+      e.preventDefault();
+      const form = document.querySelector("form");
+      if (form) form.requestSubmit();
+    }
+  }}
+/>
 
 <div
   class="fixed inset-0 bg-theme-bg/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 font-mono text-theme-text"

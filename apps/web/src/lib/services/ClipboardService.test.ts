@@ -54,9 +54,11 @@ describe("ClipboardService", () => {
       content: "Test Content",
       lore: "Test Lore",
       type: "npc",
+      status: "active",
       connections: [],
       tags: [],
       labels: [],
+      aliases: [],
     };
 
     const result = await service.copyEntity(mockEntity);

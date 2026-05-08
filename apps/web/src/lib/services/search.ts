@@ -5,7 +5,10 @@ import SearchWorker from "../workers/search.worker?worker";
 import type { SearchEngine } from "@codex/search-engine";
 import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
-import { vaultEventBus } from "../stores/vault/events";
+import { appEventBus } from "@codex/events";
+import { VAULT_EVENTS } from "@codex/vault-engine";
+
+const INDEX_BATCH_SIZE = 100;
 
 export class SearchService {
   private worker: Worker | null = null;
@@ -14,15 +17,16 @@ export class SearchService {
   private activeVaultId: string | null = null;
   private saveTimeout: any = null;
   private indexQueue: Promise<void> = Promise.resolve();
+  private initPromise: Promise<void> | null = null;
   private isInitialized = false;
   private needsFullContentSweep = false;
 
   constructor() {
     if (typeof window !== "undefined") {
-      this.initWorker();
+      // Defer worker initialization until first use or vault event
+      // Bridge logs from worker to main thread log service
 
       // Final emergency save on page reload/exit
-      // Note: visibilitychange is more reliable than beforeunload for IDB writes
       window.addEventListener("visibilitychange", () => {
         if (
           document.visibilityState === "hidden" &&
@@ -33,86 +37,101 @@ export class SearchService {
         }
       });
 
-      // Subscribe to vault lifecycle events
-      vaultEventBus.subscribe(async (event) => {
-        // VALIDATION: All sync/load events MUST match the current active vault ID
-        // to prevent cross-vault index contamination during rapid switches.
-        if (
-          "vaultId" in event &&
-          event.vaultId !== this.activeVaultId &&
-          event.type !== "VAULT_OPENING"
-        ) {
-          return;
-        }
-
-        switch (event.type) {
-          case "VAULT_OPENING":
-            this.activeVaultId = event.vaultId;
-            // Context switch: Clear dirty flag if we are switching vaults
-            this.isDirty = false;
-            // IMPORTANT: Clear the existing index in memory so we don't merge vaults!
-            await this.clear();
-            break;
-
-          case "CACHE_LOADED": {
-            // 1. Try to restore index from disk
-            const restored = await this.loadIndex(event.vaultId);
-
-            // 2. If not restored, perform initial metadata indexing
-            if (!restored) {
-              debugStore.log(
-                `[SearchService] Cold boot: Rebuilding index for ${event.vaultId}`,
-              );
-              await this.indexBatch(Object.values(event.entities));
-              this.needsFullContentSweep = true;
-              debugStore.log(`[SearchService] Metadata indexing complete.`);
-            } else {
-              this.needsFullContentSweep = false;
-              debugStore.log(
-                `[SearchService] Warm boot: Restored index for ${event.vaultId}`,
-              );
-            }
-            break;
+      // Subscribe to vault lifecycle events via AppEventBus
+      appEventBus.subscribe(
+        "VAULT:*",
+        async (event) => {
+          // VALIDATION: All sync/load events MUST match the current active vault ID
+          // to prevent cross-vault index contamination during rapid switches.
+          // VAULT_OPENING and VAULT_SWITCHED are exempt — they drive the transition.
+          const vaultId = event.metadata.vaultId;
+          if (
+            vaultId &&
+            vaultId !== this.activeVaultId &&
+            event.type !== VAULT_EVENTS.VAULT_OPENING &&
+            event.type !== VAULT_EVENTS.VAULT_SWITCHED
+          ) {
+            return;
           }
 
-          case "SYNC_CHUNK_READY": {
-            const chunk = event.newOrChangedIds
-              .map((id) => event.entities[id])
-              .filter(Boolean);
-            if (chunk.length > 0) {
-              await this.indexBatch(chunk);
+          switch (event.type) {
+            case VAULT_EVENTS.VAULT_OPENING:
+              if (this.activeVaultId !== vaultId) {
+                this.activeVaultId = vaultId!;
+                this.isDirty = false;
+                await this.clear();
+              }
+              break;
+
+            case VAULT_EVENTS.CACHE_LOADED: {
+              const restored = await this.loadIndex(vaultId!);
+              if (!restored) {
+                debugStore.log(
+                  `[SearchService] Cold boot: Rebuilding index for ${vaultId}`,
+                );
+                await this.indexBatch(event.payload.entities);
+                this.needsFullContentSweep = true;
+                debugStore.log(`[SearchService] Metadata indexing complete.`);
+              } else {
+                this.needsFullContentSweep = false;
+                debugStore.log(
+                  `[SearchService] Warm boot: Restored index for ${vaultId}`,
+                );
+              }
+              break;
             }
-            break;
+
+            case VAULT_EVENTS.SYNC_CHUNK_READY: {
+              const { entities } = event.payload;
+              if (entities.length > 0) {
+                await this.indexBatch(entities);
+              }
+              break;
+            }
+
+            case VAULT_EVENTS.SYNC_COMPLETE:
+              if (this.needsFullContentSweep) {
+                setTimeout(() => {
+                  this.indexContentInBackground(vaultId!);
+                }, 3000);
+                this.needsFullContentSweep = false;
+              }
+              break;
+
+            case VAULT_EVENTS.VAULT_SWITCHED:
+              // Fallback: sync activeVaultId if VAULT_OPENING was missed
+              if (this.activeVaultId !== event.payload.id) {
+                this.activeVaultId = event.payload.id;
+                this.isDirty = false;
+                await this.clear();
+              }
+              break;
+
+            case VAULT_EVENTS.ENTITY_UPDATED: {
+              const { patch, entity } = event.payload;
+              if (
+                patch.title !== undefined ||
+                patch.aliases !== undefined ||
+                patch.content !== undefined ||
+                patch.tags !== undefined ||
+                patch.lore !== undefined
+              ) {
+                await this.index(this.mapToSearchEntry(entity));
+              }
+              break;
+            }
+
+            case VAULT_EVENTS.ENTITY_DELETED:
+              await this.remove(event.payload.entityId);
+              break;
+
+            case VAULT_EVENTS.BATCH_CREATED:
+              await this.indexBatch(event.payload.entities);
+              break;
           }
-
-          case "SYNC_COMPLETE":
-            // Trigger full content indexing sweep in background ONLY if cold boot
-            if (this.needsFullContentSweep) {
-              this.indexContentInBackground(event.vaultId);
-              this.needsFullContentSweep = false;
-            }
-            break;
-
-          case "ENTITY_UPDATED":
-            if (
-              event.patch.title !== undefined ||
-              event.patch.content !== undefined ||
-              event.patch.tags !== undefined ||
-              event.patch.lore !== undefined
-            ) {
-              await this.index(this.mapToSearchEntry(event.entity));
-            }
-            break;
-
-          case "ENTITY_DELETED":
-            await this.remove(event.entityId);
-            break;
-
-          case "BATCH_CREATED":
-            await this.indexBatch(event.entities);
-            break;
-        }
-      }, "search-service");
+        },
+        "search-service",
+      );
     }
   }
 
@@ -126,40 +145,62 @@ export class SearchService {
     debugStore.log(`[SearchService] Starting background content sync...`);
     const start = performance.now();
     let indexedCount = 0;
-    const batch: any[] = [];
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = INDEX_BATCH_SIZE;
 
     try {
-      await entityDb.entityContent
+      const metadatas = await entityDb.graphEntities
         .where("vaultId")
         .equals(vaultId)
-        .each(async (record) => {
+        .toArray();
+
+      const metaMap = new Map(metadatas.map((m) => [m.id, m]));
+
+      let offset = 0;
+      while (true) {
+        if (this.activeVaultId !== vaultId) {
+          debugStore.log(
+            `[SearchService] Background sync aborted (vault switched).`,
+          );
+          return;
+        }
+
+        const records = await entityDb.entityContent
+          .where("vaultId")
+          .equals(vaultId)
+          .offset(offset)
+          .limit(BATCH_SIZE)
+          .toArray();
+
+        if (records.length === 0) break;
+
+        const currentBatch = [];
+        for (const record of records) {
           // We need the full metadata to prevent FlexSearch from overwriting the document
           // with empty fields, as 'add/update' replaces the entire document.
-          const metadata = await entityDb.graphEntities.get([
-            vaultId,
-            record.entityId,
-          ]);
+          const metadata = metaMap.get(record.entityId);
 
           if (metadata) {
-            batch.push({
+            currentBatch.push({
               ...metadata,
               content: record.content,
               lore: record.lore,
             });
-
-            if (batch.length >= BATCH_SIZE) {
-              const currentBatch = [...batch];
-              batch.length = 0;
-              await this.indexBatch(currentBatch);
-              indexedCount += currentBatch.length;
-            }
           }
-        });
+        }
 
-      if (batch.length > 0) {
-        await this.indexBatch(batch);
-        indexedCount += batch.length;
+        if (currentBatch.length > 0) {
+          await this.indexBatch(currentBatch);
+          indexedCount += currentBatch.length;
+        }
+
+        if (records.length < BATCH_SIZE) break;
+
+        offset += records.length;
+
+        // Stagger batches to let the main thread and IndexedDB breathe.
+        // 500ms delay between chunks provides a smooth background sync
+        // without choking UI interactivity.
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       debugStore.log(
@@ -171,6 +212,8 @@ export class SearchService {
   }
 
   private initWorker() {
+    if (this.worker) return;
+
     this.worker = new SearchWorker();
     this.api = Comlink.wrap<SearchEngine>(this.worker);
 
@@ -198,10 +241,31 @@ export class SearchService {
       }),
     );
 
-    // Initialize immediately
-    this.init().then(() => {
-      this.isInitialized = true;
-    });
+    // Initialize worker state (but defer FlexSearch init until clear/load)
+    this.isInitialized = true;
+    this.initPromise = Promise.resolve();
+  }
+
+  private async ensureWorker(): Promise<Comlink.Remote<SearchEngine>> {
+    if (typeof window === "undefined") {
+      throw new Error(
+        "[SearchService] Search worker cannot be initialized in SSR environment",
+      );
+    }
+
+    if (!this.api) {
+      this.initWorker();
+    }
+
+    if (this.initPromise) {
+      await this.initPromise;
+    }
+
+    if (!this.api || !this.isInitialized) {
+      throw new Error("[SearchService] Search worker failed to initialize");
+    }
+
+    return this.api;
   }
 
   private scheduleAutoSave() {
@@ -222,26 +286,26 @@ export class SearchService {
     }
     this.worker?.terminate();
     this.worker = null;
+    this.initPromise = null;
   }
 
   async init(_options: { phonetic?: boolean } = {}): Promise<void> {
-    if (!this.api) return;
-    return this.api.initIndex();
+    await this.ensureWorker();
   }
 
   async index(entry: SearchEntry): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     // Serialize all indexing operations
     this.indexQueue = this.indexQueue
-      .then(() => this.api!.add(entry))
+      .then(() => api.add(entry))
       .catch((err) => debugStore.warn("Index error", err));
     return this.indexQueue;
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     this.indexQueue = this.indexQueue
-      .then(() => this.api!.remove(id))
+      .then(() => api.remove(id))
       .catch((err) => debugStore.warn("Index remove error", err));
     return this.indexQueue;
   }
@@ -250,9 +314,8 @@ export class SearchService {
     query: string,
     options: SearchOptions = {},
   ): Promise<SearchResult[]> {
-    if (!this.api) return [];
-
-    const rawResult = await this.api.searchOptimized(query, options);
+    const api = await this.ensureWorker();
+    const rawResult = await api.searchOptimized(query, options);
 
     // Handle Transferable (Encoded) result
     if (
@@ -269,9 +332,9 @@ export class SearchService {
   }
 
   async clear(): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     this.isDirty = false;
-    return this.api.clear();
+    return api.clear();
   }
 
   /**
@@ -279,20 +342,12 @@ export class SearchService {
    * Returns true if successful.
    */
   async loadIndex(vaultId: string): Promise<boolean> {
-    if (!this.api) return false;
-
-    // Wait for worker to be ready
-    let retries = 0;
-    while (!this.isInitialized && retries < 20) {
-      await new Promise((r) => setTimeout(r, 100));
-      retries++;
-    }
-
+    const api = await this.ensureWorker();
     this.activeVaultId = vaultId;
     try {
       const record = await entityDb.searchIndex.get(vaultId);
       if (record && record.data) {
-        await this.api.importIndex(record.data);
+        await api.importIndex(record.data);
         this.isDirty = false; // Reset dirty state after load
         return true;
       }
@@ -309,20 +364,49 @@ export class SearchService {
    * Persists the current state of the search index to IndexedDB.
    */
   async saveIndex(vaultId: string): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     try {
       debugStore.log(
         `[SearchService] Save started: Exporting index for ${vaultId}...`,
       );
       const start = performance.now();
-      const data = await this.api.exportIndex();
+      const rawData = await api.exportIndex();
+
+      const explicitKeyCount =
+        typeof rawData?.keyCount === "number" ? rawData.keyCount : undefined;
+      const segmentedKeyCount =
+        rawData?.isSegmented &&
+        rawData?.segments &&
+        typeof rawData.segments === "object"
+          ? Object.keys(rawData.segments).length
+          : undefined;
+      const encodedPayload =
+        rawData?.isEncoded && rawData && typeof rawData === "object"
+          ? "payload" in rawData
+            ? (rawData as any).payload
+            : "data" in rawData
+              ? (rawData as any).data
+              : undefined
+          : undefined;
+      const encodedKeyCount =
+        rawData?.isEncoded &&
+        encodedPayload &&
+        typeof encodedPayload === "object"
+          ? Array.isArray(encodedPayload)
+            ? encodedPayload.length
+            : Object.keys(encodedPayload).length
+          : undefined;
+      const keyCount =
+        explicitKeyCount ??
+        segmentedKeyCount ??
+        encodedKeyCount ??
+        Object.keys(rawData || {}).length;
 
       // Ensure we have actual index data (more than just docCount)
-      const keyCount = Object.keys(data).length;
-      if (data && keyCount > 1) {
+      if (rawData && keyCount > 1) {
         await entityDb.searchIndex.put({
           vaultId,
-          data,
+          data: rawData,
           updatedAt: Date.now(),
         });
         this.isDirty = false; // Reset dirty state after successful save
@@ -353,6 +437,7 @@ export class SearchService {
     return {
       id: entity.id,
       title: entity.title,
+      aliases: (entity.aliases || []).join(" "),
       content: entity.content || "",
       type: entity.type,
       path,
@@ -362,16 +447,22 @@ export class SearchService {
   }
 
   private async indexBatch(entities: any[]) {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
 
     // Serialize indexing jobs to prevent overlapping worker updates
     this.indexQueue = this.indexQueue
       .then(async () => {
-        const entries = entities.map((e) => this.mapToSearchEntry(e));
-        // Indexing in chunks to avoid blocking the worker for too long
-        for (let i = 0; i < entries.length; i += 50) {
-          const chunk = entries.slice(i, i + 50);
-          await Promise.all(chunk.map((entry) => this.api!.add(entry)));
+        // ⚡ Bolt Optimization: Replace full array .map() with incremental imperative loop processing.
+        // Avoids allocating a massive intermediate array for all entities during cold boot,
+        // reducing peak memory and GC pressure.
+        for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
+          const chunkEntries: any[] = [];
+          const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
+          for (let j = i; j < end; j++) {
+            const entry = this.mapToSearchEntry(entities[j]);
+            chunkEntries.push(entry);
+          }
+          await api.addBatch(chunkEntries);
         }
       })
       .catch((err) => debugStore.warn("Index batch error", err));

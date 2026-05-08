@@ -39,7 +39,7 @@ _GATE: Passed on 2026-02-17._
 specs/045-campaign-date-picker/
 ├── plan.md              # This file
 ├── research.md          # Decision log for Positioning and Engine
-├── data-model.md        # CampaignCalendar and Month entities
+├── data-model.md        # WorldCalendar and Month entities
 ├── quickstart.md        # Setup guide for chronology-engine
 ├── contracts/           # ICalendarEngine interface
 └── tasks.md             # Implementation breakdown

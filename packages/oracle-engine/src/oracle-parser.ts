@@ -1,11 +1,12 @@
 import type { OracleIntent } from "./types";
 
 export class OracleCommandParser {
-  static parse(query: string, liteMode: boolean): OracleIntent {
+  static parse(query: string, aiDisabled: boolean): OracleIntent {
     const q = query.toLowerCase().trim();
 
     if (q === "/help") return { type: "help" };
     if (q === "/clear") return { type: "clear" };
+    if (q === "/regenerate") return { type: "regenerate" };
 
     if (q.startsWith("/roll")) {
       const formula = query.slice(5).trim();
@@ -37,7 +38,7 @@ export class OracleCommandParser {
           : "character";
         return { type: "create", entityName, entityType, isDrawing: false };
       }
-      if (liteMode)
+      if (aiDisabled)
         return {
           type: "error",
           message:
@@ -56,7 +57,7 @@ export class OracleCommandParser {
           targetName: match[3],
         };
       }
-      if (liteMode)
+      if (aiDisabled)
         return {
           type: "error",
           message: 'Invalid format. Use: /connect "Entity A" label "Entity B"',
@@ -74,7 +75,7 @@ export class OracleCommandParser {
           targetName: match[2],
         };
       }
-      if (liteMode)
+      if (aiDisabled)
         return {
           type: "error",
           message: 'Invalid format. Use: /merge "Source" into "Target"',
@@ -83,11 +84,11 @@ export class OracleCommandParser {
     }
 
     if (q.startsWith("/plot")) {
-      if (liteMode)
+      if (aiDisabled)
         return {
           type: "error",
           message:
-            "❌ The /plot command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use story tension analysis.",
+            "❌ The /plot command is powered by AI and is disabled. Enable AI in settings to use story tension analysis.",
         };
       let subject = query.replace(/^\/plot\s*/i, "").trim();
       if (subject.startsWith('"') && subject.endsWith('"')) {
@@ -97,15 +98,15 @@ export class OracleCommandParser {
     }
 
     if (q.startsWith("/draw") || q.startsWith("/image")) {
-      if (liteMode)
+      if (aiDisabled)
         return {
           type: "error",
           message:
-            "❌ The /draw command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use image generation.",
+            "❌ The /draw command is powered by AI and is disabled. Enable AI in settings to use image generation.",
         };
     }
 
-    return { type: "chat", query, isAIIntent: !liteMode };
+    return { type: "chat", query, isAIIntent: !aiDisabled };
   }
 
   static detectImageIntent(query: string): boolean {
@@ -159,5 +160,41 @@ export class OracleCommandParser {
     }
 
     return false;
+  }
+
+  /**
+   * Parses a structured AI regeneration response into its constituent sections.
+   * Supports both the current format (**Chronicle:** / **Lore:**) and the
+   * legacy format (### CHRONICLE / ### LORE).
+   */
+  static parseRegenerationResponse(text: string): {
+    chronicle: string;
+    lore: string;
+  } {
+    // Primary format: **Chronicle:** / **Lore:** (matches /create system instruction)
+    // Anchored to line start (multiline) to prevent mid-text false matches.
+    // Lore regex uses no `m` flag so `$` binds to end-of-string, not end-of-line.
+    const boldChronicle = text.match(
+      /(?:^|\n)\s*\*\*Chronicle:\*\*\s*([\s\S]*?)(?=(?:^|\n)\s*\*\*Lore:\*\*|$)/im,
+    );
+    const boldLore = text.match(/(?:^|\n)\s*\*\*Lore:\*\*\s*([\s\S]*)$/i);
+
+    if (boldChronicle || boldLore) {
+      return {
+        chronicle: boldChronicle ? boldChronicle[1].trim() : "",
+        lore: boldLore ? boldLore[1].trim() : "",
+      };
+    }
+
+    // Legacy format: ### CHRONICLE / ### LORE
+    const chronicleMatch = text.match(
+      /###\s*CHRONICLE[:\s]*\n([\s\S]*?)(?=###|$)/i,
+    );
+    const loreMatch = text.match(/###\s*LORE[:\s]*\n([\s\S]*?)(?=###|$)/i);
+
+    return {
+      chronicle: chronicleMatch ? chronicleMatch[1].trim() : "",
+      lore: loreMatch ? loreMatch[1].trim() : "",
+    };
   }
 }

@@ -171,14 +171,14 @@ export class CacheService {
         title: String(raw.title),
         tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
         labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
-        connections: Array.isArray(raw.connections)
-          ? JSON.parse(JSON.stringify(raw.connections))
-          : [],
+        aliases: Array.isArray(raw.aliases) ? [...raw.aliases] : [],
+        connections: Array.isArray(raw.connections) ? raw.connections : [],
         image: raw.image ? String(raw.image) : undefined,
         thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
-        metadata: raw.metadata ? JSON.parse(JSON.stringify(raw.metadata)) : {},
+        metadata: raw.metadata ?? {},
         updatedAt:
           typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+        status: raw.status || "active",
         _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
         vaultId: String(vaultId),
         lastModified: Number(lastModified),

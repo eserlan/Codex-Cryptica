@@ -11,7 +11,7 @@
 
 {#if hint && !isDismissed}
   <div
-    class="bg-theme-surface/95 border border-theme-primary/50 p-3 rounded shadow-lg flex flex-col gap-2 max-w-[200px]"
+    class="flex w-full max-w-full flex-col gap-2 overflow-hidden rounded border border-theme-primary/50 bg-theme-surface/95 p-3 shadow-lg"
     transition:fly={{ y: 5, duration: 200 }}
   >
     <div
@@ -30,7 +30,7 @@
         <span class="icon-[lucide--x] w-3 h-3"></span>
       </button>
     </div>
-    <p class="text-[10px] text-theme-text/80 leading-tight">
+    <p class="text-[10px] leading-tight break-words text-theme-text/80">
       {hint.content}
     </p>
   </div>

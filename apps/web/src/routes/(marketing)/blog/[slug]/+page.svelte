@@ -1,7 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
-
   let { data } = $props();
   const article = $derived(data.article);
 </script>
@@ -10,6 +10,7 @@
   <title>{article.title} | Codex Cryptica Blog</title>
   <meta name="description" content={article.description} />
   <meta name="keywords" content={article.keywords.join(", ")} />
+  <link rel="canonical" href={data.canonicalUrl} />
 
   <!-- Open Graph -->
   <meta property="og:title" content={article.title} />
@@ -47,7 +48,7 @@
           })}
         </time>
         <span class="w-8 h-px bg-theme-border"></span>
-        <span>Intel Report</span>
+        <span>{themeStore.resolveJargon("blog_entry")}</span>
       </div>
 
       <h1
@@ -69,7 +70,7 @@
 
     <footer class="pt-12 border-t border-theme-border">
       <div class="flex flex-wrap gap-2">
-        {#each article.keywords as keyword}
+        {#each article.keywords as keyword (keyword)}
           <span
             class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted uppercase tracking-wider"
           >

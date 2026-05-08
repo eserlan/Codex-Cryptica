@@ -12,7 +12,7 @@ Implement a **Standalone Help** route and a "Pop out Window" trigger in the help
 **Language/Version**: TypeScript 5.9.3 + Svelte 5 (Runes)
 **Primary Dependencies**: SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte
 **Storage**: LocalStorage (for help state persistence)
-**Testing**: Vitest (`npm test`), Playwright (`npm run test:e2e`)
+**Testing**: Vitest (`pnpm test`), Playwright (`pnpm run test:e2e`)
 **Target Platform**: Modern Desktop Browsers
 **Project Type**: Web Application (SvelteKit)
 **Performance Goals**: Instant search rendering via FlexSearch; <500ms launch for pop-out window.

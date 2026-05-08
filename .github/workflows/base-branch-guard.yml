@@ -1,0 +1,25 @@
+name: Base Branch Guard
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-base-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR Target
+        shell: bash
+        run: |
+          HEAD_BRANCH="${{ github.head_ref }}"
+          BASE_BRANCH="${{ github.base_ref }}"
+
+          echo "PR is from $HEAD_BRANCH into $BASE_BRANCH"
+
+          if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "staging" && ! "$HEAD_BRANCH" =~ ^jules- && ! "$HEAD_BRANCH" =~ ^bolt/ && ! "$HEAD_BRANCH" =~ ^palette-hover-a11y ]]; then
+            echo "::error::Direct PRs into 'main' are blocked. Please target the 'staging' branch instead."
+            echo "Once your changes are merged to 'staging' and verified, 'staging' itself will be promoted to 'main'."
+            exit 1
+          fi
+
+          echo "✅ Target branch check passed."

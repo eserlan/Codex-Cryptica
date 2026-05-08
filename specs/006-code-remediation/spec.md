@@ -42,6 +42,6 @@ A recent expert architectural review identified several key areas for improvemen
 
 ## Verification
 
-- **Type Check:** `npm run lint` should pass with zero file system related type errors.
+- **Type Check:** `pnpm run lint` should pass with zero file system related type errors.
 - **Load Test:** Rapidly typing in the editor should result in consistent file writes without errors.
 - **Graph Test:** Adding a new node should smoothly appear; editing a title should not reset the graph layout.

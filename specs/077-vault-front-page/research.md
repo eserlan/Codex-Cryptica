@@ -16,7 +16,7 @@
 
 ### 3. Frontpage Tag Resolution
 
-- **Decision**: Implement a search in `CampaignService` and `ActivityService` that queries the `graphEntities` table in Dexie for `frontpage` markers in both tags and labels.
+- **Decision**: Implement a search in `WorldService` and `ActivityService` that queries the `graphEntities` table in Dexie for `frontpage` markers in both tags and labels.
 - **Rationale**: Consistent with how categories and connections are handled via structured Dexie queries, while still remaining tolerant of older content shapes.
 
 ### 4. Cover Image Storage

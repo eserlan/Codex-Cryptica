@@ -110,6 +110,21 @@ export function getKeyboardViewportUpdate(
   }
 }
 
+export function shouldIgnoreMapKeyboardEvent(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  if (
+    target.isContentEditable ||
+    target.getAttribute("contenteditable") === "" ||
+    target.getAttribute("contenteditable") === "true"
+  ) {
+    return true;
+  }
+
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
 export function getZoomViewportUpdate({
   mouse,
   canvasSize,

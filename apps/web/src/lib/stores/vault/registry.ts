@@ -32,6 +32,8 @@ export async function createVault(
     createdAt: Date.now(),
     lastOpenedAt: Date.now(),
     entityCount: 0,
+    lastInternalChange: Date.now(),
+    lastSavedToFolder: 0,
     syncState: {
       lastSyncMs: null,
       remoteHash: null,
@@ -86,5 +88,41 @@ export async function updateLastOpened(id: string): Promise<void> {
   if (vault) {
     vault.lastOpenedAt = Date.now();
     await db.put("vaults", vault);
+  }
+}
+
+let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+async function triggerRefresh() {
+  if (refreshTimeout) clearTimeout(refreshTimeout);
+  refreshTimeout = setTimeout(async () => {
+    const { vaultRegistry } = await import("../vault-registry.svelte");
+    if (vaultRegistry) {
+      await vaultRegistry.refreshVaults();
+    }
+    refreshTimeout = null;
+  }, 100);
+}
+
+export async function updateLastInternalChange(id: string): Promise<void> {
+  const db = await getDB();
+  const vault = await db.get("vaults", id);
+  if (vault) {
+    vault.lastInternalChange = Date.now();
+    await db.put("vaults", vault);
+
+    // Trigger debounced refresh
+    triggerRefresh();
+  }
+}
+
+export async function updateLastSavedToFolder(id: string): Promise<void> {
+  const db = await getDB();
+  const vault = await db.get("vaults", id);
+  if (vault) {
+    vault.lastSavedToFolder = Date.now();
+    await db.put("vaults", vault);
+
+    // Trigger debounced refresh
+    triggerRefresh();
   }
 }

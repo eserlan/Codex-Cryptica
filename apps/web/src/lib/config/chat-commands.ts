@@ -63,10 +63,6 @@ export const chatCommands: ChatCommand[] = [
   {
     name: "/clear",
     description: "Clear conversation history",
-    handler: () => {
-      if (confirm("Are you sure you want to clear the conversation history?")) {
-        oracle.clearMessages();
-      }
-    },
+    handler: () => oracle.clearMessages(),
   },
 ];

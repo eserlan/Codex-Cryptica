@@ -83,6 +83,13 @@ test.describe("Entity Labeling System", () => {
     await expect(page.getByTestId("new-entity-button")).toBeVisible({
       timeout: 10000,
     });
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("Add and remove labels from an entity", async ({ page }) => {

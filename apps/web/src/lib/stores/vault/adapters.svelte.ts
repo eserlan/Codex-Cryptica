@@ -56,13 +56,15 @@ export const fileIOAdapter: IFileIOAdapter = {
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
       title: parsed.metadata.title || id!,
+      status: parsed.metadata.status || "active",
       tags: parsed.metadata.tags || [],
       labels: parsed.metadata.labels || [],
+      aliases: parsed.metadata.aliases || [],
       connections,
       content: parsed.content,
-      lore: (parsed.metadata as any).lore || "",
+      lore: parsed.metadata.lore || "",
       _path: path,
-    } as any;
+    };
   },
   isNotFoundError: (err) => isNotFoundError(err),
 };
@@ -73,14 +75,28 @@ export const syncIOAdapter: ISyncIOAdapter = {
   writeOpfsFile: writeOpfsFile as any,
   getLocalHandle: async (vaultId) => {
     const db = await getDB();
-    return await db.get("settings", `syncHandle_${vaultId}`);
+    let handle = await db.get("settings", `folderHandle_${vaultId}`);
+    if (!handle) {
+      // Migrate from old key name
+      handle = await db.get("settings", `syncHandle_${vaultId}`);
+      if (handle) {
+        try {
+          await db.put("settings", handle, `folderHandle_${vaultId}`);
+          await db.delete("settings", `syncHandle_${vaultId}`);
+        } catch {
+          // Best-effort migration — still return the handle
+        }
+      }
+    }
+    return handle;
   },
   setLocalHandle: async (vaultId, handle) => {
     const db = await getDB();
-    await db.put("settings", handle, `syncHandle_${vaultId}`);
+    await db.put("settings", handle, `folderHandle_${vaultId}`);
   },
   deleteLocalHandle: async (vaultId) => {
     const db = await getDB();
+    await db.delete("settings", `folderHandle_${vaultId}`);
     await db.delete("settings", `syncHandle_${vaultId}`);
   },
   parseMarkdown: (text) => parseMarkdown(text) as any,
@@ -113,5 +129,5 @@ export const imageProcessor: IImageProcessor = {
 
 export async function createSyncEngine(): Promise<ISyncEngine> {
   const db = await getDB();
-  return new LocalSyncService(new SyncRegistry(db));
+  return new LocalSyncService(new SyncRegistry(db)) as unknown as ISyncEngine;
 }

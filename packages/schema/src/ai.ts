@@ -23,6 +23,13 @@ export interface PlotAnalysisEntity {
   direction: "inbound" | "outbound";
 }
 
+export interface RelatedEntityContext {
+  title: string;
+  type: string;
+  relation?: string;
+  summary: string;
+}
+
 export interface ContextRetrievalService {
   retrieveContext(
     query: string,
@@ -45,6 +52,11 @@ export interface TextGenerationService {
     query: string,
     history: ChatHistoryMessage[],
   ): Promise<string>;
+  distillContext?(
+    apiKey: string,
+    context: string,
+    modelName: string,
+  ): Promise<string>;
   generateResponse(
     apiKey: string,
     query: string,
@@ -53,6 +65,12 @@ export interface TextGenerationService {
     modelName: string,
     onUpdate: (partial: string) => void,
     demoMode?: boolean,
+    categories?: string[],
+    options?: {
+      requestId?: string;
+      vaultId?: string;
+      existingEntities?: Entity[];
+    },
   ): Promise<void>;
   generateMergeProposal(
     apiKey: string,
@@ -60,6 +78,19 @@ export interface TextGenerationService {
     target: Entity,
     sources: Entity[],
   ): Promise<{ body: string; lore?: string }>;
+  reconcileEntityUpdate?(
+    apiKey: string,
+    modelName: string,
+    entity: Entity,
+    incoming: {
+      chronicle: string;
+      lore: string;
+    },
+    relatedEntities?: RelatedEntityContext[],
+  ): Promise<{
+    content: string;
+    lore: string;
+  }>;
   generatePlotAnalysis(
     apiKey: string,
     modelName: string,

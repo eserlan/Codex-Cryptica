@@ -16,4 +16,4 @@ Here you will find deep dives into:
 
 You can access the blog at any time by visiting [/blog](/blog).
 
-Read our first intel report: **The GM’s Guide to Data Sovereignty**.
+Read our latest dispatch: **The GM’s Guide to Data Sovereignty**.

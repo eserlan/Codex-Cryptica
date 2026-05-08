@@ -3,6 +3,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import OracleChat from "./OracleChat.svelte";
   import OracleStatus from "./OracleStatus.svelte";
+  import ActivityLog from "./ActivityLog.svelte";
   import { demoService } from "$lib/services/demo";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
@@ -11,8 +12,19 @@
   import { fly } from "svelte/transition";
   import { onMount } from "svelte";
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import VTTChat from "../vtt/VTTChat.svelte";
 
   let showHint = $state(false);
+  let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
+  let activityCount = $derived(uiStore.archiveActivityLog.length);
+  let headerTitle = $derived(
+    activeTab === "oracle"
+      ? "Lore Oracle"
+      : activeTab === "activity"
+        ? "Lore Activity"
+        : "VTT Chat",
+  );
 
   onMount(() => {
     // Show hint on first open
@@ -43,14 +55,15 @@
 </script>
 
 <div
-  class="w-full md:w-96 h-full bg-theme-surface border-r border-theme-border flex flex-col z-[60] shrink-0 shadow-2xl relative
-         max-md:fixed max-md:inset-0 max-md:border-none"
+  class="flex-1 min-h-0 bg-theme-surface border-r border-theme-border flex flex-col z-[60] shrink-0 shadow-2xl relative"
+  style:background-image="var(--bg-texture-overlay)"
   transition:fly={{ x: -384, duration: 300 }}
   data-testid="oracle-sidebar-panel"
 >
   <!-- Header -->
   <div
-    class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
+    class="px-3 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] pb-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
+    style:background-image="var(--bg-texture-overlay)"
   >
     <div class="flex items-center gap-2">
       <div
@@ -59,13 +72,13 @@
           : ''}"
       ></div>
       <span
-        class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
-        >Lore Oracle</span
+        class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+        >{headerTitle}</span
       >
-      {#if uiStore.liteMode}
+      {#if uiStore.aiDisabled}
         <span
           class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
-          >LITE</span
+          >AI DISABLED</span
         >
       {/if}
       <OracleStatus />
@@ -73,18 +86,10 @@
 
     <div class="flex items-center gap-1">
       <!-- Clear Chat -->
-      {#if oracle.messages.length > 0}
+      {#if activeTab === "oracle" && oracle.messages.length > 0}
         <button
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
-          onclick={() => {
-            if (
-              confirm(
-                "Are you sure you want to clear the conversation history?",
-              )
-            ) {
-              oracle.clearMessages();
-            }
-          }}
+          onclick={() => oracle.clearMessages()}
           title="Clear conversation history"
           aria-label="Clear conversation history"
         >
@@ -93,15 +98,17 @@
       {/if}
 
       <!-- Pop out -->
-      <button
-        class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
-        onclick={popOut}
-        title="Pop out to new window"
-        aria-label="Pop out to new window"
-      >
-        <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
-        ></span>
-      </button>
+      {#if activeTab === "oracle"}
+        <button
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
+          onclick={popOut}
+          title="Pop out to new window"
+          aria-label="Pop out to new window"
+        >
+          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          ></span>
+        </button>
+      {/if}
 
       <!-- Close -->
       <button
@@ -109,27 +116,78 @@
         onclick={() => uiStore.closeSidebar()}
         aria-label="Close panel"
       >
-        ✕
+        <span class="icon-[lucide--x] w-4 h-4"></span>
       </button>
     </div>
   </div>
 
+  <!-- Navigation Tabs -->
+  <div
+    class="flex border-b border-theme-border bg-theme-bg/10 px-0.5 pt-0.5 sm:px-1 sm:pt-1 shrink-0"
+  >
+    <button
+      onclick={() => (activeTab = "oracle")}
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all
+             {activeTab === 'oracle'
+        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+        : 'text-theme-muted hover:text-theme-text'}"
+    >
+      Oracle
+    </button>
+    <button
+      onclick={() => (activeTab = "activity")}
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+             {activeTab === 'activity'
+        ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+        : 'text-theme-muted hover:text-theme-text'}"
+    >
+      Activity
+      {#if activityCount > 0}
+        <span
+          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+          aria-label={`${activityCount} activity events`}>{activityCount}</span
+        >
+      {/if}
+    </button>
+    {#if mapSession.vttEnabled}
+      <button
+        onclick={() => (activeTab = "chat")}
+        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+               {activeTab === 'chat'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        VTT Chat
+      </button>
+    {/if}
+  </div>
+
   <!-- Chat Content -->
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-    <OracleChat
-      onOpenSettings={() => {
-        uiStore.openSettings();
-        uiStore.closeSidebar();
-      }}
-    />
+    {#if activeTab === "oracle"}
+      <OracleChat
+        onOpenSettings={() => {
+          uiStore.openSettings();
+          uiStore.closeSidebar();
+        }}
+      />
+    {:else if activeTab === "activity"}
+      <ActivityLog />
+    {:else}
+      <VTTChat />
+    {/if}
   </div>
 
   <!-- Feature Hint Modal -->
   {#if showHint}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="absolute inset-0 bg-black/60 z-[70] flex items-center justify-center p-4"
       onclick={() => (showHint = false)}
     >
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="bg-theme-surface border border-theme-border rounded-lg p-5 max-w-sm shadow-2xl"
         onclick={(e) => e.stopPropagation()}
@@ -176,7 +234,7 @@
       <button
         onclick={async () => {
           try {
-            const _id = await demoService.convertToCampaign();
+            const _id = await demoService.convertToWorld();
             const url = new URL(page.url.href);
             url.searchParams.delete("demo");
             goto(url.toString(), { replaceState: true });

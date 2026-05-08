@@ -5,6 +5,7 @@
   } from "$lib/services/node-merge.service";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
 
   let {
     isOpen = false,
@@ -19,6 +20,7 @@
   }>();
 
   let targetId = $state("");
+  let targetTitle = $derived(vault.entities[targetId]?.title || targetId);
   let previewContent = $state("");
   let proposal = $state<IMergedContentProposal | null>(null);
   let isLoading = $state(false);
@@ -60,9 +62,12 @@
     // Check for unsaved changes (T011)
     if (nodeMergeService.checkUnsavedChanges(sourceNodeIds)) {
       if (
-        !confirm(
-          "Some nodes might be open in the editor with unsaved changes. Proceeding might lose recent edits. Continue?",
-        )
+        !(await uiStore.confirm({
+          title: "Unsaved Changes",
+          message:
+            "Some nodes might be open in the editor with unsaved changes. Proceeding might lose recent edits. Continue?",
+          isDangerous: false,
+        }))
       ) {
         return;
       }
@@ -90,17 +95,19 @@
 
 {#if isOpen}
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-theme-bg/80 backdrop-blur-sm p-4"
   >
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="merge-nodes-title"
       class="w-full max-w-2xl bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col max-h-[90vh]"
     >
       <div
         class="p-6 border-b border-theme-border flex justify-between items-center"
       >
-        <h2 class="text-xl font-bold text-theme-text">
-          Merge {sourceNodeIds.length}
-          {themeStore.resolveJargon("entity", sourceNodeIds.length)}
+        <h2 id="merge-nodes-title" class="text-xl font-bold text-theme-text">
+          Merge into {targetTitle}
         </h2>
         <button
           onclick={() => onClose()}
@@ -210,11 +217,20 @@
           Cancel
         </button>
         <button
-          class="px-6 py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          class="px-6 py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           onclick={handleMerge}
           disabled={!targetId || isLoading}
+          aria-busy={isLoading}
         >
-          {isLoading ? "Processing..." : "Confirm Merge"}
+          {#if isLoading}
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
+            Processing...
+          {:else}
+            Confirm Merge
+          {/if}
         </button>
       </div>
     </div>

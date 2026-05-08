@@ -220,4 +220,27 @@ export class OracleSettingsService {
   get isEnabled() {
     return true; // Always enabled - either proxy or custom key
   }
+
+  get settings() {
+    return {
+      apiKey: this.apiKey,
+      tier: this.tier,
+      modelName: this.modelName,
+      activeStyleTitle: this.activeStyleTitle,
+      connectionMode: this.connectionMode,
+    };
+  }
+
+  async updateSettings(updates: any) {
+    if (updates.apiKey !== undefined) {
+      if (updates.apiKey === null || updates.apiKey === "") {
+        await this.clearKey();
+      } else {
+        await this.setKey(updates.apiKey);
+      }
+    }
+    if (updates.tier) await this.setTier(updates.tier);
+    if (updates.activeStyleTitle !== undefined)
+      this.setStyle(updates.activeStyleTitle);
+  }
 }

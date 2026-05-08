@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { Entity, Connection } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
+  import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let {
     entity,
@@ -24,6 +26,15 @@
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 
   const getTemporalLabel = (type: string, field: "date" | "start" | "end") => {
     const t = type.toLowerCase();
@@ -91,9 +102,16 @@
     }));
     return [...outbound, ...inbound];
   });
+
+  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
+  const draft = $derived(
+    regenerationService.pendingDraft?.entityId === entity.id
+      ? regenerationService.pendingDraft
+      : null,
+  );
 </script>
 
-<div class="space-y-6 md:space-y-8">
+<div class="space-y-7 md:space-y-9">
   <!-- Temporal Metadata -->
   {#if isEditing}
     <div class="space-y-4">
@@ -111,10 +129,15 @@
   {:else if entity.date?.year !== undefined || entity.start_date?.year !== undefined || entity.end_date?.year !== undefined}
     <div
       class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono border-b border-theme-border pb-4"
+      style:border-color={isFantasyTheme
+        ? "var(--theme-selected-border)"
+        : undefined}
     >
       {#if entity.date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase font-header"
+          <span
+            class="font-bold uppercase font-header"
+            style:color="var(--theme-section-title)"
             >{getTemporalLabel(entity.type, "date")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.date)}</span>
@@ -122,7 +145,9 @@
       {/if}
       {#if entity.start_date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase font-header"
+          <span
+            class="font-bold uppercase font-header"
+            style:color="var(--theme-section-title)"
             >{getTemporalLabel(entity.type, "start")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.start_date)}</span>
@@ -130,7 +155,9 @@
       {/if}
       {#if entity.end_date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase font-header"
+          <span
+            class="font-bold uppercase font-header"
+            style:color="var(--theme-section-title)"
             >{getTemporalLabel(entity.type, "end")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.end_date)}</span>
@@ -140,27 +167,65 @@
   {/if}
 
   <!-- Chronicle -->
-  <div>
-    <h3
-      class="text-theme-secondary font-header italic text-lg mb-3 border-b border-theme-border pb-1"
-    >
-      {themeStore.jargon.chronicle_header}
-    </h3>
-    <div class="prose-content">
-      <MarkdownEditor
-        content={isEditing ? editContent : entity.content || "No content yet."}
-        editable={isEditing}
-        onUpdate={(val) => {
-          if (isEditing) editContent = val;
-        }}
-      />
+  {#if isEditing || isVisible}
+    <div>
+      <h3
+        class="font-header text-lg mb-3 border-b border-theme-border pb-1 {isFantasyTheme
+          ? 'uppercase tracking-[0.16em] text-sm'
+          : 'italic'}"
+        style:color="var(--theme-section-title)"
+        style:border-color={isFantasyTheme
+          ? "var(--theme-selected-border)"
+          : undefined}
+      >
+        {themeStore.jargon.chronicle_header}
+      </h3>
+      <div
+        class="prose-content {draft
+          ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
+          : ''}"
+      >
+        {#if draft}
+          <div
+            class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+          >
+            Proposed
+          </div>
+        {/if}
+        {#if !isVisible && vault.isGuest}
+          <div
+            class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
+          >
+            <span class="icon-[lucide--lock] w-4 h-4"></span>
+            Chronicle is hidden in shared mode
+          </div>
+        {:else}
+          <MarkdownEditor
+            content={isEditing
+              ? editContent
+              : draft
+                ? draft.chronicle
+                : entity.content || "No content yet."}
+            editable={isEditing && !draft}
+            onUpdate={(val) => {
+              if (isEditing) editContent = val;
+            }}
+          />
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 
   <!-- Connections -->
   <div>
     <h3
-      class="text-theme-secondary font-header italic text-lg mb-3 border-b border-theme-border pb-1"
+      class="font-header text-lg mb-3 border-b border-theme-border pb-1 {isFantasyTheme
+        ? 'uppercase tracking-[0.16em] text-sm'
+        : 'italic'}"
+      style:color="var(--theme-section-title)"
+      style:border-color={isFantasyTheme
+        ? "var(--theme-selected-border)"
+        : undefined}
     >
       {themeStore.jargon.connections_header}
     </h3>
@@ -179,8 +244,11 @@
           <li class="flex gap-3 text-sm text-theme-muted items-start group">
             <span
               class="mt-1 w-3 h-3 shrink-0 {conn.isOutbound
-                ? 'text-theme-primary icon-[lucide--arrow-up-right]'
-                : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
+                ? 'icon-[lucide--arrow-up-right]'
+                : 'icon-[lucide--arrow-down-left]'}"
+              style:color={conn.isOutbound
+                ? "var(--theme-icon-active)"
+                : "var(--theme-icon-default)"}
             ></span>
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
@@ -208,14 +276,41 @@
                 {/if}
               </button>
 
-              {#if conn.isOutbound && !vault.isGuest}
-                <button
-                  class="text-theme-muted hover:text-theme-primary transition p-1"
-                  onclick={() => (editingConnectionTarget = conn.targetId)}
-                  aria-label="Edit connection"
-                >
-                  <span class="icon-[lucide--pencil] w-3 h-3"></span>
-                </button>
+              {#if !vault.isGuest}
+                <div class="flex items-center gap-1">
+                  {#if conn.isOutbound}
+                    <button
+                      class="text-theme-muted hover:text-theme-primary transition p-1"
+                      onclick={() => (editingConnectionTarget = conn.targetId)}
+                      aria-label="Edit connection"
+                      title="Edit connection"
+                    >
+                      <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                    </button>
+                  {/if}
+                  <button
+                    class="text-theme-muted hover:text-theme-danger transition p-1"
+                    onclick={() => {
+                      if (conn.isOutbound) {
+                        vault.removeConnection(
+                          entity.id,
+                          conn.targetId,
+                          conn.type,
+                        );
+                      } else {
+                        vault.removeConnection(
+                          conn.targetId,
+                          entity.id,
+                          conn.type,
+                        );
+                      }
+                    }}
+                    aria-label="Delete connection"
+                    title="Delete connection"
+                  >
+                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                  </button>
+                </div>
               {/if}
             </div>
           </li>
@@ -237,7 +332,7 @@
   }
 
   .relation-arrow {
-    color: #22c55e;
+    color: var(--theme-icon-active);
     width: 1.1rem;
     height: 1.1rem;
     display: inline-block;

@@ -12,6 +12,22 @@ export const ThemeTokensSchema = z.object({
   fontHeader: z.string(),
   fontBody: z.string(),
   texture: z.string().optional(),
+  titleInk: z.string().optional(),
+  sectionTitle: z.string().optional(),
+  metaText: z.string().optional(),
+  iconDefault: z.string().optional(),
+  iconActive: z.string().optional(),
+  focus: z.string().optional(),
+  panelFill: z.string().optional(),
+  panelMuted: z.string().optional(),
+  selectedBg: z.string().optional(),
+  selectedBorder: z.string().optional(),
+  focusBg: z.string().optional(),
+  focusBorder: z.string().optional(),
+  actionBg: z.string().optional(),
+  actionHover: z.string().optional(),
+  actionText: z.string().optional(),
+  borderRadius: z.string().optional(),
 });
 
 export type ThemeTokens = z.infer<typeof ThemeTokensSchema>;
@@ -75,6 +91,8 @@ export const DEFAULT_JARGON: JargonMap = {
   tab_status: "Status",
   tab_lore: "Lore & Notes",
   tab_inventory: "Inventory",
+  blog_entry: "Archive Entry",
+  blog_action: "Read Full Entry",
   graph_loading: "Initializing...",
 };
 
@@ -96,7 +114,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -118,6 +136,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Diagnostics",
       tab_lore: "Data Streams",
       tab_inventory: "Cargo",
+      blog_entry: "Intel Report",
+      blog_action: "Decrypt Full Entry",
       graph_loading: "Initiating Neural Interface...",
     },
   },
@@ -127,23 +147,39 @@ export const THEMES: Record<string, StylingTemplate> = {
     description:
       "Classic fantasy, magic, kingdoms, quests, ancient relics, and the broad language of swords, sorcery, and legend.",
     tokens: {
-      primary: "#78350f", // Burnt Umber
-      secondary: "#451a03", // Deep Brown
+      primary: "#5e3018", // Warm Mahogany — red-brown undertone, interactive/primary elements
+      secondary: "#423830", // Cool Umber — grey-brown undertone, structural/secondary elements
       background: "#fdf6e3", // Parchment
-      surface: "#eee8d5", // Aged Paper
-      text: "#2d241e", // Inked Text
-      border: "rgba(120, 53, 15, 0.3)",
-      accent: "#991b1b", // Dried Blood / Crimson
-      fontHeader: "'Zilla Slab', serif",
-      fontBody: "'Zilla Slab', serif",
+      surface: "#f0ddb8", // Aged Vellum — softer than #ead4a8, still distinct from parchment bg but not harsh
+      text: "#2a2018", // Inked Text — warm, stays warm (body copy reads as hand-inked)
+      border: "rgba(94, 48, 24, 0.52)", // Stronger border — up from 0.34, uses richer primary
+      accent: "#c8973a", // Jeweller's Gold — highlights and active states
+      fontHeader: "'Alegreya', serif",
+      fontBody: "'Alegreya', serif",
       texture: "parchment.svg",
+      titleInk: "#24180f", // Warmest — titles and headings anchor the hierarchy
+      sectionTitle: "#3a3225", // Cool Umber — section labels are structural, not primary; slightly olive-grey
+      metaText: "#6b5e50", // Cool Grey-Brown — metadata, timestamps; neutral to recede behind content
+      iconDefault: "#6b5e4e", // Cool Grey-Brown — inactive icons match metaText register
+      iconActive: "#5e3018", // Warm — active icon matches primary
+      focus: "#c8973a", // Updated to match new accent gold
+      panelFill: "color-mix(in srgb, #f0ddb8, #fdf6e3 62%)", // 38% vellum — panels recede further toward parchment bg
+      panelMuted: "color-mix(in srgb, #f0ddb8, #fdf6e3 74%)", // Even lighter — secondary panel surfaces near-invisible
+      selectedBg: "color-mix(in srgb, #c8973a, #fdf6e3 88%)", // Faint gold tint on hover — was brown-tinted, now gold-tinted
+      selectedBorder: "color-mix(in srgb, #c8973a, #fdf6e3 42%)", // Gold-based (was brown) — guides eye on section headings and tab separator
+      focusBg: "color-mix(in srgb, #c8973a, #fdf6e3 72%)", // 28% gold tint — light enough for dark text to read clearly on it
+      focusBorder: "#c8973a", // Raw gold — no dilution on active tab border
+      actionBg: "color-mix(in srgb, #5e3018, #fdf6e3 74%)",
+      actionHover: "color-mix(in srgb, #5e3018, #fdf6e3 64%)",
+      actionText: "#24180f",
+      borderRadius: "3px",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
-      edgeWidth: 2,
-      edgeColor: "#5F4B3B", // Sepia Ink
+      edgeWidth: 3, // Bolder — connections need to win against parchment bg
+      edgeColor: "#6b3820", // Deep Mahogany — updated to complement richer primary
     },
     jargon: {
       vault: "Archive",
@@ -161,6 +197,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Attributes",
       tab_lore: "Mythos",
       tab_inventory: "Possessions",
+      blog_entry: "Chronicle Dispatch",
+      blog_action: "Read Full Entry",
       graph_loading: "Summoning Chronicles...",
     },
   },
@@ -181,13 +219,15 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
       edgeColor: "#cbd5e1",
     },
     jargon: {
+      blog_entry: "Article",
+      blog_action: "Read Full Article",
       graph_loading: "Establishing Data Link...",
     },
   },
@@ -208,7 +248,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Fira Code', monospace",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "dashed",
       nodeBorderWidth: 2,
       edgeWidth: 1,
@@ -230,6 +270,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Vitals",
       tab_lore: "Neural Feed",
       tab_inventory: "Loadout",
+      blog_entry: "Data Breach",
+      blog_action: "Analyze Transmission",
       graph_loading: "Uplinking to Grid...",
     },
   },
@@ -251,7 +293,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       texture: "rust.svg",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "dotted",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -273,6 +315,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Vitals",
       tab_lore: "Memories",
       tab_inventory: "Stash",
+      blog_entry: "Salvaged Log",
+      blog_action: "Extract Fragment",
       graph_loading: "Scavenging Fragments...",
     },
   },
@@ -294,7 +338,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       texture: "blood.svg",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
       edgeWidth: 1,
@@ -316,6 +360,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Condition",
       tab_lore: "Memoriam",
       tab_inventory: "Assets",
+      blog_entry: "Tome Entry",
+      blog_action: "Examine Records",
       graph_loading: "Awakening Memories...",
     },
   },
@@ -338,7 +384,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       texture: "crt.svg",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -360,6 +406,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "S.P.E.C.I.A.L.",
       tab_lore: "Pip-Boy Data",
       tab_inventory: "Inventory",
+      blog_entry: "Holotape",
+      blog_action: "Play Message",
       graph_loading: "Accessing Vault-Tec Network...",
     },
   },
@@ -380,7 +428,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -402,6 +450,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Vitals",
       tab_lore: "Archives",
       tab_inventory: "Cargo",
+      blog_entry: "Intelligence Report",
+      blog_action: "Analyze Intel",
       graph_loading: "Navigating Hyperspace...",
     },
   },
@@ -422,7 +472,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -444,6 +494,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Bio-Signs",
       tab_lore: "Mission Data",
       tab_inventory: "Equipment",
+      blog_entry: "Mission Log",
+      blog_action: "View Records",
       graph_loading: "Scanning Sector...",
     },
   },

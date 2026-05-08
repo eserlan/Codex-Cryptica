@@ -14,10 +14,10 @@ test.describe("Fog of War", () => {
 
     await page.goto("./");
 
-    // Wait for header to ensure layout is loaded
-    await expect(
-      page.getByRole("heading", { name: "Codex Cryptica" }),
-    ).toBeVisible({ timeout: 15000 });
+    // Wait for vault to initialize (graph canvas indicates app is loaded)
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 15000,
+    });
 
     // Use the exposed stores to set up state directly, which is more reliable for E2E
     await page.waitForFunction(

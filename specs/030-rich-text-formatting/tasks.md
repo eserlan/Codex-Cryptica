@@ -5,9 +5,9 @@
 
 ## Phase 1: Setup
 
-- [x] T001 Install Tiptap bubble menu extension if not present (`npm install @tiptap/extension-bubble-menu`)
-- [x] T002 ~~Install Tiptap floating menu extension if not present (`npm install @tiptap/extension-floating-menu`)~~ (Not required for current scope)
-- [x] T003 Install Tiptap Link extension if not present (`npm install @tiptap/extension-link`)
+- [x] T001 Install Tiptap bubble menu extension if not present (`pnpm add @tiptap/extension-bubble-menu`)
+- [x] T002 ~~Install Tiptap floating menu extension if not present (`pnpm add @tiptap/extension-floating-menu`)~~ (Not required for current scope)
+- [x] T003 Install Tiptap Link extension if not present (`pnpm add @tiptap/extension-link`)
 
 ## Phase 2: Foundational Components
 

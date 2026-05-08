@@ -1,9 +1,5 @@
 import type { ChatMessage } from "./types";
 
-/**
- * Minimal interface for app settings persistence.
- * Defined here to avoid cross-package coupling with web app's EntityDb.
- */
 interface AppSettingsStore {
   appSettings: {
     get(key: string): Promise<{ value: any } | undefined>;
@@ -11,45 +7,104 @@ interface AppSettingsStore {
   };
 }
 
-/**
- * Internal type for chat history records stored in IndexedDB.
- * Extends ChatMessage with database-specific fields.
- */
 interface ChatHistoryRecord extends Omit<ChatMessage, "imageBlob"> {
   imageBlob?: Blob;
-  [key: string]: any; // Allow additional fields for flexibility
+  [key: string]: any;
 }
 
 export class ChatHistoryService {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
   private db: AppSettingsStore | null = null;
+  private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+  private vaultId: string | null = null;
+  private switchSequence = 0;
 
-  /**
-   * Initialize the chat history service by loading saved messages from IndexedDB.
-   * Restores blob URLs for any persisted image blobs.
-   * @param db - The EntityDb instance for persistence
-   */
-  async init(db: AppSettingsStore) {
+  private get key() {
+    return `chat_history_${this.vaultId ?? "default"}`;
+  }
+
+  async init(db: AppSettingsStore, vaultId: string) {
     this.db = db;
-    const savedMessages = await db.appSettings.get("chat_history");
-    if (savedMessages?.value && Array.isArray(savedMessages.value)) {
-      // Restore blob URLs for persisted blobs
-      const messages = savedMessages.value.map((msg: ChatHistoryRecord) => {
+    this.vaultId = vaultId;
+
+    let saved = await db.appSettings.get(this.key);
+
+    if (!saved?.value) {
+      const legacyScoped = await db.appSettings.get(`chat_history:${vaultId}`);
+      if (legacyScoped?.value && Array.isArray(legacyScoped.value)) {
+        saved = legacyScoped;
+      }
+    }
+
+    if (!saved?.value) {
+      const legacyFlat = await db.appSettings.get("chat_history");
+      if (legacyFlat?.value && Array.isArray(legacyFlat.value)) {
+        saved = legacyFlat;
+      }
+    }
+
+    if (saved?.value && Array.isArray(saved.value)) {
+      this.messages = saved.value.map((msg: ChatHistoryRecord) => {
         if (msg.imageBlob && !msg.imageUrl) {
           msg.imageUrl = URL.createObjectURL(msg.imageBlob);
         }
         return msg;
       });
-      this.messages = messages;
+
+      await db.appSettings.put({
+        key: this.key,
+        value: saved.value,
+        updatedAt: Date.now(),
+      });
+    } else {
+      this.messages = [];
     }
+
+    this.lastUpdated = Date.now();
   }
 
-  /**
-   * Cleanup method to revoke blob URLs and prevent memory leaks.
-   * Should be called when the service is destroyed or messages are cleared.
-   */
+  async switchVault(newVaultId: string) {
+    const seq = ++this.switchSequence;
+
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+      this.debounceTimeout = null;
+      await this.saveToDB();
+    }
+
+    if (seq !== this.switchSequence) return;
+
+    this.messages.forEach((m) => {
+      if (m.imageUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(m.imageUrl);
+      }
+    });
+
+    this.messages = [];
+    this.vaultId = newVaultId;
+    if (!this.db) return;
+
+    const saved = await this.db.appSettings.get(this.key);
+    if (seq !== this.switchSequence) return;
+
+    if (saved?.value && Array.isArray(saved.value)) {
+      this.messages = saved.value.map((msg: ChatHistoryRecord) => {
+        if (msg.imageBlob && !msg.imageUrl) {
+          msg.imageUrl = URL.createObjectURL(msg.imageBlob);
+        }
+        return msg;
+      });
+    }
+
+    this.lastUpdated = Date.now();
+  }
+
   destroy() {
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+      this.debounceTimeout = null;
+    }
     this.messages.forEach((m) => {
       if (m.imageUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(m.imageUrl);
@@ -65,7 +120,7 @@ export class ChatHistoryService {
 
   async removeMessage(id: string) {
     const msg = this.messages.find((m) => m.id === id);
-    if (msg?.imageUrl && msg.imageUrl.startsWith("blob:")) {
+    if (msg?.imageUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(msg.imageUrl);
     }
     this.messages = this.messages.filter((m) => m.id !== id);
@@ -75,7 +130,7 @@ export class ChatHistoryService {
 
   async clearMessages() {
     this.messages.forEach((m) => {
-      if (m.imageUrl && m.imageUrl.startsWith("blob:")) {
+      if (m.imageUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(m.imageUrl);
       }
     });
@@ -84,31 +139,66 @@ export class ChatHistoryService {
     await this.saveToDB();
   }
 
-  /**
-   * Save current messages to IndexedDB.
-   * Strips blob URLs before persistence (they are regenerated on init).
-   * Failures are silently ignored as chat history is non-critical.
-   */
+  async clear() {
+    return this.clearMessages();
+  }
+
+  async updateMessage(
+    id: string,
+    updates: Partial<ChatMessage>,
+    persist = true,
+  ) {
+    const msgIndex = this.messages.findIndex((m) => m.id === id);
+    if (msgIndex !== -1) {
+      this.messages[msgIndex] = { ...this.messages[msgIndex], ...updates };
+      this.messages = [...this.messages];
+      this.lastUpdated = Date.now();
+      if (persist) {
+        await this.saveToDB();
+      }
+    }
+  }
+
+  async addProposal(messageId: string, proposal: any) {
+    const msgIndex = this.messages.findIndex((m) => m.id === messageId);
+    if (msgIndex !== -1) {
+      const msg = this.messages[msgIndex];
+      const existing = msg.proposals || [];
+      if (existing.some((p: any) => p.title === proposal.title)) return;
+
+      const proposals = [...existing, proposal];
+      this.messages[msgIndex] = { ...msg, proposals };
+      this.messages = [...this.messages];
+      this.lastUpdated = Date.now();
+
+      if (this.debounceTimeout) {
+        clearTimeout(this.debounceTimeout);
+      }
+      this.debounceTimeout = setTimeout(() => {
+        void this.saveToDB();
+        this.debounceTimeout = null;
+      }, 500);
+    }
+  }
+
   async saveToDB() {
-    if (!this.db) return;
+    if (!this.db || !this.vaultId) return;
     try {
       const messagesToPersist = $state.snapshot(this.messages).map((msg) => {
         const toPersist = { ...msg };
-        // We keep imageBlob (it's a Blob, can store in IndexedDB)
-        // But we MUST remove imageUrl if it's a blob URL because they expire
         if (toPersist.imageUrl?.startsWith("blob:")) {
           delete toPersist.imageUrl;
         }
         return toPersist;
       });
+
       await this.db.appSettings.put({
-        key: "chat_history",
+        key: this.key,
         value: messagesToPersist,
         updatedAt: Date.now(),
       });
     } catch {
-      // [ChatHistoryService] Silently fail - chat history is not critical data
-      // User can still interact with messages even if persistence fails
+      // non-critical persistence failure
     }
   }
 
@@ -117,8 +207,6 @@ export class ChatHistoryService {
     this.lastUpdated = Date.now();
     await this.saveToDB();
   }
-
-  // --- Domain Mutations ---
 
   async startWizard(type: "connection" | "merge") {
     await this.addMessage({

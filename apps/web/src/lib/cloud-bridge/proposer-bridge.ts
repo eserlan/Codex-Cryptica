@@ -34,6 +34,7 @@ export class ProposerBridge {
   public async analyzeEntity(
     apiKey: string,
     modelName: string,
+    vaultId: string,
     entityId: string,
     content: string,
     availableTargets: { id: string; name: string }[],
@@ -46,7 +47,14 @@ export class ProposerBridge {
       this.worker!.postMessage({
         type: "ANALYZE",
         id,
-        payload: { apiKey, modelName, entityId, content, availableTargets },
+        payload: {
+          apiKey,
+          modelName,
+          vaultId,
+          entityId,
+          content,
+          availableTargets,
+        },
       });
     });
   }

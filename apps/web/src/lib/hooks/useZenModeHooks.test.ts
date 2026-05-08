@@ -9,9 +9,11 @@ describe("ZenMode Hooks", () => {
     title: "Initial Title",
     content: "Initial Content",
     type: "npc",
+    status: "active",
     connections: [],
     tags: [],
     labels: [],
+    aliases: [],
   };
 
   describe("useEditState", () => {

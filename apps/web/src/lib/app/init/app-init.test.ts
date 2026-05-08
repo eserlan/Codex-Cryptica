@@ -247,20 +247,148 @@ describe("app-init", () => {
   describe("registerServiceWorker", () => {
     it("should not register if in DEV mode (default in Vitest)", async () => {
       const registerSpy = vi.fn();
-      vi.stubGlobal("navigator", {
-        serviceWorker: {
-          register: registerSpy,
-        },
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            register: registerSpy,
+          },
+        } as any,
+        window: mockWindow,
+        isDev: true,
       });
 
-      registerServiceWorker();
       expect(registerSpy).not.toHaveBeenCalled();
     });
 
+    it("should register immediately when the document is active", () => {
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            register: registerSpy,
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
+    });
+
+    it("should defer registration until the document becomes active", () => {
+      const registerSpy = vi.fn().mockResolvedValue(undefined);
+      const docListeners = new Map<string, EventListener>();
+      const windowListeners = new Map<string, EventListener>();
+      const mockDocument = {
+        readyState: "loading",
+        visibilityState: "hidden",
+        prerendering: true,
+        addEventListener: vi.fn((event: string, handler: EventListener) => {
+          docListeners.set(event, handler);
+        }),
+        removeEventListener: vi.fn((event: string) => {
+          docListeners.delete(event);
+        }),
+      } as any;
+      const mockWindow = {
+        addEventListener: vi.fn((event: string, handler: EventListener) => {
+          windowListeners.set(event, handler);
+        }),
+        removeEventListener: vi.fn((event: string) => {
+          windowListeners.delete(event);
+        }),
+      } as any;
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            register: registerSpy,
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      expect(registerSpy).not.toHaveBeenCalled();
+
+      mockDocument.readyState = "complete";
+      mockDocument.visibilityState = "visible";
+      mockDocument.prerendering = false;
+      const visibilityHandler = docListeners.get("visibilitychange");
+
+      expect(visibilityHandler).toBeDefined();
+      visibilityHandler?.(new Event("visibilitychange"));
+
+      expect(registerSpy).toHaveBeenCalledWith("/service-worker.js");
+      expect(mockDocument.removeEventListener).toHaveBeenCalledWith(
+        "visibilitychange",
+        expect.any(Function),
+      );
+      expect(mockWindow.removeEventListener).toHaveBeenCalledWith(
+        "pageshow",
+        expect.any(Function),
+      );
+    });
+
     it("should handle registration failure", async () => {
-      // Mocking the env to be prod is hard, but we can test the error handling if we can trigger it.
-      // Since we can't easily flip import.meta.env.DEV, we might just hit the "if" guard.
-      registerServiceWorker();
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const registerSpy = vi
+        .fn()
+        .mockRejectedValue(new Error("Service worker failed"));
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            register: registerSpy,
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      await Promise.resolve();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Service Worker registration failed:",
+        expect.any(Error),
+      );
+      warnSpy.mockRestore();
     });
   });
 });

@@ -51,7 +51,7 @@ export class GraphImageManager {
         const start = performance.now();
         const results = await Promise.all(
           nodesWithImages.map(async (node) => {
-            const imagePath = node.data("image") || node.data("thumbnail");
+            const imagePath = node.data("thumbnail") || node.data("image");
             let url = this.urlCache.get(imagePath);
             if (!url) {
               url = (await options.resolveImageUrl(imagePath)) || "";
@@ -88,7 +88,7 @@ export class GraphImageManager {
 
                 node.data("resolvedImage", newUrl);
                 const currentPath =
-                  node.data("image") || node.data("thumbnail");
+                  node.data("thumbnail") || node.data("image");
                 if (currentPath) {
                   this.nodePathMap.set(nodeId, currentPath);
                 }

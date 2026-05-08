@@ -14,8 +14,56 @@ export interface SyncOptions {
     isInitial: boolean,
     isForced: boolean,
     caller: string,
+    hasNewNodes?: boolean,
   ) => void;
 }
+
+const isNodeRendered = (node: any) =>
+  !node.hasClass("filtered-out") &&
+  !node.hasClass("category-filtered-out") &&
+  !node.hasClass("timeline-hidden");
+
+const syncRenderedWeights = (
+  elementMap: Map<string, any>,
+  elements: (GraphNode | GraphEdge)[],
+) => {
+  const graphNodes: any[] = [];
+
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (el.group !== "nodes") continue;
+
+    const node = elementMap.get(el.data.id);
+    if (node) graphNodes.push(node);
+  }
+
+  const visibleNodeIds = new Set<string>();
+  for (let i = 0; i < graphNodes.length; i++) {
+    const node = graphNodes[i];
+    if (isNodeRendered(node)) visibleNodeIds.add(node.id());
+  }
+
+  for (let i = 0; i < graphNodes.length; i++) {
+    const node = graphNodes[i];
+    let nextWeight = 0;
+
+    if (visibleNodeIds.has(node.id())) {
+      const connectedEdges = node.connectedEdges();
+      for (let j = 0; j < connectedEdges.length; j++) {
+        const edge = connectedEdges[j];
+        const sourceId = edge.source().id();
+        const targetId = edge.target().id();
+        if (visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId)) {
+          nextWeight++;
+        }
+      }
+    }
+
+    if (node.data("weight") !== nextWeight) {
+      node.data("weight", nextWeight);
+    }
+  }
+};
 
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const {
@@ -66,6 +114,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         }
 
         const addedNodes = cy.add(newNodes);
+        addedNodes.addClass("pending-layout");
 
         addedNodes.forEach((n) => {
           elementMap.set(n.id(), n);
@@ -108,6 +157,11 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         for (const k in newData) {
           if (k === "id" || !Object.hasOwn(newData, k)) continue;
 
+          // Bugfix: Do not re-apply isPendingLayout to existing nodes.
+          // This prevents nodes that were already placed by LayoutManager from
+          // becoming invisible just because Svelte hasn't saved their coordinates yet.
+          if (k === "isPendingLayout") continue;
+
           const newVal = newData[k];
           const curVal = currentData[k];
           let isMatch = newVal === curVal;
@@ -145,7 +199,29 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
             hasChanges = true;
           }
         }
-        if (hasChanges) node.data(patch);
+
+        // Remove keys that no longer exist in newData (e.g. isPendingLayout)
+        for (const k in currentData) {
+          if (k !== "id" && !Object.hasOwn(newData, k)) {
+            // Bugfix: Do not strip internal cytoscape properties managed by other components
+            if (k === "resolvedImage") continue;
+
+            node.removeData(k);
+            // If the source image path is removed, clear the resolved image so ImageManager can clean up
+            if (k === "image" || k === "thumbnail") {
+              node.removeData("resolvedImage");
+            }
+          }
+        }
+
+        if (hasChanges) {
+          node.data(patch);
+          // If the image or thumbnail properties changed, clear the resolvedImage
+          // so that ImageManager is forced to re-fetch and apply the new one.
+          if ("image" in patch || "thumbnail" in patch) {
+            node.removeData("resolvedImage");
+          }
+        }
 
         // Apply Filtering Classes
         if (el.group === "nodes") {
@@ -198,23 +274,25 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
           }
         }
       });
+
+      syncRenderedWeights(elementMap, elements);
     });
 
     const isFirstElements = !initialLoaded && elements.length > 0;
     const hasDeletions = elementsToRemove.length > 0;
-    const hasNewEdges = newEdges.length > 0;
     const hasNewNodes = newNodes.length > 0;
 
-    if (hasNewNodes || hasNewEdges || hasDeletions || isFirstElements) {
+    if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
         const w = cy.width();
         const h = cy.height();
         cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
       } else if (!isVaultLoading || initialLoaded) {
-        // Force layout if we have deletions or new edges to ensure constraints are respected
-        const force = hasDeletions || hasNewEdges;
-        options.onLayoutUpdate?.(false, force, "Elements Update");
+        // Preserve current positions for edge-only updates. This avoids a second
+        // relayout when AI discovery adds connections right after creating a node.
+        const force = hasDeletions;
+        options.onLayoutUpdate?.(false, force, "Elements Update", hasNewNodes);
       }
     }
   } catch (err) {

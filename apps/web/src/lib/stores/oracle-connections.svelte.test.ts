@@ -15,18 +15,62 @@ vi.hoisted(() => {
   (global as any).$effect.root = (v: any) => v();
 });
 
+// Mock Oracle Engine classes
+vi.mock("@codex/oracle-engine", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+  return {
+    ...actual,
+    OracleCommandParser: {
+      parse: vi.fn().mockImplementation((query) => {
+        if (query.startsWith("/connect")) {
+          return {
+            type: "connect",
+            sourceName: "Eldrin",
+            targetName: "Tower",
+            label: "master of",
+          };
+        }
+        return { type: "chat", query };
+      }),
+    },
+  };
+});
+
 vi.mock("../../lib/services/search", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
   },
 }));
 
+vi.mock("./vault.svelte", () => ({
+  vault: {
+    activeVaultId: "test-vault",
+    entities: {},
+  },
+}));
+
+vi.mock("./ui.svelte", () => {
+  const uiStore = {
+    aiDisabled: false,
+    isDemoMode: false,
+    confirm: vi.fn().mockResolvedValue(true),
+    notify: vi.fn(),
+  };
+  return {
+    uiStore,
+    ui: uiStore,
+  };
+});
+
 import { OracleStore } from "./oracle.svelte";
+import { OracleActionExecutor } from "@codex/oracle-engine";
+import { vault as mockVault } from "./vault.svelte";
+import { uiStore as mockUiStore } from "./ui.svelte";
 
 describe("OracleStore - /connect parsing", () => {
   let oracle: OracleStore;
   let mockChatHistory: any;
-  let mockExecutor: any;
+  let executor: OracleActionExecutor;
   let mockSettings: any;
   let mockUndoRedo: any;
 
@@ -43,44 +87,53 @@ describe("OracleStore - /connect parsing", () => {
         mockChatHistory.messages = ms;
       }),
       clearMessages: vi.fn(),
+      init: vi.fn().mockResolvedValue(undefined),
     };
 
     mockSettings = {
       effectiveApiKey: "test-key",
       isEnabled: true,
       setLoading: vi.fn(),
+      settings: {
+        apiKey: "test-key",
+        tier: "advanced",
+        modelName: "test-model",
+        connectionMode: "custom-key",
+      },
+      init: vi.fn().mockResolvedValue(undefined),
     };
 
     mockUndoRedo = {
       pushUndoAction: vi.fn(),
+      undoStack: [],
+      redoStack: [],
     };
 
-    mockExecutor = {
-      execute: vi
-        .fn()
-        .mockImplementation(async (intent, _context, onUpdate) => {
-          if (intent.type === "connect-ai" || intent.type === "connect") {
-            const content = "✅ Connected **Eldrin** to **Tower**";
-            await mockChatHistory.addMessage({ role: "assistant", content });
-            if (onUpdate) onUpdate(content);
-          } else if (intent.type === "error") {
-            await mockChatHistory.addMessage({
-              role: "system",
-              content: intent.message,
-            });
-          }
-        }),
-    };
+    executor = new OracleActionExecutor();
 
-    oracle = new OracleStore(
-      mockChatHistory,
-      mockSettings,
-      mockUndoRedo,
-      mockExecutor,
-    );
+    oracle = new OracleStore({
+      vault: mockVault as any,
+      uiStore: mockUiStore as any,
+      chatHistoryService: mockChatHistory,
+      settingsService: mockSettings,
+      undoRedo: mockUndoRedo,
+      executor: executor,
+    });
+
+    (oracle as any).isInitialized = true;
   });
 
   it("should handle direct /connect command", async () => {
+    // Mock the internal executeConnect to avoid deep dependencies
+    const executeConnectSpy = vi
+      .spyOn(executor as any, "executeConnect")
+      .mockImplementation(async (source: any, label: any, target: any) => {
+        await mockChatHistory.addMessage({
+          role: "assistant",
+          content: `✅ Connected **${source}** to **${target}**`,
+        });
+      });
+
     await oracle.ask("/connect Eldrin is the master of Tower");
 
     const assistantMsg = mockChatHistory.messages.find(
@@ -88,16 +141,18 @@ describe("OracleStore - /connect parsing", () => {
     );
     expect(assistantMsg).toBeDefined();
     expect(assistantMsg.content).toContain("Connected **Eldrin** to **Tower**");
-    expect(mockExecutor.execute).toHaveBeenCalled();
+    expect(executeConnectSpy).toHaveBeenCalled();
   });
 
   it("should show error if entities cannot be resolved", async () => {
-    mockExecutor.execute.mockImplementationOnce(async (_intent: any) => {
-      await mockChatHistory.addMessage({
-        role: "system",
-        content: '❌ Could not find source entity: "Unknown"',
-      });
-    });
+    vi.spyOn(executor as any, "executeConnect").mockImplementationOnce(
+      async (_source: any, _label: any, _target: any) => {
+        await mockChatHistory.addMessage({
+          role: "system",
+          content: '❌ Could not find source entity: "Unknown"',
+        });
+      },
+    );
 
     await oracle.ask("/connect Unknown to Tower");
 

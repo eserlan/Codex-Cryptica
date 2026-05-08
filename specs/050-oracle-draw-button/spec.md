@@ -71,6 +71,7 @@ As a World Builder who has imported text-only campaign data, I want a "Draw" but
 - **FR-008**: System MUST automatically ground all "Draw" actions against any "Art Style" or "Visual Aesthetic" notes found in the vault to ensure stylistic consistency.
 - **FR-009**: System SHOULD provide a "Style Grounding Indicator" (e.g., a tooltip or status text) indicating that a "Global Art Style" is being applied to the generation.
 - **FR-010**: System MUST persist the state of the "Draw" button (or the resulting image) in the chat history.
+- **FR-011**: System MUST hide all "Draw" buttons when AI features are globally disabled (`aiDisabled` in UIStore), regardless of the user's tier.
 
 ### Key Entities
 

@@ -4,6 +4,18 @@ import type { GuestPresenceStatus, GuestSession } from "../../stores/guest";
 
 type GuestRoster = Record<string, GuestSession>;
 
+export function sanitizeEntityForGuestTransport(entity: Entity): Entity {
+  const {
+    _fsHandle,
+    lore: _lore,
+    ...safeEntity
+  } = entity as Entity & {
+    _fsHandle?: unknown;
+    lore?: string;
+  };
+  return safeEntity as Entity;
+}
+
 export function normalizeGuestName(name: unknown, fallback: string) {
   if (typeof name !== "string") return fallback;
   const trimmed = name.trim();
@@ -68,7 +80,7 @@ export function buildSharedGraphPayload(
   const assets: Record<string, string> = {};
 
   for (const [id, localEntity] of Object.entries(rawEntities)) {
-    const { _fsHandle, ...safeEntity } = localEntity as any;
+    const safeEntity = sanitizeEntityForGuestTransport(localEntity);
     entities[id] = safeEntity;
 
     if (safeEntity.image && !safeEntity.image.startsWith("http")) {

@@ -29,12 +29,16 @@
     { id: "about", label: "About", icon: "icon-[lucide--info]" },
   ];
 
-  const close = () => {
+  const close = async () => {
     if (uiStore.isImporting) {
       if (
-        confirm(
-          "An import is in progress or pending review. Closing now will cancel the process and you may lose identified entities. Are you sure you want to abort?",
-        )
+        await uiStore.confirm({
+          title: "Confirm Change",
+          message:
+            "An import is in progress or pending review. Closing now will cancel the process and you may lose identified entities. Are you sure you want to abort?",
+          confirmLabel: "Abort",
+          isDangerous: false,
+        })
       ) {
         uiStore.abortActiveOperations();
         uiStore.closeSettings();
@@ -274,7 +278,7 @@
                 <div>
                   <label
                     class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
-                    for="lite-mode-toggle">Lite Mode (No AI)</label
+                    for="ai-disabled-toggle">AI Disabled</label
                   >
                   <p class="text-[11px] text-theme-muted">
                     Disable all AI-powered features (Oracle chat, image
@@ -282,17 +286,17 @@
                   </p>
                 </div>
                 <input
-                  id="lite-mode-toggle"
+                  id="ai-disabled-toggle"
                   type="checkbox"
-                  checked={uiStore.liteMode}
+                  checked={uiStore.aiDisabled}
                   onchange={(e) =>
-                    uiStore.toggleLiteMode(e.currentTarget.checked)}
+                    uiStore.toggleAiDisabled(e.currentTarget.checked)}
                   class="w-4 h-4 accent-theme-primary cursor-pointer"
                 />
               </div>
 
               <div
-                class="transition-all duration-300 {uiStore.liteMode
+                class="transition-all duration-300 {uiStore.aiDisabled
                   ? 'opacity-40 grayscale pointer-events-none select-none'
                   : ''}"
               >
@@ -456,6 +460,45 @@
                     Polyform Noncommercial License 1.0.0
                   </div>
                 </div>
+              </div>
+
+              <div class="mt-6">
+                <button
+                  onclick={() => (uiStore.showChangelog = true)}
+                  data-testid="show-changelog-button"
+                  class="w-full p-4 bg-theme-primary/10 border border-theme-primary/30 hover:border-theme-primary text-theme-primary transition-all rounded group flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="icon-[lucide--sparkles] w-5 h-5"></span>
+                    <span
+                      class="text-sm font-bold uppercase font-header tracking-widest"
+                      >What's New in Codex</span
+                    >
+                  </div>
+                  <span
+                    class="icon-[lucide--chevron-right] w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  ></span>
+                </button>
+
+                <a
+                  href="{base}/changelog"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-3 flex items-center justify-between p-4 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
+                >
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="icon-[lucide--history] w-5 h-5 text-theme-muted group-hover:text-theme-primary transition-colors"
+                    ></span>
+                    <span
+                      class="text-sm font-bold uppercase font-header tracking-widest text-theme-muted group-hover:text-theme-text transition-colors"
+                      >Full Chronology</span
+                    >
+                  </div>
+                  <span
+                    class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-hover:translate-x-1 transition-all"
+                  ></span>
+                </a>
               </div>
             </section>
 

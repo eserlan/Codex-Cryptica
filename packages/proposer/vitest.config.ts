@@ -19,6 +19,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
+      all: true,
+      include: ["src/**/*.ts"],
       thresholds: {
         statements: 70,
         branches: 60,
@@ -32,6 +34,8 @@ export default defineConfig({
         "**/*.spec.ts",
         "**/*.config.ts",
         ".svelte-kit/**",
+        "src/index.ts",
+        "src/types.ts",
         "**/*.md",
       ],
     },

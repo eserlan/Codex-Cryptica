@@ -121,7 +121,14 @@ class CanvasRegistryStore {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete canvas "${data.name}"?`)) {
+    if (
+      !(await uiStore.confirm({
+        title: "Delete Canvas",
+        message: `Are you sure you want to delete canvas "${data.name}"?`,
+        confirmLabel: "Delete",
+        isDangerous: true,
+      }))
+    ) {
       return;
     }
 
@@ -131,6 +138,11 @@ class CanvasRegistryStore {
         vaultRegistry.activeVaultId,
       );
       await deleteCanvasFromDisk(vaultDir, id);
+
+      // Update dirty tracking timestamp
+      import("./vault/registry").then((m) =>
+        m.updateLastInternalChange(vaultRegistry.activeVaultId!),
+      );
 
       const nextCanvases = { ...this.canvases };
       delete nextCanvases[id];
@@ -176,6 +188,12 @@ class CanvasRegistryStore {
       try {
         const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveCanvasToDisk(vaultDir, id, data);
+
+        // Update dirty tracking timestamp
+        import("./vault/registry").then((m) =>
+          m.updateLastInternalChange(vaultId),
+        );
+
         this.status = "idle";
       } catch (err) {
         console.error("[CanvasRegistryStore] Failed to save canvas", id, err);

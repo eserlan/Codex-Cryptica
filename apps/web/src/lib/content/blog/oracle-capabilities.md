@@ -27,7 +27,7 @@ The Oracle is the AI engine embedded directly in your Codex. It's not a generic 
 
 ## **The Two States of the Oracle**
 
-- **Restricted Mode (Lite Mode)** — Turns off the AI engine. Natural language chat, `/plot`, and `/draw` are disabled, but deterministic commands like `/roll`, `/create`, and `/connect` still work instantly and offline.
+- **AI Disabled** — Turns off the AI engine. Natural language chat, `/plot`, and `/draw` are disabled, but deterministic commands like `/roll`, `/create`, and `/connect` still work instantly and offline.
 - **AI-Powered Mode** — Unlocks full natural language reasoning, narrative analysis, and image generation using the Gemini API.
 
 ---

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
 
   let editingLabel = $state<string | null>(null);
   let renameValue = $state("");
@@ -17,11 +18,13 @@
   };
 
   const handleDelete = async (label: string) => {
-    if (
-      confirm(
-        `Are you sure you want to delete the label "${label}" from ALL entities?`,
-      )
-    ) {
+    const confirmed = await uiStore.confirm({
+      title: "Delete Label",
+      message: `Are you sure you want to delete the label "${label}" from ALL entities?`,
+      confirmLabel: "Delete",
+      isDangerous: true,
+    });
+    if (confirmed) {
       // Logic disabled
     }
   };
@@ -76,7 +79,7 @@
 
           {#if editingLabel !== label}
             <div
-              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
             >
               <button
                 onclick={() => startRename(label)}

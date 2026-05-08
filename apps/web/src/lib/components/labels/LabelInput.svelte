@@ -143,7 +143,7 @@
     onkeydown={handleKeydown}
     onfocus={() => (showSuggestions = true)}
     onblur={() => setTimeout(() => (showSuggestions = false), 200)}
-    class="w-full bg-theme-bg/50 border border-theme-border rounded px-2 py-1 text-[10px] text-theme-text outline-none focus:border-theme-primary transition-all font-mono placeholder-theme-muted/50"
+    class="w-full bg-theme-bg/50 border border-theme-border rounded px-2 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 transition-all font-mono placeholder-theme-muted/50"
   />
 
   {#if showSuggestions && suggestions.length > 0}
@@ -160,7 +160,7 @@
           role="option"
           aria-selected={i === selectedIndex}
           onclick={() => selectSuggestion(_label)}
-          class="w-full px-2 py-1.5 text-left text-[10px] font-mono transition-colors border-b border-theme-border/50 last:border-0
+          class="w-full px-2 py-2 text-left text-xs font-mono transition-colors border-b border-theme-border/50 last:border-0
             {i === selectedIndex
             ? 'bg-theme-primary/20 text-theme-primary'
             : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-primary'}"

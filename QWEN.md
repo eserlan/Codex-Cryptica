@@ -20,7 +20,7 @@
 | **Framework**    | SvelteKit 2.x with Svelte 5     |
 | **Styling**      | Tailwind CSS 4.x                |
 | **Build System** | Turborepo (monorepo)            |
-| **Runtime**      | Node.js 18+                     |
+| **Runtime**      | Node.js 24+                     |
 | **Graph Viz**    | Cytoscape.js with fCoSE layout  |
 | **Editor**       | Tiptap + Milkdown               |
 | **AI**           | Google Gemini API               |
@@ -59,8 +59,8 @@ Codex-Arcana/
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or pnpm
+- Node.js 24+
+- pnpm (Recommended)
 
 ### Installation
 
@@ -68,19 +68,19 @@ Codex-Arcana/
 # Clone and install dependencies
 git clone <repository>
 cd Codex-Arcana
-npm install
+pnpm install
 ```
 
 ### Development
 
 ```bash
 # Start development server (all packages)
-npm run dev
+pnpm run dev
 # or
 turbo run dev
 
 # Start only the web app
-npm run dev --workspace=web
+pnpm --filter web run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to view the application.
@@ -89,7 +89,7 @@ Open [http://localhost:5173](http://localhost:5173) to view the application.
 
 ```bash
 # Build all packages
-npm run build
+pnpm run build
 # or
 turbo run build
 ```
@@ -98,26 +98,26 @@ turbo run build
 
 ```bash
 # Run all unit tests
-npm test
+pnpm test
 
 # Run tests with coverage
-npm run test:coverage
+pnpm run test:coverage
 
 # Run E2E tests (Playwright)
-npm run test:e2e
+pnpm run test:e2e
 
 # Test specific workspace
-npm test --workspace=@codex/vault-engine
+pnpm --filter @codex/vault-engine test
 ```
 
 ### Linting & Formatting
 
 ```bash
 # Lint all packages
-npm run lint
+pnpm run lint
 
 # Format code
-npm run format
+pnpm run format
 ```
 
 ## Development Conventions
@@ -135,7 +135,7 @@ All commits must start with a [gitmoji](https://gitmoji.dev/) emoji:
 🔧 Configuration change
 ```
 
-Use `npx gitmoji -c` for interactive commit with emoji selection.
+Use `pnpm exec gitmoji -c` for interactive commit with emoji selection.
 
 ### Pre-commit Hooks
 
@@ -217,7 +217,7 @@ When working with AI coding assistants:
 The application builds as a **static site** deployed to GitHub Pages. The Oracle AI uses:
 
 - **User API Key**: Stored in IndexedDB (secure, local)
-- **Lite Mode**: Shared key (public, rate-limited) - must be restricted via Google Cloud Console referrer policy
+- **Shared Key**: public, rate-limited access to Lite tier (restricted via Referrer Policy)
 
 ## Important Directories
 
@@ -254,7 +254,7 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Git Workflow
 
-- Before committing, run `npm run lint` and `npm run test` to catch errors early
+- Before committing, run `pnpm run lint` and `pnpm run test` to catch errors early
 - If commitlint fails, use `git reset --soft HEAD~1` to amend rather than creating new commits
 - When addressing PR comments, reference the specific comment thread in your commit message
 
@@ -272,9 +272,16 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
+- TypeScript (as project standard) + Svelte 5 (UI), existing `map.svelte.ts` (base map), existing P2P host-service/client-adapter (sync) (079-vtt-light)
+- In-memory session state; optional vault persistence via OPFS for encounter snapshots (079-vtt-light)
+
 - TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine (076-add-canvas-context-menu)
 - OPFS (Origin Private File System) via canvas-engine (076-add-canvas-context-menu)
 
 ## Recent Changes
 
 - 076-add-canvas-context-menu: Added TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine
+
+## Qwen Added Memories
+
+- Always run playwright test with --last-failed --max-failures=5 --reporter=line when iterating on fixes. --last-failed only reruns previously failed tests. --max-failures=5 stops after 5 failures (fail-fast). --reporter=line gives terse output. Only applies when invoking pnpm exec playwright test directly; pnpm run test:e2e already has default flags.

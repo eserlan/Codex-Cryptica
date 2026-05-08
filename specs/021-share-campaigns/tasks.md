@@ -12,7 +12,7 @@
 
 - [x] T001 Create `specs/021-share-campaigns/checklists/` directory for validation
 - [x] T002 Ensure `VITE_GOOGLE_API_KEY` is added to `.env.example`
-- [x] T003 [P] Define `CampaignMetadata` extensions in `packages/schema/src/campaign.ts` (if applicable, or `apps/web/src/lib/types/`)
+- [x] T003 [P] Define `WorldMetadata` extensions in `packages/schema/src/campaign.ts` (if applicable, or `apps/web/src/lib/types/`)
 
 ---
 

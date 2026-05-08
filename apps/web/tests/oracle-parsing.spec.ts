@@ -41,7 +41,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
         removeEntry: async () => {},
       });
     });
-    await page.goto("/");
+    await page.goto("http://0.0.0.0:5173/");
 
     // Wait for app to be ready
     await page.waitForFunction(
@@ -86,7 +86,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     page,
   }) => {
     // 1. Open Oracle
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // 2. Inject a structured message into the store
     await page.evaluate(() => {
@@ -142,7 +142,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     page,
   }) => {
     // 1. Open Oracle
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // 2. Mock the AI response for a /create command
     await page.evaluate(() => {

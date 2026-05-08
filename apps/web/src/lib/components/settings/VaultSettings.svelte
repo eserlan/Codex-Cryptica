@@ -7,6 +7,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import DriveSettings from "./DriveSettings.svelte";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
@@ -81,7 +82,7 @@
       <button
         onclick={async () => {
           try {
-            await demoService.convertToCampaign();
+            await demoService.convertToWorld();
             const url = new URL(page.url.href);
             url.searchParams.delete("demo");
             goto(url.toString(), { replaceState: true });
@@ -150,11 +151,15 @@
             <button
               class="px-4 py-2 border border-amber-500/50 text-amber-500 hover:bg-amber-500/10 rounded transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
               onclick={async () => {
-                if (
-                  confirm(
+                const confirmed = await uiStore.confirm({
+                  title: "Squash History",
+                  message:
                     "This will scan for .conflict files, keep only the newest version of each file, and remove the rest. Continue?",
-                  )
-                ) {
+                  confirmLabel: "Squash",
+                  cancelLabel: "Cancel",
+                  isDangerous: true,
+                });
+                if (confirmed) {
                   await vault.cleanupConflictFiles();
                 }
               }}
@@ -167,6 +172,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Cloud Mirroring -->
+  {#if !uiStore.isDemoMode}
+    <div>
+      <DriveSettings />
+    </div>
+  {/if}
 
   <!-- Fog of War -->
   <div>
@@ -343,7 +355,7 @@
                 </div>
                 <button
                   onclick={() => removeMonth(month.id)}
-                  class="p-1 text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="p-1 text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   aria-label="Remove Month"
                 >
                   <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>

@@ -42,7 +42,9 @@ export const EntitySchema = z.object({
   title: z.string().min(1),
   tags: z.array(z.string()).default([]),
   labels: z.array(z.string()).default([]),
+  aliases: z.array(z.string().trim().min(1)).default([]),
   connections: z.array(ConnectionSchema).default([]),
+
   content: z.string().default(""), // Markdown content, default empty
   lore: z.string().optional(), // Extended lore & rich notes
   image: z.string().optional(),
@@ -57,6 +59,9 @@ export const EntitySchema = z.object({
       height: z.number().optional(),
     })
     .optional(),
+  status: z.enum(["active", "draft"]).optional().default("active"),
+  discoverySource: z.string().optional(),
+  lastUpdated: z.number().optional(),
   updatedAt: z.number().optional(),
   _path: z.union([z.string(), z.array(z.string())]).optional(),
 });

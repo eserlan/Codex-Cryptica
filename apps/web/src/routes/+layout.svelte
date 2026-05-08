@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import { base } from "$app/paths";
+  import { getRobotsDirective } from "$lib/seo/site";
 
   let { children } = $props();
 </script>
@@ -11,6 +12,7 @@
     name="description"
     content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with Google Gemini."
   />
+  <meta name="robots" content={getRobotsDirective()} />
   <meta property="og:type" content="website" />
   <meta
     property="og:title"

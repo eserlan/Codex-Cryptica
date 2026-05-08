@@ -16,8 +16,10 @@
   let step = $state<Step>("SELECT_SOURCE");
   let sourceId = $state<string | null>(null);
   let sourceName = $state("");
+  let sourceTitle = $derived(sourceId ? vault.entities[sourceId]?.title : "");
   let targetId = $state<string | null>(null);
   let targetName = $state("");
+  let targetTitle = $derived(targetId ? vault.entities[targetId]?.title : "");
 
   let proposal = $state<IMergedContentProposal | null>(null);
   let isProposing = $state(false);
@@ -159,7 +161,7 @@
             >Source:</span
           >
           <span class="text-theme-text truncate"
-            >{vault.entities[sourceId!]?.title ?? "Unknown Entity"}</span
+            >{sourceTitle || "Unknown Entity"}</span
           >
         </div>
         <div class="flex gap-2 text-theme-accent">
@@ -167,7 +169,7 @@
             >Into:</span
           >
           <span class="font-bold truncate"
-            >{vault.entities[targetId!]?.title ?? "Unknown Entity"}</span
+            >{targetTitle || "Unknown Entity"}</span
           >
         </div>
       </div>

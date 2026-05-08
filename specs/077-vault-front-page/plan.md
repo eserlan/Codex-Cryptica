@@ -30,7 +30,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 5. **Privacy**: All images and metadata stored locally via OPFS and Dexie. [PASS]
 6. **Clean Implementation**: Adhere to Dexie schema versioning (Version 4). [PASS]
 7. **Documentation**: Update `help-content.ts`. [PASS]
-8. **Dependency Injection**: **CRITICAL**. All new services (`CampaignService`, `ActivityService`) and stores (`CampaignStore`) MUST use constructor-based DI to ensure unit-testability with mocked databases and services. [PASS]
+8. **Dependency Injection**: **CRITICAL**. All new services (`WorldService`, `ActivityService`) and stores (`WorldStore`) MUST use constructor-based DI to ensure unit-testability with mocked databases and services. [PASS]
 
 ## Project Structure
 
@@ -57,7 +57,7 @@ apps/web/src/
 │   │   │   ├── EntityCard.svelte    # Card for relevant recent items
 │   │   │   └── CoverImage.svelte    # Cover art drop zone / generator
 │   ├── stores/
-│   │   └── campaign.svelte.ts       # UI state for front page (Uses DI for Services)
+│   │   └── world.svelte.ts       # UI state for front page (Uses DI for Services)
 │   ├── utils/
 │   │   └── entity-db.ts             # UPDATED: Dexie Schema Version 4
 └── routes/
@@ -68,7 +68,7 @@ packages/
 ├── vault-engine/
 │   ├── src/
 │   │   ├── services/
-│   │   │   ├── CampaignService.ts   # Metadata and frontpage tag logic (Uses DI for EntityDb)
+│   │   │   ├── WorldService.ts   # Metadata and frontpage tag logic (Uses DI for EntityDb)
 │   │   │   └── ActivityService.ts   # Tracking recent changes (Uses DI for EntityDb)
 ```
 

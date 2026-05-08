@@ -1,0 +1,16 @@
+# Codex Cryptica
+
+> A private, local-first campaign manager for lore keepers who value total privacy, speed, and visual organization. Built with Svelte 5 and Google Gemini.
+
+## Features
+
+- **Knowledge Graph**: Visualize and navigate your world's knowledge through an interactive graph.
+- **AI Oracle**: Use Google Gemini to discover hidden connections and generate immersive descriptions.
+- **Total Privacy**: Your data never leaves your device. We use browser-native storage (OPFS) for maximum security.
+- **Local-First**: Works offline and syncs directly between your devices without centralized servers.
+
+## Technical Documentation
+
+- [Full User Guide & Features](llms-full.txt): Amalgamation of all user-facing help documentation and core project features.
+- [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.
+- [Local-First Persistence (ADR 001)](https://github.com/eserlan/Codex-Cryptica/blob/main/docs/adr/001-fs-handle-storage.md): Deep dive into our unique browser-native storage strategy.

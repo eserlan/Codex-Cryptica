@@ -12,6 +12,13 @@ test.describe("Graph Zen Mode", () => {
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
     });
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("should open Zen mode directly from a graph node double click", async ({

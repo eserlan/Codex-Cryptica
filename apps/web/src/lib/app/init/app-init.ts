@@ -1,5 +1,6 @@
 import { browser } from "$app/environment";
 import { base } from "$app/paths";
+import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 
@@ -133,6 +134,7 @@ export function setupWindowGlobals(context: {
   categories: any;
   uiStore: any;
   isEntityVisible: any;
+  eventBus?: any;
 }) {
   if (!browser) return;
 
@@ -178,12 +180,58 @@ export function setupWindowGlobals(context: {
 /**
  * Registers the service worker if in production.
  */
-export function registerServiceWorker() {
-  if (browser && "serviceWorker" in navigator && !import.meta.env.DEV) {
-    navigator.serviceWorker
-      .register(`${base}/service-worker.js`)
-      .catch((error) => {
-        console.warn("Service Worker registration failed:", error);
-      });
+export function registerServiceWorker(deps?: {
+  document?: Document;
+  navigator?: Navigator;
+  window?: Window;
+  isDev?: boolean;
+}) {
+  const doc = deps?.document ?? document;
+  const nav = deps?.navigator ?? navigator;
+  const win = deps?.window ?? window;
+  const isDev = deps?.isDev ?? import.meta.env.DEV;
+
+  if (!browser || !("serviceWorker" in nav) || isDev) {
+    return;
   }
+
+  let isRegistered = false;
+
+  const cleanup = () => {
+    win.removeEventListener("load", tryRegister);
+    win.removeEventListener("pageshow", tryRegister);
+    doc.removeEventListener("visibilitychange", tryRegister);
+  };
+
+  const tryRegister = () => {
+    const isPrerendering =
+      String(doc.visibilityState) === "prerender" ||
+      (
+        doc as Document & {
+          prerendering?: boolean;
+        }
+      ).prerendering === true;
+
+    if (isRegistered || doc.readyState !== "complete" || isPrerendering) {
+      return;
+    }
+
+    isRegistered = true;
+    cleanup();
+
+    nav.serviceWorker.register(`${base}/service-worker.js`).catch((error) => {
+      console.warn("Service Worker registration failed:", error);
+    });
+  };
+
+  if (doc.readyState === "complete") {
+    tryRegister();
+    if (isRegistered) {
+      return;
+    }
+  }
+
+  win.addEventListener("load", tryRegister, { once: true });
+  win.addEventListener("pageshow", tryRegister);
+  doc.addEventListener("visibilitychange", tryRegister);
 }

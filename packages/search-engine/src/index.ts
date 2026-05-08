@@ -27,7 +27,8 @@ export class SearchEngine {
   }
 
   constructor() {
-    this.initIndex();
+    // Index initialization is deferred to explicit initIndex() calls
+    // from the service layer or lazy-initialized during first write.
   }
 
   setLogger(
@@ -78,6 +79,12 @@ export class SearchEngine {
           resolution: 9,
         },
         {
+          field: "aliases",
+          tokenize: "full",
+          optimize: true,
+          resolution: 9,
+        },
+        {
           field: "keywords",
           tokenize: "full",
           optimize: true,
@@ -91,7 +98,7 @@ export class SearchEngine {
           minlength: 2,
         },
       ],
-      store: ["id", "title", "path", "content", "type"],
+      store: ["id", "title", "path", "content", "type", "status"],
     };
 
     this.index = new FlexSearch.Document(config);
@@ -109,6 +116,37 @@ export class SearchEngine {
         this.notifyChange();
       } catch (err) {
         this.log("error", `Failed to add document ${doc.id}`, err);
+      }
+    });
+    return this.taskQueue;
+  }
+
+  async addBatch(docs: SearchEntry[]) {
+    this.taskQueue = this.taskQueue.then(async () => {
+      if (!this.index) {
+        this.log("warn", "Index was null during addBatch(), re-initializing.");
+        this.initIndex();
+      }
+      let count = 0;
+      const errors: string[] = [];
+      for (const doc of docs) {
+        try {
+          this.index.add(doc);
+          this.docIds.add(doc.id);
+          count++;
+        } catch (err) {
+          this.log("error", `Failed to add document ${doc.id}`, err);
+          errors.push(doc.id);
+        }
+      }
+      if (errors.length > 0) {
+        this.log(
+          "warn",
+          `Batch complete with ${errors.length} errors: ${errors.join(", ")}`,
+        );
+      }
+      if (count > 0) {
+        this.notifyChange();
       }
     });
     return this.taskQueue;
@@ -150,10 +188,21 @@ export class SearchEngine {
 
     // Process results from all fields
     for (const fieldResult of results) {
-      const field = fieldResult.field as "title" | "content" | "keywords";
+      const field = fieldResult.field as
+        | "title"
+        | "aliases"
+        | "content"
+        | "keywords";
       const isTitle = field === "title";
+      const isAliases = field === "aliases";
       const isKeywords = field === "keywords";
-      const baseScore = isTitle ? 1.0 : isKeywords ? 0.8 : 0.5;
+      const baseScore = isTitle
+        ? 1.0
+        : isAliases
+          ? 0.9
+          : isKeywords
+            ? 0.8
+            : 0.5;
 
       this.log(
         "info",
@@ -169,7 +218,12 @@ export class SearchEngine {
           continue;
         }
 
-        const rankAdjustment = i * 0.0001;
+        // Filter out drafts unless explicitly included
+        if (entry?.status === "draft" && !options.includeDrafts) {
+          continue;
+        }
+
+        const rankAdjustment = Math.min(i * 0.0001, 0.05);
         const currentScore = baseScore - rankAdjustment;
 
         const existing = resultsMap.get(id);
@@ -270,22 +324,93 @@ export class SearchEngine {
       }
     });
 
-    this.log("info", `Export complete. ${count} segments collected.`);
-    return data;
+    this.log(
+      "info",
+      `Export complete. ${count} segments collected. Encoding...`,
+    );
+
+    const segments: Record<string, ArrayBuffer> = {};
+    const transferables: ArrayBuffer[] = [];
+    const encoder = new TextEncoder();
+    let processed = 0;
+
+    // Process segments individually to prevent massive V8 string allocation
+    for (const [k, v] of Object.entries(data)) {
+      const jsonStr = typeof v === "string" ? v : JSON.stringify(v);
+      const buffer = encoder.encode(jsonStr).buffer;
+      segments[k] = buffer;
+      transferables.push(buffer);
+      processed++;
+
+      // Yield back to event loop every 50 segments so the worker can process search queries!
+      if (processed % 50 === 0) {
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    }
+
+    this.log("info", `Encoding complete. Transferring binary payload...`);
+    return Comlink.transfer(
+      { isSegmented: true, segments, keyCount: count },
+      transferables,
+    );
   }
 
   /**
    * Imports a previously exported index.
    */
-  async importIndex(data: Record<string, any>): Promise<void> {
+  async importIndex(data: any): Promise<void> {
     this.taskQueue = this.taskQueue.then(async () => {
+      let parsedData = data;
+
+      if (
+        data &&
+        typeof data === "object" &&
+        data.isSegmented &&
+        data.segments
+      ) {
+        try {
+          parsedData = {};
+          const decoder = new TextDecoder();
+          let processed = 0;
+
+          for (const [k, value] of Object.entries(data.segments)) {
+            const buffer = value as ArrayBuffer;
+            const str = decoder.decode(buffer);
+            parsedData[k] = k === "_docIds" ? JSON.parse(str) : str;
+            processed++;
+
+            // Yield back to event loop every 50 segments during heavy imports
+            if (processed % 50 === 0) {
+              await new Promise((r) => setTimeout(r, 0));
+            }
+          }
+        } catch (e) {
+          this.log("error", "Failed to decode segmented index data", e);
+          return;
+        }
+      } else if (
+        data &&
+        typeof data === "object" &&
+        data.isEncoded &&
+        data.data
+      ) {
+        // Fallback for previous monolithic encoded format
+        try {
+          const decoded = new TextDecoder().decode(data.data);
+          parsedData = JSON.parse(decoded);
+        } catch (e) {
+          this.log("error", "Failed to decode imported index data", e);
+          return;
+        }
+      }
+
       if (!this.index) this.initIndex();
-      if (data._docIds !== undefined) {
-        this.docIds = new Set(data._docIds);
+      if (parsedData._docIds !== undefined) {
+        this.docIds = new Set(parsedData._docIds);
       }
 
       let count = 0;
-      for (const [key, value] of Object.entries(data)) {
+      for (const [key, value] of Object.entries(parsedData)) {
         if (key === "_docIds") continue;
         // FlexSearch import is synchronous
         this.index.import(key, value);

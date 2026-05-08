@@ -1,17 +1,14 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
-  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { base } from "$app/paths";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { base } from "$app/paths";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
-  import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
-  import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
   const isSpecialEnv =
     import.meta.env.DEV ||
@@ -59,7 +56,7 @@
         .catch((err) => logChunkError("GraphView", err));
     }
     if (!FrontPage) {
-      import("../../lib/components/campaign/FrontPage.svelte")
+      import("../../lib/components/world/FrontPage.svelte")
         .then((m) => (FrontPage = m?.default))
         .catch((err) => logChunkError("FrontPage", err));
     }
@@ -87,7 +84,7 @@
   });
 
   const dismissFrontPageOverlay = () => {
-    uiStore.dismissedCampaignPage = true;
+    uiStore.dismissWorldPage();
   };
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
@@ -110,7 +107,7 @@
       // 3. If the front page is visible, dismiss it
       if (
         !uiStore.isLandingPageVisible &&
-        !uiStore.dismissedCampaignPage &&
+        !uiStore.dismissedWorldPage &&
         !selectedEntity
       ) {
         dismissFrontPageOverlay();
@@ -123,6 +120,14 @@
     building ? null : page.url.searchParams.get("shareId"),
   );
   const isGuestMode = $derived(!!shareId);
+
+  onMount(() => {
+    // Eagerly prefetch the heavy components in the background a second after boot
+    // to eliminate the 10-15s dev-mode lag when clicking an entity for the first time.
+    setTimeout(() => {
+      loadHeavyComponents();
+    }, 1000);
+  });
 
   // Consolidate reactive pre-loading and fallback loading into a single effect
   // to prevent race conditions during dynamic imports.
@@ -137,121 +142,6 @@
     ) {
       loadHeavyComponents();
     }
-  });
-
-  // Guest Mode Connection Logic - Triggers once username is provided
-  $effect(() => {
-    if (
-      isGuestMode &&
-      shareId &&
-      shareId.startsWith("p2p-") &&
-      uiStore.guestUsername
-    ) {
-      const peerId = shareId.substring(4); // Remove "p2p-" prefix
-      uiStore.isGuestMode = true; // Activate guest mode
-      vault.status = "loading";
-      vault.selectedEntityId = null;
-
-      p2pGuestService
-        .connectToHost(
-          peerId,
-          (graph) => {
-            // Update vault entities with received data
-            vault.repository.entities = Object.fromEntries(
-              Object.entries(graph.entities).map(
-                ([id, entity]: [string, any]) => [
-                  id,
-                  {
-                    ...entity,
-                    _path:
-                      typeof entity._path === "string"
-                        ? [entity._path]
-                        : entity._path,
-                  },
-                ],
-              ),
-            );
-            if (graph.defaultVisibility) {
-              vault.defaultVisibility = graph.defaultVisibility;
-            }
-            if (graph.themeId) {
-              import("../../lib/stores/theme.svelte")
-                .then((m) => {
-                  if (m?.themeStore) m.themeStore.previewTheme(graph.themeId);
-                })
-                .catch((err) =>
-                  console.error("Failed to load theme store", err),
-                );
-            }
-            // Force shared mode for guests to ensure Fog of War is active
-            import("../../lib/stores/ui.svelte")
-              .then((m) => {
-                if (m?.ui) m.ui.sharedMode = true;
-              })
-              .catch((err) => console.error("Failed to load ui store", err));
-            vault.isInitialized = true; // Mark vault as initialized in guest mode
-            vault.status = "idle";
-          },
-          (updatedEntity) => {
-            // Real-time update from host
-            vault.repository.entities[updatedEntity.id] = {
-              ...updatedEntity,
-              _path:
-                typeof updatedEntity._path === "string"
-                  ? [updatedEntity._path]
-                  : updatedEntity._path,
-            };
-          },
-          (deletedId) => {
-            // Real-time delete from host
-            delete vault.repository.entities[deletedId];
-          },
-          (batchUpdates) => {
-            // Real-time batch update from host
-            vault.batchUpdate(batchUpdates);
-          },
-          (themeId) => {
-            // Real-time theme update from host
-            import("../../lib/stores/theme.svelte")
-              .then((m) => {
-                if (m?.themeStore) m.themeStore.previewTheme(themeId);
-              })
-              .catch((err) => console.error("Failed to load theme store", err));
-          },
-          uiStore.guestUsername ?? undefined,
-        )
-        .catch((err) => {
-          console.error("[Guest Mode] Failed to connect to host:", err);
-          vault.selectedEntityId = null;
-          uiStore.guestUsername = null;
-          uiStore.isGuestMode = false;
-          vault.status = "error";
-          vault.errorMessage = "Failed to connect to shared campaign.";
-        });
-    }
-  });
-
-  $effect(() => {
-    if (!isGuestMode || !uiStore.isGuestMode || !uiStore.guestUsername) {
-      return;
-    }
-
-    const { status, currentEntityId, currentEntityTitle } =
-      buildGuestPresencePayload({
-        selectedEntityId: vault.selectedEntityId,
-        zenModeEntityId: uiStore.showZenMode ? uiStore.zenModeEntityId : null,
-        entities: vault.entities,
-      });
-
-    p2pGuestService.updateGuestStatus({
-      status,
-      currentEntityId,
-      currentEntityTitle,
-    });
-  });
-
-  onMount(async () => {
-    // onMount logic removed - moved to reactive $effect above
   });
 </script>
 
@@ -272,7 +162,9 @@
     {#if uiStore.mainViewMode === "focus" && uiStore.focusedEntityId && EmbeddedEntityView}
       <EmbeddedEntityView entityId={uiStore.focusedEntityId} />
     {:else if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
-      <GraphView bind:selectedId={vault.selectedEntityId} />
+      {#key vault.activeVaultId}
+        <GraphView bind:selectedId={vault.selectedEntityId} />
+      {/key}
     {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
         class="absolute inset-0 bg-theme-bg flex items-center justify-center"
@@ -294,14 +186,8 @@
     />
   {/if}
 
-  {#if isGuestMode && !uiStore.guestUsername && !building}
-    <GuestLoginModal
-      onJoin={(username) => uiStore.setGuestUsername(username)}
-    />
-  {/if}
-
   <!-- Vault Front Page Overlay -->
-  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedCampaignPage && !selectedEntity}
+  {#if FrontPage && vault.isInitialized && uiStore.skipWelcomeScreen && !uiStore.dismissedWorldPage && !selectedEntity}
     <div
       data-testid="front-page-overlay"
       class={`absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm ${selectedEntity ? "pointer-events-none" : ""}`}
@@ -323,7 +209,9 @@
       transition:fade
     >
       <div class="max-w-7xl mx-auto w-full">
-        <FrontPage onClose={dismissFrontPageOverlay} />
+        {#key vault.activeVaultId}
+          <FrontPage onClose={dismissFrontPageOverlay} />
+        {/key}
       </div>
     </div>
   {/if}
@@ -364,7 +252,7 @@
           >
             <button
               onclick={() => {
-                uiStore.dismissedLandingPage = true;
+                uiStore.dismissLandingPage();
               }}
               class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
             >
@@ -385,6 +273,14 @@
             >
               <span class="icon-[lucide--zap] w-3 h-3"></span>
               View Features Overview
+            </a>
+
+            <a
+              href="{base}/changelog"
+              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--history] w-3 h-3"></span>
+              View Full Changelog
             </a>
 
             <div

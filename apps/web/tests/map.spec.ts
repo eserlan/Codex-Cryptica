@@ -217,6 +217,169 @@ test.describe("Map Mode", () => {
     const uploadLabelFinal = page.locator('label:has-text("Upload Map")');
     await expect(uploadLabelFinal).toBeVisible({ timeout: 20000 });
   });
+
+  test("should list draggable VTT entities and create multiple tokens from drag and drop", async ({
+    page,
+  }) => {
+    await ensureTestMap(page);
+
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      await vault.createEntity("character", "VTT Hero", {
+        id: "vtt-hero",
+        content: "Ready for battle",
+      });
+      await vault.createEntity("item", "VTT Relic", {
+        id: "vtt-relic",
+        content: "A useful object",
+      });
+      await vault.createEntity("location", "Hidden Valley", {
+        id: "vtt-location",
+        content: "Should not be draggable in VTT",
+      });
+
+      (window as any).mapSession.vttEnabled = true;
+      (window as any).uiStore.vttSidebarCollapsed = false;
+      (window as any).uiStore.vttEntityListCollapsed = false;
+    });
+
+    const entitySection = page.getByTestId("vtt-entity-list-section");
+    await expect(entitySection).toBeVisible();
+    await expect(page.locator('[data-entity-id="vtt-hero"]')).toBeVisible();
+    await expect(page.locator('[data-entity-id="vtt-relic"]')).toBeVisible();
+    await expect(page.locator('[data-entity-id="vtt-location"]')).toHaveCount(
+      0,
+    );
+
+    const mapSurface = page.locator(
+      'div[role="application"][aria-roledescription="map"]',
+    );
+
+    await page.evaluate(() => {
+      const item = document.querySelector(
+        '[data-entity-id="vtt-hero"]',
+      ) as HTMLElement | null;
+      const mapSurface = document.querySelector(
+        'div[role="application"][aria-roledescription="map"]',
+      ) as HTMLElement | null;
+      if (!item || !mapSurface) {
+        throw new Error("Missing drag source or drop target");
+      }
+
+      const rect = mapSurface.getBoundingClientRect();
+      const dataTransfer = new DataTransfer();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      item.dispatchEvent(
+        new DragEvent("dragstart", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+        }),
+      );
+      mapSurface.dispatchEvent(
+        new DragEvent("dragover", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+          clientX: centerX,
+          clientY: centerY,
+        }),
+      );
+      mapSurface.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+          clientX: centerX,
+          clientY: centerY,
+        }),
+      );
+      item.dispatchEvent(
+        new DragEvent("dragend", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+        }),
+      );
+    });
+
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          () => Object.keys((window as any).mapSession.tokens).length,
+        ),
+      )
+      .toBe(1);
+
+    const previewCleared = await page.evaluate(
+      () => (window as any).mapSession.dragPreview,
+    );
+    expect(previewCleared).toBeNull();
+
+    await page.evaluate(() => {
+      const item = document.querySelector(
+        '[data-entity-id="vtt-hero"]',
+      ) as HTMLElement | null;
+      const mapSurface = document.querySelector(
+        'div[role="application"][aria-roledescription="map"]',
+      ) as HTMLElement | null;
+      if (!item || !mapSurface) {
+        throw new Error("Missing drag source or drop target");
+      }
+
+      const rect = mapSurface.getBoundingClientRect();
+      const dataTransfer = new DataTransfer();
+      const dropX = rect.left + rect.width * 0.6;
+      const dropY = rect.top + rect.height * 0.6;
+
+      item.dispatchEvent(
+        new DragEvent("dragstart", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+        }),
+      );
+      mapSurface.dispatchEvent(
+        new DragEvent("dragover", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+          clientX: dropX,
+          clientY: dropY,
+        }),
+      );
+      mapSurface.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+          clientX: dropX,
+          clientY: dropY,
+        }),
+      );
+      item.dispatchEvent(
+        new DragEvent("dragend", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+        }),
+      );
+    });
+
+    await expect
+      .poll(async () =>
+        page.evaluate(() => {
+          const tokens = Object.values((window as any).mapSession.tokens);
+          return tokens.filter((token: any) => token.entityId === "vtt-hero")
+            .length;
+        }),
+      )
+      .toBe(2);
+
+    await expect(mapSurface.locator("canvas")).toBeVisible();
+  });
 });
 
 async function ensureTestMap(page: Page) {

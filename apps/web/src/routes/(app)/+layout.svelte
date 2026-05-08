@@ -3,7 +3,8 @@
   import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import { preloadCode } from "$app/navigation";
 
   // Stores
   import { helpStore } from "$lib/stores/help.svelte";
@@ -16,11 +17,16 @@
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { graph } from "$lib/stores/graph.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
+  import { initGDriveSync } from "$lib/services/gdrive-sync";
   import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { isEntityVisible } from "schema";
+  import { VERSION } from "$lib/config";
+  import releases from "$lib/content/changelog/releases.json";
+  import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
@@ -30,6 +36,7 @@
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
+  import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
 
   // Logic & Hooks
   import {
@@ -48,6 +55,8 @@
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
   let globalListenersCleanup: (() => void) | null = null;
+  let crossTabBroadcaster: InstanceType<typeof CrossTabBroadcaster> | null =
+    null;
 
   // Derived
   const isPopup = $derived(
@@ -55,6 +64,24 @@
       page.url.pathname === `${base}/help` ||
       page.url.pathname === `${base}/import`,
   );
+  const isZenPopout = $derived(
+    /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
+  );
+  const isVttFullscreen = $derived(
+    page.url.pathname.startsWith(`${base}/map`) && mapSession.vttEnabled,
+  );
+
+  if (browser) {
+    const requestedTheme = page.url.searchParams.get("theme");
+    if (requestedTheme && THEMES[requestedTheme]) {
+      themeStore.currentThemeId = requestedTheme;
+    }
+  }
+
+  onDestroy(() => {
+    crossTabBroadcaster?.destroy();
+    crossTabBroadcaster = null;
+  });
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
@@ -94,8 +121,17 @@
       helpStore.init();
       await themeStore.init();
       oracle.init();
+      void initGDriveSync();
+
+      // Preload heavy route chunks so first navigation is instant
+      preloadCode(`${base}/canvas`).catch(() => {});
+      preloadCode(`${base}/map`).catch(() => {});
 
       registerServiceWorker();
+
+      if (browser) {
+        crossTabBroadcaster = new CrossTabBroadcaster(appEventBus);
+      }
 
       console.log("[Layout] Calling setupWindowGlobals");
       setupWindowGlobals({
@@ -110,6 +146,7 @@
         categories,
         uiStore,
         isEntityVisible,
+        eventBus: appEventBus,
       });
     })();
   });
@@ -145,7 +182,14 @@
 
   // Header Height CSS Var
   $effect(() => {
-    if (headerEl && browser) {
+    if (!browser) return;
+
+    if (isVttFullscreen || !headerEl) {
+      document.documentElement.style.setProperty("--header-height", "0px");
+      return;
+    }
+
+    if (headerEl) {
       const updateHeight = () => {
         const height = headerEl!.getBoundingClientRect().height;
         document.documentElement.style.setProperty(
@@ -173,12 +217,52 @@
         if (
           vault.allEntities.length === 0 &&
           !uiStore.isDemoMode &&
-          !isTesting
+          !isTesting &&
+          !uiStore.dismissedLandingPage
         ) {
           demoService.startDemo("fantasy");
         } else {
           helpStore.startTour("initial-onboarding");
         }
+      }
+    }
+  });
+
+  // Automatic Release Note Trigger
+  $effect(() => {
+    if (
+      browser &&
+      !uiStore.showChangelog &&
+      !uiStore.isDemoMode &&
+      !uiStore.isLandingPageVisible
+    ) {
+      const lastSeenStr = uiStore.lastSeenVersion;
+
+      // First-time user: no changelog popup, silently mark latest known release as seen
+      if (!lastSeenStr) {
+        uiStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
+        return;
+      }
+
+      const currentStoredMinor = parseInt(lastSeenStr.split(".")[1] || "0", 10);
+      const hasUnseenMinorRelease = releases.some((r) => {
+        const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
+        return releaseMinor > currentStoredMinor;
+      });
+
+      if (hasUnseenMinorRelease) {
+        // Delay to not conflict with tour/demo triggers
+        const timeout = setTimeout(() => {
+          if (
+            !helpStore.activeTour &&
+            !uiStore.showZenMode &&
+            !uiStore.isDemoMode &&
+            !uiStore.showChangelog
+          ) {
+            uiStore.showChangelog = true;
+          }
+        }, 2000);
+        return () => clearTimeout(timeout);
       }
     }
   });
@@ -192,17 +276,17 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="h-screen bg-theme-bg flex flex-col font-body app-layout">
+<div class="h-[100dvh] bg-theme-bg flex flex-col font-body app-layout">
   <NotificationToast />
 
-  {#if !isPopup}
+  {#if !isPopup && !isVttFullscreen && !isZenPopout}
     <AppHeader bind:isMobileMenuOpen bind:headerEl />
   {/if}
 
   <div
     class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
   >
-    {#if !isPopup}
+    {#if !isPopup && !isVttFullscreen && !isZenPopout}
       <ActivityBar />
       <SidebarPanelHost />
     {/if}
@@ -212,10 +296,15 @@
     </main>
   </div>
 
-  {#if !isPopup}
+  {#if !isPopup && !isVttFullscreen && !isZenPopout}
     <AppFooter />
+  {/if}
+
+  {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
+
+  <GuestSessionBootstrap />
 </div>
 
 <FatalErrorOverlay />

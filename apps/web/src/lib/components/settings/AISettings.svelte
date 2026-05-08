@@ -1,5 +1,6 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { onMount } from "svelte";
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
 
@@ -9,13 +10,53 @@
 
   const handleClear = async () => {
     if (
-      confirm(
-        "Are you sure you want to remove your API key? The Oracle will continue working via the system proxy.",
-      )
+      await uiStore.confirm({
+        title: "Reset Settings",
+        message:
+          "Are you sure you want to remove your API key? The Oracle will continue working via the system proxy.",
+        confirmLabel: "Remove Key",
+        isDangerous: true,
+      })
     ) {
       await oracle.clearKey();
     }
   };
+
+  const entityDiscoveryOptions = [
+    {
+      value: "off",
+      label: "Off",
+      description: "Do not show Oracle discovery chips.",
+    },
+    {
+      value: "suggest",
+      label: "Suggest",
+      description: "Show found records and wait for your approval.",
+    },
+    {
+      value: "auto-create",
+      label: "Auto-create",
+      description: "Save discovered records as drafts automatically.",
+    },
+  ] as const;
+
+  const connectionDiscoveryOptions = [
+    {
+      value: "off",
+      label: "Off",
+      description: "Do not scan for links after Oracle updates.",
+    },
+    {
+      value: "suggest",
+      label: "Suggest",
+      description: "Queue connection proposals for review.",
+    },
+    {
+      value: "auto-apply",
+      label: "Auto-apply",
+      description: "Create eligible graph links automatically.",
+    },
+  ] as const;
 </script>
 
 <div class="p-4 border border-theme-border rounded-lg bg-theme-bg/30 mt-4">
@@ -89,6 +130,84 @@
         <span class="text-xs text-theme-accent font-bold">FREE</span>
       </div>
     {/if}
+  </div>
+
+  <!-- Oracle Automation Settings -->
+  <div class="mb-6 pt-6 border-t border-theme-border/30">
+    <div class="mb-5">
+      <span
+        class="text-sm text-theme-text font-bold uppercase font-header block"
+        id="entity-discovery-label">Entity Discovery</span
+      >
+      <p class="text-xs text-theme-muted mt-1 mb-3 leading-relaxed">
+        Choose whether Oracle chat should ignore, suggest, or automatically save
+        discovered records.
+      </p>
+      <div
+        class="grid grid-cols-1 sm:grid-cols-3 gap-2"
+        role="radiogroup"
+        aria-labelledby="entity-discovery-label"
+      >
+        {#each entityDiscoveryOptions as option (option.value)}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={uiStore.entityDiscoveryMode === option.value}
+            onclick={() => uiStore.setEntityDiscoveryMode(option.value)}
+            class={[
+              "text-left rounded-lg border p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60",
+              uiStore.entityDiscoveryMode === option.value
+                ? "border-theme-primary bg-theme-primary/10 text-theme-text"
+                : "border-theme-border bg-theme-bg/30 text-theme-text/80 hover:bg-theme-surface/60",
+            ]}
+          >
+            <span class="block text-xs font-bold uppercase font-header">
+              {option.label}
+            </span>
+            <span class="mt-1 block text-[11px] leading-snug text-theme-muted">
+              {option.description}
+            </span>
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    <div>
+      <span
+        class="text-sm text-theme-text font-bold uppercase font-header block"
+        id="connection-discovery-label">Connection Discovery</span
+      >
+      <p class="text-xs text-theme-muted mt-1 mb-3 leading-relaxed">
+        Choose what happens after the Oracle creates or updates a record.
+      </p>
+      <div
+        class="grid grid-cols-1 sm:grid-cols-3 gap-2"
+        role="radiogroup"
+        aria-labelledby="connection-discovery-label"
+      >
+        {#each connectionDiscoveryOptions as option (option.value)}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={uiStore.connectionDiscoveryMode === option.value}
+            onclick={() => uiStore.setConnectionDiscoveryMode(option.value)}
+            class={[
+              "text-left rounded-lg border p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60",
+              uiStore.connectionDiscoveryMode === option.value
+                ? "border-theme-primary bg-theme-primary/10 text-theme-text"
+                : "border-theme-border bg-theme-bg/30 text-theme-text/80 hover:bg-theme-surface/60",
+            ]}
+          >
+            <span class="block text-xs font-bold uppercase font-header">
+              {option.label}
+            </span>
+            <span class="mt-1 block text-[11px] leading-snug text-theme-muted">
+              {option.description}
+            </span>
+          </button>
+        {/each}
+      </div>
+    </div>
   </div>
 
   <!-- API Key Management -->

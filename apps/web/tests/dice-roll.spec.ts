@@ -35,8 +35,7 @@ test.describe("Dice Rolling (Oracle Command)", () => {
     // Open Oracle if not already open
     const oracleSidebar = page.getByTestId("oracle-sidebar-panel");
     if (!(await oracleSidebar.isVisible())) {
-      const oracleBtn = page.getByTitle("Open Lore Oracle");
-      await oracleBtn.click({ force: true });
+      await page.getByTestId("activity-bar-oracle").click();
     }
 
     await expect(oracleSidebar).toBeVisible({

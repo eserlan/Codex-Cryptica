@@ -11,10 +11,19 @@ Chat with the AI about your world. Ask questions, brainstorm ideas, or get help 
 The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.
 
 ### Visual Graph
-Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.
+Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.
 
-### Local Folder Sync
-Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.
+### World Front Page
+Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.
+
+### Load and Save Folders
+Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
+
+### Save to Folder
+The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.
+
+### Load from Folder
+Use 'LOAD FROM FOLDER' in the Vault Selector to refresh your internal archive with changes from the linked folder. A safety gate warns you if unsaved internal work would be overwritten.
 
 ### Total Privacy
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
@@ -35,7 +44,7 @@ Use the toolbar to quickly Apply Labels to multiple items or Merge duplicates in
 Keep secrets hidden. Hide items from your map so players don't see them during a session. Press `P` to toggle the preview.
 
 ### Switching Stories
-Change your campaign. Click the folder name at the top to switch to a different story.
+Change your world. Click the folder name at the top to switch to a different story.
 
 ### Pick Dates
 Pick years quickly without typing. Click the grid to zoom into specific decades and years.
@@ -50,16 +59,22 @@ Instantly transform the look and feel of your workspace. Choose from a variety o
 For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.
 
 ### Demo Mode
-Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.
+Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.
 
-### Lite Mode (No AI)
-Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
+### AI Disabled
+Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI-powered features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
 
 ### SEO Prerendering
 Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.
 
 ### Map Mode
-Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.
+Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.
+
+### VTT Mode
+Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.
+
+### VTT Entity List
+Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.
 
 ### Spatial Canvas
 Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.
@@ -69,6 +84,27 @@ Visit our blog for deep dives into data sovereignty and tactical world-building 
 
 ### Die Roller
 Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.
+
+### Entity Explorer
+Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down.
+
+### Navigation Hub
+Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.
+
+### Proactive Discovery
+While you chat, the Oracle can identify new characters, locations, and items. In Settings, choose whether discoveries are off, shown as chips for review, or saved automatically as drafts.
+
+### Oracle Automation
+Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.
+
+### Adjustable Sidebars
+Dynamically resize the left and right sidebars to suit your workspace needs. Hover over the inner edge of a sidebar and drag left or right. Your custom widths are automatically saved across sessions.
+
+### Reviewing Drafts
+Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.
+
+### AI Description Regeneration
+Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
 
 
 ## Help Documentation
@@ -125,7 +161,8 @@ The bottom-left toolbar provides quick access to layout and visibility:
 Connect your geography directly to your notes:
 
 - **Double-Click** anywhere on the map to create a new pin.
-- Use the **Link Lore** search box to connect the pin to an existing NPC, Location, or Item.
+- **Drag an entity** from the **Entity Explorer** sidebar and drop it anywhere on the map to instantly create a pin linked to that entity.
+- Use the **Link Lore** search box on a pin to connect it to an existing NPC, Location, or Item.
 - **Click a Pin** to instantly open its associated chronicle in the side panel.
 
 ### Fog of War (GM Only)
@@ -159,6 +196,16 @@ The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intent
 - **Themed Components**: The **MiniMap** and all UI elements adapt to your active theme (Fantasy, Sci-Fi, etc.), ensuring a cohesive aesthetic.
 - **Readable URLs**: Each canvas uses a name-based **slug** in its URL (e.g., `/canvas/battle-at-the-docks`), making it easy to bookmark and identify specific workspaces.
 
+### Adding Entities
+
+The fastest way to populate a canvas is to drag entities directly from the **Entity Explorer** sidebar onto the board. Open the Explorer, find the entity you want, and drag it onto the canvas — it will be placed wherever you drop it.
+
+You can also right-click nodes in the **Knowledge Graph** and use **Add to Canvas** to send one or more entities to any of your boards without leaving the graph.
+
+### Managing Canvases
+
+Click the **workspace name** in the top-left HUD to open the **Canvas Manager**. From there you can create new canvases, rename or delete existing ones, and switch between boards.
+
 ### Managing Connections
 
 - **Custom Labels**: Double-click any connection (edge) to open a themed modal and enter a name for the relationship.
@@ -168,14 +215,22 @@ The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intent
 ### Tips for Organization
 
 1. **Use Multiple Canvases**: Create separate boards for different regions, plot lines, or character groups to avoid clutter.
-2. **Quick Spawn**: Use the **Entity Palette** to drag existing lore onto the board, or use the "Add to Canvas" action from global search results.
+2. **Drag from Explorer**: Open the Entity Explorer sidebar and drag lore directly onto the board for the fastest workflow.
 3. **Zen Integration**: Double-click any entity card to open it in **Zen Mode** (the full detail panel) for quick editing.
 
 ---
 
 ### ADDING ENTITIES TO CANVAS
 
-You can quickly bring your lore onto a **Spatial Canvas** without leaving the **Knowledge Graph** or your search results. This allows for a seamless transition from discovering connections to designing custom spatial layouts.
+You can quickly bring your lore onto a **Spatial Canvas** in several ways — by dragging from the sidebar, right-clicking in the graph, or choosing from search results.
+
+### Drag from Entity Explorer
+
+The fastest way to add a single entity is to drag it directly from the **Entity Explorer** sidebar onto the canvas.
+
+1. **Open the Explorer**: Click the Explorer icon in the left activity bar.
+2. **Find your entity**: Use the search bar or browse the list.
+3. **Drag onto the canvas**: Click and drag the entity card onto the board. It will be placed wherever you drop it.
 
 ### Right-Click to Add
 
@@ -529,6 +584,49 @@ When you open Codex on a new device:
 
 ---
 
+### GOOGLE DRIVE CLOUD SYNC
+
+Codex Cryptica can back up your vault to your personal Google Drive and restore it from any device. Your files go straight from your browser to your Drive — our servers never see them.
+
+## Connect Your Vault
+
+1. Open **Settings → Cloud Sync**.
+2. Click **Connect Google Drive** and sign in when Google prompts you.
+3. Codex creates a `CodexCryptica/` folder on your Drive (if it doesn't exist) and a subfolder named after your vault inside it. The folder ID is saved locally so future syncs know where to go.
+
+Once connected you'll see two buttons:
+
+- **Save to Drive** — pushes your local vault up to the cloud.
+- **Load from Drive** — pulls the cloud version back down. Only files that are newer than your local copy are downloaded, so a full re-pull stays fast.
+
+> [!NOTE]
+> Sync is always manual. Codex never uploads in the background without you clicking a button, so you stay in control of what leaves your device.
+
+## Import a Vault from Drive
+
+If you have vaults already stored in your `CodexCryptica/` Drive folder (from another device), you can load them without setting them up from scratch:
+
+1. In **Settings → Cloud Sync**, click **Browse Drive**.
+2. Codex lists every vault subfolder it finds under `CodexCryptica/`.
+3. Click **Load** next to any vault. Codex creates a local vault (or finds the existing one), then pulls only the files that are newer than what you have locally.
+
+## Join a Shared Vault (Co-GM Flow)
+
+If your GM has shared their Drive vault folder with you, you can connect to it directly:
+
+1. Ask your GM to share the Drive folder and copy the share link (it looks like `https://drive.google.com/drive/folders/…`).
+2. In **Settings → Cloud Sync**, paste the link into the **Join a Shared Vault** field and click **Join**.
+3. Google will ask you to grant read access to the shared folder. Once approved, Codex imports the vault locally and you can pull updates any time with **Load from Drive**.
+
+> [!NOTE]
+> The first join asks for broader Drive access so Codex can read folders you don't own. Normal push/pull to your own vaults uses the narrower `drive.file` scope and only accesses files Codex itself created.
+
+## Disconnect
+
+Click **Disconnect** in the connected state to remove the Drive link from this vault. Your local vault and the files on Drive are both preserved — only the sync mapping is removed.
+
+---
+
 ### VAULT STRUCTURE
 
 Codex Cryptica uses standard Markdown files. You can even open your vault folder in other apps like Obsidian or VS Code.
@@ -554,6 +652,25 @@ Your story starts here...
 
 - **Metadata**: You can add your own fields to the header (like `age: 45`). The AI Oracle will see these and use them for extra context.
 - **Syncing**: Because these are just files, you can use any cloud service (Dropbox, OneDrive, etc.) to keep them synced across devices.
+
+---
+
+### WORLD FRONT PAGE
+
+The front page is the first thing you see when a vault opens. It gives you a world briefing, a quick way to jump to the graph or tools, and a space for recent activity cards.
+
+### What You Can Do
+
+- Edit the world briefing directly from the page.
+- Upload a cover image, paste an image URL, or ask the Oracle to generate one.
+- Tag any markdown entity with `frontpage` to pin it to the top of recent entities and use its chronicle/body text in the card preview.
+- Use the navigation buttons to move into the Graph view, open the map, or open the canvas.
+
+### Tips
+
+- Keep the briefing short and useful. You can always expand it later.
+- If you add more than one `frontpage` tag, the most recently edited entity wins.
+- Recent cards update automatically from the vault’s latest edits, and any `frontpage` entity stays pinned at the top.
 
 ---
 
@@ -593,6 +710,6 @@ Here you will find deep dives into:
 
 You can access the blog at any time by visiting [/blog](/blog).
 
-Read our first intel report: **The GM’s Guide to Data Sovereignty**.
+Read our latest dispatch: **The GM’s Guide to Data Sovereignty**.
 
 ---

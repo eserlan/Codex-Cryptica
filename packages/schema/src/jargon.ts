@@ -18,6 +18,8 @@ export interface JargonMap {
   tab_status: string;
   tab_lore: string;
   tab_inventory: string;
+  blog_entry: string;
+  blog_action: string;
   [key: string]: string; // Allow for extensibility
 }
 

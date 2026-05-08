@@ -6,6 +6,9 @@
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
+  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { base } from "$app/paths";
+  import { goto } from "$app/navigation";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -103,7 +106,7 @@
           : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
         onclick={async () => {
           try {
-            await demoService.convertToCampaign();
+            await demoService.convertToWorld();
           } catch (error) {
             console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
             ui.notify(
@@ -139,7 +142,7 @@
     {#if isOffline}
       <div
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
-        title="Sovereign data remains accessible. Cloud sync and Lore Oracle are suspended while offline."
+        title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
         <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
@@ -188,14 +191,25 @@
             ></div>
           </div>
         </div>
-      {:else if vault.status === "saving"}
-        <span class="text-theme-accent">SAVING...</span>
-      {:else if vault.status === "error"}
-        <span
-          class="text-red-400 font-bold text-xs bg-red-900/20 px-2 py-1 rounded border border-red-900/50"
-        >
-          {vault.errorMessage || "ERROR"}
-        </span>
+      {:else if vault.status === "error" || vault.failedFiles.length > 0}
+        <div class="flex items-center gap-1.5">
+          <span
+            class="text-red-400 font-bold text-[10px] bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
+            title={vault.failedFiles.length > 0
+              ? vault.failedFiles.map((f) => `${f.path}: ${f.error}`).join("\n")
+              : vault.errorMessage || "ERROR"}
+          >
+            {vault.errorMessage || `${vault.failedFiles.length} FAILURES`}
+          </span>
+          {#if vault.failedFiles.length > 0}
+            <button
+              class="text-[9px] text-theme-muted hover:text-theme-text underline font-header"
+              onclick={() => (vault.failedFiles = [])}
+            >
+              CLEAR
+            </button>
+          {/if}
+        </div>
       {:else if vault.allEntities.length > 0}
         <span
           class="text-theme-secondary font-header"
@@ -218,9 +232,11 @@
           class={isVertical
             ? `${btnAccent} py-3 text-sm justify-center`
             : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
-          onclick={() => {
-            window.location.href =
-              window.location.origin + window.location.pathname;
+          onclick={async () => {
+            await p2pGuestService.leaveSession();
+            ui.guestUsername = null;
+            ui.isGuestMode = false;
+            await goto(base, { replaceState: true });
           }}
           data-testid="exit-guest-mode-button"
           aria-label="Exit Guest Mode"
@@ -274,27 +290,37 @@
           <button
             class="{btnAccent} {isVertical
               ? 'py-3 text-sm justify-center gap-2'
-              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.syncType ===
-            'local'
+              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
+            'saving'
               ? 'opacity-75 cursor-wait'
+              : ''} {!vault.hasFolderHandle || !vault.isDirty
+              ? 'opacity-50'
               : ''}"
-            onclick={() => vault.syncWithLocalFolder()}
-            title="Mirror internal archive with a local folder."
-            aria-label={isVertical
-              ? "SYNC - Mirror internal archive with a local folder."
-              : "SYNC - Mirror internal archive with a local folder."}
-            aria-busy={vault.syncType === "local"}
-            disabled={vault.syncType === "local"}
+            onclick={() => vault.saveToFolder()}
+            title={!vault.hasFolderHandle
+              ? "No folder linked — connect a local folder first to enable saving."
+              : vault.isDirty
+                ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                : "Up to date with local folder."}
+            aria-label="SAVE TO FOLDER"
+            aria-busy={vault.status === "saving"}
+            disabled={vault.status === "saving" ||
+              !vault.hasFolderHandle ||
+              !vault.isDirty}
           >
-            {#if vault.syncType === "local"}
+            {#if vault.status === "saving"}
               <span
                 class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
                 aria-hidden="true"
               ></span>
-              {#if isVertical}SYNCING...{:else}SYNCING...{/if}
+              SAVING...
             {:else}
-              <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
-              {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+              <span
+                class={vault.isDirty
+                  ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                  : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
+              ></span>
+              {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
             {/if}
           </button>
 

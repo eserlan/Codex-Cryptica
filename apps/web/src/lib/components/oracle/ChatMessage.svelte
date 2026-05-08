@@ -14,6 +14,7 @@
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
   import MergeWizard from "./MergeWizard.svelte";
+  import DiscoveryChip from "./DiscoveryChip.svelte";
   import {
     canOverrideTarget,
     getTargetEntityId,
@@ -24,6 +25,9 @@
   } from "./chat-message.helpers";
   import { ChatMessageActions } from "./chat-message.actions";
   import { sanitizeId } from "$lib/utils/markdown";
+  import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
+  import { appEventBus } from "@codex/events";
+  import { ORACLE_EVENTS } from "@codex/oracle-engine";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
   const chatMessageActions = new ChatMessageActions({
@@ -46,18 +50,19 @@
 
   let isSaved = $state(false);
   let isCopied = $state(false);
+  let showDiscoveryChips = $state(false);
   let htmlCache = $state("");
   let lastParsedContent = "";
 
   onMount(() => {
-    const channel = new BroadcastChannel("codex-oracle-sync");
-    channel.onmessage = (event) => {
-      const { type, data } = event.data;
-      if (type === "UNDO_PERFORMED" && data.messageId === message.id) {
+    return appEventBus.subscribe(ORACLE_EVENTS.UNDO_PERFORMED, (event) => {
+      if (
+        event.type === ORACLE_EVENTS.UNDO_PERFORMED &&
+        event.payload.messageId === message.id
+      ) {
         isSaved = false;
       }
-    };
-    return () => channel.close();
+    });
   });
 
   let isLastAction = $derived(
@@ -75,6 +80,9 @@
   let isLore = $derived(isLoreMessage(message, oracle.messages));
   let showActions = $derived(
     shouldShowActions(message, parsed, oracle.isLoading),
+  );
+  let visibleProposals = $derived(
+    (message.proposals ?? []).filter(isVisibleDiscoveryProposal),
   );
 
   $effect(() => {
@@ -168,14 +176,14 @@
 </script>
 
 <div
-  class="flex flex-col gap-1 mb-4 {message.role === 'user'
+  class="flex flex-col gap-1 {message.role === 'user'
     ? 'items-end'
     : 'items-start'}"
   data-testid="chat-message"
   data-role={message.role}
 >
   <div
-    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden font-body
+    class="px-3 sm:px-4 py-2 rounded-lg max-w-[92%] sm:max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden font-body
     {message.role === 'user'
       ? 'bg-theme-primary/15 text-theme-text border border-theme-primary/40 shadow-lg shadow-theme-primary/5'
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
@@ -210,6 +218,46 @@
                 <div class="bg-theme-border/20 h-3 w-full rounded"></div>
                 <div class="bg-theme-border/20 h-3 w-[90%] rounded"></div>
                 <div class="bg-theme-border/20 h-3 w-[95%] rounded"></div>
+              </div>
+            {/if}
+          </div>
+        {/if}
+
+        {#if visibleProposals.length > 0}
+          <div
+            class="mt-3 pt-2 border-t border-theme-border/30"
+            data-testid="found-lore-panel"
+          >
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/20 bg-theme-primary/5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary/80 font-header transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
+              onclick={() => (showDiscoveryChips = !showDiscoveryChips)}
+              aria-expanded={showDiscoveryChips}
+              aria-controls={`found-lore-${message.id}`}
+            >
+              <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+              <span>Found lore</span>
+              <span
+                class="rounded-full bg-theme-primary/15 px-1.5 py-0.5 text-[8px] text-theme-primary"
+                >{visibleProposals.length}</span
+              >
+              <span
+                class={[
+                  "icon-[lucide--chevron-down] w-3 h-3 transition-transform",
+                  showDiscoveryChips ? "rotate-180" : "",
+                ]}
+              ></span>
+            </button>
+
+            {#if showDiscoveryChips}
+              <div
+                id={`found-lore-${message.id}`}
+                class="mt-2 flex flex-wrap gap-2 items-center"
+                transition:fade
+              >
+                {#each visibleProposals as proposal (`${proposal.entityId ?? "new"}:${proposal.title}`)}
+                  <DiscoveryChip {proposal} />
+                {/each}
               </div>
             {/if}
           </div>

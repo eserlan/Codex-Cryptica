@@ -164,4 +164,44 @@ describe("mergeEntities", () => {
         ?.label,
     ).toBe("weapon");
   });
+
+  it("removes bidirectional links preferring labels and alphabetical order", () => {
+    const entities: DiscoveredEntity[] = [
+      {
+        id: "1",
+        suggestedTitle: "A",
+        suggestedType: "NPC",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [{ target: "B", label: "friend of" }],
+        suggestedFilename: "a.md",
+      },
+      {
+        id: "2",
+        suggestedTitle: "B",
+        suggestedType: "NPC",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [{ target: "A" }],
+        suggestedFilename: "b.md",
+      },
+    ];
+
+    const merged = mergeEntities(entities);
+    expect(merged).toHaveLength(2);
+    const entityA = merged.find((e) => e.suggestedTitle === "A")!;
+    const entityB = merged.find((e) => e.suggestedTitle === "B")!;
+
+    // A -> B (with label) should be kept, B -> A (no label) should be removed
+    expect(entityA.detectedLinks).toHaveLength(1);
+    expect(entityA.detectedLinks[0].target).toBe("B");
+    expect(entityA.detectedLinks[0].label).toBe("friend of");
+    expect(entityB.detectedLinks).toHaveLength(0);
+  });
 });

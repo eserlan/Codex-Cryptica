@@ -4,15 +4,15 @@
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or pnpm
+- Node.js 24+
+- pnpm >= 10.5.0 (Required)
 
 ### Installation
 
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
 ### Running the App
@@ -20,7 +20,7 @@
 Start the development server:
 
 ```bash
-npm run dev
+pnpm run dev
 # or
 turbo run dev
 ```
@@ -40,7 +40,7 @@ This project uses **Husky** and **lint-staged** to ensure code quality before ev
 
 - **Commit Messages**: We use [gitmoji](https://gitmoji.dev/) for consistent and descriptive commit messages. Every commit message must start with a gitmoji (either the emoji character or the `:code:`).
   - Example: `:sparkles: Add new feature` or `✨ Add new feature`
-  - You can use the `gitmoji-cli` to help you choose the right emoji: `npx gitmoji -c`
+  - You can use the `gitmoji-cli` to help you choose the right emoji: `pnpm exec gitmoji -c`
 - **Pull Request Labels**: Pull requests are labeled automatically from the PR title and changed files. Use the same gitmoji-style prefixes you use in commit messages, and see [docs/PR_LABELING.md](docs/PR_LABELING.md) for the label mapping.
 - **Pre-commit Hooks**: When you run `git commit`, Husky runs `lint-staged`, which executes `eslint --fix` and `prettier --write` on the modified files.
 - **Commit-msg Hooks**: A hook validates that your commit message follows the gitmoji convention using `commitlint`.
@@ -65,13 +65,13 @@ Testing is managed by [Vitest](https://vitest.dev/). You can run tests for the e
 
 ```bash
 # Run all unit tests
-npm test
+pnpm test
 
 # Run tests with coverage reports
-npm run test:coverage
+pnpm run test:coverage
 
 # Run E2E tests (Playwright)
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 Coverage reports are generated in the `coverage/` directory of each package and the `apps/web/` directory. An HTML report is also available for visual inspection.
@@ -92,7 +92,7 @@ Coverage reports are generated in the `coverage/` directory of each package and 
 The Lore Oracle (AI Assistant) uses Google Gemini. It can be used in two modes:
 
 1.  **User Provided Key**: Users enter their own API key in the settings. This is stored securely in their local browser (IndexedDB).
-2.  **Lite Mode (Shared Key)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" tier.
+2.  **Shared Key (Basic Tier)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" model tier.
 
 **Important for Developers:** Because this is a static frontend application, any shared key provided at build time is **publicly visible** in the compiled JavaScript. To prevent abuse, you **must** restrict your API key in the [Google Cloud Console](https://console.cloud.google.com/):
 

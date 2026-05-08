@@ -21,7 +21,7 @@ description: "Task list for Dexie Entity Store implementation"
 
 **Purpose**: Introduce the Dexie schema without touching existing code paths.
 
-- [x] T001 Add `dexie@4.3.0` to `apps/web/package.json` via `npm install`
+- [x] T001 Add `dexie@4.3.0` to `apps/web/package.json` via `pnpm install`
 - [x] T002 Create `apps/web/src/lib/utils/entity-db.ts` with `EntityDb` (Dexie subclass), `GraphEntityRecord`, `EntityContentRecord` types, and `entityDb` singleton
 - [x] T003 Define `graphEntities` table: compound primary key `[vaultId+id]`, secondary indexes `vaultId` and `[vaultId+filePath]`
 - [x] T004 Define `entityContent` table: compound primary key `[vaultId+entityId]`, secondary index `vaultId`
@@ -77,7 +77,7 @@ description: "Task list for Dexie Entity Store implementation"
 
 - [x] T019 [P] `cache.ts` — remove bulk `entityContent` preload; keep only `graphEntities` scan to preserve lazy-loading goal (review feedback)
 - [x] T020 [P] `useEditState.svelte.ts` — extract `VaultLike` interface; accept optional `vaultInstance: VaultLike = defaultVault` DI parameter (review feedback, FR-010)
-- [x] T021 Verify all 127 unit tests pass (`npm test --workspace=apps/web`)
+- [x] T021 Verify all 127 unit tests pass (`pnpm --filter web test`)
 - [x] T022 Verify `svelte-check` reports 0 errors
 
 ---

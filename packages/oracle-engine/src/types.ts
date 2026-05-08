@@ -2,12 +2,22 @@
  * Oracle Engine Type Definitions
  */
 
+import type { EntityType, Category } from "schema";
+
 /**
  * Connection mode for the Oracle service.
  * - `system-proxy`: Uses the Cloudflare Worker proxy (no user API key required)
  * - `custom-key`: Uses the user's own Gemini API key directly
  */
 export type ConnectionMode = "system-proxy" | "custom-key";
+
+export type EntityDiscoveryMode = "off" | "suggest" | "auto-create";
+export type ConnectionDiscoveryMode = "off" | "suggest" | "auto-apply";
+
+export interface OracleAutomationPolicy {
+  entityDiscovery: EntityDiscoveryMode;
+  connectionDiscovery: ConnectionDiscoveryMode;
+}
 
 /**
  * Oracle message role types
@@ -31,6 +41,7 @@ export interface ChatMessage {
   rollResult?: any;
   hasDrawAction?: boolean;
   isDrawing?: boolean;
+  proposals?: DiscoveryProposal[];
 }
 
 /**
@@ -48,6 +59,7 @@ export type OracleIntentType =
   | "plot"
   | "chat"
   | "roll"
+  | "regenerate"
   | "wizard"
   | "help"
   | "clear"
@@ -75,6 +87,16 @@ export interface OracleIntent {
 }
 
 /**
+ * AI Regeneration draft state
+ */
+export interface RegenerationDraft {
+  entityId: string;
+  chronicle: string;
+  lore: string;
+  timestamp: number;
+}
+
+/**
  * Undoable action for history management
  */
 export interface UndoableAction {
@@ -88,13 +110,39 @@ export interface UndoableAction {
 }
 
 /**
+ * Transient draft state used during chat
+ */
+export interface PendingDraft {
+  id: string;
+  title: string;
+  type: EntityType;
+  description: string;
+  sourceMessageIds: string[];
+  state: "new" | "update";
+}
+
+/**
+ * Proposal for UI rendering (Discovery Chips)
+ */
+export interface DiscoveryProposal {
+  entityId?: string; // Present if 'update'
+  title: string;
+  type: EntityType;
+  draft: {
+    lore: string;
+    chronicle: string;
+  };
+  confidence: number;
+}
+
+/**
  * Oracle execution context
  * Provides all services needed for Oracle operations
  */
 export interface OracleExecutionContext {
   userId?: string;
   vaultId?: string;
-  liteMode?: boolean;
+  aiDisabled?: boolean;
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;
   modelName: string;
@@ -112,4 +160,33 @@ export interface OracleExecutionContext {
   diceHistory?: any;
   graph?: any;
   undoRedo?: any;
+  draftingEngine?: any;
+  categories?: Category[];
+  automationPolicy?: OracleAutomationPolicy;
+  proposeConnectionsForEntity?: (
+    entityId: string,
+    options?: { apply?: boolean; analysisText?: string },
+  ) => Promise<number | void>;
+  logActivity?: (event: {
+    type: "discovery" | "archive" | "update";
+    title: string;
+    entityType: string;
+    entityId?: string;
+  }) => void | Promise<void>;
+}
+
+/**
+ * Oracle Background Worker Event Types
+ */
+export type OracleWorkerEventType =
+  | "ORACLE_THINKING_START"
+  | "ORACLE_THINKING_END"
+  | "ORACLE_ENTITY_DISCOVERED"
+  | "ORACLE_ERROR";
+
+export interface OracleWorkerEvent {
+  type: OracleWorkerEventType;
+  payload?: any;
+  vaultId?: string;
+  requestId?: string;
 }
