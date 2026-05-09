@@ -35,7 +35,7 @@
 
 - **Task**: Install `@sveltejs/adapter-static` in `apps/web`.
 - **Task**: Update `svelte.config.js` to use the static adapter and set the base path.
-- **Verification**: Run `npm run build` locally and check `build/` output.
+- **Verification**: Run `pnpm run build` locally and check `build/` output.
 
 ### Phase 3: Web Access (User Story 1)
 

@@ -26,4 +26,4 @@
 
 ### State Transitions
 
-- **Build-time Generation**: `llms-full.txt` is updated whenever `npm run build` is executed via a pre-build script.
+- **Build-time Generation**: `llms-full.txt` is updated whenever `pnpm run build` is executed via a pre-build script.

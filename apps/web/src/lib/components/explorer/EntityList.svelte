@@ -343,8 +343,10 @@
         </button>
 
         {#if entity.labels && entity.labels.length > 0}
-          <div class="flex gap-1 shrink-0 px-2 flex-wrap justify-end">
-            {#each entity.labels as label}
+          <div
+            class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0"
+          >
+            {#each entity.labels.slice(0, 2) as label}
               <button
                 type="button"
                 onclick={(e) => {
@@ -360,6 +362,13 @@
                 {label}
               </button>
             {/each}
+            {#if entity.labels.length > 2}
+              <div
+                class="text-[7px] text-theme-muted font-mono flex items-center"
+              >
+                +{entity.labels.length - 2}
+              </div>
+            {/if}
           </div>
         {/if}
 

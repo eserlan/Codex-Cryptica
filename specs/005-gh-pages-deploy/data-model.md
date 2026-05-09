@@ -18,5 +18,5 @@ The automated pipeline defined in `.github/workflows/deploy.yml`.
 
 | Step     | Action                 | Purpose                                                  |
 | -------- | ---------------------- | -------------------------------------------------------- |
-| `Build`  | `npm run build`        | Generates the `build/` directory using `adapter-static`. |
+| `Build`  | `pnpm run build`       | Generates the `build/` directory using `adapter-static`. |
 | `Deploy` | `actions/deploy-pages` | Uploads the `build/` artifacts to GitHub Pages.          |

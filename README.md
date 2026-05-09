@@ -5,7 +5,7 @@
 ### Prerequisites
 
 - Node.js 24+
-- pnpm (Recommended) or npm
+- pnpm >= 10.5.0 (Required)
 
 ### Installation
 
@@ -40,7 +40,7 @@ This project uses **Husky** and **lint-staged** to ensure code quality before ev
 
 - **Commit Messages**: We use [gitmoji](https://gitmoji.dev/) for consistent and descriptive commit messages. Every commit message must start with a gitmoji (either the emoji character or the `:code:`).
   - Example: `:sparkles: Add new feature` or `✨ Add new feature`
-  - You can use the `gitmoji-cli` to help you choose the right emoji: `npx gitmoji -c`
+  - You can use the `gitmoji-cli` to help you choose the right emoji: `pnpm exec gitmoji -c`
 - **Pull Request Labels**: Pull requests are labeled automatically from the PR title and changed files. Use the same gitmoji-style prefixes you use in commit messages, and see [docs/PR_LABELING.md](docs/PR_LABELING.md) for the label mapping.
 - **Pre-commit Hooks**: When you run `git commit`, Husky runs `lint-staged`, which executes `eslint --fix` and `prettier --write` on the modified files.
 - **Commit-msg Hooks**: A hook validates that your commit message follows the gitmoji convention using `commitlint`.

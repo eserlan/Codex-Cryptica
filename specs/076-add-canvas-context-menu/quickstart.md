@@ -51,10 +51,10 @@ Allows users to right-click selected entities in the graph view and quickly add 
 
 ```bash
 # Unit tests
-npm test -- apps/web/src/lib/stores/canvas-registry.test.ts
+pnpm test -- apps/web/src/lib/stores/canvas-registry.test.ts
 
 # E2E test
-npm run test:e2e -- tests/canvas-add-context-menu.spec.ts
+pnpm run test:e2e -- tests/canvas-add-context-menu.spec.ts
 ```
 
 ## Final Implementation Details

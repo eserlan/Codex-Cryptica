@@ -14,8 +14,8 @@
 
 - [ ] **Constitution & Quality Checks** <!-- id: 5 -->
   - [ ] **Offline Functionality Verification**: Confirm all features work without network access (Constitution VIII). <!-- id: 5.1 -->
-  - [ ] Verify `npm run lint` passes for the web workspace. <!-- id: 5.2 -->
-  - [ ] Verify `npm run test` passes for the web workspace. <!-- id: 5.3 -->
+  - [ ] Verify `pnpm run lint` passes for the web workspace. <!-- id: 5.2 -->
+  - [ ] Verify `pnpm run test` passes for the web workspace. <!-- id: 5.3 -->
 
 - [ ] **Documentation** <!-- id: 6 -->
   - [ ] Update `GEMINI.md` with the new changes. <!-- id: 6.1 -->

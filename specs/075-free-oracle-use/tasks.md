@@ -90,7 +90,7 @@
 
 - [ ] T017 [P] Remove all unused "Lite Mode" UI elements and logic across the app
 - [ ] T018 Final code cleanup and Tailwind 4 syntax verification
-- [ ] T019 [P] Run all project tests to ensure no regressions: `npm test`
+- [ ] T019 [P] Run all project tests to ensure no regressions: `pnpm test`
 - [ ] T020 Verify 0ms CLS impact for `OracleStatus` component
 - [x] T021 [P] Update `apps/web/src/lib/config/help-content.ts` with Oracle access mode documentation
 - [x] T022 [P] Add `FeatureHint` component for first-time Oracle users in `apps/web/src/lib/components/oracle/OracleSidebarPanel.svelte`

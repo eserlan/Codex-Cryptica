@@ -27,6 +27,11 @@ Users desire a natural language interface to query their vault ("Who is the king
 - System MUST fallback to keyword extraction if direct fuzzy search returns no results.
 - System MUST track sent context within a session to avoid sending redundant data in subsequent turns.
 
+- System MUST maintain conversation coherence by including previous message history in requests to the Gemini API.
+- System MUST support multi-turn history even when using the system-provided proxy (no custom API key mode).
+- System MUST implement a **Sliding Window** (default: 10 messages) for conversation history to prevent excessive token usage and payload size.
+- System MUST optimize prompt structure for **Implicit Caching** by maintaining prefix stability (System -> History -> Lore Context -> Query).
+
 ### FR-003: Integrated Chat UI
 
 - System MUST provide a docked chat window in the main application.

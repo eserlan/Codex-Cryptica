@@ -99,7 +99,7 @@ As a crawler, I want to find a `sitemap.xml` and `robots.txt` so that I can effi
 
 ### Measurable Outcomes
 
-- **SC-001**: `npm run build` outputs static HTML files for `/`, `/features`, `/terms`, and `/privacy`.
+- **SC-001**: `pnpm run build` outputs static HTML files for `/`, `/features`, `/terms`, and `/privacy`.
 - **SC-002**: Lighthouse SEO score for all marketing routes is 90 or higher.
 - **SC-003**: Initial server response for marketing routes contains >80% of the visible page content in the HTML body.
 - **SC-004**: Largest Contentful Paint (LCP) for public routes is under 1.5 seconds using Lighthouse "Applied Mobile" throttling.

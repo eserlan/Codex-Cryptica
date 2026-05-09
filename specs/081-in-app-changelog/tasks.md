@@ -18,4 +18,4 @@
 ## Phase 4: Verification
 
 - [x] T401 Add Playwright E2E test to verify navigation to `/changelog` and existence of anchor links.
-- [x] T402 Verify `npm test` passes for related components.
+- [x] T402 Verify `pnpm test` passes for related components.

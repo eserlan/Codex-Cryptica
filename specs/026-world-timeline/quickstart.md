@@ -17,6 +17,6 @@
 
 ## Validation
 
-- Run `npm test --workspace=schema` to verify type safety.
+- Run `pnpm --filter schema test` to verify type safety.
 - Create nodes with varying dates and verify sorting in the Timeline View.
 - Offline Verification: Ensure timeline loads from OPFS/Local cache without network.

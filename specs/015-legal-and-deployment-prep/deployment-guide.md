@@ -34,7 +34,7 @@ The app is configured for GitHub Pages with a custom domain at the root.
 1.  **Build**:
     ```bash
     cd apps/web
-    npm run build
+    pnpm run build
     ```
 2.  **Deploy**: Push the `build` folder content to the `gh-pages` branch. Ensure a `CNAME` file with `codexcryptica.com` is present in the `static` folder or the build output.
 

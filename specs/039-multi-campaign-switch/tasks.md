@@ -114,7 +114,7 @@
 
 - [x] T020 Ensure active vault name is displayed in the main header in `VaultControls.svelte`
 - [x] T021 Add loading states to `VaultSwitcherModal.svelte` while switching vaults
-- [x] T022 Final run of `npm run check` and `npm test` to ensure no regressions
+- [x] T022 Final run of `pnpm run check` and `pnpm test` to ensure no regressions
 - [x] T023 Verify `SC-001` (switch time < 500ms) using Chrome DevTools Performance tab
 - [x] T029 Update broken E2E tests that expect the old "OPEN VAULT" button to use the new vault picker flow
 

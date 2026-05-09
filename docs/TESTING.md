@@ -11,13 +11,13 @@ Unit tests are located alongside the source code they test, typically with `.tes
 To run all unit tests across the entire monorepo:
 
 ```bash
-npm test
+pnpm test
 ```
 
 To run tests for a specific package:
 
 ```bash
-npm test --workspace=@codex/vault-engine
+pnpm --filter @codex/vault-engine test
 ```
 
 ### Test Coverage
@@ -27,7 +27,7 @@ We use `@vitest/coverage-v8` to generate coverage reports.
 To run tests with coverage:
 
 ```bash
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 Coverage reports are generated in the `coverage/` directory of each package. You can view the HTML report by opening `coverage/index.html` in your browser.
@@ -58,7 +58,7 @@ E2E tests are located in `apps/web/tests` and are managed by Playwright.
 ### Running E2E Tests
 
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 ## Continuous Integration (CI)

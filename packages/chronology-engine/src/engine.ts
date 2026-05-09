@@ -122,3 +122,33 @@ export class CalendarEngine {
 }
 
 export const calendarEngine = new CalendarEngine();
+
+export function parseDirectDateInput(
+  input: string,
+  config: WorldCalendar,
+): TemporalMetadata | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const compactMatch = trimmed.match(/^(\d{2})(\d{2})(-?\d+)$/);
+  const separatedMatch =
+    trimmed.match(/^(\d{1,2})[./\s](\d{1,2})[./\s](-?\d+)$/) ||
+    trimmed.match(/^(\d{1,2})-(\d{1,2})-(-?\d+)$/);
+  const match = compactMatch || separatedMatch;
+  if (!match) return null;
+
+  const day = Number.parseInt(match[1], 10);
+  const month = Number.parseInt(match[2], 10);
+  const year = Number.parseInt(match[3], 10);
+
+  if (
+    !Number.isInteger(day) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(year)
+  ) {
+    return null;
+  }
+
+  const date = { year, month, day };
+  return calendarEngine.isValid(date, config) ? date : null;
+}

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { calendarEngine, DEFAULT_CALENDAR } from "../src/engine";
+import {
+  calendarEngine,
+  DEFAULT_CALENDAR,
+  parseDirectDateInput,
+} from "../src/engine";
 import type { WorldCalendar } from "../src/types";
 
 describe("CalendarEngine", () => {
@@ -120,6 +124,34 @@ describe("CalendarEngine", () => {
       );
       const daysInYear = calendarEngine.getDaysInYear(DEFAULT_CALENDAR);
       expect(v1).toBe(-daysInYear);
+    });
+  });
+
+  describe("parseDirectDateInput", () => {
+    it("parses compact ddmmyyyy input", () => {
+      expect(parseDirectDateInput("12011240", DEFAULT_CALENDAR)).toEqual({
+        year: 1240,
+        month: 1,
+        day: 12,
+      });
+    });
+
+    it("parses direct dates with a negative year", () => {
+      expect(parseDirectDateInput("0101-500", DEFAULT_CALENDAR)).toEqual({
+        year: -500,
+        month: 1,
+        day: 1,
+      });
+      expect(parseDirectDateInput("01/01/-500", DEFAULT_CALENDAR)).toEqual({
+        year: -500,
+        month: 1,
+        day: 1,
+      });
+    });
+
+    it("rejects direct dates outside the active calendar", () => {
+      expect(parseDirectDateInput("30021000", DEFAULT_CALENDAR)).toBeNull();
+      expect(parseDirectDateInput("2101100", customCalendar)).toBeNull();
     });
   });
 });

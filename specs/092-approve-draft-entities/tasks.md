@@ -51,8 +51,8 @@ Independent Test: Open a draft in Zen Mode, verify header buttons, click approve
 
 Goal: Ensure the implementation is clean, robust, and matches the style guide.
 
-- [ ] T017 Run `npm run lint` and fix any style or typing issues across the modified files.
-- [ ] T018 Run `npm test` to ensure all tests pass and coverage is maintained.
+- [ ] T017 Run `pnpm run lint` and fix any style or typing issues across the modified files.
+- [ ] T018 Run `pnpm test` to ensure all tests pass and coverage is maintained.
 - [ ] T019 Verify that clicking approve/reject rapidly does not crash the application (idempotency).
 
 ## Implementation Strategy & Dependencies

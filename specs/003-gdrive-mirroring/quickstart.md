@@ -28,7 +28,7 @@
 1.  **Start the App**:
 
     ```bash
-    npm run dev
+    pnpm run dev
     ```
 
 2.  **Access Settings**:
