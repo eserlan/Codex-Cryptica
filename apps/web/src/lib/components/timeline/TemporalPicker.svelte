@@ -2,7 +2,7 @@
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import type { TemporalMetadata } from "chronology-engine";
-  import { calendarEngine } from "chronology-engine";
+  import { calendarEngine, parseDirectDateInput } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick } from "svelte";
   import { fade, scale, slide } from "svelte/transition";
@@ -25,6 +25,13 @@
   let selectedYear = $state(value?.year || 0);
   let selectedMonth = $state(value?.month);
   let selectedDay = $state(value?.day);
+  const formatDirectDateInput = (year: number, month?: number, day?: number) =>
+    day !== undefined && month !== undefined
+      ? `${String(day).padStart(2, "0")}${String(month).padStart(2, "0")}${year}`
+      : "";
+  let directDateInput = $state("");
+  let directDateError = $state("");
+  let isDirectDateEditing = $state(false);
 
   let precision = $state<"year" | "month" | "day">(
     (() => {
@@ -54,6 +61,17 @@
     } else if (precision === "day") {
       if (selectedMonth === undefined) selectedMonth = 1;
       if (selectedDay === undefined) selectedDay = 1;
+    }
+  });
+
+  $effect(() => {
+    if (!isDirectDateEditing) {
+      directDateInput = formatDirectDateInput(
+        selectedYear,
+        selectedMonth,
+        selectedDay,
+      );
+      directDateError = "";
     }
   });
 
@@ -101,6 +119,7 @@
   });
 
   const save = () => {
+    if (directDateError) return;
     value = {
       year: selectedYear,
       month: precision !== "year" ? selectedMonth : undefined,
@@ -128,6 +147,28 @@
     }
   };
 
+  const handleDirectDateInput = (e: Event) => {
+    directDateInput = (e.target as HTMLInputElement).value;
+    if (!directDateInput.trim()) {
+      directDateError = "";
+      return;
+    }
+
+    const parsed = parseDirectDateInput(directDateInput, calendarStore.config);
+    if (!parsed) {
+      directDateError = "Use DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
+      return;
+    }
+
+    selectedYear = parsed.year;
+    selectedMonth = parsed.month;
+    selectedDay = parsed.day;
+    precision = "day";
+    viewBaseYear = Math.floor(parsed.year / 10) * 10;
+    yearPickerView = "years";
+    directDateError = "";
+  };
+
   const focusableElements = $derived.by(() => {
     if (!pickerElement) return [];
     return Array.from(
@@ -139,8 +180,13 @@
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
-    if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON")
+    if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON") {
+      if (directDateError) {
+        e.preventDefault();
+        return;
+      }
       save();
+    }
 
     // Simple Focus Trap
     if (e.key === "Tab") {
@@ -343,6 +389,40 @@
 
         <!-- Pure UI Year Picker / Manual Entry -->
         <div class="space-y-2">
+          <div class="space-y-1">
+            <label
+              for="direct-date-input"
+              class="text-[9px] font-bold text-theme-muted uppercase font-header tracking-widest"
+              >Date</label
+            >
+            <input
+              id="direct-date-input"
+              type="text"
+              value={directDateInput}
+              oninput={handleDirectDateInput}
+              onfocus={() => (isDirectDateEditing = true)}
+              onblur={() => (isDirectDateEditing = false)}
+              class="w-full bg-theme-bg border {directDateError
+                ? 'border-red-500/70'
+                : 'border-theme-border'} rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
+              placeholder="DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY"
+              aria-invalid={!!directDateError}
+              aria-describedby={directDateError
+                ? "direct-date-error"
+                : undefined}
+            />
+            {#if directDateError}
+              <div
+                id="direct-date-error"
+                role="alert"
+                aria-live="polite"
+                class="text-[9px] text-red-500 font-bold uppercase font-header"
+              >
+                {directDateError}
+              </div>
+            {/if}
+          </div>
+
           <div class="flex items-center justify-between">
             <button
               onclick={() => navigateView(-1)}
@@ -492,6 +572,7 @@
     <button
       class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
       data-testid="apply-date-button"
+      disabled={!!directDateError}
       onclick={save}
     >
       Apply
