@@ -238,12 +238,15 @@ export class DefaultTextGenerationService implements TextGenerationService {
       systemInstruction,
     );
 
+    // 1. Sliding Window: Limit history to last 10 messages to keep payload lean
+    const slidingHistory = history.slice(-10);
+
     const sanitizedHistory: {
       role: "user" | "model";
       parts: { text: string }[];
     }[] = [];
 
-    for (const m of history) {
+    for (const m of slidingHistory) {
       if (m.role !== "user" && m.role !== "assistant") continue;
 
       const role = m.role === "assistant" ? "model" : "user";
@@ -292,9 +295,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
         };
 
     try {
+      // 2. Prefix Stability: Always place dynamic Lore Context AFTER history
+      // but BEFORE the current query. This keeps the history prefix stable
+      // for Gemini's implicit caching.
       const finalQuery = context
-        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}\n[USER QUERY]\n${query}`
-        : `${prefixContext}\n${query}`;
+        ? `[VAULT LORE CONTEXT]\n${context}\n\n${prefixContext}[USER QUERY]\n${query}`
+        : `${prefixContext}${query}`;
 
       const result = await chat.sendMessageStream(finalQuery);
 
