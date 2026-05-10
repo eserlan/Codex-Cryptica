@@ -167,6 +167,12 @@ Only activate when the user explicitly requests to:
 Do NOT use this structured format for normal conversation.
 Before generating the structured record, the system will synthesize established lore and connections from the vault to ensure the new entity fits the canonical continuity.
 
+/plot [subject]
+Purpose: Generate plot hooks, adventure seeds, complications, mysteries, or campaign developments based on vault canon.
+Only activate when the user invokes /plot or explicitly asks for:
+- plot hooks, adventure ideas, campaign arcs, session ideas, mysteries, conflicts, consequences, or story developments.
+Before generating plots, the system will resolve established vault canon, unresolved threads, and faction agendas.
+
 Always prioritize the vault context as the absolute truth.`;
 
   if (demoMode) {

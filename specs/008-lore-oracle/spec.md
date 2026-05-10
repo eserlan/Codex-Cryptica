@@ -52,6 +52,13 @@ Users desire a natural language interface to query their vault ("Who is the king
   2. **Visual Canon Resolution:** Resolve established artistic direction, motifs, and faction aesthetics from the vault.
   3. **Visual Prompt Generation:** Generate high-fidelity prompts grounded in the resolved canon, avoiding generic fantasy defaults.
 
+### FR-006: Multi-Stage Plot Generation Workflow
+
+- System MUST handle `/plot` requests using a multi-stage cognitive architecture:
+  1. **Intent Trigger:** Only activate on explicit user request for plot hooks, adventure seeds, or campaign developments.
+  2. **Plot Canon Resolution:** Search the vault for unresolved threads, faction agendas, and historical consequences to identify fertile ground for story development.
+  3. **Plot Generation:** Generate 3-5 actionable plot options grounded in established canon, following a structured format (Premise, Canon Roots, Complication, Player Hook, Possible Outcomes).
+
 ## Constraints
 
 - **Network**: Requires active internet connection.

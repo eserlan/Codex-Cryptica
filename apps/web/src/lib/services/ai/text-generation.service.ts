@@ -7,7 +7,10 @@ import {
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
-import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
+import {
+  buildPlotCanonResolutionPrompt,
+  buildPlotGenerationPrompt,
+} from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
 import {
@@ -204,18 +207,28 @@ export class DefaultTextGenerationService implements TextGenerationService {
           : connectionsContext + suffix;
     }
 
-    const prompt = buildPlotAnalysisPrompt(
+    console.log("[TextGenerationService] Stage 1: Resolving plot canon...");
+
+    // Stage 1: Interpretation Layer - Resolve Plot Canon
+    const resolutionPrompt = buildPlotCanonResolutionPrompt(
       subjectContextStr,
       connectionsContext,
       userQuery,
     );
+    const resolutionResult = await model.generateContent(resolutionPrompt);
+    const canonSummary = resolutionResult.response.text().trim();
+
+    console.log("[TextGenerationService] Stage 2: Generating plot hooks...");
+
+    // Stage 2: Generation Layer - Plot Generation
+    const generationPrompt = buildPlotGenerationPrompt(canonSummary, userQuery);
 
     try {
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(generationPrompt);
       return result.response.text();
     } catch (err: any) {
-      console.error("[TextGenerationService] Plot analysis failed:", err);
-      throw new Error(`Plot analysis failed: ${err.message}`, { cause: err });
+      console.error("[TextGenerationService] Plot generation failed:", err);
+      throw new Error(`Plot generation failed: ${err.message}`, { cause: err });
     }
   }
 

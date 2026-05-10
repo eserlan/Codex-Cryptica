@@ -208,6 +208,50 @@ export class OracleCommandParser {
     return false;
   }
 
+  static detectPlotIntent(query: string): boolean {
+    const q = query.toLowerCase().trim();
+
+    if (q.startsWith("/plot")) return true;
+
+    const plotKeywords = [
+      "plot hook",
+      "adventure seed",
+      "campaign arc",
+      "session idea",
+      "mystery",
+      "story development",
+      "consequence",
+      "conflict",
+    ];
+
+    if (plotKeywords.some((keyword) => q.includes(keyword))) {
+      return true;
+    }
+
+    const plotVerbs = ["generate", "suggest", "create", "think of", "give me"];
+    const plotNouns = [
+      "plot",
+      "hook",
+      "adventure",
+      "arc",
+      "seed",
+      "mystery",
+      "development",
+    ];
+
+    for (const verb of plotVerbs) {
+      const verbRegex = new RegExp(`\\b${verb}\\b`);
+      if (!verbRegex.test(q)) continue;
+
+      for (const noun of plotNouns) {
+        const pattern = new RegExp(`\\b${verb}\\b[\\s\\S]{0,50}\\b${noun}\\b`);
+        if (pattern.test(q)) return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Parses a structured AI regeneration response into its constituent sections.
    * Supports both the current format (**Chronicle:** / **Lore:**) and the
