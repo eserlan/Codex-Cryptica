@@ -658,12 +658,13 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     }
 
     const isImageRequest = OracleCommandParser.detectImageIntent(query);
+    const isCreationRequest = OracleCommandParser.detectCreationIntent(query);
 
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
-      type: isImageRequest ? "image" : "text",
+      type: isImageRequest ? "image" : isCreationRequest ? "text" : "text",
     };
     await context.chatHistory.addMessage(assistantMsg);
 
@@ -721,6 +722,33 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             thumbnail,
           });
         }
+      } else if (isCreationRequest) {
+        const { primaryEntityId, sourceIds } =
+          await this.generator.generateCreationResponse(
+            query,
+            context,
+            handlePartialResponse,
+          );
+
+        // Final update with entity context
+        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+          ...context.chatHistory.messages,
+        ];
+        const userMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === userMsgId,
+        );
+        const assistantMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
+
+        if (userMsgIndex !== -1) {
+          finalMsgs[userMsgIndex].entityId = primaryEntityId;
+        }
+        if (assistantMsgIndex !== -1) {
+          finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
+          finalMsgs[assistantMsgIndex].sources = sourceIds;
+        }
+        await context.chatHistory.setMessages(finalMsgs);
       } else {
         const { primaryEntityId, sourceIds } =
           await this.generator.generateChatResponse(

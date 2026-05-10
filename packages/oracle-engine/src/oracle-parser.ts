@@ -162,6 +162,52 @@ export class OracleCommandParser {
     return false;
   }
 
+  static detectCreationIntent(query: string): boolean {
+    const q = query.toLowerCase().trim();
+
+    if (q.startsWith("/create")) return true;
+
+    if (
+      q.includes("create a record") ||
+      q.includes("add an entity") ||
+      q.includes("archive a") ||
+      q.includes("formally document")
+    ) {
+      return true;
+    }
+
+    const creationVerbs = [
+      "create",
+      "add",
+      "make",
+      "new",
+      "archive",
+      "document",
+    ];
+    const entityNouns = [
+      "npc",
+      "character",
+      "location",
+      "faction",
+      "item",
+      "event",
+      "record",
+      "entity",
+    ];
+
+    for (const verb of creationVerbs) {
+      const verbRegex = new RegExp(`\\b${verb}\\b`);
+      if (!verbRegex.test(q)) continue;
+
+      for (const noun of entityNouns) {
+        const pattern = new RegExp(`\\b${verb}\\b[\\s\\S]{0,40}\\b${noun}\\b`);
+        if (pattern.test(q)) return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Parses a structured AI regeneration response into its constituent sections.
    * Supports both the current format (**Chronicle:** / **Lore:**) and the
