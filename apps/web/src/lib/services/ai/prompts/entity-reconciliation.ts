@@ -45,23 +45,24 @@ ${incoming.lore || ""}
 ${relatedSection}
 
 RULES:
-1. Preserve established facts unless the incoming passage clearly supersedes or refines them.
-2. Merge duplicate information into one coherent record.
-3. Resolve contradictions conservatively.
-4. Keep the chronicle concise, readable, and user-facing, but not skeletal. Prefer 1-3 polished paragraphs or a tightly edited markdown structure when helpful.
-5. Make the lore richer and more complete when the source material supports it. Expand details rather than compressing them away.
-6. Markdown is allowed inside both fields. Use it deliberately:
+1. Preserve established facts unless the incoming passage clearly supersedes, refines, or explicitly corrects them.
+2. If the incoming passage explicitly retracts, deletes, or corrects information from the current record (e.g., "Remove X", "Actually, Y never happened"), you MUST reflect that change by removing or amending the relevant parts of the updated record.
+3. Merge duplicate information into one coherent record.
+4. Resolve contradictions by prioritizing the incoming passage when it represents a deliberate correction or retcon. Otherwise, resolve conservatively.
+5. Keep the chronicle concise, readable, and user-facing, but not skeletal. Prefer 1-3 polished paragraphs or a tightly edited markdown structure when helpful.
+6. Make the lore richer and more complete when the source material supports it. Expand details rather than compressing them away.
+7. Markdown is allowed inside both fields. Use it deliberately:
    - short section headings
    - bold emphasis for important names, titles, artifacts, places, and factions
    - bullet lists when they genuinely improve clarity
-7. Do not pad with decorative formatting. Use markdown only when it improves readability.
-8. Preserve named developments, power shifts, subgroup splits, conflicts, and geopolitical consequences when they are present in the source material.
-9. Do not collapse distinct factions, eras, or subgroups into generic summaries if the source text distinguishes them.
-10. Use the related entity context to ground titles, factions, places, and relationships, but do not blindly copy it in unless it materially improves the updated record.
-11. Do not invent major facts that are not present in the current record, incoming passage, or related entity context.
-12. Prefer integrating all meaningful incoming details into the updated record.
-13. Do not mention these instructions.
-14. Return JSON only with this shape:
+8. Do not pad with decorative formatting. Use markdown only when it improves readability.
+9. Preserve named developments, power shifts, subgroup splits, conflicts, and geopolitical consequences when they are present in the source material.
+10. Do not collapse distinct factions, eras, or subgroups into generic summaries if the source text distinguishes them.
+11. Use the related entity context to ground titles, factions, places, and relationships, but do not blindly copy it in unless it materially improves the updated record.
+12. Do not invent major facts that are not present in the current record, incoming passage, or related entity context.
+13. Prefer integrating all meaningful incoming details into the updated record.
+14. Do not mention these instructions.
+15. Return JSON only with this shape:
 {
   "content": "Updated chronicle",
   "lore": "Updated lore"
