@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   buildVisualCanonResolutionPrompt,
   buildVisualPromptGenerationPrompt,
+  buildEnhancePrompt,
+  buildVisualDistillationPrompt,
 } from "./visual-distillation";
 
 describe("visual-distillation prompts", () => {
@@ -20,6 +22,20 @@ describe("visual-distillation prompts", () => {
       expect(result).toContain("cat");
       expect(result).toContain("CanonSummary");
       expect(result).toContain("Visual Prompt Architect");
+    });
+  });
+
+  describe("Legacy and Wrapper Support", () => {
+    it("buildEnhancePrompt should wrap both resolution and generation", () => {
+      const result = buildEnhancePrompt("cat", "context");
+      expect(result).toContain("Visual Canon Interpreter");
+      expect(result).toContain("Visual Prompt Architect");
+    });
+
+    it("buildVisualDistillationPrompt should alias resolution prompt", () => {
+      const result = buildVisualDistillationPrompt("cat", "context");
+      expect(result).toContain("Visual Canon Interpreter");
+      expect(result).not.toContain("Visual Prompt Architect");
     });
   });
 });
