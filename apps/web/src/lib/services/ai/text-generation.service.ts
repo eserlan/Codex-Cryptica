@@ -17,6 +17,7 @@ import {
   buildCreationLoreSynthesisPrompt,
   buildStructuredDraftingPrompt,
 } from "./prompts/entity-creation";
+import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled } from "./capability-guard";
 
 export class DefaultTextGenerationService implements TextGenerationService {
