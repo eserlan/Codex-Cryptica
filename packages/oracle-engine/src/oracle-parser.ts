@@ -196,11 +196,14 @@ export class OracleCommandParser {
     ];
 
     for (const verb of creationVerbs) {
-      const verbRegex = new RegExp(`\\b${verb}\\b`);
+      const verbRegex = new RegExp(`\\b${verb}\\b`, "i");
       if (!verbRegex.test(q)) continue;
 
       for (const noun of entityNouns) {
-        const pattern = new RegExp(`\\b${verb}\\b[\\s\\S]{0,40}\\b${noun}\\b`);
+        const pattern = new RegExp(
+          `\\b${verb}\\b[\\s\\S]{0,100}\\b${noun}\\b`,
+          "i",
+        );
         if (pattern.test(q)) return true;
       }
     }
@@ -240,11 +243,14 @@ export class OracleCommandParser {
     ];
 
     for (const verb of plotVerbs) {
-      const verbRegex = new RegExp(`\\b${verb}\\b`);
+      const verbRegex = new RegExp(`\\b${verb}\\b`, "i");
       if (!verbRegex.test(q)) continue;
 
       for (const noun of plotNouns) {
-        const pattern = new RegExp(`\\b${verb}\\b[\\s\\S]{0,50}\\b${noun}\\b`);
+        const pattern = new RegExp(
+          `\\b${verb}\\b[\\s\\S]{0,100}\\b${noun}\\b`,
+          "i",
+        );
         if (pattern.test(q)) return true;
       }
     }

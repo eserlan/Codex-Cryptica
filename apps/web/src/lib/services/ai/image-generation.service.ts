@@ -30,7 +30,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
       context,
     );
     const canonResult = await model.generateContent(canonResolutionPrompt);
-    const canonSummary = canonResult.response.text().trim();
+    const canonSummary = canonResult.response.text()?.trim() || "";
 
     console.log(
       `[ImageGenerationService] Stage 2: Generating visual prompt...`,
