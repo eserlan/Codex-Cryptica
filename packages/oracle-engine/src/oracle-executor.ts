@@ -659,12 +659,13 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     const isImageRequest = OracleCommandParser.detectImageIntent(query);
     const isCreationRequest = OracleCommandParser.detectCreationIntent(query);
+    const isPlotRequest = OracleCommandParser.detectPlotIntent(query);
 
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
-      type: isImageRequest ? "image" : isCreationRequest ? "text" : "text",
+      type: isImageRequest ? "image" : "text",
     };
     await context.chatHistory.addMessage(assistantMsg);
 
@@ -721,6 +722,30 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             image,
             thumbnail,
           });
+        }
+      } else if (isPlotRequest) {
+        // Extract subject for plot request
+        const { primaryEntityId } = await this.generator.identifyPrimaryEntity(
+          query,
+          context,
+        );
+
+        if (primaryEntityId) {
+          const entity = context.vault.entities[primaryEntityId];
+          // Re-use executePlot logic but with better context identification
+          await this.executePlot(entity.title, context);
+
+          // The executePlot adds its own assistant message, so we should
+          // probably remove the one we just added or reconcile them.
+          // For now, let's just make executePlot use the handlePartialResponse
+          // if we want streaming, but executePlot is currently non-streaming.
+        } else {
+          // Fallback to normal chat if no entity identified
+          await this.generator.generateChatResponse(
+            query,
+            context,
+            handlePartialResponse,
+          );
         }
       } else if (isCreationRequest) {
         const { primaryEntityId, sourceIds } =
