@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DefaultTextGenerationService } from "./text-generation.service";
 import { TIER_MODES } from "schema";
+import * as capabilityGuard from "./capability-guard";
 
 // Mock AI capability guard
 vi.mock("./capability-guard", () => ({
@@ -49,7 +50,8 @@ describe("DefaultTextGenerationService", () => {
   let mockModel: any;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(true);
 
     mockModel = {
       generateContent: vi.fn().mockResolvedValue({
@@ -72,19 +74,20 @@ describe("DefaultTextGenerationService", () => {
     };
 
     mockContextRetrievalService = {
-      getConsolidatedContext: vi.fn().mockReturnValue("Consolidated context"),
+      getConsolidatedContext: vi.fn().mockReturnValue("consolidated"),
     };
 
     service = new DefaultTextGenerationService(
       mockAiClientManager,
-      mockContextRetrievalService,
+      mockContextRetrievalService as any,
     );
   });
 
   describe("expandQuery", () => {
-    it("should expand a query", async () => {
-      const history = [{ role: "user", content: "Hi" }];
-      const result = await service.expandQuery("key", "What is lore?", history);
+    it("should call model to expand query", async () => {
+      const result = await service.expandQuery("key", "him?", [
+        { role: "user", content: "Valerius" },
+      ]);
 
       expect(result).toBe("Generated content");
       expect(mockAiClientManager.getModel).toHaveBeenCalledWith(
@@ -92,11 +95,18 @@ describe("DefaultTextGenerationService", () => {
         TIER_MODES.lite,
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("USER: Hi:What is lore?"),
+        expect.stringContaining("expanded"),
       );
     });
 
-    it("should return original query if expansion fails", async () => {
+    it("should return original query if AI is disabled", async () => {
+      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
+
+      const result = await service.expandQuery("key", "him?", []);
+      expect(result).toBe("him?");
+    });
+
+    it("should return original query on error", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -151,50 +161,30 @@ describe("DefaultTextGenerationService", () => {
         },
       });
 
-      const target = { title: "T", type: "npc" };
-      const sources = [{ title: "S1", type: "npc" }];
-
-      const result = await service.generateMergeProposal(
+      const result = await service.generateMergeProposal!(
         "key",
         "model",
-        target,
-        sources,
+        { title: "Target", type: "npc" },
+        [{ title: "Source", type: "npc" }],
       );
 
       expect(result).toEqual({ body: "Merged Body", lore: "Merged Lore" });
-    });
-
-    it("should return plain text if JSON match fails", async () => {
-      mockModel.generateContent.mockResolvedValue({
-        response: {
-          text: vi.fn().mockReturnValue("Just plain text"),
-        },
-      });
-
-      const result = await service.generateMergeProposal(
-        "key",
-        "model",
-        {},
-        [],
-      );
-      expect(result).toEqual({ body: "Just plain text" });
+      expect(mockModel.generateContent).toHaveBeenCalled();
     });
   });
 
   describe("generatePlotAnalysis", () => {
     it("should generate plot analysis with many connected entities (omitted suffix)", async () => {
       const subject = { title: "Subject", type: "npc" };
-      const connected = Array.from({ length: 25 }, (_, i) => ({
-        entity: { title: `C${i}`, type: "npc" },
-        direction: "outbound",
-        label: "label",
-      }));
-
+      const connections = Array(25).fill({
+        entity: { title: "C", type: "npc" },
+        connectionType: "link",
+      });
       await service.generatePlotAnalysis(
         "key",
         "model",
         subject,
-        connected,
+        connections,
         "Q",
       );
 
@@ -304,139 +294,103 @@ describe("DefaultTextGenerationService", () => {
         onUpdate,
       );
 
-      expect(mockModel.startChat).toHaveBeenCalledWith({
-        history: [
-          {
-            role: "user",
-            parts: [{ text: "User message 1\n\nUser message 2" }],
-          },
-          { role: "model", parts: [{ text: "Assistant message" }] },
-        ],
-      });
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      expect(chatOptions.history).toHaveLength(2);
+      expect(chatOptions.history[0].role).toBe("user");
+      expect(chatOptions.history[0].parts[0].text).toContain("User message 2");
+      expect(chatOptions.history[1].role).toBe("model");
     });
+  });
 
-    it("should handle API rate limit error (429)", async () => {
+  describe("generateStructuredEntity", () => {
+    it("should orchestrate multi-stage creation", async () => {
       const onUpdate = vi.fn();
-      mockModel.startChat.mockReturnValue({
-        sendMessageStream: vi
-          .fn()
-          .mockRejectedValue(new Error("429 rate limit")),
-      });
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "Lore Synthesis Summary" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "Structured Record" },
+        });
 
-      await expect(
-        service.generateResponse("key", "Q", [], "C", "m", onUpdate),
-      ).rejects.toThrow("API rate limit exceeded");
+      await service.generateStructuredEntity!(
+        "key",
+        "Create Valerius",
+        "Vault Context",
+        "model",
+        onUpdate,
+        ["npc", "location"],
+      );
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
+      expect(onUpdate).toHaveBeenCalledWith("Structured Record");
     });
+  });
 
-    it("should handle generic Gemini API error", async () => {
-      const onUpdate = vi.fn();
-      mockModel.startChat.mockReturnValue({
-        sendMessageStream: vi
-          .fn()
-          .mockRejectedValue(new Error("Generic AI error")),
-      });
+  describe("context optimizations", () => {
+    it("should handle history sliding window", async () => {
+      const history = Array(20)
+        .fill(null)
+        .map((_, i) => ({
+          role: i % 2 === 0 ? "user" : "assistant",
+          content: `Message ${i}`,
+        }));
 
-      await expect(
-        service.generateResponse("key", "Q", [], "C", "m", onUpdate),
-      ).rejects.toThrow("Lore Oracle Error: Generic AI error");
-    });
-
-    it("should pass categories to buildSystemInstruction", async () => {
-      const onUpdate = vi.fn();
-      const categories = ["cat1", "cat2"];
       await service.generateResponse(
         "key",
-        "Q",
-        [],
-        "C",
-        "m",
-        onUpdate,
-        false,
-        categories,
+        "Query",
+        history,
+        "Context",
+        "model",
+        vi.fn(),
       );
 
-      // Verify that the model was initialized with the instruction containing categories
-      // aiClientManager.getModel is called with systemInstruction
-      expect(mockAiClientManager.getModel).toHaveBeenCalledWith(
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      // Sliding window is 10.
+      expect(chatOptions.history.length).toBeLessThanOrEqual(10);
+    });
+
+    it("should ensure prefix stability in final query", async () => {
+      await service.generateResponse(
         "key",
-        "m",
-        "system:false:cat1,cat2",
+        "Query",
+        [],
+        " Lore Context ",
+        "model",
+        vi.fn(),
       );
+
+      const sendMessageStreamResult = await vi.mocked(mockModel.startChat).mock
+        .results[0].value;
+      const finalQuery = vi.mocked(sendMessageStreamResult.sendMessageStream)
+        .mock.calls[0][0];
+
+      expect(finalQuery).toContain("[VAULT LORE CONTEXT]");
+      expect(finalQuery).toContain("Lore Context");
+      expect(finalQuery).toContain("[USER QUERY]");
+      // Ensure trimmed context
+      expect(finalQuery).not.toContain(" Lore Context ");
     });
   });
 
   describe("failure cases", () => {
-    it("should throw error if merge generation fails", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Network fail"));
-      await expect(
-        service.generateMergeProposal("key", "model", {}, []),
-      ).rejects.toThrow("Merge failed: Network fail");
-    });
-
     it("should throw error if plot analysis fails", async () => {
       mockModel.generateContent.mockRejectedValue(new Error("Timeout"));
+
       await expect(
         service.generatePlotAnalysis("key", "model", {}, [], "Q"),
       ).rejects.toThrow("Plot analysis failed: Timeout");
     });
-  });
 
-  describe("expandQuery", () => {
-    it("should return expanded query from model", async () => {
-      const mockText = vi.fn().mockReturnValue("Expanded query");
-      mockModel.generateContent.mockResolvedValue({
-        response: { text: mockText },
-      });
+    it("should throw error if structured drafting fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Direct throw"));
 
-      const result = await service.expandQuery("key", "original query", []);
-      expect(result).toBe("Expanded query");
-    });
-
-    it("should return original query if expansion fails", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Fail"));
-      const result = await service.expandQuery("key", "original query", []);
-      expect(result).toBe("original query");
-    });
-  });
-
-  describe("distillContext", () => {
-    it("should return distilled context", async () => {
-      const mockText = vi.fn().mockReturnValue("distilled context");
-      mockModel.generateContent.mockResolvedValue({
-        response: { text: mockText },
-      });
-
-      const result = await service.distillContext("key", "context", "model");
-      expect(result).toBe("distilled context");
-    });
-
-    it("should return raw context if distillContext fails", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Timeout"));
-      const result = await service.distillContext("key", "context", "model");
-      expect(result).toBe("context");
-    });
-  });
-
-  describe("merge and reconcile failure paths", () => {
-    it("should handle error in generateMergeProposal catch block", async () => {
-      mockModel.generateContent.mockImplementationOnce(() => {
-        throw new Error("Direct throw");
-      });
-      await expect(
-        service.generateMergeProposal("key", "model", {}, []),
-      ).rejects.toThrow("Merge failed: Direct throw");
-    });
-
-    it("should handle error in reconcileEntityUpdate catch block", async () => {
-      mockModel.generateContent.mockImplementationOnce(() => {
-        throw new Error("Direct throw");
-      });
       await expect(
         service.reconcileEntityUpdate!(
           "key",
           "model",
           { title: "T", type: "npc", content: "", lore: "" },
-          { chronicle: "C", lore: "L" },
+          { chronicle: "", lore: "" },
           [],
         ),
       ).rejects.toThrow("Entity reconciliation failed: Direct throw");

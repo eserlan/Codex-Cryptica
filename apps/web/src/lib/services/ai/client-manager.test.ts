@@ -280,4 +280,43 @@ describe("DefaultAIClientManager", () => {
       expect(body.generationConfig).toEqual(request.generationConfig);
     });
   });
+
+  describe("startChat", () => {
+    it("should include history in proxy sendMessageStream", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "Coherent response" }],
+              },
+            },
+          ],
+        }),
+      };
+
+      (fetch as any).mockResolvedValue(mockResponse as any);
+
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const history = [
+        { role: "user", parts: [{ text: "Hello" }] },
+        { role: "model", parts: [{ text: "Hi there" }] },
+      ];
+
+      const chat = (model as any).startChat({ history });
+      const result = await chat.sendMessageStream("What is my name?");
+
+      const callArgs = (fetch as any).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+
+      expect(body.contents).toHaveLength(3);
+      expect(body.contents[0].parts[0].text).toBe("Hello");
+      expect(body.contents[1].role).toBe("model");
+      expect(body.contents[2].parts[0].text).toBe("What is my name?");
+
+      const streamResult = await result.stream.next();
+      expect(streamResult.value.text()).toBe("Coherent response");
+    });
+  });
 });
