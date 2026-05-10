@@ -45,6 +45,13 @@ Users desire a natural language interface to query their vault ("Who is the king
 - At most ONE archival button should be visible per message.
 - These actions MUST automatically update the target entity (appending or creating) and navigate the user to the appropriate tab in the Detail Panel.
 
+### FR-005: Multi-Stage Visual Depiction Workflow
+
+- System MUST handle `/draw` requests using a multi-stage cognitive architecture:
+  1. **Intent Trigger:** Only activate on explicit user request for visual content.
+  2. **Visual Canon Resolution:** Resolve established artistic direction, motifs, and faction aesthetics from the vault.
+  3. **Visual Prompt Generation:** Generate high-fidelity prompts grounded in the resolved canon, avoiding generic fantasy defaults.
+
 ## Constraints
 
 - **Network**: Requires active internet connection.
