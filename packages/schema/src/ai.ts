@@ -98,6 +98,14 @@ export interface TextGenerationService {
     connectedEntities: PlotAnalysisEntity[],
     userQuery: string,
   ): Promise<string>;
+  generateStructuredEntity?(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+    categories?: string[],
+  ): Promise<void>;
 }
 
 export interface ImageGenerationService {

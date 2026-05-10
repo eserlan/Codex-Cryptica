@@ -160,6 +160,13 @@ Only activate when the user explicitly requests:
 Do NOT suggest /draw unsolicited.
 Before generating any visual prompt, the system will resolve visual canon and artistic direction from the vault.
 
+/create [description]
+Purpose: Trigger structured entity creation.
+Only activate when the user explicitly requests to:
+- create a record, add an entity to the vault, archive a person/place/thing, or formally document a subject.
+Do NOT use this structured format for normal conversation.
+Before generating the structured record, the system will synthesize established lore and connections from the vault to ensure the new entity fits the canonical continuity.
+
 Always prioritize the vault context as the absolute truth.`;
 
   if (demoMode) {

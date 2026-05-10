@@ -10,7 +10,10 @@ import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
 import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
-import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
+import {
+  buildCreationLoreSynthesisPrompt,
+  buildStructuredDraftingPrompt,
+} from "./prompts/entity-creation";
 import { isAIEnabled } from "./capability-guard";
 
 export class DefaultTextGenerationService implements TextGenerationService {
@@ -213,6 +216,48 @@ export class DefaultTextGenerationService implements TextGenerationService {
     } catch (err: any) {
       console.error("[TextGenerationService] Plot analysis failed:", err);
       throw new Error(`Plot analysis failed: ${err.message}`, { cause: err });
+    }
+  }
+
+  async generateStructuredEntity(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+    categories?: string[],
+  ): Promise<void> {
+    if (!isAIEnabled()) return;
+
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
+
+    console.log(
+      "[TextGenerationService] Stage 1: Resolving canonical synthesis...",
+    );
+
+    // Stage 1: Interpretation Layer - Resolve Canonical Synthesis
+    const synthesisPrompt = buildCreationLoreSynthesisPrompt(query, context);
+    const synthesisResult = await model.generateContent(synthesisPrompt);
+    const synthesisSummary = synthesisResult.response.text().trim();
+
+    console.log(
+      "[TextGenerationService] Stage 2: Drafting structured record...",
+    );
+
+    // Stage 2: Generation Layer - Structured Record Drafting
+    const draftingPrompt = buildStructuredDraftingPrompt(
+      synthesisSummary,
+      query,
+      categories,
+    );
+
+    try {
+      const result = await model.generateContent(draftingPrompt);
+      const text = result.response.text();
+      await onUpdate(text);
+    } catch (err: any) {
+      console.error("[TextGenerationService] Structured drafting failed:", err);
+      throw new Error(`Drafting failed: ${err.message}`, { cause: err });
     }
   }
 

@@ -132,6 +132,67 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
   }
 
   /**
+   * Orchestrates the construction of context and the generation of a structured entity creation response.
+   */
+  async generateCreationResponse(
+    query: string,
+    context: OracleExecutionContext,
+    onPartial: (partial: string) => void,
+  ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
+    const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
+    const apiKey = context.effectiveApiKey || "";
+
+    const { primaryEntityId, sourceIds, searchQuery } =
+      await this.identifyPrimaryEntity(query, context);
+
+    const lastEntityId = context.chatHistory.messages.findLast(
+      (m: ChatMessage) => m.entityId,
+    )?.entityId;
+
+    const { content: aiContext } =
+      await context.contextRetrieval.retrieveContext(
+        searchQuery,
+        alreadySentTitles,
+        context.vault,
+        lastEntityId,
+        false,
+      );
+
+    const categoryList = Array.from(
+      new Set(
+        (context.categories || [])
+          .map((c: any) => String(c?.id || "").trim())
+          .filter(Boolean),
+      ),
+    );
+
+    if (context.textGeneration.generateStructuredEntity) {
+      await context.textGeneration.generateStructuredEntity(
+        apiKey,
+        query,
+        aiContext,
+        context.modelName,
+        onPartial,
+        categoryList,
+      );
+    } else {
+      // Fallback to normal response if method not implemented
+      await context.textGeneration.generateResponse(
+        apiKey,
+        query,
+        context.chatHistory.messages.slice(0, -2),
+        aiContext,
+        context.modelName,
+        onPartial,
+        context.isDemoMode,
+        categoryList,
+      );
+    }
+
+    return { primaryEntityId, sourceIds };
+  }
+
+  /**
    * Orchestrates the creation of a visual visualization for an entity.
    */
   async generateEntityVisualization(
