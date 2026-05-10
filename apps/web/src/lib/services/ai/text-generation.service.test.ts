@@ -23,7 +23,14 @@ vi.mock("./prompts/merge-proposal", () => ({
   buildMergeProposalPrompt: vi.fn((t, s) => `merge:${t}:${s}`),
 }));
 vi.mock("./prompts/plot-analysis", () => ({
-  buildPlotAnalysisPrompt: vi.fn((s, c, q) => `plot:${s}:${c}:${q}`),
+  buildPlotCanonResolutionPrompt: vi.fn((s, c, q) => `plot-res:${s}:${c}:${q}`),
+  buildPlotGenerationPrompt: vi.fn((c, q) => `plot-gen:${c}:${q}`),
+}));
+vi.mock("./prompts/entity-creation", () => ({
+  buildCreationLoreSynthesisPrompt: vi.fn((q, c) => `creation-syn:${q}:${c}`),
+  buildStructuredDraftingPrompt: vi.fn(
+    (s, q, c) => `creation-draft:${s}:${q}:${c}`,
+  ),
 }));
 vi.mock("./prompts/context-distillation", () => ({
   buildContextDistillationPrompt: vi.fn((context) => `distill:${context}`),
