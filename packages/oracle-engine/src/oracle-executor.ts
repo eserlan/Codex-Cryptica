@@ -732,13 +732,13 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
         if (primaryEntityId) {
           const entity = context.vault.entities[primaryEntityId];
-          // Re-use executePlot logic but with better context identification
-          await this.executePlot(entity.title, context);
 
-          // The executePlot adds its own assistant message, so we should
-          // probably remove the one we just added or reconcile them.
-          // For now, let's just make executePlot use the handlePartialResponse
-          // if we want streaming, but executePlot is currently non-streaming.
+          // Re-use executePlot logic but with better context identification.
+          // Since executePlot is currently non-streaming, we remove the
+          // temporary assistantMsg we created and let executePlot create its own.
+          // This prevents a blank message appearing in the UI.
+          await context.chatHistory.removeMessage(assistantMsg.id);
+          await this.executePlot(entity.title, context);
         } else {
           // Fallback to normal chat if no entity identified
           await this.generator.generateChatResponse(
