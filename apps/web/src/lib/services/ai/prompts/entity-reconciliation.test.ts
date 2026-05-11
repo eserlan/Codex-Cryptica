@@ -34,7 +34,7 @@ describe("buildEntityReconciliationPrompt", () => {
       "Make the lore richer and more complete when the source material supports it.",
     );
     expect(prompt).toContain(
-      "Prefer integrating all meaningful incoming details into the updated record.",
+      "Only integrate incoming details that directly reveal new information about Szass Tam",
     );
     expect(prompt).toContain("Preserve named developments, power shifts");
     expect(prompt).toContain("RELATED ENTITY CONTEXT:");
