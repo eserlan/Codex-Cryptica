@@ -28,6 +28,10 @@ describe("ChatMessageActions", () => {
       pushUndoAction: vi.fn(),
       updateMessageEntity: vi.fn(),
       undo: vi.fn().mockResolvedValue(undefined),
+      reconcileSmartApply: vi.fn().mockResolvedValue({
+        content: "new chronicle",
+        lore: "new lore",
+      }),
     };
     graph = {
       requestFit: vi.fn(),
@@ -64,12 +68,8 @@ describe("ChatMessageActions", () => {
     expect(oracle.pushUndoAction).toHaveBeenCalled();
   });
 
-  it("snapshots the entity before cloning during undo capture", async () => {
+  it("captures a deep copy of the entity state for undo", async () => {
     const setSaved = vi.fn();
-    const entityRef = vault.entities.target;
-    const structuredCloneSpy = vi
-      .spyOn(globalThis, "structuredClone")
-      .mockImplementation((value) => value as any);
 
     await actions.copyToChronicle({
       message: {
@@ -80,8 +80,13 @@ describe("ChatMessageActions", () => {
       setSaved,
     });
 
-    expect(structuredCloneSpy).toHaveBeenCalledTimes(1);
-    expect(structuredCloneSpy.mock.calls[0][0]).not.toBe(entityRef);
+    const undo = oracle.pushUndoAction.mock.calls.at(-1)?.[1];
+    vault.entities.target.content = "mutated after capture";
+    await undo?.();
+
+    expect(vault.updateEntity).toHaveBeenCalledWith("target", {
+      content: "old chronicle",
+    });
   });
 
   it("creates a node from parsed chat content", async () => {
