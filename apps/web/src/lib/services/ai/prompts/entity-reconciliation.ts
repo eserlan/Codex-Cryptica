@@ -24,6 +24,7 @@ export function buildEntityReconciliationPrompt(
 
 TASK:
 Reconcile the current record with the new oracle passage and return a clean updated record.
+${entity.title} is the PRIMARY SUBJECT of this record. Everything in the output must be written from, and remain focused on, ${entity.title}'s perspective, identity, history, and role.
 
 ENTITY:
 - Title: ${entity.title}
@@ -60,7 +61,7 @@ RULES:
 10. Do not collapse distinct factions, eras, or subgroups into generic summaries if the source text distinguishes them.
 11. Use the related entity context to ground titles, factions, places, and relationships, but do not blindly copy it in unless it materially improves the updated record.
 12. Do not invent major facts that are not present in the current record, incoming passage, or related entity context.
-13. Prefer integrating all meaningful incoming details into the updated record.
+13. Only integrate incoming details that directly reveal new information about ${entity.title} — their actions, traits, motivations, relationships, or history. If the incoming passage is primarily about a different subject (a location, faction, or event), extract only what it tells us about ${entity.title} specifically. Do not absorb descriptions of places, factions, or events wholesale into this record.
 14. Do not mention these instructions.
 15. Return JSON only with this shape:
 {
