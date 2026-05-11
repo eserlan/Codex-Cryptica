@@ -573,6 +573,33 @@ export class OracleStore {
     await this.chatHistoryService.removeMessage(id);
   }
 
+  private async reconcileEntityFields(
+    existing: Entity,
+    incoming: { chronicle: string; lore: string },
+  ): Promise<{ content: string; lore: string }> {
+    if (!this.textGeneration.reconcileEntityUpdate) {
+      throw new Error("reconcileEntityUpdate not available");
+    }
+    const snapExisting = $state.snapshot(existing);
+    const snapIncoming = $state.snapshot(incoming);
+    const snapContext = $state.snapshot(
+      buildRelatedEntityContext({
+        entity: existing,
+        incoming,
+        vault: this.vault,
+        getConsolidatedContext: (related) =>
+          this.contextRetrieval.getConsolidatedContext(related),
+      }),
+    );
+    return this.textGeneration.reconcileEntityUpdate(
+      this.effectiveApiKey || "",
+      this.modelName,
+      snapExisting,
+      snapIncoming,
+      snapContext,
+    );
+  }
+
   async reconcileSmartApply(
     entityId: string,
     incoming: { chronicle?: string; lore?: string },
@@ -580,7 +607,7 @@ export class OracleStore {
     const existing = this.vault.entities[entityId];
     if (!existing) throw new Error(`Entity ${entityId} not found.`);
 
-    const fallback = () => ({
+    const fallback = (): { content?: string; lore?: string } => ({
       content: incoming.chronicle
         ? existing.content
           ? existing.content + "\n\n" + incoming.chronicle
@@ -598,32 +625,10 @@ export class OracleStore {
     }
 
     try {
-      const snapExisting = $state.snapshot(existing);
-      const snapIncoming = $state.snapshot({
+      const reconciled = await this.reconcileEntityFields(existing, {
         chronicle: incoming.chronicle || "",
         lore: incoming.lore || "",
       });
-      const snapContext = $state.snapshot(
-        buildRelatedEntityContext({
-          entity: existing,
-          incoming: {
-            chronicle: incoming.chronicle || "",
-            lore: incoming.lore || "",
-          },
-          vault: this.vault,
-          getConsolidatedContext: (related) =>
-            this.contextRetrieval.getConsolidatedContext(related),
-        }),
-      );
-
-      const reconciled = await this.textGeneration.reconcileEntityUpdate(
-        this.effectiveApiKey || "",
-        this.modelName,
-        snapExisting,
-        snapIncoming,
-        snapContext,
-      );
-
       return {
         content: incoming.chronicle ? reconciled.content : undefined,
         lore: incoming.lore ? reconciled.lore : undefined,
@@ -651,32 +656,10 @@ export class OracleStore {
     }
 
     try {
-      // We MUST snapshot reactive state before sending to a worker (PR Fix)
-      const snapExisting = $state.snapshot(existing);
-      const snapIncoming = $state.snapshot({
+      return await this.reconcileEntityFields(existing, {
         chronicle: proposal.draft.chronicle,
         lore: proposal.draft.lore,
       });
-      const snapContext = $state.snapshot(
-        buildRelatedEntityContext({
-          entity: existing,
-          incoming: {
-            chronicle: proposal.draft.chronicle,
-            lore: proposal.draft.lore,
-          },
-          vault: this.vault,
-          getConsolidatedContext: (related) =>
-            this.contextRetrieval.getConsolidatedContext(related),
-        }),
-      );
-
-      return await this.textGeneration.reconcileEntityUpdate(
-        this.effectiveApiKey || "",
-        this.modelName,
-        snapExisting,
-        snapIncoming,
-        snapContext,
-      );
     } catch {
       return {
         content: existing.content || proposal.draft.chronicle,
