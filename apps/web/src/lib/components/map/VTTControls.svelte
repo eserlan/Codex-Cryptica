@@ -35,6 +35,7 @@
       type="button"
       aria-label="Explore"
       title="Explore"
+      aria-pressed={mapSession.mode === "exploration"}
     >
       <span class="icon-[lucide--compass] h-4 w-4"></span>
     </button>
@@ -45,6 +46,7 @@
       type="button"
       aria-label="Combat"
       title="Combat"
+      aria-pressed={mapSession.mode === "combat"}
     >
       <span class="icon-[lucide--swords] h-4 w-4"></span>
     </button>
@@ -69,6 +71,8 @@
         type="button"
         aria-label="Encounters"
         title="Encounters"
+        aria-haspopup="dialog"
+        aria-expanded={showEncounters}
       >
         <span class="icon-[lucide--scroll-text] h-4 w-4"></span>
       </button>

@@ -46,3 +46,7 @@
 
 **Learning:** Non-submit buttons in Svelte components can accidentally submit forms if they are ever wrapped in a `<form>` context and don't explicitly have a type.
 **Action:** Always explicitly define `type="button"` on generic buttons to prevent unexpected form submission behavior.
+## 2026-05-11 - Toggle Button State
+
+**Learning:** Found custom toggle buttons (like the VTT mode switchers) that change visual state via classes but don't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode is active.
+**Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.

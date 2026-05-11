@@ -80,8 +80,15 @@ describe("VTTControls", () => {
   it("shows the pure VTT controls for the active map session", async () => {
     const { container } = render(VTTControls);
 
-    expect(screen.getByRole("button", { name: "Explore" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Combat" })).not.toBeNull();
+    const exploreButton = screen.getByRole("button", { name: "Explore" });
+    const combatButton = screen.getByRole("button", { name: "Combat" });
+
+    expect(exploreButton).not.toBeNull();
+    expect(exploreButton.getAttribute("aria-pressed")).toBe("true");
+
+    expect(combatButton).not.toBeNull();
+    expect(combatButton.getAttribute("aria-pressed")).toBe("false");
+
     expect(screen.getByRole("button", { name: "Add Token" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Encounters" })).not.toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
