@@ -26,6 +26,11 @@ describe("getMeasurementToolButtonClass", () => {
     expect(className).toContain("hover:border-theme-primary/60");
     expect(className).toContain("hover:shadow-[0_14px_30px_rgba(0,0,0,0.28)]");
     expect(className).toContain("border-theme-border");
+    expect(className).toContain("focus-visible:outline-none");
+    expect(className).toContain("focus-visible:ring-2");
+    expect(className).toContain("focus-visible:ring-theme-primary");
+    expect(className).toContain("focus-visible:ring-offset-2");
+    expect(className).toContain("focus-visible:ring-offset-theme-surface");
   });
 
   it("uses the shared active toggle treatment when enabled", () => {
@@ -34,19 +39,24 @@ describe("getMeasurementToolButtonClass", () => {
     expect(className).toContain("border-theme-primary");
     expect(className).toContain("bg-theme-primary");
     expect(className).toContain("shadow-[0_14px_30px_rgba(0,0,0,0.35)]");
+    expect(className).toContain("focus-visible:outline-none");
+    expect(className).toContain("focus-visible:ring-2");
+    expect(className).toContain("focus-visible:ring-theme-primary");
+    expect(className).toContain("focus-visible:ring-offset-2");
+    expect(className).toContain("focus-visible:ring-offset-theme-surface");
   });
 });
 
 describe("getPrimaryButtonStateClass", () => {
   it("returns the shared inactive toggle state", () => {
     expect(getPrimaryButtonStateClass(false)).toBe(
-      "text-theme-muted hover:text-theme-text hover:bg-theme-primary/10",
+      "text-theme-muted hover:text-theme-text hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary",
     );
   });
 
   it("returns the shared active toggle state", () => {
     expect(getPrimaryButtonStateClass(true)).toBe(
-      "bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30",
+      "bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary",
     );
   });
 });
