@@ -32,7 +32,7 @@ import {
 } from "dice-engine";
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import { categories as defaultCategories } from "./categories.svelte";
-import type { TextGenerationService } from "schema";
+import type { Entity, TextGenerationService } from "schema";
 
 export type { ChatMessage, UndoableAction };
 
