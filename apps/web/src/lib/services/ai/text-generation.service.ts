@@ -7,9 +7,16 @@ import {
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
-import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
+import {
+  buildPlotCanonResolutionPrompt,
+  buildPlotGenerationPrompt,
+} from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
+import {
+  buildCreationLoreSynthesisPrompt,
+  buildStructuredDraftingPrompt,
+} from "./prompts/entity-creation";
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled } from "./capability-guard";
 
@@ -201,18 +208,73 @@ export class DefaultTextGenerationService implements TextGenerationService {
           : connectionsContext + suffix;
     }
 
-    const prompt = buildPlotAnalysisPrompt(
-      subjectContextStr,
-      connectionsContext,
-      userQuery,
+    try {
+      console.log("[TextGenerationService] Stage 1: Resolving plot canon...");
+
+      // Stage 1: Interpretation Layer - Resolve Plot Canon
+      const resolutionPrompt = buildPlotCanonResolutionPrompt(
+        subjectContextStr,
+        connectionsContext,
+        userQuery,
+      );
+      const resolutionResult = await model.generateContent(resolutionPrompt);
+      const canonSummary = resolutionResult.response.text().trim();
+
+      console.log("[TextGenerationService] Stage 2: Generating plot hooks...");
+
+      // Stage 2: Generation Layer - Plot Generation
+      const generationPrompt = buildPlotGenerationPrompt(
+        canonSummary,
+        userQuery,
+      );
+
+      const result = await model.generateContent(generationPrompt);
+      return result.response.text();
+    } catch (err: any) {
+      console.error("[TextGenerationService] Plot generation failed:", err);
+      throw new Error(`Plot analysis failed: ${err.message}`, { cause: err });
+    }
+  }
+
+  async generateStructuredEntity(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+    categories?: string[],
+  ): Promise<void> {
+    if (!isAIEnabled()) return;
+
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
+
+    console.log(
+      "[TextGenerationService] Stage 1: Resolving canonical synthesis...",
+    );
+
+    // Stage 1: Interpretation Layer - Resolve Canonical Synthesis
+    const synthesisPrompt = buildCreationLoreSynthesisPrompt(query, context);
+    const synthesisResult = await model.generateContent(synthesisPrompt);
+    const synthesisSummary = synthesisResult.response.text().trim();
+
+    console.log(
+      "[TextGenerationService] Stage 2: Drafting structured record...",
+    );
+
+    // Stage 2: Generation Layer - Structured Record Drafting
+    const draftingPrompt = buildStructuredDraftingPrompt(
+      synthesisSummary,
+      query,
+      categories,
     );
 
     try {
-      const result = await model.generateContent(prompt);
-      return result.response.text();
+      const result = await model.generateContent(draftingPrompt);
+      const text = result.response.text();
+      await onUpdate(text);
     } catch (err: any) {
-      console.error("[TextGenerationService] Plot analysis failed:", err);
-      throw new Error(`Plot analysis failed: ${err.message}`, { cause: err });
+      console.error("[TextGenerationService] Structured drafting failed:", err);
+      throw new Error(`Drafting failed: ${err.message}`, { cause: err });
     }
   }
 
@@ -238,8 +300,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
       systemInstruction,
     );
 
-    // 1. Sliding Window: Limit history to last 10 messages to keep payload lean
-    const slidingHistory = history.slice(-10);
+    const slidingWindowSize = 10;
+    // 1. Sliding Window: Limit history to keep payload lean
+    const slidingHistory = history.slice(-slidingWindowSize);
 
     const sanitizedHistory: {
       role: "user" | "model";
@@ -299,11 +362,10 @@ export class DefaultTextGenerationService implements TextGenerationService {
       // but BEFORE the current query. This keeps the history prefix stable
       // for Gemini's implicit caching.
       const finalQuery = context
-        ? `[VAULT LORE CONTEXT]\n${context}\n\n${prefixContext}[USER QUERY]\n${query}`
+        ? `[VAULT LORE CONTEXT]\n${context.trim()}\n\n${prefixContext}[USER QUERY]\n${query}`
         : `${prefixContext}${query}`;
 
       const result = await chat.sendMessageStream(finalQuery);
-
       let fullText = "";
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();

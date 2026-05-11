@@ -33,11 +33,12 @@ describe("DefaultImageGenerationService", () => {
     // Default mock for prompt builders
     vi.spyOn(
       visualDistillation,
-      "buildVisualDistillationPrompt",
-    ).mockReturnValue("distill-prompt");
-    vi.spyOn(visualDistillation, "buildEnhancePrompt").mockReturnValue(
-      "enhanced-prompt",
-    );
+      "buildVisualCanonResolutionPrompt",
+    ).mockReturnValue("canon-res-prompt");
+    vi.spyOn(
+      visualDistillation,
+      "buildVisualPromptGenerationPrompt",
+    ).mockReturnValue("prompt-gen-prompt");
   });
 
   describe("distillVisualPrompt", () => {
@@ -63,11 +64,13 @@ describe("DefaultImageGenerationService", () => {
     });
 
     it("should return distilled text on success", async () => {
-      mockModel.generateContent.mockResolvedValue({
-        response: {
-          text: () => " distilled result ",
-        },
-      });
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "canon summary" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => " distilled result " },
+        });
 
       const result = await service.distillVisualPrompt(
         "key",
@@ -79,8 +82,12 @@ describe("DefaultImageGenerationService", () => {
       expect(mockAiClientManager.getModel).toHaveBeenCalledWith("key", "model");
     });
 
-    it("should fallback to enhanced prompt on error", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Gemini Error"));
+    it("should fallback to canon summary on error in stage 2", async () => {
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "canon summary" },
+        })
+        .mockRejectedValueOnce(new Error("Gemini Error"));
 
       const result = await service.distillVisualPrompt(
         "key",
@@ -88,7 +95,7 @@ describe("DefaultImageGenerationService", () => {
         "ctx",
         "model",
       );
-      expect(result).toBe("enhanced-prompt");
+      expect(result).toBe("canon summary");
     });
   });
 

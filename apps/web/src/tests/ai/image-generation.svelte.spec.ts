@@ -44,10 +44,13 @@ describe("ImageGenerationService", () => {
 
   describe("Distill Visual Prompt", () => {
     it("should call model to distill prompt", async () => {
-      const mockText = vi.fn().mockReturnValue("Distilled Prompt");
-      mockModel.generateContent.mockResolvedValueOnce({
-        response: Promise.resolve({ text: mockText }),
-      });
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "Canon Summary" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "Final Prompt" },
+        });
 
       const result = await service.distillVisualPrompt(
         "api-key",
@@ -55,8 +58,8 @@ describe("ImageGenerationService", () => {
         "context",
         "model",
       );
-      expect(result).toBe("Distilled Prompt");
-      expect(mockModel.generateContent).toHaveBeenCalled();
+      expect(result).toBe("Final Prompt");
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
     });
 
     it("should return query as is when no context is provided", async () => {

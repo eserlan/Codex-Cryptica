@@ -162,6 +162,102 @@ export class OracleCommandParser {
     return false;
   }
 
+  static detectCreationIntent(query: string): boolean {
+    const q = query.toLowerCase().trim();
+
+    if (q.startsWith("/create")) return true;
+
+    if (
+      q.includes("create a record") ||
+      q.includes("add an entity") ||
+      q.includes("archive a") ||
+      q.includes("formally document")
+    ) {
+      return true;
+    }
+
+    const creationVerbs = [
+      "create",
+      "add",
+      "make",
+      "new",
+      "archive",
+      "document",
+    ];
+    const entityNouns = [
+      "npc",
+      "character",
+      "location",
+      "faction",
+      "item",
+      "event",
+      "record",
+      "entity",
+    ];
+
+    for (const verb of creationVerbs) {
+      const verbRegex = new RegExp(`\\b${verb}\\b`, "i");
+      if (!verbRegex.test(q)) continue;
+
+      for (const noun of entityNouns) {
+        const pattern = new RegExp(
+          `\\b${verb}\\b[\\s\\S]{0,100}\\b${noun}\\b`,
+          "i",
+        );
+        if (pattern.test(q)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  static detectPlotIntent(query: string): boolean {
+    const q = query.toLowerCase().trim();
+
+    if (q.startsWith("/plot")) return true;
+
+    const plotKeywords = [
+      "plot hook",
+      "adventure seed",
+      "campaign arc",
+      "session idea",
+      "mystery",
+      "story development",
+      "consequence",
+      "conflict",
+    ];
+
+    if (plotKeywords.some((keyword) => q.includes(keyword))) {
+      return true;
+    }
+
+    const plotVerbs = ["generate", "suggest", "create", "think of", "give me"];
+    const plotNouns = [
+      "plot",
+      "hook",
+      "adventure",
+      "arc",
+      "seed",
+      "mystery",
+      "development",
+    ];
+
+    for (const verb of plotVerbs) {
+      const verbRegex = new RegExp(`\\b${verb}\\b`, "i");
+      if (!verbRegex.test(q)) continue;
+
+      for (const noun of plotNouns) {
+        const pattern = new RegExp(
+          `\\b${verb}\\b[\\s\\S]{0,100}\\b${noun}\\b`,
+          "i",
+        );
+        if (pattern.test(q)) return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Parses a structured AI regeneration response into its constituent sections.
    * Supports both the current format (**Chronicle:** / **Lore:**) and the

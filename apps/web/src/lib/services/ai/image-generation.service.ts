@@ -1,8 +1,8 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import type { ImageGenerationService } from "schema";
 import {
-  buildEnhancePrompt,
-  buildVisualDistillationPrompt,
+  buildVisualCanonResolutionPrompt,
+  buildVisualPromptGenerationPrompt,
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 import { GEMINI_API_BASE_URL } from "../../config/oracle-constants";
@@ -22,26 +22,40 @@ export class DefaultImageGenerationService implements ImageGenerationService {
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
+    console.log(`[ImageGenerationService] Stage 1: Resolving visual canon...`);
+
+    // Stage 1: Interpretation Layer - Resolve Visual Canon
+    const canonResolutionPrompt = buildVisualCanonResolutionPrompt(
+      query,
+      context,
+    );
+    const canonResult = await model.generateContent(canonResolutionPrompt);
+    const canonSummary = canonResult.response.text()?.trim() || "";
+
     console.log(
-      `[ImageGenerationService] Distilling visual prompt using: ${modelName}`,
+      `[ImageGenerationService] Stage 2: Generating visual prompt...`,
     );
 
-    const prompt = buildVisualDistillationPrompt(query, context);
+    // Stage 2: Generation Layer - Visual Prompt Generation
+    const promptGenerationPrompt = buildVisualPromptGenerationPrompt(
+      canonSummary,
+      query,
+    );
 
     try {
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(promptGenerationPrompt);
       const response = await result.response;
       const distilled = response.text().trim();
       console.log(
-        `[ImageGenerationService] Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`,
+        `[ImageGenerationService] Final Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`,
       );
       return distilled;
     } catch (err) {
       console.warn(
-        "[ImageGenerationService] Failed to distill visual prompt, falling back to enhanced prompt.",
+        "[ImageGenerationService] Failed to generate visual prompt, falling back to canon summary.",
         err,
       );
-      return buildEnhancePrompt(query, context);
+      return canonSummary || query;
     }
   }
 
