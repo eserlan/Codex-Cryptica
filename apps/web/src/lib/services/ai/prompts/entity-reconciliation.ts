@@ -22,9 +22,14 @@ export function buildEntityReconciliationPrompt(
 
   return `You are a meticulous lore archivist updating an existing worldbuilding record.
 
+FIELD DEFINITIONS:
+- CHRONICLE (content): The concise, user-facing summary of who ${entity.title} is right now — current status, key role, defining traits. Think of it as a tight 1–3 paragraph "at a glance" entry. Prose only; avoid bullet lists here.
+- LORE (lore): The rich reference layer — backstory, motivations, relationships, tactics, secrets, contradictions, open questions. This is where details live. Structured markdown (headings, bullets) is appropriate when it helps.
+
 TASK:
 Reconcile the current record with the new oracle passage and return a clean updated record.
 ${entity.title} is the PRIMARY SUBJECT of this record. Everything in the output must be written from, and remain focused on, ${entity.title}'s perspective, identity, history, and role.
+You have full authority to move or redistribute content between chronicle and lore to best fit their definitions above — including when the incoming passage contains a mix of summary and detail.
 
 ENTITY:
 - Title: ${entity.title}
@@ -50,8 +55,8 @@ RULES:
 2. If the incoming passage explicitly retracts, deletes, or corrects information from the current record (e.g., "Remove X", "Actually, Y never happened"), you MUST reflect that change by removing or amending the relevant parts of the updated record.
 3. Merge duplicate information into one coherent record.
 4. Resolve contradictions by prioritizing the incoming passage when it represents a deliberate correction or retcon. Otherwise, resolve conservatively.
-5. Keep the chronicle concise, readable, and user-facing, but not skeletal. Prefer 1-3 polished paragraphs or a tightly edited markdown structure when helpful.
-6. Make the lore richer and more complete when the source material supports it. Expand details rather than compressing them away.
+5. Keep the chronicle tight and readable — current status and defining identity, not exhaustive history.
+6. Make the lore richer and more complete when the source material supports it. When an incoming passage contains detail that belongs in lore rather than chronicle, place it there rather than compressing it away.
 7. Markdown is allowed inside both fields. Use it deliberately:
    - short section headings
    - bold emphasis for important names, titles, artifacts, places, and factions
