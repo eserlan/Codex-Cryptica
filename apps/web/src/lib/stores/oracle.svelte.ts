@@ -351,6 +351,9 @@ export class OracleStore {
         clearMessages: wrap(
           this.chatHistoryService.clearMessages?.bind(this.chatHistoryService),
         ),
+        removeMessage: wrap(
+          this.chatHistoryService.removeMessage?.bind(this.chatHistoryService),
+        ),
         addProposal: wrap(
           this.chatHistoryService.addProposal?.bind(this.chatHistoryService),
         ),
@@ -568,6 +571,66 @@ export class OracleStore {
 
   async removeMessage(id: string) {
     await this.chatHistoryService.removeMessage(id);
+  }
+
+  async reconcileSmartApply(
+    entityId: string,
+    incoming: { chronicle?: string; lore?: string },
+  ): Promise<{ content?: string; lore?: string }> {
+    const existing = this.vault.entities[entityId];
+    if (!existing) throw new Error(`Entity ${entityId} not found.`);
+
+    const fallback = () => ({
+      content: incoming.chronicle
+        ? existing.content
+          ? existing.content + "\n\n" + incoming.chronicle
+          : incoming.chronicle
+        : undefined,
+      lore: incoming.lore
+        ? existing.lore
+          ? existing.lore + "\n\n" + incoming.lore
+          : incoming.lore
+        : undefined,
+    });
+
+    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+      return fallback();
+    }
+
+    try {
+      const snapExisting = $state.snapshot(existing);
+      const snapIncoming = $state.snapshot({
+        chronicle: incoming.chronicle || "",
+        lore: incoming.lore || "",
+      });
+      const snapContext = $state.snapshot(
+        buildRelatedEntityContext({
+          entity: existing,
+          incoming: {
+            chronicle: incoming.chronicle || "",
+            lore: incoming.lore || "",
+          },
+          vault: this.vault,
+          getConsolidatedContext: (related) =>
+            this.contextRetrieval.getConsolidatedContext(related),
+        }),
+      );
+
+      const reconciled = await this.textGeneration.reconcileEntityUpdate(
+        this.effectiveApiKey || "",
+        this.modelName,
+        snapExisting,
+        snapIncoming,
+        snapContext,
+      );
+
+      return {
+        content: incoming.chronicle ? reconciled.content : undefined,
+        lore: incoming.lore ? reconciled.lore : undefined,
+      };
+    } catch {
+      return fallback();
+    }
   }
 
   async reconcileDiscoveryProposal(proposal: DiscoveryProposal) {
