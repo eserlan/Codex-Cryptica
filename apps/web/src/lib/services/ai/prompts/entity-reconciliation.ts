@@ -57,10 +57,9 @@ RULES:
 4. Resolve contradictions by prioritizing the incoming passage when it represents a deliberate correction or retcon. Otherwise, resolve conservatively.
 5. Keep the chronicle tight and readable — current status and defining identity, not exhaustive history.
 6. Make the lore richer and more complete when the source material supports it. When an incoming passage contains detail that belongs in lore rather than chronicle, place it there rather than compressing it away.
-7. Markdown is allowed inside both fields. Use it deliberately:
-   - short section headings
-   - bold emphasis for important names, titles, artifacts, places, and factions
-   - bullet lists when they genuinely improve clarity
+7. Markdown usage differs by field:
+   - Chronicle: prose only. Bold emphasis for key names is fine; avoid headings and bullet lists.
+   - Lore: structured markdown is welcome — short section headings, bold emphasis, bullet lists when they genuinely improve clarity.
 8. Do not pad with decorative formatting. Use markdown only when it improves readability.
 9. Preserve named developments, power shifts, subgroup splits, conflicts, and geopolitical consequences when they are present in the source material.
 10. Do not collapse distinct factions, eras, or subgroups into generic summaries if the source text distinguishes them.

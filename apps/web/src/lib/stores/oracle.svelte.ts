@@ -629,7 +629,10 @@ export class OracleStore {
         chronicle: incoming.chronicle || "",
         lore: incoming.lore || "",
       });
-      return reconciled;
+      return {
+        content: reconciled.content || existing.content || "",
+        lore: reconciled.lore || existing.lore || "",
+      };
     } catch {
       return fallback();
     }

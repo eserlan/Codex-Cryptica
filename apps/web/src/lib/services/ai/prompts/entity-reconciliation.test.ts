@@ -26,7 +26,8 @@ describe("buildEntityReconciliationPrompt", () => {
       ],
     );
 
-    expect(prompt).toContain("Markdown is allowed inside both fields.");
+    expect(prompt).toContain("Markdown usage differs by field");
+    expect(prompt).toContain("Chronicle: prose only");
     expect(prompt).toContain("short section headings");
     expect(prompt).toContain("bold emphasis");
     expect(prompt).toContain("bullet lists");

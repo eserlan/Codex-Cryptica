@@ -772,6 +772,20 @@ describe("OracleStore", () => {
         expect(result.lore).toBe("Enriched lore");
       });
 
+      it("falls back to existing content when AI returns empty strings", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({ content: "", lore: "" });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        });
+
+        expect(result.content).toBe("Old chronicle");
+        expect(result.lore).toBe("Old lore");
+      });
+
       it("falls back to local append when AI is disabled", async () => {
         (mockUiStore as any).aiDisabled = true;
         (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();

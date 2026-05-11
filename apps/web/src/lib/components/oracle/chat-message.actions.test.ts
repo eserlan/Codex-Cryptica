@@ -68,6 +68,25 @@ describe("ChatMessageActions", () => {
     expect(oracle.pushUndoAction).toHaveBeenCalled();
   });
 
+  it("undo restores all fields that were applied, not just those in parsed", async () => {
+    const setSaved = vi.fn();
+
+    await actions.applySmart({
+      message: { id: "message-undo", content: "ignored" } as any,
+      parsed: { chronicle: "new chronicle" },
+      activeEntityId: "target",
+      setSaved,
+    });
+
+    const undo = oracle.pushUndoAction.mock.calls.at(-1)?.[1];
+    await undo?.();
+
+    expect(vault.updateEntity).toHaveBeenCalledWith("target", {
+      content: "old chronicle",
+      lore: "old lore",
+    });
+  });
+
   it("captures a deep copy of the entity state for undo", async () => {
     const setSaved = vi.fn();
 
