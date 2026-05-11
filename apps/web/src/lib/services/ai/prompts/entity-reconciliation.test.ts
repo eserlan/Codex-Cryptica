@@ -26,7 +26,8 @@ describe("buildEntityReconciliationPrompt", () => {
       ],
     );
 
-    expect(prompt).toContain("Markdown is allowed inside both fields.");
+    expect(prompt).toContain("Markdown usage differs by field");
+    expect(prompt).toContain("Chronicle: prose only");
     expect(prompt).toContain("short section headings");
     expect(prompt).toContain("bold emphasis");
     expect(prompt).toContain("bullet lists");
@@ -34,7 +35,7 @@ describe("buildEntityReconciliationPrompt", () => {
       "Make the lore richer and more complete when the source material supports it.",
     );
     expect(prompt).toContain(
-      "Prefer integrating all meaningful incoming details into the updated record.",
+      "Only integrate incoming details that directly reveal new information about Szass Tam",
     );
     expect(prompt).toContain("Preserve named developments, power shifts");
     expect(prompt).toContain("RELATED ENTITY CONTEXT:");

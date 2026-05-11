@@ -137,8 +137,9 @@ export class ChatMessageActions {
       params.message.id,
       async (beforeState) => {
         const undoUpdates: { content?: string; lore?: string } = {};
-        if (params.parsed.chronicle) undoUpdates.content = beforeState.content;
-        if (params.parsed.lore) undoUpdates.lore = beforeState.lore;
+        if (updates.content !== undefined)
+          undoUpdates.content = beforeState.content;
+        if (updates.lore !== undefined) undoUpdates.lore = beforeState.lore;
         await this.vault.updateEntity(beforeState.id, undoUpdates);
       },
       params.setSaved,
