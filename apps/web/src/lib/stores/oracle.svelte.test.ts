@@ -756,12 +756,12 @@ describe("OracleStore", () => {
         });
       });
 
-      it("omits fields not present in incoming when returning reconciled result", async () => {
+      it("returns full reconciled result even when only chronicle is incoming", async () => {
         (oracle as any).textGeneration.reconcileEntityUpdate = vi
           .fn()
           .mockResolvedValue({
             content: "Merged chronicle",
-            lore: "Merged lore",
+            lore: "Enriched lore",
           });
 
         const result = await oracle.reconcileSmartApply("target", {
@@ -769,7 +769,21 @@ describe("OracleStore", () => {
         });
 
         expect(result.content).toBe("Merged chronicle");
-        expect(result.lore).toBeUndefined();
+        expect(result.lore).toBe("Enriched lore");
+      });
+
+      it("falls back to existing content when AI returns empty strings", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({ content: "", lore: "" });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        });
+
+        expect(result.content).toBe("Old chronicle");
+        expect(result.lore).toBe("Old lore");
       });
 
       it("falls back to local append when AI is disabled", async () => {
