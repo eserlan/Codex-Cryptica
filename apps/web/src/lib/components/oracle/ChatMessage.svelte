@@ -90,7 +90,7 @@
   );
 
   $effect(() => {
-    if (isSaved && !regenerationService.pendingDraft && lastParsedContent) {
+    if (isSaved && !regenerationService.pendingDraft && message.content) {
       // If we were in saved/proposed state and the global draft is cleared,
       // and we still have content, reset isSaved so buttons reappear.
       // But only if we don't have an undo action (which means it was a permanent save).
@@ -521,6 +521,8 @@
             <div
               class="mt-3 pt-2 border-t border-theme-border flex items-center justify-between"
               transition:fade
+              role="status"
+              aria-live="polite"
             >
               {#if regenerationService.pendingDraft?.messageId === message.id}
                 <span

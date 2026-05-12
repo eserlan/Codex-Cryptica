@@ -91,6 +91,7 @@ export interface OracleIntent {
  */
 export interface RegenerationDraft {
   entityId: string;
+  /** Optional ID of the ChatMessage that triggered this draft proposal */
   messageId?: string;
   chronicle: string;
   lore: string;

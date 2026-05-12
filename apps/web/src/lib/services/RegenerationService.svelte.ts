@@ -31,10 +31,18 @@ export class RegenerationService {
       }
 
       // Reconcile the AI output with existing content to preserve/merge details
-      const updates = await oracle.reconcileSmartApply(entityId, {
-        chronicle: parsed.chronicle,
-        lore: parsed.lore,
-      });
+      let updates: { content?: string; lore?: string } = {};
+      try {
+        updates = await oracle.reconcileSmartApply(entityId, {
+          chronicle: parsed.chronicle,
+          lore: parsed.lore,
+        });
+      } catch (e) {
+        console.error(
+          "[RegenerationService] Reconciliation failed, falling back to raw output",
+          e,
+        );
+      }
 
       this.pendingDraft = {
         entityId,

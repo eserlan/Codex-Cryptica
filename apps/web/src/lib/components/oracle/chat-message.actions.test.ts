@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatMessageActions } from "./chat-message.actions";
 
-const regenerationServiceMock = {
-  pendingDraft: null as any,
-};
+const { regenerationServiceMock } = vi.hoisted(() => ({
+  regenerationServiceMock: { pendingDraft: null as any },
+}));
 
 vi.mock("$lib/services/RegenerationService.svelte", () => ({
   regenerationService: regenerationServiceMock,

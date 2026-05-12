@@ -4,6 +4,7 @@ import {
   type ChatMessage,
 } from "$lib/stores/oracle.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
+import { regenerationService as defaultRegenerationService } from "$lib/services/RegenerationService.svelte";
 import { sanitizeId } from "$lib/utils/markdown";
 import type { ParsedChatMessage } from "./chat-message.helpers";
 
@@ -27,11 +28,13 @@ type ConnectionLike = {
 type VaultLike = typeof defaultVault;
 type OracleLike = typeof defaultOracle;
 type GraphLike = typeof defaultGraph;
+type RegenerationServiceLike = typeof defaultRegenerationService;
 
 export interface ChatMessageActionsDeps {
   oracle?: OracleLike;
   vault?: VaultLike;
   graph?: GraphLike;
+  regenerationService?: RegenerationServiceLike;
 }
 
 export interface SavedStateCallbacks {
@@ -42,11 +45,14 @@ export class ChatMessageActions {
   private oracle: OracleLike;
   private vault: VaultLike;
   private graph: GraphLike;
+  private regenerationService: RegenerationServiceLike;
 
   constructor(deps: ChatMessageActionsDeps = {}) {
     this.oracle = deps.oracle ?? defaultOracle;
     this.vault = deps.vault ?? defaultVault;
     this.graph = deps.graph ?? defaultGraph;
+    this.regenerationService =
+      deps.regenerationService ?? defaultRegenerationService;
   }
 
   private finalTargetId(
@@ -131,9 +137,7 @@ export class ChatMessageActions {
     console.log("[Oracle] Smart Apply reconciled updates:", updates);
 
     // Instead of immediate update with undo, use the draft flow for a unified experience
-    const { regenerationService } =
-      await import("$lib/services/RegenerationService.svelte");
-    regenerationService.pendingDraft = {
+    this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
       chronicle: updates.content || "",
@@ -216,9 +220,7 @@ export class ChatMessageActions {
       chronicle: params.message.content,
     });
 
-    const { regenerationService } =
-      await import("$lib/services/RegenerationService.svelte");
-    regenerationService.pendingDraft = {
+    this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
       chronicle: updates.content || "",
@@ -245,9 +247,7 @@ export class ChatMessageActions {
       lore: params.message.content,
     });
 
-    const { regenerationService } =
-      await import("$lib/services/RegenerationService.svelte");
-    regenerationService.pendingDraft = {
+    this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
       chronicle: updates.content || "",
