@@ -345,6 +345,7 @@
                 }
               } else {
                 if (ui.isMobile) {
+                  clearNodeSelectTimer();
                   ui.openZenMode(id);
                   selectedId = null;
                   node.unselect();

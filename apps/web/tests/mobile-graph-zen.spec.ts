@@ -88,5 +88,17 @@ test.describe("Mobile Graph Zen Mode", () => {
     // Check title in Zen mode
     const titleElement = modal.getByTestId("entity-title");
     await expect(titleElement).toHaveText("Mobile Tap Node");
+
+    // Close Zen Mode
+    await modal.getByRole("button", { name: "Close" }).click();
+    await expect(modal).toBeHidden();
+
+    // Verify node is not selected in Cytoscape
+    const isSelected = await page.evaluate((id) => {
+      const cy = (window as any).cy;
+      return cy.$id(id).selected();
+    }, nodeId);
+
+    expect(isSelected).toBe(false);
   });
 });
