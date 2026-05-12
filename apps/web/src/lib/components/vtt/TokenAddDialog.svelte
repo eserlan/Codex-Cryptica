@@ -10,16 +10,25 @@
   const coords = $derived(mapSession.pendingTokenCoords);
 
   const entities = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
+    // This avoids intermediate array allocations and reduces GC pressure when typing in the search.
     const all = vault.allEntities;
-    const allowed = all.filter((entity) =>
-      ["character", "creature"].includes(entity.type),
-    );
-    if (!query) return allowed.slice(0, 12);
+    const term = query ? query.toLowerCase() : null;
+    const result: typeof all = [];
+    const limit = 12;
 
-    const term = query.toLowerCase();
-    return allowed
-      .filter((entity) => entity.title.toLowerCase().includes(term))
-      .slice(0, 12);
+    for (let i = 0; i < all.length; i++) {
+      if (result.length >= limit) break;
+      const entity = all[i];
+
+      if (entity.type === "character" || entity.type === "creature") {
+        if (!term || entity.title.toLowerCase().includes(term)) {
+          result.push(entity);
+        }
+      }
+    }
+
+    return result;
   });
 
   const selectedEntity = $derived.by(() => {

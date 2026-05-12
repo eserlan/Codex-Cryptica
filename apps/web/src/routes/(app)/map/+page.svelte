@@ -29,11 +29,12 @@
   );
   const hasSelectedToken = $derived(Boolean(mapSession.selectedToken));
   const VTT_ENTITY_TYPES = ["character", "creature", "item"];
-  const vttEntityCount = $derived.by(
-    () =>
-      vault.allEntities.filter((entity) =>
-        VTT_ENTITY_TYPES.includes(entity.type),
-      ).length,
+  // ⚡ Bolt Optimization: Replace .filter().length with .reduce() to avoid intermediate array allocation
+  const vttEntityCount = $derived(
+    vault.allEntities.reduce(
+      (count, e) => count + (VTT_ENTITY_TYPES.includes(e.type) ? 1 : 0),
+      0,
+    ),
   );
 
   let showUpload = $state(false);
@@ -547,6 +548,8 @@
               <button
                 class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
                 onclick={() => (mapStore.showFog = !mapStore.showFog)}
+                aria-pressed={mapStore.showFog}
+                aria-label="Toggle Fog of War"
               >
                 FOG: {mapStore.showFog ? "ON" : "OFF"}
               </button>
@@ -559,10 +562,13 @@
                   mapSession.showGridSettings = true;
                 }}
                 title="Toggle Grid (Right-click for settings)"
+                aria-pressed={mapStore.showGrid}
+                aria-haspopup="dialog"
+                aria-expanded={mapSession.showGridSettings}
+                aria-label="Toggle Grid"
               >
                 GRID: {mapStore.showGrid ? "ON" : "OFF"}
               </button>
-
               <VTTModeToggle />
 
               <div class="flex items-center gap-2 px-2">

@@ -36,7 +36,7 @@
     oncontextmenu={(event) => event.preventDefault()}
     title={mapSession.vttEnabled ? "Disable VTT mode" : "Enable VTT mode"}
     aria-pressed={mapSession.vttEnabled}
-    aria-haspopup="true"
+    aria-haspopup="menu"
     aria-expanded={vttModeMenu.isOpen}
     aria-label="Toggle VTT mode"
   >
