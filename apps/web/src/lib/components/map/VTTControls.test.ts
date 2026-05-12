@@ -89,8 +89,17 @@ describe("VTTControls", () => {
     expect(combatButton).not.toBeNull();
     expect(combatButton.getAttribute("aria-pressed")).toBe("false");
 
-    expect(screen.getByRole("button", { name: "Add Token" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Encounters" })).not.toBeNull();
+    const addTokenButton = screen.getByRole("button", { name: "Add Token" });
+    const encountersButton = screen.getByRole("button", { name: "Encounters" });
+
+    expect(addTokenButton).not.toBeNull();
+    expect(addTokenButton.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(addTokenButton.getAttribute("aria-expanded")).toBe("false");
+
+    expect(encountersButton).not.toBeNull();
+    expect(encountersButton.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(encountersButton.getAttribute("aria-expanded")).toBe("false");
+
     expect(screen.queryByRole("tab")).toBeNull();
     expect(container.firstElementChild?.className).toContain("flex-col");
     expect(container.firstElementChild?.firstElementChild?.className).toContain(

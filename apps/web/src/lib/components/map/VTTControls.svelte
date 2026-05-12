@@ -61,6 +61,8 @@
         type="button"
         aria-label="Add Token"
         title="Add Token"
+        aria-haspopup="dialog"
+        aria-expanded={!!mapSession.pendingTokenCoords}
       >
         <span class="icon-[lucide--user-plus] h-4 w-4"></span>
       </button>
