@@ -140,8 +140,8 @@ export class ChatMessageActions {
     this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
-      chronicle: updates.content || "",
-      lore: updates.lore || "",
+      chronicle: updates.content ?? entity?.content ?? "",
+      lore: updates.lore ?? entity?.lore ?? "",
       timestamp: Date.now(),
     };
 
@@ -220,11 +220,12 @@ export class ChatMessageActions {
       chronicle: params.message.content,
     });
 
+    const entity = this.vault.entities[finalTargetId] as EntityLike | undefined;
     this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
-      chronicle: updates.content || "",
-      lore: updates.lore || "",
+      chronicle: updates.content ?? entity?.content ?? "",
+      lore: updates.lore ?? entity?.lore ?? "",
       timestamp: Date.now(),
     };
 
@@ -247,11 +248,12 @@ export class ChatMessageActions {
       lore: params.message.content,
     });
 
+    const entity = this.vault.entities[finalTargetId] as EntityLike | undefined;
     this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
-      chronicle: updates.content || "",
-      lore: updates.lore || "",
+      chronicle: updates.content ?? entity?.content ?? "",
+      lore: updates.lore ?? entity?.lore ?? "",
       timestamp: Date.now(),
     };
 

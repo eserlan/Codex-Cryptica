@@ -44,10 +44,11 @@ export class RegenerationService {
         );
       }
 
+      const entity = vault.entities[entityId] as any;
       this.pendingDraft = {
         entityId,
-        chronicle: updates.content || parsed.chronicle || "",
-        lore: updates.lore || parsed.lore || "",
+        chronicle: updates.content ?? parsed.chronicle ?? entity?.content ?? "",
+        lore: updates.lore ?? parsed.lore ?? entity?.lore ?? "",
         timestamp: Date.now(),
       };
       return true;

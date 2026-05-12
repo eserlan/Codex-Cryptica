@@ -125,8 +125,11 @@ describe("ChatMessageActions", () => {
     expect(oracle.pushUndoAction).toHaveBeenCalled();
   });
 
-  it("proposes a chronicle update draft with reconciliation", async () => {
+  it("proposes a chronicle update draft with reconciliation and preserves existing lore", async () => {
     const setSaved = vi.fn();
+    oracle.reconcileSmartApply.mockResolvedValue({
+      content: "fresh chronicle reconciled",
+    });
 
     await actions.copyToChronicle({
       message: {
@@ -144,14 +147,18 @@ describe("ChatMessageActions", () => {
       expect.objectContaining({
         entityId: "target",
         messageId: "message-3",
-        chronicle: "new chronicle",
+        chronicle: "fresh chronicle reconciled",
+        lore: "old lore", // Preserved from vault.entities.target
       }),
     );
     expect(setSaved).toHaveBeenCalledWith(true);
   });
 
-  it("proposes a lore update draft with reconciliation", async () => {
+  it("proposes a lore update draft with reconciliation and preserves existing chronicle", async () => {
     const setSaved = vi.fn();
+    oracle.reconcileSmartApply.mockResolvedValue({
+      lore: "fresh lore reconciled",
+    });
 
     await actions.copyToLore({
       message: {
@@ -169,7 +176,8 @@ describe("ChatMessageActions", () => {
       expect.objectContaining({
         entityId: "target",
         messageId: "message-4",
-        lore: "new lore",
+        chronicle: "old chronicle", // Preserved from vault.entities.target
+        lore: "fresh lore reconciled",
       }),
     );
     expect(setSaved).toHaveBeenCalledWith(true);
