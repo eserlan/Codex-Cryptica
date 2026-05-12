@@ -49,6 +49,9 @@
   );
 
   let isSaved = $state(false);
+  let activeAction = $state<"apply" | "create" | "chronicle" | "lore" | null>(
+    null,
+  );
   let isCopied = $state(false);
   let showDiscoveryChips = $state(false);
   let htmlCache = $state("");
@@ -130,44 +133,64 @@
   }
 
   const applySmart = async () => {
-    await chatMessageActions.applySmart({
-      message,
-      parsed,
-      activeEntityId: activeEntity?.id ?? null,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
-    });
+    activeAction = "apply";
+    try {
+      await chatMessageActions.applySmart({
+        message,
+        parsed,
+        activeEntityId: activeEntity?.id ?? null,
+        setSaved: (saved) => {
+          isSaved = saved;
+        },
+      });
+    } finally {
+      activeAction = null;
+    }
   };
 
   const createAsNode = async () => {
-    await chatMessageActions.createAsNode({
-      message,
-      parsed,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
-    });
+    activeAction = "create";
+    try {
+      await chatMessageActions.createAsNode({
+        message,
+        parsed,
+        setSaved: (saved) => {
+          isSaved = saved;
+        },
+      });
+    } finally {
+      activeAction = null;
+    }
   };
 
   const copyToChronicle = async () => {
-    await chatMessageActions.copyToChronicle({
-      message,
-      activeEntityId: activeEntity?.id ?? null,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
-    });
+    activeAction = "chronicle";
+    try {
+      await chatMessageActions.copyToChronicle({
+        message,
+        activeEntityId: activeEntity?.id ?? null,
+        setSaved: (saved) => {
+          isSaved = saved;
+        },
+      });
+    } finally {
+      activeAction = null;
+    }
   };
 
   const copyToLore = async () => {
-    await chatMessageActions.copyToLore({
-      message,
-      activeEntityId: activeEntity?.id ?? null,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
-    });
+    activeAction = "lore";
+    try {
+      await chatMessageActions.copyToLore({
+        message,
+        activeEntityId: activeEntity?.id ?? null,
+        setSaved: (saved) => {
+          isSaved = saved;
+        },
+      });
+    } finally {
+      activeAction = null;
+    }
   };
 
   const handleUndo = async () => {
@@ -328,12 +351,24 @@
               {#if showCreate}
                 <button
                   onclick={createAsNode}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative"
+                  disabled={activeAction !== null}
+                  aria-busy={activeAction === "create"}
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span class="icon-[lucide--plus-circle] w-3.5 h-3.5 shrink-0"
-                  ></span>
+                  {#if activeAction === "create"}
+                    <span
+                      class="icon-[lucide--loader-2] w-3.5 h-3.5 shrink-0 animate-spin"
+                      aria-hidden="true"
+                    ></span>
+                  {:else}
+                    <span
+                      class="icon-[lucide--plus-circle] w-3.5 h-3.5 shrink-0"
+                    ></span>
+                  {/if}
                   <span class="truncate font-header"
-                    >CREATE AS {parsed.type?.toUpperCase() || "NEW NODE"}: {parsed.title?.toUpperCase()}</span
+                    >{activeAction === "create"
+                      ? "CREATING..."
+                      : `CREATE AS ${parsed.type?.toUpperCase() || "NEW NODE"}: ${parsed.title?.toUpperCase()}`}</span
                   >
 
                   <!-- Tooltip for Create -->
@@ -371,12 +406,25 @@
                 {#if parsed.wasSplit}
                   <button
                     onclick={applySmart}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative"
+                    disabled={activeAction !== null}
+                    aria-busy={activeAction === "apply"}
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"></span>
+                    {#if activeAction === "apply"}
+                      <span
+                        class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
+                        aria-hidden="true"
+                      ></span>
+                    {:else}
+                      <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"
+                      ></span>
+                    {/if}
                     <span class="truncate font-header"
-                      >SMART APPLY TO {(
+                      >{activeAction === "apply"
+                        ? "APPLYING..."
+                        : "SMART APPLY TO"}
+                      {(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()}</span
                     >
@@ -408,13 +456,24 @@
                 {:else if !isLore}
                   <button
                     onclick={copyToChronicle}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px]"
+                    disabled={activeAction !== null}
+                    aria-busy={activeAction === "chronicle"}
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
-                    ></span>
+                    {#if activeAction === "chronicle"}
+                      <span
+                        class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
+                        aria-hidden="true"
+                      ></span>
+                    {:else}
+                      <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
+                      ></span>
+                    {/if}
                     <span class="truncate font-header"
-                      >COPY TO CHRONICLE ({(
+                      >{activeAction === "chronicle"
+                        ? "COPYING..."
+                        : "COPY TO CHRONICLE"} ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span
                     >
@@ -422,13 +481,22 @@
                 {:else}
                   <button
                     onclick={copyToLore}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px]"
+                    disabled={activeAction !== null}
+                    aria-busy={activeAction === "lore"}
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
-                    ></span>
+                    {#if activeAction === "lore"}
+                      <span
+                        class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
+                        aria-hidden="true"
+                      ></span>
+                    {:else}
+                      <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
+                      ></span>
+                    {/if}
                     <span class="truncate font-header"
-                      >COPY TO LORE ({(
+                      >{activeAction === "lore" ? "COPYING..." : "COPY TO LORE"} ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span
                     >
