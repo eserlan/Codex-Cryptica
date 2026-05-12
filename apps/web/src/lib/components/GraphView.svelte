@@ -344,6 +344,12 @@
                   ui.toggleConnectMode();
                 }
               } else {
+                if (ui.isMobile) {
+                  ui.openZenMode(id);
+                  selectedId = null;
+                  node.unselect();
+                  return;
+                }
                 clearNodeSelectTimer();
                 nodeSelectTimer = window.setTimeout(() => {
                   selectedId = id;
@@ -351,10 +357,11 @@
                 }, NODE_SELECT_DELAY_MS);
               }
             },
-            onNodeDoubleTap: (id) => {
+            onNodeDoubleTap: (id, node) => {
               clearNodeSelectTimer();
               ui.openZenMode(id);
               selectedId = null;
+              node.unselect();
             },
             onEdgeTap: (data) => {
               editingEdge = {
