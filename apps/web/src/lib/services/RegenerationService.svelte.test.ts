@@ -14,6 +14,7 @@ vi.mock("../stores/oracle.svelte", () => ({
 
 vi.mock("../stores/vault.svelte", () => ({
   vault: {
+    entities: {} as any,
     updateEntity: vi.fn().mockResolvedValue(undefined),
   },
 }));
