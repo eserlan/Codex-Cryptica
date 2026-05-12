@@ -1,115 +1,77 @@
 # God File Analysis Report: Codex-Cryptica
 
-This report identifies the top 10 potential "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
+_(Last updated: May 11, 2026)_
+
+This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
+
+## Executive Summary (May 2026 Reassessment)
+
+A recent reassessment has revealed a significant shift in the codebase's technical debt. While many of the historical "God Files" (like `vault.svelte.ts` and `CanvasWorkspace.svelte`) have stayed modular, a massive influx of new code—primarily around the **VTT / Map Engine**, **P2P Cloud Bridge**, and **Oracle enhancements**—has created a new generation of monolithic files. Furthermore, some previously refactored files (such as `MapView.svelte` and `oracle.svelte.ts`) have suffered severe regressions.
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                   | Line Count    | Type                | Status   |
-| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :------- |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 304 | Store (State/Logic) | ✅ FIXED |
-| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 478 | Store (State/Logic) | ✅ FIXED |
-| 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 561 | UI Component        | ✅ FIXED |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 372 | UI Component        | ✅ FIXED |
-| 5    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`      | ~~920~~ 210   | Store (State/Logic) | ✅ FIXED |
-| 6    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1     | Service (API/Logic) | ✅ FIXED |
-| 7    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 222   | UI Layout           | ✅ FIXED |
-| 8    | `packages/sync-engine/src/SyncService.ts`                   | 711           | Engine Core         | 🟡 SOON  |
-| 9    | `apps/web/src/lib/components/map/MapView.svelte`            | ~~681~~ 448   | UI Component        | ✅ FIXED |
-| 10   | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | ~~835~~ 326   | UI Component        | ✅ FIXED |
+| Rank | File Path                                                  | Line Count | Type                | Status            |
+| :--- | :--------------------------------------------------------- | :--------- | :------------------ | :---------------- |
+| 1    | `apps/web/src/lib/stores/map-session.svelte.ts`            | 1,788      | Store (State/Logic) | 🔴 NEW (CRITICAL) |
+| 2    | `apps/web/src/lib/components/map/MapView.svelte`           | 1,536      | UI Component        | 🔴 REGRESSION     |
+| 3    | `packages/oracle-engine/src/oracle-executor.ts`            | 1,072      | Engine Core         | 🔴 NEW (CRITICAL) |
+| 4    | `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` | 917        | Service (P2P)       | 🔴 NEW            |
+| 5    | `apps/web/src/lib/stores/ui.svelte.ts`                     | 872        | Store (State)       | 🔴 NEW            |
+| 6    | `apps/web/src/lib/stores/oracle.svelte.ts`                 | 790        | Store (State/Logic) | 🔴 REGRESSION     |
+| 7    | `apps/web/src/routes/(app)/map/+page.svelte`               | 735        | UI Layout           | 🔴 NEW            |
+| 8    | `apps/web/src/lib/components/GraphView.svelte`             | 699        | UI Component        | 🟡 REGRESSION     |
+| 9    | `packages/map-engine/src/renderer.ts`                      | 672        | Engine Core         | 🔴 NEW            |
+| 10   | `apps/web/src/lib/components/graph/ContextMenu.svelte`     | 644        | UI Component        | 🔴 NEW            |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. `oracle.svelte.ts` (Refactored)
+### 1. The VTT / Map Monoliths (`map-session.svelte.ts`, `MapView.svelte`, `(app)/map/+page.svelte`)
 
-**Status:** ✅ **COMPLETED (2026-03-11)**
-**Summary:** Refactored into `@codex/oracle-engine`. Logic isolated into `ChatHistoryService`, `OracleSettingsService`, `OracleCommandParser`, `OracleActionExecutor`, `OracleGenerator`, and `UndoRedoService`.
-**Outcome:** Reduced from ~1,600 lines to 304 lines. Established Dependency Injection as a core principle.
+**Analysis:** The introduction of the VTT and Map features has severely overloaded these files. `map-session.svelte.ts` at 1,788 lines is the largest file in the project, likely orchestrating state, rendering loops, multiplayer sync, and fog of war all in one place. `MapView.svelte` (1,536 lines) was previously refactored but has completely ballooned with VTT features.
+**Recommended Split:**
 
-### 2. `vault.svelte.ts` (Refactored)
+- Decouple pure rendering state from multiplayer session state.
+- Extract P2P sync handlers out of the map session store into dedicated sync coordinators.
+- Split `MapView.svelte` into smaller composite components (e.g., `MapCanvas`, `TokenLayer`, `FogLayer`, `VTTControls`).
 
-**Status:** ✅ **COMPLETED (2026-03-11)**
-**Summary:** Refactored into `@codex/vault-engine` and specialized stores. Logic decoupled into `VaultRegistryStore`, `MapRegistryStore`, `CanvasRegistryStore`, and `VaultRepository`.
-**Outcome:** Reduced from ~1,400 lines to 478 lines. Improved data separation and persistence logic.
+### 2. The Oracle Monoliths (`oracle-executor.ts`, `oracle.svelte.ts`)
 
-### 3. `GraphView.svelte` (Refactored)
+**Analysis:** `oracle-executor.ts` (1,072 lines) handles command routing, execution policy, and effectful integrations behind a single entrypoint. Additionally, `oracle.svelte.ts` (790 lines) has regressed from its previously refactored state of ~300 lines, accumulating new state and logic.
+**Recommended Split:**
 
-**Status:** ✅ **COMPLETED (2026-03-12)**
-**Summary:** Refactored into modular components and decoupled logic. Extracted `GraphHUD`, `GraphToolbar`, `GraphTooltip`, and `EdgeEditorModal` UI components. Moved layout execution to `LayoutManager`, styling to `GraphStyles`, event handling to `useGraphEvents`, and element synchronization to `useGraphSync`.
-**Outcome:** Reduced from 1,371 lines to 561 lines. Improved viewport stability and eliminated image loading jitter. Established a clear separation between the UI layer and the visualization engine.
+- Isolate command routing, specific tool executors, and effectful integrations in `oracle-executor.ts` into a plugin-like architecture so the executor becomes a thin dispatcher.
+- Review `oracle.svelte.ts` to push business logic back down into the `oracle-engine` or extract sub-stores for distinct Oracle features (e.g., Chat History vs. Generation State).
 
-### 4. `ZenModeModal.svelte` (Refactored)
+### 3. P2P Cloud Bridge (`host-service.svelte.ts`)
 
-**Status:** ✅ **COMPLETED (2026-03-12)**
-**Summary:** Refactored into a modal orchestration shell with extracted editor/view subcomponents and isolated state handling.
-**Outcome:** Reduced from 1,058 lines to 372 lines and aligned with the modular component patterns established by GraphView.
+**Analysis:** At 917 lines, the host service likely handles WebRTC signaling, connection management, delta synchronization, and host authority rules simultaneously.
+**Recommended Split:**
 
-### 5. `ai.ts` (Refactored)
+- Extract the low-level WebRTC/connection management into a transport layer.
+- Keep the Svelte store focused purely on reactive connection state and top-level session authority.
 
-**Status:** ✅ **COMPLETED (2026-03-13)**
-**Summary:** Decomposed into specialized services under `services/ai/` for orchestration, prompts, generation, and retrieval.
-**Outcome:** `ai.ts` now serves as a compatibility/export shim (1 line), dramatically reducing coupling and making AI capabilities independently testable.
+### 4. UI State (`ui.svelte.ts`)
 
-### 6. `+layout.svelte` (Refactored)
+**Analysis:** A generic `ui.svelte.ts` store at 872 lines indicates it has become a dumping ground for global UI state (modals, toasts, theme, layout toggles, sidebars).
+**Recommended Split:**
 
-**Status:** ✅ **COMPLETED (2026-03-22)**
-**Summary:** Restructured layout architecture using SvelteKit route groups. Created `(app)` route group for workspace routes, moved workspace routes into it, and stripped root layout to minimal shell.
-**Outcome:** Reduced from 795 lines to 222 lines.
+- Decompose into feature-specific UI stores (e.g., `toast-store.svelte.ts`, `modal-store.svelte.ts`, `layout-store.svelte.ts`).
 
-### 7. `MapView.svelte` (Refactored)
+### 5. Graph Component Regressions (`GraphView.svelte`, `ContextMenu.svelte`)
 
-**Status:** ✅ **COMPLETED (2026-04-01)**
-**Summary:** Split into a thin composition shell with extracted loader, fog painter, pin popover, and pure interaction helpers.
-**Outcome:** Reduced from ~~681~~ 448 lines.
+**Analysis:** `GraphView.svelte` has crept back up to ~700 lines, and `ContextMenu.svelte` at 644 lines indicates an overly complex context menu logic (likely handling every possible graph node action).
+**Recommended Split:**
 
-### 8. `entity-store.svelte.ts` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-04-27)**
-**Summary:** Extracted content loading, persistence coordination, and mutation logic into `EntityContentLoader`, `EntityPersistenceService`, and `EntityMutationService`. Implementation switched to full Dependency Injection.
-**Outcome:** Reduced from 920 lines to 450 lines. Established a clean separation between reactive state views and side-effectful operations.
-
-### 8. `CanvasWorkspace.svelte` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-04-27)**
-**Summary:** Extracted workspace logic into `useCanvasLogic` and `useCanvasEvents` hooks. Moved overlay HUD to `CanvasHUD` component. The main component now acts as a clean orchestration shell for SvelteFlow.
-**Outcome:** Reduced from 835 lines to 326 lines. Improved separation between UI state, persistence, and event handling.
+- Extract action dispatchers and menu item configuration from `ContextMenu.svelte` into a configuration/strategy pattern.
+- Re-audit `GraphView.svelte` to push newly added graph features into `packages/graph-engine/` or child components.
 
 ---
 
-## Conclusion
+## Historical Successes (Previously Fixed & Maintained)
 
-The biggest remaining risks are no longer the historically-fixed monoliths, but the live high-coupling shells at the top of the current list. The next refactor pass should focus on files that combine UI, state, and side effects in a way that is still hard to test or reason about, rather than simply chasing line count.
-
-## Next Actions
-
-The next pass should focus on the four or five files below. Each one either concentrates too many responsibilities in one module or is likely to hide a reusable boundary that can be extracted cleanly.
-
-### 1. `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte`
-
-**Why now:** This is the largest remaining file and the strongest signal that the canvas workspace still mixes rendering, pointer interaction, selection, keyboard shortcuts, tool dispatch, and workspace coordination in one place.
-**Recommended split:** Extract tool-specific interaction handlers, selection/command state, and rendering helpers into separate modules or child components. Keep the shell focused on composition and event wiring.
-
-### 2. `apps/web/src/lib/stores/vault/entity-store.svelte.ts`
-
-**Why now:** This store is the biggest vault-adjacent state module and likely carries entity lifecycle, indexing, sync hooks, and persistence boundaries.
-**Recommended split:** Separate pure entity CRUD/state from persistence and indexing concerns. If this file still knows too much about vault-wide coordination, move that logic into a dedicated service or coordinator.
-
-### 3. `packages/oracle-engine/src/oracle-executor.ts`
-
-**Why now:** Engine code tends to accumulate orchestration, validation, and side effects behind a single entrypoint. It is a good candidate for clearer seams because the behavior is usually deterministic enough to test in layers.
-**Recommended split:** Isolate command routing, execution policy, and effectful integrations so the executor becomes a thin dispatcher instead of a multi-role coordinator.
-
-### 4. `apps/web/src/lib/components/settings/SettingsModal.svelte`
-
-**Why now:** Settings modals commonly become a dumping ground for vault, sync, theme, export/import, and preference flows.
-**Recommended split:** Extract the modal sections by concern, and move non-visual settings logic into store/service modules so the modal becomes a layout shell with tabs or sections.
-
-### 5. `apps/web/src/lib/components/settings/ImportSettings.svelte`
-
-**Why now:** Import flows often hide parsing, validation, preview, and merge logic in a component that should mostly just present state.
-**Recommended split:** Pull parsing and file/format validation out of the component. Keep the Svelte file responsible for UX and status display only.
-
-### Secondary Candidates
-
-`apps/web/src/lib/components/GraphView.svelte`, `apps/web/src/routes/(app)/+page.svelte`, `apps/web/src/lib/components/world/FrontPage.svelte`, and `apps/web/src/lib/stores/ui.svelte.ts` should stay on watch, but they are lower priority than the files above. They may still be large shells, but they are less obviously the source of architectural coupling than `CanvasWorkspace`, `entity-store`, and `oracle-executor`.
+- **`vault.svelte.ts`**: Holding steady at ~500 lines (down from 1,381).
+- **`CanvasWorkspace.svelte`**: Staying modular at ~326 lines (down from 835).
+- **`entity-store.svelte.ts`**: Maintaining boundaries at ~450 lines (down from 920).
+- **`ai.ts`**: Effectively eliminated as a god file.

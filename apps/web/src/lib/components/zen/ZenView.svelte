@@ -8,6 +8,7 @@
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
+  import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
 
   let {
@@ -391,6 +392,9 @@
         </div>
       {/if}
     </div>
+
+    <!-- Inline Preview Overlay for AI Drafts -->
+    <InlinePreviewOverlay />
   {:else}
     <div class="flex-1 flex items-center justify-center p-12 text-center">
       <div class="max-w-md space-y-4">
