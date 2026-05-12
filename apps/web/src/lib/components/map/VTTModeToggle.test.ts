@@ -27,6 +27,7 @@ describe("VTTModeToggle", () => {
 
     const toggle = screen.getByRole("button", { name: "Toggle VTT mode" });
     expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    expect(toggle.getAttribute("aria-haspopup")).toBe("menu");
     await fireEvent.click(toggle);
 
     await waitFor(() => {

@@ -548,6 +548,8 @@
               <button
                 class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
                 onclick={() => (mapStore.showFog = !mapStore.showFog)}
+                aria-pressed={mapStore.showFog}
+                aria-label="Toggle Fog of War"
               >
                 FOG: {mapStore.showFog ? "ON" : "OFF"}
               </button>
@@ -560,10 +562,13 @@
                   mapSession.showGridSettings = true;
                 }}
                 title="Toggle Grid (Right-click for settings)"
+                aria-pressed={mapStore.showGrid}
+                aria-haspopup="dialog"
+                aria-expanded={mapSession.showGridSettings}
+                aria-label="Toggle Grid"
               >
                 GRID: {mapStore.showGrid ? "ON" : "OFF"}
               </button>
-
               <VTTModeToggle />
 
               <div class="flex items-center gap-2 px-2">
