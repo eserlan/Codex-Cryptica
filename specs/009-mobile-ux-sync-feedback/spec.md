@@ -121,6 +121,21 @@ As a mobile user, I want to access graph controls through a single toggle button
 1. **Given** a mobile device, **When** I tap the graph control toggle, **Then** the full set of controls (zoom, fit, filters) appears in an overlaid menu.
 2. **Given** the mobile control menu is open, **When** I trigger a "Fit to Screen" action, **Then** the action executes and the control menu automatically closes.
 
+---
+
+### User Story 9 - Direct Zen Mode Access from Graph (Priority: P2)
+
+As a mobile user, I want tapping a node in the graph to immediately open its full details in Zen Mode, so that I can quickly read and edit my lore without the extra step of a selection delay or double-tap.
+
+**Why this priority**: Streamlines the primary mobile workflow where Zen Mode is the standard viewing context.
+
+**Independent Test**: On a mobile-sized viewport, tap a graph node once and verify Zen Mode opens immediately.
+
+**Acceptance Scenarios**:
+
+1. **Given** a mobile device, **When** I tap a node in the graph, **Then** the Zen Mode modal opens for that entity immediately.
+2. **Given** Zen Mode is opened via a single tap, **When** I close Zen Mode, **Then** the node should not remain visually selected in the graph.
+
 ## Requirements
 
 ### Functional Requirements
@@ -140,6 +155,7 @@ As a mobile user, I want to access graph controls through a single toggle button
 - **FR-013**: Clicking a connected entity in the embedded connections view MUST update the main content area while preserving sidebar state (Oracle, Explorer).
 - **FR-014**: Connections section MUST show an appropriate empty state when no connections exist for an entity.
 - **FR-015**: Graph controls MUST collapse into a single floating toggle button on mobile viewports, revealing a compact overlaid menu when activated.
+- **FR-016**: Tapping a node in the graph on mobile viewports MUST immediately trigger `openZenMode` and clear active graph selection.
 
 ### User Story 4 - Reliable Sync Consistency (Priority: P0)
 
