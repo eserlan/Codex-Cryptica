@@ -32,7 +32,7 @@ import {
 } from "dice-engine";
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import { categories as defaultCategories } from "./categories.svelte";
-import type { TextGenerationService } from "schema";
+import type { Entity, TextGenerationService } from "schema";
 
 export type { ChatMessage, UndoableAction };
 
@@ -351,6 +351,9 @@ export class OracleStore {
         clearMessages: wrap(
           this.chatHistoryService.clearMessages?.bind(this.chatHistoryService),
         ),
+        removeMessage: wrap(
+          this.chatHistoryService.removeMessage?.bind(this.chatHistoryService),
+        ),
         addProposal: wrap(
           this.chatHistoryService.addProposal?.bind(this.chatHistoryService),
         ),
@@ -570,6 +573,71 @@ export class OracleStore {
     await this.chatHistoryService.removeMessage(id);
   }
 
+  private async reconcileEntityFields(
+    existing: Entity,
+    incoming: { chronicle: string; lore: string },
+  ): Promise<{ content: string; lore: string }> {
+    if (!this.textGeneration.reconcileEntityUpdate) {
+      throw new Error("reconcileEntityUpdate not available");
+    }
+    const snapExisting = $state.snapshot(existing);
+    const snapIncoming = $state.snapshot(incoming);
+    const snapContext = $state.snapshot(
+      buildRelatedEntityContext({
+        entity: existing,
+        incoming,
+        vault: this.vault,
+        getConsolidatedContext: (related) =>
+          this.contextRetrieval.getConsolidatedContext(related),
+      }),
+    );
+    return this.textGeneration.reconcileEntityUpdate(
+      this.effectiveApiKey || "",
+      this.modelName,
+      snapExisting,
+      snapIncoming,
+      snapContext,
+    );
+  }
+
+  async reconcileSmartApply(
+    entityId: string,
+    incoming: { chronicle?: string; lore?: string },
+  ): Promise<{ content?: string; lore?: string }> {
+    const existing = this.vault.entities[entityId];
+    if (!existing) throw new Error(`Entity ${entityId} not found.`);
+
+    const fallback = (): { content?: string; lore?: string } => ({
+      content: incoming.chronicle
+        ? existing.content
+          ? existing.content + "\n\n" + incoming.chronicle
+          : incoming.chronicle
+        : undefined,
+      lore: incoming.lore
+        ? existing.lore
+          ? existing.lore + "\n\n" + incoming.lore
+          : incoming.lore
+        : undefined,
+    });
+
+    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+      return fallback();
+    }
+
+    try {
+      const reconciled = await this.reconcileEntityFields(existing, {
+        chronicle: incoming.chronicle || "",
+        lore: incoming.lore || "",
+      });
+      return {
+        content: reconciled.content || existing.content || "",
+        lore: reconciled.lore || existing.lore || "",
+      };
+    } catch {
+      return fallback();
+    }
+  }
+
   async reconcileDiscoveryProposal(proposal: DiscoveryProposal) {
     if (!proposal.entityId) {
       throw new Error("Discovery proposal does not target an existing record.");
@@ -588,32 +656,10 @@ export class OracleStore {
     }
 
     try {
-      // We MUST snapshot reactive state before sending to a worker (PR Fix)
-      const snapExisting = $state.snapshot(existing);
-      const snapIncoming = $state.snapshot({
+      return await this.reconcileEntityFields(existing, {
         chronicle: proposal.draft.chronicle,
         lore: proposal.draft.lore,
       });
-      const snapContext = $state.snapshot(
-        buildRelatedEntityContext({
-          entity: existing,
-          incoming: {
-            chronicle: proposal.draft.chronicle,
-            lore: proposal.draft.lore,
-          },
-          vault: this.vault,
-          getConsolidatedContext: (related) =>
-            this.contextRetrieval.getConsolidatedContext(related),
-        }),
-      );
-
-      return await this.textGeneration.reconcileEntityUpdate(
-        this.effectiveApiKey || "",
-        this.modelName,
-        snapExisting,
-        snapIncoming,
-        snapContext,
-      );
     } catch {
       return {
         content: existing.content || proposal.draft.chronicle,

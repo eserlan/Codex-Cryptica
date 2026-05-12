@@ -2,7 +2,7 @@
 
 ## Phase 1: Setup
 
-- [x] T001 Initialize `packages/chronology-engine` package with `npm init`
+- [x] T001 Initialize `packages/chronology-engine` package with `pnpm init`
 - [x] T002 Configure `tsconfig.json` for `packages/chronology-engine` ensuring Svelte 5 compatibility
 - [x] T003 Add `packages/chronology-engine` to the root `package.json` workspaces
 - [x] T004 Install `floating-ui` in `apps/web` for popover positioning

@@ -9,7 +9,7 @@ How to verify and work with prerendered marketing routes.
 To verify that routes are correctly prerendered, run the production build:
 
 ```bash
-npm run build --workspace=web
+pnpm --filter web run build
 ```
 
 Check the `apps/web/build` directory. You should see:

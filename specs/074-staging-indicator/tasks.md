@@ -38,7 +38,7 @@
 
 ## Phase 4: Polish & Validation
 
-- [x] T011 [P] Run all project tests to ensure no regressions: `npm test`
+- [x] T011 [P] Run all project tests to ensure no regressions: `pnpm test`
 - [x] T012 [P] Verify E2E tests pass for desktop and mobile viewports
 - [x] T013 Verify SC-004: 0ms CLS impact using browser devtools performance tab
 

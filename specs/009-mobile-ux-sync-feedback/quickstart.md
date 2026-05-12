@@ -23,8 +23,8 @@
 
 ```bash
 # Run unit tests for the sync-stats store
-npm run test:unit --prefix apps/web src/stores/sync-stats.test.ts
+pnpm -C apps/web run test:unit src/stores/sync-stats.test.ts
 
 # Run E2E tests for responsiveness and visual feedback
-npm run test:e2e --prefix apps/web
+pnpm -C apps/web run test:e2e
 ```

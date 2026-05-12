@@ -59,17 +59,7 @@ export class ChatMessageActions {
   private captureState(entityId: string) {
     const entity = this.vault.entities[entityId] as EntityLike | undefined;
     if (!entity) return null;
-    const snapshot = { ...entity } as EntityLike;
-
-    try {
-      return structuredClone(snapshot) as EntityLike;
-    } catch (error) {
-      console.warn(
-        "Failed to structuredClone entity, falling back to JSON parse/stringify",
-        error,
-      );
-      return JSON.parse(JSON.stringify(snapshot)) as EntityLike;
-    }
+    return JSON.parse(JSON.stringify(entity)) as EntityLike;
   }
 
   private async updateWithUndo(
@@ -124,20 +114,21 @@ export class ChatMessageActions {
       return;
     }
 
-    const updates: Partial<EntityLike> = {};
-    if (params.parsed.chronicle) {
-      updates.content = params.parsed.chronicle;
-    }
-    if (params.parsed.lore) {
-      updates.lore = params.parsed.lore;
-    }
+    const incoming: { chronicle?: string; lore?: string } = {};
+    if (params.parsed.chronicle) incoming.chronicle = params.parsed.chronicle;
+    if (params.parsed.lore) incoming.lore = params.parsed.lore;
 
-    console.log("[Oracle] Smart Apply updates:", updates);
-
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(incoming).length === 0) {
       console.warn("[Oracle] Smart Apply aborted: No updates extracted");
       return;
     }
+
+    const updates = await this.oracle.reconcileSmartApply(
+      finalTargetId,
+      incoming,
+    );
+
+    console.log("[Oracle] Smart Apply reconciled updates:", updates);
 
     await this.updateWithUndo(
       finalTargetId,
@@ -146,8 +137,9 @@ export class ChatMessageActions {
       params.message.id,
       async (beforeState) => {
         const undoUpdates: { content?: string; lore?: string } = {};
-        if (params.parsed.chronicle) undoUpdates.content = beforeState.content;
-        if (params.parsed.lore) undoUpdates.lore = beforeState.lore;
+        if (updates.content !== undefined)
+          undoUpdates.content = beforeState.content;
+        if (updates.lore !== undefined) undoUpdates.lore = beforeState.lore;
         await this.vault.updateEntity(beforeState.id, undoUpdates);
       },
       params.setSaved,

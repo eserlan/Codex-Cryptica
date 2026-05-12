@@ -24,7 +24,7 @@ Orbit Layout allows you to visualize the graph as a series of concentric rings a
 
 ### Manual Test
 
-1.  Launch the app: `npm run dev`.
+1.  Launch the app: `pnpm run dev`.
 2.  Go to a graph with at least 5 connected nodes.
 3.  Click Node A. Press "Orbit".
     - **Verify**: Node A is center. Neighbors are around it.
@@ -38,7 +38,7 @@ Orbit Layout allows you to visualize the graph as a series of concentric rings a
 Run the graph engine test suite:
 
 ```bash
-npm run test --filter=orbit
+pnpm run test --filter=orbit
 ```
 
 (Note: You will need to implement the tests in `packages/graph-engine/tests/orbit.test.ts`)

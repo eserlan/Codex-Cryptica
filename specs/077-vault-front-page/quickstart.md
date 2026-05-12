@@ -22,6 +22,6 @@
 
 ## 3. Verification Commands
 
-- **Unit Tests**: `npm test`
+- **Unit Tests**: `pnpm test`
 - **Dexie Validation**: Verify schema version 4 in browser DevTools.
 - **Manual**: Tag an entity with `frontpage`, confirm it pins to the top of relevant entities, and verify summary/cover generation still works.

@@ -38,8 +38,8 @@
 
 ## Phase 4: Polish & Validation
 
-- [x] T013 [P] Run `npm run check` and fix any type mismatches.
-- [x] T014 [P] Run `npm run lint` to ensure adherence to style guides.
+- [x] T013 [P] Run `pnpm run check` and fix any type mismatches.
+- [x] T014 [P] Run `pnpm run lint` to ensure adherence to style guides.
 - [x] T015 Run existing Playwright E2E tests (`tests/node-read-mode.spec.ts`, `tests/rich-text.spec.ts`) to verify zero functional regressions.
 - [x] T016 Final audit of `ZenModeModal.svelte` to ensure it meets the < 250 LOC goal (Physical LOC).
 

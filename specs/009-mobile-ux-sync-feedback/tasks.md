@@ -90,7 +90,7 @@
 **Purpose**: Final refinements and quality assurance.
 
 - [x] T014 [P] Update quickstart.md with finalized verification steps.
-- [ ] T015 Run final linting and type checks via `npm run check` in apps/web.
+- [ ] T015 Run final linting and type checks via `pnpm run check` in apps/web.
 - [ ] T016 **Offline Functionality Verification** (Constitutional Requirement: Verify Service Worker caching and offline behavior).
 
 ---

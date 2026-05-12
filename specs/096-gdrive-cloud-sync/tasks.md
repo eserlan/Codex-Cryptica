@@ -48,8 +48,8 @@
 
 ## Phase 4: Polish & Cross-Cutting
 
-- [ ] T029 Run `npm run lint` across `packages/sync-engine` and `apps/web`; fix any issues
-- [ ] T030 Run `npm test` across `packages/sync-engine` and `apps/web`; maintain ≥80% coverage on `GDriveBackend.ts`
+- [ ] T029 Run `pnpm run lint` across `packages/sync-engine` and `apps/web`; fix any issues
+- [ ] T030 Run `pnpm test` across `packages/sync-engine` and `apps/web`; maintain ≥80% coverage on `GDriveBackend.ts`
 - [ ] T031 [P] Create Playwright e2e test in `apps/web/tests/e2e/gdrive-sync.test.ts`: connect (with MSW-stubbed Drive API) → save entity → reload vault → verify entity present
 - [ ] T032 [P] Update `GEMINI.md` with Drive integration notes for feature `096-gdrive-cloud-sync`
 - [ ] T033 Verify SC-001 through SC-005 from the spec manually in the browser

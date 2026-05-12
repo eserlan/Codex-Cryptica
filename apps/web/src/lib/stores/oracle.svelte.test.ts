@@ -574,6 +574,7 @@ describe("OracleStore", () => {
       // Chat history methods
       expect(typeof context.chatHistory.addMessage).toBe("function");
       expect(typeof context.chatHistory.setMessages).toBe("function");
+      expect(typeof context.chatHistory.removeMessage).toBe("function");
 
       // Context retrieval methods (Regressed in previous version)
       expect(context.contextRetrieval).toBeDefined();
@@ -711,6 +712,116 @@ describe("OracleStore", () => {
 
       expect(result.content).toBe("C");
       expect(result.lore).toBe("L\n\nmore");
+    });
+
+    describe("reconcileSmartApply", () => {
+      beforeEach(() => {
+        (mockVault as any).entities = {
+          target: {
+            id: "target",
+            title: "Zariel",
+            type: "npc",
+            content: "Old chronicle",
+            lore: "Old lore",
+            connections: [],
+          },
+        };
+      });
+
+      it("calls reconcileEntityUpdate with snapshotted args and returns selective fields", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({
+            content: "Merged chronicle",
+            lore: "Merged lore",
+          });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        });
+
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).toHaveBeenCalledWith(
+          "test-key",
+          "test-model",
+          expect.objectContaining({ id: "target" }),
+          { chronicle: "New chronicle", lore: "New lore" },
+          expect.any(Array),
+        );
+        expect(result).toEqual({
+          content: "Merged chronicle",
+          lore: "Merged lore",
+        });
+      });
+
+      it("returns full reconciled result even when only chronicle is incoming", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({
+            content: "Merged chronicle",
+            lore: "Enriched lore",
+          });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+        });
+
+        expect(result.content).toBe("Merged chronicle");
+        expect(result.lore).toBe("Enriched lore");
+      });
+
+      it("falls back to existing content when AI returns empty strings", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({ content: "", lore: "" });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        });
+
+        expect(result.content).toBe("Old chronicle");
+        expect(result.lore).toBe("Old lore");
+      });
+
+      it("falls back to local append when AI is disabled", async () => {
+        (mockUiStore as any).aiDisabled = true;
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "Appended",
+          lore: "New lore",
+        });
+
+        expect(result).toEqual({
+          content: "Old chronicle\n\nAppended",
+          lore: "Old lore\n\nNew lore",
+        });
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+      });
+
+      it("falls back to local append when reconcileEntityUpdate throws", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockRejectedValue(new Error("AI error"));
+
+        const result = await oracle.reconcileSmartApply("target", {
+          lore: "Extra lore",
+        });
+
+        expect(result).toEqual({ lore: "Old lore\n\nExtra lore" });
+      });
+
+      it("throws when entity is not found", async () => {
+        (mockVault as any).entities = {};
+        await expect(
+          oracle.reconcileSmartApply("missing", { chronicle: "x" }),
+        ).rejects.toThrow("Entity missing not found.");
+      });
     });
 
     it("should reset the store", () => {

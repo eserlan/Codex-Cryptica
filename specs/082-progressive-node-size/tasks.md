@@ -14,7 +14,7 @@
 
 **Purpose**: Environment verification
 
-- [x] T001 Verify `packages/graph-engine` development environment and run baseline tests using `npm test -w packages/graph-engine`
+- [x] T001 Verify `packages/graph-engine` development environment and run baseline tests using `pnpm --filter graph-engine test`
 
 ---
 

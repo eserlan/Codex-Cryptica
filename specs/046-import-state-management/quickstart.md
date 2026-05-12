@@ -21,5 +21,5 @@
 
 ## Testing
 
-- **Unit**: `npm test -w packages/importer` (Hash generation, Registry purging).
-- **E2E**: `npx playwright test` (Resume scenario, Restart button).
+- **Unit**: `pnpm test -w packages/importer` (Hash generation, Registry purging).
+- **E2E**: `pnpm exec playwright test` (Resume scenario, Restart button).

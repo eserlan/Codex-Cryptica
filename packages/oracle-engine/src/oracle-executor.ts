@@ -658,6 +658,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     }
 
     const isImageRequest = OracleCommandParser.detectImageIntent(query);
+    const isCreationRequest = OracleCommandParser.detectCreationIntent(query);
+    const isPlotRequest = OracleCommandParser.detectPlotIntent(query);
 
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -721,6 +723,57 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             thumbnail,
           });
         }
+      } else if (isPlotRequest) {
+        // Extract subject for plot request
+        const { primaryEntityId } = await this.generator.identifyPrimaryEntity(
+          query,
+          context,
+        );
+
+        if (primaryEntityId) {
+          const entity = context.vault.entities[primaryEntityId];
+
+          // Re-use executePlot logic but with better context identification.
+          // Since executePlot is currently non-streaming, we remove the
+          // temporary assistantMsg we created and let executePlot create its own.
+          // This prevents a blank message appearing in the UI.
+          await context.chatHistory.removeMessage(assistantMsg.id);
+          await this.executePlot(entity.title, context);
+        } else {
+          // Fallback to normal chat if no entity identified
+          await this.generator.generateChatResponse(
+            query,
+            context,
+            handlePartialResponse,
+          );
+        }
+      } else if (isCreationRequest) {
+        const { primaryEntityId, sourceIds } =
+          await this.generator.generateCreationResponse(
+            query,
+            context,
+            handlePartialResponse,
+          );
+
+        // Final update with entity context
+        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+          ...context.chatHistory.messages,
+        ];
+        const userMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === userMsgId,
+        );
+        const assistantMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
+
+        if (userMsgIndex !== -1) {
+          finalMsgs[userMsgIndex].entityId = primaryEntityId;
+        }
+        if (assistantMsgIndex !== -1) {
+          finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
+          finalMsgs[assistantMsgIndex].sources = sourceIds;
+        }
+        await context.chatHistory.setMessages(finalMsgs);
       } else {
         const { primaryEntityId, sourceIds } =
           await this.generator.generateChatResponse(

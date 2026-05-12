@@ -130,7 +130,7 @@
 **Purpose**: Documentation and final cleanup
 
 - [x] T026 Update `apps/web/src/lib/config/help-content.ts` with Front Page user guide
-- [x] T027 [P] Run `npm run lint` and `npm test` across workspace packages
+- [x] T027 [P] Run `pnpm run lint` and `pnpm test` across workspace packages
 - [x] T028 [P] Performance audit: Front Page render (<500ms), AI Image Gen (<10s), AI Summary Gen (<15s)
 
 ---

@@ -12,6 +12,7 @@
 
   function handleSelect(entity: Entity) {
     uiStore.openZenMode(entity.id);
+    if (uiStore.isMobile) uiStore.closeSidebar();
   }
 
   function onDragStart(event: DragEvent, entityId: string) {
@@ -135,7 +136,7 @@
   <div class="flex-1 min-h-0 flex flex-col">
     <EntityList
       onSelect={handleSelect}
-      onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+      onOpenZen={handleSelect}
       onFindInGraph={handleFindInGraph}
       onDragStart={explorerTab === "all" ? onDragStart : undefined}
       showDraftsOnly={explorerTab === "review"}
