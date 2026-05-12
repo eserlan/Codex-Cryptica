@@ -16,7 +16,6 @@ import type {
   ChatMessagePayload,
   DragPreview,
   EncounterSession,
-  EncounterSnapshotSummary,
   SessionMode,
   Token,
   TokenCreationInput,
@@ -29,6 +28,7 @@ import { VTTChatManager } from "./vtt/vtt-chat-manager.svelte";
 import { VTTMediaManager } from "./vtt/vtt-media-manager.svelte";
 import { VTTPersistenceManager } from "./vtt/vtt-persistence-manager.svelte";
 import { VTTNetworkManager } from "./vtt/vtt-network-manager.svelte";
+import { VTTEncounterManager } from "./vtt/vtt-encounter-manager.svelte";
 import { cloneMeasurement } from "$lib/utils/vtt-helpers";
 
 export interface MapSessionDependencies {
@@ -39,17 +39,13 @@ export interface MapSessionDependencies {
 
 export class MapSessionStore {
   vttEnabled = $state(false);
-  sessionId = $state<string | null>(null);
   mapId = $state<string | null>(null);
   mode = $state<SessionMode>("exploration");
-  name = $state("Encounter");
 
   sessionFogMask = $state<string | null>(null);
-  createdAt = $state(Date.now());
-  savedAt = $state<number | null>(null);
-  snapshots = $state<EncounterSnapshotSummary[]>([]);
   myPeerId = $state<string | null>(null);
 
+  encounterManager: VTTEncounterManager;
   chatManager: VTTChatManager;
   mediaManager: VTTMediaManager;
   initiativeManager: VTTInitiativeManager;
@@ -58,6 +54,37 @@ export class MapSessionStore {
   measurementManager: VTTMeasurementManager;
   persistenceManager: VTTPersistenceManager;
   networkManager: VTTNetworkManager;
+
+  get sessionId() {
+    return this.encounterManager.sessionId;
+  }
+  set sessionId(value) {
+    this.encounterManager.sessionId = value;
+  }
+  get name() {
+    return this.encounterManager.name;
+  }
+  set name(value) {
+    this.encounterManager.name = value;
+  }
+  get createdAt() {
+    return this.encounterManager.createdAt;
+  }
+  set createdAt(value) {
+    this.encounterManager.createdAt = value;
+  }
+  get savedAt() {
+    return this.encounterManager.savedAt;
+  }
+  set savedAt(value) {
+    this.encounterManager.savedAt = value;
+  }
+  get snapshots() {
+    return this.encounterManager.snapshots;
+  }
+  set snapshots(value) {
+    this.encounterManager.snapshots = value;
+  }
 
   get tokens() {
     return this.tokenManager.tokens;
@@ -193,6 +220,12 @@ export class MapSessionStore {
   }
 
   constructor(private deps: MapSessionDependencies) {
+    this.service =
+      deps.service ??
+      new VTTSessionService({
+        getActiveVaultHandle: () => this.deps.vault.getActiveVaultHandle(),
+      });
+
     this.persistenceManager = new VTTPersistenceManager({
       createSnapshot: () => this.createSnapshot(),
       applySnapshot: (snapshot, silent) => this.applySnapshot(snapshot, silent),
@@ -271,6 +304,28 @@ export class MapSessionStore {
       isInitiativeOrdered: (tokenId) => this.initiativeOrder.includes(tokenId),
     });
 
+    this.encounterManager = new VTTEncounterManager({
+      service: this.service,
+      getMapId: () => this.mapId,
+      persistDraft: () => this.persistenceManager.persistDraft(),
+      createSnapshot: () => this.createSnapshot(),
+      applySnapshot: (snapshot, silent) => this.applySnapshot(snapshot, silent),
+      resetTokenManager: () => this.tokenManager.reset(),
+      resetInitiativeManager: () => this.initiativeManager.reset(),
+      resetMeasurementManager: () => this.measurementManager.reset(),
+      resetChatManager: () => this.chatManager.reset(),
+      clearPings: () => this.measurementManager.clearPings(),
+      setMode: (mode) => {
+        this.mode = mode;
+      },
+      setSessionFogMask: (mask) => {
+        this.sessionFogMask = mask;
+      },
+      setMeasurement: (m) => {
+        this.measurementManager.measurement = m;
+      },
+    });
+
     this.networkManager = new VTTNetworkManager({
       chatManager: this.chatManager,
       mediaManager: this.mediaManager,
@@ -297,12 +352,6 @@ export class MapSessionStore {
       selectMap: (mapId) => this.deps.mapStore.selectMap(mapId),
       getActiveMapId: () => this.deps.mapStore.activeMapId,
     });
-
-    this.service =
-      deps.service ??
-      new VTTSessionService({
-        getActiveVaultHandle: () => this.deps.vault.getActiveVaultHandle(),
-      });
 
     if (typeof window !== "undefined") {
       $effect.root(() => {
@@ -388,17 +437,17 @@ export class MapSessionStore {
   private resetSessionState(mapId: string) {
     this.persistenceManager.clearPendingSessionSnapshotBroadcast();
     const session = createEncounterSession(mapId);
-    this.sessionId = session.id;
+    this.encounterManager.sessionId = session.id;
     this.mode = session.mode;
-    this.name = session.name;
+    this.encounterManager.name = session.name;
     this.tokenManager.reset();
     this.initiativeManager.reset();
     this.sessionFogMask = null;
     this.measurementManager.reset();
     this.mediaManager.reset();
-    this.createdAt = session.createdAt;
-    this.savedAt = null;
-    this.snapshots = [];
+    this.encounterManager.createdAt = session.createdAt;
+    this.encounterManager.savedAt = null;
+    this.encounterManager.snapshots = [];
     this.chatManager.reset();
   }
 
@@ -414,17 +463,13 @@ export class MapSessionStore {
     }
     this.tokenManager.reset();
     this.mapId = null;
-    this.sessionId = null;
     this.initiativeManager.reset();
     this.sessionFogMask = null;
     this.measurementManager.reset();
     this.mediaManager.reset();
-    this.createdAt = Date.now();
-    this.savedAt = null;
-    this.snapshots = [];
     this.vttEnabled = false;
     this.chatManager.reset();
-    this.name = "Encounter";
+    this.encounterManager.reset();
     this.hasHydratedSession = false;
   }
 
@@ -465,8 +510,8 @@ export class MapSessionStore {
 
   createSnapshot(): EncounterSession {
     return {
-      id: this.sessionId ?? crypto.randomUUID(),
-      name: this.name,
+      id: this.encounterManager.sessionId ?? crypto.randomUUID(),
+      name: this.encounterManager.name,
       mapId: this.mapId ?? "",
       mode: this.mode,
       tokens: Object.fromEntries(
@@ -475,20 +520,20 @@ export class MapSessionStore {
           { ...token },
         ]),
       ),
-      initiativeOrder: [...this.initiativeOrder],
-      initiativeValues: { ...this.initiativeValues },
-      round: this.round,
-      turnIndex: this.turnIndex,
-      selection: this.selection,
+      initiativeOrder: [...this.initiativeManager.initiativeOrder],
+      initiativeValues: { ...this.initiativeManager.initiativeValues },
+      round: this.initiativeManager.round,
+      turnIndex: this.initiativeManager.turnIndex,
+      selection: this.tokenManager.selection,
       sessionFogMask: this.sessionFogMask,
-      lastPing: this.lastPing,
-      measurement: cloneMeasurement(this.measurement),
-      createdAt: this.createdAt,
-      savedAt: this.savedAt,
+      lastPing: this.measurementManager.lastPing,
+      measurement: cloneMeasurement(this.measurementManager.measurement),
+      createdAt: this.encounterManager.createdAt,
+      savedAt: this.encounterManager.savedAt,
       chatMessages: [...this.chatManager.chatMessages],
       gridSize: this.deps.mapStore.gridSize,
-      gridUnit: this.gridUnit,
-      gridDistance: this.gridDistance,
+      gridUnit: this.gridManager.gridUnit,
+      gridDistance: this.gridManager.gridDistance,
     };
   }
 
@@ -496,10 +541,10 @@ export class MapSessionStore {
     this.persistenceManager.clearPendingSessionSnapshotBroadcast();
     this.tokenManager.clearPendingMoves();
     this.measurementManager.clearPings();
-    this.sessionId = snapshot.id;
+    this.encounterManager.sessionId = snapshot.id;
     this.mapId = snapshot.mapId;
     this.mode = snapshot.mode;
-    this.name = snapshot.name ?? this.name;
+    this.encounterManager.name = snapshot.name ?? this.encounterManager.name;
 
     const tokens = snapshot.tokens
       ? Object.fromEntries(
@@ -536,8 +581,8 @@ export class MapSessionStore {
       snapshot.measurement,
       snapshot.lastPing ?? null,
     );
-    this.createdAt = snapshot.createdAt;
-    this.savedAt = snapshot.savedAt;
+    this.encounterManager.createdAt = snapshot.createdAt;
+    this.encounterManager.savedAt = snapshot.savedAt;
     this.chatManager.setMessages(
       snapshot.chatMessages ? [...snapshot.chatMessages] : [],
     );
@@ -723,75 +768,24 @@ export class MapSessionStore {
     return this.initiativeManager.canAdvanceTurn(peerId, isHost);
   }
 
-  async saveEncounterSnapshot(
-    encounterId = this.sessionId ?? crypto.randomUUID(),
-  ) {
-    if (!this.mapId) return null;
-    const result = await this.service.saveEncounterSnapshot(
-      this.createSnapshot(),
-      encounterId,
-    );
-    this.savedAt = Date.now();
-    this.snapshots = [
-      result.summary,
-      ...this.snapshots.filter((s) => s.id !== encounterId),
-    ];
-    this.persistenceManager.persistDraft();
-    return result;
+  saveEncounterSnapshot(encounterId?: string) {
+    return this.encounterManager.saveEncounterSnapshot(encounterId);
   }
 
-  startNewEncounter(name = this.name) {
-    if (!this.mapId) return null;
-
-    const session = createEncounterSession(
-      this.mapId,
-      crypto.randomUUID(),
-      name.trim() || this.name || "Encounter",
-    );
-
-    this.tokenManager.reset();
-    this.measurementManager.clearPings();
-
-    this.sessionId = session.id;
-    this.mode = session.mode;
-    this.name = session.name;
-    this.initiativeManager.reset();
-    this.sessionFogMask = null;
-    this.measurementManager.measurement = cloneMeasurement(session.measurement);
-    this.createdAt = session.createdAt;
-    this.savedAt = null;
-    this.chatManager.reset();
-    this.persistenceManager.persistDraft();
-    return session;
+  startNewEncounter(name?: string) {
+    return this.encounterManager.startNewEncounter(name);
   }
 
-  async refreshEncounterSnapshots() {
-    if (!this.mapId) {
-      this.snapshots = [];
-      return [];
-    }
-    this.snapshots = await this.service.listEncounterSnapshots(this.mapId);
-    return this.snapshots;
+  refreshEncounterSnapshots() {
+    return this.encounterManager.refreshEncounterSnapshots();
   }
 
-  async loadEncounterSnapshot(encounterId: string) {
-    if (!this.mapId) return null;
-    const snapshot = await this.service.loadEncounterSnapshot(
-      this.mapId,
-      encounterId,
-    );
-    this.applySnapshot(snapshot, true);
-    this.persistenceManager.persistDraft();
-    return snapshot;
+  loadEncounterSnapshot(encounterId: string) {
+    return this.encounterManager.loadEncounterSnapshot(encounterId);
   }
 
-  async deleteEncounterSnapshot(encounterId: string) {
-    if (!this.mapId) return null;
-    await this.service.deleteEncounterSnapshot(this.mapId, encounterId);
-    this.snapshots = this.snapshots.filter(
-      (snapshot) => snapshot.id !== encounterId,
-    );
-    return true;
+  deleteEncounterSnapshot(encounterId: string) {
+    return this.encounterManager.deleteEncounterSnapshot(encounterId);
   }
 
   syncFromRemoteSession(snapshot: EncounterSession, persist = true) {

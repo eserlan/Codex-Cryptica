@@ -5,7 +5,7 @@ import type {
   Token,
   TokenStateUpdateInput,
   VTTMessage,
-} from "../../types/vtt";
+} from "../../../types/vtt";
 import type { VTTChatManager } from "./vtt-chat-manager.svelte";
 import type { VTTMediaManager } from "./vtt-media-manager.svelte";
 import type { VTTTokenManager } from "./vtt-token-manager.svelte";
