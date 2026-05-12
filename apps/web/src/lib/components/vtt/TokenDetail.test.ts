@@ -111,8 +111,18 @@ describe("TokenDetail", () => {
     mapStore.isGMMode = true;
     const { uiStore } = await import("$lib/stores/ui.svelte");
     uiStore.isGuestMode = false;
-    mapSession.initiativeOrder = ["token-1"];
-    mapSession.initiativeValues = { "token-1": 12 };
+    mapSession.initiativeManager.setSnapshotData(
+      ["token-1"],
+      mapSession.initiativeValues,
+      mapSession.round,
+      mapSession.turnIndex,
+    );
+    mapSession.initiativeManager.setSnapshotData(
+      mapSession.initiativeOrder,
+      { "token-1": 12 },
+      mapSession.round,
+      mapSession.turnIndex,
+    );
 
     render(TokenDetail);
 
