@@ -91,6 +91,7 @@ export interface OracleIntent {
  */
 export interface RegenerationDraft {
   entityId: string;
+  messageId?: string;
   chronicle: string;
   lore: string;
   timestamp: number;

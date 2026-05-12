@@ -30,10 +30,16 @@ export class RegenerationService {
         throw new Error("AI failed to produce a valid description.");
       }
 
-      this.pendingDraft = {
-        entityId,
+      // Reconcile the AI output with existing content to preserve/merge details
+      const updates = await oracle.reconcileSmartApply(entityId, {
         chronicle: parsed.chronicle,
         lore: parsed.lore,
+      });
+
+      this.pendingDraft = {
+        entityId,
+        chronicle: updates.content || parsed.chronicle || "",
+        lore: updates.lore || parsed.lore || "",
         timestamp: Date.now(),
       };
       return true;

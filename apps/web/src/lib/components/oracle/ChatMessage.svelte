@@ -28,6 +28,7 @@
   import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
   import { appEventBus } from "@codex/events";
   import { ORACLE_EVENTS } from "@codex/oracle-engine";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
   const chatMessageActions = new ChatMessageActions({
@@ -87,6 +88,17 @@
   let visibleProposals = $derived(
     (message.proposals ?? []).filter(isVisibleDiscoveryProposal),
   );
+
+  $effect(() => {
+    if (isSaved && !regenerationService.pendingDraft && lastParsedContent) {
+      // If we were in saved/proposed state and the global draft is cleared,
+      // and we still have content, reset isSaved so buttons reappear.
+      // But only if we don't have an undo action (which means it was a permanent save).
+      if (!isLastAction) {
+        isSaved = false;
+      }
+    }
+  });
 
   $effect(() => {
     if (message.content && message.content !== lastParsedContent) {
@@ -505,27 +517,36 @@
               {/if}
             </div>
           {:else}
-            <!-- Saved State with Undo -->
+            <!-- Saved/Proposed State -->
             <div
               class="mt-3 pt-2 border-t border-theme-border flex items-center justify-between"
               transition:fade
             >
-              <span
-                class="text-[10px] text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
-              >
-                <span class="icon-[lucide--check-circle] w-3 h-3"></span>
-                SAVED
-              </span>
-
-              {#if isLastAction}
-                <button
-                  onclick={handleUndo}
-                  class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
-                  title="Undo changes (Ctrl+Z)"
+              {#if regenerationService.pendingDraft?.messageId === message.id}
+                <span
+                  class="text-[10px] text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >
-                  <span class="icon-[lucide--undo-2] w-3 h-3"></span>
-                  UNDO
-                </button>
+                  <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+                  DRAFT PROPOSED
+                </span>
+              {:else}
+                <span
+                  class="text-[10px] text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
+                >
+                  <span class="icon-[lucide--check-circle] w-3 h-3"></span>
+                  SAVED
+                </span>
+
+                {#if isLastAction}
+                  <button
+                    onclick={handleUndo}
+                    class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
+                    title="Undo changes (Ctrl+Z)"
+                  >
+                    <span class="icon-[lucide--undo-2] w-3 h-3"></span>
+                    UNDO
+                  </button>
+                {/if}
               {/if}
             </div>
           {/if}

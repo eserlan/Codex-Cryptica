@@ -99,6 +99,21 @@ As a user, I want to choose whether to keep the generated descriptions or discar
 - **Network/API Failure**: How does the system handle AI service timeouts or errors? (Show a friendly error message and allow retry).
 - **Insufficient Permissions**: If a non-host attempts to access the feature via deep link or console, the system MUST deny the request.
 
+---
+
+### User Story 6 - Consistent Smart Apply Experience (Priority: P1)
+
+As a user, I want the "Smart Apply" and "Copy" actions from the Oracle chat to use the same "proposal" system as the "AI Regenerate" button, so that I can review and reconcile all AI-suggested changes in the entity panel before they are committed to my vault.
+
+**Why this priority**: Unifies the AI interaction model and prevents accidental data overwrites from chat actions.
+
+**Independent Test**: Click "Smart Apply" in the Oracle chat and verify that the "Accept/Discard" overlay appears in the entity detail panel, and the changes are only saved after clicking "Apply Changes".
+
+**Acceptance Scenarios**:
+
+1. **Given** an Oracle chat message with structured content, **When** I click "Smart Apply", **Then** the target entity should be focused and show the "AI Suggestion Ready" overlay.
+2. **Given** a proposed draft from the Oracle chat, **When** I click "Apply Changes" in the entity panel, **Then** the reconciled content should be saved to the entity.
+
 ## Requirements _(mandatory)_
 
 ### Functional Requirements
@@ -107,6 +122,7 @@ As a user, I want to choose whether to keep the generated descriptions or discar
 - **FR-002**: System MUST provide an "AI Regenerate" action in the Zen Mode entity interface for users with **Host/GM permissions**.
 - **FR-008**: System MUST provide a "Regenerate Content" option in the Knowledge Graph context menu for entity nodes.
 - **FR-009**: System MUST provide a "Regenerate Content" option in the Spatial Canvas context menu for entity nodes.
+- **FR-010**: Oracle "Smart Apply", "Copy to Chronicle", and "Copy to Lore" actions MUST utilize the same Draft Flow as the "AI Regenerate" feature, allowing for user review and reconciliation before saving.
 - **FR-003**: The regeneration process MUST use the following as context for the AI prompt:
   - Entity name and type.
   - Assigned labels.

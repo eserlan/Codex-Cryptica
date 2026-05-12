@@ -130,20 +130,20 @@ export class ChatMessageActions {
 
     console.log("[Oracle] Smart Apply reconciled updates:", updates);
 
-    await this.updateWithUndo(
-      finalTargetId,
-      updates,
-      `Smart Apply to ${entity.title}`,
-      params.message.id,
-      async (beforeState) => {
-        const undoUpdates: { content?: string; lore?: string } = {};
-        if (updates.content !== undefined)
-          undoUpdates.content = beforeState.content;
-        if (updates.lore !== undefined) undoUpdates.lore = beforeState.lore;
-        await this.vault.updateEntity(beforeState.id, undoUpdates);
-      },
-      params.setSaved,
-    );
+    // Instead of immediate update with undo, use the draft flow for a unified experience
+    const { regenerationService } =
+      await import("$lib/services/RegenerationService.svelte");
+    regenerationService.pendingDraft = {
+      entityId: finalTargetId,
+      messageId: params.message.id,
+      chronicle: updates.content || "",
+      lore: updates.lore || "",
+      timestamp: Date.now(),
+    };
+
+    // Auto-focus the entity so the user sees the draft overlay
+    this.vault.selectedEntityId = finalTargetId;
+    params.setSaved(true);
   }
 
   async createAsNode(params: {
@@ -212,21 +212,22 @@ export class ChatMessageActions {
     );
     if (!finalTargetId || !params.message.content) return;
 
-    await this.updateWithUndo(
-      finalTargetId,
-      { content: params.message.content },
-      `Update Chronicle: ${
-        (this.vault.entities[finalTargetId] as EntityLike | undefined)?.title ??
-        "Unknown"
-      }`,
-      params.message.id,
-      async (beforeState) => {
-        await this.vault.updateEntity(beforeState.id, {
-          content: beforeState.content,
-        });
-      },
-      params.setSaved,
-    );
+    const updates = await this.oracle.reconcileSmartApply(finalTargetId, {
+      chronicle: params.message.content,
+    });
+
+    const { regenerationService } =
+      await import("$lib/services/RegenerationService.svelte");
+    regenerationService.pendingDraft = {
+      entityId: finalTargetId,
+      messageId: params.message.id,
+      chronicle: updates.content || "",
+      lore: updates.lore || "",
+      timestamp: Date.now(),
+    };
+
+    this.vault.selectedEntityId = finalTargetId;
+    params.setSaved(true);
   }
 
   async copyToLore(params: {
@@ -240,21 +241,22 @@ export class ChatMessageActions {
     );
     if (!finalTargetId || !params.message.content) return;
 
-    await this.updateWithUndo(
-      finalTargetId,
-      { lore: params.message.content },
-      `Update Lore: ${
-        (this.vault.entities[finalTargetId] as EntityLike | undefined)?.title ??
-        "Unknown"
-      }`,
-      params.message.id,
-      async (beforeState) => {
-        await this.vault.updateEntity(beforeState.id, {
-          lore: beforeState.lore,
-        });
-      },
-      params.setSaved,
-    );
+    const updates = await this.oracle.reconcileSmartApply(finalTargetId, {
+      lore: params.message.content,
+    });
+
+    const { regenerationService } =
+      await import("$lib/services/RegenerationService.svelte");
+    regenerationService.pendingDraft = {
+      entityId: finalTargetId,
+      messageId: params.message.id,
+      chronicle: updates.content || "",
+      lore: updates.lore || "",
+      timestamp: Date.now(),
+    };
+
+    this.vault.selectedEntityId = finalTargetId;
+    params.setSaved(true);
   }
 
   async undo() {

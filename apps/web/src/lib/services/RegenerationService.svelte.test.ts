@@ -3,6 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../stores/oracle.svelte", () => ({
   oracle: {
     regenerate: vi.fn(),
+    reconcileSmartApply: vi.fn().mockImplementation((_id, incoming) =>
+      Promise.resolve({
+        content: incoming.chronicle,
+        lore: incoming.lore,
+      }),
+    ),
   },
 }));
 
