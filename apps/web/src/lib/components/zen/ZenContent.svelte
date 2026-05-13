@@ -225,6 +225,6 @@
       </div>
     {/if}
 
-    <DetailProposals isEditing={editState.isEditing} />
+    <DetailProposals isEditing={editState.isEditing} entityId={entity?.id} />
   </div>
 </div>

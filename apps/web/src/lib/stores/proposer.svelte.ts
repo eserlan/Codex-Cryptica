@@ -72,12 +72,12 @@ class ProposerStore {
   allAcceptedProposals = $state<Proposal[]>([]);
   allVerifiedProposals = $state<Proposal[]>([]);
 
-  activeProposals = $derived.by(() => {
-    if (!vault.selectedEntityId) return [];
+  getActiveProposalsForEntity(entityId: string | null | undefined) {
+    if (!entityId) return [];
 
     // Deduplicate from history/store load so old DB states don't cause duplicate keys
     // We pick the best proposal per target (highest confidence, then latest timestamp)
-    const raw = this.proposals[vault.selectedEntityId] || [];
+    const raw = this.proposals[entityId] || [];
     const bestByTarget = new Map<string, Proposal>();
 
     for (const p of raw) {
@@ -98,12 +98,16 @@ class ProposerStore {
     return Array.from(bestByTarget.values()).sort(
       (a, b) => b.confidence - a.confidence,
     );
+  }
+
+  activeProposals = $derived.by(() => {
+    return this.getActiveProposalsForEntity(vault.selectedEntityId);
   });
 
-  activeHistory = $derived.by(() => {
-    if (!vault.selectedEntityId) return [];
+  getActiveHistoryForEntity(entityId: string | null | undefined) {
+    if (!entityId) return [];
 
-    const raw = this.history[vault.selectedEntityId] || [];
+    const raw = this.history[entityId] || [];
     const bestByTarget = new Map<string, Proposal>();
 
     for (const p of raw) {
@@ -118,6 +122,10 @@ class ProposerStore {
     return Array.from(bestByTarget.values()).sort(
       (a, b) => b.timestamp - a.timestamp,
     );
+  }
+
+  activeHistory = $derived.by(() => {
+    return this.getActiveHistoryForEntity(vault.selectedEntityId);
   });
 
   private getService(): ProposerService {

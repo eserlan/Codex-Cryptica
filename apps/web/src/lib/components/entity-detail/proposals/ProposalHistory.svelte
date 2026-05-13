@@ -3,14 +3,18 @@
   import { vault } from "$lib/stores/vault.svelte";
   import type { Proposal } from "@codex/proposer";
 
+  let { history = proposerStore.activeHistory } = $props<{
+    history?: Proposal[];
+  }>();
+
   const handleReEvaluate = async (proposal: Proposal) => {
     await proposerStore.reEvaluate(proposal);
   };
 </script>
 
-{#if proposerStore.activeHistory.length > 0}
+{#if history.length > 0}
   <div class="space-y-3 mt-4">
-    {#each proposerStore.activeHistory as proposal (proposal.id)}
+    {#each history as proposal (proposal.id)}
       <div
         class="bg-theme-bg/20 border border-theme-border/30 rounded-lg p-3 flex justify-between items-center opacity-70 hover:opacity-100 transition-opacity"
       >

@@ -9,6 +9,7 @@ describe("ZenContent proposals wiring", () => {
     );
 
     expect(source).toContain("DetailProposals");
+    expect(source).toContain("entityId={entity?.id}");
     expect(source).not.toContain("showConnections");
     expect(source).not.toContain("themeStore.jargon.connections_header");
   });
