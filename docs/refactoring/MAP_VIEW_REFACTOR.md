@@ -69,24 +69,24 @@ To minimize risk and avoid breaking VTT interactions, this refactor should be ex
 - [x] Pass required store data or callbacks.
 - _Actual LOC reduction: ~320 lines._
 
-### Phase 2: Overlay Extraction (Low Risk)
+### Phase 2: Overlay Extraction (Low Risk) - **COMPLETED**
 
-- Create `MapOverlays.svelte` to handle the grid fit rect, box select rect, `PinLinker`, and `MapPinPopover`.
-- _Expected LOC reduction: ~100 lines._
+- [x] Create `MapOverlays.svelte` to handle the grid fit rect, box select rect, `PinLinker`, and `MapPinPopover`.
+- _Actual LOC reduction: ~70 lines._
 
-### Phase 3: Canvas Rendering Isolation (Medium Risk)
+### Phase 3: Canvas Rendering Isolation (Medium Risk) - **COMPLETED**
 
-- Create `MapCanvas.svelte`.
-- Move the `canvas` DOM element, `handleResize`, the `ResizeObserver`, and the `draw()` loop.
-- _Expected LOC reduction: ~250 lines._
+- [x] Create `MapCanvas.svelte`.
+- [x] Move the `canvas` DOM element, `handleResize`, the `ResizeObserver`, and the `draw()` loop.
+- _Actual LOC reduction: ~280 lines._
 
-### Phase 4: Interaction State Machine (High Risk / High Reward)
+### Phase 4: Interaction State Machine (High Risk / High Reward) - **COMPLETED**
 
-- Create `map-interactions.svelte.ts`.
-- Migrate all `onMouse*`, `onKey*`, and `onWheel` handlers into this class.
-- Update `MapView.svelte` to instantiate this class and attach its listeners to the container.
-- _Expected LOC reduction: ~400 lines._
+- [x] Create `map-interactions.svelte.ts`.
+- [x] Migrate all `onMouse*`, `onKey*`, and `onWheel` handlers into this class.
+- [x] Update `MapView.svelte` to instantiate this class and attach its listeners to the container.
+- _Actual LOC reduction: ~480 lines._
 
 ## Summary
 
-By executing this refactor, we will eliminate the largest god file in the project, resulting in a cleaner UI hierarchy, easier testing for complex map gestures, and a more maintainable VTT environment.
+By executing this refactor, we successfully eliminated the largest god file in the project. `MapView.svelte` has been reduced from 1,536 lines to 328 lines, resulting in a cleaner UI hierarchy, easier testing for complex map gestures, and a more maintainable VTT environment.
