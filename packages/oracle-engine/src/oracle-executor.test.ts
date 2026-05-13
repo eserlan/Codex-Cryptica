@@ -617,6 +617,46 @@ describe("OracleActionExecutor - Detailed", () => {
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
     });
 
+    it("should auto-link high confidence entity matches if no entityId is set", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "suggest";
+      mockGenerator.generateChatResponse.mockImplementation(
+        async (
+          _query: string,
+          _context: any,
+          onPartial: (partial: string) => void,
+        ) => {
+          onPartial("The Red Hand is a cult.");
+          // Simulating a response where no primaryEntityId is yet determined by context retrieval
+          return { primaryEntityId: undefined, sourceIds: [] };
+        },
+      );
+
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            entityId: "e_redhand",
+            title: "Red Hand",
+            type: "group",
+            draft: { chronicle: "A cult.", lore: "" },
+            confidence: 0.9, // High confidence > 0.8
+          },
+        ]),
+      };
+
+      await executor.execute(
+        { type: "chat", query: "Who are the Red Hand?", isAIIntent: true },
+        mockContext,
+      );
+
+      const finalMessages =
+        mockContext.chatHistory.setMessages.mock.calls[0][0];
+      const assistantMessage = finalMessages.find(
+        (m: any) => m.role === "assistant",
+      );
+
+      expect(assistantMessage.entityId).toBe("e_redhand");
+    });
+
     it("should reconcile existing entity updates during auto-archive", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.vault.entities = {
