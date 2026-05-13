@@ -21,6 +21,9 @@ const { mockVault, mockOracle, mockUiStore, mockFocusEntity } = vi.hoisted(
     },
     mockOracle: {
       reconcileDiscoveryProposal: vi.fn(),
+      reconcileNewEntityDraft: vi
+        .fn()
+        .mockResolvedValue({ content: "new content", lore: "new lore" }),
       proposeConnectionsForEntity: vi.fn().mockResolvedValue(0),
       handleDiscoveryConnectionsForEntity: vi.fn().mockResolvedValue(0),
     },

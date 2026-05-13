@@ -170,6 +170,24 @@ class OracleWorker {
     }
   }
 
+  async generateStructuredEntity(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+    categories?: string[],
+  ): Promise<void> {
+    return this.textGeneration.generateStructuredEntity(
+      apiKey,
+      query,
+      context,
+      modelName,
+      onUpdate,
+      categories,
+    );
+  }
+
   async propose(
     text: string,
     context: { existingEntities: any[]; history: any[]; categories?: any[] },
