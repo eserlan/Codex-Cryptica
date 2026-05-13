@@ -347,6 +347,7 @@
                   <Autocomplete
                     bind:selectedId={selectedEntityId}
                     placeholder="Search for an entity..."
+                    ariaLabel="Search for an entity"
                   />
                   <button
                     onclick={() => (isSelectingEntity = false)}
