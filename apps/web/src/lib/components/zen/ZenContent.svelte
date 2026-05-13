@@ -4,20 +4,17 @@
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
-  import { isEntityVisible, type Connection, type Entity } from "schema";
+  import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
+  import { isEntityVisible, type Entity } from "schema";
 
   let {
     entity,
     editState = $bindable(),
     scrollContainer = $bindable(),
-    onNavigate,
-    showConnections = false,
   } = $props<{
     entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
-    onNavigate: (id: string) => void;
-    showConnections?: boolean;
   }>();
 
   // Check if this entity is visible in guest/shared mode
@@ -73,26 +70,6 @@
     if (date.day !== undefined) str += `/${date.day}`;
     return str;
   };
-
-  const connections = $derived.by(() => {
-    if (!showConnections || !entity) return [];
-
-    const outbound = (entity.connections || []).map((c: Connection) => ({
-      ...c,
-      isOutbound: true,
-      displayTitle: vault.entities[c.target]?.title || c.target,
-      targetId: c.target,
-    }));
-
-    const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
-      ...item.connection,
-      isOutbound: false,
-      displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
-      targetId: item.sourceId,
-    }));
-
-    return [...outbound, ...inbound];
-  });
 
   const draft = $derived(
     entity && regenerationService.pendingDraft?.entityId === entity.id
@@ -248,82 +225,6 @@
       </div>
     {/if}
 
-    {#if showConnections}
-      <div>
-        <h2
-          class="text-xl font-header font-bold text-theme-primary mb-3 flex items-center gap-2 border-b border-theme-border pb-2"
-        >
-          <span class="icon-[lucide--link-2] w-5 h-5"></span>
-          {themeStore.jargon.connections_header}
-        </h2>
-
-        <ul class="space-y-3">
-          {#each connections as conn (conn.targetId + ":" + conn.label + ":" + conn.type + ":" + conn.isOutbound)}
-            <li class="flex gap-3 text-sm text-theme-muted items-start group">
-              <span
-                class="mt-1 w-3 h-3 shrink-0 {conn.isOutbound
-                  ? 'text-theme-primary icon-[lucide--arrow-up-right]'
-                  : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
-              ></span>
-              <button
-                type="button"
-                class="flex-1 min-w-0 text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
-                onclick={() => onNavigate(conn.targetId)}
-              >
-                {#if conn.isOutbound}
-                  <span class="text-theme-secondary">{entity?.title}</span>
-                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
-                  <strong
-                    class="text-theme-text group-hover:text-theme-primary transition"
-                    >{conn.label || conn.type}</strong
-                  >
-                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
-                  <span class="text-theme-text">{conn.displayTitle}</span>
-                {:else}
-                  <span class="text-theme-text">{conn.displayTitle}</span>
-                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
-                  <strong
-                    class="text-theme-text group-hover:text-theme-primary transition"
-                    >{conn.label || conn.type}</strong
-                  >
-                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
-                  <span class="text-theme-secondary">{entity?.title}</span>
-                {/if}
-              </button>
-
-              {#if !vault.isGuest}
-                <button
-                  type="button"
-                  class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-                  onclick={() => {
-                    if (conn.isOutbound) {
-                      vault.removeConnection(
-                        entity.id,
-                        conn.targetId,
-                        conn.type,
-                      );
-                    } else {
-                      vault.removeConnection(
-                        conn.targetId,
-                        entity.id,
-                        conn.type,
-                      );
-                    }
-                  }}
-                  aria-label="Delete connection"
-                  title="Delete connection"
-                >
-                  <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-                </button>
-              {/if}
-            </li>
-          {:else}
-            <li class="text-theme-muted italic text-sm">
-              No known connections.
-            </li>
-          {/each}
-        </ul>
-      </div>
-    {/if}
+    <DetailProposals isEditing={editState.isEditing} entityId={entity?.id} />
   </div>
 </div>
