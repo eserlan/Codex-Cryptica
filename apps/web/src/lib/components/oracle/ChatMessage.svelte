@@ -74,9 +74,16 @@
 
   $effect(() => {
     if (selectedEntityId) {
-      oracle.updateMessageEntity(message.id, selectedEntityId);
+      const id = selectedEntityId;
       isSelectingEntity = false;
       selectedEntityId = null;
+      (async () => {
+        try {
+          await oracle.updateMessageEntity(message.id, id);
+        } catch {
+          // silent — toast would be noisy for a link action
+        }
+      })();
     }
   });
 
@@ -429,39 +436,39 @@
                 </button>
               {/if}
 
-              <button
-                onclick={() => (isSelectingEntity = !isSelectingEntity)}
-                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-surface border border-theme-border text-theme-muted hover:bg-theme-primary hover:text-black hover:border-theme-primary group/link relative"
-                title={message.entityId
-                  ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
-                  : "Link this message to an entity"}
+              <div
+                class="flex items-center rounded text-[10px] font-bold tracking-widest bg-theme-surface border border-theme-border text-theme-muted group/link relative"
               >
-                <span
-                  class={message.entityId
-                    ? "icon-[lucide--link-2] w-3 h-3 text-theme-primary"
-                    : "icon-[lucide--link] w-3 h-3 shrink-0"}
-                ></span>
-                <span class="font-header truncate max-w-[120px]">
-                  {message.entityId
-                    ? (
-                        vault.entities[message.entityId]?.title || "LINKED"
-                      ).toUpperCase()
-                    : "LINK ENTITY"}
-                </span>
-
+                <button
+                  onclick={() => (isSelectingEntity = !isSelectingEntity)}
+                  class="flex items-center gap-1.5 px-2 py-1 transition-all hover:bg-theme-primary hover:text-black hover:border-theme-primary"
+                  title={message.entityId
+                    ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
+                    : "Link this message to an entity"}
+                >
+                  <span
+                    class={message.entityId
+                      ? "icon-[lucide--link-2] w-3 h-3 text-theme-primary"
+                      : "icon-[lucide--link] w-3 h-3 shrink-0"}
+                  ></span>
+                  <span class="font-header truncate max-w-[120px]">
+                    {message.entityId
+                      ? (
+                          vault.entities[message.entityId]?.title || "LINKED"
+                        ).toUpperCase()
+                      : "LINK ENTITY"}
+                  </span>
+                </button>
                 {#if message.entityId}
                   <button
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      oracle.updateMessageEntity(message.id, null);
-                    }}
-                    class="ml-1 p-0.5 hover:text-red-400 transition-colors"
+                    onclick={() => oracle.updateMessageEntity(message.id, null)}
+                    class="pr-1.5 pl-0.5 py-1 hover:text-red-400 transition-colors"
                     title="Clear link"
                   >
                     <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
                   </button>
                 {/if}
-              </button>
+              </div>
 
               {#if targetEntity || activeEntity}
                 {#if canOverride}
