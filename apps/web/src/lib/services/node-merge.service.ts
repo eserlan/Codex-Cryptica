@@ -161,7 +161,9 @@ export class NodeMergeService {
       type: suggestedFrontmatter.type || targetEntity.type,
       tags: suggestedFrontmatter.tags || targetEntity.tags,
       labels: suggestedFrontmatter.labels || targetEntity.labels,
-      lore: suggestedFrontmatter.lore || targetEntity.lore,
+      lore: Object.hasOwn(suggestedFrontmatter, "lore")
+        ? suggestedFrontmatter.lore
+        : targetEntity.lore,
       date: suggestedFrontmatter.date,
       start_date: suggestedFrontmatter.start_date,
       end_date: suggestedFrontmatter.end_date,

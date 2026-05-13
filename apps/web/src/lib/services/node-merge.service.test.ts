@@ -241,6 +241,27 @@ describe("NodeMergeService", () => {
       expect(updates.connections!).toHaveLength(1);
       expect(updates.connections![0].target).toBe("other");
     });
+
+    it("should preserve intentionally empty lore updates", async () => {
+      vault.entities["t"] = {
+        id: "t",
+        title: "T",
+        lore: "Existing lore",
+        connections: [],
+      } as any;
+
+      const proposal = {
+        targetId: "t",
+        suggestedFrontmatter: { lore: "" },
+        suggestedBody: "Body",
+        outgoingConnections: [],
+      } as any;
+
+      await service.executeMerge(proposal, ["t"]);
+
+      const updates = vi.mocked(vault.updateEntity).mock.calls[0][1];
+      expect(updates.lore).toBe("");
+    });
   });
 
   describe("updateBacklinks", () => {
