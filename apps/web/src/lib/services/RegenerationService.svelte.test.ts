@@ -25,7 +25,7 @@ vi.mock("../stores/ui.svelte", () => ({
   },
 }));
 
-vi.mock("./node-merge.service", () => ({
+vi.mock("$lib/services/node-merge.service", () => ({
   nodeMergeService: {
     executeMerge: vi.fn().mockResolvedValue(undefined),
   },
@@ -41,7 +41,7 @@ import { oracle } from "../stores/oracle.svelte";
 import { vault } from "../stores/vault.svelte";
 import { uiStore } from "../stores/ui.svelte";
 import { OracleCommandParser } from "@codex/oracle-engine";
-import { nodeMergeService } from "./node-merge.service";
+import { nodeMergeService } from "$lib/services/node-merge.service";
 import { regenerationService } from "./RegenerationService.svelte";
 
 describe("RegenerationService", () => {

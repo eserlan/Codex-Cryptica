@@ -237,7 +237,7 @@
         class="text-green-400 font-bold uppercase font-header tracking-widest text-[10px] flex items-center justify-center gap-2"
       >
         <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
-        {themeStore.resolveJargon("entity", 2)} Merged
+        Merge Draft Prepared
       </span>
     </div>
   {/if}

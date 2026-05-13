@@ -210,7 +210,7 @@
       </div>
     {/if}
 
-    {#if !vault.isGuest && (editState.isEditing || entity?.lore || draft?.lore)}
+    {#if !vault.isGuest && (editState.isEditing || entity?.lore || draft !== null)}
       <div>
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
