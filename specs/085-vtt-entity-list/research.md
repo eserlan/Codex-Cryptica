@@ -29,7 +29,7 @@ The wrapper `div` around `MapView` in `+page.svelte` already handles `ondrop` fo
 To provide visual feedback (Priority P2), `MapSessionStore` needs a `dragPreview` state.
 
 - Updated during `handleDragOver` in `+page.svelte`.
-- Rendered in `MapView.svelte` within the `draw()` loop using a semi-transparent version of the token.
+- Rendered in `MapCanvas.svelte` within the `draw()` loop using a semi-transparent version of the token.
 
 ### 4. Persistence
 

@@ -24,9 +24,9 @@ Start with the `EncounterSession` class. It should:
 
 Test first: `apps/web/tests/unit/stores/map-session.test.ts`
 
-### 2. Add token rendering to MapView
+### 2. Add token rendering to MapCanvas
 
-In `apps/web/src/lib/components/map/MapView.svelte`, inside the `draw()` function, after the `renderMap()` call:
+In `apps/web/src/lib/components/map/MapCanvas.svelte`, inside the `draw()` function, after the `renderMap()` call:
 
 ```typescript
 // After renderMap()
@@ -59,7 +59,7 @@ Render a list with drag-reorder capability, token selection handoff, and an opti
 
 ### 5. Token drag interaction
 
-Add pointer event handling in `MapView.svelte` (or a new `TokenDragLayer.svelte`):
+Add pointer event handling in `MapInteractionManager` (`map-interactions.svelte.ts`):
 
 - On pointer down over a token: start drag
 - On pointer move: update token x/y (snap to grid if grid active)
@@ -94,18 +94,20 @@ pnpm run dev
 
 ## Key Files to Modify
 
-| File                                                       | Change                                       |
-| ---------------------------------------------------------- | -------------------------------------------- |
-| `apps/web/src/lib/stores/map-session.svelte.ts`            | New session state store                      |
-| `packages/map-engine/src/renderer.ts`                      | Add `renderTokens()` function                |
-| `apps/web/src/lib/components/map/MapView.svelte`           | Add VTT overlay rendering and input handling |
-| `apps/web/src/lib/components/map/VTTControls.svelte`       | Toolbar and icon-button actions              |
-| `apps/web/src/lib/components/vtt/VTTChatSidebar.svelte`    | Left-side chat panel                         |
-| `apps/web/src/lib/components/vtt/VTTChat.svelte`           | Chat input, slash commands, dice modal entry |
-| `apps/web/src/lib/components/vtt/InitiativePanel.svelte`   | Turn order UI + pop-out                      |
-| `apps/web/src/lib/components/vtt/TokenDetail.svelte`       | Token owner/remove actions                   |
-| `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` | Add VTT message handlers                     |
-| `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts`       | Add VTT message handlers                     |
+| File                                                         | Change                                       |
+| ------------------------------------------------------------ | -------------------------------------------- |
+| `apps/web/src/lib/stores/map-session.svelte.ts`              | New session state store                      |
+| `packages/map-engine/src/renderer.ts`                        | Add `renderTokens()` function                |
+| `apps/web/src/lib/components/map/MapView.svelte`             | Coordinator component for Map views          |
+| `apps/web/src/lib/components/map/MapCanvas.svelte`           | VTT overlay rendering (tokens, pings, etc.)  |
+| `apps/web/src/lib/components/map/map-interactions.svelte.ts` | Input handling and gestural state machine    |
+| `apps/web/src/lib/components/map/VTTControls.svelte`         | Toolbar and icon-button actions              |
+| `apps/web/src/lib/components/vtt/VTTChatSidebar.svelte`      | Left-side chat panel                         |
+| `apps/web/src/lib/components/vtt/VTTChat.svelte`             | Chat input, slash commands, dice modal entry |
+| `apps/web/src/lib/components/vtt/InitiativePanel.svelte`     | Turn order UI + pop-out                      |
+| `apps/web/src/lib/components/vtt/TokenDetail.svelte`         | Token owner/remove actions                   |
+| `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts`   | Add VTT message handlers                     |
+| `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts`         | Add VTT message handlers                     |
 
 ## Testing Strategy
 

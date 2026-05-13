@@ -42,7 +42,7 @@ description: "Task list for Interactive Campaign Mapping & Spatial Lore"
 
 **Goal**: Render a high-resolution map image with fluid zoom and pan
 
-- [x] T009 [P] [US1] Create base `MapView.svelte` with HTML5 Canvas element in `apps/web/src/lib/components/map/MapView.svelte`
+- [x] T009 [P] [US1] Create base `MapView.svelte` as a coordinator component in `apps/web/src/lib/components/map/MapView.svelte`
 - [x] T010 [US1] Implement high-performance zoom and pan logic in `packages/map-engine/src/renderer.ts`
 - [x] T011 [US1] Implement image upload and OPFS storage logic in `apps/web/src/lib/stores/map.svelte.ts`
 - [x] T012 [US1] Create Map Mode route at `apps/web/src/routes/map/+page.svelte`
@@ -57,7 +57,7 @@ description: "Task list for Interactive Campaign Mapping & Spatial Lore"
 **Goal**: Drop pins on the map and link them to existing Lore entities
 
 - [x] T014 [P] [US2] Implement `PinLayer.svelte` for rendering interactive markers in `apps/web/src/lib/components/map/PinLayer.svelte`
-- [x] T015 [US2] Add double-click listener to `MapView.svelte` to trigger pin creation at specific image coordinates
+- [x] T015 [US2] Add double-click listener to `MapInteractionManager` to trigger pin creation at specific image coordinates
 - [x] T016 [US2] Create `PinLinker.svelte` modal for selecting an existing Entity to link to a pin
 - [x] T017 [US2] Connect pin click events to `uiStore.openZenMode()` side-panel logic
 - [x] T018 [US2] Implement pin icon resolution based on linked Entity category
@@ -114,3 +114,4 @@ description: "Task list for Interactive Campaign Mapping & Spatial Lore"
 
 - T001, T002, T004 (Setup) can run in parallel.
 - Documentation (T028) can be authored while implementation is in progress.
+  ress.
