@@ -29,6 +29,7 @@
   import { appEventBus } from "@codex/events";
   import { ORACLE_EVENTS } from "@codex/oracle-engine";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import Autocomplete from "../ui/Autocomplete.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
   const chatMessageActions = new ChatMessageActions({
@@ -55,6 +56,8 @@
   );
   let isCopied = $state(false);
   let showDiscoveryChips = $state(false);
+  let isSelectingEntity = $state(false);
+  let selectedEntityId = $state<string | null>(null);
   let htmlCache = $state("");
   let lastParsedContent = "";
 
@@ -67,6 +70,14 @@
         isSaved = false;
       }
     });
+  });
+
+  $effect(() => {
+    if (selectedEntityId) {
+      oracle.updateMessageEntity(message.id, selectedEntityId);
+      isSelectingEntity = false;
+      selectedEntityId = null;
+    }
   });
 
   let isLastAction = $derived(
@@ -327,6 +338,21 @@
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"
               transition:fade
             >
+              {#if isSelectingEntity}
+                <div class="w-full mb-2" transition:fade>
+                  <Autocomplete
+                    bind:selectedId={selectedEntityId}
+                    placeholder="Search for an entity..."
+                  />
+                  <button
+                    onclick={() => (isSelectingEntity = false)}
+                    class="mt-1 text-[9px] text-theme-muted hover:text-theme-primary font-bold uppercase tracking-widest font-header"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              {/if}
+
               {#if message.hasDrawAction}
                 <button
                   onclick={() => oracle.drawMessage(message.id)}
@@ -397,6 +423,40 @@
                   </div>
                 </button>
               {/if}
+
+              <button
+                onclick={() => (isSelectingEntity = !isSelectingEntity)}
+                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-surface border border-theme-border text-theme-muted hover:bg-theme-primary hover:text-black hover:border-theme-primary group/link relative"
+                title={message.entityId
+                  ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
+                  : "Link this message to an entity"}
+              >
+                <span
+                  class={message.entityId
+                    ? "icon-[lucide--link-2] w-3 h-3 text-theme-primary"
+                    : "icon-[lucide--link] w-3 h-3 shrink-0"}
+                ></span>
+                <span class="font-header truncate max-w-[120px]">
+                  {message.entityId
+                    ? (
+                        vault.entities[message.entityId]?.title || "LINKED"
+                      ).toUpperCase()
+                    : "LINK ENTITY"}
+                </span>
+
+                {#if message.entityId}
+                  <button
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      oracle.updateMessageEntity(message.id, null);
+                    }}
+                    class="ml-1 p-0.5 hover:text-red-400 transition-colors"
+                    title="Clear link"
+                  >
+                    <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
+                  </button>
+                {/if}
+              </button>
 
               {#if targetEntity || activeEntity}
                 {#if canOverride}

@@ -838,6 +838,20 @@ The Lore Oracle supports several slash commands to help you manage your vault:
               ...newProposals,
             ];
 
+            // Auto-link high confidence existing entities if no entity is linked yet
+            if (!finalMsgs[assistantMsgIndex].entityId) {
+              const highConfidenceMatch = [...proposals]
+                .filter(
+                  (p: DiscoveryProposal) => p.entityId && p.confidence > 0.8,
+                )
+                .sort((a, b) => b.confidence - a.confidence)[0];
+
+              if (highConfidenceMatch) {
+                finalMsgs[assistantMsgIndex].entityId =
+                  highConfidenceMatch.entityId;
+              }
+            }
+
             for (const p of newProposals) {
               await context.logActivity?.({
                 type: "discovery",
