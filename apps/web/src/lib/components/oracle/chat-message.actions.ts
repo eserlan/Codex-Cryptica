@@ -140,6 +140,7 @@ export class ChatMessageActions {
     this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
+      source: "oracle-chat",
       chronicle: updates.content ?? entity?.content ?? "",
       lore: updates.lore ?? entity?.lore ?? "",
       timestamp: Date.now(),
@@ -224,6 +225,7 @@ export class ChatMessageActions {
     this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
+      source: "oracle-chat",
       chronicle: updates.content ?? entity?.content ?? "",
       lore: updates.lore ?? entity?.lore ?? "",
       timestamp: Date.now(),
@@ -252,6 +254,7 @@ export class ChatMessageActions {
     this.regenerationService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
+      source: "oracle-chat",
       chronicle: updates.content ?? entity?.content ?? "",
       lore: updates.lore ?? entity?.lore ?? "",
       timestamp: Date.now(),

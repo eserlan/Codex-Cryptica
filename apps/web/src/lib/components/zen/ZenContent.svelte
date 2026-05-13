@@ -3,6 +3,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { isEntityVisible, type Connection, type Entity } from "schema";
 
   let {
@@ -92,6 +93,12 @@
 
     return [...outbound, ...inbound];
   });
+
+  const draft = $derived(
+    entity && regenerationService.pendingDraft?.entityId === entity.id
+      ? regenerationService.pendingDraft
+      : null,
+  );
 </script>
 
 <div
@@ -173,9 +180,22 @@
             onUpdate={(md) => (editState.content = md)}
           />
         {:else if isVisible}
-          <div class="prose-container">
+          <div
+            class="prose-container {draft
+              ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
+              : ''}"
+          >
+            {#if draft}
+              <div
+                class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+              >
+                Proposed
+              </div>
+            {/if}
             <MarkdownEditor
-              content={entity?.content || "No records found."}
+              content={draft
+                ? draft.chronicle
+                : entity?.content || "No records found."}
               editable={false}
             />
           </div>
@@ -190,7 +210,7 @@
       </div>
     {/if}
 
-    {#if !vault.isGuest && (editState.isEditing || entity?.lore)}
+    {#if !vault.isGuest && (editState.isEditing || entity?.lore || draft?.lore)}
       <div>
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
@@ -205,9 +225,22 @@
             onUpdate={(md) => (editState.lore = md)}
           />
         {:else}
-          <div class="prose-container">
+          <div
+            class="prose-container {draft
+              ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
+              : ''}"
+          >
+            {#if draft}
+              <div
+                class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+              >
+                Proposed
+              </div>
+            {/if}
             <MarkdownEditor
-              content={entity?.lore || "No detailed lore available."}
+              content={draft
+                ? draft.lore
+                : entity?.lore || "No detailed lore available."}
               editable={false}
             />
           </div>
