@@ -36,13 +36,8 @@
   } = $props();
 
   let container = $state<HTMLDivElement | null>(null);
-  let _canvasElement: HTMLCanvasElement | null = null;
   let mapImage = $state<HTMLImageElement | null>(null);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
-
-  // Reactive mirrors for MapCanvas passing
-  let _drawImage = $state<HTMLImageElement | null>(null);
-  let _drawMask = $state<HTMLCanvasElement | null>(null);
 
   const painter = new MapFogPainter({
     mapStore,
@@ -64,17 +59,13 @@
     onClear: () => {
       painter.cancel();
       mapImage = null;
-      _drawImage = null;
       maskCanvas = null;
-      _drawMask = null;
     },
     onImageLoaded: (img) => {
-      _drawImage = img;
       mapImage = img;
     },
     onMaskLoaded: (mask) => {
       maskCanvas = mask;
-      _drawMask = mask;
     },
     onDimensionsLoaded: async (width, height) => {
       const activeMap = mapStore.activeMap;
@@ -247,7 +238,6 @@
     void mapStore.loadMask(image.width, image.height).then((mask) => {
       if (cancelled) return;
       maskCanvas = mask;
-      _drawMask = mask;
       loadedMaskPath = fogMaskPath;
     });
 
@@ -282,15 +272,14 @@
   ondrop={onMapDrop}
 >
   <MapCanvas
-    mapImage={_drawImage}
-    maskCanvas={_drawMask}
+    {mapImage}
+    {maskCanvas}
     {vttTokens}
     {vttMeasurement}
     {remoteMeasurement}
     {vttPings}
     {vttDragPreview}
     {interactions}
-    getCanvas={(c) => (_canvasElement = c)}
   />
 
   {#if !mapImage}

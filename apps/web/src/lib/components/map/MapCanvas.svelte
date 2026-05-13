@@ -49,7 +49,6 @@
     vttPings,
     vttDragPreview,
     interactions,
-    getCanvas,
   }: {
     mapImage: HTMLImageElement | null;
     maskCanvas: HTMLCanvasElement | null;
@@ -59,7 +58,6 @@
     vttPings: PingState[];
     vttDragPreview: EnrichedDragPreview | null;
     interactions: MapInteractionManager;
-    getCanvas: (c: HTMLCanvasElement) => void;
   } = $props();
 
   let canvas = $state<HTMLCanvasElement | null>(null);
@@ -74,10 +72,6 @@
       mapStore.gridColor || themeStore.activeTheme.tokens.primary;
     const rgb = baseColor.startsWith("#") ? hexToRgb(baseColor) : baseColor;
     return `rgba(${rgb}, 0.55)`;
-  });
-
-  $effect(() => {
-    if (canvas) getCanvas(canvas);
   });
 
   function handleResize() {
@@ -100,23 +94,11 @@
 
   function draw() {
     if (canvas) {
-      const canvasSize = {
-        width: canvas.width || 1,
-        height: canvas.height || 1,
-      };
-
-      if (
-        canvasSize.width !== mapStore.canvasSize.width ||
-        canvasSize.height !== mapStore.canvasSize.height
-      ) {
-        mapStore.setCanvasSize(canvasSize.width, canvasSize.height);
-      }
-
       renderMap({
         canvas: canvas,
         image: mapImage,
         transform: mapStore.viewport,
-        canvasSize,
+        canvasSize: mapStore.canvasSize,
         pins: mapStore.pins,
         maskCanvas: maskCanvas,
         showFog: mapStore.showFog,
