@@ -46,8 +46,8 @@ describe("ContextRetrievalService", () => {
     );
 
     expect(mockSearchService.search).toHaveBeenCalledWith(
-      "art style visual aesthetic",
-      expect.objectContaining({ includeDrafts: true }),
+      "art style direction visual aesthetic style guide",
+      expect.objectContaining({ includeDrafts: true, limit: 3 }),
     );
   });
 
@@ -165,7 +165,7 @@ describe("ContextRetrievalService", () => {
       true,
     );
     expect(mockSearchService.search).toHaveBeenCalledWith(
-      "art style visual aesthetic",
+      "art style direction visual aesthetic style guide",
       expect.anything(),
     );
 
