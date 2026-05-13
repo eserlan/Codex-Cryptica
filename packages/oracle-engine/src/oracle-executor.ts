@@ -870,12 +870,37 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             ) {
               for (const p of proposals) {
                 if (!p.entityId) {
+                  let content = p.draft.chronicle;
+                  let lore = p.draft.lore;
+                  if (context.textGeneration?.reconcileEntityUpdate) {
+                    try {
+                      const shell = {
+                        id: "",
+                        title: p.title,
+                        type: p.type,
+                        content: "",
+                        lore: "",
+                      } as any;
+                      const reconciled =
+                        await context.textGeneration.reconcileEntityUpdate(
+                          context.effectiveApiKey || "",
+                          context.modelName,
+                          shell,
+                          { chronicle: p.draft.chronicle, lore: p.draft.lore },
+                          [],
+                        );
+                      content = reconciled.content || p.draft.chronicle;
+                      lore = reconciled.lore || p.draft.lore;
+                    } catch {
+                      // keep raw draft on failure
+                    }
+                  }
                   const id = await context.vault.createEntity(
                     p.type as any,
                     p.title,
                     {
-                      lore: p.draft.lore,
-                      content: p.draft.chronicle,
+                      content,
+                      lore,
                       status: "draft",
                     },
                   );

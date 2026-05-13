@@ -688,6 +688,34 @@ export class OracleStore {
     }
   }
 
+  async reconcileNewEntityDraft(
+    title: string,
+    type: string,
+    draft: { chronicle: string; lore: string },
+  ): Promise<{ content: string; lore: string }> {
+    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+      return { content: draft.chronicle, lore: draft.lore };
+    }
+
+    const shell = {
+      id: "",
+      title,
+      type,
+      content: "",
+      lore: "",
+    } as Entity;
+
+    try {
+      const reconciled = await this.reconcileEntityFields(shell, draft);
+      return {
+        content: reconciled.content || draft.chronicle,
+        lore: reconciled.lore || draft.lore,
+      };
+    } catch {
+      return { content: draft.chronicle, lore: draft.lore };
+    }
+  }
+
   async proposeConnectionsForEntity(
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },

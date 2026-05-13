@@ -39,13 +39,18 @@
           );
         }
       } else {
-        // New Entity
+        // New Entity — reconcile draft through AI to structure chronicle/lore properly
+        const reconciled = await oracle.reconcileNewEntityDraft(
+          proposal.title,
+          proposal.type,
+          proposal.draft,
+        );
         const entityId = await vault.createEntity(
           proposal.type as any,
           proposal.title,
           {
-            lore: proposal.draft.lore,
-            content: proposal.draft.chronicle,
+            content: reconciled.content,
+            lore: reconciled.lore,
           },
         );
         const connectionCount =
