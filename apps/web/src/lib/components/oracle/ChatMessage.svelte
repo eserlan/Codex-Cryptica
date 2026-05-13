@@ -461,7 +461,10 @@
                 </button>
                 {#if message.entityId}
                   <button
-                    onclick={() => oracle.updateMessageEntity(message.id, null)}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      oracle.updateMessageEntity(message.id, null);
+                    }}
                     class="pr-1.5 pl-0.5 py-1 hover:text-red-400 transition-colors"
                     title="Clear link"
                   >
