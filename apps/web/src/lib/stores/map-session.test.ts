@@ -183,14 +183,23 @@ describe("MapSessionStore", () => {
       y: 0,
     });
 
-    store.initiativeOrder = [guestOwned!.id, hostOwned!.id];
-    store.turnIndex = 0;
+    store.initiativeManager.setSnapshotData(
+      [guestOwned!.id, hostOwned!.id],
+      {},
+      1,
+      0,
+    );
 
     expect(store.canAdvanceTurn("guest-1", false)).toBe(true);
     expect(store.canAdvanceTurn("guest-2", false)).toBe(false);
     expect(store.canAdvanceTurn(null, false)).toBe(false);
 
-    store.turnIndex = 1;
+    store.initiativeManager.setSnapshotData(
+      [guestOwned!.id, hostOwned!.id],
+      {},
+      1,
+      1,
+    );
 
     expect(store.canAdvanceTurn("guest-1", false)).toBe(false);
     expect(store.canAdvanceTurn("host-peer", true)).toBe(true);
@@ -946,7 +955,7 @@ describe("MapSessionStore", () => {
   });
 
   it("triggers local pings and emits messages", () => {
-    const emitSpy = vi.spyOn(store as any, "emit");
+    const emitSpy = vi.spyOn(store.networkManager, "emit");
     store.ping(150, 250);
 
     expect(store.lastPing).toMatchObject({
@@ -970,7 +979,7 @@ describe("MapSessionStore", () => {
   });
 
   it("broadcasts resolved modal roll results to VTT chat", () => {
-    const emitSpy = vi.spyOn(store as any, "emit");
+    const emitSpy = vi.spyOn(store.networkManager, "emit");
     store.vttEnabled = true;
 
     store.sendResolvedRollMessage("2d20kh1 + 5", {
@@ -1011,9 +1020,9 @@ describe("MapSessionStore", () => {
   });
 
   it("clears chat and emits a shared clear event", () => {
-    const emitSpy = vi.spyOn(store as any, "emit");
+    const emitSpy = vi.spyOn(store.networkManager, "emit");
     store.vttEnabled = true;
-    store.chatMessages = [
+    store.chatManager.setMessages([
       {
         type: "CHAT_MESSAGE",
         sender: "GM",
@@ -1021,7 +1030,7 @@ describe("MapSessionStore", () => {
         content: "hello",
         timestamp: Date.now(),
       },
-    ];
+    ]);
 
     store.clearChatMessages();
 
@@ -1034,7 +1043,7 @@ describe("MapSessionStore", () => {
   });
 
   it("applies remote chat clear events locally", () => {
-    store.chatMessages = [
+    store.chatManager.setMessages([
       {
         type: "CHAT_MESSAGE",
         sender: "GM",
@@ -1042,7 +1051,7 @@ describe("MapSessionStore", () => {
         content: "hello",
         timestamp: Date.now(),
       },
-    ];
+    ]);
 
     store.handleRemoteChatClear();
 

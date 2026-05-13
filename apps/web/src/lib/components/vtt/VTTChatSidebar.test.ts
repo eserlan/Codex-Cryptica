@@ -65,7 +65,7 @@ describe("VTTChatSidebar", () => {
   });
 
   it("clears chat after confirmation when the host clicks clear", async () => {
-    mapSession.chatMessages = [
+    (mapSession as any).chatMessages = [
       {
         type: "CHAT_MESSAGE",
         sender: "GM",
