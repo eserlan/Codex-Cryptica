@@ -264,6 +264,7 @@
       onCancelEdit={cancelEditing}
       onSave={saveChanges}
       onClose={() => actions.handleClose(onClose)}
+      onDelete={handleDelete}
       onPopOut={typeof onPopOut === "function"
         ? () => {
             onPopOut();
@@ -359,13 +360,7 @@
             onDelete={handleDelete}
           />
 
-          <ZenContent
-            {entity}
-            bind:editState
-            bind:scrollContainer
-            onNavigate={navigateTo}
-            showConnections={true}
-          />
+          <ZenContent {entity} bind:editState bind:scrollContainer />
         </div>
       {:else if activeTab === "map"}
         <div
