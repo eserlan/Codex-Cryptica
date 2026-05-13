@@ -9,9 +9,7 @@ describe("ZenContent ordering", () => {
     );
 
     const chronicleIndex = source.indexOf("<!-- Chronicle -->");
-    const loreIndex = source.indexOf(
-      "{#if !vault.isGuest && (editState.isEditing || entity?.lore)}",
-    );
+    const loreIndex = source.indexOf("themeStore.jargon.lore_header");
 
     expect(chronicleIndex).toBeGreaterThan(-1);
     expect(loreIndex).toBeGreaterThan(-1);
