@@ -1,21 +1,23 @@
 # God File Analysis Report: Codex-Cryptica
 
-_(Last updated: May 11, 2026)_
+_(Last updated: May 13, 2026)_
 
 This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
 
 ## Executive Summary (May 2026 Reassessment)
 
-A recent reassessment has revealed a significant shift in the codebase's technical debt. While many of the historical "God Files" (like `vault.svelte.ts` and `CanvasWorkspace.svelte`) have stayed modular, a massive influx of new code—primarily around the **VTT / Map Engine**, **P2P Cloud Bridge**, and **Oracle enhancements**—has created a new generation of monolithic files. Furthermore, some previously refactored files (such as `MapView.svelte` and `oracle.svelte.ts`) have suffered severe regressions.
+A fresh reassessment on current `staging` shows that the VTT refactor has reduced the worst store-level hotspot: `map-session.svelte.ts` dropped from roughly 1,788 lines to 896 lines. That is meaningful progress, but the overall god-file risk has not disappeared. The largest remaining pressure points are now **Map UI composition**, **Oracle command execution**, **P2P hosting**, and broad global stores such as `ui.svelte.ts` and `oracle.svelte.ts`.
+
+The historical wins are still real (`vault.svelte.ts`, `CanvasWorkspace.svelte`, and the entity store remain contained), but the project has a new top tier of files above ~900 lines that deserve deliberate extraction work before adding more feature logic.
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
 | Rank | File Path                                                  | Line Count | Type                | Status            |
 | :--- | :--------------------------------------------------------- | :--------- | :------------------ | :---------------- |
-| 1    | `apps/web/src/lib/stores/map-session.svelte.ts`            | 1,788      | Store (State/Logic) | 🔴 NEW (CRITICAL) |
-| 2    | `apps/web/src/lib/components/map/MapView.svelte`           | 1,536      | UI Component        | 🔴 REGRESSION     |
-| 3    | `packages/oracle-engine/src/oracle-executor.ts`            | 1,072      | Engine Core         | 🔴 NEW (CRITICAL) |
-| 4    | `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` | 917        | Service (P2P)       | 🔴 NEW            |
+| 1    | `apps/web/src/lib/components/map/MapView.svelte`           | 1,536      | UI Component        | 🔴 REGRESSION     |
+| 2    | `packages/oracle-engine/src/oracle-executor.ts`            | 1,072      | Engine Core         | 🔴 NEW (CRITICAL) |
+| 3    | `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` | 917        | Service (P2P)       | 🔴 NEW            |
+| 4    | `apps/web/src/lib/stores/map-session.svelte.ts`            | 896        | Store (State/Logic) | 🟡 IMPROVED       |
 | 5    | `apps/web/src/lib/stores/ui.svelte.ts`                     | 872        | Store (State)       | 🔴 NEW            |
 | 6    | `apps/web/src/lib/stores/oracle.svelte.ts`                 | 790        | Store (State/Logic) | 🔴 REGRESSION     |
 | 7    | `apps/web/src/routes/(app)/map/+page.svelte`               | 735        | UI Layout           | 🔴 NEW            |
@@ -27,14 +29,14 @@ A recent reassessment has revealed a significant shift in the codebase's technic
 
 ## Evaluation & Refactoring Strategies
 
-### 1. The VTT / Map Monoliths (`map-session.svelte.ts`, `MapView.svelte`, `(app)/map/+page.svelte`)
+### 1. The VTT / Map Monoliths (`MapView.svelte`, `map-session.svelte.ts`, `(app)/map/+page.svelte`)
 
-**Analysis:** The introduction of the VTT and Map features has severely overloaded these files. `map-session.svelte.ts` at 1,788 lines is the largest file in the project, likely orchestrating state, rendering loops, multiplayer sync, and fog of war all in one place. `MapView.svelte` (1,536 lines) was previously refactored but has completely ballooned with VTT features.
+**Analysis:** The VTT store split has reduced `map-session.svelte.ts` to 896 lines, moving it out of the most critical slot. However, `MapView.svelte` remains the largest file in the repository at 1,536 lines, and `(app)/map/+page.svelte` is still a large route-level coordinator. The remaining risk is concentrated in UI composition, event handling, mode/tool controls, and route orchestration rather than a single all-consuming session store.
 **Recommended Split:**
 
-- Decouple pure rendering state from multiplayer session state.
-- Extract P2P sync handlers out of the map session store into dedicated sync coordinators.
-- Split `MapView.svelte` into smaller composite components (e.g., `MapCanvas`, `TokenLayer`, `FogLayer`, `VTTControls`).
+- Continue trimming `map-session.svelte.ts` by keeping it as a session facade over focused managers.
+- Split `MapView.svelte` into smaller composite components and interaction modules (e.g., `MapCanvas`, `TokenLayer`, `FogLayer`, `MapContextMenu`, `VTTControls`).
+- Move route-specific setup and teardown out of `(app)/map/+page.svelte` into hooks or controller modules so the route file becomes layout glue.
 
 ### 2. The Oracle Monoliths (`oracle-executor.ts`, `oracle.svelte.ts`)
 
@@ -66,6 +68,16 @@ A recent reassessment has revealed a significant shift in the codebase's technic
 
 - Extract action dispatchers and menu item configuration from `ContextMenu.svelte` into a configuration/strategy pattern.
 - Re-audit `GraphView.svelte` to push newly added graph features into `packages/graph-engine/` or child components.
+
+---
+
+## Next Recommended Refactor Order
+
+1. **`MapView.svelte`**: Highest line count and broadest UI/event responsibility.
+2. **`oracle-executor.ts`**: Critical engine hotspot where command handlers should become isolated executors.
+3. **`host-service.svelte.ts` / `guest-service.ts`**: P2P service split should reduce future multiplayer risk.
+4. **`ui.svelte.ts`**: Global UI state should be decomposed before it grows further.
+5. **`oracle.svelte.ts`**: Push chat, generation, and reconciliation state into smaller stores/services.
 
 ---
 
