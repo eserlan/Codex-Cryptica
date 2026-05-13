@@ -3,7 +3,7 @@ import type {
   VTTMessage,
   Token,
 } from "../../../types/vtt";
-import type { VaultStore } from "../vault.svelte"; // Let's check where vault store is imported from
+import type { VaultStore } from "../vault.svelte";
 
 export interface VTTMediaDependencies {
   emit: (message: VTTMessage) => void;

@@ -6,6 +6,7 @@ import type {
   EncounterSession,
   EncounterSnapshotSummary,
   SessionMode,
+  MeasurementState,
 } from "../../../types/vtt";
 import { cloneMeasurement } from "$lib/utils/vtt-helpers";
 
@@ -24,7 +25,7 @@ export interface VTTEncounterManagerDependencies {
   clearPings: () => void;
   setMode: (mode: SessionMode) => void;
   setSessionFogMask: (mask: string | null) => void;
-  setMeasurement: (measurement: any) => void;
+  setMeasurement: (measurement: MeasurementState) => void;
 }
 
 export class VTTEncounterManager {

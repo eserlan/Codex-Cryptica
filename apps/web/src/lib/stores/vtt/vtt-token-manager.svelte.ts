@@ -335,28 +335,6 @@ export class VTTTokenManager {
       [tokenId]: next,
     };
 
-    if (permissionChanged) {
-      console.log("[VTTTokenManager] updateToken permission change", {
-        tokenId,
-        current: {
-          ownerPeerId: current.ownerPeerId,
-          ownerGuestName: current.ownerGuestName,
-          visibleTo: current.visibleTo,
-        },
-        updates: {
-          ownerPeerId: updates.ownerPeerId,
-          ownerGuestName: updates.ownerGuestName,
-          visibleTo: updates.visibleTo,
-        },
-        next: {
-          ownerPeerId: next.ownerPeerId,
-          ownerGuestName: next.ownerGuestName,
-          visibleTo: next.visibleTo,
-        },
-        silent,
-      });
-    }
-
     if (!silent) {
       if (shouldDebounceBroadcast) {
         this.deps.queueSessionSnapshotBroadcast();
@@ -524,14 +502,6 @@ export class VTTTokenManager {
   ) {
     const token = this.tokens[tokenId];
     if (!token) return null;
-    console.log("[VTTTokenManager] setTokenOwner", {
-      tokenId,
-      fromOwnerPeerId: token.ownerPeerId,
-      fromOwnerGuestName: token.ownerGuestName,
-      toOwnerPeerId: ownerPeerId,
-      toOwnerGuestName: ownerGuestName,
-      fromVisibleTo: token.visibleTo,
-    });
     return this.updateToken(tokenId, {
       ownerPeerId,
       ownerGuestName,

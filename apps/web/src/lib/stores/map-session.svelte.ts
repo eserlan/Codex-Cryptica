@@ -677,10 +677,12 @@ export class MapSessionStore {
   }
 
   addToken(input: TokenCreationInput, silent = false) {
+    if (!this.mapId) return null;
     return this.tokenManager.addToken(input, silent);
   }
 
   requestTokenAdd(input: TokenCreationInput) {
+    if (!this.mapId || !this.networkManager.hasBroadcaster) return false;
     return this.tokenManager.requestTokenAdd(input);
   }
 

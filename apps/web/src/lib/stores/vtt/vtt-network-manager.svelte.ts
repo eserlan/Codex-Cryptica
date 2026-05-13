@@ -40,6 +40,10 @@ export class VTTNetworkManager {
 
   constructor(private deps: VTTNetworkManagerDependencies) {}
 
+  get hasBroadcaster() {
+    return this.broadcaster !== null;
+  }
+
   setBroadcaster(handler: ((message: VTTMessage) => void) | null) {
     this.broadcaster = handler;
   }

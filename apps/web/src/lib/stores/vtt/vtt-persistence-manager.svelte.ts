@@ -78,7 +78,6 @@ export class VTTPersistenceManager {
 
     this.sessionSnapshotBroadcastTimeout = window.setTimeout(() => {
       this.sessionSnapshotBroadcastTimeout = null;
-      this.persistDraft();
       this.deps.emit({
         type: "SESSION_SNAPSHOT",
         session: this.deps.createSnapshot(),
@@ -88,7 +87,6 @@ export class VTTPersistenceManager {
 
   broadcastSessionSnapshotNow() {
     this.clearPendingSessionSnapshotBroadcast();
-    this.persistDraft();
     this.deps.emit({
       type: "SESSION_SNAPSHOT",
       session: this.deps.createSnapshot(),
