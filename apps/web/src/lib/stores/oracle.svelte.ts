@@ -50,6 +50,7 @@ export class OracleStore {
   isOpen = $state(false);
   isModal = $state(false);
   isInitialized = $state(false);
+  isThinking = $state(false);
   visualizingEntityId = $state<string | null>(null);
   visualizingMessageId = $state<string | null>(null);
 
@@ -212,6 +213,12 @@ export class OracleStore {
     if (event.vaultId && event.vaultId !== this.vault.activeVaultId) return;
 
     switch (event.type) {
+      case "ORACLE_THINKING_START":
+        this.isThinking = true;
+        break;
+      case "ORACLE_THINKING_END":
+        this.isThinking = false;
+        break;
       case "ORACLE_ENTITY_DISCOVERED":
         if (event.requestId) {
           void this.chatHistoryService.addProposal(

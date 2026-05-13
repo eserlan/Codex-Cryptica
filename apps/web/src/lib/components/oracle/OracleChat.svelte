@@ -328,12 +328,13 @@
       <ChatMessage bind:message={oracle.messages[i]} />
     {/each}
 
-    {#if oracle.isLoading}
+    {#if oracle.isLoading || oracle.isThinking}
       <div class="flex justify-start" transition:fade>
         <div
-          class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-header animate-pulse"
+          class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-header animate-pulse flex items-center gap-2"
         >
-          Consulting archives...
+          <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+          {oracle.isThinking ? "Consulting archives..." : "Accessing..."}
         </div>
       </div>
     {/if}
