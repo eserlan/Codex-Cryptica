@@ -523,7 +523,7 @@ export class MapInteractionManager {
       canvasSize: mapStore.canvasSize,
       viewport: mapStore.viewport,
       deltaY: e.deltaY,
-      altHeld: this.isAltPressed,
+      altHeld: e.altKey,
     });
 
     mapStore.updateViewport(update.pan, update.zoom);

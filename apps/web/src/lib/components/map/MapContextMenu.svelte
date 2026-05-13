@@ -165,6 +165,7 @@
       <!-- Resize Submenu (Host only) -->
       <div
         class="relative group"
+        role="presentation"
         onmouseenter={() => {
           showResizeSubmenu = true;
           showStatusSubmenu = false;
@@ -244,6 +245,7 @@
       {@const activeEffects = _ctxToken?.statusEffects ?? []}
       <div
         class="relative group"
+        role="presentation"
         onmouseenter={() => {
           showStatusSubmenu = true;
           showResizeSubmenu = false;

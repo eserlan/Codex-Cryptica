@@ -40,9 +40,9 @@
   let mapImage = $state<HTMLImageElement | null>(null);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
 
-  // Non-reactive mirrors for MapCanvas passing inside rAF loop
-  let _drawImage: HTMLImageElement | null = null;
-  let _drawMask: HTMLCanvasElement | null = null;
+  // Reactive mirrors for MapCanvas passing
+  let _drawImage = $state<HTMLImageElement | null>(null);
+  let _drawMask = $state<HTMLCanvasElement | null>(null);
 
   const painter = new MapFogPainter({
     mapStore,

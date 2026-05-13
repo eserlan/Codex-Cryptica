@@ -5,7 +5,40 @@
   import { themeStore } from "../../stores/theme.svelte";
   import { hexToRgb } from "../../utils/color";
   import { renderMap } from "map-engine";
+  import type { Point } from "schema";
+  import type { PingState, Token } from "../../../types/vtt";
   import type { MapInteractionManager } from "./map-interactions.svelte";
+
+  interface EnrichedToken extends Token {
+    label: string;
+    image: HTMLImageElement | null;
+    selected: boolean;
+    active: boolean;
+    visible: boolean;
+  }
+
+  interface EnrichedMeasurement {
+    active: boolean;
+    start: Point | null;
+    end: Point | null;
+    label: string;
+  }
+
+  interface RemoteEnrichedMeasurement {
+    start: Point;
+    end: Point;
+    label: string;
+    color: string;
+    peerId: string;
+  }
+
+  interface EnrichedDragPreview {
+    entityId: string;
+    x: number;
+    y: number;
+    label: string;
+    valid: boolean;
+  }
 
   let {
     mapImage,
@@ -20,11 +53,11 @@
   }: {
     mapImage: HTMLImageElement | null;
     maskCanvas: HTMLCanvasElement | null;
-    vttTokens: any[];
-    vttMeasurement: any;
-    remoteMeasurement: any;
-    vttPings: any[];
-    vttDragPreview: any;
+    vttTokens: EnrichedToken[];
+    vttMeasurement: EnrichedMeasurement | null;
+    remoteMeasurement: RemoteEnrichedMeasurement | null;
+    vttPings: PingState[];
+    vttDragPreview: EnrichedDragPreview | null;
     interactions: MapInteractionManager;
     getCanvas: (c: HTMLCanvasElement) => void;
   } = $props();
