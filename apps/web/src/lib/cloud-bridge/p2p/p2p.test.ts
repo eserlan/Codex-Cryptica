@@ -448,9 +448,7 @@ describe("P2P Services", () => {
         y: 0,
         ownerPeerId: "guest-1",
       });
-      mapSession.initiativeOrder = [guestToken!.id];
-      mapSession.turnIndex = 0;
-      mapSession.round = 1;
+      mapSession.initiativeManager.setSnapshotData([guestToken!.id], {}, 1, 0);
 
       const mockConn = new MockConnection("guest-1");
       (hostService as any).connections.push(mockConn);
