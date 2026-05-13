@@ -423,6 +423,26 @@ export class OracleStore {
             },
           );
         },
+        generateStructuredEntity: (
+          apiKey: string,
+          query: string,
+          context: string,
+          modelName: string,
+          onUpdate: (partial: string) => void,
+          categories?: string[],
+        ) => {
+          const callback = isWorker
+            ? Comlink.proxy(onUpdate)
+            : (onUpdate as any);
+          return this.textGeneration.generateStructuredEntity?.(
+            apiKey,
+            query,
+            context,
+            modelName,
+            callback,
+            categories ? $state.snapshot(categories) : undefined,
+          );
+        },
         reconcileEntityUpdate: wrap(
           this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
         ),
