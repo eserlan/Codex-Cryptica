@@ -22,8 +22,8 @@
   import { MapFogPainter } from "./map-fog-painter";
   import { MapViewAssetLoader } from "./map-view-loader";
   import MapPinPopover from "./MapPinPopover.svelte";
+  import MapContextMenu from "./MapContextMenu.svelte";
   import { hitTestToken, measureDistance } from "$lib/utils/vtt-helpers";
-  import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
 
   function hashToColor(input: string) {
     let hash = 0;
@@ -555,8 +555,6 @@
     imgY: number;
     tokenId?: string;
   } | null>(null);
-  let showResizeSubmenu = $state(false);
-  let showStatusSubmenu = $state(false);
 
   const visualBrushRadius = $derived(
     mapStore.brushRadius * mapStore.viewport.zoom,
@@ -638,8 +636,6 @@
 
   function onMouseDown(e: MouseEvent) {
     contextMenu = null;
-    showResizeSubmenu = false;
-    showStatusSubmenu = false;
     updateCachedRect();
     if (cachedRect) {
       lastMousePos = {
@@ -953,8 +949,6 @@
 
   function onDoubleClick(e: MouseEvent) {
     contextMenu = null;
-    showResizeSubmenu = false;
-    showStatusSubmenu = false;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
@@ -992,8 +986,6 @@
     );
 
     const imgCoords = mapStore.unproject({ x, y });
-    showResizeSubmenu = false;
-    showStatusSubmenu = false;
     contextMenu = {
       x: e.clientX,
       y: e.clientY,
@@ -1143,359 +1135,14 @@
   {/if}
 
   {#if contextMenu}
-    <div
-      class="fixed z-[1000] bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[140px]"
-      style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
-      transition:fade={{ duration: 100 }}
-      role="presentation"
-      onmousedown={(e) => e.stopPropagation()}
-    >
-      {#if contextMenu.tokenId}
-        <button
-          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-          onclick={() => {
-            if (contextMenu?.tokenId) {
-              mapSession.pingToken(contextMenu.tokenId);
-              contextMenu = null;
-            }
-          }}
-        >
-          <span class="icon-[lucide--radar] w-3.5 h-3.5 text-theme-primary"
-          ></span>
-          <span>Ping Token</span>
-        </button>
-
-        <!-- View Entity (host always; guest only if token is not gm-only) -->
-        {#if contextMenu.tokenId}
-          {@const _ctxToken = mapSession.tokens[contextMenu.tokenId]}
-          {#if _ctxToken?.entityId && mapSession.canViewToken(contextMenu.tokenId, mapSession.myPeerId, mapStore.isGMMode)}
-            <div class="h-px bg-theme-border my-1 mx-2"></div>
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-              onclick={() => {
-                if (_ctxToken?.entityId) {
-                  uiStore.openZenMode(_ctxToken.entityId);
-                  contextMenu = null;
-                }
-              }}
-            >
-              <span
-                class="icon-[lucide--book-open] w-3.5 h-3.5 text-theme-primary"
-              ></span>
-              <span>Look at {_ctxToken.name}</span>
-            </button>
-          {/if}
-        {/if}
-
-        <!-- Multi-select actions (GM only) -->
-        {#if mapStore.isGMMode && !uiStore.isGuestMode}
-          {#if contextMenu?.tokenId && mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(contextMenu.tokenId)}
-            <div class="h-px bg-theme-border my-1 mx-2"></div>
-            <div
-              class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
-            >
-              {mapSession.selectedTokens.size} tokens selected
-            </div>
-            <!-- Hide Selected -->
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-              onclick={() => {
-                for (const id of mapSession.selectedTokens) {
-                  mapSession.toggleTokenVisibility(id);
-                }
-                contextMenu = null;
-              }}
-            >
-              <span class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
-              ></span>
-              <span>Hide Selected</span>
-            </button>
-            <!-- Remove Selected -->
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-red-400"
-              onclick={() => {
-                for (const id of mapSession.selectedTokens) {
-                  mapSession.removeToken(id);
-                }
-                contextMenu = null;
-              }}
-            >
-              <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-              <span>Remove Selected</span>
-            </button>
-          {:else}
-            <!-- Select All Visible -->
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-              onclick={() => {
-                const allIds = Object.keys(mapSession.tokens);
-                mapSession.setMultiSelection(allIds);
-                contextMenu = null;
-              }}
-            >
-              <span
-                class="icon-[lucide--square-mouse-pointer] w-3.5 h-3.5 text-theme-muted"
-              ></span>
-              <span>Select All</span>
-            </button>
-          {/if}
-        {/if}
-
-        <div class="h-px bg-theme-border my-1 mx-2"></div>
-
-        <!-- Removal -->
-        {#if mapStore.isGMMode && !uiStore.isGuestMode}
-          <button
-            class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-            onclick={() => {
-              if (contextMenu?.tokenId) {
-                mapSession.cloneToken(contextMenu.tokenId);
-                contextMenu = null;
-              }
-            }}
-          >
-            <span class="icon-[lucide--copy-plus] w-3.5 h-3.5"></span>
-            <span>Clone Token</span>
-          </button>
-
-          <!-- Show/Hide Token -->
-          {#if contextMenu?.tokenId}
-            {@const token = mapSession.tokens[contextMenu.tokenId]}
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-              onclick={() => {
-                if (contextMenu?.tokenId) {
-                  mapSession.toggleTokenVisibility(contextMenu.tokenId);
-                  contextMenu = null;
-                }
-              }}
-            >
-              {#if token?.visibleTo === "all"}
-                <span
-                  class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
-                ></span>
-                <span>Hide from Guests</span>
-              {:else}
-                <span class="icon-[lucide--eye] w-3.5 h-3.5 text-theme-primary"
-                ></span>
-                <span>Show to All</span>
-              {/if}
-            </button>
-          {/if}
-        {/if}
-
-        {#if mapStore.isGMMode && !uiStore.isGuestMode}
-          <button
-            class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-red-400"
-            onclick={() => {
-              if (contextMenu?.tokenId) {
-                mapSession.removeToken(contextMenu.tokenId);
-                contextMenu = null;
-              }
-            }}
-          >
-            <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-            <span>Remove Token</span>
-          </button>
-        {/if}
-
-        <!-- Resize Submenu (Host only) -->
-        {#if mapStore.isGMMode && !uiStore.isGuestMode}
-          <div
-            class="relative group"
-            onmouseenter={() => {
-              showResizeSubmenu = true;
-              showStatusSubmenu = false;
-            }}
-            onmouseleave={() => {
-              showResizeSubmenu = false;
-              showStatusSubmenu = false;
-            }}
-          >
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
-              aria-haspopup="menu"
-              aria-expanded={showResizeSubmenu}
-              onclick={(e) => {
-                e.stopPropagation();
-                showResizeSubmenu = !showResizeSubmenu;
-                if (showResizeSubmenu) showStatusSubmenu = false;
-              }}
-              onkeydown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  showResizeSubmenu = !showResizeSubmenu;
-                  if (showResizeSubmenu) showStatusSubmenu = false;
-                }
-              }}
-            >
-              <div class="flex items-center gap-2">
-                <span class="icon-[lucide--maximize] w-3.5 h-3.5"></span>
-                <span>Resize</span>
-              </div>
-              <span class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
-              ></span>
-            </button>
-
-            {#if showResizeSubmenu}
-              <div
-                class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[100px]"
-                role="menu"
-                aria-label="Resize options"
-              >
-                {#each [1, 2, 3, 4] as scale (scale)}
-                  <button
-                    class="w-full text-left px-4 py-2 text-xs hover:bg-theme-primary/20 hover:text-theme-primary transition-colors font-mono"
-                    role="menuitem"
-                    onclick={() => {
-                      if (contextMenu?.tokenId) {
-                        const gridSize = mapStore.gridSize || 50;
-                        const token = mapSession.tokens[contextMenu.tokenId];
-                        if (token) {
-                          const snappedX =
-                            Math.round(
-                              (token.x - mapStore.gridOffsetX) / gridSize,
-                            ) *
-                              gridSize +
-                            mapStore.gridOffsetX;
-                          const snappedY =
-                            Math.round(
-                              (token.y - mapStore.gridOffsetY) / gridSize,
-                            ) *
-                              gridSize +
-                            mapStore.gridOffsetY;
-
-                          mapSession.updateToken(contextMenu.tokenId, {
-                            x: snappedX,
-                            y: snappedY,
-                            width: scale * gridSize,
-                            height: scale * gridSize,
-                          });
-                        }
-                        contextMenu = null;
-                        showResizeSubmenu = false;
-                      }
-                    }}
-                  >
-                    {scale}x{scale}
-                  </button>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        {/if}
-
-        <!-- Status Submenu (Host only) -->
-        {#if mapStore.isGMMode && !uiStore.isGuestMode}
-          {#if contextMenu.tokenId}
-            {@const token = mapSession.tokens[contextMenu.tokenId]}
-            {@const activeEffects = token?.statusEffects ?? []}
-            <div
-              class="relative group"
-              onmouseenter={() => {
-                showStatusSubmenu = true;
-                showResizeSubmenu = false;
-              }}
-              onmouseleave={() => {
-                showStatusSubmenu = false;
-                showResizeSubmenu = false;
-              }}
-            >
-              <button
-                class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
-                aria-haspopup="menu"
-                aria-expanded={showStatusSubmenu}
-                onclick={(e) => {
-                  e.stopPropagation();
-                  showStatusSubmenu = !showStatusSubmenu;
-                  if (showStatusSubmenu) showResizeSubmenu = false;
-                }}
-                onkeydown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showStatusSubmenu = !showStatusSubmenu;
-                    if (showStatusSubmenu) showResizeSubmenu = false;
-                  }
-                }}
-              >
-                <div class="flex items-center gap-2">
-                  <span class="icon-[lucide--badge] w-3.5 h-3.5"></span>
-                  <span>Status</span>
-                </div>
-                <span class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
-                ></span>
-              </button>
-
-              {#if showStatusSubmenu}
-                <div
-                  class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[160px]"
-                  role="menu"
-                  aria-label="Status options"
-                >
-                  {#each TOKEN_STATUS_EFFECTS as effect (effect.id)}
-                    {@const isActive = activeEffects.includes(effect.id)}
-                    <button
-                      class="w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2 {isActive
-                        ? 'text-theme-primary hover:bg-theme-primary/20'
-                        : 'text-theme-text hover:bg-theme-bg/50'}"
-                      role="menuitemcheckbox"
-                      aria-checked={isActive}
-                      onclick={() => {
-                        if (contextMenu?.tokenId) {
-                          const token = mapSession.tokens[contextMenu.tokenId];
-                          if (token) {
-                            const current = token.statusEffects ?? [];
-                            const updated = isActive
-                              ? current.filter((e: string) => e !== effect.id)
-                              : [...current, effect.id];
-                            mapSession.updateToken(contextMenu.tokenId, {
-                              statusEffects: updated,
-                            });
-                          }
-                          contextMenu = null;
-                          showStatusSubmenu = false;
-                          showResizeSubmenu = false;
-                        }
-                      }}
-                    >
-                      <span
-                        class="{effect.icon} w-3.5 h-3.5 flex-shrink-0"
-                        style:color={effect.color}
-                      ></span>
-                      <span class="flex-1">{effect.label}</span>
-                      {#if isActive}
-                        <span
-                          class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-900/10 text-[11px] font-black leading-none text-amber-950 shadow-[0_0_0_1px_rgba(120,53,15,0.25)]"
-                          aria-hidden="true"
-                        >
-                          ✓
-                        </span>
-                      {/if}
-                    </button>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {/if}
-        {/if}
-      {:else}
-        <button
-          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-          onclick={() => {
-            if (contextMenu) {
-              mapSession.ping(contextMenu.imgX, contextMenu.imgY);
-              contextMenu = null;
-            }
-          }}
-        >
-          <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
-          ></span>
-          <span>Ping Here</span>
-        </button>
-      {/if}
-    </div>
+    <MapContextMenu
+      x={contextMenu.x}
+      y={contextMenu.y}
+      imgX={contextMenu.imgX}
+      imgY={contextMenu.imgY}
+      tokenId={contextMenu.tokenId}
+      onClose={() => (contextMenu = null)}
+    />
   {/if}
 
   {#if gridFitStart && gridFitEnd}
