@@ -872,7 +872,10 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                 if (!p.entityId) {
                   let content = p.draft.chronicle;
                   let lore = p.draft.lore;
-                  if (context.textGeneration?.reconcileEntityUpdate) {
+                  if (
+                    context.textGeneration?.reconcileEntityUpdate &&
+                    proposals.length < 5
+                  ) {
                     try {
                       const shell = {
                         id: "",
