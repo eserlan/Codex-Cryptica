@@ -426,11 +426,36 @@
 
               <button
                 onclick={() => (isSelectingEntity = !isSelectingEntity)}
-                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-surface border border-theme-border text-theme-muted hover:bg-theme-primary hover:text-black hover:border-theme-primary"
-                title="Link this message to an entity"
+                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-surface border border-theme-border text-theme-muted hover:bg-theme-primary hover:text-black hover:border-theme-primary group/link relative"
+                title={message.entityId
+                  ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
+                  : "Link this message to an entity"}
               >
-                <span class="icon-[lucide--link] w-3 h-3 shrink-0"></span>
-                <span class="font-header">LINK ENTITY</span>
+                <span
+                  class={message.entityId
+                    ? "icon-[lucide--link-2] w-3 h-3 text-theme-primary"
+                    : "icon-[lucide--link] w-3 h-3 shrink-0"}
+                ></span>
+                <span class="font-header truncate max-w-[120px]">
+                  {message.entityId
+                    ? (
+                        vault.entities[message.entityId]?.title || "LINKED"
+                      ).toUpperCase()
+                    : "LINK ENTITY"}
+                </span>
+
+                {#if message.entityId}
+                  <button
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      oracle.updateMessageEntity(message.id, null);
+                    }}
+                    class="ml-1 p-0.5 hover:text-red-400 transition-colors"
+                    title="Clear link"
+                  >
+                    <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
+                  </button>
+                {/if}
               </button>
 
               {#if targetEntity || activeEntity}
