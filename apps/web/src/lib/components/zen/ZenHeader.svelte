@@ -23,6 +23,7 @@
     onCancelEdit,
     onSave,
     onClose,
+    onDelete,
     onPopOut,
     onApproveDraft,
     onRejectDraft,
@@ -37,6 +38,7 @@
     onCancelEdit: () => void;
     onSave: () => Promise<void>;
     onClose: () => void;
+    onDelete?: () => Promise<void>;
     onPopOut?: () => void;
     onApproveDraft?: () => void;
     onRejectDraft?: () => void;
@@ -202,6 +204,17 @@
       </button>
     {/if}
     {#if !editState.isEditing && !vault.isGuest && entity}
+      {#if onDelete}
+        <button
+          onclick={onDelete}
+          class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          title="Delete entity"
+          aria-label="Delete entity"
+          data-testid="delete-entity-button"
+        >
+          <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+        </button>
+      {/if}
       <button
         onclick={onStartEdit}
         class="px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
