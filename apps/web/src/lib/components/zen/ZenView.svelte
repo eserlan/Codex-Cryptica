@@ -264,6 +264,7 @@
       onCancelEdit={cancelEditing}
       onSave={saveChanges}
       onClose={() => actions.handleClose(onClose)}
+      onDelete={handleDelete}
       onPopOut={typeof onPopOut === "function"
         ? () => {
             onPopOut();
