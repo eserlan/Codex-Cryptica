@@ -302,7 +302,11 @@
                 transition:fade
               >
                 {#each visibleProposals as proposal (`${proposal.entityId ?? "new"}:${proposal.title}`)}
-                  <DiscoveryChip {proposal} />
+                  <DiscoveryChip
+                    {proposal}
+                    onLink={(entityId) =>
+                      oracle.updateMessageEntity(message.id, entityId)}
+                  />
                 {/each}
               </div>
             {/if}
