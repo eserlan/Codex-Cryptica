@@ -6,7 +6,6 @@
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
-  import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
   import { isEntityVisible, type Entity } from "schema";
 
   let {
@@ -374,8 +373,6 @@
         {/if}
       </div>
     {/if}
-
-    <DetailProposals isEditing={editState.isEditing} />
 
     {#if editState.isEditing && !vault.isGuest}
       <div class="mt-6 pt-6 border-t border-theme-border">
