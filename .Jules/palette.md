@@ -37,6 +37,7 @@
 
 **Learning:** When creating or updating custom modal/dialog components (e.g., those using floating backdrops like `fixed inset-0`), strictly ensure screen reader accessibility by applying `role="dialog"`, `aria-modal="true"`, and an explicit `aria-label` or `aria-labelledby` directly to the main inner container element.
 **Action:** Add ARIA dialog roles, aria-modal, and appropriate labels to VTTGridSettings, CategorySettings icon picker sub-modal, and ZenModeModal.
+
 ## 2026-05-07 - Focus vs Focus-Visible Accessibility
 
 **Learning:** When making components keyboard accessible, using standard `focus:` styles often results in ugly outlines appearing for mouse users after they click a button. This discourages developers from adding focus states at all.
@@ -46,7 +47,13 @@
 
 **Learning:** Non-submit buttons in Svelte components can accidentally submit forms if they are ever wrapped in a `<form>` context and don't explicitly have a type.
 **Action:** Always explicitly define `type="button"` on generic buttons to prevent unexpected form submission behavior.
+
 ## 2026-05-11 - Toggle Button State
 
 **Learning:** Found custom toggle buttons (like the VTT mode switchers) that change visual state via classes but don't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode is active.
 **Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.
+
+## 2026-05-15 - DetailFooter Accessible Loading State
+
+**Learning:** Found the Save button in `DetailFooter.svelte` was relying on an inaccessible text-only `animate-pulse` class ("SAVING...") without a visual spinner and lacking an `aria-busy` state, making the loading state less obvious and invisible to assistive technology.
+**Action:** Replaced text-only pulse with the standard SVG spinner (`icon-[lucide--loader-2] animate-spin`) next to static "SAVING..." text, and explicitly bound `aria-busy={isSaving}` on the parent button.
