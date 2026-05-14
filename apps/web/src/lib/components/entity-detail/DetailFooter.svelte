@@ -39,9 +39,11 @@
         style:border-color="var(--theme-selected-border)"
         style:color="var(--theme-action-text)"
         disabled={isSaving}
+        aria-busy={isSaving}
       >
         {#if isSaving}
-          <span class="animate-pulse">SAVING...</span>
+          <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+          <span>SAVING...</span>
         {:else}
           {themeStore.jargon.save.toUpperCase()} CHANGES
         {/if}
