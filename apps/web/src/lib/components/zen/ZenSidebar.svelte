@@ -301,8 +301,8 @@
     {/if}
   </div>
 
-  <!-- Sidebar Content (Desktop) -->
-  <div class="hidden md:block space-y-4">
+  <!-- Sidebar Content -->
+  <div class="block space-y-4" data-testid="zen-sidebar-content">
     {#if !(isPopout && vault.isGuest)}
       <div
         class="space-y-4 pt-6 border-t border-theme-border md:border-t-0 md:pt-0"
