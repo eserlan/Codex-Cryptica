@@ -12,30 +12,29 @@ The historical wins are still real (`vault.svelte.ts`, `CanvasWorkspace.svelte`,
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                  | Line Count | Type                | Status            |
-| :--- | :--------------------------------------------------------- | :--------- | :------------------ | :---------------- |
-| 1    | `apps/web/src/lib/components/map/MapView.svelte`           | 1,536      | UI Component        | 🔴 REGRESSION     |
-| 2    | `packages/oracle-engine/src/oracle-executor.ts`            | 1,072      | Engine Core         | 🔴 NEW (CRITICAL) |
-| 3    | `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` | 917        | Service (P2P)       | 🔴 NEW            |
-| 4    | `apps/web/src/lib/stores/map-session.svelte.ts`            | 896        | Store (State/Logic) | 🟡 IMPROVED       |
-| 5    | `apps/web/src/lib/stores/ui.svelte.ts`                     | 872        | Store (State)       | 🔴 NEW            |
-| 6    | `apps/web/src/lib/stores/oracle.svelte.ts`                 | 790        | Store (State/Logic) | 🔴 REGRESSION     |
-| 7    | `apps/web/src/routes/(app)/map/+page.svelte`               | 735        | UI Layout           | 🔴 NEW            |
-| 8    | `apps/web/src/lib/components/GraphView.svelte`             | 699        | UI Component        | 🟡 REGRESSION     |
-| 9    | `packages/map-engine/src/renderer.ts`                      | 672        | Engine Core         | 🔴 NEW            |
-| 10   | `apps/web/src/lib/components/graph/ContextMenu.svelte`     | 644        | UI Component        | 🔴 NEW            |
+| Rank | File Path                                                    | Line Count | Type                | Status            |
+| :--- | :----------------------------------------------------------- | :--------- | :------------------ | :---------------- |
+| 1    | `packages/oracle-engine/src/oracle-executor.ts`              | 1,072      | Engine Core         | 🔴 NEW (CRITICAL) |
+| 2    | `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts`   | 917        | Service (P2P)       | 🔴 NEW            |
+| 3    | `apps/web/src/lib/stores/map-session.svelte.ts`              | 896        | Store (State/Logic) | 🟡 IMPROVED       |
+| 4    | `apps/web/src/lib/stores/ui.svelte.ts`                       | 872        | Store (State)       | 🔴 NEW            |
+| 5    | `apps/web/src/lib/stores/oracle.svelte.ts`                   | 790        | Store (State/Logic) | 🔴 REGRESSION     |
+| 6    | `apps/web/src/routes/(app)/map/+page.svelte`                 | 735        | UI Layout           | 🔴 NEW            |
+| 7    | `apps/web/src/lib/components/GraphView.svelte`               | 699        | UI Component        | 🟡 REGRESSION     |
+| 8    | `packages/map-engine/src/renderer.ts`                        | 672        | Engine Core         | 🔴 NEW            |
+| 9    | `apps/web/src/lib/components/graph/ContextMenu.svelte`       | 644        | UI Component        | 🔴 NEW            |
+| 10   | `apps/web/src/lib/components/map/map-interactions.svelte.ts` | 532        | State Class         | 🟢 NEW (MODULAR)  |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. The VTT / Map Monoliths (`MapView.svelte`, `map-session.svelte.ts`, `(app)/map/+page.svelte`)
+### 1. The VTT / Map Monoliths (`map-session.svelte.ts`, `(app)/map/+page.svelte`)
 
-**Analysis:** The VTT store split has reduced `map-session.svelte.ts` to 896 lines, moving it out of the most critical slot. However, `MapView.svelte` remains the largest file in the repository at 1,536 lines, and `(app)/map/+page.svelte` is still a large route-level coordinator. The remaining risk is concentrated in UI composition, event handling, mode/tool controls, and route orchestration rather than a single all-consuming session store.
+**Analysis:** The `MapView.svelte` refactor successfully reduced the UI component from 1,536 lines to ~330 lines by extracting logic into `MapCanvas`, `MapContextMenu`, and `MapInteractionManager`. However, `(app)/map/+page.svelte` remains a large route coordinator, and `map-session.svelte.ts` is still significant at 896 lines.
 **Recommended Split:**
 
 - Continue trimming `map-session.svelte.ts` by keeping it as a session facade over focused managers.
-- Split `MapView.svelte` into smaller composite components and interaction modules (e.g., `MapCanvas`, `TokenLayer`, `FogLayer`, `MapContextMenu`, `VTTControls`).
 - Move route-specific setup and teardown out of `(app)/map/+page.svelte` into hooks or controller modules so the route file becomes layout glue.
 
 ### 2. The Oracle Monoliths (`oracle-executor.ts`, `oracle.svelte.ts`)
@@ -73,16 +72,17 @@ The historical wins are still real (`vault.svelte.ts`, `CanvasWorkspace.svelte`,
 
 ## Next Recommended Refactor Order
 
-1. **`MapView.svelte`**: Highest line count and broadest UI/event responsibility.
-2. **`oracle-executor.ts`**: Critical engine hotspot where command handlers should become isolated executors.
-3. **`host-service.svelte.ts` / `guest-service.ts`**: P2P service split should reduce future multiplayer risk.
-4. **`ui.svelte.ts`**: Global UI state should be decomposed before it grows further.
-5. **`oracle.svelte.ts`**: Push chat, generation, and reconciliation state into smaller stores/services.
+1. **`oracle-executor.ts`**: Critical engine hotspot where command handlers should become isolated executors.
+2. **`host-service.svelte.ts` / `guest-service.ts`**: P2P service split should reduce future multiplayer risk.
+3. **`ui.svelte.ts`**: Global UI state should be decomposed before it grows further.
+4. **`oracle.svelte.ts`**: Push chat, generation, and reconciliation state into smaller stores/services.
+5. **`(app)/map/+page.svelte`**: Reduce route coordination complexity.
 
 ---
 
 ## Historical Successes (Previously Fixed & Maintained)
 
+- **`MapView.svelte`**: **RESOLVED**. Reduced from 1,536 to ~330 lines by decomposing into focused modules.
 - **`vault.svelte.ts`**: Holding steady at ~500 lines (down from 1,381).
 - **`CanvasWorkspace.svelte`**: Staying modular at ~326 lines (down from 835).
 - **`entity-store.svelte.ts`**: Maintaining boundaries at ~450 lines (down from 920).
