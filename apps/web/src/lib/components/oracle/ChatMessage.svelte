@@ -445,11 +445,16 @@
                   title={message.entityId
                     ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
                     : "Link this message to an entity"}
+                  aria-label={message.entityId
+                    ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}. Click to change.`
+                    : "Link this message to an entity"}
+                  type="button"
                 >
                   <span
                     class={message.entityId
                       ? "icon-[lucide--link-2] w-3 h-3 text-theme-primary"
                       : "icon-[lucide--link] w-3 h-3 shrink-0"}
+                    aria-hidden="true"
                   ></span>
                   <span class="font-header truncate max-w-[120px]">
                     {message.entityId
@@ -467,8 +472,13 @@
                     }}
                     class="pr-1.5 pl-0.5 py-1 hover:text-red-400 transition-colors"
                     title="Clear link"
+                    aria-label="Clear entity link"
+                    type="button"
                   >
-                    <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
+                    <span
+                      class="icon-[lucide--x] w-2.5 h-2.5"
+                      aria-hidden="true"
+                    ></span>
                   </button>
                 {/if}
               </div>

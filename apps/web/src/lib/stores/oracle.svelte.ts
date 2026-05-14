@@ -50,7 +50,8 @@ export class OracleStore {
   isOpen = $state(false);
   isModal = $state(false);
   isInitialized = $state(false);
-  isThinking = $state(false);
+  private _thinkingCount = $state(0);
+  isThinking = $derived(this._thinkingCount > 0);
   visualizingEntityId = $state<string | null>(null);
   visualizingMessageId = $state<string | null>(null);
 
@@ -214,10 +215,10 @@ export class OracleStore {
 
     switch (event.type) {
       case "ORACLE_THINKING_START":
-        this.isThinking = true;
+        this._thinkingCount++;
         break;
       case "ORACLE_THINKING_END":
-        this.isThinking = false;
+        this._thinkingCount = Math.max(0, this._thinkingCount - 1);
         break;
       case "ORACLE_ENTITY_DISCOVERED":
         if (event.requestId) {
@@ -430,26 +431,28 @@ export class OracleStore {
             },
           );
         },
-        generateStructuredEntity: (
-          apiKey: string,
-          query: string,
-          context: string,
-          modelName: string,
-          onUpdate: (partial: string) => void,
-          categories?: string[],
-        ) => {
-          const callback = isWorker
-            ? Comlink.proxy(onUpdate)
-            : (onUpdate as any);
-          return this.textGeneration.generateStructuredEntity?.(
-            apiKey,
-            query,
-            context,
-            modelName,
-            callback,
-            categories ? $state.snapshot(categories) : undefined,
-          );
-        },
+        generateStructuredEntity: this.textGeneration.generateStructuredEntity
+          ? (
+              apiKey: string,
+              query: string,
+              context: string,
+              modelName: string,
+              onUpdate: (partial: string) => void,
+              categories?: string[],
+            ) => {
+              const callback = isWorker
+                ? Comlink.proxy(onUpdate)
+                : (onUpdate as any);
+              return this.textGeneration.generateStructuredEntity?.(
+                apiKey,
+                query,
+                context,
+                modelName,
+                callback,
+                categories ? $state.snapshot(categories) : undefined,
+              );
+            }
+          : undefined,
         reconcileEntityUpdate: wrap(
           this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
         ),

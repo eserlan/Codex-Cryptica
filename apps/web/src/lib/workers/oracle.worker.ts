@@ -177,15 +177,22 @@ class OracleWorker {
     modelName: string,
     onUpdate: (partial: string) => void,
     categories?: string[],
+    vaultId?: string,
+    requestId?: string,
   ): Promise<void> {
-    return this.textGeneration.generateStructuredEntity(
-      apiKey,
-      query,
-      context,
-      modelName,
-      onUpdate,
-      categories,
-    );
+    this.emit({ type: "ORACLE_THINKING_START", vaultId, requestId });
+    try {
+      return await this.textGeneration.generateStructuredEntity(
+        apiKey,
+        query,
+        context,
+        modelName,
+        onUpdate,
+        categories,
+      );
+    } finally {
+      this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
+    }
   }
 
   async propose(
