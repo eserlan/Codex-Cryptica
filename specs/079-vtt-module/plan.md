@@ -64,7 +64,10 @@ apps/web/src/
 │   │   └── vault.svelte.ts             # Vault and OPFS persistence helpers
 │   ├── components/
 │   │   ├── map/
-│   │   │   ├── MapView.svelte           # Map canvas, token overlay, drag handling
+│   │   │   ├── MapView.svelte           # Map coordinator component
+│   │   │   ├── MapCanvas.svelte         # High-performance VTT layer (tokens, fog)
+│   │   │   ├── MapOverlays.svelte       # DOM-based VTT overlays (selection, grid fit)
+│   │   │   ├── map-interactions.svelte.ts # Input state machine (drag, measure, zoom)
 │   │   │   ├── VTTControls.svelte       # Top-level VTT controls and host share entry
 │   │   │   ├── vtt-ui.ts                # Shared VTT UI state helpers
 │   │   │   └── vtt-mode-menu.svelte.ts  # Mode menu state helpers

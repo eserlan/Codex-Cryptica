@@ -50,6 +50,8 @@ export class OracleStore {
   isOpen = $state(false);
   isModal = $state(false);
   isInitialized = $state(false);
+  private _thinkingCount = $state(0);
+  isThinking = $derived(this._thinkingCount > 0);
   visualizingEntityId = $state<string | null>(null);
   visualizingMessageId = $state<string | null>(null);
 
@@ -212,6 +214,12 @@ export class OracleStore {
     if (event.vaultId && event.vaultId !== this.vault.activeVaultId) return;
 
     switch (event.type) {
+      case "ORACLE_THINKING_START":
+        this._thinkingCount++;
+        break;
+      case "ORACLE_THINKING_END":
+        this._thinkingCount = Math.max(0, this._thinkingCount - 1);
+        break;
       case "ORACLE_ENTITY_DISCOVERED":
         if (event.requestId) {
           void this.chatHistoryService.addProposal(
@@ -423,6 +431,28 @@ export class OracleStore {
             },
           );
         },
+        generateStructuredEntity: this.textGeneration.generateStructuredEntity
+          ? (
+              apiKey: string,
+              query: string,
+              context: string,
+              modelName: string,
+              onUpdate: (partial: string) => void,
+              categories?: string[],
+            ) => {
+              const callback = isWorker
+                ? Comlink.proxy(onUpdate)
+                : (onUpdate as any);
+              return this.textGeneration.generateStructuredEntity?.(
+                apiKey,
+                query,
+                context,
+                modelName,
+                callback,
+                categories ? $state.snapshot(categories) : undefined,
+              );
+            }
+          : undefined,
         reconcileEntityUpdate: wrap(
           this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
         ),
@@ -665,6 +695,34 @@ export class OracleStore {
         content: existing.content || proposal.draft.chronicle,
         lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
       };
+    }
+  }
+
+  async reconcileNewEntityDraft(
+    title: string,
+    type: string,
+    draft: { chronicle: string; lore: string },
+  ): Promise<{ content: string; lore: string }> {
+    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+      return { content: draft.chronicle, lore: draft.lore };
+    }
+
+    const shell = {
+      id: "",
+      title,
+      type,
+      content: "",
+      lore: "",
+    } as Entity;
+
+    try {
+      const reconciled = await this.reconcileEntityFields(shell, draft);
+      return {
+        content: reconciled.content || draft.chronicle,
+        lore: reconciled.lore || draft.lore,
+      };
+    } catch {
+      return { content: draft.chronicle, lore: draft.lore };
     }
   }
 

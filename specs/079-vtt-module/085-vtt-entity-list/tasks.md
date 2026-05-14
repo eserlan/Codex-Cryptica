@@ -39,8 +39,8 @@
 
 - [x] T012 [US3] Update `handleDragOver` to continuously update `mapSession.dragPreview` with unprojected coordinates in `apps/web/src/routes/(app)/map/+page.svelte`
 - [x] T013 [US3] Implement `handleDragLeave` and `handleDrop` cleanup to clear `mapSession.dragPreview` in `apps/web/src/routes/(app)/map/+page.svelte`
-- [x] T014 [US3] Update the `draw` loop in `apps/web/src/lib/components/map/MapView.svelte` to render a ghost token at `mapSession.dragPreview` coordinates.
-- [x] T015 [US3] Add validation check in `MapView.svelte` to change preview style (e.g., red tint) when the cursor is over invalid drop zones.
+- [x] T014 [US3] Update the `draw` loop in `apps/web/src/lib/components/map/MapCanvas.svelte` to render a ghost token at `mapSession.dragPreview` coordinates.
+- [x] T015 [US3] Add validation check in `MapCanvas.svelte` to change preview style (e.g., red tint) when the cursor is over invalid drop zones.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 

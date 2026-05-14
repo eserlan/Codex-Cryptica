@@ -19,7 +19,8 @@ export class OracleCommandParser {
     }
 
     if (q.startsWith("/create")) {
-      const quotedRegex = /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?/i;
+      const quotedRegex =
+        /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?\s*$/i;
       const match = query.match(quotedRegex);
       if (match) {
         const entityName = match[1];
@@ -47,7 +48,7 @@ export class OracleCommandParser {
     }
 
     if (q.startsWith("/connect")) {
-      const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"/i;
+      const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"\s*$/i;
       const match = query.match(quotedRegex);
       if (match) {
         return {
@@ -66,7 +67,7 @@ export class OracleCommandParser {
     }
 
     if (q.startsWith("/merge")) {
-      const quotedRegex = /\/merge\s+"([^"]+)"\s+into\s+"([^"]+)"/i;
+      const quotedRegex = /\/merge\s+"([^"]+)"\s+into\s+"([^"]+)"\s*$/i;
       const match = query.match(quotedRegex);
       if (match) {
         return {
