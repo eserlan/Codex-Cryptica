@@ -70,9 +70,9 @@
 - [x] T015 [US1] Add token add/remove methods to MapSession store in `apps/web/src/lib/stores/map-session.svelte.ts`
 - [x] T016 [US1] Implement grid snapping helper in `apps/web/src/lib/utils/vtt-helpers.ts` (snap to `mapStore.gridSize`)
 - [x] T017 [US1] Create VTTControls.svelte with an always-visible VTT mode toggle in `apps/web/src/lib/components/map/VTTControls.svelte`
-- [x] T018 [US1] Wire VTT mode toggle to MapView.svelte draw() loop to enable token overlay rendering
+- [x] T018 [US1] Wire VTT mode toggle to MapCanvas.svelte draw() loop to enable token overlay rendering
 - [x] T019 [US1] Add token placement UI (click to place + dialog for name/entity link) in `apps/web/src/lib/components/map/TokenAddDialog.svelte`
-- [x] T020 [US1] Implement pointer-based token drag in MapView.svelte (pointer down/move/up with coordinate transform)
+- [x] T020 [US1] Implement pointer-based token drag in `MapInteractionManager` (`map-interactions.svelte.ts`)
 - [x] T021 [US1] Add grid snapping to token drag using vtt-helpers.ts (snap only when `mapStore.showGrid` is true; free placement otherwise)
 - [x] T022 [US1] Render token labels as canvas text in `renderTokens()` for freeform tokens
 - [x] T023 [US1] Render token images from linked entities in `renderTokens()` using entity image blob URLs
@@ -97,11 +97,11 @@
 
 ### Implementation for User Story 2
 
-- [x] T029 [US2] Add token hit-testing in MapView.svelte pointer handler (detect click on token bounds)
+- [x] T029 [US2] Add token hit-testing in `MapInteractionManager` pointer handler (detect click on token bounds)
 - [x] T030 [US2] Wire token click to MapSession store selection state
 - [x] T031 [US2] Create TokenDetail.svelte side panel in `apps/web/src/lib/components/vtt/TokenDetail.svelte` with ownership assignment and selected-token removal actions
 - [x] T032 [US2] Render token selection highlight (glow/border) in `renderTokens()` canvas function
-- [x] T033 [US2] Implement deselect on empty-space click in MapView.svelte
+- [x] T033 [US2] Implement deselect on empty-space click in `MapInteractionManager`
 
 **Checkpoint**: Token selection and detail view work independently. Can select, view details, and deselect.
 
@@ -146,7 +146,7 @@
 
 - [x] T044 [US4] Add measurement tool state to MapSession store (startPoint, endPoint, active)
 - [x] T045 [US4] Create MeasurementTool.svelte overlay in `apps/web/src/lib/components/map/MeasurementTool.svelte`
-- [x] T046 [US4] Implement measurement click handler in MapView.svelte (pointer events on measurement tool active)
+- [x] T046 [US4] Implement measurement click handler in `MapInteractionManager` (pointer events on measurement tool active)
 - [x] T047 [US4] Draw measurement line and distance label on canvas in `renderTokens()` or dedicated `renderMeasurement()` function
 - [x] T048 [US4] Display distance using map scale if defined, otherwise pixel distance
 - [x] T049 [US4] Add measurement tool toggle to VTTControls.svelte
@@ -175,7 +175,7 @@
 - [x] T056 [US5] Implement TOKEN_ADD_REQUEST handler in host-service.svelte.ts (host assigns id, ownerPeerId, broadcasts TOKEN_ADDED)
 - [x] T057 [US5] Implement TURN_ADVANCE broadcast from MapSession store through host-service when host advances turn
 - [x] T058 [US5] Add token ownership assignment and removal UI in TokenDetail.svelte (GM assigns move permission to connected guests and can delete selected tokens without affecting visibility)
-- [x] T059 [US5] Implement guest permission enforcement in MapView.svelte drag handler (check ownerPeerId before allowing drag; do not use ownership as a visibility filter)
+- [x] T059 [US5] Implement guest permission enforcement in `MapInteractionManager` drag handler (check ownerPeerId before allowing drag; do not use ownership as a visibility filter)
 - [x] T060 [US5] Implement session fog reveal sync (host paints fog using existing MapFogPainter brush → broadcasts FOG_REVEAL stroke deltas → guests apply to in-memory session mask)
 - [x] T061 [US5] Implement MAP_PING broadcast for guest/host cursor pings
 - [x] T062 [US5] Handle host disconnection (detect peer disconnect, broadcast SESSION_ENDED to guests so they see a disconnected UI state, then clear session state immediately)
@@ -226,7 +226,7 @@
 - [x] T082 Extract shared dice-roll rendering into `apps/web/src/lib/components/dice/DiceRollResult.svelte` and reuse it in Oracle and VTT chat message rendering
 - [x] T083 Add the dice modal entry button to the VTT chat input row in `apps/web/src/lib/components/vtt/VTTChat.svelte`
 - [x] T084 Broadcast resolved dice rolls from the shared modal into VTT chat and the P2P transcript path in `apps/web/src/lib/components/dice/DiceModal.svelte` and `apps/web/src/lib/stores/map-session.svelte.ts`
-- [x] T085 Guard map zoom shortcuts while typing in VTT chat by ignoring editable targets in `apps/web/src/lib/components/map/MapView.svelte` and `apps/web/src/lib/components/map/map-view-helpers.ts`
+- [x] T085 Guard map zoom shortcuts while typing in VTT chat by ignoring editable targets in `MapInteractionManager` and `map-view-helpers.ts`
 - [x] T086 Convert primary VTT controls to icon buttons in `apps/web/src/lib/components/map/VTTControls.svelte`
 - [x] T087 Keep the shared modal provider mounted in VTT fullscreen so the dice modal can open from the chat sidebar in `apps/web/src/routes/(app)/+layout.svelte`
 
@@ -345,3 +345,7 @@ With multiple developers:
 - Constitution requirement: constructor DI for all stores and services
 - Constitution requirement: Svelte 5 `$derived` for computed state (not `$state(prop)`)
 - Constitution requirement: Tailwind 4 CSS syntax
+  S syntax
+  `$state(prop)`)
+- Constitution requirement: Tailwind 4 CSS syntax
+  S syntax

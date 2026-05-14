@@ -2,9 +2,9 @@
 
 ## Decision 1: Token Rendering Approach
 
-**Context**: The existing `MapView.svelte` renders everything on a single canvas via `renderMap()` in the map-engine. Pins, grid, fog, and the map image are all composited in one pass.
+**Context**: The existing `MapView.svelte` (modularized) delegates rendering via `renderMap()` in the map-engine. Pins, grid, fog, and the map image are all composited in one pass.
 
-**Decision**: Render tokens as a post-render canvas overlay inside `MapView.svelte`'s existing `draw()` loop, after `renderMap()` returns but before the frame completes.
+**Decision**: Render tokens as a post-render canvas overlay inside `MapCanvas.svelte`'s existing `draw()` loop, after `renderMap()` returns but before the frame completes.
 
 **Rationale**:
 
