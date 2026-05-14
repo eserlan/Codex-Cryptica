@@ -87,11 +87,31 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         activeStyleTitle = this.styleTitleCache || undefined;
       } else {
         const styleResults = await this.searchService.search(
-          "art style visual aesthetic",
-          { limit: 1, includeDrafts: true },
+          "art style direction visual aesthetic style guide",
+          { limit: 3, includeDrafts: true },
         );
-        if (styleResults.length > 0 && styleResults[0].score > 0.5) {
-          const styleId = styleResults[0].id;
+        const styleKeywords = [
+          "art style",
+          "visual aesthetic",
+          "style guide",
+          "art direction",
+          "visual direction",
+        ];
+        let bestStyleId: string | undefined;
+
+        for (const res of styleResults) {
+          if (res.score > 0.4) {
+            const ent = vault.entities[res.id];
+            const title = ent?.title?.toLowerCase() || "";
+            if (styleKeywords.some((kw) => title.includes(kw))) {
+              bestStyleId = res.id;
+              break;
+            }
+          }
+        }
+
+        if (bestStyleId) {
+          const styleId = bestStyleId;
           // Ensure content is loaded from Dexie before reading context.
           await vault.loadEntityContent?.(styleId);
           const styleEntity = vault.entities[styleId];

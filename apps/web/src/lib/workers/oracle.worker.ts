@@ -170,6 +170,31 @@ class OracleWorker {
     }
   }
 
+  async generateStructuredEntity(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+    categories?: string[],
+    vaultId?: string,
+    requestId?: string,
+  ): Promise<void> {
+    this.emit({ type: "ORACLE_THINKING_START", vaultId, requestId });
+    try {
+      return await this.textGeneration.generateStructuredEntity(
+        apiKey,
+        query,
+        context,
+        modelName,
+        onUpdate,
+        categories,
+      );
+    } finally {
+      this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
+    }
+  }
+
   async propose(
     text: string,
     context: { existingEntities: any[]; history: any[]; categories?: any[] },

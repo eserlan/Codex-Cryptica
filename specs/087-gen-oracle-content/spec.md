@@ -147,6 +147,9 @@ As a lore keeper, I want to choose how much the Oracle changes my vault and grap
   - **FR-009.4**: Manual entity commits MUST still respect the Connection Discovery mode for follow-up analysis.
   - **FR-009.5**: Deterministic slash-command creation MUST respect the Connection Discovery mode unless the command explicitly requests connection creation.
 
+- **FR-010**: System MUST reconcile newly discovered entities through a secondary AI pass to ensure high-quality formatting of Lore and Chronicle fields before creation.
+- **FR-011**: System MUST limit synchronous AI reconciliation during large discovery batches (e.g., more than 5 entities) to maintain UI responsiveness and conversational flow.
+
 ### Key Entities _(include if feature involves data)_
 
 - **PendingDraft**: A non-persistent draft stored in the current session memory until committed or discarded.
