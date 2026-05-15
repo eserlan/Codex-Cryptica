@@ -589,6 +589,22 @@ describe("OracleActionExecutor - Detailed", () => {
       vi.unstubAllGlobals();
     });
 
+    it("should NOT proactively trigger plot analysis for conversational queries", async () => {
+      // "mystery" is a keyword that would normally trigger plot intent
+      const query = "Tell me about the mystery in this room";
+
+      await executor.execute(
+        { type: "chat", query, isAIIntent: true },
+        mockContext,
+      );
+
+      // Should call generateChatResponse instead of generatePlotAnalysis
+      expect(mockGenerator.generateChatResponse).toHaveBeenCalled();
+      expect(
+        mockContext.textGeneration.generatePlotAnalysis,
+      ).not.toHaveBeenCalled();
+    });
+
     it("should handle text response", async () => {
       mockGenerator.generateChatResponse.mockImplementation(
         async (
