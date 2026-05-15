@@ -71,7 +71,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     excludeTitles: Set<string>,
     vault: any,
     lastEntityId?: string,
-    isImage: boolean = false,
+    _isImage: boolean = false,
   ): Promise<{
     content: string;
     primaryEntityId?: string;
@@ -81,51 +81,54 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     let styleContext = "";
     let activeStyleTitle: string | undefined;
 
-    if (isImage) {
-      if (this.styleCache !== null) {
-        styleContext = this.styleCache;
-        activeStyleTitle = this.styleTitleCache || undefined;
-      } else {
-        const styleResults = await this.searchService.search(
-          "art style direction visual aesthetic style guide",
-          { limit: 3, includeDrafts: true },
-        );
-        const styleKeywords = [
-          "art style",
-          "visual aesthetic",
-          "style guide",
-          "art direction",
-          "visual direction",
-        ];
-        let bestStyleId: string | undefined;
+    // 1. Retrieve Global Art Style (Influences tone/description)
+    if (this.styleCache !== null) {
+      styleContext = this.styleCache;
+      activeStyleTitle = this.styleTitleCache || undefined;
+    } else {
+      const styleResults = await this.searchService.search(
+        "art style direction visual aesthetic style guide",
+        { limit: 3, includeDrafts: true },
+      );
+      const styleKeywords = [
+        "art style",
+        "visual aesthetic",
+        "style guide",
+        "art direction",
+        "visual direction",
+      ];
+      let bestStyleId: string | undefined;
 
-        for (const res of styleResults) {
-          if (res.score > 0.4) {
-            const ent = vault.entities[res.id];
-            const title = ent?.title?.toLowerCase() || "";
-            if (styleKeywords.some((kw) => title.includes(kw))) {
-              bestStyleId = res.id;
-              break;
-            }
+      for (const res of styleResults) {
+        if (res.score > 0.4) {
+          const ent = vault.entities[res.id];
+          const title = ent?.title?.toLowerCase() || "";
+          if (styleKeywords.some((kw) => title.includes(kw))) {
+            bestStyleId = res.id;
+            break;
           }
-        }
-
-        if (bestStyleId) {
-          const styleId = bestStyleId;
-          // Ensure content is loaded from Dexie before reading context.
-          await vault.loadEntityContent?.(styleId);
-          const styleEntity = vault.entities[styleId];
-          if (styleEntity) {
-            styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
-            activeStyleTitle = styleEntity.title;
-            this.styleCache = styleContext;
-            this.styleTitleCache = activeStyleTitle || "";
-          }
-        } else {
-          this.styleCache = "";
-          this.styleTitleCache = "";
         }
       }
+
+      if (bestStyleId) {
+        const styleId = bestStyleId;
+        await vault.loadEntityContent?.(styleId);
+        const styleEntity = vault.entities[styleId];
+        if (styleEntity) {
+          styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
+          activeStyleTitle = styleEntity.title;
+          this.styleCache = styleContext;
+          this.styleTitleCache = activeStyleTitle || "";
+        }
+      } else {
+        this.styleCache = "";
+        this.styleTitleCache = "";
+      }
+    }
+
+    // Ensure the style entity itself isn't treated as a subject in the prose
+    if (activeStyleTitle) {
+      excludeTitles.add(activeStyleTitle);
     }
 
     let results = await this.searchService.search(query, {
