@@ -86,22 +86,53 @@
   </div>
 {/if}
 
+{#snippet headerActions()}
+  {#if !isEditing}
+    <SidepanelRegenButton entityId={entity.id} />
+    {#if isGraphView}
+      <button
+        onclick={handleFindInGraph}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        aria-label="Find in Graph"
+        title="Find in Graph"
+        data-testid="find-in-graph-button"
+      >
+        <span class="icon-[lucide--target] w-5 h-5"></span>
+      </button>
+    {/if}
+    <button
+      onclick={() => ui.openZenMode(entity.id)}
+      class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+      aria-label="Enter Zen Mode"
+      title="Zen Mode (Full Screen)"
+      data-testid="enter-zen-mode-button"
+    >
+      <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+    </button>
+  {/if}
+{/snippet}
+
 <div
   class="p-4 md:p-6 border-b border-theme-border bg-theme-surface"
   style:background-color="var(--theme-panel-fill)"
   style:background-image="var(--bg-texture-overlay)"
 >
+  <!-- Mobile-only top bar -->
+  <div class="flex md:hidden justify-between items-center mb-4">
+    <button
+      onclick={onClose}
+      class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      aria-label="Back"
+    >
+      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+    </button>
+    <div class="flex items-center gap-1.5">
+      {@render headerActions()}
+    </div>
+  </div>
+
   <div class="flex justify-between items-center mb-2">
     <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-      <!-- Mobile-only close button -->
-      <button
-        onclick={onClose}
-        class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
-        aria-label="Back"
-      >
-        <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
-      </button>
-
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
           <input
@@ -117,7 +148,7 @@
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold md:truncate"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}
@@ -141,35 +172,15 @@
       {/if}
     </div>
 
-    <div class="flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4">
-      {#if !isEditing}
-        <SidepanelRegenButton entityId={entity.id} />
-        {#if isGraphView}
-          <button
-            onclick={handleFindInGraph}
-            class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-            aria-label="Find in Graph"
-            title="Find in Graph"
-            data-testid="find-in-graph-button"
-          >
-            <span class="icon-[lucide--target] w-5 h-5"></span>
-          </button>
-        {/if}
-        <button
-          onclick={() => ui.openZenMode(entity.id)}
-          class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-          aria-label="Enter Zen Mode"
-          title="Zen Mode (Full Screen)"
-          data-testid="enter-zen-mode-button"
-        >
-          <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
-        </button>
-      {/if}
+    <div
+      class="hidden md:flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4"
+    >
+      {@render headerActions()}
 
       <!-- Desktop-only close button -->
       <button
         onclick={onClose}
-        class="hidden md:flex transition items-center justify-center p-1 text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-icon-active)]"
+        class="transition items-center justify-center p-1 text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Close panel"
         title="Close"
       >
