@@ -489,6 +489,15 @@ describe("OracleStore", () => {
       expect(typeof context.searchService.search).toBe("function");
     });
 
+    it("should expose generatePlotAnalysis through the textGeneration context", () => {
+      const context = oracle.getExecutionContext();
+
+      expect(context.textGeneration).toBeDefined();
+      expect(typeof context.textGeneration.generatePlotAnalysis).toBe(
+        "function",
+      );
+    });
+
     it("should expose oracle automation policy through the execution context", () => {
       (mockUiStore as any).oracleAutomationPolicy = {
         entityDiscovery: "auto-create",

@@ -456,6 +456,20 @@ export class OracleStore {
         reconcileEntityUpdate: wrap(
           this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
         ),
+        generatePlotAnalysis: (
+          apiKey: string,
+          modelName: string,
+          subject: any,
+          connectedEntities: any[],
+          userQuery: string,
+        ) =>
+          this.textGeneration.generatePlotAnalysis(
+            apiKey,
+            modelName,
+            $state.snapshot(subject),
+            $state.snapshot(connectedEntities),
+            userQuery,
+          ),
       },
       searchService: {
         search: wrap(this.searchService.search?.bind(this.searchService)),
