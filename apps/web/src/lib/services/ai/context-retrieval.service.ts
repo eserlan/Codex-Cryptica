@@ -127,15 +127,15 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
           this.styleCache = styleContext;
           this.styleTitleCache = activeStyleTitle || "";
         }
-      } else {
-        this.styleCache = "";
-        this.styleTitleCache = "";
       }
     }
 
-    // Ensure the style entity itself isn't treated as a subject in the prose
+    // Ensure the style entity itself isn't treated as a subject in the prose.
+    // We use a local set to avoid polluting the caller's excludeTitles,
+    // which would suppress the "Available Records" fallback logic below.
+    const internalExclusions = new Set(excludeTitles);
     if (activeStyleTitle) {
-      excludeTitles.add(activeStyleTitle);
+      internalExclusions.add(activeStyleTitle);
     }
 
     let results = await this.searchService.search(query, {
@@ -225,7 +225,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     const addEntityToContext = (id: string, isEnrichment: boolean = false) => {
       if (contextMap.has(id)) return;
       const entity = vault.entities[id];
-      if (!entity || excludeTitles.has(entity.title)) return;
+      if (!entity || internalExclusions.has(entity.title)) return;
 
       const mainContent = isEnrichment
         ? (entity.content || "").trim()
@@ -326,7 +326,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       let first = true;
       for (let i = 0; i < count; i++) {
         const title = allEntities[i].title;
-        if (title) {
+        if (title && !internalExclusions.has(title)) {
           if (!first) {
             allTitles += ", ";
           }

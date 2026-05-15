@@ -218,6 +218,36 @@ describe("ContextRetrievalService", () => {
     expect(result.content).toContain("--- File: Neo-Tokyo ---");
   });
 
+  it("should still show 'Available Records' fallback when art style is found but query has no other matches", async () => {
+    const mockVault: any = {
+      entities: {
+        s1: { id: "s1", title: "Art Style: Neon", content: "Neon vibes" },
+        e1: { id: "e1", title: "Alpha", content: "Content" },
+      },
+      selectedEntityId: null,
+      inboundConnections: {},
+    };
+
+    // Style search finds s1, main search finds nothing
+    mockSearchService.search
+      .mockResolvedValueOnce([{ id: "s1", score: 0.9 }]) // Style search
+      .mockResolvedValueOnce([]); // Main search
+
+    const result = await service.retrieveContext(
+      "unknown",
+      new Set(),
+      mockVault,
+    );
+
+    // Style should be there
+    expect(result.content).toContain("--- GLOBAL ART STYLE ---");
+    // Fallback should trigger and list available records
+    expect(result.content).toContain("--- Available Records ---");
+    expect(result.content).toContain("Alpha");
+    // But art style should NOT be in the available records list (natural exclusion)
+    expect(result.content).not.toContain("Alpha, Art Style: Neon");
+  });
+
   it("should handle truncation of large context", async () => {
     const longContent = "A".repeat(11000);
     const mockVault: any = {
