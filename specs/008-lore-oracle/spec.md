@@ -31,6 +31,7 @@ Users desire a natural language interface to query their vault ("Who is the king
 - System MUST support multi-turn history even when using the system-provided proxy (no custom API key mode).
 - System MUST implement a **Sliding Window** (default: 10 messages) for conversation history to prevent excessive token usage and payload size.
 - System MUST optimize prompt structure for **Implicit Caching** by maintaining prefix stability (System -> History -> Lore Context -> Query).
+- System MUST automatically retrieve and apply the global "Art Style" to inform tone and sensory details, but MUST explicitly instruct the AI NOT to mention the style by name or cite it as a source in the generated prose.
 
 ### FR-003: Integrated Chat UI
 
