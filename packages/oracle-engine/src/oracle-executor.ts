@@ -659,7 +659,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     const isImageRequest = OracleCommandParser.detectImageIntent(query);
     const isCreationRequest = OracleCommandParser.detectCreationIntent(query);
-    const isPlotRequest = OracleCommandParser.detectPlotIntent(query);
+    const isPlotRequest = false; // Disable proactive plot detection; only use slash command as per user preference.
 
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
