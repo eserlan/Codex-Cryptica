@@ -65,6 +65,8 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     const { getByText } = render(DetailHeader, {
       entity: mockEntity,
       isEditing: false,
+      editTitle: "",
+      editAliases: [],
       onClose: () => {},
     });
 
@@ -86,6 +88,8 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     render(DetailHeader, {
       entity: mockEntity,
       isEditing: false,
+      editTitle: "",
+      editAliases: [],
       onClose: () => {},
     });
     console.log("Render succeeded as expected.");
@@ -105,6 +109,8 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     render(DetailHeader, {
       entity: mockEntity,
       isEditing: false,
+      editTitle: "",
+      editAliases: [],
       onClose: () => {},
     });
     console.log("Render succeeded as expected.");
