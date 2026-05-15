@@ -103,9 +103,17 @@
   let showActions = $derived(
     shouldShowActions(message, parsed, oracle.isLoading),
   );
-  let visibleProposals = $derived(
-    (message.proposals ?? []).filter(isVisibleDiscoveryProposal),
-  );
+  let visibleProposals = $derived.by(() => {
+    const raw = (message.proposals ?? []).filter(isVisibleDiscoveryProposal);
+    // Deduplicate to prevent each_key_duplicate crashes
+    const seen = new Set<string>();
+    return raw.filter((p) => {
+      const key = `${p.entityId ?? "new"}:${p.title}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  });
 
   $effect(() => {
     if (isSaved && !regenerationService.pendingDraft && message.content) {
@@ -308,7 +316,7 @@
                 class="mt-2 flex flex-wrap gap-2 items-center"
                 transition:fade
               >
-                {#each visibleProposals as proposal}
+                {#each visibleProposals as proposal (`${proposal.entityId ?? "new"}:${proposal.title}`)}
                   <DiscoveryChip
                     {proposal}
                     onLink={(entityId) =>

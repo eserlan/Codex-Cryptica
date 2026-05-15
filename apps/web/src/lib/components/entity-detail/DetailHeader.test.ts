@@ -82,17 +82,15 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
       labels: ["label1"],
     } as any;
 
-    console.log(
-      "Attempting to render with duplicate aliases (Expect success)...",
-    );
-    render(DetailHeader, {
-      entity: mockEntity,
-      isEditing: false,
-      editTitle: "",
-      editAliases: [],
-      onClose: () => {},
-    });
-    console.log("Render succeeded as expected.");
+    expect(() => {
+      render(DetailHeader, {
+        entity: mockEntity,
+        isEditing: false,
+        editTitle: "",
+        editAliases: [],
+        onClose: () => {},
+      });
+    }).not.toThrow();
   });
 
   it("should NOT fail when duplicate labels are provided (FIX VERIFIED)", () => {
@@ -103,16 +101,14 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
       labels: ["label1", "label1"], // DUPLICATE
     } as any;
 
-    console.log(
-      "Attempting to render with duplicate labels (Expect success)...",
-    );
-    render(DetailHeader, {
-      entity: mockEntity,
-      isEditing: false,
-      editTitle: "",
-      editAliases: [],
-      onClose: () => {},
-    });
-    console.log("Render succeeded as expected.");
+    expect(() => {
+      render(DetailHeader, {
+        entity: mockEntity,
+        isEditing: false,
+        editTitle: "",
+        editAliases: [],
+        onClose: () => {},
+      });
+    }).not.toThrow();
   });
 });
