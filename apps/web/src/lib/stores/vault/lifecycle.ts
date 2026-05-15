@@ -230,11 +230,11 @@ export class VaultLifecycleManager {
           const keywordsArray = [...(entity.tags || []), entity.lore || ""];
           if (entity.metadata) {
             for (const key in entity.metadata) {
-              const val = entity.metadata[key];
+              const val = (entity.metadata as any)[key];
               if (Array.isArray(val)) {
                 keywordsArray.push(...val);
               } else if (val) {
-                keywordsArray.push(val as string);
+                keywordsArray.push(String(val));
               }
             }
           }
