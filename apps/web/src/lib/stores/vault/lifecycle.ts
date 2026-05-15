@@ -71,7 +71,9 @@ export class VaultLifecycleManager {
       if (!handle) throw new Error("No vault handle available");
 
       const entities = this.deps.getEntities();
-      for (const entity of Object.values(entities)) {
+      // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
+      for (const id in entities) {
+        const entity = entities[id];
         await this.deps.repository.saveToDisk(handle, vaultId, entity, false);
         await this.deps.ensureAssetPersisted(entity.id, handle);
       }
@@ -222,18 +224,28 @@ export class VaultLifecycleManager {
 
       const services = this.deps.getServices();
       if (services?.search) {
-        for (const entity of Object.values(entities)) {
+        // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
+        for (const id in entities) {
+          const entity = entities[id];
+          const keywordsArray = [...(entity.tags || []), entity.lore || ""];
+          if (entity.metadata) {
+            for (const key in entity.metadata) {
+              const val = entity.metadata[key];
+              if (Array.isArray(val)) {
+                keywordsArray.push(...val);
+              } else if (val) {
+                keywordsArray.push(val as string);
+              }
+            }
+          }
+
           await services.search.index({
             id: entity.id,
             title: entity.title,
             content: entity.content,
             type: entity.type,
             path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
-            keywords: [
-              ...(entity.tags || []),
-              entity.lore || "",
-              ...Object.values(entity.metadata || {}).flat(),
-            ].join(" "),
+            keywords: keywordsArray.join(" "),
             updatedAt: Date.now(),
           });
         }

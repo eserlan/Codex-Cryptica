@@ -82,3 +82,8 @@
 
 **Learning:** Chaining `.filter().slice()` in Svelte `$derived` blocks, especially for autocomplete features iterating over `vault.allEntities`, forces an O(N) intermediate array allocation on every keystroke.
 **Action:** Always replace `.filter(...).slice(0, limit)` with an imperative loop and an early exit (`if (result.length >= limit) break;`) for bounded search results to eliminate redundant processing and GC overhead.
+
+## 2026-05-18 - [Performance Insight: Array allocation in iteration over Object]
+
+**Learning:** Replaced `Object.values()` when iterating over the large `entities` record in `VaultLifecycleManager` with an imperative loop over keys (`for (const id in entities) { const entity = entities[id]; ... }`). Also replaced `...Object.values(entity.metadata || {}).flat()` with direct array push logic. This prevents creation of large intermediate arrays, reducing garbage collection pauses in hot paths like vault persistence and data loading.
+**Action:** When iterating over a large object or assembling a large sequence of items, prefer an imperative iteration (`for...in`) over `Object.values()`, and direct array insertions over spread operators and `.flat()`, to eliminate intermediate allocations and garbage collection overhead.
