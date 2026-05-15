@@ -4,6 +4,7 @@ import type { ContextRetrievalService } from "schema";
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
+  private cachedVaultId: string | null = null;
 
   constructor(private searchService = defaultSearchService) {}
 
@@ -80,6 +81,12 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   }> {
     let styleContext = "";
     let activeStyleTitle: string | undefined;
+
+    const currentVaultId = vault.activeVaultId || vault.id || "default";
+    if (this.cachedVaultId !== currentVaultId) {
+      this.clearStyleCache();
+      this.cachedVaultId = currentVaultId;
+    }
 
     // 1. Retrieve Global Art Style (Influences tone/description)
     if (this.styleCache !== null) {
@@ -343,6 +350,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   clearStyleCache() {
     this.styleCache = null;
     this.styleTitleCache = null;
+    this.cachedVaultId = null;
   }
 }
 

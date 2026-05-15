@@ -200,7 +200,10 @@ describe("ContextRetrievalService", () => {
     // Style search finds s1
     mockSearchService.search
       .mockResolvedValueOnce([{ id: "s1", score: 0.9 }]) // Style search
-      .mockResolvedValueOnce([{ id: "e1", score: 0.9 }]); // Main search
+      .mockResolvedValueOnce([
+        { id: "e1", score: 0.9 },
+        { id: "s1", score: 0.9 },
+      ]); // Main search
 
     const result = await service.retrieveContext("test", new Set(), mockVault);
 
