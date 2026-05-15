@@ -308,7 +308,7 @@
                 class="mt-2 flex flex-wrap gap-2 items-center"
                 transition:fade
               >
-                {#each visibleProposals as proposal (`${proposal.entityId ?? "new"}:${proposal.title}`)}
+                {#each visibleProposals as proposal}
                   <DiscoveryChip
                     {proposal}
                     onLink={(entityId) =>

@@ -70,7 +70,7 @@
 
     <footer class="pt-12 border-t border-theme-border">
       <div class="flex flex-wrap gap-2">
-        {#each article.keywords as keyword (keyword)}
+        {#each article.keywords as keyword}
           <span
             class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted uppercase tracking-wider"
           >

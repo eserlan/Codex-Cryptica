@@ -172,7 +172,7 @@
 
         {#if activity.tags.length > 0}
           <div class="mt-4 flex flex-wrap gap-2">
-            {#each activity.tags as tag (tag)}
+            {#each activity.tags as tag}
               <span
                 class="rounded-full border border-theme-primary/20 bg-[color-mix(in_srgb,var(--color-theme-primary)_10%,var(--color-theme-bg))] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-theme-secondary backdrop-blur-sm"
               >

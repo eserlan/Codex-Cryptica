@@ -105,7 +105,7 @@
       <div class="space-y-2">
         {#if entity?.labels?.length}
           <div class="flex flex-wrap gap-1.5">
-            {#each entity.labels as label (label)}
+            {#each entity.labels as label}
               <LabelBadge
                 {label}
                 removable={!vault.isGuest}
@@ -125,7 +125,7 @@
 
         {#if entity?.aliases?.length}
           <div class="flex flex-wrap gap-1.5">
-            {#each entity.aliases as alias (alias)}
+            {#each entity.aliases as alias}
               <div
                 class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
               >

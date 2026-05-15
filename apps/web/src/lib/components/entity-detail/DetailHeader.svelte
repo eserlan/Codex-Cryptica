@@ -128,7 +128,7 @@
                 class="text-[8px] md:text-[9px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
-              {#each entity.aliases as alias (alias)}
+              {#each entity.aliases as alias}
                 <div
                   class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
                 >
@@ -181,7 +181,7 @@
   <!-- Labels Section -->
   <div class="mt-4 mb-2 space-y-2">
     <div class="flex flex-wrap gap-1.5 min-h-[24px]">
-      {#each entity.labels || [] as label (label)}
+      {#each entity.labels || [] as label}
         <LabelBadge
           {label}
           removable={!vault.isGuest}
