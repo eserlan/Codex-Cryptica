@@ -59,6 +59,7 @@ describe("ContextRetrievalService", () => {
     };
 
     mockSearchService.search
+      .mockResolvedValueOnce([]) // Style search
       .mockResolvedValueOnce([]) // Main search
       .mockResolvedValueOnce([]); // Keyword search
 
@@ -68,7 +69,7 @@ describe("ContextRetrievalService", () => {
       mockVault,
     );
 
-    expect(mockSearchService.search).toHaveBeenCalledTimes(2);
+    expect(mockSearchService.search).toHaveBeenCalledTimes(3);
     expect(mockSearchService.search).toHaveBeenLastCalledWith(
       expect.any(String),
       expect.objectContaining({ includeDrafts: true }),
@@ -184,6 +185,67 @@ describe("ContextRetrievalService", () => {
       expect.anything(),
     );
     expect(result.content).toContain("Neon aesthetic");
+  });
+
+  it("should exclude art style entity from regular subject context", async () => {
+    const mockVault: any = {
+      entities: {
+        s1: { id: "s1", title: "Art Style: Neon", content: "Neon vibes" },
+        e1: { id: "e1", title: "Neo-Tokyo", content: "The city" },
+      },
+      selectedEntityId: null,
+      inboundConnections: {},
+    };
+
+    // Style search finds s1
+    mockSearchService.search
+      .mockResolvedValueOnce([{ id: "s1", score: 0.9 }]) // Style search
+      .mockResolvedValueOnce([
+        { id: "e1", score: 0.9 },
+        { id: "s1", score: 0.9 },
+      ]); // Main search
+
+    const result = await service.retrieveContext("test", new Set(), mockVault);
+
+    // Should be in global style block
+    expect(result.content).toContain("--- GLOBAL ART STYLE ---");
+    expect(result.content).toContain("Neon vibes");
+
+    // But should NOT be in a regular file block (which would cause the AI to mention it)
+    expect(result.content).not.toContain("--- File: Art Style: Neon ---");
+
+    // Regular entity should still be there
+    expect(result.content).toContain("--- File: Neo-Tokyo ---");
+  });
+
+  it("should still show 'Available Records' fallback when art style is found but query has no other matches", async () => {
+    const mockVault: any = {
+      entities: {
+        s1: { id: "s1", title: "Art Style: Neon", content: "Neon vibes" },
+        e1: { id: "e1", title: "Alpha", content: "Content" },
+      },
+      selectedEntityId: null,
+      inboundConnections: {},
+    };
+
+    // Style search finds s1, main search finds nothing
+    mockSearchService.search
+      .mockResolvedValueOnce([{ id: "s1", score: 0.9 }]) // Style search
+      .mockResolvedValueOnce([]); // Main search
+
+    const result = await service.retrieveContext(
+      "unknown",
+      new Set(),
+      mockVault,
+    );
+
+    // Style should be there
+    expect(result.content).toContain("--- GLOBAL ART STYLE ---");
+    // Fallback should trigger and list available records
+    expect(result.content).toContain("--- Available Records ---");
+    expect(result.content).toContain("Alpha");
+    // But art style should NOT be in the available records list (natural exclusion)
+    expect(result.content).not.toContain("Alpha, Art Style: Neon");
   });
 
   it("should handle truncation of large context", async () => {
