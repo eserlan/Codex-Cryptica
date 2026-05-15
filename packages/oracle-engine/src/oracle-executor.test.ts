@@ -605,6 +605,36 @@ describe("OracleActionExecutor - Detailed", () => {
       ).not.toHaveBeenCalled();
     });
 
+    it("should successfully execute plot analysis when explicitly requested via slash command", async () => {
+      mockContext.searchService.search.mockResolvedValue([
+        { id: "e1", title: "Hero" },
+      ]);
+      mockContext.vault.entities["e1"] = {
+        id: "e1",
+        title: "Hero",
+        connections: [],
+      };
+      mockContext.textGeneration.generatePlotAnalysis.mockResolvedValue(
+        "Plot success",
+      );
+
+      // This mimics the 'plot' intent returned by the parser for "/plot Hero"
+      await executor.execute({ type: "plot", query: "Hero" }, mockContext);
+
+      expect(
+        mockContext.textGeneration.generatePlotAnalysis,
+      ).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+        expect.objectContaining({ id: "e1" }),
+        expect.any(Array),
+        "/plot Hero",
+      );
+      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ content: "Plot success" }),
+      );
+    });
+
     it("should handle text response", async () => {
       mockGenerator.generateChatResponse.mockImplementation(
         async (
