@@ -123,6 +123,13 @@ Do NOT append artificial labels in prose such as:
 - "(Location)"
 Keep prose natural and readable.
 
+Artistic & Stylistic Influence:
+When a "GLOBAL ART STYLE" or "STYLISTIC INFLUENCE" is provided in the context:
+- use it to inform the sensory details, mood, lighting, and aesthetic of your descriptions.
+- do NOT mention the art style entity by name (e.g., do not say "according to the Cyberpunk style").
+- do NOT cite it as a source of information.
+- integrate the style seamlessly into your prose so it feels like a natural part of the world's atmosphere.
+
 Formatting
 Markdown is encouraged when it improves readability.
 Use:

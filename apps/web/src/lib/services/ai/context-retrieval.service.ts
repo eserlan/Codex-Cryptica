@@ -4,6 +4,7 @@ import type { ContextRetrievalService } from "schema";
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
+  private cachedVaultId: string | null = null;
 
   constructor(private searchService = defaultSearchService) {}
 
@@ -71,7 +72,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     excludeTitles: Set<string>,
     vault: any,
     lastEntityId?: string,
-    isImage: boolean = false,
+    _isImage: boolean = false,
   ): Promise<{
     content: string;
     primaryEntityId?: string;
@@ -81,51 +82,60 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     let styleContext = "";
     let activeStyleTitle: string | undefined;
 
-    if (isImage) {
-      if (this.styleCache !== null) {
-        styleContext = this.styleCache;
-        activeStyleTitle = this.styleTitleCache || undefined;
-      } else {
-        const styleResults = await this.searchService.search(
-          "art style direction visual aesthetic style guide",
-          { limit: 3, includeDrafts: true },
-        );
-        const styleKeywords = [
-          "art style",
-          "visual aesthetic",
-          "style guide",
-          "art direction",
-          "visual direction",
-        ];
-        let bestStyleId: string | undefined;
+    const currentVaultId = vault.activeVaultId || vault.id || "default";
+    if (this.cachedVaultId !== currentVaultId) {
+      this.clearStyleCache();
+      this.cachedVaultId = currentVaultId;
+    }
 
-        for (const res of styleResults) {
-          if (res.score > 0.4) {
-            const ent = vault.entities[res.id];
-            const title = ent?.title?.toLowerCase() || "";
-            if (styleKeywords.some((kw) => title.includes(kw))) {
-              bestStyleId = res.id;
-              break;
-            }
-          }
-        }
+    // 1. Retrieve Global Art Style (Influences tone/description)
+    if (this.styleCache !== null) {
+      styleContext = this.styleCache;
+      activeStyleTitle = this.styleTitleCache || undefined;
+    } else {
+      const styleResults = await this.searchService.search(
+        "art style direction visual aesthetic style guide",
+        { limit: 3, includeDrafts: true },
+      );
+      const styleKeywords = [
+        "art style",
+        "visual aesthetic",
+        "style guide",
+        "art direction",
+        "visual direction",
+      ];
+      let bestStyleId: string | undefined;
 
-        if (bestStyleId) {
-          const styleId = bestStyleId;
-          // Ensure content is loaded from Dexie before reading context.
-          await vault.loadEntityContent?.(styleId);
-          const styleEntity = vault.entities[styleId];
-          if (styleEntity) {
-            styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
-            activeStyleTitle = styleEntity.title;
-            this.styleCache = styleContext;
-            this.styleTitleCache = activeStyleTitle || "";
+      for (const res of styleResults) {
+        if (res.score > 0.4) {
+          const ent = vault.entities[res.id];
+          const title = ent?.title?.toLowerCase() || "";
+          if (styleKeywords.some((kw) => title.includes(kw))) {
+            bestStyleId = res.id;
+            break;
           }
-        } else {
-          this.styleCache = "";
-          this.styleTitleCache = "";
         }
       }
+
+      if (bestStyleId) {
+        const styleId = bestStyleId;
+        await vault.loadEntityContent?.(styleId);
+        const styleEntity = vault.entities[styleId];
+        if (styleEntity) {
+          styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
+          activeStyleTitle = styleEntity.title;
+          this.styleCache = styleContext;
+          this.styleTitleCache = activeStyleTitle || "";
+        }
+      }
+    }
+
+    // Ensure the style entity itself isn't treated as a subject in the prose.
+    // We use a local set to avoid polluting the caller's excludeTitles,
+    // which would suppress the "Available Records" fallback logic below.
+    const internalExclusions = new Set(excludeTitles);
+    if (activeStyleTitle) {
+      internalExclusions.add(activeStyleTitle);
     }
 
     let results = await this.searchService.search(query, {
@@ -215,7 +225,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     const addEntityToContext = (id: string, isEnrichment: boolean = false) => {
       if (contextMap.has(id)) return;
       const entity = vault.entities[id];
-      if (!entity || excludeTitles.has(entity.title)) return;
+      if (!entity || internalExclusions.has(entity.title)) return;
 
       const mainContent = isEnrichment
         ? (entity.content || "").trim()
@@ -316,7 +326,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       let first = true;
       for (let i = 0; i < count; i++) {
         const title = allEntities[i].title;
-        if (title) {
+        if (title && !internalExclusions.has(title)) {
           if (!first) {
             allTitles += ", ";
           }
@@ -340,6 +350,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   clearStyleCache() {
     this.styleCache = null;
     this.styleTitleCache = null;
+    this.cachedVaultId = null;
   }
 }
 
