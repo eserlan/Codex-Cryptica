@@ -659,7 +659,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     const isImageRequest = OracleCommandParser.detectImageIntent(query);
     const isCreationRequest = OracleCommandParser.detectCreationIntent(query);
-    const isPlotRequest = false; // Disable proactive plot detection; only use slash command as per user preference.
 
     const assistantMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -722,30 +721,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             image,
             thumbnail,
           });
-        }
-      } else if (isPlotRequest) {
-        // Extract subject for plot request
-        const { primaryEntityId } = await this.generator.identifyPrimaryEntity(
-          query,
-          context,
-        );
-
-        if (primaryEntityId) {
-          const entity = context.vault.entities[primaryEntityId];
-
-          // Re-use executePlot logic but with better context identification.
-          // Since executePlot is currently non-streaming, we remove the
-          // temporary assistantMsg we created and let executePlot create its own.
-          // This prevents a blank message appearing in the UI.
-          await context.chatHistory.removeMessage(assistantMsg.id);
-          await this.executePlot(entity.title, context);
-        } else {
-          // Fallback to normal chat if no entity identified
-          await this.generator.generateChatResponse(
-            query,
-            context,
-            handlePartialResponse,
-          );
         }
       } else if (isCreationRequest) {
         const { primaryEntityId, sourceIds } =
