@@ -71,6 +71,7 @@
     <div class="grid grid-cols-2 gap-2">
       {#each gridColors as color (color.value)}
         <button
+          type="button"
           role="menuitem"
           class="flex items-center gap-2 rounded-md border border-theme-border bg-theme-bg/60 px-2.5 py-2 text-left text-xs text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
           onclick={() => setGridColor(color.value)}
@@ -87,6 +88,7 @@
 
     <div class="mt-3 pt-3 border-t border-theme-border/50">
       <button
+        type="button"
         role="menuitem"
         class="w-full rounded-md border border-theme-border bg-theme-bg/60 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-theme-muted transition-all hover:text-theme-primary hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         onclick={() => setGridColor(null)}
