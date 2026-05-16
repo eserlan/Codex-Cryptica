@@ -41,4 +41,32 @@ describe("buildEntityReconciliationPrompt", () => {
     expect(prompt).toContain("RELATED ENTITY CONTEXT:");
     expect(prompt).toContain("Thay (location) [rules]");
   });
+
+  it("asks for a category only when allowed categories are provided", () => {
+    const prompt = buildEntityReconciliationPrompt(
+      {
+        id: "glass-key",
+        title: "The Glass Key",
+        type: "note",
+        content: "",
+        lore: "",
+      } as any,
+      {
+        chronicle: "A crystalline archive key.",
+        lore: "It opens sealed memory vaults.",
+      },
+      [],
+      [
+        { id: "note", label: "Note" },
+        { id: "item", label: "Item" },
+      ],
+    );
+
+    expect(prompt).toContain("ALLOWED CATEGORIES:");
+    expect(prompt).toContain("- item (Item)");
+    expect(prompt).toContain(
+      "based on the final reconciled chronicle and lore",
+    );
+    expect(prompt).toContain('"categoryId": "one allowed category id"');
+  });
 });

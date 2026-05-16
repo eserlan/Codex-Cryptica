@@ -87,9 +87,11 @@ export interface TextGenerationService {
       lore: string;
     },
     relatedEntities?: RelatedEntityContext[],
+    categories?: { id: string; label?: string; description?: string }[],
   ): Promise<{
     content: string;
     lore: string;
+    categoryId?: string;
   }>;
   generatePlotAnalysis(
     apiKey: string,

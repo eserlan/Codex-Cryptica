@@ -270,6 +270,9 @@ const getThemeTextureVariantStyles = (texture?: string) => {
   ];
 };
 
+const RESOLVED_IMAGE_NODE_SELECTOR =
+  "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']";
+
 const getFantasyNodeStyle = (
   template: StylingTemplate,
 ): Record<string, string | number | number[]> => {
@@ -375,17 +378,13 @@ export const getGraphStyle = (
 
   if (showImages) {
     baseStyle.push({
-      selector:
-        "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
+      selector: RESOLVED_IMAGE_NODE_SELECTOR,
       style: {
         "background-fit": "cover",
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-opacity": 1,
-        "border-width": isFantasy
-          ? graph.nodeBorderWidth + 5
-          : graph.nodeBorderWidth + 6,
         "border-color": tokens.primary,
       },
     });
@@ -488,22 +487,6 @@ export const getGraphStyle = (
     },
   }));
 
-  // Image width override ensures that nodes with images have thick borders
-  // even if category styles (which come before) set a thinner width.
-  const imageWidthOverride = showImages
-    ? [
-        {
-          selector:
-            "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
-          style: {
-            "border-width": isFantasy
-              ? graph.nodeBorderWidth + 5
-              : graph.nodeBorderWidth + 8,
-          },
-        },
-      ]
-    : [];
-
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
     // Reset opacity for image nodes — categoryStyles sets 0.4 which would bleed through portraits
@@ -604,7 +587,6 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
-    ...imageWidthOverride,
     ...revealedStyles,
     ...selectionStyles,
   ];

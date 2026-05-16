@@ -379,7 +379,7 @@ describe("GraphTransformer", () => {
     );
   });
 
-  it("should have thicker borders for nodes and even thicker for images", () => {
+  it("should keep image node borders at normal entity thickness", () => {
     const mockTemplate = {
       tokens: {
         primary: "#000",
@@ -404,12 +404,20 @@ describe("GraphTransformer", () => {
     const baseStyle = style.find((s) => s.selector === "node");
     expect(baseStyle.style["border-width"]).toBe(3);
 
-    // Image override should be +8
-    const imageOverride = style.find(
+    const imageStyle = style.find(
       (s) =>
-        s.selector.includes("resolvedImage") && s.style["border-width"] === 9,
+        s.selector ===
+        "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
     );
-    expect(imageOverride).toBeDefined();
+    expect(imageStyle).toBeDefined();
+    expect(imageStyle.style["border-width"]).toBeUndefined();
+    expect(
+      style.some(
+        (s) =>
+          s.selector ===
+          "node[image], node[thumbnail], node[resolvedImage][resolvedImage != 'none']",
+      ),
+    ).toBe(false);
 
     // Revealed should be +10
     const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
@@ -442,11 +450,13 @@ describe("GraphTransformer", () => {
     const baseStyle = style.find((s) => s.selector === "node");
     expect(baseStyle.style["border-width"]).toBe(2);
 
-    const imageOverride = style.find(
+    const imageStyle = style.find(
       (s) =>
-        s.selector.includes("resolvedImage") && s.style["border-width"] === 7,
+        s.selector.includes("resolvedImage") &&
+        s.style["background-image"] === "data(resolvedImage)",
     );
-    expect(imageOverride).toBeDefined();
+    expect(imageStyle).toBeDefined();
+    expect(imageStyle.style["border-width"]).toBeUndefined();
 
     const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
     expect(revealedStyle.style["border-width"]).toBe(4);
