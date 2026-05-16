@@ -184,4 +184,37 @@ describe("DiscoveryChip", () => {
       );
     });
   });
+
+  it("overrides the initial type guess with the AI-refined categoryId when provided", async () => {
+    mockOracle.reconcileNewEntityDraft.mockResolvedValue({
+      content: "refined content",
+      lore: "refined lore",
+      categoryId: "location", // Refined from 'npc'
+    });
+
+    render(DiscoveryChip, {
+      proposal: {
+        title: "The Iron Keep",
+        type: "npc", // Initial guess
+        draft: {
+          chronicle: "a scary place",
+          lore: "full of knights",
+        },
+        confidence: 0.8,
+      },
+    });
+
+    await fireEvent.click(screen.getByLabelText("Create The Iron Keep"));
+
+    await waitFor(() => {
+      expect(mockVault.createEntity).toHaveBeenCalledWith(
+        "location",
+        "The Iron Keep",
+        {
+          content: "refined content",
+          lore: "refined lore",
+        },
+      );
+    });
+  });
 });
