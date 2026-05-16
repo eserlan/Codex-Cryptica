@@ -38,8 +38,8 @@ vi.mock("./prompts/context-distillation", () => ({
 }));
 vi.mock("./prompts/entity-reconciliation", () => ({
   buildEntityReconciliationPrompt: vi.fn(
-    (entity, incoming) =>
-      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}`,
+    (entity, incoming, _related, categories) =>
+      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}`,
   ),
 }));
 
@@ -238,7 +238,7 @@ describe("DefaultTextGenerationService", () => {
         lore: "Updated lore",
       });
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        "reconcile:Thay:New chronicle:New lore",
+        "reconcile:Thay:New chronicle:New lore:",
       );
     });
 
@@ -254,6 +254,81 @@ describe("DefaultTextGenerationService", () => {
           [],
         ),
       ).rejects.toThrow("Entity reconciliation failed: Network fail");
+    });
+
+    it("should return a valid category from the reconciliation response", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Updated chronicle","lore":"Updated lore","categoryId":"item"}',
+            ),
+        },
+      });
+
+      const result = await service.reconcileEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "The Glass Key",
+          type: "note",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+        {
+          chronicle: "A crystalline archive key.",
+          lore: "It opens sealed memory vaults.",
+        },
+        [],
+        [
+          { id: "note", label: "Note" },
+          { id: "item", label: "Item" },
+        ],
+      );
+
+      expect(result).toEqual({
+        content: "Updated chronicle",
+        lore: "Updated lore",
+        categoryId: "item",
+      });
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "reconcile:The Glass Key:A crystalline archive key.:It opens sealed memory vaults.:note,item",
+      );
+    });
+
+    it("should ignore reconciliation categories outside the allowed list", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Updated chronicle","lore":"Updated lore","categoryId":"vehicle"}',
+            ),
+        },
+      });
+
+      const result = await service.reconcileEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "The Glass Key",
+          type: "note",
+          content: "",
+          lore: "",
+        },
+        {
+          chronicle: "A crystalline archive key.",
+          lore: "It opens sealed memory vaults.",
+        },
+        [],
+        [{ id: "item", label: "Item" }],
+      );
+
+      expect(result).toEqual({
+        content: "Updated chronicle",
+        lore: "Updated lore",
+      });
     });
   });
 
