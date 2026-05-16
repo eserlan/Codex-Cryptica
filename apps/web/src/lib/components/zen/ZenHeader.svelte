@@ -72,19 +72,12 @@
 
 <header
   style="background-image: var(--bg-texture-overlay)"
-  class="px-4 md:px-6 py-2 md:py-3 border-b border-theme-border bg-theme-surface flex justify-between items-center shrink-0"
+  class="px-4 md:px-6 py-2 md:py-3 border-b border-theme-border bg-theme-surface flex flex-col md:flex-row gap-2 md:gap-4 md:justify-between md:items-center shrink-0"
   data-testid="zen-header"
 >
-  <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-    <!-- Mobile-only back button -->
-    <button
-      onclick={onClose}
-      class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
-      aria-label="Back"
-    >
-      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
-    </button>
-
+  <div
+    class="flex items-center gap-3 md:gap-4 flex-1 min-w-0 w-full md:w-auto order-2 md:order-1"
+  >
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-3 mb-0.5 md:mb-1">
         <span
@@ -128,7 +121,7 @@
           <h1
             id="entity-modal-title"
             data-testid="entity-title"
-            class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide truncate"
+            class="text-xl md:text-4xl font-body font-bold text-theme-text tracking-wide whitespace-normal break-words overflow-visible md:truncate"
           >
             {entity?.title || ""}
           </h1>
@@ -152,119 +145,135 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-1.5 md:gap-3 shrink-0 ml-2 md:ml-4">
-    {#if !editState.isEditing}
-      {#if isGraphView}
+  <div
+    class="flex items-center justify-between gap-2 w-full md:w-auto shrink-0 md:ml-4 order-1 md:order-2"
+  >
+    <button
+      type="button"
+      onclick={onClose}
+      class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      aria-label="Back"
+    >
+      <span class="icon-[lucide--chevron-left] w-7 h-7"></span>
+    </button>
+
+    <div class="flex items-center gap-1.5 md:gap-3 shrink-0 ml-auto">
+      {#if !editState.isEditing}
+        {#if isGraphView}
+          <button
+            onclick={handleFindInGraph}
+            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title="Find in Graph"
+            aria-label="Find in Graph"
+            data-testid="zen-find-in-graph-button"
+          >
+            <span class="icon-[lucide--target] w-4 h-4"></span>
+          </button>
+        {/if}
         <button
-          onclick={handleFindInGraph}
+          onclick={onCopy}
           class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
-          title="Find in Graph"
-          aria-label="Find in Graph"
-          data-testid="zen-find-in-graph-button"
+          title="Copy Content"
+          aria-label="Copy Content"
         >
-          <span class="icon-[lucide--target] w-4 h-4"></span>
+          {#if isCopied}
+            <span class="icon-[lucide--check] w-4 h-4 text-theme-primary"
+            ></span>
+          {:else}
+            <span class="icon-[lucide--copy] w-4 h-4"></span>
+          {/if}
         </button>
       {/if}
-      <button
-        onclick={onCopy}
-        class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
-        title="Copy Content"
-        aria-label="Copy Content"
-      >
-        {#if isCopied}
-          <span class="icon-[lucide--check] w-4 h-4 text-theme-primary"></span>
-        {:else}
-          <span class="icon-[lucide--copy] w-4 h-4"></span>
-        {/if}
-      </button>
-    {/if}
 
-    {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
-      <button
-        onclick={onApproveDraft}
-        disabled={isDraftActioning}
-        title="Approve draft"
-        aria-label="Approve draft"
-        class="px-2 md:px-4 py-1.5 border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
-        data-testid="approve-draft-button"
-      >
-        <span class="icon-[lucide--check] w-3 h-3"></span>
-        <span class="hidden sm:inline">APPROVE</span>
-      </button>
-      <button
-        onclick={onRejectDraft}
-        disabled={isDraftActioning}
-        title="Reject draft"
-        aria-label="Reject draft"
-        class="px-2 md:px-4 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
-        data-testid="reject-draft-button"
-      >
-        <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-        <span class="hidden sm:inline">REJECT</span>
-      </button>
-    {/if}
-    {#if !editState.isEditing && !vault.isGuest && entity}
-      {#if onDelete}
+      {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
         <button
-          onclick={onDelete}
-          class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
-          title="Delete entity"
-          aria-label="Delete entity"
-          data-testid="delete-entity-button"
+          onclick={onApproveDraft}
+          disabled={isDraftActioning}
+          title="Approve draft"
+          aria-label="Approve draft"
+          class="px-2 md:px-4 py-1.5 border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
+          data-testid="approve-draft-button"
+        >
+          <span class="icon-[lucide--check] w-3 h-3"></span>
+          <span class="hidden sm:inline">APPROVE</span>
+        </button>
+        <button
+          onclick={onRejectDraft}
+          disabled={isDraftActioning}
+          title="Reject draft"
+          aria-label="Reject draft"
+          class="px-2 md:px-4 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
+          data-testid="reject-draft-button"
         >
           <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+          <span class="hidden sm:inline">REJECT</span>
         </button>
       {/if}
-      <button
-        onclick={onStartEdit}
-        class="px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
-        data-testid="edit-entity-button"
-      >
-        <span class="icon-[lucide--edit-2] w-3 h-3"></span>
-        <span class="hidden sm:inline">EDIT</span>
-      </button>
-    {:else if editState.isEditing}
-      <button
-        onclick={onCancelEdit}
-        class="px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-[10px] md:text-xs font-bold rounded tracking-widest transition"
-      >
-        CANCEL
-      </button>
-      <button
-        onclick={onSave}
-        disabled={isSaving}
-        class="px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
-      >
-        {#if isSaving}
-          <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
-          <span class="hidden sm:inline">SAVING...</span>
-        {:else}
-          <span class="icon-[lucide--save] w-3 h-3"></span>
-          <span class="hidden sm:inline">SAVE</span>
+      {#if !editState.isEditing && !vault.isGuest && entity}
+        {#if onDelete}
+          <button
+            onclick={onDelete}
+            class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+            title="Delete entity"
+            aria-label="Delete entity"
+            data-testid="delete-entity-button"
+          >
+            <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+          </button>
         {/if}
-      </button>
-    {/if}
+        <button
+          onclick={onStartEdit}
+          class="px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          data-testid="edit-entity-button"
+        >
+          <span class="icon-[lucide--edit-2] w-3 h-3"></span>
+          <span class="hidden sm:inline">EDIT</span>
+        </button>
+      {:else if editState.isEditing}
+        <button
+          onclick={onCancelEdit}
+          class="px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-[10px] md:text-xs font-bold rounded tracking-widest transition"
+        >
+          CANCEL
+        </button>
+        <button
+          onclick={onSave}
+          disabled={isSaving}
+          class="px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+        >
+          {#if isSaving}
+            <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+            <span class="hidden sm:inline">SAVING...</span>
+          {:else}
+            <span class="icon-[lucide--save] w-3 h-3"></span>
+            <span class="hidden sm:inline">SAVE</span>
+          {/if}
+        </button>
+      {/if}
 
-    {#if onPopOut && !editState.isEditing}
+      {#if onPopOut && !editState.isEditing}
+        <button
+          onclick={onPopOut}
+          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+          title="Open in new tab"
+          aria-label="Open in new tab"
+        >
+          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          ></span>
+        </button>
+      {/if}
+
+      <div
+        class="hidden md:block w-px h-6 bg-theme-border mx-0.5 md:mx-1"
+      ></div>
+
       <button
-        onclick={onPopOut}
-        class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
-        title="Open in new tab"
-        aria-label="Open in new tab"
+        onclick={onClose}
+        class="hidden md:flex text-theme-muted hover:text-theme-primary transition p-2 hover:bg-theme-primary/10 rounded"
+        aria-label="Close"
       >
-        <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
-        ></span>
+        <span class="icon-[lucide--x] w-6 h-6"></span>
       </button>
-    {/if}
-
-    <div class="hidden md:block w-px h-6 bg-theme-border mx-0.5 md:mx-1"></div>
-
-    <button
-      onclick={onClose}
-      class="hidden md:flex text-theme-muted hover:text-theme-primary transition p-2 hover:bg-theme-primary/10 rounded"
-      aria-label="Close"
-    >
-      <span class="icon-[lucide--x] w-6 h-6"></span>
-    </button>
+    </div>
   </div>
 </header>
