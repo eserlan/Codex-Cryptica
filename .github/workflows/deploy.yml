@@ -92,7 +92,7 @@ jobs:
           name: dist
           path: apps/web/build/
           include-hidden-files: true
-          retention-days: 1
+          retention-days: 7
 
       - name: Upload staging artifact for promotion
         if: github.ref_name == 'staging'
