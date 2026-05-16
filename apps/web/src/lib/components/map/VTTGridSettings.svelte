@@ -124,7 +124,7 @@
               Draw a square around a map grid cell
             </p>
             <button
-              class="w-full px-4 py-2 rounded-md border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider"
+              class="w-full px-4 py-2 rounded-md border border-theme-border text-theme-muted hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
               onclick={() => {
                 mapSession.gridFitMode = false;
               }}
@@ -134,7 +134,7 @@
           </div>
         {:else}
           <button
-            class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2"
+            class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
             onclick={() => {
               mapSession.gridFitMode = true;
               close();
@@ -149,7 +149,7 @@
 
           {#if mapStore.gridSize > 0}
             <button
-              class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2"
+              class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
               onclick={() => {
                 mapSession.gridMoveMode = true;
                 close();
@@ -172,13 +172,13 @@
 
       <div class="pt-2 flex gap-3">
         <button
-          class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider"
+          class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
           onclick={close}
         >
           Close
         </button>
         <button
-          class="flex-1 px-4 py-2 bg-theme-primary text-theme-bg rounded-md font-bold uppercase tracking-wider hover:bg-theme-primary/90 transition-all"
+          class="flex-1 px-4 py-2 bg-theme-primary text-theme-bg rounded-md font-bold uppercase tracking-wider hover:bg-theme-primary/90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-surface"
           onclick={save}
         >
           Apply to All

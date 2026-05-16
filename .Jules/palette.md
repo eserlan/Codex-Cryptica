@@ -57,3 +57,6 @@
 
 **Learning:** Found the Save button in `DetailFooter.svelte` was relying on an inaccessible text-only `animate-pulse` class ("SAVING...") without a visual spinner and lacking an `aria-busy` state, making the loading state less obvious and invisible to assistive technology.
 **Action:** Replaced text-only pulse with the standard SVG spinner (`icon-[lucide--loader-2] animate-spin`) next to static "SAVING..." text, and explicitly bound `aria-busy={isSaving}` on the parent button.
+## 2026-05-16 - Focus Visible for VTT Grid Settings
+**Learning:** Interactive buttons within modals and menus often miss explicit keyboard focus indicators if they only use mouse-centric hover classes.
+**Action:** Add Tailwind focus-visible utilities to ensure accessibility without degrading the mouse user experience.
