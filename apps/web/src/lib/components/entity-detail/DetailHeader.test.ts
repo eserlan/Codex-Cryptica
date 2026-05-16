@@ -111,4 +111,24 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
       });
     }).not.toThrow();
   });
+
+  it("renders very long titles without throwing", () => {
+    const mockEntity = {
+      id: "entity-1",
+      title:
+        "This is an extremely long entity title that should definitely wrap on mobile devices otherwise it would be cut short and the user would not be able to read the full name of the entity which is very important for the lore",
+      aliases: [],
+      labels: [],
+    } as any;
+
+    expect(() => {
+      render(DetailHeader, {
+        entity: mockEntity,
+        isEditing: false,
+        editTitle: "",
+        editAliases: [],
+        onClose: () => {},
+      });
+    }).not.toThrow();
+  });
 });

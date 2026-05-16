@@ -135,8 +135,10 @@
     </div>
   </div>
 
-  <div class="flex justify-between items-start md:items-center mb-2">
-    <div class="flex items-start md:items-center gap-3 md:gap-4 flex-1 min-w-0">
+  <div class="md:flex md:justify-between md:items-center mb-2">
+    <div
+      class="flex items-start md:items-center gap-3 md:gap-4 md:flex-1 min-w-0 w-full"
+    >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
           <input
@@ -148,11 +150,11 @@
           <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
         </div>
       {:else}
-        <div class="flex flex-col gap-0.5 min-w-0">
+        <div class="flex flex-col gap-0.5 min-w-0 w-full">
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal md:truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal break-words overflow-visible w-full md:truncate"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}
