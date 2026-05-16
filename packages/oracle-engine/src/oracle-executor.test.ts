@@ -723,15 +723,144 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "New lore",
         },
         [],
+        [],
       );
       expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
         content: "Reconciled chronicle",
         lore: "Reconciled lore",
+        type: "location",
       });
       expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
         "e1",
         { apply: false, analysisText: undefined },
       );
+    });
+
+    it("should use the reconciled category after new entity content is prepared", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.categories = [
+        { id: "note", label: "Note" },
+        { id: "item", label: "Item" },
+      ];
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            title: "The Glass Key",
+            type: "note",
+            draft: {
+              chronicle: "A crystalline key carried by the old archivists.",
+              lore: "The Glass Key opens sealed memory vaults.",
+            },
+            confidence: 0.92,
+          },
+        ]),
+      };
+      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+        content: "The Glass Key is a crystalline archive key.",
+        lore: "It opens sealed memory vaults.",
+        categoryId: "item",
+      });
+
+      await executor.execute(
+        {
+          type: "chat",
+          query: "Tell me about the Glass Key",
+          isAIIntent: true,
+        },
+        mockContext,
+      );
+
+      expect(
+        mockContext.textGeneration.reconcileEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        {
+          id: "",
+          title: "The Glass Key",
+          type: "note",
+          content: "",
+          lore: "",
+        },
+        {
+          chronicle: "A crystalline key carried by the old archivists.",
+          lore: "The Glass Key opens sealed memory vaults.",
+        },
+        [],
+        mockContext.categories,
+      );
+      expect(mockContext.vault.createEntity).toHaveBeenCalledWith(
+        "item",
+        "The Glass Key",
+        expect.objectContaining({
+          content: "The Glass Key is a crystalline archive key.",
+          lore: "It opens sealed memory vaults.",
+        }),
+      );
+    });
+
+    it("should update an existing entity category from the reconciled record", async () => {
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.categories = [
+        { id: "character", label: "Character" },
+        { id: "faction", label: "Faction" },
+      ];
+      mockContext.vault.entities = {
+        e1: {
+          id: "e1",
+          title: "The Red Hand",
+          type: "character",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+      };
+      mockContext.draftingEngine = {
+        propose: vi.fn().mockResolvedValue([
+          {
+            entityId: "e1",
+            title: "The Red Hand",
+            type: "character",
+            draft: {
+              chronicle: "A militant organization.",
+              lore: "The Red Hand recruits across the borderlands.",
+            },
+            confidence: 0.95,
+          },
+        ]),
+      };
+      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+        content: "The Red Hand is a militant organization.",
+        lore: "It recruits across the borderlands.",
+        categoryId: "faction",
+      });
+
+      await executor.execute(
+        {
+          type: "chat",
+          query: "Update the Red Hand",
+          isAIIntent: true,
+        },
+        mockContext,
+      );
+
+      expect(
+        mockContext.textGeneration.reconcileEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        mockContext.vault.entities.e1,
+        {
+          chronicle: "A militant organization.",
+          lore: "The Red Hand recruits across the borderlands.",
+        },
+        [],
+        mockContext.categories,
+      );
+      expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
+        content: "The Red Hand is a militant organization.",
+        lore: "It recruits across the borderlands.",
+        type: "faction",
+      });
     });
 
     it("should seed connection proposals for newly auto-archived entities", async () => {

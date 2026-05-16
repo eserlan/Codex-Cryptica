@@ -7,6 +7,7 @@ export function buildEntityReconciliationPrompt(
     lore: string;
   },
   relatedEntities: RelatedEntityContext[] = [],
+  categories: { id: string; label?: string; description?: string }[] = [],
 ): string {
   const relatedSection =
     relatedEntities.length > 0
@@ -19,6 +20,24 @@ export function buildEntityReconciliationPrompt(
           )
           .join("\n")}\n`
       : "";
+  const categorySection =
+    categories.length > 0
+      ? `\nALLOWED CATEGORIES:\n${categories
+          .map((category) => {
+            const label = category.label ? ` (${category.label})` : "";
+            const description = category.description
+              ? `: ${category.description}`
+              : "";
+            return `- ${category.id}${label}${description}`;
+          })
+          .join("\n")}\n`
+      : "";
+  const categoryRule =
+    categories.length > 0
+      ? `15. Also choose the single best categoryId from ALLOWED CATEGORIES based on the final reconciled chronicle and lore. Prefer the final record over the earlier type guess.`
+      : `15. Keep the entity's existing type unchanged.`;
+  const categoryJsonField =
+    categories.length > 0 ? ',\n  "categoryId": "one allowed category id"' : "";
 
   return `You are a meticulous lore archivist updating an existing worldbuilding record.
 
@@ -34,6 +53,7 @@ You have full authority to move or redistribute content between chronicle and lo
 ENTITY:
 - Title: ${entity.title}
 - Type: ${entity.type}
+${categorySection}
 
 CURRENT RECORD:
 --- CURRENT CHRONICLE ---
@@ -67,9 +87,10 @@ RULES:
 12. Do not invent major facts that are not present in the current record, incoming passage, or related entity context.
 13. Only integrate incoming details that directly reveal new information about ${entity.title} — their actions, traits, motivations, relationships, or history. If the incoming passage is primarily about a different subject (a location, faction, or event), extract only what it tells us about ${entity.title} specifically. Do not absorb descriptions of places, factions, or events wholesale into this record.
 14. Do not mention these instructions.
-15. Return JSON only with this shape:
+${categoryRule}
+16. Return JSON only with this shape:
 {
   "content": "Updated chronicle",
-  "lore": "Updated lore"
+  "lore": "Updated lore"${categoryJsonField}
 }`;
 }

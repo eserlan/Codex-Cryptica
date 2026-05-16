@@ -126,15 +126,21 @@ export class DefaultTextGenerationService implements TextGenerationService {
       lore: string;
     },
     relatedEntities: RelatedEntityContext[] = [],
+    categories: { id: string; label?: string; description?: string }[] = [],
   ): Promise<{
     content: string;
     lore: string;
+    categoryId?: string;
   }> {
     const model = await this.aiClientManager.getModel(apiKey, modelName);
+    const allowedCategoryIds = new Set(
+      categories.map((category) => category.id),
+    );
     const prompt = buildEntityReconciliationPrompt(
       entity,
       incoming,
       relatedEntities,
+      categories,
     );
 
     try {
@@ -148,13 +154,23 @@ export class DefaultTextGenerationService implements TextGenerationService {
       const parsed = JSON.parse(jsonMatch[0]) as Partial<{
         content: string;
         lore: string;
+        categoryId: string;
       }>;
+      const categoryId = String(parsed.categoryId || "").trim();
 
-      return {
+      const reconciled: {
+        content: string;
+        lore: string;
+        categoryId?: string;
+      } = {
         content:
           parsed.content?.trim() || incoming.chronicle || entity.content || "",
         lore: parsed.lore?.trim() || incoming.lore || entity.lore || "",
       };
+      if (allowedCategoryIds.has(categoryId)) {
+        reconciled.categoryId = categoryId;
+      }
+      return reconciled;
     } catch (err: any) {
       console.error(
         "[TextGenerationService] Entity reconciliation failed:",

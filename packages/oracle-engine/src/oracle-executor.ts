@@ -19,6 +19,29 @@ export class OracleActionExecutor {
     this.generator = generator ?? new OracleGenerator();
     this.draftingEngine = engine ?? draftingEngine;
   }
+
+  private getAvailableCategories(context: OracleExecutionContext) {
+    return (context.categories || [])
+      .map((category: any) => ({
+        id: String(category?.id || "").trim(),
+        label: category?.label ? String(category.label) : undefined,
+        description: category?.description
+          ? String(category.description)
+          : undefined,
+      }))
+      .filter((category) => category.id);
+  }
+
+  private getValidCategoryId(
+    context: OracleExecutionContext,
+    proposed: string | undefined,
+  ): string | undefined {
+    const categories = this.getAvailableCategories(context);
+    return categories.some((category) => category.id === proposed)
+      ? proposed
+      : undefined;
+  }
+
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -847,6 +870,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                 if (!p.entityId) {
                   let content = p.draft.chronicle;
                   let lore = p.draft.lore;
+                  let finalType = p.type;
                   if (
                     context.textGeneration?.reconcileEntityUpdate &&
                     proposals.length < 5
@@ -866,15 +890,21 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                           shell,
                           { chronicle: p.draft.chronicle, lore: p.draft.lore },
                           [],
+                          this.getAvailableCategories(context),
                         );
                       content = reconciled.content || p.draft.chronicle;
                       lore = reconciled.lore || p.draft.lore;
+                      finalType =
+                        this.getValidCategoryId(
+                          context,
+                          reconciled.categoryId,
+                        ) || p.type;
                     } catch {
                       // keep raw draft on failure
                     }
                   }
                   const id = await context.vault.createEntity(
-                    p.type as any,
+                    finalType as any,
                     p.title,
                     {
                       content,
@@ -885,13 +915,17 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                   await context.logActivity?.({
                     type: "archive",
                     title: p.title,
-                    entityType: p.type,
+                    entityType: finalType,
                     entityId: id,
                   });
                   await this.handleConnectionDiscovery(id, context);
                 } else {
                   const existing = context.vault.entities[p.entityId];
                   if (existing) {
+                    let updatedContent = existing.content || "";
+                    let updatedLore = existing.lore || "";
+                    let finalType = existing.type || p.type;
+                    const updatePatch: Record<string, string> = {};
                     if (context.textGeneration?.reconcileEntityUpdate) {
                       try {
                         const reconciled =
@@ -915,26 +949,34 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                                   related,
                                 ),
                             }),
+                            this.getAvailableCategories(context),
                           );
 
-                        await context.vault.updateEntity(p.entityId, {
-                          content: reconciled.content,
-                          lore: reconciled.lore,
-                        });
+                        updatedContent = reconciled.content;
+                        updatedLore = reconciled.lore;
+                        finalType =
+                          this.getValidCategoryId(
+                            context,
+                            reconciled.categoryId,
+                          ) || finalType;
+                        updatePatch.content = updatedContent;
+                        updatePatch.lore = updatedLore;
                       } catch {
-                        await context.vault.updateEntity(p.entityId, {
-                          lore: (existing.lore || "") + "\n\n" + p.draft.lore,
-                        });
+                        updatedLore =
+                          (existing.lore || "") + "\n\n" + p.draft.lore;
+                        updatePatch.lore = updatedLore;
                       }
                     } else {
-                      await context.vault.updateEntity(p.entityId, {
-                        lore: (existing.lore || "") + "\n\n" + p.draft.lore,
-                      });
+                      updatedLore =
+                        (existing.lore || "") + "\n\n" + p.draft.lore;
+                      updatePatch.lore = updatedLore;
                     }
+                    updatePatch.type = finalType;
+                    await context.vault.updateEntity(p.entityId, updatePatch);
                     await context.logActivity?.({
                       type: "update",
                       title: p.title,
-                      entityType: p.type,
+                      entityType: finalType,
                       entityId: p.entityId,
                     });
                     await this.handleConnectionDiscovery(p.entityId, context);
