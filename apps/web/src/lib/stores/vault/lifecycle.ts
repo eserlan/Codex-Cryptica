@@ -71,17 +71,16 @@ export class VaultLifecycleManager {
       if (!handle) throw new Error("No vault handle available");
 
       const entities = this.deps.getEntities();
+      let count = 0;
       // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
       for (const id in entities) {
         const entity = entities[id];
         await this.deps.repository.saveToDisk(handle, vaultId, entity, false);
         await this.deps.ensureAssetPersisted(entity.id, handle);
+        count++;
       }
 
-      await this.deps.vaultRegistry.updateEntityCount(
-        vaultId,
-        Object.keys(entities).length,
-      );
+      await this.deps.vaultRegistry.updateEntityCount(vaultId, count);
 
       this.deps.syncStore.setStatus("idle");
     } catch (err: any) {
@@ -227,25 +226,22 @@ export class VaultLifecycleManager {
         // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
         for (const id in entities) {
           const entity = entities[id];
-          const keywordsArray = [...(entity.tags || []), entity.lore || ""];
-          if (entity.metadata) {
-            for (const key in entity.metadata) {
-              const val = (entity.metadata as any)[key];
-              if (Array.isArray(val)) {
-                keywordsArray.push(...val);
-              } else if (val) {
-                keywordsArray.push(String(val));
-              }
-            }
-          }
+
+          // Canonical keyword construction mirroring SearchService.mapToSearchEntry
+          const keywords = [
+            ...(entity.tags || []),
+            entity.lore || "",
+            ...Object.values(entity.metadata || {}).flat(),
+          ].join(" ");
 
           await services.search.index({
             id: entity.id,
             title: entity.title,
-            content: entity.content,
+            aliases: (entity.aliases || []).join(" "),
+            content: entity.content || "",
             type: entity.type,
             path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
-            keywords: keywordsArray.join(" "),
+            keywords,
             updatedAt: Date.now(),
           });
         }
