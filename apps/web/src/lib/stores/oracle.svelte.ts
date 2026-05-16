@@ -638,7 +638,6 @@ export class OracleStore {
     const snapCategories = $state.snapshot(this.categories.list).map((c) => ({
       id: c.id,
       label: c.label,
-      description: c.description,
     }));
 
     return this.textGeneration.reconcileEntityUpdate(
