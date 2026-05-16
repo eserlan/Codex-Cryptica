@@ -443,6 +443,7 @@ describe("OracleStore", () => {
             type: "npc",
           }),
         ],
+        expect.any(Array),
       );
     });
 
@@ -758,10 +759,12 @@ describe("OracleStore", () => {
           expect.objectContaining({ id: "target" }),
           { chronicle: "New chronicle", lore: "New lore" },
           expect.any(Array),
+          expect.any(Array),
         );
         expect(result).toEqual({
           content: "Merged chronicle",
           lore: "Merged lore",
+          categoryId: undefined,
         });
       });
 

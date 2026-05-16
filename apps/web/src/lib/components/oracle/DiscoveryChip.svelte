@@ -46,7 +46,7 @@
           proposal.draft,
         );
         const entityId = await vault.createEntity(
-          proposal.type as any,
+          (reconciled.categoryId || proposal.type) as any,
           proposal.title,
           {
             content: reconciled.content,

@@ -620,7 +620,7 @@ export class OracleStore {
   private async reconcileEntityFields(
     existing: Entity,
     incoming: { chronicle: string; lore: string },
-  ): Promise<{ content: string; lore: string }> {
+  ): Promise<{ content: string; lore: string; categoryId?: string }> {
     if (!this.textGeneration.reconcileEntityUpdate) {
       throw new Error("reconcileEntityUpdate not available");
     }
@@ -635,23 +635,34 @@ export class OracleStore {
           this.contextRetrieval.getConsolidatedContext(related),
       }),
     );
+    const snapCategories = $state.snapshot(this.categories.list).map((c) => ({
+      id: c.id,
+      label: c.label,
+      description: c.description,
+    }));
+
     return this.textGeneration.reconcileEntityUpdate(
       this.effectiveApiKey || "",
       this.modelName,
       snapExisting,
       snapIncoming,
       snapContext,
+      snapCategories,
     );
   }
 
   async reconcileSmartApply(
     entityId: string,
     incoming: { chronicle?: string; lore?: string },
-  ): Promise<{ content?: string; lore?: string }> {
+  ): Promise<{ content?: string; lore?: string; categoryId?: string }> {
     const existing = this.vault.entities[entityId];
     if (!existing) throw new Error(`Entity ${entityId} not found.`);
 
-    const fallback = (): { content?: string; lore?: string } => ({
+    const fallback = (): {
+      content?: string;
+      lore?: string;
+      categoryId?: string;
+    } => ({
       content: incoming.chronicle
         ? existing.content
           ? existing.content + "\n\n" + incoming.chronicle
@@ -676,6 +687,7 @@ export class OracleStore {
       return {
         content: reconciled.content || existing.content || "",
         lore: reconciled.lore || existing.lore || "",
+        categoryId: reconciled.categoryId,
       };
     } catch {
       return fallback();
@@ -716,7 +728,7 @@ export class OracleStore {
     title: string,
     type: string,
     draft: { chronicle: string; lore: string },
-  ): Promise<{ content: string; lore: string }> {
+  ): Promise<{ content: string; lore: string; categoryId?: string }> {
     if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
       return { content: draft.chronicle, lore: draft.lore };
     }
@@ -734,6 +746,7 @@ export class OracleStore {
       return {
         content: reconciled.content || draft.chronicle,
         lore: reconciled.lore || draft.lore,
+        categoryId: reconciled.categoryId,
       };
     } catch {
       return { content: draft.chronicle, lore: draft.lore };
