@@ -131,8 +131,8 @@
     </div>
   </div>
 
-  <div class="flex justify-between items-center mb-2">
-    <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+  <div class="flex justify-between items-start md:items-center mb-2">
+    <div class="flex items-start md:items-center gap-3 md:gap-4 flex-1 min-w-0">
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
           <input
@@ -148,7 +148,7 @@
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold md:truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal md:truncate"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}
