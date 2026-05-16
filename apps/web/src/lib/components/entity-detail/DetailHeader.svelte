@@ -91,6 +91,7 @@
     <SidepanelRegenButton entityId={entity.id} />
     {#if isGraphView}
       <button
+        type="button"
         onclick={handleFindInGraph}
         class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Find in Graph"
@@ -101,6 +102,7 @@
       </button>
     {/if}
     <button
+      type="button"
       onclick={() => ui.openZenMode(entity.id)}
       class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
       aria-label="Enter Zen Mode"
@@ -120,6 +122,7 @@
   <!-- Mobile-only top bar -->
   <div class="flex md:hidden justify-between items-center mb-4">
     <button
+      type="button"
       onclick={onClose}
       class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
@@ -179,8 +182,9 @@
 
       <!-- Desktop-only close button -->
       <button
+        type="button"
         onclick={onClose}
-        class="transition items-center justify-center p-1 text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-icon-active)]"
+        class="flex transition items-center justify-center p-1 text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Close panel"
         title="Close"
       >
