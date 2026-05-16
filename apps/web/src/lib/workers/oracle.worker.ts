@@ -61,6 +61,7 @@ class OracleWorker {
     entity: any,
     incoming: { chronicle: string; lore: string },
     relatedEntities: any[] = [],
+    categories: any[] = [],
   ): Promise<any> {
     return this.textGeneration.reconcileEntityUpdate(
       apiKey,
@@ -68,6 +69,7 @@ class OracleWorker {
       entity,
       incoming,
       relatedEntities,
+      categories,
     );
   }
 

@@ -68,7 +68,7 @@ When the Oracle suggests a new entity (Discovery), it provides a title and a typ
 
 ## Observations
 
-1.  **AI Involvement**: The reconciliation prompt _is_ instructed to refined the category (`categoryId`) based on the full draft.
+1.  **AI Involvement**: The reconciliation prompt _is_ instructed to refine the category (`categoryId`) based on the full draft.
 2.  **Connected Pipeline**: The refined `categoryId` is now correctly propagated through `OracleStore` and used by `DiscoveryChip`.
 
 ## Conclusion
