@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { appEventBus } from "@codex/events";
 import { initOracleEventListeners } from "./oracle-events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
