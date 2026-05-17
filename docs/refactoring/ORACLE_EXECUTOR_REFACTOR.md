@@ -18,52 +18,55 @@ This high coupling makes the file difficult to test in isolation, prone to regre
 
 ## 2. Proposed Architecture: Command Pattern
 
-We will transition to a modular **Command Dispatcher** architecture.
+## 2. Proposed Architecture: Command + Event-Driven Pattern
+
+We will transition to a modular **Command Dispatcher** architecture that leverages the **App Event Bus** (`@codex/events`) to decouple business logic from side effects.
 
 ### Goal
 
-Reduce `oracle-executor.ts` to < 200 lines by delegating all work to specialized command handlers.
+- Reduce `oracle-executor.ts` to < 200 lines.
+- Eliminate "Side Effect Bloat" in `OracleExecutionContext` by moving notifications, logging, and state synchronization to event listeners.
 
 ### Proposed Structure
 
 ```text
 packages/oracle-engine/src/
-├── executors/                 # New directory for handlers
+├── executors/                 # Focused command handlers
 │   ├── base-executor.ts       # Common logic/types
-│   ├── chat-executor.ts       # The complex AI logic (formerly executeChat)
-│   ├── create-executor.ts     # /create
-│   ├── connect-executor.ts    # /connect & /connect-ai
-│   ├── merge-executor.ts      # /merge & /merge-ai
-│   ├── dice-executor.ts       # /roll
-│   ├── visualization-executor.ts # drawEntity & drawMessage
-│   └── meta-executor.ts       # /help, /clear, /regen
-└── oracle-executor.ts         # The thin router/facade
+│   ├── chat-executor.ts       # AI logic (emits ORACLE:THINKING, ORACLE:CHUNK)
+│   ├── create-executor.ts     # /create (emits ORACLE:ENTITY_CREATED)
+│   ├── connect-executor.ts    # /connect (emits ORACLE:CONNECTION_CREATED)
+│   └── ...
+├── events.ts                  # Event definitions (module augmentation)
+└── oracle-executor.ts         # The thin dispatcher
 ```
 
-## 3. Breakdown of extractions
+## 3. Decoupling Side Effects via AppEventBus
 
-| Extraction Target     | Line Range (Approx) | Dependencies                            |
-| :-------------------- | :------------------ | :-------------------------------------- |
-| **Command Router**    | 45-120              | Switches on `intent.type`               |
-| **Help Handler**      | 126-172             | Static text                             |
-| **Regen Handler**     | 174-228             | `generator`, `vault`                    |
-| **Roll Handler**      | 230-259             | `dice-engine` (external)                |
-| **Create Handler**    | 261-330             | `vault`, `draftingEngine`               |
-| **Connect Handler**   | 332-407             | `vault`                                 |
-| **Merge Handler**     | 409-491             | `vault`                                 |
-| **AI Connect/Merge**  | 493-556             | `textGeneration`, `vault`               |
-| **Plot Handler**      | 558-641             | `textGeneration`, `vault`               |
-| **Chat Orchestrator** | 643-1000            | `generator`, `parser`, `draftingEngine` |
-| **Image/Viz Handler** | 1045-1130           | `generator`, `vault`                    |
+Currently, the `OracleExecutionContext` is bloated with functions like `logActivity` and `proposeConnectionsForEntity`. We will replace these with a unified event-based flow:
 
-## 4. Transition Strategy
+| Current direct call        | Proposed Event              | Listener / Reactor                      |
+| :------------------------- | :-------------------------- | :-------------------------------------- |
+| `context.logActivity(...)` | `ORACLE:ACTION_COMPLETED`   | `ActivityStore` (Search indexing, logs) |
+| `uiStore.notify(...)`      | `ORACLE:ERROR` or `SUCCESS` | `ToastManager` (UI notifications)       |
+| `undoRedo.push(...)`       | `ORACLE:UNDO_REGISTERED`    | `UndoRedoService`                       |
+| `proposeConnections(...)`  | `ORACLE:ENTITY_DISCOVERED`  | `DiscoveryListener` (Suggests links)    |
 
-### Phase 1: Infrastructure (In progress)
+## 4. Breakdown of extractions
+
+... (rest of the table remains similar) ...
+
+## 5. Transition Strategy
+
+### Phase 1: Infrastructure & Events (In progress)
 
 - Define `OracleCommand` interface.
-- Create `BaseExecutor` with shared utilities (like `getAvailableCategories`).
+- Register new `ORACLE:*` events in `packages/oracle-engine/src/events.ts`.
+- Create `BaseExecutor` that handles event emission.
 
-### Phase 2: Surgical Extractions (Ordered by complexity)
+### Phase 2: Surgical Extractions
+
+...
 
 1.  **Low Complexity**: `Help`, `Roll`, `Clear`.
 2.  **Medium Complexity**: `Create`, `Connect`, `Merge`, `Plot`.
