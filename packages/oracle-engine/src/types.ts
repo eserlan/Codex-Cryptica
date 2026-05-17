@@ -168,8 +168,10 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  eventBus?: any;
   categories?: Category[];
   automationPolicy?: OracleAutomationPolicy;
+  commandStack?: string[];
   proposeConnectionsForEntity?: (
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },

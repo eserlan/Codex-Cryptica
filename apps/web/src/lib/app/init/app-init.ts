@@ -3,6 +3,7 @@ import { base } from "$app/paths";
 import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
+import { initOracleEventListeners } from "../../listeners/oracle-events";
 
 /**
  * Core system bootstrapping.
@@ -45,6 +46,9 @@ export function bootSystem(stores: {
  */
 export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
   if (!browser) return () => {};
+
+  // Initialize Oracle action listeners
+  initOracleEventListeners();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
