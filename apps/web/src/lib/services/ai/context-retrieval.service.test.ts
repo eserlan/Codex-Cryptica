@@ -281,4 +281,62 @@ describe("ContextRetrievalService", () => {
     expect(result.content).toContain("Alpha, Beta");
     expect(result.content).toContain("Available Records");
   });
+
+  it("should filter out hidden entities from 'Available Records' fallback for guest users", async () => {
+    const mockVault: any = {
+      entities: {
+        e1: { id: "e1", title: "Visible", content: "C", labels: ["visible"] },
+        e2: { id: "e2", title: "Hidden", content: "C", labels: ["hidden"] },
+      },
+      allEntities: [
+        { id: "e1", title: "Visible", content: "C", labels: ["visible"] },
+        { id: "e2", title: "Hidden", content: "C", labels: ["hidden"] },
+      ],
+      selectedEntityId: null,
+      inboundConnections: {},
+      isGuest: true,
+      defaultVisibility: "visible",
+    };
+
+    mockSearchService.search.mockResolvedValue([]);
+
+    const result = await service.retrieveContext(
+      "unknown query",
+      new Set(),
+      mockVault,
+    );
+
+    expect(result.content).toContain("Visible");
+    expect(result.content).not.toContain("Hidden");
+    expect(result.content).toContain("Available Records");
+  });
+
+  it("should show all entities in 'Available Records' fallback for non-guest users regardless of labels", async () => {
+    const mockVault: any = {
+      entities: {
+        e1: { id: "e1", title: "Visible", content: "C", labels: ["visible"] },
+        e2: { id: "e2", title: "Hidden", content: "C", labels: ["hidden"] },
+      },
+      allEntities: [
+        { id: "e1", title: "Visible", content: "C", labels: ["visible"] },
+        { id: "e2", title: "Hidden", content: "C", labels: ["hidden"] },
+      ],
+      selectedEntityId: null,
+      inboundConnections: {},
+      isGuest: false,
+      defaultVisibility: "visible",
+    };
+
+    mockSearchService.search.mockResolvedValue([]);
+
+    const result = await service.retrieveContext(
+      "unknown query",
+      new Set(),
+      mockVault,
+    );
+
+    expect(result.content).toContain("Visible");
+    expect(result.content).toContain("Hidden");
+    expect(result.content).toContain("Available Records");
+  });
 });
