@@ -9,6 +9,7 @@
   } from "@xyflow/svelte";
   import { CanvasStore } from "@codex/canvas-engine";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
@@ -116,6 +117,7 @@
   }
 
   function handlePaneContextMenu({ event }: { event: MouseEvent }) {
+    if (vault.isGuest) return;
     event.preventDefault();
     logic.contextMenu = {
       x: event.clientX,
@@ -137,6 +139,7 @@
   }
 
   function onDragOver(event: DragEvent) {
+    if (vault.isGuest) return;
     event.preventDefault();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = "move";
@@ -144,6 +147,7 @@
   }
 
   function onDrop(event: DragEvent) {
+    if (vault.isGuest) return;
     event.preventDefault();
     const entityId = event.dataTransfer?.getData("application/codex-entity");
     if (!entityId) return;
@@ -186,8 +190,9 @@
       bind:edges={logic.edges}
       {nodeTypes}
       {edgeTypes}
-      onconnect={logic.onConnect}
+      onconnect={!vault.isGuest ? logic.onConnect : undefined}
       onconnectstart={() => {
+        if (vault.isGuest) return;
         logic.isConnecting = true;
         uiStore.isConnecting = true;
       }}
