@@ -95,7 +95,11 @@ export class ConnectExecutor
         context.undoRedo?.pushUndoAction(
           `Connect ${source.title} to ${target.title}`,
           async () => {
-            await context.vault.removeConnection(source.id, target.id);
+            await context.vault.removeConnection(
+              source.id,
+              target.id,
+              typeToUse,
+            );
           },
           undefined,
           async () => {
@@ -107,6 +111,8 @@ export class ConnectExecutor
             );
           },
         );
+      } else {
+        throw new Error("Vault refused to create connection.");
       }
     } else {
       throw new Error(

@@ -48,7 +48,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
   if (!browser) return () => {};
 
   // Initialize Oracle action listeners
-  initOracleEventListeners();
+  const unsubOracle = initOracleEventListeners();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
@@ -117,6 +117,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
   window.addEventListener("vault-switched", handleVaultSwitched);
 
   return () => {
+    unsubOracle();
     window.removeEventListener("error", handleGlobalError);
     window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener("vault-switched", handleVaultSwitched);

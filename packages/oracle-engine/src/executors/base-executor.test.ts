@@ -63,13 +63,22 @@ describe("BaseExecutor", () => {
     expect(context.commandStack).toHaveLength(0);
   });
 
-  it("should emit events via eventBus", async () => {
+  it("should emit events via eventBus with domain and metadata", async () => {
     const executor = new TestExecutor();
     const emit = vi.fn();
-    const context = { eventBus: { emit } } as any;
+    const context = { eventBus: { emit }, vaultId: "v1" } as any;
     const event = { type: "TEST_EVENT" };
 
     await executor.testEmit(context, event);
-    expect(emit).toHaveBeenCalledWith(event);
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TEST_EVENT",
+        domain: "oracle",
+        metadata: expect.objectContaining({
+          vaultId: "v1",
+          timestamp: expect.any(Number),
+        }),
+      }),
+    );
   });
 });

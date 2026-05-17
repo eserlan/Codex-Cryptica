@@ -101,14 +101,30 @@ export class OracleActionExecutor {
    * Public API for direct entity visualization.
    */
   async drawEntity(entityId: string, context: OracleExecutionContext) {
-    await this.visualizationExecutor.drawEntity(entityId, context);
+    try {
+      await this.visualizationExecutor.drawEntity(entityId, context);
+    } catch (err: any) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Image generation failed: ${err.message}`,
+      });
+    }
   }
 
   /**
    * Public API for direct message visualization.
    */
   async drawMessage(messageId: string, context: OracleExecutionContext) {
-    await this.visualizationExecutor.drawMessage(messageId, context);
+    try {
+      await this.visualizationExecutor.drawMessage(messageId, context);
+    } catch (err: any) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Image generation failed: ${err.message}`,
+      });
+    }
   }
 
   /**
@@ -119,10 +135,19 @@ export class OracleActionExecutor {
     context: OracleExecutionContext,
     onPartialResponse?: (partial: string) => void,
   ) {
-    await this.regenerateExecutor.execute(
-      { type: "regenerate", entityId },
-      context,
-      onPartialResponse,
-    );
+    try {
+      await this.regenerateExecutor.execute(
+        { type: "regenerate", entityId },
+        context,
+        onPartialResponse,
+      );
+    } catch (err: any) {
+      // execute() usually catches errors, but we wrap for safety and parity
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Regeneration failed: ${err.message}`,
+      });
+    }
   }
 }

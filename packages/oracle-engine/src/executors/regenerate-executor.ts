@@ -24,9 +24,12 @@ export class RegenerateExecutor
     onPartialResponse?: (partial: string) => void,
   ): Promise<void> {
     if (this.isExecuting) {
-      console.warn(
-        "[RegenerateExecutor] Execution skipped: already in progress.",
-      );
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "Regeneration is already in progress. Please wait for it to finish.",
+      });
       return;
     }
 
@@ -70,10 +73,7 @@ export class RegenerateExecutor
             onPartialResponse?.(partial);
           };
 
-          const generator =
-            this.generator ||
-            context.generator ||
-            context.draftingEngine?.generator;
+          const generator = this.generator || context.generator;
           if (!generator)
             throw new Error("Generator not available in context.");
 

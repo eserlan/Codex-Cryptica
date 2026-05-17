@@ -38,7 +38,7 @@
 
 ### Tests for User Story 2
 
-- [x] T010 [P] [US2] Integration test for event-driven notifications in `tests/oracle-events.test.ts`
+- [x] T010 [P] [US2] Integration test for event-driven notifications in `apps/web/src/lib/listeners/oracle-events.test.ts`
 
 ### Implementation for User Story 2
 
@@ -54,7 +54,10 @@
 ### Tests for User Story 3
 
 - [x] T013 [P] [US3] Unit test for entity creation logic in `packages/oracle-engine/src/executors/create-executor.test.ts`
-- [x] T014 [P] [US3] Unit test for connection/merge logic in `packages/oracle-engine/src/executors/connect-executor.test.ts`
+- [x] T014 [P] [US3] Unit test for connection logic in `packages/oracle-engine/src/executors/connect-executor.test.ts`
+- [x] T014b [US3] Unit test for `MergeExecutor` in `packages/oracle-engine/src/executors/merge-executor.test.ts`
+- [x] T014c [US3] Unit test for `PlotExecutor` in `packages/oracle-engine/src/executors/plot-executor.test.ts`
+- [x] T014d [US3] Unit test for `VisualizationExecutor` in `packages/oracle-engine/src/executors/visualization-executor.test.ts`
 
 ### Implementation for User Story 3
 

@@ -72,7 +72,14 @@ export abstract class BaseExecutor {
    */
   protected async emit(context: OracleExecutionContext, event: any) {
     if (context.eventBus?.emit) {
-      await context.eventBus.emit(event);
+      await context.eventBus.emit({
+        ...event,
+        domain: "oracle",
+        metadata: {
+          timestamp: Date.now(),
+          vaultId: context.vaultId,
+        },
+      });
     }
   }
 

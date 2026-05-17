@@ -34,7 +34,12 @@ export class ChatExecutor
     onPartialResponse?: (partial: string) => void,
   ): Promise<void> {
     if (this.isExecuting) {
-      console.warn("[ChatExecutor] Execution skipped: already in progress.");
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "The Oracle is already processing a request. Please wait for the current action to complete.",
+      });
       return;
     }
 
@@ -63,6 +68,10 @@ export class ChatExecutor
             content:
               "The Oracle is currently offline. Conversational expansion and AI generation are suspended.",
           });
+          await this.emit(context, {
+            type: ORACLE_EVENTS.COMMAND_COMPLETED,
+            payload: { intent },
+          });
           return;
         }
 
@@ -79,6 +88,10 @@ export class ChatExecutor
             role: "system",
             content:
               "AI features are disabled. Only utility slash commands are supported. Type /help for a list of available commands.",
+          });
+          await this.emit(context, {
+            type: ORACLE_EVENTS.COMMAND_COMPLETED,
+            payload: { intent },
           });
           return;
         }
@@ -105,12 +118,8 @@ export class ChatExecutor
           onPartialResponse?.(partial);
         };
 
-        const generator =
-          this.generator ||
-          context.generator ||
-          context.draftingEngine?.generator;
+        const generator = this.generator || context.generator;
         if (!generator) throw new Error("Generator not available in context.");
-
         try {
           if (isImageRequest) {
             const { primaryEntityId } = await generator.identifyPrimaryEntity(
@@ -218,18 +227,17 @@ export class ChatExecutor
               const entityDiscoveryMode = this.getEntityDiscoveryMode(context);
               if (entityDiscoveryMode === "off") {
                 await context.chatHistory.setMessages(finalMsgs);
+                await this.emit(context, {
+                  type: ORACLE_EVENTS.COMMAND_COMPLETED,
+                  payload: { intent },
+                });
                 return;
               }
-
               const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
-              const engineToUse =
-                this.draftingEngine ||
-                context.draftingEngine ||
-                (this.generator as any)?.draftingEngine;
+              const engineToUse = this.draftingEngine || context.draftingEngine;
 
               if (!engineToUse)
                 throw new Error("Drafting engine not available.");
-
               const proposals = await engineToUse.propose(combinedText, {
                 existingEntities: Object.values(context.vault.entities || {}),
                 history: context.chatHistory.messages,

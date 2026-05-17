@@ -60,8 +60,7 @@ export class VisualizationExecutor
     const entity = context.vault.entities[entityId];
     if (!entity) return;
 
-    const generator =
-      this.generator || context.generator || context.draftingEngine?.generator;
+    const generator = this.generator || context.generator;
     if (!generator) throw new Error("Generator not available in context.");
 
     const blob = await generator.generateEntityVisualization(entityId, context);
@@ -96,8 +95,7 @@ export class VisualizationExecutor
     if (msgIndex === -1) return;
 
     const message = context.chatHistory.messages[msgIndex];
-    const generator =
-      this.generator || context.generator || context.draftingEngine?.generator;
+    const generator = this.generator || context.generator;
     if (!generator) throw new Error("Generator not available in context.");
 
     const blob = await generator.generateMessageVisualization(message, context);
