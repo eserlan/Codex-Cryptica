@@ -82,9 +82,10 @@
 
 ---
 
-## Phase 6: Polish & Cleanup (Rule X Alignment)
+## Phase 6: Polish & Cleanup (Rule X & XI Alignment)
 
 - [ ] T025 [P] Finalize `OracleActionExecutor.ts` dispatcher reduction (Target: < 300 LOC)
 - [ ] T026 [US5] Run coverage reports and verify `oracle-engine` coverage is >= 70% (Constitution Rule X)
 - [ ] T027 Code cleanup and documentation updates in `docs/refactoring/`
 - [ ] T028 Run full integration suite and verify zero regressions in guest mode/privacy
+- [ ] T029 Verify that all implemented handlers strictly adhere to **Constitution Rule XI (Agent Operational Protocol)** (Think First, Verify Everything)

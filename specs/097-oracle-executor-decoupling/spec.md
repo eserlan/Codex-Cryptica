@@ -37,17 +37,18 @@ As a system architect, I want execution side effects (like logging and notificat
 
 ---
 
-### User Story 3 - Mutation Command Decoupling (Priority: P3)
+### User Story 3 - Mutation & Visualization Decoupling (Priority: P3)
 
-As a developer, I want complex mutation commands (/create, /connect, /merge) extracted into handlers that receive dependencies via DI so that I can test vault modifications in isolation.
+As a developer, I want complex mutation commands (/create, /connect, /merge) and visualization actions (drawEntity, drawMessage) extracted into handlers that receive dependencies via DI so that I can test data operations and generation in isolation.
 
-**Why this priority**: Modularizes high-risk data operations and simplifies the dispatcher's dependency bag.
+**Why this priority**: Modularizes high-risk data and media operations and simplifies the dispatcher's dependency bag.
 
-**Independent Test**: Use a unit test for `CreateExecutor` with a mocked Vault to verify entity creation.
+**Independent Test**: Use a unit test for `VisualizationExecutor` with a mocked Generator to verify image metadata updates without a full Oracle integration.
 
 **Acceptance Scenarios**:
 
 1. **Given** a `/create` command, **When** executed, **Then** the `CreateExecutor` uses its injected `VaultService` to perform the operation.
+2. **Given** a request to draw an entity, **When** processed, **Then** the `VisualizationExecutor` handles the generation and vault update via injected services.
 
 ---
 
@@ -88,10 +89,11 @@ As a quality assurance engineer, I want every command handler to have its own un
 ### Functional Requirements
 
 - **FR-001**: System MUST utilize a Command Pattern to route `OracleIntent` to specialized `OracleCommandExecutor` implementations.
-- **FR-002**: System MUST inject all required services (Vault, Generator, EventBus) via constructors with sensible defaults.
+- **FR-002**: System MUST inject all required services (Vault, Generator, EventBus) via constructors. Defaults MUST be restricted to `null` or engine-internal mocks to maintain package purity.
 - **FR-003**: System MUST emit domain-specific events (`ORACLE:*`) for all major execution state transitions.
 - **FR-004**: System MUST preserve existing guest-mode restrictions and Fog of War visibility checks in all handlers.
 - **FR-005**: System MUST reduce the `OracleActionExecutor.ts` file to under 300 lines by the end of the refactor.
+- **FR-006**: Implementing AI agents MUST strictly follow **Constitution Rule XI (Agent Operational Protocol)**: Think First, Simple Solutions, Surgical Changes, and Verify Everything.
 
 ### Key Entities
 
