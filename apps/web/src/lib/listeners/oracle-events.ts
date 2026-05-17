@@ -7,7 +7,7 @@ import { ORACLE_EVENTS } from "@codex/oracle-engine";
  * Maps engine events to UI side effects like notifications.
  * Returns an unsubscription function.
  */
-export function initOracleEventListeners() {
+export function initOracleEventListeners(): () => void {
   const unsubs: (() => void)[] = [];
 
   // Listen for command failures

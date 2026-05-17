@@ -10,6 +10,11 @@ vi.mock("$lib/stores/ui.svelte", () => ({
   },
 }));
 
+afterEach(() => {
+  appEventBus.reset();
+  vi.clearAllMocks();
+});
+
 describe("Oracle Event Listeners Integration", () => {
   it("should notify UI when entity is created", () => {
     initOracleEventListeners();

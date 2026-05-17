@@ -48,7 +48,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
   if (!browser) return () => {};
 
   // Initialize Oracle action listeners
-  const unsubOracle = initOracleEventListeners();
+  const unsubOracle: () => void = initOracleEventListeners();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
