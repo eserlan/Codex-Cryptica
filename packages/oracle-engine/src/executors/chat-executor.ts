@@ -225,7 +225,7 @@ export class ChatExecutor
               const engineToUse =
                 this.draftingEngine ||
                 context.draftingEngine ||
-                this.generator?.draftingEngine;
+                (this.generator as any)?.draftingEngine;
 
               if (!engineToUse)
                 throw new Error("Drafting engine not available.");

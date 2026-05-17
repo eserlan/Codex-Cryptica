@@ -63,6 +63,7 @@ export type OracleIntentType =
   | "wizard"
   | "help"
   | "clear"
+  | "draw"
   | "error";
 
 /**
@@ -157,6 +158,7 @@ export interface OracleExecutionContext {
   vault: any;
   uiStore: any;
   chatHistory: any;
+  generator?: any;
   textGeneration?: any;
   imageGeneration?: any;
   contextRetrieval?: any;
