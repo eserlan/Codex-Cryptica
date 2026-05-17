@@ -139,7 +139,7 @@ describe("OracleStore", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockVault.isGuest = false;
+    (mockVault as any).isGuest = false;
     (mockUiStore as any).aiDisabled = false;
     (mockUiStore as any).isDemoMode = false;
     (mockUiStore as any).entityDiscoveryMode = "suggest";
@@ -726,7 +726,7 @@ describe("OracleStore", () => {
     });
 
     it("should bypass AI reconciliation for guest users in reconcileDiscoveryProposal", async () => {
-      mockVault.isGuest = true;
+      (mockVault as any).isGuest = true;
       (mockVault as any).entities = {
         e1: { id: "e1", title: "E1", content: "C", lore: "L" },
       };
@@ -838,7 +838,7 @@ describe("OracleStore", () => {
       });
 
       it("falls back to local append when in guest mode", async () => {
-        mockVault.isGuest = true;
+        (mockVault as any).isGuest = true;
         (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
 
         const result = await oracle.reconcileSmartApply("target", {
@@ -872,6 +872,28 @@ describe("OracleStore", () => {
         await expect(
           oracle.reconcileSmartApply("missing", { chronicle: "x" }),
         ).rejects.toThrow("Entity missing not found.");
+      });
+    });
+
+    describe("reconcileNewEntityDraft", () => {
+      it("should bypass AI reconciliation and use raw draft for guest users", async () => {
+        (mockVault as any).isGuest = true;
+        const result = await oracle.reconcileNewEntityDraft(
+          "New Subject",
+          "npc",
+          {
+            chronicle: "guest chronicle",
+            lore: "guest lore",
+          },
+        );
+
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+        expect(result).toEqual({
+          content: "guest chronicle",
+          lore: "guest lore",
+        });
       });
     });
 
