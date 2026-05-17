@@ -197,3 +197,14 @@ export interface OracleWorkerEvent {
   vaultId?: string;
   requestId?: string;
 }
+
+/**
+ * Interface for specialized command executors
+ */
+export interface OracleCommandExecutor {
+  execute(
+    intent: OracleIntent,
+    context: OracleExecutionContext,
+    onPartialResponse?: (partial: string) => void,
+  ): Promise<void>;
+}

@@ -10,10 +10,12 @@ import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
 import { DraftingEngine, draftingEngine } from "./drafting-engine";
 import { buildRelatedEntityContext } from "./reconciliation-context";
+import { DiceExecutor } from "./executors/dice-executor";
 
 export class OracleActionExecutor {
   private generator: OracleGenerator;
   private draftingEngine: DraftingEngine;
+  private diceExecutor = new DiceExecutor();
 
   constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
     this.generator = generator ?? new OracleGenerator();
@@ -70,7 +72,7 @@ export class OracleActionExecutor {
         await context.chatHistory.clearMessages();
         break;
       case "roll":
-        await this.executeRoll(intent.formula!, context);
+        await this.diceExecutor.execute(intent, context);
         break;
       case "create":
         await this.executeCreate(
@@ -223,37 +225,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         id: crypto.randomUUID(),
         role: "system",
         content: `❌ Regeneration failed for **${entity.title}**: ${err.message}`,
-      });
-    }
-  }
-
-  private async executeRoll(formula: string, context: OracleExecutionContext) {
-    if (!formula) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: "❌ Please specify a roll formula (e.g. /roll 1d20).",
-      });
-      return;
-    }
-
-    try {
-      const command = context.diceParser.parse(formula);
-      const result = context.diceEngine.execute(command);
-      await context.diceHistory.addResult(result, "chat");
-
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: "",
-        type: "roll",
-        rollResult: result,
-      });
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Roll failed: ${err.message}`,
       });
     }
   }
