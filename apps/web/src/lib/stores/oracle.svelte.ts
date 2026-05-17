@@ -674,7 +674,11 @@ export class OracleStore {
         : undefined,
     });
 
-    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+    if (
+      this.vault.isGuest ||
+      this.uiStore.aiDisabled ||
+      !this.textGeneration.reconcileEntityUpdate
+    ) {
       return fallback();
     }
 
@@ -703,7 +707,11 @@ export class OracleStore {
       throw new Error(`Entity ${proposal.entityId} was not found.`);
     }
 
-    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+    if (
+      this.vault.isGuest ||
+      this.uiStore.aiDisabled ||
+      !this.textGeneration.reconcileEntityUpdate
+    ) {
       return {
         content: existing.content || proposal.draft.chronicle,
         lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
@@ -728,7 +736,11 @@ export class OracleStore {
     type: string,
     draft: { chronicle: string; lore: string },
   ): Promise<{ content: string; lore: string; categoryId?: string }> {
-    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+    if (
+      this.vault.isGuest ||
+      this.uiStore.aiDisabled ||
+      !this.textGeneration.reconcileEntityUpdate
+    ) {
       return { content: draft.chronicle, lore: draft.lore };
     }
 

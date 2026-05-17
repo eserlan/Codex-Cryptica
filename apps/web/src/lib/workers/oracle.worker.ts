@@ -46,12 +46,14 @@ class OracleWorker {
     modelName: string,
     target: any,
     sources: any[],
+    options?: { isGuest?: boolean },
   ): Promise<any> {
     return this.textGeneration.generateMergeProposal(
       apiKey,
       modelName,
       target,
       sources,
+      options,
     );
   }
 
@@ -62,6 +64,7 @@ class OracleWorker {
     incoming: { chronicle: string; lore: string },
     relatedEntities: any[] = [],
     categories: any[] = [],
+    options?: { isGuest?: boolean },
   ): Promise<any> {
     return this.textGeneration.reconcileEntityUpdate(
       apiKey,
@@ -70,6 +73,7 @@ class OracleWorker {
       incoming,
       relatedEntities,
       categories,
+      options,
     );
   }
 
@@ -79,6 +83,7 @@ class OracleWorker {
     subject: any,
     connectedEntities: any[],
     userQuery: string,
+    options?: { isGuest?: boolean },
   ): Promise<string> {
     return this.textGeneration.generatePlotAnalysis(
       apiKey,
@@ -86,6 +91,7 @@ class OracleWorker {
       subject,
       connectedEntities,
       userQuery,
+      options,
     );
   }
 
