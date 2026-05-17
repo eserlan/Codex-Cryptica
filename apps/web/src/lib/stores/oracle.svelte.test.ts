@@ -137,8 +137,9 @@ describe("OracleStore", () => {
   let mockExecutor: any;
   let mockSessionActivity: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    (mockVault as any).isGuest = false;
     (mockUiStore as any).aiDisabled = false;
     (mockUiStore as any).isDemoMode = false;
     (mockUiStore as any).entityDiscoveryMode = "suggest";
@@ -724,6 +725,26 @@ describe("OracleStore", () => {
       expect(result.lore).toBe("L\n\nmore");
     });
 
+    it("should bypass AI reconciliation for guest users in reconcileDiscoveryProposal", async () => {
+      (mockVault as any).isGuest = true;
+      (mockVault as any).entities = {
+        e1: { id: "e1", title: "E1", content: "C", lore: "L" },
+      };
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+
+      const result = await oracle.reconcileDiscoveryProposal({
+        entityId: "e1",
+        title: "E1",
+        draft: { chronicle: "new", lore: "more" },
+      } as any);
+
+      expect(result.content).toBe("C");
+      expect(result.lore).toBe("L\n\nmore");
+      expect(
+        (oracle as any).textGeneration.reconcileEntityUpdate,
+      ).not.toHaveBeenCalled();
+    });
+
     describe("reconcileSmartApply", () => {
       beforeEach(() => {
         (mockVault as any).entities = {
@@ -816,6 +837,24 @@ describe("OracleStore", () => {
         ).not.toHaveBeenCalled();
       });
 
+      it("falls back to local append when in guest mode", async () => {
+        (mockVault as any).isGuest = true;
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "Guest Appended",
+          lore: "Guest Lore",
+        });
+
+        expect(result).toEqual({
+          content: "Old chronicle\n\nGuest Appended",
+          lore: "Old lore\n\nGuest Lore",
+        });
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+      });
+
       it("falls back to local append when reconcileEntityUpdate throws", async () => {
         (oracle as any).textGeneration.reconcileEntityUpdate = vi
           .fn()
@@ -833,6 +872,28 @@ describe("OracleStore", () => {
         await expect(
           oracle.reconcileSmartApply("missing", { chronicle: "x" }),
         ).rejects.toThrow("Entity missing not found.");
+      });
+    });
+
+    describe("reconcileNewEntityDraft", () => {
+      it("should bypass AI reconciliation and use raw draft for guest users", async () => {
+        (mockVault as any).isGuest = true;
+        const result = await oracle.reconcileNewEntityDraft(
+          "New Subject",
+          "npc",
+          {
+            chronicle: "guest chronicle",
+            lore: "guest lore",
+          },
+        );
+
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+        expect(result).toEqual({
+          content: "guest chronicle",
+          lore: "guest lore",
+        });
       });
     });
 

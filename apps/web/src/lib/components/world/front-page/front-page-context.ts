@@ -15,11 +15,22 @@ import { contextRetrievalService } from "$lib/services/ai/context-retrieval.serv
 
 /** Minimal interface matching the vault store subset used by context retrieval. */
 interface VaultLike {
-  allEntities: Array<{ id?: string }>;
+  allEntities: Array<{ id?: string; title?: string }>;
   entities: Record<
     string,
-    { title?: string; content?: string; chronicle?: string }
+    {
+      title?: string;
+      content?: string;
+      chronicle?: string;
+      type?: string;
+      lore?: string;
+      connections?: any[];
+    }
   >;
+  selectedEntityId: string | null;
+  inboundConnections: Record<string, any>;
+  defaultVisibility: "visible" | "hidden";
+  isGuest: boolean;
   loadEntityContent?: (id: string) => Promise<void>;
 }
 
@@ -57,7 +68,7 @@ export async function buildRetrievedWorldContext(
         const retrieved = await contextRetrievalService.retrieveContext(
           query,
           new Set<string>(),
-          vault,
+          vault as any,
           frontpageEntityId,
           isImage,
         );

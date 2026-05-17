@@ -459,94 +459,108 @@
     >
       Set as Central Node
     </button>
-    {#if selectedNodes.length === 2}
+    {#if !vault.isGuest}
+      {#if selectedNodes.length === 2}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+          onclick={handleConnectSelection}
+          aria-label="Connect 2 Nodes"
+        >
+          Connect 2 Nodes
+        </button>
+      {/if}
+      {#if selectedNodes.length > 1}
+        <button
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+          onclick={handleMerge}
+          aria-label="Merge {selectedNodes.length} Nodes"
+        >
+          Merge {selectedNodes.length} Nodes
+        </button>
+      {/if}
       <button
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-        onclick={handleConnectSelection}
-        aria-label="Connect 2 Nodes"
+        onclick={handleBulkLabel}
+        aria-label="Apply / Remove Label"
       >
-        Connect 2 Nodes
+        {selectedNodes.length > 1
+          ? `Label ${selectedNodes.length} Nodes…`
+          : "Label…"}
       </button>
-    {/if}
-    {#if selectedNodes.length > 1}
-      <button
-        role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-        onclick={handleMerge}
-        aria-label="Merge {selectedNodes.length} Nodes"
-      >
-        Merge {selectedNodes.length} Nodes
-      </button>
-    {/if}
-    <button
-      role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
-      onclick={handleBulkLabel}
-      aria-label="Apply / Remove Label"
-    >
-      {selectedNodes.length > 1
-        ? `Label ${selectedNodes.length} Nodes…`
-        : "Label…"}
-    </button>
 
-    {#if selectedNodes.length === 1}
+      {#if selectedNodes.length === 1}
+        <button
+          bind:this={imagePickerAnchor}
+          role="menuitem"
+          class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+          onmouseenter={showImagePicker}
+          onmouseleave={hideImagePicker}
+          onclick={handleImageMainClick}
+          aria-label="Image actions"
+          aria-expanded={imagePickerOpen}
+          aria-haspopup="true"
+        >
+          <span>Image</span>
+          <div class="flex items-center gap-2">
+            {#if hasImage}
+              <span
+                class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
+              >
+                click to view
+              </span>
+            {/if}
+            <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+            ></span>
+          </div>
+        </button>
+      {/if}
+
       <button
-        bind:this={imagePickerAnchor}
+        bind:this={categoryPickerAnchor}
         role="menuitem"
-        class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-        onmouseenter={showImagePicker}
-        onmouseleave={hideImagePicker}
-        onclick={handleImageMainClick}
-        aria-label="Image actions"
-        aria-expanded={imagePickerOpen}
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+        onmouseenter={showCategoryPicker}
+        onmouseleave={hideCategoryPicker}
+        onclick={toggleCategoryPicker}
+        aria-label="Change Category"
+        aria-expanded={categoryPickerOpen}
         aria-haspopup="true"
       >
-        <span>Image</span>
-        <div class="flex items-center gap-2">
-          {#if hasImage}
-            <span
-              class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
-            >
-              click to view
-            </span>
-          {/if}
-          <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
-          ></span>
-        </div>
+        Change Category
+        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+        ></span>
+      </button>
+
+      <button
+        bind:this={pickerAnchor}
+        role="menuitem"
+        data-testid="add-to-canvas-button"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+        onmouseenter={showCanvasPicker}
+        onmouseleave={hideCanvasPicker}
+        onclick={() => (canvasPickerOpen = !canvasPickerOpen)}
+        aria-label="Add to Canvas"
+        aria-expanded={canvasPickerOpen}
+        aria-haspopup="true"
+      >
+        Add to Canvas
+        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+        ></span>
+      </button>
+    {:else if hasImage}
+      <!-- Guest view only image action -->
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
+        onclick={handleViewImage}
+        aria-label="View Image"
+      >
+        View Image
       </button>
     {/if}
-
-    <button
-      bind:this={categoryPickerAnchor}
-      role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-      onmouseenter={showCategoryPicker}
-      onmouseleave={hideCategoryPicker}
-      onclick={toggleCategoryPicker}
-      aria-label="Change Category"
-      aria-expanded={categoryPickerOpen}
-      aria-haspopup="true"
-    >
-      Change Category
-      <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"></span>
-    </button>
-
-    <button
-      bind:this={pickerAnchor}
-      role="menuitem"
-      data-testid="add-to-canvas-button"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-      onmouseenter={showCanvasPicker}
-      onmouseleave={hideCanvasPicker}
-      onclick={() => (canvasPickerOpen = !canvasPickerOpen)}
-      aria-label="Add to Canvas"
-      aria-expanded={canvasPickerOpen}
-      aria-haspopup="true"
-    >
-      Add to Canvas
-      <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"></span>
-    </button>
 
     {#if !vault.isGuest}
       <button

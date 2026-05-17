@@ -177,6 +177,7 @@ describe("NodeMergeService", () => {
         expect.any(String),
         expect.any(Object),
         expect.any(Array),
+        { isGuest: undefined },
       );
     });
   });

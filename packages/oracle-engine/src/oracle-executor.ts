@@ -872,6 +872,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                   let lore = p.draft.lore;
                   let finalType = p.type;
                   if (
+                    !context.vault.isGuest &&
                     context.textGeneration?.reconcileEntityUpdate &&
                     proposals.length < 5
                   ) {
@@ -926,7 +927,10 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                     let updatedLore = existing.lore || "";
                     let finalType = existing.type || p.type;
                     const updatePatch: Record<string, string> = {};
-                    if (context.textGeneration?.reconcileEntityUpdate) {
+                    if (
+                      !context.vault.isGuest &&
+                      context.textGeneration?.reconcileEntityUpdate
+                    ) {
                       try {
                         const reconciled =
                           await context.textGeneration.reconcileEntityUpdate(

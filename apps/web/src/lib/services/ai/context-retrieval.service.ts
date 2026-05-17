@@ -1,5 +1,6 @@
 import { searchService as defaultSearchService } from "../search";
-import type { ContextRetrievalService } from "schema";
+import { isEntityVisible } from "schema";
+import type { ContextRetrievalService, VaultMinimal } from "schema";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -8,9 +9,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
   constructor(private searchService = defaultSearchService) {}
 
-  getConsolidatedContext(entity: any): string {
+  getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {
     const parts = [];
-    if (entity.lore?.trim()) parts.push(entity.lore.trim());
+    if (!options?.isGuest && entity.lore?.trim())
+      parts.push(entity.lore.trim());
     if (entity.content?.trim()) parts.push(entity.content.trim());
     return parts.join("\n\n");
   }
@@ -21,13 +23,26 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
   private findExplicitSubject(
     query: string,
-    entities: Record<string, any>,
+    vault: VaultMinimal,
   ): string | undefined {
     const queryLower = query.toLowerCase();
     const matches = [];
+    const entities = vault.entities || {};
 
     for (const id in entities) {
       const e = entities[id];
+
+      // Enforce Fog of War for guests in explicit subject matching
+      if (
+        vault.isGuest &&
+        !isEntityVisible(e, {
+          sharedMode: true,
+          defaultVisibility: vault.defaultVisibility,
+        })
+      ) {
+        continue;
+      }
+
       const titleLower = e.title.toLowerCase();
       let matched = false;
 
@@ -70,7 +85,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   async retrieveContext(
     query: string,
     excludeTitles: Set<string>,
-    vault: any,
+    vault: VaultMinimal,
     lastEntityId?: string,
     _isImage: boolean = false,
   ): Promise<{
@@ -121,8 +136,16 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         const styleId = bestStyleId;
         await vault.loadEntityContent?.(styleId);
         const styleEntity = vault.entities[styleId];
-        if (styleEntity) {
-          styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
+        const isVisible =
+          !vault.isGuest ||
+          (styleEntity &&
+            isEntityVisible(styleEntity, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            }));
+
+        if (styleEntity && isVisible) {
+          styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity, { isGuest: vault.isGuest })}\n\n`;
           activeStyleTitle = styleEntity.title;
           this.styleCache = styleContext;
           this.styleTitleCache = activeStyleTitle || "";
@@ -142,6 +165,20 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       limit: 5,
       includeDrafts: true,
     });
+
+    // Enforce Fog of War for guests in search results
+    if (vault.isGuest) {
+      results = results.filter((res) => {
+        const entity = vault.entities[res.id];
+        return (
+          entity &&
+          isEntityVisible(entity, {
+            sharedMode: true,
+            defaultVisibility: vault.defaultVisibility,
+          })
+        );
+      });
+    }
 
     if (results.length === 0) {
       const keywords = query
@@ -172,11 +209,25 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
           limit: 5,
           includeDrafts: true,
         });
+
+        // Enforce Fog of War for guests in keyword results
+        if (vault.isGuest) {
+          results = results.filter((res) => {
+            const entity = vault.entities[res.id];
+            return (
+              entity &&
+              isEntityVisible(entity, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              })
+            );
+          });
+        }
       }
     }
 
     const activeId = vault.selectedEntityId;
-    const explicitSubject = this.findExplicitSubject(query, vault.entities);
+    const explicitSubject = this.findExplicitSubject(query, vault);
     const topSearchResult = results[0];
     const isHighConfidenceSearch =
       topSearchResult && topSearchResult.score >= 0.6;
@@ -189,9 +240,27 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     } else if (isHighConfidenceSearch) {
       primaryEntityId = topSearchResult.id;
     } else if (isFollowUp && lastEntityId) {
-      primaryEntityId = lastEntityId;
+      const lastEntity = vault.entities[lastEntityId];
+      const isVisible =
+        !vault.isGuest ||
+        (lastEntity &&
+          isEntityVisible(lastEntity, {
+            sharedMode: true,
+            defaultVisibility: vault.defaultVisibility,
+          }));
+      if (isVisible) primaryEntityId = lastEntityId;
     } else {
-      primaryEntityId = activeId || topSearchResult?.id;
+      const activeEntity = activeId ? vault.entities[activeId] : null;
+      const isActiveVisible =
+        !vault.isGuest ||
+        (activeEntity &&
+          isEntityVisible(activeEntity, {
+            sharedMode: true,
+            defaultVisibility: vault.defaultVisibility,
+          }));
+      primaryEntityId = isActiveVisible
+        ? activeId || topSearchResult?.id
+        : topSearchResult?.id;
     }
 
     // Pre-load content for all entity IDs that will contribute to the oracle
@@ -213,7 +282,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         }
       }
       await Promise.all(
-        Array.from(candidateIds).map((id) => vault.loadEntityContent(id)),
+        Array.from(candidateIds).map((id) => vault.loadEntityContent!(id)),
       );
     }
 
@@ -227,32 +296,65 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       const entity = vault.entities[id];
       if (!entity || internalExclusions.has(entity.title)) return;
 
+      // Enforce Fog of War for guests
+      if (
+        vault.isGuest &&
+        !isEntityVisible(entity, {
+          sharedMode: true,
+          defaultVisibility: vault.defaultVisibility,
+        })
+      ) {
+        return;
+      }
+
       const mainContent = isEnrichment
         ? (entity.content || "").trim()
-        : this.getConsolidatedContext(entity);
+        : this.getConsolidatedContext(entity, { isGuest: vault.isGuest });
       if (!mainContent && !isEnrichment) return;
 
       const isActive = id === activeId;
       const prefix = isActive ? "[ACTIVE FILE] " : "";
 
       let connectionContext = "";
-      const outbound = (entity.connections || []).map((c: any) => {
-        const targetEntity = vault.entities[c.target];
-        const target =
-          targetEntity && targetEntity.title
-            ? targetEntity.title
-            : `[missing entity: ${c.target}]`;
-        return `- ${entity.title} → ${c.label || c.type} → ${target}`;
-      });
+      const outbound = (entity.connections || []).reduce(
+        (acc: string[], c: any) => {
+          const targetEntity = vault.entities[c.target];
+          if (
+            targetEntity &&
+            (!vault.isGuest ||
+              isEntityVisible(targetEntity, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              }))
+          ) {
+            acc.push(
+              `- ${entity.title} → ${c.label || c.type} → ${targetEntity.title}`,
+            );
+          }
+          return acc;
+        },
+        [],
+      );
 
-      const inbound = (vault.inboundConnections[id] || []).map((item: any) => {
-        const sourceEntity = vault.entities[item.sourceId];
-        const source =
-          sourceEntity && sourceEntity.title
-            ? sourceEntity.title
-            : `[missing entity: ${item.sourceId}]`;
-        return `- ${source} → ${item.connection.label || item.connection.type} → ${entity.title}`;
-      });
+      const inbound = (vault.inboundConnections[id] || []).reduce(
+        (acc: string[], item: any) => {
+          const sourceEntity = vault.entities[item.sourceId];
+          if (
+            sourceEntity &&
+            (!vault.isGuest ||
+              isEntityVisible(sourceEntity, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              }))
+          ) {
+            acc.push(
+              `- ${sourceEntity.title} → ${item.connection.label || item.connection.type} → ${entity.title}`,
+            );
+          }
+          return acc;
+        },
+        [],
+      );
 
       if (outbound.length > 0 || inbound.length > 0) {
         connectionContext =
@@ -325,8 +427,20 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       let allTitles = "";
       let first = true;
       for (let i = 0; i < count; i++) {
-        const title = allEntities[i].title;
+        const e = allEntities[i];
+        const title = e.title;
         if (title && !internalExclusions.has(title)) {
+          // Enforce Fog of War for guests in title list
+          if (
+            vault.isGuest &&
+            !isEntityVisible(e, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            })
+          ) {
+            continue;
+          }
+
           if (!first) {
             allTitles += ", ";
           }

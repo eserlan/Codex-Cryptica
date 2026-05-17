@@ -237,7 +237,7 @@ export class FrontPageController {
     const themeName = themeStore.activeTheme.name;
 
     return buildRetrievedWorldContext(
-      vault,
+      vault as any,
       worldName,
       themeName,
       worldStore.frontPageEntity?.id,

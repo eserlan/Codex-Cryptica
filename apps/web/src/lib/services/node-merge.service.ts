@@ -95,6 +95,7 @@ export class NodeMergeService {
         modelName,
         mapToAiEntity(targetContent),
         sources.map(mapToAiEntity),
+        { isGuest: vault.isGuest },
       );
 
       suggestedFrontmatter = mergeFrontmatter(targetContent, sources);
