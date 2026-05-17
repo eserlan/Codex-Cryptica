@@ -11,7 +11,7 @@ describe("UndoRedoService", () => {
         class {
           postMessage = vi.fn();
           onmessage = null;
-        },
+        } as any,
       ),
     );
     service = new UndoRedoService();

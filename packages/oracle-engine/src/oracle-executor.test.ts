@@ -5,6 +5,7 @@ describe("OracleActionExecutor - Detailed", () => {
   let executor: OracleActionExecutor;
   let mockContext: any;
   let mockGenerator: any;
+  let mockDraftingEngine: any;
 
   beforeEach(() => {
     vi.stubGlobal("navigator", { onLine: true });
@@ -19,9 +20,20 @@ describe("OracleActionExecutor - Detailed", () => {
       generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateMessageVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateRegenerationResponse: vi.fn().mockResolvedValue(undefined),
+      generateCreationResponse: vi
+        .fn()
+        .mockResolvedValue({ primaryEntityId: "e1", sourceIds: [] }),
     };
-    executor = new OracleActionExecutor(mockGenerator);
+    mockDraftingEngine = {
+      propose: vi.fn().mockResolvedValue([]),
+    };
+    executor = new OracleActionExecutor(
+      mockGenerator,
+      mockDraftingEngine as any,
+    );
     mockContext = {
+      generator: mockGenerator,
+      draftingEngine: mockDraftingEngine,
       chatHistory: {
         addMessage: vi.fn().mockImplementation(async (msg) => {
           mockContext.chatHistory.messages.push(msg);
@@ -647,17 +659,15 @@ describe("OracleActionExecutor - Detailed", () => {
         },
       );
 
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            entityId: "e_redhand",
-            title: "Red Hand",
-            type: "group",
-            draft: { chronicle: "A cult.", lore: "" },
-            confidence: 0.9, // High confidence > 0.8
-          },
-        ]),
-      };
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          entityId: "e_redhand",
+          title: "Red Hand",
+          type: "group",
+          draft: { chronicle: "A cult.", lore: "" },
+          confidence: 0.9, // High confidence > 0.8
+        },
+      ]);
 
       await executor.execute(
         { type: "chat", query: "Who are the Red Hand?", isAIIntent: true },
@@ -684,20 +694,18 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "Old lore",
         },
       };
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            entityId: "e1",
-            title: "Thay",
-            type: "location",
-            draft: {
-              chronicle: "New chronicle",
-              lore: "New lore",
-            },
-            confidence: 0.95,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          entityId: "e1",
+          title: "Thay",
+          type: "location",
+          draft: {
+            chronicle: "New chronicle",
+            lore: "New lore",
           },
-        ]),
-      };
+          confidence: 0.95,
+        },
+      ]);
       mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
         content: "Reconciled chronicle",
         lore: "Reconciled lore",
@@ -742,19 +750,17 @@ describe("OracleActionExecutor - Detailed", () => {
         { id: "note", label: "Note" },
         { id: "item", label: "Item" },
       ];
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            title: "The Glass Key",
-            type: "note",
-            draft: {
-              chronicle: "A crystalline key carried by the old archivists.",
-              lore: "The Glass Key opens sealed memory vaults.",
-            },
-            confidence: 0.92,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          title: "The Glass Key",
+          type: "note",
+          draft: {
+            chronicle: "A crystalline key carried by the old archivists.",
+            lore: "The Glass Key opens sealed memory vaults.",
           },
-        ]),
-      };
+          confidence: 0.92,
+        },
+      ]);
       mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
         content: "The Glass Key is a crystalline archive key.",
         lore: "It opens sealed memory vaults.",
@@ -814,20 +820,18 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "Old lore",
         },
       };
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            entityId: "e1",
-            title: "The Red Hand",
-            type: "character",
-            draft: {
-              chronicle: "A militant organization.",
-              lore: "The Red Hand recruits across the borderlands.",
-            },
-            confidence: 0.95,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          entityId: "e1",
+          title: "The Red Hand",
+          type: "character",
+          draft: {
+            chronicle: "A militant organization.",
+            lore: "The Red Hand recruits across the borderlands.",
           },
-        ]),
-      };
+          confidence: 0.95,
+        },
+      ]);
       mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
         content: "The Red Hand is a militant organization.",
         lore: "It recruits across the borderlands.",
@@ -865,19 +869,17 @@ describe("OracleActionExecutor - Detailed", () => {
 
     it("should seed connection proposals for newly auto-archived entities", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            title: "Valerius",
-            type: "npc",
-            draft: {
-              chronicle: "A reclusive alchemist",
-              lore: "Valerius works from a crystal tower.",
-            },
-            confidence: 0.92,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          title: "Valerius",
+          type: "npc",
+          draft: {
+            chronicle: "A reclusive alchemist",
+            lore: "Valerius works from a crystal tower.",
           },
-        ]),
-      };
+          confidence: 0.92,
+        },
+      ]);
       mockGenerator.generateChatResponse.mockResolvedValue({
         primaryEntityId: "e1",
         sourceIds: ["e1"],
@@ -913,28 +915,26 @@ describe("OracleActionExecutor - Detailed", () => {
         .fn()
         .mockResolvedValueOnce("new-id-1")
         .mockResolvedValueOnce("new-id-2");
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            title: "Valerius",
-            type: "npc",
-            draft: {
-              chronicle: "A reclusive alchemist",
-              lore: "Valerius works from a crystal tower.",
-            },
-            confidence: 0.92,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          title: "Valerius",
+          type: "npc",
+          draft: {
+            chronicle: "A reclusive alchemist",
+            lore: "Valerius works from a crystal tower.",
           },
-          {
-            title: "Azure Wastes",
-            type: "location",
-            draft: {
-              chronicle: "A frozen frontier",
-              lore: "The wastes stretch beyond the last watchtower.",
-            },
-            confidence: 0.9,
+          confidence: 0.92,
+        },
+        {
+          title: "Azure Wastes",
+          type: "location",
+          draft: {
+            chronicle: "A frozen frontier",
+            lore: "The wastes stretch beyond the last watchtower.",
           },
-        ]),
-      };
+          confidence: 0.9,
+        },
+      ]);
       mockGenerator.generateChatResponse.mockResolvedValue({
         primaryEntityId: "e1",
         sourceIds: ["e1"],
@@ -963,19 +963,17 @@ describe("OracleActionExecutor - Detailed", () => {
 
     it("should suppress proactive discovery when entity discovery is off", async () => {
       mockContext.uiStore.entityDiscoveryMode = "off";
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            title: "Valerius",
-            type: "npc",
-            draft: {
-              chronicle: "A reclusive alchemist",
-              lore: "Valerius works from a crystal tower.",
-            },
-            confidence: 0.92,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          title: "Valerius",
+          type: "npc",
+          draft: {
+            chronicle: "A reclusive alchemist",
+            lore: "Valerius works from a crystal tower.",
           },
-        ]),
-      };
+          confidence: 0.92,
+        },
+      ]);
 
       await executor.execute(
         {
@@ -986,7 +984,7 @@ describe("OracleActionExecutor - Detailed", () => {
         mockContext,
       );
 
-      expect(mockContext.draftingEngine.propose).not.toHaveBeenCalled();
+      expect(mockDraftingEngine.propose).not.toHaveBeenCalled();
       expect(mockContext.vault.createEntity).not.toHaveBeenCalled();
       expect(mockContext.proposeConnectionsForEntity).not.toHaveBeenCalled();
     });
@@ -994,19 +992,17 @@ describe("OracleActionExecutor - Detailed", () => {
     it("should auto-apply connection discovery for auto-archived entities when enabled", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.uiStore.connectionDiscoveryMode = "auto-apply";
-      mockContext.draftingEngine = {
-        propose: vi.fn().mockResolvedValue([
-          {
-            title: "Valerius",
-            type: "npc",
-            draft: {
-              chronicle: "A reclusive alchemist",
-              lore: "Valerius works from a crystal tower.",
-            },
-            confidence: 0.92,
+      mockDraftingEngine.propose.mockResolvedValue([
+        {
+          title: "Valerius",
+          type: "npc",
+          draft: {
+            chronicle: "A reclusive alchemist",
+            lore: "Valerius works from a crystal tower.",
           },
-        ]),
-      };
+          confidence: 0.92,
+        },
+      ]);
 
       await executor.execute(
         {
