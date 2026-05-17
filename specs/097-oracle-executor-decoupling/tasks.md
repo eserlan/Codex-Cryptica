@@ -11,6 +11,7 @@
 - [ ] T002 Register new `ORACLE:*` events in `packages/oracle-engine/src/events.ts`
 - [ ] T003 Create `BaseExecutor` class in `packages/oracle-engine/src/executors/base-executor.ts`
 - [ ] T004 [P] Initialize `executors/` directory and basic test scaffold
+- [ ] T004b Design and implement circular dependency prevention mechanism in `BaseExecutor` (Edge Case)
 
 ---
 
@@ -85,7 +86,8 @@
 ## Phase 6: Polish & Cleanup (Rule X & XI Alignment)
 
 - [ ] T025 [P] Finalize `OracleActionExecutor.ts` dispatcher reduction (Target: < 300 LOC)
+- [ ] T025b Audit `OracleActionExecutor.ts` to ensure `$state.snapshot` is applied correctly before passing context to async executors (Edge Case)
 - [ ] T026 [US5] Run coverage reports and verify `oracle-engine` coverage is >= 70% (Constitution Rule X)
 - [ ] T027 Code cleanup and documentation updates in `docs/refactoring/`
-- [ ] T028 Run full integration suite and verify zero regressions in guest mode/privacy
+- [ ] T028 Run existing Playwright and Vitest integration suites to verify zero regressions in guest mode and privacy parity
 - [ ] T029 Verify that all implemented handlers strictly adhere to **Constitution Rule XI (Agent Operational Protocol)** (Think First, Verify Everything)

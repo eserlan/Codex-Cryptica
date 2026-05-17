@@ -1,6 +1,6 @@
 # Implementation Plan: Oracle Executor Decoupling
 
-**Branch**: `refactor/oracle-executor-monolith` | **Date**: 2026-05-17 | **Spec**: `/specs/097-oracle-executor-decoupling/spec.md`
+**Branch**: `097-oracle-executor-decoupling` | **Date**: 2026-05-17 | **Spec**: `/specs/097-oracle-executor-decoupling/spec.md`
 
 ## Summary
 
