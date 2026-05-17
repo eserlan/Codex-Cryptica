@@ -18,30 +18,49 @@ This high coupling makes the file difficult to test in isolation, prone to regre
 
 ## 2. Proposed Architecture: Command Pattern
 
-## 2. Proposed Architecture: Command + Event-Driven Pattern
+## 2. Proposed Architecture: Command + Event + DI Pattern
 
-We will transition to a modular **Command Dispatcher** architecture that leverages the **App Event Bus** (`@codex/events`) to decouple business logic from side effects.
+We will transition to a modular **Command Dispatcher** architecture that leverages **Dependency Injection (DI)** and the **App Event Bus** to decouple logic from its environment.
 
 ### Goal
 
 - Reduce `oracle-executor.ts` to < 200 lines.
-- Eliminate "Side Effect Bloat" in `OracleExecutionContext` by moving notifications, logging, and state synchronization to event listeners.
+- **Improved Testability**: Each executor can be unit-tested by mocking its injected dependencies.
+- **Loose Coupling**: Avoid direct imports of global singletons (like `vault` or `uiStore`) inside engine packages.
 
 ### Proposed Structure
 
 ```text
 packages/oracle-engine/src/
 ├── executors/                 # Focused command handlers
-│   ├── base-executor.ts       # Common logic/types
-│   ├── chat-executor.ts       # AI logic (emits ORACLE:THINKING, ORACLE:CHUNK)
-│   ├── create-executor.ts     # /create (emits ORACLE:ENTITY_CREATED)
-│   ├── connect-executor.ts    # /connect (emits ORACLE:CONNECTION_CREATED)
+│   ├── base-executor.ts       # Common logic/types + DI base class
+│   ├── chat-executor.ts       # Injects: generator, parser, draftingEngine
+│   ├── create-executor.ts     # Injects: vault, eventBus
 │   └── ...
-├── events.ts                  # Event definitions (module augmentation)
-└── oracle-executor.ts         # The thin dispatcher
+├── events.ts                  # Event definitions
+└── oracle-executor.ts         # The "Composer" and Dispatcher
 ```
 
-## 3. Decoupling Side Effects via AppEventBus
+## 3. Dependency Injection Strategy
+
+Following the project's DI mandate, every executor will receive its required services via the constructor. This allows us to provide "sensible defaults" while remaining fully mockable.
+
+### Example: CreateExecutor
+
+```typescript
+export class CreateExecutor extends BaseExecutor {
+  constructor(
+    private vault: VaultService,
+    private eventBus: AppEventBus = defaultEventBus
+  ) { super(); }
+
+  async execute(...) {
+    // Uses this.vault and this.eventBus instead of global singletons
+  }
+}
+```
+
+## 4. Decoupling Side Effects via AppEventBus
 
 Currently, the `OracleExecutionContext` is bloated with functions like `logActivity` and `proposeConnectionsForEntity`. We will replace these with a unified event-based flow:
 
