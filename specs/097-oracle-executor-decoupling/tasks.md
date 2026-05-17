@@ -29,61 +29,62 @@
 - [ ] T008 [P] [US1] Implement `MetaExecutor` (/help, /clear) in `packages/oracle-engine/src/executors/meta-executor.ts`
 - [ ] T009 [US1] Update `OracleActionExecutor` dispatcher to delegate US1 commands
 
-**Checkpoint**: MVP Ready - Basic commands are decoupled and tested.
-
 ---
 
-## Phase 3: User Story 2 - Mutation Command Decoupling (P2)
-
-**Goal**: Extract stateful mutation commands and inject dependencies.
-
-### Tests for User Story 2
-
-- [ ] T010 [P] [US2] Unit test for entity creation logic in `packages/oracle-engine/src/executors/create-executor.test.ts`
-- [ ] T011 [P] [US2] Unit test for connection/merge logic in `packages/oracle-engine/src/executors/connect-executor.test.ts`
-
-### Implementation for User Story 2
-
-- [ ] T012 [P] [US2] Implement `CreateExecutor` in `packages/oracle-engine/src/executors/create-executor.ts`
-- [ ] T013 [P] [US2] Implement `ConnectExecutor` in `packages/oracle-engine/src/executors/connect-executor.ts`
-- [ ] T014 [P] [US2] Implement `MergeExecutor` in `packages/oracle-engine/src/executors/merge-executor.ts`
-- [ ] T015 [P] [US2] Implement `PlotExecutor` in `packages/oracle-engine/src/executors/plot-executor.ts`
-
----
-
-## Phase 4: User Story 3 - AI Orchestration Extraction (P3)
-
-**Goal**: Extract complex AI multi-step logic.
-
-### Tests for User Story 3
-
-- [ ] T016 [P] [US3] Unit test for chat orchestration in `packages/oracle-engine/src/executors/chat-executor.test.ts`
-- [ ] T017 [P] [US3] Unit test for regeneration logic in `packages/oracle-engine/src/executors/regenerate-executor.test.ts`
-
-### Implementation for User Story 3
-
-- [ ] T018 [P] [US3] Implement `RegenerateExecutor` in `packages/oracle-engine/src/executors/regenerate-executor.ts`
-- [ ] T019 [P] [US3] Implement `ChatExecutor` in `packages/oracle-engine/src/executors/chat-executor.ts`
-- [ ] T020 [US3] Sub-extract Discovery reactor from Chat logic
-
----
-
-## Phase 5: User Story 4 - Event-Driven Side Effects (P4)
+## Phase 3: User Story 2 - Event-Driven Side Effects (P2)
 
 **Goal**: Decouple logic from UI and logging via events.
 
-### Tests for User Story 4
+### Tests for User Story 2
 
-- [ ] T021 [P] [US4] Integration test for event-driven notifications in `tests/oracle-events.test.ts`
+- [ ] T010 [P] [US2] Integration test for event-driven notifications in `tests/oracle-events.test.ts`
 
-### Implementation for User Story 4
+### Implementation for User Story 2
 
-- [ ] T022 [P] [US4] Update all executors to emit typed events (`ORACLE:COMMAND_COMPLETED`, etc.)
-- [ ] T023 [US4] Implement global event listeners in the Web layer to replace direct callbacks
+- [ ] T011 [P] [US2] Update `DiceExecutor` and `MetaExecutor` to emit typed events
+- [ ] T012 [US2] Implement global event listeners in `apps/web/src/lib/listeners/oracle-events.ts`
 
 ---
 
-## Phase 6: Polish & Cleanup
+## Phase 4: User Story 3 - Mutation Command Decoupling (P3)
 
-- [ ] T024 [P] Finalize `OracleActionExecutor.ts` dispatcher reduction (Target: < 300 LOC)
-- [ ] T025 Run full integration suite and verify zero regressions in guest mode/privacy
+**Goal**: Extract stateful mutation commands and inject dependencies.
+
+### Tests for User Story 3
+
+- [ ] T013 [P] [US3] Unit test for entity creation logic in `packages/oracle-engine/src/executors/create-executor.test.ts`
+- [ ] T014 [P] [US3] Unit test for connection/merge logic in `packages/oracle-engine/src/executors/connect-executor.test.ts`
+
+### Implementation for User Story 3
+
+- [ ] T015 [P] [US3] Implement `CreateExecutor` in `packages/oracle-engine/src/executors/create-executor.ts`
+- [ ] T016 [P] [US3] Implement `ConnectExecutor` in `packages/oracle-engine/src/executors/connect-executor.ts`
+- [ ] T017 [P] [US3] Implement `MergeExecutor` in `packages/oracle-engine/src/executors/merge-executor.ts`
+- [ ] T018 [P] [US3] Implement `PlotExecutor` in `packages/oracle-engine/src/executors/plot-executor.ts`
+- [ ] T019 [P] [US3] Implement `VisualizationExecutor` (drawEntity, drawMessage) in `packages/oracle-engine/src/executors/visualization-executor.ts`
+
+---
+
+## Phase 5: User Story 4 - AI Orchestration Extraction (P4)
+
+**Goal**: Extract complex AI multi-step logic.
+
+### Tests for User Story 4
+
+- [ ] T020 [P] [US4] Unit test for chat orchestration in `packages/oracle-engine/src/executors/chat-executor.test.ts`
+- [ ] T021 [P] [US4] Unit test for regeneration logic in `packages/oracle-engine/src/executors/regenerate-executor.test.ts`
+
+### Implementation for User Story 4
+
+- [ ] T022 [P] [US4] Implement `RegenerateExecutor` in `packages/oracle-engine/src/executors/regenerate-executor.ts`
+- [ ] T023 [P] [US4] Implement `ChatExecutor` (The core AI orchestrator) in `packages/oracle-engine/src/executors/chat-executor.ts`
+- [ ] T024 [US4] Sub-extract Discovery reactor from Chat logic
+
+---
+
+## Phase 6: Polish & Cleanup (Rule X Alignment)
+
+- [ ] T025 [P] Finalize `OracleActionExecutor.ts` dispatcher reduction (Target: < 300 LOC)
+- [ ] T026 [US5] Run coverage reports and verify `oracle-engine` coverage is >= 70% (Constitution Rule X)
+- [ ] T027 Code cleanup and documentation updates in `docs/refactoring/`
+- [ ] T028 Run full integration suite and verify zero regressions in guest mode/privacy

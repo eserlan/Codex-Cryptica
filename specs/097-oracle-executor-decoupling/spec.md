@@ -11,7 +11,7 @@
 
 As a developer, I want to see simple slash commands (like /roll, /help, /clear) handled by specialized classes so that I can verify the Command Pattern with low-risk logic.
 
-**Why this priority**: Crucial for establishing the infrastructure and pattern without risking core AI or data logic.
+**Why this priority**: Establish the architectural pattern and DI infrastructure using low-complexity commands.
 
 **Independent Test**: Verify that `/roll` continues to work through the new `DiceExecutor` while the old implementation is removed.
 
@@ -22,45 +22,56 @@ As a developer, I want to see simple slash commands (like /roll, /help, /clear) 
 
 ---
 
-### User Story 2 - Mutation Command Decoupling (Priority: P2)
+### User Story 2 - Event-Driven Side Effects (Priority: P2)
+
+As a system architect, I want execution side effects (like logging and notifications) to be handled via the App Event Bus so that the execution logic is decoupled from UI and storage services.
+
+**Why this priority**: Essential foundation for mutation commands (US3) to signal success/failure without tight coupling.
+
+**Independent Test**: Verify that `ORACLE:ENTITY_CREATED` is emitted after a successful `/create` command.
+
+**Acceptance Scenarios**:
+
+1. **Given** a successful command execution, **When** it completes, **Then** an `ORACLE:COMMAND_COMPLETED` event is emitted.
+2. **Given** a failed command execution, **When** an error occurs, **Then** an `ORACLE:COMMAND_FAILED` event is emitted with the error details.
+
+---
+
+### User Story 3 - Mutation Command Decoupling (Priority: P3)
 
 As a developer, I want complex mutation commands (/create, /connect, /merge) extracted into handlers that receive dependencies via DI so that I can test vault modifications in isolation.
 
-**Why this priority**: Modularizes the highest-risk data operations and simplifies the dispatcher's dependency bag.
+**Why this priority**: Modularizes high-risk data operations and simplifies the dispatcher's dependency bag.
 
-**Independent Test**: Use a unit test for `CreateExecutor` with a mocked Vault to verify entity creation without a full browser environment.
+**Independent Test**: Use a unit test for `CreateExecutor` with a mocked Vault to verify entity creation.
 
 **Acceptance Scenarios**:
 
 1. **Given** a `/create` command, **When** executed, **Then** the `CreateExecutor` uses its injected `VaultService` to perform the operation.
-2. **Given** a `/merge` command, **When** executed, **Then** it coordinates between the vault and AI services via injected interfaces.
 
 ---
 
-### User Story 3 - AI Orchestration Extraction (Priority: P3)
+### User Story 4 - AI Orchestration Extraction (Priority: P4)
 
 As a system architect, I want the core AI chat and regeneration logic extracted into an orchestration handler so that the complex multi-step generation pipeline is manageable.
 
-**Why this priority**: Tackles the largest block of code (600+ lines) and enables advanced AI unit testing.
+**Why this priority**: Tackles the largest code block (600+ lines) after the architectural foundations are solid.
 
-**Independent Test**: Verify that `ChatExecutor` can handle a full conversation flow, including "thinking" states and "discovery" triggers, using mocked generators.
+**Independent Test**: Verify that `ChatExecutor` can handle a full conversation flow using mocked generators.
 
 **Acceptance Scenarios**:
 
 1. **Given** a standard chat query, **When** processed, **Then** the `ChatExecutor` manages the generation, parsing, and eventual response emission.
-2. **Given** a regeneration request, **When** triggered, **Then** the `RegenerateExecutor` handles the draft proposal and reconciliation flow.
 
 ---
 
-### User Story 4 - Event-Driven Side Effects (Priority: P4)
+### User Story 5 - Comprehensive Unit Testing (Priority: P5)
 
-As a system architect, I want all side effects (logging, notifications) to be handled via the App Event Bus so that the execution logic is decoupled from UI services.
+As a quality assurance engineer, I want every command handler to have its own unit test suite so that regressions can be identified instantly.
 
-As a quality assurance engineer, I want every command handler to have its own unit test suite so that regressions can be identified instantly without running the entire Oracle integration.
+**Why this priority**: Ensures long-term maintainability and satisfies Constitution Rule X (70% coverage).
 
-**Why this priority**: Ensures long-term maintainability and allows for safe refactoring of individual handlers.
-
-**Independent Test**: Running `vitest` on a single executor (e.g., `DiceExecutor.test.ts`) should provide full coverage of that command's logic.
+**Independent Test**: Running `vitest` on a single executor provides 100% logic coverage of that command.
 
 **Acceptance Scenarios**:
 

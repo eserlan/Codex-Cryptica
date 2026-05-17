@@ -30,5 +30,24 @@ Located in `packages/oracle-engine/src/events.ts`.
 
 ## 3. Executor Hierarchy
 
-- `BaseExecutor`: Abstract class providing shared utilities for all handlers.
-- `SpecializedExecutors`: Concrete implementations of `OracleCommandExecutor`.
+### `BaseExecutor` (Abstract)
+
+Provides shared logic for all command handlers.
+
+- **`protected getAvailableCategories(context)`**: Normalizes category list from context.
+- **`protected getValidCategoryId(context, id)`**: Validates if a category ID exists in current context.
+- **`protected emit(eventBus, event)`**: Helper for standardized event emission.
+
+### `SpecializedExecutors`
+
+Concrete implementations of `OracleCommandExecutor`:
+
+- `DiceExecutor`: Handles `/roll`.
+- `MetaExecutor`: Handles `/help`, `/clear`.
+- `CreateExecutor`: Handles `/create`.
+- `ConnectExecutor`: Handles `/connect`, `/connect-ai`.
+- `MergeExecutor`: Handles `/merge`, `/merge-ai`.
+- `PlotExecutor`: Handles `/plot`.
+- `VisualizationExecutor`: Handles `drawEntity`, `drawMessage`.
+- `ChatExecutor`: Orchestrates multi-step AI chat generation.
+- `RegenerateExecutor`: Orchestrates AI-driven entity regeneration.

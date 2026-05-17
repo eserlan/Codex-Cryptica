@@ -55,6 +55,14 @@ packages/oracle-engine/src/
 
 **Structure Decision**: Adopting a modular "Executors" directory within the `oracle-engine` package to isolate command logic while keeping the public API (`OracleActionExecutor`) stable.
 
+## Dependency Injection Strategy
+
+Following the project's DI mandate (Constitution Rule VIII), every executor will receive its required services via the constructor.
+
+- **Pure Engine**: Executors will define interfaces for their dependencies.
+- **Wired Composition**: The `OracleActionExecutor` (Composer) in the web layer will instantiate these executors with concrete singletons (Vault, AppEventBus, etc.).
+- **Sensible Defaults**: Defaults in constructors will be restricted to `null` or internal engine mocks to avoid cross-package contamination.
+
 ## Complexity Tracking
 
 | Violation                 | Why Needed                                | Simpler Alternative Rejected Because                                                   |
