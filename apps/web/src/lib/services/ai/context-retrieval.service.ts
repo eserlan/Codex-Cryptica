@@ -1,6 +1,6 @@
 import { searchService as defaultSearchService } from "../search";
 import { isEntityVisible } from "schema";
-import type { ContextRetrievalService } from "schema";
+import type { ContextRetrievalService, VaultMinimal } from "schema";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -21,7 +21,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  private findExplicitSubject(query: string, vault: any): string | undefined {
+  private findExplicitSubject(
+    query: string,
+    vault: VaultMinimal,
+  ): string | undefined {
     const queryLower = query.toLowerCase();
     const matches = [];
     const entities = vault.entities || {};
@@ -82,7 +85,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   async retrieveContext(
     query: string,
     excludeTitles: Set<string>,
-    vault: any,
+    vault: VaultMinimal,
     lastEntityId?: string,
     _isImage: boolean = false,
   ): Promise<{
@@ -279,7 +282,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         }
       }
       await Promise.all(
-        Array.from(candidateIds).map((id) => vault.loadEntityContent(id)),
+        Array.from(candidateIds).map((id) => vault.loadEntityContent!(id)),
       );
     }
 
@@ -313,41 +316,45 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       const prefix = isActive ? "[ACTIVE FILE] " : "";
 
       let connectionContext = "";
-      const outbound = (entity.connections || [])
-        .filter((c: any) => {
+      const outbound = (entity.connections || []).reduce(
+        (acc: string[], c: any) => {
           const targetEntity = vault.entities[c.target];
-          if (!targetEntity) return false;
-          if (vault.isGuest) {
-            return isEntityVisible(targetEntity, {
-              sharedMode: true,
-              defaultVisibility: vault.defaultVisibility,
-            });
+          if (
+            targetEntity &&
+            (!vault.isGuest ||
+              isEntityVisible(targetEntity, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              }))
+          ) {
+            acc.push(
+              `- ${entity.title} → ${c.label || c.type} → ${targetEntity.title}`,
+            );
           }
-          return true;
-        })
-        .map((c: any) => {
-          const targetEntity = vault.entities[c.target];
-          const target = targetEntity.title;
-          return `- ${entity.title} → ${c.label || c.type} → ${target}`;
-        });
+          return acc;
+        },
+        [],
+      );
 
-      const inbound = (vault.inboundConnections[id] || [])
-        .filter((item: any) => {
+      const inbound = (vault.inboundConnections[id] || []).reduce(
+        (acc: string[], item: any) => {
           const sourceEntity = vault.entities[item.sourceId];
-          if (!sourceEntity) return false;
-          if (vault.isGuest) {
-            return isEntityVisible(sourceEntity, {
-              sharedMode: true,
-              defaultVisibility: vault.defaultVisibility,
-            });
+          if (
+            sourceEntity &&
+            (!vault.isGuest ||
+              isEntityVisible(sourceEntity, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              }))
+          ) {
+            acc.push(
+              `- ${sourceEntity.title} → ${item.connection.label || item.connection.type} → ${entity.title}`,
+            );
           }
-          return true;
-        })
-        .map((item: any) => {
-          const sourceEntity = vault.entities[item.sourceId];
-          const source = sourceEntity.title;
-          return `- ${source} → ${item.connection.label || item.connection.type} → ${entity.title}`;
-        });
+          return acc;
+        },
+        [],
+      );
 
       if (outbound.length > 0 || inbound.length > 0) {
         connectionContext =

@@ -6,11 +6,14 @@ export const TIER_MODES = {
 };
 
 export interface VaultMinimal {
+  id?: string;
   entities: Record<string, Entity>;
+  allEntities?: Entity[];
   selectedEntityId: string | null;
   inboundConnections: Record<string, any>;
   defaultVisibility: "visible" | "hidden";
   isGuest: boolean;
+  activeVaultId?: string;
   loadEntityContent?: (id: string) => Promise<void>;
 }
 
