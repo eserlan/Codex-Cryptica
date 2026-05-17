@@ -1,68 +1,63 @@
 # Implementation Plan: Oracle Executor Decoupling
 
-## 1. Technical Strategy
+**Branch**: `refactor/oracle-executor-monolith` | **Date**: 2026-05-17 | **Spec**: `/specs/097-oracle-executor-decoupling/spec.md`
 
-We will adopt a **Command + Event + DI** hybrid architecture.
+## Summary
 
-### Command Dispatcher
+This refactor transforms the 1,135-line `OracleActionExecutor` God Object into a modular, testable, and extensible Command Dispatcher. We will adopt a **Command + Event + DI** hybrid architecture, extracting command logic into specialized handlers, decoupling side effects via the `AppEventBus`, and ensuring all dependencies are provided via constructor injection.
 
-The `OracleActionExecutor` will act as a Registry/Composer. It will map `OracleIntentType` to specific `OracleCommandExecutor` implementations.
+## Technical Context
 
-### Event-Driven Side Effects
+**Language/Version**: TypeScript 5.9.x  
+**Primary Dependencies**: `@codex/events`, `@codex/oracle-engine`, Svelte 5 (Runes)  
+**Storage**: OPFS (via Vault), IndexedDB (via Chat History)  
+**Testing**: Vitest  
+**Target Platform**: Web (Browser + Web Workers)
+**Project Type**: Engine / Library  
+**Performance Goals**: < 50ms command dispatch time (excluding AI latency)  
+**Constraints**: MUST preserve guest-mode restrictions and Fog of War visibility.  
+**Scale/Scope**: Refactoring ~1,100 lines of critical business logic across 10+ slash commands.
 
-Executors will no longer call services like `logActivity` or `uiStore.notify`. Instead, they will emit typed events via the `AppEventBus`.
+## Constitution Check
 
-- **Example**: `ORACLE:ENTITY_CREATED`, `ORACLE:COMMAND_FAILED`.
+- **Svelte 5 Reactivity**: 🟢 Pass. Plan mandates `$state.snapshot` before passing context to async executors.
+- **Dependency Injection**: 🟢 Pass. Plan mandates constructor-based DI for all specialized executors.
+- **Icon Usage**: N/A (Engine only)
+- **Mandatory Testing**: 🟢 Pass. Plan requires 100% logic coverage for all new handlers.
+- **Package Type Safety**: 🟢 Pass. Interfaces defined in `schema` and engine-specific types.
 
-### Dependency Injection
+## Project Structure
 
-All executors will use constructor-based DI with sensible defaults. This allows the Engine to remain independent of the Web layer during testing.
+### Documentation (this feature)
 
-## 2. Infrastructure Changes
-
-### `OracleCommandExecutor` Interface
-
-```typescript
-export interface OracleCommandExecutor {
-  execute(intent: OracleIntent, context: OracleExecutionContext): Promise<void>;
-}
+```text
+specs/097-oracle-executor-decoupling/
+├── plan.md              # This file
+├── spec.md              # High-level vision and user stories
+├── data-model.md        # Interface and event definitions
+└── tasks.md             # Phased implementation tasks
 ```
 
-### Event Registry
+### Source Code (repository root)
 
-Update `packages/oracle-engine/src/events.ts` to include:
+```text
+packages/oracle-engine/src/
+├── executors/                 # Focused command handlers
+│   ├── base-executor.ts       # Shared logic and DI base
+│   ├── chat-executor.ts       # AI Orchestration
+│   ├── create-executor.ts     # /create logic
+│   ├── dice-executor.ts       # /roll logic
+│   └── ...
+├── events.ts                  # Event definitions
+├── types.ts                   # Interface definitions (OracleCommandExecutor)
+└── oracle-executor.ts         # The thin dispatcher (Composer)
+```
 
-- `ORACLE:COMMAND_STARTED`
-- `ORACLE:COMMAND_COMPLETED`
-- `ORACLE:COMMAND_FAILED`
-- `ORACLE:ENTITY_DISCOVERED`
+**Structure Decision**: Adopting a modular "Executors" directory within the `oracle-engine` package to isolate command logic while keeping the public API (`OracleActionExecutor`) stable.
 
-## 3. Phased Extraction
+## Complexity Tracking
 
-### Phase 1: Simple Commands
-
-Extract `/roll`, `/help`, `/clear` into:
-
-- `DiceExecutor`
-- `MetaExecutor`
-
-### Phase 2: Mutation Commands
-
-Extract `/create`, `/connect`, `/merge`, `/plot` into:
-
-- `CreateExecutor`
-- `ConnectExecutor`
-- `MergeExecutor`
-
-### Phase 3: AI & Orchestration
-
-Extract `executeChat` and `executeRegenerate` into:
-
-- `ChatExecutor`
-- `RegenerateExecutor`
-
-## 4. Verification vs. Constitution
-
-- **Svelte 5 Runes**: Use `$state.snapshot` when passing proxy data to executors.
-- **Dependency Injection**: Every executor MUST be instantiated with its dependencies, no global singletons in the engines.
-- **Testing**: Every extracted executor must have a dedicated `.test.ts` file in the engine package.
+| Violation                 | Why Needed                                | Simpler Alternative Rejected Because                                                   |
+| ------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| Command Pattern           | To solve the God Object monolith.         | Keeping it in one file makes maintenance impossible as AI commands grow in complexity. |
+| Event-Driven Side Effects | To eliminate "Callback Bloat" in context. | Direct callbacks couple the engine too tightly to the UI/Web layer.                    |
