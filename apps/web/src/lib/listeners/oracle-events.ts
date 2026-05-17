@@ -1,5 +1,5 @@
 import { appEventBus } from "@codex/events";
-import { uiStore } from "../stores/ui.svelte";
+import { uiStore } from "$lib/stores/ui.svelte";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
 
 /**

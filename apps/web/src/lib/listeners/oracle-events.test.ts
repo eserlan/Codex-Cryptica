@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { appEventBus } from "@codex/events";
-import { initOracleEventListeners } from "./oracle-events";
+import { initOracleEventListeners } from "$lib/listeners/oracle-events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
-import { uiStore } from "../stores/ui.svelte";
+import { uiStore } from "$lib/stores/ui.svelte";
 
-vi.mock("../stores/ui.svelte", () => ({
+vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     notify: vi.fn(),
   },
