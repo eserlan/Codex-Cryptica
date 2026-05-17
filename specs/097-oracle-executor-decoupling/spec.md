@@ -7,37 +7,54 @@
 
 ## User Scenarios & Testing
 
-### User Story 1 - Command Modularization (Priority: P1) 🎯 MVP
+### User Story 1 - Simple Command Modularization (Priority: P1) 🎯 MVP
 
-As a developer, I want to see slash commands handled by specialized classes so that I can modify or add new commands without touching a 1,100-line monolith.
+As a developer, I want to see simple slash commands (like /roll, /help, /clear) handled by specialized classes so that I can verify the Command Pattern with low-risk logic.
 
-**Why this priority**: Crucial for system stability and preventing the "God Object" from growing further.
+**Why this priority**: Crucial for establishing the infrastructure and pattern without risking core AI or data logic.
 
-**Independent Test**: Can be tested by verifying that `/roll` continues to work through the new `DiceExecutor` while the old implementation is removed.
+**Independent Test**: Verify that `/roll` continues to work through the new `DiceExecutor` while the old implementation is removed.
 
 **Acceptance Scenarios**:
 
 1. **Given** a parsed `/roll` intent, **When** the `OracleActionExecutor` receives it, **Then** it delegates execution to an isolated `DiceExecutor`.
-2. **Given** a system command execution, **When** dependencies are needed, **Then** they are provided via constructor injection instead of global lookups.
+2. **Given** a `/help` or `/clear` intent, **When** received, **Then** it is handled by a stateless `MetaExecutor`.
 
 ---
 
-### User Story 2 - Event-Driven Side Effects (Priority: P2)
+### User Story 2 - Mutation Command Decoupling (Priority: P2)
 
-As a system architect, I want execution side effects (like logging and notifications) to be handled via the App Event Bus so that the execution logic is decoupled from UI and storage services.
+As a developer, I want complex mutation commands (/create, /connect, /merge) extracted into handlers that receive dependencies via DI so that I can test vault modifications in isolation.
 
-**Why this priority**: Reduces "Callback Bloat" in the execution context and improves system observability.
+**Why this priority**: Modularizes the highest-risk data operations and simplifies the dispatcher's dependency bag.
 
-**Independent Test**: Verify that `ORACLE:ENTITY_CREATED` is emitted after a successful `/create` command and is picked up by the activity logger.
+**Independent Test**: Use a unit test for `CreateExecutor` with a mocked Vault to verify entity creation without a full browser environment.
 
 **Acceptance Scenarios**:
 
-1. **Given** a successful command execution, **When** the command completes, **Then** an `ORACLE:COMMAND_COMPLETED` event is emitted.
-2. **Given** a failed command execution, **When** an error occurs, **Then** an `ORACLE:COMMAND_FAILED` event is emitted with the error details.
+1. **Given** a `/create` command, **When** executed, **Then** the `CreateExecutor` uses its injected `VaultService` to perform the operation.
+2. **Given** a `/merge` command, **When** executed, **Then** it coordinates between the vault and AI services via injected interfaces.
 
 ---
 
-### User Story 3 - Comprehensive Unit Testing (Priority: P3)
+### User Story 3 - AI Orchestration Extraction (Priority: P3)
+
+As a system architect, I want the core AI chat and regeneration logic extracted into an orchestration handler so that the complex multi-step generation pipeline is manageable.
+
+**Why this priority**: Tackles the largest block of code (600+ lines) and enables advanced AI unit testing.
+
+**Independent Test**: Verify that `ChatExecutor` can handle a full conversation flow, including "thinking" states and "discovery" triggers, using mocked generators.
+
+**Acceptance Scenarios**:
+
+1. **Given** a standard chat query, **When** processed, **Then** the `ChatExecutor` manages the generation, parsing, and eventual response emission.
+2. **Given** a regeneration request, **When** triggered, **Then** the `RegenerateExecutor` handles the draft proposal and reconciliation flow.
+
+---
+
+### User Story 4 - Event-Driven Side Effects (Priority: P4)
+
+As a system architect, I want all side effects (logging, notifications) to be handled via the App Event Bus so that the execution logic is decoupled from UI services.
 
 As a quality assurance engineer, I want every command handler to have its own unit test suite so that regressions can be identified instantly without running the entire Oracle integration.
 

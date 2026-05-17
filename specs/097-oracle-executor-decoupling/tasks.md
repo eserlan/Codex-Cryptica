@@ -5,6 +5,8 @@
 
 ## Phase 1: Setup & Infrastructure (Shared)
 
+**Purpose**: Shared infrastructure and event definitions.
+
 - [x] T001 Define `OracleCommandExecutor` interface in `packages/oracle-engine/src/types.ts`
 - [ ] T002 Register new `ORACLE:*` events in `packages/oracle-engine/src/events.ts`
 - [ ] T003 Create `BaseExecutor` class in `packages/oracle-engine/src/executors/base-executor.ts`
@@ -12,9 +14,9 @@
 
 ---
 
-## Phase 2: User Story 1 - Command Modularization (P1) 🎯 MVP
+## Phase 2: User Story 1 - Simple Command Modularization (P1) 🎯 MVP
 
-**Goal**: Extract core commands into specialized handlers.
+**Goal**: Extract core stateless commands into handlers.
 
 ### Tests for User Story 1
 
@@ -31,43 +33,57 @@
 
 ---
 
-## Phase 3: User Story 2 - Event-Driven Side Effects (P2)
+## Phase 3: User Story 2 - Mutation Command Decoupling (P2)
 
-**Goal**: Decouple business logic from side effects using AppEventBus.
+**Goal**: Extract stateful mutation commands and inject dependencies.
 
 ### Tests for User Story 2
 
-- [ ] T010 [P] [US2] Integration test for event emission in `tests/oracle-events.test.ts`
+- [ ] T010 [P] [US2] Unit test for entity creation logic in `packages/oracle-engine/src/executors/create-executor.test.ts`
+- [ ] T011 [P] [US2] Unit test for connection/merge logic in `packages/oracle-engine/src/executors/connect-executor.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T011 [P] [US2] Implement `CreateExecutor` with event emission in `packages/oracle-engine/src/executors/create-executor.ts`
-- [ ] T012 [P] [US2] Implement `ConnectExecutor` with event emission in `packages/oracle-engine/src/executors/connect-executor.ts`
-- [ ] T013 [P] [US2] Implement `MergeExecutor` with event emission in `packages/oracle-engine/src/executors/merge-executor.ts`
-- [ ] T014 [US2] Refactor `OracleActionExecutor` dispatcher to use event bus for UI notifications
-
-**Checkpoint**: Foundation ready - Side effects are decoupled from execution.
+- [ ] T012 [P] [US2] Implement `CreateExecutor` in `packages/oracle-engine/src/executors/create-executor.ts`
+- [ ] T013 [P] [US2] Implement `ConnectExecutor` in `packages/oracle-engine/src/executors/connect-executor.ts`
+- [ ] T014 [P] [US2] Implement `MergeExecutor` in `packages/oracle-engine/src/executors/merge-executor.ts`
+- [ ] T015 [P] [US2] Implement `PlotExecutor` in `packages/oracle-engine/src/executors/plot-executor.ts`
 
 ---
 
-## Phase 4: User Story 3 - Comprehensive AI Orchestration (P3)
+## Phase 4: User Story 3 - AI Orchestration Extraction (P3)
 
-**Goal**: Extract complex AI logic while maintaining security and performance.
+**Goal**: Extract complex AI multi-step logic.
 
 ### Tests for User Story 3
 
-- [ ] T015 [P] [US3] Unit test for AI orchestration in `packages/oracle-engine/src/executors/chat-executor.test.ts`
+- [ ] T016 [P] [US3] Unit test for chat orchestration in `packages/oracle-engine/src/executors/chat-executor.test.ts`
+- [ ] T017 [P] [US3] Unit test for regeneration logic in `packages/oracle-engine/src/executors/regenerate-executor.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T016 [P] [US3] Implement `RegenerateExecutor` in `packages/oracle-engine/src/executors/regenerate-executor.ts`
-- [ ] T017 [P] [US3] Implement `ChatExecutor` (The core AI orchestrator) in `packages/oracle-engine/src/executors/chat-executor.ts`
-- [ ] T018 [US3] Sub-extract Discovery reactor from Chat logic
+- [ ] T018 [P] [US3] Implement `RegenerateExecutor` in `packages/oracle-engine/src/executors/regenerate-executor.ts`
+- [ ] T019 [P] [US3] Implement `ChatExecutor` in `packages/oracle-engine/src/executors/chat-executor.ts`
+- [ ] T020 [US3] Sub-extract Discovery reactor from Chat logic
 
 ---
 
-## Phase 5: Polish & Cleanup
+## Phase 5: User Story 4 - Event-Driven Side Effects (P4)
 
-- [ ] T019 [P] Finalize `OracleActionExecutor.ts` dispatcher reduction (Target: < 300 LOC)
-- [ ] T020 Code cleanup and documentation updates in `docs/refactoring/`
-- [ ] T021 Run all engine tests and verify zero regressions in guest mode/privacy
+**Goal**: Decouple logic from UI and logging via events.
+
+### Tests for User Story 4
+
+- [ ] T021 [P] [US4] Integration test for event-driven notifications in `tests/oracle-events.test.ts`
+
+### Implementation for User Story 4
+
+- [ ] T022 [P] [US4] Update all executors to emit typed events (`ORACLE:COMMAND_COMPLETED`, etc.)
+- [ ] T023 [US4] Implement global event listeners in the Web layer to replace direct callbacks
+
+---
+
+## Phase 6: Polish & Cleanup
+
+- [ ] T024 [P] Finalize `OracleActionExecutor.ts` dispatcher reduction (Target: < 300 LOC)
+- [ ] T025 Run full integration suite and verify zero regressions in guest mode/privacy
