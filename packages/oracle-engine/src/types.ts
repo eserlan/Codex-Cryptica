@@ -63,6 +63,7 @@ export type OracleIntentType =
   | "wizard"
   | "help"
   | "clear"
+  | "draw"
   | "error";
 
 /**
@@ -157,6 +158,7 @@ export interface OracleExecutionContext {
   vault: any;
   uiStore: any;
   chatHistory: any;
+  generator?: any;
   textGeneration?: any;
   imageGeneration?: any;
   contextRetrieval?: any;
@@ -168,8 +170,10 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  eventBus?: any;
   categories?: Category[];
   automationPolicy?: OracleAutomationPolicy;
+  commandStack?: string[];
   proposeConnectionsForEntity?: (
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },
@@ -196,4 +200,15 @@ export interface OracleWorkerEvent {
   payload?: any;
   vaultId?: string;
   requestId?: string;
+}
+
+/**
+ * Interface for specialized command executors
+ */
+export interface OracleCommandExecutor {
+  execute(
+    intent: OracleIntent,
+    context: OracleExecutionContext,
+    onPartialResponse?: (partial: string) => void,
+  ): Promise<void>;
 }

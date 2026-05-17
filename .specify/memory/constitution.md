@@ -50,8 +50,17 @@ To maintain long-term stability, every merge MUST maintain or improve test cover
 - **Enforcement**: CI enforces a "Floor" based on each component's current baseline. Dropping below the floor requires explicit justification.
 - **New Code**: New packages and major logic extractions MUST meet the **70% Goal** upon introduction.
 
+### XI. Agent Operational Protocol (Karpathy Rules)
+
+To ensure maximum efficiency and minimum disruption, AI agents MUST follow these operational rules:
+
+1.  **Think First**: Before changing code, state the goal, assumptions, and any uncertainty. Do not silently guess when the request is ambiguous.
+2.  **Simple Solutions**: Solve only the requested problem. Do not add extra features, abstractions, or "future-proofing" unless clearly needed (YAGNI).
+3.  **Surgical Changes**: Touch only the files and code required. Do not refactor, reformat, or "clean up" unrelated code.
+4.  **Verify Everything**: Define success criteria upfront. Run relevant tests, builds, and linting. Explicitly state what was and was not verified.
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.0.9 | **Ratified**: 2026-03-19 | **Last Amended**: 2026-03-19
+**Version**: 1.1.0 | **Ratified**: 2026-05-17 | **Last Amended**: 2026-05-17

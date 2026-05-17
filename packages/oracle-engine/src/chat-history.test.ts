@@ -12,7 +12,7 @@ describe("ChatHistoryService", () => {
         class {
           postMessage = vi.fn();
           onmessage = null;
-        },
+        } as any,
       ),
     );
 

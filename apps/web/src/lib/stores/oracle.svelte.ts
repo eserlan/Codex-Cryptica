@@ -522,6 +522,7 @@ export class OracleStore {
         }),
       ),
       draftingEngine: this.draftingEngine,
+      eventBus: appEventBus,
       categories: $state.snapshot(this.categories.list),
     } as OracleExecutionContext;
   }
