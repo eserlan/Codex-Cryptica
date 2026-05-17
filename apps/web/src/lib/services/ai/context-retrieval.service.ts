@@ -1,4 +1,5 @@
 import { searchService as defaultSearchService } from "../search";
+import { isEntityVisible } from "schema";
 import type { ContextRetrievalService } from "schema";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
@@ -8,9 +9,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
   constructor(private searchService = defaultSearchService) {}
 
-  getConsolidatedContext(entity: any): string {
+  getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {
     const parts = [];
-    if (entity.lore?.trim()) parts.push(entity.lore.trim());
+    if (!options?.isGuest && entity.lore?.trim())
+      parts.push(entity.lore.trim());
     if (entity.content?.trim()) parts.push(entity.content.trim());
     return parts.join("\n\n");
   }
@@ -122,7 +124,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         await vault.loadEntityContent?.(styleId);
         const styleEntity = vault.entities[styleId];
         if (styleEntity) {
-          styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
+          styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity, { isGuest: vault.isGuest })}\n\n`;
           activeStyleTitle = styleEntity.title;
           this.styleCache = styleContext;
           this.styleTitleCache = activeStyleTitle || "";
@@ -227,9 +229,20 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       const entity = vault.entities[id];
       if (!entity || internalExclusions.has(entity.title)) return;
 
+      // Enforce Fog of War for guests
+      if (
+        vault.isGuest &&
+        !isEntityVisible(entity, {
+          sharedMode: true,
+          defaultVisibility: vault.defaultVisibility,
+        })
+      ) {
+        return;
+      }
+
       const mainContent = isEnrichment
         ? (entity.content || "").trim()
-        : this.getConsolidatedContext(entity);
+        : this.getConsolidatedContext(entity, { isGuest: vault.isGuest });
       if (!mainContent && !isEnrichment) return;
 
       const isActive = id === activeId;
@@ -325,8 +338,20 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       let allTitles = "";
       let first = true;
       for (let i = 0; i < count; i++) {
-        const title = allEntities[i].title;
+        const e = allEntities[i];
+        const title = e.title;
         if (title && !internalExclusions.has(title)) {
+          // Enforce Fog of War for guests in title list
+          if (
+            vault.isGuest &&
+            !isEntityVisible(e, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            })
+          ) {
+            continue;
+          }
+
           if (!first) {
             allTitles += ", ";
           }
