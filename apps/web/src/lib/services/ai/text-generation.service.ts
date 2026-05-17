@@ -89,14 +89,15 @@ export class DefaultTextGenerationService implements TextGenerationService {
     modelName: string,
     target: any,
     sources: any[],
+    options?: { isGuest?: boolean },
   ): Promise<{ body: string; lore?: string }> {
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
-    const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target)}`;
+    const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target, { isGuest: options?.isGuest })}`;
     const sourceContext = sources
       .map(
         (s, i) =>
-          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(s)}`,
+          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(s, { isGuest: options?.isGuest })}`,
       )
       .join("\n\n");
 
@@ -127,6 +128,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     },
     relatedEntities: RelatedEntityContext[] = [],
     categories: { id: string; label?: string; description?: string }[] = [],
+    options?: { isGuest?: boolean },
   ): Promise<{
     content: string;
     lore: string;
@@ -136,8 +138,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const allowedCategoryIds = new Set(
       categories.map((category) => category.id),
     );
+
+    // Enforce guest data restriction: exclude existing lore if in guest mode
+    const sanitizedEntity = options?.isGuest ? { ...entity, lore: "" } : entity;
+
     const prompt = buildEntityReconciliationPrompt(
-      entity,
+      sanitizedEntity,
       incoming,
       relatedEntities,
       categories,
@@ -188,6 +194,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     subject: any,
     connectedEntities: any[],
     userQuery: string,
+    options?: { isGuest?: boolean },
   ): Promise<string> {
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
@@ -195,7 +202,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const MAX_CONNECTED_ENTITIES = 20;
     const MAX_CONNECTION_CONTEXT_CHARS = 500;
 
-    const subjectContextStr = `--- SUBJECT: ${subject.title} (${subject.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(subject).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
+    const subjectContextStr = `--- SUBJECT: ${subject.title} (${subject.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(subject, { isGuest: options?.isGuest }).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
 
     const limitedConnections = connectedEntities.slice(
       0,
@@ -209,7 +216,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
             .map(({ entity, connectionType, label, direction }) => {
               const dirStr = direction === "outbound" ? "→" : "←";
               const relStr = label || connectionType;
-              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(entity).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
+              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(entity, { isGuest: options?.isGuest }).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
             })
             .join("\n\n")
         : "No connected entities found.";

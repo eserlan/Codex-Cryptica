@@ -6,9 +6,15 @@ export const TIER_MODES = {
 };
 
 export interface VaultMinimal {
+  id?: string;
   entities: Record<string, Entity>;
+  allEntities?: Entity[];
   selectedEntityId: string | null;
   inboundConnections: Record<string, any>;
+  defaultVisibility: "visible" | "hidden";
+  isGuest: boolean;
+  activeVaultId?: string;
+  loadEntityContent?: (id: string) => Promise<void>;
 }
 
 export interface ChatHistoryMessage {
@@ -43,7 +49,10 @@ export interface ContextRetrievalService {
     sourceIds: string[];
     activeStyleTitle?: string;
   }>;
-  getConsolidatedContext(entity: Entity): string;
+  getConsolidatedContext(
+    entity: Entity,
+    options?: { isGuest?: boolean },
+  ): string;
 }
 
 export interface TextGenerationService {
@@ -77,6 +86,7 @@ export interface TextGenerationService {
     modelName: string,
     target: Entity,
     sources: Entity[],
+    options?: { isGuest?: boolean },
   ): Promise<{ body: string; lore?: string }>;
   reconcileEntityUpdate?(
     apiKey: string,
@@ -88,6 +98,7 @@ export interface TextGenerationService {
     },
     relatedEntities?: RelatedEntityContext[],
     categories?: { id: string; label?: string; description?: string }[],
+    options?: { isGuest?: boolean },
   ): Promise<{
     content: string;
     lore: string;
@@ -99,6 +110,7 @@ export interface TextGenerationService {
     subject: Entity,
     connectedEntities: PlotAnalysisEntity[],
     userQuery: string,
+    options?: { isGuest?: boolean },
   ): Promise<string>;
   generateStructuredEntity?(
     apiKey: string,

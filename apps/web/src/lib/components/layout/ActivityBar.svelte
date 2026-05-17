@@ -1,5 +1,6 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import {
     Sparkles,
@@ -57,7 +58,11 @@
       },
     ];
 
-    if (!uiStore.aiDisabled && uiStore.connectionDiscoveryMode !== "off") {
+    if (
+      !vault.isGuest &&
+      !uiStore.aiDisabled &&
+      uiStore.connectionDiscoveryMode !== "off"
+    ) {
       list.push({
         id: "ai-assessment",
         icon: ShieldCheck,

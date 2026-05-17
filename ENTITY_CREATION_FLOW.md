@@ -70,6 +70,7 @@ When the Oracle suggests a new entity (Discovery), it provides a title and a typ
 
 1.  **AI Involvement**: The reconciliation prompt _is_ instructed to refine the category (`categoryId`) based on the full draft.
 2.  **Connected Pipeline**: The refined `categoryId` is now correctly propagated through `OracleStore` and used by `DiscoveryChip`.
+3.  **Guest Bypass**: AI reconciliation is entirely bypassed for guest users (collaborators) to maintain security and simplicity. In guest mode, entities are created using the initial Oracle guess and raw draft data.
 
 ## Conclusion
 
