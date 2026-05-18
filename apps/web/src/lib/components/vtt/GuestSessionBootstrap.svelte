@@ -14,6 +14,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { appEventBus } from "@codex/events";
   import { VAULT_EVENTS } from "@codex/vault-engine";
 
@@ -49,16 +50,20 @@
     }
 
     // Explicitly set a vault ID and emit lifecycle events so services (like search/RAG) initialize correctly
-    vault.activeVaultId = `guest-${shareId}`;
+    vaultRegistry.activeVaultId = `guest-${shareId}`;
 
-    appEventBus.emit(VAULT_EVENTS.VAULT_OPENING, {
-      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+    appEventBus.emit({
+      type: VAULT_EVENTS.VAULT_OPENING,
+      domain: "vault",
       payload: {},
+      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
     });
 
-    appEventBus.emit(VAULT_EVENTS.CACHE_LOADED, {
-      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+    appEventBus.emit({
+      type: VAULT_EVENTS.CACHE_LOADED,
+      domain: "vault",
       payload: { entities: parsedEntities },
+      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
     });
 
     uiStore.sharedMode = true;
@@ -135,17 +140,21 @@
           const newEntity = mergeGuestEntityUpdate(oldEntity, updatedEntity);
           vault.repository.entities[updatedEntity.id] = newEntity;
 
-          appEventBus.emit(VAULT_EVENTS.ENTITY_UPDATED, {
-            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+          appEventBus.emit({
+            type: VAULT_EVENTS.ENTITY_UPDATED,
+            domain: "vault",
             payload: { entity: newEntity, patch: updatedEntity },
+            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
           });
         },
         (deletedId) => {
           delete vault.repository.entities[deletedId];
 
-          appEventBus.emit(VAULT_EVENTS.ENTITY_DELETED, {
-            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+          appEventBus.emit({
+            type: VAULT_EVENTS.ENTITY_DELETED,
+            domain: "vault",
             payload: { entityId: deletedId },
+            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
           });
         },
         (batchUpdates) => {

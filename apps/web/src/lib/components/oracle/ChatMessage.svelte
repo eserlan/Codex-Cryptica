@@ -107,12 +107,17 @@
     const raw = (message.proposals ?? []).filter(isVisibleDiscoveryProposal);
     // Deduplicate to prevent each_key_duplicate crashes
     const seen = new Set<string>();
-    return raw.filter((p) => {
+    const deduped = raw.filter((p) => {
       const key = `${p.entityId ?? "new"}:${p.title}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+    // Guests only see chips for entities that already exist in the vault
+    if (vault.isGuest) {
+      return deduped.filter((p) => p.entityId && vault.entities[p.entityId]);
+    }
+    return deduped;
   });
 
   $effect(() => {
@@ -250,7 +255,7 @@
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
   >
     {#if message.role === "assistant" || message.role === "system"}
-      {#if message.type === "wizard"}
+      {#if message.type === "wizard" && !vault.isGuest}
         {#if message.wizardType === "connection"}
           <ConnectionWizard bind:message />
         {:else if message.wizardType === "merge"}
@@ -351,7 +356,7 @@
           </button>
         </div>
 
-        {#if showActions && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
+        {#if showActions && !vault.isGuest && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
           {#if !isSaved}
             <div
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"

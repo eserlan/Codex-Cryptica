@@ -252,106 +252,104 @@
   </div>
 {/snippet}
 
-{#if !ui.isGuestMode}
-  <div
-    class="absolute bottom-4 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:left-6 z-20 flex flex-col gap-2 items-center md:items-start max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)]"
-  >
-    {#if cy}
-      <div class="relative hidden md:block">
-        <Minimap
-          {cy}
-          absolute={false}
-          width={192}
-          height={128}
-          isExpanded={showMinimap}
-        />
-      </div>
-    {/if}
+<div
+  class="absolute bottom-4 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:left-6 z-20 flex flex-col gap-2 items-center md:items-start max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)]"
+>
+  {#if cy}
+    <div class="relative hidden md:block">
+      <Minimap
+        {cy}
+        absolute={false}
+        width={192}
+        height={128}
+        isExpanded={showMinimap}
+      />
+    </div>
+  {/if}
 
-    {#if !vault.isGuest && activeGuests.length > 0}
-      <div
-        class="pointer-events-auto w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-xs text-theme-text shadow-lg backdrop-blur overflow-hidden"
-        style:height={`${guestPanelHeight}px`}
-        style:max-height="calc(100vh - 6rem)"
-        transition:fade
-      >
-        <div class="flex items-center justify-between gap-3 mb-2">
-          <div
-            class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
-          >
-            <span class="icon-[lucide--users] w-3 h-3"></span>
-            Active Guests
-          </div>
-          <span class="text-theme-muted font-mono">{activeGuests.length}</span>
-        </div>
+  {#if !vault.isGuest && activeGuests.length > 0}
+    <div
+      class="pointer-events-auto w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-xs text-theme-text shadow-lg backdrop-blur overflow-hidden"
+      style:height={`${guestPanelHeight}px`}
+      style:max-height="calc(100vh - 6rem)"
+      transition:fade
+    >
+      <div class="flex items-center justify-between gap-3 mb-2">
         <div
-          class="space-y-1.5 overflow-y-auto pr-1"
-          style:max-height="calc(100% - 1.75rem)"
+          class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
         >
-          {#each activeGuests as guest (guest.peerId)}
-            <div class="flex items-start gap-2">
-              <span
-                class="mt-1 w-2 h-2 rounded-full shrink-0 {guest.status ===
-                'viewing'
-                  ? 'bg-theme-primary'
-                  : 'bg-theme-muted'}"
-              ></span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-theme-text truncate"
-                    >{guest.displayName}</span
-                  >
-                  <span
-                    class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[10px] text-theme-muted"
-                  >
-                    {guest.status === "viewing" ? "viewing" : "connected"}
-                  </span>
-                </div>
-                <div class="truncate text-theme-text/70">
-                  {guest.currentEntityTitle
-                    ? `Viewing ${guest.currentEntityTitle}`
-                    : "Connected"}
-                </div>
+          <span class="icon-[lucide--users] w-3 h-3"></span>
+          Active Guests
+        </div>
+        <span class="text-theme-muted font-mono">{activeGuests.length}</span>
+      </div>
+      <div
+        class="space-y-1.5 overflow-y-auto pr-1"
+        style:max-height="calc(100% - 1.75rem)"
+      >
+        {#each activeGuests as guest (guest.peerId)}
+          <div class="flex items-start gap-2">
+            <span
+              class="mt-1 w-2 h-2 rounded-full shrink-0 {guest.status ===
+              'viewing'
+                ? 'bg-theme-primary'
+                : 'bg-theme-muted'}"
+            ></span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-theme-text truncate"
+                  >{guest.displayName}</span
+                >
+                <span
+                  class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[10px] text-theme-muted"
+                >
+                  {guest.status === "viewing" ? "viewing" : "connected"}
+                </span>
+              </div>
+              <div class="truncate text-theme-text/70">
+                {guest.currentEntityTitle
+                  ? `Viewing ${guest.currentEntityTitle}`
+                  : "Connected"}
               </div>
             </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    <div
-      class="flex flex-col md:flex-row gap-1 items-center justify-center md:justify-start p-1.5 md:p-0 rounded-full md:rounded-none
-             {ui.isMobile
-        ? 'bg-transparent border-none backdrop-blur-none'
-        : 'bg-theme-surface/60 md:bg-transparent border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none'}"
-    >
-      {#if !ui.isMobile}
-        {@render toolbarItems()}
-      {:else}
-        {#if isMobileMenuOpen}
-          <div
-            id="mobile-graph-controls"
-            class="flex gap-1 items-center flex-wrap justify-center bg-theme-surface/95 p-2 rounded-xl border border-theme-border shadow-xl backdrop-blur mb-2"
-            transition:fade
-          >
-            {@render toolbarItems()}
           </div>
-        {/if}
-        <button
-          onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
-          class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
-          class:rotate-45={isMobileMenuOpen}
-          aria-label="Graph Controls"
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="mobile-graph-controls"
-        >
-          <span
-            class="{isMobileMenuOpen
-              ? 'icon-[lucide--x]'
-              : 'icon-[lucide--settings-2]'} w-5 h-5"
-          ></span>
-        </button>
-      {/if}
+        {/each}
+      </div>
     </div>
+  {/if}
+
+  <div
+    class="flex flex-col md:flex-row gap-1 items-center justify-center md:justify-start p-1.5 md:p-0 rounded-full md:rounded-none
+             {ui.isMobile
+      ? 'bg-transparent border-none backdrop-blur-none'
+      : 'bg-theme-surface/60 md:bg-transparent border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none'}"
+  >
+    {#if !ui.isMobile}
+      {@render toolbarItems()}
+    {:else}
+      {#if isMobileMenuOpen}
+        <div
+          id="mobile-graph-controls"
+          class="flex gap-1 items-center flex-wrap justify-center bg-theme-surface/95 p-2 rounded-xl border border-theme-border shadow-xl backdrop-blur mb-2"
+          transition:fade
+        >
+          {@render toolbarItems()}
+        </div>
+      {/if}
+      <button
+        onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
+        class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
+        class:rotate-45={isMobileMenuOpen}
+        aria-label="Graph Controls"
+        aria-expanded={isMobileMenuOpen}
+        aria-controls="mobile-graph-controls"
+      >
+        <span
+          class="{isMobileMenuOpen
+            ? 'icon-[lucide--x]'
+            : 'icon-[lucide--settings-2]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
   </div>
-{/if}
+</div>

@@ -365,6 +365,7 @@
               node.unselect();
             },
             onEdgeTap: (data) => {
+              if (vault.isGuest) return;
               editingEdge = {
                 source: data.source,
                 target: data.target,
