@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-17
+Auto-generated from all feature plans. Last updated: 2026-05-18
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, Vitest, existing VTT managers under `apps/web/src/lib/stores/vtt/`, `VTTSessionService`, P2P host/guest services (099-map-session-decomposition)
+- Browser `sessionStorage`/`localStorage` for VTT drafts/popouts, OPFS-backed encounter snapshot persistence via `VTTSessionService` (099-map-session-decomposition)
 
 - TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events` (098-p2p-host-service-decoupling)
 - OPFS (Vault Files), IndexedDB (Registry) (098-p2p-host-service-decoupling)
@@ -176,9 +179,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 099-map-session-decomposition: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, Vitest, existing VTT managers under `apps/web/src/lib/stores/vtt/`, `VTTSessionService`, P2P host/guest services
+
 - 098-p2p-host-service-decoupling: Added TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events`
 - 098-p2p-host-service-decoupling: OPFS (Vault Files), IndexedDB (Registry)
-
-- 096-gdrive-cloud-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb`
 
 <!-- MANUAL ADDITIONS START -->
