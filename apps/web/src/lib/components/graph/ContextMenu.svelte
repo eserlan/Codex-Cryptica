@@ -618,7 +618,7 @@
       onmouseleave={hideImagePicker}
       onkeydown={handleMenuKeydown}
     >
-      {#if !ui.aiDisabled}
+      {#if !ui.aiDisabled && !vault.isGuest}
         <button
           role="menuitem"
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"

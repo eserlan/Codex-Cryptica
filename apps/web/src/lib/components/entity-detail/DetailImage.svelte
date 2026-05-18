@@ -184,7 +184,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.aiDisabled}
+        {#if oracle.tier === "advanced" && !uiStore.aiDisabled && !vault.isGuest}
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
