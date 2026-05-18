@@ -177,27 +177,29 @@
       ? ''
       : 'hidden md:block'} flex-shrink-0"
   ></div>
-  <button
-    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
-      ? 'flex'
-      : 'hidden md:flex'} transition {ui.sharedMode
-      ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
-      : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-    onclick={() => {
-      ui.sharedMode = !ui.sharedMode;
-      closeMenuIfMobile();
-    }}
-    title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
-    data-testid="shared-mode-toggle"
-    aria-pressed={ui.sharedMode}
-    aria-label="Toggle player view mode"
-  >
-    <span
-      class={ui.sharedMode
-        ? "icon-[lucide--eye] w-4 h-4"
-        : "icon-[lucide--eye-off] w-4 h-4"}
-    ></span></button
-  >
+  {#if !ui.isGuestMode}
+    <button
+      class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+        ? 'flex'
+        : 'hidden md:flex'} transition {ui.sharedMode
+        ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
+        : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+      onclick={() => {
+        ui.sharedMode = !ui.sharedMode;
+        closeMenuIfMobile();
+      }}
+      title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
+      data-testid="shared-mode-toggle"
+      aria-pressed={ui.sharedMode}
+      aria-label="Toggle player view mode"
+    >
+      <span
+        class={ui.sharedMode
+          ? "icon-[lucide--eye] w-4 h-4"
+          : "icon-[lucide--eye-off] w-4 h-4"}
+      ></span></button
+    >
+  {/if}
   <button
     class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
       ? 'flex'
