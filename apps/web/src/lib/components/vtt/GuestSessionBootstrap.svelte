@@ -56,14 +56,20 @@
       type: VAULT_EVENTS.VAULT_OPENING,
       domain: "vault",
       payload: {},
-      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+      metadata: {
+        vaultId: vault.activeVaultId ?? undefined,
+        timestamp: Date.now(),
+      },
     });
 
     appEventBus.emit({
       type: VAULT_EVENTS.CACHE_LOADED,
       domain: "vault",
       payload: { entities: parsedEntities },
-      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+      metadata: {
+        vaultId: vault.activeVaultId ?? undefined,
+        timestamp: Date.now(),
+      },
     });
 
     uiStore.sharedMode = true;
@@ -143,8 +149,15 @@
           appEventBus.emit({
             type: VAULT_EVENTS.ENTITY_UPDATED,
             domain: "vault",
-            payload: { entity: newEntity, patch: updatedEntity },
-            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+            payload: {
+              id: newEntity.id,
+              entity: newEntity,
+              patch: updatedEntity,
+            },
+            metadata: {
+              vaultId: vault.activeVaultId ?? undefined,
+              timestamp: Date.now(),
+            },
           });
         },
         (deletedId) => {
@@ -154,7 +167,10 @@
             type: VAULT_EVENTS.ENTITY_DELETED,
             domain: "vault",
             payload: { entityId: deletedId },
-            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+            metadata: {
+              vaultId: vault.activeVaultId ?? undefined,
+              timestamp: Date.now(),
+            },
           });
         },
         (batchUpdates) => {
