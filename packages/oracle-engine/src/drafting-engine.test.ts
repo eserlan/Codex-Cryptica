@@ -243,11 +243,24 @@ describe("DraftingEngine", () => {
   });
 
   it("should strip trailing colons from proposal titles", async () => {
-    const text = "**Valerius:** guards the sealed moon gate.";
+    const text =
+      "**Valerius:** guards the sealed moon gate.\n\nAnother paragraph should stay separate.";
     const context = { existingEntities: [], history: [] };
 
     const proposals = await engine.propose(text, context);
 
     expect(proposals[0].title).toBe("Valerius");
+    expect(proposals[0].draft.lore).toBe(
+      "**Valerius:** guards the sealed moon gate.",
+    );
+  });
+
+  it("should keep non-Latin proposal titles", async () => {
+    const text = "**東京** is the hidden city beneath the moon.";
+    const context = { existingEntities: [], history: [] };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals.map((proposal) => proposal.title)).toEqual(["東京"]);
   });
 });

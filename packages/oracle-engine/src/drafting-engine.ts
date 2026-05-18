@@ -23,7 +23,8 @@ export class DraftingEngine {
     let match;
 
     while ((match = markerRegex.exec(text)) !== null) {
-      const name = this.normalizeProposalTitle(match[1]);
+      const rawName = match[1].trim();
+      const name = this.normalizeProposalTitle(rawName);
       const rawType = match[2]?.toLowerCase().trim();
 
       const existing = this.findExistingEntity(name, context.existingEntities);
@@ -32,7 +33,7 @@ export class DraftingEngine {
       }
 
       // Extract excerpt/lore around the mention
-      const lore = this.extractLore(text, match.index, name);
+      const lore = this.extractLore(text, match.index, rawName);
       if (
         this.shouldSuppressCandidate(name, { lore, isExisting: !!existing })
       ) {
@@ -152,10 +153,17 @@ export class DraftingEngine {
   }
 
   private isNoisyCandidate(name: string): boolean {
-    const normalized = this.normalizeLookupValue(name);
+    const normalized = name
+      .trim()
+      .toLowerCase()
+      .replace(/[:\s]+$/g, "")
+      .trim();
     if (/^\d+\.?$/.test(normalized)) return true;
 
-    const words = normalized.split(/\s+/).filter(Boolean);
+    const words = normalized
+      .replace(/[^\p{L}\p{N}'-]+/gu, " ")
+      .split(/\s+/)
+      .filter(Boolean);
     if (words.length === 0) return true;
 
     const leadingNoise = new Set([
