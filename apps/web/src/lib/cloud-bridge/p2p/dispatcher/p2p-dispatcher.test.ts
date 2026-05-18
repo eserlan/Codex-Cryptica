@@ -39,4 +39,41 @@ describe("P2PDispatcher", () => {
     );
     expect(handled).toBe(false);
   });
+
+  it("should reject null payloads before asking handlers to inspect them", async () => {
+    const dispatcher = new P2PDispatcher();
+    const handler: P2PMessageHandler = {
+      canHandle: vi.fn(() => true),
+      handle: vi.fn(),
+    };
+
+    dispatcher.register(handler);
+
+    const handled = await dispatcher.dispatch(null, {} as any, {} as any);
+
+    expect(handled).toBe(false);
+    expect(handler.canHandle).not.toHaveBeenCalled();
+    expect(handler.handle).not.toHaveBeenCalled();
+  });
+
+  it("should return false when handler routing throws", async () => {
+    const dispatcher = new P2PDispatcher();
+    const handler: P2PMessageHandler = {
+      canHandle: vi.fn(() => {
+        throw new Error("bad routing");
+      }),
+      handle: vi.fn(),
+    };
+
+    dispatcher.register(handler);
+
+    const handled = await dispatcher.dispatch(
+      { type: "PING" } as any,
+      {} as any,
+      {} as any,
+    );
+
+    expect(handled).toBe(false);
+    expect(handler.handle).not.toHaveBeenCalled();
+  });
 });

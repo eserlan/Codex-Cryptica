@@ -356,6 +356,75 @@ describe("P2P Services", () => {
       vi.useRealTimers();
     });
 
+    it("should convert host ping and measurement broadcasts to guest map messages", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const mockConn = new MockConnection("guest-1");
+      (transport as any)._connections.push(mockConn as any);
+
+      mockMapSession.mapId = "map-1";
+
+      hostService.broadcastVttMessage({
+        type: "PING",
+        x: 10,
+        y: 20,
+        color: "#f00",
+        timestamp: 123,
+      } as any);
+
+      hostService.broadcastVttMessage({
+        type: "MEASUREMENT",
+        startX: 1,
+        startY: 2,
+        endX: 3,
+        endY: 4,
+        active: true,
+      } as any);
+
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "MAP_PING", mapId: "map-1" }),
+      );
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "MAP_MEASUREMENT", mapId: "map-1" }),
+      );
+    });
+
+    it("should sanitize entity broadcasts before sending data to guests", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const mockConn = new MockConnection("guest-1");
+      (transport as any)._connections.push(mockConn as any);
+
+      await vault.onEntityUpdate?.({
+        id: "entity-1",
+        title: "Entity 1",
+        lore: "host secret",
+        _fsHandle: { private: true },
+      } as any);
+
+      vault.onBatchUpdate?.({
+        "entity-1": {
+          id: "entity-1",
+          title: "Entity 1",
+          lore: "batch secret",
+          _fsHandle: { private: true },
+        },
+      } as any);
+
+      await vi.waitFor(() => {
+        expect(mockConn.send).toHaveBeenCalledWith({
+          type: "ENTITY_UPDATE",
+          payload: { id: "entity-1", title: "Entity 1" },
+        });
+        expect(mockConn.send).toHaveBeenCalledWith({
+          type: "ENTITY_BATCH_UPDATE",
+          payload: {
+            "entity-1": { id: "entity-1", title: "Entity 1" },
+          },
+        });
+      });
+    });
+
     it("should debounce token movement broadcasts into a session snapshot", async () => {
       vi.useFakeTimers();
       await startHostingHelper(hostService);
@@ -496,6 +565,30 @@ describe("P2P Services", () => {
       expect(get(guestRoster)["guest-1"].displayName).toBe("Ava");
     });
 
+    it("should clear guest roster and ownership when a connection closes", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
+
+      expect(get(guestRoster)["guest-1"]).toBeDefined();
+
+      mockConn.emit("close");
+
+      expect(get(guestRoster)["guest-1"]).toBeUndefined();
+      expect(mockMapSession.clearGuestOwnership).toHaveBeenCalledWith(
+        "guest-1",
+      );
+    });
+
     it("should stop hosting and clear connections", async () => {
       await startHostingHelper(hostService);
       const transport = (hostService as any).transport;
@@ -506,6 +599,7 @@ describe("P2P Services", () => {
 
       expect(hostService.connections.length).toBe(0);
       expect((hostService as any)._isHosting).toBe(false);
+      expect(mockMapSession.myPeerId).toBeNull();
     });
   });
 });

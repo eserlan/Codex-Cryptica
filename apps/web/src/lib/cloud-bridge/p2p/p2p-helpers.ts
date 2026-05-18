@@ -1,7 +1,6 @@
 import type { Entity, Map } from "schema";
 import type { SerializedGraph } from "../types";
 import type { GuestPresenceStatus, GuestSession } from "../../stores/guest";
-import { $state } from "svelte";
 
 type GuestRoster = Record<string, GuestSession>;
 
@@ -113,7 +112,7 @@ export async function prepareMapPayload(
     image?: { mime: string; data: ArrayBuffer };
     fog?: { mime: string; data: ArrayBuffer };
   } = {
-    map: $state.snapshot(map),
+    map: snapshotForTransport(map),
   };
 
   if (map.fogOfWar) {
@@ -161,6 +160,14 @@ export async function prepareMapPayload(
   }
 
   return payload;
+}
+
+function snapshotForTransport<T>(value: T): T {
+  try {
+    return structuredClone(value);
+  } catch {
+    return { ...(value as Record<string, unknown>) } as T;
+  }
 }
 
 export async function prepareFogPayload(

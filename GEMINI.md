@@ -177,7 +177,7 @@ TypeScript: Follow standard conventions
 ## Recent Changes
 
 - 098-p2p-host-service-decoupling: Added TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events`
-- 098-p2p-host-service-decoupling: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 098-p2p-host-service-decoupling: OPFS (Vault Files), IndexedDB (Registry)
 
 - 096-gdrive-cloud-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb`
 

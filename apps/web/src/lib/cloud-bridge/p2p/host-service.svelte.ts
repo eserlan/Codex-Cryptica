@@ -3,7 +3,6 @@ import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
 import { guestRoster as defaultGuestRoster } from "../../stores/guest";
 import { mapStore as defaultMapStore } from "../../stores/map.svelte";
 import { uiStore as defaultUIStore } from "../../stores/ui.svelte";
-import type { Entity } from "schema";
 import { mapSession } from "../../stores/map-session.svelte";
 import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
 import type {
@@ -80,6 +79,12 @@ export class P2PHostService {
     this.transport.on("close", (peerId) => {
       if (peerId) {
         this.connections = this.connections.filter((c) => c.peer !== peerId);
+        // Restore cleanup on disconnect
+        mapSession.clearGuestOwnership(peerId);
+        this.guestRoster.update((current: any) => {
+          const { [peerId]: _, ...rest } = current;
+          return rest;
+        });
       }
     });
   }
@@ -174,9 +179,21 @@ export class P2PHostService {
     if (message.type === "PING") {
       this.transport.broadcast(
         {
+          ...message,
           type: "MAP_PING",
           mapId: mapSession.mapId || this.mapStore.activeMapId || "",
+        },
+        excludePeer,
+      );
+      return;
+    }
+
+    if (message.type === "MEASUREMENT") {
+      this.transport.broadcast(
+        {
           ...message,
+          type: "MAP_MEASUREMENT",
+          mapId: mapSession.mapId || "",
         },
         excludePeer,
       );
@@ -193,16 +210,28 @@ export class P2PHostService {
     this.transport.broadcast(payload);
   }
 
-  private broadcastEntityUpdate(entity: any) {
-    this.transport.broadcast({ type: "ENTITY_UPDATE", payload: entity });
+  private async broadcastEntityUpdate(entity: any) {
+    const { sanitizeEntityForGuestTransport } = await import("./p2p-helpers");
+    this.transport.broadcast({
+      type: "ENTITY_UPDATE",
+      payload: sanitizeEntityForGuestTransport(entity),
+    });
   }
 
   private broadcastEntityDelete(id: string) {
     this.transport.broadcast({ type: "ENTITY_DELETE", payload: id });
   }
 
-  private broadcastBatchUpdate(updates: Record<string, Partial<Entity>>) {
-    this.transport.broadcast({ type: "ENTITY_BATCH_UPDATE", payload: updates });
+  private async broadcastBatchUpdate(updates: Record<string, any>) {
+    const { sanitizeEntityForGuestTransport } = await import("./p2p-helpers");
+    const sanitized: Record<string, any> = {};
+    for (const [id, entity] of Object.entries(updates)) {
+      sanitized[id] = sanitizeEntityForGuestTransport(entity);
+    }
+    this.transport.broadcast({
+      type: "ENTITY_BATCH_UPDATE",
+      payload: sanitized,
+    });
   }
 
   private broadcastThemeUpdate(themeId: string) {
@@ -210,13 +239,17 @@ export class P2PHostService {
   }
 
   stopHosting() {
-    clearInterval(this.heartbeatInterval);
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
     this.vault.onEntityUpdate = undefined;
     this.vault.onEntityDelete = undefined;
     this.vault.onBatchUpdate = undefined;
     this.themeStore.onThemeUpdate = undefined;
     this.guestRoster.set({});
     mapSession.setBroadcaster(null);
+    mapSession.myPeerId = null;
     this.transport.stop();
     this._isHosting = false;
     this.connections = [];

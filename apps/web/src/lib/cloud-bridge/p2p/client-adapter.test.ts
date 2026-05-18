@@ -26,12 +26,12 @@ describe("P2PClientAdapter", () => {
     // Initialize adapter and trigger connection
     const initPromise = adapter.init();
     const peerOpenHandler = mockPeer.on.mock.calls.find(
-      (c) => c[0] === "open",
+      (c: any[]) => c[0] === "open",
     )[1];
     peerOpenHandler();
 
     const connOpenHandler = mockConn.on.mock.calls.find(
-      (c) => c[0] === "open",
+      (c: any[]) => c[0] === "open",
     )[1];
     connOpenHandler();
 
@@ -45,7 +45,9 @@ describe("P2PClientAdapter", () => {
     const requestId = sentMsg.requestId;
 
     // Simulate receiving 3 chunks
-    const dataHandler = mockConn.on.mock.calls.find((c) => c[0] === "data")[1];
+    const dataHandler = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
 
     const chunk1 = new ArrayBuffer(10);
     const chunk2 = new ArrayBuffer(10);

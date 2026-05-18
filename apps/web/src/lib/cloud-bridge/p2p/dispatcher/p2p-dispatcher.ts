@@ -1,4 +1,4 @@
-import type { P2PMessage } from "../p2p-protocol";
+import { isValidP2PMessage, type P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
 import type {
   P2PMessageHandler,
@@ -23,27 +23,34 @@ export class P2PDispatcher {
    * Routes an incoming message to the first handler that can process it.
    */
   async dispatch(
-    message: P2PMessage,
+    message: unknown,
     connection: P2PConnection,
     context: P2PHandlerContext,
   ): Promise<boolean> {
+    if (!isValidP2PMessage(message)) {
+      console.warn(`[P2P Dispatcher] Invalid message received:`, message);
+      return false;
+    }
+
+    const p2pMessage = message as P2PMessage;
+
     for (const handler of this.handlers) {
-      if (handler.canHandle(message)) {
-        try {
-          await handler.handle(message, connection, context);
+      try {
+        if (handler.canHandle(p2pMessage)) {
+          await handler.handle(p2pMessage, connection, context);
           return true;
-        } catch (err) {
-          console.error(
-            `[P2P Dispatcher] Error in handler ${handler.constructor.name}:`,
-            err,
-          );
-          return false;
         }
+      } catch (err) {
+        console.error(
+          `[P2P Dispatcher] Error in handler ${handler.constructor.name}:`,
+          err,
+        );
+        return false;
       }
     }
 
     console.warn(
-      `[P2P Dispatcher] No handler found for message type: ${message.type}`,
+      `[P2P Dispatcher] No handler found for message type: ${p2pMessage.type}`,
     );
     return false;
   }

@@ -2,8 +2,8 @@ import type {
   P2PTransport,
   TransportEventType,
   P2PConnection,
-  TransportErrorPayload,
 } from "./transport-interface";
+import type { TransportErrorPayload } from "./transport-events";
 import { createPeer, type PeerFactory } from "../peer-factory";
 
 const MAX_GUESTS = 10;

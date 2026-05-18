@@ -14,14 +14,7 @@ import { encodeSessionSnapshot } from "../p2p-protocol";
 
 export class VaultHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
-    return [
-      "GUEST_JOIN",
-      "GUEST_LEAVE",
-      "GUEST_STATUS",
-      "ENTITY_UPDATE",
-      "ENTITY_BATCH_UPDATE",
-      "ENTITY_DELETE",
-    ].includes(message.type);
+    return ["GUEST_JOIN", "GUEST_LEAVE", "GUEST_STATUS"].includes(message.type);
   }
 
   async handle(
@@ -39,15 +32,6 @@ export class VaultHandler extends BaseHandler {
       case "GUEST_STATUS":
         await this.handleGuestStatus(connection.peer, message.payload, context);
         break;
-      case "ENTITY_UPDATE":
-        await context.vault.updateEntity(message.payload.id, message.payload);
-        break;
-      case "ENTITY_BATCH_UPDATE":
-        await context.vault.batchUpdateEntities(message.payload);
-        break;
-      case "ENTITY_DELETE":
-        await context.vault.deleteEntity(message.payload);
-        break;
     }
   }
 
@@ -59,8 +43,9 @@ export class VaultHandler extends BaseHandler {
     const peerId = conn.peer;
     const { guestRoster, mapSession } = context;
     const displayName = normalizeGuestName(payload?.displayName, peerId);
+    const currentRoster = get(guestRoster) as Record<string, any>;
 
-    const hasDuplicateName = Object.values(get(guestRoster)).some(
+    const hasDuplicateName = Object.values(currentRoster).some(
       (guest: any) =>
         guest.peerId !== peerId &&
         guest.displayName.localeCompare(displayName, undefined, {
@@ -89,7 +74,7 @@ export class VaultHandler extends BaseHandler {
     mapSession.rebindGuestOwnership(peerId, displayName);
     this.sendGuestRosterSnapshot(conn, context);
 
-    const guest = get(guestRoster)[peerId];
+    const guest = (get(guestRoster) as Record<string, any>)[peerId];
     if (guest) {
       await this.sendInitialState(conn, context);
       this.broadcast(context, {
@@ -109,7 +94,9 @@ export class VaultHandler extends BaseHandler {
     conn: P2PConnection,
     context: P2PHandlerContext,
   ) {
-    const roster = Object.values(get(context.guestRoster));
+    const roster = Object.values(
+      get(context.guestRoster) as Record<string, any>,
+    );
     for (const guest of roster as any[]) {
       conn.send({
         type: "GUEST_STATUS",
@@ -130,7 +117,9 @@ export class VaultHandler extends BaseHandler {
     context: P2PHandlerContext,
   ) {
     const peerId = conn.peer;
-    const departingGuest = get(context.guestRoster)[peerId] as any;
+    const departingGuest = (get(context.guestRoster) as Record<string, any>)[
+      peerId
+    ];
 
     if (departingGuest) {
       context.mapSession.clearGuestOwnership(peerId);
@@ -157,7 +146,9 @@ export class VaultHandler extends BaseHandler {
     payload: any,
     context: P2PHandlerContext,
   ) {
-    const existingGuest = get(context.guestRoster)[peerId] as any;
+    const existingGuest = (get(context.guestRoster) as Record<string, any>)[
+      peerId
+    ];
     if (!existingGuest) return;
 
     const currentEntityId = payload?.currentEntityId || null;
@@ -182,7 +173,7 @@ export class VaultHandler extends BaseHandler {
     );
 
     context.mapSession.rebindGuestOwnership(peerId, displayName);
-    const guest = get(context.guestRoster)[peerId] as any;
+    const guest = (get(context.guestRoster) as Record<string, any>)[peerId];
     if (guest) {
       this.broadcast(context, {
         type: "GUEST_STATUS",

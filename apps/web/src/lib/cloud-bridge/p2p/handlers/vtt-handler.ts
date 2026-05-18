@@ -24,22 +24,20 @@ export class VTTHandler extends BaseHandler {
         return;
 
       const entity = message.entityId
-        ? context.vault.entities[message.entityId]
+        ? (context.vault.entities[message.entityId] as
+            | { image?: string }
+            | undefined)
         : null;
-      const guest = (await import("svelte/store")).get(context.guestRoster)[
-        connection.peer
-      ];
+      const roster = (await import("svelte/store")).get(
+        context.guestRoster,
+      ) as Record<string, { displayName?: string } | undefined>;
+      const guest = roster[connection.peer];
 
       mapSession.addToken({
         name: message.name,
-        type: message.tokenType || "character",
         entityId: message.entityId,
         x: message.x,
         y: message.y,
-        status: "active",
-        hp: entity?.stats?.hp,
-        maxHp: entity?.stats?.maxHp,
-        ac: entity?.stats?.ac,
         color: message.color,
         imageUrl: entity?.image ? entity.image : null,
         ownerPeerId: connection.peer,
@@ -73,7 +71,10 @@ export class VTTHandler extends BaseHandler {
       }
     } else if (message.type === "TOKEN_SELECT") {
       if (typeof message.tokenId !== "string") return;
-      mapSession.remoteSelection[connection.peer] = message.tokenId;
+      const remoteSelection = (mapSession as any).remoteSelection;
+      if (remoteSelection && typeof remoteSelection === "object") {
+        remoteSelection[connection.peer] = message.tokenId;
+      }
     } else if (message.type === "TURN_ADVANCE") {
       if (mapSession.canAdvanceTurn(connection.peer, false)) {
         mapSession.advanceTurn();

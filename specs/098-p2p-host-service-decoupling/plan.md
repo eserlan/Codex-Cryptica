@@ -49,20 +49,19 @@ apps/web/src/lib/cloud-bridge/p2p/
 ├── dispatcher/
 │   └── p2p-dispatcher.ts
 ├── handlers/
-├── handlers/
 │   ├── base-handler.ts         # Abstract base for action logic and DI
 │   ├── vtt-handler.ts
 │   ├── vault-handler.ts
 │   └── file-handler.ts
 ├── p2p-protocol.ts
 └── host-service.svelte.ts
+```
 
 **Structure Decision**: Adopting a layered directory structure within the P2P cloud-bridge to clearly separate concerns. The `BaseHandler` will serve as the architectural equivalent of the Oracle's `BaseExecutor`, providing shared utilities and enforced DI patterns.
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-| --------- | ---------- | ------------------------------------ |
+| Violation               | Why Needed                        | Simpler Alternative Rejected Because                                        |
+| ----------------------- | --------------------------------- | --------------------------------------------------------------------------- |
 | Command/Handler Pattern | To resolve the 900-line monolith. | Keeps the host service maintainable as more multiplayer features are added. |
-| Transport Abstraction | To decouple PeerJS. | PeerJS event-driven API is difficult to test directly in logic. |
-```
+| Transport Abstraction   | To decouple PeerJS.               | PeerJS event-driven API is difficult to test directly in logic.             |

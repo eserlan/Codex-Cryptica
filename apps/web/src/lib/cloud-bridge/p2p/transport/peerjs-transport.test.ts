@@ -25,7 +25,7 @@ describe("PeerJSTransport", () => {
 
     // Simulate peer opening
     const openCallback = mockPeer.on.mock.calls.find(
-      (call) => call[0] === "open",
+      (call: any[]) => call[0] === "open",
     )[1];
     openCallback("host-id");
 
@@ -37,7 +37,7 @@ describe("PeerJSTransport", () => {
   it("should handle incoming connections", async () => {
     transport.start("host-id");
     const connCallback = mockPeer.on.mock.calls.find(
-      (call) => call[0] === "connection",
+      (call: any[]) => call[0] === "connection",
     )[1];
 
     const onConnection = vi.fn();
@@ -50,7 +50,7 @@ describe("PeerJSTransport", () => {
 
     // Simulate open
     const connOpenCallback = mockConn.on.mock.calls.find(
-      (call) => call[0] === "open",
+      (call: any[]) => call[0] === "open",
     )[1];
     connOpenCallback();
 
@@ -62,14 +62,14 @@ describe("PeerJSTransport", () => {
   it("should enforce 10 guest limit", async () => {
     transport.start("host-id");
     const connCallback = mockPeer.on.mock.calls.find(
-      (call) => call[0] === "connection",
+      (call: any[]) => call[0] === "connection",
     )[1];
 
     // Mock 10 existing connections
     for (let i = 0; i < 10; i++) {
       const c = { peer: `g-${i}`, on: vi.fn() };
       connCallback(c);
-      c.on.mock.calls.find((call) => call[0] === "open")[1]();
+      c.on.mock.calls.find((call: any[]) => call[0] === "open")?.[1]();
     }
     expect(transport.connections).toHaveLength(10);
 
@@ -82,8 +82,10 @@ describe("PeerJSTransport", () => {
     // Should register open to send rejection
     expect(c11.on).toHaveBeenCalledWith("open", expect.any(Function));
     const c11OpenCallback = c11.on.mock.calls.find(
-      (call) => call[0] === "open",
-    )[1];
+      (call: any[]) => call[0] === "open",
+    )?.[1];
+    expect(c11OpenCallback).toBeDefined();
+    if (!c11OpenCallback) throw new Error("Missing open callback");
     c11OpenCallback();
 
     expect(c11.send).toHaveBeenCalledWith(
