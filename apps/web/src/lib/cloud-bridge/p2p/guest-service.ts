@@ -500,6 +500,9 @@ export class P2PGuestService {
     const requestId = crypto.randomUUID();
 
     return new Promise((resolve, reject) => {
+      let state: { chunks: ArrayBuffer[]; total: number; mime: string } | null =
+        null;
+
       const cleanup = () => {
         connection.off("data", handler);
         connection.off("close", cleanup);
@@ -513,12 +516,49 @@ export class P2PGuestService {
 
       const handler = (data: any) => {
         if (data.type === "FILE_RESPONSE" && data.requestId === requestId) {
-          clearTimeout(timeoutHandle);
-          cleanup();
-          if (data.found) {
-            resolve(new Blob([data.data], { type: data.mime }));
-          } else {
+          if (!data.found) {
+            clearTimeout(timeoutHandle);
+            cleanup();
             reject(new Error("File not found on host"));
+            return;
+          }
+
+          const totalChunks = data.totalChunks ?? 1;
+          const chunkIndex = data.chunkIndex ?? 0;
+
+          if (totalChunks === 1) {
+            clearTimeout(timeoutHandle);
+            cleanup();
+            resolve(
+              new Blob([data.data], {
+                type: data.mime || "application/octet-stream",
+              }),
+            );
+            return;
+          }
+
+          // Handle chunks
+          if (!state) {
+            state = {
+              chunks: new Array(totalChunks),
+              total: 0,
+              mime: data.mime,
+            };
+          }
+
+          if (!state.chunks[chunkIndex]) {
+            state.chunks[chunkIndex] = data.data;
+            state.total++;
+          }
+
+          if (state.total === totalChunks) {
+            clearTimeout(timeoutHandle);
+            cleanup();
+            resolve(
+              new Blob(state.chunks, {
+                type: state.mime || "application/octet-stream",
+              }),
+            );
           }
         }
       };
