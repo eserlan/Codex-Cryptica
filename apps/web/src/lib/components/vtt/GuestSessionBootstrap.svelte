@@ -14,6 +14,8 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { appEventBus } from "@codex/events";
+  import { VAULT_EVENTS } from "@codex/vault-engine";
 
   const shareId = $derived(
     building ? null : page.url.searchParams.get("shareId"),
@@ -26,15 +28,16 @@
   let isConnectedToHost = $state(false);
 
   const syncGuestGraphPayload = (graph: any) => {
-    vault.repository.entities = Object.fromEntries(
-      Object.entries(graph.entities).map(([id, entity]: [string, any]) => [
+    const parsedEntities = Object.entries(graph.entities).map(
+      ([id, entity]: [string, any]) => ({
+        ...entity,
         id,
-        {
-          ...entity,
-          _path:
-            typeof entity._path === "string" ? [entity._path] : entity._path,
-        },
-      ]),
+        _path: typeof entity._path === "string" ? [entity._path] : entity._path,
+      }),
+    );
+
+    vault.repository.entities = Object.fromEntries(
+      parsedEntities.map((e) => [e.id, e]),
     );
 
     if (graph.defaultVisibility) {
@@ -44,6 +47,19 @@
     if (graph.themeId) {
       themeStore.previewTheme(graph.themeId);
     }
+
+    // Explicitly set a vault ID and emit lifecycle events so services (like search/RAG) initialize correctly
+    vault.activeVaultId = `guest-${shareId}`;
+
+    appEventBus.emit(VAULT_EVENTS.VAULT_OPENING, {
+      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+      payload: {},
+    });
+
+    appEventBus.emit(VAULT_EVENTS.CACHE_LOADED, {
+      metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+      payload: { entities: parsedEntities },
+    });
 
     uiStore.sharedMode = true;
     vault.isInitialized = true;
@@ -115,13 +131,22 @@
           syncGuestGraphPayload(graph);
         },
         (updatedEntity) => {
-          vault.repository.entities[updatedEntity.id] = mergeGuestEntityUpdate(
-            vault.repository.entities[updatedEntity.id],
-            updatedEntity,
-          );
+          const oldEntity = vault.repository.entities[updatedEntity.id];
+          const newEntity = mergeGuestEntityUpdate(oldEntity, updatedEntity);
+          vault.repository.entities[updatedEntity.id] = newEntity;
+
+          appEventBus.emit(VAULT_EVENTS.ENTITY_UPDATED, {
+            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+            payload: { entity: newEntity, patch: updatedEntity },
+          });
         },
         (deletedId) => {
           delete vault.repository.entities[deletedId];
+
+          appEventBus.emit(VAULT_EVENTS.ENTITY_DELETED, {
+            metadata: { vaultId: vault.activeVaultId, timestamp: Date.now() },
+            payload: { entityId: deletedId },
+          });
         },
         (batchUpdates) => {
           vault.batchUpdate(batchUpdates);
