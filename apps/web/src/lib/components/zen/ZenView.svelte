@@ -59,13 +59,24 @@
 
   $effect(() => {
     let isStale = false;
-    if (entity?.image) {
-      vault.resolveImageUrl(entity.image).then((url) => {
-        if (!isStale) resolvedImageUrl = url;
-      });
-    } else {
-      resolvedImageUrl = "";
-    }
+    const imagePath = entity?.image;
+    const thumbnailPath = entity?.thumbnail;
+
+    const resolveImage = async () => {
+      let url = "";
+      if (imagePath) {
+        url = await vault.resolveImageUrl(imagePath);
+      }
+      if (!url && thumbnailPath) {
+        url = await vault.resolveImageUrl(thumbnailPath);
+      }
+      if (!isStale) {
+        resolvedImageUrl = url;
+      }
+    };
+
+    resolveImage();
+
     return () => {
       isStale = true;
     };

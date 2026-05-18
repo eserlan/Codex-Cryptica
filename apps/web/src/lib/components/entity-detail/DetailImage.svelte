@@ -32,17 +32,28 @@
 
   $effect(() => {
     const imagePath = entity?.image;
+    const thumbnailPath = entity?.thumbnail;
     let stale = false;
 
-    if (imagePath) {
-      vault.resolveImageUrl(imagePath).then((url) => {
-        if (!stale && entity?.image === imagePath) {
-          resolvedImageUrl = url;
-        }
-      });
-    } else {
-      resolvedImageUrl = "";
-    }
+    const resolveImage = async () => {
+      let url = "";
+      if (imagePath) {
+        url = await vault.resolveImageUrl(imagePath);
+      }
+      // Fallback to thumbnail if full image resolution fails (e.g. timeout on large P2P file)
+      if (!url && thumbnailPath) {
+        url = await vault.resolveImageUrl(thumbnailPath);
+      }
+
+      if (
+        !stale &&
+        (entity?.image === imagePath || entity?.thumbnail === thumbnailPath)
+      ) {
+        resolvedImageUrl = url;
+      }
+    };
+
+    resolveImage();
 
     return () => {
       stale = true;
@@ -184,7 +195,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.aiDisabled}
+        {#if oracle.tier === "advanced" && !uiStore.aiDisabled && !vault.isGuest}
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}

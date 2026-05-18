@@ -99,21 +99,25 @@
         </div>
 
         <div class="flex justify-between items-center pt-4">
-          <button
-            onclick={async () => {
-              if (editingEdge) {
-                await vault.removeConnection(
-                  editingEdge.source,
-                  editingEdge.target,
-                  editingEdge.type,
-                );
-                editingEdge = null;
-              }
-            }}
-            class="text-[10px] font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
-          >
-            Sever Connection
-          </button>
+          {#if !vault.isGuest}
+            <button
+              onclick={async () => {
+                if (editingEdge) {
+                  await vault.removeConnection(
+                    editingEdge.source,
+                    editingEdge.target,
+                    editingEdge.type,
+                  );
+                  editingEdge = null;
+                }
+              }}
+              class="text-[10px] font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
+            >
+              Sever Connection
+            </button>
+          {:else}
+            <span></span>
+          {/if}
 
           <div class="flex gap-2">
             <button
@@ -122,12 +126,14 @@
             >
               Cancel
             </button>
-            <button
-              onclick={saveEdgeLabel}
-              class="px-6 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
-            >
-              Sync Data
-            </button>
+            {#if !vault.isGuest}
+              <button
+                onclick={saveEdgeLabel}
+                class="px-6 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
+              >
+                Sync Data
+              </button>
+            {/if}
           </div>
         </div>
       </div>

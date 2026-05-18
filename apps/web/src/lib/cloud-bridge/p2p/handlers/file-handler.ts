@@ -88,6 +88,19 @@ export class FileHandler extends BaseHandler {
         const file = await fileHandle.getFile();
         const arrayBuffer = await file.arrayBuffer();
 
+        let mimeType = file.type;
+        if (!mimeType) {
+          const name = file.name.toLowerCase();
+          if (name.endsWith(".webp")) mimeType = "image/webp";
+          else if (name.endsWith(".png")) mimeType = "image/png";
+          else if (name.endsWith(".jpg") || name.endsWith(".jpeg"))
+            mimeType = "image/jpeg";
+          else if (name.endsWith(".svg")) mimeType = "image/svg+xml";
+          else if (name.endsWith(".md")) mimeType = "text/markdown";
+          else if (name.endsWith(".json")) mimeType = "application/json";
+          else mimeType = "application/octet-stream";
+        }
+
         // FR-007: Binary/ArrayBuffer streaming with 16KB chunk size
         const CHUNK_SIZE = 16 * 1024;
         const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK_SIZE);
@@ -97,7 +110,7 @@ export class FileHandler extends BaseHandler {
             type: "FILE_RESPONSE",
             requestId,
             found: true,
-            mime: file.type,
+            mime: mimeType,
             data: arrayBuffer,
             chunkIndex: 0,
             totalChunks: 1,
@@ -112,7 +125,7 @@ export class FileHandler extends BaseHandler {
               type: "FILE_RESPONSE",
               requestId,
               found: true,
-              mime: file.type,
+              mime: mimeType,
               data: chunk,
               chunkIndex: i,
               totalChunks,
