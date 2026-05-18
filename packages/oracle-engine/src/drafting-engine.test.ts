@@ -162,7 +162,7 @@ describe("DraftingEngine", () => {
 
   it("should infer event types from named historical conflicts", async () => {
     const text =
-      "The rise of Szass Tam followed **The War of the Zulkirs**, a cataclysm that broke the old order.";
+      "The rise of Szass Tam followed **War of the Zulkirs**, a cataclysm that broke the old order.";
     const context = { existingEntities: [], history: [] };
 
     const proposals = await engine.propose(text, context);
@@ -190,5 +190,64 @@ describe("DraftingEngine", () => {
     const proposals = await engine.propose(text, context);
 
     expect(proposals.map((proposal) => proposal.title)).toEqual(["Luiren"]);
+  });
+
+  it("should suppress proposal titles longer than four words", async () => {
+    const text =
+      "**The Old Tower** remains, but **The Forgotten Keep Beneath Greyfall Mountain** is gone.";
+    const context = { existingEntities: [], history: [] };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals.map((proposal) => proposal.title)).toEqual([
+      "The Old Tower",
+    ]);
+  });
+
+  it("should suppress noisy fragment proposal titles", async () => {
+    const text = [
+      "**Valerius** guards the sealed moon gate.",
+      "**and his** blade is missing.",
+      "**1.** Return to the tower.",
+      "**you use your** key at dawn.",
+    ].join(" ");
+    const context = { existingEntities: [], history: [] };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals.map((proposal) => proposal.title)).toEqual(["Valerius"]);
+  });
+
+  it("should allow long proposal titles when they match existing entities", async () => {
+    const text =
+      "**The Forgotten Keep Beneath Greyfall Mountain** now holds the missing seal.";
+    const context = {
+      existingEntities: [
+        {
+          id: "greyfall-keep",
+          title: "The Forgotten Keep Beneath Greyfall Mountain",
+          type: "location",
+        },
+      ],
+      history: [],
+    };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0]).toMatchObject({
+      entityId: "greyfall-keep",
+      title: "The Forgotten Keep Beneath Greyfall Mountain",
+      type: "location",
+    });
+  });
+
+  it("should strip trailing colons from proposal titles", async () => {
+    const text = "**Valerius:** guards the sealed moon gate.";
+    const context = { existingEntities: [], history: [] };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals[0].title).toBe("Valerius");
   });
 });
