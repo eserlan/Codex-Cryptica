@@ -1,0 +1,312 @@
+    beforeEach(() => {
+      vi.clearAllMocks();
+      guestRoster.set({});
+      mapSession.clearSession(true);
+      hostService = new P2PHostService({
+        vault,
+        themeStore,
+        guestRoster,
+        mapStore,
+        peerFactory: (id?: string) => new MockPeer(id ?? "mock-peer-id"),
+      });
+    });
+
+    it("should start hosting and return a peer ID", async () => {
+      const seenIds: string[] = [];
+      const idPromise = hostService.startHosting((peerId) => {
+        seenIds.push(peerId);
+      });
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+      expect(seenIds).toHaveLength(1);
+      expect(peerInstance.id).toBe(seenIds[0]);
+      peerInstance.emit("open", seenIds[0]);
+      const id = await idPromise;
+      expect(id).toBe(seenIds[0]);
+    });
+
+    it("should expose the peer id immediately when already hosting", async () => {
+      (hostService as any)._isHosting = true;
+      const transport = (hostService as any).transport;
+      (transport as any)._id = "existing-peer";
+
+      const seenIds: string[] = [];
+      await expect(
+        hostService.startHosting((peerId) => {
+          seenIds.push(peerId);
+        }),
+      ).resolves.toBe("existing-peer");
+      expect(seenIds).toEqual(["existing-peer"]);
+    });
+
+    it("should handle new connections and send initial graph", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      expect(hostService.connections).toHaveLength(1);
+      expect(hostService.connections[0].peer).toBe("guest-1");
+
+      mockConn.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
+
+      await vi.waitFor(() => {
+        expect(mockConn.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "GRAPH_SYNC",
+            payload: expect.objectContaining({
+              entities: expect.objectContaining({
+                "entity-1": expect.not.objectContaining({
+                  lore: expect.anything(),
+                }),
+              }),
+            }),
+          }),
+        );
+      });
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "MAP_SYNC",
+          payload: expect.objectContaining({
+            image: expect.any(Object),
+            fog: expect.any(Object),
+          }),
+        }),
+      );
+    });
+
+    it("should rebroadcast the active map with fresh fog data", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      (transport as any)._id = "mock-peer-id";
+      (hostService as any)._isHosting = true;
+
+      const mockConn = new MockConnection("guest-1");
+      hostService.connections.push(mockConn as any);
+
+      await hostService.broadcastActiveMapSync();
+
+      expect(mapStore.loadMask).toHaveBeenCalled();
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "MAP_SYNC",
+          payload: expect.objectContaining({
+            fog: expect.any(Object),
+          }),
+        }),
+      );
+    });
+
+    it("should broadcast initiative snapshot updates to guests", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      (transport as any)._id = "mock-peer-id";
+      (hostService as any)._isHosting = true;
+
+      const mockConn = new MockConnection("guest-1");
+      hostService.connections.push(mockConn as any);
+
+      const snapshot: any = {
+        id: "enc-1",
+        name: "Encounter",
+        mapId: "map-1",
+        mode: "combat",
+        tokens: {
+          "token-1": {
+            id: "token-1",
+            entityId: null,
+            name: "Scout",
+            x: 0,
+            y: 0,
+            width: 50,
+            height: 50,
+            rotation: 0,
+            zIndex: 0,
+            ownerPeerId: null,
+            visibleTo: "all",
+            color: "#fff",
+            imageUrl: null,
+            statusEffects: [],
+          },
+        },
+        initiativeOrder: ["token-1"],
+        initiativeValues: { "token-1": 12 },
+        round: 1,
+        turnIndex: 0,
+        selection: null,
+        sessionFogMask: null,
+        lastPing: null,
+        measurement: {
+          active: false,
+          start: null,
+          end: null,
+        },
+        createdAt: 1,
+        savedAt: null,
+        chatMessages: [],
+        gridSize: 50,
+        gridUnit: "ft",
+        gridDistance: 5,
+      };
+
+      mapSession.syncFromRemoteSession(snapshot, false);
+      mapSession.setInitiativeValue("token-1", 17);
+
+      await vi.waitFor(() => {
+        expect(mockConn.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "SESSION_SNAPSHOT",
+            session: expect.objectContaining({
+              initiativeValues: expect.objectContaining({
+                "token-1": 17,
+              }),
+            }),
+          }),
+        );
+      });
+    });
+
+    it("should debounce token movement broadcasts into a session snapshot", async () => {
+      vi.useFakeTimers();
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      (transport as any)._id = "mock-peer-id";
+      (hostService as any)._isHosting = true;
+
+      const mockConn = new MockConnection("guest-1");
+      hostService.connections.push(mockConn as any);
+
+      mapSession.addToken({
+        name: "Mover",
+        x: 0,
+        y: 0,
+      });
+      mockConn.send.mockClear();
+
+      const tokenId = Object.keys(mapSession.tokens)[0];
+      mapSession.moveToken(tokenId, 150, 200);
+      expect(mockConn.send).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(250);
+
+      await vi.waitFor(() => {
+        expect(mockConn.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "SESSION_SNAPSHOT",
+            session: expect.objectContaining({
+              tokens: expect.any(Object),
+            }),
+          }),
+        );
+      });
+
+      vi.useRealTimers();
+    });
+
+    it("should remove a guest token when the guest sends TOKEN_REMOVED", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      mapSession.addToken({
+        name: "Disposable",
+        x: 0,
+        y: 0,
+        ownerPeerId: "guest-1",
+      });
+      const tokenId = Object.keys(mapSession.tokens)[0];
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "TOKEN_REMOVED",
+        tokenId,
+      });
+
+      await vi.waitFor(() => {
+        expect(mapSession.tokens[tokenId]).toBeUndefined();
+      });
+    });
+
+    it("should let a guest advance the turn when they own the active token", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const guestToken = mapSession.addToken({
+        name: "Guest Turn",
+        x: 0,
+        y: 0,
+        ownerPeerId: "guest-1",
+      });
+      mapSession.initiativeManager.setSnapshotData([guestToken!.id], {}, 1, 0);
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "TURN_ADVANCE",
+      });
+
+      await vi.waitFor(() => {
+        expect(mapSession.round).toBe(2);
+      });
+    });
+
+    it("should rebroadcast only fog updates without re-sending the map image", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      (transport as any)._id = "mock-peer-id";
+      (hostService as any)._isHosting = true;
+
+      const mockConn = new MockConnection("guest-1");
+      hostService.connections.push(mockConn as any);
+
+      await hostService.broadcastActiveMapFogSync();
+
+      expect(mapStore.loadMask).toHaveBeenCalled();
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "MAP_FOG_SYNC",
+          payload: expect.objectContaining({
+            mapId: "map-1",
+            fog: expect.any(Object),
+          }),
+        }),
+      );
+    });
+
+    it("should track joined guests and their status", async () => {
+      const idPromise = hostService.startHosting();
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
+
+      expect(get(guestRoster)["guest-1"]).toBeDefined();
+      expect(get(guestRoster)["guest-1"].displayName).toBe("Ava");
+    });

@@ -4,55 +4,65 @@
 
 ## Summary
 
-This refactor transforms the 918-line `P2PHostService` monolith into a layered architecture. We will separate the network transport from the application logic, implement a message dispatcher for the P2P protocol, and extract domain-specific handlers for VTT actions, Vault synchronization, and file serving.
+Refactor the `P2PHostService` monolith by decoupling the network transport layer (PeerJS) from the application logic. Implement a layered architecture with a dedicated `P2PTransport` interface, a `P2PDispatcher` for protocol routing, and isolated action handlers for VTT, Vault, and File operations.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.9.x
 **Primary Dependencies**: `PeerJS`, Svelte 5 (Runes), `@codex/events`
-**Target Platform**: Web (P2P Bridge)
-**Architecture**: Layered Bridge (Transport -> Dispatcher -> Handlers)
-**Constraints**: MUST preserve PeerJS protocol compatibility and OPFS file streaming logic.
+**Storage**: OPFS (Vault Files), IndexedDB (Registry)
+**Testing**: Vitest
+**Target Platform**: Web (Browser)
+**Project Type**: Web Application / P2P Bridge
+**Performance Goals**: Support 10 concurrent guests, < 200ms latency for VTT events.
+**Constraints**: ArrayBuffer binary streaming for OPFS assets, Fire-and-forget protocol reliability.
+**Scale/Scope**: Refactoring 918 lines of existing logic.
 
 ## Constitution Check
 
-- **Library-First**: 🟢 Pass. Decoupling logic from the Svelte store into pure TS handlers.
-- **Svelte 5 Reactivity**: 🟢 Pass. Using `$state` snapshots for message payloads.
-- **Dependency Injection**: 🟢 Pass. Constructors will receive Transport and Handlers.
-- **Agent Operational Protocol**: 🟢 Pass. Strict surgical changes and verification per task.
+- **Library-First**: 🟢 Pass. Decoupling logic into pure TypeScript handlers.
+- **TDD**: 🟢 Pass. Mandated unit tests for handlers and transport.
+- **Simplicity & YAGNI**: 🟢 Pass. Using existing protocol instead of adding complexity.
+- **Privacy**: 🟢 Pass. Processing remains fully client-side.
+- **Dependency Injection**: 🟢 Pass. Using constructor-based DI for transport and stores.
 
 ## Project Structure
 
-### Documentation
+### Documentation (this feature)
 
 ```text
 specs/098-p2p-host-service-decoupling/
-├── plan.md
-├── spec.md
-└── tasks.md
+├── plan.md              # This file
+├── research.md          # Phase 0 output
+├── data-model.md        # Phase 1 output
+├── quickstart.md        # Phase 1 output
+└── tasks.md             # Phase 2 output
 ```
 
-### Source Code
+### Source Code (repository root)
 
 ```text
 apps/web/src/lib/cloud-bridge/p2p/
-├── transport/                  # NEW: Network Layer
-│   ├── transport-interface.ts  # The P2PTransport interface
-│   └── peerjs-transport.ts     # PeerJS implementation
-├── dispatcher/                 # NEW: Routing Layer
-│   └── p2p-dispatcher.ts       # Message routing logic
-├── handlers/                   # NEW: Action Layer
-│   ├── base-handler.ts         # Common handler logic
-│   ├── vtt-handler.ts          # Map/Token logic
-│   ├── vault-handler.ts        # Sync/Vault logic
-│   └── file-handler.ts         # File server logic
-├── p2p-protocol.ts             # Message types (Existing)
-└── host-service.svelte.ts      # The thin coordinator facade
-```
+├── transport/
+│   ├── transport-interface.ts
+│   └── peerjs-transport.ts
+├── dispatcher/
+│   └── p2p-dispatcher.ts
+├── handlers/
+├── handlers/
+│   ├── base-handler.ts         # Abstract base for action logic and DI
+│   ├── vtt-handler.ts
+│   ├── vault-handler.ts
+│   └── file-handler.ts
+├── p2p-protocol.ts
+└── host-service.svelte.ts
+
+**Structure Decision**: Adopting a layered directory structure within the P2P cloud-bridge to clearly separate concerns. The `BaseHandler` will serve as the architectural equivalent of the Oracle's `BaseExecutor`, providing shared utilities and enforced DI patterns.
 
 ## Complexity Tracking
 
-| Violation             | Why Needed                          | Simpler Alternative Rejected Because                                           |
-| --------------------- | ----------------------------------- | ------------------------------------------------------------------------------ |
-| Layered Architecture  | To resolve the 900-line God Object. | Keeping it in one file makes maintenance of multiplayer features too risky.    |
-| Interface Abstraction | To decouple PeerJS from logic.      | Direct coupling makes unit testing VTT logic impossible without network mocks. |
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+| --------- | ---------- | ------------------------------------ |
+| Command/Handler Pattern | To resolve the 900-line monolith. | Keeps the host service maintainable as more multiplayer features are added. |
+| Transport Abstraction | To decouple PeerJS. | PeerJS event-driven API is difficult to test directly in logic. |
+```

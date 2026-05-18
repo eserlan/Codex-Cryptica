@@ -33,6 +33,8 @@ export type P2PMessage =
       found: boolean;
       mime?: string;
       data?: ArrayBuffer;
+      chunkIndex?: number;
+      totalChunks?: number;
     }
   | { type: "GUEST_JOIN"; payload: { displayName: string } }
   | {

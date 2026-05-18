@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: Analysis of `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` (918 lines)
 
+## Clarifications
+
+### Session 2026-05-17
+
+- Q: What is the maximum number of concurrent guest connections the host transport layer should explicitly support and optimize for? → A: 10 guests (Balanced, standard VTT party size + overhead)
+- Q: How should the transport layer handle large binary assets (images, PDFs) from OPFS? → A: Binary/ArrayBuffer streaming (Required for OPFS assets)
+- Q: What reliability model should the dispatcher use for standard VTT messages (pings, moves)? → A: Fire-and-forget (Stateless, relies on heartbeat sync)
+- Q: How should the transport layer signal connection or data errors back to the host service? → A: Typed Event System (Standardized error codes/types)
+- Q: Where should the coordination logic for outbound broadcasts (e.g., sending state updates to all guests) reside? → A: P2PHostService (Top-level coordination)
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Transport Abstraction (Priority: P1) 🎯 MVP
@@ -71,6 +81,11 @@ As a quality assurance engineer, I want the refactor to follow strict surgical g
 - **FR-003**: System MUST extract VTT, Vault, and File logic into isolated Action Handlers.
 - **FR-004**: System MUST reduce `host-service.svelte.ts` to under 200 lines.
 - **FR-005**: All new components MUST follow the project's DI mandate (Rule VIII).
+- **FR-006**: The transport and dispatcher MUST be optimized for a maximum of 10 concurrent guest connections.
+- **FR-007**: System MUST support binary/ArrayBuffer streaming for OPFS asset synchronization, utilizing a maximum chunk size of 16KB to maintain UI responsiveness.
+- **FR-008**: The protocol dispatcher SHOULD follow a fire-and-forget reliability model, utilizing periodic heartbeat syncs (every 30s) containing a hash of critical VTT state for eventual consistency.
+- **FR-009**: System MUST implement a Typed Event System for the transport layer to signal actionable connection and data errors to the UI.
+- **FR-010**: The `P2PHostService` MUST retain coordination logic for outbound broadcasts, while inbound message processing is fully delegated to the Dispatcher.
 
 ## Success Criteria
 
