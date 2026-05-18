@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-28
+Auto-generated from all feature plans. Last updated: 2026-05-17
 
 ## Active Technologies
+
+- TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events` (098-p2p-host-service-decoupling)
+- OPFS (Vault Files), IndexedDB (Registry) (098-p2p-host-service-decoupling)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb` (096-gdrive-cloud-sync)
 - OPFS (Primary), IndexedDB (Metadata), Google Drive (Cloud Mirror) (096-gdrive-cloud-sync)
@@ -155,6 +158,11 @@ TypeScript: Follow standard conventions
 
 ## Implementation Guardrails (AI Guidelines)
 
+- **Agent Operational Protocol**: You MUST strictly follow these behavioral rules:
+  1.  **Think First**: Before changing code, state the goal, assumptions, and any uncertainty. Do not silently guess when the request is ambiguous.
+  2.  **Simple Solutions**: Solve only the requested problem. Do not add extra features, abstractions, or "future-proofing" unless clearly needed (YAGNI).
+  3.  **Surgical Changes**: Touch only the files and code required. Do not refactor, reformat, or "clean up" unrelated code.
+  4.  **Verify Everything**: Define success criteria upfront. Run relevant tests, builds, and linting. Explicitly state what was and was not verified.
 - **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`).
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - **Reactive Snapshots**: Use `$state.snapshot(obj)` when passing state to non-reactive logic or async handlers to prevent stale references.
@@ -168,12 +176,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 098-p2p-host-service-decoupling: Added TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events`
+- 098-p2p-host-service-decoupling: OPFS (Vault Files), IndexedDB (Registry)
+
 - 096-gdrive-cloud-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb`
-- 095-ai-regen-button: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine`
-- 094-app-event-bus: Added TypeScript 5.9.3 + None (Browser Native APIs only)
-
-- 093-directional-vault-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb`
-
-- 092-approve-draft-entities: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4
 
 <!-- MANUAL ADDITIONS START -->

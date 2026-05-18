@@ -1,4 +1,4 @@
-import type { Entity } from "schema";
+import type { Entity, Map } from "schema";
 import type { SerializedGraph } from "../types";
 import type { GuestPresenceStatus, GuestSession } from "../../stores/guest";
 
@@ -96,6 +96,121 @@ export function buildSharedGraphPayload(
     sharedMode: true,
     themeId,
   };
+}
+
+export async function prepareMapPayload(
+  map: Map,
+  mapStore: any,
+  vault: any,
+): Promise<{
+  map: Map;
+  image?: { mime: string; data: ArrayBuffer };
+  fog?: { mime: string; data: ArrayBuffer };
+}> {
+  const payload: {
+    map: Map;
+    image?: { mime: string; data: ArrayBuffer };
+    fog?: { mime: string; data: ArrayBuffer };
+  } = {
+    map: snapshotForTransport(map),
+  };
+
+  if (map.fogOfWar) {
+    try {
+      const maskCanvas = await mapStore.loadMask(
+        Math.max(map.dimensions.width, 1),
+        Math.max(map.dimensions.height, 1),
+      );
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        maskCanvas.toBlob(
+          (b: any) =>
+            b
+              ? resolve(b)
+              : reject(new Error("Failed to create fog blob from canvas")),
+          "image/png",
+        );
+      });
+      payload.fog = {
+        mime: blob.type || "image/png",
+        data: await blob.arrayBuffer(),
+      };
+    } catch (err) {
+      console.warn("[P2P Helpers] Failed to prepare fog payload", err);
+    }
+  }
+
+  if (!map.assetPath) {
+    return payload;
+  }
+
+  try {
+    const url = await vault.resolveImageUrl(map.assetPath);
+    if (!url) return payload;
+
+    const response = await fetch(url);
+    if (!response.ok) return payload;
+
+    const blob = await response.blob();
+    payload.image = {
+      mime: blob.type || "image/webp",
+      data: await blob.arrayBuffer(),
+    };
+  } catch (err) {
+    console.warn("[P2P Helpers] Failed to prepare map image payload", err);
+  }
+
+  return payload;
+}
+
+function snapshotForTransport<T>(value: T): T {
+  try {
+    return structuredClone(value);
+  } catch {
+    return { ...(value as Record<string, unknown>) } as T;
+  }
+}
+
+export async function prepareFogPayload(
+  map: Map,
+  mapStore: any,
+): Promise<{
+  mapId: string;
+  fog?: { mime: string; data: ArrayBuffer };
+}> {
+  const payload: {
+    mapId: string;
+    fog?: { mime: string; data: ArrayBuffer };
+  } = {
+    mapId: map.id,
+  };
+
+  if (!map.fogOfWar) {
+    return payload;
+  }
+
+  try {
+    const maskCanvas = await mapStore.loadMask(
+      Math.max(map.dimensions.width, 1),
+      Math.max(map.dimensions.height, 1),
+    );
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      maskCanvas.toBlob(
+        (b: any) =>
+          b
+            ? resolve(b)
+            : reject(new Error("Failed to create fog blob from canvas")),
+        "image/png",
+      );
+    });
+    payload.fog = {
+      mime: blob.type || "image/png",
+      data: await blob.arrayBuffer(),
+    };
+  } catch (err) {
+    console.warn("[P2P Helpers] Failed to prepare fog payload", err);
+  }
+
+  return payload;
 }
 
 export function buildGuestPresencePayload(options: {
