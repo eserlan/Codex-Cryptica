@@ -316,45 +316,44 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       const prefix = isActive ? "[ACTIVE FILE] " : "";
 
       let connectionContext = "";
-      const outbound = (entity.connections || []).reduce(
-        (acc: string[], c: any) => {
-          const targetEntity = vault.entities[c.target];
-          if (
-            targetEntity &&
-            (!vault.isGuest ||
-              isEntityVisible(targetEntity, {
-                sharedMode: true,
-                defaultVisibility: vault.defaultVisibility,
-              }))
-          ) {
-            acc.push(
-              `- ${entity.title} → ${c.label || c.type} → ${targetEntity.title}`,
-            );
-          }
-          return acc;
-        },
-        [],
-      );
 
-      const inbound = (vault.inboundConnections[id] || []).reduce(
-        (acc: string[], item: any) => {
-          const sourceEntity = vault.entities[item.sourceId];
-          if (
-            sourceEntity &&
-            (!vault.isGuest ||
-              isEntityVisible(sourceEntity, {
-                sharedMode: true,
-                defaultVisibility: vault.defaultVisibility,
-              }))
-          ) {
-            acc.push(
-              `- ${sourceEntity.title} → ${item.connection.label || item.connection.type} → ${entity.title}`,
-            );
-          }
-          return acc;
-        },
-        [],
-      );
+      // ⚡ Bolt Optimization: Replace .reduce() that returns an array with an imperative loop to eliminate closure allocation overhead.
+      const outbound: string[] = [];
+      const connections = entity.connections || [];
+      for (const c of connections) {
+        const targetEntity = vault.entities[c.target];
+        if (
+          targetEntity &&
+          (!vault.isGuest ||
+            isEntityVisible(targetEntity, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            }))
+        ) {
+          outbound.push(
+            `- ${entity.title} → ${c.label || c.type} → ${targetEntity.title}`,
+          );
+        }
+      }
+
+      // ⚡ Bolt Optimization: Replace .reduce() that returns an array with an imperative loop to eliminate closure allocation overhead.
+      const inbound: string[] = [];
+      const inboundConn = vault.inboundConnections[id] || [];
+      for (const item of inboundConn) {
+        const sourceEntity = vault.entities[item.sourceId];
+        if (
+          sourceEntity &&
+          (!vault.isGuest ||
+            isEntityVisible(sourceEntity, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            }))
+        ) {
+          inbound.push(
+            `- ${sourceEntity.title} → ${item.connection.label || item.connection.type} → ${entity.title}`,
+          );
+        }
+      }
 
       if (outbound.length > 0 || inbound.length > 0) {
         connectionContext =
