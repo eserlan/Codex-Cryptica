@@ -22,7 +22,12 @@
     if (uiStore.aiDisabled) return;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     // Trigger analysis when viewing an entity
-    if (activeEntityId && vault.status === "idle" && !isEditing) {
+    if (
+      activeEntityId &&
+      vault.status === "idle" &&
+      !isEditing &&
+      !vault.isGuest
+    ) {
       const entityToAnalyze = activeEntityId;
       // We could add a debounce here or let the store handle it.
       // The store checks isAnalyzing, so it won't double-trigger.
@@ -48,7 +53,7 @@
   };
 </script>
 
-{#if !uiStore.aiDisabled && (activeProposals.length > 0 || activeHistory.length > 0)}
+{#if !uiStore.aiDisabled && !vault.isGuest && (activeProposals.length > 0 || activeHistory.length > 0)}
   <div
     class="mt-8 border-t border-theme-border pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
   >

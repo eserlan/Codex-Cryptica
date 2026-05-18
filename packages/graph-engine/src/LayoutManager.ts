@@ -330,10 +330,10 @@ export class LayoutManager {
         });
       }
 
-      if (options.isGuest) {
-        if (isInitial) {
-          this.cy.fit(this.cy.nodes(), 20);
-        }
+      if (options.isGuest && isInitial) {
+        this.cy.nodes().removeData("isPendingLayout");
+        this.cy.nodes(".pending-layout").removeClass("pending-layout");
+        this.cy.fit(this.cy.nodes(), 20);
         options.onLayoutStop?.();
         return;
       }

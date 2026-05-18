@@ -242,7 +242,7 @@
       </div>
     {/if}
 
-    {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity && !editState.isEditing}
+    {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
       <div class="flex flex-col gap-2 mt-4 w-full px-0">
         <button
           onclick={() => oracle.drawEntity(entity.id)}

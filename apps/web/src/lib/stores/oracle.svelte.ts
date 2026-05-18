@@ -335,6 +335,7 @@ export class OracleStore {
         selectedEntityId: this.vault.selectedEntityId,
         entities: $state.snapshot(this.vault.entities),
         inboundConnections: $state.snapshot(this.vault.inboundConnections),
+        defaultVisibility: this.vault.defaultVisibility,
         isGuest: this.vault.isGuest,
         createEntity: wrap(this.vault.createEntity?.bind(this.vault)),
         updateEntity: wrap(this.vault.updateEntity?.bind(this.vault)),

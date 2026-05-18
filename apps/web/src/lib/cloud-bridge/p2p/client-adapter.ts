@@ -74,6 +74,11 @@ export class P2PClientAdapter implements IStorageAdapter {
     }, 10000);
   }
 
+  private pendingChunks = new Map<
+    string,
+    { chunks: ArrayBuffer[]; total: number; mime: string }
+  >();
+
   private handleMessage(data: any) {
     if (data.type === "GRAPH_SYNC") {
       console.log("[P2P Client] Received Graph Sync");
@@ -82,18 +87,50 @@ export class P2PClientAdapter implements IStorageAdapter {
       console.log("[P2P Client] Received Realtime Update");
       // vault.ingestRemoteUpdate(data.payload);
     } else if (data.type === "FILE_RESPONSE") {
-      const req = this.pendingRequests.get(data.requestId);
-      if (req) {
-        if (data.found && data.data) {
-          req.resolve(
-            new Blob([data.data], {
-              type: data.mime || "application/octet-stream",
-            }),
-          );
-        } else {
-          req.reject(new Error("File not found on host"));
-        }
-        this.pendingRequests.delete(data.requestId);
+      const requestId = data.requestId;
+      const req = this.pendingRequests.get(requestId);
+      if (!req) return;
+
+      if (!data.found) {
+        req.reject(new Error("File not found on host"));
+        this.pendingRequests.delete(requestId);
+        this.pendingChunks.delete(requestId);
+        return;
+      }
+
+      const totalChunks = data.totalChunks ?? 1;
+      const chunkIndex = data.chunkIndex ?? 0;
+
+      if (totalChunks === 1) {
+        req.resolve(
+          new Blob([data.data], {
+            type: data.mime || "application/octet-stream",
+          }),
+        );
+        this.pendingRequests.delete(requestId);
+        return;
+      }
+
+      // Handle chunks
+      let state = this.pendingChunks.get(requestId);
+      if (!state) {
+        state = { chunks: new Array(totalChunks), total: 0, mime: data.mime };
+        this.pendingChunks.set(requestId, state);
+      }
+
+      if (!state.chunks[chunkIndex]) {
+        state.chunks[chunkIndex] = data.data;
+        state.total++;
+      }
+
+      if (state.total === totalChunks) {
+        req.resolve(
+          new Blob(state.chunks, {
+            type: state.mime || "application/octet-stream",
+          }),
+        );
+        this.pendingRequests.delete(requestId);
+        this.pendingChunks.delete(requestId);
       }
     }
   }
