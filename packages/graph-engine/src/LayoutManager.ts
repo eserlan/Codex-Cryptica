@@ -331,6 +331,8 @@ export class LayoutManager {
       }
 
       if (options.isGuest) {
+        this.cy.nodes().removeData("isPendingLayout");
+        this.cy.nodes(".pending-layout").removeClass("pending-layout");
         if (isInitial) {
           this.cy.fit(this.cy.nodes(), 20);
         }
