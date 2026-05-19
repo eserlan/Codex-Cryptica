@@ -1,14 +1,16 @@
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
 import type { vault } from "../../../stores/vault.svelte";
-import type { uiStore } from "../../../stores/ui.svelte";
+import type { sessionModeStore } from "../../../stores/ui/session-mode.svelte";
+import type { notificationStore } from "../../../stores/ui/notification.svelte";
 import type { mapSession } from "../../../stores/map-session.svelte";
 import type { themeStore } from "../../../stores/theme.svelte";
 import type { mapStore } from "../../../stores/map.svelte";
 
 export interface P2PHandlerContext {
   vault: typeof vault;
-  uiStore: typeof uiStore;
+  sessionModeStore: typeof sessionModeStore;
+  notificationStore: typeof notificationStore;
   mapSession: typeof mapSession;
   mapStore: typeof mapStore;
   themeStore: typeof themeStore;

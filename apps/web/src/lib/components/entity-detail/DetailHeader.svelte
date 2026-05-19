@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import { fade } from "svelte/transition";
@@ -15,6 +14,8 @@
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
   } from "$lib/components/search/search-focus";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     entity,
@@ -48,7 +49,7 @@
     const nodeId = vault.selectedEntityId;
     if (!nodeId) return;
 
-    ui.findInGraph();
+    layoutUIStore.findInGraph();
 
     // Trigger centering and zooming
     dispatchSearchEntityFocus(nodeId, DEFAULT_SEARCH_ENTITY_ZOOM);
@@ -104,7 +105,7 @@
     {/if}
     <button
       type="button"
-      onclick={() => ui.openZenMode(entity.id)}
+      onclick={() => modalUIStore.openZenMode(entity.id)}
       class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
       aria-label="Enter Zen Mode"
       title="Zen Mode (Full Screen)"

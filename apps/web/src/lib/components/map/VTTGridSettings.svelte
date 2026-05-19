@@ -1,8 +1,8 @@
 <script lang="ts">
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let { close }: { close: () => void } = $props();
 
@@ -153,7 +153,7 @@
               onclick={() => {
                 mapSession.gridMoveMode = true;
                 close();
-                uiStore.notify(
+                notificationStore.notify(
                   "Drag the map to align. Enter to confirm, Esc to cancel.",
                   "info",
                   true,

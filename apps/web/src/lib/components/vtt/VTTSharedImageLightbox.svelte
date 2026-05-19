@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { SharedTokenImageState } from "../../../types/vtt";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { imageState, onClose } = $props<{
     imageState: SharedTokenImageState | null;
@@ -15,12 +15,12 @@
     if (!imageState) {
       resolvedImageUrl = "";
       lastResolvedPath = null;
-      uiStore.closeLightbox();
+      modalUIStore.closeLightbox();
       return;
     }
 
     if (imageState.imagePath === lastResolvedPath && resolvedImageUrl) {
-      uiStore.openLightbox(resolvedImageUrl, imageState.title);
+      modalUIStore.openLightbox(resolvedImageUrl, imageState.title);
       return;
     }
 
@@ -37,7 +37,7 @@
             resolvedUrl: url,
           });
           resolvedImageUrl = url;
-          uiStore.openLightbox(url, imageState.title);
+          modalUIStore.openLightbox(url, imageState.title);
         }
       })
       .catch((err) => {
@@ -51,7 +51,7 @@
 
   // Synchronize store back to onClose if it's closed manually
   $effect(() => {
-    if (!uiStore.lightbox.show && imageState) {
+    if (!modalUIStore.lightbox.show && imageState) {
       onClose();
     }
   });

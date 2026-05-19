@@ -1,7 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { DISCORD_URL, PATREON_URL } from "$lib/config";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 </script>
 
 <footer
@@ -43,7 +43,7 @@
       >Blog</a
     >
     <button
-      onclick={() => uiStore.openSettings("help")}
+      onclick={() => modalUIStore.openSettings("help")}
       class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest cursor-pointer"
       >Help</button
     >

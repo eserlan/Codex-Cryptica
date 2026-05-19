@@ -1,8 +1,9 @@
 <script lang="ts">
   import { driveStore } from "$lib/stores/drive.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let isOnline = $state(true);
 
@@ -38,9 +39,9 @@
   };
 </script>
 
-{#if !uiStore.isDemoMode && !uiStore.isGuestMode}
+{#if !sessionModeStore.isDemoMode && !sessionModeStore.isGuestMode}
   <button
-    onclick={() => uiStore.toggleSettings("vault")}
+    onclick={() => modalUIStore.toggleSettings("vault")}
     class="flex items-center justify-center p-1.5 rounded-md hover:bg-theme-primary/10 transition-all group relative"
     title={getStatusLabel()}
     aria-label="Google Drive Sync Status"

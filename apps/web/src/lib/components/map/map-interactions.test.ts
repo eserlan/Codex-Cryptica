@@ -28,13 +28,6 @@ vi.mock("../../stores/map-session.svelte", () => ({
   },
 }));
 
-vi.mock("../../stores/ui.svelte", () => ({
-  uiStore: {
-    isGuestMode: false,
-    clearNotification: vi.fn(),
-  },
-}));
-
 vi.mock("../../stores/vault.svelte", () => ({
   vault: {
     selectedEntityId: null,

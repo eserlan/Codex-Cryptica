@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let OracleSidebarPanel = $state<any>(null);
 
@@ -10,7 +10,7 @@
     import.meta.env.VITE_STAGING === "true";
 
   $effect(() => {
-    if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
+    if (layoutUIStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
       import("$lib/components/oracle/OracleSidebarPanel.svelte")
         .then((m) => (OracleSidebarPanel = m?.default))
         .catch((error) => {
@@ -27,8 +27,8 @@
   });
 </script>
 
-{#if uiStore.leftSidebarOpen}
-  {#if uiStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
+{#if layoutUIStore.leftSidebarOpen}
+  {#if layoutUIStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
     <OracleSidebarPanel />
   {/if}
 {/if}

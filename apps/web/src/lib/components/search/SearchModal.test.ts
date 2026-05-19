@@ -3,37 +3,28 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSearchStore, mockUiStore, mockVault, mockCategories } = vi.hoisted(
-  () => ({
-    mockSearchStore: {
-      isOpen: true,
-      query: "",
-      results: [],
-      selectedIndex: 0,
-      setQuery: vi.fn(),
-      setSelectedIndex: vi.fn(),
-      selectCurrent: vi.fn(),
-      close: vi.fn(),
-    },
-    mockUiStore: {
-      leftSidebarOpen: false,
-    },
-    mockVault: {
-      selectedEntityId: null as string | null,
-    },
-    mockCategories: {
-      getCategory: vi.fn(() => ({ icon: "lucide:file-text", label: "Note" })),
-      getColor: vi.fn(() => "#888888"),
-    },
-  }),
-);
+const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
+  mockSearchStore: {
+    isOpen: true,
+    query: "",
+    results: [],
+    selectedIndex: 0,
+    setQuery: vi.fn(),
+    setSelectedIndex: vi.fn(),
+    selectCurrent: vi.fn(),
+    close: vi.fn(),
+  },
+  mockVault: {
+    selectedEntityId: null as string | null,
+  },
+  mockCategories: {
+    getCategory: vi.fn(() => ({ icon: "lucide:file-text", label: "Note" })),
+    getColor: vi.fn(() => "#888888"),
+  },
+}));
 
 vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: mockSearchStore,
-}));
-
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: mockUiStore,
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -65,6 +56,7 @@ vi.mock("./search-focus", () => ({
 }));
 
 import SearchModal from "./SearchModal.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 describe("SearchModal", () => {
   beforeEach(() => {
@@ -76,12 +68,12 @@ describe("SearchModal", () => {
     mockSearchStore.setSelectedIndex.mockReset();
     mockSearchStore.selectCurrent.mockReset();
     mockSearchStore.close.mockReset();
-    mockUiStore.leftSidebarOpen = false;
+    layoutUIStore.leftSidebarOpen = false;
     mockVault.selectedEntityId = null;
   });
 
   it("anchors to the main area when the left sidebar is open", () => {
-    mockUiStore.leftSidebarOpen = true;
+    layoutUIStore.leftSidebarOpen = true;
 
     const { container } = render(SearchModal);
 

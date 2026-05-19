@@ -19,12 +19,6 @@ vi.mock("../stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("../stores/ui.svelte", () => ({
-  uiStore: {
-    notify: vi.fn(),
-  },
-}));
-
 vi.mock("$lib/services/node-merge.service", () => ({
   nodeMergeService: {
     executeMerge: vi.fn().mockResolvedValue(undefined),
@@ -39,10 +33,10 @@ vi.mock("@codex/oracle-engine", () => ({
 
 import { oracle } from "../stores/oracle.svelte";
 import { vault } from "../stores/vault.svelte";
-import { uiStore } from "../stores/ui.svelte";
 import { OracleCommandParser } from "@codex/oracle-engine";
 import { nodeMergeService } from "$lib/services/node-merge.service";
 import { regenerationService } from "./RegenerationService.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 describe("RegenerationService", () => {
   beforeEach(() => {
@@ -51,6 +45,7 @@ describe("RegenerationService", () => {
     regenerationService.error = null;
     regenerationService.isGenerating = false;
     (vault.entities as any) = {};
+    notificationStore.notify = vi.fn();
   });
 
   it("returns true and stores a draft when regeneration succeeds", async () => {
@@ -90,7 +85,7 @@ describe("RegenerationService", () => {
     expect(regenerationService.pendingDraft).toBeNull();
     expect(regenerationService.error).toBe("boom");
     expect(regenerationService.isGenerating).toBe(false);
-    expect(uiStore.notify).not.toHaveBeenCalled();
+    expect(notificationStore.notify).not.toHaveBeenCalled();
     expect(vault.updateEntity).not.toHaveBeenCalled();
   });
 
@@ -141,7 +136,7 @@ describe("RegenerationService", () => {
     );
     expect(vault.updateEntity).not.toHaveBeenCalled();
     expect(regenerationService.pendingDraft).toBeNull();
-    expect(uiStore.notify).toHaveBeenCalledWith(
+    expect(notificationStore.notify).toHaveBeenCalledWith(
       "Merge saved successfully.",
       "success",
     );

@@ -1,15 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AssetStore } from "./asset-store.svelte";
-import { uiStore } from "../ui.svelte";
 import { p2pGuestService } from "../../cloud-bridge/p2p/guest-service";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 vi.mock("$app/paths", () => ({ base: "" }));
-
-vi.mock("../ui.svelte", () => ({
-  uiStore: {
-    activeDemoTheme: null,
-  },
-}));
 
 vi.mock("../../cloud-bridge/p2p/guest-service", () => ({
   p2pGuestService: {
@@ -31,7 +25,7 @@ describe("AssetStore", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (uiStore as any).activeDemoTheme = null;
+    sessionModeStore.activeDemoTheme = null;
     assetManager = {
       resolveImageUrl: vi.fn().mockResolvedValue("blob:url"),
       releaseImageUrl: vi.fn(),
@@ -83,7 +77,7 @@ describe("AssetStore", () => {
   });
 
   it("passes the demo asset fetcher to persistence when a demo theme is active", async () => {
-    (uiStore as any).activeDemoTheme = "fantasy";
+    sessionModeStore.activeDemoTheme = "fantasy";
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       blob: vi.fn().mockResolvedValue(new Blob(["demo"])),

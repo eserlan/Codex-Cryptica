@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { openFrontPage } from "./app-header-actions";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const mocks = vi.hoisted(() => ({
   closeSidebar: vi.fn(),
@@ -12,19 +14,6 @@ const mocks = vi.hoisted(() => ({
   closeLightbox: vi.fn(),
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    dismissedLandingPage: false,
-    closeSidebar: mocks.closeSidebar,
-    closeZenMode: mocks.closeZenMode,
-    toggleWelcomeScreen: mocks.toggleWelcomeScreen,
-    restoreWorldPage: mocks.restoreWorldPage,
-    openLightbox: mocks.openLightbox,
-    closeLightbox: mocks.closeLightbox,
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     selectedEntityId: "entity-1",
@@ -33,22 +22,26 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 
 describe("openFrontPage", () => {
   beforeEach(() => {
-    uiStore.dismissedLandingPage = false;
+    onboardingStore.dismissedLandingPage = false;
     mocks.closeSidebar.mockClear();
     mocks.closeZenMode.mockClear();
     mocks.toggleWelcomeScreen.mockClear();
     mocks.restoreWorldPage.mockClear();
+    layoutUIStore.closeSidebar = mocks.closeSidebar;
+    modalUIStore.closeZenMode = mocks.closeZenMode;
+    onboardingStore.toggleWelcomeScreen = mocks.toggleWelcomeScreen;
+    onboardingStore.restoreWorldPage = mocks.restoreWorldPage;
     vault.selectedEntityId = "entity-1";
   });
 
   it("restores and persists the front page overlay", () => {
     openFrontPage();
 
-    expect(uiStore.closeSidebar).toHaveBeenCalled();
-    expect(uiStore.closeZenMode).toHaveBeenCalled();
-    expect(uiStore.toggleWelcomeScreen).toHaveBeenCalledWith(true);
-    expect(uiStore.dismissedLandingPage).toBe(true);
-    expect(uiStore.restoreWorldPage).toHaveBeenCalled();
+    expect(layoutUIStore.closeSidebar).toHaveBeenCalled();
+    expect(modalUIStore.closeZenMode).toHaveBeenCalled();
+    expect(onboardingStore.toggleWelcomeScreen).toHaveBeenCalledWith(true);
+    expect(onboardingStore.dismissedLandingPage).toBe(true);
+    expect(onboardingStore.restoreWorldPage).toHaveBeenCalled();
     expect(vault.selectedEntityId).toBe(null);
   });
 });

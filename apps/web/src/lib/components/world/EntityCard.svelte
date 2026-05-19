@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import type { RecentActivity } from "@codex/vault-engine";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { renderMarkdown } from "$lib/utils/markdown";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { activity } = $props<{ activity: RecentActivity }>();
   let imageUrl = $state("");
@@ -36,14 +37,14 @@
   );
 
   const openInGraph = () => {
-    uiStore.dismissWorldPage();
+    onboardingStore.dismissWorldPage();
     vault.selectedEntityId = activity.id;
   };
 
   const openInZenMode = () => {
-    uiStore.dismissWorldPage();
+    onboardingStore.dismissWorldPage();
     vault.selectedEntityId = activity.id;
-    uiStore.openZenMode(activity.id);
+    modalUIStore.openZenMode(activity.id);
   };
 
   const handleCardClick = (event: MouseEvent) => {

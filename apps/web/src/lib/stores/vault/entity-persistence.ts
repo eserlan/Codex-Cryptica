@@ -1,9 +1,9 @@
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
-import { uiStore } from "../ui.svelte";
 import type { LocalEntity } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export interface PersistenceDependencies {
   repository: VaultRepository;
@@ -39,7 +39,7 @@ export class EntityPersistenceService {
 
     const vaultIdAtStart = this.deps.activeVaultId();
     if (!vaultIdAtStart) return Promise.resolve();
-    if (uiStore.isDemoMode) return Promise.resolve();
+    if (sessionModeStore.isDemoMode) return Promise.resolve();
 
     const id = entity.id;
 

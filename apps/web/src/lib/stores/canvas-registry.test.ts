@@ -3,19 +3,13 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import * as vaultIO from "./vault/io";
 import { getVaultDir } from "../utils/opfs";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("./vault-registry.svelte", () => ({
   vaultRegistry: {
     rootHandle: { kind: "directory" },
     activeVaultId: "test-vault",
     updateEntityCount: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
-vi.mock("./ui.svelte", () => ({
-  uiStore: {
-    notify: vi.fn(),
-    confirm: vi.fn().mockResolvedValue(true),
   },
 }));
 
@@ -47,6 +41,7 @@ describe("CanvasRegistryStore", () => {
     canvasRegistry.init({
       enqueue: vi.fn((id, cb) => cb()),
     } as any);
+    notificationStore.confirm = vi.fn().mockResolvedValue(true);
   });
 
   it("should create a new canvas with proper metadata and slug", async () => {

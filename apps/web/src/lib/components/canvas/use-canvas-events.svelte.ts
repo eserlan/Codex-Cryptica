@@ -1,5 +1,5 @@
 import { onMount } from "svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
+import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
 export function useCanvasEvents(params: {
   onQuickSpawn: (
@@ -12,10 +12,10 @@ export function useCanvasEvents(params: {
 }) {
   onMount(() => {
     const handleDown = (e: KeyboardEvent) => {
-      uiStore.isModifierPressed = e.ctrlKey || e.metaKey;
+      connectionModeStore.isModifierPressed = e.ctrlKey || e.metaKey;
     };
     const handleUp = (e: KeyboardEvent) => {
-      uiStore.isModifierPressed = e.ctrlKey || e.metaKey;
+      connectionModeStore.isModifierPressed = e.ctrlKey || e.metaKey;
     };
 
     const handleQuickSpawn = (event: CustomEvent) => {
@@ -47,7 +47,7 @@ export function useCanvasEvents(params: {
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      uiStore.isModifierPressed = false;
+      connectionModeStore.isModifierPressed = false;
     };
   });
 }

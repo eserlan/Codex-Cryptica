@@ -1,9 +1,9 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
@@ -62,7 +62,7 @@
     const v = vaultRegistry.availableVaults.find((v) => v.id === id);
     if (!v) return;
 
-    const confirmed = await uiStore.confirm({
+    const confirmed = await notificationStore.confirm({
       title: "Delete Vault",
       message: `Are you sure you want to permanently delete "${v.name}" and all its files? This action cannot be undone.`,
       confirmLabel: "Delete Forever",

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { graph } from "$lib/stores/graph.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
@@ -8,6 +7,10 @@
   import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core, EventObject, NodeSingular } from "cytoscape";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
@@ -148,21 +151,21 @@
 
   const handleMerge = () => {
     if (selectedNodes.length > 1) {
-      ui.openMergeDialog(selectedNodes);
+      modalUIStore.openMergeDialog(selectedNodes);
       contextMenuOpen = false;
     }
   };
 
   const handleConnectSelection = () => {
     if (selectedNodes.length === 2) {
-      ui.startSelectionConnection();
+      connectionModeStore.startSelectionConnection();
       contextMenuOpen = false;
     }
   };
 
   const handleBulkLabel = () => {
     if (selectedNodes.length >= 1) {
-      ui.openBulkLabelDialog(selectedNodes);
+      modalUIStore.openBulkLabelDialog(selectedNodes);
       contextMenuOpen = false;
     }
   };
@@ -171,7 +174,7 @@
     clearPickerTimeout();
     canvasPickerOpen = false;
     contextMenuOpen = false;
-    ui.openCanvasSelection(selectedNodes);
+    modalUIStore.openCanvasSelection(selectedNodes);
   };
 
   const showCanvasPicker = () => {
@@ -272,18 +275,24 @@
     try {
       if (nodesToUpdate.length === 1) {
         await vault.updateEntity(nodesToUpdate[0], { type });
-        ui.notify("Category updated.", "success");
+        notificationStore.notify("Category updated.", "success");
       } else if (nodesToUpdate.length > 1) {
         const updates: Record<string, { type: string }> = {};
         for (const id of nodesToUpdate) {
           updates[id] = { type };
         }
         await vault.batchUpdate(updates);
-        ui.notify(`Updated ${nodesToUpdate.length} nodes.`, "success");
+        notificationStore.notify(
+          `Updated ${nodesToUpdate.length} nodes.`,
+          "success",
+        );
       }
     } catch (err: any) {
       console.error("Failed to update category", err);
-      ui.notify(`Failed to update category: ${err.message}`, "error");
+      notificationStore.notify(
+        `Failed to update category: ${err.message}`,
+        "error",
+      );
     }
   };
 
@@ -300,7 +309,10 @@
       await oracle.drawEntity(nodesToUpdate[0]);
     } catch (err: any) {
       console.error("Failed to generate image", err);
-      ui.notify(`Failed to generate image: ${err.message}`, "error");
+      notificationStore.notify(
+        `Failed to generate image: ${err.message}`,
+        "error",
+      );
     }
   };
 
@@ -316,14 +328,17 @@
     try {
       const ok = await regenerationService.regenerate(nodesToUpdate[0]);
       if (!ok) {
-        ui.notify(
+        notificationStore.notify(
           `Failed to regenerate content: ${regenerationService.error ?? "Unknown error"}`,
           "error",
         );
       }
     } catch (err: any) {
       console.error("Failed to regenerate content", err);
-      ui.notify(`Failed to regenerate content: ${err.message}`, "error");
+      notificationStore.notify(
+        `Failed to regenerate content: ${err.message}`,
+        "error",
+      );
     }
   };
 
@@ -339,10 +354,10 @@
 
     try {
       const url = await vault.resolveImageUrl(entity.image);
-      ui.openLightbox(url, entity.title);
+      modalUIStore.openLightbox(url, entity.title);
     } catch (err: any) {
       console.error("Failed to view image", err);
-      ui.notify(`Failed to open image: ${err.message}`, "error");
+      notificationStore.notify(`Failed to open image: ${err.message}`, "error");
     }
   };
 
@@ -366,7 +381,7 @@
           result.added.length === 1
             ? `Added to "${canvasRegistry.canvases[canvasId]?.name || "canvas"}"`
             : `Added ${result.added.length} entities to "${canvasRegistry.canvases[canvasId]?.name || "canvas"}"`;
-        ui.notify(msg, "success");
+        notificationStore.notify(msg, "success");
       }
 
       if (result.skipped.length > 0) {
@@ -374,11 +389,14 @@
           result.skipped.length === 1
             ? "1 entity already on canvas"
             : `${result.skipped.length} entities already on canvas`;
-        ui.notify(msg, "info");
+        notificationStore.notify(msg, "info");
       }
     } catch (err: any) {
       console.error("Failed to add entities to canvas", err);
-      ui.notify(`Failed to add to canvas: ${err.message}`, "error");
+      notificationStore.notify(
+        `Failed to add to canvas: ${err.message}`,
+        "error",
+      );
     }
   };
 
@@ -393,14 +411,17 @@
       const result = await canvasRegistry.createCanvas(selectedNodes, title);
 
       if (result) {
-        ui.notify(
+        notificationStore.notify(
           `Created canvas "${result.name}" with ${selectedNodes.length} entit${selectedNodes.length === 1 ? "y" : "ies"}`,
           "success",
         );
       }
     } catch (err: any) {
       console.error("Failed to create canvas", err);
-      ui.notify(`Failed to create canvas: ${err.message}`, "error");
+      notificationStore.notify(
+        `Failed to create canvas: ${err.message}`,
+        "error",
+      );
     }
   };
 
@@ -412,7 +433,7 @@
         : "Are you sure you want to delete this node and all its connections? This cannot be undone.";
 
     if (
-      await ui.confirm({
+      await notificationStore.confirm({
         title: "Confirm Action",
         message,
         confirmLabel: "Delete",
@@ -427,13 +448,13 @@
         for (const id of selectedNodes) {
           await vault.deleteEntity(id);
         }
-        ui.notify(
+        notificationStore.notify(
           count > 1 ? `Deleted ${count} nodes.` : "Node deleted.",
           "success",
         );
       } catch (err: any) {
         console.error("Failed to delete nodes", err);
-        ui.notify(`Failed to delete: ${err.message}`, "error");
+        notificationStore.notify(`Failed to delete: ${err.message}`, "error");
       }
     }
   };
@@ -618,7 +639,7 @@
       onmouseleave={hideImagePicker}
       onkeydown={handleMenuKeydown}
     >
-      {#if !ui.aiDisabled && !vault.isGuest}
+      {#if !discoveryPolicyStore.aiDisabled && !vault.isGuest}
         <button
           role="menuitem"
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"

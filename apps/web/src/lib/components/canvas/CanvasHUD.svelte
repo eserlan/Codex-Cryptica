@@ -1,7 +1,7 @@
 <script lang="ts">
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { canvasName, activeCategories, onToggleCategory, onClearCategories } =
     $props<{
@@ -17,7 +17,7 @@
 >
   <button
     type="button"
-    onclick={() => (uiStore.showCanvasSelector = true)}
+    onclick={() => (modalUIStore.showCanvasSelector = true)}
     title="Manage canvases"
     class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 py-2 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group flex items-center gap-2"
   >

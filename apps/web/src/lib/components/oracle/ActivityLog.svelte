@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { sessionActivity } from "$lib/services/SessionActivityService";
   import {
@@ -7,6 +6,7 @@
     dispatchSearchEntityFocus,
   } from "$lib/components/search/search-focus";
   import { slide } from "svelte/transition";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   function formatTime(ts: number) {
     return new Date(ts).toLocaleTimeString([], {
@@ -56,7 +56,7 @@
   </div>
 
   <div class="flex-1 overflow-y-auto p-2 space-y-2 no-scrollbar">
-    {#if uiStore.archiveActivityLog.length === 0}
+    {#if discoveryPolicyStore.archiveActivityLog.length === 0}
       <div
         class="flex flex-col items-center justify-center h-full opacity-30 text-center p-4"
       >
@@ -67,7 +67,7 @@
         <p class="text-[10px] mt-1">Talk to the Oracle to discover new lore.</p>
       </div>
     {:else}
-      {#each uiStore.archiveActivityLog as event (event.id)}
+      {#each discoveryPolicyStore.archiveActivityLog as event (event.id)}
         {#if event.entityId}
           <button
             type="button"

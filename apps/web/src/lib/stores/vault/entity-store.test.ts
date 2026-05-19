@@ -59,14 +59,7 @@ vi.mock("../debug.svelte", () => ({
   },
 }));
 
-vi.mock("../ui.svelte", () => ({
-  uiStore: {
-    isDemoMode: false,
-    notify: vi.fn(),
-  },
-}));
-
-import { uiStore } from "../ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("EntityStore", () => {
   let repository: { entities: Record<string, LocalEntity>; saveQueue: any };
@@ -334,7 +327,7 @@ describe("EntityStore", () => {
 
     it("should return immediately in demo mode", async () => {
       const setStatus = vi.fn();
-      uiStore.isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
 
       const storeDemo = new EntityStore({
         repository: repository as any,
@@ -353,7 +346,7 @@ describe("EntityStore", () => {
 
       expect(setStatus).not.toHaveBeenCalled();
 
-      uiStore.isDemoMode = false;
+      sessionModeStore.isDemoMode = false;
     });
 
     it("should return early when entity does not exist in repository", async () => {
@@ -586,7 +579,7 @@ describe("EntityStore", () => {
     });
 
     it("should delete from memory in demo mode", async () => {
-      uiStore.isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
       const onEntityDelete = vi.fn();
       const demoStore = new EntityStore({
         repository: repository as any,
@@ -607,7 +600,7 @@ describe("EntityStore", () => {
       expect(repository.entities.hero).toBeUndefined();
       expect(onEntityDelete).toHaveBeenCalledWith("hero");
 
-      uiStore.isDemoMode = false;
+      sessionModeStore.isDemoMode = false;
     });
 
     it("should save modified entities after deletion", async () => {

@@ -3,11 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AppHeader from "./AppHeader.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
-
-vi.mock("$app/navigation", () => ({
-  goto: vi.fn(),
-}));
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -25,18 +21,6 @@ vi.mock("$lib/stores/search.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    showSettings: false,
-    showDiceModal: false,
-    isStaging: false,
-    toggleSettings: vi.fn(),
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 vi.mock("../VaultControls.svelte", () => ({
   default: function VaultControlsMock() {
     return {};
@@ -49,11 +33,11 @@ vi.mock("./app-header-actions", () => ({
 
 describe("AppHeader", () => {
   beforeEach(() => {
-    uiStore.isStaging = false;
+    sessionModeStore.isStaging = false;
   });
 
   it("renders a staging banner when the staging flag is enabled", () => {
-    uiStore.isStaging = true;
+    sessionModeStore.isStaging = true;
 
     render(AppHeader);
 

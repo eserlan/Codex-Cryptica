@@ -7,8 +7,10 @@ import {
 } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FrontPage from "./FrontPage.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { hexToRgb } from "$lib/utils/color";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -158,26 +160,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => {
-  const store = {
-    dismissedLandingPage: false,
-    dismissedWorldPage: false,
-    skipWelcomeScreen: true,
-    toggleWelcomeScreen: vi.fn(),
-    dismissWorldPage: vi.fn(),
-    toggleSidebarTool: vi.fn(),
-    openZenMode: vi.fn(),
-    confirm: vi.fn().mockResolvedValue(true),
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  };
-  store.dismissWorldPage.mockImplementation(() => {
-    store.dismissedWorldPage = true;
-  });
-  return { uiStore: store, ui: store };
-});
-
 vi.mock("$lib/stores/world.svelte", () => ({
   worldStore: Object.assign(worldStoreMock, {
     load: mocks.load,
@@ -196,9 +178,15 @@ describe("FrontPage", () => {
         "--- File: World Primer ---\nSky-market politics and drone wars.",
       sourceIds: ["front-1"],
     });
-    uiStore.dismissedLandingPage = false;
-    uiStore.dismissedWorldPage = false;
-    uiStore.skipWelcomeScreen = true;
+    onboardingStore.dismissedLandingPage = false;
+    onboardingStore.dismissedWorldPage = false;
+    onboardingStore.skipWelcomeScreen = true;
+    onboardingStore.dismissWorldPage = vi.fn(() => {
+      onboardingStore.dismissedWorldPage = true;
+    });
+    modalUIStore.openLightbox = vi.fn();
+    modalUIStore.openZenMode = vi.fn();
+    notificationStore.confirm = vi.fn().mockResolvedValue(true);
     worldStoreMock.error = null;
     window.localStorage.removeItem("codex_front_page_recent_limit:vault-1");
     Object.assign(worldMock.metadata, {
@@ -297,7 +285,7 @@ describe("FrontPage", () => {
 
     await fireEvent.click(screen.getByLabelText("Open cover image lightbox"));
 
-    expect(uiStore.openLightbox).toHaveBeenCalledWith(
+    expect(modalUIStore.openLightbox).toHaveBeenCalledWith(
       "resolved://image",
       "World cover",
     );
@@ -425,10 +413,10 @@ describe("FrontPage", () => {
 
     vi.useFakeTimers();
     await fireEvent.click(cardButton);
-    expect(uiStore.dismissedWorldPage).toBe(false);
+    expect(onboardingStore.dismissedWorldPage).toBe(false);
     await vi.advanceTimersByTimeAsync(320);
-    expect(uiStore.dismissedWorldPage).toBe(true);
-    expect(uiStore.openZenMode).not.toHaveBeenCalled();
+    expect(onboardingStore.dismissedWorldPage).toBe(true);
+    expect(modalUIStore.openZenMode).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 
@@ -680,8 +668,8 @@ describe("FrontPage", () => {
     await fireEvent.dblClick(cardButton);
     await vi.advanceTimersByTimeAsync(320);
 
-    expect(uiStore.openZenMode).toHaveBeenCalledWith("front-1");
-    expect(uiStore.dismissedWorldPage).toBe(true);
+    expect(modalUIStore.openZenMode).toHaveBeenCalledWith("front-1");
+    expect(onboardingStore.dismissedWorldPage).toBe(true);
     vi.useRealTimers();
   });
 
@@ -711,9 +699,9 @@ describe("FrontPage", () => {
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
     await fireEvent.click(screen.getByLabelText("Generate briefing"));
     // Wait for the async confirm to be called
-    await waitFor(() => expect(uiStore.confirm).toHaveBeenCalled());
+    await waitFor(() => expect(notificationStore.confirm).toHaveBeenCalled());
 
-    expect(uiStore.confirm).toHaveBeenCalledWith(
+    expect(notificationStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Regenerate Briefing",
       }),
@@ -722,7 +710,7 @@ describe("FrontPage", () => {
   });
 
   it("includes the theme description when generating a briefing", async () => {
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
+    (notificationStore.confirm as any).mockResolvedValueOnce(true);
 
     render(FrontPage);
 
@@ -792,7 +780,7 @@ describe("FrontPage", () => {
   });
 
   it("caps extra frontpage entity context before generating a briefing", async () => {
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
+    (notificationStore.confirm as any).mockResolvedValueOnce(true);
     Object.assign(worldMock.frontpageEntity, {
       content: "Frontpage alpha ".repeat(250),
       chronicle: "Frontpage alpha ".repeat(250),
@@ -818,7 +806,7 @@ describe("FrontPage", () => {
   });
 
   it("falls back to empty context when frontpage entity loading fails during briefing generation", async () => {
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
+    (notificationStore.confirm as any).mockResolvedValueOnce(true);
     mocks.loadEntityContent.mockRejectedValueOnce(new Error("idb failure"));
 
     render(FrontPage);
@@ -845,7 +833,7 @@ describe("FrontPage", () => {
           resolveGenerate = resolve;
         }),
     );
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
+    (notificationStore.confirm as any).mockResolvedValueOnce(true);
 
     render(FrontPage);
 
@@ -877,7 +865,7 @@ describe("FrontPage", () => {
   });
 
   it("keeps the current briefing when generation fails", async () => {
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
+    (notificationStore.confirm as any).mockResolvedValueOnce(true);
     mocks.generateBriefing.mockResolvedValueOnce("");
 
     render(FrontPage);
@@ -1044,9 +1032,9 @@ describe("FrontPage", () => {
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
     await fireEvent.click(screen.getByLabelText("Generate briefing"));
     // Wait for the async confirm to be called
-    await waitFor(() => expect(uiStore.confirm).toHaveBeenCalled());
+    await waitFor(() => expect(notificationStore.confirm).toHaveBeenCalled());
 
-    expect(uiStore.confirm).toHaveBeenCalledWith(
+    expect(notificationStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Regenerate Briefing",
       }),
@@ -1073,7 +1061,7 @@ describe("FrontPage", () => {
     await fireEvent.click(screen.getByLabelText("Generate briefing"));
 
     // No confirmation needed when there's no existing briefing
-    expect(uiStore.confirm).not.toHaveBeenCalled();
+    expect(notificationStore.confirm).not.toHaveBeenCalled();
     await waitFor(() => expect(mocks.generateBriefing).toHaveBeenCalled());
   });
 

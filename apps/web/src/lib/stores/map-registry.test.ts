@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mapRegistry } from "./map-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { uiStore } from "./ui.svelte";
 import { loadMapsFromDisk, saveMapsToDisk } from "./vault/io";
 import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 // Mock dependencies
 vi.mock("./vault-registry.svelte", () => ({
@@ -11,13 +12,6 @@ vi.mock("./vault-registry.svelte", () => ({
     rootHandle: {},
     activeVaultId: "v1",
     updateEntityCount: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
-vi.mock("./ui.svelte", () => ({
-  uiStore: {
-    isDemoMode: false,
-    notify: vi.fn(),
   },
 }));
 
@@ -44,7 +38,8 @@ describe("MapRegistryStore", () => {
     (mapRegistry as any).status = "idle";
     (vaultRegistry as any).rootHandle = {};
     (vaultRegistry as any).activeVaultId = "v1";
-    (uiStore as any).isDemoMode = false;
+    sessionModeStore.isDemoMode = false;
+    notificationStore.notify = vi.fn();
   });
 
   describe("loadFromVault", () => {
@@ -103,7 +98,7 @@ describe("MapRegistryStore", () => {
       await mapRegistry.saveMaps();
 
       expect(mapRegistry.status).toBe("error");
-      expect(uiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         expect.stringContaining("storage quota"),
         "error",
       );
@@ -129,12 +124,12 @@ describe("MapRegistryStore", () => {
     });
 
     it("should handle deletion in Demo Mode", async () => {
-      (uiStore as any).isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
       mapRegistry.maps = { m1: { id: "m1" } as any };
 
       await mapRegistry.deleteMap("m1");
 
-      expect(uiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         expect.stringContaining("disabled in Demo Mode"),
         "info",
       );
@@ -161,7 +156,7 @@ describe("MapRegistryStore", () => {
       );
 
       await mapRegistry.deleteMap("m1");
-      expect(uiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         expect.stringContaining("Failed to fully delete"),
         "error",
       );
@@ -191,7 +186,7 @@ describe("MapRegistryStore", () => {
       vi.mocked(saveMapsToDisk).mockRejectedValue(new Error("Disk full"));
 
       await mapRegistry.deleteMap("m1");
-      expect(uiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         expect.stringContaining("Failed to fully delete map"),
         "error",
       );
@@ -212,7 +207,7 @@ describe("MapRegistryStore", () => {
         .mockRejectedValueOnce(new Error("Mask delete failed"));
 
       await mapRegistry.deleteMap("m1");
-      expect(uiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         expect.stringContaining("Mask delete failed"),
         "error",
       );

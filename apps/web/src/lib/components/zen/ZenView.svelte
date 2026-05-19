@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { clipboardService } from "$lib/services/ClipboardService";
   import { createEditState } from "$lib/hooks/useEditState.svelte";
@@ -10,6 +9,9 @@
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusEntity } from "$lib/stores/ui/navigation";
 
   let {
     entityId,
@@ -47,7 +49,7 @@
     persistZenPopoutPayload(vault.activeVaultId ?? "guest", entity, true);
   });
 
-  let activeTab = $derived(uiStore.zenModeActiveTab);
+  let activeTab = $derived(modalUIStore.zenModeActiveTab);
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
@@ -123,7 +125,7 @@
     try {
       await vault.updateEntity(entity.id, { status: "active" });
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       isDraftActioning = false;
     }
@@ -136,7 +138,7 @@
       await vault.deleteEntity(entity.id);
       onClose();
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       isDraftActioning = false;
     }
@@ -145,7 +147,7 @@
   const navigateTo = async (id: string) => {
     if (editState.isEditing) {
       if (
-        !(await uiStore.confirm({
+        !(await notificationStore.confirm({
           title: "Unsaved Changes",
           message: "Discard unsaved changes to navigate?",
           confirmLabel: "Discard",
@@ -157,10 +159,10 @@
     }
 
     // Check if we are in modal mode or embedded mode
-    if (uiStore.showZenMode) {
-      uiStore.zenModeEntityId = id;
+    if (modalUIStore.showZenMode) {
+      modalUIStore.zenModeEntityId = id;
     } else {
-      uiStore.focusEntity(id);
+      focusEntity(id);
     }
   };
 
@@ -178,8 +180,8 @@
           ? (currentIndex + 1) % tabs.length
           : (currentIndex - 1 + tabs.length) % tabs.length;
 
-      uiStore.zenModeActiveTab = tabs[nextIndex];
-      const nextTab = uiStore.zenModeActiveTab;
+      modalUIStore.zenModeActiveTab = tabs[nextIndex];
+      const nextTab = modalUIStore.zenModeActiveTab;
       if (nextTab === "overview") tabOverview?.focus();
       else if (nextTab === "inventory") tabInventory?.focus();
       else if (nextTab === "map") tabMap?.focus();
@@ -188,11 +190,11 @@
 
   // Handle keyboard shortcuts
   const handleKeydown = async (e: KeyboardEvent) => {
-    if (uiStore.lightbox.show) {
+    if (modalUIStore.lightbox.show) {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        uiStore.closeLightbox();
+        modalUIStore.closeLightbox();
       }
       return;
     }
@@ -226,8 +228,8 @@
     }
   };
 
-  const ariaRole = $derived(uiStore.showZenMode ? "dialog" : "region");
-  const ariaModal = $derived(uiStore.showZenMode ? "true" : undefined);
+  const ariaRole = $derived(modalUIStore.showZenMode ? "dialog" : "region");
+  const ariaModal = $derived(modalUIStore.showZenMode ? "true" : undefined);
 
   export function requestClose() {
     actions.handleClose(onClose);
@@ -307,7 +309,7 @@
         'overview'
           ? 'text-theme-primary border-theme-primary'
           : 'text-theme-muted border-transparent hover:text-theme-text'}"
-        onclick={() => (uiStore.zenModeActiveTab = "overview")}
+        onclick={() => (modalUIStore.zenModeActiveTab = "overview")}
         onkeydown={handleTabKeydown}
       >
         OVERVIEW
@@ -324,7 +326,7 @@
           'inventory'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (uiStore.zenModeActiveTab = "inventory")}
+          onclick={() => (modalUIStore.zenModeActiveTab = "inventory")}
           onkeydown={handleTabKeydown}
         >
           INVENTORY
@@ -340,7 +342,7 @@
           'map'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (uiStore.zenModeActiveTab = "map")}
+          onclick={() => (modalUIStore.zenModeActiveTab = "map")}
           onkeydown={handleTabKeydown}
         >
           MAP
@@ -366,7 +368,7 @@
             {resolvedImageUrl}
             {isPopout}
             onShowLightbox={() =>
-              uiStore.openLightbox(resolvedImageUrl, entity.title)}
+              modalUIStore.openLightbox(resolvedImageUrl, entity.title)}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />

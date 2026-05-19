@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-  const error = $derived(uiStore.globalError);
+  const error = $derived(notificationStore.globalError);
   const isEnabled = $derived(!(window as any).DISABLE_ERROR_OVERLAY);
 </script>
 
@@ -38,7 +38,7 @@
           REBOOT SYSTEM
         </button>
         <button
-          onclick={() => uiStore.clearGlobalError()}
+          onclick={() => notificationStore.clearGlobalError()}
           class="px-6 py-3 border border-red-900 text-red-900 hover:text-red-500 hover:border-red-500 transition-colors"
         >
           IGNORE

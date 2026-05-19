@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Proposal } from "@codex/proposer";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 const {
   mockVault,
   mockOracle,
-  mockUiStore,
   mockDebugStore,
   mockAnalyzeEntity,
   mockVaultEventBus,
@@ -21,10 +21,6 @@ const {
   mockOracle: {
     effectiveApiKey: "test-key",
   },
-  mockUiStore: {
-    aiDisabled: false,
-    connectionDiscoveryMode: "suggest",
-  },
   mockDebugStore: {
     log: vi.fn(),
     warn: vi.fn(),
@@ -39,7 +35,6 @@ const {
 
 vi.mock("./vault.svelte", () => ({ vault: mockVault }));
 vi.mock("./oracle.svelte", () => ({ oracle: mockOracle }));
-vi.mock("./ui.svelte", () => ({ uiStore: mockUiStore }));
 vi.mock("./debug.svelte", () => ({ debugStore: mockDebugStore }));
 vi.mock("./vault/events", () => ({ vaultEventBus: mockVaultEventBus }));
 vi.mock("../cloud-bridge/proposer-bridge", () => ({
@@ -97,7 +92,7 @@ describe("proposerStore", () => {
     mockVault.allEntities = Object.values(mockVault.entities);
     mockVault.activeVaultId = "test-vault";
     mockVault.selectedEntityId = "s";
-    mockUiStore.aiDisabled = false;
+    discoveryPolicyStore.aiDisabled = false;
     mockAnalyzeEntity.mockResolvedValue([]);
 
     const { proposerStore } = await import("./proposer.svelte");
@@ -123,12 +118,12 @@ describe("proposerStore", () => {
     expect(proposerStore.proposals["s"]).toHaveLength(1);
 
     // Skip if disabled
-    mockUiStore.aiDisabled = true;
+    discoveryPolicyStore.aiDisabled = true;
     await proposerStore.analyzeCurrentEntity();
     expect(mockAnalyzeEntity).toHaveBeenCalledTimes(1);
 
     // Skip if no vault
-    mockUiStore.aiDisabled = false;
+    discoveryPolicyStore.aiDisabled = false;
     mockVault.activeVaultId = null;
     await proposerStore.analyzeEntityById("s");
     expect(mockAnalyzeEntity).toHaveBeenCalledTimes(1);

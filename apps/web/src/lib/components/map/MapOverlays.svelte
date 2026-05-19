@@ -2,9 +2,9 @@
   import PinLinker from "./PinLinker.svelte";
   import MapPinPopover from "./MapPinPopover.svelte";
   import { mapStore } from "../../stores/map.svelte";
-  import { uiStore } from "../../stores/ui.svelte";
   import { vault } from "../../stores/vault.svelte";
   import type { MapInteractionManager } from "./map-interactions.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { interactions }: { interactions: MapInteractionManager } = $props();
 
@@ -38,7 +38,7 @@
     y={pos.y}
     entity={selectedPin.entityId ? vault.entities[selectedPin.entityId] : null}
     subMap={subMapForSelected}
-    onOpenEntity={(entityId) => uiStore.openZenMode(entityId)}
+    onOpenEntity={(entityId) => modalUIStore.openZenMode(entityId)}
     onEnterSubmap={(mapId) => mapStore.selectMap(mapId, true)}
     onDelete={() => {
       if (interactions.selectedPinId) {

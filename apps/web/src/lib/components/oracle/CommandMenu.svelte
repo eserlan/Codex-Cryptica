@@ -4,10 +4,10 @@
   import { searchService } from "../../services/search";
   import { categories } from "../../stores/categories.svelte";
   import { getIconClass } from "../../utils/icon";
-  import { ui } from "../../stores/ui.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import type { SearchResult } from "schema";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let {
     input = $bindable(""),
@@ -120,7 +120,7 @@
       searchService.search(term, { limit: 5 }).then((res) => {
         // Filter results based on visibility settings (same as searchStore and Autocomplete)
         const settings = {
-          sharedMode: ui.sharedMode,
+          sharedMode: sessionModeStore.sharedMode,
           defaultVisibility: vault.defaultVisibility,
         };
 

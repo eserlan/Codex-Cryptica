@@ -2,15 +2,12 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
   maps: {},
   saveMaps: vi.fn(),
-}));
-
-const uiMock = vi.hoisted(() => ({
-  sharedMode: false,
 }));
 
 function makeMap(id: string, isWorldMap = false) {
@@ -29,10 +26,6 @@ vi.mock("./vault.svelte", () => ({
   vault: vaultMock,
 }));
 
-vi.mock("./ui.svelte", () => ({
-  uiStore: uiMock,
-}));
-
 import { MapStore } from "./map.svelte";
 
 describe("MapStore settings persistence", () => {
@@ -40,7 +33,7 @@ describe("MapStore settings persistence", () => {
     window.localStorage.clear();
     vaultMock.activeVaultId = "vault-a";
     vaultMock.maps = {};
-    uiMock.sharedMode = false;
+    sessionModeStore.sharedMode = false;
   });
 
   afterEach(() => {

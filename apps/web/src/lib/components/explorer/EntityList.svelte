@@ -1,10 +1,11 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { groupEntitiesForExplorer } from "./entityListGrouping";
   import type { Entity } from "schema";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let {
     onSelect,
@@ -33,9 +34,9 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   const activeVaultId = $derived(vault.activeVaultId);
-  const labelFilters = $derived(uiStore.labelFilters);
-  const focusedEntityId = $derived(uiStore.focusedEntityId);
-  const viewMode = $derived(uiStore.explorerViewMode);
+  const labelFilters = $derived(explorerUIStore.labelFilters);
+  const focusedEntityId = $derived(layoutUIStore.focusedEntityId);
+  const viewMode = $derived(explorerUIStore.explorerViewMode);
   const allowedTypeSet = $derived.by(() =>
     allowedTypes ? new Set(allowedTypes) : null,
   );
@@ -45,7 +46,7 @@
     ),
   );
   const collapsedLabelGroups = $derived.by(() =>
-    uiStore.getCollapsedLabelGroups(activeVaultId),
+    explorerUIStore.getCollapsedLabelGroups(activeVaultId),
   );
 
   // ⚡ Bolt Optimization: Return the Map directly to avoid intermediate array allocations,
@@ -128,7 +129,7 @@
 
     if (type === "all") {
       typeFilters = new Set();
-      uiStore.clearLabelFilters();
+      explorerUIStore.clearLabelFilters();
       return;
     }
 
@@ -241,7 +242,7 @@
       <div class="w-px h-3.5 bg-theme-border mx-0.5 opacity-50"></div>
 
       <button
-        onclick={() => uiStore.setExplorerViewMode("list")}
+        onclick={() => explorerUIStore.setExplorerViewMode("list")}
         title="List View"
         aria-label="List View"
         aria-pressed={viewMode === "list"}
@@ -253,7 +254,7 @@
       </button>
 
       <button
-        onclick={() => uiStore.setExplorerViewMode("label")}
+        onclick={() => explorerUIStore.setExplorerViewMode("label")}
         title="Group by Label"
         aria-label="Group by Label"
         aria-pressed={viewMode === "label"}
@@ -275,7 +276,7 @@
           >
             <span>{label}</span>
             <button
-              onclick={() => uiStore.removeLabelFilter(label)}
+              onclick={() => explorerUIStore.removeLabelFilter(label)}
               class="hover:text-theme-text transition-colors flex items-center justify-center"
               aria-label={`Remove ${label} filter`}
             >
@@ -284,7 +285,7 @@
           </div>
         {/each}
         <button
-          onclick={() => uiStore.clearLabelFilters()}
+          onclick={() => explorerUIStore.clearLabelFilters()}
           class="px-2 py-0.5 text-[9px] font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
         >
           Clear All
@@ -351,7 +352,10 @@
                 type="button"
                 onclick={(e) => {
                   e.stopPropagation();
-                  uiStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
+                  explorerUIStore.toggleLabelFilter(
+                    label,
+                    e.ctrlKey || e.metaKey,
+                  );
                 }}
                 class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
                   label,
@@ -457,7 +461,8 @@
         {@const isCollapsed = collapsedLabelGroups.has(label)}
         <button
           type="button"
-          onclick={() => uiStore.toggleExplorerLabelGroup(activeVaultId, label)}
+          onclick={() =>
+            explorerUIStore.toggleExplorerLabelGroup(activeVaultId, label)}
           aria-expanded={!isCollapsed}
           class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
         >

@@ -2,13 +2,13 @@ import { vaultEventBus } from "./events";
 import * as vaultEntities from "./entities";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
-import { uiStore } from "../ui.svelte";
 import type { LocalEntity, BatchCreateInput } from "./types";
 import { VaultRepository } from "@codex/vault-engine";
 import type { Entity } from "schema";
 import type { EntityPersistenceService } from "./entity-persistence";
 import type { EntityContentLoader } from "./entity-content-loader.svelte";
 import type { IVaultServices } from "./service-registry";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export interface MutationDependencies {
   repository: VaultRepository;
@@ -202,7 +202,7 @@ export class EntityMutationService {
   async deleteEntity(id: string) {
     if (this.deps.isGuest())
       throw new Error("Cannot delete entities in Guest Mode");
-    if (uiStore.isDemoMode) {
+    if (sessionModeStore.isDemoMode) {
       const updated = { ...this.entities };
       delete updated[id];
       this.entities = updated;

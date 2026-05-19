@@ -1,6 +1,5 @@
 import { oracle } from "$lib/stores/oracle.svelte";
 import { vault } from "$lib/stores/vault.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import {
   nodeMergeService,
   type IMergedContentProposal,
@@ -9,6 +8,7 @@ import {
   OracleCommandParser,
   type RegenerationDraft,
 } from "@codex/oracle-engine";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export class RegenerationService {
   pendingDraft = $state<RegenerationDraft | null>(null);
@@ -113,14 +113,14 @@ export class RegenerationService {
         });
       }
       this.discardDraft();
-      uiStore.notify(
+      notificationStore.notify(
         draftSource === "merge"
           ? "Merge saved successfully."
           : "AI content saved successfully.",
         "success",
       );
     } catch (err: any) {
-      uiStore.notify(`Failed to save draft: ${err.message}`, "error");
+      notificationStore.notify(`Failed to save draft: ${err.message}`, "error");
     }
   }
 

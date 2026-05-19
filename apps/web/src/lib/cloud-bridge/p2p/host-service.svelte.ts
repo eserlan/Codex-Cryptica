@@ -2,7 +2,8 @@ import { vault as defaultVault } from "../../stores/vault.svelte";
 import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
 import { guestRoster as defaultGuestRoster } from "../../stores/guest";
 import { mapStore as defaultMapStore } from "../../stores/map.svelte";
-import { uiStore as defaultUIStore } from "../../stores/ui.svelte";
+import { sessionModeStore as defaultSessionModeStore } from "../../stores/ui/session-mode.svelte";
+import { notificationStore as defaultNotificationStore } from "../../stores/ui/notification.svelte";
 import { mapSession } from "../../stores/map-session.svelte";
 import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
 import type {
@@ -21,7 +22,8 @@ type HostDeps = {
   themeStore?: typeof defaultThemeStore;
   guestRoster?: typeof defaultGuestRoster;
   mapStore?: typeof defaultMapStore;
-  uiStore?: typeof defaultUIStore;
+  sessionModeStore?: typeof defaultSessionModeStore;
+  notificationStore?: typeof defaultNotificationStore;
   peerFactory?: PeerFactory;
   transport?: P2PTransport;
   dispatcher?: P2PDispatcher;
@@ -39,14 +41,16 @@ export class P2PHostService {
   private readonly themeStore: typeof defaultThemeStore;
   private readonly guestRoster: typeof defaultGuestRoster;
   private readonly mapStore: typeof defaultMapStore;
-  private readonly uiStore: typeof defaultUIStore;
+  private readonly sessionModeStore: typeof defaultSessionModeStore;
+  private readonly notificationStore: typeof defaultNotificationStore;
 
   constructor(deps: HostDeps = {}) {
     this.vault = deps.vault ?? defaultVault;
     this.themeStore = deps.themeStore ?? defaultThemeStore;
     this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
     this.mapStore = deps.mapStore ?? defaultMapStore;
-    this.uiStore = deps.uiStore ?? defaultUIStore;
+    this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
+    this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
 
     this.transport =
       deps.transport ?? new PeerJSTransport(deps.peerFactory ?? createPeer);
@@ -92,7 +96,8 @@ export class P2PHostService {
   private getHandlerContext() {
     return {
       vault: this.vault,
-      uiStore: this.uiStore,
+      sessionModeStore: this.sessionModeStore,
+      notificationStore: this.notificationStore,
       mapSession: mapSession,
       mapStore: this.mapStore,
       themeStore: this.themeStore,

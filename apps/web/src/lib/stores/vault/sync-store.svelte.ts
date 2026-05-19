@@ -5,8 +5,9 @@ import { cacheService } from "../../services/cache.svelte";
 import { SyncCoordinator, VaultRepository } from "@codex/vault-engine";
 import { appEventBus } from "@codex/events";
 import { fileIOAdapter } from "./adapters.svelte";
-import { uiStore } from "../ui.svelte";
 import type { VaultRecord } from "../../utils/idb";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
@@ -47,7 +48,7 @@ export class SyncStore {
   get isDirty() {
     const record = this.deps.activeVaultRecord();
     if (!record) return false;
-    if (uiStore.isDemoMode || this.status === "loading") return false;
+    if (sessionModeStore.isDemoMode || this.status === "loading") return false;
     return (record.lastInternalChange || 0) > (record.lastSavedToFolder || 0);
   }
 
@@ -91,7 +92,8 @@ export class SyncStore {
 
       this.deps.repository.entities = {};
 
-      const isDemo = uiStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
+      const isDemo =
+        sessionModeStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
       const cachedMap = !isDemo
         ? await cacheService.preloadVault(vaultIdAtStart)
         : new Map();
@@ -317,7 +319,7 @@ export class SyncStore {
     const vaultIdAtStart = activeVaultId;
 
     if (this.isDirty) {
-      const confirmed = await uiStore.confirm({
+      const confirmed = await notificationStore.confirm({
         title: "Overwrite Internal Work?",
         message:
           "Warning: You have unsaved internal changes. Loading from the folder will overwrite your current work. Continue?",

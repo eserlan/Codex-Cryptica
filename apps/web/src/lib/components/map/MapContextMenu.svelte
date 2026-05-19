@@ -1,9 +1,10 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import { mapStore } from "../../stores/map.svelte";
-  import { uiStore } from "../../stores/ui.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let {
     x,
@@ -52,7 +53,7 @@
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
         onclick={() => {
           if (_ctxToken?.entityId) {
-            uiStore.openZenMode(_ctxToken.entityId);
+            modalUIStore.openZenMode(_ctxToken.entityId);
             onClose();
           }
         }}
@@ -64,7 +65,7 @@
     {/if}
 
     <!-- Multi-select actions (GM only) -->
-    {#if mapStore.isGMMode && !uiStore.isGuestMode}
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
       {#if mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(tokenId)}
         <div class="h-px bg-theme-border my-1 mx-2"></div>
         <div
@@ -120,7 +121,7 @@
     <div class="h-px bg-theme-border my-1 mx-2"></div>
 
     <!-- Removal -->
-    {#if mapStore.isGMMode && !uiStore.isGuestMode}
+    {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
         onclick={() => {

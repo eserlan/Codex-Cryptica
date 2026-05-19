@@ -1,9 +1,9 @@
 import { vault } from "./vault.svelte";
-import { uiStore } from "./ui.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
 import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
@@ -47,7 +47,7 @@ export class MapStore {
   pendingPinCoords = $state<Point | null>(null);
   showFog = $state(true);
   // GM Mode is active whenever we are NOT in Shared Mode (Player View)
-  isGMMode = $derived(!uiStore.sharedMode);
+  isGMMode = $derived(!sessionModeStore.sharedMode);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);

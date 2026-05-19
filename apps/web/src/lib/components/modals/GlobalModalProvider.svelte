@@ -1,11 +1,13 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { helpStore } from "$lib/stores/help.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -42,7 +44,7 @@
   {/await}
 {/if}
 
-{#if uiStore.showChangelog}
+{#if onboardingStore.showChangelog}
   {#await loadModal(() => import("./ChangelogModal.svelte"), "ChangelogModal") then ChangelogModal}
     {#if ChangelogModal}
       <ChangelogModal />
@@ -60,7 +62,7 @@
   {/if}
 
   {#if browser}
-    {#if uiStore.showSettings}
+    {#if modalUIStore.showSettings}
       {#await loadModal(() => import("$lib/components/settings/SettingsModal.svelte"), "SettingsModal") then SettingsModal}
         {#if SettingsModal}
           <SettingsModal />
@@ -68,7 +70,7 @@
       {/await}
     {/if}
 
-    {#if uiStore.showZenMode}
+    {#if modalUIStore.showZenMode}
       {#await loadModal(() => import("./ZenModeModal.svelte"), "ZenModeModal") then ZenModeModal}
         {#if ZenModeModal}
           <ZenModeModal />
@@ -92,7 +94,7 @@
       {/await}
     {/if}
 
-    {#if uiStore.confirmationDialog.open}
+    {#if notificationStore.confirmationDialog.open}
       {#await loadModal(() => import("./ConfirmationModal.svelte"), "ConfirmationModal") then ConfirmationModal}
         {#if ConfirmationModal}
           <ConfirmationModal />
@@ -100,25 +102,25 @@
       {/await}
     {/if}
 
-    {#if uiStore.mergeDialog.open}
+    {#if modalUIStore.mergeDialog.open}
       {#await loadModal(() => import("$lib/components/dialogs/MergeNodesDialog.svelte"), "MergeNodesDialog") then MergeNodesDialog}
         {#if MergeNodesDialog}
           <MergeNodesDialog
-            isOpen={uiStore.mergeDialog.open}
-            sourceNodeIds={uiStore.mergeDialog.sourceIds}
-            onClose={() => uiStore.closeMergeDialog()}
+            isOpen={modalUIStore.mergeDialog.open}
+            sourceNodeIds={modalUIStore.mergeDialog.sourceIds}
+            onClose={() => modalUIStore.closeMergeDialog()}
           />
         {/if}
       {/await}
     {/if}
 
-    {#if uiStore.bulkLabelDialog.open}
+    {#if modalUIStore.bulkLabelDialog.open}
       {#await loadModal(() => import("$lib/components/dialogs/BulkLabelDialog.svelte"), "BulkLabelDialog") then BulkLabelDialog}
         {#if BulkLabelDialog}
           <BulkLabelDialog
-            isOpen={uiStore.bulkLabelDialog.open}
-            entityIds={uiStore.bulkLabelDialog.entityIds}
-            onClose={() => uiStore.closeBulkLabelDialog()}
+            isOpen={modalUIStore.bulkLabelDialog.open}
+            entityIds={modalUIStore.bulkLabelDialog.entityIds}
+            onClose={() => modalUIStore.closeBulkLabelDialog()}
           />
         {/if}
       {/await}
@@ -145,13 +147,13 @@
     {/if}
 
     <!-- Global Image Lightbox -->
-    {#if uiStore.lightbox.show}
+    {#if modalUIStore.lightbox.show}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
         {#if ZenImageLightbox}
           <ZenImageLightbox
-            bind:show={uiStore.lightbox.show}
-            imageUrl={uiStore.lightbox.imageUrl}
-            title={uiStore.lightbox.title}
+            bind:show={modalUIStore.lightbox.show}
+            imageUrl={modalUIStore.lightbox.imageUrl}
+            title={modalUIStore.lightbox.title}
           />
         {/if}
       {/await}
