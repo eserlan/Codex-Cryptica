@@ -17,6 +17,12 @@ type MediaQueryListLike = {
     type: "change",
     listener: (event: { matches: boolean }) => void,
   ) => void;
+  removeEventListener?: (
+    type: "change",
+    listener: (event: { matches: boolean }) => void,
+  ) => void;
+  addListener?: (listener: (event: { matches: boolean }) => void) => void;
+  removeListener?: (listener: (event: { matches: boolean }) => void) => void;
 };
 
 export interface UIViewport {
@@ -158,9 +164,9 @@ export class LayoutUIStore {
     );
   }
 
-  private watchMobileState() {
+  private watchMobileState(): (() => void) | null {
     const mediaQuery = this.viewport?.matchMedia?.("(max-width: 768px)");
-    if (!mediaQuery) return;
+    if (!mediaQuery) return null;
     this.isMobile = mediaQuery.matches;
 
     const handler = (event: { matches: boolean }) => {
@@ -169,9 +175,12 @@ export class LayoutUIStore {
 
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener("change", handler);
+      return () => mediaQuery.removeEventListener?.("change", handler);
     } else if ((mediaQuery as any).addListener) {
       (mediaQuery as any).addListener(handler);
+      return () => (mediaQuery as any).removeListener?.(handler);
     }
+    return null;
   }
 
   private debounceWrite(side: "left" | "right", key: string, width: number) {

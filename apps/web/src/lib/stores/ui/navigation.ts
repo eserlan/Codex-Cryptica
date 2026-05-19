@@ -1,7 +1,7 @@
 import { base } from "$app/paths";
 import { layoutUIStore, type LayoutUIStore } from "./layout-ui.svelte";
 import { modalUIStore } from "./modal-ui.svelte";
-import { UI_STORAGE_KEYS } from "./persistence";
+import { UI_STORAGE_KEYS, UIPersistence } from "./persistence";
 
 export const ACTIVE_THEME_STORAGE_KEY = UI_STORAGE_KEYS.ACTIVE_THEME;
 
@@ -79,7 +79,7 @@ export function openDiceWindow() {
   const persistence = new UIPersistence();
   const activeTheme = persistence.read(
     ACTIVE_THEME_STORAGE_KEY,
-    (v) => v,
+    (v: string) => v,
     null,
   );
   if (activeTheme) {
