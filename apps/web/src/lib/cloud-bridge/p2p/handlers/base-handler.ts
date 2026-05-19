@@ -17,9 +17,10 @@ export interface P2PHandlerContext {
 }
 
 /**
- * Interface for specialized P2P message handlers.
+ * Interface for specialized P2P message handlers, parameterized over a context type
+ * so the same routing infrastructure can serve both host and guest sides.
  */
-export interface P2PMessageHandler {
+export interface P2PMessageHandler<TContext = P2PHandlerContext> {
   /** Returns true if this handler can process the given message. */
   canHandle(message: P2PMessage): boolean;
 
@@ -27,32 +28,25 @@ export interface P2PMessageHandler {
   handle(
     message: P2PMessage,
     connection: P2PConnection,
-    context: P2PHandlerContext,
+    context: TContext,
   ): Promise<void>;
 }
 
 /**
  * Abstract base class for action logic and DI.
  */
-export abstract class BaseHandler implements P2PMessageHandler {
+export abstract class BaseHandler<
+  TContext = P2PHandlerContext,
+> implements P2PMessageHandler<TContext> {
   abstract canHandle(message: P2PMessage): boolean;
   abstract handle(
     message: P2PMessage,
     connection: P2PConnection,
-    context: P2PHandlerContext,
+    context: TContext,
   ): Promise<void>;
 
   /** Utility to send a message back to the sender */
   protected send(connection: P2PConnection, message: P2PMessage) {
     connection.send(message);
-  }
-
-  /** Utility to broadcast a message to all except sender */
-  protected broadcast(
-    context: P2PHandlerContext,
-    message: P2PMessage,
-    excludePeerId?: string,
-  ) {
-    context.transport.broadcast(message, excludePeerId);
   }
 }
