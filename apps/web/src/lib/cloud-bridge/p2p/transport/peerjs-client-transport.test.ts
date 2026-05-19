@@ -120,6 +120,22 @@ describe("PeerJsClientTransport", () => {
     await expect(promise).rejects.toThrow("peer boom");
   });
 
+  it("allows a retry after a peer initialization error", async () => {
+    const transport = new PeerJsClientTransport(peerFactory as any);
+
+    const first = transport.connect("host-1");
+    lastPeer!.emit("error", new Error("peer boom"));
+    await expect(first).rejects.toThrow("peer boom");
+
+    // Retry must rebuild the peer, not silently no-op via the isConnecting guard.
+    const second = transport.connect("host-1");
+    expect(peerFactory).toHaveBeenCalledTimes(2);
+    lastPeer!.emit("open", "mock-guest-id");
+    lastPeer!.lastConnection!.open = true;
+    lastPeer!.lastConnection!.emit("open");
+    await expect(second).resolves.toBeUndefined();
+  });
+
   it("rejects connect() on a 15s timeout and tears down the peer", async () => {
     vi.useFakeTimers();
     const transport = new PeerJsClientTransport(peerFactory as any);

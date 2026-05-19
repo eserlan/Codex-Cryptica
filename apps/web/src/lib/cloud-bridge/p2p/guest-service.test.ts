@@ -203,6 +203,74 @@ describe("P2PGuestService (facade)", () => {
     expect(onGraphData).toHaveBeenCalledTimes(1);
   });
 
+  it("reconnects when connectToHost targets a different host id", async () => {
+    const noop = vi.fn();
+    await service.connectToHost("host-1", noop, noop, noop, noop, noop, "Ava");
+    const firstSent = transport.sent.length;
+
+    // Same host: no-op
+    await service.connectToHost("host-1", noop, noop, noop, noop, noop, "Ava");
+    expect(transport.sent.length).toBe(firstSent);
+
+    // Different host: must disconnect + reconnect (re-sends GUEST_JOIN)
+    await service.connectToHost("host-2", noop, noop, noop, noop, noop, "Ava");
+    expect(transport.sent.filter((m) => m.type === "GUEST_JOIN").length).toBe(
+      2,
+    );
+  });
+
+  it("cleans up listeners when connect fails so retries don't double-dispatch", async () => {
+    // Patch transport.connect to reject on first call, succeed on second
+    const realConnect = transport.connect.bind(transport);
+    let calls = 0;
+    transport.connect = vi.fn(async (hostId: string) => {
+      calls++;
+      if (calls === 1) throw new Error("boom");
+      return realConnect(hostId);
+    });
+
+    const noop = vi.fn();
+    const onGraphData = vi.fn();
+    await expect(
+      service.connectToHost(
+        "host-1",
+        onGraphData,
+        noop,
+        noop,
+        noop,
+        noop,
+        "Ava",
+      ),
+    ).rejects.toThrow("boom");
+
+    // Second attempt succeeds
+    await service.connectToHost(
+      "host-1",
+      onGraphData,
+      noop,
+      noop,
+      noop,
+      noop,
+      "Ava",
+    );
+
+    transport.simulateData({ type: "GRAPH_SYNC", payload: { x: 1 } });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onGraphData).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a transport error like a close: tears down service state", async () => {
+    const noop = vi.fn();
+    await service.connectToHost("host-1", noop, noop, noop, noop, noop, "Ava");
+    expect(service.connected).toBe(true);
+
+    transport.simulateError(new Error("connection lost"));
+
+    expect(service.connected).toBe(false);
+    expect(mockMapSession.myPeerId).toBeNull();
+  });
+
   it("disconnect() tears down state and is idempotent", async () => {
     const noop = vi.fn();
     await service.connectToHost("host-1", noop, noop, noop, noop, noop, "Ava");

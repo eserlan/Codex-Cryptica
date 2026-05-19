@@ -100,6 +100,15 @@ export class PeerJsClientTransport implements P2PClientTransport {
         this.peer.on("error", (err: any) => {
           if (epoch !== this.activeEpoch) return;
           if (timeoutHandle) clearTimeout(timeoutHandle);
+          // Reset state so a retry can rebuild the peer.
+          this.isConnecting = false;
+          this.activeEpoch++;
+          try {
+            this.peer?.destroy();
+          } catch {
+            /* ignore */
+          }
+          this.peer = null;
           this.emit("error", err);
           reject(err);
         });

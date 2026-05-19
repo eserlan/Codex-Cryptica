@@ -39,11 +39,13 @@ export interface GuestHandlerContext {
   session: GuestSessionState;
 }
 
+export type GuestStatusPayload = {
+  status: GuestPresenceStatus;
+  currentEntityId: string | null;
+  currentEntityTitle: string | null;
+};
+
 export interface GuestSessionState {
   joinAccepted: boolean;
-  pendingStatus: {
-    status: GuestPresenceStatus;
-    currentEntityId: string | null;
-    currentEntityTitle: string | null;
-  } | null;
+  pendingStatus: GuestStatusPayload | null;
 }

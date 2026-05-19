@@ -1,9 +1,10 @@
-import { guestRoster, type GuestPresenceStatus } from "../../stores/guest";
+import { guestRoster } from "../../stores/guest";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { MapAssetUrlCache } from "./handlers/map-asset-url-cache";
 import type {
   GuestHandlerContext,
   GuestSessionState,
+  GuestStatusPayload,
 } from "./handlers/guest-handler-context";
 import { PeerJsClientTransport } from "./transport/peerjs-client-transport";
 import type { P2PClientTransport } from "./transport/client-transport";
@@ -14,12 +15,6 @@ import {
   buildGuestDispatcher,
 } from "./guest-session-context";
 import { createPeer, type PeerFactory } from "./peer-factory";
-
-type GuestStatusPayload = {
-  status: GuestPresenceStatus;
-  currentEntityId: string | null;
-  currentEntityTitle: string | null;
-};
 
 type GuestDeps = {
   peerFactory?: PeerFactory;
@@ -42,6 +37,7 @@ export class P2PGuestService {
     pendingStatus: null,
   };
   private guestDisplayName: string | null = null;
+  private currentHostId: string | null = null;
   private isConnected = false;
   private dataListener: ((data: any) => void) | null = null;
   private closeListener: (() => void) | null = null;
@@ -64,7 +60,8 @@ export class P2PGuestService {
     guestName?: string,
     onJoinRejectedCallback?: (reason: string, displayName: string) => void,
   ): Promise<void> {
-    if (this.transport.connected && this.context) return;
+    if (this.transport.connected && this.currentHostId === hostId) return;
+    if (this.isConnected) this.disconnect();
 
     guestRoster.set({});
     this.guestDisplayName = guestName?.trim() || null;
@@ -97,9 +94,16 @@ export class P2PGuestService {
     this.closeListener = () => this.handleTransportClose();
     this.transport.on("data", this.dataListener);
     this.transport.on("close", this.closeListener);
+    this.transport.on("error", this.closeListener);
 
-    await this.transport.connect(hostId);
+    try {
+      await this.transport.connect(hostId);
+    } catch (err) {
+      this.disconnect();
+      throw err;
+    }
     this.isConnected = true;
+    this.currentHostId = hostId;
 
     if (this.transport.id) ctx.mapSession.myPeerId = this.transport.id;
 
@@ -120,24 +124,23 @@ export class P2PGuestService {
 
   private handleTransportClose() {
     if (!this.isConnected) return;
-    const ctx = this.context;
-    if (ctx) {
-      ctx.mapSession.setBroadcaster(null);
-      ctx.mapSession.clearSession(true);
-      ctx.mapSession.myPeerId = null;
-    }
+    this.context?.mapSession.clearSession(true);
     this.disconnect();
   }
 
   disconnect() {
     this.isConnected = false;
+    this.currentHostId = null;
     this.session.joinAccepted = false;
     this.session.pendingStatus = null;
     guestRoster.set({});
     this.tokenMoves.clear();
 
     if (this.dataListener) this.transport.off("data", this.dataListener);
-    if (this.closeListener) this.transport.off("close", this.closeListener);
+    if (this.closeListener) {
+      this.transport.off("close", this.closeListener);
+      this.transport.off("error", this.closeListener);
+    }
     this.dataListener = null;
     this.closeListener = null;
 
