@@ -3,13 +3,13 @@ import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import { uiStore as defaultUiStore } from "./ui.svelte";
 import {
   getOpfsRoot,
   getVaultDir,
   readFileAsText,
   writeOpfsFile,
 } from "../utils/opfs";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 const CONFIG_PATH = [".codex", "config.json"];
@@ -33,7 +33,7 @@ export class ThemeStore {
   onThemeUpdate?: (id: string) => void;
 
   // Dependencies
-  private uiStore: typeof defaultUiStore;
+  private sessionModeStore: typeof sessionModeStore;
   private storage: IThemeStorage;
   private getVault: () => any;
 
@@ -63,7 +63,7 @@ export class ThemeStore {
   }
 
   constructor(
-    uiStore: typeof defaultUiStore = defaultUiStore,
+    sessionStore: typeof sessionModeStore = sessionModeStore,
     getVault?: () => any,
     storage: IThemeStorage = {
       loadLocal() {
@@ -119,7 +119,7 @@ export class ThemeStore {
       },
     },
   ) {
-    this.uiStore = uiStore;
+    this.sessionModeStore = sessionStore;
     this.storage = storage;
     this.getVault =
       getVault || (() => import("./vault.svelte").then((m) => m.vault));
@@ -161,7 +161,7 @@ export class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || this.uiStore.isDemoMode) return;
+    if (!browser || this.sessionModeStore.isDemoMode) return;
 
     this.previewThemeId = null; // Clear any preview on vault switch
 
@@ -206,7 +206,7 @@ export class ThemeStore {
     this.onThemeUpdate?.(id);
     if (browser) {
       // Don't persist theme if in demo mode
-      if (this.uiStore.isDemoMode) return;
+      if (this.sessionModeStore.isDemoMode) return;
 
       this.storage.saveLocal(id);
 

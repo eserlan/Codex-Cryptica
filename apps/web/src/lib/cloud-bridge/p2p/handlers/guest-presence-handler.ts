@@ -62,8 +62,8 @@ export class GuestPresenceHandler extends BaseHandler<GuestHandlerContext> {
     context.session.pendingStatus = null;
     context.session.joinAccepted = false;
     context.guestRoster.set({});
-    context.uiStore.guestUsername = null;
-    context.uiStore.isGuestMode = true;
+    context.sessionModeStore.guestUsername = null;
+    context.sessionModeStore.isGuestMode = true;
     context.vault.status = "idle";
     context.vault.errorMessage = null;
 

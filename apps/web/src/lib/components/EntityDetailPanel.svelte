@@ -2,11 +2,6 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
-  import {
-    uiStore,
-    MIN_RIGHT_SIDEBAR_WIDTH,
-    MAX_SIDEBAR_VW,
-  } from "$lib/stores/ui.svelte";
   import ResizerHandle from "./layout/ResizerHandle.svelte";
 
   // Sub-components
@@ -22,6 +17,13 @@
     createEntityDetailTabIds,
     type EntityDetailTab,
   } from "./entity-detail/detail-tabs";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import {
+    layoutUIStore,
+    MAX_SIDEBAR_VW,
+    MIN_RIGHT_SIDEBAR_WIDTH,
+  } from "$lib/stores/ui/layout-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { entity: _entity, onClose } = $props<{
     entity: Entity | null;
@@ -109,7 +111,7 @@
       isEditing = false;
     } catch (err) {
       console.error("Failed to save changes", err);
-      uiStore.notify(
+      notificationStore.notify(
         "Failed to save changes. Your latest edits were not saved.",
         "info",
       );
@@ -120,7 +122,7 @@
 
   const handleDelete = async () => {
     if (!entity) return;
-    const confirmed = await uiStore.confirm({
+    const confirmed = await notificationStore.confirm({
       title: "Delete Entity",
       message: `Are you sure you want to permanently delete "${entity.title}"? This action cannot be undone.`,
       confirmLabel: "Delete permanently",
@@ -134,7 +136,7 @@
         onClose();
       } catch (err: any) {
         console.error("Failed to delete entity", err);
-        uiStore.notify(`Error: ${err.message}`, "error");
+        notificationStore.notify(`Error: ${err.message}`, "error");
       }
     }
   };
@@ -147,7 +149,7 @@
     try {
       await vault.updateEntity(entity.id, { status: "active" });
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       isDraftActioning = false;
     }
@@ -160,7 +162,7 @@
       await vault.deleteEntity(entity.id);
       onClose();
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       isDraftActioning = false;
     }
@@ -171,19 +173,21 @@
   <aside
     transition:fade={{ duration: 200 }}
     class="pointer-events-auto flex h-full w-full flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50 shrink-0"
-    style:width={uiStore.isMobile ? "100%" : `${uiStore.rightSidebarWidth}px`}
+    style:width={layoutUIStore.isMobile
+      ? "100%"
+      : `${layoutUIStore.rightSidebarWidth}px`}
     style:background-color="var(--theme-panel-fill)"
     style:background-image="var(--bg-theme-surface)"
     style:background-size="cover"
     data-testid="entity-detail-panel"
   >
-    {#if !uiStore.isMobile}
+    {#if !layoutUIStore.isMobile}
       <ResizerHandle
         side="right"
         minWidth={MIN_RIGHT_SIDEBAR_WIDTH}
         maxWidthVW={MAX_SIDEBAR_VW}
-        currentWidth={uiStore.rightSidebarWidth}
-        onResize={(w) => uiStore.setRightSidebarWidth(w)}
+        currentWidth={layoutUIStore.rightSidebarWidth}
+        onResize={(w) => layoutUIStore.setRightSidebarWidth(w)}
       />
     {/if}
 
@@ -200,7 +204,7 @@
       style:background-color="var(--theme-panel-muted)"
       style="background-image: var(--bg-texture-overlay); touch-action: pan-y;"
     >
-      {#if uiStore.isDemoMode}
+      {#if sessionModeStore.isDemoMode}
         <div
           class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-[9px] font-bold text-theme-primary tracking-widest text-center animate-pulse"
         >

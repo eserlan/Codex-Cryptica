@@ -150,7 +150,7 @@ As a quality assurance engineer, I want the refactor to follow strict surgical g
 ### Functional Requirements
 
 - **FR-001**: System MUST partition `ui.svelte.ts` into the following focused stores, each owning a coherent UI slice:
-  - **`LayoutUIStore`**: sidebar open/closed, widths, active tool, mobile detection, VTT sidebar collapses, focus/navigation primitives.
+  - **`LayoutUIStore`**: sidebar open/closed, widths, active tool, mobile detection, VTT sidebar collapses. (Note: navigation composition like `focusEntity` moves to a cross-store helper).
   - **`ModalUIStore`**: settings, dice, canvas selector, merge dialog, bulk label, lightbox, read-mode, zen-mode, confirmation dialog.
   - **`NotificationStore`**: `notify` / `clearNotification`, `globalError` / `setGlobalError` / `clearGlobalError`, `confirm` / `resolveConfirmation`.
   - **`ExplorerUIStore`**: explorer view mode, collapsed label groups (per vault), label filters.
@@ -161,12 +161,12 @@ As a quality assurance engineer, I want the refactor to follow strict surgical g
 - **FR-002**: System MUST provide a `UIPersistence` helper module that owns every `localStorage` read/write currently inline in `UIStore`. Helpers MUST be typed (e.g., `read<T>(key: string, parse: (raw: string) => T)`) and gracefully no-op when `typeof window === "undefined"`.
 - **FR-003**: Every existing `localStorage` key MUST be preserved verbatim. Renaming or restructuring any key is out of scope.
 - **FR-004**: During the migration, the existing `uiStore` export MUST remain a working facade that delegates every property and method to the new stores. No consumer file may break partway through the migration.
-- **FR-005**: Each new store MUST be standalone — it MUST NOT import any other `stores/ui/*` module. Cross-store flows (e.g., `focusEntity` composing layout + navigation) MUST be implemented at the call site or in a separate helper module.
+- **FR-005**: Each new store MUST be standalone — it MUST NOT import any other `stores/ui/*` module. Cross-store flows (e.g., `focusEntity` composing layout + navigation) MUST be implemented in a dedicated `navigation.ts` helper that imports the required stores.
 - **FR-006**: Each new store MUST be unit-testable without stubbing `window` directly. The `UIPersistence` helper MUST be injectable so tests can pass an in-memory backing store.
 - **FR-007**: After Phase 8 (facade removal), `ui.svelte.ts` MUST be deleted and every project file MUST import from a per-feature store. Zero `uiStore.*` references MUST remain.
 - **FR-008**: The codemod MUST be applied automatically (or via documented manual steps) and the project MUST pass type-check, lint, and the full Vitest suite after the sweep.
 - **FR-009**: System MUST follow the project DI mandate (Rule VIII): each new store's constructor MUST accept a `UIPersistence` implementation (defaulting to the real one).
-- **FR-010**: The `notify` / `confirm` / `setGlobalError` APIs MUST remain wire-compatible — same method signatures, same return shapes, same timing semantics — so that the ~100 call sites need no code change beyond their import path.
+- **FR-010**: The `notify` / `confirm` / `setGlobalError` APIs MUST remain wire-compatible — same method signatures, same return shapes, and identical timing behavior (matching the existing 5s/8s constants) — so that the ~100 call sites need no code change beyond their import path.
 - **FR-011**: Each new store file MUST stay under **200 lines** (including types and JSDoc).
 - **FR-012**: System MUST preserve the `window.uiStore` debug registration (if present today) until Phase 8; in Phase 8 it MUST be replaced with `window.codexUI = { layout: layoutUIStore, modal: modalUIStore, … }` or equivalent so debugging from DevTools remains possible.
 

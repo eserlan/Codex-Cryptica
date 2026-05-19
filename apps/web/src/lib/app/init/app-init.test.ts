@@ -21,12 +21,25 @@ vi.mock("../../config", () => ({
   IS_STAGING: true,
 }));
 
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: {
+    setGlobalError: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
+  sessionModeStore: {
+    isStaging: false,
+  },
+}));
+
 import {
   bootSystem,
   initializeGlobalListeners,
   setupWindowGlobals,
   registerServiceWorker,
 } from "./app-init";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 describe("app-init", () => {
   let listenersCleanup: (() => void)[] = [];
@@ -49,7 +62,7 @@ describe("app-init", () => {
         graph: { init: vi.fn() },
         calendar: { init: vi.fn() },
         vault: { init: vi.fn().mockResolvedValue(undefined) },
-        uiStore: { isStaging: false },
+        sessionModeStore: { isStaging: false },
       };
 
       const result = bootSystem(mockStores as any);
@@ -60,7 +73,7 @@ describe("app-init", () => {
       expect(mockStores.graph.init).toHaveBeenCalled();
       expect(mockStores.calendar.init).toHaveBeenCalled();
       expect(mockStores.vault.init).toHaveBeenCalled();
-      expect(mockStores.uiStore.isStaging).toBe(true);
+      expect(mockStores.sessionModeStore.isStaging).toBe(true);
     });
 
     it("should handle vault initialization failure", async () => {
@@ -73,7 +86,7 @@ describe("app-init", () => {
         graph: { init: vi.fn() },
         calendar: { init: vi.fn() },
         vault: { init: vi.fn().mockRejectedValue(new Error("Vault fail")) },
-        uiStore: { isStaging: false },
+        sessionModeStore: { isStaging: false },
       };
 
       bootSystem(mockStores as any);
@@ -92,10 +105,9 @@ describe("app-init", () => {
   describe("initializeGlobalListeners", () => {
     it("should add event listeners to window", () => {
       const addSpy = vi.spyOn(window, "addEventListener");
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
 
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       expect(addSpy).toHaveBeenCalledWith("error", expect.any(Function));
@@ -110,9 +122,8 @@ describe("app-init", () => {
     });
 
     it("should handle global error and update uiStore", () => {
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       const errorEvent = new ErrorEvent("error", {
@@ -121,16 +132,15 @@ describe("app-init", () => {
       });
       window.dispatchEvent(errorEvent);
 
-      expect(mockUiStore.setGlobalError).toHaveBeenCalledWith(
+      expect(notificationStore.setGlobalError).toHaveBeenCalledWith(
         "Test Error",
         expect.any(String),
       );
     });
 
     it("should ignore noisy script/link errors", () => {
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       const scriptElement = document.createElement("script");
@@ -141,13 +151,12 @@ describe("app-init", () => {
       Object.defineProperty(errorEvent, "target", { value: scriptElement });
 
       window.dispatchEvent(errorEvent);
-      expect(mockUiStore.setGlobalError).not.toHaveBeenCalled();
+      expect(notificationStore.setGlobalError).not.toHaveBeenCalled();
     });
 
     it("should ignore specific ignored error messages", () => {
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       window.dispatchEvent(
@@ -162,13 +171,12 @@ describe("app-init", () => {
         new ErrorEvent("error", { message: "Failed to fetch" }),
       );
 
-      expect(mockUiStore.setGlobalError).not.toHaveBeenCalled();
+      expect(notificationStore.setGlobalError).not.toHaveBeenCalled();
     });
 
     it("should handle unhandled rejection", () => {
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       const p = Promise.reject("fail");
@@ -180,16 +188,15 @@ describe("app-init", () => {
       });
       window.dispatchEvent(rejectionEvent);
 
-      expect(mockUiStore.setGlobalError).toHaveBeenCalledWith(
+      expect(notificationStore.setGlobalError).toHaveBeenCalledWith(
         "Rejection Reason",
         expect.any(String),
       );
     });
 
     it("should handle vault-switched event", () => {
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       window.dispatchEvent(new CustomEvent("vault-switched"));
@@ -199,10 +206,9 @@ describe("app-init", () => {
 
     it("should remove event listeners on cleanup", () => {
       const removeSpy = vi.spyOn(window, "removeEventListener");
-      const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
 
-      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockCalendarStore);
       cleanup();
 
       expect(removeSpy).toHaveBeenCalledWith("error", expect.any(Function));

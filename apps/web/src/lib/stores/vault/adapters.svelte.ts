@@ -22,10 +22,10 @@ import type {
 } from "@codex/vault-engine/src/asset-manager";
 import { LocalSyncService, SyncRegistry } from "@codex/sync-engine";
 import { getDB } from "../../utils/idb";
-import { uiStore } from "../ui.svelte";
 import { readOpfsBlob, getDirHandle } from "../../utils/opfs";
 import { convertToWebP, generateThumbnail } from "../../utils/image-processing";
 import { DEFAULT_ENTITY_TYPE } from "schema";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export const fileIOAdapter: IFileIOAdapter = {
   walkDirectory: walkOpfsDirectory as any,
@@ -110,7 +110,7 @@ export const syncIOAdapter: ISyncIOAdapter = {
 export const syncNotifier: ISyncNotifier = {
   notify: (msg, type) => {
     const uiType = type === "warning" ? "info" : type;
-    uiStore.notify(msg, uiType);
+    notificationStore.notify(msg, uiType);
   },
   alert: (msg) => window.alert(msg),
 };

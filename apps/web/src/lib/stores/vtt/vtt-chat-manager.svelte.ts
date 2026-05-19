@@ -1,6 +1,6 @@
 import type { ChatMessagePayload, VTTMessage } from "../../../types/vtt";
 import { diceEngine, type RollResult } from "dice-engine";
-import { uiStore } from "../ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export interface VTTChatDependencies {
   emit: (message: VTTMessage) => void;
@@ -42,8 +42,8 @@ export class VTTChatManager {
     content: string,
     roll?: ReturnType<VTTChatManager["createChatRoll"]>,
   ): ChatMessagePayload {
-    const sender = uiStore.isGuestMode
-      ? uiStore.guestUsername || "Guest"
+    const sender = sessionModeStore.isGuestMode
+      ? sessionModeStore.guestUsername || "Guest"
       : "GM";
     const senderId = this.deps.getMyPeerId() || "host";
 

@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { uiStore } from "./ui.svelte";
-
 vi.hoisted(() => {
   const effect = vi.fn();
   (effect as any).root = (fn: any) => fn?.();
@@ -38,6 +36,7 @@ vi.mock("./vault.svelte", () => ({
 import { mapStore } from "./map.svelte";
 import { vault } from "./vault.svelte";
 import { MapSessionStore } from "./map-session.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("MapSessionStore", () => {
   let service: {
@@ -51,7 +50,7 @@ describe("MapSessionStore", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
     window.localStorage.clear();
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
     mapStore.activeMapId = "map-1";
     mapStore.gridSize = 50;
     service = {
@@ -103,7 +102,7 @@ describe("MapSessionStore", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("adds and moves tokens with grid snapping", () => {
@@ -637,7 +636,7 @@ describe("MapSessionStore", () => {
   });
 
   it("mirrors the current session into popout storage", () => {
-    uiStore.isGuestMode = true;
+    sessionModeStore.isGuestMode = true;
     store.setVttEnabled(true);
     store.myPeerId = "guest-peer";
     const token = store.addToken({

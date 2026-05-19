@@ -1,6 +1,5 @@
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
-import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { debugStore } from "./debug.svelte";
 import { vaultEventBus } from "./vault/events";
@@ -8,6 +7,7 @@ import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
 import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 class ProposerStore {
   private service: ProposerService | null = null;
@@ -296,7 +296,7 @@ class ProposerStore {
   }
 
   async analyzeCurrentEntity() {
-    if (uiStore.aiDisabled) return;
+    if (discoveryPolicyStore.aiDisabled) return;
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isEntityAnalyzing(entityId)) return;
     await this.analyzeEntityById(entityId, true);
@@ -307,7 +307,7 @@ class ProposerStore {
     requireSelection = false,
     analysisText?: string,
   ) {
-    if (uiStore.aiDisabled) return;
+    if (discoveryPolicyStore.aiDisabled) return;
 
     if (this.isEntityAnalyzing(entityId)) {
       debugStore.warn(

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import {
@@ -12,6 +11,8 @@
   } from "lucide-svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   interface NavItem {
     id: string;
@@ -48,26 +49,26 @@
         id: "oracle",
         icon: Sparkles,
         label: "Lore Oracle",
-        action: () => uiStore.toggleSidebarTool("oracle"),
+        action: () => layoutUIStore.toggleSidebarTool("oracle"),
       },
       {
         id: "explorer",
         icon: Database,
         label: "Entity Explorer",
-        action: () => uiStore.toggleSidebarTool("explorer"),
+        action: () => layoutUIStore.toggleSidebarTool("explorer"),
       },
     ];
 
     if (
       !vault.isGuest &&
-      !uiStore.aiDisabled &&
-      uiStore.connectionDiscoveryMode !== "off"
+      !discoveryPolicyStore.aiDisabled &&
+      discoveryPolicyStore.connectionDiscoveryMode !== "off"
     ) {
       list.push({
         id: "ai-assessment",
         icon: ShieldCheck,
         label: "AI Assessment",
-        action: () => uiStore.toggleSidebarTool("ai-assessment"),
+        action: () => layoutUIStore.toggleSidebarTool("ai-assessment"),
       });
     }
 
@@ -136,7 +137,7 @@
   <!-- Sidecar Tools -->
   {#each tools as tool}
     {@const Icon = tool.icon}
-    {@const active = uiStore.activeSidebarTool === tool.id}
+    {@const active = layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active

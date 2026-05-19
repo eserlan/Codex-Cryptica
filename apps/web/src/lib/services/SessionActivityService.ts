@@ -1,5 +1,5 @@
-import { uiStore } from "$lib/stores/ui.svelte";
 import type { ActivityEvent } from "$lib/types/activity";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 export type { ActivityEvent };
 
@@ -19,15 +19,15 @@ export class SessionActivityService {
       timestamp: Date.now(),
     };
 
-    uiStore.archiveActivityLog = this.prune([
+    discoveryPolicyStore.archiveActivityLog = this.prune([
       fullEvent,
-      ...uiStore.archiveActivityLog,
+      ...discoveryPolicyStore.archiveActivityLog,
     ]).slice(0, MAX_EVENTS);
     this.persist();
   }
 
   clear() {
-    uiStore.archiveActivityLog = [];
+    discoveryPolicyStore.archiveActivityLog = [];
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -38,7 +38,9 @@ export class SessionActivityService {
 
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      uiStore.archiveActivityLog = this.prune(uiStore.archiveActivityLog ?? []);
+      discoveryPolicyStore.archiveActivityLog = this.prune(
+        discoveryPolicyStore.archiveActivityLog ?? [],
+      );
       return;
     }
 
@@ -46,12 +48,12 @@ export class SessionActivityService {
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) throw new Error("Invalid activity log");
 
-      uiStore.archiveActivityLog = this.prune(
+      discoveryPolicyStore.archiveActivityLog = this.prune(
         parsed.filter(isActivityEvent),
       ).slice(0, MAX_EVENTS);
       this.persist();
     } catch {
-      uiStore.archiveActivityLog = [];
+      discoveryPolicyStore.archiveActivityLog = [];
       localStorage.removeItem(STORAGE_KEY);
     }
   }
@@ -67,7 +69,7 @@ export class SessionActivityService {
     if (typeof window === "undefined") return;
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(uiStore.archiveActivityLog),
+      JSON.stringify(discoveryPolicyStore.archiveActivityLog),
     );
   }
 }

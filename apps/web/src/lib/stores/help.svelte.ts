@@ -7,8 +7,9 @@ import {
   HELP_ARTICLES,
 } from "$lib/config/help-content";
 import FlexSearch from "flexsearch";
-import { uiStore as defaultUiStore } from "./ui.svelte";
 import { searchStore as defaultSearchStore } from "./search.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -41,7 +42,8 @@ export class HelpStore {
   isInitialized = $state(false);
 
   // Dependencies
-  private uiStore: typeof defaultUiStore;
+  private onboardingStore: typeof onboardingStore;
+  private modalUIStore: typeof modalUIStore;
   private searchStore: typeof defaultSearchStore;
 
   /**
@@ -79,10 +81,12 @@ export class HelpStore {
   private indexedCount = 0;
 
   constructor(
-    uiStore: typeof defaultUiStore = defaultUiStore,
+    onboarding: typeof onboardingStore = onboardingStore,
+    modal: typeof modalUIStore = modalUIStore,
     searchStore: typeof defaultSearchStore = defaultSearchStore,
   ) {
-    this.uiStore = uiStore;
+    this.onboardingStore = onboarding;
+    this.modalUIStore = modal;
     this.searchStore = searchStore;
     // Init handled explicitly in layout
   }
@@ -161,8 +165,8 @@ export class HelpStore {
 
     if (id === "initial-onboarding") {
       // Dismiss landing page and close settings modal to ensure the tour is visible
-      this.uiStore.dismissedLandingPage = true;
-      this.uiStore.closeSettings();
+      this.onboardingStore.dismissedLandingPage = true;
+      this.modalUIStore.closeSettings();
 
       this.activeTour = {
         id,
@@ -219,7 +223,7 @@ export class HelpStore {
     const article = HELP_ARTICLES.find((a) => a.id === id);
     if (article) {
       this.expandedId = id;
-      this.uiStore.openSettings("help");
+      this.modalUIStore.openSettings("help");
     }
   }
 

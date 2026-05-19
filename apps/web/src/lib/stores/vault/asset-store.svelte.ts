@@ -1,7 +1,7 @@
 import { AssetManager } from "@codex/vault-engine";
 import { p2pGuestService } from "../../cloud-bridge/p2p/guest-service";
-import { uiStore } from "../ui.svelte";
 import { base } from "$app/paths";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export interface AssetStoreDependencies {
   assetManager: AssetManager;
@@ -54,7 +54,7 @@ export class AssetStore {
     vaultHandle: FileSystemDirectoryHandle,
   ) {
     // If we are in demo mode, we need a fetcher that knows how to find the sample images
-    const fetcher = uiStore.activeDemoTheme
+    const fetcher = sessionModeStore.activeDemoTheme
       ? async (p: string) => {
           const url = p.startsWith("vault-samples/")
             ? `${base}/${p}`

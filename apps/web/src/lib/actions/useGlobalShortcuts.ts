@@ -1,7 +1,8 @@
 import { searchStore } from "$lib/stores/search.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const isTypingTarget = (target: EventTarget | null) => {
   const element = target as HTMLElement | null;
@@ -56,7 +57,7 @@ export const createGlobalShortcutHandler = () => {
 
     if (isZenShortcut && vault.selectedEntityId) {
       event.preventDefault();
-      uiStore.openZenMode(vault.selectedEntityId);
+      modalUIStore.openZenMode(vault.selectedEntityId);
       return;
     }
 
@@ -67,7 +68,7 @@ export const createGlobalShortcutHandler = () => {
       !event.altKey;
 
     if (isSharedModeToggle) {
-      uiStore.sharedMode = !uiStore.sharedMode;
+      sessionModeStore.sharedMode = !sessionModeStore.sharedMode;
     }
   };
 };

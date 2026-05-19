@@ -9,7 +9,6 @@
   // Stores
   import { helpStore } from "$lib/stores/help.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
@@ -46,6 +45,14 @@
     registerServiceWorker,
   } from "$lib/app/init/app-init";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
   let { children } = $props();
 
@@ -86,10 +93,7 @@
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
     if (browser && !globalListenersCleanup) {
-      globalListenersCleanup = initializeGlobalListeners(
-        uiStore,
-        calendarStore,
-      );
+      globalListenersCleanup = initializeGlobalListeners(calendarStore);
     }
   });
 
@@ -97,7 +101,7 @@
   $effect(() => {
     // This layout only serves workspace routes — always boot except on landing page
     const isLandingPage = page.url.pathname === `${base}/`;
-    const shouldShowLanding = uiStore.isLandingPageVisible;
+    const shouldShowLanding = onboardingStore.isLandingPageVisible;
     const isTesting =
       typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
@@ -109,7 +113,7 @@
           graph,
           calendar: calendarStore,
           vault,
-          uiStore,
+          sessionModeStore,
           oracle,
         });
       }
@@ -144,7 +148,14 @@
         calendarStore,
         helpStore,
         categories,
-        uiStore,
+        onboardingStore,
+        sessionModeStore,
+        notificationStore,
+        layoutUIStore,
+        modalUIStore,
+        discoveryPolicyStore,
+        connectionModeStore,
+        explorerUIStore,
         isEntityVisible,
         eventBus: appEventBus,
       });
@@ -175,7 +186,7 @@
     const demoTheme = page.url.searchParams.get("demo");
     if (!demoTheme || demoTheme === lastDemoQueryParam) return;
     lastDemoQueryParam = demoTheme;
-    if (!uiStore.wasConverted) {
+    if (!sessionModeStore.wasConverted) {
       demoService.startDemo(demoTheme);
     }
   });
@@ -206,7 +217,7 @@
 
   // Automatic Tour/Demo Trigger
   $effect(() => {
-    if (vault.isInitialized && !uiStore.isLandingPageVisible) {
+    if (vault.isInitialized && !onboardingStore.isLandingPageVisible) {
       if (
         !helpStore.hasSeen("initial-onboarding") &&
         !(window as any).DISABLE_ONBOARDING &&
@@ -216,9 +227,9 @@
           typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
         if (
           vault.allEntities.length === 0 &&
-          !uiStore.isDemoMode &&
+          !sessionModeStore.isDemoMode &&
           !isTesting &&
-          !uiStore.dismissedLandingPage
+          !onboardingStore.dismissedLandingPage
         ) {
           demoService.startDemo("fantasy");
         } else {
@@ -232,15 +243,15 @@
   $effect(() => {
     if (
       browser &&
-      !uiStore.showChangelog &&
-      !uiStore.isDemoMode &&
-      !uiStore.isLandingPageVisible
+      !onboardingStore.showChangelog &&
+      !sessionModeStore.isDemoMode &&
+      !onboardingStore.isLandingPageVisible
     ) {
-      const lastSeenStr = uiStore.lastSeenVersion;
+      const lastSeenStr = onboardingStore.lastSeenVersion;
 
       // First-time user: no changelog popup, silently mark latest known release as seen
       if (!lastSeenStr) {
-        uiStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
+        onboardingStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
         return;
       }
 
@@ -255,11 +266,11 @@
         const timeout = setTimeout(() => {
           if (
             !helpStore.activeTour &&
-            !uiStore.showZenMode &&
-            !uiStore.isDemoMode &&
-            !uiStore.showChangelog
+            !modalUIStore.showZenMode &&
+            !sessionModeStore.isDemoMode &&
+            !onboardingStore.showChangelog
           ) {
-            uiStore.showChangelog = true;
+            onboardingStore.showChangelog = true;
           }
         }, 2000);
         return () => clearTimeout(timeout);
@@ -270,7 +281,7 @@
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,
-    uiStore,
+    modalUIStore,
   });
 </script>
 

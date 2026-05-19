@@ -1,9 +1,10 @@
 import type { Map } from "schema";
 import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { uiStore } from "./ui.svelte";
 import { saveMapsToDisk, loadMapsFromDisk } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 class MapRegistryStore {
   maps = $state<Record<string, Map>>({});
@@ -51,7 +52,7 @@ class MapRegistryStore {
       } catch (err) {
         console.error("[MapRegistryStore] Failed to save maps", err);
         this.status = "error";
-        uiStore.notify(
+        notificationStore.notify(
           "Failed to save map data. Please check your storage quota.",
           "error",
         );
@@ -64,10 +65,10 @@ class MapRegistryStore {
     if (!activeVaultId || !vaultRegistry.rootHandle || !this.saveQueue) return;
 
     if (
-      uiStore.isDemoMode &&
+      sessionModeStore.isDemoMode &&
       !(typeof window !== "undefined" && (window as any).__E2E__)
     ) {
-      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
+      notificationStore.notify("Deletion is disabled in Demo Mode.", "info");
       return;
     }
 
@@ -108,7 +109,10 @@ class MapRegistryStore {
       } catch (err: any) {
         console.error("[MapRegistryStore] Failed to delete map files", err);
         this.status = "error";
-        uiStore.notify(`Failed to fully delete map: ${err.message}`, "error");
+        notificationStore.notify(
+          `Failed to fully delete map: ${err.message}`,
+          "error",
+        );
       }
     });
   }

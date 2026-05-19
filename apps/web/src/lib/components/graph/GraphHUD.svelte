@@ -2,12 +2,14 @@
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { graph } from "$lib/stores/graph.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import type { Entity } from "schema";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
   import type { Core, NodeSingular } from "cytoscape";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
   let { selectedEntity, parentEntity, selectedId, isLayoutRunning, cy } =
     $props<{
@@ -49,7 +51,7 @@
       ),
     );
 
-    ui.notify(
+    notificationStore.notify(
       `${entitiesToQueue.length} entities queued. Open a canvas to place them.`,
       "info",
     );
@@ -157,7 +159,7 @@
     </div>
   </div>
 
-  {#if ui.sharedMode}
+  {#if sessionModeStore.sharedMode}
     <div
       class="absolute bottom-0 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 max-w-[calc(100vw-3rem)] mb-12 sm:mb-0"
     >
@@ -202,13 +204,13 @@
       </div>
     {/if}
 
-    {#if ui.isConnecting}
+    {#if connectionModeStore.isConnecting}
       <div
         class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-xs font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
         transition:fade
       >
         <span class="icon-[lucide--link] w-3.5 h-3.5 animate-pulse"></span>
-        {#if !ui.connectingNodeId}
+        {#if !connectionModeStore.connectingNodeId}
           <span class="hidden md:inline">Select Source Entity</span>
           <span class="md:hidden">Select Source</span>
         {:else}
@@ -216,7 +218,7 @@
           <span class="md:hidden">Select Target</span>
         {/if}
         <button
-          onclick={() => ui.toggleConnectMode()}
+          onclick={() => connectionModeStore.toggleConnectMode()}
           class="ml-2 hover:text-white transition-colors"
           title="Cancel (Esc)"
         >

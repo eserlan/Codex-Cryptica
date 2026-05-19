@@ -34,13 +34,6 @@ const mapStoreMock = vi.hoisted(() => ({
   isGMMode: true,
 }));
 
-const uiStoreMock = vi.hoisted(() => ({
-  isGuestMode: false,
-  openLightbox: vi.fn(),
-  closeLightbox: vi.fn(),
-  lightbox: { show: false, imageUrl: "", title: "" },
-}));
-
 vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: mapSessionMock,
 }));
@@ -49,11 +42,8 @@ vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: mapStoreMock,
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: uiStoreMock,
-}));
-
 import InitiativePanel from "./InitiativePanel.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("InitiativePanel", () => {
   beforeEach(() => {
@@ -83,7 +73,7 @@ describe("InitiativePanel", () => {
     mapSessionMock.canAdvanceTurn.mockReturnValue(true);
     mapSessionMock.myPeerId = "host-peer";
     mapStoreMock.isGMMode = true;
-    uiStoreMock.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("hides the internal combatant id", () => {
@@ -157,7 +147,7 @@ describe("InitiativePanel", () => {
 
   it("disables next turn for guests who do not own the active token", () => {
     mapStoreMock.isGMMode = false;
-    uiStoreMock.isGuestMode = true;
+    sessionModeStore.isGuestMode = true;
     mapSessionMock.myPeerId = "guest-2";
     mapSessionMock.canAdvanceTurn.mockReturnValue(false);
 

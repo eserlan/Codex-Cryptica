@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-  const notification = $derived(uiStore.notification);
+  const notification = $derived(notificationStore.notification);
 </script>
 
 {#if notification}

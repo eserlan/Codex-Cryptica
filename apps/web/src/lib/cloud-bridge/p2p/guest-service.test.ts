@@ -27,8 +27,8 @@ vi.mock("../../stores/vault.svelte", () => ({
     errorMessage: null,
   },
 }));
-vi.mock("../../stores/ui.svelte", () => ({
-  uiStore: { guestUsername: null, isGuestMode: false },
+vi.mock("../../stores/ui/session-mode.svelte", () => ({
+  sessionModeStore: { guestUsername: null, isGuestMode: false },
 }));
 vi.mock("../../stores/map.svelte", () => ({
   mapStore: { activeMapId: null, selectMap: vi.fn() },
@@ -47,6 +47,7 @@ describe("P2PGuestService (facade)", () => {
   let service: P2PGuestService;
 
   beforeEach(() => {
+    const NativeURL = globalThis.URL;
     transport = new MockClientTransport();
     service = new P2PGuestService({ transport });
     mockMapSession.setBroadcaster.mockClear();
@@ -54,10 +55,13 @@ describe("P2PGuestService (facade)", () => {
     mockMapSession.myPeerId = null;
     guestRoster.set({});
     // URL.* stubs for assetCache path coverage
-    vi.stubGlobal("URL", {
-      createObjectURL: vi.fn(() => "blob:fake"),
-      revokeObjectURL: vi.fn(),
-    } as any);
+    vi.stubGlobal(
+      "URL",
+      Object.assign(NativeURL, {
+        createObjectURL: vi.fn(() => "blob:fake"),
+        revokeObjectURL: vi.fn(),
+      }),
+    );
   });
 
   afterEach(() => {

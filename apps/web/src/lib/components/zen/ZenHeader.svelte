@@ -2,7 +2,6 @@
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import {
@@ -12,6 +11,7 @@
 
   import { page } from "$app/state";
   import { base } from "$app/paths";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let {
     entity,
@@ -65,7 +65,7 @@
       vault.selectedEntityId = entityId;
 
       // Signal finding
-      ui.findInGraph();
+      layoutUIStore.findInGraph();
     }, 300);
   };
 </script>

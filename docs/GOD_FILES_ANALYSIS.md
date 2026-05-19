@@ -6,24 +6,24 @@ This report identifies the top "God Files" (files with excessive responsibilitie
 
 ## Executive Summary (May 2026 Reassessment)
 
-The **P2P guest service** refactor (Spec 100) reduced `guest-service.ts` from 657 lines to 197 lines by extracting a `P2PClientTransport`, generalizing the existing `P2PDispatcher`, partitioning inbound handling across six focused handlers, and isolating chunked file transfer and token-move coalescing into dedicated modules. This mirrors the **P2P host service** refactor (Spec 098) and follows the **Map session store** refactor (Spec 099, `map-session.svelte.ts` 896 → 47 lines) and the **Oracle Executor monolith** win (Spec 097, 1,100+ → 153 lines).
+The **UI store decoupling** refactor (Spec 101) deleted `ui.svelte.ts` after splitting its 872-line grab-bag into focused `stores/ui/*` modules, each under 200 lines. This follows the **P2P guest service** refactor (Spec 100), **Map session store** refactor (Spec 099), **P2P host service** refactor (Spec 098), and the **Oracle Executor monolith** win (Spec 097, 1,100+ → 153 lines).
 
-With both sides of P2P now modular, the largest remaining pressure points are the **broad global Oracle/UI stores**, the **map route coordinator**, and **regressed graph components** (`GraphView.svelte`, `ContextMenu.svelte`).
+With both sides of P2P and the global UI store now modular, the largest remaining pressure points are the **broad global Oracle store**, the **map route coordinator**, and **regressed graph components** (`GraphView.svelte`, `ContextMenu.svelte`).
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                 | Line Count | Type                | Status         |
-| :--- | :-------------------------------------------------------- | :--------- | :------------------ | :------------- |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                | 888        | Store (State/Logic) | 🔴 REGRESSION  |
-| 2    | `apps/web/src/lib/stores/ui.svelte.ts`                    | 872        | Store (State)       | 🔴 CRITICAL    |
-| 3    | `apps/web/src/routes/(app)/map/+page.svelte`              | 735        | UI Layout           | 🟡 NEEDS SPLIT |
-| 4    | `apps/web/src/lib/components/GraphView.svelte`            | 700        | UI Component        | 🟡 REGRESSION  |
-| 5    | `packages/map-engine/src/renderer.ts`                     | 672        | Engine Core         | 🟡 WATCH       |
-| 6    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`   | 659        | UI Component        | 🟡 NEW         |
-| 7    | `apps/web/src/lib/components/graph/ContextMenu.svelte`    | 658        | UI Component        | 🟡 NEEDS SPLIT |
-| 8    | `packages/graph-engine/src/LayoutManager.ts`              | 637        | Engine Core         | 🟡 WATCH       |
-| 9    | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts` | 605        | Store Manager       | 🟡 WATCH       |
-| 10   | `apps/web/src/lib/stores/map.svelte.ts`                   | 595        | Store (State)       | 🟡 NEW         |
+| Rank | File Path                                                    | Line Count | Type                | Status         |
+| :--- | :----------------------------------------------------------- | :--------- | :------------------ | :------------- |
+| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                   | 896        | Store (State/Logic) | 🔴 REGRESSION  |
+| 2    | `apps/web/src/routes/(app)/map/+page.svelte`                 | 738        | UI Layout           | 🟡 NEEDS SPLIT |
+| 3    | `apps/web/src/lib/components/GraphView.svelte`               | 703        | UI Component        | 🟡 REGRESSION  |
+| 4    | `packages/map-engine/src/renderer.ts`                        | 672        | Engine Core         | 🟡 WATCH       |
+| 5    | `apps/web/src/lib/components/graph/ContextMenu.svelte`       | 661        | UI Component        | 🟡 NEEDS SPLIT |
+| 6    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`      | 659        | UI Component        | 🟡 NEW         |
+| 7    | `packages/graph-engine/src/LayoutManager.ts`                 | 637        | Engine Core         | 🟡 WATCH       |
+| 8    | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts`    | 605        | Store Manager       | 🟡 WATCH       |
+| 9    | `apps/web/src/lib/stores/map.svelte.ts`                      | 595        | Store (State)       | 🟡 NEW         |
+| 10   | `apps/web/src/lib/components/timeline/TemporalPicker.svelte` | 594        | UI Component        | 🟡 WATCH       |
 
 ---
 
@@ -36,13 +36,12 @@ With both sides of P2P now modular, the largest remaining pressure points are th
 
 - Move route-specific setup out of `(app)/map/+page.svelte` into controller modules.
 
-### 2. Application Stores (`oracle.svelte.ts`, `ui.svelte.ts`)
+### 2. Application Store (`oracle.svelte.ts`)
 
-**Analysis:** `oracle.svelte.ts` (888 lines) has regressed, accumulating chat, undo, and reconciliation state. `ui.svelte.ts` (872 lines) remains a dumping ground for global UI state.
+**Analysis:** `oracle.svelte.ts` (896 lines) has regressed, accumulating chat, undo, and reconciliation state. `ui.svelte.ts` is resolved by Spec 101.
 **Recommended Split:**
 
 - REVIEW `oracle.svelte.ts`: Extract sub-stores for distinct features (e.g., `chat-history-ui.ts` vs `recon-manager.ts`).
-- Decompose `ui.svelte.ts` into feature-specific stores (Toast, Modal, Layout).
 
 ### 3. Graph Component Regressions (`GraphView.svelte`, `ContextMenu.svelte`)
 
@@ -56,10 +55,9 @@ With both sides of P2P now modular, the largest remaining pressure points are th
 
 ## Next Recommended Refactor Order
 
-1. **`ui.svelte.ts`**: Global UI state should be decomposed to improve testability.
-2. **`oracle.svelte.ts`**: Clean up regressed UI state and logic.
-3. **`(app)/map/+page.svelte`**: Move route orchestration into smaller controller modules.
-4. **`GraphView.svelte` / `ContextMenu.svelte`**: Push complex menu/action logic out of the components.
+1. **`oracle.svelte.ts`**: Clean up regressed UI state and logic.
+2. **`(app)/map/+page.svelte`**: Move route orchestration into smaller controller modules.
+3. **`GraphView.svelte` / `ContextMenu.svelte`**: Push complex menu/action logic out of the components.
 
 ---
 
@@ -69,6 +67,7 @@ With both sides of P2P now modular, the largest remaining pressure points are th
 - **`host-service.svelte.ts`**: **RESOLVED**. Reduced from 917 to 263 lines by extracting P2P transport, dispatcher, and specialized handlers (Spec 098).
 - **`map-session.svelte.ts`**: **RESOLVED**. Reduced from 896 to 47 lines by extracting snapshot, lifecycle, composition, and compatibility facade modules (Spec 099).
 - **`guest-service.ts`**: **RESOLVED**. Reduced from 657 to 197 lines by mirroring the host-side architecture &mdash; sibling `P2PClientTransport`, generalized dispatcher, six focused guest handlers, dedicated `GuestFileClient`, `MapAssetUrlCache`, and `TokenMoveCoalescer` (Spec 100).
+- **`ui.svelte.ts`**: **RESOLVED**. Reduced from 872 lines to a deleted facade by extracting notification, onboarding, session mode, modal, discovery policy, connection mode, explorer, layout, and navigation state into focused `stores/ui/*` modules (Spec 101).
 - **`MapView.svelte`**: **RESOLVED**. Reduced from 1,536 to ~330 lines by decomposing into focused modules.
 - **`vault.svelte.ts`**: Holding steady at ~500 lines (down from 1,381).
 - **`CanvasWorkspace.svelte`**: Staying modular at ~326 lines (down from 835).

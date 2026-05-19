@@ -3,9 +3,10 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { isEntityVisible } from "schema";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   let {
     entity,
@@ -166,7 +167,8 @@
   {:else if entity.image}
     <div class="px-4 md:px-6">
       <button
-        onclick={() => uiStore.openLightbox(resolvedImageUrl, entity.title)}
+        onclick={() =>
+          modalUIStore.openLightbox(resolvedImageUrl, entity.title)}
         class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
       >
         <img
@@ -195,7 +197,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.aiDisabled && !vault.isGuest}
+        {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest}
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}

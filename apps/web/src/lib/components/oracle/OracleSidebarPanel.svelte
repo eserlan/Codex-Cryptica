@@ -1,6 +1,5 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import OracleChat from "./OracleChat.svelte";
   import OracleStatus from "./OracleStatus.svelte";
   import ActivityLog from "./ActivityLog.svelte";
@@ -14,10 +13,14 @@
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let showHint = $state(false);
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
-  let activityCount = $derived(uiStore.archiveActivityLog.length);
+  let activityCount = $derived(discoveryPolicyStore.archiveActivityLog.length);
   let headerTitle = $derived(
     activeTab === "oracle"
       ? "Lore Oracle"
@@ -50,7 +53,7 @@
       "codex-oracle",
       "width=600,height=800,menubar=no,toolbar=no,location=no,status=no",
     );
-    uiStore.closeSidebar();
+    layoutUIStore.closeSidebar();
   };
 </script>
 
@@ -75,7 +78,7 @@
         class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
         >{headerTitle}</span
       >
-      {#if uiStore.aiDisabled}
+      {#if discoveryPolicyStore.aiDisabled}
         <span
           class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
           >AI DISABLED</span
@@ -113,7 +116,7 @@
       <!-- Close -->
       <button
         class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors"
-        onclick={() => uiStore.closeSidebar()}
+        onclick={() => layoutUIStore.closeSidebar()}
         aria-label="Close panel"
       >
         <span class="icon-[lucide--x] w-4 h-4"></span>
@@ -167,8 +170,8 @@
     {#if activeTab === "oracle"}
       <OracleChat
         onOpenSettings={() => {
-          uiStore.openSettings();
-          uiStore.closeSidebar();
+          modalUIStore.openSettings();
+          layoutUIStore.closeSidebar();
         }}
       />
     {:else if activeTab === "activity"}
@@ -222,7 +225,7 @@
   {/if}
 
   <!-- Demo Mode CTA -->
-  {#if uiStore.isDemoMode}
+  {#if sessionModeStore.isDemoMode}
     <div
       class="p-4 bg-theme-primary/5 border-t border-theme-border flex flex-col gap-3"
     >
@@ -238,8 +241,8 @@
             const url = new URL(page.url.href);
             url.searchParams.delete("demo");
             goto(url.toString(), { replaceState: true });
-            uiStore.closeSidebar();
-            uiStore.openSettings("vault");
+            layoutUIStore.closeSidebar();
+            modalUIStore.openSettings("vault");
           } catch (error) {
             console.error(
               `Failed to convert demo to ${themeStore.jargon.vault}`,

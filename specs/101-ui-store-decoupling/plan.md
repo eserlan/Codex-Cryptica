@@ -17,7 +17,7 @@ This is structurally identical to Specs 098 (P2P host service), 099 (map session
 **Testing**: Vitest
 **Target Platform**: Browser (SvelteKit)
 **Project Type**: Web Application (UI Store Refactor)
-**Performance Goals**: No regression in interaction latency; reactive scope per consumer should shrink (subjectively verified during smoke tests).
+**Performance Goals**: No regression in interaction latency; reactive scope per consumer should shrink (verified by comparing reactive dependencies of `EntityExplorer` before/after in Svelte DevTools).
 **Constraints**: All existing `localStorage` keys preserved verbatim; every new store ≤ 200 lines; zero test regressions.
 **Scale/Scope**: ~872 lines refactored into 8 focused stores + 1 persistence helper; 147 consumer files swept by codemod.
 

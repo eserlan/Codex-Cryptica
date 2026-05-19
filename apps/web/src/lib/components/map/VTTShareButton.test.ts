@@ -13,15 +13,6 @@ vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    isGuestMode: false,
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 vi.mock("$lib/stores/map-session.svelte", () => ({
   mapSession: {
     vttEnabled: true,
@@ -29,11 +20,11 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
 }));
 
 import VTTShareButton from "./VTTShareButton.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("VTTShareButton", () => {
   beforeEach(() => {
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("emits a share request", async () => {
@@ -48,7 +39,7 @@ describe("VTTShareButton", () => {
   });
 
   it("hides for guests", async () => {
-    uiStore.isGuestMode = true;
+    sessionModeStore.isGuestMode = true;
 
     render(VTTShareButton);
 

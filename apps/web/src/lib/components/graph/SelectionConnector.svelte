@@ -1,9 +1,10 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { untrack } from "svelte";
   import type { Core, NodeSingular } from "cytoscape";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
@@ -32,7 +33,7 @@
       updatePosition();
     } else {
       selection = [];
-      ui.showSelectionConnector = false;
+      connectionModeStore.showSelectionConnector = false;
       isSubmitting = false;
     }
   };
@@ -54,9 +55,9 @@
 
   // Prefill label when connector opens
   $effect(() => {
-    const currentShow = ui.showSelectionConnector;
+    const currentShow = connectionModeStore.showSelectionConnector;
     if (currentShow && !previousShow) {
-      labelInput = ui.lastConnectionLabel;
+      labelInput = connectionModeStore.lastConnectionLabel;
       isSubmitting = false;
     }
     previousShow = currentShow;
@@ -80,12 +81,14 @@
         );
 
         if (success) {
-          ui.setLastConnectionLabel(label);
+          connectionModeStore.setLastConnectionLabel(label);
           cy.elements().unselect();
-          ui.showSelectionConnector = false;
-          ui.notify(`Connected ${sourceTitle} to ${targetTitle}`);
+          connectionModeStore.showSelectionConnector = false;
+          notificationStore.notify(
+            `Connected ${sourceTitle} to ${targetTitle}`,
+          );
         } else {
-          ui.notify(
+          notificationStore.notify(
             `Failed to connect ${sourceTitle} to ${targetTitle}`,
             "error",
           );
@@ -99,11 +102,11 @@
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
-    if (!ui.showSelectionConnector) return;
+    if (!connectionModeStore.showSelectionConnector) return;
     if (e.key === "Enter") {
       submit();
     } else if (e.key === "Escape") {
-      ui.showSelectionConnector = false;
+      connectionModeStore.showSelectionConnector = false;
     }
   };
 
@@ -119,13 +122,13 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if selection.length === 2 && ui.showSelectionConnector}
+{#if selection.length === 2 && connectionModeStore.showSelectionConnector}
   <!-- Backdrop for "click outside" closing -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 z-30 pointer-events-auto cursor-default"
-    onclick={() => (ui.showSelectionConnector = false)}
+    onclick={() => (connectionModeStore.showSelectionConnector = false)}
   ></div>
 
   <div
@@ -158,9 +161,9 @@
           aria-labelledby="connector-title"
         />
 
-        {#if ui.recentConnectionLabels.length > 0}
+        {#if connectionModeStore.recentConnectionLabels.length > 0}
           <div class="flex flex-wrap gap-1 mb-3">
-            {#each ui.recentConnectionLabels as label}
+            {#each connectionModeStore.recentConnectionLabels as label}
               <button
                 class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
                 onclick={() => selectRecent(label)}
@@ -175,7 +178,7 @@
         <div class="flex justify-end gap-2">
           <button
             class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
-            onclick={() => (ui.showSelectionConnector = false)}
+            onclick={() => (connectionModeStore.showSelectionConnector = false)}
             disabled={isSubmitting}
             aria-label="Cancel connection"
           >

@@ -8,7 +8,6 @@ import { searchService as defaultSearchService } from "../services/search";
 import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
-import { uiStore as defaultUiStore } from "./ui.svelte";
 import { themeStore as defaultThemeStore } from "./theme.svelte";
 import { sessionActivity } from "../services/SessionActivityService";
 import {
@@ -33,6 +32,9 @@ import {
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import { categories as defaultCategories } from "./categories.svelte";
 import type { Entity, TextGenerationService } from "schema";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export type { ChatMessage, UndoableAction };
 
@@ -57,7 +59,7 @@ export class OracleStore {
 
   // Dependencies
   private _vault?: typeof defaultVault;
-  private _uiStore?: typeof defaultUiStore;
+  private _uiStore?: any;
   private _themeStore?: typeof defaultThemeStore;
   private _graph?: typeof defaultGraph;
   private _diceHistory?: typeof defaultDiceHistory;
@@ -74,8 +76,14 @@ export class OracleStore {
   private get vault() {
     return this._vault ?? defaultVault;
   }
-  private get uiStore() {
-    return this._uiStore ?? defaultUiStore;
+  private get discoveryPolicyStore() {
+    return this._uiStore ?? discoveryPolicyStore;
+  }
+  private get sessionModeStore() {
+    return this._uiStore ?? sessionModeStore;
+  }
+  private get notificationStore() {
+    return notificationStore;
   }
   private get themeStore() {
     return this._themeStore ?? defaultThemeStore;
@@ -136,7 +144,7 @@ export class OracleStore {
   constructor(
     deps: {
       vault?: typeof defaultVault;
-      uiStore?: typeof defaultUiStore;
+      uiStore?: any;
       graph?: typeof defaultGraph;
       diceHistory?: typeof defaultDiceHistory;
       contextRetrieval?: typeof defaultContextRetrieval;
@@ -298,7 +306,7 @@ export class OracleStore {
   }
 
   get tier() {
-    return this.uiStore.aiDisabled ? "lite" : "advanced";
+    return this.discoveryPolicyStore.aiDisabled ? "lite" : "advanced";
   }
 
   get effectiveApiKey(): string | null {
@@ -307,11 +315,12 @@ export class OracleStore {
 
   private createUiStoreSnapshot(): OracleUiSnapshot {
     return {
-      aiDisabled: this.uiStore.aiDisabled,
-      isDemoMode: this.uiStore.isDemoMode,
-      entityDiscoveryMode: this.uiStore.entityDiscoveryMode,
-      connectionDiscoveryMode: this.uiStore.connectionDiscoveryMode,
-      autoArchive: (this.uiStore as any).autoArchive,
+      aiDisabled: this.discoveryPolicyStore.aiDisabled,
+      isDemoMode: this.sessionModeStore.isDemoMode,
+      entityDiscoveryMode: this.discoveryPolicyStore.entityDiscoveryMode,
+      connectionDiscoveryMode:
+        this.discoveryPolicyStore.connectionDiscoveryMode,
+      autoArchive: this.discoveryPolicyStore.autoArchive,
       activeThemeId: this.themeStore.activeTheme?.id,
     };
   }
@@ -493,8 +502,10 @@ export class OracleStore {
       tier: this.tier,
       effectiveApiKey: this.effectiveApiKey,
       modelName: this.modelName,
-      isDemoMode: this.uiStore.isDemoMode,
-      automationPolicy: $state.snapshot(this.uiStore.oracleAutomationPolicy),
+      isDemoMode: this.sessionModeStore.isDemoMode,
+      automationPolicy: $state.snapshot(
+        this.discoveryPolicyStore.oracleAutomationPolicy,
+      ),
       proposeConnectionsForEntity: wrap(
         async (
           entityId: string,
@@ -548,7 +559,10 @@ export class OracleStore {
   async sendMessage(content: string) {
     if (!content.trim()) return;
 
-    const intent = OracleCommandParser.parse(content, this.uiStore.aiDisabled);
+    const intent = OracleCommandParser.parse(
+      content,
+      this.discoveryPolicyStore.aiDisabled,
+    );
 
     await this.executor.execute(intent, this.getExecutionContext());
   }
@@ -602,7 +616,7 @@ export class OracleStore {
 
   async clearMessages() {
     if (
-      await this.uiStore.confirm({
+      await this.notificationStore.confirm({
         title: "Clear History",
         message:
           "Are you sure you want to clear your conversation history? This cannot be undone.",
@@ -678,7 +692,7 @@ export class OracleStore {
 
     if (
       this.vault.isGuest ||
-      this.uiStore.aiDisabled ||
+      this.discoveryPolicyStore.aiDisabled ||
       !this.textGeneration.reconcileEntityUpdate
     ) {
       return fallback();
@@ -711,7 +725,7 @@ export class OracleStore {
 
     if (
       this.vault.isGuest ||
-      this.uiStore.aiDisabled ||
+      this.discoveryPolicyStore.aiDisabled ||
       !this.textGeneration.reconcileEntityUpdate
     ) {
       return {
@@ -740,7 +754,7 @@ export class OracleStore {
   ): Promise<{ content: string; lore: string; categoryId?: string }> {
     if (
       this.vault.isGuest ||
-      this.uiStore.aiDisabled ||
+      this.discoveryPolicyStore.aiDisabled ||
       !this.textGeneration.reconcileEntityUpdate
     ) {
       return { content: draft.chronicle, lore: draft.lore };
@@ -788,7 +802,7 @@ export class OracleStore {
     entityId: string,
     analysisText?: string,
   ) {
-    const mode = this.uiStore.connectionDiscoveryMode;
+    const mode = this.discoveryPolicyStore.connectionDiscoveryMode;
     if (mode === "off") {
       return 0;
     }

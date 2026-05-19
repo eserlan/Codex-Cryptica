@@ -2,7 +2,6 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { worldStore } from "$lib/stores/world.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { hexToRgb } from "$lib/utils/color";
   import { partitionAndSortRecentActivity } from "./front-page/front-page-entities";
   import {
@@ -14,6 +13,8 @@
   import FrontPageHero from "./FrontPageHero.svelte";
   import FrontPageEntities from "./FrontPageEntities.svelte";
   import FrontPageBriefing from "./FrontPageBriefing.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -21,7 +22,6 @@
     worldStore,
     vault,
     themeStore,
-    uiStore,
   });
 
   let lastLoadedVaultId: string | null = null;
@@ -148,7 +148,7 @@
   const handleGenerateBriefing = async () => {
     // Check confirmation FIRST (before expensive context building)
     if (hasBriefing) {
-      const confirmed = await uiStore.confirm({
+      const confirmed = await notificationStore.confirm({
         title: "Regenerate Briefing",
         message:
           "This will replace your current world briefing with a new one generated from your notes. Continue?",
@@ -248,7 +248,7 @@
 
   const openCoverLightbox = () => {
     if (coverImageUrl) {
-      uiStore.openLightbox(coverImageUrl, "World cover");
+      modalUIStore.openLightbox(coverImageUrl, "World cover");
     }
   };
 

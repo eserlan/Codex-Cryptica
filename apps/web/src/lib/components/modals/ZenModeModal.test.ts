@@ -65,20 +65,6 @@ vi.mock("$lib/components/entity-detail/DetailMapTab.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    showZenMode: true,
-    zenModeEntityId: "entity-1",
-    zenModeActiveTab: "overview",
-    openZenMode: vi.fn(),
-    closeZenMode: vi.fn(),
-    confirm: vi.fn(),
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 vi.mock("$lib/stores/vault.svelte", () => {
   const entities: Record<string, any> = {
     "entity-1": {
@@ -114,10 +100,14 @@ vi.mock("$lib/utils/zen-popout", async () => {
 });
 
 import ZenModeModal from "./ZenModeModal.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("ZenModeModal", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    modalUIStore.showZenMode = true;
+    modalUIStore.zenModeEntityId = "entity-1";
+    modalUIStore.zenModeActiveTab = "overview";
   });
 
   it("persists the guest entity snapshot after zen mode opens", async () => {

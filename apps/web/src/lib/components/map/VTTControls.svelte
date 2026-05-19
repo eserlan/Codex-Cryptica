@@ -1,14 +1,14 @@
 <script lang="ts">
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
   import VTTGridSettings from "./VTTGridSettings.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let showEncounters = $state(false);
-  let canManageVtt = $derived(!uiStore.isGuestMode);
+  let canManageVtt = $derived(!sessionModeStore.isGuestMode);
 
   function openTokenDialog() {
     if (!canManageVtt) return;

@@ -24,9 +24,8 @@
 - `codex_explorer_view_mode`
 - `codex_explorer_collapsed_label_groups`
 - `codex_dismissed_landing`
-- `codex_dismissed_world`
-- `codex_world_dismissed_at`
-- `codex_skip_welcome`
+- `codex_world_page_dismissed_at`
+- `codex_skip_landing`
 - `codex_last_seen_version`
 - `codex_ai_disabled`
 - `codex_lite_mode`
@@ -82,7 +81,7 @@
 - `toggleWelcomeScreen(skip)`
 - `markVersionAsSeen(version)`
 
-**Persistence**: `codex_dismissed_landing`, `codex_dismissed_world`, `codex_world_dismissed_at`, `codex_skip_welcome`, `codex_last_seen_version`.
+**Persistence**: `codex_dismissed_landing`, `codex_world_page_dismissed_at`, `codex_skip_landing`, `codex_last_seen_version`.
 
 ---
 

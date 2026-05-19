@@ -3,10 +3,10 @@ import * as adapters from "./adapters.svelte";
 import * as opfs from "../../utils/opfs";
 import * as markdown from "../../utils/markdown";
 import { cacheService } from "../../services/cache.svelte";
-import { uiStore } from "../ui.svelte";
 import * as imageProcessing from "../../utils/image-processing";
 import { getDB } from "../../utils/idb";
 import { LocalSyncService, SyncRegistry } from "@codex/sync-engine";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("../../utils/opfs", () => ({
   walkOpfsDirectory: vi.fn(),
@@ -27,12 +27,6 @@ vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     get: vi.fn(),
     set: vi.fn(),
-  },
-}));
-
-vi.mock("../ui.svelte", () => ({
-  uiStore: {
-    notify: vi.fn(),
   },
 }));
 
@@ -59,6 +53,7 @@ vi.stubGlobal("$state", {
 describe("Adapters", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    notificationStore.notify = vi.fn();
   });
 
   describe("fileIOAdapter", () => {
@@ -255,10 +250,10 @@ describe("Adapters", () => {
   describe("syncNotifier", () => {
     it("should notify", () => {
       adapters.syncNotifier.notify("msg", "success");
-      expect(uiStore.notify).toHaveBeenCalledWith("msg", "success");
+      expect(notificationStore.notify).toHaveBeenCalledWith("msg", "success");
 
       adapters.syncNotifier.notify("msg", "warning");
-      expect(uiStore.notify).toHaveBeenCalledWith("msg", "info");
+      expect(notificationStore.notify).toHaveBeenCalledWith("msg", "info");
     });
 
     it("should alert", () => {

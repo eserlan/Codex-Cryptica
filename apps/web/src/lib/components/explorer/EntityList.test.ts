@@ -2,8 +2,8 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { uiStore } from "$lib/stores/ui.svelte";
 import EntityList from "./EntityList.svelte";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -60,13 +60,13 @@ vi.mock("$lib/utils/icon", () => ({
 
 describe("EntityList", () => {
   beforeEach(() => {
-    uiStore.explorerViewMode = "list";
-    uiStore.explorerCollapsedLabelGroups = {};
+    explorerUIStore.explorerViewMode = "list";
+    explorerUIStore.explorerCollapsedLabelGroups = {};
     window.localStorage.removeItem("codex_explorer_collapsed_label_groups");
   });
 
   it("shows and hides entities within a label group", async () => {
-    uiStore.setExplorerViewMode("label");
+    explorerUIStore.setExplorerViewMode("label");
 
     render(EntityList);
 
@@ -85,7 +85,9 @@ describe("EntityList", () => {
     await fireEvent.click(questToggle!);
 
     expect(screen.queryByText("Broken Seal")).toBeNull();
-    expect(uiStore.getCollapsedLabelGroups("vault-1").has("Quest")).toBe(true);
+    expect(
+      explorerUIStore.getCollapsedLabelGroups("vault-1").has("Quest"),
+    ).toBe(true);
 
     const collapsedQuestToggle = screen
       .getAllByRole("button")
@@ -100,7 +102,9 @@ describe("EntityList", () => {
     await fireEvent.click(collapsedQuestToggle!);
 
     expect(screen.getByText("Broken Seal")).not.toBeNull();
-    expect(uiStore.getCollapsedLabelGroups("vault-1").has("Quest")).toBe(false);
+    expect(
+      explorerUIStore.getCollapsedLabelGroups("vault-1").has("Quest"),
+    ).toBe(false);
   });
 
   it("clears the search query when the clear button is clicked", async () => {

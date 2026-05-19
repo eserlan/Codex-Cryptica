@@ -10,7 +10,7 @@ vi.hoisted(() => {
 });
 
 import { DefaultImageGenerationService } from "../../lib/services/ai/image-generation.service";
-import { uiStore } from "../../lib/stores/ui.svelte";
+import { discoveryPolicyStore } from "../../lib/stores/ui/discovery-policy.svelte";
 
 describe("ImageGenerationService", () => {
   let mockModel: any;
@@ -29,7 +29,7 @@ describe("ImageGenerationService", () => {
     };
 
     service = new DefaultImageGenerationService(mockClientManager);
-    (uiStore as any).aiDisabled = false;
+    discoveryPolicyStore.aiDisabled = false;
     localStorage.clear();
   });
 

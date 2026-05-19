@@ -1,9 +1,9 @@
 <script lang="ts">
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import type { Proposal } from "@codex/proposer";
   import ProposalHistory from "./ProposalHistory.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   let { isEditing, entityId } = $props<{
     isEditing: boolean;
@@ -19,7 +19,7 @@
   );
 
   $effect(() => {
-    if (uiStore.aiDisabled) return;
+    if (discoveryPolicyStore.aiDisabled) return;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     // Trigger analysis when viewing an entity
     if (
@@ -53,7 +53,7 @@
   };
 </script>
 
-{#if !uiStore.aiDisabled && !vault.isGuest && (activeProposals.length > 0 || activeHistory.length > 0)}
+{#if !discoveryPolicyStore.aiDisabled && !vault.isGuest && (activeProposals.length > 0 || activeHistory.length > 0)}
   <div
     class="mt-8 border-t border-theme-border pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
   >

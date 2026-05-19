@@ -1,16 +1,18 @@
 <script lang="ts">
-  import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { parserService } from "$lib/services/parser";
   import { browser } from "$app/environment";
   import DOMPurify from "dompurify";
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  const close = () => ui.closeReadMode();
+  const close = () => modalUIStore.closeReadMode();
 
   const entity = $derived(
-    ui.readModeNodeId ? vault.entities[ui.readModeNodeId] : null,
+    modalUIStore.readModeNodeId
+      ? vault.entities[modalUIStore.readModeNodeId]
+      : null,
   );
 
   let renderedContent = $state("");
@@ -20,7 +22,7 @@
 
   // Load entity content from Dexie when the read-mode modal opens.
   $effect(() => {
-    const id = ui.readModeNodeId;
+    const id = modalUIStore.readModeNodeId;
     if (id) vault.loadEntityContent(id);
   });
 
@@ -99,7 +101,7 @@
   });
 
   const navigate = (id: string) => {
-    ui.openReadMode(id);
+    modalUIStore.openReadMode(id);
   };
 
   const copyToClipboard = async () => {
@@ -130,7 +132,7 @@
   };
 </script>
 
-{#if ui.readModeNodeId}
+{#if modalUIStore.readModeNodeId}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"

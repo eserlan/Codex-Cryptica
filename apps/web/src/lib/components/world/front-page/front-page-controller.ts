@@ -72,14 +72,6 @@ export interface FrontPageControllerDeps {
   themeStore: {
     activeTheme: { name: string; description: string };
   };
-  uiStore: {
-    confirm: (opts: {
-      title: string;
-      message: string;
-      confirmLabel: string;
-      cancelLabel: string;
-    }) => Promise<boolean>;
-  };
 }
 
 // ---------------------------------------------------------------------------

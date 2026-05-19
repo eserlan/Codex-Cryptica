@@ -6,7 +6,7 @@ interface ShortcutContext {
     toggle: () => void;
     close: () => void;
   };
-  uiStore: {
+  modalUIStore: {
     showSettings: boolean;
     closeSettings: () => void;
   };
@@ -44,8 +44,8 @@ export function useGlobalShortcuts(context: ShortcutContext) {
     if (e.key === "Escape") {
       if (context.searchStore.isOpen) {
         context.searchStore.close();
-      } else if (context.uiStore.showSettings) {
-        context.uiStore.closeSettings();
+      } else if (context.modalUIStore.showSettings) {
+        context.modalUIStore.closeSettings();
       }
     }
   };

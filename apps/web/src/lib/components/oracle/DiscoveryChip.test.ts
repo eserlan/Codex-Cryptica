@@ -3,38 +3,31 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockVault, mockOracle, mockUiStore, mockFocusEntity } = vi.hoisted(
-  () => ({
-    mockVault: {
-      isGuest: false,
-      entities: {
-        target: {
-          id: "target",
-          title: "Target",
-          content: "old chronicle",
-          lore: "old lore",
-        },
+const { mockVault, mockOracle, mockFocusEntity } = vi.hoisted(() => ({
+  mockVault: {
+    isGuest: false,
+    entities: {
+      target: {
+        id: "target",
+        title: "Target",
+        content: "old chronicle",
+        lore: "old lore",
       },
-      selectedEntityId: null as string | null,
-      updateEntity: vi.fn().mockResolvedValue(undefined),
-      createEntity: vi.fn().mockResolvedValue("new-id"),
     },
-    mockOracle: {
-      reconcileDiscoveryProposal: vi.fn(),
-      reconcileNewEntityDraft: vi
-        .fn()
-        .mockResolvedValue({ content: "new content", lore: "new lore" }),
-      proposeConnectionsForEntity: vi.fn().mockResolvedValue(0),
-      handleDiscoveryConnectionsForEntity: vi.fn().mockResolvedValue(0),
-    },
-    mockUiStore: {
-      isDemoMode: false,
-      connectionDiscoveryMode: "suggest",
-      notify: vi.fn(),
-    },
-    mockFocusEntity: vi.fn(),
-  }),
-);
+    selectedEntityId: null as string | null,
+    updateEntity: vi.fn().mockResolvedValue(undefined),
+    createEntity: vi.fn().mockResolvedValue("new-id"),
+  },
+  mockOracle: {
+    reconcileDiscoveryProposal: vi.fn(),
+    reconcileNewEntityDraft: vi
+      .fn()
+      .mockResolvedValue({ content: "new content", lore: "new lore" }),
+    proposeConnectionsForEntity: vi.fn().mockResolvedValue(0),
+    handleDiscoveryConnectionsForEntity: vi.fn().mockResolvedValue(0),
+  },
+  mockFocusEntity: vi.fn(),
+}));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: mockVault,
@@ -44,23 +37,23 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: mockOracle,
 }));
 
-vi.mock("$stores/ui.svelte", () => ({
-  uiStore: mockUiStore,
-}));
-
 vi.mock("$lib/components/search/search-focus", () => ({
   DEFAULT_SEARCH_ENTITY_ZOOM: 2,
   dispatchSearchEntityFocus: mockFocusEntity,
 }));
 
 import DiscoveryChip from "./DiscoveryChip.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 describe("DiscoveryChip", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockVault.isGuest = false;
-    mockUiStore.isDemoMode = false;
-    mockUiStore.connectionDiscoveryMode = "suggest";
+    sessionModeStore.isDemoMode = false;
+    discoveryPolicyStore.connectionDiscoveryMode = "suggest";
+    notificationStore.notify = vi.fn();
     mockVault.selectedEntityId = null;
   });
 
@@ -116,7 +109,7 @@ describe("DiscoveryChip", () => {
       expect(
         mockOracle.handleDiscoveryConnectionsForEntity,
       ).toHaveBeenCalledWith("new-id");
-      expect(mockUiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         "Created Target; connection suggestions queued",
         "success",
       );
@@ -152,7 +145,7 @@ describe("DiscoveryChip", () => {
       expect(
         mockOracle.handleDiscoveryConnectionsForEntity,
       ).toHaveBeenCalledWith("target");
-      expect(mockUiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         "Updated Target; connection suggestions queued",
         "success",
       );
@@ -160,7 +153,7 @@ describe("DiscoveryChip", () => {
   });
 
   it("reports auto-applied connection counts when enabled", async () => {
-    mockUiStore.connectionDiscoveryMode = "auto-apply";
+    discoveryPolicyStore.connectionDiscoveryMode = "auto-apply";
     mockOracle.handleDiscoveryConnectionsForEntity.mockResolvedValue(2);
 
     render(DiscoveryChip, {
@@ -178,7 +171,7 @@ describe("DiscoveryChip", () => {
     await fireEvent.click(screen.getByLabelText("Create Target"));
 
     await waitFor(() => {
-      expect(mockUiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         "Created Target and added 2 connections",
         "success",
       );

@@ -10,7 +10,7 @@ describe("useGlobalShortcuts", () => {
   it("should return a handleKeydown function", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
-      uiStore: { showSettings: false, closeSettings: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext);
@@ -20,7 +20,7 @@ describe("useGlobalShortcuts", () => {
   it("should toggle search on Cmd+K", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
-      uiStore: { showSettings: false, closeSettings: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;
@@ -41,7 +41,7 @@ describe("useGlobalShortcuts", () => {
   it("should close search on Escape if open", () => {
     const mockContext = {
       searchStore: { isOpen: true, toggle: vi.fn(), close: vi.fn() },
-      uiStore: { showSettings: false, closeSettings: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;
@@ -58,7 +58,7 @@ describe("useGlobalShortcuts", () => {
   it("should close settings on Escape if open and search is closed", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
-      uiStore: { showSettings: true, closeSettings: vi.fn() },
+      modalUIStore: { showSettings: true, closeSettings: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;
@@ -69,13 +69,13 @@ describe("useGlobalShortcuts", () => {
 
     handleKeydown(event);
 
-    expect(mockContext.uiStore.closeSettings).toHaveBeenCalled();
+    expect(mockContext.modalUIStore.closeSettings).toHaveBeenCalled();
   });
 
   it("should ignore shortcuts when typing in inputs", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
-      uiStore: { showSettings: false, closeSettings: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;

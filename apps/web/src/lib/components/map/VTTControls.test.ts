@@ -55,18 +55,9 @@ vi.mock("$lib/stores/map.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    isGuestMode: false,
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 import VTTControls from "./VTTControls.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("VTTControls", () => {
   beforeEach(() => {
@@ -74,7 +65,7 @@ describe("VTTControls", () => {
     mapSession.setVttEnabled(true);
     mapSession.setMode("exploration");
     mapSession.pendingTokenCoords = null;
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("shows the pure VTT controls for the active map session", async () => {
@@ -92,7 +83,7 @@ describe("VTTControls", () => {
   });
 
   it("hides token and encounter management for guests", async () => {
-    uiStore.isGuestMode = true;
+    sessionModeStore.isGuestMode = true;
 
     render(VTTControls);
 

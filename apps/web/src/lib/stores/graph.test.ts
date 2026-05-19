@@ -36,20 +36,6 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
-// Mock ui store
-vi.mock("./ui.svelte", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  const mockUi = new actual.UIStore();
-  // Ensure we can track calls if needed, though real logic is better for state tests
-  mockUi.toggleLabelFilter = vi.fn(mockUi.toggleLabelFilter.bind(mockUi));
-  mockUi.clearLabelFilters = vi.fn(mockUi.clearLabelFilters.bind(mockUi));
-
-  return {
-    ...actual,
-    ui: mockUi,
-  };
-});
-
 // Mock graph-engine
 vi.mock("graph-engine", () => ({
   GraphTransformer: {
@@ -64,9 +50,10 @@ vi.mock("schema", () => ({
 
 import { graph, GraphStore } from "./graph.svelte";
 import { vault } from "./vault.svelte";
-import { ui } from "./ui.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible } from "schema";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
 describe("GraphStore", () => {
   beforeEach(() => {
@@ -88,7 +75,8 @@ describe("GraphStore", () => {
     // Reset mocks
     (vault as any).allEntities = [];
     (vault as any).isGuest = false;
-    (ui as any).sharedMode = false;
+    sessionModeStore.sharedMode = false;
+    explorerUIStore.labelFilters = new Set();
   });
 
   it("should initialize with default values", () => {
@@ -302,7 +290,11 @@ describe("GraphStore", () => {
       isGuest: true,
       allEntities: [{ id: "1" } as any],
     };
-    const testGraph = new GraphStore(testVault as any, ui as any);
+    const testGraph = new GraphStore(
+      testVault as any,
+      explorerUIStore,
+      sessionModeStore,
+    );
 
     // Trigger elements derivation
     const _ = testGraph.elements;

@@ -22,18 +22,9 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    showDiceModal: false,
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 import VTTChat from "./VTTChat.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("VTTChat", () => {
   it("submits slash roll commands through the VTT session chat", async () => {
@@ -60,6 +51,6 @@ describe("VTTChat", () => {
       screen.getByRole("button", { name: "Open Dice Roller" }),
     );
 
-    expect(uiStore.showDiceModal).toBe(true);
+    expect(modalUIStore.showDiceModal).toBe(true);
   });
 });

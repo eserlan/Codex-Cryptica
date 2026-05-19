@@ -1,8 +1,9 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { onMount } from "svelte";
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   onMount(() => {
     oracle.init();
@@ -10,7 +11,7 @@
 
   const handleClear = async () => {
     if (
-      await uiStore.confirm({
+      await notificationStore.confirm({
         title: "Reset Settings",
         message:
           "Are you sure you want to remove your API key? The Oracle will continue working via the system proxy.",
@@ -152,11 +153,13 @@
           <button
             type="button"
             role="radio"
-            aria-checked={uiStore.entityDiscoveryMode === option.value}
-            onclick={() => uiStore.setEntityDiscoveryMode(option.value)}
+            aria-checked={discoveryPolicyStore.entityDiscoveryMode ===
+              option.value}
+            onclick={() =>
+              discoveryPolicyStore.setEntityDiscoveryMode(option.value)}
             class={[
               "text-left rounded-lg border p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60",
-              uiStore.entityDiscoveryMode === option.value
+              discoveryPolicyStore.entityDiscoveryMode === option.value
                 ? "border-theme-primary bg-theme-primary/10 text-theme-text"
                 : "border-theme-border bg-theme-bg/30 text-theme-text/80 hover:bg-theme-surface/60",
             ]}
@@ -189,11 +192,13 @@
           <button
             type="button"
             role="radio"
-            aria-checked={uiStore.connectionDiscoveryMode === option.value}
-            onclick={() => uiStore.setConnectionDiscoveryMode(option.value)}
+            aria-checked={discoveryPolicyStore.connectionDiscoveryMode ===
+              option.value}
+            onclick={() =>
+              discoveryPolicyStore.setConnectionDiscoveryMode(option.value)}
             class={[
               "text-left rounded-lg border p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60",
-              uiStore.connectionDiscoveryMode === option.value
+              discoveryPolicyStore.connectionDiscoveryMode === option.value
                 ? "border-theme-primary bg-theme-primary/10 text-theme-text"
                 : "border-theme-border bg-theme-bg/30 text-theme-text/80 hover:bg-theme-surface/60",
             ]}

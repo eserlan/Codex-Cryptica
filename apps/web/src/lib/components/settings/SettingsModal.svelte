@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { uiStore, type SettingsTab } from "$stores/ui.svelte";
+  import type { SettingsTab } from "$lib/stores/ui/modal-ui.svelte";
   import { fly, fade } from "svelte/transition";
   import AISettings from "./AISettings.svelte";
   import EraEditor from "../timeline/EraEditor.svelte";
@@ -11,6 +11,12 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { base } from "$app/paths";
   import { VERSION, CODENAME } from "$lib/config";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { openImportWindow } from "$lib/stores/ui/navigation";
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
     { id: "vault", label: "Vault", icon: "icon-[lucide--database]" },
@@ -30,9 +36,9 @@
   ];
 
   const close = async () => {
-    if (uiStore.isImporting) {
+    if (modalUIStore.isImporting) {
       if (
-        await uiStore.confirm({
+        await notificationStore.confirm({
           title: "Confirm Change",
           message:
             "An import is in progress or pending review. Closing now will cancel the process and you may lose identified entities. Are you sure you want to abort?",
@@ -40,19 +46,19 @@
           isDangerous: false,
         })
       ) {
-        uiStore.abortActiveOperations();
-        uiStore.closeSettings();
+        connectionModeStore.abortActiveOperations();
+        modalUIStore.closeSettings();
       }
       return;
     }
-    uiStore.closeSettings();
+    modalUIStore.closeSettings();
   };
 
   let previousActiveElement: HTMLElement | null = null;
   let modalElement: HTMLElement | undefined = $state();
 
   $effect(() => {
-    if (uiStore.showSettings) {
+    if (modalUIStore.showSettings) {
       previousActiveElement = document.activeElement as HTMLElement;
       // Focus the first tab button after a short delay to allow for transition
       setTimeout(() => {
@@ -88,7 +94,7 @@
   };
 </script>
 
-{#if uiStore.showSettings}
+{#if modalUIStore.showSettings}
   <!-- Backdrop -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
@@ -127,20 +133,20 @@
       <div class="flex flex-col gap-1">
         {#each tabs as tab}
           <button
-            onclick={() => (uiStore.activeSettingsTab = tab.id)}
-            disabled={uiStore.isImporting}
-            aria-disabled={uiStore.isImporting ? "true" : "false"}
-            title={uiStore.isImporting
+            onclick={() => (modalUIStore.activeSettingsTab = tab.id)}
+            disabled={modalUIStore.isImporting}
+            aria-disabled={modalUIStore.isImporting ? "true" : "false"}
+            title={modalUIStore.isImporting
               ? "Navigation disabled during active import"
               : ""}
             role="tab"
-            aria-selected={uiStore.activeSettingsTab === tab.id}
+            aria-selected={modalUIStore.activeSettingsTab === tab.id}
             aria-controls="settings-panel-{tab.id}"
             id="settings-tab-{tab.id}"
-            class="px-4 md:px-6 py-3 flex items-center gap-3 transition-all relative {uiStore.activeSettingsTab ===
+            class="px-4 md:px-6 py-3 flex items-center gap-3 transition-all relative {modalUIStore.activeSettingsTab ===
             tab.id
               ? 'text-theme-primary bg-theme-primary/10'
-              : 'text-theme-secondary hover:text-theme-primary hover:bg-theme-secondary/5'} {uiStore.isImporting
+              : 'text-theme-secondary hover:text-theme-primary hover:bg-theme-secondary/5'} {modalUIStore.isImporting
               ? 'opacity-50 cursor-not-allowed pointer-events-none'
               : ''}"
           >
@@ -150,7 +156,7 @@
               >{tab.label}</span
             >
 
-            {#if uiStore.activeSettingsTab === tab.id}
+            {#if modalUIStore.activeSettingsTab === tab.id}
               <div
                 class="absolute left-0 top-0 bottom-0 w-1 bg-theme-primary shadow-[0_0_10px_var(--color-accent-primary)]"
               ></div>
@@ -180,16 +186,18 @@
           class="text-lg font-bold text-theme-text uppercase font-header tracking-widest flex items-center gap-3"
         >
           <span
-            class="{tabs.find((t) => t.id === uiStore.activeSettingsTab)
+            class="{tabs.find((t) => t.id === modalUIStore.activeSettingsTab)
               ?.icon} text-theme-primary opacity-50"
           ></span>
-          {tabs.find((t) => t.id === uiStore.activeSettingsTab)?.label}
+          {tabs.find((t) => t.id === modalUIStore.activeSettingsTab)?.label}
         </h2>
         <button
           onclick={close}
-          aria-disabled={uiStore.isImporting ? "true" : "false"}
-          title={uiStore.isImporting ? "Import in progress" : "Close Settings"}
-          class="text-theme-muted hover:text-theme-primary transition-colors {uiStore.isImporting
+          aria-disabled={modalUIStore.isImporting ? "true" : "false"}
+          title={modalUIStore.isImporting
+            ? "Import in progress"
+            : "Close Settings"}
+          class="text-theme-muted hover:text-theme-primary transition-colors {modalUIStore.isImporting
             ? 'opacity-30 cursor-not-allowed'
             : ''}"
           aria-label="Close Settings"
@@ -200,7 +208,7 @@
 
       <!-- Body -->
       <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        {#if uiStore.activeSettingsTab === "vault"}
+        {#if modalUIStore.activeSettingsTab === "vault"}
           <div
             role="tabpanel"
             id="settings-panel-vault"
@@ -254,7 +262,7 @@
                 interrupting your current session.
               </p>
               <button
-                onclick={() => uiStore.openImportWindow()}
+                onclick={() => openImportWindow()}
                 class="w-full py-4 border border-theme-primary/50 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-xs rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95 flex items-center justify-center gap-2 group"
               >
                 <span
@@ -264,7 +272,7 @@
               </button>
             </section>
           </div>
-        {:else if uiStore.activeSettingsTab === "intelligence"}
+        {:else if modalUIStore.activeSettingsTab === "intelligence"}
           <div
             role="tabpanel"
             id="settings-panel-intelligence"
@@ -288,15 +296,17 @@
                 <input
                   id="ai-disabled-toggle"
                   type="checkbox"
-                  checked={uiStore.aiDisabled}
+                  checked={discoveryPolicyStore.aiDisabled}
                   onchange={(e) =>
-                    uiStore.toggleAiDisabled(e.currentTarget.checked)}
+                    discoveryPolicyStore.toggleAiDisabled(
+                      e.currentTarget.checked,
+                    )}
                   class="w-4 h-4 accent-theme-primary cursor-pointer"
                 />
               </div>
 
               <div
-                class="transition-all duration-300 {uiStore.aiDisabled
+                class="transition-all duration-300 {discoveryPolicyStore.aiDisabled
                   ? 'opacity-40 grayscale pointer-events-none select-none'
                   : ''}"
               >
@@ -322,7 +332,7 @@
               <EraEditor />
             </section>
           </div>
-        {:else if uiStore.activeSettingsTab === "schema"}
+        {:else if modalUIStore.activeSettingsTab === "schema"}
           <div
             role="tabpanel"
             id="settings-panel-schema"
@@ -351,7 +361,7 @@
             </p>
             <LabelSettings />
           </div>
-        {:else if uiStore.activeSettingsTab === "theme"}
+        {:else if modalUIStore.activeSettingsTab === "theme"}
           <div
             role="tabpanel"
             id="settings-panel-theme"
@@ -382,9 +392,11 @@
                   <input
                     id="skip-welcome-screen-toggle"
                     type="checkbox"
-                    checked={uiStore.skipWelcomeScreen}
+                    checked={onboardingStore.skipWelcomeScreen}
                     onchange={(e) =>
-                      uiStore.toggleWelcomeScreen(e.currentTarget.checked)}
+                      onboardingStore.toggleWelcomeScreen(
+                        e.currentTarget.checked,
+                      )}
                     class="w-4 h-4 accent-theme-primary cursor-pointer"
                   />
                 </div>
@@ -399,7 +411,7 @@
               <ThemeSelector />
             </section>
           </div>
-        {:else if uiStore.activeSettingsTab === "help"}
+        {:else if modalUIStore.activeSettingsTab === "help"}
           <div
             role="tabpanel"
             id="settings-panel-help"
@@ -412,7 +424,7 @@
             </p>
             <HelpTab />
           </div>
-        {:else if uiStore.activeSettingsTab === "about"}
+        {:else if modalUIStore.activeSettingsTab === "about"}
           <div
             role="tabpanel"
             id="settings-panel-about"
@@ -464,7 +476,7 @@
 
               <div class="mt-6">
                 <button
-                  onclick={() => (uiStore.showChangelog = true)}
+                  onclick={() => (onboardingStore.showChangelog = true)}
                   data-testid="show-changelog-button"
                   class="w-full p-4 bg-theme-primary/10 border border-theme-primary/30 hover:border-theme-primary text-theme-primary transition-all rounded group flex items-center justify-between"
                 >

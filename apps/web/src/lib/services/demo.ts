@@ -1,9 +1,11 @@
 import { vault } from "$lib/stores/vault.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { base } from "$app/paths";
 import type { IDemoActions } from "$lib/types/demo";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 class DemoService implements IDemoActions {
   async startDemo(theme: string): Promise<void> {
@@ -31,10 +33,10 @@ class DemoService implements IDemoActions {
       }
 
       // 2. Set UI State synchronously to lock out persistent init
-      uiStore.isDemoMode = true;
-      uiStore.activeDemoTheme = actualTheme;
-      uiStore.dismissedLandingPage = true;
-      uiStore.wasConverted = false;
+      sessionModeStore.isDemoMode = true;
+      sessionModeStore.activeDemoTheme = actualTheme;
+      onboardingStore.dismissedLandingPage = true;
+      sessionModeStore.wasConverted = false;
 
       // 3. Fetch sample data
       const response = await fetch(`${base}/vault-samples/${theme}.json`);
@@ -55,13 +57,13 @@ class DemoService implements IDemoActions {
       await vault.loadDemoData(demoName, entities);
     } catch (err) {
       console.error("[DemoService] Failed to start demo:", err);
-      uiStore.setGlobalError("Failed to start demo session.");
+      notificationStore.setGlobalError("Failed to start demo session.");
     }
   }
 
   async convertToWorld(): Promise<string> {
     try {
-      const theme = uiStore.activeDemoTheme || "fantasy";
+      const theme = sessionModeStore.activeDemoTheme || "fantasy";
       const name = `My ${theme.charAt(0).toUpperCase() + theme.slice(1)} World`;
 
       // 1. Create a real vault
@@ -71,10 +73,10 @@ class DemoService implements IDemoActions {
       await vault.persistToIndexedDB(vaultId);
 
       // 3. Cleanup demo state
-      uiStore.isDemoMode = false;
-      const activeTheme = uiStore.activeDemoTheme;
-      uiStore.activeDemoTheme = null;
-      uiStore.wasConverted = true;
+      sessionModeStore.isDemoMode = false;
+      const activeTheme = sessionModeStore.activeDemoTheme;
+      sessionModeStore.activeDemoTheme = null;
+      sessionModeStore.wasConverted = true;
 
       // Clear URL parameter to prevent re-triggering
       if (typeof window !== "undefined") {
@@ -88,7 +90,7 @@ class DemoService implements IDemoActions {
         await themeStore.setTheme(activeTheme as any);
       }
 
-      uiStore.notify("Campaign saved successfully!");
+      notificationStore.notify("Campaign saved successfully!");
 
       return vaultId;
     } catch (err) {
@@ -98,9 +100,9 @@ class DemoService implements IDemoActions {
   }
 
   exitDemo(): void {
-    uiStore.isDemoMode = false;
-    uiStore.activeDemoTheme = null;
-    uiStore.dismissedLandingPage = false;
+    sessionModeStore.isDemoMode = false;
+    sessionModeStore.activeDemoTheme = null;
+    onboardingStore.dismissedLandingPage = false;
     vault.demoVaultName = null;
 
     // Reload to clear transient state safely
@@ -110,7 +112,7 @@ class DemoService implements IDemoActions {
   }
 
   get marketingPrompt(): string {
-    const theme = uiStore.activeDemoTheme || "fantasy";
+    const theme = sessionModeStore.activeDemoTheme || "fantasy";
     const prompts: Record<string, string> = {
       fantasy: "Ready to build your own epic world? Start your journey here.",
       vampire: "Crave a world of darkness? Build your Vampire campaign now.",
