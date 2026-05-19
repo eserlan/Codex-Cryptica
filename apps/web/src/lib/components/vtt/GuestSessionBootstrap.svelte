@@ -99,15 +99,9 @@
     if (!browser || !isConnectedToHost) return;
 
     const handleBeforeUnload = (_e: BeforeUnloadEvent) => {
-      // Send leave message synchronously (best effort)
+      // Best-effort synchronous leave; leaveSession() sends and disconnects
       try {
-        const connection = (p2pGuestService as any).connection;
-        if (connection?.open) {
-          connection.send({
-            type: "GUEST_LEAVE",
-            payload: { displayName: uiStore.guestUsername },
-          });
-        }
+        void p2pGuestService.leaveSession();
       } catch {
         // Ignore errors during unload
       }
