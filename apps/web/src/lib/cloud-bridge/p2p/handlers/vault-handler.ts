@@ -77,7 +77,7 @@ export class VaultHandler extends BaseHandler {
     const guest = (get(guestRoster) as Record<string, any>)[peerId];
     if (guest) {
       await this.sendInitialState(conn, context);
-      this.broadcast(context, {
+      context.transport.broadcast({
         type: "GUEST_STATUS",
         payload: {
           peerId: guest.peerId,
@@ -127,7 +127,7 @@ export class VaultHandler extends BaseHandler {
         removeGuestFromRoster(current, peerId),
       );
 
-      this.broadcast(context, {
+      context.transport.broadcast({
         type: "GUEST_STATUS",
         payload: {
           peerId,
@@ -175,7 +175,7 @@ export class VaultHandler extends BaseHandler {
     context.mapSession.rebindGuestOwnership(peerId, displayName);
     const guest = (get(context.guestRoster) as Record<string, any>)[peerId];
     if (guest) {
-      this.broadcast(context, {
+      context.transport.broadcast({
         type: "GUEST_STATUS",
         payload: {
           peerId: guest.peerId,

@@ -7,15 +7,16 @@ import type {
 
 /**
  * Registry-based dispatcher for P2P messages.
- * Eliminates large if/else blocks and isolates message handling.
+ * Parameterized over a context type so it can serve host and guest sides
+ * with their own handler-context shape.
  */
-export class P2PDispatcher {
-  private handlers: P2PMessageHandler[] = [];
+export class P2PDispatcher<TContext = P2PHandlerContext> {
+  private handlers: P2PMessageHandler<TContext>[] = [];
 
   /**
    * Registers a new handler in the dispatcher.
    */
-  register(handler: P2PMessageHandler) {
+  register(handler: P2PMessageHandler<TContext>) {
     this.handlers.push(handler);
   }
 
@@ -25,7 +26,7 @@ export class P2PDispatcher {
   async dispatch(
     message: unknown,
     connection: P2PConnection,
-    context: P2PHandlerContext,
+    context: TContext,
   ): Promise<boolean> {
     if (!isValidP2PMessage(message)) {
       console.warn(`[P2P Dispatcher] Invalid message received:`, message);

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { P2PDispatcher } from "./p2p-dispatcher";
 import type { P2PMessageHandler } from "../handlers/base-handler";
+import type { GuestHandlerContext } from "../handlers/guest-handler-context";
 
 describe("P2PDispatcher", () => {
   it("should route message to correct handler", async () => {
@@ -54,6 +55,51 @@ describe("P2PDispatcher", () => {
     expect(handled).toBe(false);
     expect(handler.canHandle).not.toHaveBeenCalled();
     expect(handler.handle).not.toHaveBeenCalled();
+  });
+
+  it("routes through a guest-typed context unchanged", async () => {
+    const dispatcher = new P2PDispatcher<GuestHandlerContext>();
+    const handler: P2PMessageHandler<GuestHandlerContext> = {
+      canHandle: (msg) => msg.type === "GRAPH_SYNC",
+      handle: vi.fn(),
+    };
+    dispatcher.register(handler);
+
+    const guestCtx = {
+      callbacks: { onGraphData: vi.fn() },
+    } as unknown as GuestHandlerContext;
+    const handled = await dispatcher.dispatch(
+      { type: "GRAPH_SYNC", payload: {} } as any,
+      { peer: "host", send: vi.fn(), close: vi.fn() } as any,
+      guestCtx,
+    );
+    expect(handled).toBe(true);
+    expect(handler.handle).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "GRAPH_SYNC" }),
+      expect.any(Object),
+      guestCtx,
+    );
+  });
+
+  it("warns and returns false on unknown message types in guest context", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const dispatcher = new P2PDispatcher<GuestHandlerContext>();
+    const handler: P2PMessageHandler<GuestHandlerContext> = {
+      canHandle: () => false,
+      handle: vi.fn(),
+    };
+    dispatcher.register(handler);
+
+    const handled = await dispatcher.dispatch(
+      { type: "TOTALLY_UNKNOWN" } as any,
+      {} as any,
+      {} as any,
+    );
+
+    expect(handled).toBe(false);
+    expect(handler.handle).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("should return false when handler routing throws", async () => {
