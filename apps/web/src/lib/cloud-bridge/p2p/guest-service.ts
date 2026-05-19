@@ -13,14 +13,9 @@ import { TokenMoveCoalescer } from "./token-move-coalescer";
 import {
   buildGuestContext,
   buildGuestDispatcher,
+  type GuestDeps,
 } from "./guest-session-context";
-import { createPeer, type PeerFactory } from "./peer-factory";
-
-type GuestDeps = {
-  peerFactory?: PeerFactory;
-  transport?: P2PClientTransport;
-  dispatcher?: P2PDispatcher<GuestHandlerContext>;
-};
+import { createPeer } from "./peer-factory";
 
 export class P2PGuestService {
   private readonly transport: P2PClientTransport;
@@ -91,7 +86,11 @@ export class P2PGuestService {
     };
     this.dataListener = (data: any) =>
       void this.dispatcher.dispatch(data, hostConnection, ctx);
-    this.closeListener = () => this.handleTransportClose();
+    this.closeListener = () => {
+      if (!this.isConnected) return;
+      this.context?.mapSession.clearSession(true);
+      this.disconnect();
+    };
     this.transport.on("data", this.dataListener);
     this.transport.on("close", this.closeListener);
     this.transport.on("error", this.closeListener);
@@ -122,12 +121,6 @@ export class P2PGuestService {
     ctx.mapSession.setBroadcaster((message) => this.transport.send(message));
   }
 
-  private handleTransportClose() {
-    if (!this.isConnected) return;
-    this.context?.mapSession.clearSession(true);
-    this.disconnect();
-  }
-
   disconnect() {
     this.isConnected = false;
     this.currentHostId = null;
@@ -150,8 +143,8 @@ export class P2PGuestService {
     if (this.context) {
       this.context.mapSession.setBroadcaster(null);
       this.context.mapSession.myPeerId = null;
+      this.context = null;
     }
-    this.context = null;
     this.guestDisplayName = null;
   }
 

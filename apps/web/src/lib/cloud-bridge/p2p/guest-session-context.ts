@@ -1,4 +1,5 @@
 import { guestRoster } from "../../stores/guest";
+import type { PeerFactory } from "./peer-factory";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { GuestChatHandler } from "./handlers/guest-chat-handler";
 import type {
@@ -13,6 +14,12 @@ import { GuestVaultHandler } from "./handlers/guest-vault-handler";
 import { GuestVttHandler } from "./handlers/guest-vtt-handler";
 import { MapAssetUrlCache } from "./handlers/map-asset-url-cache";
 import type { P2PClientTransport } from "./transport/client-transport";
+
+export type GuestDeps = {
+  peerFactory?: PeerFactory;
+  transport?: P2PClientTransport;
+  dispatcher?: P2PDispatcher<GuestHandlerContext>;
+};
 
 /** Default guest dispatcher with all handlers registered. */
 export function buildGuestDispatcher(): P2PDispatcher<GuestHandlerContext> {
