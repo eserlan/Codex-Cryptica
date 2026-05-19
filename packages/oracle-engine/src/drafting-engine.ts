@@ -23,21 +23,24 @@ export class DraftingEngine {
     let match;
 
     while ((match = markerRegex.exec(text)) !== null) {
-      const name = match[1].trim();
+      const rawName = match[1].trim();
+      const name = this.normalizeProposalTitle(rawName);
       const rawType = match[2]?.toLowerCase().trim();
 
-      if (this.shouldSuppressCandidate(name)) {
+      const existing = this.findExistingEntity(name, context.existingEntities);
+      if (this.shouldSuppressCandidate(name, { isExisting: !!existing })) {
         continue;
       }
 
       // Extract excerpt/lore around the mention
-      const lore = this.extractLore(text, match.index, name);
-      if (this.shouldSuppressCandidate(name, lore)) {
+      const lore = this.extractLore(text, match.index, rawName);
+      if (
+        this.shouldSuppressCandidate(name, { lore, isExisting: !!existing })
+      ) {
         continue;
       }
 
       const chronicle = this.extractChronicle(lore);
-      const existing = this.findExistingEntity(name, context.existingEntities);
       const type = this.resolveType(
         rawType,
         existing,
@@ -68,6 +71,10 @@ export class DraftingEngine {
     }
 
     return Array.from(proposalsMap.values());
+  }
+
+  private normalizeProposalTitle(title: string): string {
+    return title.trim().replace(/:+$/g, "").trim();
   }
 
   private normalizeType(rawType: string, categories?: any[]): string {
@@ -111,7 +118,18 @@ export class DraftingEngine {
     return "concept";
   }
 
-  private shouldSuppressCandidate(name: string, lore = ""): boolean {
+  private shouldSuppressCandidate(
+    name: string,
+    options: { lore?: string; isExisting?: boolean } = {},
+  ): boolean {
+    if (
+      !name ||
+      this.isNoisyCandidate(name) ||
+      (!options.isExisting && this.countTitleWords(name) > 4)
+    ) {
+      return true;
+    }
+
     const normalizedName = this.normalizeLookupValue(name);
     const suppressedNames = new Set([
       "name",
@@ -127,11 +145,52 @@ export class DraftingEngine {
       return true;
     }
 
-    const normalizedLore = this.normalizeLookupValue(lore);
+    const normalizedLore = this.normalizeLookupValue(options.lore ?? "");
     const structuredFieldPattern =
       /\bname\b.*\btype\b.*\bchronicle\b.*\blore\b/;
 
     return structuredFieldPattern.test(normalizedLore);
+  }
+
+  private isNoisyCandidate(name: string): boolean {
+    const normalized = name
+      .trim()
+      .toLowerCase()
+      .replace(/[:\s]+$/g, "")
+      .trim();
+    if (/^\d+\.?$/.test(normalized)) return true;
+
+    const words = normalized
+      .replace(/[^\p{L}\p{N}'-]+/gu, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+    if (words.length === 0) return true;
+
+    const leadingNoise = new Set([
+      "and",
+      "but",
+      "or",
+      "then",
+      "so",
+      "you",
+      "your",
+      "his",
+      "her",
+      "their",
+      "our",
+      "my",
+      "its",
+    ]);
+    if (leadingNoise.has(words[0])) return true;
+
+    return words.every((word) => leadingNoise.has(word));
+  }
+
+  private countTitleWords(title: string): number {
+    return title
+      .replace(/[^\p{L}\p{N}'-]+/gu, " ")
+      .split(/\s+/)
+      .filter(Boolean).length;
   }
 
   private resolveType(
