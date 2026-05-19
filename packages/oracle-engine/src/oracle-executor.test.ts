@@ -149,7 +149,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should auto-apply create connections when connection discovery is auto-apply", async () => {
-      mockContext.discoveryPolicyStore.connectionDiscoveryMode = "auto-apply";
+      mockContext.uiStore.connectionDiscoveryMode = "auto-apply";
       mockContext.proposeConnectionsForEntity.mockResolvedValue(2);
       mockContext.chatHistory.messages = [
         {
@@ -184,7 +184,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should skip create connection analysis when connection discovery is off", async () => {
-      mockContext.discoveryPolicyStore.connectionDiscoveryMode = "off";
+      mockContext.uiStore.connectionDiscoveryMode = "off";
 
       await executor.execute(
         {
@@ -311,7 +311,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should show restricted help when AI is disabled", async () => {
-      mockContext.discoveryPolicyStore.aiDisabled = true;
+      mockContext.uiStore.aiDisabled = true;
       await executor.execute({ type: "help" }, mockContext);
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -522,7 +522,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should disable plot when AI is disabled", async () => {
-      mockContext.discoveryPolicyStore.aiDisabled = true;
+      mockContext.uiStore.aiDisabled = true;
       await executor.execute({ type: "plot", query: "Hero" }, mockContext);
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -646,7 +646,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should auto-link high confidence entity matches if no entityId is set", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "suggest";
+      mockContext.uiStore.entityDiscoveryMode = "suggest";
       mockGenerator.generateChatResponse.mockImplementation(
         async (
           _query: string,
@@ -684,7 +684,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should reconcile existing entity updates during auto-archive", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.vault.entities = {
         e1: {
           id: "e1",
@@ -745,7 +745,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should use the reconciled category after new entity content is prepared", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.categories = [
         { id: "note", label: "Note" },
         { id: "item", label: "Item" },
@@ -806,7 +806,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should update an existing entity category from the reconciled record", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.categories = [
         { id: "character", label: "Character" },
         { id: "faction", label: "Faction" },
@@ -868,7 +868,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should seed connection proposals for newly auto-archived entities", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockDraftingEngine.propose.mockResolvedValue([
         {
           title: "Valerius",
@@ -910,7 +910,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should await connection seeding for each auto-archived discovery", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.vault.createEntity = vi
         .fn()
         .mockResolvedValueOnce("new-id-1")
@@ -962,7 +962,7 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should suppress proactive discovery when entity discovery is off", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "off";
+      mockContext.uiStore.entityDiscoveryMode = "off";
       mockDraftingEngine.propose.mockResolvedValue([
         {
           title: "Valerius",
@@ -990,8 +990,8 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should auto-apply connection discovery for auto-archived entities when enabled", async () => {
-      mockContext.discoveryPolicyStore.entityDiscoveryMode = "auto-create";
-      mockContext.discoveryPolicyStore.connectionDiscoveryMode = "auto-apply";
+      mockContext.uiStore.entityDiscoveryMode = "auto-create";
+      mockContext.uiStore.connectionDiscoveryMode = "auto-apply";
       mockDraftingEngine.propose.mockResolvedValue([
         {
           title: "Valerius",
