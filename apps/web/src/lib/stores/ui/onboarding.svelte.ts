@@ -40,6 +40,9 @@ export class OnboardingStore {
       } else if (now - worldDismissed < 24 * 60 * 60 * 1000) {
         this.dismissedWorldPage = true;
         this.worldPageDismissedAt = worldDismissed;
+      } else {
+        // Expired (> 24h)
+        this.persistence.remove(UI_STORAGE_KEYS.WORLD_PAGE_DISMISSED_AT);
       }
     }
 

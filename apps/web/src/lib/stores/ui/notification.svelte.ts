@@ -94,7 +94,7 @@ export class NotificationStore {
 
   disconnect() {
     if (this.confirmationDialog.open && this.confirmationDialog.resolve) {
-      this.confirmationDialog.resolve(false);
+      this.resolveConfirmation(false);
     }
     this.clearNotification();
   }
