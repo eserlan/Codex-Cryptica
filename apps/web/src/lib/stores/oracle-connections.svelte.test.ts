@@ -106,7 +106,8 @@ describe("OracleStore - /connect parsing", () => {
 
     oracle = new OracleStore({
       vault: mockVault as any,
-      uiStore: mockUiStore as any,
+      discoveryPolicyStore: mockUiStore as any,
+      sessionModeStore: mockUiStore as any,
       chatHistoryService: mockChatHistory,
       settingsService: mockSettings,
       undoRedo: mockUndoRedo,

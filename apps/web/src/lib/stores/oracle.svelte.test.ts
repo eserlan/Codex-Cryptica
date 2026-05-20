@@ -247,7 +247,8 @@ describe("OracleStore", () => {
 
     oracle = new OracleStore({
       vault: mockVault as any,
-      uiStore: mockUiStore as any,
+      discoveryPolicyStore: mockUiStore as any,
+      sessionModeStore: mockUiStore as any,
       diceHistory: mockDiceHistory as any,
       textGeneration: textGenerationService as any,
       contextRetrieval: contextRetrievalService as any,
@@ -361,10 +362,10 @@ describe("OracleStore", () => {
 
     it("should clear key and messages", async () => {
       await oracle.clearKey();
-      expect(mockSettings.updateSettings).toHaveBeenCalledWith({
-        apiKey: undefined,
-      });
+      expect(mockSettings.clearKey).toHaveBeenCalled();
+    });
 
+    it("should clear messages", async () => {
       await oracle.clearMessages();
       expect(notificationStore.confirm).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -550,7 +551,8 @@ describe("OracleStore", () => {
     it("should handle missing methods in getExecutionContext (defensive wrapping)", () => {
       const bareOracle = new OracleStore({
         vault: { activeVaultId: "v1", entities: {} } as any,
-        uiStore: mockUiStore as any,
+        discoveryPolicyStore: mockUiStore as any,
+        sessionModeStore: mockUiStore as any,
         diceHistory: {} as any,
         searchService: {} as any,
         diceParser: {} as any,
