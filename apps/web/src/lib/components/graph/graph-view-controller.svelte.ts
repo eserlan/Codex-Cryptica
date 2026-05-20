@@ -7,12 +7,12 @@ import {
   setupGraphEvents,
   syncGraphElements,
 } from "graph-engine";
-import { graph } from "$lib/stores/graph.svelte";
-import { vault } from "$lib/stores/vault.svelte";
-import { debugStore } from "$lib/stores/debug.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import type { graph as graphStore } from "$lib/stores/graph.svelte";
+import type { vault as vaultStore } from "$lib/stores/vault.svelte";
+import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
+import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
+import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
+import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
 import {
   DEFAULT_SEARCH_ENTITY_ZOOM,
   consumePendingSearchEntityFocus,
@@ -20,6 +20,15 @@ import {
   markSearchEntityFocusHandled,
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
+
+export interface GraphViewDependencies {
+  graph: typeof graphStore;
+  vault: typeof vaultStore;
+  debugStore: typeof debugStoreType;
+  layoutUIStore: typeof layoutUIStoreType;
+  connectionModeStore: typeof connectionModeStoreType;
+  modalUIStore: typeof modalUIStoreType;
+}
 
 export class GraphViewController {
   container = $state<HTMLElement | null>(null);
@@ -62,8 +71,14 @@ export class GraphViewController {
   private cleanupEvents?: () => void;
   private searchFocusListener: ((event: Event) => void) | null = null;
 
-  constructor(options: { selectedId: string | null }) {
+  private deps: GraphViewDependencies;
+
+  constructor(
+    options: { selectedId: string | null },
+    deps: GraphViewDependencies,
+  ) {
     this.selectedId = options.selectedId;
+    this.deps = deps;
   }
 
   init = async (container: HTMLElement, graphStyle: any) => {
@@ -72,7 +87,7 @@ export class GraphViewController {
     try {
       const instance = (await initGraph({
         container,
-        elements: untrack(() => graph.elements),
+        elements: untrack(() => this.deps.graph.elements),
         style: untrack(() => graphStyle),
       })) as any;
 
@@ -100,23 +115,23 @@ export class GraphViewController {
           this.hoverPosition = null;
         },
         onNodeTap: async (id, node) => {
-          if (connectionModeStore.isConnecting) {
-            if (!connectionModeStore.connectingNodeId) {
-              connectionModeStore.connectingNodeId = id;
+          if (this.deps.connectionModeStore.isConnecting) {
+            if (!this.deps.connectionModeStore.connectingNodeId) {
+              this.deps.connectionModeStore.connectingNodeId = id;
               node.addClass("selected-source");
-            } else if (connectionModeStore.connectingNodeId === id) {
-              connectionModeStore.connectingNodeId = null;
+            } else if (this.deps.connectionModeStore.connectingNodeId === id) {
+              this.deps.connectionModeStore.connectingNodeId = null;
               node.removeClass("selected-source");
             } else {
-              const source = connectionModeStore.connectingNodeId;
+              const source = this.deps.connectionModeStore.connectingNodeId;
               const target = id;
-              await vault.addConnection(source, target, "neutral");
-              connectionModeStore.toggleConnectMode();
+              await this.deps.vault.addConnection(source, target, "neutral");
+              this.deps.connectionModeStore.toggleConnectMode();
             }
           } else {
-            if (layoutUIStore.isMobile) {
+            if (this.deps.layoutUIStore.isMobile) {
               this.clearNodeSelectTimer();
-              modalUIStore.openZenMode(id);
+              this.deps.modalUIStore.openZenMode(id);
               this.selectedId = null;
               node.unselect();
               return;
@@ -130,12 +145,12 @@ export class GraphViewController {
         },
         onNodeDoubleTap: (id, node) => {
           this.clearNodeSelectTimer();
-          modalUIStore.openZenMode(id);
+          this.deps.modalUIStore.openZenMode(id);
           this.selectedId = null;
           node.unselect();
         },
         onEdgeTap: (data) => {
-          if (vault.isGuest) return;
+          if (this.deps.vault.isGuest) return;
           this.editingEdge = {
             source: data.source,
             target: data.target,
@@ -146,8 +161,8 @@ export class GraphViewController {
         onBackgroundTap: () => {
           this.clearNodeSelectTimer();
           this.selectedId = null;
-          if (connectionModeStore.isConnecting)
-            connectionModeStore.toggleConnectMode();
+          if (this.deps.connectionModeStore.isConnecting)
+            this.deps.connectionModeStore.toggleConnectMode();
         },
         onViewportChange: () => {
           if (this.hoveredEntityId && instance) {
@@ -162,9 +177,12 @@ export class GraphViewController {
       });
 
       this.graphVisible = true;
+      this.deps.debugStore.log(
+        "[GraphViewController] Init successful, graphVisible set to true",
+      );
       this.setupEventListeners();
     } catch (err) {
-      debugStore.error("Graph Init Failed", err);
+      this.deps.debugStore.error("Graph Init Failed", err);
     }
   };
 
@@ -225,7 +243,8 @@ export class GraphViewController {
     }
     if (this.imageManager) {
       this.imageManager.destroy({
-        releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+        releaseImageUrl: (path: string) =>
+          this.deps.vault.releaseImageUrl(path),
       } as any);
       this.imageManager = undefined;
     }
@@ -247,19 +266,19 @@ export class GraphViewController {
 
     await this.layoutManager.apply(
       {
-        timelineMode: graph.timelineMode,
-        timelineAxis: graph.timelineAxis,
-        timelineScale: graph.timelineScale,
-        orbitMode: graph.orbitMode,
-        centralNodeId: graph.centralNodeId,
-        stableLayout: graph.stableLayout,
-        isGuest: vault.isGuest,
+        timelineMode: this.deps.graph.timelineMode,
+        timelineAxis: this.deps.graph.timelineAxis,
+        timelineScale: this.deps.graph.timelineScale,
+        orbitMode: this.deps.graph.orbitMode,
+        centralNodeId: this.deps.graph.centralNodeId,
+        stableLayout: this.deps.graph.stableLayout,
+        isGuest: this.deps.vault.isGuest,
         onLayoutStart: () => {
           this.isLayoutRunning = true;
         },
         onLayoutComputed: (ms) => {
-          debugStore.log(`Layout: ${ms}ms`, {
-            nodes: graph.stats.nodeCount,
+          this.deps.debugStore.log(`Layout: ${ms}ms`, {
+            nodes: this.deps.graph.stats.nodeCount,
             caller,
           });
         },
@@ -271,9 +290,12 @@ export class GraphViewController {
           }
         },
         onPositionsUpdated: (updates) => {
-          const isReady = this._layoutReady && vault.status !== "loading";
+          const isReady =
+            this._layoutReady && this.deps.vault.status !== "loading";
           if (!isInitial && isReady) {
-            vault.batchUpdate(updates as Record<string, Partial<LocalEntity>>);
+            this.deps.vault.batchUpdate(
+              updates as Record<string, Partial<LocalEntity>>,
+            );
           }
         },
       },
@@ -298,7 +320,7 @@ export class GraphViewController {
           this.lastOrientation &&
           currentOrientation !== this.lastOrientation
         ) {
-          debugStore.log(
+          this.deps.debugStore.log(
             `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
           );
           this.applyCurrentLayout(false, true, "Window Resize", true);
@@ -320,18 +342,17 @@ export class GraphViewController {
 
   // Sync Logic
   syncElements = () => {
-    if (this.cy && graph.elements) {
+    if (this.cy && this.deps.graph.elements) {
       syncGraphElements(this.cy, {
-        elements: graph.elements,
-        vaultStatus: vault.status,
+        elements: this.deps.graph.elements,
+        vaultStatus: this.deps.vault.status,
         initialLoaded: this.initialLoaded,
         isTemporalMetadataEqual: (a: any, b: any) => {
-          // Note: Need to import or pass this utility
           return JSON.stringify(a) === JSON.stringify(b);
         },
-        activeLabels: graph.activeLabels,
-        labelFilterMode: graph.labelFilterMode,
-        activeCategories: graph.activeCategories,
+        activeLabels: this.deps.graph.activeLabels,
+        labelFilterMode: this.deps.graph.labelFilterMode,
+        activeCategories: this.deps.graph.activeCategories,
         onFirstElements: () => {
           this.initialLoaded = true;
           this.graphVisible = true;
@@ -353,20 +374,24 @@ export class GraphViewController {
   };
 
   syncImages = () => {
-    if (this.cy && graph.elements && this.imageManager) {
+    if (this.cy && this.deps.graph.elements && this.imageManager) {
       untrack(() => {
         this.imageManager!.sync({
-          showImages: graph.showImages,
-          resolveImageUrl: (path) => vault.resolveImageUrl(path),
-          releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+          showImages: this.deps.graph.showImages,
+          resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
+          releaseImageUrl: (path: string) =>
+            this.deps.vault.releaseImageUrl(path),
           onBatchApplied: (count) => {
-            debugStore.log(
+            this.deps.debugStore.log(
               `[GraphView] Applied ${count} images to graph nodes.`,
             );
           },
-          onLog: (msg) => debugStore.log(msg),
+          onLog: (msg) => this.deps.debugStore.log(msg),
           onError: (err) =>
-            debugStore.error("Incremental image resolution failed", err),
+            this.deps.debugStore.error(
+              "Incremental image resolution failed",
+              err,
+            ),
         });
       });
     }
@@ -412,24 +437,28 @@ export class GraphViewController {
   };
 
   handleVaultLoading = () => {
-    if (vault.status === "loading" && vault.allEntities.length === 0) {
+    if (
+      this.deps.vault.status === "loading" &&
+      this.deps.vault.allEntities.length === 0
+    ) {
       this.initialLoaded = false;
       this.didFinalizeLoad = false;
       if (this.imageManager)
         this.imageManager.destroy({
-          releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+          releaseImageUrl: (path: string) =>
+            this.deps.vault.releaseImageUrl(path),
         } as any);
     }
   };
 
   handleVaultLoadFinalization = () => {
     if (
-      vault.status === "idle" &&
+      this.deps.vault.status === "idle" &&
       this.initialLoaded &&
       !this.didFinalizeLoad
     ) {
       this.didFinalizeLoad = true;
-      debugStore.log(
+      this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
       this.applyCurrentLayout(false, true, "Load Finalized");

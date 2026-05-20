@@ -1,14 +1,30 @@
 <script lang="ts">
+  import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core } from "cytoscape";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { GraphContextMenuController } from "./graph-context-menu-controller.svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
-  const controller = new GraphContextMenuController(cy);
+  const controller = new GraphContextMenuController(cy, {
+    graph,
+    vault,
+    oracle,
+    regenerationService,
+    canvasRegistry,
+    modalUIStore,
+    connectionModeStore,
+    notificationStore,
+  });
 
   $effect(() => {
     return controller.setupEvents();

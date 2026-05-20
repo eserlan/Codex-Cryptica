@@ -19,13 +19,25 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
 
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
   }>();
 
-  const controller = new GraphViewController({ selectedId });
+  const controller = new GraphViewController(
+    { selectedId },
+    {
+      graph,
+      vault,
+      debugStore,
+      layoutUIStore,
+      connectionModeStore,
+      modalUIStore,
+    },
+  );
 
   // Sync selectedId back and forth
   $effect(() => {
