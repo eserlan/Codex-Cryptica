@@ -6,80 +6,66 @@ This report identifies the top "God Files" (files with excessive responsibilitie
 
 ## Executive Summary (May 2026 Reassessment)
 
-The **UI store decoupling** refactor (Spec 101) deleted `ui.svelte.ts` after splitting its 872-line grab-bag into focused `stores/ui/*` modules, each under 200 lines. This follows the **P2P guest service** refactor (Spec 100), **Map session store** refactor (Spec 099), **P2P host service** refactor (Spec 098), and the **Oracle Executor monolith** win (Spec 097, 1,100+ → 153 lines).
+The **Graph Surface Decomposition** refactor has successfully eliminated `GraphView.svelte` and `ContextMenu.svelte` as the top frontend monoliths, dropping them from ~700 lines down to ~300 by extracting orchestration into `GraphViewController` and `GraphContextMenuController`.
 
-With both sides of P2P and the global UI store now modular, and with the **map route coordinator** decomposed in Spec 103, the largest remaining pressure points are the **regressed graph components**, the **map/graph engine cores**, and several still-broad UI/store modules (`ChatMessage.svelte`, `vtt-token-manager.svelte.ts`, `map.svelte.ts`).
+With the UI store, P2P services, Map route, and Graph surface now modular, the largest remaining pressure points are concentrated in the **engine cores** (`renderer.ts`, `LayoutManager.ts`) and specific **store managers** (`vtt-token-manager.svelte.ts`, `map.svelte.ts`, `oracle.svelte.ts`).
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                    | Line Count | Type                | Status        |
-| :--- | :----------------------------------------------------------- | :--------- | :------------------ | :------------ |
-| 1    | `apps/web/src/lib/components/GraphView.svelte`               | 705        | UI Component        | 🔴 REGRESSION |
-| 2    | `apps/web/src/lib/components/graph/ContextMenu.svelte`       | 679        | UI Component        | 🔴 REGRESSION |
-| 3    | `packages/map-engine/src/renderer.ts`                        | 672        | Engine Core         | 🟡 WATCH      |
-| 4    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`      | 659        | UI Component        | 🟡 WATCH      |
-| 5    | `packages/graph-engine/src/LayoutManager.ts`                 | 637        | Engine Core         | 🟡 WATCH      |
-| 6    | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts`    | 605        | Store Manager       | 🟡 WATCH      |
-| 7    | `apps/web/src/lib/stores/map.svelte.ts`                      | 595        | Store (State)       | 🟡 WATCH      |
-| 8    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte` | 594        | UI Component        | 🟡 WATCH      |
-| 9    | `apps/web/src/lib/stores/oracle.svelte.ts`                   | 509        | Store (State/Logic) | 🟢 IMPROVED   |
-| 10   | `apps/web/src/lib/components/explorer/EntityList.svelte`     | 500        | UI Component        | 🟡 WATCH      |
+| Rank | File Path                                                                   | Line Count | Type                | Status      |
+| :--- | :-------------------------------------------------------------------------- | :--------- | :------------------ | :---------- |
+| 1    | `packages/map-engine/src/renderer.ts`                                       | 672        | Engine Core         | 🟡 WATCH    |
+| 2    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`                     | 659        | UI Component        | 🟡 WATCH    |
+| 3    | `packages/graph-engine/src/LayoutManager.ts`                                | 637        | Engine Core         | 🟡 WATCH    |
+| 4    | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts`                   | 605        | Store Manager       | 🟡 WATCH    |
+| 5    | `apps/web/src/lib/stores/map.svelte.ts`                                     | 595        | Store (State)       | 🟡 WATCH    |
+| 6    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`                | 594        | UI Component        | 🟡 WATCH    |
+| 7    | `apps/web/src/lib/components/explorer/EntityList.svelte`                    | 510        | UI Component        | 🟡 WATCH    |
+| 8    | `apps/web/src/lib/stores/oracle.svelte.ts`                                  | 509        | Store (State/Logic) | 🟢 IMPROVED |
+| 9    | `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`         | 483        | Controller          | 🟢 NEW      |
+| 10   | `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` | 441        | Controller          | 🟢 NEW      |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. Map Route Coordinator (`(app)/map/+page.svelte`)
+### 1. Engine and Manager Cores (`renderer.ts`, `LayoutManager.ts`, `vtt-token-manager.svelte.ts`)
 
-**Analysis:** Resolved in Spec 103. The route is now 148 lines and acts as a thin composer over `MapPageController`, `MapHUD`, `MapUploadOverlay`, `MapVTTControlsHUD`, and `MapVTTSidebar`.
-**Result:**
-
-- Keep the route off the active god-file list unless it regresses again.
-- Watch `map-page-controller.svelte.ts` (267 lines) and `MapVTTSidebar.svelte` (210 lines) for future creep, but neither is an immediate hotspot.
-
-### 2. Application Store (`oracle.svelte.ts`)
-
-**Analysis:** This is no longer the top repository hotspot. `oracle.svelte.ts` is currently 509 lines, down materially from the prior 896-line regression noted in the May 2026 reassessment.
+**Analysis:** With the UI layers significantly thinned out, the core engines and store managers now dominate the top of the list. These files are inherently complex, but their size poses a long-term maintenance risk.
 **Recommended Split:**
 
-- Keep watching `oracle.svelte.ts`, but deprioritize it behind `GraphView.svelte` and `ContextMenu.svelte`.
-- If it starts creeping up again, continue extracting state/logic into focused manager modules.
+- Prefer extracting algorithmic helpers and persistence logic from the engine/store cores before changing public APIs.
+- Look for natural seams, such as separating WebGL setup from render loops in `renderer.ts`, or isolating collision detection in `vtt-token-manager`.
 
-### 3. Graph Component Regressions (`GraphView.svelte`, `ContextMenu.svelte`)
+### 2. Broad UI Components (`ChatMessage.svelte`, `TemporalPicker.svelte`)
 
-**Analysis:** `GraphView.svelte` (705 lines) and `ContextMenu.svelte` (679 lines) are now the clearest UI god files in the app. They have overtaken the map route and the Oracle store as the main frontend maintenance risk.
+**Analysis:** Some UI components remain large due to complex internal state and dense templates.
 **Recommended Split:**
 
-- Extract menu item logic from `ContextMenu.svelte` into a strategy pattern.
-- Push complex graph features from `GraphView.svelte` down into child components.
+- For `ChatMessage.svelte`, consider extracting rendering logic for different message types (system, AI, user, image) into sub-components.
+- For `TemporalPicker.svelte`, break out date parsing/formatting logic or specific picker views (year, month, day).
 
-### 4. Engine and Manager Watch List (`renderer.ts`, `LayoutManager.ts`, `vtt-token-manager.svelte.ts`, `map.svelte.ts`)
+### 3. Application Stores (`map.svelte.ts`, `oracle.svelte.ts`)
 
-**Analysis:** The next cluster is not route-level UI but large engine/store files that may deserve focused seams before they turn into full regressions:
-
-- `packages/map-engine/src/renderer.ts` (672)
-- `packages/graph-engine/src/LayoutManager.ts` (637)
-- `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts` (605)
-- `apps/web/src/lib/stores/map.svelte.ts` (595)
-
+**Analysis:** These stores have been improved or held steady but still sit around 500-600 lines.
 **Recommended Split:**
 
-- Prefer extracting algorithmic helpers and persistence helpers from the engine/store cores before changing public APIs.
-- For `map.svelte.ts`, keep route orchestration in `MapPageController` and continue shrinking global map-store responsibilities rather than re-inflating the route.
+- Continue shrinking global store responsibilities. For `map.svelte.ts`, keep route orchestration in `MapPageController`.
+- For `oracle.svelte.ts`, continue extracting state/logic into focused manager modules if size creeps up.
 
 ---
 
 ## Next Recommended Refactor Order
 
-1. **`GraphView.svelte`**: Break out dense graph interaction and rendering coordination.
-2. **`ContextMenu.svelte`**: Extract action branching and menu behavior out of the component.
-3. **`packages/map-engine/src/renderer.ts` / `packages/graph-engine/src/LayoutManager.ts`**: Reduce engine-core breadth before more UI layers depend on them.
-4. **`vtt-token-manager.svelte.ts` / `map.svelte.ts`**: Prevent the next store regressions.
+1. **`packages/map-engine/src/renderer.ts` / `packages/graph-engine/src/LayoutManager.ts`**: Reduce engine-core breadth before more UI layers depend on them.
+2. **`apps/web/src/lib/components/oracle/ChatMessage.svelte`**: Break down complex message rendering into specialized sub-components.
+3. **`apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts` / `apps/web/src/lib/stores/map.svelte.ts`**: Prevent the next store regressions by extracting logic helpers.
 
 ---
 
 ## Historical Successes (Previously Fixed & Maintained)
 
+- **`GraphView.svelte` & `ContextMenu.svelte`**: **RESOLVED**. Reduced from ~700 lines each to ~340 and ~290 lines respectively by extracting orchestration and action logic into `GraphViewController` and `GraphContextMenuController` (Spec 825/826).
 - **`oracle-executor.ts`**: **RESOLVED**. Reduced from 1,135 to 153 lines by extracting logic into 9 specialized command executors (Spec 097).
 - **`host-service.svelte.ts`**: **RESOLVED**. Reduced from 917 to 263 lines by extracting P2P transport, dispatcher, and specialized handlers (Spec 098).
 - **`map-session.svelte.ts`**: **RESOLVED**. Reduced from 896 to 47 lines by extracting snapshot, lifecycle, composition, and compatibility facade modules (Spec 099).
