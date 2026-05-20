@@ -362,6 +362,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.",
     icon: "icon-[lucide--sparkles]",
   },
+  "p2p-connection-manager": {
+    id: "p2p-connection-manager",
+    title: "P2P Connection Manager",
+    content:
+      "Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.",
+    icon: "icon-[lucide--wifi]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];
