@@ -1,5 +1,5 @@
-import { uiStore } from "../ui.svelte";
 import type { EncounterSession, VTTMessage } from "../../../types/vtt";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const STORAGE_PREFIX = "codex.vtt.session";
 const POPOUT_STORAGE_PREFIX = "codex.vtt.popout";
@@ -60,7 +60,9 @@ export class VTTPersistenceManager {
     const snapshot = this.deps.createSnapshot();
     const payload = JSON.stringify({
       vttEnabled: this.deps.getVttEnabled(),
-      ...(uiStore.isGuestMode ? { myPeerId: this.deps.getMyPeerId() } : {}),
+      ...(sessionModeStore.isGuestMode
+        ? { myPeerId: this.deps.getMyPeerId() }
+        : {}),
       snapshot,
     });
     window.sessionStorage.setItem(this.getDraftKey(mapId), payload);

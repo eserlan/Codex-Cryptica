@@ -1,7 +1,6 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { importQueue } from "$lib/stores/import-queue.svelte";
   import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
   import ReviewList from "$lib/features/importer/ReviewList.svelte";
@@ -25,6 +24,8 @@
   import { slide, fade } from "svelte/transition";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
   import { aiClientManager } from "$lib/services/ai/client-manager";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
   let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
 
@@ -37,7 +38,7 @@
   let currentFileHash = $state("");
 
   $effect(() => {
-    uiStore.isImporting = step === "processing" || step === "review";
+    modalUIStore.isImporting = step === "processing" || step === "review";
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (step === "processing") {
@@ -49,7 +50,7 @@
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      uiStore.isImporting = false;
+      modalUIStore.isImporting = false;
     };
   });
 
@@ -71,7 +72,7 @@
     discoveredEntities = [];
     extractedAssets.clear();
 
-    const signal = uiStore.abortSignal;
+    const signal = connectionModeStore.abortSignal;
 
     // Build known entities map for reconciliation
     const knownEntities: Record<string, string> = {};
@@ -208,7 +209,7 @@
 
     statusMessage = `Finalizing ${toSave.length} entities...`;
 
-    const signal = uiStore.abortSignal;
+    const signal = connectionModeStore.abortSignal;
 
     const mapType = (type: string) => {
       const t = type.toLowerCase();
@@ -416,7 +417,7 @@
 
             <button
               class="underline hover:text-red-300"
-              onclick={() => (uiStore.activeSettingsTab = "intelligence")}
+              onclick={() => (modalUIStore.activeSettingsTab = "intelligence")}
               >AI</button
             > tab.
           </p>
@@ -495,7 +496,7 @@
           {/if}
 
           <button
-            onclick={() => uiStore.abortActiveOperations()}
+            onclick={() => connectionModeStore.abortActiveOperations()}
             class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
           >
             Cancel Import

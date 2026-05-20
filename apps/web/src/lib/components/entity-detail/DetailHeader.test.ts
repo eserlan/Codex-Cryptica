@@ -4,9 +4,14 @@ import { describe, it, expect, vi } from "vitest";
 import DetailHeader from "./DetailHeader.svelte";
 
 // Mock stores
-vi.mock("$lib/stores/ui.svelte", () => ({
-  ui: {
+vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
+  layoutUIStore: {
     findInGraph: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: {
     openZenMode: vi.fn(),
   },
 }));

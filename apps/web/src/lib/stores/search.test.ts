@@ -31,12 +31,6 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
-vi.mock("./ui.svelte", () => ({
-  ui: {
-    sharedMode: false,
-  },
-}));
-
 vi.mock("./debug.svelte", () => ({
   debugStore: {
     log: vi.fn(),
@@ -46,24 +40,23 @@ vi.mock("./debug.svelte", () => ({
 }));
 
 import { SearchStore } from "./search.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("SearchStore", () => {
   let store: SearchStore;
   let mockVault: any;
-  let mockUi: any;
   let mockSearchService: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const { vault } = await import("./vault.svelte");
-    const { ui } = await import("./ui.svelte");
     const { searchService } = await import("$lib/services/search");
 
     mockVault = vault;
-    mockUi = ui;
+    sessionModeStore.sharedMode = false;
     mockSearchService = searchService;
 
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
   });
 
   it("loads valid recents from localStorage", () => {
@@ -80,7 +73,7 @@ describe("SearchStore", () => {
     vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(recents));
 
     // Need to re-instantiate to trigger loadRecents in constructor
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
     store.open();
 
     expect(store.recents).toHaveLength(1);
@@ -92,7 +85,7 @@ describe("SearchStore", () => {
     vi.mocked(localStorage.getItem).mockReturnValue("invalid-json");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
 
     expect(store.recents).toEqual([]);
     expect(spy).toHaveBeenCalled();
@@ -103,7 +96,7 @@ describe("SearchStore", () => {
     vi.mocked(localStorage.getItem).mockReturnValue(
       JSON.stringify({ not: "an array" }),
     );
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
     expect(store.recents).toEqual([]);
   });
 
@@ -160,7 +153,7 @@ describe("SearchStore", () => {
           { id: "no-path", path: "" }, // filtered out by .filter(entry => entry.path)
         ]),
       );
-      store = new SearchStore(mockVault, mockUi, mockSearchService);
+      store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
       expect(store.recents).toHaveLength(1);
       expect(store.recents[0].id).toBe("valid");
     });

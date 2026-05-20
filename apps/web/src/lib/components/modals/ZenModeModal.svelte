@@ -1,31 +1,32 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { fly, fade } from "svelte/transition";
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { openEntityPopout } from "$lib/utils/zen-popout";
   import ZenView from "../zen/ZenView.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const isPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
 
-  let entityId = $derived(uiStore.zenModeEntityId);
+  let entityId = $derived(modalUIStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
   let zenViewComponent: ReturnType<typeof ZenView> | undefined = $state();
 
   // Close Zen Mode if the entity being viewed is deleted
   $effect(() => {
-    if (uiStore.showZenMode && entityId && !entity) {
-      uiStore.closeZenMode();
+    if (modalUIStore.showZenMode && entityId && !entity) {
+      modalUIStore.closeZenMode();
     }
   });
 
   const handleClose = async () => {
     if (isPopout) {
-      const confirmed = await uiStore.confirm({
+      const confirmed = await notificationStore.confirm({
         title: "Close tab?",
         message: `Close the tab for "${entity?.title ?? "this entity"}"?`,
         confirmLabel: "Close tab",
@@ -33,7 +34,7 @@
       if (confirmed) window.close();
       return;
     }
-    uiStore.closeZenMode();
+    modalUIStore.closeZenMode();
   };
 
   const handleBackdropClick = () => {
@@ -80,14 +81,14 @@
         base,
         vault.isGuest,
       );
-      uiStore.closeZenMode();
+      modalUIStore.closeZenMode();
     };
 
     void popOutEntity();
   };
 </script>
 
-{#if uiStore.showZenMode && entityId}
+{#if modalUIStore.showZenMode && entityId}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div

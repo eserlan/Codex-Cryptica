@@ -1,6 +1,5 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import ShareModal from "$lib/components/ShareModal.svelte";
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
@@ -9,6 +8,9 @@
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
   import { base } from "$app/paths";
   import { goto } from "$app/navigation";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { openImportWindow } from "$lib/stores/ui/navigation";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -94,7 +96,7 @@
       ? 'flex-col items-stretch gap-3'
       : 'gap-1.5 md:gap-3 items-center'}"
   >
-    {#if ui.isDemoMode}
+    {#if sessionModeStore.isDemoMode}
       <div
         class="flex items-center gap-1.5 px-2 py-1 border border-theme-primary bg-theme-primary/10 text-theme-primary rounded text-[9px] font-bold tracking-tighter"
       >
@@ -109,7 +111,7 @@
             await demoService.convertToWorld();
           } catch (error) {
             console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
-            ui.notify(
+            notificationStore.notify(
               `Failed to save ${themeStore.jargon.vault}. Please try again.`,
               "error",
             );
@@ -234,8 +236,8 @@
             : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
           onclick={async () => {
             await p2pGuestService.leaveSession();
-            ui.guestUsername = null;
-            ui.isGuestMode = false;
+            sessionModeStore.guestUsername = null;
+            sessionModeStore.isGuestMode = false;
             await goto(base, { replaceState: true });
           }}
           data-testid="exit-guest-mode-button"
@@ -272,7 +274,7 @@
             class={isVertical
               ? `${btnGhost} py-3 text-sm justify-center gap-2 w-full`
               : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
-            onclick={() => ui.openImportWindow()}
+            onclick={() => openImportWindow()}
             data-testid="import-vault-button"
             title="Import markdown notes or JSON data into your archive."
             aria-label="Import Data"

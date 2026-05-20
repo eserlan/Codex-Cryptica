@@ -1,6 +1,6 @@
 import { appEventBus } from "@codex/events";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 /**
  * Initializes global event listeners for Oracle actions.
@@ -15,7 +15,10 @@ export function initOracleEventListeners(): () => void {
     appEventBus.subscribe(ORACLE_EVENTS.COMMAND_FAILED, (event) => {
       const { error, intent } = event.payload;
       console.error(`[Oracle] Command failed (${intent.type}):`, error);
-      uiStore.notify(error.startsWith("❌") ? error : `❌ ${error}`, "error");
+      notificationStore.notify(
+        error.startsWith("❌") ? error : `❌ ${error}`,
+        "error",
+      );
     }),
   );
 
@@ -31,7 +34,7 @@ export function initOracleEventListeners(): () => void {
   unsubs.push(
     appEventBus.subscribe(ORACLE_EVENTS.ENTITY_CREATED, (event) => {
       const { title } = event.payload;
-      uiStore.notify(`✨ Created: ${title}`, "success");
+      notificationStore.notify(`✨ Created: ${title}`, "success");
     }),
   );
 

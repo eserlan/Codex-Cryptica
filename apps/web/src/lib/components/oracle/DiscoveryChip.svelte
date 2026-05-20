@@ -2,11 +2,13 @@
   import type { DiscoveryProposal } from "@codex/oracle-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$stores/ui.svelte";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
   } from "$lib/components/search/search-focus";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   interface Props {
     proposal: DiscoveryProposal;
@@ -17,7 +19,7 @@
   let { proposal, onCommit, onLink }: Props = $props();
   let isCommitting = $state(false);
 
-  let isGuest = $derived(vault.isGuest || uiStore.isDemoMode);
+  let isGuest = $derived(vault.isGuest || sessionModeStore.isDemoMode);
 
   async function handleCommit() {
     if (isCommitting || isGuest) return;
@@ -33,7 +35,7 @@
           });
           const connectionCount =
             await oracle.handleDiscoveryConnectionsForEntity(proposal.entityId);
-          uiStore.notify(
+          notificationStore.notify(
             buildCommitNotice("Updated", proposal.title, connectionCount),
             "success",
           );
@@ -55,7 +57,7 @@
         );
         const connectionCount =
           await oracle.handleDiscoveryConnectionsForEntity(entityId);
-        uiStore.notify(
+        notificationStore.notify(
           buildCommitNotice("Created", proposal.title, connectionCount),
           "success",
         );
@@ -78,11 +80,11 @@
     title: string,
     connectionCount: number | void,
   ) {
-    if (uiStore.connectionDiscoveryMode === "off") {
+    if (discoveryPolicyStore.connectionDiscoveryMode === "off") {
       return `${action} ${title}`;
     }
 
-    if (uiStore.connectionDiscoveryMode === "auto-apply") {
+    if (discoveryPolicyStore.connectionDiscoveryMode === "auto-apply") {
       const count = connectionCount || 0;
       if (count > 0) {
         return `${action} ${title} and added ${count} connection${count === 1 ? "" : "s"}`;

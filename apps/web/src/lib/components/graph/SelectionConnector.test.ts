@@ -17,17 +17,22 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 }
 
 import SelectionConnector from "./SelectionConnector.svelte";
-import { ui } from "$lib/stores/ui.svelte";
+import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
 // Mock Svelte client runtime
 
 // Mock stores
-vi.mock("$lib/stores/ui.svelte", () => ({
-  ui: {
+vi.mock("$lib/stores/ui/connection-mode.svelte", () => ({
+  connectionModeStore: {
     showSelectionConnector: false,
     lastConnectionLabel: "",
     recentConnectionLabels: [],
     setLastConnectionLabel: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: {
     notify: vi.fn(),
   },
 }));
@@ -65,23 +70,25 @@ describe("SelectionConnector Dismissal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    ui.showSelectionConnector = false;
+    connectionModeStore.showSelectionConnector = false;
   });
 
   it("should close when Escape key is pressed", async () => {
-    ui.showSelectionConnector = true;
+    connectionModeStore.showSelectionConnector = true;
     render(SelectionConnector, { cy: mockCy as any });
 
     // Mock that we have 2 nodes selected
     // The component uses $effect to update selection, so we need to wait
-    await waitFor(() => expect(ui.showSelectionConnector).toBe(true));
+    await waitFor(() =>
+      expect(connectionModeStore.showSelectionConnector).toBe(true),
+    );
 
     await fireEvent.keyDown(window, { key: "Escape" });
-    expect(ui.showSelectionConnector).toBe(false);
+    expect(connectionModeStore.showSelectionConnector).toBe(false);
   });
 
   it("should close when clicking the backdrop", async () => {
-    ui.showSelectionConnector = true;
+    connectionModeStore.showSelectionConnector = true;
     const { container } = render(SelectionConnector, { cy: mockCy as any });
 
     // Find the backdrop - it's the first div inside the #if
@@ -91,6 +98,6 @@ describe("SelectionConnector Dismissal", () => {
     expect(backdrop).toBeTruthy();
 
     await fireEvent.click(backdrop!);
-    expect(ui.showSelectionConnector).toBe(false);
+    expect(connectionModeStore.showSelectionConnector).toBe(false);
   });
 });

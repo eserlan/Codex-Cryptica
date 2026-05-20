@@ -13,7 +13,7 @@ import {
   clampPointToBounds,
   hashToColor,
 } from "$lib/utils/vtt-helpers";
-import { uiStore } from "../ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const TOKEN_COORD_PRECISION = 2;
 
@@ -341,7 +341,7 @@ export class VTTTokenManager {
         return next;
       }
 
-      if (uiStore.isGuestMode && (posChanged || sizeChanged)) {
+      if (sessionModeStore.isGuestMode && (posChanged || sizeChanged)) {
         this.deps.emit({
           type: "TOKEN_MOVE",
           tokenId,

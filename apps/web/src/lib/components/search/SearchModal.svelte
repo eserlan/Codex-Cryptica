@@ -3,7 +3,6 @@
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { SearchResult } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
@@ -13,13 +12,14 @@
     dispatchSearchEntityFocus,
     resolveSearchResultEntityId,
   } from "./search-focus";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
 
   const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
-  const hasLeftSidebar = $derived(uiStore.leftSidebarOpen);
+  const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
   const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
   let overlayClass = $derived(
     `fixed z-[95] flex items-start justify-center bg-black/50 backdrop-blur-sm max-md:inset-x-0 max-md:top-[var(--header-height,65px)] max-md:bottom-14 ${

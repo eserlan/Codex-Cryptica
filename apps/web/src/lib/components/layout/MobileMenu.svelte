@@ -2,10 +2,10 @@
   import { fly, fade } from "svelte/transition";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { PATREON_URL } from "$lib/config";
   import VaultControls from "$lib/components/VaultControls.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { isOpen = $bindable(false) } = $props();
 
@@ -152,7 +152,7 @@
         <button
           class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-theme-primary min-h-[44px]"
           onclick={() => {
-            uiStore.toggleSettings("vault");
+            modalUIStore.toggleSettings("vault");
             close();
           }}
         >
@@ -203,7 +203,7 @@
         <button
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
           onclick={() => {
-            uiStore.openSettings("help");
+            modalUIStore.openSettings("help");
             close();
           }}
         >

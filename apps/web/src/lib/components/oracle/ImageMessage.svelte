@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { message }: { message: ChatMessage } = $props();
 
@@ -60,7 +60,8 @@
         class="w-full rounded-lg border border-theme-border shadow-lg cursor-zoom-in group-hover:border-theme-primary/50 transition-all"
         draggable="true"
         ondragstart={handleDragStart}
-        onclick={() => uiStore.openLightbox(message.imageUrl!, message.content)}
+        onclick={() =>
+          modalUIStore.openLightbox(message.imageUrl!, message.content)}
       />
 
       <!-- Overlay Info -->

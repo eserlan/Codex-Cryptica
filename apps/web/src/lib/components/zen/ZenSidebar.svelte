@@ -1,12 +1,12 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { isEntityVisible, type Entity } from "schema";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   let {
     entity,
@@ -242,7 +242,7 @@
       </div>
     {/if}
 
-    {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
+    {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
       <div class="flex flex-col gap-2 mt-4 w-full px-0">
         <button
           onclick={() => oracle.drawEntity(entity.id)}

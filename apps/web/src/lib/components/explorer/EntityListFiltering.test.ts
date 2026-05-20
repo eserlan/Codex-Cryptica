@@ -2,8 +2,8 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { uiStore } from "$lib/stores/ui.svelte";
 import EntityList from "./EntityList.svelte";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -62,8 +62,8 @@ vi.mock("$lib/utils/icon", () => ({
 
 describe("EntityList Filtering", () => {
   beforeEach(() => {
-    uiStore.explorerViewMode = "list";
-    uiStore.clearLabelFilters();
+    explorerUIStore.explorerViewMode = "list";
+    explorerUIStore.clearLabelFilters();
   });
 
   it("filters entities when a label pill is clicked", async () => {

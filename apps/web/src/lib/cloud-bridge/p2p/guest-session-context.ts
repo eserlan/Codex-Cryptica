@@ -40,16 +40,18 @@ export async function buildGuestContext(args: {
   callbacks: GuestSessionCallbacks;
   session: GuestSessionState;
 }): Promise<GuestHandlerContext> {
-  const [v, u, ms, m, t] = await Promise.all([
+  const [v, u, n, ms, m, t] = await Promise.all([
     import("../../stores/vault.svelte"),
-    import("../../stores/ui.svelte"),
+    import("../../stores/ui/session-mode.svelte"),
+    import("../../stores/ui/notification.svelte"),
     import("../../stores/map-session.svelte"),
     import("../../stores/map.svelte"),
     import("../../stores/theme.svelte"),
   ]);
   return {
     vault: v.vault,
-    uiStore: u.uiStore,
+    sessionModeStore: u.sessionModeStore,
+    notificationStore: n.notificationStore,
     mapSession: ms.mapSession,
     mapStore: m.mapStore,
     themeStore: t.themeStore,

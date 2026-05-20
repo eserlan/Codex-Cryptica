@@ -3,7 +3,7 @@ import { isEntityVisible } from "schema";
 import { searchService as defaultSearchService } from "$lib/services/search";
 import { debugStore } from "./debug.svelte";
 import { vault as defaultVault } from "./vault.svelte";
-import { ui as defaultUi } from "./ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export class SearchStore {
   query = $state("");
@@ -15,16 +15,16 @@ export class SearchStore {
 
   // Dependencies
   private vault: typeof defaultVault;
-  private ui: typeof defaultUi;
+  private sessionModeStore: typeof sessionModeStore;
   private searchService: typeof defaultSearchService;
 
   constructor(
     vault: typeof defaultVault = defaultVault,
-    ui: typeof defaultUi = defaultUi,
+    sessionStore: typeof sessionModeStore = sessionModeStore,
     searchService: typeof defaultSearchService = defaultSearchService,
   ) {
     this.vault = vault;
-    this.ui = ui;
+    this.sessionModeStore = sessionStore;
     this.searchService = searchService;
     this.recents = this.loadRecents();
     if (typeof window !== "undefined") {
@@ -122,7 +122,7 @@ export class SearchStore {
 
       // Filter results based on visibility settings
       const settings = {
-        sharedMode: this.ui.sharedMode,
+        sharedMode: this.sessionModeStore.sharedMode,
         defaultVisibility: this.vault.defaultVisibility,
       };
 

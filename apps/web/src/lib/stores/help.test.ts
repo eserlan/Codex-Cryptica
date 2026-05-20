@@ -15,6 +15,7 @@ vi.mock("$app/environment", () => ({
 
 import { helpStore, HelpStore } from "./help.svelte";
 import { HELP_ARTICLES } from "$lib/config/help-content";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("HelpStore", () => {
   beforeEach(() => {
@@ -24,19 +25,23 @@ describe("HelpStore", () => {
   });
 
   it("should support constructor injection for UI and Search stores", () => {
-    const mockUiStore = {
+    const mockOnboardingStore = {
       dismissedLandingPage: false,
-      closeSettings: vi.fn(),
     } as any;
+    const mockModalUIStore = { closeSettings: vi.fn() } as any;
     const mockSearchStore = { open: vi.fn() } as any;
-    const store = new HelpStore(mockUiStore, mockSearchStore);
+    const store = new HelpStore(
+      mockOnboardingStore,
+      mockModalUIStore,
+      mockSearchStore,
+    );
 
     // Test that it uses the injected UI store
     const original = (window as any).DISABLE_ONBOARDING;
     (window as any).DISABLE_ONBOARDING = false;
     store.startTour("initial-onboarding");
-    expect(mockUiStore.dismissedLandingPage).toBe(true);
-    expect(mockUiStore.closeSettings).toHaveBeenCalled();
+    expect(mockOnboardingStore.dismissedLandingPage).toBe(true);
+    expect(mockModalUIStore.closeSettings).toHaveBeenCalled();
     (window as any).DISABLE_ONBOARDING = original;
   });
 
@@ -97,11 +102,10 @@ describe("HelpStore", () => {
     helpStore.toggleArticle("intro");
     expect((helpStore as any).expandedId).toBeNull();
 
-    const mockUiStore = (helpStore as any).uiStore;
-    mockUiStore.openSettings = vi.fn();
+    modalUIStore.openSettings = vi.fn();
     helpStore.openHelpToArticle("intro");
     expect((helpStore as any).expandedId).toBe("intro");
-    expect(mockUiStore.openSettings).toHaveBeenCalledWith("help");
+    expect(modalUIStore.openSettings).toHaveBeenCalledWith("help");
   });
 
   it("should open help window", () => {

@@ -1,11 +1,12 @@
 <script lang="ts">
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { Search, Plus, Trash2, Edit2, Layout, X, Check } from "lucide-svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import { fade, scale, slide } from "svelte/transition";
   import { tick } from "svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let searchQuery = $state("");
   const activeCanvasId = $derived(page.params.slug);
@@ -23,7 +24,7 @@
   );
 
   function close() {
-    uiStore.closeCanvasSelection();
+    modalUIStore.closeCanvasSelection();
     isCreating = false;
     renamingId = null;
   }
@@ -41,13 +42,16 @@
   async function confirmCreate() {
     if (!newCanvasName.trim()) return;
 
-    if (uiStore.pendingCanvasEntities.length > 0) {
+    if (modalUIStore.pendingCanvasEntities.length > 0) {
       const result = await canvasRegistry.createCanvas(
-        uiStore.pendingCanvasEntities,
+        modalUIStore.pendingCanvasEntities,
         newCanvasName.trim(),
       );
       if (result) {
-        uiStore.notify(`Created workspace "${result.name}"`, "success");
+        notificationStore.notify(
+          `Created workspace "${result.name}"`,
+          "success",
+        );
         isCreating = false;
         goto(`/canvas/${result.slug}`);
         close();
@@ -110,7 +114,7 @@
   }
 </script>
 
-{#if uiStore.showCanvasSelector}
+{#if modalUIStore.showCanvasSelector}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
@@ -224,19 +228,19 @@
             onclick={async () => {
               if (renamingId === canvas.id) return;
 
-              if (uiStore.pendingCanvasEntities.length > 0 && canvas.id) {
+              if (modalUIStore.pendingCanvasEntities.length > 0 && canvas.id) {
                 const result = await canvasRegistry.addEntities(
                   canvas.id,
-                  uiStore.pendingCanvasEntities,
+                  modalUIStore.pendingCanvasEntities,
                 );
                 if (result.added.length > 0) {
-                  uiStore.notify(
+                  notificationStore.notify(
                     `Added ${result.added.length} entities to "${canvas.name}"`,
                     "success",
                   );
                 }
                 if (result.skipped.length > 0) {
-                  uiStore.notify(
+                  notificationStore.notify(
                     `${result.skipped.length} entities already on canvas`,
                     "info",
                   );

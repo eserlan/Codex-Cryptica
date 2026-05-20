@@ -21,8 +21,11 @@
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import type { Entity } from "schema";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   const showInitiativePanel = $derived(
     shouldShowInitiativePanel(mapSession.vttEnabled, mapSession.mode),
@@ -56,7 +59,7 @@
           mapName || files[0].name,
         );
         if (result === undefined) {
-          uiStore.notify(
+          notificationStore.notify(
             "Failed to upload map. Please ensure your vault is active.",
             "error",
           );
@@ -67,7 +70,10 @@
         files = null;
       } catch (err) {
         console.error("[MapPage] Error during handleUpload:", err);
-        uiStore.notify("An unexpected error occurred during upload.", "error");
+        notificationStore.notify(
+          "An unexpected error occurred during upload.",
+          "error",
+        );
       }
     }
   }
@@ -119,13 +125,13 @@
             x: mapCoords.x,
             y: mapCoords.y,
           };
-          if (uiStore.isGuestMode) {
+          if (sessionModeStore.isGuestMode) {
             mapSession.requestTokenAdd(tokenInput);
           } else {
             mapSession.addToken(tokenInput);
           }
         }
-      } else if (entity && activeMap && !uiStore.isGuestMode) {
+      } else if (entity && activeMap && !sessionModeStore.isGuestMode) {
         mapStore.addPin(entityId, mapCoords);
       }
       return;
@@ -187,7 +193,7 @@
   }
 
   function handleEntitySelect(entity: Entity) {
-    uiStore.openZenMode(entity.id);
+    modalUIStore.openZenMode(entity.id);
   }
 </script>
 
@@ -202,20 +208,20 @@
         <VTTChatSidebar bind:collapsed={isVttChatSidebarCollapsed} />
 
         <aside
-          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {uiStore.vttSidebarCollapsed
+          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {layoutUIStore.vttSidebarCollapsed
             ? 'w-12'
             : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
           aria-label="VTT Sidebar"
           onwheel={(e) => e.stopPropagation()}
         >
-          {#if uiStore.vttSidebarCollapsed}
+          {#if layoutUIStore.vttSidebarCollapsed}
             <div
               class="flex h-full w-full flex-col items-center justify-between p-2"
               style="background-image: var(--bg-texture-overlay)"
             >
               <button
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-                onclick={() => uiStore.toggleVttSidebar(false)}
+                onclick={() => layoutUIStore.toggleVttSidebar(false)}
                 aria-label="Expand VTT Sidebar"
                 aria-expanded="false"
                 type="button"
@@ -263,7 +269,7 @@
 
                 <button
                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-                  onclick={() => uiStore.toggleVttSidebar(true)}
+                  onclick={() => layoutUIStore.toggleVttSidebar(true)}
                   aria-label="Collapse VTT Sidebar"
                   aria-expanded="true"
                   type="button"
@@ -283,7 +289,7 @@
                   <InitiativePanel />
                 {/if}
 
-                {#if !uiStore.isGuestMode}
+                {#if !sessionModeStore.isGuestMode}
                   <section
                     class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
                     data-testid="vtt-entity-list-section"
@@ -292,10 +298,10 @@
                       type="button"
                       class="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
                       onclick={() =>
-                        uiStore.toggleVttEntityList(
-                          !uiStore.vttEntityListCollapsed,
+                        layoutUIStore.toggleVttEntityList(
+                          !layoutUIStore.vttEntityListCollapsed,
                         )}
-                      aria-expanded={!uiStore.vttEntityListCollapsed}
+                      aria-expanded={!layoutUIStore.vttEntityListCollapsed}
                       aria-controls="vtt-entity-list"
                     >
                       <div>
@@ -315,14 +321,14 @@
                           {vttEntityCount}
                         </span>
                         <span
-                          class="icon-[lucide--chevron-down] h-4 w-4 text-theme-muted transition-transform {uiStore.vttEntityListCollapsed
+                          class="icon-[lucide--chevron-down] h-4 w-4 text-theme-muted transition-transform {layoutUIStore.vttEntityListCollapsed
                             ? '-rotate-90'
                             : ''}"
                         ></span>
                       </div>
                     </button>
 
-                    {#if !uiStore.vttEntityListCollapsed}
+                    {#if !layoutUIStore.vttEntityListCollapsed}
                       <div
                         id="vtt-entity-list"
                         class="border-t border-theme-primary/20 flex flex-col max-h-[50vh]"
@@ -334,7 +340,8 @@
                           onSelect={handleEntitySelect}
                           onDragStart={handleEntityDragStart}
                           onDragEnd={handleEntityDragEnd}
-                          onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+                          onOpenZen={(entity) =>
+                            modalUIStore.openZenMode(entity.id)}
                         />
                       </div>
                     {/if}
@@ -352,7 +359,7 @@
                 {/if}
               </div>
 
-              {#if !uiStore.isGuestMode}
+              {#if !sessionModeStore.isGuestMode}
                 <div
                   class="relative z-20 border-t border-theme-primary/20 p-3 flex justify-end pointer-events-auto"
                   role="presentation"
@@ -397,7 +404,7 @@
             </button>
           {/if}
 
-          {#if uiStore.isGuestMode}
+          {#if sessionModeStore.isGuestMode}
             <!-- Guests only see the current shared map name -->
             {#if mapStore.activeMap}
               <div
@@ -450,7 +457,7 @@
               class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-[10px] font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2"
               onclick={async () => {
                 if (
-                  await uiStore.confirm({
+                  await notificationStore.confirm({
                     title: "Clear Map",
                     message:
                       "Are you sure you want to delete this map? This action cannot be undone.",
@@ -479,7 +486,7 @@
       </div>
 
       <!-- Measurement tool button (lower left) -->
-      {#if !uiStore.isGuestMode && mapSession.vttEnabled}
+      {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
         <div
           class="absolute z-20 pointer-events-auto"
           style="bottom: 1rem; left: calc({chatSidebarOffset} + 1rem);"
@@ -522,7 +529,7 @@
       {/if}
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      {#if !uiStore.isGuestMode}
+      {#if !sessionModeStore.isGuestMode}
         <div
           class="absolute inset-x-4 bottom-4 z-10 flex justify-center"
           role="presentation"
@@ -532,16 +539,17 @@
             class="flex gap-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border p-1.5 rounded-lg shadow-lg items-center"
           >
             <button
-              class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(uiStore.sharedMode)}`}
-              onclick={() => (uiStore.sharedMode = !uiStore.sharedMode)}
-              title={uiStore.sharedMode
+              class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
+              onclick={() =>
+                (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
+              title={sessionModeStore.sharedMode
                 ? "Exit Shared Mode (Admin View)"
                 : "Enter Shared Mode (Player Preview)"}
               data-testid="shared-mode-toggle"
-              aria-pressed={uiStore.sharedMode}
+              aria-pressed={sessionModeStore.sharedMode}
               aria-label="Toggle player view mode"
             >
-              {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
+              {sessionModeStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
             </button>
 
             {#if mapStore.isGMMode}
@@ -604,14 +612,14 @@
     {#if showVttShare}
       <ShareModal close={() => (showVttShare = false)} />
     {/if}
-    {#if uiStore.isGuestMode}
+    {#if sessionModeStore.isGuestMode}
       <VTTSharedImageLightbox
         imageState={mapSession.sharedTokenImage}
         onClose={() => mapSession.clearSharedTokenImage()}
       />
     {/if}
     <VTTGridColorMenu />
-  {:else if uiStore.isGuestMode}
+  {:else if sessionModeStore.isGuestMode}
     <!-- Guest view: no active map -->
     <div
       class="flex-1 flex flex-col items-center justify-center p-8 text-center"

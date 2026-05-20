@@ -1,9 +1,10 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { fade, fly } from "svelte/transition";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let {
     isOpen = false,
@@ -160,7 +161,7 @@
       applyInput = "";
       applySelectedIndex = -1;
       showApplySuggestions = false;
-      ui.notify(
+      notificationStore.notify(
         `Label "${finalLabel}" applied to ${count} ${themeStore.resolveJargon("entity", count)}.`,
         "success",
       );
@@ -173,7 +174,7 @@
     isLoading = true;
     try {
       const count = await vault.bulkRemoveLabel(entityIds, label);
-      ui.notify(
+      notificationStore.notify(
         `Label "${label}" removed from ${count} ${themeStore.resolveJargon("entity", count)}.`,
         "success",
       );
@@ -203,7 +204,7 @@
   >
     <div
       class="w-full max-w-md bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col overflow-hidden
-        {ui.isMobile ? 'max-h-[90vh]' : 'max-h-[80vh]'}"
+        {layoutUIStore.isMobile ? 'max-h-[90vh]' : 'max-h-[80vh]'}"
       transition:fly={{ y: 20, duration: 300 }}
     >
       <!-- Header -->

@@ -3,7 +3,6 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import type { LocalEntity } from "$lib/stores/vault/types";
 
@@ -34,6 +33,10 @@
     SEARCH_ENTITY_FOCUS_EVENT,
     markSearchEntityFocusHandled,
   } from "./search/search-focus";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -103,7 +106,7 @@
     if (hoveredEntityId) vault.loadEntityContent(hoveredEntityId);
   });
 
-  let findNodeCounter = $derived(ui.findNodeCounter);
+  let findNodeCounter = $derived(layoutUIStore.findNodeCounter);
   let pendingSearchFocus: {
     entityId: string;
     zoom: number;
@@ -175,7 +178,7 @@
   };
 
   $effect(() => {
-    if (!ui.isConnecting) {
+    if (!connectionModeStore.isConnecting) {
       cy?.$(".selected-source").removeClass("selected-source");
     }
   });
@@ -192,7 +195,7 @@
       cy,
       selectedId,
       isGuest: vault.isGuest,
-      confirm: (params) => ui.confirm(params),
+      confirm: (params) => notificationStore.confirm(params),
       deleteEntity: (id) => vault.deleteEntity(id),
       clearSelectedId: () => {
         selectedId = null;
@@ -216,9 +219,10 @@
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (!vault.isGuest) {
         if (selectedCount === 2) {
-          ui.showSelectionConnector = !ui.showSelectionConnector;
+          connectionModeStore.showSelectionConnector =
+            !connectionModeStore.showSelectionConnector;
         } else {
-          ui.toggleConnectMode();
+          connectionModeStore.toggleConnectMode();
         }
       }
     }
@@ -228,8 +232,8 @@
     if (e.key.toLowerCase() === "i" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleImages();
     }
-    if (e.key === "Escape" && ui.isConnecting) {
-      ui.toggleConnectMode();
+    if (e.key === "Escape" && connectionModeStore.isConnecting) {
+      connectionModeStore.toggleConnectMode();
     }
   };
 
@@ -330,23 +334,23 @@
               hoverPosition = null;
             },
             onNodeTap: async (id, node) => {
-              if (ui.isConnecting) {
-                if (!ui.connectingNodeId) {
-                  ui.connectingNodeId = id;
+              if (connectionModeStore.isConnecting) {
+                if (!connectionModeStore.connectingNodeId) {
+                  connectionModeStore.connectingNodeId = id;
                   node.addClass("selected-source");
-                } else if (ui.connectingNodeId === id) {
-                  ui.connectingNodeId = null;
+                } else if (connectionModeStore.connectingNodeId === id) {
+                  connectionModeStore.connectingNodeId = null;
                   node.removeClass("selected-source");
                 } else {
-                  const source = ui.connectingNodeId;
+                  const source = connectionModeStore.connectingNodeId;
                   const target = id;
                   await vault.addConnection(source, target, "neutral");
-                  ui.toggleConnectMode();
+                  connectionModeStore.toggleConnectMode();
                 }
               } else {
-                if (ui.isMobile) {
+                if (layoutUIStore.isMobile) {
                   clearNodeSelectTimer();
-                  ui.openZenMode(id);
+                  modalUIStore.openZenMode(id);
                   selectedId = null;
                   node.unselect();
                   return;
@@ -360,7 +364,7 @@
             },
             onNodeDoubleTap: (id, node) => {
               clearNodeSelectTimer();
-              ui.openZenMode(id);
+              modalUIStore.openZenMode(id);
               selectedId = null;
               node.unselect();
             },
@@ -376,7 +380,8 @@
             onBackgroundTap: () => {
               clearNodeSelectTimer();
               selectedId = null;
-              if (ui.isConnecting) ui.toggleConnectMode();
+              if (connectionModeStore.isConnecting)
+                connectionModeStore.toggleConnectMode();
             },
             onViewportChange: () => {
               if (hoveredEntityId && instance) {
@@ -668,7 +673,7 @@
       <FeatureHint hintId="node-merging" />
     </div>
   {/if}
-  {#if ui.isConnecting}
+  {#if connectionModeStore.isConnecting}
     <FeatureHint hintId="connect-mode" />
   {/if}
 </div>

@@ -22,7 +22,7 @@ describe("GuestPresenceHandler", () => {
       guestRoster: writable<Record<string, any>>({}),
       session,
       transport,
-      uiStore: { guestUsername: "Old", isGuestMode: false },
+      sessionModeStore: { guestUsername: "Old", isGuestMode: false },
       vault: { status: "error" as const, errorMessage: "boom" },
       mapSession: {
         setBroadcaster: vi.fn(),
@@ -105,8 +105,8 @@ describe("GuestPresenceHandler", () => {
     );
     expect(ctx.mapSession.setBroadcaster).toHaveBeenCalledWith(null);
     expect(ctx.mapSession.myPeerId).toBeNull();
-    expect(ctx.uiStore.guestUsername).toBeNull();
-    expect(ctx.uiStore.isGuestMode).toBe(true);
+    expect(ctx.sessionModeStore.guestUsername).toBeNull();
+    expect(ctx.sessionModeStore.isGuestMode).toBe(true);
     expect(ctx.vault.status).toBe("idle");
     expect(ctx.vault.errorMessage).toBeNull();
     expect(transport.disconnect).toHaveBeenCalled();

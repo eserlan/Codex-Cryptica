@@ -2,11 +2,12 @@
   import { goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { IS_STAGING } from "$lib/config";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
   import DriveStatus from "./DriveStatus.svelte";
   import { openFrontPage } from "./app-header-actions";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -16,7 +17,7 @@
     headerEl?: HTMLElement;
   } = $props();
 
-  const isStaging = $derived(IS_STAGING || uiStore.isStaging);
+  const isStaging = $derived(IS_STAGING || sessionModeStore.isStaging);
 
   const handleBrandClick = () => {
     openFrontPage();
@@ -65,7 +66,7 @@
       <!-- Die Roller Toggle -->
       <button
         class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"
-        onclick={() => (uiStore.showDiceModal = true)}
+        onclick={() => (modalUIStore.showDiceModal = true)}
         aria-label="Open Die Roller"
         title="Open Die Roller"
         data-testid="dice-roller-button"
@@ -126,10 +127,10 @@
       <DriveStatus />
       <VaultControls />
       <button
-        class="w-8 h-8 flex items-center justify-center border transition-all {uiStore.showSettings
+        class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
           ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
           : 'border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary'} relative"
-        onclick={() => uiStore.toggleSettings("vault")}
+        onclick={() => modalUIStore.toggleSettings("vault")}
         title="Application Settings"
         aria-label="Open Application Settings"
         data-testid="settings-button"

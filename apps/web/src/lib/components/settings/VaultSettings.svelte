@@ -2,12 +2,14 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { slide } from "svelte/transition";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { demoService } from "$lib/services/demo";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
   import DriveSettings from "./DriveSettings.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
@@ -58,7 +60,7 @@
 </script>
 
 <div class="space-y-10">
-  {#if uiStore.isDemoMode}
+  {#if sessionModeStore.isDemoMode}
     <div
       class="bg-theme-primary/10 border border-theme-primary/30 p-6 rounded-lg text-center space-y-4 animate-in fade-in slide-in-from-top-4"
     >
@@ -86,7 +88,7 @@
             const url = new URL(page.url.href);
             url.searchParams.delete("demo");
             goto(url.toString(), { replaceState: true });
-            uiStore.closeSettings();
+            modalUIStore.closeSettings();
           } catch (error) {
             console.error(
               `Failed to convert demo to ${themeStore.jargon.vault}:`,
@@ -151,7 +153,7 @@
             <button
               class="px-4 py-2 border border-amber-500/50 text-amber-500 hover:bg-amber-500/10 rounded transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
               onclick={async () => {
-                const confirmed = await uiStore.confirm({
+                const confirmed = await notificationStore.confirm({
                   title: "Squash History",
                   message:
                     "This will scan for .conflict files, keep only the newest version of each file, and remove the rest. Continue?",
@@ -174,7 +176,7 @@
   </div>
 
   <!-- Cloud Mirroring -->
-  {#if !uiStore.isDemoMode}
+  {#if !sessionModeStore.isDemoMode}
     <div>
       <DriveSettings />
     </div>

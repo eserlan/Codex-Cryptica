@@ -49,23 +49,16 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
-vi.mock("./ui.svelte", () => {
-  const uiStore = {
-    aiDisabled: false,
-    isDemoMode: false,
-    confirm: vi.fn().mockResolvedValue(true),
-    notify: vi.fn(),
-  };
-  return {
-    uiStore,
-    ui: uiStore,
-  };
-});
+const mockUiStore = {
+  aiDisabled: false,
+  isDemoMode: false,
+  confirm: vi.fn().mockResolvedValue(true),
+  notify: vi.fn(),
+};
 
 import { OracleStore } from "./oracle.svelte";
 import { OracleActionExecutor } from "@codex/oracle-engine";
 import { vault as mockVault } from "./vault.svelte";
-import { uiStore as mockUiStore } from "./ui.svelte";
 
 describe("OracleStore - /connect parsing", () => {
   let oracle: OracleStore;
@@ -113,7 +106,8 @@ describe("OracleStore - /connect parsing", () => {
 
     oracle = new OracleStore({
       vault: mockVault as any,
-      uiStore: mockUiStore as any,
+      discoveryPolicyStore: mockUiStore as any,
+      sessionModeStore: mockUiStore as any,
       chatHistoryService: mockChatHistory,
       settingsService: mockSettings,
       undoRedo: mockUndoRedo,

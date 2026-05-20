@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockOpfs } from "../../../tests/mocks/storage";
 import { cacheService } from "../../services/cache.svelte";
-import { uiStore } from "../ui.svelte";
 import { SyncStore } from "./sync-store.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
@@ -26,12 +26,6 @@ vi.mock("./adapters.svelte", () => ({
   },
 }));
 
-vi.mock("../ui.svelte", () => ({
-  uiStore: {
-    confirm: vi.fn(),
-  },
-}));
-
 describe("SyncStore", () => {
   let store: SyncStore;
   let repository: {
@@ -44,6 +38,7 @@ describe("SyncStore", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    notificationStore.confirm = vi.fn();
 
     repository = {
       entities: {},
@@ -90,7 +85,7 @@ describe("SyncStore", () => {
     mockVaultRecord.lastInternalChange = 1000;
     mockVaultRecord.lastSavedToFolder = 500;
 
-    vi.mocked(uiStore.confirm).mockResolvedValue(false);
+    vi.mocked(notificationStore.confirm).mockResolvedValue(false);
     const pullSpy = vi.fn();
 
     store = new SyncStore({
@@ -108,7 +103,7 @@ describe("SyncStore", () => {
 
     await store.loadFromFolder();
 
-    expect(uiStore.confirm).toHaveBeenCalled();
+    expect(notificationStore.confirm).toHaveBeenCalled();
     expect(pullSpy).not.toHaveBeenCalled();
   });
 

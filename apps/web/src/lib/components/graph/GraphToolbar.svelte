@@ -2,11 +2,13 @@
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
   import { graph } from "$lib/stores/graph.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { guestRoster } from "$lib/stores/guest";
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { cy, isLayoutRunning, onApplyLayout, selectedCount } = $props<{
     cy: Core | undefined;
@@ -25,11 +27,11 @@
   let currentZoom = $state(1);
 
   const closeMenuIfMobile = () => {
-    if (ui.isMobile) isMobileMenuOpen = false;
+    if (layoutUIStore.isMobile) isMobileMenuOpen = false;
   };
 
   $effect(() => {
-    if (!ui.isMobile) {
+    if (!layoutUIStore.isMobile) {
       isMobileMenuOpen = false;
     }
   });
@@ -48,11 +50,14 @@
   });
 
   const canConnect = $derived(selectedCount === 2);
-  const isConnecting = $derived(ui.showSelectionConnector || ui.isConnecting);
+  const isConnecting = $derived(
+    connectionModeStore.showSelectionConnector ||
+      connectionModeStore.isConnecting,
+  );
   const connectionTooltip = $derived(
     selectedCount === 2
       ? "Connect Selected Nodes"
-      : ui.isConnecting
+      : connectionModeStore.isConnecting
         ? "Exit Connect Mode"
         : "Enter Connect Mode (C)",
   );
@@ -69,7 +74,7 @@
 </script>
 
 {#snippet toolbarItems()}
-  {#if !ui.isMobile}
+  {#if !layoutUIStore.isMobile}
     <button
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
         ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -118,7 +123,7 @@
       ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
     >
     <button
-      class="w-8 h-8 flex-shrink-0 {ui.isMobile
+      class="w-8 h-8 flex-shrink-0 {layoutUIStore.isMobile
         ? 'flex'
         : 'hidden sm:flex'} items-center justify-center border transition {graph.stableLayout
         ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -136,16 +141,17 @@
           : 'icon-[lucide--pin-off]'} w-4 h-4"
       ></span></button
     >
-    {#if !ui.isGuestMode}
+    {#if !sessionModeStore.isGuestMode}
       <button
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
         onclick={() => {
           if (canConnect) {
-            ui.showSelectionConnector = !ui.showSelectionConnector;
+            connectionModeStore.showSelectionConnector =
+              !connectionModeStore.showSelectionConnector;
           } else {
-            ui.toggleConnectMode();
+            connectionModeStore.toggleConnectMode();
           }
           closeMenuIfMobile();
         }}
@@ -173,35 +179,37 @@
     >
   </div>
   <div
-    class="h-6 w-px bg-theme-border/30 mx-2 {ui.isMobile
+    class="h-6 w-px bg-theme-border/30 mx-2 {layoutUIStore.isMobile
       ? ''
       : 'hidden md:block'} flex-shrink-0"
   ></div>
-  {#if !ui.isGuestMode}
+  {#if !sessionModeStore.isGuestMode}
     <button
-      class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+      class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
         ? 'flex'
-        : 'hidden md:flex'} transition {ui.sharedMode
+        : 'hidden md:flex'} transition {sessionModeStore.sharedMode
         ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
         : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
       onclick={() => {
-        ui.sharedMode = !ui.sharedMode;
+        sessionModeStore.sharedMode = !sessionModeStore.sharedMode;
         closeMenuIfMobile();
       }}
-      title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
+      title={sessionModeStore.sharedMode
+        ? "Exit Shared Mode"
+        : "Enter Shared Mode"}
       data-testid="shared-mode-toggle"
-      aria-pressed={ui.sharedMode}
+      aria-pressed={sessionModeStore.sharedMode}
       aria-label="Toggle player view mode"
     >
       <span
-        class={ui.sharedMode
+        class={sessionModeStore.sharedMode
           ? "icon-[lucide--eye] w-4 h-4"
           : "icon-[lucide--eye-off] w-4 h-4"}
       ></span></button
     >
   {/if}
   <button
-    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showLabels
       ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -216,7 +224,7 @@
     ><span class="icon-[lucide--type] w-4 h-4"></span></button
   >
   <button
-    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showImages
       ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -232,7 +240,7 @@
   >
 
   <div
-    class="{ui.isMobile
+    class="{layoutUIStore.isMobile
       ? 'flex'
       : 'hidden sm:flex'} items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
   >
@@ -322,11 +330,11 @@
 
   <div
     class="flex flex-col md:flex-row gap-1 items-center justify-center md:justify-start p-1.5 md:p-0 rounded-full md:rounded-none
-             {ui.isMobile
+             {layoutUIStore.isMobile
       ? 'bg-transparent border-none backdrop-blur-none'
       : 'bg-theme-surface/60 md:bg-transparent border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none'}"
   >
-    {#if !ui.isMobile}
+    {#if !layoutUIStore.isMobile}
       {@render toolbarItems()}
     {:else}
       {#if isMobileMenuOpen}

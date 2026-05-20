@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { OracleStore } from "./oracle.svelte";
 import { vault as mockVault } from "./vault.svelte";
-import { uiStore as mockUiStore } from "./ui.svelte";
 import { textGenerationService, contextRetrievalService } from "../services/ai";
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("comlink", () => ({
   proxy: vi.fn((x) => x),
@@ -26,6 +26,18 @@ const { mockAnalyzeEntityById, mockAnalyzeAndApplyEntityById } = vi.hoisted(
   }),
 );
 
+const mockUiStore = {
+  confirm: vi.fn().mockResolvedValue(true),
+  aiDisabled: false,
+  isDemoMode: false,
+  entityDiscoveryMode: "suggest",
+  connectionDiscoveryMode: "suggest",
+  oracleAutomationPolicy: {
+    entityDiscovery: "suggest",
+    connectionDiscovery: "suggest",
+  },
+};
+
 // Mock dependencies
 vi.mock("../utils/idb", () => ({
   getDB: vi.fn().mockResolvedValue({
@@ -46,20 +58,6 @@ vi.mock("../utils/idb", () => ({
 vi.mock("./graph.svelte", () => ({
   graph: {
     requestFit: vi.fn(),
-  },
-}));
-
-vi.mock("./ui.svelte", () => ({
-  uiStore: {
-    confirm: vi.fn().mockResolvedValue(true),
-    aiDisabled: false,
-    isDemoMode: false,
-    entityDiscoveryMode: "suggest",
-    connectionDiscoveryMode: "suggest",
-    oracleAutomationPolicy: {
-      entityDiscovery: "suggest",
-      connectionDiscovery: "suggest",
-    },
   },
 }));
 
@@ -148,6 +146,7 @@ describe("OracleStore", () => {
       entityDiscovery: "suggest",
       connectionDiscovery: "suggest",
     };
+    notificationStore.confirm = vi.fn().mockResolvedValue(true);
 
     mockChatHistory = {
       messages: [],
@@ -248,7 +247,8 @@ describe("OracleStore", () => {
 
     oracle = new OracleStore({
       vault: mockVault as any,
-      uiStore: mockUiStore as any,
+      discoveryPolicyStore: mockUiStore as any,
+      sessionModeStore: mockUiStore as any,
       diceHistory: mockDiceHistory as any,
       textGeneration: textGenerationService as any,
       contextRetrieval: contextRetrievalService as any,
@@ -362,12 +362,12 @@ describe("OracleStore", () => {
 
     it("should clear key and messages", async () => {
       await oracle.clearKey();
-      expect(mockSettings.updateSettings).toHaveBeenCalledWith({
-        apiKey: undefined,
-      });
+      expect(mockSettings.clearKey).toHaveBeenCalled();
+    });
 
+    it("should clear messages", async () => {
       await oracle.clearMessages();
-      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+      expect(notificationStore.confirm).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "Clear History",
           isDangerous: true,
@@ -378,11 +378,11 @@ describe("OracleStore", () => {
     });
 
     it("should not clear messages when confirmation is cancelled", async () => {
-      vi.mocked(mockUiStore.confirm).mockResolvedValue(false);
+      vi.mocked(notificationStore.confirm).mockResolvedValue(false);
 
       await oracle.clearMessages();
 
-      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+      expect(notificationStore.confirm).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "Clear History",
           isDangerous: true,
@@ -551,7 +551,8 @@ describe("OracleStore", () => {
     it("should handle missing methods in getExecutionContext (defensive wrapping)", () => {
       const bareOracle = new OracleStore({
         vault: { activeVaultId: "v1", entities: {} } as any,
-        uiStore: mockUiStore as any,
+        discoveryPolicyStore: mockUiStore as any,
+        sessionModeStore: mockUiStore as any,
         diceHistory: {} as any,
         searchService: {} as any,
         diceParser: {} as any,

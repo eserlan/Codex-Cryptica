@@ -4,6 +4,7 @@ import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 /**
  * Core system bootstrapping.
@@ -15,7 +16,7 @@ export function bootSystem(stores: {
   graph: any;
   calendar: any;
   vault: any;
-  uiStore: any;
+  sessionModeStore: any;
   oracle?: any;
 }): boolean {
   debugStore.log("System booting: Initializing heavy stores...");
@@ -25,7 +26,7 @@ export function bootSystem(stores: {
   stores.calendar.init();
 
   // Initialize staging state
-  stores.uiStore.isStaging = IS_STAGING;
+  stores.sessionModeStore.isStaging = IS_STAGING;
 
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);
@@ -44,7 +45,7 @@ export function bootSystem(stores: {
  * Sets up global error and rejection handlers.
  * Returns a cleanup function.
  */
-export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
+export function initializeGlobalListeners(calendarStore: any) {
   if (!browser) return () => {};
 
   // Initialize Oracle action listeners
@@ -78,7 +79,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
     }
 
     console.error("[Fatal Error MSG]", event.message, event.error?.stack);
-    uiStore.setGlobalError(event.message, event.error?.stack);
+    notificationStore.setGlobalError(event.message, event.error?.stack);
   };
 
   const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -102,7 +103,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
     }
 
     console.error("[Fatal Rejection]", event);
-    uiStore.setGlobalError(
+    notificationStore.setGlobalError(
       message || "Unhandled Promise Rejection",
       reason?.stack,
     );
@@ -137,7 +138,14 @@ export function setupWindowGlobals(context: {
   calendarStore: any;
   helpStore: any;
   categories: any;
-  uiStore: any;
+  onboardingStore?: any;
+  sessionModeStore?: any;
+  notificationStore?: any;
+  layoutUIStore?: any;
+  modalUIStore?: any;
+  discoveryPolicyStore?: any;
+  connectionModeStore?: any;
+  explorerUIStore?: any;
   isEntityVisible: any;
   eventBus?: any;
 }) {
@@ -152,6 +160,16 @@ export function setupWindowGlobals(context: {
 
   console.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
+  (window as any).codexUI = {
+    onboarding: context.onboardingStore,
+    session: context.sessionModeStore,
+    notification: context.notificationStore,
+    layout: context.layoutUIStore,
+    modal: context.modalUIStore,
+    discovery: context.discoveryPolicyStore,
+    connection: context.connectionModeStore,
+    explorer: context.explorerUIStore,
+  };
 
   // Lazy-load dynamic AI services if not already present
   import("../../services/ai")

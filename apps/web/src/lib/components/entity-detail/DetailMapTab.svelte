@@ -3,7 +3,8 @@
   import { goto } from "$app/navigation";
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { entity } = $props<{ entity?: Entity | null }>();
 
@@ -26,7 +27,7 @@
       try {
         const mapId = await mapStore.uploadMap(files[0], `${entity.title} Map`);
         if (!mapId) {
-          uiStore.notify(
+          notificationStore.notify(
             "Failed to upload map. Please ensure your vault is active.",
             "error",
           );
@@ -41,7 +42,10 @@
         files = null;
       } catch (err) {
         console.error("[DetailMapTab] Error during handleUpload:", err);
-        uiStore.notify("An unexpected error occurred during upload.", "error");
+        notificationStore.notify(
+          "An unexpected error occurred during upload.",
+          "error",
+        );
       }
     }
   }
@@ -49,7 +53,7 @@
   async function handleDeleteMap() {
     if (!linkedMap) return;
     if (
-      await uiStore.confirm({
+      await notificationStore.confirm({
         title: "Clear Points",
         message:
           "Are you sure you want to delete this map? This action cannot be undone.",
@@ -59,7 +63,7 @@
       try {
         await vault.deleteMap(linkedMap.id);
       } catch (err: any) {
-        uiStore.notify(`Error deleting map: ${err.message}`, "error");
+        notificationStore.notify(`Error deleting map: ${err.message}`, "error");
       }
     }
   }
@@ -114,7 +118,7 @@
             class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
             onclick={() => {
               mapStore.selectMap(linkedMap!.id, true);
-              uiStore.closeZenMode();
+              modalUIStore.closeZenMode();
               goto("/map");
             }}
           >
@@ -140,7 +144,7 @@
           class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity bg-black/40 cursor-pointer focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 focus:outline-none"
           onclick={() => {
             mapStore.selectMap(linkedMap!.id, true);
-            uiStore.closeZenMode();
+            modalUIStore.closeZenMode();
             goto("/map");
           }}
         >

@@ -1,6 +1,5 @@
 import { mapStore } from "../../stores/map.svelte";
 import { mapSession } from "../../stores/map-session.svelte";
-import { uiStore } from "../../stores/ui.svelte";
 import { vault } from "../../stores/vault.svelte";
 import { p2pGuestService } from "../../cloud-bridge/p2p/guest-service";
 import { p2pHost } from "../../cloud-bridge/p2p/host-service.svelte";
@@ -13,6 +12,8 @@ import {
   shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
 import type { MapFogPainter } from "./map-fog-painter";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export class MapInteractionManager {
   painter: MapFogPainter;
@@ -98,13 +99,13 @@ export class MapInteractionManager {
         -((viewport.pan.y + canvasSize.height / 2) / viewport.zoom) %
         mapStore.gridSize;
       mapSession.gridMoveMode = false;
-      uiStore.clearNotification();
+      notificationStore.clearNotification();
       return;
     }
     if (event.key === "Escape") {
       if (mapSession.gridMoveMode) {
         mapSession.gridMoveMode = false;
-        uiStore.clearNotification();
+        notificationStore.clearNotification();
         return;
       }
       if (mapSession.gridFitMode) {
@@ -292,7 +293,7 @@ export class MapInteractionManager {
       if (
         finished &&
         mapStore.isGMMode &&
-        !uiStore.isGuestMode &&
+        !sessionModeStore.isGuestMode &&
         mapSession.vttEnabled
       ) {
         void p2pHost.broadcastActiveMapFogSync();
@@ -436,7 +437,11 @@ export class MapInteractionManager {
     const y = e.clientY - rect.top;
 
     const imgCoords = mapStore.unproject({ x, y });
-    if (mapSession.vttEnabled && mapStore.isGMMode && !uiStore.isGuestMode) {
+    if (
+      mapSession.vttEnabled &&
+      mapStore.isGMMode &&
+      !sessionModeStore.isGuestMode
+    ) {
       mapSession.pendingTokenCoords = imgCoords;
     } else if (!mapSession.vttEnabled) {
       mapStore.pendingPinCoords = imgCoords;
@@ -478,7 +483,9 @@ export class MapInteractionManager {
 
   onWheel = (e: WheelEvent) => {
     const canResize =
-      mapSession.vttEnabled && mapStore.isGMMode && !uiStore.isGuestMode;
+      mapSession.vttEnabled &&
+      mapStore.isGMMode &&
+      !sessionModeStore.isGuestMode;
     const el = this.getContainer();
 
     if (e.shiftKey && canResize) {

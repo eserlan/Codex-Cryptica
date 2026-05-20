@@ -1,4 +1,3 @@
-import { uiStore } from "./ui.svelte";
 import { base } from "$app/paths";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
@@ -35,6 +34,7 @@ import { migrateStructure } from "./vault/migration";
 import { VaultMessenger } from "./vault/messenger";
 import { VaultStorageManager } from "./vault/storage";
 import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export class VaultStore {
   // Reactive State
@@ -124,7 +124,7 @@ export class VaultStore {
     return this.repository.saveQueue;
   }
   get isGuest() {
-    return !!uiStore.isGuestMode;
+    return !!sessionModeStore.isGuestMode;
   }
   get services() {
     return this.serviceRegistry.services;
@@ -261,7 +261,7 @@ export class VaultStore {
   async init() {
     // Guest popout tabs pre-populate the vault via applyGuestPayload before
     // this runs — skip full init so loadFiles() doesn't overwrite that data.
-    if (uiStore.isGuestMode) {
+    if (sessionModeStore.isGuestMode) {
       this.isInitialized = true;
       return;
     }
@@ -273,7 +273,7 @@ export class VaultStore {
       const pref = await db.get("settings", "defaultVisibility");
       if (pref) this.defaultVisibility = pref as any;
 
-      if (uiStore.isDemoMode) {
+      if (sessionModeStore.isDemoMode) {
         this.isInitialized = true;
         return;
       }
@@ -305,7 +305,7 @@ export class VaultStore {
       debugStore.error("[VaultStore] Init failed", err);
       console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
 
-      uiStore.isGuestMode = true;
+      sessionModeStore.isGuestMode = true;
       this.status = "idle";
       this.errorMessage =
         err?.name === "QuotaExceededError"

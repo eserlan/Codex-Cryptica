@@ -1,9 +1,11 @@
 <script lang="ts">
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { onShare }: { onShare?: () => void } = $props();
-  let canShareVtt = $derived(mapSession.vttEnabled && !uiStore.isGuestMode);
+  let canShareVtt = $derived(
+    mapSession.vttEnabled && !sessionModeStore.isGuestMode,
+  );
 </script>
 
 {#if canShareVtt}

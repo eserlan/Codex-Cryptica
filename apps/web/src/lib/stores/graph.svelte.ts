@@ -1,40 +1,47 @@
 import { vault as defaultVault } from "./vault.svelte";
-import { ui as defaultUi } from "./ui.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible, type Era, type Entity } from "schema";
 import { getDB } from "../utils/idb";
+import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
 export class GraphStore {
   // Dependencies
   private _vault?: typeof defaultVault;
-  private _ui?: typeof defaultUi;
+  private explorerUIStore: typeof explorerUIStore;
+  private sessionModeStore: typeof sessionModeStore;
+  private connectionModeStore: typeof connectionModeStore;
 
   private get vault() {
     return this._vault ?? defaultVault;
   }
 
-  private get ui() {
-    return this._ui ?? defaultUi;
-  }
-
-  constructor(vault?: typeof defaultVault, ui?: typeof defaultUi) {
+  constructor(
+    vault?: typeof defaultVault,
+    explorerStore: typeof explorerUIStore = explorerUIStore,
+    sessionStore: typeof sessionModeStore = sessionModeStore,
+    connectionStore: typeof connectionModeStore = connectionModeStore,
+  ) {
     this._vault = vault;
-    this._ui = ui;
+    this.explorerUIStore = explorerStore;
+    this.sessionModeStore = sessionStore;
+    this.connectionModeStore = connectionStore;
   }
 
   // Svelte 5 derived state
   get activeLabels() {
-    return this.ui.labelFilters;
+    return this.explorerUIStore.labelFilters;
   }
   set activeLabels(value: Set<string>) {
-    this.ui.labelFilters = value;
+    this.explorerUIStore.labelFilters = value;
   }
   activeCategories = $state(new Set<string>());
 
   elements = $derived.by(() => {
     const allEntities = this.vault.allEntities;
     const settings = {
-      sharedMode: this.ui.sharedMode,
+      sharedMode: this.sessionModeStore.sharedMode,
       defaultVisibility: this.vault.defaultVisibility,
     };
 
@@ -183,11 +190,14 @@ export class GraphStore {
   }
 
   toggleLabelFilter(label: string) {
-    this.ui.toggleLabelFilter(label, this.ui.isModifierPressed);
+    this.explorerUIStore.toggleLabelFilter(
+      label,
+      this.connectionModeStore.isModifierPressed,
+    );
   }
 
   clearLabelFilters() {
-    this.ui.clearLabelFilters();
+    this.explorerUIStore.clearLabelFilters();
   }
 
   toggleCategoryFilter(categoryId: string) {

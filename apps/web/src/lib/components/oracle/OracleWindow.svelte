@@ -1,6 +1,5 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$stores/ui.svelte";
   import { base } from "$app/paths";
   import OracleChat from "./OracleChat.svelte";
   import { fly, fade } from "svelte/transition";
@@ -8,6 +7,9 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   const _isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
@@ -80,7 +82,7 @@
           class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
-        {#if uiStore.aiDisabled}
+        {#if discoveryPolicyStore.aiDisabled}
           <span
             class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
             >AI DISABLED</span
@@ -136,12 +138,12 @@
 
     <OracleChat
       onOpenSettings={() => {
-        uiStore.openSettings();
+        modalUIStore.openSettings();
         oracle.toggle();
       }}
     />
 
-    {#if uiStore.isDemoMode}
+    {#if sessionModeStore.isDemoMode}
       <div
         class="p-4 bg-theme-primary/5 border-t border-theme-border flex flex-col gap-3 rounded-b-xl md:rounded-b-lg"
       >
@@ -158,7 +160,7 @@
               url.searchParams.delete("demo");
               goto(url.toString(), { replaceState: true });
               oracle.toggle();
-              uiStore.openSettings("vault");
+              modalUIStore.openSettings("vault");
             } catch (error) {
               console.error(
                 `Failed to convert demo to ${themeStore.jargon.vault}`,

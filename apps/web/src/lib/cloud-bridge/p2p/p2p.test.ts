@@ -9,9 +9,9 @@ vi.mock("$app/paths", () => ({
   base: "",
 }));
 
-vi.mock("../../stores/ui.svelte", () => {
+vi.mock("../../stores/ui/notification.svelte", () => {
   return {
-    uiStore: {
+    notificationStore: {
       notify: vi.fn(),
     },
   };
