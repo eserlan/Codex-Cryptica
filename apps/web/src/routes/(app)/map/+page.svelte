@@ -1,610 +1,76 @@
 <script lang="ts">
+  import MapHUD from "$lib/components/map/MapHUD.svelte";
+  import MapUploadOverlay from "$lib/components/map/MapUploadOverlay.svelte";
   import MapView from "$lib/components/map/MapView.svelte";
-  import VTTControls from "$lib/components/map/VTTControls.svelte";
+  import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
   import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
-  import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
   import ShareModal from "$lib/components/ShareModal.svelte";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
-  import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
-  import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
-  import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
-  import GuestInfoOverlay from "$lib/components/vtt/GuestInfoOverlay.svelte";
+  import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
   import VTTSharedImageLightbox from "$lib/components/vtt/VTTSharedImageLightbox.svelte";
-  import EntityList from "$lib/components/explorer/EntityList.svelte";
   import {
-    getPrimaryButtonStateClass,
-    getMeasurementToolButtonClass,
-    shouldShowInitiativePanel,
-  } from "$lib/components/map/vtt-ui";
-  import { handleActiveMapSelection } from "$lib/components/map/map-page-actions";
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+    MapPageController,
+    type MapPageControllerDependencies,
+  } from "$lib/stores/map/map-page-controller.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import type { Entity } from "schema";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import type { Entity } from "schema";
 
-  const showInitiativePanel = $derived(
-    shouldShowInitiativePanel(mapSession.vttEnabled, mapSession.mode),
-  );
-  const hasSelectedToken = $derived(Boolean(mapSession.selectedToken));
-  const VTT_ENTITY_TYPES = ["character", "creature", "item"];
-  const vttEntityCount = $derived.by(
-    () =>
-      vault.allEntities.filter((entity) =>
-        VTT_ENTITY_TYPES.includes(entity.type),
-      ).length,
-  );
-
-  let showUpload = $state(false);
-  let showVttShare = $state(false);
-  let isVttChatSidebarCollapsed = $state(false);
-
-  // Chat sidebar offset: 20rem when expanded, 3rem (w-12) when collapsed
-  const chatSidebarOffset = $derived(
-    isVttChatSidebarCollapsed ? "3rem" : "20rem",
-  );
-  let mapName = $state("");
-  let files = $state<FileList | null>(null);
-
-  async function handleUpload() {
-    if (files && files[0]) {
-      try {
-        const result = await mapStore.uploadMap(
-          files[0],
-          mapName || files[0].name,
-        );
-        if (result === undefined) {
-          notificationStore.notify(
-            "Failed to upload map. Please ensure your vault is active.",
-            "error",
-          );
-          return;
-        }
-        showUpload = false;
-        mapName = "";
-        files = null;
-      } catch (err) {
-        console.error("[MapPage] Error during handleUpload:", err);
-        notificationStore.notify(
-          "An unexpected error occurred during upload.",
-          "error",
-        );
-      }
-    }
-  }
-
-  let isDragging = $state(false);
-
-  function isEntityDrag(dataTransfer: DataTransfer | null) {
-    if (!dataTransfer) return false;
-    return Array.from(dataTransfer.types).includes("application/codex-entity");
-  }
-
-  function handleEntityDragStart(event: DragEvent, entityId: string) {
-    if (!event.dataTransfer) return;
-
-    event.dataTransfer.setData("application/codex-entity", entityId);
-    event.dataTransfer.effectAllowed = "copy";
-    mapSession.clearDragPreview();
-  }
-
-  function handleEntityDragEnd() {
-    isDragging = false;
-    mapSession.clearDragPreview();
-  }
-
-  function handleDrop(e: DragEvent) {
-    e.preventDefault();
-    isDragging = false;
-
-    const dt = e.dataTransfer;
-    mapSession.clearDragPreview();
-    if (!dt) return;
-
-    if (isEntityDrag(dt)) {
-      const entityId = dt.getData("application/codex-entity");
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const mapCoords = mapStore.unproject({ x, y });
-      const entity = vault.entities[entityId];
-      const activeMap = mapStore.activeMap;
-
-      if (mapSession.vttEnabled) {
-        if (entity && VTT_ENTITY_TYPES.includes(entity.type) && activeMap) {
-          const tokenInput = {
-            name: entity.title,
-            entityId: entity.id,
-            imageUrl: entity.image,
-            x: mapCoords.x,
-            y: mapCoords.y,
-          };
-          if (sessionModeStore.isGuestMode) {
-            mapSession.requestTokenAdd(tokenInput);
-          } else {
-            mapSession.addToken(tokenInput);
-          }
-        }
-      } else if (entity && activeMap && !sessionModeStore.isGuestMode) {
-        mapStore.addPin(entityId, mapCoords);
-      }
-      return;
-    }
-
-    if (dt.files && dt.files.length > 0) {
-      files = dt.files;
-      // If dropping while modal is closed, open it to confirm name/upload
-      if (!showUpload) {
-        showUpload = true;
-      }
-    }
-  }
-
-  function handleDragOver(e: DragEvent) {
-    e.preventDefault();
-    isDragging = true;
-
-    const dt = e.dataTransfer;
-    if (isEntityDrag(dt)) {
-      dt!.dropEffect = "copy";
-
-      if (mapSession.vttEnabled) {
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const mapCoords = mapStore.unproject({ x, y });
-        const entityId =
-          dt?.getData("application/codex-entity") ||
-          mapSession.dragPreview?.entityId;
-
-        if (!entityId) return;
-
-        mapSession.setDragPreview({
-          entityId,
-          x: mapCoords.x,
-          y: mapCoords.y,
-        });
-      }
-    }
-  }
-
-  function handleDragLeave(e: DragEvent) {
-    e.preventDefault();
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const hasLeftTarget =
-      e.clientX < rect.left ||
-      e.clientX > rect.right ||
-      e.clientY < rect.top ||
-      e.clientY > rect.bottom;
-
-    if (!hasLeftTarget) {
-      return;
-    }
-
-    isDragging = false;
-    mapSession.clearDragPreview();
-  }
+  const controller = new MapPageController({
+    mapStore,
+    mapSession,
+    vault,
+    notificationStore,
+    sessionModeStore,
+    layoutUIStore,
+  } satisfies MapPageControllerDependencies);
 
   function handleEntitySelect(entity: Entity) {
     modalUIStore.openZenMode(entity.id);
   }
+
+  $effect(() => {
+    controller.syncActiveVault(vault.activeVaultId);
+  });
 </script>
 
 <div class="flex-1 flex flex-col bg-theme-bg overflow-hidden relative">
   {#if mapStore.activeMap}
     <MapView
-      onMapDragOver={handleDragOver}
-      onMapDragLeave={handleDragLeave}
-      onMapDrop={handleDrop}
+      onMapDragOver={(event) => controller.onDragOver(event)}
+      onMapDragLeave={(event) => controller.onDragLeave(event)}
+      onMapDrop={(event) => controller.onDrop(event)}
     >
       {#if mapSession.vttEnabled}
-        <VTTChatSidebar bind:collapsed={isVttChatSidebarCollapsed} />
-
-        <aside
-          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {layoutUIStore.vttSidebarCollapsed
-            ? 'w-12'
-            : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
-          aria-label="VTT Sidebar"
-          onwheel={(e) => e.stopPropagation()}
-        >
-          {#if layoutUIStore.vttSidebarCollapsed}
-            <div
-              class="flex h-full w-full flex-col items-center justify-between p-2"
-              style="background-image: var(--bg-texture-overlay)"
-            >
-              <button
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-                onclick={() => layoutUIStore.toggleVttSidebar(false)}
-                aria-label="Expand VTT Sidebar"
-                aria-expanded="false"
-                type="button"
-              >
-                <span class="icon-[lucide--panel-right-open] w-4 h-4"></span>
-              </button>
-
-              <div class="flex flex-1 items-center justify-center">
-                <span
-                  class="rotate-180 text-[10px] font-black uppercase tracking-[0.4em] text-theme-muted [writing-mode:vertical-rl]"
-                >
-                  VTT
-                </span>
-              </div>
-            </div>
-          {:else}
-            <div
-              class="flex h-full min-h-0 w-full flex-col relative"
-              style="background-image: var(--bg-texture-overlay)"
-            >
-              <!-- Decorative Corners -->
-              <div
-                class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-theme-primary/30 rounded-tl pointer-events-none hidden md:block"
-              ></div>
-              <div
-                class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-theme-primary/30 rounded-tr pointer-events-none hidden md:block"
-              ></div>
-              <div
-                class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-theme-primary/30 rounded-bl pointer-events-none hidden md:block"
-              ></div>
-              <div
-                class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-theme-primary/30 rounded-br pointer-events-none hidden md:block"
-              ></div>
-
-              <div
-                class="flex items-center justify-between gap-3 border-b border-theme-primary/20 px-3 py-3"
-              >
-                <div>
-                  <div
-                    class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
-                  >
-                    VTT Sidebar
-                  </div>
-                </div>
-
-                <button
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-                  onclick={() => layoutUIStore.toggleVttSidebar(true)}
-                  aria-label="Collapse VTT Sidebar"
-                  aria-expanded="true"
-                  type="button"
-                >
-                  <span class="icon-[lucide--panel-right-close] w-4 h-4"></span>
-                </button>
-              </div>
-
-              <div class="border-b border-theme-primary/20 px-3 py-3">
-                <VTTControls />
-              </div>
-
-              <div
-                class="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-3 p-3 pr-2"
-              >
-                {#if showInitiativePanel}
-                  <InitiativePanel />
-                {/if}
-
-                {#if !sessionModeStore.isGuestMode}
-                  <section
-                    class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
-                    data-testid="vtt-entity-list-section"
-                  >
-                    <button
-                      type="button"
-                      class="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
-                      onclick={() =>
-                        layoutUIStore.toggleVttEntityList(
-                          !layoutUIStore.vttEntityListCollapsed,
-                        )}
-                      aria-expanded={!layoutUIStore.vttEntityListCollapsed}
-                      aria-controls="vtt-entity-list"
-                    >
-                      <div>
-                        <div
-                          class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
-                        >
-                          Vault Entities
-                        </div>
-                        <div class="text-xs text-theme-muted">
-                          Drag characters, creatures, and items onto the map.
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span
-                          class="rounded-full border border-theme-border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
-                        >
-                          {vttEntityCount}
-                        </span>
-                        <span
-                          class="icon-[lucide--chevron-down] h-4 w-4 text-theme-muted transition-transform {layoutUIStore.vttEntityListCollapsed
-                            ? '-rotate-90'
-                            : ''}"
-                        ></span>
-                      </div>
-                    </button>
-
-                    {#if !layoutUIStore.vttEntityListCollapsed}
-                      <div
-                        id="vtt-entity-list"
-                        class="border-t border-theme-primary/20 flex flex-col max-h-[50vh]"
-                        role="presentation"
-                        onmousedown={(event) => event.stopPropagation()}
-                      >
-                        <EntityList
-                          allowedTypes={VTT_ENTITY_TYPES}
-                          onSelect={handleEntitySelect}
-                          onDragStart={handleEntityDragStart}
-                          onDragEnd={handleEntityDragEnd}
-                          onOpenZen={(entity) =>
-                            modalUIStore.openZenMode(entity.id)}
-                        />
-                      </div>
-                    {/if}
-                  </section>
-                {/if}
-
-                <TokenDetail />
-
-                {#if !showInitiativePanel && !hasSelectedToken}
-                  <div
-                    class="rounded-xl border border-dashed border-theme-primary/20 bg-theme-bg/50 p-4 text-sm text-theme-muted"
-                  >
-                    Select a token to view its details.
-                  </div>
-                {/if}
-              </div>
-
-              {#if !sessionModeStore.isGuestMode}
-                <div
-                  class="relative z-20 border-t border-theme-primary/20 p-3 flex justify-end pointer-events-auto"
-                  role="presentation"
-                  onmousedown={(e) => e.stopPropagation()}
-                >
-                  <button
-                    class="w-8 h-8 flex flex-shrink-0 items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-muted transition hover:text-theme-primary"
-                    onclick={() => {
-                      console.log("[MapPage] VTT share requested");
-                      showVttShare = true;
-                      console.log("[MapPage] showVttShare set", showVttShare);
-                    }}
-                    type="button"
-                    title="Share Campaign"
-                    aria-label="Share Campaign"
-                  >
-                    <span class="icon-[lucide--share-2] w-4 h-4"></span>
-                  </button>
-                </div>
-              {/if}
-            </div>
-          {/if}
-        </aside>
+        <MapVTTSidebar
+          isVttChatSidebarCollapsed={layoutUIStore.vttChatSidebarCollapsed}
+          showInitiativePanel={controller.showInitiativePanel}
+          hasSelectedToken={controller.hasSelectedToken}
+          vttEntityCount={controller.vttEntityCount}
+          onVttChatSidebarCollapsed={(collapsed) =>
+            controller.setVttChatSidebarCollapsed(collapsed)}
+          onEntitySelect={handleEntitySelect}
+          onEntityDragStart={(event, entityId) =>
+            controller.handleEntityDragStart(event, entityId)}
+          onEntityDragEnd={() => controller.handleEntityDragEnd()}
+          onShare={() => (controller.showVttShare = true)}
+        />
       {/if}
 
-      <!-- HUD Overlay -->
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="absolute z-10 flex flex-col items-start gap-2"
-        style="top: 1rem; left: calc({chatSidebarOffset} + 1rem);"
-        role="presentation"
-        onmousedown={(e) => e.stopPropagation()}
-      >
-        <div class="flex gap-2">
-          {#if mapStore.canGoBack}
-            <button
-              class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2"
-              onclick={() => mapStore.goBack()}
-            >
-              <span class="icon-[lucide--arrow-left] w-3 h-3"></span>
-              BACK
-            </button>
-          {/if}
-
-          {#if sessionModeStore.isGuestMode}
-            <!-- Guests only see the current shared map name -->
-            {#if mapStore.activeMap}
-              <div
-                class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
-              >
-                {mapStore.activeMap.isWorldMap ? "★ " : ""}{mapStore.activeMap
-                  .name}
-              </div>
-            {/if}
-          {:else}
-            <select
-              class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs"
-              value={mapStore.activeMapId}
-              onchange={(e) =>
-                handleActiveMapSelection({
-                  mapId: e.currentTarget.value,
-                  selectMap: (mapId) => mapStore.selectMap(mapId),
-                  isHosting: p2pHost.isHosting,
-                  broadcastActiveMapSync: () =>
-                    p2pHost.broadcastActiveMapSync(),
-                })}
-            >
-              {#each Object.values(vault.maps) as map (map.id)}
-                <option value={map.id}>
-                  {map.isWorldMap ? "★ " : ""}{map.name}
-                </option>
-              {/each}
-            </select>
-
-            {#if mapStore.activeMap && !mapStore.activeMap.isWorldMap}
-              <button
-                class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-[10px] font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2"
-                onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
-                title="Set as World Map"
-              >
-                <span class="icon-[lucide--star] w-3 h-3"></span>
-                SET WORLD
-              </button>
-            {:else if mapStore.activeMap?.isWorldMap}
-              <div
-                class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold rounded-lg flex items-center gap-2"
-              >
-                <span class="icon-[lucide--star] w-3 h-3 fill-theme-primary"
-                ></span>
-                WORLD MAP
-              </div>
-            {/if}
-
-            <button
-              class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-[10px] font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2"
-              onclick={async () => {
-                if (
-                  await notificationStore.confirm({
-                    title: "Clear Map",
-                    message:
-                      "Are you sure you want to delete this map? This action cannot be undone.",
-                    isDangerous: true,
-                  })
-                ) {
-                  await vault.deleteMap(mapStore.activeMapId!);
-                }
-              }}
-              title="Delete Map"
-            >
-              <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-              DELETE
-            </button>
-
-            <button
-              class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase font-header tracking-wider"
-              onclick={() => (showUpload = true)}
-            >
-              Add Map
-            </button>
-          {/if}
-        </div>
-
-        <GuestInfoOverlay />
-      </div>
-
-      <!-- Measurement tool button (lower left) -->
-      {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
-        <div
-          class="absolute z-20 pointer-events-auto"
-          style="bottom: 1rem; left: calc({chatSidebarOffset} + 1rem);"
-        >
-          <button
-            class={getMeasurementToolButtonClass(mapSession.measurement.active)}
-            onclick={(e) => {
-              e.stopPropagation();
-              mapSession.setMeasurementActive(!mapSession.measurement.active);
-            }}
-            aria-pressed={mapSession.measurement.active}
-            title={mapSession.measurement.active
-              ? "Disable measurement tool"
-              : "Measure: click on map to set start point, click again to set end point"}
-            aria-label="Toggle measurement tool"
-          >
-            <span
-              class={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
-                mapSession.measurement.active
-                  ? "border-theme-bg/20 bg-theme-bg shadow-md translate-x-[calc(1.075rem+2px)]"
-                  : "border-theme-border bg-theme-bg/90 shadow-sm translate-x-0 group-hover:border-theme-primary/40"
-              }`}
-            >
-              <span
-                class={`icon-[lucide--ruler] w-4 h-4 transition-colors ${
-                  mapSession.measurement.active
-                    ? "text-theme-primary"
-                    : "text-theme-muted group-hover:text-theme-primary"
-                }`}
-              ></span>
-            </span>
-
-            {#if mapSession.measurement.active}
-              <span
-                class="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_48%)]"
-              ></span>
-            {/if}
-          </button>
-        </div>
-      {/if}
-
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      {#if !sessionModeStore.isGuestMode}
-        <div
-          class="absolute inset-x-4 bottom-4 z-10 flex justify-center"
-          role="presentation"
-          onmousedown={(e) => e.stopPropagation()}
-        >
-          <div
-            class="flex gap-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border p-1.5 rounded-lg shadow-lg items-center"
-          >
-            <button
-              class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
-              onclick={() =>
-                (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
-              title={sessionModeStore.sharedMode
-                ? "Exit Shared Mode (Admin View)"
-                : "Enter Shared Mode (Player Preview)"}
-              data-testid="shared-mode-toggle"
-              aria-pressed={sessionModeStore.sharedMode}
-              aria-label="Toggle player view mode"
-            >
-              {sessionModeStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
-            </button>
-
-            {#if mapStore.isGMMode}
-              <button
-                class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
-                onclick={() => (mapStore.showFog = !mapStore.showFog)}
-              >
-                FOG: {mapStore.showFog ? "ON" : "OFF"}
-              </button>
-
-              <button
-                class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
-                onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
-                oncontextmenu={(e) => {
-                  e.preventDefault();
-                  mapSession.showGridSettings = true;
-                }}
-                title="Toggle Grid (Right-click for settings)"
-              >
-                GRID: {mapStore.showGrid ? "ON" : "OFF"}
-              </button>
-
-              <VTTModeToggle />
-
-              <div class="flex items-center gap-2 px-2">
-                <span
-                  class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
-                  >Brush Size</span
-                >
-                <input
-                  type="range"
-                  min="10"
-                  max="500"
-                  bind:value={mapStore.brushRadius}
-                  class="w-24 accent-theme-primary h-1"
-                />
-                <span class="text-[9px] text-theme-primary font-mono w-6"
-                  >{mapStore.brushRadius}px</span
-                >
-              </div>
-
-              <div
-                class="flex flex-col justify-center px-2 text-[10px] text-theme-muted/90 font-semibold italic leading-tight"
-              >
-                <span>Alt+Drag to Reveal</span>
-                <span>Alt+Shift+Drag to Hide</span>
-              </div>
-            {/if}
-          </div>
-        </div>
-      {/if}
-
+      <MapHUD
+        chatSidebarOffset={controller.chatSidebarOffset}
+        onShowUpload={() => (controller.showUpload = true)}
+      />
+      <MapVTTControlsHUD chatSidebarOffset={controller.chatSidebarOffset} />
       <TokenAddDialog />
     </MapView>
-    {#if showVttShare}
-      <ShareModal close={() => (showVttShare = false)} />
+    {#if controller.showVttShare}
+      <ShareModal close={() => (controller.showVttShare = false)} />
     {/if}
     {#if sessionModeStore.isGuestMode}
       <VTTSharedImageLightbox
@@ -612,9 +78,9 @@
         onClose={() => mapSession.clearSharedTokenImage()}
       />
     {/if}
+
     <VTTGridColorMenu />
   {:else if sessionModeStore.isGuestMode}
-    <!-- Guest view: no active map -->
     <div
       class="flex-1 flex flex-col items-center justify-center p-8 text-center"
     >
@@ -633,15 +99,14 @@
       </p>
     </div>
   {:else}
-    <!-- Host view: no active map, can upload -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="flex-1 flex flex-col items-center justify-center p-8 text-center transition-colors duration-200 {isDragging
+      class="flex-1 flex flex-col items-center justify-center p-8 text-center transition-colors duration-200 {controller.isDragging
         ? 'bg-theme-primary/10'
         : ''}"
-      ondragover={handleDragOver}
-      ondragleave={handleDragLeave}
-      ondrop={handleDrop}
+      ondragover={(event) => controller.onDragOver(event)}
+      ondragleave={(event) => controller.onDragLeave(event)}
+      ondrop={(event) => controller.onDrop(event)}
     >
       <div
         class="w-24 h-24 mb-8 rounded-full bg-theme-primary/10 flex items-center justify-center"
@@ -659,85 +124,25 @@
         Drag and drop a world image or tactical layout here, or click to upload
         and start mapping your lore spatially.
       </p>
-
       <button
         class="px-12 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
-        onclick={() => (showUpload = true)}
+        onclick={() => (controller.showUpload = true)}
       >
         Upload World Image
       </button>
     </div>
   {/if}
 
-  {#if showUpload}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="absolute inset-0 z-50 bg-theme-bg/80 backdrop-blur-sm flex items-center justify-center p-6"
-      ondragover={handleDragOver}
-      ondragleave={handleDragLeave}
-      ondrop={handleDrop}
-    >
-      <div
-        class="w-full max-w-md bg-theme-surface border rounded-xl p-8 shadow-2xl transition-colors duration-200 {isDragging
-          ? 'border-theme-primary'
-          : 'border-theme-border'}"
-      >
-        <h3
-          class="text-xl font-bold text-theme-text mb-6 uppercase font-header tracking-wider"
-        >
-          Upload New Map
-        </h3>
-
-        <div class="space-y-6">
-          <div class="space-y-2">
-            <label
-              class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
-              for="map-name"
-            >
-              Map Name
-            </label>
-            <input
-              id="map-name"
-              type="text"
-              bind:value={mapName}
-              placeholder="World Map, City Plan, etc."
-              class="w-full bg-theme-surface/50 border border-theme-border text-theme-text px-4 py-3 rounded-lg focus:border-theme-primary outline-none transition-colors"
-            />
-          </div>
-
-          <div class="space-y-2">
-            <label
-              class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
-              for="map-file"
-            >
-              Image File
-            </label>
-            <input
-              id="map-file"
-              type="file"
-              accept="image/*"
-              bind:files
-              class="w-full text-xs text-theme-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-theme-primary/10 file:text-theme-primary hover:file:bg-theme-primary/20"
-            />
-          </div>
-
-          <div class="flex gap-4 pt-4">
-            <button
-              class="flex-1 px-6 py-3 border border-theme-border text-theme-muted rounded-lg hover:bg-theme-surface transition-colors uppercase text-[10px] font-bold font-header tracking-widest"
-              onclick={() => (showUpload = false)}
-            >
-              Cancel
-            </button>
-            <button
-              class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-[10px] tracking-widest"
-              onclick={handleUpload}
-              disabled={!files}
-            >
-              Upload
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+  {#if controller.showUpload}
+    <MapUploadOverlay
+      bind:mapName={controller.mapName}
+      bind:files={controller.files}
+      isDragging={controller.isDragging}
+      onDragOver={(event) => controller.onDragOver(event)}
+      onDragLeave={(event) => controller.onDragLeave(event)}
+      onDrop={(event) => controller.onDrop(event)}
+      onUpload={() => controller.handleUpload()}
+      onCancel={() => controller.cancelUpload()}
+    />
   {/if}
 </div>

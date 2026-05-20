@@ -57,6 +57,7 @@ export class LayoutUIStore {
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
   vttSidebarCollapsed = $state(false);
+  vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
   findNodeCounter = $state(0);
 
@@ -110,6 +111,10 @@ export class LayoutUIStore {
       collapsed,
       String,
     );
+  }
+
+  toggleVttChatSidebar(collapsed: boolean) {
+    this.vttChatSidebarCollapsed = collapsed;
   }
 
   toggleVttEntityList(collapsed: boolean) {
