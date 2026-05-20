@@ -44,9 +44,8 @@
   );
 
   onMount(() => {
-    const unsubscribe = controller.subscribeToUndo(message);
+    controller.subscribeToUndo(message);
     return () => {
-      unsubscribe();
       controller.destroy();
     };
   });

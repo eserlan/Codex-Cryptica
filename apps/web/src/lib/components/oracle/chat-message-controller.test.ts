@@ -59,7 +59,11 @@ describe("ChatMessageController", () => {
       copyHtmlAndText: vi.fn().mockResolvedValue(true),
     };
     domPurify = {
-      sanitize: vi.fn().mockReturnValue("<p>Clean</p>"),
+      sanitize: vi
+        .fn()
+        .mockImplementation((html: string) =>
+          html.replace("Rendered", "Clean"),
+        ),
     };
     appEventBus = {
       subscribe: vi.fn().mockReturnValue(vi.fn()),
@@ -95,7 +99,7 @@ describe("ChatMessageController", () => {
       regenerationService,
       browser: true,
       actions,
-    } as any);
+    });
   }
 
   it("renders, sanitizes, and caches message html", async () => {
@@ -114,22 +118,42 @@ describe("ChatMessageController", () => {
 
   it("copies cached rich text and resets copied state", async () => {
     const controller = createController();
-    controller.htmlCache = "<p>Cached</p>";
+    await controller.renderContent({ content: "raw markdown" });
 
     await controller.copyToClipboard({ content: "raw markdown" });
 
     expect(clipboardService.copyHtmlAndText).toHaveBeenCalledWith(
-      "<p>Cached</p>",
+      "<p>Clean</p>",
       "raw markdown",
     );
+    expect(parserService.parse).toHaveBeenCalledTimes(1);
     expect(controller.isCopied).toBe(true);
 
     vi.advanceTimersByTime(2000);
     expect(controller.isCopied).toBe(false);
   });
 
-  it("subscribes to undo events and clears saved state for the matching message", () => {
+  it("re-renders clipboard html when cached content is stale", async () => {
     const controller = createController();
+    parserService.parse
+      .mockResolvedValueOnce("<p>Old Rendered</p>")
+      .mockResolvedValueOnce("<p>Fresh Rendered</p>");
+
+    await controller.renderContent({ content: "old markdown" });
+    await controller.copyToClipboard({ content: "fresh markdown" });
+
+    expect(parserService.parse).toHaveBeenCalledTimes(2);
+    expect(parserService.parse).toHaveBeenLastCalledWith("fresh markdown");
+    expect(clipboardService.copyHtmlAndText).toHaveBeenCalledWith(
+      "<p>Fresh Clean</p>",
+      "fresh markdown",
+    );
+  });
+
+  it("subscribes to undo events, clears matching saved state, and cleans up on destroy", () => {
+    const controller = createController();
+    const unsubscribe = vi.fn();
+    appEventBus.subscribe.mockReturnValue(unsubscribe);
     controller.isSaved = true;
 
     controller.subscribeToUndo({ id: "message-1" });
@@ -145,6 +169,10 @@ describe("ChatMessageController", () => {
       payload: { messageId: "message-1" },
     });
     expect(controller.isSaved).toBe(false);
+
+    controller.destroy();
+    controller.destroy();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it("consumes selected entity links and resets selection state", async () => {

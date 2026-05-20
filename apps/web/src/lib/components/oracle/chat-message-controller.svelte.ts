@@ -30,6 +30,39 @@ interface ClipboardServiceLike {
   copyHtmlAndText(html: string, text: string): Promise<boolean>;
 }
 
+interface SavedStateCallbacks {
+  setSaved(saved: boolean): void;
+}
+
+interface ChatMessageActionsLike {
+  applySmart(
+    params: {
+      message: ChatMessage;
+      parsed: ParsedChatMessage;
+      activeEntityId: string | null;
+    } & SavedStateCallbacks,
+  ): Promise<void> | void;
+  createAsNode(
+    params: {
+      message: ChatMessage;
+      parsed: ParsedChatMessage;
+    } & SavedStateCallbacks,
+  ): Promise<void> | void;
+  copyToChronicle(
+    params: {
+      message: ChatMessage;
+      activeEntityId: string | null;
+    } & SavedStateCallbacks,
+  ): Promise<void> | void;
+  copyToLore(
+    params: {
+      message: ChatMessage;
+      activeEntityId: string | null;
+    } & SavedStateCallbacks,
+  ): Promise<void> | void;
+  undo(): Promise<void> | void;
+}
+
 export interface ChatMessageControllerDeps {
   oracle?: OracleLike;
   vault?: VaultLike;
@@ -40,7 +73,7 @@ export interface ChatMessageControllerDeps {
   appEventBus?: typeof defaultAppEventBus;
   regenerationService?: RegenerationServiceLike;
   browser?: boolean;
-  actions?: ChatMessageActions;
+  actions?: ChatMessageActionsLike;
 }
 
 export class ChatMessageController {
@@ -54,6 +87,7 @@ export class ChatMessageController {
 
   private lastParsedContent = "";
   private copyResetTimer: ReturnType<typeof setTimeout> | null = null;
+  private undoUnsubscribe: (() => void) | null = null;
   private readonly oracle: OracleLike;
   private readonly vault: VaultLike;
   private readonly parserService: HtmlParserLike;
@@ -62,7 +96,7 @@ export class ChatMessageController {
   private readonly appEventBus: typeof defaultAppEventBus;
   private readonly regenerationService: RegenerationServiceLike;
   private readonly browser: boolean;
-  private readonly actions: ChatMessageActions;
+  private readonly actions: ChatMessageActionsLike;
 
   constructor(deps: ChatMessageControllerDeps = {}) {
     this.oracle = deps.oracle ?? defaultOracle;
@@ -90,17 +124,40 @@ export class ChatMessageController {
       clearTimeout(this.copyResetTimer);
       this.copyResetTimer = null;
     }
+    if (this.undoUnsubscribe) {
+      this.undoUnsubscribe();
+    }
   }
 
   subscribeToUndo(message: Pick<ChatMessage, "id">) {
-    return this.appEventBus.subscribe(ORACLE_EVENTS.UNDO_PERFORMED, (event) => {
-      if (
-        event.type === ORACLE_EVENTS.UNDO_PERFORMED &&
-        event.payload.messageId === message.id
-      ) {
-        this.isSaved = false;
+    if (this.undoUnsubscribe) {
+      this.undoUnsubscribe();
+    }
+
+    const unsubscribe = this.appEventBus.subscribe(
+      ORACLE_EVENTS.UNDO_PERFORMED,
+      (event) => {
+        if (
+          event.type === ORACLE_EVENTS.UNDO_PERFORMED &&
+          event.payload.messageId === message.id
+        ) {
+          this.isSaved = false;
+        }
+      },
+    );
+
+    let isActive = true;
+    const cleanup = () => {
+      if (!isActive) return;
+      isActive = false;
+      unsubscribe();
+      if (this.undoUnsubscribe === cleanup) {
+        this.undoUnsubscribe = null;
       }
-    });
+    };
+
+    this.undoUnsubscribe = cleanup;
+    return cleanup;
   }
 
   async consumeSelectedEntity(message: Pick<ChatMessage, "id">) {
@@ -156,6 +213,10 @@ export class ChatMessageController {
     return `${proposal.entityId ?? "new"}:${proposal.title}`;
   }
 
+  private getCachedHtmlFor(message: Pick<ChatMessage, "content">) {
+    return message.content === this.lastParsedContent ? this.htmlCache : "";
+  }
+
   async renderContent(message: Pick<ChatMessage, "content">) {
     if (!message.content || message.content === this.lastParsedContent) return;
 
@@ -180,7 +241,7 @@ export class ChatMessageController {
     if (!message.content) return;
 
     try {
-      let contentToCopy = this.htmlCache;
+      let contentToCopy = this.getCachedHtmlFor(message);
       if (!contentToCopy) {
         contentToCopy = await renderMessageHtml(
           message.content,
@@ -188,6 +249,8 @@ export class ChatMessageController {
           this.browser,
           this.domPurify,
         );
+        this.htmlCache = contentToCopy;
+        this.lastParsedContent = message.content;
       }
 
       const success = await this.clipboardService.copyHtmlAndText(
