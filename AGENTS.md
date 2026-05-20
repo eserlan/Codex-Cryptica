@@ -30,6 +30,7 @@ This file is the Codex-facing instruction layer for this repository.
 - Do not commit implementation changes without tests for the affected behavior.
 - When adding or updating tests for changed behavior, cover both the expected success path and at least one meaningful negative, cancellation, or failure path.
 - Use constructor-based dependency injection for services and stores.
+- **Oracle Store Architecture**: The monolithic `OracleStore` is decomposed into 6 reactive managers (`ui`, `chat`, `context`, `actions`, `settingsManager`, `reconciliation`). When extending Oracle functionality, identify the correct manager in `apps/web/src/lib/stores/oracle/` instead of bloating the facade.
 - Prefer local-first and client-side solutions when the architecture allows it.
 - Keep user-facing language clear and plain.
 - Create a new branch for code changes, fixes, or refactors.
