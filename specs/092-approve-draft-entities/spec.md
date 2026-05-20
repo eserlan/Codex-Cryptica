@@ -2,7 +2,7 @@
 
 **Feature Branch**: `092-approve-draft-entities`  
 **Created**: 2026-04-24  
-**Status**: In Progress  
+**Status**: Implemented
 **Input**: https://github.com/eserlan/Codex-Cryptica/issues/706
 
 ## Clarifications

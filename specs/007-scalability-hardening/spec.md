@@ -1,5 +1,7 @@
 # Scalability Hardening: Incremental Indexing & Worker Layout
 
+**Status**: Implemented
+
 ## Background
 
 The recent architectural review identified that while `loadFiles` is parallelized, it still parses every Markdown file on startup. For a mature vault (1000+ entities), this is unnecessary overhead. Additionally, the Cytoscape layout runs on the main thread, risking UI freezes during graph updates.

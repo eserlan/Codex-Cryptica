@@ -106,6 +106,9 @@ Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review ta
 ### AI Description Regeneration
 Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
 
+### P2P Connection Manager
+Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.
+
 
 ## Help Documentation
 

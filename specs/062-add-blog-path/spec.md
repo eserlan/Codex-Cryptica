@@ -2,7 +2,7 @@
 
 **Feature Branch**: `062-add-blog-path`  
 **Created**: 2026-02-28  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "/blog path and first article: https://github.com/eserlan/Codex-Cryptica/issues/296"
 
 ## User Scenarios & Testing _(mandatory)_

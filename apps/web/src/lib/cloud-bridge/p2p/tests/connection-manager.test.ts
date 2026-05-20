@@ -176,6 +176,71 @@ describe("PeerJSConnectionManager", () => {
     expect(receivedPayloads).not.toContain("should ignore");
   });
 
+  it("should handle wildcard subscribers that receive all messages", async () => {
+    manager.connect("host-peer-id").catch(() => {});
+    const openCallback = mockPeer.on.mock.calls.find(
+      (c: any[]) => c[0] === "open",
+    )[1];
+    openCallback("guest-peer-id");
+
+    const connOpenCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "open",
+    )[1];
+    connOpenCallback();
+
+    // Send handshake_ack to transition to connected status
+    let dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake_ack",
+      senderId: "host-peer-id",
+      timestamp: Date.now(),
+      payload: null,
+    });
+
+    const wildcardReceived: any[] = [];
+    const unsubscribeWildcard = manager.onMessage("*", (msg) => {
+      wildcardReceived.push(msg);
+    });
+
+    dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+
+    // Send custom message 1
+    dataCallback({
+      type: "custom:test1",
+      senderId: "remote-peer-id",
+      timestamp: Date.now(),
+      payload: "payload1",
+    });
+
+    // Send custom message 2
+    dataCallback({
+      type: "custom:test2",
+      senderId: "remote-peer-id",
+      timestamp: Date.now(),
+      payload: "payload2",
+    });
+
+    expect(wildcardReceived).toHaveLength(2);
+    expect(wildcardReceived[0].payload).toBe("payload1");
+    expect(wildcardReceived[1].payload).toBe("payload2");
+
+    unsubscribeWildcard();
+
+    // Send custom message 3
+    dataCallback({
+      type: "custom:test3",
+      senderId: "remote-peer-id",
+      timestamp: Date.now(),
+      payload: "payload3",
+    });
+
+    expect(wildcardReceived).toHaveLength(2);
+  });
+
   it("should handle periodic heartbeat ping-pongs and measure round trip latency", async () => {
     manager.connect("host-peer-id").catch(() => {});
     const openCallback = mockPeer.on.mock.calls.find(

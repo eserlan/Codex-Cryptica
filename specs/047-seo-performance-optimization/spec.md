@@ -2,7 +2,8 @@
 
 **Feature Branch**: `047-seo-performance-optimization`
 **Created**: 2026-02-18
-**Status**: Implemented
+**Status**: Archived
+**Archive Reason**: Retroactive spec for already-committed SEO work; no further action needed
 **Input**: Retroactive specification based on implemented commits (feat/seo).
 
 ## User Scenarios & Testing

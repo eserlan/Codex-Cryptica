@@ -186,6 +186,4 @@ TypeScript: Follow standard conventions
 
 - 099-map-session-decomposition: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, Vitest, existing VTT managers under `apps/web/src/lib/stores/vtt/`, `VTTSessionService`, P2P host/guest services
 
-- 098-p2p-host-service-decoupling: Added TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events`
-
 <!-- MANUAL ADDITIONS START -->

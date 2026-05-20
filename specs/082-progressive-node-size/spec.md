@@ -2,7 +2,7 @@
 
 **Feature Branch**: `082-progressive-node-size`  
 **Created**: 2026-04-14  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "progressively bigger graph nodes https://github.com/eserlan/Codex-Cryptica/issues/615"
 
 ## User Scenarios & Testing _(mandatory)_

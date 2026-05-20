@@ -2,7 +2,7 @@
 
 **Feature Branch**: `029-entity-labeling`  
 **Created**: 2026-02-01  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "a labeling system - It would be nice to be able to label nodes/entries. Marking session logs, titles, wars, etc would be very useful"
 
 ## User Scenarios & Testing _(mandatory)_

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `049-theme-based-jargon`  
 **Created**: 2026-02-19  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "theme based jargon https://github.com/eserlan/Codex-Cryptica/issues/178"
 
 ## User Scenarios & Testing

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `054-lite-no-ai`  
 **Created**: 2026-02-21  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "lite version with no ai support https://github.com/eserlan/Codex-Cryptica/issues/215"
 
 ## User Scenarios & Testing _(mandatory)_

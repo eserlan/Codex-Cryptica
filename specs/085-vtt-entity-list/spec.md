@@ -2,7 +2,7 @@
 
 **Feature Branch**: `085-vtt-entity-list`  
 **Created**: 2026-04-15  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "entity list in vtt mode https://github.com/eserlan/Codex-Cryptica/issues/621"
 
 ## User Scenarios & Testing _(mandatory)_

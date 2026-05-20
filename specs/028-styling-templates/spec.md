@@ -3,7 +3,7 @@
 **Feature Branch**: `028-styling-templates`  
 **GitHub Issue**: [issue #24](https://github.com/eserlan/Codex-Cryptica/issues/24)  
 **Created**: 2026-01-31  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "i would like more styling templates to choose from. we have sci-fi, i'd like fantasy, modern, cyberpunk, post-apocalyptic too"
 
 ## User Scenarios & Testing _(mandatory)_

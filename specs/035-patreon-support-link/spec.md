@@ -2,7 +2,7 @@
 
 **Feature Branch**: `035-patreon-support-link`
 **Created**: 2026-02-03
-**Status**: Draft
+**Status**: Implemented
 **Issue**: [eserlan/Codex-Cryptica#75](https://github.com/eserlan/Codex-Cryptica/issues/75)
 **Input**: User description: "id like to have a subtle link to support me on patreon in the footer"
 

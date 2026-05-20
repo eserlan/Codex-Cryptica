@@ -1,7 +1,6 @@
 # Tasks: GitHub Pages Deployment
 
 **Feature**: GitHub Pages Deployment (`005-gh-pages-deploy`)
-**Status**: Implemented
 
 ## Dependencies
 

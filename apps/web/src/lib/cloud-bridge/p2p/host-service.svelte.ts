@@ -9,13 +9,17 @@ import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
 import type {
   P2PTransport,
   P2PConnection,
+  TransportEventType,
 } from "./transport/transport-interface";
-import { PeerJSTransport } from "./transport/peerjs-transport";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { VTTHandler } from "./handlers/vtt-handler";
 import { VaultHandler } from "./handlers/vault-handler";
 import { FileHandler } from "./handlers/file-handler";
 import { createPeer, type PeerFactory } from "./peer-factory";
+import {
+  PeerJSConnectionManager,
+  type ConnectionState,
+} from "./connection-manager.svelte";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -27,9 +31,150 @@ type HostDeps = {
   peerFactory?: PeerFactory;
   transport?: P2PTransport;
   dispatcher?: P2PDispatcher;
+  connectionManager?: PeerJSConnectionManager;
 };
 
+class ConnectionManagerHostTransportAdapter implements P2PTransport {
+  private listeners: Record<string, ((payload: any) => void)[]> = {};
+  private unsubscribeWildcard: (() => void) | null = null;
+  private unsubscribeStatus: (() => void) | null = null;
+  _connections: any[] = [];
+  private emittedPeers = new Set<string>();
+  private lastActiveRemoteId: string | null = null;
+
+  constructor(private readonly manager: PeerJSConnectionManager) {
+    this.unsubscribeWildcard = this.manager.onMessage("*", (msg) => {
+      const originalMessage = msg.payload;
+      if (
+        originalMessage &&
+        typeof originalMessage === "object" &&
+        "type" in originalMessage
+      ) {
+        this.emit("data", {
+          conn: this.connections[0],
+          data: originalMessage,
+        });
+      }
+    });
+
+    this.unsubscribeStatus = this.manager.onStatusChange((status) => {
+      if (status === "connected" || status === "handshaking") {
+        const activeRemoteId =
+          this.manager.state.remotePeerId ||
+          (this.manager as any).activeConn?.peer;
+        if (activeRemoteId) {
+          this.lastActiveRemoteId = activeRemoteId;
+          if (!this.emittedPeers.has(activeRemoteId)) {
+            this.emittedPeers.add(activeRemoteId);
+            const conn: P2PConnection = {
+              peer: activeRemoteId,
+              send: (data: any) => this.manager.send(data.type, data),
+              close: () => this.manager.disconnect(),
+            };
+            this.emit("connection", conn);
+          }
+        }
+      } else if (status === "disconnected" || status === "connecting") {
+        const closingPeerId = this.lastActiveRemoteId;
+        this.lastActiveRemoteId = null;
+        if (closingPeerId) {
+          this.emittedPeers.delete(closingPeerId);
+          this.emit("close", closingPeerId);
+        }
+      }
+    });
+  }
+
+  get peer(): any {
+    return (this.manager as any).peer;
+  }
+
+  get id(): string | null {
+    return this.manager.state.peerId;
+  }
+
+  get connections(): P2PConnection[] {
+    if (this._connections.length > 0) {
+      return this._connections;
+    }
+    const activeRemoteId =
+      this.manager.state.remotePeerId || (this.manager as any).activeConn?.peer;
+    const status = this.manager.state.status;
+    if (
+      activeRemoteId &&
+      (status === "connected" || status === "handshaking")
+    ) {
+      return [
+        {
+          peer: activeRemoteId,
+          send: (data: any) => this.manager.send(data.type, data),
+          close: () => this.manager.disconnect(),
+        },
+      ];
+    }
+    return [];
+  }
+
+  async start(peerId?: string): Promise<string> {
+    return this.manager.startHost(peerId);
+  }
+
+  stop(): void {
+    this.manager.disconnect();
+  }
+
+  send(peerId: string, data: any): void {
+    if (peerId === this.manager.state.remotePeerId) {
+      this.manager.send(data.type, data);
+    } else {
+      const conn = this._connections.find((c) => c.peer === peerId);
+      if (conn) {
+        conn.send(data);
+      }
+    }
+  }
+
+  broadcast(data: any, excludePeerId?: string): void {
+    const activeRemoteId = this.manager.state.remotePeerId;
+    if (activeRemoteId && activeRemoteId !== excludePeerId) {
+      this.manager.send(data.type, data);
+    }
+    this._connections.forEach((conn) => {
+      if (conn.peer !== excludePeerId) {
+        conn.send(data);
+      }
+    });
+  }
+
+  on(event: TransportEventType, callback: (payload: any) => void): void {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(callback);
+  }
+
+  private emit(event: TransportEventType, payload?: any) {
+    this.listeners[event]?.forEach((cb) => {
+      try {
+        cb(payload);
+      } catch (err) {
+        console.error(`[P2P Host Adapter] Error emitting event ${event}:`, err);
+      }
+    });
+  }
+
+  destroy() {
+    if (this.unsubscribeWildcard) {
+      this.unsubscribeWildcard();
+      this.unsubscribeWildcard = null;
+    }
+    if (this.unsubscribeStatus) {
+      this.unsubscribeStatus();
+      this.unsubscribeStatus = null;
+    }
+  }
+}
+
 export class P2PHostService {
+  private readonly connectionManager: PeerJSConnectionManager;
   private transport: P2PTransport;
   private dispatcher: P2PDispatcher;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
@@ -52,12 +197,20 @@ export class P2PHostService {
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
 
+    this.connectionManager =
+      deps.connectionManager ??
+      new PeerJSConnectionManager(deps.peerFactory ?? createPeer);
     this.transport =
-      deps.transport ?? new PeerJSTransport(deps.peerFactory ?? createPeer);
+      deps.transport ??
+      new ConnectionManagerHostTransportAdapter(this.connectionManager);
     this.dispatcher = deps.dispatcher ?? new P2PDispatcher();
 
     this.setupDispatcher();
     this.setupTransportListeners();
+  }
+
+  get state(): ConnectionState {
+    return this.connectionManager.state;
   }
 
   private setupDispatcher() {

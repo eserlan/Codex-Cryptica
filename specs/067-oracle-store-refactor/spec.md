@@ -2,7 +2,8 @@
 
 **Feature Branch**: `067-oracle-store-refactor`  
 **Created**: 2026-03-11  
-**Status**: Draft  
+**Status**: Superseded
+**Superseded By**: 102-oracle-store-decoupling
 **Input**: User description: "Refactor the Oracle Store God File into smaller modular services."
 
 ## User Scenarios & Testing _(mandatory)_

@@ -29,7 +29,6 @@
 
 ## Response (Success)
 
-**Status**: 200 OK
 **Body**:
 
 ```json
@@ -53,7 +52,6 @@
 
 ## Response (Error)
 
-**Status**: 4xx/5xx
 **Body**:
 
 ```json

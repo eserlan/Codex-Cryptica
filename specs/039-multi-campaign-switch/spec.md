@@ -2,7 +2,7 @@
 
 **Feature Branch**: `039-multi-campaign-switch`  
 **Created**: 2026-02-12  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "the ability to select and switch between different campaigns using OPFS as primary storage, with optional sync to local filesystem"
 
 ## Architecture

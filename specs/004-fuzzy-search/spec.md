@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-fuzzy-search`
 **Created**: 2026-01-25
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "a fuzzy search feature"
 
 ## User Scenarios & Testing

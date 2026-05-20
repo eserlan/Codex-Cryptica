@@ -4,7 +4,8 @@
 
 **Feature Branch**: `068-vault-store-refactor`  
 **Created**: 2026-03-11  
-**Status**: Partially Superseded by 093-directional-vault-sync
+**Status**: Superseded
+**Superseded By**: 102-oracle-store-decoupling
 **Input**: User description: "Refactor the monolithic VaultStore into modular services and a lean repository pattern."
 
 ## User Scenarios & Testing _(mandatory)_

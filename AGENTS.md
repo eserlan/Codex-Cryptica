@@ -43,3 +43,10 @@ This file is the Codex-facing instruction layer for this repository.
 - If Speckit command behavior changes, update the command files in [`.gemini/commands`](./.gemini/commands) first, then refresh the Codex mirror at [`.codex/commands`](./.codex/commands).
 - Then update this file only for Codex-specific behavior or repository-wide guidance.
 - Avoid duplicating long command scripts here; link back to the canonical files instead.
+
+<!-- SPECKIT START -->
+
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+
+<!-- SPECKIT END -->

@@ -1,7 +1,6 @@
 # Data Model: Google Drive Cloud Bridge
 
 **Feature**: Google Drive Cloud Bridge
-**Status**: Phase 1 Design
 
 ## Entities
 

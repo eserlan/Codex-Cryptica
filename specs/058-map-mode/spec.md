@@ -2,7 +2,7 @@
 
 **Feature Branch**: `058-map-mode`  
 **Created**: 2026-02-23  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "map mode https://github.com/eserlan/Codex-Cryptica/issues/237"
 
 ## User Scenarios & Testing _(mandatory)_

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `045-campaign-date-picker`  
 **Created**: 2026-02-17  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "campaign date picker https://github.com/eserlan/Codex-Cryptica/issues/157"
 
 ## User Scenarios & Testing _(mandatory)_

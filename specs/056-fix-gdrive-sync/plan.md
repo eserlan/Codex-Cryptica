@@ -1,5 +1,8 @@
 # Implementation Plan: Fix GDrive Sync
 
+**Status**: Superseded
+**Superseded By**: 096-gdrive-cloud-sync
+
 **Branch**: `056-fix-gdrive-sync` | **Date**: 2026-02-21
 **Input**: GitHub Issue #219
 

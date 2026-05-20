@@ -1,5 +1,7 @@
 # SPEC-001: Core Entity & Relationship Schema
 
+**Status**: Implemented
+
 ## 1. The "Atomic Entity" Definition
 
 Every piece of lore (NPC, Location, Item) is an Entity. In a local-first PWA, an Entity is a single Markdown file with a structured YAML header. This ensures the data is "Human Readable" but "Machine Actionable."

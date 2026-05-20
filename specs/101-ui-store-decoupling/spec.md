@@ -2,7 +2,7 @@
 
 **Feature Branch**: `101-ui-store-decoupling`
 **Created**: 2026-05-19
-**Status**: Draft
+**Status**: Implemented
 **Input**: Analysis of `apps/web/src/lib/stores/ui.svelte.ts` (872 lines) per `docs/UI_STORE_ANALYSIS.md`. Applies the same facade-then-extract pattern used in Specs 098 (host service), 099 (map session), and 100 (guest service).
 
 ## Clarifications

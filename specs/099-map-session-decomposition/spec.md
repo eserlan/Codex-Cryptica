@@ -2,7 +2,7 @@
 
 **Feature Branch**: `099-map-session-decomposition`  
 **Created**: 2026-05-18  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Refactor map session store by decomposing responsibilities into focused managers while preserving the existing public mapSession API and behavior"
 
 ## Clarifications
