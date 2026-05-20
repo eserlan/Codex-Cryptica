@@ -381,9 +381,10 @@ export class GraphContextMenuController {
       const title = window.prompt("Enter canvas name (optional):");
       if (title === null) return;
 
+      const trimmedTitle = title.trim();
       const result = await this.deps.canvasRegistry.createCanvas(
         this.selectedNodes,
-        title,
+        trimmedTitle || undefined,
       );
 
       if (result) {

@@ -28,7 +28,7 @@
   }>();
 
   const controller = new GraphViewController(
-    { selectedId },
+    { selectedId: untrack(() => selectedId) },
     {
       graph,
       vault,
@@ -39,13 +39,19 @@
     },
   );
 
-  // Sync selectedId back and forth
+  // Single coordinator for selectedId sync
   $effect(() => {
-    selectedId = controller.selectedId;
+    if (selectedId !== controller.selectedId) {
+      selectedId = controller.selectedId;
+    }
   });
+
   $effect(() => {
+    const currentPropId = selectedId;
     untrack(() => {
-      controller.selectedId = selectedId;
+      if (controller.selectedId !== currentPropId) {
+        controller.selectedId = currentPropId;
+      }
     });
   });
 

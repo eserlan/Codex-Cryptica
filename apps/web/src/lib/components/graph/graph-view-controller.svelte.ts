@@ -62,11 +62,13 @@ export class GraphViewController {
   private resizeTimer: number | null = null;
   private lastOrientation: "landscape" | "portrait" | null = null;
 
+  private isDestroyed = false;
+
   pendingSearchFocus: {
     entityId: string;
     zoom: number;
+    timestamp: number;
   } | null = $state(null);
-  pendingSearchFocusRevision = $state(0);
 
   private cleanupEvents?: () => void;
   private searchFocusListener: ((event: Event) => void) | null = null;
@@ -83,6 +85,7 @@ export class GraphViewController {
 
   init = async (container: HTMLElement, graphStyle: any) => {
     this.container = container;
+    this.isDestroyed = false;
 
     try {
       const instance = (await initGraph({
@@ -90,6 +93,11 @@ export class GraphViewController {
         elements: untrack(() => this.deps.graph.elements),
         style: untrack(() => graphStyle),
       })) as any;
+
+      if (this.isDestroyed || !this.container) {
+        instance.destroy();
+        return;
+      }
 
       this.cy = instance;
       this.layoutManager = new LayoutManager(instance);
@@ -203,8 +211,8 @@ export class GraphViewController {
       this.pendingSearchFocus = {
         entityId: detail.entityId,
         zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
+        timestamp: Date.now(),
       };
-      this.pendingSearchFocusRevision += 1;
     };
 
     window.addEventListener(
@@ -214,12 +222,15 @@ export class GraphViewController {
 
     const bufferedSearchFocus = consumePendingSearchEntityFocus();
     if (bufferedSearchFocus) {
-      this.pendingSearchFocus = bufferedSearchFocus;
-      this.pendingSearchFocusRevision += 1;
+      this.pendingSearchFocus = {
+        ...bufferedSearchFocus,
+        timestamp: Date.now(),
+      };
     }
   };
 
   destroy = () => {
+    this.isDestroyed = true;
     window.removeEventListener("resize", this.handleResize);
     if (this.resizeTimer) {
       clearTimeout(this.resizeTimer);
