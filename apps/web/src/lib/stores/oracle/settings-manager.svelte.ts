@@ -1,4 +1,4 @@
-import { OracleSettingsService } from "@codex/oracle-engine";
+import type { OracleSettingsService } from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
 
 export class OracleSettingsManager {
@@ -36,6 +36,10 @@ export class OracleSettingsManager {
     return this.settings?.connectionMode || "system-proxy";
   }
 
+  get tier(): "lite" | "advanced" {
+    return this.service.tier;
+  }
+
   async updateSettings(settings: any) {
     await this.service.updateSettings(settings);
   }
@@ -46,6 +50,6 @@ export class OracleSettingsManager {
   }
 
   async clearKey() {
-    await this.service.updateSettings({ apiKey: undefined });
+    await this.service.clearKey();
   }
 }

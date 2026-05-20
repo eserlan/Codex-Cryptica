@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { OracleContextManager } from "../context-manager";
+import { OracleContextManager } from "../context-manager.svelte";
 import type { IOracleStore } from "../types";
 
 describe("OracleContextManager", () => {

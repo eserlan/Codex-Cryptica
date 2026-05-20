@@ -3,7 +3,7 @@
 **Feature Branch**: `102-oracle-store-decoupling`  
 **Created**: 2026-05-19  
 **Status**: Draft  
-**Input**: User description: "oracle svelte decompose refactor according to amalysis"
+**Input**: User description: "oracle svelte decompose refactor according to analysis"
 
 ## User Scenarios & Testing _(mandatory)_
 

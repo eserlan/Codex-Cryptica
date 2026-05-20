@@ -34,7 +34,7 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { type IOracleStore } from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
 import { OracleChatManager } from "./oracle/chat-manager.svelte";
-import { OracleContextManager } from "./oracle/context-manager";
+import { OracleContextManager } from "./oracle/context-manager.svelte";
 import { OracleActionManager } from "./oracle/action-manager.svelte";
 import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
 import { OracleReconciliationManager } from "./oracle/reconciliation-manager.svelte";
@@ -87,7 +87,8 @@ export class OracleStore implements IOracleStore {
 
   // Dependencies
   private _vault?: typeof defaultVault;
-  private _uiStore?: any;
+  private _discoveryPolicyStore?: any;
+  private _sessionModeStore?: any;
   private _themeStore?: typeof defaultThemeStore;
   private _graph?: typeof defaultGraph;
   private _diceHistory?: typeof defaultDiceHistory;
@@ -105,10 +106,10 @@ export class OracleStore implements IOracleStore {
     return this._vault ?? defaultVault;
   }
   get discoveryPolicyStore() {
-    return this._uiStore ?? discoveryPolicyStore;
+    return this._discoveryPolicyStore ?? discoveryPolicyStore;
   }
   get sessionModeStore() {
-    return this._uiStore ?? sessionModeStore;
+    return this._sessionModeStore ?? sessionModeStore;
   }
   get notificationStore() {
     return notificationStore;
@@ -143,6 +144,7 @@ export class OracleStore implements IOracleStore {
   get categories() {
     return this._categories ?? defaultCategories;
   }
+
   get draftingEngine() {
     return (
       this._draftingEngine ??
@@ -171,7 +173,8 @@ export class OracleStore implements IOracleStore {
   constructor(
     deps: {
       vault?: typeof defaultVault;
-      uiStore?: any;
+      discoveryPolicyStore?: any;
+      sessionModeStore?: any;
       graph?: typeof defaultGraph;
       diceHistory?: typeof defaultDiceHistory;
       contextRetrieval?: typeof defaultContextRetrieval;
@@ -197,7 +200,8 @@ export class OracleStore implements IOracleStore {
     } = {},
   ) {
     this._vault = deps.vault;
-    this._uiStore = deps.uiStore;
+    this._discoveryPolicyStore = deps.discoveryPolicyStore;
+    this._sessionModeStore = deps.sessionModeStore;
     this._graph = deps.graph;
     this._diceHistory = deps.diceHistory;
     this._contextRetrieval = deps.contextRetrieval;
@@ -209,6 +213,7 @@ export class OracleStore implements IOracleStore {
     this._sessionActivity = deps.sessionActivity;
     this._categories = deps.categories;
     this._draftingEngine = deps.draftingEngine;
+
     // Use provided services or defaults
     this.chatHistoryService =
       deps.chatHistoryService ?? new ChatHistoryService();
@@ -342,7 +347,7 @@ export class OracleStore implements IOracleStore {
   }
 
   get tier() {
-    return this.discoveryPolicyStore.aiDisabled ? "lite" : "advanced";
+    return this.settingsManager.tier;
   }
 
   get effectiveApiKey(): string | null {

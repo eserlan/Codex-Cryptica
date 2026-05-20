@@ -53,10 +53,9 @@ describe("OracleSettingsManager", () => {
   });
 
   it("should clear key", async () => {
+    mockSettingsService.clearKey = vi.fn().mockResolvedValue(undefined);
     await manager.clearKey();
-    expect(mockSettingsService.updateSettings).toHaveBeenCalledWith({
-      apiKey: undefined,
-    });
+    expect(mockSettingsService.clearKey).toHaveBeenCalled();
   });
 
   it("should expose loading state", () => {

@@ -127,7 +127,7 @@
 - T001 and T002 in Setup.
 - All Manager creation ([P] tasks) once Phase 2 is complete.
 - All Unit tests ([P] tasks) within their respective phases.
-- User Story 2 and User Story 5 can proceed in parallel once Foundation is ready.
+- User Story 2 and User Story 3 can proceed in parallel once Foundation is ready.
 
 ---
 
