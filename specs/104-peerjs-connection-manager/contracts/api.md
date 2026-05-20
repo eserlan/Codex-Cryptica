@@ -28,9 +28,9 @@ export class PeerJSConnectionManager {
   disconnect(): void;
 
   /**
-   * Send a formatted message to a specific peer (or broadcast if omitted).
+   * Send a formatted message to the active remote peer.
    */
-  send(messageType: string, payload: any, peerId?: string): void;
+  send(messageType: string, payload: any): void;
 
   /**
    * Register a custom callback handler for specific message types.

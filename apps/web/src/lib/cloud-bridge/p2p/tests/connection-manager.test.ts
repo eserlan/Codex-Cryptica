@@ -71,6 +71,19 @@ describe("PeerJSConnectionManager", () => {
     )[1];
     connOpenCallback();
 
+    expect(manager.state.status).toBe("handshaking");
+
+    // Simulate incoming handshake
+    const dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake",
+      senderId: "remote-peer-id",
+      timestamp: Date.now(),
+      payload: { clientPeerId: "remote-peer-id" },
+    });
+
     expect(manager.state.status).toBe("connected");
     expect(manager.state.remotePeerId).toBe("remote-peer-id");
   });
@@ -83,7 +96,6 @@ describe("PeerJSConnectionManager", () => {
     )[1];
     openCallback("guest-peer-id");
 
-    await connectPromise;
     expect(manager.state.peerId).toBe("guest-peer-id");
     expect(mockPeer.connect).toHaveBeenCalledWith("host-peer-id");
 
@@ -92,12 +104,26 @@ describe("PeerJSConnectionManager", () => {
     )[1];
     connOpenCallback();
 
+    expect(manager.state.status).toBe("handshaking");
+
+    // Simulate incoming handshake_ack from host to resolve connectPromise
+    const dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake_ack",
+      senderId: "host-peer-id",
+      timestamp: Date.now(),
+      payload: null,
+    });
+
+    await connectPromise;
     expect(manager.state.status).toBe("connected");
-    expect(manager.state.remotePeerId).toBe("remote-peer-id");
+    expect(manager.state.remotePeerId).toBe("host-peer-id");
   });
 
   it("should handle custom messages using registered onMessage callback", async () => {
-    manager.connect("host-peer-id");
+    manager.connect("host-peer-id").catch(() => {});
     const openCallback = mockPeer.on.mock.calls.find(
       (c: any[]) => c[0] === "open",
     )[1];
@@ -108,12 +134,23 @@ describe("PeerJSConnectionManager", () => {
     )[1];
     connOpenCallback();
 
+    // Send handshake_ack to transition to connected status
+    let dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake_ack",
+      senderId: "host-peer-id",
+      timestamp: Date.now(),
+      payload: null,
+    });
+
     const receivedPayloads: any[] = [];
     const unsubscribe = manager.onMessage("custom:test", (msg) => {
       receivedPayloads.push(msg.payload);
     });
 
-    const dataCallback = mockConn.on.mock.calls.find(
+    dataCallback = mockConn.on.mock.calls.find(
       (c: any[]) => c[0] === "data",
     )[1];
 
@@ -140,7 +177,7 @@ describe("PeerJSConnectionManager", () => {
   });
 
   it("should handle periodic heartbeat ping-pongs and measure round trip latency", async () => {
-    manager.connect("host-peer-id");
+    manager.connect("host-peer-id").catch(() => {});
     const openCallback = mockPeer.on.mock.calls.find(
       (c: any[]) => c[0] === "open",
     )[1];
@@ -150,6 +187,17 @@ describe("PeerJSConnectionManager", () => {
       (c: any[]) => c[0] === "open",
     )[1];
     connOpenCallback();
+
+    // Send handshake_ack to transition to connected status
+    let dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake_ack",
+      senderId: "host-peer-id",
+      timestamp: Date.now(),
+      payload: null,
+    });
 
     // Fast-forward to trigger first heartbeat
     await vi.advanceTimersByTimeAsync(1000);
@@ -162,8 +210,11 @@ describe("PeerJSConnectionManager", () => {
     );
 
     // Mock ping timestamp back to compute latency
-    const pingSent = mockConn.send.mock.calls[0][0];
-    const dataCallback = mockConn.on.mock.calls.find(
+    const pingCall = mockConn.send.mock.calls.find(
+      (c: any[]) => c[0] && c[0].type === "ping",
+    );
+    const pingSent = pingCall[0];
+    dataCallback = mockConn.on.mock.calls.find(
       (c: any[]) => c[0] === "data",
     )[1];
 
@@ -179,8 +230,8 @@ describe("PeerJSConnectionManager", () => {
     expect(manager.state.latencyMs).toBe(45);
   });
 
-  it("should gracefully attempt reconnection with exponential backoff on client dropouts", async () => {
-    manager.connect("host-peer-id");
+  it("should attempt reconnection if heartbeat ping-pong times out", async () => {
+    manager.connect("host-peer-id").catch(() => {});
     const openCallback = mockPeer.on.mock.calls.find(
       (c: any[]) => c[0] === "open",
     )[1];
@@ -190,6 +241,58 @@ describe("PeerJSConnectionManager", () => {
       (c: any[]) => c[0] === "open",
     )[1];
     connOpenCallback();
+
+    // Send handshake_ack to transition to connected status
+    const dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake_ack",
+      senderId: "host-peer-id",
+      timestamp: Date.now(),
+      payload: null,
+    });
+
+    // Fast-forward to trigger first heartbeat
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(mockConn.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "ping",
+        senderId: "guest-peer-id",
+      }),
+    );
+
+    // Now fast-forward past the heartbeatTimeoutMs (1500ms) without triggering pong
+    await vi.advanceTimersByTimeAsync(1600);
+
+    // It should trigger reconnecting state
+    expect(manager.state.status).toBe("reconnecting");
+    expect(manager.state.retryCount).toBe(1);
+  });
+
+  it("should gracefully attempt reconnection with exponential backoff on client dropouts", async () => {
+    manager.connect("host-peer-id").catch(() => {});
+    const openCallback = mockPeer.on.mock.calls.find(
+      (c: any[]) => c[0] === "open",
+    )[1];
+    openCallback("guest-peer-id");
+
+    const connOpenCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "open",
+    )[1];
+    connOpenCallback();
+
+    // Send handshake_ack to transition to connected status
+    const dataCallback = mockConn.on.mock.calls.find(
+      (c: any[]) => c[0] === "data",
+    )[1];
+    dataCallback({
+      type: "handshake_ack",
+      senderId: "host-peer-id",
+      timestamp: Date.now(),
+      payload: null,
+    });
 
     const errorCallback = mockConn.on.mock.calls.find(
       (c: any[]) => c[0] === "error",
@@ -228,7 +331,7 @@ describe("PeerJSConnectionManager", () => {
   });
 
   it("should cleanly tear down connections and clear scheduling resources on disconnect", async () => {
-    manager.connect("host-peer-id");
+    manager.connect("host-peer-id").catch(() => {});
     const openCallback = mockPeer.on.mock.calls.find(
       (c: any[]) => c[0] === "open",
     )[1];

@@ -4,6 +4,7 @@ export interface ConnectionState {
   status:
     | "idle"
     | "connecting"
+    | "handshaking"
     | "connected"
     | "reconnecting"
     | "disconnected"
@@ -48,6 +49,9 @@ export class PeerJSConnectionManager {
   private lastPingTime = 0;
   private isHost = false;
   private expectedRemoteId: string | null = null;
+  private isAwaitingPong = false;
+  private pendingConnectResolve: (() => void) | null = null;
+  private pendingConnectReject: ((err: any) => void) | null = null;
 
   constructor(
     peerFactory: PeerFactory = createPeer,
@@ -126,6 +130,9 @@ export class PeerJSConnectionManager {
     this._state.status = "connecting";
 
     return new Promise((resolve, reject) => {
+      this.pendingConnectResolve = resolve;
+      this.pendingConnectReject = reject;
+
       try {
         this.peer = this.peerFactory(undefined, { debug: 1 });
 
@@ -133,13 +140,14 @@ export class PeerJSConnectionManager {
           this._state.peerId = id;
           const conn = this.peer.connect(hostId);
           this.setupConnection(conn);
-          resolve();
         });
 
         this.peer.on("error", (err: any) => {
           console.error("[P2P Connection] Client Peer error:", err);
           this.handleError(err);
-          reject(err);
+          this.pendingConnectReject?.(err);
+          this.pendingConnectReject = null;
+          this.pendingConnectResolve = null;
         });
 
         this.peer.on("disconnected", () => {
@@ -152,6 +160,8 @@ export class PeerJSConnectionManager {
       } catch (err) {
         this._state.status = "failed";
         reject(err);
+        this.pendingConnectReject = null;
+        this.pendingConnectResolve = null;
       }
     });
   }
@@ -162,6 +172,16 @@ export class PeerJSConnectionManager {
   disconnect(): void {
     this.stopHeartbeat();
     this.clearTimeouts();
+
+    if (this.pendingConnectReject) {
+      try {
+        this.pendingConnectReject(new Error("Connection aborted"));
+      } catch (e) {
+        _ignore(e);
+      }
+      this.pendingConnectReject = null;
+      this.pendingConnectResolve = null;
+    }
 
     if (this.activeConn) {
       try {
@@ -242,10 +262,23 @@ export class PeerJSConnectionManager {
 
     conn.on("open", () => {
       this.clearTimeouts();
-      this._state.status = "connected";
-      this._state.remotePeerId = conn.peer;
-      this._state.retryCount = 0;
-      this.startHeartbeat();
+      this._state.status = "handshaking";
+      if (!this.isHost) {
+        const handshake: PeerJSMessage = {
+          type: "handshake",
+          senderId: this._state.peerId || "",
+          timestamp: Date.now(),
+          payload: {
+            clientPeerId: this._state.peerId || "",
+          },
+        };
+        try {
+          conn.send(handshake);
+        } catch (err) {
+          console.error("[P2P Connection] Failed to send handshake:", err);
+          this.handleDisconnectEvent();
+        }
+      }
     });
 
     conn.on("data", (data: any) => {
@@ -277,6 +310,62 @@ export class PeerJSConnectionManager {
   }
 
   private handleMessage(msg: PeerJSMessage) {
+    if (msg.type === "handshake") {
+      const payload = msg.payload;
+      if (
+        payload &&
+        typeof payload === "object" &&
+        "clientPeerId" in payload &&
+        typeof payload.clientPeerId === "string" &&
+        payload.clientPeerId.length > 0
+      ) {
+        if (this.isHost) {
+          this._state.status = "connected";
+          this._state.remotePeerId = msg.senderId;
+          this._state.retryCount = 0;
+
+          const ack: PeerJSMessage = {
+            type: "handshake_ack",
+            senderId: this._state.peerId || "",
+            timestamp: Date.now(),
+            payload: null,
+          };
+          try {
+            this.activeConn?.send(ack);
+            this.startHeartbeat();
+
+            this.pendingConnectResolve?.();
+            this.pendingConnectResolve = null;
+            this.pendingConnectReject = null;
+          } catch (err) {
+            console.error(
+              "[P2P Connection] Failed to send handshake ack:",
+              err,
+            );
+            this.handleDisconnectEvent();
+          }
+        }
+      } else {
+        console.warn("[P2P Connection] Handshake validation failed:", msg);
+        this.disconnect();
+      }
+      return;
+    }
+
+    if (msg.type === "handshake_ack") {
+      if (!this.isHost && this._state.status === "handshaking") {
+        this._state.status = "connected";
+        this._state.remotePeerId = msg.senderId;
+        this._state.retryCount = 0;
+        this.startHeartbeat();
+
+        this.pendingConnectResolve?.();
+        this.pendingConnectResolve = null;
+        this.pendingConnectReject = null;
+      }
+      return;
+    }
+
     if (msg.type === "ping") {
       const pong: PeerJSMessage = {
         type: "pong",
@@ -289,6 +378,7 @@ export class PeerJSConnectionManager {
     }
 
     if (msg.type === "pong") {
+      this.isAwaitingPong = false;
       this.clearHeartbeatTimeout();
       const RTT = Date.now() - msg.timestamp;
       this._state.latencyMs = RTT;
@@ -312,8 +402,13 @@ export class PeerJSConnectionManager {
 
   private startHeartbeat() {
     this.stopHeartbeat();
+    this.isAwaitingPong = false;
     this.heartbeatInterval = setInterval(() => {
       if (this.activeConn && this._state.status === "connected") {
+        if (this.isAwaitingPong) {
+          // Already waiting for pong of previous ping, do not send another
+          return;
+        }
         this.lastPingTime = Date.now();
         const ping: PeerJSMessage = {
           type: "ping",
@@ -322,6 +417,7 @@ export class PeerJSConnectionManager {
           payload: null,
         };
         try {
+          this.isAwaitingPong = true;
           this.activeConn.send(ping);
           this.startHeartbeatTimeout();
         } catch (err) {
@@ -382,6 +478,8 @@ export class PeerJSConnectionManager {
 
     // Clients attempt exponential reconnection retry loop
     if (
+      this._state.status === "connecting" ||
+      this._state.status === "handshaking" ||
       this._state.status === "connected" ||
       this._state.status === "reconnecting"
     ) {
@@ -390,7 +488,7 @@ export class PeerJSConnectionManager {
         const delay = this.reconnectDelays[this._state.retryCount];
         this._state.retryCount++;
         console.log(
-          `[P2P Connection] Reconnecting in ${delay}ms (Attempt ${this._state.retryCount}/3)...`,
+          `[P2P Connection] Reconnecting in ${delay}ms (Attempt ${this._state.retryCount}/${this.reconnectDelays.length})...`,
         );
 
         if (this.activeConn) {

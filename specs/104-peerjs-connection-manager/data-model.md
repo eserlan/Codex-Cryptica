@@ -10,11 +10,13 @@ The connection status transitions through a strict state machine:
 stateDiagram-v2
     [*] --> idle
     idle --> connecting : connect(hostId) / startHost()
-    connecting --> connected : "open" / handshake success
+    connecting --> handshaking : "open" / local peer opens
+    handshaking --> connected : handshake success
     connecting --> failed : error / timeout
+    handshaking --> failed : error / timeout
     connected --> reconnecting : connection drop / active heartbeat loss
     reconnecting --> connected : re-established
-    reconnecting --> failed : max retries (3) reached
+    reconnecting --> failed : max retries reached
     connected --> disconnected : explicit disconnect()
     reconnecting --> disconnected : explicit disconnect()
     failed --> idle : reset()
@@ -24,7 +26,8 @@ stateDiagram-v2
 ### States Defined:
 
 - `idle`: Not connected; signaling server is idle.
-- `connecting`: Actively negotiating WebRTC handshakes or signaling channel setup.
+- `connecting`: Actively negotiating signaling channel setup or opening peer.
+- `handshaking`: Signaling channel open; exchanging and validating protocol handshake.
 - `connected`: Active connection with zero packet drops in heartbeat window.
 - `reconnecting`: Network dropout detected. Exponential backoff retry loop in progress.
 - `failed`: Retries exhausted; manual intervention needed.
@@ -43,6 +46,7 @@ export interface ConnectionState {
   status:
     | "idle"
     | "connecting"
+    | "handshaking"
     | "connected"
     | "reconnecting"
     | "disconnected"
@@ -50,7 +54,7 @@ export interface ConnectionState {
   latencyMs: number; // Rolling average RTT
   peerId: string | null; // Self peer ID
   remotePeerId: string | null; // Connected peer ID (or central host ID)
-  retryCount: number; // Current reconnect try count (0 to 3)
+  retryCount: number; // Current reconnect try count (0 to reconnectDelays.length)
 }
 ```
 

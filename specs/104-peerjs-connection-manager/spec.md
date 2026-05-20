@@ -78,7 +78,7 @@ As a Host or Guest, I want to see real-time, clear status badges representing my
 ### Functional Requirements
 
 - **FR-001**: System MUST encapsulate all PeerJS socket listeners and connection setups inside a single unified `PeerJSConnectionManager` class.
-- **FR-002**: System MUST expose reactive connection states (`idle`, `connecting`, `connected`, `reconnecting`, `disconnected`, `failed`) and latency metrics as Svelte 5 Runes, and accept registered callback hooks for incoming message routing.
+- **FR-002**: System MUST expose reactive connection states (`idle`, `connecting`, `handshaking`, `connected`, `reconnecting`, `disconnected`, `failed`) and latency metrics as Svelte 5 Runes, and accept registered callback hooks for incoming message routing.
 - **FR-003**: System MUST implement automatic retry policies with exponential backoff (e.g., 2s, 4s, 8s delay multipliers) when socket dropouts are encountered. When retries are exhausted, the state MUST transition to `failed` to prompt for manual retry/refresh.
 - **FR-004**: System MUST cleanly release all hardware streams, socket listeners, and peer instances upon explicit session teardown to prevent memory leaks.
 - **FR-005**: System MUST validate incoming connection handshakes with a standard JSON schema, rejecting rogue or malformed connection attempts.

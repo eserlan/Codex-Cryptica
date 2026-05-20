@@ -1,7 +1,7 @@
 # Implementation Plan: Unified PeerJS Connection Manager
 
-**Branch**: `104-peerjs-connection-manager` | **Date**: 2026-05-20 | **Spec**: [spec.md](file:///home/espen/proj/Codex-Arcana/specs/104-peerjs-connection-manager/spec.md)
-**Input**: Feature specification from `/specs/104-peerjs-connection-manager/spec.md`
+**Branch**: `104-peerjs-connection-manager` | **Date**: 2026-05-20 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `./spec.md`
 
 ---
 
@@ -83,9 +83,9 @@ No constitution violations detected.
 
 ### Automated Tests
 
-- Execute unit tests covering all lifecycle transitions (`idle` ➔ `connecting` ➔ `connected` ➔ `reconnecting` ➔ `failed`):
+- Execute unit tests covering all lifecycle transitions (`idle` ➔ `connecting` ➔ `handshaking` ➔ `connected` ➔ `reconnecting` ➔ `failed`):
   ```bash
-  pnpm test apps/web/src/lib/cloud-bridge/p2p/tests/connection-manager.test.ts
+  pnpm --filter web test -- src/lib/cloud-bridge/p2p/tests/connection-manager.test.ts
   ```
 
 ### Manual Verification
