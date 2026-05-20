@@ -7,6 +7,7 @@ import {
   setupGraphEvents,
   syncGraphElements,
 } from "graph-engine";
+import { isTemporalMetadataEqual } from "$lib/utils/comparison";
 import type { graph as graphStore } from "$lib/stores/graph.svelte";
 import type { vault as vaultStore } from "$lib/stores/vault.svelte";
 import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
@@ -358,9 +359,7 @@ export class GraphViewController {
         elements: this.deps.graph.elements,
         vaultStatus: this.deps.vault.status,
         initialLoaded: this.initialLoaded,
-        isTemporalMetadataEqual: (a: any, b: any) => {
-          return JSON.stringify(a) === JSON.stringify(b);
-        },
+        isTemporalMetadataEqual,
         activeLabels: this.deps.graph.activeLabels,
         labelFilterMode: this.deps.graph.labelFilterMode,
         activeCategories: this.deps.graph.activeCategories,

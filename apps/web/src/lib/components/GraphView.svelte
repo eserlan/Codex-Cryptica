@@ -171,7 +171,7 @@
 
   // Selection & Search Focus
   $effect(() => {
-    void controller.pendingSearchFocusRevision;
+    void controller.pendingSearchFocus;
     const currentCy = controller.cy;
     const currentSelectedId = controller.selectedId;
     if (currentCy) {
@@ -203,6 +203,13 @@
       } else if (controller.pendingSearchFocus) {
         controller.pendingSearchFocus = null;
       }
+    }
+  });
+
+  // Connect Mode Visual Cleanup
+  $effect(() => {
+    if (!connectionModeStore.isConnecting && controller.cy) {
+      controller.cy.$(".selected-source").removeClass("selected-source");
     }
   });
 
