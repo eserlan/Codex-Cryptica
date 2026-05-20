@@ -1,21 +1,9 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from "svelte";
-  import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { debugStore } from "$lib/stores/debug.svelte";
-  import type { LocalEntity } from "$lib/stores/vault/types";
-
-  import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { categories } from "$lib/stores/categories.svelte";
-  import type { Core } from "cytoscape";
-  import {
-    getGraphStyles,
-    LayoutManager,
-    GraphImageManager,
-    setupGraphEvents,
-    syncGraphElements,
-  } from "graph-engine";
+  import { getGraphStyles } from "graph-engine";
 
   import { themeStore } from "$lib/stores/theme.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
@@ -27,24 +15,29 @@
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
   import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
-  import {
-    DEFAULT_SEARCH_ENTITY_ZOOM,
-    consumePendingSearchEntityFocus,
-    SEARCH_ENTITY_FOCUS_EVENT,
-    markSearchEntityFocusHandled,
-  } from "./search/search-focus";
+  import { DEFAULT_SEARCH_ENTITY_ZOOM } from "./search/search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { GraphViewController } from "./graph/graph-view-controller.svelte";
+
+  let { selectedId = $bindable(null) } = $props<{
+    selectedId: string | null;
+  }>();
+
+  const controller = new GraphViewController({ selectedId });
+
+  // Sync selectedId back and forth
+  $effect(() => {
+    selectedId = controller.selectedId;
+  });
+  $effect(() => {
+    untrack(() => {
+      controller.selectedId = selectedId;
+    });
+  });
 
   let container: HTMLElement;
-  let cy: Core | undefined = $state();
-  let layoutManager: LayoutManager | undefined = $state();
-  let imageManager: GraphImageManager | undefined = $state();
-  let isLayoutRunning = $state(false);
-  let graphVisible = $state(false);
-  let selectedCount = $state(0);
 
   let graphStyle = $derived(
     getGraphStyles(
@@ -56,149 +49,20 @@
     ),
   );
 
-  let { selectedId = $bindable(null) } = $props<{
-    selectedId: string | null;
-  }>();
-
-  const applyFocus = (id: string | null) => {
-    const currentCy = cy;
-    if (!currentCy) return;
-    try {
-      currentCy.batch(() => {
-        const allEles = currentCy.elements();
-        if (!id) {
-          allEles.removeClass("dimmed neighborhood secondary-neighborhood");
-        } else {
-          const node = currentCy.$id(id);
-          if (node.length > 0) {
-            const firstLevel = node.closedNeighborhood();
-            const firstLevelNodes = firstLevel.nodes();
-            const secondLevelNodes = firstLevelNodes
-              .neighborhood()
-              .nodes()
-              .not(firstLevelNodes);
-            const secondLevelEdges =
-              secondLevelNodes.edgesWith(firstLevelNodes);
-            const secondLevel = secondLevelNodes.add(secondLevelEdges);
-
-            allEles.addClass("dimmed");
-            allEles.removeClass("neighborhood secondary-neighborhood");
-
-            firstLevel.removeClass("dimmed");
-            firstLevel.addClass("neighborhood");
-
-            secondLevel.removeClass("dimmed");
-            secondLevel.addClass("secondary-neighborhood");
-          } else {
-            allEles.removeClass("dimmed neighborhood secondary-neighborhood");
-          }
-        }
-      });
-    } catch {
-      /* ignore */
-    }
-  };
-
-  let hoveredEntityId = $state<string | null>(null);
-  let hoverPosition = $state<{ x: number; y: number } | null>(null);
-
   $effect(() => {
-    if (hoveredEntityId) vault.loadEntityContent(hoveredEntityId);
+    if (controller.hoveredEntityId)
+      vault.loadEntityContent(controller.hoveredEntityId);
   });
-
-  let findNodeCounter = $derived(layoutUIStore.findNodeCounter);
-  let pendingSearchFocus: {
-    entityId: string;
-    zoom: number;
-  } | null = null;
-  let pendingSearchFocusRevision = $state(0);
-  let nodeSelectTimer: number | null = null;
-  const NODE_SELECT_DELAY_MS = 300;
-
-  let editingEdge = $state<{
-    source: string;
-    target: string;
-    label: string;
-    type: string;
-  } | null>(null);
-
-  let cleanupEvents: (() => void) | undefined;
-  let searchFocusListener: ((event: Event) => void) | null = null;
-
-  const applyCurrentLayout = async (
-    isInitial = false,
-    isForced = false,
-    caller = "unknown",
-    randomizeForced = false,
-    hasNewNodes = false,
-  ) => {
-    if (!layoutManager) return;
-
-    await layoutManager.apply(
-      {
-        timelineMode: graph.timelineMode,
-        timelineAxis: graph.timelineAxis,
-        timelineScale: graph.timelineScale,
-        orbitMode: graph.orbitMode,
-        centralNodeId: graph.centralNodeId,
-        stableLayout: graph.stableLayout,
-        isGuest: vault.isGuest,
-        onLayoutStart: () => {
-          isLayoutRunning = true;
-        },
-        onLayoutComputed: (ms) => {
-          debugStore.log(`Layout: ${ms}ms`, {
-            nodes: graph.stats.nodeCount,
-            caller,
-          });
-        },
-        onLayoutStop: () => {
-          isLayoutRunning = false;
-          graphVisible = true;
-          if (isInitial) {
-            _layoutReady = true;
-          }
-        },
-        onPositionsUpdated: (updates) => {
-          // Optimization: Only write back positions if this wasn't the initial load layout
-          // and the vault is not in a loading state.
-          // Also verify that the graph has been marked as fully ready.
-          const isReady = _layoutReady && vault.status !== "loading";
-          if (!isInitial && isReady) {
-            vault.batchUpdate(updates as Record<string, Partial<LocalEntity>>);
-          }
-        },
-      },
-      isInitial,
-      isForced,
-      caller,
-      randomizeForced,
-      hasNewNodes,
-    );
-  };
-
-  $effect(() => {
-    if (!connectionModeStore.isConnecting) {
-      cy?.$(".selected-source").removeClass("selected-source");
-    }
-  });
-
-  const clearNodeSelectTimer = () => {
-    if (nodeSelectTimer !== null) {
-      clearTimeout(nodeSelectTimer);
-      nodeSelectTimer = null;
-    }
-  };
 
   const handleKeyDown = async (e: KeyboardEvent) => {
     const handledDelete = await handleGraphDeleteShortcut(e, {
-      cy,
-      selectedId,
+      cy: controller.cy,
+      selectedId: controller.selectedId,
       isGuest: vault.isGuest,
       confirm: (params) => notificationStore.confirm(params),
       deleteEntity: (id) => vault.deleteEntity(id),
       clearSelectedId: () => {
-        selectedId = null;
+        controller.selectedId = null;
       },
     });
 
@@ -214,11 +78,11 @@
 
     if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleTimeline();
-      applyCurrentLayout(false, false, "Keyboard Shortcut (T)");
+      controller.applyCurrentLayout(false, true, "Keyboard Shortcut (T)");
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (!vault.isGuest) {
-        if (selectedCount === 2) {
+        if (controller.selectedCount === 2) {
           connectionModeStore.showSelectionConnector =
             !connectionModeStore.showSelectionConnector;
         } else {
@@ -237,311 +101,70 @@
     }
   };
 
-  let initTimer: ReturnType<typeof setTimeout> | null = null;
-  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-  let lastOrientation: "landscape" | "portrait" | null = null;
-
-  const handleResize = () => {
-    if (resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      if (cy) {
-        cy.resize(); // Ensure Cytoscape knows about the new container size
-        const width = cy.width();
-        const height = cy.height();
-        const currentOrientation = width > height ? "landscape" : "portrait";
-
-        // Only rearrange if orientation changed
-        if (lastOrientation && currentOrientation !== lastOrientation) {
-          debugStore.log(
-            `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
-          );
-          applyCurrentLayout(false, true, "Window Resize", true);
-        } else {
-          applyCurrentLayout(false, false, "Window Resize", false);
-        }
-
-        lastOrientation = currentOrientation;
-      }
-    }, 250);
-  };
-
   onMount(() => {
-    window.addEventListener("resize", handleResize);
-    searchFocusListener = (event: Event) => {
-      const detail = (
-        event as CustomEvent<{
-          entityId?: string;
-          zoom?: number;
-          requestId?: number;
-        }>
-      ).detail;
-      if (!detail?.entityId) return;
-      if (typeof detail.requestId === "number") {
-        markSearchEntityFocusHandled(detail.requestId);
-      }
-      pendingSearchFocus = {
-        entityId: detail.entityId,
-        zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
-      };
-      pendingSearchFocusRevision += 1;
-    };
-
-    window.addEventListener(SEARCH_ENTITY_FOCUS_EVENT, searchFocusListener);
-
-    const bufferedSearchFocus = consumePendingSearchEntityFocus();
-    if (bufferedSearchFocus) {
-      pendingSearchFocus = bufferedSearchFocus;
-      pendingSearchFocusRevision += 1;
-    }
-
-    if (container) {
-      initTimer = setTimeout(async () => {
-        if (!container) return;
-
-        try {
-          const instance = (await initGraph({
-            container,
-            elements: untrack(() => graph.elements),
-            style: untrack(() => graphStyle),
-          })) as any;
-
-          if (initTimer === null) {
-            instance.destroy();
-            return;
-          }
-
-          cy = instance;
-          layoutManager = new LayoutManager(instance);
-          imageManager = new GraphImageManager(instance);
-
-          const updateSelectionCount = () => {
-            selectedCount = instance.$("node:selected").length;
-          };
-          instance.on("select unselect", "node", updateSelectionCount);
-          updateSelectionCount();
-
-          if (import.meta.env.DEV || (window as any).__E2E__) {
-            (window as any).cy = instance;
-          }
-
-          cleanupEvents = setupGraphEvents(instance, {
-            onNodeMouseOver: (id, renderedPos) => {
-              hoverPosition = renderedPos;
-              hoveredEntityId = id;
-            },
-            onNodeMouseOut: () => {
-              hoveredEntityId = null;
-              hoverPosition = null;
-            },
-            onNodeTap: async (id, node) => {
-              if (connectionModeStore.isConnecting) {
-                if (!connectionModeStore.connectingNodeId) {
-                  connectionModeStore.connectingNodeId = id;
-                  node.addClass("selected-source");
-                } else if (connectionModeStore.connectingNodeId === id) {
-                  connectionModeStore.connectingNodeId = null;
-                  node.removeClass("selected-source");
-                } else {
-                  const source = connectionModeStore.connectingNodeId;
-                  const target = id;
-                  await vault.addConnection(source, target, "neutral");
-                  connectionModeStore.toggleConnectMode();
-                }
-              } else {
-                if (layoutUIStore.isMobile) {
-                  clearNodeSelectTimer();
-                  modalUIStore.openZenMode(id);
-                  selectedId = null;
-                  node.unselect();
-                  return;
-                }
-                clearNodeSelectTimer();
-                nodeSelectTimer = window.setTimeout(() => {
-                  selectedId = id;
-                  nodeSelectTimer = null;
-                }, NODE_SELECT_DELAY_MS);
-              }
-            },
-            onNodeDoubleTap: (id, node) => {
-              clearNodeSelectTimer();
-              modalUIStore.openZenMode(id);
-              selectedId = null;
-              node.unselect();
-            },
-            onEdgeTap: (data) => {
-              if (vault.isGuest) return;
-              editingEdge = {
-                source: data.source,
-                target: data.target,
-                label: data.label || "",
-                type: data.connectionType || "neutral",
-              };
-            },
-            onBackgroundTap: () => {
-              clearNodeSelectTimer();
-              selectedId = null;
-              if (connectionModeStore.isConnecting)
-                connectionModeStore.toggleConnectMode();
-            },
-            onViewportChange: () => {
-              if (hoveredEntityId && instance) {
-                const node = instance.$id(hoveredEntityId);
-                if (node.length > 0) {
-                  const renderedPos = node.renderedPosition();
-                  hoverPosition = renderedPos;
-                }
-              }
-              return hoverPosition;
-            },
-          });
-
-          // Set initial visibility
-          graphVisible = true;
-        } catch (err) {
-          debugStore.error("Graph Init Failed", err);
-        }
-      }, 50);
-    }
+    controller.init(container, graphStyle);
   });
 
   onDestroy(() => {
-    window.removeEventListener("resize", handleResize);
-    if (initTimer) {
-      clearTimeout(initTimer);
-      initTimer = null;
-    }
-    if (resizeTimer) {
-      clearTimeout(resizeTimer);
-      resizeTimer = null;
-    }
-    if (searchFocusListener) {
-      window.removeEventListener(
-        SEARCH_ENTITY_FOCUS_EVENT,
-        searchFocusListener,
-      );
-      searchFocusListener = null;
-    }
-    if (cleanupEvents) {
-      cleanupEvents();
-      cleanupEvents = undefined;
-    }
-    clearNodeSelectTimer();
-    if (layoutManager) {
-      layoutManager.stop();
-      layoutManager = undefined;
-    }
-    if (imageManager) {
-      imageManager.destroy({
-        releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
-      } as any);
-      imageManager = undefined;
-    }
-    if (cy) {
-      if (import.meta.env.DEV) delete (window as any).cy;
-      cy.destroy();
-      cy = undefined;
-    }
+    controller.destroy();
   });
 
-  let initialLoaded = $state(false);
-  let _layoutReady = $state(false);
-  let didFinalizeLoad = $state(false);
-
-  // Trigger layout when switching modes (Orbit, Timeline)
+  // Mode change triggers
   $effect(() => {
-    const _mode = graph.orbitMode;
-    const _node = graph.centralNodeId;
-    const _timeline = graph.timelineMode;
-
-    if (cy && didFinalizeLoad) {
-      untrack(() => {
-        applyCurrentLayout(false, true, "Mode Change Effect");
-      });
-    }
+    void graph.orbitMode;
+    void graph.centralNodeId;
+    void graph.timelineMode;
+    untrack(() => controller.handleModeChange());
   });
 
-  // Reset loading state when vault starts loading a NEW or EMPTY vault
+  // Vault loading triggers
   $effect(() => {
-    if (vault.status === "loading" && vault.allEntities.length === 0) {
-      untrack(() => {
-        initialLoaded = false;
-        didFinalizeLoad = false;
-        if (imageManager)
-          imageManager.destroy({
-            releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
-          } as any);
-      });
-    }
+    untrack(() => controller.handleVaultLoading());
   });
 
-  // FLICKER PREVENTION: Lockdown global style effect during loading.
+  // Style sync
   let activeStyleJson = "";
   $effect(() => {
     const currentStyle = graphStyle;
-    const currentCy = cy;
-
-    // While loading, we ALLOW global style updates if they actually change,
-    // but the lockdown condition was causing a final jump when it was lifted.
-    if (currentCy && currentStyle) {
+    if (controller.cy && currentStyle) {
       const styleJson = JSON.stringify(currentStyle);
       if (styleJson !== activeStyleJson) {
         activeStyleJson = styleJson;
         untrack(() => {
-          currentCy.style(currentStyle);
+          controller.cy!.style(currentStyle);
         });
       }
     }
   });
 
-  // Load Finalization Trigger
+  // Load Finalization
   $effect(() => {
-    if (vault.status === "idle" && initialLoaded && !didFinalizeLoad) {
-      didFinalizeLoad = true;
-      debugStore.log(
-        "[GraphView] Vault load finalized, unlocking all updates.",
-      );
-      // Force layout with fitting when loading is finalized
-      applyCurrentLayout(false, true, "Load Finalized");
-    }
+    untrack(() => controller.handleVaultLoadFinalization());
   });
 
+  // Element Sync
   $effect(() => {
-    const currentCy = cy;
-    if (currentCy && graph.elements) {
-      syncGraphElements(currentCy, {
-        elements: graph.elements,
-        vaultStatus: vault.status,
-        initialLoaded,
-        isTemporalMetadataEqual,
-        activeLabels: graph.activeLabels,
-        labelFilterMode: graph.labelFilterMode,
-        activeCategories: graph.activeCategories,
-        onFirstElements: () => {
-          initialLoaded = true;
-          graphVisible = true;
-        },
-        onLayoutUpdate: (isInitial, isForced, caller, hasNewNodes) => {
-          applyCurrentLayout(isInitial, isForced, caller, false, hasNewNodes);
-        },
-      });
-    }
-    // Optimization: Keep graph visible if we have data and it was already loaded
-    if (initialLoaded && !graphVisible) {
-      graphVisible = true;
-    }
+    void graph.elements;
+    void graph.activeLabels;
+    void graph.labelFilterMode;
+    void graph.activeCategories;
+    untrack(() => controller.syncElements());
   });
 
+  // Selection & Search Focus
   $effect(() => {
-    void pendingSearchFocusRevision;
-    const currentCy = cy;
+    void controller.pendingSearchFocusRevision;
+    const currentCy = controller.cy;
+    const currentSelectedId = controller.selectedId;
     if (currentCy) {
-      applyFocus(selectedId);
-      if (selectedId) {
-        const node = currentCy.$id(selectedId);
+      controller.applyFocus(currentSelectedId);
+      if (currentSelectedId) {
+        const node = currentCy.$id(currentSelectedId);
         if (node.length > 0) {
           const focusZoom =
-            pendingSearchFocus?.entityId === selectedId
-              ? (pendingSearchFocus?.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM)
+            controller.pendingSearchFocus?.entityId === currentSelectedId
+              ? (controller.pendingSearchFocus?.zoom ??
+                DEFAULT_SEARCH_ENTITY_ZOOM)
               : null;
           untrack(() =>
             currentCy.animate({
@@ -552,23 +175,27 @@
             }),
           );
           if (focusZoom !== null) {
-            pendingSearchFocus = null;
+            controller.pendingSearchFocus = null;
           }
-        } else if (pendingSearchFocus?.entityId === selectedId) {
-          pendingSearchFocus = null;
+        } else if (
+          controller.pendingSearchFocus?.entityId === currentSelectedId
+        ) {
+          controller.pendingSearchFocus = null;
         }
-      } else if (pendingSearchFocus) {
-        pendingSearchFocus = null;
+      } else if (controller.pendingSearchFocus) {
+        controller.pendingSearchFocus = null;
       }
     }
   });
 
+  // Find Node centering
   $effect(() => {
-    const currentCy = cy;
-    const findCounter = findNodeCounter;
-    if (!currentCy || !selectedId) return;
+    const currentCy = controller.cy;
+    const findCounter = layoutUIStore.findNodeCounter;
+    const currentSelectedId = controller.selectedId;
+    if (!currentCy || !currentSelectedId) return;
 
-    const node = currentCy.$id(selectedId);
+    const node = currentCy.$id(currentSelectedId);
     if (node.length === 0) return;
 
     if (findCounter >= 0) {
@@ -578,8 +205,9 @@
     }
   });
 
+  // Fit request
   $effect(() => {
-    const currentCy = cy;
+    const currentCy = controller.cy;
     if (currentCy && graph.fitRequest > 0) {
       untrack(() =>
         currentCy.animate({
@@ -591,39 +219,29 @@
     }
   });
 
+  // Image Sync
   $effect(() => {
-    const currentCy = cy;
-    const currentElements = graph.elements;
-    const showImages = graph.showImages;
-    if (currentCy && currentElements && imageManager) {
-      untrack(() => {
-        imageManager!.sync({
-          showImages,
-          resolveImageUrl: (path) => vault.resolveImageUrl(path),
-          releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
-          onBatchApplied: (count) => {
-            debugStore.log(
-              `[GraphView] Applied ${count} images to graph nodes.`,
-            );
-          },
-          onLog: (msg) => debugStore.log(msg),
-          onError: (err) =>
-            debugStore.error("Incremental image resolution failed", err),
-        });
-      });
-    }
+    void graph.elements;
+    void graph.showImages;
+    untrack(() => controller.syncImages());
   });
 
-  let selectedEntity = $derived(selectedId ? vault.entities[selectedId] : null);
+  let selectedEntity = $derived(
+    controller.selectedId ? vault.entities[controller.selectedId] : null,
+  );
   let parentEntity = $derived(
-    selectedId
-      ? vault.inboundConnections[selectedId]?.[0]?.sourceId
-        ? vault.entities[vault.inboundConnections[selectedId][0].sourceId]
+    controller.selectedId
+      ? vault.inboundConnections[controller.selectedId]?.[0]?.sourceId
+        ? vault.entities[
+            vault.inboundConnections[controller.selectedId][0].sourceId
+          ]
         : null
       : null,
   );
   let hoveredEntity = $derived(
-    hoveredEntityId ? vault.entities[hoveredEntityId] : null,
+    controller.hoveredEntityId
+      ? vault.entities[controller.hoveredEntityId]
+      : null,
   );
 </script>
 
@@ -638,16 +256,16 @@
   <GraphHUD
     {selectedEntity}
     {parentEntity}
-    {selectedId}
-    {isLayoutRunning}
-    {cy}
+    selectedId={controller.selectedId}
+    isLayoutRunning={controller.isLayoutRunning}
+    cy={controller.cy}
   />
 
   <GraphToolbar
-    {cy}
-    {isLayoutRunning}
-    onApplyLayout={applyCurrentLayout}
-    {selectedCount}
+    cy={controller.cy}
+    isLayoutRunning={controller.isLayoutRunning}
+    onApplyLayout={controller.applyCurrentLayout}
+    selectedCount={controller.selectedCount}
   />
 
   <OrbitControls />
@@ -655,20 +273,20 @@
   <div
     bind:this={container}
     data-testid="graph-canvas"
-    class="w-full h-full {graphVisible
+    class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"
   ></div>
 
-  <GraphTooltip {hoveredEntity} {hoverPosition} />
-  <EdgeEditorModal bind:editingEdge />
+  <GraphTooltip {hoveredEntity} hoverPosition={controller.hoverPosition} />
+  <EdgeEditorModal bind:editingEdge={controller.editingEdge} />
 
-  {#if cy}
-    <ContextMenu {cy} />
-    <SelectionConnector {cy} />
+  {#if controller.cy}
+    <ContextMenu cy={controller.cy} />
+    <SelectionConnector cy={controller.cy} />
   {/if}
   <FeatureHint hintId="graph-controls" />
-  {#if selectedCount === 2}
+  {#if controller.selectedCount === 2}
     <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">
       <FeatureHint hintId="node-merging" />
     </div>

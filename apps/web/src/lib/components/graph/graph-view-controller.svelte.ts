@@ -1,0 +1,444 @@
+import { untrack } from "svelte";
+import type { Core } from "cytoscape";
+import {
+  initGraph,
+  LayoutManager,
+  GraphImageManager,
+  setupGraphEvents,
+  syncGraphElements,
+} from "graph-engine";
+import { graph } from "$lib/stores/graph.svelte";
+import { vault } from "$lib/stores/vault.svelte";
+import { debugStore } from "$lib/stores/debug.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import {
+  DEFAULT_SEARCH_ENTITY_ZOOM,
+  consumePendingSearchEntityFocus,
+  SEARCH_ENTITY_FOCUS_EVENT,
+  markSearchEntityFocusHandled,
+} from "../search/search-focus";
+import type { LocalEntity } from "$lib/stores/vault/types";
+
+export class GraphViewController {
+  container = $state<HTMLElement | null>(null);
+  cy = $state<Core | undefined>();
+  layoutManager = $state<LayoutManager | undefined>();
+  imageManager = $state<GraphImageManager | undefined>();
+
+  isLayoutRunning = $state(false);
+  graphVisible = $state(false);
+  selectedCount = $state(0);
+
+  hoveredEntityId = $state<string | null>(null);
+  hoverPosition = $state<{ x: number; y: number } | null>(null);
+
+  selectedId = $state<string | null>(null);
+
+  editingEdge = $state<{
+    source: string;
+    target: string;
+    label: string;
+    type: string;
+  } | null>(null);
+
+  private _layoutReady = $state(false);
+  private initialLoaded = $state(false);
+  private didFinalizeLoad = $state(false);
+
+  private nodeSelectTimer: number | null = null;
+  private readonly NODE_SELECT_DELAY_MS = 300;
+
+  private resizeTimer: number | null = null;
+  private lastOrientation: "landscape" | "portrait" | null = null;
+
+  pendingSearchFocus: {
+    entityId: string;
+    zoom: number;
+  } | null = $state(null);
+  pendingSearchFocusRevision = $state(0);
+
+  private cleanupEvents?: () => void;
+  private searchFocusListener: ((event: Event) => void) | null = null;
+
+  constructor(options: { selectedId: string | null }) {
+    this.selectedId = options.selectedId;
+  }
+
+  init = async (container: HTMLElement, graphStyle: any) => {
+    this.container = container;
+
+    try {
+      const instance = (await initGraph({
+        container,
+        elements: untrack(() => graph.elements),
+        style: untrack(() => graphStyle),
+      })) as any;
+
+      this.cy = instance;
+      this.layoutManager = new LayoutManager(instance);
+      this.imageManager = new GraphImageManager(instance);
+
+      const updateSelectionCount = () => {
+        this.selectedCount = instance.$("node:selected").length;
+      };
+      instance.on("select unselect", "node", updateSelectionCount);
+      updateSelectionCount();
+
+      if (import.meta.env.DEV || (window as any).__E2E__) {
+        (window as any).cy = instance;
+      }
+
+      this.cleanupEvents = setupGraphEvents(instance, {
+        onNodeMouseOver: (id, renderedPos) => {
+          this.hoverPosition = renderedPos;
+          this.hoveredEntityId = id;
+        },
+        onNodeMouseOut: () => {
+          this.hoveredEntityId = null;
+          this.hoverPosition = null;
+        },
+        onNodeTap: async (id, node) => {
+          if (connectionModeStore.isConnecting) {
+            if (!connectionModeStore.connectingNodeId) {
+              connectionModeStore.connectingNodeId = id;
+              node.addClass("selected-source");
+            } else if (connectionModeStore.connectingNodeId === id) {
+              connectionModeStore.connectingNodeId = null;
+              node.removeClass("selected-source");
+            } else {
+              const source = connectionModeStore.connectingNodeId;
+              const target = id;
+              await vault.addConnection(source, target, "neutral");
+              connectionModeStore.toggleConnectMode();
+            }
+          } else {
+            if (layoutUIStore.isMobile) {
+              this.clearNodeSelectTimer();
+              modalUIStore.openZenMode(id);
+              this.selectedId = null;
+              node.unselect();
+              return;
+            }
+            this.clearNodeSelectTimer();
+            this.nodeSelectTimer = window.setTimeout(() => {
+              this.selectedId = id;
+              this.nodeSelectTimer = null;
+            }, this.NODE_SELECT_DELAY_MS);
+          }
+        },
+        onNodeDoubleTap: (id, node) => {
+          this.clearNodeSelectTimer();
+          modalUIStore.openZenMode(id);
+          this.selectedId = null;
+          node.unselect();
+        },
+        onEdgeTap: (data) => {
+          if (vault.isGuest) return;
+          this.editingEdge = {
+            source: data.source,
+            target: data.target,
+            label: data.label || "",
+            type: data.connectionType || "neutral",
+          };
+        },
+        onBackgroundTap: () => {
+          this.clearNodeSelectTimer();
+          this.selectedId = null;
+          if (connectionModeStore.isConnecting)
+            connectionModeStore.toggleConnectMode();
+        },
+        onViewportChange: () => {
+          if (this.hoveredEntityId && instance) {
+            const node = instance.$id(this.hoveredEntityId);
+            if (node.length > 0) {
+              const renderedPos = node.renderedPosition();
+              this.hoverPosition = renderedPos;
+            }
+          }
+          return this.hoverPosition;
+        },
+      });
+
+      this.graphVisible = true;
+      this.setupEventListeners();
+    } catch (err) {
+      debugStore.error("Graph Init Failed", err);
+    }
+  };
+
+  private setupEventListeners = () => {
+    window.addEventListener("resize", this.handleResize);
+    this.searchFocusListener = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{
+          entityId?: string;
+          zoom?: number;
+          requestId?: number;
+        }>
+      ).detail;
+      if (!detail?.entityId) return;
+      if (typeof detail.requestId === "number") {
+        markSearchEntityFocusHandled(detail.requestId);
+      }
+      this.pendingSearchFocus = {
+        entityId: detail.entityId,
+        zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
+      };
+      this.pendingSearchFocusRevision += 1;
+    };
+
+    window.addEventListener(
+      SEARCH_ENTITY_FOCUS_EVENT,
+      this.searchFocusListener,
+    );
+
+    const bufferedSearchFocus = consumePendingSearchEntityFocus();
+    if (bufferedSearchFocus) {
+      this.pendingSearchFocus = bufferedSearchFocus;
+      this.pendingSearchFocusRevision += 1;
+    }
+  };
+
+  destroy = () => {
+    window.removeEventListener("resize", this.handleResize);
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+    if (this.searchFocusListener) {
+      window.removeEventListener(
+        SEARCH_ENTITY_FOCUS_EVENT,
+        this.searchFocusListener,
+      );
+      this.searchFocusListener = null;
+    }
+    if (this.cleanupEvents) {
+      this.cleanupEvents();
+      this.cleanupEvents = undefined;
+    }
+    this.clearNodeSelectTimer();
+    if (this.layoutManager) {
+      this.layoutManager.stop();
+      this.layoutManager = undefined;
+    }
+    if (this.imageManager) {
+      this.imageManager.destroy({
+        releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+      } as any);
+      this.imageManager = undefined;
+    }
+    if (this.cy) {
+      if (import.meta.env.DEV) delete (window as any).cy;
+      this.cy.destroy();
+      this.cy = undefined;
+    }
+  };
+
+  applyCurrentLayout = async (
+    isInitial = false,
+    isForced = false,
+    caller = "unknown",
+    randomizeForced = false,
+    hasNewNodes = false,
+  ) => {
+    if (!this.layoutManager) return;
+
+    await this.layoutManager.apply(
+      {
+        timelineMode: graph.timelineMode,
+        timelineAxis: graph.timelineAxis,
+        timelineScale: graph.timelineScale,
+        orbitMode: graph.orbitMode,
+        centralNodeId: graph.centralNodeId,
+        stableLayout: graph.stableLayout,
+        isGuest: vault.isGuest,
+        onLayoutStart: () => {
+          this.isLayoutRunning = true;
+        },
+        onLayoutComputed: (ms) => {
+          debugStore.log(`Layout: ${ms}ms`, {
+            nodes: graph.stats.nodeCount,
+            caller,
+          });
+        },
+        onLayoutStop: () => {
+          this.isLayoutRunning = false;
+          this.graphVisible = true;
+          if (isInitial) {
+            this._layoutReady = true;
+          }
+        },
+        onPositionsUpdated: (updates) => {
+          const isReady = this._layoutReady && vault.status !== "loading";
+          if (!isInitial && isReady) {
+            vault.batchUpdate(updates as Record<string, Partial<LocalEntity>>);
+          }
+        },
+      },
+      isInitial,
+      isForced,
+      caller,
+      randomizeForced,
+      hasNewNodes,
+    );
+  };
+
+  private handleResize = () => {
+    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+    this.resizeTimer = window.setTimeout(() => {
+      if (this.cy) {
+        this.cy.resize();
+        const width = this.cy.width();
+        const height = this.cy.height();
+        const currentOrientation = width > height ? "landscape" : "portrait";
+
+        if (
+          this.lastOrientation &&
+          currentOrientation !== this.lastOrientation
+        ) {
+          debugStore.log(
+            `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
+          );
+          this.applyCurrentLayout(false, true, "Window Resize", true);
+        } else {
+          this.applyCurrentLayout(false, false, "Window Resize", false);
+        }
+
+        this.lastOrientation = currentOrientation;
+      }
+    }, 250);
+  };
+
+  private clearNodeSelectTimer = () => {
+    if (this.nodeSelectTimer !== null) {
+      clearTimeout(this.nodeSelectTimer);
+      this.nodeSelectTimer = null;
+    }
+  };
+
+  // Sync Logic
+  syncElements = () => {
+    if (this.cy && graph.elements) {
+      syncGraphElements(this.cy, {
+        elements: graph.elements,
+        vaultStatus: vault.status,
+        initialLoaded: this.initialLoaded,
+        isTemporalMetadataEqual: (a: any, b: any) => {
+          // Note: Need to import or pass this utility
+          return JSON.stringify(a) === JSON.stringify(b);
+        },
+        activeLabels: graph.activeLabels,
+        labelFilterMode: graph.labelFilterMode,
+        activeCategories: graph.activeCategories,
+        onFirstElements: () => {
+          this.initialLoaded = true;
+          this.graphVisible = true;
+        },
+        onLayoutUpdate: (isInitial, isForced, caller, hasNewNodes) => {
+          this.applyCurrentLayout(
+            isInitial,
+            isForced,
+            caller,
+            false,
+            hasNewNodes,
+          );
+        },
+      });
+    }
+    if (this.initialLoaded && !this.graphVisible) {
+      this.graphVisible = true;
+    }
+  };
+
+  syncImages = () => {
+    if (this.cy && graph.elements && this.imageManager) {
+      untrack(() => {
+        this.imageManager!.sync({
+          showImages: graph.showImages,
+          resolveImageUrl: (path) => vault.resolveImageUrl(path),
+          releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+          onBatchApplied: (count) => {
+            debugStore.log(
+              `[GraphView] Applied ${count} images to graph nodes.`,
+            );
+          },
+          onLog: (msg) => debugStore.log(msg),
+          onError: (err) =>
+            debugStore.error("Incremental image resolution failed", err),
+        });
+      });
+    }
+  };
+
+  applyFocus = (id: string | null) => {
+    const currentCy = this.cy;
+    if (!currentCy) return;
+    try {
+      currentCy.batch(() => {
+        const allEles = currentCy.elements();
+        if (!id) {
+          allEles.removeClass("dimmed neighborhood secondary-neighborhood");
+        } else {
+          const node = currentCy.$id(id);
+          if (node.length > 0) {
+            const firstLevel = node.closedNeighborhood();
+            const firstLevelNodes = firstLevel.nodes();
+            const secondLevelNodes = firstLevelNodes
+              .neighborhood()
+              .nodes()
+              .not(firstLevelNodes);
+            const secondLevelEdges =
+              secondLevelNodes.edgesWith(firstLevelNodes);
+            const secondLevel = secondLevelNodes.add(secondLevelEdges);
+
+            allEles.addClass("dimmed");
+            allEles.removeClass("neighborhood secondary-neighborhood");
+
+            firstLevel.removeClass("dimmed");
+            firstLevel.addClass("neighborhood");
+
+            secondLevel.removeClass("dimmed");
+            secondLevel.addClass("secondary-neighborhood");
+          } else {
+            allEles.removeClass("dimmed neighborhood secondary-neighborhood");
+          }
+        }
+      });
+    } catch {
+      /* ignore */
+    }
+  };
+
+  handleVaultLoading = () => {
+    if (vault.status === "loading" && vault.allEntities.length === 0) {
+      this.initialLoaded = false;
+      this.didFinalizeLoad = false;
+      if (this.imageManager)
+        this.imageManager.destroy({
+          releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
+        } as any);
+    }
+  };
+
+  handleVaultLoadFinalization = () => {
+    if (
+      vault.status === "idle" &&
+      this.initialLoaded &&
+      !this.didFinalizeLoad
+    ) {
+      this.didFinalizeLoad = true;
+      debugStore.log(
+        "[GraphView] Vault load finalized, unlocking all updates.",
+      );
+      this.applyCurrentLayout(false, true, "Load Finalized");
+    }
+  };
+
+  handleModeChange = () => {
+    if (this.cy && this.didFinalizeLoad) {
+      this.applyCurrentLayout(false, true, "Mode Change Effect");
+    }
+  };
+}
