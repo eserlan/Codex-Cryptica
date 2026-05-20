@@ -5,6 +5,7 @@ import { notificationStore as defaultNotificationStore } from "$lib/stores/ui/no
 import { sessionModeStore as defaultSessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { layoutUIStore as defaultLayoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { shouldShowInitiativePanel } from "$lib/components/map/vtt-ui";
+import type { SessionMode } from "../../../types/vtt";
 import type { Entity, Point } from "schema";
 
 export const VTT_ENTITY_TYPES = ["character", "creature", "item"];
@@ -19,7 +20,7 @@ type MapPageMapStore = {
 
 type MapPageSession = {
   vttEnabled: boolean;
-  mode: string;
+  mode: SessionMode;
   selectedToken?: unknown;
   dragPreview?: { entityId: string } | null;
   clearDragPreview(): void;
@@ -88,10 +89,7 @@ export class MapPageController {
     this.layoutUIStore.vttChatSidebarCollapsed ? "3rem" : "20rem",
   );
   showInitiativePanel = $derived(
-    shouldShowInitiativePanel(
-      this.mapSession.vttEnabled,
-      this.mapSession.mode as any,
-    ),
+    shouldShowInitiativePanel(this.mapSession.vttEnabled, this.mapSession.mode),
   );
   hasSelectedToken = $derived(Boolean(this.mapSession.selectedToken));
   vttEntityCount = $derived.by(

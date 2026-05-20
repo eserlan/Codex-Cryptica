@@ -1,4 +1,4 @@
-# Data Model: Map Route Decompositon
+# Data Model: Map Route Decomposition
 
 ## MapPageController (Reactive State)
 
@@ -10,10 +10,12 @@ Manages the transient orchestration state for the Map route.
   - `showVttShare: boolean` - Visibility of the `ShareModal`.
   - `mapName: string` - User-provided name for the new map upload.
   - `files: FileList | null` - Pending files for upload.
-  - `isVttChatSidebarCollapsed: boolean` - Controls the VTT chat sidebar expansion.
+
+- **Layout State (owned by `layoutUIStore`)**:
+  - `vttChatSidebarCollapsed: boolean` - Controls VTT chat sidebar expansion and persists outside the route controller.
 
 - **Derived State (`$derived`)**:
-  - `chatSidebarOffset: string` - Calculated based on `isVttChatSidebarCollapsed` ("3rem" or "20rem").
+  - `chatSidebarOffset: string` - Calculated from `layoutUIStore.vttChatSidebarCollapsed` ("3rem" or "20rem").
   - `vttEntityCount: number` - Filtered count of VTT-compatible entities in the vault.
   - `showInitiativePanel: boolean` - Derived from `mapSession` mode/enabled flags.
 

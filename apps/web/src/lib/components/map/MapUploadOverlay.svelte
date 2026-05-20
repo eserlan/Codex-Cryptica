@@ -18,11 +18,17 @@
     onUpload: () => void | Promise<void>;
     onCancel: () => void;
   } = $props();
+
+  const hasSelectedFile = $derived(Boolean(files?.[0]));
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="absolute inset-0 z-50 bg-theme-bg/80 backdrop-blur-sm flex items-center justify-center p-6"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="map-upload-title"
+  tabindex="-1"
   ondragover={onDragOver}
   ondragleave={onDragLeave}
   ondrop={onDrop}
@@ -33,6 +39,7 @@
       : 'border-theme-border'}"
   >
     <h3
+      id="map-upload-title"
       class="text-xl font-bold text-theme-text mb-6 uppercase font-header tracking-wider"
     >
       Upload New Map
@@ -81,7 +88,7 @@
         <button
           class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-[10px] tracking-widest"
           onclick={onUpload}
-          disabled={!files}
+          disabled={!hasSelectedFile}
         >
           Upload
         </button>
