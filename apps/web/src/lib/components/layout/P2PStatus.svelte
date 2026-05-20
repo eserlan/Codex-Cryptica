@@ -92,13 +92,17 @@
 
         <div>Latency:</div>
         <div class="col-span-2 text-theme-text">
-          {activeState?.latencyMs >= 0 ? `${activeState.latencyMs} ms` : "N/A"}
+          {activeState &&
+          activeState.latencyMs !== undefined &&
+          activeState.latencyMs >= 0
+            ? `${activeState.latencyMs} ms`
+            : "N/A"}
         </div>
 
         <div>My ID:</div>
         <div
           class="col-span-2 text-theme-text truncate"
-          title={activeState?.peerId}
+          title={activeState?.peerId ?? undefined}
         >
           {activeState?.peerId || "None"}
         </div>
@@ -107,16 +111,16 @@
           <div>Peer ID:</div>
           <div
             class="col-span-2 text-theme-text truncate"
-            title={activeState?.remotePeerId}
+            title={activeState.remotePeerId}
           >
-            {activeState?.remotePeerId}
+            {activeState.remotePeerId}
           </div>
         {/if}
 
-        {#if activeState?.retryCount > 0}
+        {#if activeState && activeState.retryCount !== undefined && activeState.retryCount > 0}
           <div>Retries:</div>
           <div class="col-span-2 text-amber-400 font-bold">
-            {activeState?.retryCount}
+            {activeState.retryCount}
           </div>
         {/if}
       </div>
