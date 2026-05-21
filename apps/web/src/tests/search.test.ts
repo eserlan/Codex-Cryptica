@@ -7,6 +7,14 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     initIndex: vi.fn().mockResolvedValue(true),
     add: vi.fn().mockResolvedValue(true),
     addBatch: vi.fn().mockResolvedValue(true),
+    addBatchProgressive: vi.fn().mockImplementation((entries, options) =>
+      Promise.resolve({
+        runId: options.runId,
+        vaultId: options.vaultId,
+        acceptedCount: entries.length,
+        failedIds: [],
+      }),
+    ),
     remove: vi.fn().mockResolvedValue(true),
     search: vi.fn().mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
     searchOptimized: vi
@@ -279,7 +287,11 @@ describe("SearchService", () => {
         expect(indexBatchSpy).toHaveBeenCalled();
       });
 
-      expect(indexBatchSpy).toHaveBeenCalledWith(Object.values(entities));
+      expect(indexBatchSpy).toHaveBeenCalledWith(Object.values(entities), {
+        runId: expect.any(String),
+        vaultId: "v1",
+        totalCount: 1,
+      });
       expect((service as any).needsFullContentSweep).toBe(true);
     });
 

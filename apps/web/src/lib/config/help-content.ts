@@ -159,6 +159,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.",
     icon: "icon-[lucide--folder-sync]",
   },
+  "search-indexing": {
+    id: "search-indexing",
+    title: "Search Indexing",
+    content:
+      "Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.",
+    icon: "icon-[lucide--search-check]",
+  },
   "vault-save": {
     id: "vault-save",
     title: "Save to Folder",

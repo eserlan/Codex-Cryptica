@@ -47,6 +47,6 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/105-p2p-transport-integration/plan.md).
+shell commands, and other important information, read the [current plan](./specs/106-progressive-worker-search/plan.md).
 
 <!-- SPECKIT END -->

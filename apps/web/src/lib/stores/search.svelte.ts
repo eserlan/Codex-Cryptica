@@ -1,4 +1,5 @@
 import type { SearchResult } from "schema";
+import type { SearchIndexProgress } from "@codex/search-engine";
 import { isEntityVisible } from "schema";
 import { searchService as defaultSearchService } from "$lib/services/search";
 import { debugStore } from "./debug.svelte";
@@ -12,11 +13,24 @@ export class SearchStore {
   selectedIndex = $state(0);
   isLoading = $state(false);
   recents = $state<SearchResult[]>([]);
+  indexProgress = $state<SearchIndexProgress>({
+    status: "idle",
+    vaultId: null,
+    runId: null,
+    indexedCount: 0,
+    totalCount: null,
+    isPartial: false,
+    canRetry: false,
+    message: "Search is idle.",
+    error: null,
+  });
 
   // Dependencies
   private vault: typeof defaultVault;
   private sessionModeStore: typeof sessionModeStore;
   private searchService: typeof defaultSearchService;
+  private unsubscribeIndexProgress: (() => void) | null = null;
+  private onVaultSwitched = () => this.reset();
 
   constructor(
     vault: typeof defaultVault = defaultVault,
@@ -27,8 +41,15 @@ export class SearchStore {
     this.sessionModeStore = sessionStore;
     this.searchService = searchService;
     this.recents = this.loadRecents();
+    if (this.searchService.subscribeIndexProgress) {
+      this.unsubscribeIndexProgress = this.searchService.subscribeIndexProgress(
+        (progress) => {
+          this.indexProgress = progress;
+        },
+      );
+    }
     if (typeof window !== "undefined") {
-      window.addEventListener("vault-switched", () => this.reset());
+      window.addEventListener("vault-switched", this.onVaultSwitched);
     }
   }
 
@@ -79,6 +100,17 @@ export class SearchStore {
     this.isLoading = false;
     this.isOpen = false;
     this.recents = this.loadRecents();
+    this.indexProgress = {
+      status: "idle",
+      vaultId: this.vault.activeVaultId,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
+    };
   }
 
   open() {
@@ -153,6 +185,19 @@ export class SearchStore {
       this.results = [];
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async retryIndexing() {
+    if (!this.searchService.retryIndexing) return;
+    await this.searchService.retryIndexing();
+  }
+
+  destroy() {
+    this.unsubscribeIndexProgress?.();
+    this.unsubscribeIndexProgress = null;
+    if (typeof window !== "undefined") {
+      window.removeEventListener("vault-switched", this.onVaultSwitched);
     }
   }
 

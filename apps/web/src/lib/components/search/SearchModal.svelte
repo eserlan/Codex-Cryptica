@@ -160,6 +160,40 @@
               : undefined}
           />
         </div>
+        {#if searchStore.indexProgress.status !== "idle" && searchStore.indexProgress.status !== "ready"}
+          <div
+            class="mt-3 flex items-center justify-between gap-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-100 dark:border-amber-900"
+            role="status"
+            data-testid="search-index-progress"
+          >
+            <span>
+              {searchStore.indexProgress.message}
+              {#if searchStore.indexProgress.totalCount !== null}
+                <span class="font-medium">
+                  {searchStore.indexProgress.indexedCount}/{searchStore
+                    .indexProgress.totalCount}
+                </span>
+              {/if}
+            </span>
+            {#if searchStore.indexProgress.canRetry}
+              <button
+                type="button"
+                class="rounded bg-amber-200 px-2 py-1 font-medium text-amber-950 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-50 dark:hover:bg-amber-700"
+                onclick={() => searchStore.retryIndexing()}
+              >
+                Retry indexing
+              </button>
+            {/if}
+          </div>
+        {:else if searchStore.indexProgress.isPartial}
+          <div
+            class="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-100 dark:border-amber-900"
+            role="status"
+            data-testid="search-index-progress"
+          >
+            Search is still indexing. Results may be incomplete.
+          </div>
+        {/if}
       </div>
 
       <!-- Results List -->
