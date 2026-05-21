@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-20
+Auto-generated from all feature plans. Last updated: 2026-05-21
 
 ## Active Technologies
 
@@ -181,6 +181,8 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+
+- 785-rune-hardening: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 - 102-oracle-store-decoupling: Added TypeScript 6.0.3, Svelte 5 Runes + `@google/generative-ai`, `idb` (IndexedDB), `flexsearch`, `comlink`
 
