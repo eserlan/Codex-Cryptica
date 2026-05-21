@@ -6,8 +6,15 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
   private cachedVaultId: string | null = null;
+  private _searchService: any;
 
-  constructor(private searchService = defaultSearchService) {}
+  constructor(searchService?: any) {
+    this._searchService = searchService;
+  }
+
+  private get searchService() {
+    return this._searchService || defaultSearchService;
+  }
 
   getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {
     const parts = [];
