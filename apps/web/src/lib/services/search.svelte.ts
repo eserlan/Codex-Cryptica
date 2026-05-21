@@ -65,6 +65,7 @@ export class SearchService {
   private isInitialized = false;
   private needsFullContentSweep = false;
   private activeRunId: string | null = null;
+  // --- Reactive Progress State ---
   private progress: SearchIndexProgress = { ...READY_PROGRESS };
   private progressListeners = new Set<
     (progress: SearchIndexProgress) => void
