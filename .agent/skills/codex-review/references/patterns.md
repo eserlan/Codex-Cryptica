@@ -26,6 +26,11 @@ This reference documents specific anti-patterns and quality standards for the Co
 - **Issue**: Initializing `$state` directly from a prop (`let x = $state(props.x)`) breaks reactivity if the prop changes.
 - **Pattern**: Use `$derived` if it should stay in sync, or explicitly document if a local copy is intended.
 
+### Svelte 5 Runes in Non-compiled Modules
+
+- **Issue**: Calling Svelte 5 runes (such as `$effect`, `$state`, `$derived`, etc.) inside a plain `.ts` module (e.g., `events.ts`). Svelte 5 runes are only compiled in `.svelte` or `.svelte.ts` modules. Plain `.ts` files do not undergo the runic compiler transformation, leading to runtime failures where the compiler complains that `$effect` (or other runes) is not defined (even if Vitest stubs it or masks it in test runs).
+- **Pattern**: Always use the `.svelte.ts` extension for any helper library, store, or service that uses Svelte 5 runes, or structure the API to return clean callback functions (like an `unsubscribe` function) so the component caller can wrap the subscription in its own `$effect`.
+
 ## Oracle & AI Logic
 
 ### Aggressive Regex Parsing

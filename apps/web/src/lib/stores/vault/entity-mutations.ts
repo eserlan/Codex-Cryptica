@@ -1,4 +1,4 @@
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import * as vaultEntities from "./entities";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";

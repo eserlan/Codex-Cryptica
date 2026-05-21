@@ -71,7 +71,7 @@ vi.mock("$lib/stores/debug.svelte", () => ({
 // Import after mock
 import { SearchService } from "$lib/services/search.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
-import { vaultEventBus } from "$lib/stores/vault/events";
+import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 
 describe("SearchService", () => {
   let service: SearchService;

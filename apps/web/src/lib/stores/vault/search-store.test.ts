@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import { SearchStore } from "./search-store.svelte";
 import type { LocalEntity } from "./types";
 

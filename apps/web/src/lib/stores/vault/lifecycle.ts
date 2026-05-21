@@ -3,7 +3,7 @@ import type { LocalEntity } from "./types";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 
 export interface VaultLifecycleDependencies {
   syncStore: SyncStore;

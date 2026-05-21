@@ -582,7 +582,7 @@ describe("VaultStore", () => {
       vi.spyOn(testVault.entityStore, "batchCreateEntities").mockImplementation(
         async (newEntities) => {
           testVault.entityStore.markContentLoaded("b1");
-          const { vaultEventBus } = await import("./vault/events");
+          const { vaultEventBus } = await import("./vault/events.svelte");
           vaultEventBus.emit({
             type: "BATCH_CREATED",
             vaultId: "v1",

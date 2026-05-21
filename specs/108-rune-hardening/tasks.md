@@ -8,13 +8,13 @@
 
 - [x] T001 Initialize hardening branch and verify test baseline with `pnpm test`
 - [x] T002 Identify all `svelte/store` imports in `apps/web/src` for progress tracking
-- [x] T002b Delete dead code file [graph-store.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/store/graph-store.ts)
+- [x] T002b Delete dead code file `apps/web/src/store/graph-store.ts`
 
 ## Phase 2: Foundational
 
 - [x] T003 Convert `apps/web/src/lib/stores/debug.svelte.ts` to pure Runic class using constructor-based DI (remove `writable`)
 - [x] T004 [P] Convert `apps/web/src/lib/stores/guest.ts` to `guest.svelte.ts` with `$state` properties and constructor-based DI
-- [x] T005 [P] Create Runic utility for event bus subscriptions that auto-cleans up via `$effect` in `apps/web/src/lib/stores/vault/events.ts`
+- [x] T005 [P] Create Runic utility for event bus subscriptions that auto-cleans up via `$effect` in `apps/web/src/lib/stores/vault/events.svelte.ts`
 
 ## Phase 3: User Story 1 - Smooth Application Performance [US1]
 
@@ -48,8 +48,8 @@
 - [x] T015 [P] [US3] Replace `onDestroy` with native `$effect` cleanup in `apps/web/src/lib/components/graph/Minimap.svelte`
 - [x] T016 [P] [US3] Fix identified leak in `apps/web/src/lib/stores/search.svelte.ts` (vault-switched listener) using Runic lifecycle
 - [x] T017 [US3] Verify guest roster cleanup in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` using Runic signals
-- [x] T017b [P] [US3] Refactor components using `$guestRoster` ([GraphToolbar.svelte](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/GraphToolbar.svelte), etc.) to use signal property access
-- [x] T017c [P] [US3] Refactor P2P handlers ([vault-handler.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/cloud-bridge/p2p/handlers/vault-handler.ts), etc.) and contexts to consume Rune-based `guestRoster`
+- [x] T017b [P] [US3] Refactor components using `$guestRoster` (`apps/web/src/lib/components/graph/GraphToolbar.svelte`, etc.) to use signal property access
+- [x] T017c [P] [US3] Refactor P2P handlers (`apps/web/src/lib/cloud-bridge/p2p/handlers/vault-handler.ts`, etc.) and contexts to consume Rune-based `guestRoster`
 - [x] T017d [P] [US3] Refactor and clean up related P2P tests (`guest-service.test.ts`, `p2p.test.ts`, etc.) to conform to Rune-based roster
 
 ## Phase 6: Polish & Cross-cutting

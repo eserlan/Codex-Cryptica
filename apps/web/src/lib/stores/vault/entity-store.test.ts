@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import { EntityStore } from "./entity-store.svelte";
 import type { LocalEntity } from "./types";
 import * as vaultEntities from "./entities";
@@ -11,7 +11,7 @@ vi.hoisted(() => {
   (global as any).$derived.by = vi.fn((fn) => fn());
 });
 
-vi.mock("./events", () => ({
+vi.mock("./events.svelte", () => ({
   vaultEventBus: {
     emit: vi.fn(),
     reset: vi.fn(),
