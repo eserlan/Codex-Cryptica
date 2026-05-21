@@ -14,6 +14,7 @@ import type { debugStore as debugStoreType } from "$lib/stores/debug.svelte";
 import type { layoutUIStore as layoutUIStoreType } from "$lib/stores/ui/layout-ui.svelte";
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
+import { quickNoteStore } from "$lib/stores/quicknote.svelte";
 import {
   DEFAULT_SEARCH_ENTITY_ZOOM,
   consumePendingSearchEntityFocus,
@@ -124,6 +125,23 @@ export class GraphViewController {
           this.hoverPosition = null;
         },
         onNodeTap: async (id, node) => {
+          if (id.startsWith("quicknote-")) {
+            const noteIdStr = id.split("-")[1];
+            const noteId = parseInt(noteIdStr, 10);
+            if (!isNaN(noteId)) {
+              const note = quickNoteStore.activeNotes.find(
+                (n) => n.id === noteId,
+              );
+              if (note) {
+                quickNoteStore.open(note);
+              } else {
+                quickNoteStore.open();
+              }
+            }
+            node.unselect();
+            return;
+          }
+
           if (this.deps.connectionModeStore.isConnecting) {
             if (!this.deps.connectionModeStore.connectingNodeId) {
               this.deps.connectionModeStore.connectingNodeId = id;
@@ -153,6 +171,10 @@ export class GraphViewController {
           }
         },
         onNodeDoubleTap: (id, node) => {
+          if (id.startsWith("quicknote-")) {
+            node.unselect();
+            return;
+          }
           this.clearNodeSelectTimer();
           this.deps.modalUIStore.openZenMode(id);
           this.selectedId = null;

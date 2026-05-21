@@ -32,6 +32,20 @@ export const getGraphStyles = (
       },
     },
     {
+      selector: "node.quicknote",
+      style: {
+        "border-style": "dotted",
+        "border-color": "#f59e0b",
+        "border-width": 3,
+        "background-color": "#f59e0b",
+        "background-opacity": 0.15,
+        "underlay-color": "#f59e0b",
+        "underlay-padding": 8,
+        "underlay-opacity": 0.15,
+        "underlay-shape": "ellipse",
+      },
+    },
+    {
       selector: ".category-filtered-out",
       style: {
         display: "none",

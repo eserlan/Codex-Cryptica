@@ -24,6 +24,9 @@
 - [ ] T006 [P] [US1] Implement the multi-note history list UI in `apps/web/src/lib/components/quicknote/NoteHistory.svelte`
 - [ ] T007 [US1] Integrate hotkey and UI toggle triggers in `QuickNoteStore`
 - [ ] T008 [US1] Implement debounced auto-save and manual save actions in `QuickNoteScratchpad.svelte`
+- [ ] T008a [US1] Build the glassmorphic **Floating Action Bubble (FAB)** at the bottom-right corner with a pulse ring animation when active drafts exist
+- [ ] T008b [US1] Integrate a glowing amber/orange count badge on the leftmost **Activity Bar** icon `[⚡]`
+- [ ] T008c [US1] Add a compact draft counter pill (`[ X ⚡ Drafts ]`) in the **Campaign Header** near the active vault name
 
 ## Phase 4: User Story 2 - AI Entity Elevation [US2]
 

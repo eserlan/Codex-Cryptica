@@ -8,7 +8,9 @@
     Compass,
     Layout,
     ShieldCheck,
+    Zap,
   } from "lucide-svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -56,6 +58,12 @@
         icon: Database,
         label: "Entity Explorer",
         action: () => layoutUIStore.toggleSidebarTool("explorer"),
+      },
+      {
+        id: "quicknote",
+        icon: Zap,
+        label: "QuickNote Scratchpad",
+        action: () => quickNoteStore.toggle(),
       },
     ];
 
@@ -157,6 +165,14 @@
       <Icon
         class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
       />
+
+      {#if tool.id === "quicknote" && quickNoteStore.count > 0}
+        <span
+          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-slate-900 bg-gradient-to-tr from-amber-500 to-orange-500 shadow-md"
+        >
+          {quickNoteStore.count}
+        </span>
+      {/if}
 
       {#if active}
         <div

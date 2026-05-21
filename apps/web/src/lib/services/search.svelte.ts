@@ -11,6 +11,7 @@ import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { appEventBus } from "@codex/events";
 import { VAULT_EVENTS } from "@codex/vault-engine";
+import { quickNoteStore } from "../stores/quicknote.svelte";
 
 const INDEX_BATCH_SIZE = 100;
 const READY_PROGRESS: SearchIndexProgress = {
@@ -445,6 +446,7 @@ export class SearchService {
     const api = await this.ensureWorker();
     const rawResult = await api.searchOptimized(query, options);
 
+    let decodedResults: SearchResult[];
     // Handle Transferable (Encoded) result
     if (
       typeof rawResult === "object" &&
@@ -453,10 +455,41 @@ export class SearchService {
     ) {
       const decoder = new TextDecoder();
       const decoded = decoder.decode(rawResult.data);
-      return JSON.parse(decoded);
+      decodedResults = JSON.parse(decoded);
+    } else {
+      decodedResults = rawResult as SearchResult[];
     }
 
-    return rawResult as SearchResult[];
+    // Intercept and merge QuickNote search results locally
+    const quickNotes = quickNoteStore.activeNotes;
+    if (quickNotes && quickNotes.length > 0) {
+      const normalizedQuery = query.toLowerCase();
+      const matchingNotes = quickNotes.filter((note) =>
+        note.content.toLowerCase().includes(normalizedQuery),
+      );
+      const quickNoteResults: SearchResult[] = matchingNotes.map((note) => {
+        const trimmed = note.content.trim();
+        const firstLine = trimmed ? trimmed.split("\n")[0] : "Untitled Note";
+        const title =
+          firstLine.length > 30
+            ? firstLine.substring(0, 30) + "..."
+            : firstLine || "Untitled Note";
+        return {
+          id: `quicknote-${note.id}`,
+          title,
+          path: `quicknote-${note.id}`,
+          type: "quicknote" as any,
+          snippet:
+            note.content.substring(0, 100) +
+            (note.content.length > 100 ? "..." : ""),
+          score: 1.0,
+          matchType: "text" as any,
+        };
+      });
+      decodedResults = [...quickNoteResults, ...decodedResults];
+    }
+
+    return decodedResults;
   }
 
   async clear(): Promise<void> {

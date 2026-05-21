@@ -19,6 +19,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
   import { initGDriveSync } from "$lib/services/gdrive-sync";
@@ -36,6 +37,8 @@
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
+  import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
+  import QuickNoteFAB from "$lib/components/quicknote/QuickNoteFAB.svelte";
 
   // Logic & Hooks
   import {
@@ -282,6 +285,7 @@
   const handleKeydown = useGlobalShortcuts({
     searchStore,
     modalUIStore,
+    quickNoteStore,
   });
 </script>
 
@@ -313,6 +317,14 @@
 
   {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
+  {/if}
+
+  {#if !isPopup && !isVttFullscreen && !isZenPopout}
+    <QuickNoteFAB />
+  {/if}
+
+  {#if !isPopup}
+    <QuickNoteScratchpad />
   {/if}
 
   <GuestSessionBootstrap />
