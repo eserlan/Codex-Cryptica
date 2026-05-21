@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
-    "vite": "^8.0.13",
+    "vite": "^8.0.14",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
@@ -21,12 +21,12 @@
     "svelte": "^5.55.4"
   },
   "devDependencies": {
-    "@sveltejs/kit": "^2.59.1",
-    "@types/node": "^25.7.0",
-    "@vitest/coverage-v8": "^4.1.6",
-    "eslint": "^10.3.0",
+    "@sveltejs/kit": "^2.60.1",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.7",
+    "eslint": "^10.4.0",
     "schema": "workspace:*",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   }
 }

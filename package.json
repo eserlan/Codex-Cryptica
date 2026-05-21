@@ -37,30 +37,30 @@
     "@emnapi/core": "^1.10.0",
     "@emnapi/runtime": "^1.10.0",
     "@eslint/js": "^10.0.1",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
-    "@typescript-eslint/parser": "^8.59.3",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
     "commitlint-config-gitmoji": "^2.3.1",
     "deepmerge": "^4.3.1",
     "esbuild": "^0.28.0",
-    "eslint": "10.3.0",
+    "eslint": "10.4.0",
     "eslint-plugin-svelte": "^3.17.1",
     "gitmoji-cli": "^9.7.0",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.4",
+    "lint-staged": "^17.0.5",
     "prettier": "3.8.3",
-    "prettier-plugin-svelte": "^3.5.2",
+    "prettier-plugin-svelte": "^4.0.1",
     "svelte-eslint-parser": "^1.6.1",
     "ts-morph": "^28.0.0",
     "turbo": "^2.9.14",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.59.3",
-    "vite": "^8.0.13",
+    "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.14",
     "vitefu": "^1.1.3",
-    "wrangler": "^4.90.1"
+    "wrangler": "^4.93.1"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@tiptap/extension-bubble-menu": "^3.23.4"
+    "@tiptap/extension-bubble-menu": "^3.23.6"
   }
 }
