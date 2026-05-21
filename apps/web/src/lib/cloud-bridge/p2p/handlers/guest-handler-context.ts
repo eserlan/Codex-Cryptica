@@ -1,11 +1,13 @@
-import type { Writable } from "svelte/store";
 import type { mapSession } from "../../../stores/map-session.svelte";
 import type { mapStore } from "../../../stores/map.svelte";
 import type { vault } from "../../../stores/vault.svelte";
 import type { sessionModeStore } from "../../../stores/ui/session-mode.svelte";
 import type { notificationStore } from "../../../stores/ui/notification.svelte";
 import type { themeStore } from "../../../stores/theme.svelte";
-import type { GuestPresenceStatus } from "../../../stores/guest";
+import type {
+  GuestPresenceStatus,
+  GuestStore,
+} from "../../../stores/guest.svelte";
 import type { MapAssetUrlCache } from "./map-asset-url-cache";
 import type { P2PClientTransport } from "../transport/client-transport";
 
@@ -33,7 +35,7 @@ export interface GuestHandlerContext {
   mapSession: typeof mapSession;
   mapStore: typeof mapStore;
   themeStore: typeof themeStore;
-  guestRoster: Writable<Record<string, any>>;
+  guestStore: GuestStore;
   transport: P2PClientTransport;
   assetCache: MapAssetUrlCache;
   callbacks: GuestSessionCallbacks;

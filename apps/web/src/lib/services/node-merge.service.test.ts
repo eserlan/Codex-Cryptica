@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NodeMergeService } from "./node-merge.service";
+import { NodeMergeService } from "./node-merge.service.svelte";
 import { vault } from "../stores/vault.svelte";
 import { oracle } from "../stores/oracle.svelte";
-import { textGenerationService } from "./ai/text-generation.service";
+import { textGenerationService } from "./ai/text-generation.service.svelte";
 
 // Mock the dependencies
 vi.mock("../stores/vault.svelte", () => ({
@@ -23,7 +23,7 @@ vi.mock("../stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("./ai/text-generation.service", () => ({
+vi.mock("./ai/text-generation.service.svelte", () => ({
   textGenerationService: {
     generateMergeProposal: vi.fn(),
   },

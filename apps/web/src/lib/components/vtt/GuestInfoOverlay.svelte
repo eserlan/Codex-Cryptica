@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { guestRoster } from "$lib/stores/guest";
+  import { guestStore } from "$lib/stores/guest.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { fade, slide } from "svelte/transition";
 
-  const guests = $derived(Object.values($guestRoster));
+  const guests = $derived(Object.values(guestStore.guestRoster));
   const hasGuests = $derived(guests.length > 0);
 </script>
 

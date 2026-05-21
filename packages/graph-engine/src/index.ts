@@ -78,8 +78,8 @@ export const initGraph = async (options: GraphOptions) => {
     hideLabelsOnViewport: true,
     textureOnViewport: true,
     pixelRatio: "auto",
-    wheelSensitivity: 5.0,
     minZoom: Math.max(0.01, 0.3 - nodeCount * 0.0005),
     maxZoom: 9.0,
+    wheelSensitivity: 1.0,
   });
 };

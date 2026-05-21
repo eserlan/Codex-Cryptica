@@ -79,7 +79,7 @@ vi.mock("./vault/migration", () => ({
   migrateStructure: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../services/search", () => ({
+vi.mock("../services/search.svelte", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -559,7 +559,7 @@ describe("VaultStore", () => {
     });
 
     it("should handle search index errors in scheduleSave", async () => {
-      const { searchService } = await import("../services/search");
+      const { searchService } = await import("../services/search.svelte");
       vi.mocked(searchService.index).mockRejectedValueOnce(
         new Error("Search Error"),
       );
@@ -582,7 +582,7 @@ describe("VaultStore", () => {
       vi.spyOn(testVault.entityStore, "batchCreateEntities").mockImplementation(
         async (newEntities) => {
           testVault.entityStore.markContentLoaded("b1");
-          const { vaultEventBus } = await import("./vault/events");
+          const { vaultEventBus } = await import("./vault/events.svelte");
           vaultEventBus.emit({
             type: "BATCH_CREATED",
             vaultId: "v1",

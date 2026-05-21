@@ -1,4 +1,4 @@
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { readFileAsText } from "../../utils/opfs";

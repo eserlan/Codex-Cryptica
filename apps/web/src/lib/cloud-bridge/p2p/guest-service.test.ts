@@ -39,8 +39,7 @@ vi.mock("../../stores/theme.svelte", () => ({
 
 import { P2PGuestService } from "./guest-service";
 import { MockClientTransport } from "./transport/mock-client-transport";
-import { guestRoster } from "../../stores/guest";
-import { get } from "svelte/store";
+import { guestStore } from "../../stores/guest.svelte";
 
 describe("P2PGuestService (facade)", () => {
   let transport: MockClientTransport;
@@ -53,7 +52,7 @@ describe("P2PGuestService (facade)", () => {
     mockMapSession.setBroadcaster.mockClear();
     mockMapSession.handleRemoteTokenAdded.mockClear();
     mockMapSession.myPeerId = null;
-    guestRoster.set({});
+    guestStore.guestRoster = {};
     // URL.* stubs for assetCache path coverage
     vi.stubGlobal(
       "URL",
@@ -281,7 +280,7 @@ describe("P2PGuestService (facade)", () => {
     service.disconnect();
     service.disconnect();
     expect(service.connected).toBe(false);
-    expect(get(guestRoster)).toEqual({});
+    expect(guestStore.guestRoster).toEqual({});
     expect(mockMapSession.myPeerId).toBeNull();
   });
 });

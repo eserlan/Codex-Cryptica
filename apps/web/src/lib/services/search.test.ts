@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SearchService } from "./search";
+import { SearchService } from "./search.svelte";
 import { VAULT_EVENTS } from "@codex/vault-engine";
 
 function createCollection(records: any[]) {

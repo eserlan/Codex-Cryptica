@@ -36,7 +36,7 @@ const {
 vi.mock("./vault.svelte", () => ({ vault: mockVault }));
 vi.mock("./oracle.svelte", () => ({ oracle: mockOracle }));
 vi.mock("./debug.svelte", () => ({ debugStore: mockDebugStore }));
-vi.mock("./vault/events", () => ({ vaultEventBus: mockVaultEventBus }));
+vi.mock("./vault/events.svelte", () => ({ vaultEventBus: mockVaultEventBus }));
 vi.mock("../cloud-bridge/proposer-bridge", () => ({
   proposerBridge: { analyzeEntity: mockAnalyzeEntity },
 }));

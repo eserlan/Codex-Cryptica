@@ -2,7 +2,7 @@ import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { debugStore } from "./debug.svelte";
-import { vaultEventBus } from "./vault/events";
+import { vaultEventBus } from "./vault/events.svelte";
 import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";

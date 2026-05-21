@@ -61,4 +61,16 @@ describe("initGraph adaptive zoom", () => {
     // maxZoom is now constant 9.0
     expect(callArgs.maxZoom).toBe(9.0);
   });
+
+  it("should configure wheelSensitivity to 1.0 for smoother scrolling", async () => {
+    await initGraph({
+      container: document.createElement("div"),
+      elements: [],
+    });
+
+    const callArgs = (cytoscape as any).mock.calls[
+      (cytoscape as any).mock.calls.length - 1
+    ][0];
+    expect(callArgs.wheelSensitivity).toBe(1.0);
+  });
 });

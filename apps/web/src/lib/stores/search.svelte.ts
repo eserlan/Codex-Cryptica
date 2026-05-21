@@ -1,7 +1,7 @@
 import type { SearchResult } from "schema";
 import type { SearchIndexProgress } from "@codex/search-engine";
 import { isEntityVisible } from "schema";
-import { searchService as defaultSearchService } from "$lib/services/search";
+import { searchService as defaultSearchService } from "$lib/services/search.svelte";
 import { debugStore } from "./debug.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";

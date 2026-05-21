@@ -8,7 +8,7 @@ import {
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
 import { vault } from "../stores/vault.svelte";
 import { oracle } from "../stores/oracle.svelte";
-import { textGenerationService } from "./ai/text-generation.service";
+import { textGenerationService } from "./ai/text-generation.service.svelte";
 import { TIER_MODES } from "schema";
 import type { LocalEntity } from "../stores/vault/types";
 
@@ -29,24 +29,25 @@ export class NodeMergeService {
     for (const id of nodeIds) {
       const entity = vault.entities[id];
       if (entity) {
+        const snap = $state.snapshot(entity);
         // Construct frontmatter from entity properties
         const frontmatter: Record<string, any> = {
-          title: entity.title,
-          type: entity.type,
-          tags: entity.tags,
-          labels: entity.labels,
-          lore: entity.lore,
-          date: entity.date,
-          start_date: entity.start_date,
-          end_date: entity.end_date,
-          ...entity.metadata, // Merge generic metadata if any
+          title: snap.title,
+          type: snap.type,
+          tags: snap.tags,
+          labels: snap.labels,
+          lore: snap.lore,
+          date: snap.date,
+          start_date: snap.start_date,
+          end_date: snap.end_date,
+          ...snap.metadata, // Merge generic metadata if any
         };
 
         contents.push({
-          id: entity.id,
+          id: snap.id,
           frontmatter,
-          body: entity.content || "",
-          connections: entity.connections.map((c) => ({
+          body: snap.content || "",
+          connections: snap.connections.map((c) => ({
             source: id,
             target: c.target,
             label: c.label || "",
@@ -156,27 +157,29 @@ export class NodeMergeService {
     const targetEntity = vault.entities[targetId];
     if (!targetEntity) throw new Error(`Target entity ${targetId} not found`);
 
+    const snapTarget = $state.snapshot(targetEntity);
+
     // 1. Update Target Entity
     const updates: Partial<LocalEntity> = {
-      title: suggestedFrontmatter.title || targetEntity.title,
-      type: suggestedFrontmatter.type || targetEntity.type,
-      tags: suggestedFrontmatter.tags || targetEntity.tags,
-      labels: suggestedFrontmatter.labels || targetEntity.labels,
+      title: suggestedFrontmatter.title || snapTarget.title,
+      type: suggestedFrontmatter.type || snapTarget.type,
+      tags: suggestedFrontmatter.tags || snapTarget.tags,
+      labels: suggestedFrontmatter.labels || snapTarget.labels,
       lore: Object.hasOwn(suggestedFrontmatter, "lore")
         ? suggestedFrontmatter.lore
-        : targetEntity.lore,
+        : snapTarget.lore,
       date: suggestedFrontmatter.date,
       start_date: suggestedFrontmatter.start_date,
       end_date: suggestedFrontmatter.end_date,
       content: suggestedBody,
       metadata: {
-        ...targetEntity.metadata,
+        ...snapTarget.metadata,
       },
     };
 
     // Merge connections
     // Existing target connections
-    const existingConnections = targetEntity.connections || [];
+    const existingConnections = snapTarget.connections || [];
     // New connections from sources
     // Filter out connections that already exist on target
     const newConnections = outgoingConnections.filter(
@@ -224,6 +227,7 @@ export class NodeMergeService {
   async updateBacklinks(sourceIds: string[], targetId: string): Promise<void> {
     const targetEntity = vault.entities[targetId];
     if (!targetEntity) return;
+    const snapTarget = $state.snapshot(targetEntity);
 
     // Pre-calculate source titles to ensure they are available
     const sourceTitlesMap: Record<string, string> = {};
@@ -234,9 +238,10 @@ export class NodeMergeService {
     }
 
     const updates: Record<string, Partial<LocalEntity>> = {};
+    const snapEntities = $state.snapshot(vault.entities);
 
-    for (const id in vault.entities) {
-      const entity = vault.entities[id];
+    for (const id in snapEntities) {
+      const entity = snapEntities[id];
       if (sourceIds.includes(entity.id) || entity.id === targetId) continue;
 
       let contentModified = false;
@@ -247,7 +252,7 @@ export class NodeMergeService {
         const sourceTitle = sourceTitlesMap[sId];
         if (!sourceTitle) continue;
 
-        const targetTitle = targetEntity.title;
+        const targetTitle = snapTarget.title;
 
         if (sourceTitle && targetTitle) {
           const escapedTitle = sourceTitle.replace(

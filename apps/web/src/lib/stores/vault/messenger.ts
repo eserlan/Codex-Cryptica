@@ -1,4 +1,4 @@
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 
 export interface MessengerDependencies {
   activeVaultId: () => string | null;
@@ -33,7 +33,7 @@ export class VaultMessenger {
         }, "vault-update-broadcaster");
       } else {
         // Fallback for circular dependency during module init
-        void import("./events").then(({ vaultEventBus: bus }) => {
+        void import("./events.svelte").then(({ vaultEventBus: bus }) => {
           if (bus) {
             this.unsubscribe = bus.subscribe((event) => {
               if (

@@ -1,6 +1,6 @@
 import { vault as defaultVault } from "../../stores/vault.svelte";
 import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
-import { guestRoster as defaultGuestRoster } from "../../stores/guest";
+import { guestStore as defaultGuestStore } from "../../stores/guest.svelte";
 import { mapStore as defaultMapStore } from "../../stores/map.svelte";
 import { sessionModeStore as defaultSessionModeStore } from "../../stores/ui/session-mode.svelte";
 import { notificationStore as defaultNotificationStore } from "../../stores/ui/notification.svelte";
@@ -24,7 +24,7 @@ import {
 type HostDeps = {
   vault?: typeof defaultVault;
   themeStore?: typeof defaultThemeStore;
-  guestRoster?: typeof defaultGuestRoster;
+  guestStore?: typeof defaultGuestStore;
   mapStore?: typeof defaultMapStore;
   sessionModeStore?: typeof defaultSessionModeStore;
   notificationStore?: typeof defaultNotificationStore;
@@ -53,7 +53,7 @@ export class P2PHostService {
 
   private readonly vault: typeof defaultVault;
   private readonly themeStore: typeof defaultThemeStore;
-  private readonly guestRoster: typeof defaultGuestRoster;
+  private readonly guestStore: typeof defaultGuestStore;
   private readonly mapStore: typeof defaultMapStore;
   private readonly sessionModeStore: typeof defaultSessionModeStore;
   private readonly notificationStore: typeof defaultNotificationStore;
@@ -61,7 +61,7 @@ export class P2PHostService {
   constructor(deps: HostDeps = {}) {
     this.vault = deps.vault ?? defaultVault;
     this.themeStore = deps.themeStore ?? defaultThemeStore;
-    this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
+    this.guestStore = deps.guestStore ?? defaultGuestStore;
     this.mapStore = deps.mapStore ?? defaultMapStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
@@ -103,10 +103,8 @@ export class P2PHostService {
         this.connections = this.connections.filter((c) => c.peer !== peerId);
         // Restore cleanup on disconnect
         mapSession.clearGuestOwnership(peerId);
-        this.guestRoster.update((current: any) => {
-          const { [peerId]: _, ...rest } = current;
-          return rest;
-        });
+        const { [peerId]: _, ...rest } = this.guestStore.guestRoster;
+        this.guestStore.guestRoster = rest;
       }
     });
   }
@@ -119,7 +117,7 @@ export class P2PHostService {
       mapSession: mapSession,
       mapStore: this.mapStore,
       themeStore: this.themeStore,
-      guestRoster: this.guestRoster,
+      guestStore: this.guestStore,
       transport: this.transport,
     };
   }
@@ -162,7 +160,7 @@ export class P2PHostService {
     this.vault.onBatchUpdate = (updates) => this.broadcastBatchUpdate(updates);
     this.themeStore.onThemeUpdate = (themeId) =>
       this.broadcastThemeUpdate(themeId);
-    this.guestRoster.set({});
+    this.guestStore.guestRoster = {};
   }
 
   private startHeartbeat() {
@@ -273,7 +271,7 @@ export class P2PHostService {
     this.vault.onEntityDelete = undefined;
     this.vault.onBatchUpdate = undefined;
     this.themeStore.onThemeUpdate = undefined;
-    this.guestRoster.set({});
+    this.guestStore.guestRoster = {};
     mapSession.setBroadcaster(null);
     mapSession.myPeerId = null;
     this.transport.stop();

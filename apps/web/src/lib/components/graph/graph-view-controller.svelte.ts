@@ -53,9 +53,9 @@ export class GraphViewController {
     type: string;
   } | null>(null);
 
-  private _layoutReady = $state(false);
-  private initialLoaded = $state(false);
-  private didFinalizeLoad = $state(false);
+  _layoutReady = $state(false);
+  initialLoaded = $state(false);
+  didFinalizeLoad = $state(false);
 
   private nodeSelectTimer: number | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
@@ -471,7 +471,7 @@ export class GraphViewController {
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
-      this.applyCurrentLayout(false, true, "Load Finalized");
+      this.applyCurrentLayout(true, true, "Load Finalized");
     }
   };
 
