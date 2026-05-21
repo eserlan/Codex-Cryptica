@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Mock Svelte 5 effects for test environment before importing the store
+// Mock Svelte 5 effects and derived stubs for test environment before importing the store
 (globalThis as any).$effect = (v: any) => v;
 (globalThis as any).$effect.root = (v: any) => v();
+if (!(globalThis as any).$derived) {
+  (globalThis as any).$derived = (v: any) => v;
+}
+(globalThis as any).$derived.by = (fn: any) => fn();
 
 // Mock dependencies of quicknote.svelte.ts
 vi.mock("../services/ai/text-generation.service.svelte", () => ({
@@ -237,5 +241,48 @@ describe("QuickNoteStore (Svelte 5 Runes)", () => {
     });
     expect(vault.selectedEntityId).toBe("new-entity-id");
     expect(store.isOpen).toBe(false);
+  });
+
+  it("should open note by ID if already active in state", async () => {
+    const mockNote = {
+      id: 42,
+      vaultId: "vault-1",
+      content: "Active note",
+      status: "active",
+      createdAt: 100,
+    } as QuickNoteRecord;
+    store.activeNotes = [mockNote];
+
+    await store.openNoteById(42);
+
+    expect(store.currentNote).toStrictEqual(mockNote);
+    expect(store.isOpen).toBe(true);
+  });
+
+  it("should fetch and open note by ID if not in active state", async () => {
+    const mockNote = {
+      id: 99,
+      vaultId: "vault-1",
+      content: "Remote note",
+      status: "active",
+      createdAt: 100,
+    } as QuickNoteRecord;
+    mockService.getNoteById = vi.fn().mockResolvedValue(mockNote);
+    store.activeNotes = [];
+
+    await store.openNoteById(99);
+
+    expect(mockService.getNoteById).toHaveBeenCalledWith(99);
+    expect(store.currentNote).toStrictEqual(mockNote);
+    expect(store.isOpen).toBe(true);
+  });
+
+  it("should unsubscribe and clean up on destroy", () => {
+    const unsubscribeMock = vi.fn();
+    (store as any).unsubscribeEventBus = unsubscribeMock;
+
+    store.destroy();
+
+    expect(unsubscribeMock).toHaveBeenCalled();
   });
 });

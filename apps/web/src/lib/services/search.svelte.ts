@@ -478,15 +478,19 @@ export class SearchService {
           id: `quicknote-${note.id}`,
           title,
           path: `quicknote-${note.id}`,
-          type: "quicknote" as any,
-          snippet:
+          type: "quicknote",
+          excerpt:
             note.content.substring(0, 100) +
             (note.content.length > 100 ? "..." : ""),
           score: 1.0,
-          matchType: "text" as any,
+          matchType: "content",
         };
       });
       decodedResults = [...quickNoteResults, ...decodedResults];
+    }
+
+    if (options.limit && decodedResults.length > options.limit) {
+      decodedResults = decodedResults.slice(0, options.limit);
     }
 
     return decodedResults;

@@ -5,8 +5,8 @@ Interface for managing fleeting ideas and their lifecycle.
 ## API
 
 ```typescript
-export interface QuickNote {
-  id?: string;
+export interface QuickNoteRecord {
+  id?: number;
   vaultId: string;
   content: string;
   status: "active" | "elevated" | "archived";
@@ -15,24 +15,38 @@ export interface QuickNote {
 
 export class QuickNoteService {
   /**
-   * Saves a new note or updates an existing one.
+   * Retrieves all active, un-elevated quick notes for a specific vault.
+   * Sorts from newest to oldest by creation date.
    */
-  save(note: Partial<QuickNote>): Promise<string>;
+  getAllActiveNotes(vaultId: string): Promise<QuickNoteRecord[]>;
 
   /**
-   * Retrieves all active notes for the current vault.
+   * Retrieves a single quick note by its ID.
    */
-  getActiveNotes(vaultId: string): Promise<QuickNote[]>;
+  getNoteById(id: number): Promise<QuickNoteRecord | undefined>;
 
   /**
-   * Elevates a note using the Oracle engine.
-   * Marks note as 'elevated' upon success.
+   * Persists a quick note to IndexedDB.
+   * Handles both inserting new notes and updating existing ones.
    */
-  elevate(id: string): Promise<void>;
+  saveNote(
+    note: Omit<QuickNoteRecord, "id"> & { id?: number },
+  ): Promise<number>;
 
   /**
-   * Archives a note (hides from scratchpad/graph).
+   * Permanently deletes a quick note from the IndexedDB store.
    */
-  archive(id: string): Promise<void>;
+  deleteNote(id: number): Promise<void>;
+
+  /**
+   * Archives a quick note (marking it archived), removing it from active lists.
+   */
+  archiveNote(id: number): Promise<void>;
+
+  /**
+   * Elevates a quick note (marks it elevated), signifying it has been converted
+   * into a proper wiki entity in the vault.
+   */
+  elevateNote(id: number): Promise<void>;
 }
 ```

@@ -185,8 +185,6 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 109-quicknote-scratchpad: Added TypeScript 6.0.3, Svelte 5 Runes + Svelte 5, Dexie (IndexedDB), Cytoscape.js
-- 109-quicknote-scratchpad: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 109-quicknote-scratchpad: Added TypeScript 6.0.3, Svelte 5 Runes + Svelte 5, Dexie (IndexedDB), Cytoscape.js
+- 109-quicknote-scratchpad: Added Svelte 5, Svelte 5 Runes, Dexie (IndexedDB), and Cytoscape.js integration.
 
 <!-- MANUAL ADDITIONS START -->

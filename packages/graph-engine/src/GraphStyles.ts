@@ -32,7 +32,7 @@ export const getGraphStyles = (
       },
     },
     {
-      selector: "node.quicknote",
+      selector: "node[type = 'quicknote']",
       style: {
         "border-style": "dotted",
         "border-color": "#f59e0b",
@@ -43,6 +43,8 @@ export const getGraphStyles = (
         "underlay-padding": 8,
         "underlay-opacity": 0.15,
         "underlay-shape": "ellipse",
+        opacity: 0.9,
+        "text-opacity": 0.9,
       },
     },
     {

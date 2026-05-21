@@ -129,14 +129,7 @@ export class GraphViewController {
             const noteIdStr = id.split("-")[1];
             const noteId = parseInt(noteIdStr, 10);
             if (!isNaN(noteId)) {
-              const note = quickNoteStore.activeNotes.find(
-                (n) => n.id === noteId,
-              );
-              if (note) {
-                quickNoteStore.open(note);
-              } else {
-                quickNoteStore.open();
-              }
+              await quickNoteStore.openNoteById(noteId);
             }
             node.unselect();
             return;

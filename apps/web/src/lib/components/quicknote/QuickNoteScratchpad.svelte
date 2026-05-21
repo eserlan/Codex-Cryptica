@@ -8,18 +8,39 @@
   let debounceTimeout: any;
   let saveStatus = $state("Saved");
 
+  let activeNoteId: number | undefined = undefined;
+  let lastLoadedContent = "";
+
   $effect(() => {
     const current = quickNoteStore.currentNote;
-    const content = current?.content;
-
-    if (current && content !== undefined) {
-      saveStatus = "Typing...";
-      if (debounceTimeout) clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(async () => {
-        saveStatus = "Saving...";
-        await quickNoteStore.saveCurrentNote();
+    if (current) {
+      if (current.id !== activeNoteId) {
+        activeNoteId = current.id;
+        lastLoadedContent = current.content;
         saveStatus = "Saved";
-      }, 600);
+        return;
+      }
+
+      if (current.content !== lastLoadedContent) {
+        if (!current.id && !current.content.trim()) {
+          return;
+        }
+
+        saveStatus = "Typing...";
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+          saveStatus = "Saving...";
+          await quickNoteStore.saveCurrentNote();
+          lastLoadedContent = current.content;
+          if (quickNoteStore.currentNote) {
+            activeNoteId = quickNoteStore.currentNote.id;
+          }
+          saveStatus = "Saved";
+        }, 600);
+      }
+    } else {
+      activeNoteId = undefined;
+      lastLoadedContent = "";
     }
 
     return () => {

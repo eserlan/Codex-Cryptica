@@ -26,6 +26,7 @@ export class QuickNoteStore {
   // Dependencies
   private service: QuickNoteService;
   private vaultRegistry: typeof defaultVaultRegistry;
+  private unsubscribeEventBus: (() => void) | null = null;
 
   constructor(
     service: QuickNoteService = quickNoteService,
@@ -47,12 +48,12 @@ export class QuickNoteStore {
     });
 
     // Subscribe to vaultEventBus to detect when draft entities are approved/made active
-    vaultEventBus.subscribe(async (event) => {
+    this.unsubscribeEventBus = vaultEventBus.subscribe(async (event) => {
       if (event.type === "ENTITY_UPDATED") {
         const { entity, patch } = event;
         if (
           patch.status === "active" &&
-          entity.status === "draft" &&
+          entity.status === "active" &&
           entity.discoverySource?.startsWith("quicknote:")
         ) {
           const noteIdStr = entity.discoverySource.split(":")[1];
@@ -62,7 +63,16 @@ export class QuickNoteStore {
           }
         }
       }
-    });
+    }, "quicknote-store-approval");
+  }
+
+  /**
+   * Cleans up subscriptions to prevent memory leaks in tests/sessions.
+   */
+  destroy(): void {
+    if (this.unsubscribeEventBus) {
+      this.unsubscribeEventBus();
+    }
   }
 
   /**
@@ -102,6 +112,25 @@ export class QuickNoteStore {
       this.selectNote(this.activeNotes[0]);
     } else if (!this.currentNote) {
       this.startNewNote();
+    }
+  }
+
+  /**
+   * Finds a note by its ID (loaded or from DB) and opens the scratchpad focusing on it.
+   */
+  async openNoteById(noteId: number): Promise<void> {
+    let note = this.activeNotes.find((n) => n.id === noteId);
+    if (!note) {
+      try {
+        note = await this.service.getNoteById(noteId);
+      } catch (e) {
+        console.error(`[QuickNoteStore] Failed to fetch note ${noteId}:`, e);
+      }
+    }
+    if (note) {
+      this.open(note);
+    } else {
+      this.open();
     }
   }
 

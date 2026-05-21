@@ -35,10 +35,6 @@ Below is the layout of the floating, resizable `QuickNoteScratchpad.svelte` comp
 +-------------------------------------------------------------+
 ```
 
-+-------------------------------------------------------------+
-
-````
-
 ### Main App Shell & Visual Indicators
 
 To keep quicknotes highly visible and easy to access without cluttering the canvas, we integrate three complementary UI indicator components:
@@ -89,7 +85,7 @@ To keep quicknotes highly visible and easy to access without cluttering the canv
 |     |                                                  +---------+  |
 |     |                                                   \ Pulse /   |
 +-----+---------------------------------------------------------------+
-````
+```
 
 ### Visual Styling Implementation (Tailwind 4 & CSS)
 
