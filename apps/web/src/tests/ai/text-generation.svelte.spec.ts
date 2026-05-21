@@ -11,7 +11,6 @@ import { DefaultTextGenerationService } from "../../lib/services/ai/text-generat
 describe("TextGenerationService", () => {
   let mockModel: any;
   let mockClientManager: any;
-  let mockContextRetrieval: any;
   let service: DefaultTextGenerationService;
 
   beforeEach(() => {
@@ -27,14 +26,7 @@ describe("TextGenerationService", () => {
       getModel: vi.fn().mockReturnValue(mockModel),
     };
 
-    mockContextRetrieval = {
-      getConsolidatedContext: vi.fn().mockReturnValue("mock context"),
-    };
-
-    service = new DefaultTextGenerationService(
-      mockClientManager,
-      mockContextRetrieval,
-    );
+    service = new DefaultTextGenerationService(mockClientManager);
   });
 
   describe("Query Expansion", () => {

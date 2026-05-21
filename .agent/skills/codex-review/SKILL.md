@@ -9,7 +9,7 @@ This skill provides a meticulous code review process tailored specifically for t
 
 ## Review Workflow
 
-1. **Examine Reactivity**: Verify Svelte 5 Runes usage. Ensure props aren't used to initialize `$state` directly, that `$derived` is used for synchronized data, and that any module calling runes uses the `.svelte.ts` extension instead of plain `.ts`.
+1. **Examine Reactivity & Worker Safety**: Verify Svelte 5 Runes usage. Ensure props aren't used to initialize `$state` directly, that `$derived` is used for synchronized data, and that any module calling runes uses the `.svelte.ts` extension instead of plain `.ts`. **CRITICAL**: Never reference Svelte compiler keywords (like `$state` or `$state.snapshot`) in files bundled into Web Workers (e.g. `oracle.worker.ts`). Svelte runes are not compiled or supported in worker threads and will cause fatal runtime ReferenceErrors. Always run `node scripts/check-compiled-runes.js` after building to verify compiled assets.
 2. **Check for Race Conditions**: Audit all async event handlers in `.svelte` files (e.g., `handleCommit`, `handleSave`). Ensure `isCommitting` guards are present.
 3. **Verify AI Grounding**: In `oracle-parser.ts`, ensure regex patterns for deterministic commands use `\s*$` to prevent matching when additional user descriptions are provided.
 4. **Audit Worker Proxies**: If a new AI method is added to `TextGenerationService`, verify it is correctly exposed in `oracle.worker.ts` and bound in `OracleStore`.

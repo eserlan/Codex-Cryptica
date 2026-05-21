@@ -19,6 +19,9 @@ Use the briefing field to edit the world blurb directly. If it is empty, the Gen
 ### Load and Save Folders
 Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
 
+### Search Indexing
+Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.
+
 ### Save to Folder
 The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.
 

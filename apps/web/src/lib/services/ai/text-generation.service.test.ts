@@ -46,7 +46,6 @@ vi.mock("./prompts/entity-reconciliation", () => ({
 describe("DefaultTextGenerationService", () => {
   let service: DefaultTextGenerationService;
   let mockAiClientManager: any;
-  let mockContextRetrievalService: any;
   let mockModel: any;
 
   beforeEach(() => {
@@ -73,14 +72,7 @@ describe("DefaultTextGenerationService", () => {
       getModel: vi.fn().mockReturnValue(mockModel),
     };
 
-    mockContextRetrievalService = {
-      getConsolidatedContext: vi.fn().mockReturnValue("consolidated"),
-    };
-
-    service = new DefaultTextGenerationService(
-      mockAiClientManager,
-      mockContextRetrievalService as any,
-    );
+    service = new DefaultTextGenerationService(mockAiClientManager);
   });
 
   describe("expandQuery", () => {

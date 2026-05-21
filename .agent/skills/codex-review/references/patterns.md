@@ -31,6 +31,11 @@ This reference documents specific anti-patterns and quality standards for the Co
 - **Issue**: Calling Svelte 5 runes (such as `$effect`, `$state`, `$derived`, etc.) inside a plain `.ts` module (e.g., `events.ts`). Svelte 5 runes are only compiled in `.svelte` or `.svelte.ts` modules. Plain `.ts` files do not undergo the runic compiler transformation, leading to runtime failures where the compiler complains that `$effect` (or other runes) is not defined (even if Vitest stubs it or masks it in test runs).
 - **Pattern**: Always use the `.svelte.ts` extension for any helper library, store, or service that uses Svelte 5 runes, or structure the API to return clean callback functions (like an `unsubscribe` function) so the component caller can wrap the subscription in its own `$effect`.
 
+### Svelte 5 Runes in Web Worker Bundles
+
+- **Issue**: Importing files containing Svelte 5 runes (such as `$state`, `$derived`, `$effect`, or `$state.snapshot`) into a Web Worker (e.g., `oracle.worker.ts`). Since the Web Worker environment runs in a separate thread without Svelte's runtime globally registered or compiled, these runes trigger fatal runtime crashes: `ReferenceError: $state is not defined`.
+- **Pattern**: Never reference Svelte runes or compiler instructions inside Web Worker scripts or files transitively imported by them. Use a fully environment-agnostic, standard JS deep clone mechanism (such as standard browser `structuredClone` with fallback) on the main thread before passing parameters to Web Worker boundaries, and verify the output using the static analyzer script `node scripts/check-compiled-runes.js` integrated into the build process.
+
 ## Oracle & AI Logic
 
 ### Aggressive Regex Parsing
