@@ -20,6 +20,19 @@ import {
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled } from "./capability-guard";
 
+function safeSnapshot<T>(obj: T): T {
+  if (!obj) return obj;
+  try {
+    return structuredClone(obj);
+  } catch {
+    try {
+      return JSON.parse(JSON.stringify(obj));
+    } catch {
+      return obj;
+    }
+  }
+}
+
 export class DefaultTextGenerationService implements TextGenerationService {
   constructor(
     private aiClientManager = defaultAiClientManager,
@@ -31,7 +44,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     query: string,
     history: any[],
   ): Promise<string> {
-    const cleanHistory = history ? $state.snapshot(history) : history;
+    const cleanHistory = history ? safeSnapshot(history) : history;
     if (!isAIEnabled()) return query;
     try {
       const basicModel = await this.aiClientManager.getModel(
@@ -92,8 +105,8 @@ export class DefaultTextGenerationService implements TextGenerationService {
     sources: any[],
     options?: { isGuest?: boolean },
   ): Promise<{ body: string; lore?: string }> {
-    const cleanTarget = target ? $state.snapshot(target) : target;
-    const cleanSources = sources ? $state.snapshot(sources) : sources;
+    const cleanTarget = target ? safeSnapshot(target) : target;
+    const cleanSources = sources ? safeSnapshot(sources) : sources;
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
@@ -138,14 +151,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
     lore: string;
     categoryId?: string;
   }> {
-    const cleanEntity = entity ? $state.snapshot(entity) : entity;
-    const cleanIncoming = incoming ? $state.snapshot(incoming) : incoming;
+    const cleanEntity = entity ? safeSnapshot(entity) : entity;
+    const cleanIncoming = incoming ? safeSnapshot(incoming) : incoming;
     const cleanRelatedEntities = relatedEntities
-      ? $state.snapshot(relatedEntities)
+      ? safeSnapshot(relatedEntities)
       : relatedEntities;
-    const cleanCategories = categories
-      ? $state.snapshot(categories)
-      : categories;
+    const cleanCategories = categories ? safeSnapshot(categories) : categories;
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
@@ -216,9 +227,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
     userQuery: string,
     options?: { isGuest?: boolean },
   ): Promise<string> {
-    const cleanSubject = subject ? $state.snapshot(subject) : subject;
+    const cleanSubject = subject ? safeSnapshot(subject) : subject;
     const cleanConnectedEntities = connectedEntities
-      ? $state.snapshot(connectedEntities)
+      ? safeSnapshot(connectedEntities)
       : connectedEntities;
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
@@ -342,7 +353,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       existingEntities?: any[];
     },
   ): Promise<void> {
-    const cleanHistory = history ? $state.snapshot(history) : history;
+    const cleanHistory = history ? safeSnapshot(history) : history;
 
     const systemInstruction = buildSystemInstruction(demoMode, categories);
     const model = await this.aiClientManager.getModel(
