@@ -16,7 +16,10 @@ function walkDir(dir, callback) {
 }
 
 const runes = ["\\$state", "\\$derived", "\\$effect", "\\$props", "\\$inspect"];
-const runesRegex = new RegExp(`\\b(${runes.join("|")})\\b`, "g");
+const runesRegex = new RegExp(
+  `(?<![\\w$])(${runes.join("|")})(?![\\w$])`,
+  "g",
+);
 
 let foundErrors = false;
 
