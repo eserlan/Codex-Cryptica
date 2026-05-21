@@ -132,7 +132,7 @@ export class SearchService {
           switch (event.type) {
             case VAULT_EVENTS.VAULT_OPENING:
               if (this.activeVaultId !== vaultId) {
-                await this.cancelIndexing("Vault switched.");
+                await this.cancelIndexing("Vault switched.", false);
                 this.activeVaultId = vaultId!;
                 this.isDirty = false;
                 await this.clear();
@@ -146,7 +146,10 @@ export class SearchService {
                 this.debug.log(
                   `[SearchService] Cold boot: Rebuilding index for ${vaultId}`,
                 );
-                await this.rebuildFromEntities(vaultId!, entities, "metadata");
+                await this.rebuildFromEntities(vaultId!, entities, "metadata", {
+                  markReady: false,
+                  saveOnReady: false,
+                });
                 this.needsFullContentSweep = true;
                 this.debug.log(`[SearchService] Metadata indexing complete.`);
               } else {
@@ -178,7 +181,7 @@ export class SearchService {
             case VAULT_EVENTS.VAULT_SWITCHED:
               // Fallback: sync activeVaultId if VAULT_OPENING was missed
               if (this.activeVaultId !== event.payload.id) {
-                await this.cancelIndexing("Vault switched.");
+                await this.cancelIndexing("Vault switched.", false);
                 this.activeVaultId = event.payload.id;
                 this.isDirty = false;
                 await this.clear();
@@ -237,6 +240,17 @@ export class SearchService {
         typeof contentQuery.count === "function"
           ? await contentQuery.count()
           : null;
+
+      // Reset progress counters for the content sweep stage to avoid flickering
+      // with metadata counts and ensure totalCount matches the sweep scope.
+      this.emitProgress({
+        ...this.progress,
+        status: "partial",
+        indexedCount: 0,
+        totalCount,
+        message: "Search is indexing note content.",
+      });
+
       const metadatas = await this.db.graphEntities
         .where("vaultId")
         .equals(vaultId)
@@ -280,17 +294,6 @@ export class SearchService {
         if (currentBatch.length > 0) {
           await this.indexBatch(currentBatch, { runId, vaultId, totalCount });
           indexedCount += currentBatch.length;
-          this.emitProgress({
-            status: "partial",
-            vaultId,
-            runId,
-            indexedCount,
-            totalCount,
-            isPartial: true,
-            canRetry: false,
-            message: `Search is still indexing (${indexedCount}/${totalCount}).`,
-            error: null,
-          });
         }
 
         if (records.length < BATCH_SIZE) break;
@@ -636,7 +639,10 @@ export class SearchService {
     }
   }
 
-  async cancelIndexing(reason = "Indexing cancelled."): Promise<void> {
+  async cancelIndexing(
+    reason = "Indexing cancelled.",
+    canRetry = true,
+  ): Promise<void> {
     if (!this.activeRunId) return;
     this.emitProgress({
       status: "cancelled",
@@ -645,7 +651,7 @@ export class SearchService {
       indexedCount: this.progress.indexedCount,
       totalCount: this.progress.totalCount,
       isPartial: false,
-      canRetry: true,
+      canRetry,
       message: reason,
       error: null,
     });

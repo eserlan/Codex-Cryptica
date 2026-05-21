@@ -30,6 +30,7 @@ export class SearchStore {
   private sessionModeStore: typeof sessionModeStore;
   private searchService: typeof defaultSearchService;
   private unsubscribeIndexProgress: (() => void) | null = null;
+  private onVaultSwitched = () => this.reset();
 
   constructor(
     vault: typeof defaultVault = defaultVault,
@@ -48,7 +49,7 @@ export class SearchStore {
       );
     }
     if (typeof window !== "undefined") {
-      window.addEventListener("vault-switched", () => this.reset());
+      window.addEventListener("vault-switched", this.onVaultSwitched);
     }
   }
 
@@ -99,9 +100,17 @@ export class SearchStore {
     this.isLoading = false;
     this.isOpen = false;
     this.recents = this.loadRecents();
-    this.indexProgress = this.searchService.getIndexProgress
-      ? this.searchService.getIndexProgress()
-      : this.indexProgress;
+    this.indexProgress = {
+      status: "idle",
+      vaultId: this.vault.activeVaultId,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
+    };
   }
 
   open() {
@@ -187,6 +196,9 @@ export class SearchStore {
   destroy() {
     this.unsubscribeIndexProgress?.();
     this.unsubscribeIndexProgress = null;
+    if (typeof window !== "undefined") {
+      window.removeEventListener("vault-switched", this.onVaultSwitched);
+    }
   }
 
   setSelectedIndex(index: number) {

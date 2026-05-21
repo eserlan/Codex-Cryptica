@@ -178,7 +178,7 @@ export class SearchEngine {
       failedIds: [],
     };
 
-    this.taskQueue = this.taskQueue.then(async () => {
+    const task = this.taskQueue.then(async () => {
       if (!this.index) {
         this.log(
           "warn",
@@ -214,7 +214,8 @@ export class SearchEngine {
         failedIds: errors,
       };
     });
-    await this.taskQueue;
+    this.taskQueue = task;
+    await task;
     return result;
   }
 

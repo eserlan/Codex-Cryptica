@@ -138,8 +138,8 @@ describe("SearchService progressive indexing", () => {
     );
 
     expect(api.addBatchProgressive).toHaveBeenCalled();
-    expect(db.searchIndex.put).toHaveBeenCalled();
-    expect(service.getIndexProgress().status).toBe("ready");
+    expect(db.searchIndex.put).not.toHaveBeenCalled();
+    expect(service.getIndexProgress().status).toBe("partial");
   });
 
   it("reports partial progress while indexing cold metadata chunks", async () => {
@@ -169,7 +169,7 @@ describe("SearchService progressive indexing", () => {
       }),
     );
     expect(service.getIndexProgress()).toEqual(
-      expect.objectContaining({ status: "ready", indexedCount: 125 }),
+      expect.objectContaining({ status: "partial", indexedCount: 125 }),
     );
   });
 
