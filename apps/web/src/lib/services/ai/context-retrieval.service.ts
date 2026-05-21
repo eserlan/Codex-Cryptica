@@ -175,7 +175,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     // Enforce Fog of War for guests in search results
     if (vault.isGuest) {
-      results = results.filter((res) => {
+      results = results.filter((res: any) => {
         const entity = vault.entities[res.id];
         return (
           entity &&
@@ -219,7 +219,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
         // Enforce Fog of War for guests in keyword results
         if (vault.isGuest) {
-          results = results.filter((res) => {
+          results = results.filter((res: any) => {
             const entity = vault.entities[res.id];
             return (
               entity &&
