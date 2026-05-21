@@ -29,7 +29,7 @@
 ## Phase 3: Host Service Refactoring
 
 - [x] **T006** **[US1]** Refactor `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` to receive `PeerJSConnectionManager` via constructor dependency injection.
-- [x] **X007** **[US1]** Expose the connection manager's reactive state structure from `P2PHostService`.
+- [x] **T007** **[US1]** Expose the connection manager's reactive state structure from `P2PHostService`.
 
 ---
 

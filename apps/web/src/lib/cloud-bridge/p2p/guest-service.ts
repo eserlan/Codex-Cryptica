@@ -45,7 +45,9 @@ class ConnectionManagerClientTransportAdapter implements P2PClientTransport {
     });
 
     this.unsubscribeStatus = this.manager.onStatusChange((status) => {
-      if (status === "disconnected") {
+      if (status === "connected") {
+        this.emit("open");
+      } else if (status === "disconnected") {
         this.emit("close");
       } else if (status === "failed") {
         this.emit("error", new Error("P2P Connection failed permanently"));

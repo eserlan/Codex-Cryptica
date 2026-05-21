@@ -6,7 +6,7 @@ This analysis evaluates the integration of low-latency, peer-to-peer (P2P) voice
 
 ## 🏛️ Architectural Context
 
-Codex Cryptica already has a robust WebRTC coordination layer managed via **PeerJS** (Spec 098/100) for real-time map, token, and campaign syncing. Integrating real-time Audio/Video (AV) leverage these existing direct socket connections, appending real-time media streams over the same signaling handshakes.
+Codex Cryptica already has a robust WebRTC coordination layer managed via **PeerJS** (Spec 098/100) for real-time map, token, and campaign syncing. Integrating real-time Audio/Video (AV) leverages these existing direct socket connections, appending real-time media streams over the same signaling handshakes.
 
 ```mermaid
 flowchart TD
@@ -103,4 +103,4 @@ To ensure this feature does not compromise the stability of primary encounter st
 2. **Aggressive Low-Bandwidth Fallbacks**:
    - Auto-degrade outbound resolution (e.g., dynamically drop from $30\text{fps} \to 15\text{fps}$ under packet loss).
    - Support an **Audio-Only Mode** to preserve upstream bandwidth for slower networks.
-3. **Hardware Echo Cancellation**: Explicitly configuration of native `echoCancellation` and `noiseSuppression` streams to prevent room loop feedback without requiring external headset setups.
+3. **Hardware Echo Cancellation**: Explicitly configure native `echoCancellation` and `noiseSuppression` streams to prevent room loop feedback without requiring external headset setups.
