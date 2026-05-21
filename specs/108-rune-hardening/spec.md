@@ -1,6 +1,6 @@
 # Feature Specification: Svelte 5 Rune Hardening & Performance
 
-**Feature Branch**: `785-rune-hardening`  
+**Feature Branch**: `108-rune-hardening`  
 **Created**: 2026-05-21  
 **Status**: Draft  
 **Input**: User description: "108 in roadmap"

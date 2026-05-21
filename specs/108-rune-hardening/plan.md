@@ -1,6 +1,6 @@
 # Implementation Plan: Svelte 5 Rune Hardening & Performance
 
-**Branch**: `785-rune-hardening` | **Date**: 2026-05-21 | **Spec**: [spec.md](./spec.md)
+**Branch**: `108-rune-hardening` | **Date**: 2026-05-21 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/108-rune-hardening/spec.md`
 
 ## Summary

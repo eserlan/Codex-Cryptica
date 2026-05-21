@@ -8,6 +8,7 @@
 
 - [ ] T001 Initialize hardening branch and verify test baseline with `pnpm test`
 - [ ] T002 Identify all `svelte/store` imports in `apps/web/src` for progress tracking
+- [ ] T002b Delete dead code file [graph-store.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/store/graph-store.ts)
 
 ## Phase 2: Foundational
 
@@ -47,6 +48,9 @@
 - [ ] T015 [P] [US3] Replace `onDestroy` with native `$effect` cleanup in `apps/web/src/lib/components/graph/Minimap.svelte`
 - [ ] T016 [P] [US3] Fix identified leak in `apps/web/src/lib/stores/search.svelte.ts` (vault-switched listener) using Runic lifecycle
 - [ ] T017 [US3] Verify guest roster cleanup in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` using Runic signals
+- [ ] T017b [P] [US3] Refactor components using `$guestRoster` ([GraphToolbar.svelte](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/GraphToolbar.svelte), etc.) to use signal property access
+- [ ] T017c [P] [US3] Refactor P2P handlers ([vault-handler.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/cloud-bridge/p2p/handlers/vault-handler.ts), etc.) and contexts to consume Rune-based `guestRoster`
+- [ ] T017d [P] [US3] Refactor and clean up related P2P tests (`guest-service.test.ts`, `p2p.test.ts`, etc.) to conform to Rune-based roster
 
 ## Phase 6: Polish & Cross-cutting
 
