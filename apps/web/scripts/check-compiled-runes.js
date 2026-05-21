@@ -16,10 +16,7 @@ function walkDir(dir, callback) {
 }
 
 const runes = ["\\$state", "\\$derived", "\\$effect", "\\$props", "\\$inspect"];
-const runesRegex = new RegExp(
-  `(?<![\\w$])(${runes.join("|")})(?![\\w$])`,
-  "g",
-);
+const runesRegex = new RegExp(`(?<![\\w$])(${runes.join("|")})(?![\\w$])`, "g");
 
 let foundErrors = false;
 
@@ -32,6 +29,11 @@ if (!fs.existsSync(BUILD_DIR)) {
 
 walkDir(BUILD_DIR, (filePath) => {
   if (path.extname(filePath) !== ".js") return;
+  // Svelte's own library/runtime code (which runs on the client/main thread) contains
+  // literal strings and symbols like Symbol("$state") and Ia=["$state",...].
+  // We only scan worker scripts because workers do not load the Svelte runtime
+  // and will throw runtime ReferenceErrors if Svelte runes bleed into them.
+  if (!filePath.includes("/workers/")) return;
 
   const content = fs.readFileSync(filePath, "utf8");
   let match;

@@ -17,7 +17,6 @@ import {
   buildCreationLoreSynthesisPrompt,
   buildStructuredDraftingPrompt,
 } from "./prompts/entity-creation";
-import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled } from "./capability-guard";
 
 function safeSnapshot<T>(obj: T): T {
@@ -34,10 +33,18 @@ function safeSnapshot<T>(obj: T): T {
 }
 
 export class DefaultTextGenerationService implements TextGenerationService {
-  constructor(
-    private aiClientManager = defaultAiClientManager,
-    private contextRetrievalService = defaultContextRetrievalService,
-  ) {}
+  constructor(private aiClientManager = defaultAiClientManager) {}
+
+  private getConsolidatedContext(
+    entity: any,
+    options?: { isGuest?: boolean },
+  ): string {
+    const parts = [];
+    if (!options?.isGuest && entity.lore?.trim())
+      parts.push(entity.lore.trim());
+    if (entity.content?.trim()) parts.push(entity.content.trim());
+    return parts.join("\n\n");
+  }
 
   async expandQuery(
     apiKey: string,
@@ -110,11 +117,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
-    const targetContext = `--- TARGET: ${cleanTarget.title} (${cleanTarget.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(cleanTarget, { isGuest: options?.isGuest })}`;
+    const targetContext = `--- TARGET: ${cleanTarget.title} (${cleanTarget.type}) ---\n${this.getConsolidatedContext(cleanTarget, { isGuest: options?.isGuest })}`;
     const sourceContext = cleanSources
       .map(
         (s, i) =>
-          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(s, { isGuest: options?.isGuest })}`,
+          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.getConsolidatedContext(s, { isGuest: options?.isGuest })}`,
       )
       .join("\n\n");
 
@@ -238,7 +245,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const MAX_CONNECTED_ENTITIES = 20;
     const MAX_CONNECTION_CONTEXT_CHARS = 500;
 
-    const subjectContextStr = `--- SUBJECT: ${cleanSubject.title} (${cleanSubject.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(cleanSubject, { isGuest: options?.isGuest }).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
+    const subjectContextStr = `--- SUBJECT: ${cleanSubject.title} (${cleanSubject.type}) ---\n${this.getConsolidatedContext(cleanSubject, { isGuest: options?.isGuest }).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
 
     const limitedConnections = cleanConnectedEntities.slice(
       0,
@@ -253,7 +260,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
             .map(({ entity, connectionType, label, direction }) => {
               const dirStr = direction === "outbound" ? "→" : "←";
               const relStr = label || connectionType;
-              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(entity, { isGuest: options?.isGuest }).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
+              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${this.getConsolidatedContext(entity, { isGuest: options?.isGuest }).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
             })
             .join("\n\n")
         : "No connected entities found.";
