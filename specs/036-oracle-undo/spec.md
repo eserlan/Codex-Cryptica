@@ -2,7 +2,7 @@
 
 **Feature Branch**: `036-oracle-undo`  
 **Created**: 2026-02-03  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "revert (ctrl+z) in the oracle" (Issue #80)
 
 ## User Scenarios & Testing

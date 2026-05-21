@@ -2,7 +2,7 @@
 
 **Feature Branch**: `011-oracle-image-gen`  
 **Created**: 2026-01-28  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "image generation in oracle chat"
 
 ## User Scenarios & Testing _(mandatory)_

@@ -5,6 +5,7 @@
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
   import DriveStatus from "./DriveStatus.svelte";
+  import P2PStatus from "./P2PStatus.svelte";
   import { openFrontPage } from "./app-header-actions";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -125,6 +126,7 @@
     <!-- Desktop: Right Controls -->
     <div class="hidden md:flex items-center gap-4 shrink-0">
       <DriveStatus />
+      <P2PStatus />
       <VaultControls />
       <button
         class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings

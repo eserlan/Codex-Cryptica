@@ -2,7 +2,7 @@
 
 **Feature Branch**: `096-gdrive-cloud-sync`
 **Created**: 2026-04-28
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "Restore Google Drive integration so vaults can be saved to and loaded from the user's own Google Drive, mirroring the existing local folder save/load model."
 
 ## Clarifications

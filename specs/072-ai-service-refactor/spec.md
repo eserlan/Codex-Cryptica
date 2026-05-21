@@ -2,7 +2,7 @@
 
 **Feature Branch**: `072-ai-service-refactor`  
 **Created**: 2026-03-13  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Reassess and generate spec.md for the 072-ai-service-refactor feature based on the analysis in docs/refactoring/AI_SERVICE_REFACTOR.md."
 
 ## User Scenarios & Testing _(mandatory)_

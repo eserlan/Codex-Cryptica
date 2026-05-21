@@ -2,7 +2,7 @@
 
 **Feature Branch**: `018-perf-improvements`  
 **Created**: 2026-01-30  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Performance bottlenecks identified in code review affecting large vaults and battery-powered devices, specifically in GraphView, Minimap, and Oracle sync."
 
 ## User Scenarios & Testing

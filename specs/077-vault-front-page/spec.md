@@ -2,7 +2,7 @@
 
 **Feature Branch**: `077-vault-front-page`  
 **Created**: 2026-04-02  
-**Status**: Implemented  
+**Status**: Implemented
 **Input**: User description: "campaign/world/vault front page https://github.com/eserlan/Codex-Cryptica/issues/533"
 
 ## User Scenarios & Testing _(mandatory)_

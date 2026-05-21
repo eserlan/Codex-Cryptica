@@ -1,5 +1,8 @@
 # Spec 038: Staging Environment
 
+**Status**: Archived
+**Archive Reason**: One-time infrastructure setup; staging environment is operational
+
 ## Status
 
 - **Status**: Implemented (Retroactive)

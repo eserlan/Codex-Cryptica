@@ -2,7 +2,7 @@
 
 **Feature Branch**: `061-spatial-canvas`  
 **Created**: 2026-02-26  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "interactive spatial canvas https://github.com/eserlan/Codex-Cryptica/issues/281"
 
 ## User Scenarios & Testing _(mandatory)_

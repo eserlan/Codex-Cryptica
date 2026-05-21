@@ -1,7 +1,9 @@
 # Specification: Legal Compliance & Deployment Preparation
 
+**Status**: Archived
+**Archive Reason**: One-time legal and deployment task completed at launch
+
 **Feature**: Legal and Deployment (015-legal-and-deployment-prep)
-**Status**: Draft
 **Date**: 2026-01-29
 
 ## 1. Goal

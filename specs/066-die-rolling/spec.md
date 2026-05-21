@@ -2,7 +2,7 @@
 
 **Feature Branch**: `066-die-rolling`  
 **Created**: 2026-03-10  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "die rolling https://github.com/eserlan/Codex-Cryptica/issues/388"
 
 ## User Scenarios & Testing _(mandatory)_

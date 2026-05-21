@@ -10,12 +10,16 @@ import type {
   P2PTransport,
   P2PConnection,
 } from "./transport/transport-interface";
-import { PeerJSTransport } from "./transport/peerjs-transport";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { VTTHandler } from "./handlers/vtt-handler";
 import { VaultHandler } from "./handlers/vault-handler";
 import { FileHandler } from "./handlers/file-handler";
 import { createPeer, type PeerFactory } from "./peer-factory";
+import { PeerJSTransport } from "./transport/peerjs-transport";
+import {
+  PeerJSConnectionManager,
+  type ConnectionState,
+} from "./connection-manager.svelte";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -27,15 +31,25 @@ type HostDeps = {
   peerFactory?: PeerFactory;
   transport?: P2PTransport;
   dispatcher?: P2PDispatcher;
+  connectionManager?: PeerJSConnectionManager;
 };
 
 export class P2PHostService {
+  private readonly connectionManager: PeerJSConnectionManager;
   private transport: P2PTransport;
   private dispatcher: P2PDispatcher;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   connections = $state<P2PConnection[]>([]);
-  private _isHosting = false;
+  _isHosting = $state(false);
+
+  state = $state<ConnectionState>({
+    status: "idle",
+    latencyMs: -1,
+    peerId: null,
+    remotePeerId: null,
+    retryCount: 0,
+  });
 
   private readonly vault: typeof defaultVault;
   private readonly themeStore: typeof defaultThemeStore;
@@ -52,6 +66,9 @@ export class P2PHostService {
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
 
+    this.connectionManager =
+      deps.connectionManager ??
+      new PeerJSConnectionManager(deps.peerFactory ?? createPeer);
     this.transport =
       deps.transport ?? new PeerJSTransport(deps.peerFactory ?? createPeer);
     this.dispatcher = deps.dispatcher ?? new P2PDispatcher();
@@ -76,9 +93,10 @@ export class P2PHostService {
       await this.dispatcher.dispatch(data, conn, this.getHandlerContext());
     });
 
-    this.transport.on("error", (err) =>
-      console.error("[P2P Host] Transport error:", err),
-    );
+    this.transport.on("error", (err) => {
+      console.error("[P2P Host] Transport error:", err);
+      this.state.status = "failed";
+    });
 
     this.transport.on("close", (peerId) => {
       if (peerId) {
@@ -122,10 +140,13 @@ export class P2PHostService {
     const peerId = crypto.randomUUID();
     onPeerId?.(peerId);
 
+    this.state.status = "connecting";
     const id = await this.transport.start(peerId);
     console.log("[P2P Host] Hosting started. ID:", id);
 
     this._isHosting = true;
+    this.state.status = "connected";
+    this.state.peerId = id;
     mapSession.setBroadcaster((message) => this.broadcastVttMessage(message));
     mapSession.myPeerId = id;
 
@@ -257,6 +278,8 @@ export class P2PHostService {
     mapSession.myPeerId = null;
     this.transport.stop();
     this._isHosting = false;
+    this.state.status = "disconnected";
+    this.state.peerId = null;
     this.connections = [];
   }
 }

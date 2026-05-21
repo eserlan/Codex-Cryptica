@@ -2,7 +2,7 @@
 
 **Feature Branch**: `055-prerender-marketing`  
 **Created**: 2026-02-21  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "prerender public marketing routes https://github.com/eserlan/Codex-Cryptica/issues/216"
 
 ## User Scenarios & Testing _(mandatory)_

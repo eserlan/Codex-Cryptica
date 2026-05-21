@@ -2,7 +2,7 @@
 
 **Feature Branch**: `026-world-timeline`  
 **Created**: 2026-01-31  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "a way to organize nodes by in world time, so that we can get a timeline of events (not only for events but also npcs, factions, locations, etc)"
 
 ## User Scenarios & Testing _(mandatory)_

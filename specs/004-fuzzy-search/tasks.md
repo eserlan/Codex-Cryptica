@@ -1,7 +1,6 @@
 # Tasks: Fuzzy Search
 
 **Feature**: Fuzzy Search (`004-fuzzy-search`)
-**Status**: Planned
 
 ## Dependencies
 

@@ -1,7 +1,6 @@
 # Research: Node Merging
 
 **Feature Branch**: `041-node-merging`
-**Status**: Complete
 
 ## Overview
 

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `016-settings-refactor`  
 **Created**: 2026-01-29  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "proper config/settings (not everything under cloud)"
 
 ## User Scenarios & Testing (mandatory)

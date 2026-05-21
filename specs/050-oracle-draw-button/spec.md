@@ -2,7 +2,7 @@
 
 **Feature Branch**: `050-oracle-draw-button`  
 **Created**: 2026-02-19  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "if advanced oracle, lets have a draw button https://github.com/eserlan/Codex-Cryptica/issues/191"
 
 ## User Scenarios & Testing _(mandatory)_

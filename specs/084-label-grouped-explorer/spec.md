@@ -2,7 +2,7 @@
 
 **Feature Branch**: `084-label-grouped-explorer`  
 **Created**: 2026-04-15  
-**Status**: Implemented  
+**Status**: Implemented
 **Input**: User description: "GitHub Issue #606: Organize the entity explorer by labels"
 
 ## User Scenarios & Testing _(mandatory)_

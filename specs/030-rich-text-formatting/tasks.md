@@ -1,7 +1,6 @@
 # Tasks: Rich Text Formatting Controls
 
 **Feature**: Rich Text Formatting Controls (030-rich-text-formatting)
-**Status**: Draft
 
 ## Phase 1: Setup
 

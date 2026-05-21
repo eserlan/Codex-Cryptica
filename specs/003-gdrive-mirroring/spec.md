@@ -2,7 +2,8 @@
 
 **Feature Branch**: `003-gdrive-mirroring`  
 **Created**: 2026-01-23  
-**Status**: Implemented  
+**Status**: Superseded
+**Superseded By**: 096-gdrive-cloud-sync
 **Input**: User description: "Optional background mirroring that anchors local-first lore to your personal Google Drive for seamless cross-device access. > Maintain total data sovereignty with an opt-in cloud bridge that preserves your world’s graph without ever touching a third-party server."
 
 ## User Scenarios & Testing _(mandatory)_

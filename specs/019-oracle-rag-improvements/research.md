@@ -1,6 +1,5 @@
 # Research: Oracle RAG Improvements
 
-**Status**: Completed
 **Date**: 2026-01-30
 
 ## Decision 1: Query Expansion Strategy (FR-004)

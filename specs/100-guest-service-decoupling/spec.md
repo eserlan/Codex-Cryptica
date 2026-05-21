@@ -2,7 +2,7 @@
 
 **Feature Branch**: `100-guest-service-decoupling`  
 **Created**: 2026-05-18  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: Analysis of `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` (657 lines). Symmetric refactor mirroring Spec 098 (host-service decoupling).
 
 ## Clarifications
