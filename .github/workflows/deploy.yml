@@ -109,6 +109,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -171,7 +173,7 @@ jobs:
           command: pages deploy dist --project-name=codex-cryptica --branch=staging
 
       - name: Deploy Preview to Cloudflare Pages
-        if: github.event_name == 'pull_request' && secrets.CLOUDFLARE_API_TOKEN != ''
+        if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
         id: deploy_preview
         uses: cloudflare/wrangler-action@v3
         env:
@@ -183,7 +185,7 @@ jobs:
           command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
 
       - name: Comment on PR
-        if: github.event_name == 'pull_request' && success() && secrets.CLOUDFLARE_API_TOKEN != ''
+        if: github.event_name == 'pull_request' && success() && env.CLOUDFLARE_API_TOKEN != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
