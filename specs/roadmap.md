@@ -26,6 +26,15 @@ The following high-impact candidate specifications target performance, scaling, 
 - **Objective**: Eliminate legacy auto-subscription overhead by conforming fully to Svelte 5 patterns.
 - **Details**: Replaces leftover legacy subscribable states with optimized `$state` and `$derived` signals, using `$state.snapshot` to prevent deep-object reference leaks.
 
+### [PROPOSED] Spec 109: QuickNote Fast Scratchpad & AI Entity Elevation
+
+- **Target Area**: Brainstorming UI & Oracle Pipeline (`apps/web/src/lib/components/oracle/`, `packages/oracle-engine/`)
+- **Objective**: Introduce a lightning-fast floating scratchpad for quick idea dumps, with one-click AI transformation into fully structured wiki entities.
+- **Details**:
+  - **Quick Dump Interface**: Accessible via global hotkey (`Ctrl+I` / `Cmd+I`) or floating dock bubble, allowing raw unformatted typing and instant save to a lightweight local IndexedDB store (`quick_notes`).
+  - **AI-Driven Synthesis**: Uses the Oracle engine to parse raw scraps, auto-extract potential names, auto-categorize (e.g. NPC, Faction, Location), and draft rich player-facing Chronicles and host-facing Lore.
+  - **Dotted Draft Nodes**: Supports displaying notes as "draft/placeholder" nodes on the Cytoscape Relationship Graph with a custom visual style (e.g. dotted border, yellow tint) to layout concepts before formal wiki integration.
+
 ---
 
 ## 🏛️ Historical Roadmap & Release Timeline
