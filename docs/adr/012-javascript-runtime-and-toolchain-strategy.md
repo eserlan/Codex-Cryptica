@@ -1,192 +1,197 @@
-# ADR 012: JavaScript Runtime and Toolchain Strategy
+# ADR 012: JavaScript Runtime and Build Tooling Strategy
 
-## Context and Problem Statement
+## Status
 
-Codex-Cryptica is currently a TypeScript monorepo using:
+Proposed. Supersedes the earlier draft of this ADR, which framed the question as "should we migrate to Deno?" — too narrow. This version treats the toolchain as a set of swappable axes and recommends a target stack.
 
-- `pnpm` workspaces for package installation and linking.
-- `turbo` for root-level orchestration of build, lint, type-check, and test tasks.
-- SvelteKit, Vite, Vitest, Playwright, Tailwind, Wrangler, and several browser-oriented npm dependencies in `apps/web`.
-- Multiple local TypeScript packages under `packages/*`, many of which are pure or mostly pure library code.
+## Context
 
-During Spec 103 work, the root `pnpm run lint` and pre-push hook could not run in the local Termux Android arm64 environment because Turborepo does not support that platform. Direct web-level checks still worked:
+Codex-Cryptica is a TypeScript monorepo with one Svelte 5 / SvelteKit 2 web app, one Cloudflare Worker (`oracle-proxy`), and 14 pure-TypeScript packages. The current toolchain is:
 
-- `pnpm --filter web run lint`
-- `pnpm --filter web run lint:types`
-- focused `vitest` runs with constrained worker settings
+| Axis              | Today                    |
+| ----------------- | ------------------------ |
+| Runtime (scripts) | Node 24                  |
+| Package manager   | pnpm 10 workspaces       |
+| Orchestrator      | Turbo 2.9                |
+| Bundler (web)     | Vite 8 (via SvelteKit 2) |
+| Test runner       | Vitest 4                 |
+| E2E               | Playwright               |
+| Deploy            | Wrangler (Cloudflare)    |
+| Lint / format     | ESLint 10 + Prettier 3.8 |
 
-This raised the question of whether the repository should transition from Node/pnpm/Turbo to Deno, or to another JavaScript runtime/toolchain strategy.
+Pain points that motivate revisiting this:
+
+1. **Cross-platform binary gaps.** Turbo has no Termux Android arm64 build, so root-level scripts fail in that environment.
+2. **Install time.** `pnpm install` cold on this repo (~80 npm deps + 14 workspace packages) is the single largest CI step.
+3. **Tool sprawl.** Turbo's value over `pnpm -r --filter` is mostly remote caching and task graph, both of which are underused here (no remote cache; task graph is shallow).
+4. **Script runtime.** Many root and per-package scripts are plain TS or `.mjs`. Running them through Node + tsx/esbuild adds startup overhead per invocation.
+
+The earlier draft assumed the only alternative was Deno. There are more options, and they're separable.
+
+## What is fixed (and why)
+
+These are not on the table; treat them as constraints:
+
+- **Vite 8** — locked in by SvelteKit 2. Any bundler swap means leaving SvelteKit.
+- **SvelteKit 2 / Svelte 5** — the web app's framework. Out of scope.
+- **Wrangler** — required by Cloudflare Pages + Workers deploy. Node-shaped CLI.
+- **Playwright** — e2e runner. Node-shaped binary.
+- **Vitest 4** — coupled to Vite. Swapping would force a different bundler stack and rewrite of every test file.
+
+What this means: any candidate must run Vite, Vitest, Wrangler, and Playwright as Node-API consumers without compatibility shims. That rules out Deno as a primary runtime and rules out Bun's bundler/test runner as replacements for Vite/Vitest.
+
+## What is swappable
+
+| Axis                  | Candidates                                    |
+| --------------------- | --------------------------------------------- |
+| Package manager       | pnpm (today), Bun, npm                        |
+| Orchestrator          | Turbo (today), moon, Nx, Bun `--filter`, none |
+| Script-execution host | Node (today), Bun, tsx-via-Node               |
+| Lockfile              | pnpm-lock.yaml (today), bun.lock              |
 
 ## Decision Drivers
 
-- **Frontend Compatibility:** The SvelteKit/Vite app should remain boring and well-supported.
-- **Monorepo Reliability:** Workspace package linking and local package builds must remain predictable.
-- **Cross-Platform Developer Experience:** Tooling should work on common development machines and degrade gracefully on constrained environments like Termux.
-- **CI Stability:** The chosen toolchain must be easy to reproduce in CI.
-- **Migration Risk:** Runtime changes should not consume engineering time unless they remove real complexity.
-- **Security and Local-First Fit:** Tooling that improves explicit permissions and reduces unnecessary dependency execution is valuable, but not at the cost of frontend instability.
+1. **Speed** — install time and orchestration overhead are the visible cost on CI and local dev.
+2. **Cross-platform binaries** — aarch64 Linux (incl. Termux) must work. macOS arm64 and Linux x64 are non-negotiable.
+3. **Tool surface** — fewer tools is better, all else equal.
+4. **Migration cost** — measured in PRs, not weeks. One contributor should be able to land it.
+5. **Compatibility with locked-in stack** — Vite/Vitest/Wrangler/Playwright must keep working without per-call shims.
+6. **CI image availability** — must be a one-line install in GitHub Actions and the Cloudflare Pages build environment.
 
-## Considered Options
+## Options
 
-### Option 1: Keep Node + pnpm + Turbo as the Primary Toolchain
+### Option A — Status quo: Node + pnpm + Turbo
 
-Keep the current stack as the canonical development and CI toolchain.
+Keep everything. Add documented `pnpm -r --filter` fallbacks for Termux.
 
-**Pros**
+- **Speed:** baseline.
+- **Cross-platform:** broken on Termux/arm64 (Turbo).
+- **Tool surface:** unchanged.
+- **Migration cost:** ~0.
+- **Verdict:** safe but leaves real wins on the table.
 
-- Best-aligned with SvelteKit, Vite, Vitest, Playwright, Wrangler, and the current npm dependency graph.
-- Lowest migration cost.
-- CI and most developer machines can continue using the established scripts.
-- Preserves `pnpm` workspace behavior already used across `apps/*` and `packages/*`.
+### Option B — Bun as package manager + script host; drop Turbo; keep Vite/Vitest
 
-**Cons**
+Replace pnpm with `bun install`, replace Turbo with `bun --filter`, run scripts through `bun run` / `bun x`. Vite, Vitest, Wrangler, Playwright, SvelteKit unchanged — they continue to be invoked the same way; Bun just hosts them.
 
-- Turborepo does not support every local platform, including the Termux Android arm64 environment used during this work.
-- Root-level scripts can be unavailable locally even when package-level scripts work.
-- Does not reduce reliance on `node_modules` or npm lifecycle tooling.
+- **Speed:** `bun install` is typically 5–10× pnpm cold; `bun run` is faster than `node` for scripts.
+- **Cross-platform:** native aarch64-linux binary; runs on Termux.
+- **Tool surface:** −1 (Turbo gone). pnpm + Turbo → Bun.
+- **Migration cost:** moderate — lockfile swap, CI image swap, validate every `pnpm` invocation has a `bun` equivalent, audit any package that ships postinstall scripts or expects pnpm's symlinked `node_modules` layout.
+- **Risks:** Bun's `node_modules` layout differs from pnpm's (no symlink farm). Some packages with implicit transitive imports may break — mitigation is a one-pass audit during migration. Wrangler and Playwright are routinely run under Bun in production by other projects; low risk.
+- **Verdict:** highest ROI swap. Touches the swappable axes, leaves the locked-in stack alone.
 
-### Option 2: Full Repository Transition to Deno
+### Option C — Keep pnpm; replace Turbo with moon
 
-Move runtime, dependency management, scripts, linting, formatting, and tests to Deno wherever possible.
+Swap orchestrator only. `moon` (Rust-based, native binaries for linux-x64, linux-arm64, darwin-arm64, win-x64) is the closest direct replacement for Turbo with better cross-platform binary coverage.
 
-**Pros**
+- **Speed:** roughly Turbo-equivalent, possibly faster for affected-task graphs.
+- **Cross-platform:** native aarch64 Linux binary.
+- **Tool surface:** unchanged (1-for-1 swap).
+- **Migration cost:** rewrite `turbo.json` as `.moon/*.yml`, port the four task definitions.
+- **Risks:** smaller community than Turbo; less GitHub Actions tooling.
+- **Verdict:** the conservative answer. Fixes the binary gap without touching the package manager.
 
-- Deno has first-party TypeScript execution, linting, formatting, testing, permissions, and workspace support.
-- Deno supports `package.json` compatibility and npm packages.
-- Deno workspaces can include Deno-first, hybrid, and Node-first packages.
+### Option D — Keep pnpm; drop Turbo entirely (use `pnpm -r --filter`)
 
-**Cons**
+No orchestrator. Use `pnpm -r --filter "./packages/*" --filter web run <task>` in root scripts.
 
-- The web app depends on SvelteKit/Vite and npm-heavy frontend tooling. Deno's docs still call out frameworks like Svelte as cases where local `node_modules` may be needed.
-- Some dependencies may require Node-API/native-addon behavior, postinstall scripts, or explicit permissions.
-- A full migration would be mostly compatibility work rather than product work.
-- It would introduce a second axis of risk across deployment, tests, and contributor onboarding.
+- **Speed:** loses Turbo's task graph and local cache.
+- **Cross-platform:** pnpm works everywhere.
+- **Tool surface:** −1 (Turbo gone).
+- **Migration cost:** rewrite four root scripts.
+- **Risks:** CI gets ~10–30% slower depending on cache hit rates; no `--affected` flag without scripting it.
+- **Verdict:** the minimum-change option. Worth doing if Option B is rejected.
 
-### Option 3: Hybrid Deno for Pure Packages and Scripts
+### Option E — Bun for everything, including bundler/test (rejected)
 
-Keep Node/pnpm as canonical for the web app and workspace install, but allow Deno in tightly scoped places:
+Use Bun's bundler and test runner instead of Vite/Vitest. Rejected up front — SvelteKit requires Vite; rewriting test files away from Vitest costs more than it saves.
 
-- pure TypeScript utility packages,
-- standalone repository scripts,
-- codegen or validation tasks that do not depend on SvelteKit/Vite/Playwright/Wrangler,
-- experimental package-level checks.
+### Option F — Deno (rejected)
 
-**Pros**
+Same reasoning as the prior ADR draft: SvelteKit/Vite/Wrangler/Playwright are all Node-shaped, full Deno migration is compatibility work with no product payoff.
 
-- Captures Deno's strengths without putting the web app on the migration path.
-- Lets the repo prove Deno value with real tasks before broad adoption.
-- Can improve script portability and explicit permissions for isolated tasks.
-- Deno can participate in hybrid workspaces, reducing the need for all-or-nothing migration.
+### Option G — Nx (rejected)
 
-**Cons**
+Larger conceptual surface than this repo needs at 14 packages; does not improve any locked-in axis.
 
-- Adds another tool developers may need installed.
-- Requires clear boundaries so the repo does not drift into two competing toolchains.
-- Still does not solve all root orchestration problems unless those tasks are deliberately mirrored or replaced.
+## Decision
 
-### Option 4: Replace Turbo with pnpm-Only Orchestration
+**Adopt Option B: Bun as package manager + script-execution host; drop Turbo; keep Vite, Vitest, SvelteKit, Wrangler, Playwright, ESLint, Prettier.**
 
-Keep Node and pnpm, but remove or reduce root reliance on Turbo by using `pnpm --recursive`, `pnpm --filter`, and package-level scripts.
+Target stack:
 
-**Pros**
+| Axis              | Today      | Target                 |
+| ----------------- | ---------- | ---------------------- |
+| Runtime (scripts) | Node 24    | **Bun 1.x**            |
+| Package manager   | pnpm 10    | **Bun**                |
+| Orchestrator      | Turbo      | **`bun --filter`**     |
+| Bundler (web)     | Vite 8     | Vite 8 (unchanged)     |
+| Test runner       | Vitest 4   | Vitest 4 (unchanged)   |
+| E2E               | Playwright | Playwright (unchanged) |
+| Deploy            | Wrangler   | Wrangler (unchanged)   |
 
-- Directly addresses the Termux/Turbo platform issue.
-- Minimal runtime migration risk.
-- Keeps the current package manager and dependency model.
-- Easier to reason about than adding Deno or Bun.
+Rationale: This is the only option that simultaneously fixes install speed, the Termux/arm64 gap, and tool surface — without touching any of the locked-in pieces. Vitest stays because it's coupled to Vite; we are not swapping the test runner. Bun is the _host_, not the framework.
 
-**Cons**
+**Fallback if Option B blocks on a real incompatibility:** Option C (moon). Option D is the zero-risk bottom line.
 
-- Loses Turbo caching and task graph behavior unless replaced elsewhere.
-- May make CI slower.
-- Requires maintaining root scripts carefully so package ordering remains correct.
+## Migration Plan
 
-### Option 5: Move to Nx
+Phased so each step is independently revertible.
 
-Replace Turbo with Nx for task orchestration and caching.
+1. **Phase 0 — Decision validation** _(1 day)_
+   Build a throwaway branch. Run `bun install`, `bun run build --filter web`, `bun run test --filter "./packages/*"`, `bun x playwright test`, `bun x wrangler deploy --dry-run`. Confirm green. If anything is yellow, escalate to Option C before committing.
 
-**Pros**
+2. **Phase 1 — Lockfile and CI** _(1 PR)_
+   Add `bun.lock`, keep `pnpm-lock.yaml` in place. Update CI to install Bun and run `bun install --frozen-lockfile`. Verify caches.
 
-- Mature monorepo task graph, caching, affected-project workflows, and inferred task support.
-- Can improve large-repo ergonomics if Codex-Cryptica keeps growing.
+3. **Phase 2 — Replace root scripts** _(1 PR)_
+   Rewrite root `package.json` scripts using `bun --filter` in place of `turbo run`. Delete `turbo.json`. Remove `turbo` from `devDependencies`.
 
-**Cons**
+4. **Phase 3 — Remove pnpm** _(1 PR)_
+   Delete `pnpm-lock.yaml`, drop `packageManager` field's pnpm pin, update `engines` to Bun. Update CONTRIBUTING and any README references.
 
-- Larger conceptual surface than the repo currently needs.
-- Does not materially improve the SvelteKit runtime story.
-- Migration cost is higher than pnpm-only fallback scripts.
-- Platform support and local binary availability still need validation on Termux before it can be called a fix.
+5. **Phase 4 — Cloudflare Pages build environment** _(1 PR)_
+   Set the Pages build command to use Bun. Verify deploy preview parity with current main.
 
-### Option 6: Move to Bun
-
-Adopt Bun as runtime/package manager/test runner, either fully or selectively.
-
-**Pros**
-
-- Fast package manager and runtime.
-- Supports workspaces and filtered workspace script execution.
-- Closer to Node/npm compatibility goals than a pure Deno migration.
-
-**Cons**
-
-- Still a major toolchain migration.
-- Test runner and edge cases would need validation against SvelteKit/Vite/Vitest/Playwright/Wrangler.
-- Does not offer the same explicit-permission model that makes Deno attractive.
-- Adds less strategic value than solving the narrower Turbo platform issue directly.
-
-## Decision Outcome
-
-Chosen option: **Option 1 as the canonical toolchain, with Option 3 allowed as a controlled pilot and Option 4 as the preferred mitigation for local Turbo incompatibility.**
-
-Codex-Cryptica should **not** transition the full repository to Deno at this time.
-
-The canonical stack remains:
-
-- Node runtime for the web app and build tooling.
-- `pnpm` for dependency management and workspaces.
-- Turbo for CI/root orchestration where supported.
-- Package-level `pnpm --filter` commands for local environments where Turbo is unavailable.
-
-Deno may be introduced only under a narrow pilot rule:
-
-1. The target must be a pure TypeScript package or standalone script.
-2. It must not be required for `apps/web` build, preview, deployment, Playwright, Wrangler, or SvelteKit/Vite tasks.
-3. It must have explicit commands documented in the package or ADR follow-up.
-4. It must prove at least one concrete benefit: simpler script execution, stronger permission boundaries, less install friction, or better local portability.
-5. It must not introduce duplicate formatting/linting rules that conflict with the existing repo style.
+Each phase is one commit, easy to revert.
 
 ## Consequences
 
 ### Positive
 
-- Avoids a high-risk runtime migration while the web app is heavily coupled to Node-oriented frontend tooling.
-- Keeps CI and deployment aligned with the current SvelteKit/Vite/Wrangler ecosystem.
-- Gives Deno a legitimate evaluation path without committing the whole repo.
-- Separates the actual local blocker, Turbo platform support, from the broader runtime decision.
+- ~5–10× faster cold installs locally and in CI.
+- One fewer top-level tool (Turbo gone).
+- Native aarch64 binary; Termux works.
+- Script startup overhead reduced (`bun x vitest` beats `node` boot).
+- Lockfile becomes the only source of truth (no pnpm/npm dual presence).
 
 ### Negative
 
-- Root scripts may still fail on unsupported Turbo platforms unless package-level fallback commands are documented and maintained.
-- Deno benefits remain limited until a concrete pilot is selected.
-- The repo keeps a conventional `node_modules` workflow for now.
+- One-time migration cost (5 PRs above).
+- Bun's `node_modules` layout is flat-ish, not pnpm's symlink farm. Packages that secretly relied on pnpm strictness may surface hidden dependency leaks. Mitigation: fix the missing `dependencies` declaration in the offending package — that's a correctness improvement, not a regression.
+- CI cache key changes; first CI run after merge is uncached.
+- Contributors must install Bun. One-line install; not a real obstacle, but worth a CONTRIBUTING note.
 
-## Follow-Up Work
+### Neutral
 
-1. Add documented fallback commands for local environments where Turbo is unavailable:
-   - `pnpm --filter web run lint`
-   - `pnpm --filter web run lint:types`
-   - `pnpm --filter web exec vitest run --maxWorkers=1 --no-fileParallelism`
-2. Identify one low-risk Deno pilot candidate, preferably a pure package or standalone validation script.
-3. Before adopting Deno in any package, run:
-   - `deno check`
-   - `deno test`
-   - `deno lint`
-4. Reconsider a broader transition only if the pilot reduces maintenance cost without increasing frontend/tooling risk.
+- Vitest, Vite, SvelteKit, Wrangler, Playwright, ESLint, Prettier all unchanged.
+
+## Re-evaluation Triggers
+
+Revisit this ADR if any of:
+
+- Bun introduces a regression in Vite/Vitest/Wrangler/Playwright that requires per-call shims.
+- The repo grows past ~30 packages and the `--filter` task graph becomes a bottleneck (consider moon or Nx at that point).
+- SvelteKit migrates off Vite (unlikely).
+- A workspace package needs to be published to npm and Bun's publish workflow proves insufficient.
 
 ## References
 
-- Deno workspaces and monorepos: https://docs.deno.com/runtime/fundamentals/workspaces/
-- Deno Node and npm compatibility: https://docs.deno.com/runtime/manual/node/
-- Deno configuration and `package.json` support: https://docs.deno.com/runtime/fundamentals/configuration/
-- Bun workspaces: https://bun.sh/docs/install/workspaces
-- Nx inferred tasks: https://nx.dev/docs/concepts/inferred-tasks
+- Bun workspaces and `--filter`: https://bun.sh/docs/install/workspaces
+- Bun vs Node compatibility matrix: https://bun.sh/docs/runtime/nodejs-apis
+- moon orchestrator: https://moonrepo.dev/
+- Vite + Bun compatibility notes: https://bun.sh/docs/ecosystem/vite
+- SvelteKit on Bun: https://bun.sh/guides/ecosystem/sveltekit
+- Cloudflare Pages with Bun: https://developers.cloudflare.com/pages/configuration/build-image/
+- Prior context: the rejected Deno-migration framing in this ADR's earlier draft.

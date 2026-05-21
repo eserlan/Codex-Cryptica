@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@codex/events": "workspace:*",
+    "dexie": "^4.4.2",
     "idb": "^8.0.3",
     "schema": "workspace:*"
   },
