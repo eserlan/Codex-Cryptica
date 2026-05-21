@@ -8,25 +8,25 @@ This document maps the evolution of Codex Cryptica from its architectural founda
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
 
-### [PROPOSED] Spec 106: Progressive Worker-Backed Search Indexing
+### [PROPOSED] Progressive Worker-Backed Search Indexing
 
 - **Target Area**: Search Engine (`packages/search-engine/`, OPFS)
 - **Objective**: Offload search indexing and updates to background Web Workers via Comlink.
 - **Details**: Guarantees zero main-thread blockages during initial load or heavy file sync operations for vaults containing 1,000+ entities.
 
-### [PROPOSED] Spec 107: Direct P2P Audio/Video Integration
+### [PROPOSED] Direct P2P Audio/Video Integration
 
 - **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/services/p2p/`)
 - **Objective**: Implement decentralized, low-latency voice and video channels directly on the tactical map view.
 - **Details**: Leverages CC's decoupled PeerJS network topology to transmit audio/video stream tracks in real-time, completely bypassing centralized routing. Includes adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components. Detailed in [p2p_audio_video_analysis.md](./p2p_audio_video_analysis.md).
 
-### [PROPOSED] Spec 108: Svelte 5 Rune Hardening & Performance
+### [PROPOSED] Svelte 5 Rune Hardening & Performance
 
 - **Target Area**: Reactivity & Stores (`apps/web/src/lib/stores/`)
 - **Objective**: Eliminate legacy auto-subscription overhead by conforming fully to Svelte 5 patterns.
 - **Details**: Replaces leftover legacy subscribable states with optimized `$state` and `$derived` signals, using `$state.snapshot` to prevent deep-object reference leaks.
 
-### [PROPOSED] Spec 109: QuickNote Fast Scratchpad & AI Entity Elevation
+### [PROPOSED] QuickNote Fast Scratchpad & AI Entity Elevation
 
 - **Target Area**: Brainstorming UI & Oracle Pipeline (`apps/web/src/lib/components/oracle/`, `packages/oracle-engine/`)
 - **Objective**: Introduce a lightning-fast floating scratchpad for quick idea dumps, with one-click AI transformation into fully structured wiki entities.
