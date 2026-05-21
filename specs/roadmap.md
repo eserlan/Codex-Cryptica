@@ -1,24 +1,12 @@
 # Codex Cryptica Product & Feature Roadmap
 
-This document maps the evolution of Codex Cryptica from its architectural foundations to its current decoupled svelte/P2P capabilities, concluding with proposed future specifications.
+This document maps the evolution of Codex Cryptica from its architectural foundations to its current decoupled Svelte/P2P capabilities, concluding with proposed future specifications.
 
 ---
 
 ## 🚀 Future Roadmap & Proposals
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
-
-### [PROPOSED] Spec 104: Unified PeerJS Connection Manager
-
-- **Target Area**: P2P Networking (`apps/web/src/lib/services/p2p/`)
-- **Objective**: Centralize PeerJS connection lifecycles, handshake handling, and signaling channels.
-- **Details**: Builds on the host/guest decoupling of Spec 098/100 to standardise connection state machines, automatic reconnection backoffs, and ICE fallback recovery.
-
-### [PROPOSED] Spec 105: Svelte 5 Rune Hardening & Performance
-
-- **Target Area**: Reactivity & Stores (`apps/web/src/lib/stores/`)
-- **Objective**: Eliminate legacy auto-subscription overhead by conforming 100% to Svelte 5 patterns.
-- **Details**: Replaces leftover legacy subscribable states with optimized `$state` and `$derived` signals, using `$state.snapshot` to prevent deep-object reference leaks.
 
 ### [PROPOSED] Spec 106: Progressive Worker-Backed Search Indexing
 
@@ -30,19 +18,42 @@ The following high-impact candidate specifications target performance, scaling, 
 
 - **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/services/p2p/`)
 - **Objective**: Implement decentralized, low-latency voice and video channels directly on the tactical map view.
-- **Details**: Leverages CC's decoupled PeerJS network topology to transmit audio/video stream tracks in real-time, completely bypassing centralized routing. Includes adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components. Detailed in [p2p_audio_video_analysis.md](file:///home/espen/proj/Codex-Arcana/specs/p2p_audio_video_analysis.md).
+- **Details**: Leverages CC's decoupled PeerJS network topology to transmit audio/video stream tracks in real-time, completely bypassing centralized routing. Includes adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components. Detailed in [p2p_audio_video_analysis.md](./p2p_audio_video_analysis.md).
+
+### [PROPOSED] Spec 108: Svelte 5 Rune Hardening & Performance
+
+- **Target Area**: Reactivity & Stores (`apps/web/src/lib/stores/`)
+- **Objective**: Eliminate legacy auto-subscription overhead by conforming fully to Svelte 5 patterns.
+- **Details**: Replaces leftover legacy subscribable states with optimized `$state` and `$derived` signals, using `$state.snapshot` to prevent deep-object reference leaks.
 
 ---
 
 ## 🏛️ Historical Roadmap & Release Timeline
+
+### v0.22.0 — The Reliability & Decomposition Update (Unreleased)
+
+- **Planned Scope**: Broad architecture and reliability train focused on decomposing monolithic services, hardening Oracle workflows, and stabilizing P2P transport for future multiplayer work.
+- **Included Specifications So Far**:
+  - [097-oracle-executor-decoupling](./097-oracle-executor-decoupling/spec.md) (Command-specific Oracle executors and faster command routing)
+  - [098-p2p-host-service-decoupling](./098-p2p-host-service-decoupling/spec.md) (Host service split into transport, dispatcher, and handlers)
+  - [099-map-session-decomposition](./099-map-session-decomposition/spec.md) (Map session store split into focused managers)
+  - [100-guest-service-decoupling](./100-guest-service-decoupling/spec.md) (Guest service split into transport, dispatcher, and handlers)
+  - [101-ui-store-decoupling](./101-ui-store-decoupling/spec.md) (UI store split into focused per-feature stores)
+  - [102-oracle-store-decoupling](./102-oracle-store-decoupling/spec.md) (Oracle store facade backed by focused reactive managers)
+  - [103-map-page-decomposition](./103-map-page-decomposition/spec.md) (Map page controller/store decomposition)
+  - [104-peerjs-connection-manager](./104-peerjs-connection-manager/spec.md) (Centralized PeerJS lifecycle, handshake, heartbeat, and retry state machine)
+  - [105-p2p-transport-integration](./105-p2p-transport-integration/spec.md) (Host/guest service integration and reactive connection status UI)
+- **Related Non-Spec Work**:
+  - Oracle `ChatMessage` controller extraction and [chat message decomposition analysis](../docs/CHAT_MESSAGE_ANALYSIS.md)
+  - Speckit command and skill restoration across `.gemini`, `.agents`, `.claude`, `.qwen`, and `.specify`
 
 ### v0.21.0 — The Mobile Ergonomics Update (2026-04-26)
 
 - **Highlights**: Compact mobile menus, real-time campaign-level entity counts, keyless AI node merging.
 - **Associated Specifications**:
   - [092-approve-draft-entities](file:///home/espen/proj/Codex-Arcana/specs/092-approve-draft-entities/spec.md) (Draft approvals)
-  - [097-oracle-executor-decoupling](file:///home/espen/proj/Codex-Arcana/specs/097-oracle-executor-decoupling/spec.md) (Execution speedups)
-  - [102-oracle-store-decoupling](file:///home/espen/proj/Codex-Arcana/specs/102-oracle-store-decoupling/spec.md) & [103-map-page-decomposition](file:///home/espen/proj/Codex-Arcana/specs/103-map-page-decomposition/spec.md) (Mobile store slim-downs)
+  - [095-ai-regen-button](file:///home/espen/proj/Codex-Arcana/specs/095-ai-regen-button/spec.md) (Inline AI regeneration drafts)
+  - [096-gdrive-cloud-sync](file:///home/espen/proj/Codex-Arcana/specs/096-gdrive-cloud-sync/spec.md) (Cloud sync reliability)
 
 ### v0.20.0 — The Aesthetic Graph Update (2026-04-21)
 

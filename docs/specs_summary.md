@@ -11,6 +11,34 @@ This file is a high-level index of all project specifications, including impleme
 
 ---
 
+## Release / Milestone Index
+
+This index maps specs to the release train where they landed or are currently planned. `v0.22.0` is not released yet; it is the active staging train.
+
+| Release / Milestone                          | Status                          | Specs                                       |
+| :------------------------------------------- | :------------------------------ | :------------------------------------------ |
+| v0.22.0 — Reliability & Decomposition Update | Unreleased / in progress        | 097, 098, 099, 100, 101, 102, 103, 104, 105 |
+| v0.21.0 — Mobile Ergonomics Update           | Released                        | 092, 095, 096                               |
+| v0.20.0 — Aesthetic Graph Update             | Released                        | 049, 071, 080                               |
+| v0.19.0 — Discovery Update                   | Released                        | 088-adjustable-sidebars, 090                |
+| v0.18.0 — Tactical Explorer Update           | Released                        | 069, 084, 085                               |
+| v0.17.0 — Playable Tabletop Update           | Released                        | 079-vtt-light, 081                          |
+| v0.16.0 — Living Hub Update                  | Released                        | 075, 077, 078                               |
+| v0.15.0 — Spatial Canvas Update              | Released                        | 061, 066, 076                               |
+| v0.14.0 — Robust Storage Update              | Released                        | 039, 059, 073-dexie-entity-store, 093       |
+| v0.13.0 — Oracle Ascension Update            | Released                        | 011, 031, 040, 044, 046                     |
+| v0.12.0 — World Timeline Update              | Released                        | 026, 030, 041                               |
+| v0.11.0 — Advanced Graph Update              | Released                        | 032, 033, 034                               |
+| v0.10.0 — Customization Update               | Released                        | 027, 028, 029                               |
+| v0.9.0 — Oracle Intelligence Update          | Released                        | 008, 019, 022                               |
+| v0.8.0 — Campaign Management Update          | Released                        | 010, 021, 045                               |
+| v0.7.0 — Graph Engine Update                 | Released                        | 012, 014, 024                               |
+| v0.6.0 — Search & Discovery Update           | Released                        | 004, 009, 018                               |
+| v0.5.0 — Foundations Update                  | Released                        | 001, 002, 003                               |
+| One-time infrastructure / archived           | Completed outside release train | 015, 038, 047                               |
+
+---
+
 ## Feature Specifications
 
 These specifications define new user-facing functionality, systems, and UI components.
@@ -82,7 +110,7 @@ These specifications define new user-facing functionality, systems, and UI compo
 | 093 | ✅ `implemented`                          | [093-directional-vault-sync](file:////home/espen/proj/Codex-Arcana/specs/093-directional-vault-sync/spec.md)           | Feature Specification: Directional Vault Synchronization           | - Q: How should the system handle partial Load failures? → A: Keep already updated files and mark vault status as "Error" with a list of failed files for user r |
 | 095 | ✅ `implemented`                          | [095-ai-regen-button](file:////home/espen/proj/Codex-Arcana/specs/095-ai-regen-button/spec.md)                         | Feature Specification: AI Regenerate Entity Description            | - Q: How should the generated "Chronicle" and "Lore" content be presented for user review before it is saved? → A: Inline Preview (Proposed text appears in fiel |
 | 096 | ✅ `implemented`                          | [096-gdrive-cloud-sync](file:////home/espen/proj/Codex-Arcana/specs/096-gdrive-cloud-sync/spec.md)                     | Feature Specification: Google Drive Cloud Sync                     | - Q: Where is user data stored? → A: Exclusively in the user's own Google Drive. Project servers never receive or store vault data.                              |
-| 104 | 📋 `draft`                                | [104-peerjs-connection-manager](file:////home/espen/proj/Codex-Arcana/specs/104-peerjs-connection-manager/spec.md)     | Feature Specification: Unified PeerJS Connection Manager           | ---                                                                                                                                                              |
+| 104 | ✅ `implemented`                          | [104-peerjs-connection-manager](file:////home/espen/proj/Codex-Arcana/specs/104-peerjs-connection-manager/spec.md)     | Feature Specification: Unified PeerJS Connection Manager           | Centralized PeerJS lifecycle manager for handshakes, heartbeat ping-pong, reconnect state, and reactive connection status.                                       |
 
 ## Technical Specifications
 
@@ -126,3 +154,4 @@ These specifications define structural code changes, performance optimizations, 
 | 101 | ✅ `implemented`                                                                            | [101-ui-store-decoupling](file:////home/espen/proj/Codex-Arcana/specs/101-ui-store-decoupling/spec.md)                   | Feature Specification: UI Store Decoupling                            | Working assumptions (subject to clarification):                                                                                                                  |
 | 102 | ✅ `implemented`                                                                            | [102-oracle-store-decoupling](file:////home/espen/proj/Codex-Arcana/specs/102-oracle-store-decoupling/spec.md)           | Feature Specification: Oracle Store Decomposition                     | As a user, I want to chat with the Oracle, regenerate entity content, and generate visualizations without any perceived change in behavior or performance during |
 | 103 | ✅ `implemented`                                                                            | [103-map-page-decomposition](file:////home/espen/proj/Codex-Arcana/specs/103-map-page-decomposition/spec.md)             | Feature Specification: Map Page Decomposition                         | - Q: What should own the chat/sidebar offset behavior after the refactor? -> A: `layoutUIStore` owns offsets; controller reads derived values.                   |
+| 105 | ✅ `implemented`                                                                            | [105-p2p-transport-integration](file:////home/espen/proj/Codex-Arcana/specs/105-p2p-transport-integration/spec.md)       | SPEC-105: P2P Transport Integration                                   | Integrates the unified PeerJS connection manager into host and guest services and exposes reactive connection status in the app header.                          |
