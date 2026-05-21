@@ -171,7 +171,7 @@ jobs:
           command: pages deploy dist --project-name=codex-cryptica --branch=staging
 
       - name: Deploy Preview to Cloudflare Pages
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.CLOUDFLARE_API_TOKEN != ''
         id: deploy_preview
         uses: cloudflare/wrangler-action@v3
         env:
@@ -183,7 +183,7 @@ jobs:
           command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
 
       - name: Comment on PR
-        if: github.event_name == 'pull_request' && success()
+        if: github.event_name == 'pull_request' && success() && secrets.CLOUDFLARE_API_TOKEN != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
