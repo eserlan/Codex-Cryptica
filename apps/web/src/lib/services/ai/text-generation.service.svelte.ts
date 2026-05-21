@@ -21,7 +21,7 @@ import { contextRetrievalService as defaultContextRetrievalService } from "./con
 import { isAIEnabled } from "./capability-guard";
 
 function safeSnapshot<T>(obj: T): T {
-  if (!obj) return obj;
+  if (obj == null) return obj;
   try {
     return structuredClone(obj);
   } catch {
