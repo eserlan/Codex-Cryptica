@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DefaultTextGenerationService } from "./text-generation.service";
+import { DefaultTextGenerationService } from "./text-generation.service.svelte";
 import { TIER_MODES } from "schema";
 import * as capabilityGuard from "./capability-guard";
 
@@ -469,6 +469,55 @@ describe("DefaultTextGenerationService", () => {
           [],
         ),
       ).rejects.toThrow("Entity reconciliation failed: Direct throw");
+    });
+  });
+
+  describe("snapshot stability", () => {
+    it("should snapshot history to prevent concurrent mutations from affecting prompt", async () => {
+      const { createReactiveHistory } =
+        await import("./text-generation-test-helper.svelte");
+      const history = createReactiveHistory();
+
+      const promise = service.expandQuery("key", "him?", history);
+
+      // Mutate history immediately after initiating the call
+      history[0].content = "Mutated";
+
+      await promise;
+
+      const { buildQueryExpansionPrompt } =
+        await import("./prompts/query-expansion");
+      expect(buildQueryExpansionPrompt).toHaveBeenCalledWith(
+        expect.stringContaining("USER: Original"),
+        "him?",
+      );
+    });
+
+    it("should snapshot target and sources to prevent concurrent mutations in merge proposal", async () => {
+      const { createReactiveTarget, createReactiveSources } =
+        await import("./text-generation-test-helper.svelte");
+      const target = createReactiveTarget();
+      const sources = createReactiveSources();
+
+      const promise = service.generateMergeProposal(
+        "key",
+        "model",
+        target,
+        sources,
+      );
+
+      target.title = "MutatedTarget";
+      sources[0].title = "MutatedSource";
+
+      await promise;
+
+      const { buildMergeProposalPrompt } =
+        await import("./prompts/merge-proposal");
+      // Since context-retrieval.service is mocked to return "consolidated", we check the targetContext header formatting
+      expect(buildMergeProposalPrompt).toHaveBeenCalledWith(
+        expect.stringContaining("--- TARGET: OriginalTarget"),
+        expect.stringContaining("--- SOURCE 1: OriginalSource"),
+      );
     });
   });
 });

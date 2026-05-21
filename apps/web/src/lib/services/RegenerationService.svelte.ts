@@ -3,7 +3,7 @@ import { vault } from "$lib/stores/vault.svelte";
 import {
   nodeMergeService,
   type IMergedContentProposal,
-} from "$lib/services/node-merge.service";
+} from "$lib/services/node-merge.service.svelte";
 import {
   OracleCommandParser,
   type RegenerationDraft,

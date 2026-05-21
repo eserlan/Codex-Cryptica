@@ -18,7 +18,7 @@
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
-  import { onDestroy } from "svelte";
+
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -160,8 +160,10 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
-  onDestroy(() => {
-    logic.flushSave();
+  $effect(() => {
+    return () => {
+      logic.flushSave();
+    };
   });
 </script>
 

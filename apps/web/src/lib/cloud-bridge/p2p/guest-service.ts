@@ -1,4 +1,4 @@
-import { guestRoster } from "../../stores/guest";
+import { guestStore } from "../../stores/guest.svelte";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { MapAssetUrlCache } from "./handlers/map-asset-url-cache";
 import type {
@@ -156,7 +156,7 @@ export class P2PGuestService {
     if (this.transport.connected && this.currentHostId === hostId) return;
     if (this.isConnected) this.disconnect();
 
-    guestRoster.set({});
+    guestStore.guestRoster = {};
     this.guestDisplayName = guestName?.trim() || null;
     this.session.joinAccepted = false;
     this.session.pendingStatus = null;
@@ -224,7 +224,7 @@ export class P2PGuestService {
     this.currentHostId = null;
     this.session.joinAccepted = false;
     this.session.pendingStatus = null;
-    guestRoster.set({});
+    guestStore.guestRoster = {};
     this.tokenMoves.clear();
 
     if (this.dataListener) this.transport.off("data", this.dataListener);

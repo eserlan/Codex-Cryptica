@@ -7,6 +7,8 @@ import type { mapSession } from "../../../stores/map-session.svelte";
 import type { themeStore } from "../../../stores/theme.svelte";
 import type { mapStore } from "../../../stores/map.svelte";
 
+import type { GuestStore } from "../../../stores/guest.svelte";
+
 export interface P2PHandlerContext {
   vault: typeof vault;
   sessionModeStore: typeof sessionModeStore;
@@ -14,7 +16,7 @@ export interface P2PHandlerContext {
   mapSession: typeof mapSession;
   mapStore: typeof mapStore;
   themeStore: typeof themeStore;
-  guestRoster: any; // Svelte writable
+  guestStore: GuestStore;
   transport: any; // P2PTransport
 }
 

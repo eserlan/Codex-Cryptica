@@ -132,11 +132,14 @@
     void graph.orbitMode;
     void graph.centralNodeId;
     void graph.timelineMode;
+    void controller.cy;
     untrack(() => controller.handleModeChange());
   });
 
   // Vault loading triggers
   $effect(() => {
+    void vault.status;
+    void vault.allEntities.length;
     untrack(() => controller.handleVaultLoading());
   });
 
@@ -157,6 +160,10 @@
 
   // Load Finalization
   $effect(() => {
+    void vault.status;
+    void controller.initialLoaded;
+    void controller.didFinalizeLoad;
+    void controller.cy;
     untrack(() => controller.handleVaultLoadFinalization());
   });
 
@@ -166,6 +173,7 @@
     void graph.activeLabels;
     void graph.labelFilterMode;
     void graph.activeCategories;
+    void controller.cy;
     untrack(() => controller.syncElements());
   });
 
@@ -248,6 +256,7 @@
   $effect(() => {
     void graph.elements;
     void graph.showImages;
+    void controller.cy;
     untrack(() => controller.syncImages());
   });
 

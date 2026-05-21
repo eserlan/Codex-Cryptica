@@ -31,6 +31,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     query: string,
     history: any[],
   ): Promise<string> {
+    const cleanHistory = history ? $state.snapshot(history) : history;
     if (!isAIEnabled()) return query;
     try {
       const basicModel = await this.aiClientManager.getModel(
@@ -38,7 +39,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
         TIER_MODES.lite,
       );
 
-      const conversationContext = history
+      const conversationContext = cleanHistory
         .slice(-4)
         .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
         .join("\n");
@@ -91,10 +92,13 @@ export class DefaultTextGenerationService implements TextGenerationService {
     sources: any[],
     options?: { isGuest?: boolean },
   ): Promise<{ body: string; lore?: string }> {
+    const cleanTarget = target ? $state.snapshot(target) : target;
+    const cleanSources = sources ? $state.snapshot(sources) : sources;
+
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
-    const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target, { isGuest: options?.isGuest })}`;
-    const sourceContext = sources
+    const targetContext = `--- TARGET: ${cleanTarget.title} (${cleanTarget.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(cleanTarget, { isGuest: options?.isGuest })}`;
+    const sourceContext = cleanSources
       .map(
         (s, i) =>
           `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(s, { isGuest: options?.isGuest })}`,
@@ -134,19 +138,31 @@ export class DefaultTextGenerationService implements TextGenerationService {
     lore: string;
     categoryId?: string;
   }> {
+    const cleanEntity = entity ? $state.snapshot(entity) : entity;
+    const cleanIncoming = incoming ? $state.snapshot(incoming) : incoming;
+    const cleanRelatedEntities = relatedEntities
+      ? $state.snapshot(relatedEntities)
+      : relatedEntities;
+    const cleanCategories = categories
+      ? $state.snapshot(categories)
+      : categories;
+
     const model = await this.aiClientManager.getModel(apiKey, modelName);
+
     const allowedCategoryIds = new Set(
-      categories.map((category) => category.id),
+      cleanCategories.map((category) => category.id),
     );
 
     // Enforce guest data restriction: exclude existing lore if in guest mode
-    const sanitizedEntity = options?.isGuest ? { ...entity, lore: "" } : entity;
+    const sanitizedEntity = options?.isGuest
+      ? { ...cleanEntity, lore: "" }
+      : cleanEntity;
 
     const prompt = buildEntityReconciliationPrompt(
       sanitizedEntity,
-      incoming,
-      relatedEntities,
-      categories,
+      cleanIncoming,
+      cleanRelatedEntities,
+      cleanCategories,
     );
 
     try {
@@ -170,8 +186,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
         categoryId?: string;
       } = {
         content:
-          parsed.content?.trim() || incoming.chronicle || entity.content || "",
-        lore: parsed.lore?.trim() || incoming.lore || entity.lore || "",
+          parsed.content?.trim() ||
+          cleanIncoming.chronicle ||
+          cleanEntity.content ||
+          "",
+        lore:
+          parsed.lore?.trim() || cleanIncoming.lore || cleanEntity.lore || "",
       };
       if (allowedCategoryIds.has(categoryId)) {
         reconciled.categoryId = categoryId;
@@ -196,19 +216,25 @@ export class DefaultTextGenerationService implements TextGenerationService {
     userQuery: string,
     options?: { isGuest?: boolean },
   ): Promise<string> {
+    const cleanSubject = subject ? $state.snapshot(subject) : subject;
+    const cleanConnectedEntities = connectedEntities
+      ? $state.snapshot(connectedEntities)
+      : connectedEntities;
+
     const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const MAX_SUBJECT_CONTEXT_CHARS = 2000;
     const MAX_CONNECTED_ENTITIES = 20;
     const MAX_CONNECTION_CONTEXT_CHARS = 500;
 
-    const subjectContextStr = `--- SUBJECT: ${subject.title} (${subject.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(subject, { isGuest: options?.isGuest }).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
+    const subjectContextStr = `--- SUBJECT: ${cleanSubject.title} (${cleanSubject.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(cleanSubject, { isGuest: options?.isGuest }).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
 
-    const limitedConnections = connectedEntities.slice(
+    const limitedConnections = cleanConnectedEntities.slice(
       0,
       MAX_CONNECTED_ENTITIES,
     );
-    const omittedCount = connectedEntities.length - limitedConnections.length;
+    const omittedCount =
+      cleanConnectedEntities.length - limitedConnections.length;
 
     let connectionsContext =
       limitedConnections.length > 0
@@ -316,6 +342,8 @@ export class DefaultTextGenerationService implements TextGenerationService {
       existingEntities?: any[];
     },
   ): Promise<void> {
+    const cleanHistory = history ? $state.snapshot(history) : history;
+
     const systemInstruction = buildSystemInstruction(demoMode, categories);
     const model = await this.aiClientManager.getModel(
       apiKey,
@@ -325,7 +353,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
     const slidingWindowSize = 10;
     // 1. Sliding Window: Limit history to keep payload lean
-    const slidingHistory = history.slice(-slidingWindowSize);
+    const slidingHistory = cleanHistory.slice(-slidingWindowSize);
 
     const sanitizedHistory: {
       role: "user" | "model";

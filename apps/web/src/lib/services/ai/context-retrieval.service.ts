@@ -1,4 +1,4 @@
-import { searchService as defaultSearchService } from "../search";
+import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 

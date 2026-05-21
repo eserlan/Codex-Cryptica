@@ -6,15 +6,15 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Initialize hardening branch and verify test baseline with `pnpm test`
-- [ ] T002 Identify all `svelte/store` imports in `apps/web/src` for progress tracking
-- [ ] T002b Delete dead code file [graph-store.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/store/graph-store.ts)
+- [x] T001 Initialize hardening branch and verify test baseline with `pnpm test`
+- [x] T002 Identify all `svelte/store` imports in `apps/web/src` for progress tracking
+- [x] T002b Delete dead code file [graph-store.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/store/graph-store.ts)
 
 ## Phase 2: Foundational
 
-- [ ] T003 Convert `apps/web/src/lib/stores/debug.svelte.ts` to pure Runic class using constructor-based DI (remove `writable`)
-- [ ] T004 [P] Convert `apps/web/src/lib/stores/guest.ts` to `guest.svelte.ts` with `$state` properties and constructor-based DI
-- [ ] T005 [P] Create Runic utility for event bus subscriptions that auto-cleans up via `$effect` in `apps/web/src/lib/stores/vault/events.ts`
+- [x] T003 Convert `apps/web/src/lib/stores/debug.svelte.ts` to pure Runic class using constructor-based DI (remove `writable`)
+- [x] T004 [P] Convert `apps/web/src/lib/stores/guest.ts` to `guest.svelte.ts` with `$state` properties and constructor-based DI
+- [x] T005 [P] Create Runic utility for event bus subscriptions that auto-cleans up via `$effect` in `apps/web/src/lib/stores/vault/events.ts`
 
 ## Phase 3: User Story 1 - Smooth Application Performance [US1]
 
@@ -22,10 +22,10 @@
 
 **Independent Test**: Chrome Performance profile shows zero long tasks (>50ms) during rapid vault navigation.
 
-- [ ] T006 [P] [US1] Refactor `apps/web/src/lib/components/GraphView.svelte` to use direct signal access instead of `$store`
-- [ ] T007 [P] [US1] Refactor `apps/web/src/lib/components/MarkdownEditor.svelte` to use direct signal access
-- [ ] T008 [P] [US1] Refactor `apps/web/src/lib/components/EntityDetailPanel.svelte` to use direct signal access
-- [ ] T009 [US1] Verify interaction latency in `apps/web/src/lib/components/search/SearchModal.svelte` after removing auto-subscriptions
+- [x] T006 [P] [US1] Refactor `apps/web/src/lib/components/GraphView.svelte` to use direct signal access instead of `$store`
+- [x] T007 [P] [US1] Refactor `apps/web/src/lib/components/MarkdownEditor.svelte` to use direct signal access
+- [x] T008 [P] [US1] Refactor `apps/web/src/lib/components/EntityDetailPanel.svelte` to use direct signal access
+- [x] T009 [US1] Verify interaction latency in `apps/web/src/lib/components/search/SearchModal.svelte` after removing auto-subscriptions
 
 ## Phase 4: User Story 2 - Data Integrity & Stability [US2]
 
@@ -33,10 +33,10 @@
 
 **Independent Test**: AI-generated content correctly populates entities without "ghost" data from concurrent edits.
 
-- [ ] T010 [P] [US2] Integrate `$state.snapshot` in `apps/web/src/lib/services/ai.ts` before dispatching prompt requests
-- [ ] T011 [P] [US2] Integrate `$state.snapshot` in `apps/web/src/lib/services/search.ts` before worker transfers
-- [ ] T012 [P] [US2] Integrate `$state.snapshot` in `apps/web/src/lib/services/node-merge.service.ts`
-- [ ] T013 [US2] Add unit tests in `apps/web/src/lib/services/ai.test.ts` verifying snapshot integrity during async delays
+- [x] T010 [P] [US2] Integrate `$state.snapshot` in `apps/web/src/lib/services/ai.ts` before dispatching prompt requests
+- [x] T011 [P] [US2] Integrate `$state.snapshot` in `apps/web/src/lib/services/search.ts` before worker transfers
+- [x] T012 [P] [US2] Integrate `$state.snapshot` in `apps/web/src/lib/services/node-merge.service.ts`
+- [x] T013 [US2] Add unit tests in `apps/web/src/lib/services/ai.test.ts` verifying snapshot integrity during async delays
 
 ## Phase 5: User Story 3 - Long-Term Session Reliability [US3]
 
@@ -44,20 +44,20 @@
 
 **Independent Test**: Memory heap returns to baseline after 10 vault switches.
 
-- [ ] T014 [P] [US3] Replace `onDestroy` with native `$effect` cleanup in `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte`
-- [ ] T015 [P] [US3] Replace `onDestroy` with native `$effect` cleanup in `apps/web/src/lib/components/graph/Minimap.svelte`
-- [ ] T016 [P] [US3] Fix identified leak in `apps/web/src/lib/stores/search.svelte.ts` (vault-switched listener) using Runic lifecycle
-- [ ] T017 [US3] Verify guest roster cleanup in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` using Runic signals
-- [ ] T017b [P] [US3] Refactor components using `$guestRoster` ([GraphToolbar.svelte](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/GraphToolbar.svelte), etc.) to use signal property access
-- [ ] T017c [P] [US3] Refactor P2P handlers ([vault-handler.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/cloud-bridge/p2p/handlers/vault-handler.ts), etc.) and contexts to consume Rune-based `guestRoster`
-- [ ] T017d [P] [US3] Refactor and clean up related P2P tests (`guest-service.test.ts`, `p2p.test.ts`, etc.) to conform to Rune-based roster
+- [x] T014 [P] [US3] Replace `onDestroy` with native `$effect` cleanup in `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte`
+- [x] T015 [P] [US3] Replace `onDestroy` with native `$effect` cleanup in `apps/web/src/lib/components/graph/Minimap.svelte`
+- [x] T016 [P] [US3] Fix identified leak in `apps/web/src/lib/stores/search.svelte.ts` (vault-switched listener) using Runic lifecycle
+- [x] T017 [US3] Verify guest roster cleanup in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` using Runic signals
+- [x] T017b [P] [US3] Refactor components using `$guestRoster` ([GraphToolbar.svelte](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/GraphToolbar.svelte), etc.) to use signal property access
+- [x] T017c [P] [US3] Refactor P2P handlers ([vault-handler.ts](file:///home/espen/proj/Codex-Arcana/apps/web/src/lib/cloud-bridge/p2p/handlers/vault-handler.ts), etc.) and contexts to consume Rune-based `guestRoster`
+- [x] T017d [P] [US3] Refactor and clean up related P2P tests (`guest-service.test.ts`, `p2p.test.ts`, etc.) to conform to Rune-based roster
 
 ## Phase 6: Polish & Cross-cutting
 
-- [ ] T018 Global audit: Ensure zero `from "svelte/store"` remain in `apps/web/src`
-- [ ] T019 Perform functional parity smoke tests against staging branch to verify zero behavioral regressions (FR-005)
-- [ ] T020 Run final full-suite `pnpm test` and `pnpm run lint`
-- [ ] T021 Update `docs/STYLE_GUIDE.md` if any new Runic patterns were established as standards
+- [x] T018 Global audit: Ensure zero `from "svelte/store"` remain in `apps/web/src`
+- [x] T019 Perform functional parity smoke tests against staging branch to verify zero behavioral regressions (FR-005)
+- [x] T020 Run final full-suite `pnpm test` and `pnpm run lint`
+- [x] T021 Update `docs/STYLE_GUIDE.md` if any new Runic patterns were established as standards
 
 ## Dependencies
 

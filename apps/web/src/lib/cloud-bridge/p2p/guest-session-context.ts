@@ -1,4 +1,4 @@
-import { guestRoster } from "../../stores/guest";
+import { guestStore } from "../../stores/guest.svelte";
 import type { PeerFactory } from "./peer-factory";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { GuestChatHandler } from "./handlers/guest-chat-handler";
@@ -55,7 +55,7 @@ export async function buildGuestContext(args: {
     mapSession: ms.mapSession,
     mapStore: m.mapStore,
     themeStore: t.themeStore,
-    guestRoster,
+    guestStore,
     transport: args.transport,
     assetCache: args.assetCache,
     callbacks: args.callbacks,

@@ -3,7 +3,7 @@
   import { base } from "$app/paths";
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { guestRoster } from "$lib/stores/guest";
+  import { guestStore } from "$lib/stores/guest.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
@@ -18,7 +18,7 @@
 
   const entries = $derived(mapSession.initiativeEntries);
   const activeTokenId = $derived(mapSession.activeTokenId);
-  const roster = $derived($guestRoster);
+  const roster = $derived(guestStore.guestRoster);
   const canManageTokens = $derived(
     mapStore.isGMMode && !sessionModeStore.isGuestMode,
   );

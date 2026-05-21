@@ -421,9 +421,10 @@ export class SearchService {
 
   async index(entry: SearchEntry): Promise<void> {
     const api = await this.ensureWorker();
+    const cleanEntry = $state.snapshot(entry);
     // Serialize all indexing operations
     this.indexQueue = this.indexQueue
-      .then(() => api.add(entry))
+      .then(() => api.add(cleanEntry))
       .catch((err) => this.debug.warn("Index error", err));
     return this.indexQueue;
   }
@@ -785,11 +786,12 @@ export class SearchService {
           const entry = this.mapToSearchEntry(entities[j]);
           chunkEntries.push(entry);
         }
+        const cleanChunkEntries = $state.snapshot(chunkEntries);
         if (context && !this.isActiveRun(context.vaultId, context.runId)) {
           return;
         }
         const result: ProgressiveBatchResult = context
-          ? await api.addBatchProgressive(chunkEntries, {
+          ? await api.addBatchProgressive(cleanChunkEntries, {
               runId: context.runId,
               vaultId: context.vaultId,
               batchIndex: Math.floor(i / INDEX_BATCH_SIZE),
@@ -799,12 +801,12 @@ export class SearchService {
           : {
               runId: "legacy",
               vaultId: this.activeVaultId ?? "legacy",
-              acceptedCount: chunkEntries.length,
+              acceptedCount: cleanChunkEntries.length,
               failedIds: [],
             };
 
         if (!context) {
-          await api.addBatch(chunkEntries);
+          await api.addBatch(cleanChunkEntries);
         } else if (this.isActiveRun(result.vaultId, result.runId)) {
           const indexedCount =
             this.progress.indexedCount + result.acceptedCount;

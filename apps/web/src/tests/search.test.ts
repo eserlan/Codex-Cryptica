@@ -69,7 +69,7 @@ vi.mock("$lib/stores/debug.svelte", () => ({
 }));
 
 // Import after mock
-import { SearchService } from "$lib/services/search";
+import { SearchService } from "$lib/services/search.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { vaultEventBus } from "$lib/stores/vault/events";
 
@@ -257,6 +257,7 @@ describe("SearchService", () => {
 
     it("should clear index on VAULT_OPENING", async () => {
       await vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "new-vault" });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(mockApi.clear).toHaveBeenCalled();
       expect((service as any).activeVaultId).toBe("new-vault");
     });

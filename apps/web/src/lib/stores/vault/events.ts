@@ -204,3 +204,17 @@ export class VaultEventBus {
 }
 
 export const vaultEventBus = new VaultEventBus();
+
+/**
+ * Runic utility that subscribes to the Vault Event Bus within an active Svelte 5 effect.
+ * Automatically cleans up the subscription when the effect is destroyed.
+ */
+export function useVaultSubscription(
+  listener: VaultEventListener,
+  name?: string,
+) {
+  $effect(() => {
+    const unsub = vaultEventBus.subscribe(listener, name);
+    return unsub;
+  });
+}

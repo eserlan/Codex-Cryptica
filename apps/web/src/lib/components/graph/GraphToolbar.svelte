@@ -3,7 +3,7 @@
   import type { Core } from "cytoscape";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { guestRoster } from "$lib/stores/guest";
+  import { guestStore } from "$lib/stores/guest.svelte";
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -63,7 +63,9 @@
   );
 
   const activeGuests = $derived.by(() =>
-    Object.values($guestRoster).sort((a, b) => a.joinedAt - b.joinedAt),
+    Object.values(guestStore.guestRoster).sort(
+      (a, b) => a.joinedAt - b.joinedAt,
+    ),
   );
 
   const guestPanelHeight = $derived(

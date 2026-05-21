@@ -1,6 +1,9 @@
 import type { Entity, Map } from "schema";
 import type { SerializedGraph } from "../types";
-import type { GuestPresenceStatus, GuestSession } from "../../stores/guest";
+import type {
+  GuestPresenceStatus,
+  GuestSession,
+} from "../../stores/guest.svelte";
 
 type GuestRoster = Record<string, GuestSession>;
 

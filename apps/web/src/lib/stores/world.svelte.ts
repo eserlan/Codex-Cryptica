@@ -9,7 +9,7 @@ import { entityDb } from "$lib/utils/entity-db";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { imageGenerationService } from "$lib/services/ai/image-generation.service";
-import { textGenerationService } from "$lib/services/ai/text-generation.service";
+import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
 
 const WORLD_IMAGE_MODEL = "gemini-3.1-flash-image-preview";
 

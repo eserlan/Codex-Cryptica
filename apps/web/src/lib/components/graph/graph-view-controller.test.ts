@@ -33,13 +33,11 @@ vi.mock("graph-engine", () => {
               not: vi.fn().mockReturnValue({
                 length: 1,
                 edgesWith: vi.fn().mockReturnValue({ length: 0 }),
-                add: vi
-                  .fn()
-                  .mockReturnValue({
-                    length: 1,
-                    removeClass: vi.fn(),
-                    addClass: vi.fn(),
-                  }),
+                add: vi.fn().mockReturnValue({
+                  length: 1,
+                  removeClass: vi.fn(),
+                  addClass: vi.fn(),
+                }),
               }),
             }),
           }),
@@ -168,5 +166,23 @@ describe("GraphViewController", () => {
 
     controller.handleVaultLoading();
     expect(true).toBe(true);
+  });
+
+  it("should finalize load when vault becomes idle and initial elements are loaded", async () => {
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    // Set up state
+    deps.vault.status = "idle";
+    controller.initialLoaded = true;
+    controller.didFinalizeLoad = false;
+
+    // Spy on applyCurrentLayout
+    const applySpy = vi.spyOn(controller, "applyCurrentLayout");
+
+    controller.handleVaultLoadFinalization();
+
+    expect(controller.didFinalizeLoad).toBe(true);
+    expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
   });
 });
