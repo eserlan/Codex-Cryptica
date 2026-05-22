@@ -2,6 +2,7 @@
 
 **Feature Branch**: `114-app-state-persistence`  
 **Created**: 2026-05-22  
+**PR Target**: `staging`  
 **Status**: Completed  
 **Input**: User description: "I'm thinking its a good idea that the browser remembers the state of the app when the user leaves, so when he refreshes or returns it is in the same state as when he left. i'm thinking about specifically what view is active (map, graph, canvas), if there's a selected entity in sidebar/graph or an open entity in zen mode, and if from the entity explorer (and if that's open)."
 
