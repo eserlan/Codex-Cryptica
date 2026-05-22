@@ -135,6 +135,10 @@ export abstract class MapSessionFacade {
     this.measurementManager.pings = value;
   }
 
+  get allPings() {
+    return this.measurementManager.allPings;
+  }
+
   get gridUnit() {
     return this.gridManager.gridUnit;
   }
