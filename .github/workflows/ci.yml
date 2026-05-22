@@ -68,4 +68,4 @@ jobs:
         env:
           VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
           VITE_ROBOTS_DIRECTIVE: "index, follow"
-        run: bun run build --filter=web
+        run: bun run build
