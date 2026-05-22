@@ -20,7 +20,9 @@
     entity: Entity | null;
     editState: any;
     resolvedImageUrl: string;
-    onShowLightbox: () => void;
+    onShowLightbox: (
+      rect?: { x: number; y: number; width: number; height: number } | null,
+    ) => void;
     onNavigate: (id: string) => void;
     onDelete: () => Promise<void>;
     isPopout?: boolean;
@@ -185,7 +187,16 @@
       </div>
     {:else if entity?.image}
       <button
-        onclick={onShowLightbox}
+        type="button"
+        onclick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          onShowLightbox({
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+          });
+        }}
         disabled={!resolvedImageUrl}
         class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none disabled:cursor-wait"
         aria-label="View full size image"

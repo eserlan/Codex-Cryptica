@@ -38,9 +38,11 @@ export class ModalUIStore {
     show: boolean;
     imageUrl: string;
     title?: string;
+    originRect?: { x: number; y: number; width: number; height: number } | null;
   }>({
     show: false,
     imageUrl: "",
+    originRect: null,
   });
 
   // Derived properties for backwards compatibility
@@ -71,16 +73,22 @@ export class ModalUIStore {
     this.bulkLabelDialog = { open: false, entityIds: [] };
   }
 
-  openLightbox(imageUrl: string, title?: string) {
+  openLightbox(
+    imageUrl: string,
+    title?: string,
+    originRect?: { x: number; y: number; width: number; height: number } | null,
+  ) {
     this.lightbox = {
       show: true,
       imageUrl,
       title,
+      originRect: originRect ?? null,
     };
   }
 
   closeLightbox() {
     this.lightbox.show = false;
+    this.lightbox.originRect = null;
   }
 
   openCanvasSelection(pendingEntities: string[]) {

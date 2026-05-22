@@ -35,6 +35,13 @@
       return null;
     }
   };
+
+  let hasOpenedLightbox = $state(false);
+  $effect(() => {
+    if (modalUIStore.lightbox.show) {
+      hasOpenedLightbox = true;
+    }
+  });
 </script>
 
 {#if searchStore.isOpen}
@@ -142,7 +149,7 @@
     {/if}
 
     <!-- Global Image Lightbox -->
-    {#if modalUIStore.lightbox.show}
+    {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
         {#if ZenImageLightbox}
           <ZenImageLightbox

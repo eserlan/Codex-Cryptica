@@ -167,8 +167,16 @@
   {:else if entity.image}
     <div class="px-4 md:px-6">
       <button
-        onclick={() =>
-          modalUIStore.openLightbox(resolvedImageUrl, entity.title)}
+        type="button"
+        onclick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          modalUIStore.openLightbox(resolvedImageUrl, entity.title, {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+          });
+        }}
         class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
       >
         <img

@@ -75,6 +75,9 @@ As a Game Master, I want a visual feedback ripple on the selected node on the gr
 - **FR-007**: Selecting a node on the Cytoscape graph canvas MUST trigger a styled underlay padding/opacity animation pulse.
 - **FR-008**: The Zen Mode modal (`ZenModeModal`) MUST utilize premium fluid transitions (`transition:fade` and `transition:fly` with `quintOut` easing) for smooth entrance and exit animations on desktop and mobile viewports.
 - **FR-009**: Large overlay elements and modals MUST be persistently mounted in their parent provider blocks (e.g. `GlobalModalProvider.svelte`) rather than wrapped in parent conditional statements, ensuring exit transition lifecycles play to completion in the DOM before destruction.
+- **FR-010**: The Image Lightbox MUST support a custom zoom-from-source transition (`zoomFrom`) that dynamically calculates scale and 3D translation based on the clicked image's screen coordinates (`originRect`).
+- **FR-011**: To enable precise coordinate-based transition geometry, the Lightbox image MUST pre-resolve and load the URL before launching the entrance transition, ensuring final bounding rect dimensions are reliably known.
+- **FR-012**: The details panel MUST cache the last non-null entity in a local reactive state (`lastNonNullEntity`) to prevent visual content clearing during the exit container expand transition.
 
 ## Success Criteria
 
@@ -84,3 +87,4 @@ As a Game Master, I want a visual feedback ripple on the selected node on the gr
 - **SC-002**: Content cross-fade does not cause vertical height jumps or layout shifts.
 - **SC-003**: The selected node pulse completes within 500ms and correctly resets styles to avoid rendering artifacts.
 - **SC-004**: Zen Mode backdrop and card elements slide/fade from the bottom with a complete exit transition when the modal is closed.
+- **SC-005**: The Image Lightbox zoom/morph transition runs synchronously over 600ms with smooth `quintOut` deceleration, originating from the thumbnail coordinate and centering dynamically.

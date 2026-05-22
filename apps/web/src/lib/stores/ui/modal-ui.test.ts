@@ -22,7 +22,11 @@ describe("ModalUIStore", () => {
 
     expect(store.mergeDialog).toEqual({ open: false, sourceIds: [] });
     expect(store.bulkLabelDialog).toEqual({ open: false, entityIds: [] });
-    expect(store.lightbox).toEqual({ show: false, imageUrl: "" });
+    expect(store.lightbox).toEqual({
+      show: false,
+      imageUrl: "",
+      originRect: null,
+    });
   });
 
   it("handles settings modal", () => {
@@ -82,12 +86,15 @@ describe("ModalUIStore", () => {
 
   it("handles lightbox", () => {
     const store = new ModalUIStore();
-    store.openLightbox("img.jpg", "A title");
+    const rect = { x: 10, y: 20, width: 100, height: 100 };
+    store.openLightbox("img.jpg", "A title", rect);
     expect(store.lightbox.show).toBe(true);
     expect(store.lightbox.imageUrl).toBe("img.jpg");
     expect(store.lightbox.title).toBe("A title");
+    expect(store.lightbox.originRect).toEqual(rect);
 
     store.closeLightbox();
     expect(store.lightbox.show).toBe(false);
+    expect(store.lightbox.originRect).toBeNull();
   });
 });

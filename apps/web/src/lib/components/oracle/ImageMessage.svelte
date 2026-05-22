@@ -60,8 +60,15 @@
         class="w-full rounded-lg border border-theme-border shadow-lg cursor-zoom-in group-hover:border-theme-primary/50 transition-all"
         draggable="true"
         ondragstart={handleDragStart}
-        onclick={() =>
-          modalUIStore.openLightbox(message.imageUrl!, message.content)}
+        onclick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          modalUIStore.openLightbox(message.imageUrl!, message.content, {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+          });
+        }}
       />
 
       <!-- Overlay Info -->

@@ -288,6 +288,7 @@ describe("FrontPage", () => {
     expect(modalUIStore.openLightbox).toHaveBeenCalledWith(
       "resolved://image",
       "World cover",
+      expect.any(Object),
     );
   });
 

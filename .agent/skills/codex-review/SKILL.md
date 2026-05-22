@@ -15,6 +15,7 @@ This skill provides a meticulous code review process tailored specifically for t
 4. **Audit Worker Proxies**: If a new AI method is added to `TextGenerationService`, verify it is correctly exposed in `oracle.worker.ts` and bound in `OracleStore`.
 5. **Enforce Performance Heuristics**: Ensure synchronous AI processing in loops (like auto-archive) is limited to small batches (< 5).
 6. **Check Accessibility**: Ensure `Autocomplete` components have `ariaLabel` and that icons follow the Iconify class pattern.
+7. **Verify HTML & JS Semantics**: Ensure all action buttons have explicit `type="button"`, coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, and avoid user-agent sniffing by using environment flags like `import.meta.env.MODE === "test"`.
 
 ## Reference Patterns
 

@@ -246,9 +246,34 @@
     showCoverEditor = false;
   };
 
-  const openCoverLightbox = () => {
+  const openCoverLightbox = (
+    e?:
+      | MouseEvent
+      | { x: number; y: number; width: number; height: number }
+      | null,
+  ) => {
     if (coverImageUrl) {
-      modalUIStore.openLightbox(coverImageUrl, "World cover");
+      let rect: { x: number; y: number; width: number; height: number } | null =
+        null;
+      if (e instanceof MouseEvent && e.currentTarget) {
+        const clientRect = (
+          e.currentTarget as HTMLElement
+        ).getBoundingClientRect();
+        rect = {
+          x: clientRect.left,
+          y: clientRect.top,
+          width: clientRect.width,
+          height: clientRect.height,
+        };
+      } else if (
+        e &&
+        typeof e === "object" &&
+        !(e instanceof MouseEvent) &&
+        "x" in e
+      ) {
+        rect = e as { x: number; y: number; width: number; height: number };
+      }
+      modalUIStore.openLightbox(coverImageUrl, "World cover", rect);
     }
   };
 

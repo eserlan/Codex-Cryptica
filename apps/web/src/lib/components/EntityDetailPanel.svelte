@@ -38,6 +38,16 @@
   // lazy loading from Dexie.
   let entity = $derived(_entity?.id ? vault.entities[_entity.id] : null);
 
+  // Keep a reference to the last non-null entity for the exit transition
+  let lastNonNullEntity = $state<Entity | null>(null);
+  $effect(() => {
+    if (entity) {
+      lastNonNullEntity = entity;
+    }
+  });
+
+  let activeEntity = $derived(entity || lastNonNullEntity);
+
   // Lazy-load content when sidebar opens or navigates
   $effect(() => {
     if (entity?.id) {
@@ -84,16 +94,17 @@
   });
 
   const startEditing = () => {
-    if (!entity) return;
-    editTitle = entity.title;
-    editAliases = [...(entity.aliases || [])];
-    editContent = entity.content || "";
-    editLore = entity.lore || "";
-    editType = entity.type;
-    editImage = entity.image || "";
-    editDate = entity.date;
-    editStartDate = entity.start_date;
-    editEndDate = entity.end_date;
+    const current = entity || activeEntity;
+    if (!current) return;
+    editTitle = current.title;
+    editAliases = [...(current.aliases || [])];
+    editContent = current.content || "";
+    editLore = current.lore || "";
+    editType = current.type;
+    editImage = current.image || "";
+    editDate = current.date;
+    editStartDate = current.start_date;
+    editEndDate = current.end_date;
     isEditing = true;
   };
 
@@ -102,10 +113,11 @@
   };
 
   const saveChanges = async () => {
-    if (!entity) return;
+    const current = entity || activeEntity;
+    if (!current) return;
     isSaving = true;
     try {
-      await vault.updateEntity(entity.id, {
+      await vault.updateEntity(current.id, {
         title: editTitle,
         aliases: $state.snapshot(editAliases),
         content: editContent,
@@ -129,10 +141,11 @@
   };
 
   const handleDelete = async () => {
-    if (!entity) return;
+    const current = entity || activeEntity;
+    if (!current) return;
     const confirmed = await notificationStore.confirm({
       title: "Delete Entity",
-      message: `Are you sure you want to permanently delete "${entity.title}"? This action cannot be undone.`,
+      message: `Are you sure you want to permanently delete "${current.title}"? This action cannot be undone.`,
       confirmLabel: "Delete permanently",
       cancelLabel: "Keep entity",
       isDangerous: true,
@@ -140,7 +153,7 @@
 
     if (confirmed) {
       try {
-        await vault.deleteEntity(entity.id);
+        await vault.deleteEntity(current.id);
         onClose();
       } catch (err: any) {
         console.error("Failed to delete entity", err);
@@ -152,10 +165,11 @@
   let isDraftActioning = $state(false);
 
   const handleApproveDraft = async () => {
-    if (!entity || isDraftActioning) return;
+    const current = entity || activeEntity;
+    if (!current || isDraftActioning) return;
     isDraftActioning = true;
     try {
-      await vault.updateEntity(entity.id, { status: "active" });
+      await vault.updateEntity(current.id, { status: "active" });
     } catch (err: any) {
       notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
@@ -164,10 +178,11 @@
   };
 
   const handleRejectDraft = async () => {
-    if (!entity || isDraftActioning) return;
+    const current = entity || activeEntity;
+    if (!current || isDraftActioning) return;
     isDraftActioning = true;
     try {
-      await vault.deleteEntity(entity.id);
+      await vault.deleteEntity(current.id);
       onClose();
     } catch (err: any) {
       notificationStore.notify(`Error: ${err.message}`, "error");
@@ -221,7 +236,7 @@
   }
 </script>
 
-{#if entity}
+{#if entity && activeEntity}
   <aside
     transition:expandFrom
     class="pointer-events-auto flex flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono absolute right-0 top-0 bottom-0 max-md:top-auto max-md:h-[calc(100%-60px)] z-50 overflow-hidden"
@@ -245,7 +260,7 @@
 
     <div class="absolute inset-0 flex flex-col min-h-0">
       <DetailHeader
-        {entity}
+        entity={activeEntity}
         {isEditing}
         bind:editTitle
         bind:editAliases
@@ -257,7 +272,7 @@
         style:background-color="var(--theme-panel-muted)"
         style="background-image: var(--bg-texture-overlay); touch-action: pan-y; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;"
       >
-        {#key entity.id}
+        {#key activeEntity.id}
           <div
             in:fade={{ duration: 150, delay: 150 }}
             out:fade={{ duration: 150 }}
@@ -270,7 +285,7 @@
                 TRANSIENT MODE: CHANGES WILL NOT BE SAVED
               </div>
             {/if}
-            {#if entity.status === "draft" && !vault.isGuest}
+            {#if activeEntity.status === "draft" && !vault.isGuest}
               <div
                 class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"
               >
@@ -308,10 +323,10 @@
               class="bg-theme-surface shrink-0"
               style:background-color="var(--theme-panel-fill)"
             >
-              <DetailImage {entity} {isEditing} bind:editImage />
+              <DetailImage entity={activeEntity} {isEditing} bind:editImage />
 
               <DetailTabs
-                {entity}
+                entity={activeEntity}
                 bind:activeTab
                 {isEditing}
                 bind:editType
@@ -328,7 +343,7 @@
               >
                 {#if activeTab === "status"}
                   <DetailStatusTab
-                    {entity}
+                    entity={activeEntity}
                     {isEditing}
                     {editType}
                     bind:editContent
@@ -344,7 +359,11 @@
                 hidden={activeTab !== "lore" || vault.isGuest}
               >
                 {#if activeTab === "lore" && !vault.isGuest}
-                  <DetailLoreTab {entity} {isEditing} bind:editLore />
+                  <DetailLoreTab
+                    entity={activeEntity}
+                    {isEditing}
+                    bind:editLore
+                  />
                 {/if}
               </div>
               <div
@@ -366,7 +385,7 @@
                 hidden={activeTab !== "map"}
               >
                 {#if activeTab === "map"}
-                  <DetailMapTab {entity} />
+                  <DetailMapTab entity={activeEntity} />
                 {/if}
               </div>
             </div>

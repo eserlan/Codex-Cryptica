@@ -99,3 +99,49 @@ class FeatureStore {
 
 - **Issue**: Running debounced auto-save effects that trigger on mere selection or opening of existing entries, causing redundant database writes and unnecessary load.
 - **Pattern**: Track the active item's original content and ID. Only trigger the debounce routine when the content has _actually_ diverged from the loaded state, and skip/gate empty brand-new entries until the user has typed.
+
+## JavaScript & HTML Best Practices
+
+### Coordinate Check Nullish Coalescing (Falsy 0)
+
+- **Issue**: Using logical OR (`||`) for coordinate fallbacks (e.g., `rect.left || fallback`) causes bugs when coordinates are exactly `0` (which is a valid position flush with the screen edge but is falsy in JS).
+- **Pattern**: Always use nullish coalescing (`??`) for coordinate or numeric fallbacks.
+- **Example**:
+
+  ```typescript
+  // Bad
+  const left = rect.left || 100; // Evaluates to 100 if left is 0
+
+  // Good
+  const left = rect.left ?? 100; // Evaluates to 0 if left is 0
+  ```
+
+### Dynamic Imports with Exit Transitions
+
+- **Issue**: Dynamically importing a component inside Svelte's `{#await}` block on-demand saves bundle size but breaks exit transitions if the wrapping conditional unmounts it immediately.
+- **Pattern**: Use a sticky boolean flag (e.g., `hasOpened = true` on first interaction) that triggers the dynamic import, and keep the flag `true` to ensure the component remains in the DOM for exit animations to play.
+- **Example**:
+  ```svelte
+  <script>
+    let hasOpened = $state(false);
+  </script>
+
+  {#if hasOpened}
+    {#await import("./LazyComponent.svelte") then { default: LazyComponent }}
+      <LazyComponent ... />
+    {/await}
+  {/if}
+  ```
+
+### User-Agent Sniffing vs Environment Flags
+
+- **Issue**: Checking `navigator.userAgent` (e.g., looking for "jsdom") to detect a testing/jsdom environment is fragile and easily breaks in different browser/node runtimes.
+- **Pattern**: Use explicit environment flags like `import.meta.env.MODE === "test"` (Vite/Vitest) or feature checks instead of fragile user-agent parsing.
+
+### Explicit Button Types
+
+- **Issue**: `<button>` tags without a `type` attribute default to `type="submit"` in HTML, which can cause unwanted form submissions or page reloads when clicked.
+- **Pattern**: Always add an explicit `type="button"` attribute to trigger/action buttons.
+  ```html
+  <button type="button" onclick="{openLightbox}">Zoom</button>
+  ```
