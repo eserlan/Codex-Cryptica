@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-22
-**Feature**: [spec.md](file:///home/espen/proj/Codex-Arcana/specs/111-proposal-limit-check/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

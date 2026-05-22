@@ -27,7 +27,12 @@ class ProposerStore {
           event.connectionType,
         );
       } else if (event.type === "VAULT_SWITCHED") {
-        void this.loadGlobalProposals();
+        void this.loadGlobalProposals().catch((err) =>
+          debugStore.error(
+            "[ProposerStore] Failed to load global proposals on vault switch",
+            { error: err },
+          ),
+        );
       }
     });
   }
@@ -209,9 +214,15 @@ class ProposerStore {
     }
 
     const service = this.getService();
-    this.allPendingProposals = await service.getAllPendingProposals(vaultId);
-    this.allAcceptedProposals = await service.getAllAcceptedProposals(vaultId);
-    this.allVerifiedProposals = await service.getAllVerifiedProposals(vaultId);
+    [
+      this.allPendingProposals,
+      this.allAcceptedProposals,
+      this.allVerifiedProposals,
+    ] = await Promise.all([
+      service.getAllPendingProposals(vaultId),
+      service.getAllAcceptedProposals(vaultId),
+      service.getAllVerifiedProposals(vaultId),
+    ]);
   }
 
   async verify(proposal: Proposal) {

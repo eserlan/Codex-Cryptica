@@ -16,17 +16,17 @@
 
 ### User Story 1 - Auto-proposal Suppression (Priority: P1)
 
-When the user opens an entity, the system checks the number of pending proposals specifically for that active entity. If this count is greater than 4, the background proposer execution must be suppressed (i.e. we do not automatically call the Lore Oracle to look for connections).
+When the user opens an entity, the system checks the total number of existing connections (outbound + inbound) for that active entity. If this count is greater than 4, the background proposer execution must be suppressed (i.e. we do not automatically call the Lore Oracle to look for connections).
 
 **Why this priority**: It is the core behavior needed to limit background AI token usage and reduce layout clutter when there are already many suggestions pending review for the entity.
 
-**Independent Test**: Load a vault with an entity that has 5 pending proposals. Open the entity's details. Verify that no background API call is triggered.
+**Independent Test**: Load a vault with an entity that has more than 4 total connections (outbound + inbound). Open the entity's details. Verify that no background API call is triggered.
 
 **Acceptance Scenarios**:
 
-1. **Given** an active entity with 5 pending proposals, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis is NOT scheduled/run.
-2. **Given** an active entity with 3 pending proposals, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis runs normally in the background.
-3. **Given** an active entity with 0 pending proposals, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis runs normally in the background.
+1. **Given** an active entity with more than 4 total connections (outbound + inbound), **When** the user navigates to it, **Then** the automatic 1-second timeout analysis is NOT scheduled/run.
+2. **Given** an active entity with 3 total connections, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis runs normally in the background.
+3. **Given** an active entity with 0 connections, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis runs normally in the background.
 
 ---
 
@@ -75,7 +75,7 @@ The `proposerStore`'s in-memory active arrays (`allPendingProposals`, `allAccept
 ### Functional Requirements
 
 - **FR-001**: The system MUST query the proposals cache (IndexedDB/store state) for the active entity upon opening the entity.
-- **FR-002**: The system MUST check if the active entity has more than 4 pending proposals. If the count is $> 4$, the automatic proposer schedule MUST be skipped.
+- **FR-002**: The system MUST check if the active entity has more than 4 total connections (outbound + inbound). If the count is $> 4$, the automatic proposer schedule MUST be skipped.
 - **FR-003**: The system MUST render a manual "Look for Connection Proposals" button in `DetailProposals.svelte` when the automatic scan is skipped, or when suggestions exist and the user wants to manual-scan.
 - **FR-004**: The manual button MUST trigger `proposerStore.analyzeEntityById(entityId, requireSelection, true)` immediately upon click and display the loading/analyzing state.
 - **FR-005**: The `proposerStore` MUST subscribe to the `VAULT_SWITCHED` event and load global proposals automatically so that global pending/accepted arrays are populated on vault load.
@@ -89,6 +89,6 @@ The `proposerStore`'s in-memory active arrays (`allPendingProposals`, `allAccept
 
 ### Measurable Outcomes
 
-- **SC-001**: Background API calls are prevented 100% of the time when opening an entity that already has more than 4 pending proposals.
+- **SC-001**: Background API calls are prevented 100% of the time when opening an entity that already has more than 4 total connections (outbound + inbound).
 - **SC-002**: The manual scan button is visible and clickable in both standard entity details and Zen mode whenever the entity has pending proposals or when auto-scan is bypassed.
 - **SC-003**: In-memory proposal lists and counts across the application (including AI Assessment panel and sidebar suggestions) are fully synchronized and updated within 100ms of any proposal state transition (apply, dismiss, etc.).

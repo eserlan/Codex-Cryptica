@@ -17,19 +17,19 @@
 
 ## Phase 3: User Story 1 - Auto-proposal Suppression (Priority: P1) 🎯 MVP
 
-**Goal**: Suppress automatic background proposer analysis when viewing an entity if the active entity has > 4 pending connection proposals.
+**Goal**: Suppress automatic background proposer analysis when viewing an entity if the active entity has > 4 total connections (outbound + inbound).
 
-**Independent Test**: Load an entity with 5 pending proposals. Verify that no automatic proposer timeout triggers.
+**Independent Test**: Load an entity with more than 4 total connections. Verify that no automatic proposer timeout triggers.
 
 ### Tests for User Story 1
 
-- [x] T003 [P] [US1] Write unit tests in `apps/web/src/lib/components/entity-detail/proposals/DetailProposals.test.ts` to assert that auto-proposing is skipped when proposals count > 4.
+- [x] T003 [P] [US1] Write unit tests in `apps/web/src/lib/components/entity-detail/proposals/DetailProposals.test.ts` to assert that auto-proposing is skipped when total connection count (outbound + inbound) > 4.
 
 ### Implementation for User Story 1
 
-- [x] T004 [US1] Modify `apps/web/src/lib/components/entity-detail/proposals/DetailProposals.svelte` to check activeProposals length and only trigger auto-proposer if length <= 4.
+- [x] T004 [US1] Modify `apps/web/src/lib/components/entity-detail/proposals/DetailProposals.svelte` to check total connection count (outbound + inbound) and only trigger auto-proposer if count <= 4.
 - [x] T005 [US1] Load entity proposals reactively in an effect in `DetailProposals.svelte` when `activeEntityId` changes.
-- [x] T014 [US1] Prevent auto-proposer execution if proposals count drops below 5 mid-session (non-reactive suppression).
+- [x] T014 [US1] Prevent auto-proposer execution if connection count drops below 5 mid-session (non-reactive suppression).
 
 ---
 
@@ -37,7 +37,7 @@
 
 **Goal**: Render a manual "Look for Connection Proposals" button in the standard Detail view and Zen mode when auto-proposing is suppressed.
 
-**Independent Test**: Click the manual button for an entity with > 4 proposals, verify analysis triggers and updates proposals.
+**Independent Test**: Click the manual button for an entity with > 4 total connections, verify analysis triggers and updates proposals.
 
 ### Tests for User Story 2
 
@@ -45,7 +45,7 @@
 
 ### Implementation for User Story 2
 
-- [x] T007 [US2] Render manual button at the bottom of the active proposals list in `DetailProposals.svelte` when proposal count is > 4.
+- [x] T007 [US2] Render manual button at the bottom of the active proposals list in `DetailProposals.svelte` when total connection count > 4.
 - [x] T008 [US2] Connect manual button click to `proposerStore.analyzeEntityById` with appropriate arguments and bind disabled/loading state to `proposerStore.isEntityAnalyzing`.
 - [x] T015 [US2] Trigger standard toast error notification on manual API scan failure, and verify with unit tests.
 

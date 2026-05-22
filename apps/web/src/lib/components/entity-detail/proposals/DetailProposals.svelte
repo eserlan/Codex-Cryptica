@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { Proposal } from "@codex/proposer";
@@ -24,8 +25,10 @@
   // Re-evaluate suppression and load proposals on each entity navigation.
   // Suppression is recomputed fresh per navigation; proposals load is gated to once per entity.
   async function loadAndEvaluate(id: string) {
-    const outbound = vault.entities[id]?.connections?.length ?? 0;
-    const inbound = vault.inboundConnections[id]?.length ?? 0;
+    const outbound = untrack(
+      () => vault.entities[id]?.connections?.length ?? 0,
+    );
+    const inbound = untrack(() => vault.inboundConnections[id]?.length ?? 0);
     isAutoProposeSuppressed = outbound + inbound > 4;
 
     if (id === lastEvaluatedEntityId) return;
@@ -175,6 +178,7 @@
     {#if isAutoProposeSuppressed || activeProposals.length > 4}
       <div class="pb-6">
         <button
+          type="button"
           onclick={() =>
             proposerStore.analyzeEntityById(
               activeEntityId,
@@ -183,14 +187,20 @@
               true,
             )}
           disabled={proposerStore.isEntityAnalyzing(activeEntityId)}
+          aria-busy={proposerStore.isEntityAnalyzing(activeEntityId)}
           class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-theme-bg/50 hover:bg-theme-bg border border-theme-border hover:border-theme-primary/50 text-theme-secondary hover:text-theme-primary rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-primary"
           aria-label="Look for connection proposals manually"
         >
           {#if proposerStore.isEntityAnalyzing(activeEntityId)}
-            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
             <span>Looking for Proposals...</span>
           {:else}
-            <span class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"
+            <span
+              class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"
+              aria-hidden="true"
             ></span>
             <span>Look for Connection Proposals</span>
           {/if}

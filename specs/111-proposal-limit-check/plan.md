@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implements a check to see if there are more than 4 pending connection proposals for the active entity. If this threshold is exceeded, disable the automatic background proposal trigger and show a manual "Look for Connection Proposals" button in the standard Detail sidebar and Zen mode. Also, keep all global/local proposal caches synchronized on mutations and vault switches.
+Implements a check to see if the active entity has more than 4 total connections (outbound + inbound). If this threshold is exceeded, disable the automatic background proposal trigger and show a manual "Look for Connection Proposals" button in the standard Detail sidebar and Zen mode. Also, keep all global/local proposal caches synchronized on mutations and vault switches.
 
 ## Technical Context
 

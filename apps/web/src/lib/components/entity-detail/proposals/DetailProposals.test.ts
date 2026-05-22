@@ -252,7 +252,10 @@ describe("DetailProposals Component", () => {
 
     expect(proposerStore.analyzeEntityById).not.toHaveBeenCalled();
 
-    // Simulate connections dropping below threshold mid-session
+    // Simulate connections dropping below threshold mid-session.
+    // Note: vault is a plain object mock (not Svelte reactive state), so this mutation
+    // does NOT trigger Svelte reactivity — it validates suppression stickiness via
+    // rerender rather than a reactive re-evaluation of loadAndEvaluate.
     vault.entities["entity-1"].connections = [{ target: "t1" }];
     vault.inboundConnections["entity-1"] = [];
     await rerender({ isEditing: false });
