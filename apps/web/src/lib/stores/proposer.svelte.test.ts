@@ -147,6 +147,10 @@ describe("proposerStore", () => {
 
   it("handles verify and undo branches", async () => {
     const { proposerStore } = await import("./proposer.svelte");
+    const loadSpy = vi
+      .spyOn(proposerStore, "loadGlobalProposals")
+      .mockResolvedValue(undefined);
+
     const p = { ...mockProposal, sourceId: "s", targetId: "t" };
     proposerStore.allAcceptedProposals = [p];
     proposerStore.proposals["s"] = [p];
@@ -154,9 +158,13 @@ describe("proposerStore", () => {
     await proposerStore.verify(p);
     expect(mockService.verifyProposal).toHaveBeenCalled();
     expect(proposerStore.allVerifiedProposals).toHaveLength(1);
+    expect(loadSpy).toHaveBeenCalled();
+
+    loadSpy.mockClear();
 
     await proposerStore.undo(p);
     expect(mockVault.removeConnection).toHaveBeenCalled();
+    expect(loadSpy).toHaveBeenCalled();
   });
 
   it("handles reEvaluate", async () => {
@@ -397,5 +405,56 @@ describe("proposerStore", () => {
       "p-high",
       "p-mid",
     ]);
+  });
+
+  it("loads global proposals on VAULT_SWITCHED event", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+    const loadSpy = vi
+      .spyOn(proposerStore, "loadGlobalProposals")
+      .mockResolvedValue(undefined);
+
+    const busListener = mockVaultEventBus.subscribe.mock.calls.find(
+      (call) => typeof call[0] === "function",
+    )?.[0];
+
+    if (!busListener) throw new Error("Bus listener not found");
+    await busListener({ type: "VAULT_SWITCHED" });
+
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it("synchronizes global proposals on mutation methods", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+    const loadSpy = vi
+      .spyOn(proposerStore, "loadGlobalProposals")
+      .mockResolvedValue(undefined);
+
+    const p = { ...mockProposal, sourceId: "s", targetId: "t" };
+
+    // Test verify
+    await proposerStore.verify(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test undo
+    await proposerStore.undo(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test apply
+    await proposerStore.apply(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test dismiss
+    await proposerStore.dismiss(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test reEvaluate
+    await proposerStore.reEvaluate(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test analyzeEntityById
+    await proposerStore.analyzeEntityById("s");
+    expect(loadSpy).toHaveBeenLastCalledWith();
   });
 });
