@@ -1,1 +1,3 @@
-pnpm exec commitlint --edit ${1}
+#!/usr/bin/env sh
+[ -d "$HOME/.bun/bin" ] && export PATH="$HOME/.bun/bin:$PATH"
+bunx commitlint --edit ${1}

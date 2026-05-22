@@ -14,7 +14,7 @@ for (const file of files) {
   
   console.log(`Uploading ${file} to ${remotePath}...`);
   try {
-    execSync(`pnpm exec wrangler r2 object put ${BUCKET}/${remotePath} --file ${localPath} --remote`, { stdio: 'inherit' });
+    execSync(`bunx wrangler r2 object put ${BUCKET}/${remotePath} --file ${localPath} --remote`, { stdio: 'inherit' });
   } catch (error) {
     console.error(`Failed to upload ${file}:`, error);
   }
