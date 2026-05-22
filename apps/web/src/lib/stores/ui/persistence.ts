@@ -20,6 +20,8 @@ export const UI_STORAGE_KEYS = {
   RECENT_CONNECTION_LABELS: "codex_recent_connection_labels",
   RIGHT_SIDEBAR_WIDTH: "codex_right_sidebar_width",
   SKIP_LANDING: "codex_skip_landing",
+  LEFT_SIDEBAR_OPEN: "codex_left_sidebar_open",
+  ACTIVE_SIDEBAR_TOOL: "codex_active_sidebar_tool",
   VTT_ENTITY_LIST_COLLAPSED: "codex_vtt_entity_list_collapsed",
   VTT_SIDEBAR_COLLAPSED: "codex_vtt_sidebar_collapsed",
   WORLD_PAGE_DISMISSED_AT: "codex_world_page_dismissed_at",
