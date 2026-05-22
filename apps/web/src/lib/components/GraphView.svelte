@@ -39,6 +39,8 @@
     },
   );
 
+  let resizeObserver: ResizeObserver | undefined;
+
   // Single coordinator for selectedId sync
   $effect(() => {
     if (selectedId !== controller.selectedId) {
@@ -121,9 +123,20 @@
 
   onMount(() => {
     controller.init(container, graphStyle);
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        if (controller.cy) {
+          controller.cy.resize();
+        }
+      });
+      resizeObserver.observe(container);
+    }
   });
 
   onDestroy(() => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
     controller.destroy();
   });
 
@@ -177,6 +190,45 @@
     untrack(() => controller.syncElements());
   });
 
+  function centerOnNode(
+    node: any,
+    animate = true,
+    customZoom: number | null = null,
+  ) {
+    const currentCy = controller.cy;
+    if (!currentCy) return;
+
+    const targetZoom = customZoom !== null ? customZoom : currentCy.zoom();
+    const nodePos = node.position();
+
+    // Adjust for desktop sidebar offset to center in the remaining visible area only if open
+    const isSidebarVisible = !!vault.selectedEntityId;
+    const sidebarWidth =
+      !layoutUIStore.isMobile &&
+      isSidebarVisible &&
+      layoutUIStore.rightSidebarWidth
+        ? layoutUIStore.rightSidebarWidth
+        : 0;
+
+    const targetPanX =
+      (currentCy.width() - sidebarWidth) / 2 - targetZoom * nodePos.x;
+    const targetPanY = currentCy.height() / 2 - targetZoom * nodePos.y;
+
+    if (animate) {
+      currentCy.animate({
+        pan: { x: targetPanX, y: targetPanY },
+        zoom: targetZoom,
+        duration: 800,
+        easing: "ease-out-cubic",
+      });
+    } else {
+      currentCy.viewport({
+        zoom: targetZoom,
+        pan: { x: targetPanX, y: targetPanY },
+      });
+    }
+  }
+
   // Selection & Search Focus
   $effect(() => {
     void controller.pendingSearchFocus;
@@ -193,12 +245,11 @@
                 DEFAULT_SEARCH_ENTITY_ZOOM)
               : null;
           untrack(() => {
-            currentCy.animate({
-              center: { eles: node },
-              ...(focusZoom !== null ? { zoom: focusZoom } : {}),
-              duration: 800,
-              easing: "ease-out-cubic",
-            });
+            centerOnNode(node, true, focusZoom);
+
+            // Stop animations and clear custom style bypasses on all nodes to prevent sticky/leaky highlight styles
+            currentCy.nodes().stop();
+            currentCy.nodes().removeStyle();
 
             node.animate(
               {
@@ -215,12 +266,17 @@
                     {
                       style: {
                         "underlay-padding": 8,
-                        "underlay-opacity": 0.3,
+                        "underlay-opacity":
+                          themeStore.activeTheme.id === "fantasy" ? 0 : 0.3,
                       },
                     },
                     {
                       duration: 250,
                       easing: "ease-in",
+                      complete: () => {
+                        // Crucial: remove override styles so they don't persist on node deselection!
+                        node.removeStyle();
+                      },
                     },
                   );
                 },
@@ -235,8 +291,15 @@
         ) {
           controller.pendingSearchFocus = null;
         }
-      } else if (controller.pendingSearchFocus) {
-        controller.pendingSearchFocus = null;
+      } else {
+        // No node is selected, clear any active node overrides and animations
+        untrack(() => {
+          currentCy.nodes().stop();
+          currentCy.nodes().removeStyle();
+        });
+        if (controller.pendingSearchFocus) {
+          controller.pendingSearchFocus = null;
+        }
       }
     }
   });
@@ -260,7 +323,7 @@
 
     if (findCounter >= 0) {
       untrack(() => {
-        currentCy.center(node);
+        centerOnNode(node, false);
       });
     }
   });

@@ -8,6 +8,7 @@
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import ZenModeModal from "./ZenModeModal.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -70,13 +71,7 @@
       {/await}
     {/if}
 
-    {#if modalUIStore.showZenMode}
-      {#await loadModal(() => import("./ZenModeModal.svelte"), "ZenModeModal") then ZenModeModal}
-        {#if ZenModeModal}
-          <ZenModeModal />
-        {/if}
-      {/await}
-    {/if}
+    <ZenModeModal />
 
     {#if helpStore.activeTour}
       {#await loadModal(() => import("$lib/components/help/TourOverlay.svelte"), "TourOverlay") then TourOverlay}

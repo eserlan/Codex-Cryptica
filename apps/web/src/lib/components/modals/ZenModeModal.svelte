@@ -1,6 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { fly, fade } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { openEntityPopout } from "$lib/utils/zen-popout";
@@ -38,15 +39,17 @@
   };
 
   const handleBackdropClick = () => {
-    if (!isPopout && zenViewComponent) {
+    if (isPopout) return;
+    if (zenViewComponent) {
       zenViewComponent.requestClose();
-    } else if (!isPopout) {
+    } else {
       handleClose();
     }
   };
 
   const handlePopOut = () => {
     if (!entity) return;
+
     const popOutEntity = async () => {
       let entityForPopout = entity!;
 
@@ -93,14 +96,14 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
-    transition:fade={{ duration: 200 }}
-    onclick={isPopout ? undefined : handleBackdropClick}
+    transition:fade={{ duration: 500 }}
+    onclick={handleBackdropClick}
     data-testid="zen-mode-modal"
   >
     <div
       class="w-full md:max-w-6xl h-full md:h-[90vh] shadow-2xl overflow-hidden"
       style:box-shadow="var(--theme-glow)"
-      transition:fly={{ y: 20, duration: 300 }}
+      transition:fly={{ y: 50, duration: 550, easing: quintOut }}
       onclick={(e) => e.stopPropagation()}
       role="presentation"
     >

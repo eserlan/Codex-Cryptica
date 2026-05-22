@@ -73,11 +73,14 @@ As a Game Master, I want a visual feedback ripple on the selected node on the gr
 - **FR-005**: The detail panel content wrapper MUST use Svelte `{#key entity.id}` and cross-fade transitions (`in:fade`, `out:fade`) to transition content when navigating between entities.
 - **FR-006**: To prevent double-height layouts during the cross-fade, the detail panel content wrapper MUST use a CSS grid container overlay (`display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;`) with both entering and exiting items placed at `col-start-1 row-start-1`.
 - **FR-007**: Selecting a node on the Cytoscape graph canvas MUST trigger a styled underlay padding/opacity animation pulse.
+- **FR-008**: The Zen Mode modal (`ZenModeModal`) MUST utilize premium fluid transitions (`transition:fade` and `transition:fly` with `quintOut` easing) for smooth entrance and exit animations on desktop and mobile viewports.
+- **FR-009**: Large overlay elements and modals MUST be persistently mounted in their parent provider blocks (e.g. `GlobalModalProvider.svelte`) rather than wrapped in parent conditional statements, ensuring exit transition lifecycles play to completion in the DOM before destruction.
 
 ## Success Criteria
 
 ### Measurable Outcomes
 
-- **SC-001**: Transition durations are visually snappy and fluid (300-350ms container transition, 150ms inner cross-fade).
+- **SC-001**: Transition durations on large/immersive containers are visually weighted and fluid, utilizing premium deceleration (`quintOut` easing with `500ms` – `600ms` container transitions, and `150ms` inner cross-fades) to prevent eye strain and feel cohesive.
 - **SC-002**: Content cross-fade does not cause vertical height jumps or layout shifts.
 - **SC-003**: The selected node pulse completes within 500ms and correctly resets styles to avoid rendering artifacts.
+- **SC-004**: Zen Mode backdrop and card elements slide/fade from the bottom with a complete exit transition when the modal is closed.
