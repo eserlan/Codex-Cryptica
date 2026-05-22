@@ -271,6 +271,8 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 - Document test limitations in comments when real API calls can't be mocked
 
 ## Active Technologies
+- TypeScript 6.x, Svelte 5, Bun 1.3.x package workflow + SvelteKit, Tailwind CSS 4 semantic tokens, Vitest, Playwright, Cytoscape, workspace `schema` and `graph-engine` packages (113-neutral-world-theming)
+- Existing browser persistence: `localStorage`, IndexedDB settings, and per-vault OPFS config. Add app-appearance preference as global browser preference; keep world theme per vault. (113-neutral-world-theming)
 
 - TypeScript (as project standard) + Svelte 5 (UI), existing `map.svelte.ts` (base map), existing P2P host-service/client-adapter (sync) (079-vtt-light)
 - In-memory session state; optional vault persistence via OPFS for encounter snapshots (079-vtt-light)
