@@ -188,3 +188,5 @@ TypeScript: Follow standard conventions
 - 109-quicknote-scratchpad: Added Svelte 5, Svelte 5 Runes, Dexie (IndexedDB), and Cytoscape.js integration.
 
 <!-- MANUAL ADDITIONS START -->
+
+- **User-Facing Changelogs**: Keep all entries in the changelog (`apps/web/src/lib/content/changelog/releases.json`) strictly focused on high-impact, user-facing features. Do not list under-the-hood technical refactors, code optimization, or architectural decomposition updates in the changelog highlights.
