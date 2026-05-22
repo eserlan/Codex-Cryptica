@@ -132,6 +132,8 @@ export class GraphViewController {
               x: rect.left + renderedPos.x,
               y: rect.top + renderedPos.y,
             });
+          } else {
+            this.deps.layoutUIStore.setLastSelectedNodePosition(null);
           }
 
           if (this.deps.connectionModeStore.isConnecting) {

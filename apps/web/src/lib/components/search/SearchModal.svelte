@@ -89,14 +89,10 @@
       event.stopPropagation();
     }
 
-    if (
-      event &&
-      "clientX" in event &&
-      typeof (event as any).clientX === "number"
-    ) {
+    if (event && event instanceof MouseEvent) {
       layoutUIStore.setLastSelectedNodePosition({
-        x: (event as any).clientX,
-        y: (event as any).clientY,
+        x: event.clientX,
+        y: event.clientY,
       });
     } else {
       layoutUIStore.setLastSelectedNodePosition(null);

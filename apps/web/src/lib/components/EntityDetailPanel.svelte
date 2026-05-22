@@ -76,6 +76,13 @@
     }
   });
 
+  // Cleanup lastSelectedNodePosition on unmount to prevent stale/incorrect zoom animation origins
+  $effect(() => {
+    return () => {
+      layoutUIStore.setLastSelectedNodePosition(null);
+    };
+  });
+
   const startEditing = () => {
     if (!entity) return;
     editTitle = entity.title;

@@ -1,5 +1,9 @@
 <script lang="ts">
-  let { entity }: { entity: { id: string; title?: string } } = $props();
+  let {
+    entity,
+  }: { entity: { id: string; title?: string } | null | undefined } = $props();
 </script>
 
-<div data-testid="entity-detail-panel-stub">{entity.id}</div>
+{#if entity}
+  <div data-testid="entity-detail-panel-stub">{entity.id}</div>
+{/if}

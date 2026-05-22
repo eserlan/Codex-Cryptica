@@ -251,6 +251,16 @@
             currentCy.nodes().stop();
             currentCy.nodes().removeStyle();
 
+            // Capture original stylesheet values before running override animations
+            const origPadding =
+              node.style("underlay-padding") !== undefined
+                ? node.style("underlay-padding")
+                : 8;
+            const origOpacity =
+              node.style("underlay-opacity") !== undefined
+                ? node.style("underlay-opacity")
+                : 0.3;
+
             node.animate(
               {
                 style: {
@@ -265,9 +275,8 @@
                   node.animate(
                     {
                       style: {
-                        "underlay-padding": 8,
-                        "underlay-opacity":
-                          themeStore.activeTheme.id === "fantasy" ? 0 : 0.3,
+                        "underlay-padding": origPadding,
+                        "underlay-opacity": origOpacity,
                       },
                     },
                     {

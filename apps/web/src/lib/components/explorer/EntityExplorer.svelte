@@ -30,6 +30,8 @@
         x: event.clientX,
         y: event.clientY,
       });
+    } else {
+      layoutUIStore.setLastSelectedNodePosition(null);
     }
     dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = entity.id;
