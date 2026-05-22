@@ -637,6 +637,41 @@ describe("P2P Services", () => {
       );
     });
 
+    it("should unwrap a PeerJSMessage envelope before dispatching", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      const dispatchSpy = vi
+        .spyOn((hostService as any).dispatcher, "dispatch")
+        .mockResolvedValue(true);
+
+      const wrappedPayload = {
+        type: "GET_FILE",
+        path: "images/test.png",
+        requestId: "req-123",
+      };
+
+      mockConn.emit("data", {
+        type: "GET_FILE",
+        senderId: "guest-1",
+        timestamp: Date.now(),
+        payload: wrappedPayload,
+      });
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        wrappedPayload,
+        expect.any(Object),
+        expect.any(Object),
+      );
+
+      dispatchSpy.mockRestore();
+    });
+
     it("should stop hosting and clear connections", async () => {
       await startHostingHelper(hostService);
       const transport = (hostService as any).transport;

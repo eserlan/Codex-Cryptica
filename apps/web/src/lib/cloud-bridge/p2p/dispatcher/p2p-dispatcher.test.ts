@@ -133,7 +133,13 @@ describe("P2PDispatcher", () => {
     };
     dispatcher.register(handler);
 
-    const internalTypes = ["handshake", "handshake_ack", "ping", "pong"];
+    const internalTypes = [
+      "handshake",
+      "handshake_ack",
+      "ping",
+      "pong",
+      "FILE_RESPONSE",
+    ];
     for (const type of internalTypes) {
       const handled = await dispatcher.dispatch(
         { type } as any,

@@ -113,7 +113,21 @@ export class P2PHostService {
           return;
         }
       }
-      await this.dispatcher.dispatch(data, conn, this.getHandlerContext());
+      // Unwrap PeerJSMessage envelope if present (e.g. from connection manager)
+      let messageToDispatch = data;
+      if (
+        data &&
+        typeof data === "object" &&
+        "senderId" in data &&
+        "payload" in data
+      ) {
+        messageToDispatch = (data as any).payload;
+      }
+      await this.dispatcher.dispatch(
+        messageToDispatch,
+        conn,
+        this.getHandlerContext(),
+      );
     });
 
     this.transport.on("error", (err) => {
