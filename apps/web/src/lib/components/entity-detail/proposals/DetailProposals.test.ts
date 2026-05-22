@@ -103,7 +103,7 @@ describe("DetailProposals Component", () => {
     render(DetailProposals, { isEditing: false });
 
     await vi.runOnlyPendingTimersAsync();
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(5000);
     await vi.runOnlyPendingTimersAsync();
 
     expect(proposerStore.analyzeEntityById).toHaveBeenCalledWith(
@@ -142,7 +142,7 @@ describe("DetailProposals Component", () => {
     render(DetailProposals, { isEditing: false });
 
     await vi.runOnlyPendingTimersAsync();
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(5000);
     await vi.runOnlyPendingTimersAsync();
 
     expect(proposerStore.analyzeEntityById).not.toHaveBeenCalled();
@@ -247,7 +247,7 @@ describe("DetailProposals Component", () => {
     const { rerender } = render(DetailProposals, { isEditing: false });
 
     await vi.runOnlyPendingTimersAsync();
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(5000);
     await vi.runOnlyPendingTimersAsync();
 
     expect(proposerStore.analyzeEntityById).not.toHaveBeenCalled();
@@ -260,7 +260,7 @@ describe("DetailProposals Component", () => {
     vault.inboundConnections["entity-1"] = [];
     await rerender({ isEditing: false });
 
-    vi.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(5000);
     await vi.runOnlyPendingTimersAsync();
 
     // Suppression set on navigation should persist for this session

@@ -65,7 +65,7 @@
         if (proposerStore.isEntityAnalyzing(entityToAnalyze)) {
           hasAutoProposedForEntity = entityToAnalyze;
         }
-      }, 1000);
+      }, 5000);
     }
 
     return () => {
