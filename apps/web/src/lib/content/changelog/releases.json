@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.22.0",
+    "title": "The Spatial & Scratchpad Update",
+    "date": "2026-05-22",
+    "type": "minor",
+    "highlights": [
+      "QuickNote Scratchpad: A lightning-fast overlay (Ctrl+I / Cmd+I) to dump ideas instantly, fully persisted to local IndexedDB.",
+      "AI Entity Elevation: Instantly convert fleeting note scribbles into fully structured wiki entities (Characters, Locations, Items, Factions, or Events) using the Oracle AI engine.",
+      "Svelte 5 Rune Migration: Complete conversion of all reactive stores and controllers to Svelte 5 Runes for ultimate UI snappiness.",
+      "Progressive Worker Search: Background search indexing offloaded to a Web Worker, ensuring zero main-thread lag during search queries.",
+      "Decoupled Network Architecture: Fully modularized PeerJS and P2P synchronization services for robust tabletop multiplayer sessions."
+    ]
+  },
+  {
     "version": "0.21.0",
     "title": "The Mobile Ergonomics Update",
     "date": "2026-04-26",
