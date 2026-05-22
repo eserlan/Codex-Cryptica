@@ -122,4 +122,30 @@ describe("P2PDispatcher", () => {
     expect(handled).toBe(false);
     expect(handler.handle).not.toHaveBeenCalled();
   });
+
+  it("should silently ignore internal PeerJS connection-level messages", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const dispatcher = new P2PDispatcher();
+
+    const handler: P2PMessageHandler = {
+      canHandle: vi.fn(() => true),
+      handle: vi.fn(),
+    };
+    dispatcher.register(handler);
+
+    const internalTypes = ["handshake", "handshake_ack", "ping", "pong"];
+    for (const type of internalTypes) {
+      const handled = await dispatcher.dispatch(
+        { type } as any,
+        {} as any,
+        {} as any,
+      );
+      expect(handled).toBe(false);
+      expect(handler.canHandle).not.toHaveBeenCalled();
+      expect(handler.handle).not.toHaveBeenCalled();
+    }
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });

@@ -35,6 +35,12 @@ export class P2PDispatcher<TContext = P2PHandlerContext> {
 
     const p2pMessage = message as P2PMessage;
 
+    // Filter out internal PeerJS connection-level control messages
+    const INTERNAL_TYPES = ["handshake", "handshake_ack", "ping", "pong"];
+    if (INTERNAL_TYPES.includes(p2pMessage.type)) {
+      return false;
+    }
+
     for (const handler of this.handlers) {
       try {
         if (handler.canHandle(p2pMessage)) {
