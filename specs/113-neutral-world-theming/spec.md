@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "GitHub issue #860 requests a UI theming update: make the app default neutral instead of fantasy, separate stable app chrome from per-world genre theming, keep genre texture and jargon on world/canvas surfaces, add light and dark neutral workspace appearances, tune fantasy typography and graph styling, and preserve existing saved world themes."
 
+## Clarifications
+
+### Session 2026-05-22
+
+- Q: What app appearance should new users get by default? → A: System app appearance, resolving to neutral light or neutral dark from OS preference.
+- Q: How should existing `codex-cryptica-active-theme` values be treated? → A: Existing values become per-world theme fallback; app appearance defaults to System unless separately saved.
+- Q: What world theme should new worlds use when none is saved? → A: New worlds default to a neutral world theme.
+- Q: How should mixed surfaces such as sidebars, modals, and entity detail panels split chrome versus world styling? → A: Structural shells stay neutral app chrome; world content inside them may use world theme.
+- Q: Which surfaces must the first implementation cover? → A: Header, activity bar, footer, settings, search, front page, graph, and entity detail; other surfaces may follow later.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Neutral Default Workspace (Priority: P1)
@@ -17,8 +27,8 @@ As a new user creating or opening a world, I want the app to start in a neutral 
 
 **Acceptance Scenarios**:
 
-1. **Given** a first-time user with no saved appearance preference, **When** the app loads, **Then** the workspace MUST use a neutral default appearance rather than a fantasy appearance.
-2. **Given** a new world without a saved world theme, **When** the user opens that world, **Then** the visible app chrome MUST remain neutral and must not use fantasy parchment as the app-wide background.
+1. **Given** a first-time user with no saved appearance preference, **When** the app loads, **Then** the workspace MUST use system app appearance, resolving to neutral light or neutral dark from OS preference, rather than a fantasy appearance.
+2. **Given** a new world without a saved world theme, **When** the user opens that world, **Then** the world MUST use a neutral world theme and the visible app chrome MUST remain neutral.
 3. **Given** an existing user with a saved fantasy theme, **When** that user reopens the app or world, **Then** the saved fantasy preference MUST continue to be honored.
 4. **Given** a user selects the fantasy theme intentionally, **When** the selection is saved, **Then** the user MUST still receive the fantasy world vocabulary and visual treatment where the world theme applies.
 
@@ -38,6 +48,8 @@ As a user moving between navigation, search, settings, sidebars, and world conte
 2. **Given** a textured world theme is active, **When** the user views global chrome, **Then** texture MUST NOT be applied as a wall-to-wall app background or repeated across chrome surfaces.
 3. **Given** the user changes only the world theme, **When** the change is applied, **Then** global chrome MUST remain visually stable while the world canvas updates.
 4. **Given** the user uses a light or dark app appearance, **When** the user opens app chrome surfaces, **Then** contrast and readability MUST remain accessible in that app appearance.
+5. **Given** a mixed surface such as a sidebar, modal, or entity detail panel is visible, **When** it contains world content, **Then** its structural shell MUST remain neutral chrome while the world content area MAY use the active world theme.
+6. **Given** the first implementation is complete, **When** a user reviews the app shell and primary world surfaces, **Then** header, activity bar, footer, settings, search, front page, graph, and entity detail MUST reflect the app/world theme split.
 
 ---
 
@@ -113,7 +125,8 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 ### Edge Cases
 
 - Existing saved theme preferences must not be overwritten or migrated unexpectedly.
-- Worlds without saved theme data should receive the neutral default behavior without losing the ability to choose a genre theme later.
+- Existing global saved theme values from the old one-layer model must be read as world theme fallback only and must not force app chrome away from System app appearance.
+- Worlds without saved theme data should receive a neutral world theme without losing the ability to choose a genre theme later.
 - Demo or shared-session worlds that intentionally force a genre theme should still present that world theme while keeping app chrome understandable.
 - If a user previews a world theme without saving it, the preview should not permanently change app appearance or another world's theme.
 - Textured themes must not make chrome controls, settings, search, or modals harder to read.
@@ -126,8 +139,12 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 
 - "App chrome" includes global navigation, activity navigation, footer, search, settings, notifications, command and modal shells, and other controls for operating the tool.
 - "World canvas" includes world front page surfaces, graph/canvas/map presentation, entity/world content surfaces, and in-world accents.
+- Mixed surfaces such as sidebars, modals, and entity detail panels have neutral structural shells; world content inside those shells may use world theme.
+- The first implementation must cover header, activity bar, footer, settings, search, front page, graph, and entity detail; less central surfaces may be addressed in follow-up work after the split is established.
 - The first deliverable should introduce neutral app appearances and scoping rules before building a full onboarding genre picker.
 - Existing genre themes remain available and are treated as world themes, not removed.
+- Existing `codex-cryptica-active-theme` values from the old one-layer model are compatibility input for world theme selection, not app appearance.
+- New worlds with no saved theme data start from a neutral world theme rather than fantasy.
 - A later onboarding improvement may ask for world genre during vault creation, but that is not required for this first spec.
 - A later theme expansion may add light and dark variants for every genre theme, but this spec only requires neutral light, neutral dark, and system app appearances.
 
@@ -135,11 +152,14 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST provide a neutral default app appearance for users and worlds with no saved appearance or theme preference.
+- **FR-001**: The system MUST default users with no saved app appearance preference to system app appearance, resolving to neutral light or neutral dark from OS preference.
 - **FR-002**: The system MUST provide neutral light, neutral dark, and system app appearances.
 - **FR-003**: The system MUST preserve existing saved theme selections and continue honoring them after this change.
+- **FR-003a**: Existing global saved theme values from the old one-layer model MUST be treated as world theme fallback and MUST NOT set app appearance unless an app appearance preference was explicitly saved.
+- **FR-003b**: Worlds with no saved world theme MUST default to a neutral world theme rather than a genre-specific theme.
 - **FR-004**: The system MUST separate app appearance from world theme so changing one does not implicitly change the other.
 - **FR-005**: App chrome MUST use the selected app appearance rather than the selected world theme.
+- **FR-005a**: Mixed surface shells, including sidebars, modals, and entity detail panels, MUST use app appearance styling while their world content regions MAY use world theme styling.
 - **FR-006**: World surfaces SHOULD use the selected world theme for genre expression, including mood, accent, texture, graph style, and world vocabulary where applicable.
 - **FR-007**: Texture MUST NOT be applied as an app-wide document background or as a default treatment for global chrome.
 - **FR-008**: Texture MAY be used on world/canvas surfaces where it supports the selected world theme without harming readability.
@@ -162,6 +182,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **FR-025**: The help or appearance guidance available to users MUST describe the distinction between app appearance and world theme in clear, approachable language.
 - **FR-026**: Automated verification MUST cover default neutral appearance, preservation of existing saved themes, independent app/world selection, and texture scoping.
 - **FR-027**: Automated or manual visual verification MUST cover fantasy refinement, including typography hierarchy, graph relationship weight, overlay behavior, palette balance, and texture scoping.
+- **FR-028**: The first implementation MUST apply the app/world theme split to header, activity bar, footer, settings, search, front page, graph, and entity detail surfaces.
 
 ### Key Entities _(include if feature involves data)_
 

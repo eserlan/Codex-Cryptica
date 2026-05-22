@@ -99,6 +99,7 @@ Behavior:
 
 - App chrome surfaces use app tokens for background, surface, border, text, muted text, accent, radius, and fonts.
 - World surfaces use world tokens for mood, graph, world accents, optional texture, and optional world typography.
+- First-pass surfaces must include header, activity bar, footer, settings, search, front page, graph, and entity detail.
 - Authored body content must prefer long-form readable typography over decorative theme fonts.
 - Light world themes must avoid dark vignettes or overlays that make light backgrounds muddy.
 - Fantasy world theme must use deliberate edge/corner treatment and less dominant graph edges.
@@ -114,3 +115,4 @@ Automated coverage must assert:
 - Texture is absent from body and chrome surfaces.
 - System appearance reacts to `prefers-color-scheme`.
 - Fantasy graph edge weight and typography hierarchy are covered at the unit or visual level.
+- Header, activity bar, footer, settings, search, front page, graph, and entity detail are covered by focused validation.

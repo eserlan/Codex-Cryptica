@@ -50,6 +50,7 @@ bun run test
 13. Confirm body/header/activity bar do not show parchment or other world textures.
 14. Confirm the front-page hero on a light theme does not use a muddy dark vignette.
 15. Inspect graph relationships in Fantasy; edges should support nodes rather than dominate the graph.
+16. Confirm the first-pass surface set is covered: header, activity bar, footer, settings, search, front page, graph, and entity detail.
 
 ## Regression Checks
 
