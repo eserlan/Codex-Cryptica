@@ -587,6 +587,56 @@ describe("P2P Services", () => {
       );
     });
 
+    it("should respond to handshake with a handshake_ack message", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "handshake",
+        senderId: "guest-1",
+        timestamp: Date.now(),
+        payload: { clientPeerId: "guest-1" },
+      });
+
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "handshake_ack",
+          senderId: "mock-peer-id",
+        }),
+      );
+    });
+
+    it("should respond to ping with a pong message", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      const pingTimestamp = 123456789;
+      mockConn.emit("data", {
+        type: "ping",
+        senderId: "guest-1",
+        timestamp: pingTimestamp,
+        payload: null,
+      });
+
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "pong",
+          senderId: "mock-peer-id",
+          timestamp: pingTimestamp,
+        }),
+      );
+    });
+
     it("should stop hosting and clear connections", async () => {
       await startHostingHelper(hostService);
       const transport = (hostService as any).transport;
