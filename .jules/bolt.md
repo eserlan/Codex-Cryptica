@@ -92,3 +92,8 @@
 
 **Learning:** Using `.reduce((acc, item) => { acc.push(item); return acc; }, [])` creates a closure and adds overhead compared to simply pushing to an array in an imperative `for...of` loop. In hot paths like context retrieval which occurs frequently, this can cause unnecessary GC overhead.
 **Action:** Replace `.reduce()` that initializes and returns an array with an imperative `for...of` loop and a standard array `push`.
+
+## 2026-05-18 - [Performance Insight: Array allocation in iteration over Object values in reactive blocks]
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline can allocate a new array on every evaluation causing unnecessary garbage collection. While it can be solved with an imperative loop for iteration, if an array is explicitly needed by the UI, caching it natively in the store (`allX = $derived.by(() => Object.values(this.X))`) prevents the dependency from repeatedly evaluating in Svelte `MapView`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
