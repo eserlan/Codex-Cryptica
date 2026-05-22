@@ -82,6 +82,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: dist/
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Deploy to Production
         uses: cloudflare/wrangler-action@v3
         env:

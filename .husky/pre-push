@@ -30,4 +30,4 @@ if [ "$blog_only" = "true" ]; then
 	exit 0
 fi
 
-pnpm run lint && pnpm run test:affected
+bun run lint:affected && bun run test:affected
