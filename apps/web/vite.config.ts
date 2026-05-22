@@ -55,6 +55,10 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     pool: "threads",
+    threads: {
+      maxThreads: 2,
+      minThreads: 1,
+    },
     setupFiles: ["tests/setup.ts"],
     // @ts-expect-error environmentMatchGlobs is valid at runtime in vitest 4.x but missing from the bundled types
     environmentMatchGlobs: [
