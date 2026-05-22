@@ -24,9 +24,9 @@ When the user opens an entity, the system checks the total number of existing co
 
 **Acceptance Scenarios**:
 
-1. **Given** an active entity with more than 4 total connections (outbound + inbound), **When** the user navigates to it, **Then** the automatic 1-second timeout analysis is NOT scheduled/run.
-2. **Given** an active entity with 3 total connections, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis runs normally in the background.
-3. **Given** an active entity with 0 connections, **When** the user navigates to it, **Then** the automatic 1-second timeout analysis runs normally in the background.
+1. **Given** an active entity with more than 4 total connections (outbound + inbound), **When** the user navigates to it, **Then** the automatic 5-second timeout analysis is NOT scheduled/run.
+2. **Given** an active entity with 3 total connections, **When** the user navigates to it, **Then** the automatic 5-second timeout analysis runs normally in the background.
+3. **Given** an active entity with 0 connections, **When** the user navigates to it, **Then** the automatic 5-second timeout analysis runs normally in the background.
 
 ---
 

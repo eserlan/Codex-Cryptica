@@ -280,6 +280,88 @@
     }
   });
 
+  let lastRestoredVaultId = $state<string | null>(null);
+
+  // Restore state once when vault is initialized and matches the active vault
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    if (
+      browser &&
+      vault.isInitialized &&
+      activeVaultId &&
+      activeVaultId !== lastRestoredVaultId
+    ) {
+      lastRestoredVaultId = activeVaultId;
+      const key = `codex_vault_state_${activeVaultId}`;
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const state = JSON.parse(raw);
+
+          // Restore selectedEntityId (if it still exists in the loaded vault's entities)
+          if (
+            state.selectedEntityId &&
+            vault.entities[state.selectedEntityId]
+          ) {
+            vault.selectedEntityId = state.selectedEntityId;
+          } else {
+            vault.selectedEntityId = null;
+          }
+
+          // Restore Zen Mode state
+          if (state.zenModeEntityId && vault.entities[state.zenModeEntityId]) {
+            modalUIStore.zenModeEntityId = state.zenModeEntityId;
+            modalUIStore.showZenMode = !!state.showZenMode;
+            modalUIStore.zenModeActiveTab =
+              state.zenModeActiveTab || "overview";
+          } else {
+            modalUIStore.closeZenMode();
+          }
+        } else {
+          vault.selectedEntityId = null;
+          modalUIStore.closeZenMode();
+        }
+      } catch (e) {
+        console.warn(
+          `[StateSync] Failed to restore state for vault ${activeVaultId}:`,
+          e,
+        );
+      }
+    }
+  });
+
+  // Track changes to selectedEntityId or Zen Mode and PERSIST them
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    if (
+      browser &&
+      vault.isInitialized &&
+      activeVaultId &&
+      activeVaultId === lastRestoredVaultId
+    ) {
+      const selectedEntityId = vault.selectedEntityId;
+      const showZenMode = modalUIStore.showZenMode;
+      const zenModeEntityId = modalUIStore.zenModeEntityId;
+      const zenModeActiveTab = modalUIStore.zenModeActiveTab;
+
+      const key = `codex_vault_state_${activeVaultId}`;
+      try {
+        const state = {
+          selectedEntityId,
+          showZenMode,
+          zenModeEntityId,
+          zenModeActiveTab,
+        };
+        localStorage.setItem(key, JSON.stringify(state));
+      } catch (e) {
+        console.warn(
+          `[StateSync] Failed to persist state for vault ${activeVaultId}:`,
+          e,
+        );
+      }
+    }
+  });
+
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,

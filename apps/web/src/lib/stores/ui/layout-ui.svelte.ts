@@ -49,8 +49,25 @@ export class LayoutUIStore {
   private rightSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
 
-  leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<SidebarTool>("none");
+  #leftSidebarOpen = $state(false);
+  #activeSidebarTool = $state<SidebarTool>("none");
+
+  get leftSidebarOpen() {
+    return this.#leftSidebarOpen;
+  }
+  set leftSidebarOpen(value: boolean) {
+    this.#leftSidebarOpen = value;
+    this.persistence.write(UI_STORAGE_KEYS.LEFT_SIDEBAR_OPEN, value, String);
+  }
+
+  get activeSidebarTool() {
+    return this.#activeSidebarTool;
+  }
+  set activeSidebarTool(value: SidebarTool) {
+    this.#activeSidebarTool = value;
+    this.persistence.write(UI_STORAGE_KEYS.ACTIVE_SIDEBAR_TOOL, value, String);
+  }
+
   leftSidebarWidth = $state(280);
   rightSidebarWidth = $state(380);
   mainViewMode = $state<MainViewMode>("visualization");
@@ -161,6 +178,17 @@ export class LayoutUIStore {
         Math.min(right, maxWidth),
       );
     }
+
+    this.#leftSidebarOpen = this.persistence.read(
+      UI_STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
+      (raw) => raw === "true",
+      false,
+    );
+    this.#activeSidebarTool = this.persistence.read(
+      UI_STORAGE_KEYS.ACTIVE_SIDEBAR_TOOL,
+      (raw) => raw as SidebarTool,
+      "none",
+    );
 
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,
