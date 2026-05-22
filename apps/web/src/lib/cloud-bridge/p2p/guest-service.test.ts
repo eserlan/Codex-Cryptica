@@ -283,4 +283,79 @@ describe("P2PGuestService (facade)", () => {
     expect(guestStore.guestRoster).toEqual({});
     expect(mockMapSession.myPeerId).toBeNull();
   });
+
+  it("short-circuits and returns same promise if connectToHost called concurrently for same host", async () => {
+    const noop = vi.fn();
+
+    let resolveConnect!: () => void;
+    const connectPromise = new Promise<void>((resolve) => {
+      resolveConnect = resolve;
+    });
+    transport.connect = vi.fn(() => connectPromise);
+
+    const promise1 = service.connectToHost(
+      "host-1",
+      noop,
+      noop,
+      noop,
+      noop,
+      noop,
+      "Ava",
+    );
+    const promise2 = service.connectToHost(
+      "host-1",
+      noop,
+      noop,
+      noop,
+      noop,
+      noop,
+      "Ava",
+    );
+
+    expect(promise1).toBe(promise2);
+
+    resolveConnect();
+    await promise1;
+    expect(transport.connect).toHaveBeenCalledTimes(1);
+    expect(service.connected).toBe(true);
+  });
+
+  it("disconnects first host and starts second when connectToHost called concurrently for a different host", async () => {
+    const noop = vi.fn();
+
+    const connectPromise1 = new Promise<void>(() => {});
+
+    transport.connect = vi.fn((hostId) => {
+      if (hostId === "host-1") return connectPromise1;
+      return Promise.resolve();
+    });
+
+    const promise1 = service.connectToHost(
+      "host-1",
+      noop,
+      noop,
+      noop,
+      noop,
+      noop,
+      "Ava",
+    );
+
+    // Call for different host while first is pending
+    const promise2 = service.connectToHost(
+      "host-2",
+      noop,
+      noop,
+      noop,
+      noop,
+      noop,
+      "Ava",
+    );
+
+    // First attempt should be rejected due to disconnect
+    await expect(promise1).rejects.toThrow();
+
+    // Second attempt should succeed
+    await promise2;
+    expect(service.connected).toBe(true);
+  });
 });

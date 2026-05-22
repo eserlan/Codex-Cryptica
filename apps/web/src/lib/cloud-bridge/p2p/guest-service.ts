@@ -127,6 +127,9 @@ export class P2PGuestService {
   private isConnected = false;
   private dataListener: ((data: any) => void) | null = null;
   private closeListener: (() => void) | null = null;
+  private connectingPromise: Promise<void> | null = null;
+  private connectingHostId: string | null = null;
+  private rejectConnecting: ((err: Error) => void) | null = null;
 
   constructor(deps: ExtendedGuestDeps = {}) {
     this.connectionManager =
@@ -143,7 +146,7 @@ export class P2PGuestService {
     return this.connectionManager.state;
   }
 
-  async connectToHost(
+  connectToHost(
     hostId: string,
     onGraphData: (data: any) => void,
     onEntityUpdate: (entity: any) => void,
@@ -153,8 +156,15 @@ export class P2PGuestService {
     guestName?: string,
     onJoinRejectedCallback?: (reason: string, displayName: string) => void,
   ): Promise<void> {
-    if (this.transport.connected && this.currentHostId === hostId) return;
-    if (this.isConnected) this.disconnect();
+    if (this.transport.connected && this.currentHostId === hostId) {
+      return Promise.resolve();
+    }
+    if (this.connectingHostId === hostId && this.connectingPromise) {
+      return this.connectingPromise;
+    }
+    if (this.isConnected || this.connectingHostId) {
+      this.disconnect();
+    }
 
     guestStore.guestRoster = {};
     this.guestDisplayName = guestName?.trim() || null;
@@ -162,70 +172,142 @@ export class P2PGuestService {
     this.session.pendingStatus = null;
     this.assetCache = new MapAssetUrlCache();
 
-    this.context = await buildGuestContext({
-      transport: this.transport,
-      assetCache: this.assetCache,
-      session: this.session,
-      callbacks: {
-        onGraphData,
-        onEntityUpdate,
-        onEntityDelete,
-        onBatchUpdate,
-        onThemeUpdate,
-        onJoinRejected: onJoinRejectedCallback ?? null,
-      },
+    this.connectingHostId = hostId;
+
+    let localDataListener: ((data: any) => void) | null = null;
+    let localCloseListener: (() => void) | null = null;
+
+    const currentPromise = new Promise<void>((resolve, reject) => {
+      this.rejectConnecting = reject;
+
+      (async () => {
+        try {
+          this.context = await buildGuestContext({
+            transport: this.transport,
+            assetCache: this.assetCache,
+            session: this.session,
+            callbacks: {
+              onGraphData,
+              onEntityUpdate,
+              onEntityDelete,
+              onBatchUpdate,
+              onThemeUpdate,
+              onJoinRejected: onJoinRejectedCallback ?? null,
+            },
+          });
+
+          if (this.connectingHostId !== hostId) {
+            throw new Error("Connection aborted");
+          }
+
+          const ctx = this.context;
+          const hostConnection = {
+            peer: hostId,
+            send: (m: any) => this.transport.send(m),
+            close: () => this.transport.disconnect(),
+          };
+
+          localDataListener = (data: any) =>
+            void this.dispatcher.dispatch(data, hostConnection, ctx);
+          localCloseListener = () => {
+            if (!this.isConnected) return;
+            this.context?.mapSession.clearSession(true);
+            this.disconnect();
+          };
+
+          this.dataListener = localDataListener;
+          this.closeListener = localCloseListener;
+
+          this.transport.on("data", localDataListener);
+          this.transport.on("close", localCloseListener);
+          this.transport.on("error", localCloseListener);
+
+          await this.transport.connect(hostId);
+
+          if (this.connectingHostId !== hostId) {
+            throw new Error("Connection aborted");
+          }
+
+          this.isConnected = true;
+          this.currentHostId = hostId;
+
+          if (this.transport.id) ctx.mapSession.myPeerId = this.transport.id;
+
+          if (this.guestDisplayName) {
+            this.transport.send({
+              type: "GUEST_JOIN",
+              payload: { displayName: this.guestDisplayName },
+            });
+          } else if (this.session.pendingStatus) {
+            this.transport.send({
+              type: "GUEST_STATUS",
+              payload: this.session.pendingStatus,
+            });
+            this.session.pendingStatus = null;
+          }
+          ctx.mapSession.setBroadcaster((message) =>
+            this.transport.send(message),
+          );
+          resolve();
+        } catch (err) {
+          if (localDataListener) {
+            this.transport.off("data", localDataListener);
+          }
+          if (localCloseListener) {
+            this.transport.off("close", localCloseListener);
+            this.transport.off("error", localCloseListener);
+          }
+          if (this.dataListener === localDataListener) {
+            this.dataListener = null;
+          }
+          if (this.closeListener === localCloseListener) {
+            this.closeListener = null;
+          }
+
+          if (this.rejectConnecting === reject) {
+            this.rejectConnecting = null;
+          }
+
+          if (
+            this.connectingHostId === hostId ||
+            (this.isConnected && this.currentHostId === hostId)
+          ) {
+            this.disconnect();
+          }
+          reject(err);
+        } finally {
+          if (this.connectingPromise === currentPromise) {
+            this.connectingPromise = null;
+          }
+          if (this.connectingHostId === hostId) {
+            this.connectingHostId = null;
+          }
+          if (this.rejectConnecting === reject) {
+            this.rejectConnecting = null;
+          }
+        }
+      })();
     });
 
-    const ctx = this.context;
-    const hostConnection = {
-      peer: hostId,
-      send: (m: any) => this.transport.send(m),
-      close: () => this.transport.disconnect(),
-    };
-    this.dataListener = (data: any) =>
-      void this.dispatcher.dispatch(data, hostConnection, ctx);
-    this.closeListener = () => {
-      if (!this.isConnected) return;
-      this.context?.mapSession.clearSession(true);
-      this.disconnect();
-    };
-    this.transport.on("data", this.dataListener);
-    this.transport.on("close", this.closeListener);
-    this.transport.on("error", this.closeListener);
-
-    try {
-      await this.transport.connect(hostId);
-    } catch (err) {
-      this.disconnect();
-      throw err;
-    }
-    this.isConnected = true;
-    this.currentHostId = hostId;
-
-    if (this.transport.id) ctx.mapSession.myPeerId = this.transport.id;
-
-    if (this.guestDisplayName) {
-      this.transport.send({
-        type: "GUEST_JOIN",
-        payload: { displayName: this.guestDisplayName },
-      });
-    } else if (this.session.pendingStatus) {
-      this.transport.send({
-        type: "GUEST_STATUS",
-        payload: this.session.pendingStatus,
-      });
-      this.session.pendingStatus = null;
-    }
-    ctx.mapSession.setBroadcaster((message) => this.transport.send(message));
+    this.connectingPromise = currentPromise;
+    return currentPromise;
   }
 
   disconnect() {
     this.isConnected = false;
     this.currentHostId = null;
+    this.connectingHostId = null;
+    this.connectingPromise = null;
     this.session.joinAccepted = false;
     this.session.pendingStatus = null;
     guestStore.guestRoster = {};
     this.tokenMoves.clear();
+
+    const rejectFn = this.rejectConnecting;
+    this.rejectConnecting = null;
+    if (rejectFn) {
+      rejectFn(new Error("Connection aborted"));
+    }
 
     if (this.dataListener) this.transport.off("data", this.dataListener);
     if (this.closeListener) {
