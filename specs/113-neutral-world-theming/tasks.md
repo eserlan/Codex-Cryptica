@@ -35,7 +35,7 @@
 
 - [ ] T004 [P] Add failing tests in `packages/schema/src/theme.test.ts` for `workspace` as a dedicated world theme distinct from `modern`, neutral app appearance ids, and default world theme resolution.
 - [ ] T005 [P] Add failing tests in `apps/web/src/lib/stores/theme.test.ts` for separate `appAppearanceId`, `resolvedAppAppearanceId`, `worldThemeId`, and backwards-compatible `currentThemeId`.
-- [ ] T006 [P] Add failing tests in `apps/web/src/lib/stores/theme.test.ts` proving old `codex-cryptica-active-theme` values become world-theme fallback only and do not set app appearance.
+- [ ] T006 Add failing tests in `apps/web/src/lib/stores/theme.test.ts` proving old `codex-cryptica-active-theme` values become world-theme fallback only and do not set app appearance.
 
 ### Implementation for Foundation
 
@@ -60,7 +60,7 @@
 ### Tests for User Story 1
 
 - [ ] T014 [P] [US1] Add unit tests in `apps/web/src/lib/stores/theme.test.ts` for first-time `system` app appearance and `workspace` world theme defaults.
-- [ ] T015 [P] [US1] Add unit tests in `apps/web/src/lib/stores/theme.test.ts` for preserving saved fantasy, modern, and other valid world themes.
+- [ ] T015 [US1] Add unit tests in `apps/web/src/lib/stores/theme.test.ts` for preserving saved fantasy, modern, and other valid world themes.
 - [ ] T016 [P] [US1] Add E2E coverage in `apps/web/tests/themes.spec.ts` asserting first load is not fantasy parchment and `data-world-theme="workspace"`.
 
 ### Implementation for User Story 1
@@ -233,7 +233,7 @@
 ### Parallel Opportunities
 
 - T002 and T003 can run in parallel.
-- T004-T006 can run in parallel because they cover schema/store behavior independently.
+- T004 and T005 can run in parallel; T006 edits the same store test file as T005 and should follow it.
 - Component tests T021-T024 can run in parallel.
 - US3 tests T033-T035 can run in parallel.
 - US4 tests T043-T044 can run in parallel.
