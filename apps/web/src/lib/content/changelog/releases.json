@@ -1,14 +1,16 @@
 [
   {
     "version": "0.23.0",
-    "title": "The Animated Transitions Update",
+    "title": "The Animated Transitions & State Persistence Update",
     "date": "2026-05-22",
     "type": "minor",
     "highlights": [
       "Tactile Panel Opening: The entity detail panel now dynamically expands and scales directly from the node, button, or search result you clicked.",
       "Mobile Bottom Sheet: The detail panel slides up smoothly as a clean bottom drawer on mobile displays to optimize reading space.",
       "Navigational Cross-Fade: Moving between connected entities within the panel smoothly fades the inner text without jarring frame movements.",
-      "Canvas Visual Feedback: Selecting nodes on the relationship graph triggers a soft, glowing ripple underlay animation."
+      "Canvas Visual Feedback: Selecting nodes on the relationship graph triggers a soft, glowing ripple underlay animation.",
+      "Workspace State Persistence: Restores your workspace exactly as you left it. Sidebar toggles, active tools, selected entities, and detailed Zen mode writing progress are now safely remembered per vault.",
+      "Smart Proposal Throttle: Auto-scan triggers are now paused when an entity already has 5 or more connections, preventing AI generation clutter. Includes an optional manual scan trigger and an increased 5-second buffer when navigating."
     ]
   },
   {
