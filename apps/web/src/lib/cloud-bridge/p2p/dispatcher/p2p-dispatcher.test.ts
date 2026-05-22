@@ -123,7 +123,7 @@ describe("P2PDispatcher", () => {
     expect(handler.handle).not.toHaveBeenCalled();
   });
 
-  it("should silently ignore internal PeerJS connection-level messages", async () => {
+  it("should silently ignore internal and silent out-of-band message types", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const dispatcher = new P2PDispatcher();
 
@@ -133,14 +133,14 @@ describe("P2PDispatcher", () => {
     };
     dispatcher.register(handler);
 
-    const internalTypes = [
+    const silentTypes = [
       "handshake",
       "handshake_ack",
       "ping",
       "pong",
       "FILE_RESPONSE",
     ];
-    for (const type of internalTypes) {
+    for (const type of silentTypes) {
       const handled = await dispatcher.dispatch(
         { type } as any,
         {} as any,
