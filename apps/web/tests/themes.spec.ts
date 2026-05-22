@@ -7,6 +7,11 @@ test.describe("Visual Styling Templates", () => {
       (window as any).__E2E__ = true;
       try {
         localStorage.setItem("codex_skip_landing", "true");
+        localStorage.setItem("codex_dismissed_landing", "true");
+        localStorage.setItem(
+          "codex_world_page_dismissed_at",
+          Date.now().toString(),
+        );
       } catch {
         /* ignore */
       }
@@ -59,6 +64,7 @@ test.describe("Visual Styling Templates", () => {
       if (ui) {
         ui.dismissedWorldPage = true;
         ui.dismissedLandingPage = true;
+        ui.skipWelcomeScreen = true;
       }
     });
   });
@@ -156,6 +162,7 @@ test.describe("Visual Styling Templates", () => {
     await page.addInitScript(() => {
       try {
         localStorage.setItem("codex_skip_landing", "false");
+        localStorage.setItem("codex_dismissed_landing", "false");
       } catch {
         /* ignore */
       }

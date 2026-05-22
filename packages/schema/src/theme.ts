@@ -97,6 +97,56 @@ export const DEFAULT_JARGON: JargonMap = {
 };
 
 export const THEMES: Record<string, StylingTemplate> = {
+  workspace: {
+    id: "workspace",
+    name: "Workspace (Light)",
+    description:
+      "Neutral light workspace with a warm gray palette and restrained gold accent.",
+    tokens: {
+      primary: "#57534e",
+      secondary: "#78716c",
+      background: "#fafaf9",
+      surface: "#ffffff",
+      text: "#1c1917",
+      border: "rgba(231, 229, 228, 1)",
+      accent: "#c8973a",
+      fontHeader: "'Fraunces', serif",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "8px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#d6d3d1",
+    },
+  },
+  workspace_dark: {
+    id: "workspace_dark",
+    name: "Workspace (Dark)",
+    description:
+      "Neutral dark workspace with a warm dark gray palette and restrained gold accent.",
+    tokens: {
+      primary: "#d6d3d1",
+      secondary: "#a8a29e",
+      background: "#1c1917",
+      surface: "#292524",
+      text: "#f5f5f4",
+      border: "rgba(68, 64, 60, 1)",
+      accent: "#c8973a",
+      fontHeader: "'Fraunces', serif",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "8px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#44403c",
+    },
+  },
   scifi: {
     id: "scifi",
     name: "Sci-Fi Terminal",
@@ -155,7 +205,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       border: "rgba(94, 48, 24, 0.52)", // Stronger border — up from 0.34, uses richer primary
       accent: "#c8973a", // Jeweller's Gold — highlights and active states
       fontHeader: "'Alegreya', serif",
-      fontBody: "'Alegreya', serif",
+      fontBody: "'Inter', sans-serif",
       texture: "parchment.svg",
       titleInk: "#24180f", // Warmest — titles and headings anchor the hierarchy
       sectionTitle: "#3a3225", // Cool Umber — section labels are structural, not primary; slightly olive-grey
@@ -178,7 +228,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
-      edgeWidth: 3, // Bolder — connections need to win against parchment bg
+      edgeWidth: 2, // Bolder — connections need to win against parchment bg
       edgeColor: "#6b3820", // Deep Mahogany — updated to complement richer primary
     },
     jargon: {
@@ -501,4 +551,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   },
 };
 
-export const DEFAULT_THEME = THEMES.fantasy;
+export const DEFAULT_THEME = THEMES.workspace;
+
+export type AppAppearanceId = "neutral-light" | "neutral-dark" | "system";
+export type ResolvedAppAppearanceId = "neutral-light" | "neutral-dark";
+export type WorldThemeId = string;

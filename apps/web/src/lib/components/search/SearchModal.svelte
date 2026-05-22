@@ -29,7 +29,7 @@
     }`,
   );
   let dialogClass = $derived(
-    "w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body",
+    "w-full max-w-2xl bg-chrome-surface rounded-lg shadow-2xl overflow-hidden border border-chrome-border flex flex-col max-h-[70vh] font-body",
   );
 
   // Auto-focus input when modal opens; clear pending debounce when closed
@@ -154,11 +154,11 @@
   >
     <div class={dialogClass}>
       <!-- Input Header -->
-      <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div class="p-4 border-b border-chrome-border">
         <div class="relative">
           <span
             aria-hidden="true"
-            class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-zinc-400"
+            class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-chrome-muted"
           ></span>
           <input
             bind:this={inputElement}
@@ -167,7 +167,7 @@
             oninput={handleInput}
             onkeydown={handleKeydown}
             placeholder="Search notes..."
-            class="w-full pl-10 pr-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-none rounded-md focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500"
+            class="w-full pl-10 pr-4 py-2 bg-chrome-bg border-none rounded-md focus:ring-2 focus:ring-chrome-accent text-chrome-text placeholder-chrome-muted"
             role="combobox"
             aria-autocomplete="list"
             aria-expanded="true"
@@ -221,7 +221,7 @@
       <div class="flex-1 overflow-y-auto p-2">
         {#if searchStore.results.length === 0 && searchStore.query}
           <div
-            class="p-12 flex flex-col items-center justify-center gap-3 text-zinc-500"
+            class="p-12 flex flex-col items-center justify-center gap-3 text-chrome-muted"
             role="status"
           >
             <span
@@ -229,8 +229,7 @@
             ></span>
             <div class="text-sm">
               We couldn't find any notes matching "<span
-                class="font-medium text-zinc-900 dark:text-zinc-100"
-                >{searchStore.query}</span
+                class="font-medium text-chrome-text">{searchStore.query}</span
               >"
             </div>
           </div>
@@ -251,8 +250,8 @@
                 aria-selected={index === searchStore.selectedIndex}
                 class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content cursor-pointer
                   {index === searchStore.selectedIndex
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
-                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
+                  ? 'bg-chrome-accent/10 text-chrome-accent'
+                  : 'hover:bg-chrome-muted/10 text-chrome-text'}"
                 onclick={(e) => selectResult(result, e)}
                 onkeydown={(e) => e.key === "Enter" && selectResult(result, e)}
                 data-testid="search-result"
@@ -274,7 +273,7 @@
 
                   {#if result.status === "draft"}
                     <span
-                      class="ml-2 px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[9px] font-bold uppercase tracking-wider text-zinc-500 border border-zinc-300 dark:border-zinc-700"
+                      class="ml-2 px-1.5 py-0.5 rounded bg-chrome-bg text-[9px] font-bold uppercase tracking-wider text-chrome-muted border border-chrome-border"
                     >
                       Draft
                     </span>
@@ -282,7 +281,7 @@
 
                   {#if isCanvasPage}
                     <button
-                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
+                      class="ml-auto p-1.5 rounded-md bg-chrome-accent/10 text-chrome-accent hover:bg-chrome-accent hover:text-chrome-surface transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
                         e.stopPropagation();
@@ -303,10 +302,10 @@
                     </button>
                   {/if}
                 </span>
-                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                <div class="flex items-center gap-2 text-xs text-chrome-muted">
                   {#if result.type}
                     <span
-                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-chrome-bg"
                       style="color: {categories.getColor(result.type)}"
                     >
                       {categories.getCategory(result.type)?.label ||
@@ -316,9 +315,7 @@
                   <span class="truncate">{result.path}</span>
                 </div>
                 {#if result.excerpt}
-                  <p
-                    class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
-                  >
+                  <p class="text-sm text-chrome-text/80 line-clamp-2 mt-1">
                     {@html renderMarkdown(result.excerpt, {
                       query: searchStore.query,
                       inline: true,
@@ -333,20 +330,23 @@
 
       <!-- Footer -->
       <div
-        class="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 flex justify-between"
+        class="px-4 py-2 bg-chrome-bg border-t border-chrome-border text-xs text-chrome-muted flex justify-between"
       >
         <span
-          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd
+            class="font-body px-1 bg-chrome-surface border border-chrome-border rounded"
             >↵</kbd
           > to select</span
         >
         <span
-          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd
+            class="font-body px-1 bg-chrome-surface border border-chrome-border rounded"
             >↑↓</kbd
           > to navigate</span
         >
         <span
-          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd
+            class="font-body px-1 bg-chrome-surface border border-chrome-border rounded"
             >esc</kbd
           > to close</span
         >
@@ -359,10 +359,10 @@
   @reference "../../../app.css";
 
   .preview-content :global(code) {
-    @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+    @apply bg-chrome-bg px-1 rounded font-mono text-[0.9em];
   }
   .preview-content :global(strong) {
-    @apply font-bold text-zinc-900 dark:text-zinc-100;
+    @apply font-bold text-chrome-text;
   }
   .preview-content :global(em) {
     @apply italic;
