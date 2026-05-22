@@ -75,7 +75,24 @@ As a user who works at different times of day, I want neutral light and dark app
 
 ---
 
-### User Story 5 - Fantasy Theme Refinement (Priority: P3)
+### User Story 5 - Layered Typography (Priority: P2)
+
+As a user reading and navigating the app, I want typography to have separate roles for app controls, world mood, and authored content so the interface is clear without flattening every layer into one genre voice.
+
+**Why this priority**: The issue calls out that one font across the whole fantasy interface makes the product feel flat. The broader fix is not only "use another font"; it is to define which layer owns which typographic voice.
+
+**Independent Test**: Compare global chrome, world surfaces, and authored content in both a neutral app appearance and a genre world theme. App controls should stay practical and readable, world headings may carry genre character, and user-authored content should remain comfortable to read.
+
+**Acceptance Scenarios**:
+
+1. **Given** a neutral app appearance is active, **When** the user views app chrome controls and utility labels, **Then** those elements MUST use a readable neutral typography voice.
+2. **Given** a genre world theme is active, **When** the user views world headers, hero surfaces, or graph labels, **Then** those elements MAY use genre typography where it improves world mood without harming readability.
+3. **Given** the user reads authored world content, **When** a genre theme is active, **Then** body content MUST remain comfortable for long reading and MUST NOT be forced into a decorative display style.
+4. **Given** a theme defines both heading and body typography, **When** the user scans a world page, **Then** headings, body copy, metadata, and controls MUST remain visually distinguishable.
+
+---
+
+### User Story 6 - Fantasy Theme Refinement (Priority: P3)
 
 As a user who intentionally chooses the fantasy theme for a fantasy world, I want the theme to feel more polished and readable rather than heavy or flat.
 
@@ -125,14 +142,18 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **FR-010**: Users MUST be able to identify and select the world theme independently from app appearance.
 - **FR-011**: The selected world theme MUST be stored per world so different worlds can retain different themes.
 - **FR-012**: Neutral app appearances MUST use clear typography hierarchy for headings, body text, controls, and metadata.
-- **FR-013**: The fantasy world theme SHOULD use distinct heading and body typography to improve hierarchy.
-- **FR-014**: The fantasy world theme SHOULD reduce graph edge visual weight so relationships support nodes rather than dominate them.
-- **FR-015**: The fantasy world theme SHOULD keep parchment texture scoped to world/canvas moments rather than global chrome.
-- **FR-016**: Theme previews MUST be temporary until explicitly saved.
-- **FR-017**: Theme and appearance changes MUST remain readable and accessible across common light and dark combinations.
-- **FR-018**: The help or appearance guidance available to users MUST describe the distinction between app appearance and world theme in clear, approachable language.
-- **FR-019**: Automated verification MUST cover default neutral appearance, preservation of existing saved themes, independent app/world selection, and texture scoping.
-- **FR-020**: Automated or manual visual verification MUST cover fantasy refinement, including typography hierarchy, graph relationship weight, and texture scoping.
+- **FR-013**: App chrome typography MUST remain neutral, readable, and consistent across world themes.
+- **FR-014**: World theme typography MAY affect world/canvas headings, hero treatments, graph labels, and in-world accents.
+- **FR-015**: Authored content body typography MUST remain readable for long-form use and MUST NOT be forced into decorative display styling.
+- **FR-016**: Theme typography MUST distinguish headings, body copy, metadata, and controls clearly enough for users to scan pages quickly.
+- **FR-017**: The fantasy world theme SHOULD use distinct heading and body typography to improve hierarchy.
+- **FR-018**: The fantasy world theme SHOULD reduce graph edge visual weight so relationships support nodes rather than dominate them.
+- **FR-019**: The fantasy world theme SHOULD keep parchment texture scoped to world/canvas moments rather than global chrome.
+- **FR-020**: Theme previews MUST be temporary until explicitly saved.
+- **FR-021**: Theme and appearance changes MUST remain readable and accessible across common light and dark combinations.
+- **FR-022**: The help or appearance guidance available to users MUST describe the distinction between app appearance and world theme in clear, approachable language.
+- **FR-023**: Automated verification MUST cover default neutral appearance, preservation of existing saved themes, independent app/world selection, and texture scoping.
+- **FR-024**: Automated or manual visual verification MUST cover fantasy refinement, including typography hierarchy, graph relationship weight, and texture scoping.
 
 ### Key Entities _(include if feature involves data)_
 
@@ -142,6 +163,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **App Chrome Surface**: A global tool surface such as navigation, search, settings, notifications, modal shells, and sidebars.
 - **World Surface**: A content-bearing surface such as a world front page, graph, canvas, map, entity page, or cover presentation.
 - **Genre Vocabulary**: Theme-specific labels for world actions and concepts that should follow the world theme, not the neutral app appearance.
+- **Typography Layer**: The assigned font role for app chrome, world mood surfaces, authored content, metadata, and controls.
 
 ## Success Criteria _(mandatory)_
 
