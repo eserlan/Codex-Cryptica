@@ -126,4 +126,38 @@ describe("LayoutUIStore", () => {
       "true",
     );
   });
+
+  it("persists leftSidebarOpen and activeSidebarTool on modification", () => {
+    const backing = storage();
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: backing.storage }),
+      null,
+    );
+
+    store.leftSidebarOpen = true;
+    store.activeSidebarTool = "explorer";
+
+    expect(backing.storage.setItem).toHaveBeenCalledWith(
+      "codex_left_sidebar_open",
+      "true",
+    );
+    expect(backing.storage.setItem).toHaveBeenCalledWith(
+      "codex_active_sidebar_tool",
+      "explorer",
+    );
+  });
+
+  it("loads persisted leftSidebarOpen and activeSidebarTool on construction", () => {
+    const backing = storage({
+      codex_left_sidebar_open: "true",
+      codex_active_sidebar_tool: "oracle",
+    });
+    const store = new LayoutUIStore(
+      new UIPersistence({ storage: backing.storage }),
+      null,
+    );
+
+    expect(store.leftSidebarOpen).toBe(true);
+    expect(store.activeSidebarTool).toBe("oracle");
+  });
 });

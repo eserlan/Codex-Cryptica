@@ -5,6 +5,7 @@ describe("UIPersistence", () => {
   it("locks the legacy UI localStorage key set byte-for-byte", () => {
     expect(Object.values(UI_STORAGE_KEYS).sort()).toEqual([
       "codex-cryptica-active-theme",
+      "codex_active_sidebar_tool",
       "codex_ai_disabled",
       "codex_auto_archive",
       "codex_connection_discovery_mode",
@@ -14,6 +15,7 @@ describe("UIPersistence", () => {
       "codex_explorer_view_mode",
       "codex_last_connection_label",
       "codex_last_seen_version",
+      "codex_left_sidebar_open",
       "codex_left_sidebar_width",
       "codex_lite_mode",
       "codex_recent_connection_labels",
