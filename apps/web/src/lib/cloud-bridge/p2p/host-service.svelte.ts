@@ -90,6 +90,29 @@ export class P2PHostService {
     });
 
     this.transport.on("data", async ({ conn, data }) => {
+      if (data && typeof data === "object") {
+        if (data.type === "handshake") {
+          console.log("[P2P Host] Received handshake from:", conn.peer);
+          const ack = {
+            type: "handshake_ack",
+            senderId: this.transport.id || "",
+            timestamp: Date.now(),
+            payload: null,
+          };
+          conn.send(ack);
+          return;
+        }
+        if (data.type === "ping") {
+          const pong = {
+            type: "pong",
+            senderId: this.transport.id || "",
+            timestamp: (data as any).timestamp || Date.now(),
+            payload: null,
+          };
+          conn.send(pong);
+          return;
+        }
+      }
       await this.dispatcher.dispatch(data, conn, this.getHandlerContext());
     });
 
