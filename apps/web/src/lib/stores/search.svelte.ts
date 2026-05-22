@@ -163,6 +163,10 @@ export class SearchStore {
       const len = results.length;
       for (let i = 0; i < len; i++) {
         const result = results[i];
+        if (result.id && result.id.startsWith("quicknote-")) {
+          filteredResults.push(result);
+          continue;
+        }
         const entity = this.vault.entities[result.id];
         if (!entity) {
           debugStore.warn(

@@ -219,6 +219,57 @@ export class GraphTransformer {
 
     return elements;
   }
+
+  static quickNotesToElements(
+    notes: { id?: number; content: string; createdAt: number }[],
+    totalCount: number,
+  ): GraphElement[] {
+    const elements: GraphElement[] = [];
+    const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+    const baseCount = Math.max(10, totalCount);
+    const spiralRadius = Math.max(1200, Math.sqrt(baseCount) * 100);
+
+    const notesCount = notes.length;
+    for (let i = 0; i < notesCount; i++) {
+      const note = notes[i];
+      if (!note.id) continue;
+
+      const id = `quicknote-${note.id}`;
+      const trimmed = note.content.trim();
+      const firstLine = trimmed ? trimmed.split("\n")[0] : "Untitled Note";
+      const label =
+        firstLine.length > 30
+          ? firstLine.substring(0, 30) + "..."
+          : firstLine || "Untitled Note";
+
+      const nodeData: GraphNode["data"] = {
+        id,
+        label,
+        type: "quicknote",
+        status: "draft",
+        weight: 1,
+        labels: ["quicknote"],
+        textureVariant: 0,
+      };
+      (nodeData as any).isQuickNote = true;
+      (nodeData as any).isPendingLayout = true;
+
+      const angle = (totalCount + i) * GOLDEN_ANGLE;
+      const distance =
+        spiralRadius * Math.sqrt((totalCount + i + 0.5) / baseCount);
+
+      elements.push({
+        group: "nodes",
+        data: nodeData,
+        position: {
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+        },
+      });
+    }
+
+    return elements;
+  }
 }
 
 /**

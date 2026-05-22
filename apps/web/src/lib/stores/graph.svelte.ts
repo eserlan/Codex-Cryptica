@@ -75,7 +75,12 @@ export class GraphStore {
       }
     }
 
-    return GraphTransformer.entitiesToElements(visibleEntities, validIds);
+    const entityElements = GraphTransformer.entitiesToElements(
+      visibleEntities,
+      validIds,
+    );
+
+    return entityElements;
   });
 
   fitRequest = $state(0);

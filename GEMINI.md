@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-20
+Auto-generated from all feature plans. Last updated: 2026-05-21
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes + Svelte 5, Dexie (IndexedDB), Cytoscape.js (109-quicknote-scratchpad)
+- IndexedDB (`quick_notes` store) (109-quicknote-scratchpad)
 
 - TypeScript 6.0.3, Svelte 5 Runes + `@google/generative-ai`, `idb` (IndexedDB), `flexsearch`, `comlink` (102-oracle-store-decoupling)
 - OPFS (Vault Files), IndexedDB (Chat History, Sync Registry), LocalStorage (UI State) (102-oracle-store-decoupling)
@@ -182,8 +185,6 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 102-oracle-store-decoupling: Added TypeScript 6.0.3, Svelte 5 Runes + `@google/generative-ai`, `idb` (IndexedDB), `flexsearch`, `comlink`
-
-- 099-map-session-decomposition: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, Vitest, existing VTT managers under `apps/web/src/lib/stores/vtt/`, `VTTSessionService`, P2P host/guest services
+- 109-quicknote-scratchpad: Added Svelte 5, Svelte 5 Runes, Dexie (IndexedDB), and Cytoscape.js integration.
 
 <!-- MANUAL ADDITIONS START -->

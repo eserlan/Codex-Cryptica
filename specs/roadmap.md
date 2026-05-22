@@ -8,23 +8,11 @@ This document maps the evolution of Codex Cryptica from its architectural founda
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
 
-### [PROPOSED] Progressive Worker-Backed Search Indexing
-
-- **Target Area**: Search Engine (`packages/search-engine/`, OPFS)
-- **Objective**: Offload search indexing and updates to background Web Workers via Comlink.
-- **Details**: Guarantees zero main-thread blockages during initial load or heavy file sync operations for vaults containing 1,000+ entities.
-
 ### [PROPOSED] Direct P2P Audio/Video Integration
 
 - **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/services/p2p/`)
 - **Objective**: Implement decentralized, low-latency voice and video channels directly on the tactical map view.
 - **Details**: Leverages CC's decoupled PeerJS network topology to transmit audio/video stream tracks in real-time, completely bypassing centralized routing. Includes adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components. Detailed in [p2p_audio_video_analysis.md](./p2p_audio_video_analysis.md).
-
-### [PROPOSED] Svelte 5 Rune Hardening & Performance
-
-- **Target Area**: Reactivity & Stores (`apps/web/src/lib/stores/`)
-- **Objective**: Eliminate legacy auto-subscription overhead by conforming fully to Svelte 5 patterns.
-- **Details**: Replaces leftover legacy subscribable states with optimized `$state` and `$derived` signals, using `$state.snapshot` to prevent deep-object reference leaks.
 
 ### [PROPOSED] QuickNote Fast Scratchpad & AI Entity Elevation
 
@@ -52,6 +40,8 @@ The following high-impact candidate specifications target performance, scaling, 
   - [103-map-page-decomposition](./103-map-page-decomposition/spec.md) (Map page controller/store decomposition)
   - [104-peerjs-connection-manager](./104-peerjs-connection-manager/spec.md) (Centralized PeerJS lifecycle, handshake, heartbeat, and retry state machine)
   - [105-p2p-transport-integration](./105-p2p-transport-integration/spec.md) (Host/guest service integration and reactive connection status UI)
+  - [106-progressive-worker-search](./106-progressive-worker-search/spec.md) (Background search indexing via Comlink/Web Workers)
+  - [108-rune-hardening](./108-rune-hardening/spec.md) (Full Svelte 5 Rune conversion for all apps/web stores)
 - **Related Non-Spec Work**:
   - Oracle `ChatMessage` controller extraction and [chat message decomposition analysis](../docs/CHAT_MESSAGE_ANALYSIS.md)
   - Speckit command and skill restoration across `.gemini`, `.agents`, `.claude`, `.qwen`, and `.specify`

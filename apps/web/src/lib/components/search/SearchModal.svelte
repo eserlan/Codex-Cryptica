@@ -89,6 +89,18 @@
       event.stopPropagation();
     }
 
+    if (result.type === "quicknote" || result.id?.startsWith("quicknote-")) {
+      const noteIdStr = result.id.replace("quicknote-", "");
+      const noteId = parseInt(noteIdStr, 10);
+      if (!isNaN(noteId)) {
+        import("$lib/stores/quicknote.svelte").then(({ quickNoteStore }) => {
+          void quickNoteStore.openNoteById(noteId);
+        });
+      }
+      searchStore.close();
+      return;
+    }
+
     const selectedEntityId = resolveSearchResultEntityId(result);
 
     if (!selectedEntityId) {

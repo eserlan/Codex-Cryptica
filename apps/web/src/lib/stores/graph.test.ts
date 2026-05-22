@@ -43,10 +43,13 @@ vi.mock("graph-engine", () => ({
   },
 }));
 
-// Mock schema
-vi.mock("schema", () => ({
-  isEntityVisible: vi.fn().mockReturnValue(true),
-}));
+vi.mock("schema", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("schema")>();
+  return {
+    ...actual,
+    isEntityVisible: vi.fn().mockReturnValue(true),
+  };
+});
 
 import { graph, GraphStore } from "./graph.svelte";
 import { vault } from "./vault.svelte";

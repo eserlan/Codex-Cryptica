@@ -11,6 +11,7 @@ describe("useGlobalShortcuts", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
       modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext);
@@ -21,6 +22,7 @@ describe("useGlobalShortcuts", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
       modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;
@@ -38,10 +40,33 @@ describe("useGlobalShortcuts", () => {
     expect(preventDefaultSpy).toHaveBeenCalled();
   });
 
+  it("should toggle quicknote on Cmd+I", () => {
+    const mockContext = {
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+    };
+
+    const handleKeydown = useGlobalShortcuts(mockContext)!;
+
+    const event = new KeyboardEvent("keydown", {
+      key: "i",
+      metaKey: true,
+    });
+
+    const preventDefaultSpy = vi.spyOn(event, "preventDefault");
+
+    handleKeydown(event);
+
+    expect(mockContext.quickNoteStore.toggle).toHaveBeenCalled();
+    expect(preventDefaultSpy).toHaveBeenCalled();
+  });
+
   it("should close search on Escape if open", () => {
     const mockContext = {
       searchStore: { isOpen: true, toggle: vi.fn(), close: vi.fn() },
       modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;
@@ -55,10 +80,29 @@ describe("useGlobalShortcuts", () => {
     expect(mockContext.searchStore.close).toHaveBeenCalled();
   });
 
+  it("should close quicknote on Escape if open", () => {
+    const mockContext = {
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: true, toggle: vi.fn(), close: vi.fn() },
+    };
+
+    const handleKeydown = useGlobalShortcuts(mockContext)!;
+
+    const event = new KeyboardEvent("keydown", {
+      key: "Escape",
+    });
+
+    handleKeydown(event);
+
+    expect(mockContext.quickNoteStore.close).toHaveBeenCalled();
+  });
+
   it("should close settings on Escape if open and search is closed", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
       modalUIStore: { showSettings: true, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;
@@ -76,6 +120,7 @@ describe("useGlobalShortcuts", () => {
     const mockContext = {
       searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
       modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
     };
 
     const handleKeydown = useGlobalShortcuts(mockContext)!;

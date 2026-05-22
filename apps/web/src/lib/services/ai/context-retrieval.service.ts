@@ -6,8 +6,15 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
   private cachedVaultId: string | null = null;
+  private _searchService: any;
 
-  constructor(private searchService = defaultSearchService) {}
+  constructor(searchService?: any) {
+    this._searchService = searchService;
+  }
+
+  private get searchService() {
+    return this._searchService || defaultSearchService;
+  }
 
   getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {
     const parts = [];
@@ -168,7 +175,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     // Enforce Fog of War for guests in search results
     if (vault.isGuest) {
-      results = results.filter((res) => {
+      results = results.filter((res: any) => {
         const entity = vault.entities[res.id];
         return (
           entity &&
@@ -212,7 +219,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
         // Enforce Fog of War for guests in keyword results
         if (vault.isGuest) {
-          results = results.filter((res) => {
+          results = results.filter((res: any) => {
             const entity = vault.entities[res.id];
             return (
               entity &&

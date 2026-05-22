@@ -376,6 +376,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.",
     icon: "icon-[lucide--wifi]",
   },
+  "quicknote-scratchpad": {
+    id: "quicknote-scratchpad",
+    title: "QuickNote Fast Scratchpad",
+    content:
+      "Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle the glassmorphic fast scratchpad. Jot down thoughts, auto-save drafts, and use the 'Elevate' button to let the AI structure your raw notes into complete Character, Location, or Item draft entities.",
+    icon: "icon-[lucide--zap]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

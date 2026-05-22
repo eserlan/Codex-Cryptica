@@ -65,3 +65,37 @@ This reference documents specific anti-patterns and quality standards for the Co
 
 - **Issue**: Using `lucide-svelte` components instead of Iconify classes.
 - **Pattern**: Use `class="icon-[lucide--name] ..."`.
+
+## Event Bus & Lifecycles
+
+### Subscription Memory Leaks in Stores & Tests
+
+- **Issue**: Subscribing to an event bus (e.g., `VaultEventBus`) in a store constructor without saving the unsubscribe callback. Repeated instantiations in unit tests accumulate listeners, resulting in major memory leaks and cross-test interference.
+- **Pattern**: Always use named subscriptions to automatically override prior listeners, save the unsubscribe callback, and invoke it inside a clean `destroy()` method.
+- **Example**:
+
+```typescript
+class FeatureStore {
+  private unsubscribe: (() => void) | null = null;
+  constructor() {
+    this.unsubscribe = vaultEventBus.subscribe((event) => {
+      // handler
+    }, "feature-store-listener-id");
+  }
+  destroy() {
+    if (this.unsubscribe) this.unsubscribe();
+  }
+}
+```
+
+### Transition Status Gating
+
+- **Issue**: Attempting to catch state changes (such as draft approvals) by checking pre-transition statuses (e.g. `entity.status === 'draft'`) when the event bus payload actually emits the finalized post-transition state.
+- **Pattern**: Check both the updated status field and the patch/event payload to cleanly capture transition states (e.g. `patch.status === 'active' && entity.status === 'active'`).
+
+## Data Gating & Optimization
+
+### Redundant Debounced Auto-Saves
+
+- **Issue**: Running debounced auto-save effects that trigger on mere selection or opening of existing entries, causing redundant database writes and unnecessary load.
+- **Pattern**: Track the active item's original content and ID. Only trigger the debounce routine when the content has _actually_ diverged from the loaded state, and skip/gate empty brand-new entries until the user has typed.
