@@ -38,24 +38,26 @@ bun run test
 1. Clear app storage or use a fresh browser profile.
 2. Open the app.
 3. Confirm global chrome is neutral and not fantasy parchment.
-4. Open Appearance settings.
-5. Confirm there are separate controls for App appearance and World theme.
-6. Select Light, Dark, and System app appearances.
-7. Confirm chrome changes while world theme remains unchanged.
-8. Select at least two different world themes in two different worlds.
-9. Confirm each world restores its world theme independently while chrome stays consistent.
-10. Select Fantasy world theme.
-11. Confirm fantasy world surfaces retain mood, but chrome remains neutral.
-12. Confirm authored body content is readable and not forced into decorative display styling.
-13. Confirm body/header/activity bar do not show parchment or other world textures.
-14. Confirm the front-page hero on a light theme does not use a muddy dark vignette.
-15. Inspect graph relationships in Fantasy; edges should support nodes rather than dominate the graph.
-16. Confirm the first-pass surface set is covered: header, activity bar, footer, settings, search, front page, graph, and entity detail.
+4. Confirm a new world with no saved theme uses the `workspace` world theme, not `modern` or `fantasy`.
+5. Open Appearance settings.
+6. Confirm there are separate controls for App appearance and World theme.
+7. Select Light, Dark, and System app appearances.
+8. Confirm chrome changes while world theme remains unchanged.
+9. Select at least two different world themes in two different worlds.
+10. Confirm each world restores its world theme independently while chrome stays consistent.
+11. Select Fantasy world theme.
+12. Confirm fantasy world surfaces retain mood, but chrome remains neutral.
+13. Confirm authored body content is readable and not forced into decorative display styling.
+14. Confirm body/header/activity bar do not show parchment or other world textures.
+15. Confirm the front-page hero on a light theme does not use a muddy dark vignette.
+16. Inspect graph relationships in Fantasy; edges should support nodes rather than dominate the graph.
+17. Confirm the first-pass surface set is covered: header, activity bar, footer, settings, search, front page, graph, and entity detail.
 
 ## Regression Checks
 
 - Existing saved fantasy world should reopen with fantasy world vocabulary.
 - Existing saved non-fantasy worlds should reopen with their previous world theme.
+- Existing saved `modern` worlds should remain `modern`; only missing world theme values fall back to `workspace`.
 - Theme preview should not persist until the user selects/saves a theme.
 - Device light/dark change should affect System app appearance without changing world theme.
 - Demo/shared sessions should still apply intended world theme without making chrome unreadable.

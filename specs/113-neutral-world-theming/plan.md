@@ -7,7 +7,7 @@
 
 ## Summary
 
-Split the current one-layer theme system into a neutral app appearance layer and a per-world theme layer. App chrome gets neutral light, neutral dark, and system appearances with stable typography and no texture. Existing genre themes remain per-world and continue to drive world/canvas mood, graph styling, and jargon. The first implementation must preserve existing saved theme choices, remove texture from global chrome/body surfaces, expose independent controls in Appearance settings, cover header, activity bar, footer, settings, search, front page, graph, and entity detail, and polish the fantasy world theme where issue #860 identified hierarchy, edge, overlay, and graph-weight problems.
+Split the current one-layer theme system into a neutral app appearance layer and a per-world theme layer. App chrome gets neutral light, neutral dark, and system appearances with stable typography and no texture. Existing genre themes remain per-world and continue to drive world/canvas mood, graph styling, and jargon. New worlds without saved theme data use a dedicated neutral `workspace` world theme rather than reusing `modern`. The first implementation must preserve existing saved theme choices, remove texture from global chrome/body surfaces, expose independent controls in Appearance settings, cover header, activity bar, footer, settings, search, front page, graph, and entity detail, and polish the fantasy world theme where issue #860 identified hierarchy, edge, overlay, and graph-weight problems.
 
 ## Technical Context
 
@@ -19,7 +19,7 @@ Split the current one-layer theme system into a neutral app appearance layer and
 **Project Type**: Web application monorepo with shared packages  
 **Performance Goals**: Theme/app appearance switch should remain CSS-variable driven with no full reload, no avoidable layout shift, and no perceptible delay beyond current theme switching.  
 **Constraints**: Preserve existing saved world themes; keep vault data client-side; do not add new runtime dependencies; follow Svelte 5 runes and Tailwind 4 semantic-token patterns; avoid decorative typography on long-form authored content; ensure light-surface overlays do not muddy light themes.  
-**Scale/Scope**: Shared theme schema and store changes plus focused UI updates for header, activity bar, footer, settings, search, front page, graph, entity detail, graph style generation, and help guidance. Other app surfaces may follow once the split is established.
+**Scale/Scope**: Shared theme schema and store changes, a dedicated neutral `workspace` world theme, plus focused UI updates for header, activity bar, footer, settings, search, front page, graph, entity detail, graph style generation, and help guidance. Other app surfaces may follow once the split is established.
 
 ## Constitution Check
 
@@ -110,7 +110,7 @@ apps/
 Research output is captured in [research.md](./research.md). Key decisions:
 
 - Add app appearance as a separate preference scope with `light`, `dark`, and `system` resolution.
-- Treat existing saved theme ids as per-world world themes for migration and backwards compatibility.
+- Treat existing saved theme ids as per-world world themes for migration and backwards compatibility; use a new `workspace` world theme for missing world theme values.
 - Scope genre texture and typography to world/canvas surfaces rather than document body or chrome.
 - Keep first implementation to neutral app appearances and fantasy refinement; defer all-genre light/dark variants and onboarding genre picker.
 

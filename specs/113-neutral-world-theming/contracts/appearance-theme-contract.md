@@ -7,7 +7,7 @@ The web theme store exposes independent app appearance and world theme state whi
 ```typescript
 type AppAppearanceId = "neutral-light" | "neutral-dark" | "system";
 type ResolvedAppAppearance = "neutral-light" | "neutral-dark";
-type WorldThemeId = keyof typeof THEMES;
+type WorldThemeId = keyof typeof THEMES; // includes dedicated neutral "workspace"
 
 interface ThemeStoreContract {
   appAppearanceId: AppAppearanceId;
@@ -53,7 +53,7 @@ The document exposes separate data attributes for app appearance and world theme
 <html
   data-app-appearance="neutral-light|neutral-dark"
   data-app-appearance-choice="neutral-light|neutral-dark|system"
-  data-world-theme="fantasy|scifi|modern|..."
+  data-world-theme="workspace|fantasy|scifi|modern|..."
 >
 ```
 
@@ -86,14 +86,15 @@ Behavior:
 
 Options:
 
-- Existing genre themes.
-- Any new neutral/default world theme introduced by implementation.
+- Dedicated neutral `workspace` world theme.
+- Existing genre and style themes.
 
 Behavior:
 
 - Selecting a world theme changes world/canvas mood, graph styling, and world vocabulary.
 - It does not change app appearance.
 - Preview is temporary until selection is saved.
+- Worlds without a saved world theme use `workspace`; `modern` remains a selectable existing theme and is not reused as the default.
 
 ## Styling Contract
 
@@ -109,6 +110,7 @@ Behavior:
 Automated coverage must assert:
 
 - First-time/default state is neutral app appearance, not fantasy app chrome.
+- First-time/default world state uses `workspace`, not `modern` or `fantasy`.
 - Existing saved world theme is still honored.
 - Changing app appearance does not change world theme.
 - Changing world theme does not change app appearance.

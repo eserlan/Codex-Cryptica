@@ -22,6 +22,17 @@
 - Migrate every saved fantasy theme to neutral automatically. Rejected because it would overwrite intentional user choices.
 - Create a one-time migration wizard. Rejected for first delivery because it adds UX surface before the core separation exists.
 
+## Decision 2a: Add Dedicated `workspace` World Theme
+
+**Decision**: Introduce a new neutral world theme id, `workspace`, for worlds with no saved world theme. Do not reuse the existing `modern` theme as the default.
+
+**Rationale**: The neutral default needs product-default semantics and should not inherit assumptions from an existing style theme. Keeping `modern` separate preserves backwards compatibility for users who intentionally chose it and avoids turning it into both a style option and a migration/default mechanism.
+
+**Alternatives considered**:
+
+- Reuse `modern` as the neutral default. Rejected because `modern` is already an existing selectable theme with its own visual identity and saved-user meaning.
+- Use no world theme until the user chooses one. Rejected because world surfaces, graph styling, and defaults still need deterministic tokens.
+
 ## Decision 3: Use Scoped CSS Variables Instead Of New Styling Framework
 
 **Decision**: Continue using Tailwind 4 semantic variables, but introduce explicit app-chrome and world-theme variable scopes. App chrome variables live at the document/root level or chrome containers; world theme variables are applied only to world/canvas containers.

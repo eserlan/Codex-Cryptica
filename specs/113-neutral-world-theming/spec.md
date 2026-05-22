@@ -11,9 +11,10 @@
 
 - Q: What app appearance should new users get by default? → A: System app appearance, resolving to neutral light or neutral dark from OS preference.
 - Q: How should existing `codex-cryptica-active-theme` values be treated? → A: Existing values become per-world theme fallback; app appearance defaults to System unless separately saved.
-- Q: What world theme should new worlds use when none is saved? → A: New worlds default to a neutral world theme.
+- Q: What world theme should new worlds use when none is saved? → A: New worlds default to the dedicated neutral `workspace` world theme.
 - Q: How should mixed surfaces such as sidebars, modals, and entity detail panels split chrome versus world styling? → A: Structural shells stay neutral app chrome; world content inside them may use world theme.
 - Q: Which surfaces must the first implementation cover? → A: Header, activity bar, footer, settings, search, front page, graph, and entity detail; other surfaces may follow later.
+- Q: Should the neutral world theme reuse an existing theme such as `modern`? → A: Add a dedicated neutral world theme id, `workspace`, instead of reusing an existing genre or style theme.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -28,7 +29,7 @@ As a new user creating or opening a world, I want the app to start in a neutral 
 **Acceptance Scenarios**:
 
 1. **Given** a first-time user with no saved appearance preference, **When** the app loads, **Then** the workspace MUST use system app appearance, resolving to neutral light or neutral dark from OS preference, rather than a fantasy appearance.
-2. **Given** a new world without a saved world theme, **When** the user opens that world, **Then** the world MUST use a neutral world theme and the visible app chrome MUST remain neutral.
+2. **Given** a new world without a saved world theme, **When** the user opens that world, **Then** the world MUST use the dedicated neutral `workspace` world theme and the visible app chrome MUST remain neutral.
 3. **Given** an existing user with a saved fantasy theme, **When** that user reopens the app or world, **Then** the saved fantasy preference MUST continue to be honored.
 4. **Given** a user selects the fantasy theme intentionally, **When** the selection is saved, **Then** the user MUST still receive the fantasy world vocabulary and visual treatment where the world theme applies.
 
@@ -126,7 +127,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 
 - Existing saved theme preferences must not be overwritten or migrated unexpectedly.
 - Existing global saved theme values from the old one-layer model must be read as world theme fallback only and must not force app chrome away from System app appearance.
-- Worlds without saved theme data should receive a neutral world theme without losing the ability to choose a genre theme later.
+- Worlds without saved theme data should receive the dedicated neutral `workspace` world theme without losing the ability to choose a genre theme later.
 - Demo or shared-session worlds that intentionally force a genre theme should still present that world theme while keeping app chrome understandable.
 - If a user previews a world theme without saving it, the preview should not permanently change app appearance or another world's theme.
 - Textured themes must not make chrome controls, settings, search, or modals harder to read.
@@ -144,7 +145,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - The first deliverable should introduce neutral app appearances and scoping rules before building a full onboarding genre picker.
 - Existing genre themes remain available and are treated as world themes, not removed.
 - Existing `codex-cryptica-active-theme` values from the old one-layer model are compatibility input for world theme selection, not app appearance.
-- New worlds with no saved theme data start from a neutral world theme rather than fantasy.
+- New worlds with no saved theme data start from the dedicated neutral `workspace` world theme rather than fantasy or `modern`.
 - A later onboarding improvement may ask for world genre during vault creation, but that is not required for this first spec.
 - A later theme expansion may add light and dark variants for every genre theme, but this spec only requires neutral light, neutral dark, and system app appearances.
 
@@ -156,7 +157,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **FR-002**: The system MUST provide neutral light, neutral dark, and system app appearances.
 - **FR-003**: The system MUST preserve existing saved theme selections and continue honoring them after this change.
 - **FR-003a**: Existing global saved theme values from the old one-layer model MUST be treated as world theme fallback and MUST NOT set app appearance unless an app appearance preference was explicitly saved.
-- **FR-003b**: Worlds with no saved world theme MUST default to a neutral world theme rather than a genre-specific theme.
+- **FR-003b**: Worlds with no saved world theme MUST default to a dedicated neutral world theme with id `workspace` rather than a genre-specific theme or the existing `modern` theme.
 - **FR-004**: The system MUST separate app appearance from world theme so changing one does not implicitly change the other.
 - **FR-005**: App chrome MUST use the selected app appearance rather than the selected world theme.
 - **FR-005a**: Mixed surface shells, including sidebars, modals, and entity detail panels, MUST use app appearance styling while their world content regions MAY use world theme styling.
@@ -187,7 +188,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 ### Key Entities _(include if feature involves data)_
 
 - **App Appearance**: The user's global workspace presentation for app chrome. It includes neutral light and neutral dark options and does not encode a story genre.
-- **World Theme**: The per-world genre presentation used for world content surfaces, graph/canvas/map styling, in-world accents, and world vocabulary.
+- **World Theme**: The per-world presentation used for world content surfaces, graph/canvas/map styling, in-world accents, and world vocabulary. This includes genre themes and the dedicated neutral `workspace` theme.
 - **Theme Preference**: A saved selection that records either app appearance or world theme at the correct scope.
 - **App Chrome Surface**: A global tool surface such as navigation, search, settings, notifications, modal shells, and sidebars.
 - **World Surface**: A content-bearing surface such as a world front page, graph, canvas, map, entity page, or cover presentation.
@@ -199,7 +200,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 ### Measurable Outcomes
 
 - **SC-001**: A first-time user with no saved preferences sees a neutral app appearance on initial load rather than fantasy parchment styling.
-- **SC-002**: Existing users with a saved fantasy or other genre theme continue to see their saved world theme after the update.
+- **SC-002**: Existing users with a saved fantasy, modern, or other theme continue to see their saved world theme after the update.
 - **SC-003**: Changing a world theme does not visibly alter global chrome surfaces in the primary app workflow.
 - **SC-004**: Users can switch between neutral light, neutral dark, and system app appearances and retain that choice independently of world theme.
 - **SC-005**: A user can maintain at least two worlds with different world themes while app chrome remains consistent between them.
