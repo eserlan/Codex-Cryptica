@@ -2,6 +2,10 @@
   "name": "codex-cryptica",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
     "bun": ">=1.3.0"
   },
