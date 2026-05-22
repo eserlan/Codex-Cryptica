@@ -30,7 +30,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 3. **Simplicity & YAGNI**: The plan extends the existing theme store/schema flow instead of adding a new styling framework or dependency. Full genre light/dark variants and onboarding genre selection are deferred. [PASS]
 4. **AI-First Extraction**: Not applicable; no AI extraction path changes. [PASS]
 5. **Privacy & Client-Side Processing**: All preferences remain browser/vault local. No server persistence is introduced. [PASS]
-6. **Clean Implementation**: Implementation must follow Svelte 5 runes, Tailwind 4 tokens, repo style guide, and explicit tests. [PASS]
+6. **Clean Implementation**: Implementation must follow Svelte 5 runes, Tailwind 4 tokens, repo style guide, Iconify icon classes instead of `lucide-svelte` components, unused-variable hygiene, and explicit tests. [PASS]
 7. **User Documentation**: Appearance help text must explain app appearance versus world theme, and `docs/STYLE_GUIDE.md` must be updated because it is the source of truth for UI theming patterns. [PASS]
 8. **Dependency Injection**: Store/storage changes must preserve injectable storage dependencies for tests. [PASS]
 9. **Natural Language**: Settings labels use plain terms: "App appearance" and "World theme"; avoid over-themed neutral labels. [PASS]

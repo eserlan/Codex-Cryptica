@@ -13,6 +13,15 @@
 - **[Story]**: Maps to user stories from spec.md.
 - Paths are repo-root relative.
 
+## Coding Standards Guardrails
+
+- Follow `docs/STYLE_GUIDE.md` for Svelte 5 runes, Tailwind 4 semantic tokens, accessibility, component composition, and animation behavior.
+- Use Iconify utility classes such as `icon-[lucide--search]` for icons; do not introduce `lucide-svelte` component imports.
+- Keep store/storage changes dependency-injectable with sensible production defaults and mockable test dependencies.
+- Prefix intentionally unused variables or parameters with `_`.
+- Do not add new runtime dependencies for this feature.
+- Keep user-facing settings and help copy plain: "App appearance" and "World theme".
+
 ---
 
 ## Phase 1: Setup
