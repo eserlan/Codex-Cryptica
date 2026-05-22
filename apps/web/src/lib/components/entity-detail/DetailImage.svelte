@@ -167,6 +167,7 @@
   {:else if entity.image}
     <div class="px-4 md:px-6">
       <button
+        type="button"
         onclick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           modalUIStore.openLightbox(resolvedImageUrl, entity.title, {

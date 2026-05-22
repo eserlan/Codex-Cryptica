@@ -187,6 +187,7 @@
       </div>
     {:else if entity?.image}
       <button
+        type="button"
         onclick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           onShowLightbox({

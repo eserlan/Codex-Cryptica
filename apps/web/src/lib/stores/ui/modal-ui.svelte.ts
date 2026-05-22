@@ -82,7 +82,7 @@ export class ModalUIStore {
       show: true,
       imageUrl,
       title,
-      originRect,
+      originRect: originRect ?? null,
     };
   }
 

@@ -35,6 +35,13 @@
       return null;
     }
   };
+
+  let hasOpenedLightbox = $state(false);
+  $effect(() => {
+    if (modalUIStore.lightbox.show) {
+      hasOpenedLightbox = true;
+    }
+  });
 </script>
 
 {#if searchStore.isOpen}
@@ -142,14 +149,16 @@
     {/if}
 
     <!-- Global Image Lightbox -->
-    {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
-      {#if ZenImageLightbox}
-        <ZenImageLightbox
-          bind:show={modalUIStore.lightbox.show}
-          imageUrl={modalUIStore.lightbox.imageUrl}
-          title={modalUIStore.lightbox.title}
-        />
-      {/if}
-    {/await}
+    {#if hasOpenedLightbox}
+      {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
+        {#if ZenImageLightbox}
+          <ZenImageLightbox
+            bind:show={modalUIStore.lightbox.show}
+            imageUrl={modalUIStore.lightbox.imageUrl}
+            title={modalUIStore.lightbox.title}
+          />
+        {/if}
+      {/await}
+    {/if}
   {/if}
 {/if}

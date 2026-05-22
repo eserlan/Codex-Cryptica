@@ -6,11 +6,11 @@
   let {
     show = $bindable(false),
     imageUrl,
-    title,
+    title = "",
   } = $props<{
     show: boolean;
     imageUrl: string;
-    title: string;
+    title?: string;
   }>();
 
   let lightboxBackdrop = $state<HTMLDivElement>();
@@ -40,11 +40,11 @@
 
     // Center of the final rendered full-screen image
     const finalCenterX =
-      (rect.left ||
+      (rect.left ??
         (typeof window !== "undefined" ? window.innerWidth / 2 : 960)) +
       finalWidth / 2;
     const finalCenterY =
-      (rect.top ||
+      (rect.top ??
         (typeof window !== "undefined" ? window.innerHeight / 2 : 540)) +
       finalHeight / 2;
 
@@ -76,10 +76,7 @@
         isLoaded = false;
         loadedUrl = "";
       }
-      if (
-        typeof window !== "undefined" &&
-        navigator.userAgent.includes("jsdom")
-      ) {
+      if (typeof window !== "undefined" && import.meta.env.MODE === "test") {
         loadedUrl = imageUrl;
         isLoaded = true;
       } else {
