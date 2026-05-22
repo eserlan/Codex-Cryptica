@@ -74,3 +74,4 @@ blogPics/
 .vercel/
 .netlify/
 .cache/
+.eslintcache

@@ -13,6 +13,7 @@
     "build": "bun run --filter '*' build",
     "dev": "bun run --filter web dev",
     "lint": "bun run --filter '*' lint",
+    "lint:affected": "bun run --filter '*' lint -- --cache --cache-strategy content",
     "lint:types": "bun run --filter '*' lint:types",
     "lint:fix": "bun run --filter '*' lint -- --fix",
     "test": "bun run --filter '*' test",
