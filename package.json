@@ -17,7 +17,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "commitlint": "commitlint --edit",
     "prepare": "husky",
-    "assets:sync": "node scripts/upload-images.mjs",
+    "assets:sync": "bun scripts/upload-images.mjs",
     "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },
