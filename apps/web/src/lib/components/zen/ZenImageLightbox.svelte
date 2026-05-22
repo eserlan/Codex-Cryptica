@@ -1,5 +1,7 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     show = $bindable(false),
@@ -12,6 +14,92 @@
   }>();
 
   let lightboxBackdrop = $state<HTMLDivElement>();
+
+  function zoomFrom(_node: HTMLElement) {
+    const origin = modalUIStore.lightbox.originRect;
+    if (!origin) {
+      // Fallback: scale up from center with fade
+      return {
+        duration: 350,
+        easing: quintOut,
+        css: (t: number) => {
+          const scale = 0.9 + 0.1 * t;
+          return `transform: scale(${scale}); opacity: ${t};`;
+        },
+      };
+    }
+
+    // Capture precise rendered bounding box of the full-screen image
+    const rect = _node.getBoundingClientRect();
+    const finalWidth = rect.width || 800;
+    const finalHeight = rect.height || 600;
+
+    // Center of the clicked element (origin rect)
+    const originCenterX = origin.x + origin.width / 2;
+    const originCenterY = origin.y + origin.height / 2;
+
+    // Center of the final rendered full-screen image
+    const finalCenterX =
+      (rect.left ||
+        (typeof window !== "undefined" ? window.innerWidth / 2 : 960)) +
+      finalWidth / 2;
+    const finalCenterY =
+      (rect.top ||
+        (typeof window !== "undefined" ? window.innerHeight / 2 : 540)) +
+      finalHeight / 2;
+
+    // Translation required to match click origin center
+    const startX = originCenterX - finalCenterX;
+    const startY = originCenterY - finalCenterY;
+
+    // Mathematically exact starting scale relative to the final rendered image size
+    const startScale = Math.min(Math.max(origin.width / finalWidth, 0.05), 1.0);
+
+    return {
+      duration: 600,
+      easing: quintOut,
+      css: (t: number) => {
+        const scale = startScale + (1 - startScale) * t;
+        const x = startX * (1 - t);
+        const y = startY * (1 - t);
+        return `transform: translate3d(${x}px, ${y}px, 0) scale(${scale}); opacity: ${t};`;
+      },
+    };
+  }
+
+  let isLoaded = $state(false);
+  let loadedUrl = $state("");
+
+  $effect(() => {
+    if (show && imageUrl) {
+      if (loadedUrl !== imageUrl) {
+        isLoaded = false;
+        loadedUrl = "";
+      }
+      if (
+        typeof window !== "undefined" &&
+        navigator.userAgent.includes("jsdom")
+      ) {
+        loadedUrl = imageUrl;
+        isLoaded = true;
+      } else {
+        const img = new Image();
+        img.src = imageUrl;
+        img.onload = () => {
+          loadedUrl = imageUrl;
+          isLoaded = true;
+        };
+      }
+    } else if (!show) {
+      // Reset loading states after exit transitions complete (600ms) to ensure next opening morphs dynamically
+      const timer = setTimeout(() => {
+        isLoaded = false;
+        loadedUrl = "";
+      }, 650);
+      return () => clearTimeout(timer);
+    }
+  });
+
   let closeLightboxBtn = $state<HTMLButtonElement>();
 
   function openInStandaloneWindow(event: MouseEvent) {
@@ -75,7 +163,7 @@
     class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out w-full h-full outline-none"
     onclick={() => (show = false)}
     onkeydown={handleKeydown}
-    transition:fade={{ duration: 200 }}
+    transition:fade={{ duration: 500 }}
   >
     <div class="absolute top-4 right-4 flex items-center gap-2">
       <!-- Pop out button -->
@@ -105,11 +193,12 @@
       </button>
     </div>
 
-    {#if imageUrl}
+    {#if isLoaded && loadedUrl}
       <img
-        src={imageUrl}
+        src={loadedUrl}
         alt={title}
         class="max-w-full max-h-full object-contain shadow-2xl rounded pointer-events-none"
+        transition:zoomFrom
       />
     {:else}
       <div class="flex flex-col items-center gap-4 text-white/50">

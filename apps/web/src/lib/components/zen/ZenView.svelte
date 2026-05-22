@@ -367,8 +367,8 @@
             bind:editState
             {resolvedImageUrl}
             {isPopout}
-            onShowLightbox={() =>
-              modalUIStore.openLightbox(resolvedImageUrl, entity.title)}
+            onShowLightbox={(rect) =>
+              modalUIStore.openLightbox(resolvedImageUrl, entity.title, rect)}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />

@@ -142,16 +142,14 @@
     {/if}
 
     <!-- Global Image Lightbox -->
-    {#if modalUIStore.lightbox.show}
-      {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
-        {#if ZenImageLightbox}
-          <ZenImageLightbox
-            bind:show={modalUIStore.lightbox.show}
-            imageUrl={modalUIStore.lightbox.imageUrl}
-            title={modalUIStore.lightbox.title}
-          />
-        {/if}
-      {/await}
-    {/if}
+    {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
+      {#if ZenImageLightbox}
+        <ZenImageLightbox
+          bind:show={modalUIStore.lightbox.show}
+          imageUrl={modalUIStore.lightbox.imageUrl}
+          title={modalUIStore.lightbox.title}
+        />
+      {/if}
+    {/await}
   {/if}
 {/if}

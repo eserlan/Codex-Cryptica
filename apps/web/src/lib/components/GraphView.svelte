@@ -41,18 +41,22 @@
 
   let resizeObserver: ResizeObserver | undefined;
 
-  // Single coordinator for selectedId sync
-  $effect(() => {
-    if (selectedId !== controller.selectedId) {
-      selectedId = controller.selectedId;
-    }
-  });
-
+  // Sync prop -> controller
   $effect(() => {
     const currentPropId = selectedId;
     untrack(() => {
       if (controller.selectedId !== currentPropId) {
         controller.selectedId = currentPropId;
+      }
+    });
+  });
+
+  // Sync controller -> prop
+  $effect(() => {
+    const currentControllerId = controller.selectedId;
+    untrack(() => {
+      if (selectedId !== currentControllerId) {
+        selectedId = currentControllerId;
       }
     });
   });
@@ -305,6 +309,7 @@
         untrack(() => {
           currentCy.nodes().stop();
           currentCy.nodes().removeStyle();
+          currentCy.$("node:selected").unselect();
         });
         if (controller.pendingSearchFocus) {
           controller.pendingSearchFocus = null;
