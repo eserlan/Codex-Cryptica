@@ -14,23 +14,14 @@ The following high-impact candidate specifications target performance, scaling, 
 - **Objective**: Implement decentralized, low-latency voice and video channels directly on the tactical map view.
 - **Details**: Leverages CC's decoupled PeerJS network topology to transmit audio/video stream tracks in real-time, completely bypassing centralized routing. Includes adaptive frame rates, audio-only fallbacks, and floating Svelte 5 overlay components. Detailed in [p2p_audio_video_analysis.md](./p2p_audio_video_analysis.md).
 
-### [PROPOSED] QuickNote Fast Scratchpad & AI Entity Elevation
-
-- **Target Area**: Brainstorming UI & Oracle Pipeline (`apps/web/src/lib/components/oracle/`, `packages/oracle-engine/`)
-- **Objective**: Introduce a lightning-fast floating scratchpad for quick idea dumps, with one-click AI transformation into fully structured wiki entities.
-- **Details**:
-  - **Quick Dump Interface**: Accessible via global hotkey (`Ctrl+I` / `Cmd+I`) or floating dock bubble, allowing raw unformatted typing and instant save to a lightweight local IndexedDB store (`quick_notes`).
-  - **AI-Driven Synthesis**: Uses the Oracle engine to parse raw scraps, auto-extract potential names, auto-categorize (e.g. NPC, Faction, Location), and draft rich player-facing Chronicles and host-facing Lore.
-  - **Dotted Draft Nodes**: Supports displaying notes as "draft/placeholder" nodes on the Cytoscape Relationship Graph with a custom visual style (e.g. dotted border, yellow tint) to layout concepts before formal wiki integration.
-
 ---
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
-### v0.22.0 — The Reliability & Decomposition Update (Unreleased)
+### v0.22.0 — The Spatial & Scratchpad Update (2026-05-22)
 
-- **Planned Scope**: Broad architecture and reliability train focused on decomposing monolithic services, hardening Oracle workflows, and stabilizing P2P transport for future multiplayer work.
-- **Included Specifications So Far**:
+- **Highlights**: QuickNote scratchpad, AI-driven entity synthesis/elevation, full Svelte 5 Rune conversion, progressive background search worker, and decoupled P2P network services.
+- **Associated Specifications**:
   - [097-oracle-executor-decoupling](./097-oracle-executor-decoupling/spec.md) (Command-specific Oracle executors and faster command routing)
   - [098-p2p-host-service-decoupling](./098-p2p-host-service-decoupling/spec.md) (Host service split into transport, dispatcher, and handlers)
   - [099-map-session-decomposition](./099-map-session-decomposition/spec.md) (Map session store split into focused managers)
@@ -42,6 +33,7 @@ The following high-impact candidate specifications target performance, scaling, 
   - [105-p2p-transport-integration](./105-p2p-transport-integration/spec.md) (Host/guest service integration and reactive connection status UI)
   - [106-progressive-worker-search](./106-progressive-worker-search/spec.md) (Background search indexing via Comlink/Web Workers)
   - [108-rune-hardening](./108-rune-hardening/spec.md) (Full Svelte 5 Rune conversion for all apps/web stores)
+  - [109-quicknote-scratchpad](./109-quicknote-scratchpad/spec.md) (QuickNote scratchpad and AI elevation)
 - **Related Non-Spec Work**:
   - Oracle `ChatMessage` controller extraction and [chat message decomposition analysis](../docs/CHAT_MESSAGE_ANALYSIS.md)
   - Speckit command and skill restoration across `.gemini`, `.agents`, `.claude`, `.qwen`, and `.specify`
