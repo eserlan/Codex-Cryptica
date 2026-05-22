@@ -41,7 +41,7 @@ jobs:
 
       - name: Update lockfiles without running scripts
         run: |
-          bun install --frozen-lockfile=false --ignore-scripts
+          bun install --ignore-scripts
           pnpm install --lockfile-only --ignore-scripts
 
       - name: Commit and push changes
