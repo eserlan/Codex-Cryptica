@@ -64,14 +64,15 @@ As a user who works at different times of day, I want neutral light and dark app
 
 **Why this priority**: A neutral light-only default does not solve evening use, and a genre-themed dark mode would reintroduce the default-genre problem.
 
-**Independent Test**: Select neutral light and neutral dark app appearances. Both should provide a readable, restrained workspace with consistent controls and no genre-specific texture.
+**Independent Test**: Select neutral light, neutral dark, and system app appearances. Each should provide a readable, restrained workspace with consistent controls and no genre-specific texture, with system following the user's device preference.
 
 **Acceptance Scenarios**:
 
 1. **Given** the user selects neutral light app appearance, **When** app chrome is displayed, **Then** it MUST use a restrained light workspace palette.
 2. **Given** the user selects neutral dark app appearance, **When** app chrome is displayed, **Then** it MUST use a restrained dark workspace palette suitable for low-light use.
-3. **Given** either neutral app appearance is selected, **When** the user changes world themes, **Then** the app appearance MUST remain unchanged unless the user explicitly changes it.
-4. **Given** a neutral app appearance is active, **When** the user views headings and body text, **Then** typography MUST provide clear hierarchy without implying a specific story genre.
+3. **Given** the user selects system app appearance, **When** the device preference changes between light and dark, **Then** the app appearance SHOULD follow that preference without changing the active world theme.
+4. **Given** any neutral app appearance is selected, **When** the user changes world themes, **Then** the app appearance MUST remain unchanged unless the user explicitly changes it.
+5. **Given** a neutral app appearance is active, **When** the user views headings and body text, **Then** typography MUST provide clear hierarchy without implying a specific story genre.
 
 ---
 
@@ -105,7 +106,9 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 1. **Given** the fantasy world theme is active, **When** the user reads world content, **Then** headings and body text SHOULD have clearer hierarchy than a single-font presentation.
 2. **Given** the fantasy world theme is active, **When** the user views graph relationships, **Then** edges SHOULD support the nodes without visually overpowering the graph.
 3. **Given** the fantasy world theme is active, **When** the user views textured surfaces, **Then** parchment texture SHOULD appear as a world/canvas treatment rather than a repeated app-wide wallpaper.
-4. **Given** the fantasy world theme is active, **When** users interact with world content, **Then** active and selected states SHOULD remain clear without turning every surface into a high-emphasis accent.
+4. **Given** the fantasy world theme is active, **When** the user views world surfaces and controls, **Then** the palette SHOULD include enough tonal contrast and visual rest to avoid a single warm-brown wash.
+5. **Given** the fantasy world theme is active, **When** users interact with world content, **Then** active and selected states SHOULD remain clear without turning every surface into a high-emphasis accent.
+6. **Given** the fantasy world theme is active, **When** panels, cards, and controls are displayed, **Then** their edge treatment SHOULD follow an intentional visual direction rather than an ambiguous in-between radius.
 
 ### Edge Cases
 
@@ -114,6 +117,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - Demo or shared-session worlds that intentionally force a genre theme should still present that world theme while keeping app chrome understandable.
 - If a user previews a world theme without saving it, the preview should not permanently change app appearance or another world's theme.
 - Textured themes must not make chrome controls, settings, search, or modals harder to read.
+- Overlay treatments such as hero vignettes must not muddy light world themes or make a light background look unintentionally darkened.
 - Light world themes shown inside a dark app appearance, and dark world themes shown inside a light app appearance, must still have clear boundaries.
 - Genre vocabulary should not leak into neutral app-wide labels unless a world theme intentionally controls that label.
 - The change must preserve accessible contrast for common app and world interactions.
@@ -125,13 +129,14 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - The first deliverable should introduce neutral app appearances and scoping rules before building a full onboarding genre picker.
 - Existing genre themes remain available and are treated as world themes, not removed.
 - A later onboarding improvement may ask for world genre during vault creation, but that is not required for this first spec.
+- A later theme expansion may add light and dark variants for every genre theme, but this spec only requires neutral light, neutral dark, and system app appearances.
 
 ## Requirements _(mandatory)_
 
 ### Functional Requirements
 
 - **FR-001**: The system MUST provide a neutral default app appearance for users and worlds with no saved appearance or theme preference.
-- **FR-002**: The system MUST provide both neutral light and neutral dark app appearances.
+- **FR-002**: The system MUST provide neutral light, neutral dark, and system app appearances.
 - **FR-003**: The system MUST preserve existing saved theme selections and continue honoring them after this change.
 - **FR-004**: The system MUST separate app appearance from world theme so changing one does not implicitly change the other.
 - **FR-005**: App chrome MUST use the selected app appearance rather than the selected world theme.
@@ -149,11 +154,14 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **FR-017**: The fantasy world theme SHOULD use distinct heading and body typography to improve hierarchy.
 - **FR-018**: The fantasy world theme SHOULD reduce graph edge visual weight so relationships support nodes rather than dominate them.
 - **FR-019**: The fantasy world theme SHOULD keep parchment texture scoped to world/canvas moments rather than global chrome.
-- **FR-020**: Theme previews MUST be temporary until explicitly saved.
-- **FR-021**: Theme and appearance changes MUST remain readable and accessible across common light and dark combinations.
-- **FR-022**: The help or appearance guidance available to users MUST describe the distinction between app appearance and world theme in clear, approachable language.
-- **FR-023**: Automated verification MUST cover default neutral appearance, preservation of existing saved themes, independent app/world selection, and texture scoping.
-- **FR-024**: Automated or manual visual verification MUST cover fantasy refinement, including typography hierarchy, graph relationship weight, and texture scoping.
+- **FR-020**: Light world themes MUST avoid dark overlay treatments that muddy light backgrounds or reduce perceived content clarity.
+- **FR-021**: The fantasy world theme SHOULD provide enough palette contrast and visual rest to avoid a single warm-brown visual wash.
+- **FR-022**: The fantasy world theme SHOULD use an intentional edge and corner treatment for panels, cards, and controls.
+- **FR-023**: Theme previews MUST be temporary until explicitly saved.
+- **FR-024**: Theme and appearance changes MUST remain readable and accessible across common light and dark combinations.
+- **FR-025**: The help or appearance guidance available to users MUST describe the distinction between app appearance and world theme in clear, approachable language.
+- **FR-026**: Automated verification MUST cover default neutral appearance, preservation of existing saved themes, independent app/world selection, and texture scoping.
+- **FR-027**: Automated or manual visual verification MUST cover fantasy refinement, including typography hierarchy, graph relationship weight, overlay behavior, palette balance, and texture scoping.
 
 ### Key Entities _(include if feature involves data)_
 
@@ -172,8 +180,8 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **SC-001**: A first-time user with no saved preferences sees a neutral app appearance on initial load rather than fantasy parchment styling.
 - **SC-002**: Existing users with a saved fantasy or other genre theme continue to see their saved world theme after the update.
 - **SC-003**: Changing a world theme does not visibly alter global chrome surfaces in the primary app workflow.
-- **SC-004**: Users can switch between neutral light and neutral dark app appearances and retain that choice independently of world theme.
+- **SC-004**: Users can switch between neutral light, neutral dark, and system app appearances and retain that choice independently of world theme.
 - **SC-005**: A user can maintain at least two worlds with different world themes while app chrome remains consistent between them.
 - **SC-006**: Textures no longer appear as a wall-to-wall app background or repeated default chrome treatment during normal app use.
-- **SC-007**: Fantasy world theme review confirms improved reading hierarchy and less visually dominant graph relationships while preserving a recognizable fantasy mood.
+- **SC-007**: Fantasy world theme review confirms improved reading hierarchy, less visually dominant graph relationships, cleaner light-surface overlays, and more intentional palette and edge treatment while preserving a recognizable fantasy mood.
 - **SC-008**: Verification covers the main appearance/theme flows before implementation is considered complete.
