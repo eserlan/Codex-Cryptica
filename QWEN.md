@@ -60,7 +60,7 @@ Codex-Arcana/
 ### Prerequisites
 
 - Node.js 24+
-- pnpm (Recommended)
+- Bun (Recommended)
 
 ### Installation
 
@@ -68,19 +68,19 @@ Codex-Arcana/
 # Clone and install dependencies
 git clone <repository>
 cd Codex-Arcana
-pnpm install
+bun install
 ```
 
 ### Development
 
 ```bash
 # Start development server (all packages)
-pnpm run dev
+bun run dev
 # or
 turbo run dev
 
 # Start only the web app
-pnpm --filter web run dev
+bun run --filter web dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to view the application.
@@ -89,7 +89,7 @@ Open [http://localhost:5173](http://localhost:5173) to view the application.
 
 ```bash
 # Build all packages
-pnpm run build
+bun run build
 # or
 turbo run build
 ```
@@ -98,26 +98,26 @@ turbo run build
 
 ```bash
 # Run all unit tests
-pnpm test
+bun run test
 
 # Run tests with coverage
-pnpm run test:coverage
+bun run test:coverage
 
 # Run E2E tests (Playwright)
-pnpm run test:e2e
+bun run test:e2e
 
 # Test specific workspace
-pnpm --filter @codex/vault-engine test
+bun run --filter @codex/vault-engine test
 ```
 
 ### Linting & Formatting
 
 ```bash
 # Lint all packages
-pnpm run lint
+bun run lint
 
 # Format code
-pnpm run format
+bun run format
 ```
 
 ## Development Conventions
@@ -135,7 +135,7 @@ All commits must start with a [gitmoji](https://gitmoji.dev/) emoji:
 🔧 Configuration change
 ```
 
-Use `pnpm exec gitmoji -c` for interactive commit with emoji selection.
+Use `bunx gitmoji -c` for interactive commit with emoji selection.
 
 ### Pre-commit Hooks
 
@@ -254,7 +254,7 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Git Workflow
 
-- Before committing, run `pnpm run lint` and `pnpm run test` to catch errors early
+- Before committing, run `bun run lint` and `bun run test` to catch errors early
 - If commitlint fails, use `git reset --soft HEAD~1` to amend rather than creating new commits
 - When addressing PR comments, reference the specific comment thread in your commit message
 
@@ -284,4 +284,4 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Qwen Added Memories
 
-- Always run playwright test with --last-failed --max-failures=5 --reporter=line when iterating on fixes. --last-failed only reruns previously failed tests. --max-failures=5 stops after 5 failures (fail-fast). --reporter=line gives terse output. Only applies when invoking pnpm exec playwright test directly; pnpm run test:e2e already has default flags.
+- Always run playwright test with --last-failed --max-failures=5 --reporter=line when iterating on fixes. --last-failed only reruns previously failed tests. --max-failures=5 stops after 5 failures (fail-fast). --reporter=line gives terse output. Only applies when invoking bunx playwright test directly; bun run test:e2e already has default flags.
