@@ -200,12 +200,13 @@
 
 **Purpose**: Cross-story cleanup, docs, and final validation.
 
-- [ ] T063 [P] Update `specs/113-neutral-world-theming/quickstart.md` if implementation commands or validation steps change.
-- [ ] T064 Run focused unit tests: `bun run --filter schema test`, `bun run --filter graph-engine test`, and `bun run --filter web test -- theme`.
-- [ ] T065 Run focused browser checks: `bun run --filter web test:e2e -- themes.spec.ts`.
-- [ ] T066 Run full validation: `bun run lint` and `bun run test`.
-- [ ] T067 Manually validate first-pass surfaces from quickstart: header, activity bar, footer, settings, search, front page, graph, and entity detail.
-- [ ] T068 Confirm no unintended changes to existing saved theme behavior by testing fantasy, modern, and one dark genre theme.
+- [ ] T063 [P] Update `docs/STYLE_GUIDE.md` so theming guidance documents app appearance versus world theme, app chrome token usage, scoped world texture, and no longer describes Fantasy as the default app theme.
+- [ ] T064 [P] Update `specs/113-neutral-world-theming/quickstart.md` if implementation commands or validation steps change.
+- [ ] T065 Run focused unit tests: `bun run --filter schema test`, `bun run --filter graph-engine test`, and `bun run --filter web test -- theme`.
+- [ ] T066 Run focused browser checks: `bun run --filter web test:e2e -- themes.spec.ts`.
+- [ ] T067 Run full validation: `bun run lint` and `bun run test`.
+- [ ] T068 Manually validate first-pass surfaces from quickstart: header, activity bar, footer, settings, search, front page, graph, and entity detail.
+- [ ] T069 Confirm no unintended changes to existing saved theme behavior by testing fantasy, modern, and one dark genre theme.
 
 ---
 

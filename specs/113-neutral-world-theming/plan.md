@@ -19,7 +19,7 @@ Split the current one-layer theme system into a neutral app appearance layer and
 **Project Type**: Web application monorepo with shared packages  
 **Performance Goals**: Theme/app appearance switch should remain CSS-variable driven with no full reload, no avoidable layout shift, and no perceptible delay beyond current theme switching.  
 **Constraints**: Preserve existing saved world themes; keep vault data client-side; do not add new runtime dependencies; follow Svelte 5 runes and Tailwind 4 semantic-token patterns; avoid decorative typography on long-form authored content; ensure light-surface overlays do not muddy light themes.  
-**Scale/Scope**: Shared theme schema and store changes, a dedicated neutral `workspace` world theme, plus focused UI updates for header, activity bar, footer, settings, search, front page, graph, entity detail, graph style generation, and help guidance. Other app surfaces may follow once the split is established.
+**Scale/Scope**: Shared theme schema and store changes, a dedicated neutral `workspace` world theme, plus focused UI updates for header, activity bar, footer, settings, search, front page, graph, entity detail, graph style generation, help guidance, and style guide alignment. Other app surfaces may follow once the split is established.
 
 ## Constitution Check
 
@@ -31,12 +31,12 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 4. **AI-First Extraction**: Not applicable; no AI extraction path changes. [PASS]
 5. **Privacy & Client-Side Processing**: All preferences remain browser/vault local. No server persistence is introduced. [PASS]
 6. **Clean Implementation**: Implementation must follow Svelte 5 runes, Tailwind 4 tokens, repo style guide, and explicit tests. [PASS]
-7. **User Documentation**: Appearance help text must explain app appearance versus world theme. [PASS]
+7. **User Documentation**: Appearance help text must explain app appearance versus world theme, and `docs/STYLE_GUIDE.md` must be updated because it is the source of truth for UI theming patterns. [PASS]
 8. **Dependency Injection**: Store/storage changes must preserve injectable storage dependencies for tests. [PASS]
 9. **Natural Language**: Settings labels use plain terms: "App appearance" and "World theme"; avoid over-themed neutral labels. [PASS]
 10. **Coverage Enforcement**: New logic must maintain or improve relevant coverage. [PASS]
 
-**Post-Design Recheck**: Phase 1 artifacts preserve the same scope and introduce no new dependency, server storage, or architecture violation. [PASS]
+**Post-Design Recheck**: Phase 1 artifacts preserve the same scope and introduce no new dependency, server storage, or architecture violation. Style guide alignment is required because the current guide still describes the old single-theme model. [PASS]
 
 ## Project Structure
 
@@ -101,6 +101,8 @@ apps/
     │   │       └── help-content.ts
     │   └── tests/
     │       └── themes.spec.ts
+docs/
+└── STYLE_GUIDE.md           # Updated app/world theme guidance
 ```
 
 **Structure Decision**: Keep reusable theme definitions in `packages/schema`, graph rendering style in `packages/graph-engine`, and browser preference/UI concerns in `apps/web`. The existing `themeStore` remains the central web-facing preference store, but it must distinguish global app appearance from per-vault world theme and keep storage injectable for tests. CSS should expose app-chrome variables at the root and world-theme variables through scoped selectors/containers so chrome cannot inherit parchment or other genre textures by accident. The first UI pass is intentionally bounded to header, activity bar, footer, settings, search, front page, graph, and entity detail so the architectural split can ship without becoming a full-app visual audit.

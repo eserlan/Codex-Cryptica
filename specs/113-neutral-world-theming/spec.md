@@ -184,6 +184,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **FR-026**: Automated verification MUST cover default neutral appearance, preservation of existing saved themes, independent app/world selection, and texture scoping.
 - **FR-027**: Automated or manual visual verification MUST cover fantasy refinement, including typography hierarchy, graph relationship weight, overlay behavior, palette balance, and texture scoping.
 - **FR-028**: The first implementation MUST apply the app/world theme split to header, activity bar, footer, settings, search, front page, graph, and entity detail surfaces.
+- **FR-029**: The developer style guide MUST be updated to document the app appearance versus world theme split, replacing outdated single-theme/default-fantasy guidance.
 
 ### Key Entities _(include if feature involves data)_
 
