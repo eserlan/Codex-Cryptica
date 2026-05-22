@@ -8,6 +8,7 @@
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let {
     entity,
@@ -247,7 +248,13 @@
             ></span>
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
-                onclick={() => (vault.selectedEntityId = conn.targetId)}
+                onclick={(e) => {
+                  layoutUIStore.setLastSelectedNodePosition({
+                    x: e.clientX,
+                    y: e.clientY,
+                  });
+                  vault.selectedEntityId = conn.targetId;
+                }}
                 class="text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
               >
                 {#if conn.isOutbound}

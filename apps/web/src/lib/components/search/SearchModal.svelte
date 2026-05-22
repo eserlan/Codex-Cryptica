@@ -89,6 +89,19 @@
       event.stopPropagation();
     }
 
+    if (
+      event &&
+      "clientX" in event &&
+      typeof (event as any).clientX === "number"
+    ) {
+      layoutUIStore.setLastSelectedNodePosition({
+        x: (event as any).clientX,
+        y: (event as any).clientY,
+      });
+    } else {
+      layoutUIStore.setLastSelectedNodePosition(null);
+    }
+
     if (result.type === "quicknote" || result.id?.startsWith("quicknote-")) {
       const noteIdStr = result.id.replace("quicknote-", "");
       const noteId = parseInt(noteIdStr, 10);

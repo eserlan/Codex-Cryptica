@@ -60,6 +60,7 @@ export class LayoutUIStore {
   vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
   findNodeCounter = $state(0);
+  lastSelectedNodePosition = $state<{ x: number; y: number } | null>(null);
 
   constructor(
     private persistence: UIPersistence = new DefaultPersistence(),
@@ -128,6 +129,10 @@ export class LayoutUIStore {
 
   findInGraph() {
     this.findNodeCounter++;
+  }
+
+  setLastSelectedNodePosition(pos: { x: number; y: number } | null) {
+    this.lastSelectedNodePosition = pos;
   }
 
   private loadPersistedState() {

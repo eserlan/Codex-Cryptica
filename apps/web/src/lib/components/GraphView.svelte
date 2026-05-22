@@ -192,14 +192,41 @@
               ? (controller.pendingSearchFocus?.zoom ??
                 DEFAULT_SEARCH_ENTITY_ZOOM)
               : null;
-          untrack(() =>
+          untrack(() => {
             currentCy.animate({
               center: { eles: node },
               ...(focusZoom !== null ? { zoom: focusZoom } : {}),
               duration: 800,
               easing: "ease-out-cubic",
-            }),
-          );
+            });
+
+            node.animate(
+              {
+                style: {
+                  "underlay-padding": 24,
+                  "underlay-opacity": 0.5,
+                },
+              },
+              {
+                duration: 250,
+                easing: "ease-out",
+                complete: () => {
+                  node.animate(
+                    {
+                      style: {
+                        "underlay-padding": 8,
+                        "underlay-opacity": 0.3,
+                      },
+                    },
+                    {
+                      duration: 250,
+                      easing: "ease-in",
+                    },
+                  );
+                },
+              },
+            );
+          });
           if (focusZoom !== null) {
             controller.pendingSearchFocus = null;
           }

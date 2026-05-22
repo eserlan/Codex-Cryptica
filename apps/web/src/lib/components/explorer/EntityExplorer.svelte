@@ -24,7 +24,13 @@
     }
   }
 
-  function handleFindInGraph(entity: Entity) {
+  function handleFindInGraph(entity: Entity, event?: MouseEvent) {
+    if (event) {
+      layoutUIStore.setLastSelectedNodePosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    }
     dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = entity.id;
     layoutUIStore.findInGraph();
