@@ -75,7 +75,7 @@
     >
       <div class="flex items-center gap-2">
         <span
-          class="icon-[lucide--sparkles] h-5 w-5 text-amber-400 animate-pulse"
+          class="icon-[lucide--sparkles] h-5 w-5 text-theme-accent animate-pulse"
         ></span>
         <h3
           class="font-header text-sm text-theme-primary uppercase tracking-wider font-bold"
@@ -114,7 +114,7 @@
             <textarea
               bind:value={quickNoteStore.currentNote.content}
               placeholder="Dump your thoughts here instantly... Type location lore, NPC concepts, or plot hooks. Auto-saved!"
-              class="flex-1 bg-transparent border-0 text-xs text-theme-text placeholder-theme-muted focus:ring-0 focus:outline-none resize-none font-sans leading-relaxed"
+              class="flex-1 bg-transparent border-0 text-xs text-theme-text placeholder-theme-muted focus:ring-0 focus:outline-none resize-none font-body leading-relaxed"
             ></textarea>
 
             <!-- Bottom Tool Actions -->
@@ -125,20 +125,11 @@
                 <!-- Discard/Delete button -->
                 <button
                   onclick={() => quickNoteStore.discardNote()}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold text-xs transition-colors"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-danger/20 bg-theme-danger/10 hover:bg-theme-danger/20 text-theme-danger font-semibold text-xs transition-colors"
                   title="Discard Note"
                 >
                   <span class="icon-[lucide--trash-2] h-3.5 w-3.5"></span>
                   Discard
-                </button>
-                <!-- Archive button -->
-                <button
-                  onclick={() => quickNoteStore.archiveNote()}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-border/50 bg-theme-bg/35 hover:bg-theme-bg/60 text-theme-text font-semibold text-xs transition-colors"
-                  title="Archive Note"
-                >
-                  <span class="icon-[lucide--archive] h-3.5 w-3.5"></span>
-                  Archive
                 </button>
               </div>
 
@@ -155,17 +146,15 @@
                   }}
                   disabled={quickNoteStore.isElevating ||
                     !quickNoteStore.currentNote.content.trim()}
-                  class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs hover:from-amber-600 hover:to-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
-                  title="Elevate Draft with AI"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-[10px] uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
+                  title="Make Entity with AI"
                 >
                   <span
                     class="icon-[lucide--sparkles] h-3.5 w-3.5 {quickNoteStore.isElevating
-                      ? 'animate-spin text-slate-950'
-                      : 'text-slate-950'}"
+                      ? 'animate-spin'
+                      : ''}"
                   ></span>
-                  {quickNoteStore.isElevating
-                    ? "Elevating..."
-                    : "Elevate to Wiki"}
+                  {quickNoteStore.isElevating ? "Making..." : "Make Entity"}
                 </button>
               </div>
             </div>
@@ -175,7 +164,7 @@
             class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted"
           >
             <span
-              class="icon-[lucide--sticky-note] h-12 w-12 opacity-30 mb-3 text-amber-500/80"
+              class="icon-[lucide--sticky-note] h-12 w-12 opacity-30 mb-3 text-theme-accent"
             ></span>
             <p class="text-xs font-medium">
               Select a note or create a new one to begin editing.

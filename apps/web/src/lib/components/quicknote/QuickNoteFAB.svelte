@@ -11,7 +11,7 @@
     <!-- Pulse Ring Animation when un-elevated drafts exist -->
     {#if quickNoteStore.count > 0}
       <span
-        class="absolute inset-0 rounded-full bg-amber-500/20 quicknote-ring-pulse"
+        class="absolute inset-0 rounded-full bg-theme-accent/20 quicknote-ring-pulse"
       ></span>
     {/if}
 
@@ -21,7 +21,7 @@
       class="relative flex items-center justify-center w-12 h-12 rounded-full border transition-all duration-300
              backdrop-blur-md hover:scale-105 active:scale-95 shadow-lg
              {quickNoteStore.count > 0
-        ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+        ? 'bg-theme-accent/10 border-theme-accent/30 text-theme-accent hover:bg-theme-accent/20 hover:border-theme-accent/50 shadow-lg shadow-theme-accent/25'
         : 'bg-theme-surface/75 border-theme-border/60 text-theme-muted hover:text-theme-text hover:bg-theme-surface hover:border-theme-border/80'}"
       aria-label="Toggle scratchpad"
     >
@@ -30,7 +30,7 @@
       <!-- Floating counter badge -->
       {#if quickNoteStore.count > 0}
         <span
-          class="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-slate-900 bg-gradient-to-tr from-amber-500 to-orange-500 shadow-md border border-slate-950/20"
+          class="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-theme-bg bg-theme-accent shadow-md border border-theme-border/20"
           transition:scale
         >
           {quickNoteStore.count}

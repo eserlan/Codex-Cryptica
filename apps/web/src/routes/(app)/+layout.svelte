@@ -38,7 +38,6 @@
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
-  import QuickNoteFAB from "$lib/components/quicknote/QuickNoteFAB.svelte";
 
   // Logic & Hooks
   import {
@@ -317,10 +316,6 @@
 
   {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
-  {/if}
-
-  {#if !isPopup && !isVttFullscreen && !isZenPopout}
-    <QuickNoteFAB />
   {/if}
 
   {#if !isPopup}

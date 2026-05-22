@@ -34,7 +34,7 @@
         type="text"
         bind:value={quickNoteStore.filterText}
         placeholder="Filter notes..."
-        class="w-full pl-8 pr-3 py-1.5 bg-theme-bg/40 border border-theme-border/40 rounded-lg text-xs text-theme-text placeholder-theme-muted focus:outline-none focus:border-amber-500/50 transition-colors"
+        class="w-full pl-8 pr-3 py-1.5 bg-theme-bg/40 border border-theme-border/40 rounded-lg text-xs text-theme-text placeholder-theme-muted focus:outline-none focus:border-theme-accent/50 focus:ring-1 focus:ring-theme-accent/20 transition-colors"
       />
       {#if quickNoteStore.filterText}
         <button
@@ -49,7 +49,7 @@
   </div>
 
   <!-- Notes List -->
-  <div class="flex-1 overflow-y-auto min-h-0 p-2 space-y-1.5">
+  <div class="flex-1 overflow-y-auto min-h-0 p-2 space-y-1.5 custom-scrollbar">
     {#if quickNoteStore.filteredNotes.length === 0}
       <div class="p-6 text-center text-theme-muted text-xs" transition:fade>
         No notes found
@@ -60,7 +60,7 @@
           onclick={() => quickNoteStore.selectNote(note)}
           class="w-full text-left p-2.5 rounded-xl border transition-all text-xs flex flex-col gap-1
             {quickNoteStore.currentNote?.id === note.id
-            ? 'bg-amber-500/10 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.1)] text-amber-200'
+            ? 'bg-theme-accent/10 border-theme-accent/30 shadow-sm shadow-theme-accent/10 text-theme-text font-bold'
             : 'bg-theme-bg/25 border-theme-border/20 text-theme-text hover:bg-theme-bg/60 hover:border-theme-border/40'}"
         >
           <div class="flex justify-between items-center w-full">
@@ -86,7 +86,7 @@
   >
     <button
       onclick={() => quickNoteStore.startNewNote()}
-      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold text-xs transition-colors shadow-sm"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg font-semibold text-xs transition-colors shadow-sm hover:brightness-110"
     >
       <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
       New Note

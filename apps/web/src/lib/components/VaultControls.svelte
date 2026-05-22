@@ -1,7 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import ShareModal from "$lib/components/ShareModal.svelte";
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -170,15 +169,6 @@
       >
         {themeStore.jargon.vault}: {vault.vaultName}
       </span>
-      {#if quickNoteStore.count > 0}
-        <span
-          class="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30 animate-pulse"
-          title={`${quickNoteStore.count} active quick note drafts`}
-        >
-          <span class="icon-[lucide--zap] h-2.5 w-2.5"></span>
-          <span>{quickNoteStore.count}</span>
-        </span>
-      {/if}
       <span
         class="icon-[lucide--chevron-down] w-3 h-3 text-theme-muted/50 group-hover:text-theme-primary"
       ></span>

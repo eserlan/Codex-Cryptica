@@ -5,7 +5,6 @@ import { getDB } from "../utils/idb";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-import { quickNoteStore } from "./quicknote.svelte";
 
 export class GraphStore {
   // Dependencies
@@ -80,16 +79,6 @@ export class GraphStore {
       visibleEntities,
       validIds,
     );
-
-    // Merge active un-elevated QuickNotes as draft nodes on the graph canvas
-    const quickNotes = quickNoteStore.activeNotes;
-    if (quickNotes && quickNotes.length > 0) {
-      const quickNoteElements = GraphTransformer.quickNotesToElements(
-        quickNotes,
-        visibleEntities.length,
-      );
-      return [...entityElements, ...quickNoteElements];
-    }
 
     return entityElements;
   });

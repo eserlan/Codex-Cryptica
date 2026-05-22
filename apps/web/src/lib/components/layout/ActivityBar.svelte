@@ -168,7 +168,7 @@
 
       {#if tool.id === "quicknote" && quickNoteStore.count > 0}
         <span
-          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-slate-900 bg-gradient-to-tr from-amber-500 to-orange-500 shadow-md"
+          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-theme-bg bg-theme-accent shadow-md"
         >
           {quickNoteStore.count}
         </span>
