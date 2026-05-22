@@ -156,6 +156,41 @@ const _handleUnusedEvent = (e) => {
 };
 ```
 
+## Animation and Transition Standards
+
+Immersive animations are a core pillar of Codex-Cryptica's premium design aesthetic. Use these standards to maintain a weighted, tactile, and professional motion feel:
+
+### Timing & Duration Rules
+
+- **UI Micro-interactions**: `150ms` – `250ms` (e.g., tooltips, button hover states, small dropdown toggles). Requires fast, crisp feedback.
+- **Large Drawer Side Sheets**: `500ms` – `550ms` (e.g., entity detail panels, sidebar slide-outs).
+- **Immersive Full-Screen Modals**: `550ms` – `650ms` (e.g., Zen Mode). Larger surfaces cover more visual distance and require longer durations to prevent eye strain and feel premium.
+
+### Easing Standards
+
+- NEVER use linear or robotic, jarring transitions for large elements.
+- **`quintOut`**: The default deceleration easing for immersive screen elements (cards, modal screens, drawer panels). It starts instantly to give immediate feedback on tap/click, and then spends the remainder of its duration smoothly drifting and settling into place, producing a satisfying "weighted" feel.
+
+### Technical Implementation (Avoid Broken Exit Transitions)
+
+Svelte's built-in exit transitions (`out:fade`, `transition:fly`, etc.) will NOT execute if a parent component wraps the element in a conditional check that unmounts immediately (e.g., `{#if showModal}`).
+
+To ensure entrance and exit transitions run fully:
+
+1. **Render the component persistently** in its parent provider or layouts (e.g. `<ZenModeModal />` always rendered inside `GlobalModalProvider.svelte`).
+2. **Move the conditional block inside** the component itself as its root-level template:
+   ```svelte
+   <!-- ZenModeModal.svelte -->
+   {#if modalUIStore.showZenMode && entityId}
+     <div transition:fade={{ duration: 500 }}>
+       <div transition:fly={{ y: 50, duration: 550, easing: quintOut }}>
+         ...
+       </div>
+     </div>
+   {/if}
+   ```
+   This gives the Svelte transition engine full control over element lifecycles, ensuring exit animations always play perfectly before removal.
+
 ## How to Contribute
 
 To extend the Codex-Cryptica design system, follow these steps:

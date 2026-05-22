@@ -182,7 +182,7 @@
     {/if}
   </div>
 
-  {#if selectedEntity && EntityDetailPanel}
+  {#if EntityDetailPanel}
     <EntityDetailPanel
       entity={selectedEntity}
       onClose={() => (vault.selectedEntityId = null)}

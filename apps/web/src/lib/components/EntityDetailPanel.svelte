@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
   import { vault } from "$lib/stores/vault.svelte";
   import ResizerHandle from "./layout/ResizerHandle.svelte";
 
@@ -73,6 +74,13 @@
     if (vault.isGuest && activeTab === "lore") {
       activeTab = "status";
     }
+  });
+
+  // Cleanup lastSelectedNodePosition on unmount to prevent stale/incorrect zoom animation origins
+  $effect(() => {
+    return () => {
+      layoutUIStore.setLastSelectedNodePosition(null);
+    };
   });
 
   const startEditing = () => {
@@ -167,12 +175,56 @@
       isDraftActioning = false;
     }
   };
+
+  function expandFrom(node: HTMLElement) {
+    const isMobile = layoutUIStore.isMobile;
+    const pos = layoutUIStore.lastSelectedNodePosition;
+
+    if (isMobile) {
+      node.style.transformOrigin = "bottom center";
+      return {
+        duration: 550,
+        easing: quintOut,
+        css: (t: number) => {
+          const y = (1 - t) * 100;
+          return `transform: translateY(${y}%); opacity: ${t};`;
+        },
+      };
+    }
+
+    if (pos) {
+      // Compute transform-origin relative to the panel's own bounding box
+      const rect = node.getBoundingClientRect();
+      const originX = pos.x - rect.left;
+      const originY = pos.y - rect.top;
+      node.style.transformOrigin = `${originX}px ${originY}px`;
+
+      return {
+        duration: 600,
+        easing: quintOut,
+        css: (t: number) => {
+          const scale = 0.7 + 0.3 * t;
+          return `transform: scale(${scale}); opacity: ${t};`;
+        },
+      };
+    }
+
+    // Fallback: slide from right
+    node.style.transformOrigin = "right center";
+    return {
+      duration: 550,
+      easing: quintOut,
+      css: (t: number) => {
+        return `transform: translateX(${(1 - t) * 100}%); opacity: ${Math.min(t * 1.5, 1)};`;
+      },
+    };
+  }
 </script>
 
 {#if entity}
   <aside
-    transition:fade={{ duration: 200 }}
-    class="pointer-events-auto flex h-full w-full flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50 shrink-0"
+    transition:expandFrom
+    class="pointer-events-auto flex flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono absolute right-0 top-0 bottom-0 max-md:top-auto max-md:h-[calc(100%-60px)] z-50 overflow-hidden"
     style:width={layoutUIStore.isMobile
       ? "100%"
       : `${layoutUIStore.rightSidebarWidth}px`}
@@ -191,138 +243,148 @@
       />
     {/if}
 
-    <DetailHeader
-      {entity}
-      {isEditing}
-      bind:editTitle
-      bind:editAliases
-      {onClose}
-    />
+    <div class="absolute inset-0 flex flex-col min-h-0">
+      <DetailHeader
+        {entity}
+        {isEditing}
+        bind:editTitle
+        bind:editAliases
+        {onClose}
+      />
 
-    <div
-      class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col overscroll-contain"
-      style:background-color="var(--theme-panel-muted)"
-      style="background-image: var(--bg-texture-overlay); touch-action: pan-y;"
-    >
-      {#if sessionModeStore.isDemoMode}
-        <div
-          class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-[9px] font-bold text-theme-primary tracking-widest text-center animate-pulse"
-        >
-          TRANSIENT MODE: CHANGES WILL NOT BE SAVED
-        </div>
-      {/if}
-      {#if entity.status === "draft" && !vault.isGuest}
-        <div
-          class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"
-        >
-          <span
-            class="text-[9px] font-bold tracking-widest text-amber-500 uppercase"
-          >
-            AI Draft — Pending Review
-          </span>
-          <div class="flex items-center gap-1">
-            <button
-              onclick={handleApproveDraft}
-              disabled={isDraftActioning}
-              title="Approve draft"
-              aria-label="Approve draft"
-              class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/10 disabled:opacity-50"
-            >
-              <span class="icon-[lucide--check] h-3 w-3"></span>
-              Approve
-            </button>
-            <button
-              onclick={handleRejectDraft}
-              disabled={isDraftActioning}
-              title="Reject draft"
-              aria-label="Reject draft"
-              class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-red-500 transition hover:bg-red-500/10 disabled:opacity-50"
-            >
-              <span class="icon-[lucide--trash-2] h-3 w-3"></span>
-              Reject
-            </button>
-          </div>
-        </div>
-      {/if}
       <div
-        style:background-image="var(--bg-texture-overlay)"
-        class="bg-theme-surface shrink-0"
-        style:background-color="var(--theme-panel-fill)"
+        class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg overscroll-contain"
+        style:background-color="var(--theme-panel-muted)"
+        style="background-image: var(--bg-texture-overlay); touch-action: pan-y; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;"
       >
-        <DetailImage {entity} {isEditing} bind:editImage />
+        {#key entity.id}
+          <div
+            in:fade={{ duration: 150, delay: 150 }}
+            out:fade={{ duration: 150 }}
+            class="col-start-1 row-start-1 flex flex-col w-full h-full min-h-0"
+          >
+            {#if sessionModeStore.isDemoMode}
+              <div
+                class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-[9px] font-bold text-theme-primary tracking-widest text-center animate-pulse"
+              >
+                TRANSIENT MODE: CHANGES WILL NOT BE SAVED
+              </div>
+            {/if}
+            {#if entity.status === "draft" && !vault.isGuest}
+              <div
+                class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"
+              >
+                <span
+                  class="text-[9px] font-bold tracking-widest text-amber-500 uppercase"
+                >
+                  AI Draft — Pending Review
+                </span>
+                <div class="flex items-center gap-1">
+                  <button
+                    onclick={handleApproveDraft}
+                    disabled={isDraftActioning}
+                    title="Approve draft"
+                    aria-label="Approve draft"
+                    class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/10 disabled:opacity-50"
+                  >
+                    <span class="icon-[lucide--check] h-3 w-3"></span>
+                    Approve
+                  </button>
+                  <button
+                    onclick={handleRejectDraft}
+                    disabled={isDraftActioning}
+                    title="Reject draft"
+                    aria-label="Reject draft"
+                    class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-red-500 transition hover:bg-red-500/10 disabled:opacity-50"
+                  >
+                    <span class="icon-[lucide--trash-2] h-3 w-3"></span>
+                    Reject
+                  </button>
+                </div>
+              </div>
+            {/if}
+            <div
+              style:background-image="var(--bg-texture-overlay)"
+              class="bg-theme-surface shrink-0"
+              style:background-color="var(--theme-panel-fill)"
+            >
+              <DetailImage {entity} {isEditing} bind:editImage />
 
-        <DetailTabs
-          {entity}
-          bind:activeTab
-          {isEditing}
-          bind:editType
-          idPrefix={tabInstanceId}
-        />
-      </div>
-
-      <div class="p-4 md:p-6">
-        <div
-          role="tabpanel"
-          id={panelIds.status}
-          aria-labelledby={tabIds.status}
-          hidden={activeTab !== "status"}
-        >
-          {#if activeTab === "status"}
-            <DetailStatusTab
-              {entity}
-              {isEditing}
-              {editType}
-              bind:editContent
-              bind:editStartDate
-              bind:editEndDate
-            />
-          {/if}
-        </div>
-        <div
-          role="tabpanel"
-          id={panelIds.lore}
-          aria-labelledby={tabIds.lore}
-          hidden={activeTab !== "lore" || vault.isGuest}
-        >
-          {#if activeTab === "lore" && !vault.isGuest}
-            <DetailLoreTab {entity} {isEditing} bind:editLore />
-          {/if}
-        </div>
-        <div
-          role="tabpanel"
-          id={panelIds.inventory}
-          aria-labelledby={tabIds.inventory}
-          hidden={activeTab !== "inventory"}
-        >
-          {#if activeTab === "inventory"}
-            <div class="text-theme-muted italic text-sm">
-              Inventory coming soon...
+              <DetailTabs
+                {entity}
+                bind:activeTab
+                {isEditing}
+                bind:editType
+                idPrefix={tabInstanceId}
+              />
             </div>
-          {/if}
-        </div>
-        <div
-          role="tabpanel"
-          id={panelIds.map}
-          aria-labelledby={tabIds.map}
-          hidden={activeTab !== "map"}
-        >
-          {#if activeTab === "map"}
-            <DetailMapTab {entity} />
-          {/if}
-        </div>
+
+            <div class="p-4 md:p-6">
+              <div
+                role="tabpanel"
+                id={panelIds.status}
+                aria-labelledby={tabIds.status}
+                hidden={activeTab !== "status"}
+              >
+                {#if activeTab === "status"}
+                  <DetailStatusTab
+                    {entity}
+                    {isEditing}
+                    {editType}
+                    bind:editContent
+                    bind:editStartDate
+                    bind:editEndDate
+                  />
+                {/if}
+              </div>
+              <div
+                role="tabpanel"
+                id={panelIds.lore}
+                aria-labelledby={tabIds.lore}
+                hidden={activeTab !== "lore" || vault.isGuest}
+              >
+                {#if activeTab === "lore" && !vault.isGuest}
+                  <DetailLoreTab {entity} {isEditing} bind:editLore />
+                {/if}
+              </div>
+              <div
+                role="tabpanel"
+                id={panelIds.inventory}
+                aria-labelledby={tabIds.inventory}
+                hidden={activeTab !== "inventory"}
+              >
+                {#if activeTab === "inventory"}
+                  <div class="text-theme-muted italic text-sm">
+                    Inventory coming soon...
+                  </div>
+                {/if}
+              </div>
+              <div
+                role="tabpanel"
+                id={panelIds.map}
+                aria-labelledby={tabIds.map}
+                hidden={activeTab !== "map"}
+              >
+                {#if activeTab === "map"}
+                  <DetailMapTab {entity} />
+                {/if}
+              </div>
+            </div>
+          </div>
+        {/key}
       </div>
+
+      <DetailFooter
+        {isEditing}
+        {isSaving}
+        onCancel={cancelEditing}
+        onSave={saveChanges}
+        onDelete={handleDelete}
+        onStartEdit={startEditing}
+      />
+
+      <InlinePreviewOverlay />
     </div>
-
-    <DetailFooter
-      {isEditing}
-      {isSaving}
-      onCancel={cancelEditing}
-      onSave={saveChanges}
-      onDelete={handleDelete}
-      onStartEdit={startEditing}
-    />
-
-    <InlinePreviewOverlay />
   </aside>
 {/if}
 

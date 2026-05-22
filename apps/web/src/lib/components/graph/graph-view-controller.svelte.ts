@@ -124,6 +124,18 @@ export class GraphViewController {
           this.hoverPosition = null;
         },
         onNodeTap: async (id, node) => {
+          const container = this.cy?.container();
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const renderedPos = node.renderedPosition();
+            this.deps.layoutUIStore.setLastSelectedNodePosition({
+              x: rect.left + renderedPos.x,
+              y: rect.top + renderedPos.y,
+            });
+          } else {
+            this.deps.layoutUIStore.setLastSelectedNodePosition(null);
+          }
+
           if (this.deps.connectionModeStore.isConnecting) {
             if (!this.deps.connectionModeStore.connectingNodeId) {
               this.deps.connectionModeStore.connectingNodeId = id;

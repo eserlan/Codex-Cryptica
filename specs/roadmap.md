@@ -18,6 +18,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.23.0 — The Animated Transitions Update (2026-05-22)
+
+- **Highlights**: Animated entity detail panel opening (scaling/translating from click location), native bottom sheet panel transitions on mobile viewports, seamless content cross-fading on internal details navigation, and graph node selection pulse animations.
+- **Associated Specifications**:
+  - [110-animate-node-opening](./110-animate-node-opening/spec.md) (Entity detail panel and graph node selected transitions)
+
 ### v0.22.0 — The Spatial & Scratchpad Update (2026-05-22)
 
 - **Highlights**: QuickNote scratchpad, AI-driven entity synthesis/elevation, full Svelte 5 Rune conversion, progressive background search worker, and decoupled P2P network services.

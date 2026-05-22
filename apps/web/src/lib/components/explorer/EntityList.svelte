@@ -23,7 +23,7 @@
     onDragStart?: (event: DragEvent, entityId: string) => void;
     onDragEnd?: () => void;
     onOpenZen?: (entity: Entity) => void;
-    onFindInGraph?: (entity: Entity) => void;
+    onFindInGraph?: (entity: Entity, event?: MouseEvent) => void;
     onApproveDraft?: (entity: Entity) => void;
     onRejectDraft?: (entity: Entity) => void;
     allowedTypes?: string[] | null;
@@ -381,7 +381,7 @@
             type="button"
             onclick={(e) => {
               e.stopPropagation();
-              onFindInGraph(entity);
+              onFindInGraph(entity, e);
             }}
             title="Find in Graph"
             aria-label="Find {entity.title} in Graph"

@@ -24,9 +24,7 @@
   {/key}
 {/if}
 
-{#if selectedEntity}
-  <EntityDetailPanel
-    entity={selectedEntity}
-    onClose={() => (vault.selectedEntityId = null)}
-  />
-{/if}
+<EntityDetailPanel
+  entity={selectedEntity}
+  onClose={() => (vault.selectedEntityId = null)}
+/>
