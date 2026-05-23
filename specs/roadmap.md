@@ -18,6 +18,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.25.0 — The Art Direction Update (2026-05-23)
+
+- **Highlights**: Deterministic default Art Direction for AI image generation across Oracle entity/chat draw flows and front page cover art. The resolver now applies entity-specific art direction, normal user-authored art direction content, category composition defaults, active theme Default Art Style, and a global Codex Cryptica fallback. Category defaults tailor composition for characters, creatures, locations, items, factions, events, notes, and world covers, while `/draw` category hints fill gaps without overriding matched entity metadata. Custom art direction remains lore-native through ordinary notes/entities rather than a dedicated settings editor.
+- **Associated Specifications**:
+  - [115-default-art-prompts](./115-default-art-prompts/spec.md) (Default art prompt resolver, category/theme defaults, draw-command category hints, and lore-native art direction content)
+
 ### v0.24.0 — The Dual-Layer Theming & Chrome Stabilization Update (2026-05-23)
 
 - **Highlights**: Separate global app appearance layers (neutral light, neutral dark, and system matching device preferences) and vault-specific world theme genre layers. Fully neutralized, stable, and texture-free app chrome (headers, sidebar panels, settings screens, and status indicators) that remains consistent when changing or previewing campaign genres, with strict color/font isolation for all chrome controls. Support for dynamic light and dark counterpart resolution for all 10 selectable world themes.
