@@ -1,5 +1,32 @@
 [
   {
+    "version": "0.25.0",
+    "title": "The Art Direction Update",
+    "date": "2026-05-23",
+    "type": "minor",
+    "highlights": [
+      "Default Art Prompts: Image generation now resolves consistent Art Direction before drawing, so visuals stay grounded in your world instead of starting from a generic prompt.",
+      "Category Defaults: Characters, creatures, locations, items, factions, events, notes, and world covers now receive composition guidance tailored to what you are drawing.",
+      "Theme-Aware Visual Style: Active world themes now contribute Default Art Style guidance for generated images while preserving stronger entity and note-based art direction.",
+      "World Cover Direction: Front page cover generation now combines world-cover composition with the active theme's visual style for more coherent campaign covers.",
+      "Lore-Native Customization: Add sections such as Art Direction, Default Art Style, or Visual Direction to normal notes/entities to guide image generation without a separate settings form.",
+      "Smarter Draw Commands: Commands like /draw character Almos can use category hints when no matched entity metadata is available, while real entity categories still take precedence."
+    ]
+  },
+  {
+    "version": "0.24.0",
+    "title": "The Dual-Layer Theming & Chrome Stabilization Update",
+    "date": "2026-05-23",
+    "type": "minor",
+    "highlights": [
+      "Dual-Layer Appearance: App chrome and world genre themes are now separated, keeping navigation, settings, and workspace controls stable while vault themes change.",
+      "Neutral App Chrome: Headers, sidebars, panels, and status indicators now use consistent neutral light/dark styling instead of inheriting campaign texture and genre colors.",
+      "System Appearance Support: The workspace can follow the device's light or dark preference while preserving the active world theme for campaign content.",
+      "Theme Counterparts: Selectable world themes now resolve matching light and dark counterparts so campaign mood survives appearance changes.",
+      "Settings Clarity: Appearance controls now distinguish app-level display mode from vault-level world themes."
+    ]
+  },
+  {
     "version": "0.23.0",
     "title": "The Animated Transitions & State Persistence Update",
     "date": "2026-05-22",
