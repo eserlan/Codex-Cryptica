@@ -14,7 +14,7 @@
   });
 
   const getStatusColor = () => {
-    if (!activeState) return "text-theme-muted grayscale opacity-40";
+    if (!activeState) return "text-chrome-muted grayscale opacity-40";
     const status = activeState.status;
     if (status === "connected")
       return "text-cyan-400 animate-pulse drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]";
@@ -24,7 +24,7 @@
       return "text-amber-400 animate-pulse drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]";
     if (status === "failed")
       return "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]";
-    return "text-theme-muted";
+    return "text-chrome-muted";
   };
 
   const getStatusLabel = () => {
@@ -51,7 +51,7 @@
 
 {#if isHost || isGuest}
   <div
-    class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-theme-border/50 bg-theme-surface/30 backdrop-blur-md transition-all duration-300 hover:border-theme-primary/40 hover:bg-theme-surface/50 group relative cursor-help"
+    class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-chrome-border/50 bg-chrome-surface/30 backdrop-blur-md transition-all duration-300 hover:border-chrome-accent/40 hover:bg-chrome-surface/50 group relative cursor-help"
     title={getStatusLabel()}
     aria-label="P2P Connection Status"
   >
@@ -61,13 +61,13 @@
 
     {#if activeState?.status === "connected" && activeState.latencyMs >= 0}
       <span
-        class="text-[10px] font-mono font-medium text-theme-muted group-hover:text-theme-primary transition-colors"
+        class="text-[10px] font-mono font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors"
       >
         {getLatencyLabel()}
       </span>
     {:else}
       <span
-        class="text-[10px] font-sans font-medium text-theme-muted group-hover:text-theme-primary transition-colors uppercase tracking-wider"
+        class="text-[10px] font-sans font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors uppercase tracking-wider"
       >
         {activeState?.status || "offline"}
       </span>
@@ -75,23 +75,23 @@
 
     <!-- Premium glassmorphism tooltip info on hover -->
     <div
-      class="pointer-events-none absolute top-full right-0 mt-2 w-64 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-theme-border bg-theme-surface/90 backdrop-blur-lg shadow-xl text-left"
+      class="pointer-events-none absolute top-full right-0 mt-2 w-64 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-chrome-border bg-chrome-surface/90 backdrop-blur-lg shadow-xl text-left"
     >
       <div
-        class="text-xs font-bold text-theme-text mb-1 border-b border-theme-border pb-1"
+        class="text-xs font-bold text-chrome-text mb-1 border-b border-chrome-border pb-1"
       >
         P2P Session Diagnostics ({isHost ? "Host" : "Guest"})
       </div>
       <div
-        class="grid grid-cols-3 gap-y-1 text-[10px] font-mono text-theme-muted"
+        class="grid grid-cols-3 gap-y-1 text-[10px] font-mono text-chrome-muted"
       >
         <div>Status:</div>
-        <div class="col-span-2 text-theme-text font-semibold capitalize">
+        <div class="col-span-2 text-chrome-text font-semibold capitalize">
           {activeState?.status}
         </div>
 
         <div>Latency:</div>
-        <div class="col-span-2 text-theme-text">
+        <div class="col-span-2 text-chrome-text">
           {activeState &&
           activeState.latencyMs !== undefined &&
           activeState.latencyMs >= 0
@@ -101,7 +101,7 @@
 
         <div>My ID:</div>
         <div
-          class="col-span-2 text-theme-text truncate"
+          class="col-span-2 text-chrome-text truncate"
           title={activeState?.peerId ?? undefined}
         >
           {activeState?.peerId || "None"}
@@ -110,7 +110,7 @@
         {#if activeState?.remotePeerId}
           <div>Peer ID:</div>
           <div
-            class="col-span-2 text-theme-text truncate"
+            class="col-span-2 text-chrome-text truncate"
             title={activeState.remotePeerId}
           >
             {activeState.remotePeerId}

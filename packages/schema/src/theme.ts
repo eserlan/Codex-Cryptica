@@ -96,7 +96,58 @@ export const DEFAULT_JARGON: JargonMap = {
   graph_loading: "Initializing...",
 };
 
-export const THEMES: Record<string, StylingTemplate> = {
+export const WORKSPACE_DARK: StylingTemplate = {
+  id: "workspace_dark",
+  name: "Workspace (Dark)",
+  description:
+    "Neutral dark workspace with a warm dark gray palette and restrained gold accent.",
+  tokens: {
+    primary: "#d6d3d1",
+    secondary: "#a8a29e",
+    background: "#1c1917",
+    surface: "#292524",
+    text: "#f5f5f4",
+    border: "rgba(68, 64, 60, 1)",
+    accent: "#c8973a",
+    fontHeader: "'Fraunces', serif",
+    fontBody: "'Inter', sans-serif",
+    borderRadius: "8px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#44403c",
+  },
+};
+
+export const THEMES = {
+  workspace: {
+    id: "workspace",
+    name: "Workspace (Light)",
+    description:
+      "Neutral light workspace with a warm gray palette and restrained gold accent.",
+    tokens: {
+      primary: "#57534e",
+      secondary: "#78716c",
+      background: "#fafaf9",
+      surface: "#ffffff",
+      text: "#1c1917",
+      border: "rgba(231, 229, 228, 1)",
+      accent: "#c8973a",
+      fontHeader: "'Fraunces', serif",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "8px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#d6d3d1",
+    },
+  },
   scifi: {
     id: "scifi",
     name: "Sci-Fi Terminal",
@@ -155,7 +206,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       border: "rgba(94, 48, 24, 0.52)", // Stronger border — up from 0.34, uses richer primary
       accent: "#c8973a", // Jeweller's Gold — highlights and active states
       fontHeader: "'Alegreya', serif",
-      fontBody: "'Alegreya', serif",
+      fontBody: "'Inter', sans-serif",
       texture: "parchment.svg",
       titleInk: "#24180f", // Warmest — titles and headings anchor the hierarchy
       sectionTitle: "#3a3225", // Cool Umber — section labels are structural, not primary; slightly olive-grey
@@ -178,7 +229,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
-      edgeWidth: 3, // Bolder — connections need to win against parchment bg
+      edgeWidth: 2, // Bolder — connections need to win against parchment bg
       edgeColor: "#6b3820", // Deep Mahogany — updated to complement richer primary
     },
     jargon: {
@@ -499,6 +550,244 @@ export const THEMES: Record<string, StylingTemplate> = {
       graph_loading: "Scanning Sector...",
     },
   },
+} as const satisfies Record<string, StylingTemplate>;
+
+export const FANTASY_DARK: StylingTemplate = {
+  id: "fantasy_dark",
+  name: "Candlelit Tome",
+  description:
+    "Aged leather and brass by candlelight; the dark counterpart to Ancient Parchment.",
+  tokens: {
+    primary: "#d4a85a",
+    secondary: "#8b6532",
+    background: "#1c1410",
+    surface: "#2a1e16",
+    text: "#e8ddc4",
+    border: "rgba(212, 168, 90, 0.32)",
+    accent: "#f0c879",
+    fontHeader: "'Alegreya', serif",
+    fontBody: "'Alegreya', serif",
+    texture: "leather.svg",
+    borderRadius: "3px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 2,
+    edgeWidth: 2,
+    edgeColor: "#8b6532",
+  },
+  jargon: THEMES.fantasy.jargon,
 };
 
-export const DEFAULT_THEME = THEMES.fantasy;
+export const MODERN_DARK: StylingTemplate = {
+  id: "modern_dark",
+  name: "After Hours",
+  description: "Contemporary styling in a dark slate variant.",
+  tokens: {
+    primary: "#60a5fa",
+    secondary: "#93c5fd",
+    background: "#09090b",
+    surface: "#18181b",
+    text: "#f4f4f5",
+    border: "rgba(96, 165, 250, 0.3)",
+    accent: "#a78bfa",
+    fontHeader: "'Inter', sans-serif",
+    fontBody: "'Inter', sans-serif",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#3f3f46",
+  },
+  jargon: THEMES.modern.jargon,
+};
+
+export const SCIFI_LIGHT: StylingTemplate = {
+  id: "scifi_light",
+  name: "Clean Room",
+  description:
+    "Science fiction interface in a high-contrast light green terminal variant.",
+  tokens: {
+    primary: "#15803d",
+    secondary: "#166534",
+    background: "#f0f4ec",
+    surface: "#ffffff",
+    text: "#14532d",
+    border: "rgba(21, 128, 61, 0.3)",
+    accent: "#7e22ce",
+    fontHeader: "'Orbitron', sans-serif",
+    fontBody: "'Inter', sans-serif",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#86efac",
+  },
+  jargon: THEMES.scifi.jargon,
+};
+
+export const CYBERPUNK_LIGHT: StylingTemplate = {
+  id: "cyberpunk_light",
+  name: "Vapor Dawn",
+  description: "Cyberpunk styling in a neon pink and cyan light-mode variant.",
+  tokens: {
+    primary: "#be185d",
+    secondary: "#9d174d",
+    background: "#fdf2f8",
+    surface: "#ffffff",
+    text: "#155e75",
+    border: "rgba(190, 24, 93, 0.35)",
+    accent: "#b45309",
+    fontHeader: "'Fira Code', monospace",
+    fontBody: "'Fira Code', monospace",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "dashed",
+    nodeBorderWidth: 2,
+    edgeWidth: 1,
+    edgeColor: "#be185d",
+  },
+  jargon: THEMES.cyberpunk.jargon,
+};
+
+export const APOCALYPTIC_LIGHT: StylingTemplate = {
+  id: "apocalyptic_light",
+  name: "Sun-Bleached",
+  description:
+    "Post-apocalyptic survival styling in a light sand/dust variant.",
+  tokens: {
+    primary: "#9a3412",
+    secondary: "#7c2d12",
+    background: "#f0e9d6",
+    surface: "#e8dfc6",
+    text: "#292524",
+    border: "rgba(154, 52, 18, 0.3)",
+    accent: "#991b1b",
+    fontHeader: "'Courier Prime', monospace",
+    fontBody: "'Courier Prime', monospace",
+    texture: "rust.svg",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "dotted",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#9a3412",
+  },
+  jargon: THEMES.apocalyptic.jargon,
+};
+
+export const HORROR_LIGHT: StylingTemplate = {
+  id: "horror_light",
+  name: "Autopsy Report",
+  description:
+    "Gothic horror styling in a striking light crimson and ash variant.",
+  tokens: {
+    primary: "#7f1d1d",
+    secondary: "#450a0a",
+    background: "#f1eee5",
+    surface: "#fafaf6",
+    text: "#1c1917",
+    border: "rgba(127, 29, 29, 0.25)",
+    accent: "#581c87",
+    fontHeader: "'Spectral', serif",
+    fontBody: "'Spectral', serif",
+    borderRadius: "0px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 2,
+    edgeWidth: 1,
+    edgeColor: "#7f1d1d",
+  },
+  jargon: THEMES.horror.jargon,
+};
+
+export const FALLOUT_LIGHT: StylingTemplate = {
+  id: "fallout_light",
+  name: "Vault-Tec Bulletin",
+  description: "Retro-futurist terminal in a light phosphor green variant.",
+  tokens: {
+    primary: "#1e40af",
+    secondary: "#1e3a8a",
+    background: "#f8f3e1",
+    surface: "#ffffff",
+    text: "#292524",
+    border: "rgba(30, 64, 175, 0.3)",
+    accent: "#d97706",
+    fontHeader: "'Share Tech Mono', monospace",
+    fontBody: "'Share Tech Mono', monospace",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#1e3a8a",
+  },
+  jargon: THEMES.fallout.jargon,
+};
+
+export const STARWARS_LIGHT: StylingTemplate = {
+  id: "starwars_light",
+  name: "Jedi Archives",
+  description:
+    "Space opera styling in a crisp starlight and jedi-blue variant.",
+  tokens: {
+    primary: "#1e3a8a",
+    secondary: "#1d4ed8",
+    background: "#f5f0e3",
+    surface: "#fbf6e8",
+    text: "#292524",
+    border: "rgba(30, 58, 138, 0.3)",
+    accent: "#b45309",
+    fontHeader: "'Orbitron', sans-serif",
+    fontBody: "'Inter', sans-serif",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#1e3a8a",
+  },
+  jargon: THEMES.starwars.jargon,
+};
+
+export const STARTREK_LIGHT: StylingTemplate = {
+  id: "startrek_light",
+  name: "Stellar Cartography",
+  description: "Hopeful starship console styling in a light Okudagram variant.",
+  tokens: {
+    primary: "#c2410c",
+    secondary: "#ea580c",
+    background: "#f1f4f6",
+    surface: "#ffffff",
+    text: "#1e293b",
+    border: "rgba(194, 65, 12, 0.3)",
+    accent: "#6d28d9",
+    fontHeader: "'Orbitron', sans-serif",
+    fontBody: "'Inter', sans-serif",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#c2410c",
+  },
+  jargon: THEMES.startrek.jargon,
+};
+
+export const DEFAULT_THEME = THEMES.workspace;
+
+export type AppAppearanceId = "neutral-light" | "neutral-dark" | "system";
+export type ResolvedAppAppearanceId = "neutral-light" | "neutral-dark";
+export type WorldThemeId = keyof typeof THEMES;

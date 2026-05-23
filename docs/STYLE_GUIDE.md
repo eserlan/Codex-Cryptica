@@ -52,15 +52,25 @@ We follow the **Red-Green-Refactor** cycle for all core logic.
 
 ## Theming
 
-Codex-Cryptica supports multiple visual modes (e.g., the default "Fantasy" theme). Theming is achieved through CSS variable overrides within the `@theme` and `@layer base` blocks in `app.css`.
+Codex-Cryptica uses a dual-layer theming architecture that separates the visual frame of the application (App Chrome) from the creative mood of the specific campaign world (World Theme).
 
-Component guides should stay theme agnostic by default. When a guide needs to explain how the application looks today, document that separately as an example of how the current theme maps onto the shared semantic tokens.
+### Dual-Layer Theming Model
 
-### How it Works
+1. **App Appearance (`data-app-appearance` & `data-app-appearance-choice`)**
+   - **Purpose**: Controls the application frame (headers, footers, sidebars, settings shells, search modals).
+   - **Modes**: Neutral `neutral-light`, `neutral-dark`, or `system` (resolving dynamically based on media queries).
+   - **Styling**: Always texture-free, high-legibility, clean layout using neutral app chrome tokens (e.g., `--color-chrome-*` and neutral grays).
 
-1.  **Semantic Tokens**: We define semantic tokens (e.g., `--color-theme-primary`) that components use.
-2.  **Theme Overrides**: Specific themes (e.g., `[data-theme="fantasy"]`) override these tokens to change colors, fonts, and textures.
-3.  **Typography Theming**: Font families (`--font-header`, `--font-body`) are included in this system, ensuring the typeface matches the thematic era.
+2. **World Theme (`data-world-theme`)**
+   - **Purpose**: Scopes the visual genre mood (e.g. `workspace`, `fantasy`, `blood_noir`) to world-specific areas (campaign front pages, graph nodes/edges, entity detail cards).
+   - **Defaults**: The default world theme is `workspace` (a clean neutral aesthetic adapting to the current app appearance).
+   - **Mood Styling**: Genre-specific borders, textures, Alegreya headers, and parchment backgrounds are strictly scoped to world/content surfaces using `data-world-theme` attribute selectors.
+
+### Scoping Rules for Developers
+
+- **App Chrome Components**: Header, sidebar outer shells, footers, search shells, settings panels, and popout hosts MUST remain neutral and stable. Any nested buttons, selectors, database stats, or control indicators placed inside these chrome shells (such as `VaultControls` in the header) MUST use chrome tokens (`chrome-*`) and cannot inherit or use world/genre tokens. Do not use texture variables (`--bg-texture-overlay`) or genre-based accents on these surfaces.
+- **World Canvas Components**: Cytoscape viewports, world front pages, entity cards, and inner entity detail tabs can consume world theme tokens (e.g., `--color-theme-*`, `--font-header`, and `--bg-texture-overlay`) to project the campaign's visual genre.
+- **Typography Role**: The app interface uses high-legibility sans-serif fonts for utility controls. Author-written content and world headers may leverage themed fonts like Alegreya, serif styles, or other genre typefaces.
 
 ## Common Design Patterns
 

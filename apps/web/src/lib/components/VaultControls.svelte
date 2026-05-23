@@ -32,16 +32,16 @@
     "rounded font-bold tracking-widest transition whitespace-nowrap flex items-center";
 
   const btnPrimary = $derived(
-    `${btnBase} bg-theme-primary hover:bg-theme-secondary text-theme-bg`,
+    `${btnBase} bg-chrome-accent text-chrome-bg hover:bg-chrome-accent/90`,
   );
   const btnSecondary = $derived(
-    `${btnBase} border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary`,
+    `${btnBase} border border-chrome-border text-chrome-muted hover:text-chrome-text hover:border-chrome-accent`,
   );
   const btnAccent = $derived(
-    `${btnBase} border border-theme-border text-theme-accent hover:text-theme-accent/80 hover:border-theme-accent`,
+    `${btnBase} border border-chrome-border text-chrome-accent hover:text-chrome-accent/85 hover:border-chrome-accent`,
   );
   const btnGhost = $derived(
-    `${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`,
+    `${btnBase} border border-chrome-border text-chrome-muted hover:text-chrome-text hover:border-chrome-accent`,
   );
 
   const iconOnlyClasses = $derived(
@@ -90,7 +90,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2 font-body">
+<div class="flex flex-col gap-2 font-sans">
   <div
     class="flex {isVertical
       ? 'flex-col items-stretch gap-3'
@@ -98,7 +98,7 @@
   >
     {#if sessionModeStore.isDemoMode}
       <div
-        class="flex items-center gap-1.5 px-2 py-1 border border-theme-primary bg-theme-primary/10 text-theme-primary rounded text-[9px] font-bold tracking-tighter"
+        class="flex items-center gap-1.5 px-2 py-1 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-[9px] font-bold tracking-tighter"
       >
         DEMO MODE
       </div>
@@ -154,7 +154,7 @@
     <button
       class="flex items-center gap-2 rounded transition-colors group {isVertical
         ? 'justify-center w-full py-3 min-h-[44px]'
-        : 'px-3 py-2 hover:bg-theme-surface/50'}"
+        : 'px-3 py-2 hover:bg-chrome-bg/50'}"
       onclick={() => (showVaultSwitcher = true)}
       title="Switch Vault"
       data-testid="open-vault-button"
@@ -162,20 +162,20 @@
       aria-expanded={showVaultSwitcher}
     >
       <span
-        class="icon-[lucide--database] w-3.5 h-3.5 text-theme-muted group-hover:text-theme-primary"
+        class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
       ></span>
       <span
-        class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[240px] truncate font-header"
+        class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans"
       >
         {themeStore.jargon.vault}: {vault.vaultName}
       </span>
       <span
-        class="icon-[lucide--chevron-down] w-3 h-3 text-theme-muted/50 group-hover:text-theme-primary"
+        class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
       ></span>
     </button>
 
     <div
-      class="text-[10px] md:text-xs text-theme-muted tracking-wider uppercase {isVertical
+      class="text-[10px] md:text-xs text-chrome-muted tracking-wider uppercase {isVertical
         ? 'text-center'
         : 'hidden sm:block'}"
       role="status"
@@ -183,12 +183,12 @@
     >
       {#if vault.status === "loading"}
         <div class="flex flex-col gap-1 items-center min-w-[100px] py-1">
-          <span class="animate-pulse text-theme-primary font-bold font-header"
+          <span class="animate-pulse text-chrome-accent font-bold font-sans"
             >LOADING... {vault.syncStats.progress}%</span
           >
-          <div class="w-full h-1 bg-theme-border rounded-full overflow-hidden">
+          <div class="w-full h-1 bg-chrome-border rounded-full overflow-hidden">
             <div
-              class="h-full bg-theme-primary transition-all duration-300 ease-out"
+              class="h-full bg-chrome-accent transition-all duration-300 ease-out"
               style="width: {vault.syncStats.progress}%"
             ></div>
           </div>
@@ -205,7 +205,7 @@
           </span>
           {#if vault.failedFiles.length > 0}
             <button
-              class="text-[9px] text-theme-muted hover:text-theme-text underline font-header"
+              class="text-[9px] text-chrome-muted hover:text-chrome-text underline font-sans"
               onclick={() => (vault.failedFiles = [])}
             >
               CLEAR
@@ -213,16 +213,14 @@
           {/if}
         </div>
       {:else if vault.allEntities.length > 0}
-        <span
-          class="text-theme-secondary font-header"
-          data-testid="entity-count"
+        <span class="text-chrome-muted font-sans" data-testid="entity-count"
           >{vault.allEntities.length}
           {themeStore
             .resolveJargon("entity", vault.allEntities.length)
             .toUpperCase()}</span
         >
       {:else}
-        <span class="text-theme-muted"
+        <span class="text-chrome-muted"
           >NO {themeStore.jargon.vault.toUpperCase()}</span
         >
       {/if}
@@ -359,14 +357,14 @@
       }}
       class="flex {isVertical
         ? 'flex-col'
-        : 'flex-wrap'} gap-2 p-3 bg-theme-surface rounded border border-theme-border animate-in slide-in-from-top-2 fade-in"
+        : 'flex-wrap'} gap-2 p-3 bg-chrome-surface rounded border border-chrome-border animate-in slide-in-from-top-2 fade-in"
     >
       <input
         bind:value={newTitle}
         aria-label={`New ${themeStore.jargon.entity} Title`}
         placeholder={`${themeStore.jargon.entity} Title...`}
         data-testid="new-entity-title-input"
-        class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 font-body {isVertical
+        class="px-3 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded flex-1 focus:outline-none focus:border-chrome-accent placeholder-chrome-muted/50 font-sans {isVertical
           ? 'py-3 text-sm'
           : ''}"
         aria-invalid={!!createError}
@@ -375,7 +373,7 @@
       <select
         bind:value={newType}
         aria-label="New Entity Type"
-        class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary font-body {isVertical
+        class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus:outline-none focus:border-chrome-accent font-sans {isVertical
           ? 'py-3 text-sm'
           : ''}"
       >
@@ -396,7 +394,7 @@
       >
         {#if isCreating}
           <span
-            class="icon-[lucide--loader-2] w-3 h-3 animate-spin mr-2"
+            class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin mr-2"
             aria-hidden="true"
           ></span>
           ADDING...
@@ -407,7 +405,7 @@
       {#if createError}
         <div
           id="create-error"
-          class="text-[10px] text-red-500 w-full text-center font-header"
+          class="text-[10px] text-red-500 w-full text-center font-sans"
           role="alert"
         >
           {createError}

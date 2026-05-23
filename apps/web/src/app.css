@@ -19,6 +19,13 @@
 
   --bg-theme-surface: var(--bg-texture-overlay);
 
+  --color-chrome-bg: var(--chrome-bg);
+  --color-chrome-surface: var(--chrome-surface);
+  --color-chrome-border: var(--chrome-border);
+  --color-chrome-text: var(--chrome-text);
+  --color-chrome-muted: var(--chrome-muted);
+  --color-chrome-accent: var(--chrome-accent);
+
   /* Override Tailwind colors to make existing UI theme-aware */
   --color-green-50: color-mix(
     in srgb,
@@ -122,6 +129,13 @@
   :root {
     --header-height: 65px;
     --color-bg-primary: #fdf6e3;
+    --chrome-bg: #fafaf9;
+    --frontpage-vignette: radial-gradient(circle at top, transparent, transparent), linear-gradient(to bottom, transparent, transparent);
+    --chrome-surface: #ffffff;
+    --chrome-border: #e7e5e0;
+    --chrome-text: #1c1917;
+    --chrome-muted: #78716c;
+    --chrome-accent: #c8973a;
     --color-bg-surface: #eee8d5;
     --color-accent-primary: #78350f;
     --color-accent-dim: #451a03;
@@ -193,17 +207,153 @@
     display: none !important;
   }
 
+  html[data-app-appearance="neutral-light"] {
+    --chrome-bg: #fafaf9;
+    --chrome-surface: #ffffff;
+    --chrome-border: #e7e5e0;
+    --chrome-text: #1c1917;
+    --chrome-muted: #78716c;
+    --chrome-accent: #c8973a;
+  }
+
+  html[data-app-appearance="neutral-dark"] {
+    --chrome-bg: #1c1917;
+    --chrome-surface: #292524;
+    --chrome-border: #44403c;
+    --chrome-text: #f5f5f4;
+    --chrome-muted: #a8a29e;
+    --chrome-accent: #c8973a;
+  }
+
+  html[data-app-appearance="neutral-dark"],
+  [data-theme="workspace_dark"],
+  [data-theme="scifi"],
+  [data-theme="cyberpunk"],
+  [data-theme="apocalyptic"],
+  [data-theme="horror"],
+  [data-theme="fallout"],
+  [data-theme="starwars"],
+  [data-theme="startrek"] {
+    --frontpage-vignette: radial-gradient(circle at top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.85)), linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
+  }
+
+  /* Shield app chrome from world theme colors and fonts */
+  header,
+  footer,
+  .bg-chrome-surface,
+  .bg-chrome-bg {
+    --font-header: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+
+    /* Restore standard Tailwind neutral colors inside chrome elements to prevent world theme bleed */
+    --color-gray-50: #fafafa;
+    --color-gray-100: #f5f5f5;
+    --color-gray-200: #e5e5e5;
+    --color-gray-300: #d4d4d4;
+    --color-gray-400: #a3a3a3;
+    --color-gray-500: #737373;
+    --color-gray-600: #525252;
+    --color-gray-700: #404040;
+    --color-gray-800: #262626;
+    --color-gray-900: #171717;
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f4f4f5;
+    --color-zinc-200: #e4e4e7;
+    --color-zinc-300: #d4d4d8;
+    --color-zinc-400: #a1a1aa;
+    --color-zinc-500: #71717a;
+    --color-zinc-600: #52525b;
+    --color-zinc-700: #3f3f46;
+    --color-zinc-800: #27272a;
+    --color-zinc-900: #18181b;
+
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #0f172a;
+
+    --color-green-50: #f0fdf4;
+    --color-green-100: #dcfce7;
+    --color-green-200: #bbf7d0;
+    --color-green-300: #86efac;
+    --color-green-400: #4ade80;
+    --color-green-500: #22c55e;
+    --color-green-600: #16a34a;
+    --color-green-700: #15803d;
+    --color-green-800: #166534;
+    --color-green-900: #14532d;
+    --color-green-950: #052e16;
+
+    --color-blue-50: #eff6ff;
+    --color-blue-100: #dbeafe;
+    --color-blue-200: #bfdbfe;
+    --color-blue-300: #93c5fd;
+    --color-blue-400: #60a5fa;
+    --color-blue-500: #3b82f6;
+    --color-blue-600: #2563eb;
+    --color-blue-700: #1d4ed8;
+    --color-blue-800: #1e40af;
+    --color-blue-900: #1e3a8a;
+    --color-blue-950: #172554;
+
+    --color-red-50: #fef2f2;
+    --color-red-100: #fee2e2;
+    --color-red-200: #fecaca;
+    --color-red-300: #fca5a5;
+    --color-red-400: #f87171;
+    --color-red-500: #ef4444;
+    --color-red-600: #dc2626;
+    --color-red-700: #b91c1c;
+    --color-red-800: #991b1b;
+    --color-red-900: #7f1d1d;
+    --color-red-950: #450a0a;
+
+    --color-amber-50: #fffbeb;
+    --color-amber-100: #fef3c7;
+    --color-amber-200: #fde68a;
+    --color-amber-300: #fcd34d;
+    --color-amber-400: #fbbf24;
+    --color-amber-500: #f59e0b;
+    --color-amber-600: #d97706;
+    --color-amber-700: #b45309;
+    --color-amber-800: #92400e;
+    --color-amber-900: #78350f;
+    --color-amber-950: #451a03;
+  }
+
+  /* Force all descendants in chrome to inherit the font, except mono elements */
+  header *:not(code):not(pre):not(kbd):not(.font-mono),
+  footer *:not(code):not(pre):not(kbd):not(.font-mono),
+  .bg-chrome-surface *:not(code):not(pre):not(kbd):not(.font-mono),
+  .bg-chrome-bg *:not(code):not(pre):not(kbd):not(.font-mono) {
+    font-family: inherit !important;
+  }
+
   body {
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
+    background-color: var(--chrome-bg);
+    color: var(--chrome-text);
     font-family: var(--font-body-val);
-    background-image: var(--bg-texture);
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
     transition:
       background-color 0.3s ease,
       color 0.3s ease;
+  }
+
+  .world-canvas {
+    background-image: var(--bg-texture);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
   }
 
   h1,
@@ -260,13 +410,7 @@
     outline-offset: 2px !important;
   }
 
-  /* Chrome (header, footer, activity bar) blends into parchment — same sheet, not separate panels */
-  [data-theme="fantasy"] header,
-  [data-theme="fantasy"] footer,
-  [data-theme="fantasy"] nav[aria-label="Activity Bar"] {
-    background-color: color-mix(in srgb, var(--color-bg-surface), var(--color-bg-primary) 72%) !important;
-    border-color: rgba(94, 48, 24, 0.18) !important;
-  }
+
 
   [data-theme="fantasy"] .btnSecondary {
     border-color: var(--theme-selected-border);

@@ -107,7 +107,7 @@
 
   <div
     bind:this={modalElement}
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-chrome-bg border border-chrome-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body"
     role="dialog"
     aria-modal="true"
     aria-labelledby="settings-heading"
@@ -118,14 +118,13 @@
   >
     <!-- Sidebar Navigation -->
     <div
-      style="background-image: var(--bg-texture-overlay)"
-      class="w-16 md:w-48 bg-theme-surface border-r border-theme-border flex flex-col pt-6"
+      class="w-16 md:w-48 bg-chrome-surface border-r border-chrome-border flex flex-col pt-6"
       role="tablist"
       aria-label="Settings Categories"
     >
       <div class="px-6 mb-8 hidden md:block">
         <span
-          class="text-[11px] font-header text-theme-muted uppercase tracking-[0.3em]"
+          class="text-[11px] font-header text-chrome-muted uppercase tracking-[0.3em]"
           >Configuration</span
         >
       </div>
@@ -145,8 +144,8 @@
             id="settings-tab-{tab.id}"
             class="px-4 md:px-6 py-3 flex items-center gap-3 transition-all relative {modalUIStore.activeSettingsTab ===
             tab.id
-              ? 'text-theme-primary bg-theme-primary/10'
-              : 'text-theme-secondary hover:text-theme-primary hover:bg-theme-secondary/5'} {modalUIStore.isImporting
+              ? 'text-chrome-accent bg-chrome-accent/10'
+              : 'text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'} {modalUIStore.isImporting
               ? 'opacity-50 cursor-not-allowed pointer-events-none'
               : ''}"
           >
@@ -158,7 +157,7 @@
 
             {#if modalUIStore.activeSettingsTab === tab.id}
               <div
-                class="absolute left-0 top-0 bottom-0 w-1 bg-theme-primary shadow-[0_0_10px_var(--color-accent-primary)]"
+                class="absolute left-0 top-0 bottom-0 w-1 bg-chrome-accent shadow-[0_0_10px_var(--chrome-accent)]"
               ></div>
             {/if}
           </button>
@@ -166,28 +165,25 @@
       </div>
 
       <div
-        class="mt-auto p-4 md:p-6 text-[10px] font-header text-theme-muted/40 uppercase hidden md:block"
+        class="mt-auto p-4 md:p-6 text-[10px] font-header text-chrome-muted/40 uppercase hidden md:block"
       >
         Version {VERSION} // Build {CODENAME}
       </div>
     </div>
 
     <!-- Content Area -->
-    <div
-      style="background-image: var(--bg-texture-overlay)"
-      class="flex-1 flex flex-col min-w-0 bg-theme-bg"
-    >
+    <div class="flex-1 flex flex-col min-w-0 bg-chrome-bg">
       <!-- Header -->
       <div
-        class="px-8 py-6 flex justify-between items-center border-b border-theme-border"
+        class="px-8 py-6 flex justify-between items-center border-b border-chrome-border"
       >
         <h2
           id="settings-heading"
-          class="text-lg font-bold text-theme-text uppercase font-header tracking-widest flex items-center gap-3"
+          class="text-lg font-bold text-chrome-text uppercase font-header tracking-widest flex items-center gap-3"
         >
           <span
             class="{tabs.find((t) => t.id === modalUIStore.activeSettingsTab)
-              ?.icon} text-theme-primary opacity-50"
+              ?.icon} text-chrome-accent opacity-50"
           ></span>
           {tabs.find((t) => t.id === modalUIStore.activeSettingsTab)?.label}
         </h2>
@@ -197,7 +193,7 @@
           title={modalUIStore.isImporting
             ? "Import in progress"
             : "Close Settings"}
-          class="text-theme-muted hover:text-theme-primary transition-colors {modalUIStore.isImporting
+          class="text-chrome-muted hover:text-chrome-text transition-colors {modalUIStore.isImporting
             ? 'opacity-30 cursor-not-allowed'
             : ''}"
           aria-label="Close Settings"
@@ -217,53 +213,53 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
+                class="text-sm font-bold text-chrome-accent uppercase font-header mb-3 tracking-widest"
               >
                 Active Archive
               </h3>
               <div
-                class="bg-theme-surface border border-theme-border p-4 rounded font-body"
+                class="bg-chrome-surface border border-chrome-border p-4 rounded font-body"
               >
                 <div
-                  class="text-[11px] text-theme-muted uppercase mb-1 font-header"
+                  class="text-[11px] text-chrome-muted uppercase mb-1 font-header"
                 >
                   Status
                 </div>
-                <div class="text-sm text-theme-text mb-4">
+                <div class="text-sm text-chrome-text mb-4">
                   {vault.isInitialized
                     ? "Connected to Local Archive (OPFS)"
                     : "No Vault Active"}
                 </div>
 
                 <div
-                  class="text-[11px] text-theme-muted uppercase mb-1 font-header"
+                  class="text-[11px] text-chrome-muted uppercase mb-1 font-header"
                 >
                   Entity Count
                 </div>
-                <div class="text-sm text-theme-text">
+                <div class="text-sm text-chrome-text">
                   {vault.allEntities.length} tracked entities
                 </div>
               </div>
             </section>
 
-            <section class="border-t border-theme-border pt-6">
+            <section class="border-t border-chrome-border pt-6">
               <VaultSettings />
             </section>
 
-            <section class="border-t border-theme-border pt-6">
+            <section class="border-t border-chrome-border pt-6">
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
+                class="text-sm font-bold text-chrome-accent uppercase font-header mb-3 tracking-widest"
               >
                 Archive Importer
               </h3>
-              <p class="text-sm text-theme-text/70 leading-relaxed mb-6">
+              <p class="text-sm text-chrome-text/70 leading-relaxed mb-6">
                 Import existing documents, lore bibles, or JSON data via the
                 dedicated importer. This allows for continuous imports without
                 interrupting your current session.
               </p>
               <button
                 onclick={() => openImportWindow()}
-                class="w-full py-4 border border-theme-primary/50 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-xs rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                class="w-full py-4 border border-chrome-accent/50 text-chrome-accent font-bold uppercase font-header tracking-[0.2em] text-xs rounded-lg hover:bg-chrome-accent/10 transition-all active:scale-95 flex items-center justify-center gap-2 group"
               >
                 <span
                   class="icon-[lucide--folder-input] w-4 h-4 transition-transform group-hover:-translate-y-1"
@@ -281,14 +277,14 @@
           >
             <section>
               <div
-                class="bg-theme-surface border border-theme-border p-6 rounded-lg mb-8 flex items-center justify-between shadow-sm"
+                class="bg-chrome-surface border border-chrome-border p-6 rounded-lg mb-8 flex items-center justify-between shadow-sm"
               >
                 <div>
                   <label
-                    class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
+                    class="block text-sm font-bold text-chrome-text uppercase font-header cursor-pointer"
                     for="ai-disabled-toggle">AI Disabled</label
                   >
-                  <p class="text-[11px] text-theme-muted">
+                  <p class="text-[11px] text-chrome-muted">
                     Disable all AI-powered features (Oracle chat, image
                     generation, tag suggestions).
                   </p>
@@ -301,7 +297,7 @@
                     discoveryPolicyStore.toggleAiDisabled(
                       e.currentTarget.checked,
                     )}
-                  class="w-4 h-4 accent-theme-primary cursor-pointer"
+                  class="w-4 h-4 accent-chrome-accent cursor-pointer"
                 />
               </div>
 
@@ -310,7 +306,7 @@
                   ? 'opacity-40 grayscale pointer-events-none select-none'
                   : ''}"
               >
-                <p class="text-sm text-theme-text/70 leading-relaxed">
+                <p class="text-sm text-chrome-text/70 leading-relaxed">
                   Manage AI integration settings. Codex Cryptica uses Google
                   Gemini to provide context-aware reasoning, automated tagging,
                   and image generation.
@@ -321,11 +317,11 @@
 
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
+                class="text-sm font-bold text-chrome-accent uppercase font-header mb-3 tracking-widest"
               >
                 World Eras
               </h3>
-              <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
+              <p class="text-sm text-chrome-text/70 leading-relaxed mb-4">
                 Define chronological boundaries for your world's history. These
                 will be visualized on the timeline graph.
               </p>
@@ -339,23 +335,23 @@
             aria-labelledby="settings-tab-schema"
             class="space-y-6 max-w-3xl mx-auto"
           >
-            <p class="text-sm text-theme-text/70 leading-relaxed">
+            <p class="text-sm text-chrome-text/70 leading-relaxed">
               Define the ontology of your world. Custom categories allow you to
               color-code nodes and group entities by their role in your
               narrative.
             </p>
             <div
-              class="bg-theme-surface border border-theme-border p-6 rounded"
+              class="bg-chrome-surface border border-chrome-border p-6 rounded"
             >
               <CategorySettings />
             </div>
 
             <h3
-              class="text-sm font-bold text-theme-primary uppercase font-header mt-8 mb-3 tracking-widest"
+              class="text-sm font-bold text-chrome-accent uppercase font-header mt-8 mb-3 tracking-widest"
             >
               Campaign Labels
             </h3>
-            <p class="text-sm text-theme-text/70 mb-4 leading-relaxed">
+            <p class="text-sm text-chrome-text/70 mb-4 leading-relaxed">
               Manage the custom tags used across your entities. Renaming a label
               here will update all tagged files project-wide.
             </p>
@@ -370,21 +366,21 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest mb-4"
+                class="text-sm font-bold text-chrome-accent uppercase font-header tracking-widest mb-4"
               >
                 Interface Configuration
               </h3>
               <div
-                class="bg-theme-bg/50 border border-theme-border p-6 rounded-lg space-y-6"
+                class="bg-chrome-bg/50 border border-chrome-border p-6 rounded-lg space-y-6"
               >
                 <div class="flex items-center justify-between pb-4">
                   <div>
                     <label
-                      class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
+                      class="block text-sm font-bold text-chrome-text uppercase font-header cursor-pointer"
                       for="skip-welcome-screen-toggle"
                       >Skip Welcome Screen</label
                     >
-                    <p class="text-[11px] text-theme-muted">
+                    <p class="text-[11px] text-chrome-muted">
                       Hide the marketing landing page on startup even when no
                       vault is initialized.
                     </p>
@@ -397,14 +393,14 @@
                       onboardingStore.toggleWelcomeScreen(
                         e.currentTarget.checked,
                       )}
-                    class="w-4 h-4 accent-theme-primary cursor-pointer"
+                    class="w-4 h-4 accent-chrome-accent cursor-pointer"
                   />
                 </div>
               </div>
             </section>
 
             <section>
-              <p class="text-sm text-theme-text/70 leading-relaxed">
+              <p class="text-sm text-chrome-text/70 leading-relaxed">
                 Shift the visual dimension of your workspace. Themes redefine
                 the interface aesthetic to match your world's genre.
               </p>
@@ -418,7 +414,7 @@
             aria-labelledby="settings-tab-help"
             class="space-y-6 max-w-3xl mx-auto"
           >
-            <p class="text-sm text-theme-text/70 leading-relaxed">
+            <p class="text-sm text-chrome-text/70 leading-relaxed">
               Access system documentation and interactive guides to master the
               art of lore management.
             </p>
@@ -433,42 +429,42 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header mb-4 tracking-widest border-b border-theme-border pb-2"
+                class="text-sm font-bold text-chrome-accent uppercase font-header mb-4 tracking-widest border-b border-chrome-border pb-2"
               >
                 Manifest
               </h3>
               <div class="grid grid-cols-2 gap-4 font-body text-[11px]">
                 <div>
-                  <div class="text-theme-muted uppercase mb-1 font-header">
+                  <div class="text-chrome-muted uppercase mb-1 font-header">
                     Software
                   </div>
-                  <div class="text-theme-text">Codex Cryptica</div>
+                  <div class="text-chrome-text">Codex Cryptica</div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1 font-header">
+                  <div class="text-chrome-muted uppercase mb-1 font-header">
                     Version
                   </div>
-                  <div class="text-theme-text">{VERSION}</div>
+                  <div class="text-chrome-text">{VERSION}</div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1 font-header">
+                  <div class="text-chrome-muted uppercase mb-1 font-header">
                     Codename
                   </div>
-                  <div class="text-theme-text">
+                  <div class="text-chrome-text">
                     {CODENAME}
                   </div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1 font-header">
+                  <div class="text-chrome-muted uppercase mb-1 font-header">
                     Architecture
                   </div>
-                  <div class="text-theme-text">Local-First / Svelte 5</div>
+                  <div class="text-chrome-text">Local-First / Svelte 5</div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1 font-header">
+                  <div class="text-chrome-muted uppercase mb-1 font-header">
                     License
                   </div>
-                  <div class="text-theme-text">
+                  <div class="text-chrome-text">
                     Polyform Noncommercial License 1.0.0
                   </div>
                 </div>
@@ -478,7 +474,7 @@
                 <button
                   onclick={() => (onboardingStore.showChangelog = true)}
                   data-testid="show-changelog-button"
-                  class="w-full p-4 bg-theme-primary/10 border border-theme-primary/30 hover:border-theme-primary text-theme-primary transition-all rounded group flex items-center justify-between"
+                  class="w-full p-4 bg-chrome-accent/10 border border-chrome-accent/30 hover:border-chrome-accent text-chrome-accent transition-all rounded group flex items-center justify-between"
                 >
                   <div class="flex items-center gap-3">
                     <span class="icon-[lucide--sparkles] w-5 h-5"></span>
@@ -496,19 +492,19 @@
                   href="{base}/changelog"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="mt-3 flex items-center justify-between p-4 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
+                  class="mt-3 flex items-center justify-between p-4 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
                 >
                   <div class="flex items-center gap-3">
                     <span
-                      class="icon-[lucide--history] w-5 h-5 text-theme-muted group-hover:text-theme-primary transition-colors"
+                      class="icon-[lucide--history] w-5 h-5 text-chrome-muted group-hover:text-chrome-accent transition-colors"
                     ></span>
                     <span
-                      class="text-sm font-bold uppercase font-header tracking-widest text-theme-muted group-hover:text-theme-text transition-colors"
+                      class="text-sm font-bold uppercase font-header tracking-widest text-chrome-muted group-hover:text-chrome-text transition-colors"
                       >Full Chronology</span
                     >
                   </div>
                   <span
-                    class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-hover:translate-x-1 transition-all"
+                    class="icon-[lucide--external-link] w-4 h-4 text-chrome-muted group-hover:text-chrome-accent group-hover:translate-x-1 transition-all"
                   ></span>
                 </a>
               </div>
@@ -516,7 +512,7 @@
 
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header mb-4 tracking-widest border-b border-theme-border pb-2"
+                class="text-sm font-bold text-chrome-accent uppercase font-header mb-4 tracking-widest border-b border-chrome-border pb-2"
               >
                 Legal Compliance
               </h3>
@@ -525,28 +521,28 @@
                   href="{base}/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
+                  class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
                 >
                   <span
-                    class="text-sm text-theme-text uppercase tracking-widest font-bold font-header"
+                    class="text-sm text-chrome-text uppercase tracking-widest font-bold font-header"
                     >Privacy Policy</span
                   >
                   <span
-                    class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary"
+                    class="icon-[lucide--external-link] w-4 h-4 text-chrome-muted group-hover:text-chrome-accent"
                   ></span>
                 </a>
                 <a
                   href="{base}/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
+                  class="flex items-center justify-between p-3 bg-chrome-surface border border-chrome-border hover:border-chrome-accent transition-all rounded group"
                 >
                   <span
-                    class="text-sm text-theme-text uppercase tracking-widest font-bold font-header"
+                    class="text-sm text-chrome-text uppercase tracking-widest font-bold font-header"
                     >Terms of Service</span
                   >
                   <span
-                    class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary"
+                    class="icon-[lucide--external-link] w-4 h-4 text-chrome-muted group-hover:text-chrome-accent"
                   ></span>
                 </a>
               </div>
@@ -554,11 +550,13 @@
 
             <section class="pt-4 text-center">
               <div
-                class="text-[10px] font-header text-theme-muted/40 uppercase tracking-[0.5em] mb-2"
+                class="text-[10px] font-header text-chrome-muted/40 uppercase tracking-[0.5em] mb-2"
               >
                 Secure Connection Protocol Active
               </div>
-              <div class="text-[8px] font-header text-theme-muted/20 uppercase">
+              <div
+                class="text-[8px] font-header text-chrome-muted/20 uppercase"
+              >
                 No telemetry detected // User privacy prioritized
               </div>
             </section>
