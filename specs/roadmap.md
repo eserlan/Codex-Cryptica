@@ -18,6 +18,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.24.0 — The Dual-Layer Theming & Chrome Stabilization Update (2026-05-23)
+
+- **Highlights**: Separate global app appearance layers (neutral light, neutral dark, and system matching device preferences) and vault-specific world theme genre layers. Fully neutralized, stable, and texture-free app chrome (headers, sidebar panels, settings screens, and status indicators) that remains consistent when changing or previewing campaign genres.
+- **Associated Specifications**:
+  - [113-neutral-world-theming](./113-neutral-world-theming/plan.md) (Dual-layer app appearance and world themes with stable chrome controls)
+
 ### v0.23.0 — The Animated Transitions & State Persistence Update (2026-05-22)
 
 - **Highlights**: Animated entity detail panel opening (scaling/translating from click location), native bottom sheet panel transitions on mobile viewports, seamless content cross-fading on internal details navigation, graph node selection pulse animations, and vault-scoped browser state persistence and layout restoration.
