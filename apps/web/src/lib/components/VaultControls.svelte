@@ -90,7 +90,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2 font-body">
+<div class="flex flex-col gap-2 font-sans">
   <div
     class="flex {isVertical
       ? 'flex-col items-stretch gap-3'
@@ -165,7 +165,7 @@
         class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
       ></span>
       <span
-        class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-header"
+        class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans"
       >
         {themeStore.jargon.vault}: {vault.vaultName}
       </span>
@@ -183,7 +183,7 @@
     >
       {#if vault.status === "loading"}
         <div class="flex flex-col gap-1 items-center min-w-[100px] py-1">
-          <span class="animate-pulse text-chrome-accent font-bold font-header"
+          <span class="animate-pulse text-chrome-accent font-bold font-sans"
             >LOADING... {vault.syncStats.progress}%</span
           >
           <div class="w-full h-1 bg-chrome-border rounded-full overflow-hidden">
@@ -205,7 +205,7 @@
           </span>
           {#if vault.failedFiles.length > 0}
             <button
-              class="text-[9px] text-chrome-muted hover:text-chrome-text underline font-header"
+              class="text-[9px] text-chrome-muted hover:text-chrome-text underline font-sans"
               onclick={() => (vault.failedFiles = [])}
             >
               CLEAR
@@ -213,7 +213,7 @@
           {/if}
         </div>
       {:else if vault.allEntities.length > 0}
-        <span class="text-chrome-muted font-header" data-testid="entity-count"
+        <span class="text-chrome-muted font-sans" data-testid="entity-count"
           >{vault.allEntities.length}
           {themeStore
             .resolveJargon("entity", vault.allEntities.length)
@@ -364,7 +364,7 @@
         aria-label={`New ${themeStore.jargon.entity} Title`}
         placeholder={`${themeStore.jargon.entity} Title...`}
         data-testid="new-entity-title-input"
-        class="px-3 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded flex-1 focus:outline-none focus:border-chrome-accent placeholder-chrome-muted/50 font-body {isVertical
+        class="px-3 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded flex-1 focus:outline-none focus:border-chrome-accent placeholder-chrome-muted/50 font-sans {isVertical
           ? 'py-3 text-sm'
           : ''}"
         aria-invalid={!!createError}
@@ -373,7 +373,7 @@
       <select
         bind:value={newType}
         aria-label="New Entity Type"
-        class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus:outline-none focus:border-chrome-accent font-body {isVertical
+        class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus:outline-none focus:border-chrome-accent font-sans {isVertical
           ? 'py-3 text-sm'
           : ''}"
       >
@@ -394,7 +394,7 @@
       >
         {#if isCreating}
           <span
-            class="icon-[lucide--loader-2] w-3 h-3 animate-spin mr-2"
+            class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin mr-2"
             aria-hidden="true"
           ></span>
           ADDING...
@@ -405,7 +405,7 @@
       {#if createError}
         <div
           id="create-error"
-          class="text-[10px] text-red-500 w-full text-center font-header"
+          class="text-[10px] text-red-500 w-full text-center font-sans"
           role="alert"
         >
           {createError}
