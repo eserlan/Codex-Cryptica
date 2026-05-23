@@ -68,7 +68,7 @@ Codex-Cryptica uses a dual-layer theming architecture that separates the visual 
 
 ### Scoping Rules for Developers
 
-- **App Chrome Components**: Header, sidebar outer shells, footers, search shells, settings panels, and popout hosts MUST remain neutral and stable. Do not use texture variables (`--bg-texture-overlay`) or genre-based accents on these surfaces.
+- **App Chrome Components**: Header, sidebar outer shells, footers, search shells, settings panels, and popout hosts MUST remain neutral and stable. Any nested buttons, selectors, database stats, or control indicators placed inside these chrome shells (such as `VaultControls` in the header) MUST use chrome tokens (`chrome-*`) and cannot inherit or use world/genre tokens. Do not use texture variables (`--bg-texture-overlay`) or genre-based accents on these surfaces.
 - **World Canvas Components**: Cytoscape viewports, world front pages, entity cards, and inner entity detail tabs can consume world theme tokens (e.g., `--color-theme-*`, `--font-header`, and `--bg-texture-overlay`) to project the campaign's visual genre.
 - **Typography Role**: The app interface uses high-legibility sans-serif fonts for utility controls. Author-written content and world headers may leverage themed fonts like Alegreya, serif styles, or other genre typefaces.
 

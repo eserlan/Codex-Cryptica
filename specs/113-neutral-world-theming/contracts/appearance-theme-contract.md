@@ -54,7 +54,7 @@ The document exposes separate data attributes for app appearance and world theme
   data-app-appearance="neutral-light|neutral-dark"
   data-app-appearance-choice="neutral-light|neutral-dark|system"
   data-world-theme="workspace|fantasy|scifi|modern|..."
->
+></html>
 ```
 
 Required behavior:
@@ -98,7 +98,7 @@ Behavior:
 
 ## Styling Contract
 
-- App chrome surfaces use app tokens for background, surface, border, text, muted text, accent, radius, and fonts.
+- App chrome surfaces use app tokens for background, surface, border, text, muted text, accent, radius, and fonts. Any subcomponents or controls nested inside app chrome surfaces (such as `VaultControls`, status labels, database indicators, and action buttons in the App Header) MUST use these app chrome tokens (`chrome-*`) rather than world theme tokens (`theme-*`) to maintain visual stability.
 - World surfaces use world tokens for mood, graph, world accents, optional texture, and optional world typography.
 - First-pass surfaces must include header, activity bar, footer, settings, search, front page, graph, and entity detail.
 - Authored body content must prefer long-form readable typography over decorative theme fonts.
