@@ -97,3 +97,6 @@
 
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline can allocate a new array on every evaluation causing unnecessary garbage collection. While it can be solved with an imperative loop for iteration, if an array is explicitly needed by the UI, caching it natively in the store (`allX = $derived.by(() => Object.values(this.X))`) prevents the dependency from repeatedly evaluating in Svelte `MapView`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+## 2026-05-18 - [Performance Insight: Array allocation in map selection loop]
+**Learning:** Replaced the inline array allocation `{#each Object.values(vault.maps) as map (map.id)}` with the pre-cached property `{#each vault.allMaps as map (map.id)}` in Svelte 5.
+**Action:** When a Svelte UI component requires an array representation of a record/map located in a store, pre-calculate the array natively at the store level using `$derived.by(() => Object.values(this.X))` and expose it as a property to prevent redundant array allocations and unnecessary garbage collection overhead on UI updates.

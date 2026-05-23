@@ -8,6 +8,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 class MapRegistryStore {
   maps = $state<Record<string, Map>>({});
+  allMaps = $derived.by(() => Object.values(this.maps));
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   private saveQueue: KeyedTaskQueue | null = null;
 
