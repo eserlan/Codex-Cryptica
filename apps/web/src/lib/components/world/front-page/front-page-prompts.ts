@@ -20,6 +20,17 @@ export function createWorldCoverPrompt(
     surface: "cover",
     themeId,
   });
+  const themeArtDirection = themeId
+    ? resolveArtDirection({
+        subject: safeName,
+        surface: "chat",
+        themeId,
+      })
+    : null;
+  const themeStyleLine =
+    themeArtDirection?.source === "theme-default"
+      ? `- Theme Style: ${themeArtDirection.prompt}\n`
+      : "";
 
   return `Create atmospheric portrait cover art for "${safeName}".
 
@@ -34,7 +45,7 @@ ${safeWorldContext}
 
 Art direction:
 - Default Art Style: ${artDirection.prompt}
-- Portrait composition, vertical framing, approximately 2:3 aspect ratio.
+${themeStyleLine}- Portrait composition, vertical framing, approximately 2:3 aspect ratio.
 - Focus on the tone, mood, and symbolic atmosphere of the setting.
 - Depict the world itself more than a single action scene.
 - Emphasize place, tension, and identity through lighting, silhouette, color, and environment.

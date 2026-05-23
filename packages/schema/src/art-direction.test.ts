@@ -99,6 +99,27 @@ describe("art direction resolver", () => {
     expect(result.categoryId).toBe("cover");
   });
 
+  it("does not alias real category ids unless they are marked as hints", () => {
+    const realCategory = resolveArtDirection({
+      subject: "Archivist Nara",
+      surface: "entity",
+      categoryId: "npc",
+      themeId: "fantasy",
+    });
+    const hintedCategory = resolveArtDirection({
+      subject: "Archivist Nara",
+      surface: "command",
+      categoryId: "npc",
+      categoryIdIsHint: true,
+      themeId: "fantasy",
+    });
+
+    expect(realCategory.source).toBe("theme-default");
+    expect(realCategory.categoryId).toBe("npc");
+    expect(hintedCategory.source).toBe("category-default");
+    expect(hintedCategory.categoryId).toBe("character");
+  });
+
   it("ships required category and theme defaults without named artist imitation", () => {
     for (const id of [
       "character",

@@ -19,6 +19,7 @@ export interface DrawRequestContext {
   entityTitle?: string;
   categoryId?: string;
   categoryLabel?: string;
+  categoryIdIsHint?: boolean;
   themeId?: string;
   surface: DrawSurface;
   entityArtDirection?: string;
@@ -219,6 +220,7 @@ export function resolveArtDirection(
   const categoryId =
     normalizeCategoryId(
       context.surface === "cover" ? "cover" : context.categoryId,
+      context.surface === "cover" || context.categoryIdIsHint,
     ) ||
     undefined;
   const themeId = normalizeId(context.themeId) || undefined;
@@ -256,8 +258,9 @@ export function resolveArtDirection(
 
 export function getCategoryArtDirectionDefault(
   categoryId?: string,
+  options: { categoryIdIsHint?: boolean } = {},
 ): ArtDirectionTemplate | undefined {
-  const normalized = normalizeCategoryId(categoryId);
+  const normalized = normalizeCategoryId(categoryId, options.categoryIdIsHint);
   return normalized ? CATEGORY_ART_DIRECTION_DEFAULTS[normalized] : undefined;
 }
 
@@ -308,7 +311,7 @@ function normalizeId(id?: string) {
     .replace(/\s+/g, "-");
 }
 
-function normalizeCategoryId(id?: string) {
+function normalizeCategoryId(id?: string, applyAliases = false) {
   const normalized = normalizeId(id);
-  return CATEGORY_ALIASES[normalized] || normalized;
+  return applyAliases ? CATEGORY_ALIASES[normalized] || normalized : normalized;
 }

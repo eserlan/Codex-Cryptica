@@ -1,18 +1,20 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
-import { resolveArtDirection } from "schema/src/art-direction";
+import { resolveArtDirection } from "schema";
+
+interface VisualEntityLike {
+  id?: string;
+  title: string;
+  type?: string;
+  categoryId?: string;
+  labels?: string[];
+  content?: string;
+  lore?: string;
+  artDirection?: string;
+}
 
 export class OracleGenerator {
   private buildEntityVisualQuery(
-    entity: {
-      id?: string;
-      title: string;
-      type?: string;
-      categoryId?: string;
-      labels?: string[];
-      content?: string;
-      lore?: string;
-      artDirection?: string;
-    },
+    entity: VisualEntityLike,
     context?: OracleExecutionContext,
   ): string {
     const artDirection = resolveArtDirection({
@@ -31,7 +33,7 @@ export class OracleGenerator {
 
   private buildMessageVisualQuery(
     message: ChatMessage,
-    entity: any,
+    entity: VisualEntityLike | null,
     context: OracleExecutionContext,
   ): string {
     if (entity) {
@@ -43,6 +45,7 @@ export class OracleGenerator {
       subject: commandSubject.subject,
       surface: "chat",
       categoryId: commandSubject.categoryId,
+      categoryIdIsHint: Boolean(commandSubject.categoryId),
       themeId: context.uiStore?.activeThemeId,
       userAuthoredArtDirection: this.extractArtDirectionFromText(
         message.content,
@@ -67,11 +70,7 @@ ${cleanLabels.map((label) => `- ${label}`).join("\n")}
 Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
   }
 
-  private extractEntityArtDirection(entity: {
-    artDirection?: string;
-    content?: string;
-    lore?: string;
-  }) {
+  private extractEntityArtDirection(entity: VisualEntityLike) {
     return (
       entity.artDirection ||
       this.extractArtDirectionFromText(entity.content) ||
