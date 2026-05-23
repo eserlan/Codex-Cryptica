@@ -11,6 +11,9 @@
 
 - Q: Is this part of the neutral world theming spec? -> A: No. It is a separate spec because it affects AI art prompt resolution, vault settings, category overrides, and draw-command behavior rather than app chrome theming.
 - Q: Should shipped default prompts copy named artist styles? -> A: No. Defaults should use descriptive visual direction and avoid named living-artist imitation while preserving mood, composition, medium, lighting, and material guidance.
+- Q: Should the first implementation include UI for editing entity-specific art direction? -> A: No. Keep entity-specific art direction as the highest-priority resolver slot, but do not build entity-level editing UI in the first implementation.
+- Q: How should category art direction overrides be stored so category renames are handled? -> A: Store category overrides by stable category ID.
+- Q: How should `/draw character Almos` treat `character`? -> A: Command category words may supply category context, but matched entity metadata wins when the subject resolves to an entity with a category.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -114,11 +117,12 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 ### Assumptions
 
 - Art direction is a text prompt template that may include `{subject}` as the subject insertion point.
-- Entity-specific art direction is optional and may be added later if entity editing UI is not part of the first implementation.
+- Entity-specific art direction remains the highest-priority resolver input, but entity-level editing UI is out of scope for the first implementation.
 - The first implementation should cover vault default art direction, category overrides, theme defaults, global default, and resolver integration for existing draw entry points.
 - Existing image generation model calls remain unchanged; this feature prepares the prompt before it reaches the image generation service.
 - Prompt defaults should be concise enough to guide style without producing unwieldy prompts.
 - Shipped defaults should describe style through medium, composition, lighting, mood, materials, and visual constraints rather than named artist imitation.
+- For `/draw` commands, a recognized category word may provide category context, but matched entity metadata takes precedence over the command-provided category when both are present.
 
 ## Requirements _(mandatory)_
 
@@ -131,6 +135,7 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 - **FR-005**: If a selected template does not include `{subject}`, the system MUST still include the subject in the final prompt.
 - **FR-006**: Users MUST be able to configure vault default art direction per vault.
 - **FR-007**: Users MUST be able to configure category-specific art direction overrides per vault.
+- **FR-007a**: Category-specific art direction overrides MUST be keyed by stable category ID so renaming a category does not detach its art direction.
 - **FR-008**: Saved art direction settings MUST persist per vault and MUST NOT affect other vaults.
 - **FR-009**: Clearing a category-specific override MUST restore fallback to the next available art direction level.
 - **FR-010**: The system MUST provide shipped global default art direction.
@@ -139,6 +144,7 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 - **FR-013**: Theme default and category default prompts MUST avoid naming living artists or directly imitating a living artist's style.
 - **FR-014**: Default prompts SHOULD remain concise and focused on subject, medium, composition, lighting, mood, materials, and readability.
 - **FR-015**: Existing `/draw` command behavior MUST use the art direction resolver before calling image generation.
+- **FR-015a**: `/draw` command parsing MUST allow recognized category words to provide category context, while matched entity category metadata MUST take precedence when the subject resolves to an entity.
 - **FR-016**: Existing entity sidepanel draw behavior MUST use the art direction resolver before calling image generation.
 - **FR-017**: Existing Oracle chat draw behavior SHOULD use the art direction resolver when subject or category context is available.
 - **FR-018**: If AI image generation is unavailable because of tier, capability, or missing configuration, art direction settings MUST remain editable but generation controls MUST keep existing gating behavior.
@@ -151,7 +157,7 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 - **Art Direction Template**: A prompt template that guides image style and may include `{subject}`.
 - **Resolved Art Direction**: The final prompt text assembled for a draw request after applying fallback rules and subject insertion.
 - **Vault Art Direction Settings**: Per-vault settings containing a default art style and category overrides.
-- **Category Art Direction Override**: A per-vault art direction template assigned to a category or category-like type.
+- **Category Art Direction Override**: A per-vault art direction template assigned to a stable category ID or category-like type.
 - **Theme Art Direction Default**: A shipped default prompt associated with a world theme.
 - **Global Art Direction Default**: The final fallback prompt used when no more specific art direction is available.
 - **Draw Request Context**: Subject text plus optional entity id, category, vault id, and theme id used by the resolver.
