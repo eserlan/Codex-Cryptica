@@ -23,7 +23,10 @@
 			if (localStorage.getItem("codex_skip_landing") === "true" || new URLSearchParams(window.location.search).has("demo")) {
 				document.documentElement.classList.add("skip-landing");
 			}
-			const appearance = localStorage.getItem("codex-cryptica-app-appearance") || "system";
+			let appearance = localStorage.getItem("codex-cryptica-app-appearance") || "system";
+			if (appearance !== "neutral-light" && appearance !== "neutral-dark" && appearance !== "system") {
+				appearance = "system";
+			}
 			let resolvedAppearance = appearance;
 			if (appearance === "system") {
 				resolvedAppearance = window.matchMedia("(prefers-color-scheme: dark)").matches ? "neutral-dark" : "neutral-light";
@@ -31,7 +34,13 @@
 			document.documentElement.dataset.appAppearance = resolvedAppearance;
 			document.documentElement.dataset.appAppearanceChoice = appearance;
 
-			const storedTheme = (localStorage.getItem("codex-cryptica-active-theme") || "workspace").replace(/_(light|dark)$/, "");
+			let storedTheme = (localStorage.getItem("codex-cryptica-active-theme") || "workspace").replace(/_(light|dark)$/, "");
+			const baseThemes = ["workspace", "fantasy", "modern", "scifi", "cyberpunk", "apocalyptic", "horror", "fallout", "starwars", "startrek"];
+			if (!baseThemes.includes(storedTheme)) {
+				storedTheme = "workspace";
+			}
+			document.documentElement.dataset.worldTheme = storedTheme;
+
 			const isDark = resolvedAppearance === "neutral-dark";
 			let theme = storedTheme;
 
@@ -76,7 +85,6 @@
 				const t = themes[theme];
 				const root = document.documentElement;
 				root.dataset.theme = theme;
-				root.dataset.worldTheme = storedTheme;
 				root.style.setProperty("--color-bg-primary", t.bg);
 				root.style.setProperty("--color-bg-surface", t.surface);
 				root.style.setProperty("--color-text-primary", t.text);

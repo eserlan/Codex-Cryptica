@@ -82,7 +82,7 @@
 
   if (browser) {
     const requestedTheme = page.url.searchParams.get("theme");
-    if (requestedTheme && THEMES[requestedTheme]) {
+    if (requestedTheme && requestedTheme in THEMES) {
       themeStore.currentThemeId = requestedTheme;
     }
   }

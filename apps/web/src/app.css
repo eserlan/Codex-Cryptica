@@ -240,7 +240,6 @@
   /* Shield app chrome from world theme colors and fonts */
   header,
   footer,
-  aside,
   .bg-chrome-surface,
   .bg-chrome-bg {
     --font-header: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
@@ -333,7 +332,6 @@
   /* Force all descendants in chrome to inherit the font, except mono elements */
   header *:not(code):not(pre):not(kbd):not(.font-mono),
   footer *:not(code):not(pre):not(kbd):not(.font-mono),
-  aside *:not(code):not(pre):not(kbd):not(.font-mono),
   .bg-chrome-surface *:not(code):not(pre):not(kbd):not(.font-mono),
   .bg-chrome-bg *:not(code):not(pre):not(kbd):not(.font-mono) {
     font-family: inherit !important;

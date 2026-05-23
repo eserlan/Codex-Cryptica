@@ -3,10 +3,7 @@
   import { THEMES } from "schema";
   import { fade } from "svelte/transition";
 
-  // Filter out the dark variant of workspace, since it is selected automatically via App Appearance
-  const worldThemes = Object.values(THEMES).filter(
-    (t) => t.id !== "workspace_dark",
-  );
+  const worldThemes = Object.values(THEMES);
 </script>
 
 <div class="space-y-6">
@@ -53,15 +50,14 @@
 
   <!-- World Genre Themes Settings -->
   <div class="space-y-2">
-    <h3 class="text-xs font-bold tracking-widest uppercase text-theme-muted/80">
+    <h3
+      class="text-xs font-bold tracking-widest uppercase text-chrome-muted/80"
+    >
       World Genre Theme
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {#each worldThemes as theme}
-        {@const isSelected =
-          themeStore.currentThemeId === theme.id ||
-          (theme.id === "workspace" &&
-            themeStore.currentThemeId === "workspace_dark")}
+        {@const isSelected = themeStore.currentThemeId === theme.id}
         <button
           class="group relative flex flex-col items-start p-4 bg-theme-surface border transition-all rounded overflow-hidden
           {isSelected
@@ -118,10 +114,11 @@
           {/if}
 
           <!-- Background Texture Preview (simplified) -->
-          {#if theme.tokens.texture}
+          {#if (theme.tokens as any).texture}
             <div
               class="absolute inset-0 opacity-5 pointer-events-none mix-blend-overlay"
-              style:background-image="url('/themes/{theme.tokens.texture}')"
+              style:background-image="url('/themes/{(theme.tokens as any)
+                .texture}')"
             ></div>
           {/if}
         </button>

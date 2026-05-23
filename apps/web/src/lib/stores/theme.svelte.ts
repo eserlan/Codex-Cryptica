@@ -394,7 +394,9 @@ export class ThemeStore {
     root.dataset.theme = theme.id;
     root.dataset.appAppearance = appearance;
     root.dataset.appAppearanceChoice = appearanceChoice;
-    root.dataset.worldTheme = this.worldThemeId;
+    root.dataset.worldTheme = (
+      this.previewThemeId || this.worldThemeId
+    ).replace(/_(light|dark)$/, "");
 
     root.style.setProperty("--color-bg-primary", tokens.background);
     root.style.setProperty("--color-bg-surface", tokens.surface);
