@@ -159,7 +159,7 @@
 <svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
 <div
-  class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
+  class="h-[calc(100vh-var(--header-height,65px))] flex bg-chrome-bg text-chrome-text overflow-hidden relative"
 >
   <div class="flex-1 relative overflow-hidden">
     {#if layoutUIStore.mainViewMode === "focus" && layoutUIStore.focusedEntityId && EmbeddedEntityView}
@@ -170,7 +170,7 @@
       {/key}
     {:else if !onboardingStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
-        class="absolute inset-0 bg-theme-bg flex items-center justify-center"
+        class="absolute inset-0 bg-chrome-bg flex items-center justify-center"
         aria-hidden="true"
       >
         <div

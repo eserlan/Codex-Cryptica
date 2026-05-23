@@ -372,7 +372,9 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="h-[100dvh] bg-theme-bg flex flex-col font-body app-layout">
+<div
+  class="h-[100dvh] bg-chrome-bg text-chrome-text flex flex-col font-body app-layout"
+>
   <NotificationToast />
 
   {#if !isPopup && !isVttFullscreen && !isZenPopout}

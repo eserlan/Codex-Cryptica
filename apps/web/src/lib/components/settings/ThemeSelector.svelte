@@ -12,35 +12,37 @@
 <div class="space-y-6">
   <!-- App Appearance Settings -->
   <div class="space-y-2">
-    <h3 class="text-xs font-bold tracking-widest uppercase text-theme-muted/80">
+    <h3
+      class="text-xs font-bold tracking-widest uppercase text-chrome-muted/80"
+    >
       App Appearance
     </h3>
     <div class="grid grid-cols-3 gap-2">
       <button
-        class="flex items-center justify-center gap-2 p-3 bg-theme-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
+        class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'system'
-          ? 'border-theme-primary ring-1 ring-theme-primary text-theme-primary'
-          : 'border-theme-border text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
+          ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
+          : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("system")}
       >
         <span class="icon-[lucide--monitor] w-4 h-4"></span>
         System
       </button>
       <button
-        class="flex items-center justify-center gap-2 p-3 bg-theme-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
+        class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'neutral-light'
-          ? 'border-theme-primary ring-1 ring-theme-primary text-theme-primary'
-          : 'border-theme-border text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
+          ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
+          : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("neutral-light")}
       >
         <span class="icon-[lucide--sun] w-4 h-4"></span>
         Light
       </button>
       <button
-        class="flex items-center justify-center gap-2 p-3 bg-theme-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
+        class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'neutral-dark'
-          ? 'border-theme-primary ring-1 ring-theme-primary text-theme-primary'
-          : 'border-theme-border text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
+          ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
+          : 'border-chrome-border text-chrome-muted hover:border-chrome-accent/50 hover:text-chrome-text'}"
         onclick={() => themeStore.setAppAppearance("neutral-dark")}
       >
         <span class="icon-[lucide--moon] w-4 h-4"></span>

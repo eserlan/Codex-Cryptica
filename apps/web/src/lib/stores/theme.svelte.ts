@@ -1,4 +1,4 @@
-import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
+import { THEMES, DEFAULT_THEME, DEFAULT_JARGON, WORKSPACE_DARK } from "schema";
 import type {
   StylingTemplate,
   JargonMap,
@@ -50,16 +50,19 @@ export class ThemeStore {
 
   activeTheme = $derived.by(() => {
     const id = this.previewThemeId || this.worldThemeId || DEFAULT_THEME.id;
-    if (id === "workspace" && this.resolvedAppAppearanceId === "neutral-dark") {
-      return THEMES.workspace_dark;
+    if (
+      (id === "workspace" || id === "workspace_dark") &&
+      this.resolvedAppAppearanceId === "neutral-dark"
+    ) {
+      return WORKSPACE_DARK;
     }
     if (
-      id === "workspace_dark" &&
+      (id === "workspace" || id === "workspace_dark") &&
       this.resolvedAppAppearanceId === "neutral-light"
     ) {
       return THEMES.workspace;
     }
-    return THEMES[id] || DEFAULT_THEME;
+    return (THEMES as any)[id] || DEFAULT_THEME;
   });
 
   resolvedAppAppearanceId = $derived<ResolvedAppAppearanceId>(
@@ -77,7 +80,7 @@ export class ThemeStore {
   }
 
   set currentThemeId(id: string) {
-    this.setTheme(id);
+    void this.setTheme(id);
   }
 
   /**
@@ -350,7 +353,7 @@ export class ThemeStore {
     root.dataset.theme = theme.id;
     root.dataset.appAppearance = appearance;
     root.dataset.appAppearanceChoice = appearanceChoice;
-    root.dataset.worldTheme = theme.id;
+    root.dataset.worldTheme = this.worldThemeId;
 
     root.style.setProperty("--color-bg-primary", tokens.background);
     root.style.setProperty("--color-bg-surface", tokens.surface);

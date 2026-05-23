@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { THEMES, DEFAULT_THEME } from "./theme";
+import { THEMES, DEFAULT_THEME, WORKSPACE_DARK } from "./theme";
 
 describe("Theme Schema & Definitions", () => {
   it("defines the workspace and workspace_dark themes", () => {
@@ -9,11 +9,11 @@ describe("Theme Schema & Definitions", () => {
     expect(THEMES.workspace.tokens.fontBody).toContain("Inter");
     expect(THEMES.workspace.tokens.borderRadius).toBe("8px");
 
-    expect(THEMES.workspace_dark).toBeDefined();
-    expect(THEMES.workspace_dark.id).toBe("workspace_dark");
-    expect(THEMES.workspace_dark.tokens.fontHeader).toContain("Fraunces");
-    expect(THEMES.workspace_dark.tokens.fontBody).toContain("Inter");
-    expect(THEMES.workspace_dark.tokens.borderRadius).toBe("8px");
+    expect(WORKSPACE_DARK).toBeDefined();
+    expect(WORKSPACE_DARK.id).toBe("workspace_dark");
+    expect(WORKSPACE_DARK.tokens.fontHeader).toContain("Fraunces");
+    expect(WORKSPACE_DARK.tokens.fontBody).toContain("Inter");
+    expect(WORKSPACE_DARK.tokens.borderRadius).toBe("8px");
   });
 
   it("sets workspace as the DEFAULT_THEME", () => {

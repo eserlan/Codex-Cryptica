@@ -31,7 +31,8 @@
 			document.documentElement.dataset.appAppearance = resolvedAppearance;
 			document.documentElement.dataset.appAppearanceChoice = appearance;
 
-			let theme = localStorage.getItem("codex-cryptica-active-theme") || "workspace";
+			const storedTheme = localStorage.getItem("codex-cryptica-active-theme") || "workspace";
+			let theme = storedTheme;
 			if (theme === "workspace" && resolvedAppearance === "neutral-dark") {
 				theme = "workspace_dark";
 			} else if (theme === "workspace_dark" && resolvedAppearance === "neutral-light") {
@@ -56,7 +57,7 @@
 				const t = themes[theme];
 				const root = document.documentElement;
 				root.dataset.theme = theme;
-				root.dataset.worldTheme = theme;
+				root.dataset.worldTheme = storedTheme;
 				root.style.setProperty("--color-bg-primary", t.bg);
 				root.style.setProperty("--color-bg-surface", t.surface);
 				root.style.setProperty("--color-text-primary", t.text);

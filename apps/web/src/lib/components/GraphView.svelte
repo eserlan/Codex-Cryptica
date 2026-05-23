@@ -384,6 +384,7 @@
 </script>
 
 <div
+  data-testid="graph-view-root"
   class="absolute inset-0 w-full h-full bg-theme-bg overflow-hidden shadow-2xl border-y border-theme-border/30"
 >
   <div

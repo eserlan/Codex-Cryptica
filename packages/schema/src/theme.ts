@@ -96,7 +96,33 @@ export const DEFAULT_JARGON: JargonMap = {
   graph_loading: "Initializing...",
 };
 
-export const THEMES: Record<string, StylingTemplate> = {
+export const WORKSPACE_DARK: StylingTemplate = {
+  id: "workspace_dark",
+  name: "Workspace (Dark)",
+  description:
+    "Neutral dark workspace with a warm dark gray palette and restrained gold accent.",
+  tokens: {
+    primary: "#d6d3d1",
+    secondary: "#a8a29e",
+    background: "#1c1917",
+    surface: "#292524",
+    text: "#f5f5f4",
+    border: "rgba(68, 64, 60, 1)",
+    accent: "#c8973a",
+    fontHeader: "'Fraunces', serif",
+    fontBody: "'Inter', sans-serif",
+    borderRadius: "8px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#44403c",
+  },
+};
+
+export const THEMES = {
   workspace: {
     id: "workspace",
     name: "Workspace (Light)",
@@ -120,31 +146,6 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeBorderWidth: 1,
       edgeWidth: 1,
       edgeColor: "#d6d3d1",
-    },
-  },
-  workspace_dark: {
-    id: "workspace_dark",
-    name: "Workspace (Dark)",
-    description:
-      "Neutral dark workspace with a warm dark gray palette and restrained gold accent.",
-    tokens: {
-      primary: "#d6d3d1",
-      secondary: "#a8a29e",
-      background: "#1c1917",
-      surface: "#292524",
-      text: "#f5f5f4",
-      border: "rgba(68, 64, 60, 1)",
-      accent: "#c8973a",
-      fontHeader: "'Fraunces', serif",
-      fontBody: "'Inter', sans-serif",
-      borderRadius: "8px",
-    },
-    graph: {
-      nodeShape: "ellipse",
-      edgeStyle: "solid",
-      nodeBorderWidth: 1,
-      edgeWidth: 1,
-      edgeColor: "#44403c",
     },
   },
   scifi: {
@@ -549,10 +550,10 @@ export const THEMES: Record<string, StylingTemplate> = {
       graph_loading: "Scanning Sector...",
     },
   },
-};
+} as const satisfies Record<string, StylingTemplate>;
 
 export const DEFAULT_THEME = THEMES.workspace;
 
 export type AppAppearanceId = "neutral-light" | "neutral-dark" | "system";
 export type ResolvedAppAppearanceId = "neutral-light" | "neutral-dark";
-export type WorldThemeId = string;
+export type WorldThemeId = keyof typeof THEMES;

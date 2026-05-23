@@ -58,7 +58,7 @@ Codex-Cryptica uses a dual-layer theming architecture that separates the visual 
 
 1. **App Appearance (`data-app-appearance` & `data-app-appearance-choice`)**
    - **Purpose**: Controls the application frame (headers, footers, sidebars, settings shells, search modals).
-   - **Modes**: Neutral `light`, `dark`, or `system` (resolving dynamically based on media queries).
+   - **Modes**: Neutral `neutral-light`, `neutral-dark`, or `system` (resolving dynamically based on media queries).
    - **Styling**: Always texture-free, high-legibility, clean layout using neutral app chrome tokens (e.g., `--color-chrome-*` and neutral grays).
 
 2. **World Theme (`data-world-theme`)**

@@ -238,8 +238,8 @@
   }
 
   body {
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
+    background-color: var(--chrome-bg);
+    color: var(--chrome-text);
     font-family: var(--font-body-val);
     background-repeat: no-repeat;
     background-size: cover;

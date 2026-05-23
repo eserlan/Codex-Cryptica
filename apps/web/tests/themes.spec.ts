@@ -82,8 +82,11 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("button", { name: "Ancient Parchment" }).click();
 
     // 4. Verify background color change (Parchment color)
-    const body = page.locator("body");
-    await expect(body).toHaveCSS("background-color", "rgb(253, 246, 227)");
+    const canvasView = page.locator("div.bg-theme-bg").first();
+    await expect(canvasView).toHaveCSS(
+      "background-color",
+      "rgb(253, 246, 227)",
+    );
     await expect(page.locator("html")).toHaveAttribute("data-theme", "fantasy");
 
     // Close settings via explicit button
@@ -209,8 +212,8 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("button", { name: "Blood & Noir" }).click();
 
     // 4. Verify visual properties
-    const body = page.locator("body");
-    await expect(body).toHaveCSS("background-color", "rgb(5, 5, 5)");
+    const canvasView = page.locator("div.bg-theme-bg").first();
+    await expect(canvasView).toHaveCSS("background-color", "rgb(5, 5, 5)");
 
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();

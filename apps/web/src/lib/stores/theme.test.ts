@@ -141,7 +141,7 @@ describe("ThemeStore", () => {
 
     it("should resolve workspace_dark to workspace when appearance is neutral-light", async () => {
       store.setAppAppearance("neutral-light");
-      await store.setTheme("workspace_dark");
+      await store.setTheme("workspace_dark" as any);
       expect(store.activeTheme.id).toBe("workspace");
     });
 
