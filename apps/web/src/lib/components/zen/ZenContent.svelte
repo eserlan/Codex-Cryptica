@@ -283,11 +283,12 @@
         </h3>
         {#if allConnections.length > 0}
           <div class="space-y-2">
-            {#each allConnections as conn (conn.id)}
+            {#each allConnections as conn (`${conn.id}:${conn.type}:${conn.isOutbound}`)}
               <div
                 class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
               >
                 <button
+                  type="button"
                   onclick={() => onNavigate(conn.id)}
                   class="flex-1 min-w-0 flex items-center gap-3 text-left"
                 >
@@ -311,6 +312,7 @@
                 </button>
                 {#if !vault.isGuest}
                   <button
+                    type="button"
                     onclick={() => {
                       const entityId = entity?.id;
                       if (!entityId) return;
@@ -328,6 +330,7 @@
                   </button>
                 {/if}
                 <button
+                  type="button"
                   onclick={() => onNavigate(conn.id)}
                   class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
                   aria-label="Navigate to {conn.title}"
