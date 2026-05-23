@@ -210,4 +210,52 @@ describe("art direction resolver", () => {
       /\b(in the style of|by artgerm|by greg rutkowski|by loish|by sakimichan|by beeple)\b/i,
     );
   });
+
+  it("resolves each canonical theme id and alias correctly and includes expected text", () => {
+    const testCases: Array<{ themeId: string; expectedSubstring: string }> = [
+      { themeId: "fantasy", expectedSubstring: "Oil painting style" },
+      { themeId: "scifi", expectedSubstring: "Digital concept art style" },
+      { themeId: "cyberpunk", expectedSubstring: "wet streets" },
+      { themeId: "modern", expectedSubstring: "Photographic" },
+      {
+        themeId: "apocalyptic",
+        expectedSubstring: "Desaturated digital illustration",
+      },
+      {
+        themeId: "post-apocalyptic",
+        expectedSubstring: "Desaturated digital illustration",
+      },
+      {
+        themeId: "post_apocalyptic",
+        expectedSubstring: "Desaturated digital illustration",
+      },
+      { themeId: "horror", expectedSubstring: "Tenebrist oil painting" },
+      { themeId: "gothic-horror", expectedSubstring: "Tenebrist oil painting" },
+      { themeId: "gothic_horror", expectedSubstring: "Tenebrist oil painting" },
+      { themeId: "steampunk", expectedSubstring: "Gouache painting style" },
+      { themeId: "mythic", expectedSubstring: "Tempera illustration style" },
+      { themeId: "pulp_adventure", expectedSubstring: "Screen print style" },
+      { themeId: "pulp-adventure", expectedSubstring: "Screen print style" },
+      { themeId: "fallout", expectedSubstring: "Americana illustration style" },
+      { themeId: "starwars", expectedSubstring: "McQuarrie-era" },
+      { themeId: "startrek", expectedSubstring: "Clean 1990s sci-fi" },
+      // suffix variants
+      {
+        themeId: "scifi_light",
+        expectedSubstring: "Digital concept art style",
+      },
+      { themeId: "fantasy-dark", expectedSubstring: "Oil painting style" },
+    ];
+
+    for (const { themeId, expectedSubstring } of testCases) {
+      const result = resolveArtDirection({
+        subject: "TestSubject",
+        surface: "entity",
+        themeId,
+      });
+
+      expect(result.themeId).toBeDefined();
+      expect(result.prompt).toContain(expectedSubstring);
+    }
+  });
 });

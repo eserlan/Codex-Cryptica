@@ -44,6 +44,12 @@ export interface ResolvedArtDirection {
 
 const MAX_CONTEXT_TEMPLATE_LENGTH = 1200;
 
+function capPrompt(prompt: string): string {
+  return prompt.length > MAX_CONTEXT_TEMPLATE_LENGTH
+    ? prompt.slice(0, MAX_CONTEXT_TEMPLATE_LENGTH)
+    : prompt;
+}
+
 export const GLOBAL_ART_DIRECTION_DEFAULT: ArtDirectionTemplate = {
   id: "global.codex-cryptica",
   label: "Codex Cryptica Default",
@@ -360,7 +366,7 @@ export function resolveArtDirection(
   );
   if (entityTemplate) {
     return {
-      prompt: applySubject(entityTemplate.template, subject),
+      prompt: capPrompt(applySubject(entityTemplate.template, subject)),
       source: "entity-context",
       templateId: entityTemplate.id,
       subject,
@@ -377,7 +383,7 @@ export function resolveArtDirection(
   );
   if (userTemplate) {
     return {
-      prompt: applySubject(userTemplate.template, subject),
+      prompt: capPrompt(applySubject(userTemplate.template, subject)),
       source: "user-authored-context",
       templateId: userTemplate.id,
       subject,
@@ -414,7 +420,7 @@ export function resolveArtDirection(
   parts.push(applySubject(globalTemplate.template, subject));
 
   return {
-    prompt: parts.join(" "),
+    prompt: capPrompt(parts.join(" ")),
     source,
     templateId,
     subject,

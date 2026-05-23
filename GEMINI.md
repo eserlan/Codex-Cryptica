@@ -4,7 +4,7 @@ Auto-generated from all feature plans. Last updated: 2026-05-23
 
 ## Active Technologies
 
-- TypeScript 6.0.3 + None (Browser Native APIs) / Zod (874-art-direction-clarification)
+- TypeScript 6.0.3 + zod (874-art-direction-clarification)
 
 - TypeScript 6.0.3, Svelte 5 Runes + Svelte 5, Dexie (IndexedDB), Cytoscape.js (109-quicknote-scratchpad)
 - IndexedDB (`quick_notes` store) (109-quicknote-scratchpad)
