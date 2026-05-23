@@ -64,6 +64,21 @@ describe("art direction resolver", () => {
     ).toBe("global-default");
   });
 
+  it("composes category default, theme default, and global default prompts", () => {
+    const result = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      categoryId: "character",
+      themeId: "scifi",
+    });
+
+    expect(result.prompt).toContain("Mara, full character concept art");
+    expect(result.prompt).toContain("Mara. Digital concept art style");
+    expect(result.prompt).toContain(
+      "Mara, illustrated worldbuilding reference",
+    );
+  });
+
   it("inserts the subject when the template has no placeholder", () => {
     const result = resolveArtDirection({
       subject: "The Ember Crown",
@@ -120,6 +135,33 @@ describe("art direction resolver", () => {
     expect(hintedCategory.categoryId).toBe("character");
   });
 
+  it("normalizes and strips theme suffixes (light/dark)", () => {
+    const resultScifiLight = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      themeId: "scifi_light",
+    });
+    const resultScifiDark = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      themeId: "scifi-dark",
+    });
+    const resultHorrorLight = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      themeId: "gothic_horror_light",
+    });
+
+    expect(resultScifiLight.themeId).toBe("scifi");
+    expect(resultScifiLight.prompt).toContain("Digital concept art style");
+
+    expect(resultScifiDark.themeId).toBe("scifi");
+    expect(resultScifiDark.prompt).toContain("Digital concept art style");
+
+    expect(resultHorrorLight.themeId).toBe("horror");
+    expect(resultHorrorLight.prompt).toContain("Tenebrist oil painting");
+  });
+
   it("ships required category and theme defaults without named artist imitation", () => {
     for (const id of [
       "character",
@@ -142,10 +184,18 @@ describe("art direction resolver", () => {
       "cyberpunk",
       "modern",
       "post_apocalyptic",
+      "post-apocalyptic",
+      "apocalyptic",
       "gothic_horror",
+      "gothic-horror",
+      "horror",
       "steampunk",
       "mythic",
       "pulp_adventure",
+      "pulp-adventure",
+      "fallout",
+      "starwars",
+      "startrek",
     ]) {
       expect(THEME_ART_DIRECTION_DEFAULTS[id]?.template).toContain("{subject}");
     }
@@ -159,5 +209,53 @@ describe("art direction resolver", () => {
     expect(shippedText).not.toMatch(
       /\b(in the style of|by artgerm|by greg rutkowski|by loish|by sakimichan|by beeple)\b/i,
     );
+  });
+
+  it("resolves each canonical theme id and alias correctly and includes expected text", () => {
+    const testCases: Array<{ themeId: string; expectedSubstring: string }> = [
+      { themeId: "fantasy", expectedSubstring: "Oil painting style" },
+      { themeId: "scifi", expectedSubstring: "Digital concept art style" },
+      { themeId: "cyberpunk", expectedSubstring: "wet streets" },
+      { themeId: "modern", expectedSubstring: "Photographic" },
+      {
+        themeId: "apocalyptic",
+        expectedSubstring: "Desaturated digital illustration",
+      },
+      {
+        themeId: "post-apocalyptic",
+        expectedSubstring: "Desaturated digital illustration",
+      },
+      {
+        themeId: "post_apocalyptic",
+        expectedSubstring: "Desaturated digital illustration",
+      },
+      { themeId: "horror", expectedSubstring: "Tenebrist oil painting" },
+      { themeId: "gothic-horror", expectedSubstring: "Tenebrist oil painting" },
+      { themeId: "gothic_horror", expectedSubstring: "Tenebrist oil painting" },
+      { themeId: "steampunk", expectedSubstring: "Gouache painting style" },
+      { themeId: "mythic", expectedSubstring: "Tempera illustration style" },
+      { themeId: "pulp_adventure", expectedSubstring: "Screen print style" },
+      { themeId: "pulp-adventure", expectedSubstring: "Screen print style" },
+      { themeId: "fallout", expectedSubstring: "Americana illustration style" },
+      { themeId: "starwars", expectedSubstring: "McQuarrie-era" },
+      { themeId: "startrek", expectedSubstring: "Clean 1990s sci-fi" },
+      // suffix variants
+      {
+        themeId: "scifi_light",
+        expectedSubstring: "Digital concept art style",
+      },
+      { themeId: "fantasy-dark", expectedSubstring: "Oil painting style" },
+    ];
+
+    for (const { themeId, expectedSubstring } of testCases) {
+      const result = resolveArtDirection({
+        subject: "TestSubject",
+        surface: "entity",
+        themeId,
+      });
+
+      expect(result.themeId).toBeDefined();
+      expect(result.prompt).toContain(expectedSubstring);
+    }
   });
 });

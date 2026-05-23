@@ -180,3 +180,14 @@ As a user using `/draw`, entity sidebar draw, Zen mode draw, graph context menu 
 - **SC-005**: `/draw`, entity sidebar draw, Zen mode draw, graph context menu image generation, front page cover generation, and Oracle chat draw all use the same resolver where context is available.
 - **SC-006**: Shipped default prompts pass review for concise descriptive language and avoid named living-artist style imitation.
 - **SC-007**: Verification covers the fallback hierarchy and existing image generation still works with no user-authored art direction content.
+
+---
+
+## 2026-05-23 Update: Art Direction Clarification (#874)
+
+An architectural and content review of the initial implementation identified a few key issues to address as an improvement to this spec:
+
+1. **Composition Over Selection**: Instead of picking only one template (e.g., category blocking theme), category and theme default templates must compose with the global default: `category template + theme template + global template`.
+2. **Normalized Theme Mapping**: Aligned theme IDs to match `theme.ts` definitions, adding explicit theme mapping/aliases (horror, apocalyptic).
+3. **Missing Themes**: Implemented fallout, starwars, and startrek default templates.
+4. **Visual Quality Refinements**: Theme prompts updated with explicit medium, palette, and conditional lighting. Banned "cinematic" word removed. Global default is genre-neutral.

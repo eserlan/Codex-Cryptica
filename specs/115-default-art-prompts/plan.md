@@ -128,3 +128,21 @@ Design outputs:
 ## Complexity Tracking
 
 N/A - No constitution violations identified.
+
+---
+
+## 2026-05-23 Update: Art Direction Clarification (#874)
+
+### Proposed Changes
+
+#### packages/schema/src/art-direction.ts
+
+- Modify `resolveArtDirection` to compose the final prompt from the category default (if any), the theme default (if any), and the global default (always) when no custom overrides (`entityArtDirection` or `userAuthoredArtDirection`) are present.
+- Implement theme normalization mapping using `THEME_ALIASES` to ensure theme IDs used in `theme.ts` map correctly.
+- Update global, cover, and theme prompt wording according to the explicit prompt list (adding medium, palette, and conditional lighting; removing "cinematic"; making the global default genre-neutral).
+- Add new theme prompts: `fallout`, `starwars`, `startrek`.
+
+#### packages/schema/src/art-direction.test.ts
+
+- Update the unit tests to assert composed prompts instead of single selected ones.
+- Add test coverage for all 9 theme templates resolving correctly.
