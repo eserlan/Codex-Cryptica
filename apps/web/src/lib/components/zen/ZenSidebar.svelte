@@ -254,7 +254,7 @@
     {/if}
 
     {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
-      <div class="flex flex-col gap-2 mt-4 w-full px-0">
+      <div class="flex flex-row md:flex-col gap-2 mt-2 md:mt-4 w-full px-0">
         <button
           onclick={() => oracle.drawEntity(entity.id)}
           disabled={isVisualizing}
@@ -316,7 +316,7 @@
   <div class="block space-y-4" data-testid="zen-sidebar-content">
     {#if !(isPopout && vault.isGuest)}
       <div
-        class="space-y-4 pt-6 border-t border-theme-border md:border-t-0 md:pt-0"
+        class="hidden md:block space-y-4 pt-6 border-t border-theme-border md:border-t-0 md:pt-0"
       >
         <h3
           class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest border-b border-theme-border pb-2"
