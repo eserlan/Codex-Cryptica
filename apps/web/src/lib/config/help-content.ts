@@ -254,7 +254,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "draw-button",
     title: "Instant Visualization",
     content:
-      "For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.",
+      "For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.",
     icon: "icon-[lucide--brush]",
   },
   "demo-mode": {

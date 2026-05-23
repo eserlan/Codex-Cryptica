@@ -98,6 +98,20 @@ describe("GraphContextMenuController", () => {
     expect(deps.oracle.drawEntity).toHaveBeenCalledWith("node-1");
   });
 
+  it("should keep graph image generation on the central entity draw path", async () => {
+    deps.vault.entities["node-1"] = {
+      id: "node-1",
+      title: "Glass Tower",
+      type: "location",
+    };
+    controller.selectedNodes = ["node-1"];
+
+    await controller.handleGenerateImage();
+
+    expect(deps.oracle.drawEntity).toHaveBeenCalledTimes(1);
+    expect(deps.oracle.drawEntity).toHaveBeenCalledWith("node-1");
+  });
+
   it("should handle node deletion with confirmation", async () => {
     controller.selectedNodes = ["node-1"];
     await controller.deleteNodes();

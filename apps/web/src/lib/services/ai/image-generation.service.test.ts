@@ -63,6 +63,20 @@ describe("DefaultImageGenerationService", () => {
       expect(result).toBe("query");
     });
 
+    it("should preserve a resolved art direction query when context is missing", async () => {
+      const resolvedPrompt =
+        "Almos, full character concept art with readable silhouette";
+
+      const result = await service.distillVisualPrompt(
+        "key",
+        resolvedPrompt,
+        "",
+        "model",
+      );
+
+      expect(result).toBe(resolvedPrompt);
+    });
+
     it("should return distilled text on success", async () => {
       mockModel.generateContent
         .mockResolvedValueOnce({

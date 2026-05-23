@@ -51,7 +51,7 @@
 ### Tests for User Story 1
 
 - [x] T010 [US1] Add failing fallback-order tests for entity-specific, user-authored, category, theme, and global precedence in `packages/schema/src/art-direction.test.ts`
-- [ ] T011 [P] [US1] Add failing Oracle action-manager tests proving `drawEntity` passes resolved art direction metadata/context before executor image generation in `apps/web/src/lib/stores/oracle/tests/action-manager.test.ts`
+- [x] T011 [P] [US1] Add failing Oracle action-manager tests proving `drawEntity` passes resolved art direction metadata/context before executor image generation in `apps/web/src/lib/stores/oracle/tests/action-manager.test.ts`
 - [ ] T012 [P] [US1] Add failing Oracle store tests proving `drawEntity` still delegates through the action manager with an entity id and execution context in `apps/web/src/lib/stores/oracle.svelte.test.ts`
 
 ### Implementation for User Story 1
@@ -60,7 +60,7 @@
 - [ ] T014 [US1] Extend Oracle draw context types to carry resolved art direction input/output fields in `apps/web/src/lib/stores/oracle/types.ts`
 - [ ] T015 [US1] Collect entity title, stable category id/label, theme id, entity art direction, and user-authored art direction candidates for `drawEntity` in `apps/web/src/lib/stores/oracle/action-manager.svelte.ts`
 - [ ] T016 [US1] Pass the resolved prompt and resolver metadata through the Oracle store execution context in `apps/web/src/lib/stores/oracle.svelte.ts`
-- [ ] T017 [US1] Ensure Oracle context snapshots keep existing tier, capability, guest, and AI-disabled gates unchanged in `apps/web/src/lib/stores/oracle/context-manager.svelte.ts`
+- [x] T017 [US1] Ensure Oracle context snapshots keep existing tier, capability, guest, and AI-disabled gates unchanged in `apps/web/src/lib/stores/oracle/context-manager.svelte.ts`
 - [ ] T018 [US1] Run focused tests for resolver and Oracle entity draw paths: `bun test packages/schema/src/art-direction.test.ts apps/web/src/lib/stores/oracle/tests/action-manager.test.ts apps/web/src/lib/stores/oracle.svelte.test.ts`
 
 **Checkpoint**: Entity draw requests resolve art direction deterministically and expose the winning source for troubleshooting.
@@ -121,7 +121,7 @@
 ### Tests for User Story 4
 
 - [x] T032 [US4] Add failing theme default tests for fantasy, sci-fi, cyberpunk, modern, post-apocalyptic, gothic horror, steampunk, mythic, and pulp-adventure theme ids in `packages/schema/src/art-direction.test.ts`
-- [ ] T033 [P] [US4] Add failing Oracle context-manager tests proving the active theme id is available in draw execution context in `apps/web/src/lib/stores/oracle/tests/context-manager.test.ts`
+- [x] T033 [P] [US4] Add failing Oracle context-manager tests proving the active theme id is available in draw execution context in `apps/web/src/lib/stores/oracle/tests/context-manager.test.ts`
 
 ### Implementation for User Story 4
 
@@ -142,9 +142,9 @@
 
 ### Tests for User Story 5
 
-- [ ] T038 [US5] Add failing image generation service tests proving it receives the resolver's final prompt without changing model request behavior in `apps/web/src/lib/services/ai/image-generation.service.test.ts`
+- [x] T038 [US5] Add failing image generation service tests proving it receives the resolver's final prompt without changing model request behavior in `apps/web/src/lib/services/ai/image-generation.service.test.ts`
 - [ ] T039 [P] [US5] Add failing chat message action tests proving Oracle chat draw requests use resolver context when message/entity/category data exists in `apps/web/src/lib/components/oracle/chat-message.actions.test.ts`
-- [ ] T040 [P] [US5] Add failing graph context menu tests proving selected graph nodes call the central entity draw path with entity/category context in `apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts`
+- [x] T040 [P] [US5] Add failing graph context menu tests proving selected graph nodes call the central entity draw path with entity/category context in `apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts`
 - [x] T041 [P] [US5] Add failing front page tests proving cover generation uses world-cover context and active theme defaults in `apps/web/src/lib/components/world/FrontPage.test.ts`
 - [ ] T042 [P] [US5] Add failing E2E coverage for `/draw`, entity sidebar, and Zen mode draw buttons using resolved art direction in `apps/web/tests/draw-button.spec.ts`
 - [ ] T043 [P] [US5] Add failing E2E coverage for graph image generation using resolved art direction in `apps/web/tests/graph-image-gen.spec.ts`
@@ -170,7 +170,7 @@
 
 **Purpose**: Documentation, validation, and regression checks across all stories.
 
-- [ ] T054 [P] Update user-facing help text to mention normal notes/entities as Art Direction context without implying a settings editor in `apps/web/src/lib/content/help/chat-commands.md`
+- [x] T054 [P] Update user-facing help text to mention normal notes/entities as Art Direction context without implying a settings editor in `apps/web/src/lib/content/help/chat-commands.md`
 - [ ] T055 [P] Update quickstart validation notes with the final focused commands and manual draw surfaces in `specs/115-default-art-prompts/quickstart.md`
 - [ ] T056 [P] Add or update troubleshooting labels to expose resolver source names using "Art Direction", "Default Art Style", and "Category Defaults" wording in `apps/web/src/lib/stores/oracle/action-manager.svelte.ts`
 - [ ] T057 Run all resolver and unit coverage for the feature: `bun test packages/schema/src/art-direction.test.ts apps/web/src/lib/stores/oracle/tests/action-manager.test.ts apps/web/src/lib/config/chat-commands.test.ts apps/web/src/lib/components/world/FrontPage.test.ts apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts apps/web/src/lib/services/ai/image-generation.service.test.ts`
