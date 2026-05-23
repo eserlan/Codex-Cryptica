@@ -373,7 +373,13 @@
             onDelete={handleDelete}
           />
 
-          <ZenContent {entity} bind:editState bind:scrollContainer />
+          <ZenContent
+            {entity}
+            bind:editState
+            bind:scrollContainer
+            onNavigate={navigateTo}
+            {isPopout}
+          />
         </div>
       {:else if activeTab === "map"}
         <div
