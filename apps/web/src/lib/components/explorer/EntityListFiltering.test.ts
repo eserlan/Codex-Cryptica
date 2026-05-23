@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EntityList from "./EntityList.svelte";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
@@ -45,6 +46,14 @@ vi.mock("$lib/stores/vault.svelte", () => ({
         status: "active",
         content: "",
       },
+      {
+        id: "e5",
+        title: "Dallan",
+        type: "npc",
+        labels: ["past", "historical"],
+        status: "active",
+        content: "",
+      },
     ],
   },
 }));
@@ -77,6 +86,8 @@ describe("EntityList Filtering", () => {
     // Find and click "MerchantLabel" label pill
     const merchantPill = screen.getByText("MerchantLabel");
     await fireEvent.click(merchantPill);
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Should only show Merchant
     expect(screen.queryByText("City Guard")).toBeNull();
@@ -90,6 +101,8 @@ describe("EntityList Filtering", () => {
     // Click "Guard" pill
     const guardPill = screen.getAllByText("Guard")[0];
     await fireEvent.click(guardPill);
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Shows both guards
     expect(screen.getByText("City Guard")).not.toBeNull();
@@ -99,6 +112,8 @@ describe("EntityList Filtering", () => {
     // Ctrl+Click "NPC" pill
     const npcPill = screen.getAllByText("NPC")[0];
     await fireEvent.click(npcPill, { ctrlKey: true });
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Should only show "City Guard" (has both Guard and NPC)
     expect(screen.getByText("City Guard")).not.toBeNull();
@@ -130,16 +145,54 @@ describe("EntityList Filtering", () => {
     expect(screen.getByText("King Arthur")).not.toBeNull();
   });
 
+  it("surfaces entities when searching for their labels with '#' prefix", async () => {
+    render(EntityList);
+
+    const searchInput = screen.getByPlaceholderText("Search entities...");
+    await fireEvent.input(searchInput, { target: { value: "#past" } });
+
+    // Should show "Dallan" because it has the "past" label
+    expect(screen.queryByText("City Guard")).toBeNull();
+    expect(screen.getByText("Dallan")).not.toBeNull();
+  });
+
+  it("surfaces entities when searching for their labels with '@' prefix", async () => {
+    render(EntityList);
+
+    const searchInput = screen.getByPlaceholderText("Search entities...");
+    await fireEvent.input(searchInput, { target: { value: "@guard" } });
+
+    // Should show "City Guard" and "Castle Guard"
+    expect(screen.getByText("City Guard")).not.toBeNull();
+    expect(screen.getByText("Castle Guard")).not.toBeNull();
+    expect(screen.queryByText("Merchant")).toBeNull();
+  });
+
+  it("supports combined text and structured query searches", async () => {
+    render(EntityList);
+
+    const searchInput = screen.getByPlaceholderText("Search entities...");
+    await fireEvent.input(searchInput, { target: { value: "Dallan #past" } });
+
+    // Should show "Dallan"
+    expect(screen.getByText("Dallan")).not.toBeNull();
+    expect(screen.queryByText("King Arthur")).toBeNull();
+  });
+
   it("clears label filters when removal button is clicked", async () => {
     render(EntityList);
 
     // Apply filter
     await fireEvent.click(screen.getByText("MerchantLabel"));
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByText("City Guard")).toBeNull();
 
     // Find removal button (X) for the active filter pill
     const clearButton = screen.getByLabelText("Remove MerchantLabel filter");
     await fireEvent.click(clearButton);
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // All should be back
     expect(screen.getByText("City Guard")).not.toBeNull();

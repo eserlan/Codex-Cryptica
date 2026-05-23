@@ -156,6 +156,44 @@ describe("Adapters", () => {
       expect(entity!._path).toEqual(["path"]);
     });
 
+    it("should automatically add 'past' label during parse if entity has valid end_date", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: [],
+          end_date: { year: 1800 },
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toContain("past");
+    });
+
+    it("should remove 'past' label during parse if entity has no end_date", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: ["past"],
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label during parse if already present and end_date is valid", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: ["past"],
+          end_date: { year: 1800 },
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toEqual(["past"]);
+    });
+
     it("should check isNotFoundError", () => {
       const err = new Error();
       adapters.fileIOAdapter.isNotFoundError(err);

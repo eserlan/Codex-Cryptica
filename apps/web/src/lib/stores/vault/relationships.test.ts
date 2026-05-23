@@ -16,7 +16,6 @@ describe("relationships", () => {
             { target: "node-2", label: "knows" },
             { target: "node-3", label: "hates" },
           ],
-          tags: [],
           labels: [],
         } as any,
         "node-2": {
@@ -26,7 +25,6 @@ describe("relationships", () => {
           lore: "",
           type: "location",
           connections: [{ target: "node-1", label: "is-in" }],
-          tags: [],
           labels: [],
         } as any,
       };

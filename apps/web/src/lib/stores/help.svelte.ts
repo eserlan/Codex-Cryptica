@@ -19,7 +19,7 @@ interface HelpStoreState {
   dismissedHints: string[];
 }
 
-const SEARCH_FIELDS = ["title", "tags", "content"];
+const SEARCH_FIELDS = ["title", "labels", "content"];
 
 export class HelpStore {
   // Walkthrough State

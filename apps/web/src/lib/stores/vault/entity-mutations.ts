@@ -99,7 +99,7 @@ export class EntityMutationService {
       updates.content !== undefined ||
       updates.lore !== undefined ||
       updates.title !== undefined ||
-      updates.tags !== undefined
+      updates.labels !== undefined
     ) {
       this.deps.loader.markContentLoaded(id);
     }
@@ -170,7 +170,7 @@ export class EntityMutationService {
         patch.content !== undefined ||
         patch.lore !== undefined ||
         patch.title !== undefined ||
-        patch.tags !== undefined
+        patch.labels !== undefined
       ) {
         this.deps.loader.markContentLoaded(id);
       }

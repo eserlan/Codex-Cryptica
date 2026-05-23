@@ -56,10 +56,10 @@
                 >{article.title}</span
               >
               <div class="flex gap-2 mt-1">
-                {#each article.tags as tag}
+                {#each article.labels as label}
                   <span
                     class="text-xs bg-theme-primary/10 text-theme-primary px-1.5 py-0.5 rounded uppercase font-bold font-header tracking-tighter"
-                    >#{tag}</span
+                    >#{label}</span
                   >
                 {/each}
               </div>

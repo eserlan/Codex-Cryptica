@@ -230,7 +230,7 @@ export class VaultLifecycleManager {
             type: entity.type,
             path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
             keywords: [
-              ...(entity.tags || []),
+              ...(entity.labels || []),
               entity.lore || "",
               ...Object.values(entity.metadata || {}).flat(),
             ].join(" "),

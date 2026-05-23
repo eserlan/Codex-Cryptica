@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.25.1",
+    "title": "The Autotagging & Search Autocomplete Update",
+    "date": "2026-05-24",
+    "type": "patch",
+    "highlights": [
+      "Historical Entity Autotagging: Entities with an end date are now automatically tagged with \"past\" in-memory on vault load, and dynamically updated during creation/edits.",
+      "Optimized Search Autocomplete: Selecting autocomplete suggestions now seamlessly clears completed tags from the search input prompt and transitions them into active sidebar filters.",
+      "Intelligent Re-triggering: Autocomplete dropdown triggers are fully optimized to correctly re-evaluate and reappear as you continue typing new labels."
+    ]
+  },
+  {
     "version": "0.25.0",
     "title": "The Art Direction Update",
     "date": "2026-05-23",

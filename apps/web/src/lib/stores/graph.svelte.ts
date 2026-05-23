@@ -53,7 +53,7 @@ export class GraphStore {
         sampleEntity: allEntities[0]
           ? {
               id: allEntities[0].id,
-              tags: allEntities[0].tags,
+              labels: allEntities[0].labels,
               visible: isEntityVisible(allEntities[0], settings),
             }
           : "none",

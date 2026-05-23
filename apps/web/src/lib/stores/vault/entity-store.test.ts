@@ -79,7 +79,6 @@ describe("EntityStore", () => {
           type: "character",
           status: "active",
           labels: [],
-          tags: [],
           aliases: [],
           connections: [],
         } as LocalEntity,
@@ -91,7 +90,6 @@ describe("EntityStore", () => {
           type: "location",
           status: "active",
           labels: ["important"],
-          tags: [],
           aliases: [],
           connections: [],
         } as LocalEntity,
@@ -191,7 +189,7 @@ describe("EntityStore", () => {
 
   it("handles batch updates", async () => {
     const success = await store.batchUpdate({
-      hero: { tags: ["new-tag"] },
+      hero: { labels: ["new-tag"] },
     });
 
     expect(success).toBe(true);
@@ -480,7 +478,7 @@ describe("EntityStore", () => {
     it("should skip entities not in the current set", async () => {
       const result = await store.batchUpdate({
         nonexistent: { title: "X" },
-        hero: { tags: ["tag"] },
+        hero: { labels: ["tag"] },
       });
       expect(result).toBe(true);
     });
@@ -502,11 +500,11 @@ describe("EntityStore", () => {
       });
 
       await storeWithCallback.batchUpdate({
-        hero: { tags: ["new"] },
+        hero: { labels: ["new"] },
       });
 
       expect(onBatchUpdate).toHaveBeenCalledWith({
-        hero: { tags: ["new"] },
+        hero: { labels: ["new"] },
       });
     });
 

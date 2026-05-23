@@ -51,7 +51,7 @@ export const fileIOAdapter: IFileIOAdapter = {
     const parsed = parseMarkdown(text);
     const id = parsed.metadata.id || deriveIdFromPath(path);
     const connections = parsed.metadata.connections || [];
-    return {
+    const entity = {
       ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
@@ -65,6 +65,17 @@ export const fileIOAdapter: IFileIOAdapter = {
       lore: parsed.metadata.lore || "",
       _path: path,
     };
+
+    const hasEndDate =
+      entity.end_date && typeof entity.end_date.year === "number";
+    const hasPastLabel = entity.labels.includes("past");
+    if (hasEndDate && !hasPastLabel) {
+      entity.labels = [...entity.labels, "past"];
+    } else if (!hasEndDate && hasPastLabel) {
+      entity.labels = entity.labels.filter((l) => l !== "past");
+    }
+
+    return entity;
   },
   isNotFoundError: (err) => isNotFoundError(err),
 };
