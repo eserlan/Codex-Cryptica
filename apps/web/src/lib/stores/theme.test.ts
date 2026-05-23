@@ -145,10 +145,42 @@ describe("ThemeStore", () => {
       expect(store.activeTheme.id).toBe("workspace");
     });
 
-    it("should not affect other themes like fantasy", async () => {
+    it("should resolve light world themes to dark variants in neutral-dark", async () => {
       store.setAppAppearance("neutral-dark");
+
+      await store.setTheme("fantasy");
+      expect(store.activeTheme.id).toBe("fantasy_dark");
+
+      await store.setTheme("modern");
+      expect(store.activeTheme.id).toBe("modern_dark");
+    });
+
+    it("should resolve dark world themes to light variants in neutral-light", async () => {
+      store.setAppAppearance("neutral-light");
+
+      const darkThemes = [
+        "scifi",
+        "cyberpunk",
+        "apocalyptic",
+        "horror",
+        "fallout",
+        "starwars",
+        "startrek",
+      ];
+      for (const id of darkThemes) {
+        await store.setTheme(id);
+        expect(store.activeTheme.id).toBe(`${id}_light`);
+      }
+    });
+
+    it("should keep natively light themes as light in neutral-light, and natively dark as dark in neutral-dark", async () => {
+      store.setAppAppearance("neutral-light");
       await store.setTheme("fantasy");
       expect(store.activeTheme.id).toBe("fantasy");
+
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("scifi");
+      expect(store.activeTheme.id).toBe("scifi");
     });
   });
 });

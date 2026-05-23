@@ -1,4 +1,18 @@
-import { THEMES, DEFAULT_THEME, DEFAULT_JARGON, WORKSPACE_DARK } from "schema";
+import {
+  THEMES,
+  DEFAULT_THEME,
+  DEFAULT_JARGON,
+  WORKSPACE_DARK,
+  FANTASY_DARK,
+  MODERN_DARK,
+  SCIFI_LIGHT,
+  CYBERPUNK_LIGHT,
+  APOCALYPTIC_LIGHT,
+  HORROR_LIGHT,
+  FALLOUT_LIGHT,
+  STARWARS_LIGHT,
+  STARTREK_LIGHT,
+} from "schema";
 import type {
   StylingTemplate,
   JargonMap,
@@ -49,20 +63,47 @@ export class ThemeStore {
   private getVault: () => any;
 
   activeTheme = $derived.by(() => {
-    const id = this.previewThemeId || this.worldThemeId || DEFAULT_THEME.id;
-    if (
-      (id === "workspace" || id === "workspace_dark") &&
-      this.resolvedAppAppearanceId === "neutral-dark"
-    ) {
-      return WORKSPACE_DARK;
+    const rawId = this.previewThemeId || this.worldThemeId || DEFAULT_THEME.id;
+    const id = rawId.replace(/_(light|dark)$/, "") as WorldThemeId;
+    const isDark = this.resolvedAppAppearanceId === "neutral-dark";
+
+    if (isDark) {
+      switch (id) {
+        case "workspace":
+          return WORKSPACE_DARK;
+        case "fantasy":
+          return FANTASY_DARK;
+        case "modern":
+          return MODERN_DARK;
+        default:
+          return (THEMES as any)[id] || DEFAULT_THEME;
+      }
+    } else {
+      switch (id) {
+        case "workspace":
+          return THEMES.workspace;
+        case "fantasy":
+          return THEMES.fantasy;
+        case "modern":
+          return THEMES.modern;
+        case "scifi":
+          return SCIFI_LIGHT;
+        case "cyberpunk":
+          return CYBERPUNK_LIGHT;
+        case "apocalyptic":
+          return APOCALYPTIC_LIGHT;
+        case "horror":
+          return HORROR_LIGHT;
+        case "fallout":
+          return FALLOUT_LIGHT;
+        case "starwars":
+          return STARWARS_LIGHT;
+        case "startrek":
+          return STARTREK_LIGHT;
+        default:
+          return DEFAULT_THEME;
+      }
     }
-    if (
-      (id === "workspace" || id === "workspace_dark") &&
-      this.resolvedAppAppearanceId === "neutral-light"
-    ) {
-      return THEMES.workspace;
-    }
-    return (THEMES as any)[id] || DEFAULT_THEME;
   });
 
   resolvedAppAppearanceId = $derived<ResolvedAppAppearanceId>(

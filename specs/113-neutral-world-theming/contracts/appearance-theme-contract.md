@@ -95,10 +95,14 @@ Behavior:
 - It does not change app appearance.
 - Preview is temporary until selection is saved.
 - Worlds without a saved world theme use `workspace`; `modern` remains a selectable existing theme and is not reused as the default.
+- Every world theme will provide both a light and a dark variant, resolving dynamically based on the active App Appearance.
+  - Natively Light themes (`workspace`, `fantasy`, `modern`) resolve to dark variants (`WORKSPACE_DARK`, `FANTASY_DARK`, `MODERN_DARK`) in dark mode.
+  - Natively Dark themes (`scifi`, `cyberpunk`, `apocalyptic`, `horror`, `fallout`, `starwars`, `startrek`) resolve to light variants (`SCIFI_LIGHT`, `CYBERPUNK_LIGHT`, `APOCALYPTIC_LIGHT`, `HORROR_LIGHT`, `FALLOUT_LIGHT`, `STARWARS_LIGHT`, `STARTREK_LIGHT`) in light mode.
+- Only the base theme keys are selectable in the settings UI. The dynamic light/dark resolution is handled automatically and transparently.
 
 ## Styling Contract
 
-- App chrome surfaces use app tokens for background, surface, border, text, muted text, accent, radius, and fonts. Any subcomponents or controls nested inside app chrome surfaces (such as `VaultControls`, status labels, database indicators, and action buttons in the App Header) MUST use these app chrome tokens (`chrome-*`) rather than world theme tokens (`theme-*`) to maintain visual stability.
+- App chrome surfaces use app tokens for background, surface, border, text, muted text, accent, radius, and fonts. Any subcomponents or controls nested inside app chrome surfaces (such as `VaultControls`, status labels, database indicators, and action buttons in the App Header) MUST use these app chrome tokens (`chrome-*`) rather than world theme tokens (`theme-*`) to maintain visual stability. All global chrome elements (header, footer, activity bar, settings, search modals, etc.) MUST exclusively use the neutral chrome colors and fonts (sans-serif), completely isolated from any active world theme's custom color and font overrides.
 - World surfaces use world tokens for mood, graph, world accents, optional texture, and optional world typography.
 - First-pass surfaces must include header, activity bar, footer, settings, search, front page, graph, and entity detail.
 - Authored body content must prefer long-form readable typography over decorative theme fonts.

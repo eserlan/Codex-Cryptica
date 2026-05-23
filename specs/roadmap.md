@@ -20,7 +20,7 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ### v0.24.0 — The Dual-Layer Theming & Chrome Stabilization Update (2026-05-23)
 
-- **Highlights**: Separate global app appearance layers (neutral light, neutral dark, and system matching device preferences) and vault-specific world theme genre layers. Fully neutralized, stable, and texture-free app chrome (headers, sidebar panels, settings screens, and status indicators) that remains consistent when changing or previewing campaign genres.
+- **Highlights**: Separate global app appearance layers (neutral light, neutral dark, and system matching device preferences) and vault-specific world theme genre layers. Fully neutralized, stable, and texture-free app chrome (headers, sidebar panels, settings screens, and status indicators) that remains consistent when changing or previewing campaign genres, with strict color/font isolation for all chrome controls. Support for dynamic light and dark counterpart resolution for all 10 selectable world themes.
 - **Associated Specifications**:
   - [113-neutral-world-theming](./113-neutral-world-theming/plan.md) (Dual-layer app appearance and world themes with stable chrome controls)
 

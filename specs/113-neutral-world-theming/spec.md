@@ -147,7 +147,7 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - Existing `codex-cryptica-active-theme` values from the old one-layer model are compatibility input for world theme selection, not app appearance.
 - New worlds with no saved theme data start from the dedicated neutral `workspace` world theme rather than fantasy or `modern`.
 - A later onboarding improvement may ask for world genre during vault creation, but that is not required for this first spec.
-- A later theme expansion may add light and dark variants for every genre theme, but this spec only requires neutral light, neutral dark, and system app appearances.
+- Every world theme MUST provide both a light and a dark variant, resolving dynamically based on the active App Appearance.
 
 ## Requirements _(mandatory)_
 
@@ -161,14 +161,16 @@ As a user who intentionally chooses the fantasy theme for a fantasy world, I wan
 - **FR-004**: The system MUST separate app appearance from world theme so changing one does not implicitly change the other.
 - **FR-005**: App chrome MUST use the selected app appearance rather than the selected world theme.
 - **FR-005a**: Mixed surface shells, including sidebars, modals, and entity detail panels, MUST use app appearance styling while their world content regions MAY use world theme styling.
+- **FR-005b**: All global chrome elements (header, footer, activity bar, settings, search modals, etc.) MUST exclusively use the neutral chrome colors and fonts, completely isolated from any active world theme's custom color and font overrides.
 - **FR-006**: World surfaces SHOULD use the selected world theme for genre expression, including mood, accent, texture, graph style, and world vocabulary where applicable.
+- **FR-006a**: Every world theme MUST resolve to a corresponding light or dark variant matching the active resolved App Appearance (`neutral-light` or `neutral-dark`).
 - **FR-007**: Texture MUST NOT be applied as an app-wide document background or as a default treatment for global chrome.
 - **FR-008**: Texture MAY be used on world/canvas surfaces where it supports the selected world theme without harming readability.
 - **FR-009**: Users MUST be able to identify and select the app appearance independently from the world theme.
 - **FR-010**: Users MUST be able to identify and select the world theme independently from app appearance.
 - **FR-011**: The selected world theme MUST be stored per world so different worlds can retain different themes.
 - **FR-012**: Neutral app appearances MUST use clear typography hierarchy for headings, body text, controls, and metadata.
-- **FR-013**: App chrome typography MUST remain neutral, readable, and consistent across world themes.
+- **FR-013**: App chrome typography MUST remain neutral, readable, and consistent across world themes, using the system sans-serif font family.
 - **FR-014**: World theme typography MAY affect world/canvas headings, hero treatments, graph labels, and in-world accents.
 - **FR-015**: Authored content body typography MUST remain readable for long-form use and MUST NOT be forced into decorative display styling.
 - **FR-016**: Theme typography MUST distinguish headings, body copy, metadata, and controls clearly enough for users to scan pages quickly.

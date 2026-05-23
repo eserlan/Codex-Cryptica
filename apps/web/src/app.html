@@ -31,26 +31,45 @@
 			document.documentElement.dataset.appAppearance = resolvedAppearance;
 			document.documentElement.dataset.appAppearanceChoice = appearance;
 
-			const storedTheme = localStorage.getItem("codex-cryptica-active-theme") || "workspace";
+			const storedTheme = (localStorage.getItem("codex-cryptica-active-theme") || "workspace").replace(/_(light|dark)$/, "");
+			const isDark = resolvedAppearance === "neutral-dark";
 			let theme = storedTheme;
-			if (theme === "workspace" && resolvedAppearance === "neutral-dark") {
-				theme = "workspace_dark";
-			} else if (theme === "workspace_dark" && resolvedAppearance === "neutral-light") {
-				theme = "workspace";
+
+			if (isDark) {
+				if (storedTheme === "workspace") theme = "workspace_dark";
+				else if (storedTheme === "fantasy") theme = "fantasy_dark";
+				else if (storedTheme === "modern") theme = "modern_dark";
+			} else {
+				if (storedTheme === "scifi") theme = "scifi_light";
+				else if (storedTheme === "cyberpunk") theme = "cyberpunk_light";
+				else if (storedTheme === "apocalyptic") theme = "apocalyptic_light";
+				else if (storedTheme === "horror") theme = "horror_light";
+				else if (storedTheme === "fallout") theme = "fallout_light";
+				else if (storedTheme === "starwars") theme = "starwars_light";
+				else if (storedTheme === "startrek") theme = "startrek_light";
 			}
 
 			const themes = {
 				workspace: { bg: "#fafaf9", surface: "#ffffff", text: "#1c1917", primary: "#57534e", secondary: "#78716c", border: "rgba(231, 229, 228, 1)" },
 				workspace_dark: { bg: "#1c1917", surface: "#292524", text: "#f5f5f4", primary: "#d6d3d1", secondary: "#a8a29e", border: "rgba(68, 64, 60, 1)" },
-				scifi: { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80", secondary: "#86efac", border: "rgba(22, 163, 74, 0.5)" },
 				fantasy: { bg: "#fdf6e3", surface: "#f0ddb8", text: "#2a2018", primary: "#5e3018", secondary: "#423830", border: "rgba(94, 48, 24, 0.52)", texture: "parchment.svg" },
+				fantasy_dark: { bg: "#1a1612", surface: "#2b221a", text: "#f5ebd6", primary: "#d2b48c", secondary: "#a89f91", border: "rgba(168, 120, 80, 0.4)", texture: "parchment.svg" },
 				modern: { bg: "#f8fafc", surface: "#ffffff", text: "#0f172a", primary: "#2563eb", secondary: "#1d4ed8", border: "rgba(203, 213, 225, 1)" },
+				modern_dark: { bg: "#0f172a", surface: "#1e293b", text: "#f8fafc", primary: "#3b82f6", secondary: "#94a3b8", border: "rgba(51, 65, 85, 1)" },
+				scifi: { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80", secondary: "#86efac", border: "rgba(22, 163, 74, 0.5)" },
+				scifi_light: { bg: "#f0fdf4", surface: "#ffffff", text: "#14532d", primary: "#16a34a", secondary: "#15803d", border: "rgba(74, 222, 128, 0.5)" },
 				cyberpunk: { bg: "#020617", surface: "#0f172a", text: "#22d3ee", primary: "#f472b6", secondary: "#f9a8d4", border: "rgba(244, 114, 182, 0.6)" },
+				cyberpunk_light: { bg: "#fdf2f8", surface: "#ffffff", text: "#0891b2", primary: "#db2777", secondary: "#be185d", border: "rgba(244, 114, 182, 0.5)" },
 				apocalyptic: { bg: "#1c1917", surface: "#292524", text: "#ececec", primary: "#f97316", secondary: "#fdba74", border: "rgba(120, 113, 108, 0.5)", texture: "rust.svg" },
+				apocalyptic_light: { bg: "#fafaf9", surface: "#f5f5f4", text: "#44403c", primary: "#ea580c", secondary: "#78716c", border: "rgba(168, 162, 158, 0.5)", texture: "rust.svg" },
 				horror: { bg: "#050505", surface: "#121212", text: "#f3f4f6", primary: "#dc2626", secondary: "#f87171", border: "rgba(220, 38, 38, 0.3)", texture: "blood.svg" },
+				horror_light: { bg: "#fef2f2", surface: "#ffffff", text: "#450a0a", primary: "#b91c1c", secondary: "#7f1d1d", border: "rgba(239, 68, 68, 0.4)", texture: "blood.svg" },
 				fallout: { bg: "#0a0a08", surface: "#111109", text: "#a8ff78", primary: "#39ff14", secondary: "#86efac", border: "rgba(57, 255, 20, 0.4)", texture: "crt.svg" },
+				fallout_light: { bg: "#f0fdf4", surface: "#ffffff", text: "#14532d", primary: "#16a34a", secondary: "#15803d", border: "rgba(34, 197, 94, 0.4)", texture: "crt.svg" },
 				starwars: { bg: "#000000", surface: "#0F172A", text: "#E2E8F0", primary: "#FFE81F", secondary: "#cbd5e1", border: "rgba(74, 144, 226, 0.5)" },
-				startrek: { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#fbcfe8", border: "rgba(255, 153, 0, 0.4)" }
+				starwars_light: { bg: "#fafaf9", surface: "#ffffff", text: "#1c1917", primary: "#b45309", secondary: "#4b5563", border: "rgba(59, 130, 246, 0.5)" },
+				startrek: { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#fbcfe8", border: "rgba(255, 153, 0, 0.4)" },
+				startrek_light: { bg: "#fffbeb", surface: "#ffffff", text: "#1c1917", primary: "#d97706", secondary: "#b45309", border: "rgba(217, 119, 6, 0.4)" }
 			};
 
 			if (theme && themes[theme]) {

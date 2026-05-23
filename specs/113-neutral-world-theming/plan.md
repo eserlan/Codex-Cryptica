@@ -27,7 +27,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 1. **Library-First**: Shared theme, app-appearance, graph, and jargon contracts stay in workspace packages where reusable. Web UI remains a consumer of shared definitions. [PASS]
 2. **TDD**: Store migration, schema defaults, graph styling, and UI behavior require automated coverage before implementation is complete. [PASS]
-3. **Simplicity & YAGNI**: The plan extends the existing theme store/schema flow instead of adding a new styling framework or dependency. Full genre light/dark variants and onboarding genre selection are deferred. [PASS]
+3. **Simplicity & YAGNI**: The plan extends the existing theme store/schema flow instead of adding a new styling framework or dependency. Onboarding genre selection is deferred. [PASS]
 4. **AI-First Extraction**: Not applicable; no AI extraction path changes. [PASS]
 5. **Privacy & Client-Side Processing**: All preferences remain browser/vault local. No server persistence is introduced. [PASS]
 6. **Clean Implementation**: Implementation must follow Svelte 5 runes, Tailwind 4 tokens, repo style guide, Iconify icon classes instead of `lucide-svelte` components, unused-variable hygiene, and explicit tests. [PASS]
@@ -114,7 +114,7 @@ Research output is captured in [research.md](./research.md). Key decisions:
 - Add app appearance as a separate preference scope with `light`, `dark`, and `system` resolution.
 - Treat existing saved theme ids as per-world world themes for migration and backwards compatibility; use a new `workspace` world theme for missing world theme values.
 - Scope genre texture and typography to world/canvas surfaces rather than document body or chrome.
-- Keep first implementation to neutral app appearances and fantasy refinement; defer all-genre light/dark variants and onboarding genre picker.
+- Support light and dark variants for every world theme; defer only the onboarding genre picker.
 
 ## Phase 1: Design And Contracts
 

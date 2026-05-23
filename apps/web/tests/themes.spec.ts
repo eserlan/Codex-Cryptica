@@ -78,6 +78,9 @@ test.describe("Visual Styling Templates", () => {
     // 2. Go to Aesthetics tab
     await page.getByRole("tab", { name: "Theme" }).click();
 
+    // Force Light appearance
+    await page.getByRole("button", { name: "Light" }).click();
+
     // 3. Select Fantasy theme
     await page.getByRole("button", { name: "Ancient Parchment" }).click();
 
@@ -133,7 +136,7 @@ test.describe("Visual Styling Templates", () => {
     expect(fantasyVars.panelFill).toContain("#f0ddb8");
     expect(fantasyVars.selectedBg).toContain("#c8973a");
 
-    // 9. Verify unified warm activity-bar icon colors
+    // 9. Verify unified activity-bar icon colors (neutral chrome-muted)
     const mapButton = page.getByTestId("activity-bar-map");
     const explorerButton = page.getByTestId("activity-bar-explorer");
     const [mapColor, explorerColor] = await Promise.all([
@@ -141,7 +144,7 @@ test.describe("Visual Styling Templates", () => {
       explorerButton.evaluate((el) => getComputedStyle(el).color),
     ]);
     expect(mapColor).toBe(explorerColor);
-    expect(explorerColor).toBe("rgb(107, 94, 78)");
+    expect(explorerColor).toBe("rgb(120, 113, 108)");
 
     // 10. Verify selected fantasy states use gold
     await explorerButton.click();
@@ -173,7 +176,7 @@ test.describe("Visual Styling Templates", () => {
     await page.reload();
     // In landing page mode, vault might not be idle if it doesn't boot.
     // Let's just wait for the landing page to be visible.
-    const landingPage = page.locator(".absolute.inset-0.z-30");
+    const landingPage = page.locator(".marketing-layer");
     await expect(landingPage).toBeVisible();
 
     // Check background color. It should NOT be black/60 (rgba(0,0,0,0.6))
@@ -207,6 +210,9 @@ test.describe("Visual Styling Templates", () => {
 
     // 2. Go to Aesthetics tab
     await page.getByRole("tab", { name: "Theme" }).click();
+
+    // Force Dark appearance
+    await page.getByRole("button", { name: "Dark" }).click();
 
     // 3. Select Horror theme
     await page.getByRole("button", { name: "Blood & Noir" }).click();
@@ -244,6 +250,10 @@ test.describe("Visual Styling Templates", () => {
     // 1. Open Settings and select Cyberpunk (Neon Night)
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: "Theme" }).click();
+
+    // Force Dark appearance
+    await page.getByRole("button", { name: "Dark" }).click();
+
     await page.getByRole("button", { name: "Neon Night" }).click();
 
     // Wait for the accent color to update to cyberpunk yellow (#facc15)
@@ -267,6 +277,10 @@ test.describe("Visual Styling Templates", () => {
   test("Theme selection persists across reloads", async ({ page }) => {
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: "Theme" }).click();
+
+    // Force Dark appearance
+    await page.getByRole("button", { name: "Dark" }).click();
+
     await page.getByRole("button", { name: "Neon Night" }).click();
 
     // Verify cyberpunk color
@@ -315,5 +329,66 @@ test.describe("Visual Styling Templates", () => {
     const normalizedThemeFont = themeHeaderFont.replace(/['"]/g, "");
 
     expect(normalizedH1Font).toContain(normalizedThemeFont);
+  });
+
+  test("Dynamic World Theme resolution when toggling App Appearance", async ({
+    page,
+  }) => {
+    // 1. Open Settings
+    await page.getByTestId("settings-button").click();
+    await page.getByRole("tab", { name: "Theme" }).click();
+
+    // 2. Select Fantasy theme (Ancient Parchment)
+    await page.getByRole("button", { name: "Ancient Parchment" }).click();
+
+    // 3. Select App Appearance: Light
+    await page.getByRole("button", { name: "Light" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "fantasy");
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-app-appearance",
+      "neutral-light",
+    );
+    await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
+      "background-color",
+      "rgb(253, 246, 227)",
+    );
+
+    // 4. Select App Appearance: Dark
+    await page.getByRole("button", { name: "Dark" }).click();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-theme",
+      "fantasy_dark",
+    );
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-app-appearance",
+      "neutral-dark",
+    );
+    await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
+      "background-color",
+      "rgb(26, 22, 18)",
+    );
+
+    // 5. Select Sci-Fi Terminal theme
+    await page.getByRole("button", { name: "Sci-Fi Terminal" }).click();
+    // App appearance is still Dark. Sci-Fi is natively dark, so it should resolve to "scifi"
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "scifi");
+    await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
+      "background-color",
+      "rgb(5, 5, 5)",
+    );
+
+    // 6. Select App Appearance: Light
+    await page.getByRole("button", { name: "Light" }).click();
+    // Sci-Fi resolves to "scifi_light" in light mode
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-theme",
+      "scifi_light",
+    );
+    await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
+      "background-color",
+      "rgb(240, 253, 244)",
+    );
+
+    await page.getByLabel("Close Settings").click();
   });
 });
