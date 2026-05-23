@@ -1,3 +1,5 @@
+import { resolveArtDirection } from "schema";
+
 /**
  * Build an AI prompt for generating a world cover image.
  */
@@ -7,11 +9,17 @@ export function createWorldCoverPrompt(
   themeDescription: string,
   briefing: string,
   worldContext: string,
+  themeId?: string,
 ): string {
   const safeBriefing = briefing.trim() || "An unexplored setting.";
   const safeName = worldName.trim() || "this world";
   const safeWorldContext =
     worldContext.trim() || "No additional context was retrieved.";
+  const artDirection = resolveArtDirection({
+    subject: safeName,
+    surface: "cover",
+    themeId,
+  });
 
   return `Create atmospheric portrait cover art for "${safeName}".
 
@@ -25,6 +33,7 @@ World cues:
 ${safeWorldContext}
 
 Art direction:
+- Default Art Style: ${artDirection.prompt}
 - Portrait composition, vertical framing, approximately 2:3 aspect ratio.
 - Focus on the tone, mood, and symbolic atmosphere of the setting.
 - Depict the world itself more than a single action scene.

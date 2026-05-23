@@ -335,6 +335,12 @@ describe("FrontPage", () => {
       ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("Default Art Style: Moonfall"),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("atmospheric world cover art"),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
         "Briefing: A broken moon hangs over the **capital**.",
       ),
