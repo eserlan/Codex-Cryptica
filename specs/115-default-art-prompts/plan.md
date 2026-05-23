@@ -75,9 +75,11 @@ apps/
     │   │   │       ├── image-generation.service.ts
     │   │   │       └── image-generation.service.test.ts
     │   │   ├── stores/
+    │   │   │   ├── oracle.svelte.ts
     │   │   │   └── oracle/
     │   │   │       ├── action-manager.svelte.ts
-    │   │   │       ├── executor.svelte.ts
+    │   │   │       ├── types.ts
+    │   │   │       ├── context-manager.svelte.ts
     │   │   │       └── tests/
     │   │   │           └── action-manager.test.ts
     │   │   ├── config/
