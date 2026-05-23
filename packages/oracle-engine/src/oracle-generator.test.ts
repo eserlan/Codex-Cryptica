@@ -97,6 +97,51 @@ describe("OracleGenerator", () => {
       expect(mockContext.imageGeneration.generateImage).toHaveBeenCalled();
     });
 
+    it("should apply category and theme defaults to entity visualization prompts", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Almos",
+        type: "character",
+        labels: [],
+      };
+      mockContext.uiStore.activeThemeId = "fantasy";
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("full character concept art"),
+        "ctx",
+        "model",
+        false,
+      );
+    });
+
+    it("should prefer entity art direction from normal content", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Almos",
+        type: "character",
+        labels: [],
+        content:
+          "Chronicle text\n\n## Art Direction\nink wash portrait with a silver mask\n\n## Notes\nOther text",
+      };
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("Almos. ink wash portrait"),
+        "ctx",
+        "model",
+        false,
+      );
+    });
+
     it("should prioritize entity labels in entity visualization prompts", async () => {
       mockContext.vault.entities.e1.labels = ["necromancy", "regal", "undead"];
 
@@ -129,6 +174,67 @@ describe("OracleGenerator", () => {
         mockContext,
       );
       expect(result).toBeInstanceOf(Blob);
+    });
+
+    it("should apply chat art direction for unlinked message visualization", async () => {
+      await generator.generateMessageVisualization(
+        {
+          content:
+            "Draw the moon gate\n\n## Art Direction\nflat ink and gold leaf icon",
+        } as any,
+        mockContext,
+      );
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("Draw the moon gate. flat ink and gold leaf icon"),
+        "ctx",
+        "model",
+        false,
+      );
+    });
+
+    it("should use /draw category hints when no entity is linked", async () => {
+      await generator.generateMessageVisualization(
+        { content: "/draw character Almos" } as any,
+        mockContext,
+      );
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("Almos, full character concept art"),
+        "ctx",
+        "model",
+        false,
+      );
+    });
+
+    it("should let linked entity metadata win over /draw category hints", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Almos",
+        type: "location",
+        labels: [],
+      };
+
+      await generator.generateMessageVisualization(
+        { content: "/draw character Almos", entityId: "e1" } as any,
+        mockContext,
+      );
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("Almos, establishing environment art"),
+        "ctx",
+        "model",
+        false,
+      );
     });
 
     it("should prioritize linked entity labels in message visualization prompts", async () => {
