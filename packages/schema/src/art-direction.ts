@@ -49,7 +49,7 @@ export const GLOBAL_ART_DIRECTION_DEFAULT: ArtDirectionTemplate = {
   label: "Codex Cryptica Default",
   source: "global-default",
   template:
-    "{subject}, a clear fantasy tabletop reference illustration with readable forms, grounded materials, cinematic lighting, and enough concrete detail to support worldbuilding.",
+    "{subject}, illustrated worldbuilding reference, grounded materials, readable forms, natural light, and enough concrete detail to support worldbuilding.",
 };
 
 export const CATEGORY_ART_DIRECTION_DEFAULTS: Record<
@@ -110,97 +110,213 @@ export const CATEGORY_ART_DIRECTION_DEFAULTS: Record<
     label: "World Cover Default",
     source: "category-default",
     template:
-      "{subject}, atmospheric world cover art with a strong focal point, genre-defining setting details, cinematic depth, and room for title treatment.",
+      "{subject}, atmospheric world cover art with a strong focal point, genre-defining setting details, layered depth, and room for title treatment.",
   },
 };
 
-export const THEME_ART_DIRECTION_DEFAULTS: Record<string, ArtDirectionTemplate> =
-  {
-    fantasy: {
-      id: "theme.fantasy",
-      label: "Fantasy Default",
-      source: "theme-default",
-      template:
-        "{subject}, painterly high-fantasy art with ancient textures, candlelit warmth, mythic atmosphere, handcrafted materials, and subtle magic.",
-    },
-    scifi: {
-      id: "theme.scifi",
-      label: "Sci-Fi Default",
-      source: "theme-default",
-      template:
-        "{subject}, clean science-fiction concept art with advanced interfaces, engineered materials, controlled lighting, and frontier scale.",
-    },
-    cyberpunk: {
-      id: "theme.cyberpunk",
-      label: "Cyberpunk Default",
-      source: "theme-default",
-      template:
-        "{subject}, neon urban concept art with wet streets, dense signage, layered technology, hard shadows, and high-contrast color accents.",
-    },
-    modern: {
-      id: "theme.modern",
-      label: "Modern Default",
-      source: "theme-default",
-      template:
-        "{subject}, grounded modern cinematic illustration with natural materials, believable lighting, documentary detail, and restrained color.",
-    },
-    post_apocalyptic: {
-      id: "theme.post_apocalyptic",
-      label: "Post-Apocalyptic Default",
-      source: "theme-default",
-      template:
-        "{subject}, weathered post-apocalyptic concept art with scavenged materials, harsh daylight, survival details, and environmental decay.",
-    },
-    "post-apocalyptic": {
-      id: "theme.post-apocalyptic",
-      label: "Post-Apocalyptic Default",
-      source: "theme-default",
-      template:
-        "{subject}, weathered post-apocalyptic concept art with scavenged materials, harsh daylight, survival details, and environmental decay.",
-    },
-    gothic_horror: {
-      id: "theme.gothic_horror",
-      label: "Gothic Horror Default",
-      source: "theme-default",
-      template:
-        "{subject}, gothic horror illustration with oppressive architecture, dim candlelight, heavy atmosphere, ornate decay, and controlled dread.",
-    },
-    "gothic-horror": {
-      id: "theme.gothic-horror",
-      label: "Gothic Horror Default",
-      source: "theme-default",
-      template:
-        "{subject}, gothic horror illustration with oppressive architecture, dim candlelight, heavy atmosphere, ornate decay, and controlled dread.",
-    },
-    steampunk: {
-      id: "theme.steampunk",
-      label: "Steampunk Default",
-      source: "theme-default",
-      template:
-        "{subject}, brass-and-iron adventure illustration with visible mechanisms, steam, leather, polished gauges, and warm industrial lighting.",
-    },
-    mythic: {
-      id: "theme.mythic",
-      label: "Mythic Default",
-      source: "theme-default",
-      template:
-        "{subject}, mythic storybook illustration with monumental scale, symbolic composition, luminous atmosphere, and ancient ceremonial detail.",
-    },
-    pulp_adventure: {
-      id: "theme.pulp_adventure",
-      label: "Pulp Adventure Default",
-      source: "theme-default",
-      template:
-        "{subject}, bold pulp-adventure illustration with dynamic composition, practical danger, saturated accents, and crisp readable action.",
-    },
-    "pulp-adventure": {
-      id: "theme.pulp-adventure",
-      label: "Pulp Adventure Default",
-      source: "theme-default",
-      template:
-        "{subject}, bold pulp-adventure illustration with dynamic composition, practical danger, saturated accents, and crisp readable action.",
-    },
-  };
+const fantasy: ArtDirectionTemplate = {
+  id: "theme.fantasy",
+  label: "Fantasy Default",
+  source: "theme-default",
+  template:
+    "{subject}. Oil painting style, painterly brushwork, handcrafted materials (worn leather, hammered iron, stained wood, candle-soot stone), warm earth palette of ochre, umber, and tarnished gold, occasional cool shadow, subtle magical detail rather than overt VFX, lighting that suits the scene.",
+};
+
+const scifi: ArtDirectionTemplate = {
+  id: "theme.scifi",
+  label: "Sci-Fi Default",
+  source: "theme-default",
+  template:
+    "{subject}. Digital concept art style, matte painting, engineered materials (brushed chrome, carbon fiber, matte polymer), clean slate-grey and cool white palette with cyan accents, even practical or soft ambient lighting, frontier scale.",
+};
+
+const cyberpunk: ArtDirectionTemplate = {
+  id: "theme.cyberpunk",
+  label: "Cyberpunk Default",
+  source: "theme-default",
+  template:
+    "{subject}. Digital concept art style, wet streets, dense signage, layered technology, hard shadows, high-contrast neon palette with hot pink and electric blue accents.",
+};
+
+const modern: ArtDirectionTemplate = {
+  id: "theme.modern",
+  label: "Modern Default",
+  source: "theme-default",
+  template:
+    "{subject}. Photographic, 35mm film grain, available light, muted contemporary palette of asphalt grey, denim, and warm skin tones, restrained color grading, documentary framing, no fantasy ornamentation.",
+};
+
+const apocalyptic: ArtDirectionTemplate = {
+  id: "theme.apocalyptic",
+  label: "Post-Apocalyptic Default",
+  source: "theme-default",
+  template:
+    "{subject}. Desaturated digital illustration, weathered and scavenged materials, harsh daylight with long shadows, gritty palette of rust, bone, dried blood, and dust.",
+};
+
+const horror: ArtDirectionTemplate = {
+  id: "theme.horror",
+  label: "Horror Default",
+  source: "theme-default",
+  template:
+    "{subject}. Tenebrist oil painting or desaturated photograph, chiaroscuro lighting from a single practical source where the scene allows, palette of bone, ash, dried blood, and bruise purple, ornate decay and texture detail, controlled dread rather than gore.",
+};
+
+const steampunk: ArtDirectionTemplate = {
+  id: "theme.steampunk",
+  label: "Steampunk Default",
+  source: "theme-default",
+  template:
+    "{subject}. Gouache painting style, brass-and-iron visible mechanisms, steam, leather, polished gauges, warm amber and sepia palette, dramatic industrial lighting.",
+};
+
+const mythic: ArtDirectionTemplate = {
+  id: "theme.mythic",
+  label: "Mythic Default",
+  source: "theme-default",
+  template:
+    "{subject}. Tempera illustration style, monumental scale, symbolic composition, luminous ambient glow, palette of cerulean, gold leaf, and ivory, ancient ceremonial detail.",
+};
+
+const pulp_adventure: ArtDirectionTemplate = {
+  id: "theme.pulp_adventure",
+  label: "Pulp Adventure Default",
+  source: "theme-default",
+  template:
+    "{subject}. Screen print style, bold ink lines, dynamic composition, practical danger, saturated palette of primary reds and yellows with high-contrast shadows, crisp readable action.",
+};
+
+const fallout: ArtDirectionTemplate = {
+  id: "theme.fallout",
+  label: "Fallout Default",
+  source: "theme-default",
+  template:
+    "{subject}. 1950s Americana illustration style crossed with post-war ruin, palette of vault blue, rust, bone, and dust, atomic-age industrial design with retro-futurist optimism decayed by time.",
+};
+
+const starwars: ArtDirectionTemplate = {
+  id: "theme.starwars",
+  label: "Star Wars Default",
+  source: "theme-default",
+  template:
+    "{subject}. Ralph McQuarrie-era concept painting style, lived-in tactile technology with visible wear, dusty desert ochre or cold imperial monochrome depending on the scene, dramatic rim lighting, practical-effects sensibility.",
+};
+
+const startrek: ArtDirectionTemplate = {
+  id: "theme.startrek",
+  label: "Star Trek Default",
+  source: "theme-default",
+  template:
+    "{subject}. Clean 1990s sci-fi production illustration style, smooth surfaces and primary-coded technology (red, blue, gold), even practical lighting, optimistic palette, no grime, engineered rather than salvaged.",
+};
+
+export const THEME_ART_DIRECTION_DEFAULTS: Record<
+  string,
+  ArtDirectionTemplate
+> = {
+  fantasy: {
+    id: "theme.fantasy",
+    label: "Fantasy Default",
+    source: "theme-default",
+    template: fantasy.template,
+  },
+  scifi: {
+    id: "theme.scifi",
+    label: "Sci-Fi Default",
+    source: "theme-default",
+    template: scifi.template,
+  },
+  cyberpunk: {
+    id: "theme.cyberpunk",
+    label: "Cyberpunk Default",
+    source: "theme-default",
+    template: cyberpunk.template,
+  },
+  modern: {
+    id: "theme.modern",
+    label: "Modern Default",
+    source: "theme-default",
+    template: modern.template,
+  },
+  apocalyptic: {
+    id: "theme.apocalyptic",
+    label: "Post-Apocalyptic Default",
+    source: "theme-default",
+    template: apocalyptic.template,
+  },
+  "post-apocalyptic": {
+    id: "theme.post-apocalyptic",
+    label: "Post-Apocalyptic Default",
+    source: "theme-default",
+    template: apocalyptic.template,
+  },
+  post_apocalyptic: {
+    id: "theme.post_apocalyptic",
+    label: "Post-Apocalyptic Default",
+    source: "theme-default",
+    template: apocalyptic.template,
+  },
+  horror: {
+    id: "theme.horror",
+    label: "Horror Default",
+    source: "theme-default",
+    template: horror.template,
+  },
+  "gothic-horror": {
+    id: "theme.gothic-horror",
+    label: "Gothic Horror Default",
+    source: "theme-default",
+    template: horror.template,
+  },
+  gothic_horror: {
+    id: "theme.gothic_horror",
+    label: "Gothic Horror Default",
+    source: "theme-default",
+    template: horror.template,
+  },
+  steampunk: {
+    id: "theme.steampunk",
+    label: "Steampunk Default",
+    source: "theme-default",
+    template: steampunk.template,
+  },
+  mythic: {
+    id: "theme.mythic",
+    label: "Mythic Default",
+    source: "theme-default",
+    template: mythic.template,
+  },
+  pulp_adventure: {
+    id: "theme.pulp_adventure",
+    label: "Pulp Adventure Default",
+    source: "theme-default",
+    template: pulp_adventure.template,
+  },
+  "pulp-adventure": {
+    id: "theme.pulp-adventure",
+    label: "Pulp Adventure Default",
+    source: "theme-default",
+    template: pulp_adventure.template,
+  },
+  fallout: {
+    id: "theme.fallout",
+    label: "Fallout Default",
+    source: "theme-default",
+    template: fallout.template,
+  },
+  starwars: {
+    id: "theme.starwars",
+    label: "Star Wars Default",
+    source: "theme-default",
+    template: starwars.template,
+  },
+  startrek: {
+    id: "theme.startrek",
+    label: "Star Trek Default",
+    source: "theme-default",
+    template: startrek.template,
+  },
+};
 
 const CATEGORY_ALIASES: Record<string, string> = {
   npc: "character",
@@ -213,6 +329,14 @@ const CATEGORY_ALIASES: Record<string, string> = {
   world: "cover",
 };
 
+const THEME_ALIASES: Record<string, string> = {
+  "gothic-horror": "horror",
+  gothic_horror: "horror",
+  "post-apocalyptic": "apocalyptic",
+  post_apocalyptic: "apocalyptic",
+  "pulp-adventure": "pulp_adventure",
+};
+
 export function resolveArtDirection(
   context: DrawRequestContext,
 ): ResolvedArtDirection {
@@ -221,35 +345,78 @@ export function resolveArtDirection(
     normalizeCategoryId(
       context.surface === "cover" ? "cover" : context.categoryId,
       context.surface === "cover" || context.categoryIdIsHint,
-    ) ||
-    undefined;
-  const themeId = normalizeId(context.themeId) || undefined;
+    ) || undefined;
 
-  const candidates: ArtDirectionTemplate[] = [
-    contextTemplate(
-      "entity-context",
-      "entity.context",
-      "Entity Art Direction",
-      context.entityArtDirection,
-    ),
-    contextTemplate(
-      "user-authored-context",
-      "user.context",
-      "User Authored Art Direction",
-      context.userAuthoredArtDirection,
-    ),
-    categoryId ? CATEGORY_ART_DIRECTION_DEFAULTS[categoryId] : undefined,
-    themeId ? THEME_ART_DIRECTION_DEFAULTS[themeId] : undefined,
-    GLOBAL_ART_DIRECTION_DEFAULT,
-  ].filter((template): template is ArtDirectionTemplate =>
-    Boolean(template && normalizeTemplate(template.template)),
+  const rawThemeId = normalizeThemeId(context.themeId) || undefined;
+  const themeId = rawThemeId
+    ? THEME_ALIASES[rawThemeId] || rawThemeId
+    : undefined;
+
+  const entityTemplate = contextTemplate(
+    "entity-context",
+    "entity.context",
+    "Entity Art Direction",
+    context.entityArtDirection,
   );
+  if (entityTemplate) {
+    return {
+      prompt: applySubject(entityTemplate.template, subject),
+      source: "entity-context",
+      templateId: entityTemplate.id,
+      subject,
+      categoryId,
+      themeId,
+    };
+  }
 
-  const selected = candidates[0] || GLOBAL_ART_DIRECTION_DEFAULT;
+  const userTemplate = contextTemplate(
+    "user-authored-context",
+    "user.context",
+    "User Authored Art Direction",
+    context.userAuthoredArtDirection,
+  );
+  if (userTemplate) {
+    return {
+      prompt: applySubject(userTemplate.template, subject),
+      source: "user-authored-context",
+      templateId: userTemplate.id,
+      subject,
+      categoryId,
+      themeId,
+    };
+  }
+
+  let source: ArtDirectionSource = "global-default";
+  let templateId: string | undefined = GLOBAL_ART_DIRECTION_DEFAULT.id;
+
+  const categoryTemplate = categoryId
+    ? CATEGORY_ART_DIRECTION_DEFAULTS[categoryId]
+    : undefined;
+  const themeTemplate = themeId
+    ? THEME_ART_DIRECTION_DEFAULTS[themeId]
+    : undefined;
+  const globalTemplate = GLOBAL_ART_DIRECTION_DEFAULT;
+
+  const parts: string[] = [];
+  if (categoryTemplate) {
+    parts.push(applySubject(categoryTemplate.template, subject));
+    source = "category-default";
+    templateId = categoryTemplate.id;
+  }
+  if (themeTemplate) {
+    parts.push(applySubject(themeTemplate.template, subject));
+    if (source === "global-default") {
+      source = "theme-default";
+      templateId = themeTemplate.id;
+    }
+  }
+
+  parts.push(applySubject(globalTemplate.template, subject));
+
   return {
-    prompt: applySubject(selected.template, subject),
-    source: selected.source,
-    templateId: selected.id,
+    prompt: parts.join(" "),
+    source,
+    templateId,
     subject,
     categoryId,
     themeId,
@@ -267,8 +434,11 @@ export function getCategoryArtDirectionDefault(
 export function getThemeArtDirectionDefault(
   themeId?: string,
 ): ArtDirectionTemplate | undefined {
-  const normalized = normalizeId(themeId);
-  return normalized ? THEME_ART_DIRECTION_DEFAULTS[normalized] : undefined;
+  const normalized = normalizeThemeId(themeId);
+  const mapped = normalized
+    ? THEME_ALIASES[normalized] || normalized
+    : undefined;
+  return mapped ? THEME_ART_DIRECTION_DEFAULTS[mapped] : undefined;
 }
 
 function normalizeRequiredSubject(context: DrawRequestContext) {
@@ -305,13 +475,18 @@ function applySubject(template: string, subject: string) {
 }
 
 function normalizeId(id?: string) {
-  return (id || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");
+  return (id || "").trim().toLowerCase().replace(/\s+/g, "-");
 }
 
 function normalizeCategoryId(id?: string, applyAliases = false) {
   const normalized = normalizeId(id);
   return applyAliases ? CATEGORY_ALIASES[normalized] || normalized : normalized;
+}
+
+function normalizeThemeId(id?: string) {
+  const normalized = (id || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-](light|dark)$/, "");
+  return normalized.replace(/\s+/g, "-");
 }

@@ -64,6 +64,21 @@ describe("art direction resolver", () => {
     ).toBe("global-default");
   });
 
+  it("composes category default, theme default, and global default prompts", () => {
+    const result = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      categoryId: "character",
+      themeId: "scifi",
+    });
+
+    expect(result.prompt).toContain("Mara, full character concept art");
+    expect(result.prompt).toContain("Mara. Digital concept art style");
+    expect(result.prompt).toContain(
+      "Mara, illustrated worldbuilding reference",
+    );
+  });
+
   it("inserts the subject when the template has no placeholder", () => {
     const result = resolveArtDirection({
       subject: "The Ember Crown",
@@ -120,6 +135,33 @@ describe("art direction resolver", () => {
     expect(hintedCategory.categoryId).toBe("character");
   });
 
+  it("normalizes and strips theme suffixes (light/dark)", () => {
+    const resultScifiLight = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      themeId: "scifi_light",
+    });
+    const resultScifiDark = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      themeId: "scifi-dark",
+    });
+    const resultHorrorLight = resolveArtDirection({
+      subject: "Mara",
+      surface: "entity",
+      themeId: "gothic_horror_light",
+    });
+
+    expect(resultScifiLight.themeId).toBe("scifi");
+    expect(resultScifiLight.prompt).toContain("Digital concept art style");
+
+    expect(resultScifiDark.themeId).toBe("scifi");
+    expect(resultScifiDark.prompt).toContain("Digital concept art style");
+
+    expect(resultHorrorLight.themeId).toBe("horror");
+    expect(resultHorrorLight.prompt).toContain("Tenebrist oil painting");
+  });
+
   it("ships required category and theme defaults without named artist imitation", () => {
     for (const id of [
       "character",
@@ -142,10 +184,18 @@ describe("art direction resolver", () => {
       "cyberpunk",
       "modern",
       "post_apocalyptic",
+      "post-apocalyptic",
+      "apocalyptic",
       "gothic_horror",
+      "gothic-horror",
+      "horror",
       "steampunk",
       "mythic",
       "pulp_adventure",
+      "pulp-adventure",
+      "fallout",
+      "starwars",
+      "startrek",
     ]) {
       expect(THEME_ART_DIRECTION_DEFAULTS[id]?.template).toContain("{subject}");
     }

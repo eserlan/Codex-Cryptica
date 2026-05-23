@@ -342,7 +342,9 @@ describe("FrontPage", () => {
       expect.stringContaining("atmospheric world cover art"),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining("Theme Style: Moonfall, neon urban concept art"),
+      expect.stringContaining(
+        "Theme Style: Moonfall. Digital concept art style",
+      ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
