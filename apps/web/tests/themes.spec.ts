@@ -365,7 +365,7 @@ test.describe("Visual Styling Templates", () => {
     );
     await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
       "background-color",
-      "rgb(26, 22, 18)",
+      "rgb(28, 20, 16)",
     );
 
     // 5. Select Sci-Fi Terminal theme
@@ -386,7 +386,7 @@ test.describe("Visual Styling Templates", () => {
     );
     await expect(page.locator("div.bg-theme-bg").first()).toHaveCSS(
       "background-color",
-      "rgb(240, 253, 244)",
+      "rgb(240, 244, 236)",
     );
 
     await page.getByLabel("Close Settings").click();
