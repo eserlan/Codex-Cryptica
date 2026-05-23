@@ -86,20 +86,23 @@ As a user who selects a world theme, I want that theme to provide an appropriate
 
 ---
 
-### User Story 5 - Draw Command Uses Resolved Art Direction (Priority: P2)
+### User Story 5 - Draw Entry Points Use Resolved Art Direction (Priority: P2)
 
-As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image generation entry points to use the same art direction resolver so generated results are consistent.
+As a user using `/draw`, entity sidebar draw, Zen mode draw, graph context menu draw, front page cover generation, or chat draw actions, I want all image generation entry points to use the same art direction resolver so generated results are consistent.
 
 **Why this priority**: Users should not get different style behavior depending on which draw button or command they use.
 
-**Independent Test**: Trigger image generation through `/draw`, entity sidepanel draw, and chat draw for the same subject and verify each path uses the same resolved art direction for equivalent subject/category context.
+**Independent Test**: Trigger image generation through `/draw`, entity sidebar draw, Zen mode draw, graph context menu draw, front page cover generation, and chat draw for the same or equivalent subject and verify each path uses the same resolver with the best available subject/category/vault/theme context.
 
 **Acceptance Scenarios**:
 
 1. **Given** the user enters `/draw character Almos`, **When** the command resolves the subject and category, **Then** it MUST apply the Character art direction fallback chain.
-2. **Given** the user draws from an entity sidepanel, **When** the entity has a category, **Then** the resolver MUST use that entity and category context.
-3. **Given** the user draws from an Oracle chat message, **When** the message is associated with an entity or category context, **Then** the resolver SHOULD use that context where available and fall back safely where it is not.
-4. **Given** a draw request is missing category context, **When** the resolver builds the prompt, **Then** it MUST fall back to vault, theme, or global art direction instead of failing.
+2. **Given** the user draws from an entity sidebar, **When** the entity has a category, **Then** the resolver MUST use that entity and category context.
+3. **Given** the user draws from Zen mode, **When** the active entity has a category, **Then** the resolver MUST use that entity and category context.
+4. **Given** the user draws from the graph context menu for a selected node, **When** the selected node maps to an entity, **Then** the resolver MUST use that entity and category context.
+5. **Given** the user generates front page cover art, **When** the request is for the world cover rather than a specific entity, **Then** the resolver MUST use vault, theme, and global art direction with cover/world composition context.
+6. **Given** the user draws from an Oracle chat message, **When** the message is associated with an entity or category context, **Then** the resolver SHOULD use that context where available and fall back safely where it is not.
+7. **Given** a draw request is missing category context, **When** the resolver builds the prompt, **Then** it MUST fall back to vault, theme, or global art direction instead of failing.
 
 ### Edge Cases
 
@@ -118,7 +121,7 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 
 - Art direction is a text prompt template that may include `{subject}` as the subject insertion point.
 - Entity-specific art direction remains the highest-priority resolver input, but entity-level editing UI is out of scope for the first implementation.
-- The first implementation should cover vault default art direction, category overrides, theme defaults, global default, and resolver integration for existing draw entry points.
+- The first implementation should cover vault default art direction, category overrides, theme defaults, global default, and resolver integration for existing draw entry points including `/draw`, entity sidebar draw, Zen mode draw, graph context menu draw, front page cover generation, and Oracle chat draw.
 - Existing image generation model calls remain unchanged; this feature prepares the prompt before it reaches the image generation service.
 - Prompt defaults should be concise enough to guide style without producing unwieldy prompts.
 - Shipped defaults should describe style through medium, composition, lighting, mood, materials, and visual constraints rather than named artist imitation.
@@ -145,11 +148,14 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 - **FR-014**: Default prompts SHOULD remain concise and focused on subject, medium, composition, lighting, mood, materials, and readability.
 - **FR-015**: Existing `/draw` command behavior MUST use the art direction resolver before calling image generation.
 - **FR-015a**: `/draw` command parsing MUST allow recognized category words to provide category context, while matched entity category metadata MUST take precedence when the subject resolves to an entity.
-- **FR-016**: Existing entity sidepanel draw behavior MUST use the art direction resolver before calling image generation.
+- **FR-016**: Existing entity sidebar draw behavior MUST use the art direction resolver before calling image generation.
+- **FR-016a**: Existing Zen mode draw behavior MUST use the art direction resolver before calling image generation.
+- **FR-016b**: Existing graph context menu image generation behavior MUST use the art direction resolver before calling image generation.
+- **FR-016c**: Existing front page cover generation behavior MUST use the art direction resolver with world cover context before calling image generation.
 - **FR-017**: Existing Oracle chat draw behavior SHOULD use the art direction resolver when subject or category context is available.
 - **FR-018**: If AI image generation is unavailable because of tier, capability, or missing configuration, art direction settings MUST remain editable but generation controls MUST keep existing gating behavior.
 - **FR-019**: Users MUST be able to preview or understand which fallback level will be used for a category before saving settings.
-- **FR-020**: Automated verification MUST cover resolver fallback order, template subject insertion, empty-value fallback, per-vault persistence, category overrides, and at least one draw entry point.
+- **FR-020**: Automated verification MUST cover resolver fallback order, template subject insertion, empty-value fallback, per-vault persistence, category overrides, and existing draw entry points including `/draw`, entity sidebar, Zen mode, graph context menu, front page cover generation, and Oracle chat where context is available.
 - **FR-021**: User-facing labels and help text MUST use clear wording such as "AI Art Direction", "Default Art Style", and "Category Overrides".
 
 ### Key Entities _(include if feature involves data)_
@@ -160,7 +166,7 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 - **Category Art Direction Override**: A per-vault art direction template assigned to a stable category ID or category-like type.
 - **Theme Art Direction Default**: A shipped default prompt associated with a world theme.
 - **Global Art Direction Default**: The final fallback prompt used when no more specific art direction is available.
-- **Draw Request Context**: Subject text plus optional entity id, category, vault id, and theme id used by the resolver.
+- **Draw Request Context**: Subject text plus optional entity id, category, vault id, theme id, and surface context such as entity visual, chat visual, graph node image, or world cover used by the resolver.
 
 ## Success Criteria _(mandatory)_
 
@@ -170,6 +176,6 @@ As a user using `/draw`, sidepanel draw, or chat draw actions, I want all image 
 - **SC-002**: A draw request without entity-specific art direction but with category art direction uses the category art direction.
 - **SC-003**: A user can edit vault default art direction and category overrides, reload the vault, and see those settings persist.
 - **SC-004**: Two vaults can maintain different art direction settings without affecting each other.
-- **SC-005**: `/draw` image generation uses the same resolver as at least one existing draw button path.
+- **SC-005**: `/draw`, entity sidebar draw, Zen mode draw, graph context menu image generation, front page cover generation, and Oracle chat draw all use the same resolver where context is available.
 - **SC-006**: Shipped default prompts pass review for concise descriptive language and avoid named living-artist style imitation.
 - **SC-007**: Verification covers the fallback hierarchy and existing image generation still works with no saved art direction settings.
