@@ -47,6 +47,7 @@ specs/116-scroll-wheel-date-picker/
 |-- plan.md
 |-- research.md
 |-- data-model.md
+|-- ui-mockups.md
 |-- quickstart.md
 |-- contracts/
 |   `-- scroll-wheel-date-picker.md
@@ -97,7 +98,7 @@ See [research.md](./research.md). All planning unknowns are resolved without int
 
 ## Phase 1 Design
 
-See [data-model.md](./data-model.md), [contracts/scroll-wheel-date-picker.md](./contracts/scroll-wheel-date-picker.md), and [quickstart.md](./quickstart.md).
+See [data-model.md](./data-model.md), [ui-mockups.md](./ui-mockups.md), [contracts/scroll-wheel-date-picker.md](./contracts/scroll-wheel-date-picker.md), and [quickstart.md](./quickstart.md).
 
 ## Post-Design Constitution Check
 
