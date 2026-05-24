@@ -370,5 +370,119 @@ describe("CalendarEngine", () => {
       expect(repair?.reason).toBe("day-overflow");
       expect(repair?.suggestedSelection.day).toBe(10); // capped to 10
     });
+
+    it("should identify stale-revision when the revision is outdated but the date remains valid", () => {
+      const selection: DateSelection = {
+        precision: "day",
+        year: 100,
+        unitId: "m2",
+        day: 5,
+        calendarRevision: 1, // Snapshot has revision 2
+      };
+      const repair = calendarEngine.getRepairState(selection, newSnapshot);
+      expect(repair).not.toBeNull();
+      expect(repair?.reason).toBe("stale-revision");
+      expect(repair?.suggestedSelection.calendarRevision).toBe(2);
+    });
+  });
+
+  describe("Additional Coverage Tests", () => {
+    const snapshot: CalendarSnapshot = {
+      revision: 2,
+      config: {
+        useGregorian: false,
+        months: [
+          { id: "m1", name: "Alpha", days: 10 },
+          { id: "m2", name: "Beta", days: 15 },
+        ],
+        daysPerWeek: 5,
+        anchors: [
+          { id: "anc1", name: "Solstice", afterMonthId: "m1", afterDay: 10 },
+        ],
+      },
+    };
+
+    it("should format an anchor precision date selection", () => {
+      const date: DateSelection = {
+        precision: "anchor",
+        year: 2026,
+        anchorId: "anc1",
+        calendarRevision: 2,
+      };
+      expect(calendarEngine.format(date, snapshot)).toBe("Solstice 2026");
+    });
+
+    it("should get timeline value for unit precision", () => {
+      const date: DateSelection = {
+        precision: "unit",
+        year: 100,
+        unitId: "m2",
+        calendarRevision: 2,
+      };
+      expect(calendarEngine.getTimelineValue(date, snapshot)).toBe(2510);
+    });
+
+    it("should get timeline value for day precision", () => {
+      const date: DateSelection = {
+        precision: "day",
+        year: 100,
+        unitId: "m2",
+        day: 5,
+        calendarRevision: 2,
+      };
+      expect(calendarEngine.getTimelineValue(date, snapshot)).toBe(2514);
+    });
+
+    it("should get timeline value for anchor precision", () => {
+      const date: DateSelection = {
+        precision: "anchor",
+        year: 100,
+        anchorId: "anc1",
+        calendarRevision: 2,
+      };
+      expect(calendarEngine.getTimelineValue(date, snapshot)).toBe(2510);
+    });
+
+    it("should identify missing-anchor when the anchor is deleted", () => {
+      const selection: DateSelection = {
+        precision: "anchor",
+        year: 100,
+        anchorId: "nonexistent-anchor",
+        calendarRevision: 2,
+      };
+      const repair = calendarEngine.getRepairState(selection, snapshot);
+      expect(repair).not.toBeNull();
+      expect(repair?.reason).toBe("missing-anchor");
+      expect(repair?.suggestedSelection.anchorId).toBe("anc1");
+    });
+
+    it("should fallback to unit precision when missing-anchor has no anchors configured", () => {
+      const snapshotNoAnchors: CalendarSnapshot = {
+        revision: 2,
+        config: {
+          useGregorian: false,
+          months: [{ id: "m1", name: "Alpha", days: 10 }],
+          daysPerWeek: 5,
+        },
+      };
+      const selection: DateSelection = {
+        precision: "anchor",
+        year: 100,
+        anchorId: "nonexistent-anchor",
+        calendarRevision: 2,
+      };
+      const repair = calendarEngine.getRepairState(
+        selection,
+        snapshotNoAnchors,
+      );
+      expect(repair).not.toBeNull();
+      expect(repair?.reason).toBe("missing-anchor");
+      expect(repair?.suggestedSelection.precision).toBe("unit");
+      expect(repair?.suggestedSelection.unitId).toBe("m1");
+    });
+
+    it("should reject direct date input with non-integer values", () => {
+      expect(parseDirectDateInput("12.5.01.2024", DEFAULT_CALENDAR)).toBeNull();
+    });
   });
 });
