@@ -140,7 +140,8 @@ export class EntityStore {
       const counts: Record<string, number> = {};
       for (const entity of this.allActiveEntities) {
         if (entity.labels) {
-          for (const l of entity.labels) {
+          const uniqueLabels = new Set(entity.labels);
+          for (const l of uniqueLabels) {
             counts[l] = (counts[l] || 0) + 1;
           }
         }

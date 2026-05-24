@@ -140,7 +140,7 @@ describe("EntityStore", () => {
       lore: "",
       type: "location",
       status: "active",
-      labels: ["new-label"],
+      labels: ["new-label", "new-label"], // Duplicate labels on single entity
       aliases: [],
       connections: [],
     } as LocalEntity;
@@ -163,7 +163,7 @@ describe("EntityStore", () => {
     expect(testStore.labelIndex).toEqual(["important", "new-label"]);
     expect(testStore.labelCounts).toEqual({
       important: 1,
-      "new-label": 1,
+      "new-label": 1, // Correctly de-duplicated and counted as 1
     });
   });
 

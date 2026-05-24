@@ -130,7 +130,7 @@
                 ></span>
               {/if}
             </span>
-            <span class="truncate flex-1">{label}</span>
+            <span class="truncate flex-1 min-w-0">{label}</span>
             <span
               class="text-[9px] text-theme-muted/80 font-mono font-bold shrink-0"
               >({vault.labelCounts[label] ?? 0})</span

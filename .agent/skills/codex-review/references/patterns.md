@@ -66,6 +66,26 @@ This reference documents specific anti-patterns and quality standards for the Co
 - **Issue**: Using `lucide-svelte` components instead of Iconify classes.
 - **Pattern**: Use `class="icon-[lucide--name] ..."`.
 
+### Flexbox Truncation Layouts
+
+- **Issue**: Using Tailwind's `truncate` utility on elements inside a flex container (such as a dropdown row or card) does not truncate correctly and can push adjacent sibling elements off-screen or cause layouts to overflow. Flexbox's default behavior is to use `min-content` for flex items, preventing them from shrinking below their content size.
+- **Pattern**: Always add an explicit `min-w-0` to the flex item that contains the `truncate` element to allow it to shrink and truncate correctly.
+- **Example**:
+
+  ```svelte
+  <!-- Bad: can overflow or push sibling elements off-screen -->
+  <div class="flex items-center gap-2">
+    <span class="truncate">{label}</span>
+    <span class="shrink-0">(12)</span>
+  </div>
+
+  <!-- Good: truncates correctly within flexbox bounds -->
+  <div class="flex items-center gap-2">
+    <span class="truncate min-w-0 flex-1">{label}</span>
+    <span class="shrink-0">(12)</span>
+  </div>
+  ```
+
 ## Event Bus & Lifecycles
 
 ### Subscription Memory Leaks in Stores & Tests
@@ -100,6 +120,29 @@ class FeatureStore {
 - **Issue**: Running debounced auto-save effects that trigger on mere selection or opening of existing entries, causing redundant database writes and unnecessary load.
 - **Pattern**: Track the active item's original content and ID. Only trigger the debounce routine when the content has _actually_ diverged from the loaded state, and skip/gate empty brand-new entries until the user has typed.
 
+### Unique Value Counting per Record (De-duplication)
+
+- **Issue**: Standard mapping/iteration over list-based properties (like `entity.labels`) to calculate item frequencies or metrics will overcount entries if a single record contains duplicate values in that array.
+- **Pattern**: Always de-duplicate array-like properties per record using `new Set()` before counting or executing metrics logic.
+- **Example**:
+
+  ```typescript
+  // Bad: overcounts if entity.labels has duplicate values
+  for (const entity of entities) {
+    for (const label of entity.labels) {
+      counts[label] = (counts[label] || 0) + 1;
+    }
+  }
+
+  // Good: counts each label once per entity
+  for (const entity of entities) {
+    const uniqueLabels = new Set(entity.labels);
+    for (const label of uniqueLabels) {
+      counts[label] = (counts[label] || 0) + 1;
+    }
+  }
+  ```
+
 ## JavaScript & HTML Best Practices
 
 ### Coordinate Check Nullish Coalescing (Falsy 0)
@@ -121,6 +164,7 @@ class FeatureStore {
 - **Issue**: Dynamically importing a component inside Svelte's `{#await}` block on-demand saves bundle size but breaks exit transitions if the wrapping conditional unmounts it immediately.
 - **Pattern**: Use a sticky boolean flag (e.g., `hasOpened = true` on first interaction) that triggers the dynamic import, and keep the flag `true` to ensure the component remains in the DOM for exit animations to play.
 - **Example**:
+
   ```svelte
   <script>
     let hasOpened = $state(false);
