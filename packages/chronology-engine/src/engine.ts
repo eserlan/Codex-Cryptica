@@ -217,7 +217,7 @@ export class CalendarEngine {
             (m) => m.id === anchor.afterMonthId,
           );
           if (unitIndex !== -1) {
-            for (let i = 0; i <= unitIndex; i++) {
+            for (let i = 0; i < unitIndex; i++) {
               value += months[i].days;
             }
           }
@@ -301,11 +301,15 @@ export class CalendarEngine {
           value: i + 1,
         }));
 
+        const selectedDay = selection.day
+          ? Math.max(1, Math.min(selection.day, dayCount))
+          : 1;
+
         columns.push({
           id: "day",
           label: "Day",
           options: dayOptions,
-          selectedId: String(selection.day || 1),
+          selectedId: String(selectedDay),
           canDirectEnter: true,
         });
       }
@@ -358,6 +362,24 @@ export class CalendarEngine {
     selection: DateSelection,
     currentSnapshot: CalendarSnapshot,
   ): RepairState | null {
+    if (
+      selection.calendarRevision !== undefined &&
+      selection.calendarRevision !== currentSnapshot.revision
+    ) {
+      const suggested: DateSelection = {
+        ...selection,
+        calendarRevision: currentSnapshot.revision,
+      };
+      if (this.isValid(selection, currentSnapshot)) {
+        return {
+          originalSelection: selection,
+          suggestedSelection: suggested,
+          reason: "stale-revision",
+          requiresConfirmation: true,
+        };
+      }
+    }
+
     if (this.isValid(selection, currentSnapshot)) {
       return null;
     }

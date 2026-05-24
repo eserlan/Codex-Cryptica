@@ -632,6 +632,7 @@
                         type="button"
                         id="opt-{col.id}-{option.id}"
                         role="option"
+                        tabindex="-1"
                         aria-selected={col.selectedId === option.id}
                         onclick={() => selectOption(col.id, option.id)}
                         class="h-10 w-full flex items-center justify-center snap-center text-[10px] font-semibold tracking-wider uppercase transition-colors hover:text-theme-primary {col.selectedId ===

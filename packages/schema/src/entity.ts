@@ -14,15 +14,48 @@ export type Category = z.infer<typeof CategorySchema>;
 
 export const DatePrecisionSchema = z.enum(["year", "unit", "day", "anchor"]);
 
-export const DateSelectionSchema = z.object({
-  precision: DatePrecisionSchema,
-  year: z.number(),
-  unitId: z.string().optional(),
-  day: z.number().optional(),
-  anchorId: z.string().optional(),
-  label: z.string().optional(),
-  calendarRevision: z.number(),
-});
+export const DateSelectionSchema = z
+  .object({
+    precision: DatePrecisionSchema,
+    year: z.number().int(),
+    unitId: z.string().optional(),
+    day: z.number().int().optional(),
+    anchorId: z.string().optional(),
+    label: z.string().optional(),
+    calendarRevision: z.number().int().min(1),
+  })
+  .superRefine((data, ctx) => {
+    if (data.precision === "unit" && !data.unitId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "unitId is required when precision is 'unit'",
+        path: ["unitId"],
+      });
+    }
+    if (data.precision === "day") {
+      if (!data.unitId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "unitId is required when precision is 'day'",
+          path: ["unitId"],
+        });
+      }
+      if (data.day === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "day is required when precision is 'day'",
+          path: ["day"],
+        });
+      }
+    }
+    if (data.precision === "anchor" && !data.anchorId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "anchorId is required when precision is 'anchor'",
+        path: ["anchorId"],
+      });
+    }
+  });
 
 export const LegacyTemporalMetadataSchema = z.object({
   year: z.number(),
