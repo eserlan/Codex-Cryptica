@@ -1,7 +1,8 @@
 <script lang="ts">
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { graph } from "$lib/stores/graph.svelte";
-  import type { TemporalMetadata, DateSelection } from "chronology-engine";
+  import type { TemporalMetadata } from "schema";
+  import type { DateSelection } from "chronology-engine";
   import { calendarEngine, parseDirectDateInput } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick } from "svelte";
@@ -12,7 +13,7 @@
     trigger,
     onClose,
   }: {
-    value?: TemporalMetadata;
+    value?: TemporalMetadata | DateSelection;
     trigger: HTMLElement;
     onClose: () => void;
   } = $props();

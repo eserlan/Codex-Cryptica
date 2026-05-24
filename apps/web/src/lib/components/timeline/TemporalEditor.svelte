@@ -1,12 +1,13 @@
 <script lang="ts">
-  import type { TemporalMetadata } from "chronology-engine";
+  import type { TemporalMetadata } from "schema";
+  import type { DateSelection } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { slide } from "svelte/transition";
   import TemporalPicker from "./TemporalPicker.svelte";
 
   let { value = $bindable(), label = "Chronological Date" } = $props<{
-    value?: TemporalMetadata;
+    value?: TemporalMetadata | DateSelection;
     label?: string;
   }>();
 
