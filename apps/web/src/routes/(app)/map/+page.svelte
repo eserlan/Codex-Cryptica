@@ -427,7 +427,8 @@
                     p2pHost.broadcastActiveMapSync(),
                 })}
             >
-              {#each Object.values(vault.maps) as map (map.id)}
+              <!-- ⚡ Bolt Optimization: Replace Object.values() with pre-cached vault.allMaps property to prevent array allocation during re-renders -->
+              {#each vault.allMaps as map (map.id)}
                 <option value={map.id}>
                   {map.isWorldMap ? "★ " : ""}{map.name}
                 </option>
