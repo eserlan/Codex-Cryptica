@@ -413,6 +413,7 @@
   <!-- Header / Tabs -->
   <div class="flex border-b border-theme-border bg-theme-bg/50" role="tablist">
     <button
+      type="button"
       role="tab"
       aria-selected={activeTab === "era"}
       aria-controls="era-panel"
@@ -426,6 +427,7 @@
       Eras
     </button>
     <button
+      type="button"
       role="tab"
       aria-selected={activeTab === "manual"}
       aria-controls="manual-panel"
@@ -451,6 +453,7 @@
       >
         {#each graph.eras as era}
           <button
+            type="button"
             class="w-full text-left p-2 rounded hover:bg-theme-primary/10 border border-transparent hover:border-theme-primary/20 transition-all group"
             data-testid="era-select-button"
             onclick={() => selectEra(era)}
@@ -491,6 +494,7 @@
         >
           {#each ["year", "unit", "day", ...(calendarStore.config.anchors?.length ? ["anchor"] : [])] as p}
             <button
+              type="button"
               class="flex-1 py-1 text-[9px] font-bold uppercase font-header tracking-tighter transition-all rounded {activeSelection.precision ===
               p
                 ? 'bg-theme-primary text-theme-bg shadow-sm'
@@ -625,6 +629,7 @@
 
                     {#each col.options as option}
                       <button
+                        type="button"
                         id="opt-{col.id}-{option.id}"
                         role="option"
                         aria-selected={col.selectedId === option.id}
@@ -647,6 +652,7 @@
 
                   {#if col.canDirectEnter}
                     <button
+                      type="button"
                       onclick={() => (directEntryModes[col.id] = true)}
                       class="absolute bottom-1 right-1 p-0.5 bg-theme-surface/80 hover:bg-theme-primary/10 hover:text-theme-primary border border-theme-border/30 rounded text-theme-muted transition-all z-20"
                       aria-label="Direct jump to {col.label}"
@@ -676,6 +682,7 @@
               The calendar configuration changed. Selected values are invalid.
             </p>
             <button
+              type="button"
               onclick={confirmRepair}
               class="w-full py-1 text-[9px] font-bold uppercase font-header tracking-wider bg-yellow-500 hover:bg-yellow-400 text-theme-bg transition-colors rounded"
             >
@@ -725,12 +732,14 @@
     class="p-3 border-t border-theme-border flex gap-2 bg-theme-bg/30 shrink-0"
   >
     <button
+      type="button"
       class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
       onclick={onClose}
     >
       Cancel
     </button>
     <button
+      type="button"
       class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
       data-testid="apply-date-button"
       disabled={!!directDateError || !!repairState}
