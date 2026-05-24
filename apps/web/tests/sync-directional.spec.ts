@@ -22,7 +22,9 @@ test.describe("Directional Vault Sync UI", () => {
     await page.getByTestId("open-vault-button").click();
     await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
 
-    const activeVaultRow = page.locator(".bg-theme-primary\\/10");
+    const activeVaultRow = page.locator(
+      "[data-testid='vault-switcher-modal'] .bg-theme-primary\\/10",
+    );
     await expect(activeVaultRow).toBeVisible();
 
     const loadButton = activeVaultRow.getByLabel("Load from Folder");
@@ -36,12 +38,17 @@ test.describe("Directional Vault Sync UI", () => {
     await page.getByTestId("open-vault-button").click();
     await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
 
-    const activeVaultRow = page.locator(".bg-theme-primary\\/10");
+    const activeVaultRow = page.locator(
+      "[data-testid='vault-switcher-modal'] .bg-theme-primary\\/10",
+    );
     await expect(activeVaultRow).toBeVisible();
 
     const saveButton = activeVaultRow.getByLabel("Save to Folder");
     await expect(saveButton).toBeVisible();
-    await expect(saveButton).toHaveAttribute("title", /Save to Folder/);
+    await expect(saveButton).toHaveAttribute(
+      "title",
+      /Save to [fF]older|No folder linked/,
+    );
   });
 
   test("should enable Save button when internal changes are made", async ({

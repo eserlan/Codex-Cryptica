@@ -292,13 +292,31 @@
 
                 <button
                   type="button"
-                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                   onclick={() => vault.saveToFolder()}
-                  title="Save to Folder — writes all changes from your internal archive to your linked folder."
+                  title={!vault.hasFolderHandle
+                    ? "No folder linked — connect a local folder first to enable saving."
+                    : vault.isDirty
+                      ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                      : "Up to date with local folder."}
                   aria-label="Save to Folder"
-                  disabled={isLoading || !!editingId}
+                  aria-busy={vault.status === "saving"}
+                  disabled={isLoading ||
+                    !!editingId ||
+                    vault.status === "saving" ||
+                    !vault.hasFolderHandle ||
+                    !vault.isDirty}
                 >
-                  <span class="icon-[lucide--upload-cloud] w-3.5 h-3.5"></span>
+                  {#if vault.status === "saving"}
+                    <span
+                      class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                    ></span>
+                  {:else if !vault.isDirty && vault.hasFolderHandle}
+                    <span class="icon-[lucide--cloud-check] w-3.5 h-3.5"></span>
+                  {:else}
+                    <span class="icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                    ></span>
+                  {/if}
                 </button>
               {:else}
                 <button

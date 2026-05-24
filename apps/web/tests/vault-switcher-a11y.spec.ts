@@ -35,7 +35,7 @@ test.describe("Vault Switching Accessibility", () => {
     // Check that buttons are discoverable by role + accessible name (confirms aria-label)
     const renameButtons = modal.getByRole("button", { name: "Rename" });
     const restoreButtons = modal.getByRole("button", {
-      name: /Restore/,
+      name: /Restore .* from Folder/i,
     });
     const deleteButtons = modal.getByRole("button", { name: "Delete" });
 
@@ -50,7 +50,7 @@ test.describe("Vault Switching Accessibility", () => {
       .first();
 
     const restoreBtn = nonActiveRow.getByRole("button", {
-      name: /Restore/,
+      name: /Restore .* from Folder/i,
     });
     const renameBtn = nonActiveRow.getByRole("button", { name: "Rename" });
     const deleteBtn = nonActiveRow.getByRole("button", { name: "Delete" });
