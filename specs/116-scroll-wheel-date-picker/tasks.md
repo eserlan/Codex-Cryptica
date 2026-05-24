@@ -17,10 +17,10 @@
 
 **Purpose**: Prepare documentation, package surfaces, and baseline test locations before implementation.
 
-- [ ] T001 Review scroll-wheel UI states and acceptance examples in `specs/116-scroll-wheel-date-picker/ui-mockups.md`
-- [ ] T002 [P] Confirm chronology package exports are the intended public surface in `packages/chronology-engine/src/index.ts`
-- [ ] T003 [P] Confirm existing entity temporal schema compatibility points in `packages/schema/src/entity.ts`
-- [ ] T004 [P] Confirm current picker integration points in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T001 Review scroll-wheel UI states and acceptance examples in `specs/116-scroll-wheel-date-picker/ui-mockups.md`
+- [x] T002 [P] Confirm chronology package exports are the intended public surface in `packages/chronology-engine/src/index.ts`
+- [x] T003 [P] Confirm existing entity temporal schema compatibility points in `packages/schema/src/entity.ts`
+- [x] T004 [P] Confirm current picker integration points in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
 
 ---
 
@@ -30,15 +30,15 @@
 
 **Critical**: No user story implementation should begin until this phase is complete.
 
-- [ ] T005 [P] Add failing tests for `DateSelection`, `CalendarSnapshot`, `RepairState`, and `WheelColumnState` validation in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T006 [P] Add failing schema tests for legacy temporal metadata and new precision/revision metadata in `packages/schema/src/schema.test.ts`
-- [ ] T007 [P] Add failing calendar store tests for revision increment and snapshot creation in `apps/web/src/lib/stores/calendar.test.ts`
-- [ ] T008 Define `DatePrecision`, `DateSelection`, `CalendarSnapshot`, `IntercalaryAnchor`, `RepairState`, `WheelOption`, and `WheelColumnState` in `packages/chronology-engine/src/types.ts`
-- [ ] T009 Extend `WorldCalendar` and `CalendarMonth` compatibility types with revision and stable label fields in `packages/chronology-engine/src/types.ts`
-- [ ] T010 Update calendar validation and formatting signatures to accept `DateSelection` and `CalendarSnapshot` in `packages/chronology-engine/src/engine.ts`
-- [ ] T011 Update temporal metadata schema to accept legacy and new date selection shapes in `packages/schema/src/entity.ts`
-- [ ] T012 Add calendar revision persistence and snapshot creation behavior in `apps/web/src/lib/stores/calendar.svelte.ts`
-- [ ] T013 Run foundational package tests for chronology, schema, and calendar store using `packages/chronology-engine/tests/engine.test.ts`, `packages/schema/src/schema.test.ts`, and `apps/web/src/lib/stores/calendar.test.ts`
+- [x] T005 [P] Add failing tests for `DateSelection`, `CalendarSnapshot`, `RepairState`, and `WheelColumnState` validation in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T006 [P] Add failing schema tests for legacy temporal metadata and new precision/revision metadata in `packages/schema/src/schema.test.ts`
+- [x] T007 [P] Add failing calendar store tests for revision increment and snapshot creation in `apps/web/src/lib/stores/calendar.test.ts`
+- [x] T008 Define `DatePrecision`, `DateSelection`, `CalendarSnapshot`, `IntercalaryAnchor`, `RepairState`, `WheelOption`, and `WheelColumnState` in `packages/chronology-engine/src/types.ts`
+- [x] T009 Extend `WorldCalendar` and `CalendarMonth` compatibility types with revision and stable label fields in `packages/chronology-engine/src/types.ts`
+- [x] T010 Update calendar validation and formatting signatures to accept `DateSelection` and `CalendarSnapshot` in `packages/chronology-engine/src/engine.ts`
+- [x] T011 Update temporal metadata schema to accept legacy and new date selection shapes in `packages/schema/src/entity.ts`
+- [x] T012 Add calendar revision persistence and snapshot creation behavior in `apps/web/src/lib/stores/calendar.svelte.ts`
+- [x] T013 Run foundational package tests for chronology, schema, and calendar store using `packages/chronology-engine/tests/engine.test.ts`, `packages/schema/src/schema.test.ts`, and `apps/web/src/lib/stores/calendar.test.ts`
 
 **Checkpoint**: Shared date model, schema, and calendar snapshots are testable and ready for story work.
 
@@ -52,21 +52,21 @@
 
 ### Tests for User Story 1
 
-- [ ] T014 [P] [US1] Add failing engine tests for deriving numeric year/unit/day wheel columns in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T015 [US1] Add failing engine tests for direct numeric entry rejection and last-valid-value behavior in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T016 [P] [US1] Add failing Svelte tests for numeric wheel selection, centered values, preview sync, and apply behavior in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
-- [ ] T017 [US1] Add failing Svelte tests for keyboard stepper/listbox operation and current-value announcements in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T014 [P] [US1] Add failing engine tests for deriving numeric year/unit/day wheel columns in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T015 [US1] Add failing engine tests for direct numeric entry rejection and last-valid-value behavior in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T016 [P] [US1] Add failing Svelte tests for numeric wheel selection, centered values, preview sync, and apply behavior in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T017 [US1] Add failing Svelte tests for keyboard stepper/listbox operation and current-value announcements in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Implement `deriveWheelColumns` for numeric year, unit, and day columns in `packages/chronology-engine/src/engine.ts`
-- [ ] T019 [US1] Implement direct numeric parse/reject behavior without mutating the previous valid selection in `packages/chronology-engine/src/engine.ts`
-- [ ] T020 [US1] Replace the existing detail grid with reusable wheel column rendering in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T021 [US1] Add centered lens, snap state, and selected-value preview sync in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T022 [US1] Add direct numeric entry or jump controls for large numeric ranges in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T023 [US1] Add keyboard-operable stepper/listbox semantics and accessible announcements in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T024 [US1] Preserve existing `TemporalEditor` value binding and close/apply behavior in `apps/web/src/lib/components/timeline/TemporalEditor.svelte`
-- [ ] T025 [US1] Run US1 tests for `packages/chronology-engine/tests/engine.test.ts` and `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T018 [US1] Implement `deriveWheelColumns` for numeric year, unit, and day columns in `packages/chronology-engine/src/engine.ts`
+- [x] T019 [US1] Implement direct numeric parse/reject behavior without mutating the previous valid selection in `packages/chronology-engine/src/engine.ts`
+- [x] T020 [US1] Replace the existing detail grid with reusable wheel column rendering in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T021 [US1] Add centered lens, snap state, and selected-value preview sync in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T022 [US1] Add direct numeric entry or jump controls for large numeric ranges in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T023 [US1] Add keyboard-operable stepper/listbox semantics and accessible announcements in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T024 [US1] Preserve existing `TemporalEditor` value binding and close/apply behavior in `apps/web/src/lib/components/timeline/TemporalEditor.svelte`
+- [x] T025 [US1] Run US1 tests for `packages/chronology-engine/tests/engine.test.ts` and `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
 
 **Checkpoint**: User Story 1 is independently functional as the MVP.
 
@@ -80,20 +80,20 @@
 
 ### Tests for User Story 2
 
-- [ ] T026 [P] [US2] Add failing engine tests for stable named option identities across rename and reorder in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T027 [US2] Add failing engine tests for intercalary anchor precision and formatting in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T028 [P] [US2] Add failing picker tests for named wheel columns, anchor precision, long-label truncation, and full preview text in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
-- [ ] T029 [P] [US2] Add failing settings tests for preserving stable calendar option IDs while editing labels in `apps/web/src/lib/stores/calendar.test.ts`
+- [x] T026 [P] [US2] Add failing engine tests for stable named option identities across rename and reorder in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T027 [US2] Add failing engine tests for intercalary anchor precision and formatting in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T028 [P] [US2] Add failing picker tests for named wheel columns, anchor precision, long-label truncation, and full preview text in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T029 [P] [US2] Add failing settings tests for preserving stable calendar option IDs while editing labels in `apps/web/src/lib/stores/calendar.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] Implement stable named option lookup and formatting in `packages/chronology-engine/src/engine.ts`
-- [ ] T031 [US2] Implement intercalary anchor validation, wheel derivation, and formatting in `packages/chronology-engine/src/engine.ts`
-- [ ] T032 [US2] Update custom calendar settings to preserve stable option IDs during label edits in `apps/web/src/lib/components/settings/VaultSettings.svelte`
-- [ ] T033 [US2] Update calendar store persistence to retain named option identities and anchor definitions in `apps/web/src/lib/stores/calendar.svelte.ts`
-- [ ] T034 [US2] Add named unit and anchor precision UI states in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T035 [US2] Add mobile long-label truncation and full preview behavior in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T036 [US2] Run US2 tests for `packages/chronology-engine/tests/engine.test.ts`, `apps/web/src/lib/stores/calendar.test.ts`, and `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T030 [US2] Implement stable named option lookup and formatting in `packages/chronology-engine/src/engine.ts`
+- [x] T031 [US2] Implement intercalary anchor validation, wheel derivation, and formatting in `packages/chronology-engine/src/engine.ts`
+- [x] T032 [US2] Update custom calendar settings to preserve stable option IDs during label edits in `apps/web/src/lib/components/settings/VaultSettings.svelte`
+- [x] T033 [US2] Update calendar store persistence to retain named option identities and anchor definitions in `apps/web/src/lib/stores/calendar.svelte.ts`
+- [x] T034 [US2] Add named unit and anchor precision UI states in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T035 [US2] Add mobile long-label truncation and full preview behavior in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T036 [US2] Run US2 tests for `packages/chronology-engine/tests/engine.test.ts`, `apps/web/src/lib/stores/calendar.test.ts`, and `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
 
 **Checkpoint**: User Story 2 works independently with named units and anchors.
 
@@ -107,20 +107,20 @@
 
 ### Tests for User Story 3
 
-- [ ] T037 [P] [US3] Add failing engine tests for top-down constraint evaluation and day capping in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T038 [US3] Add failing engine tests for repair state reasons and suggested replacements in `packages/chronology-engine/tests/engine.test.ts`
-- [ ] T039 [P] [US3] Add failing picker tests for overflow feedback, repair state confirmation, and stale snapshot blocking in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
-- [ ] T040 [P] [US3] Add failing calendar store tests for open-picker snapshot invalidation after calendar revision changes in `apps/web/src/lib/stores/calendar.test.ts`
+- [x] T037 [P] [US3] Add failing engine tests for top-down constraint evaluation and day capping in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T038 [US3] Add failing engine tests for repair state reasons and suggested replacements in `packages/chronology-engine/tests/engine.test.ts`
+- [x] T039 [P] [US3] Add failing picker tests for overflow feedback, repair state confirmation, and stale snapshot blocking in `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T040 [P] [US3] Add failing calendar store tests for open-picker snapshot invalidation after calendar revision changes in `apps/web/src/lib/stores/calendar.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T041 [US3] Implement top-down parent-change evaluation and maximum-day capping in `packages/chronology-engine/src/engine.ts`
-- [ ] T042 [US3] Implement `getRepairState` for missing unit, missing anchor, day overflow, and stale revision in `packages/chronology-engine/src/engine.ts`
-- [ ] T043 [US3] Add repair-state UI with original/suggested values and confirmation actions in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T044 [US3] Add overflow cap feedback before save in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T045 [US3] Block save or require refresh/repair when an open picker's calendar snapshot is stale in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T046 [US3] Ensure save writes the current calendar revision and preserves invalid originals until confirmation in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
-- [ ] T047 [US3] Run US3 tests for `packages/chronology-engine/tests/engine.test.ts`, `apps/web/src/lib/stores/calendar.test.ts`, and `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
+- [x] T041 [US3] Implement top-down parent-change evaluation and maximum-day capping in `packages/chronology-engine/src/engine.ts`
+- [x] T042 [US3] Implement `getRepairState` for missing unit, missing anchor, day overflow, and stale revision in `packages/chronology-engine/src/engine.ts`
+- [x] T043 [US3] Add repair-state UI with original/suggested values and confirmation actions in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T044 [US3] Add overflow cap feedback before save in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T045 [US3] Block save or require refresh/repair when an open picker's calendar snapshot is stale in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T046 [US3] Ensure save writes the current calendar revision and preserves invalid originals until confirmation in `apps/web/src/lib/components/timeline/TemporalPicker.svelte`
+- [x] T047 [US3] Run US3 tests for `packages/chronology-engine/tests/engine.test.ts`, `apps/web/src/lib/stores/calendar.test.ts`, and `apps/web/src/lib/components/timeline/TemporalPicker.test.ts`
 
 **Checkpoint**: User Story 3 works independently without silent date repair.
 
@@ -130,13 +130,13 @@
 
 **Purpose**: Documentation, visual validation, compatibility checks, and full verification.
 
-- [ ] T048 [P] Update Custom Chronology help content for scroll wheels, precision, anchors, direct entry, and repair states in `apps/web/src/lib/content/help/chronology.md`
-- [ ] T049 [P] Add or update first-time feature hint copy for the date picker in `apps/web/src/lib/config/help-content.ts`
-- [ ] T050 [P] Validate mobile and desktop layouts against `specs/116-scroll-wheel-date-picker/ui-mockups.md`
-- [ ] T051 Verify legacy entities with `{ year, month, day, label }` still render in `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte`
-- [ ] T052 Verify timeline sorting remains stable for legacy and new selections in `apps/web/src/lib/stores/timeline.svelte.ts`
-- [ ] T053 Run package-level checks from `specs/116-scroll-wheel-date-picker/quickstart.md`
-- [ ] T054 Run full workspace validation with `bun run lint` and `bun run test`
+- [x] T048 [P] Update Custom Chronology help content for scroll wheels, precision, anchors, direct entry, and repair states in `apps/web/src/lib/content/help/chronology.md`
+- [x] T049 [P] Add or update first-time feature hint copy for the date picker in `apps/web/src/lib/config/help-content.ts`
+- [x] T050 [P] Validate mobile and desktop layouts against `specs/116-scroll-wheel-date-picker/ui-mockups.md`
+- [x] T051 Verify legacy entities with `{ year, month, day, label }` still render in `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte`
+- [x] T052 Verify timeline sorting remains stable for legacy and new selections in `apps/web/src/lib/stores/timeline.svelte.ts`
+- [x] T053 Run package-level checks from `specs/116-scroll-wheel-date-picker/quickstart.md`
+- [x] T054 Run full workspace validation with `bun run lint` and `bun run test`
 
 ---
 

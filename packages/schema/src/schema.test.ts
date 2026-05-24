@@ -172,3 +172,51 @@ describe("Category Schema Validation", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("TemporalMetadataSchema Compatibility Validation", () => {
+  it("should validate a legacy temporal metadata date", () => {
+    const legacyDate = {
+      year: 1240,
+      month: 5,
+      day: 12,
+      label: "Legacy Date",
+    };
+    const result = EntitySchema.shape.date.parse(legacyDate);
+    expect(result.year).toBe(1240);
+    expect(result.month).toBe(5);
+    expect(result.day).toBe(12);
+    expect(result.label).toBe("Legacy Date");
+  });
+
+  it("should validate a new DateSelection shape", () => {
+    const newDateSelection = {
+      precision: "day",
+      year: 2026,
+      unitId: "m1",
+      day: 5,
+      calendarRevision: 2,
+      label: "My Selection",
+    };
+    const result = EntitySchema.shape.date.parse(newDateSelection);
+    expect(result.precision).toBe("day");
+    expect(result.year).toBe(2026);
+    expect(result.unitId).toBe("m1");
+    expect(result.day).toBe(5);
+    expect(result.calendarRevision).toBe(2);
+    expect(result.label).toBe("My Selection");
+  });
+
+  it("should validate an anchor DateSelection shape", () => {
+    const anchorSelection = {
+      precision: "anchor",
+      year: 2026,
+      anchorId: "anc1",
+      calendarRevision: 2,
+    };
+    const result = EntitySchema.shape.date.parse(anchorSelection);
+    expect(result.precision).toBe("anchor");
+    expect(result.year).toBe(2026);
+    expect(result.anchorId).toBe("anc1");
+    expect(result.calendarRevision).toBe(2);
+  });
+});

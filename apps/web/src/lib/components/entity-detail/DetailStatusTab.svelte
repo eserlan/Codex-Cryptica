@@ -10,6 +10,9 @@
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
+  import { calendarEngine } from "chronology-engine";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+
   let {
     entity,
     isEditing,
@@ -75,11 +78,15 @@
 
   const formatDate = (date: Entity["date"]) => {
     if (!date || date.year === undefined) return "";
-    if (date.label) return date.label;
-    let str = `${date.year}`;
-    if (date.month !== undefined) str += `/${date.month}`;
-    if (date.day !== undefined) str += `/${date.day}`;
-    return str;
+    try {
+      return calendarEngine.format(date as any, calendarStore.config);
+    } catch {
+      if (date.label) return date.label;
+      let str = `${date.year}`;
+      if (date.month !== undefined) str += `/${date.month}`;
+      if (date.day !== undefined) str += `/${date.day}`;
+      return str;
+    }
   };
 
   let allConnections = $derived.by(() => {

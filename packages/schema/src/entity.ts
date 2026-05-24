@@ -12,12 +12,29 @@ export const CategorySchema = z.object({
 
 export type Category = z.infer<typeof CategorySchema>;
 
-export const TemporalMetadataSchema = z.object({
+export const DatePrecisionSchema = z.enum(["year", "unit", "day", "anchor"]);
+
+export const DateSelectionSchema = z.object({
+  precision: DatePrecisionSchema,
+  year: z.number(),
+  unitId: z.string().optional(),
+  day: z.number().optional(),
+  anchorId: z.string().optional(),
+  label: z.string().optional(),
+  calendarRevision: z.number(),
+});
+
+export const LegacyTemporalMetadataSchema = z.object({
   year: z.number(),
   month: z.number().min(1).max(12).optional(),
   day: z.number().min(1).max(31).optional(),
   label: z.string().optional(),
 });
+
+export const TemporalMetadataSchema = z.union([
+  DateSelectionSchema,
+  LegacyTemporalMetadataSchema,
+]);
 
 export type TemporalMetadata = z.infer<typeof TemporalMetadataSchema>;
 

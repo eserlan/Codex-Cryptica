@@ -13,27 +13,28 @@ Codex Cryptica allows you to define the very structure of time for your campaign
 
 ## The Date Picker
 
-When editing an entity's temporal data (Date, Start Date, or End Date), you will use the tactile **Date Picker**.
+When editing an entity's temporal data (Date, Start Date, or End Date), you will use the dynamic **Scroll-Wheel Date Picker**.
 
-### Tactile Year Selection
+### Center-Aligned Scroll Wheels
 
-The year picker uses a grid-based navigation system designed for fast, non-keyboard entry across vast timelines:
+The date picker uses a smooth, vertical, center-aligned scroll wheel interface designed for both desktop mouse-wheel and mobile touch interactions:
 
-1. **Drill Down**: Click a Century to see its Decades, then click a Decade to select a specific Year.
-2. **Zoom Out**: Click the header (e.g., "1200 - 1211") to jump back up to the Decade or Century view.
-3. **Navigate**: Use the left/right arrows to slide the current grid forward or backward in time.
+1. **Center Snapping**: Wheels automatically snap center-aligned options into place. A highlight lens guides your visual focus.
+2. **Synchronized Preview**: Below the wheels, a live, full-text preview renders the exact formatted date so you are always clear on your selection, even when dealing with truncated long names.
+3. **Direct Jump Override**: Need to select a year far in the past or future? Simply click the keyboard icon in any column to directly type a numeric override.
 
-### Era-Centric Snapping
-
-If you have defined **Eras** in your Vault Settings, you can use the "Eras" tab to instantly snap the picker to the beginning of a historical period. This is the fastest way to navigate across millennia.
-
-### Precision Levels
+### Precision Levels & Intercalary Anchors
 
 The picker allows you to choose your granularity using the toggle at the top:
 
 - **Year**: For broad historical events.
-- **Month**: For seasonal occurrences.
+- **Month/Unit**: For seasonal occurrences.
 - **Day**: For specific, high-precision moments.
+- **Anchor**: For special intercalary days (e.g., Midyear festivals) that sit outside standard months.
+
+### Conflict Auto-Repair
+
+If you change your campaign calendar structure after saving dates, opening the picker automatically triggers an **inline repair warning**. You can view the discrepancy and click **Confirm Repair** to cleanly align the date to the new calendar constraints without silent, accidental data loss.
 
 ## Campaign Calendars
 
