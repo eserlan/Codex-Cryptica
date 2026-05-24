@@ -120,6 +120,53 @@ describe("EntityStore", () => {
     expect(store.allEntities).toHaveLength(2);
   });
 
+  it("derives the label counts and excludes drafts from counts but keeps them in index", () => {
+    repository.entities.draftPlace = {
+      id: "draftPlace",
+      title: "Draft Place",
+      content: "",
+      lore: "",
+      type: "location",
+      status: "draft",
+      labels: ["important", "new-label"],
+      aliases: [],
+      connections: [],
+    } as LocalEntity;
+
+    repository.entities.activePlace = {
+      id: "activePlace",
+      title: "Active Place",
+      content: "",
+      lore: "",
+      type: "location",
+      status: "active",
+      labels: ["new-label"],
+      aliases: [],
+      connections: [],
+    } as LocalEntity;
+
+    const testStore = new EntityStore({
+      repository: repository as any,
+      activeVaultId: () => "vault-1",
+      isGuest: () => false,
+      getGuestFile: vi.fn(),
+      setStatus: vi.fn(),
+      setErrorMessage: vi.fn(),
+      getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+      getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({ ai: { clearStyleCache: vi.fn() } }),
+      invalidateUrlCache: vi.fn(),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
+    });
+
+    expect(testStore.labelIndex).toEqual(["important", "new-label"]);
+    expect(testStore.labelCounts).toEqual({
+      important: 1,
+      "new-label": 1,
+    });
+  });
+
   it("creates an entity and marks it as loaded and updates count", async () => {
     const newEntity = { id: "new-entity", title: "New Entity" };
     vi.mocked(vaultEntities.createEntity).mockReturnValue(newEntity as any);

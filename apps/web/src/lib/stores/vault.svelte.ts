@@ -105,6 +105,9 @@ export class VaultStore {
   get labelIndex() {
     return this.entityStore.labelIndex;
   }
+  get labelCounts() {
+    return this.entityStore.labelCounts;
+  }
   get maps() {
     return mapRegistry.maps;
   }

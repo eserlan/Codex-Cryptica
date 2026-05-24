@@ -46,6 +46,7 @@ export class EntityStore {
   allActiveEntities: LocalEntity[];
   inboundConnections: InboundMap;
   labelIndex: string[];
+  labelCounts: Record<string, number>;
 
   constructor(
     depsOrRepository: EntityStoreDependencies | VaultRepository,
@@ -134,6 +135,17 @@ export class EntityStore {
         }
       }
       return Array.from(labels).sort();
+    });
+    this.labelCounts = $derived.by(() => {
+      const counts: Record<string, number> = {};
+      for (const entity of this.allActiveEntities) {
+        if (entity.labels) {
+          for (const l of entity.labels) {
+            counts[l] = (counts[l] || 0) + 1;
+          }
+        }
+      }
+      return counts;
     });
   }
 
