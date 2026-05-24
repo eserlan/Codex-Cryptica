@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entity, Connection } from "schema";
+  import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
