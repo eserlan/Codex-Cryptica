@@ -3,7 +3,6 @@ import { render } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
 import { vault } from "$lib/stores/vault.svelte";
-import LabelInput from "$lib/components/labels/LabelInput.svelte";
 
 // Mock stores
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -11,6 +10,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     isGuest: false,
     entities: {},
     inboundConnections: {},
+    labelIndex: [],
   },
 }));
 
@@ -33,12 +33,8 @@ vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   },
 }));
 
-// Mock sub-components
+// Mock sub-components except LabelInput (to render it for real and assert robustly)
 vi.mock("$lib/components/labels/LabelBadge.svelte", () => ({
-  default: vi.fn(),
-}));
-
-vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
   default: vi.fn(),
 }));
 
@@ -47,7 +43,7 @@ vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
 }));
 
 describe("ZenSidebar labels addition when not editing", () => {
-  it("renders LabelInput when not editing and user is not a guest", () => {
+  it("renders LabelInput when not editing, user is not a guest, and entity has labels", () => {
     vault.isGuest = false;
 
     const mockEntity = {
@@ -57,7 +53,7 @@ describe("ZenSidebar labels addition when not editing", () => {
       aliases: [],
     } as any;
 
-    render(ZenSidebar, {
+    const { queryByRole } = render(ZenSidebar, {
       entity: mockEntity,
       editState: { isEditing: false, aliases: [] },
       resolvedImageUrl: "",
@@ -66,6 +62,53 @@ describe("ZenSidebar labels addition when not editing", () => {
       onDelete: async () => {},
     });
 
-    expect(LabelInput).toHaveBeenCalled();
+    const combobox = queryByRole("combobox", { name: "Quick add label" });
+    expect(combobox).toBeTruthy();
+  });
+
+  it("renders LabelInput when not editing, user is not a guest, and entity has NO labels", () => {
+    vault.isGuest = false;
+
+    const mockEntity = {
+      id: "entity-1",
+      title: "Test Entity",
+      labels: [], // EMPTY LABELS
+      aliases: [],
+    } as any;
+
+    const { queryByRole } = render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    const combobox = queryByRole("combobox", { name: "Quick add label" });
+    expect(combobox).toBeTruthy();
+  });
+
+  it("does NOT render LabelInput when user is a guest", () => {
+    vault.isGuest = true; // GUEST
+
+    const mockEntity = {
+      id: "entity-1",
+      title: "Test Entity",
+      labels: [],
+      aliases: [],
+    } as any;
+
+    const { queryByRole } = render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    const combobox = queryByRole("combobox", { name: "Quick add label" });
+    expect(combobox).toBeFalsy();
   });
 });

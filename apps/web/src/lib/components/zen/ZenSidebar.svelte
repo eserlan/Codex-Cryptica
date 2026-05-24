@@ -127,7 +127,10 @@
               </div>
             {/if}
             {#if !vault.isGuest}
-              <LabelInput entityId={entity?.id || ""} />
+              <LabelInput
+                entityId={entity?.id || ""}
+                ariaLabel="Quick add label"
+              />
             {/if}
           </div>
         {/if}
@@ -151,7 +154,7 @@
             class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
             for="zen-labels">Labels</label
           >
-          <LabelInput entityId={entity?.id || ""} />
+          <LabelInput entityId={entity?.id || ""} ariaLabel="Labels" />
         </div>
 
         <div class="space-y-1">
