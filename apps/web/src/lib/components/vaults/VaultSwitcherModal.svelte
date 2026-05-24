@@ -295,7 +295,7 @@
                   class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                   onclick={() => vault.saveToFolder()}
                   title={!vault.hasFolderHandle
-                    ? "No folder linked — connect a local folder first to enable saving."
+                    ? "No folder linked — select a local folder to enable saving."
                     : vault.isDirty
                       ? "Save to folder — writes all changes from the internal archive to your linked folder."
                       : "Up to date with local folder."}
@@ -304,8 +304,7 @@
                   disabled={isLoading ||
                     !!editingId ||
                     vault.status === "saving" ||
-                    !vault.hasFolderHandle ||
-                    !vault.isDirty}
+                    (vault.hasFolderHandle && !vault.isDirty)}
                 >
                   {#if vault.status === "saving"}
                     <span
