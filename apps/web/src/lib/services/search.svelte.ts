@@ -197,6 +197,7 @@ export class SearchService {
                 patch.aliases !== undefined ||
                 patch.content !== undefined ||
                 patch.tags !== undefined ||
+                patch.labels !== undefined ||
                 patch.lore !== undefined
               ) {
                 await this.index(this.mapToSearchEntry(entity));
@@ -621,7 +622,7 @@ export class SearchService {
   private mapToSearchEntry(entity: any): SearchEntry {
     const path = entity._path?.join("/") || `${entity.id}.md`;
     const keywords = [
-      ...(entity.tags || []),
+      ...(entity.labels || entity.tags || []),
       entity.lore || "",
       ...Object.values(entity.metadata || {}).flat(),
     ].join(" ");

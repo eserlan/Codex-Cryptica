@@ -352,8 +352,8 @@
               Campaign Labels
             </h3>
             <p class="text-sm text-chrome-text/70 mb-4 leading-relaxed">
-              Manage the custom tags used across your entities. Renaming a label
-              here will update all tagged files project-wide.
+              Manage the custom labels used across your entities. Renaming a
+              label here will update all labeled files project-wide.
             </p>
             <LabelSettings />
           </div>

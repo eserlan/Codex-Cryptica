@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -13,10 +13,92 @@
     resolveSearchResultEntityId,
   } from "./search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
+
+  // Unique labels in the current vault
+  const uniqueLabels = $derived.by(() => {
+    const labelsSet = new Set<string>();
+    const entities = vault.allEntities || [];
+    for (let i = 0; i < entities.length; i++) {
+      const labels = entities[i].labels || [];
+      for (let j = 0; j < labels.length; j++) {
+        if (labels[j]) {
+          labelsSet.add(labels[j]);
+        }
+      }
+    }
+    return Array.from(labelsSet).sort((a, b) => a.localeCompare(b));
+  });
+
+  // Autocomplete state
+  let isFocused = $state(false);
+  let autocompleteDismissed = $state(false);
+  let autocompleteActiveIndex = $state(-1);
+
+  const activeWord = $derived.by(() => {
+    const query = searchStore.query;
+    if (!query) return "";
+    const words = query.split(/\s+/);
+    return words[words.length - 1] || "";
+  });
+
+  const isLabelAutocompleteActive = $derived(
+    activeWord.startsWith("#") || activeWord.startsWith("@"),
+  );
+
+  const autocompletePrefix = $derived(activeWord[0] || "");
+  const autocompleteSearch = $derived(activeWord.slice(1).toLowerCase());
+
+  const suggestions = $derived.by(() => {
+    if (!isLabelAutocompleteActive) return [];
+    return uniqueLabels
+      .filter((label) => label.toLowerCase().includes(autocompleteSearch))
+      .slice(0, 10);
+  });
+
+  // Reset dismissed state when the word being typed changes
+  $effect(() => {
+    const _word = activeWord; // track dependency
+    untrack(() => {
+      autocompleteDismissed = false;
+    });
+  });
+
+  const showAutocomplete = $derived(
+    isFocused &&
+      isLabelAutocompleteActive &&
+      !autocompleteDismissed &&
+      suggestions.length > 0,
+  );
+
+  $effect(() => {
+    if (!showAutocomplete || suggestions.length === 0) {
+      autocompleteActiveIndex = -1;
+    } else if (autocompleteActiveIndex >= suggestions.length) {
+      autocompleteActiveIndex = suggestions.length - 1;
+    }
+  });
+
+  function selectLabel(label: string) {
+    const query = searchStore.query;
+    const words = query.split(/\s+/);
+    if (words.length > 0) {
+      words.pop(); // Remove the autocomplete prefix (e.g. #p)
+    }
+    const newQuery = words.join(" ").trim() + (words.length > 0 ? " " : "");
+    searchStore.setQuery(newQuery);
+    // Keep focus
+    inputElement?.focus();
+
+    // Auto-apply selected label to active filters
+    if (!explorerUIStore.labelFilters.has(label)) {
+      explorerUIStore.toggleLabelFilter(label, true);
+    }
+  }
 
   const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
   const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
@@ -55,9 +137,46 @@
     if (!searchStore.isOpen) return;
 
     if (event.key === "Escape") {
+      if (showAutocomplete) {
+        autocompleteDismissed = true;
+        event.preventDefault();
+        return;
+      }
       searchStore.close();
       event.preventDefault();
       return;
+    }
+
+    if (showAutocomplete && suggestions.length > 0) {
+      if (event.key === "ArrowDown") {
+        autocompleteActiveIndex =
+          (autocompleteActiveIndex + 1) % suggestions.length;
+        event.preventDefault();
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        autocompleteActiveIndex =
+          (autocompleteActiveIndex - 1 + suggestions.length) %
+          suggestions.length;
+        event.preventDefault();
+        return;
+      }
+
+      if (event.key === "Enter" || event.key === "Tab") {
+        if (
+          autocompleteActiveIndex >= 0 &&
+          autocompleteActiveIndex < suggestions.length
+        ) {
+          event.preventDefault();
+          selectLabel(suggestions[autocompleteActiveIndex]);
+          return;
+        } else if (event.key === "Tab" && suggestions.length > 0) {
+          event.preventDefault();
+          selectLabel(suggestions[0]);
+          return;
+        }
+      }
     }
 
     if (event.key === "ArrowDown") {
@@ -166,21 +285,76 @@
             value={searchStore.query}
             oninput={handleInput}
             onkeydown={handleKeydown}
+            onfocus={() => (isFocused = true)}
+            onblur={() => setTimeout(() => (isFocused = false), 200)}
             placeholder="Search notes..."
             class="w-full pl-10 pr-4 py-2 bg-chrome-bg border-none rounded-md focus:ring-2 focus:ring-chrome-accent text-chrome-text placeholder-chrome-muted"
             role="combobox"
             aria-autocomplete="list"
             aria-expanded="true"
-            aria-controls={searchStore.results.length > 0
-              ? "search-results-list"
-              : undefined}
+            aria-controls={showAutocomplete && suggestions.length > 0
+              ? "search-autocomplete-listbox"
+              : searchStore.results.length > 0
+                ? "search-results-list"
+                : undefined}
             aria-label="Search notes"
             data-testid="search-modal-input"
-            aria-activedescendant={searchStore.results.length > 0
-              ? `search-result-${searchStore.selectedIndex}`
-              : undefined}
+            aria-activedescendant={showAutocomplete && suggestions.length > 0 && autocompleteActiveIndex >= 0
+              ? `search-autocomplete-option-${autocompleteActiveIndex}`
+              : searchStore.results.length > 0
+                ? `search-result-${searchStore.selectedIndex}`
+                : undefined}
           />
+
+          {#if showAutocomplete && suggestions.length > 0}
+            <div
+              id="search-autocomplete-listbox"
+              role="listbox"
+              aria-label="Autocomplete suggestions"
+              class="absolute z-[100] left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-lg border border-chrome-border bg-chrome-surface/95 backdrop-blur-md p-1 shadow-lg"
+            >
+              {#each suggestions as label, index}
+                <button
+                  type="button"
+                  id={`search-autocomplete-option-${index}`}
+                  role="option"
+                  aria-selected={autocompleteActiveIndex === index}
+                  onclick={() => selectLabel(label)}
+                  class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-chrome-accent/10 text-chrome-text hover:text-chrome-accent font-mono transition-colors flex items-center gap-1.5 {autocompleteActiveIndex ===
+                  index
+                    ? 'bg-chrome-accent/10 text-chrome-accent'
+                    : ''}"
+                >
+                  <span class="text-chrome-accent/60">{autocompletePrefix}</span>
+                  <span>{label}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
+
+        {#if explorerUIStore.labelFilters.size > 0}
+          <div
+            class="flex flex-wrap gap-1.5 mt-3"
+            data-testid="active-label-filters"
+          >
+            {#each Array.from(explorerUIStore.labelFilters) as activeLabel}
+              <button
+                type="button"
+                onclick={() =>
+                  explorerUIStore.toggleLabelFilter(activeLabel, true)}
+                class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded-full bg-chrome-accent/10 text-chrome-accent border border-chrome-accent/20 hover:bg-chrome-accent/20 hover:border-chrome-accent/30 transition-all shadow-sm cursor-pointer"
+                title="Click to remove filter"
+                aria-label={`Remove ${activeLabel} filter`}
+              >
+                <span>#{activeLabel}</span>
+                <span
+                  class="icon-[lucide--x] w-3 h-3 text-chrome-accent/60 hover:text-chrome-accent transition-colors"
+                ></span>
+              </button>
+            {/each}
+          </div>
+        {/if}
         {#if searchStore.indexProgress.status !== "idle" && searchStore.indexProgress.status !== "ready"}
           <div
             class="mt-3 flex items-center justify-between gap-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-100 dark:border-amber-900"

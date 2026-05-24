@@ -48,6 +48,48 @@ describe("Vault Entities Operations", () => {
       const entity2 = createEntity("My NPC", "npc", {}, entities);
       expect(entity2.id).toBe("my-npc-2");
     });
+
+    it("should automatically add 'past' label when end_date has a valid year", () => {
+      const entity = createEntity(
+        "Historical Event",
+        "event",
+        {
+          labels: [],
+          end_date: { year: 2026, month: 5, day: 23 } as any,
+        },
+        {},
+      );
+      expect(entity.labels).toContain("past");
+    });
+
+    it("should not add 'past' label when end_date is missing or invalid", () => {
+      const entity1 = createEntity("Active Event", "event", { labels: [] }, {});
+      expect(entity1.labels).not.toContain("past");
+
+      const entity2 = createEntity(
+        "Invalid Event",
+        "event",
+        {
+          labels: [],
+          end_date: { year: undefined } as any,
+        },
+        {},
+      );
+      expect(entity2.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label if already present", () => {
+      const entity = createEntity(
+        "Old Event",
+        "event",
+        {
+          labels: ["past"],
+          end_date: { year: 2000 } as any,
+        },
+        {},
+      );
+      expect(entity.labels).toEqual(["past"]);
+    });
   });
 
   describe("updateEntity", () => {
@@ -67,6 +109,53 @@ describe("Vault Entities Operations", () => {
     it("should return null if entity not found", () => {
       const { updated } = updateEntity({}, "missing", { title: "X" });
       expect(updated).toBeNull();
+    });
+
+    it("should add 'past' label when updating to add a valid end_date", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        labels: [],
+        connections: [],
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        end_date: { year: 1999 } as any,
+      });
+      expect(updated!.labels).toContain("past");
+    });
+
+    it("should remove 'past' label when updating to remove end_date", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        labels: ["past"],
+        end_date: { year: 1999 } as any,
+        connections: [],
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        end_date: undefined,
+      });
+      expect(updated!.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label when updating end_date details if already present", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        labels: ["past"],
+        end_date: { year: 1999 } as any,
+        connections: [],
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        end_date: { year: 2000 } as any,
+      });
+      expect(updated!.labels).toEqual(["past"]);
     });
   });
 
@@ -281,7 +370,6 @@ describe("Vault Entities Operations", () => {
           title: "Hero 1",
           type: "character",
           status: "active",
-          tags: [],
           labels: [],
           aliases: [],
           connections: [],

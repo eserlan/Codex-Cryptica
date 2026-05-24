@@ -7,7 +7,8 @@ export type VisibilitySettings = {
 
 /**
  * Core visibility check logic for Fog of War.
- * Precedence Rule: 'hidden' tag > 'revealed' tag > defaultVisibility.
+ * Precedence Rule: 'hidden' tag/label > 'revealed' tag/label > defaultVisibility.
+ * Checks legacy tags as a fallback and current labels.
  *
  * @param entity The entity to check
  * @param settings The current visibility settings
@@ -26,7 +27,7 @@ export function isEntityVisible(
   // to avoid regex execution overhead on hot paths (~10x faster).
   let explicitlyRevealed = false;
 
-  // Check Tags
+  // Check Tags (fallback)
   if (entity.tags) {
     for (let i = 0; i < entity.tags.length; i++) {
       const tag = entity.tags[i].toLowerCase();

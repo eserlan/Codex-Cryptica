@@ -11,7 +11,7 @@ export class SearchStore {
   private async indexEntity(entity: LocalEntity, services: any) {
     const path = entity._path?.join("/") || `${entity.id}.md`;
     const keywords = [
-      ...(entity.tags || []),
+      ...(entity.labels || entity.tags || []),
       entity.lore || "",
       ...Object.values(entity.metadata || {}).flat(),
     ].join(" ");

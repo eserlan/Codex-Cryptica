@@ -59,8 +59,12 @@ To ensure maximum efficiency and minimum disruption, AI agents MUST follow these
 3.  **Surgical Changes**: Touch only the files and code required. Do not refactor, reformat, or "clean up" unrelated code.
 4.  **Verify Everything**: Define success criteria upfront. Run relevant tests, builds, and linting. Explicitly state what was and was not verified.
 
+### XII. Terminology Unification: Labels Over Tags
+
+To prevent user confusion and maintain conceptual clarity, the project converges entirely on the term "Labels" for all metadata categorization. We do not introduce or expose "Tags" to the user. Any automated categorization attributes (such as marking an entity as historical/deceased via an end date) MUST be stored, managed, and rendered as "Labels".
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.1.0 | **Ratified**: 2026-05-17 | **Last Amended**: 2026-05-17
+**Version**: 1.2.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-05-23

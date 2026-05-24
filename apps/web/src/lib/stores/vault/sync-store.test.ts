@@ -120,8 +120,6 @@ describe("SyncStore", () => {
               content: "Cached Content",
               lore: "Cached Lore",
               type: "character",
-              status: "active",
-              tags: [],
               labels: [],
               aliases: [],
               connections: [],

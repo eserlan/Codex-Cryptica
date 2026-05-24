@@ -8,6 +8,27 @@ import { deleteOpfsEntry } from "../../utils/opfs";
  * Metadata updates and other modifications are tracked via updatedAt.
  */
 
+function applyAutoLabels(entity: LocalEntity): LocalEntity {
+  const hasEndDate =
+    entity.end_date &&
+    typeof entity.end_date.year === "number" &&
+    Number.isFinite(entity.end_date.year);
+  const labels = entity.labels ? [...entity.labels] : [];
+  const hasPastLabel = labels.includes("past");
+
+  if (hasEndDate && !hasPastLabel) {
+    labels.push("past");
+  } else if (!hasEndDate && hasPastLabel) {
+    const index = labels.indexOf("past");
+    if (index !== -1) {
+      labels.splice(index, 1);
+    }
+  }
+
+  entity.labels = labels;
+  return entity;
+}
+
 export function createEntity(
   title: string,
   type: Entity["type"] = "note",
@@ -26,7 +47,7 @@ export function createEntity(
     }
   }
 
-  return {
+  const entity = {
     id,
     type,
     title,
@@ -39,6 +60,8 @@ export function createEntity(
     updatedAt: Date.now(),
     ...initialData,
   } as LocalEntity;
+
+  return applyAutoLabels(entity);
 }
 
 export function updateEntity(
@@ -49,11 +72,14 @@ export function updateEntity(
   const entity = entities[id];
   if (!entity) return { entities, updated: null };
 
-  const updated = {
+  let updated = {
     ...entity,
     ...updates,
     updatedAt: Date.now(),
   } as LocalEntity;
+
+  updated = applyAutoLabels(updated);
+
   return {
     entities: { ...entities, [id]: updated },
     updated,

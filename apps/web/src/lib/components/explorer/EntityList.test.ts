@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EntityList from "./EntityList.svelte";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
@@ -118,5 +119,36 @@ describe("EntityList", () => {
     await fireEvent.click(clearButton);
 
     expect(input.value).toBe("");
+  });
+
+  it("automatically applies the label in the graph filter when an autocomplete option is selected", async () => {
+    explorerUIStore.clearLabelFilters();
+    expect(explorerUIStore.labelFilters.has("Quest")).toBe(false);
+
+    render(EntityList);
+
+    const input = screen.getByLabelText("Search entities") as HTMLInputElement;
+    await fireEvent.focus(input);
+    await fireEvent.input(input, { target: { value: "#Qu" } });
+
+    // Wait for Svelte 5 to process state updates and render the autocomplete dropdown
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Find the autocomplete option for "Quest" (which displays as "#Quest")
+    const buttons = screen.getAllByRole("button");
+    const questOption = buttons.find(
+      (b) => b.textContent?.replace(/\s+/g, "") === "#Quest",
+    );
+    expect(questOption).not.toBeUndefined();
+
+    await fireEvent.click(questOption!);
+
+    // Wait for Svelte reactive effect synchronization
+    await tick();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Verify label is auto-applied to active filters
+    expect(explorerUIStore.labelFilters.has("Quest")).toBe(true);
   });
 });
