@@ -63,6 +63,8 @@ As a user editing a campaign date, I want lower-level date values to adjust when
 - A previously saved partial date may omit day or month; opening the picker must preserve that precision unless the user explicitly adds more detail.
 - Negative, zero, or era-relative years must be displayed consistently with the campaign's existing date rules.
 - Calendar labels may be duplicated or similar; the picker must preserve the selected ordered value even if two labels have the same visible text.
+- A calendar configuration may include intercalary days that fall outside standard month boundaries; the picker must gracefully swap or lock affected columns to represent those unique timeline anchors.
+- Rapid continuous scrolling across columns must remain responsive and must not leave the picker showing stale, impossible, or partially updated date combinations.
 
 ## Requirements _(mandatory)_
 
@@ -73,14 +75,14 @@ As a user editing a campaign date, I want lower-level date values to adjust when
 - **FR-003**: System MUST support numeric columns with configurable minimum and maximum ranges based on the active calendar configuration.
 - **FR-004**: System MUST support named columns whose visible values come from the active campaign calendar's ordered labels.
 - **FR-005**: System MUST preserve the ordered position of a named value separately from its display label so duplicated or renamed labels do not corrupt selection behavior.
-- **FR-006**: System MUST update lower-level column ranges when a higher-level date part changes.
-- **FR-007**: System MUST automatically cap a lower-level date part to the nearest valid value when a higher-level date part reduces the allowed range.
+- **FR-006**: System MUST update dependent column ranges by evaluating calendar constraints from the highest structural date tier to the lowest available tier.
+- **FR-007**: System MUST automatically cap a lower-level date part to the nearest valid value, defaulting to the maximum allowed value of the new range, when a higher-level date part reduces the allowed range.
 - **FR-008**: System MUST visually communicate automatic date adjustments before the user saves the edited date.
 - **FR-009**: Users MUST be able to operate the picker with touch, pointer, mouse wheel or trackpad scrolling, and keyboard controls.
 - **FR-010**: System MUST keep selected values, preview text, and saved output synchronized throughout picker interaction.
 - **FR-011**: System MUST preserve existing support for partial dates such as year-only and year-with-parent-unit dates.
 - **FR-012**: System MUST prevent saving impossible dates created by calendar range changes.
-- **FR-013**: System MUST display long named calendar values without clipping, overlapping, or making adjacent columns unusable.
+- **FR-013**: System MUST display long named calendar values without clipping, overlapping, or making adjacent columns unusable. On small viewports, text MUST wrap or truncate cleanly within its designated wheel track while the synchronized preview displays the full date representation.
 - **FR-014**: System MUST provide accessible names and current-value announcements for each date column.
 - **FR-015**: System MUST default to the existing campaign calendar behavior when no custom named units are configured.
 
@@ -90,6 +92,7 @@ As a user editing a campaign date, I want lower-level date values to adjust when
 - **Calendar Unit Option**: One ordered value within a calendar unit, either numeric or named.
 - **Date Selection**: The currently selected set of date parts and the precision level chosen by the user.
 - **Calendar Constraint**: The valid value range for one date part based on the selected values of higher-level parts.
+- **Intercalary Anchor**: A named date position outside the standard unit hierarchy, such as a festival day between months.
 
 ## Success Criteria _(mandatory)_
 
