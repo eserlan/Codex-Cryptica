@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Better date picker: dynamic scroll-wheel picker for custom calendars from GitHub issue #873"
 
+## Clarifications
+
+### Session 2026-05-24
+
+- Q: How should intercalary days be represented in saved date selections? -> A: Intercalary days are saved as named anchors that replace normal month/day selection for that date.
+- Q: How should users navigate very large numeric date ranges? -> A: Wheel columns with large numeric ranges also provide direct numeric entry or jump controls for fast positioning.
+- Q: How should saved dates handle renamed or reordered named calendar values? -> A: Named calendar values use stable identities; saved dates keep pointing to the same value across label renames and reordering.
+- Q: How should long labels behave on small viewports? -> A: Long labels are truncated with an ellipsis inside wheel columns; the full label appears in the synchronized preview.
+- Q: How should invalid saved dates behave after campaign calendar edits? -> A: Invalid saved dates open in a repair state; the original value is preserved until the user confirms the nearest valid replacement.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Pick Dates With Scroll Wheels (Priority: P1)
@@ -51,19 +61,20 @@ As a user editing a campaign date, I want lower-level date values to adjust when
 
 1. **Given** the selected day is 34 in a 35-day month, **When** the user changes to a month with 30 days, **Then** the picker changes the selected day to 30 and shows that adjustment clearly.
 2. **Given** the selected day remains valid after a parent unit changes, **When** the user changes that parent unit, **Then** the selected day is preserved.
-3. **Given** a saved date becomes invalid because the campaign calendar configuration changed, **When** the picker opens that date, **Then** it presents the nearest valid equivalent and requires the user to confirm the resulting value before saving.
+3. **Given** a saved date becomes invalid because the campaign calendar configuration changed, **When** the picker opens that date, **Then** it preserves the original value, enters a repair state, presents the nearest valid equivalent, and requires the user to confirm the replacement before saving.
 
 ---
 
 ### Edge Cases
 
-- A calendar may have very large numeric ranges, such as hundreds of days in a year; the picker must remain navigable without requiring long, precise dragging.
+- A calendar may have very large numeric ranges, such as hundreds of days in a year; the picker must provide direct numeric entry or jump controls so users are not forced into long, precise dragging.
 - A calendar unit may contain only one value; that column should be stable and clearly selected rather than behaving like a broken scroll control.
-- A calendar may combine numeric and named columns; column sizing must keep all active values readable on mobile and desktop.
+- A calendar may combine numeric and named columns; column sizing must keep all active values readable on mobile and desktop, truncating long wheel labels with an ellipsis while showing the full text in the preview.
 - A previously saved partial date may omit day or month; opening the picker must preserve that precision unless the user explicitly adds more detail.
+- A previously saved date may no longer exist under the current campaign calendar; opening the picker must preserve the original value until the user confirms a valid repaired replacement.
 - Negative, zero, or era-relative years must be displayed consistently with the campaign's existing date rules.
-- Calendar labels may be duplicated or similar; the picker must preserve the selected ordered value even if two labels have the same visible text.
-- A calendar configuration may include intercalary days that fall outside standard month boundaries; the picker must gracefully swap or lock affected columns to represent those unique timeline anchors.
+- Calendar labels may be duplicated, renamed, reordered, or visually similar; the picker must preserve the selected stable value identity even if the visible text or order changes.
+- A calendar configuration may include intercalary days that fall outside standard month boundaries; the picker must represent these as named anchors that replace normal month/day selection for that date.
 - Rapid continuous scrolling across columns must remain responsive and must not leave the picker showing stale, impossible, or partially updated date combinations.
 
 ## Requirements _(mandatory)_
@@ -74,7 +85,7 @@ As a user editing a campaign date, I want lower-level date values to adjust when
 - **FR-002**: System MUST center the active value for each visible column in a clear selection area before treating that value as selected.
 - **FR-003**: System MUST support numeric columns with configurable minimum and maximum ranges based on the active calendar configuration.
 - **FR-004**: System MUST support named columns whose visible values come from the active campaign calendar's ordered labels.
-- **FR-005**: System MUST preserve the ordered position of a named value separately from its display label so duplicated or renamed labels do not corrupt selection behavior.
+- **FR-005**: System MUST preserve a stable identity for each named calendar value separately from its display label and current order so duplicated, renamed, or reordered labels do not corrupt saved date selections.
 - **FR-006**: System MUST update dependent column ranges by evaluating calendar constraints from the highest structural date tier to the lowest available tier.
 - **FR-007**: System MUST automatically cap a lower-level date part to the nearest valid value, defaulting to the maximum allowed value of the new range, when a higher-level date part reduces the allowed range.
 - **FR-008**: System MUST visually communicate automatic date adjustments before the user saves the edited date.
@@ -82,17 +93,21 @@ As a user editing a campaign date, I want lower-level date values to adjust when
 - **FR-010**: System MUST keep selected values, preview text, and saved output synchronized throughout picker interaction.
 - **FR-011**: System MUST preserve existing support for partial dates such as year-only and year-with-parent-unit dates.
 - **FR-012**: System MUST prevent saving impossible dates created by calendar range changes.
-- **FR-013**: System MUST display long named calendar values without clipping, overlapping, or making adjacent columns unusable. On small viewports, text MUST wrap or truncate cleanly within its designated wheel track while the synchronized preview displays the full date representation.
+- **FR-013**: System MUST display long named calendar values without clipping, overlapping, or making adjacent columns unusable. On small viewports, long labels MUST truncate with an ellipsis inside their designated wheel track while the synchronized preview displays the full date representation.
 - **FR-014**: System MUST provide accessible names and current-value announcements for each date column.
 - **FR-015**: System MUST default to the existing campaign calendar behavior when no custom named units are configured.
+- **FR-016**: System MUST save intercalary days as named date anchors instead of forcing them into month/day values.
+- **FR-017**: System MUST provide direct numeric entry or jump controls for numeric wheel columns whose configured range is too large for efficient scrolling alone.
+- **FR-018**: System MUST preserve invalid saved date values after campaign calendar edits until the user confirms a repaired valid replacement.
 
 ### Key Entities
 
 - **Calendar Unit**: A selectable part of a campaign date, such as year, month, season, moon phase, or day.
-- **Calendar Unit Option**: One ordered value within a calendar unit, either numeric or named.
+- **Calendar Unit Option**: One selectable value within a calendar unit, either numeric or named; named options have stable identities plus display labels and ordering.
 - **Date Selection**: The currently selected set of date parts and the precision level chosen by the user.
 - **Calendar Constraint**: The valid value range for one date part based on the selected values of higher-level parts.
-- **Intercalary Anchor**: A named date position outside the standard unit hierarchy, such as a festival day between months.
+- **Intercalary Anchor**: A named saved date position outside the standard month/day hierarchy, such as a festival day between months.
+- **Repair State**: The picker state shown when a saved date no longer matches the active campaign calendar and needs user-confirmed replacement.
 
 ## Success Criteria _(mandatory)_
 
