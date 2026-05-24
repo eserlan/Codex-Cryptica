@@ -97,6 +97,8 @@
 
 **Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline can allocate a new array on every evaluation causing unnecessary garbage collection. While it can be solved with an imperative loop for iteration, if an array is explicitly needed by the UI, caching it natively in the store (`allX = $derived.by(() => Object.values(this.X))`) prevents the dependency from repeatedly evaluating in Svelte `MapView`.
 **Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
 ## 2026-05-24 - Array Spread and Chained .map Allocation Optimization
+
 **Learning:** Found an instance in `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte` where an array of outbound connections and inbound connections was mapped into new objects, then concatenated using the array spread operator (`[...outbound, ...inbound]`) inside a Svelte `$derived` block. This triggers three intermediate array allocations per reactive evaluation.
-**Action:** Replaced the chained array methods (`.map().map()` combined with spread syntax) with a single imperative `for` loop and `.push()`. This avoids garbage collection pressure, preventing performance degradation in reactive scopes where the calculation is invoked frequently.
+**Action:** Replaced the two separate `.map()` transformations (outbound and inbound) plus spread concatenation (`[...outbound, ...inbound]`) with a single imperative `for` loop and `.push()`. This avoids garbage collection pressure, preventing performance degradation in reactive scopes where the calculation is invoked frequently.

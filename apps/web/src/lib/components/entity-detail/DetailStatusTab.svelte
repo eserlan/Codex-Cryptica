@@ -81,10 +81,16 @@
     return str;
   };
 
+  type ConnectionViewModel = Entity["connections"][number] & {
+    isOutbound: boolean;
+    displayTitle: string;
+    targetId: string;
+  };
+
   let allConnections = $derived.by(() => {
-    if (!entity) return [];
+    if (!entity) return [] as ConnectionViewModel[];
     // ⚡ Bolt Optimization: Replace chained .map() and spread allocations with an imperative loop
-    const result = [];
+    const result: ConnectionViewModel[] = [];
 
     for (let i = 0; i < entity.connections.length; i++) {
       const c = entity.connections[i];
