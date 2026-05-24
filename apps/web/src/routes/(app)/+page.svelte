@@ -159,7 +159,7 @@
 <svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
 <div
-  class="h-[calc(100vh-var(--header-height,65px))] flex bg-chrome-bg text-chrome-text overflow-hidden relative"
+  class="h-[var(--app-content-height)] flex bg-chrome-bg text-chrome-text overflow-hidden relative"
 >
   <div class="flex-1 relative overflow-hidden">
     {#if layoutUIStore.mainViewMode === "focus" && layoutUIStore.focusedEntityId && EmbeddedEntityView}
