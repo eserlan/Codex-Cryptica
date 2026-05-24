@@ -83,19 +83,33 @@
 
   let allConnections = $derived.by(() => {
     if (!entity) return [];
-    const outbound = entity.connections.map((c: Connection) => ({
-      ...c,
-      isOutbound: true,
-      displayTitle: vault.entities[c.target]?.title || c.target,
-      targetId: c.target,
-    }));
-    const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
-      ...item.connection,
-      isOutbound: false,
-      displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
-      targetId: item.sourceId,
-    }));
-    return [...outbound, ...inbound];
+    // ⚡ Bolt Optimization: Replace chained .map() and spread allocations with an imperative loop
+    const result = [];
+
+    for (let i = 0; i < entity.connections.length; i++) {
+      const c = entity.connections[i];
+      result.push({
+        ...c,
+        isOutbound: true,
+        displayTitle: vault.entities[c.target]?.title || c.target,
+        targetId: c.target,
+      });
+    }
+
+    const inboundList = vault.inboundConnections[entity.id];
+    if (inboundList) {
+      for (let i = 0; i < inboundList.length; i++) {
+        const item = inboundList[i];
+        result.push({
+          ...item.connection,
+          isOutbound: false,
+          displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
+          targetId: item.sourceId,
+        });
+      }
+    }
+
+    return result;
   });
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
