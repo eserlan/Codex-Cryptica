@@ -12,9 +12,7 @@ test.describe("Vault Switching Accessibility", () => {
       }
     });
     await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
   });
 
   test("action buttons should be accessible via keyboard and have proper labels", async ({
@@ -26,6 +24,7 @@ test.describe("Vault Switching Accessibility", () => {
     await page.getByRole("button", { name: "NEW VAULT" }).click();
     await page.getByPlaceholder("Vault Name...").fill("A11yTestVault");
     await page.getByRole("button", { name: "CREATE" }).click();
+    await expect(page.getByTestId("vault-switcher-modal")).toBeHidden();
 
     // Re-open the vault switcher (creating a vault closes the modal)
     await page.getByTestId("open-vault-button").click();
@@ -36,7 +35,7 @@ test.describe("Vault Switching Accessibility", () => {
     // Check that buttons are discoverable by role + accessible name (confirms aria-label)
     const renameButtons = modal.getByRole("button", { name: "Rename" });
     const restoreButtons = modal.getByRole("button", {
-      name: "Restore from Folder",
+      name: /Restore/,
     });
     const deleteButtons = modal.getByRole("button", { name: "Delete" });
 
@@ -47,11 +46,11 @@ test.describe("Vault Switching Accessibility", () => {
     // Scope to the non-active vault row (the only row that has a Delete button)
     const nonActiveRow = modal
       .locator(".group")
-      .filter({ has: modal.getByRole("button", { name: "Delete" }) })
+      .filter({ has: page.getByRole("button", { name: "Delete" }) })
       .first();
 
     const restoreBtn = nonActiveRow.getByRole("button", {
-      name: "Restore from Folder",
+      name: /Restore/,
     });
     const renameBtn = nonActiveRow.getByRole("button", { name: "Rename" });
     const deleteBtn = nonActiveRow.getByRole("button", { name: "Delete" });

@@ -289,17 +289,28 @@
                   <span class="icon-[lucide--download-cloud] w-3.5 h-3.5"
                   ></span>
                 </button>
-              {/if}
 
-              <button
-                class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                onclick={() => handleImportToVault(v)}
-                title="Restore from Folder"
-                aria-label="Restore {v.name} from Folder"
-                disabled={isLoading || !!editingId}
-              >
-                <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
-              </button>
+                <button
+                  type="button"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => vault.saveToFolder()}
+                  title="Save to Folder — writes all changes from your internal archive to your linked folder."
+                  aria-label="Save to Folder"
+                  disabled={isLoading || !!editingId}
+                >
+                  <span class="icon-[lucide--upload-cloud] w-3.5 h-3.5"></span>
+                </button>
+              {:else}
+                <button
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => handleImportToVault(v)}
+                  title="Restore from Folder"
+                  aria-label="Restore {v.name} from Folder"
+                  disabled={isLoading || !!editingId}
+                >
+                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                </button>
+              {/if}
 
               <button
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
