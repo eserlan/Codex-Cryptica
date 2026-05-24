@@ -292,31 +292,40 @@
             role="combobox"
             aria-autocomplete="list"
             aria-expanded="true"
-            aria-controls={searchStore.results.length > 0
-              ? "search-results-list"
-              : undefined}
+            aria-controls={showAutocomplete && suggestions.length > 0
+              ? "search-autocomplete-listbox"
+              : searchStore.results.length > 0
+                ? "search-results-list"
+                : undefined}
             aria-label="Search notes"
             data-testid="search-modal-input"
-            aria-activedescendant={searchStore.results.length > 0
-              ? `search-result-${searchStore.selectedIndex}`
-              : undefined}
+            aria-activedescendant={showAutocomplete && suggestions.length > 0 && autocompleteActiveIndex >= 0
+              ? `search-autocomplete-option-${autocompleteActiveIndex}`
+              : searchStore.results.length > 0
+                ? `search-result-${searchStore.selectedIndex}`
+                : undefined}
           />
 
           {#if showAutocomplete && suggestions.length > 0}
             <div
+              id="search-autocomplete-listbox"
+              role="listbox"
+              aria-label="Autocomplete suggestions"
               class="absolute z-[100] left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-lg border border-chrome-border bg-chrome-surface/95 backdrop-blur-md p-1 shadow-lg"
             >
               {#each suggestions as label, index}
                 <button
                   type="button"
+                  id={`search-autocomplete-option-${index}`}
+                  role="option"
+                  aria-selected={autocompleteActiveIndex === index}
                   onclick={() => selectLabel(label)}
                   class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-chrome-accent/10 text-chrome-text hover:text-chrome-accent font-mono transition-colors flex items-center gap-1.5 {autocompleteActiveIndex ===
                   index
                     ? 'bg-chrome-accent/10 text-chrome-accent'
                     : ''}"
                 >
-                  <span class="text-chrome-accent/60">{autocompletePrefix}</span
-                  >
+                  <span class="text-chrome-accent/60">{autocompletePrefix}</span>
                   <span>{label}</span>
                 </button>
               {/each}
@@ -336,6 +345,7 @@
                   explorerUIStore.toggleLabelFilter(activeLabel, true)}
                 class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded-full bg-chrome-accent/10 text-chrome-accent border border-chrome-accent/20 hover:bg-chrome-accent/20 hover:border-chrome-accent/30 transition-all shadow-sm cursor-pointer"
                 title="Click to remove filter"
+                aria-label={`Remove ${activeLabel} filter`}
               >
                 <span>#{activeLabel}</span>
                 <span

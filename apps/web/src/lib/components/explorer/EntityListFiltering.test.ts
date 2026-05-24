@@ -1,7 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
-import { tick } from "svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EntityList from "./EntityList.svelte";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
@@ -86,13 +85,12 @@ describe("EntityList Filtering", () => {
     // Find and click "MerchantLabel" label pill
     const merchantPill = screen.getByText("MerchantLabel");
     await fireEvent.click(merchantPill);
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // Should only show Merchant
-    expect(screen.queryByText("City Guard")).toBeNull();
-    expect(screen.queryByText("Castle Guard")).toBeNull();
-    expect(screen.getByText("Merchant")).not.toBeNull();
+    await waitFor(() => {
+      // Should only show Merchant
+      expect(screen.queryByText("City Guard")).toBeNull();
+      expect(screen.queryByText("Castle Guard")).toBeNull();
+      expect(screen.getByText("Merchant")).not.toBeNull();
+    });
   });
 
   it("applies AND logic for multiple label filters", async () => {
@@ -101,23 +99,21 @@ describe("EntityList Filtering", () => {
     // Click "Guard" pill
     const guardPill = screen.getAllByText("Guard")[0];
     await fireEvent.click(guardPill);
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // Shows both guards
-    expect(screen.getByText("City Guard")).not.toBeNull();
-    expect(screen.getByText("Castle Guard")).not.toBeNull();
-    expect(screen.queryByText("Merchant")).toBeNull();
+    await waitFor(() => {
+      // Shows both guards
+      expect(screen.getByText("City Guard")).not.toBeNull();
+      expect(screen.getByText("Castle Guard")).not.toBeNull();
+      expect(screen.queryByText("Merchant")).toBeNull();
+    });
 
     // Ctrl+Click "NPC" pill
     const npcPill = screen.getAllByText("NPC")[0];
     await fireEvent.click(npcPill, { ctrlKey: true });
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // Should only show "City Guard" (has both Guard and NPC)
-    expect(screen.getByText("City Guard")).not.toBeNull();
-    expect(screen.queryByText("Castle Guard")).toBeNull();
+    await waitFor(() => {
+      // Should only show "City Guard" (has both Guard and NPC)
+      expect(screen.getByText("City Guard")).not.toBeNull();
+      expect(screen.queryByText("Castle Guard")).toBeNull();
+    });
     expect(screen.queryByText("Merchant")).toBeNull();
   });
 
@@ -184,19 +180,18 @@ describe("EntityList Filtering", () => {
 
     // Apply filter
     await fireEvent.click(screen.getByText("MerchantLabel"));
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(screen.queryByText("City Guard")).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText("City Guard")).toBeNull();
+    });
 
     // Find removal button (X) for the active filter pill
     const clearButton = screen.getByLabelText("Remove MerchantLabel filter");
     await fireEvent.click(clearButton);
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // All should be back
-    expect(screen.getByText("City Guard")).not.toBeNull();
-    expect(screen.getByText("Castle Guard")).not.toBeNull();
-    expect(screen.getByText("Merchant")).not.toBeNull();
+    await waitFor(() => {
+      // All should be back
+      expect(screen.getByText("City Guard")).not.toBeNull();
+      expect(screen.getByText("Castle Guard")).not.toBeNull();
+      expect(screen.getByText("Merchant")).not.toBeNull();
+    });
   });
 });

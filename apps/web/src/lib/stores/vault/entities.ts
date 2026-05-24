@@ -10,7 +10,9 @@ import { deleteOpfsEntry } from "../../utils/opfs";
 
 function applyAutoLabels(entity: LocalEntity): LocalEntity {
   const hasEndDate =
-    entity.end_date && typeof entity.end_date.year === "number";
+    entity.end_date &&
+    typeof entity.end_date.year === "number" &&
+    Number.isFinite(entity.end_date.year);
   const labels = entity.labels ? [...entity.labels] : [];
   const hasPastLabel = labels.includes("past");
 

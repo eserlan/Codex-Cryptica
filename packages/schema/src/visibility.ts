@@ -7,7 +7,8 @@ export type VisibilitySettings = {
 
 /**
  * Core visibility check logic for Fog of War.
- * Precedence Rule: 'hidden' label > 'revealed' label > defaultVisibility.
+ * Precedence Rule: 'hidden' tag/label > 'revealed' tag/label > defaultVisibility.
+ * Checks legacy tags as a fallback and current labels.
  *
  * @param entity The entity to check
  * @param settings The current visibility settings

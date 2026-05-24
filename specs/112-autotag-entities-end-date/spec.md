@@ -59,7 +59,7 @@ As a Codex Cryptica user, when I open my vault, any existing markdown file conta
 
 ### Edge Cases
 
-- **Manual "past" Tag**: If a user manually added `"past"` to an entity that has no `end_date`, we should preserve it (i.e. do not aggressively delete it if they explicitly want it).
+- **Manual "past" Tag / Synchronization**: To ensure consistency across editing and loading, the presence of the `"past"` label is strictly synchronized with the presence of a valid `end_date`. Therefore, a manual `"past"` label on an entity with no `end_date` is not preserved across entity saves or loads.
 - **Invalid or Empty End Date**: An `end_date` object without a valid `year` (e.g., empty or undefined) should not trigger the `"past"` tag, and if a `"past"` tag was present, it should be removed.
 - **Duplicate Prevention**: If `"past"` is already in the tags list when an `end_date` is added, we must not duplicate it.
 
@@ -67,8 +67,8 @@ As a Codex Cryptica user, when I open my vault, any existing markdown file conta
 
 ### Functional Requirements
 
-- **FR-001**: System MUST automatically append `"past"` to the `tags` array of an entity if `end_date` has a valid `year` defined.
-- **FR-002**: System MUST automatically remove `"past"` from the `tags` array of an entity if `end_date` is cleared or is undefined, **unless** `"past"` was not part of an autotagging flow (or simply always keep `tags` in sync with the presence of `end_date`). To be safe and clean: if there is no `end_date`, `"past"` tag is removed.
+- **FR-001**: System MUST automatically append `"past"` to the `tags`/`labels` array of an entity if `end_date` has a valid `year` defined.
+- **FR-002**: System MUST automatically remove `"past"` from the `tags`/`labels` array of an entity if `end_date` is cleared, is undefined, or is invalid.
 - **FR-003**: The autotagging behavior MUST apply during both entity creation (`createEntity`) and entity update (`updateEntity`) operations.
 - **FR-004**: The autotagging behavior MUST apply when parsing existing markdown files from disk (`parseMarkdown`).
 

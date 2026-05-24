@@ -58,7 +58,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       title: parsed.metadata.title || id!,
       status: parsed.metadata.status || "active",
       tags: parsed.metadata.tags || [],
-      labels: parsed.metadata.labels || [],
+      labels: parsed.metadata.labels || parsed.metadata.tags || [],
       aliases: parsed.metadata.aliases || [],
       connections,
       content: parsed.content,
@@ -67,7 +67,9 @@ export const fileIOAdapter: IFileIOAdapter = {
     };
 
     const hasEndDate =
-      entity.end_date && typeof entity.end_date.year === "number";
+      entity.end_date &&
+      typeof entity.end_date.year === "number" &&
+      Number.isFinite(entity.end_date.year);
     const hasPastLabel = entity.labels.includes("past");
     if (hasEndDate && !hasPastLabel) {
       entity.labels = [...entity.labels, "past"];

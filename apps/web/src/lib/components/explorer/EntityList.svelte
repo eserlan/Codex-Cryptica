@@ -109,8 +109,8 @@
       if (t.startsWith("#") || t.startsWith("@")) {
         const val = t.slice(1);
         if (val) {
-          // Find case-sensitive match
-          const match = uniqueLabels.find((l) => l.toLowerCase() === val);
+          // Find case-insensitive match
+          const match = uniqueLabels.find((l) => l.toLowerCase() === val.toLowerCase());
           if (match) {
             parsedLabels.add(match);
             hasLabelToken = true;

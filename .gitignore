@@ -75,3 +75,4 @@ blogPics/
 .netlify/
 .cache/
 .eslintcache
+.claude/
