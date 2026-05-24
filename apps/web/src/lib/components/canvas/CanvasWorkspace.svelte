@@ -170,7 +170,7 @@
 <div
   class="canvas-container {logic.isConnecting
     ? 'is-connecting'
-    : ''} flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
+    : ''} flex h-[var(--app-content-height)] w-full overflow-hidden relative"
   tabindex="-1"
   role="none"
 >

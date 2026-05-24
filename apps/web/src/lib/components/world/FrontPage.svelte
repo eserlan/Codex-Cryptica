@@ -286,7 +286,7 @@
 
 <section
   data-testid="front-page-shell"
-  class="front-page-shell world-canvas relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
+  class="front-page-shell world-canvas relative isolate min-h-[calc(var(--app-content-height)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
   style={`background-color: ${themeTokens.background}; background-image: var(--bg-texture-overlay), radial-gradient(circle at top, rgba(${hexToRgb(
     themeTokens.primary,
   )}, 0.16), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
