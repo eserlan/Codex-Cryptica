@@ -233,7 +233,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "era-date-picker",
     title: "Pick Dates",
     content:
-      "Pick years quickly without typing. Click the grid to zoom into specific decades and years.",
+      "Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
     icon: "icon-[lucide--calendar]",
   },
   "import-resume": {
