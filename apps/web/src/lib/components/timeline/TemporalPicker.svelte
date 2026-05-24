@@ -179,9 +179,26 @@
 
   const save = () => {
     if (directDateError) return;
+
+    // Normalize properties according to precision to keep saved structures clean and unambiguous
+    const cleanSelection = { ...activeSelection };
+    if (cleanSelection.precision === "year") {
+      delete cleanSelection.unitId;
+      delete cleanSelection.day;
+      delete cleanSelection.anchorId;
+    } else if (cleanSelection.precision === "unit") {
+      delete cleanSelection.day;
+      delete cleanSelection.anchorId;
+    } else if (cleanSelection.precision === "day") {
+      delete cleanSelection.anchorId;
+    } else if (cleanSelection.precision === "anchor") {
+      delete cleanSelection.unitId;
+      delete cleanSelection.day;
+    }
+
     // Save as rich DateSelection structure
     value = {
-      ...activeSelection,
+      ...cleanSelection,
       calendarRevision: calendarStore.config.revision || 1,
     };
     onClose();
