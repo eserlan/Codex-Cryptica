@@ -79,6 +79,12 @@ export class FileHandler extends BaseHandler {
               }
             }
           }
+        } else if (parts.length > 1) {
+          let currentDir = vaultHandle;
+          for (let i = 0; i < parts.length - 1; i++) {
+            currentDir = await currentDir.getDirectoryHandle(parts[i]);
+          }
+          fileHandle = await currentDir.getFileHandle(parts[parts.length - 1]);
         }
       } catch (err) {
         console.error(`[P2P Host] Error accessing path: ${path}`, err);
