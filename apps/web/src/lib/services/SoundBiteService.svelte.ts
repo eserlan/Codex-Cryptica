@@ -330,14 +330,14 @@ class ProxiedGeminiTTSService implements TTSService {
       const styleInstruction = buildVoiceStyleInstruction(voiceProfile);
       if (styleInstruction) {
         debugStore.log(
-          `[ProxiedGeminiTTS] style instruction: "${styleInstruction}"`,
+          `[ProxiedGeminiTTS] style instruction: "${styleInstruction}" (computed but ignored for gemini-2.5-flash-preview-tts due to Google 500 bug)`,
         );
       }
 
       const model = await aiClientManager.getModel(
         apiKey,
         "gemini-2.5-flash-preview-tts",
-        styleInstruction || undefined,
+        undefined, // bypass systemInstruction for TTS to prevent Google 500 error
       );
 
       const ttsRequest: Record<string, unknown> = {
@@ -351,10 +351,6 @@ class ProxiedGeminiTTSService implements TTSService {
           },
         },
       };
-
-      if (styleInstruction) {
-        ttsRequest.systemInstruction = styleInstruction;
-      }
 
       const result = await (model as any).generateContent(ttsRequest);
 
