@@ -176,6 +176,7 @@ export class CacheService {
         image: raw.image ? String(raw.image) : undefined,
         thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
         metadata: raw.metadata ?? {},
+        soundBite: raw.soundBite,
         updatedAt:
           typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
         status: raw.status || "active",

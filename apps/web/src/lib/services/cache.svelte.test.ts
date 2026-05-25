@@ -47,6 +47,9 @@ describe("CacheService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("$state", {
+      snapshot: vi.fn((x) => x),
+    });
     service = new CacheService();
   });
 
@@ -91,6 +94,37 @@ describe("CacheService", () => {
       const hit = await service.get("v1:f1.md");
       expect(hit).toBeDefined();
       expect(hit?.entity.title).toBe("Cached");
+    });
+
+    it("should preserve soundBite fields during cache operations", async () => {
+      await service.preloadVault("v1");
+      const entity = {
+        id: "e1",
+        title: "Emese Kovács",
+        type: "character",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        soundBite: {
+          transcript: "They think they can break me...",
+          audioFile: "audio/emese-kov-cs_soundbite.wav",
+          voiceMode: "entity",
+          voiceProfile: {
+            gender: "female",
+            ageRange: "young-adult",
+            accent: "Rugged frontier with a lilt",
+            tone: "Defiant",
+          },
+          generatedAt: 1779719690500,
+        },
+      } as any;
+
+      await service.set("v1:f1.md", 400, entity);
+
+      const hit = await service.get("v1:f1.md");
+      expect(hit).toBeDefined();
+      expect(hit?.entity.soundBite).toEqual(entity.soundBite);
     });
   });
 

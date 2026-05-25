@@ -117,8 +117,9 @@ class GeminiTTSService implements TTSService {
       }
 
       const json = await response.json();
+      const part = json?.candidates?.[0]?.content?.parts?.[0];
       const audioData: string | undefined =
-        json?.candidates?.[0]?.content?.parts?.[0]?.inline_data?.data;
+        part?.inline_data?.data ?? part?.inlineData?.data;
       if (!audioData) {
         console.warn(
           "[GeminiTTS] Response OK but no audio data in payload:",
@@ -128,7 +129,8 @@ class GeminiTTSService implements TTSService {
       }
 
       const mimeType: string =
-        json?.candidates?.[0]?.content?.parts?.[0]?.inline_data?.mime_type ??
+        part?.inline_data?.mime_type ??
+        part?.inlineData?.mimeType ??
         "audio/pcm";
       const sampleRate = parseInt(
         mimeType.match(/rate=(\d+)/i)?.[1] ?? "24000",
@@ -161,9 +163,17 @@ export class WebSpeechTTSService implements TTSService {
       try {
         const utterance = new SpeechSynthesisUtterance(text);
         applyWebSpeechVoice(utterance, voiceProfile);
+
+        // Resolve immediately onstart so generation completion is not blocked
+        // by the playback length of Web Speech.
+        utterance.onstart = () => resolve(null);
         utterance.onend = () => resolve(null);
         utterance.onerror = () => resolve(null);
+
         window.speechSynthesis.speak(utterance);
+
+        // Safety timeout fallback
+        setTimeout(() => resolve(null), 100);
       } catch {
         resolve(null);
       }
@@ -624,7 +634,7 @@ export class SoundBiteGenerator implements SoundBiteGenerationService {
   ): Promise<SoundBiteResult> {
     const L = this.logger;
     L.log(
-      `[SoundBite] generateSoundBite start — entity="${request.entity.title}" voiceMode=${request.voiceMode} model=${modelName} apiKey=${apiKey ? apiKey.slice(0, 6) + "…" : "(empty)"} isGuest=${options?.isGuest} isDemoMode=${options?.isDemoMode}`,
+      `[SoundBite] generateSoundBite start — entity="${request.entity.title}" voiceMode=${request.voiceMode} model=${modelName} hasApiKey=${!!apiKey} isGuest=${options?.isGuest} isDemoMode=${options?.isDemoMode}`,
     );
 
     if (options?.isGuest) {

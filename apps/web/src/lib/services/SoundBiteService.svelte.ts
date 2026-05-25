@@ -33,7 +33,7 @@ import { oracle } from "$lib/stores/oracle.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
 import { aiClientManager } from "$lib/services/ai/client-manager";
-import { writeOpfsFile } from "$lib/utils/opfs";
+import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
 import * as Comlink from "comlink";
 import type { TextGenerationService } from "schema";
 
@@ -72,7 +72,7 @@ class SoundBiteServiceClass {
       const modelName = oracle.modelName ?? "gemini-flash-lite-latest";
 
       debugStore.log(
-        `[SoundBiteService] generate start — entity="${entity.title}" voiceMode=${voiceMode} model=${modelName} apiKey=${apiKey ? apiKey.slice(0, 6) + "…" : "(empty — no key!)"} textGeneration=${oracle.textGeneration ? "present" : "MISSING"} contextRetrieval=${oracle.contextRetrieval ? "present" : "MISSING"}`,
+        `[SoundBiteService] generate start — entity="${entity.title}" voiceMode=${voiceMode} model=${modelName} hasApiKey=${!!apiKey} textGeneration=${oracle.textGeneration ? "present" : "MISSING"} contextRetrieval=${oracle.contextRetrieval ? "present" : "MISSING"}`,
       );
 
       const generator = getSoundBiteGenerator(
@@ -123,6 +123,76 @@ class SoundBiteServiceClass {
     }
   }
 
+  /** Synthesize custom text using the TTS service directly */
+  async synthesizeCustomText(
+    entity: Entity,
+    text: string,
+    voiceMode: SoundBiteVoiceMode,
+  ): Promise<void> {
+    if (this.isGenerating) return;
+
+    this.isGenerating = true;
+    this.result = null;
+    this.error = null;
+
+    try {
+      const apiKey = oracle.effectiveApiKey ?? "";
+
+      debugStore.log(
+        `[SoundBiteService] synthesizeCustomText start — entity="${entity.title}" text="${text.slice(0, 50)}..." voiceMode=${voiceMode}`,
+      );
+
+      // Reuse saved voice profile if matching mode, otherwise look for current results voice profile, otherwise fallback smartly
+      const savedMode = this.savedSoundBite?.voiceMode;
+      const savedProfile =
+        savedMode === voiceMode
+          ? (this.savedSoundBite?.voiceProfile as VoiceProfile | undefined)
+          : undefined;
+
+      let profile: VoiceProfile;
+      if (savedProfile) {
+        profile = savedProfile;
+      } else {
+        const contentLower = (entity.content ?? "").toLowerCase();
+        let gender: "male" | "female" = "female";
+        if (
+          /\b(he|his|him|himself|man|boy|father|husband)\b/.test(contentLower)
+        ) {
+          gender = "male";
+        }
+        profile = {
+          gender,
+          ageRange: "young-adult",
+          accent: "Standard",
+          tone: "Clear and expressive",
+        };
+      }
+
+      const ttsService = new SoundBiteTTSService();
+      const audioBlob = await ttsService.synthesize(text, profile, apiKey);
+
+      this.result = {
+        transcript: text,
+        audioBlob,
+        voiceMode,
+        voiceProfile: profile,
+      };
+
+      debugStore.log(`[SoundBiteService] synthesizeCustomText success`);
+    } catch (err: any) {
+      debugStore.error("[SoundBiteService] synthesizeCustomText error", err);
+      this.error = err.message ?? "Failed to synthesize custom text.";
+    } finally {
+      this.isGenerating = false;
+    }
+  }
+
+  /** Discard the current transient result */
+  discardResult(): void {
+    this.result = null;
+    this.error = null;
+  }
+
   /** Save the current result to the entity */
   async save(entity: Entity): Promise<void> {
     if (!this.result) return;
@@ -171,6 +241,27 @@ class SoundBiteServiceClass {
 
   /** Delete the saved sound bite from the entity */
   async deleteSoundBite(entity: Entity): Promise<void> {
+    const filename = entity.soundBite?.audioFile;
+    if (filename) {
+      try {
+        const vaultHandle = await vault.getActiveVaultHandle();
+        if (vaultHandle) {
+          const segments = filename.split("/");
+          await deleteOpfsEntry(vaultHandle, segments, vaultHandle.name).catch(
+            () => {},
+          );
+          debugStore.log(
+            `[SoundBiteService] deleted OPFS audio file: ${filename}`,
+          );
+        }
+      } catch (err) {
+        debugStore.warn(
+          "[SoundBiteService] failed to delete OPFS audio file",
+          err,
+        );
+      }
+    }
+
     await vault.updateEntity(entity.id, { soundBite: undefined });
     this.savedSoundBite = null;
     this.result = null;
@@ -246,6 +337,7 @@ class ProxiedGeminiTTSService implements TTSService {
       const model = await aiClientManager.getModel(
         apiKey,
         "gemini-2.5-flash-preview-tts",
+        styleInstruction || undefined,
       );
 
       const ttsRequest: Record<string, unknown> = {

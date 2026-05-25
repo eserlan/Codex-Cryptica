@@ -299,6 +299,13 @@ export class P2PHostService {
     this.transport.broadcast({ type: "THEME_UPDATE", payload: themeId });
   }
 
+  public broadcastSoundBitePlay(entityId: string) {
+    this.transport.broadcast({
+      type: "SOUND_BITE_PLAY",
+      entityId,
+    });
+  }
+
   stopHosting() {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);

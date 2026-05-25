@@ -116,7 +116,9 @@
           if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
           modalUIStore.openSoundBite(entity.id);
         }}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        class="transition flex items-center justify-center p-1 {entity.soundBite
+          ? 'text-theme-accent hover:opacity-85'
+          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Sound bite"
         title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
         data-testid="sound-bite-button"
@@ -124,7 +126,7 @@
         <span
           class="{entity.soundBite
             ? 'icon-[lucide--volume-2]'
-            : 'icon-[lucide--volume-x]'} w-5 h-5"
+            : 'icon-[lucide--mic]'} w-5 h-5"
         ></span>
       </button>
     {/if}

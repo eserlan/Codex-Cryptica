@@ -16,6 +16,29 @@
   let showOverwriteConfirm = $state(false);
   let audioEl = $state<HTMLAudioElement | null>(null);
 
+  let isEditingText = $state(false);
+  let editableTranscript = $state("");
+
+  function startEditing() {
+    editableTranscript = displayed?.transcript ?? "";
+    isEditingText = true;
+  }
+
+  function cancelEditing() {
+    isEditingText = false;
+    editableTranscript = "";
+  }
+
+  async function handleSynthesize() {
+    if (!editableTranscript.trim()) return;
+    isEditingText = false;
+    await soundBiteService.synthesizeCustomText(
+      entity,
+      editableTranscript,
+      voiceMode,
+    );
+  }
+
   // ─── Derived ──────────────────────────────────────────────────────────────
 
   const isGuest = $derived(vault.isGuest);
@@ -29,10 +52,11 @@
 
   /** The sound bite to display: transient result takes priority over saved */
   const displayed = $derived(result ?? saved ?? null);
+  const dispSafe = $derived(displayed as any);
 
   /** True when the displayed bite has usable audio (or is loading it) */
   const hasAudio = $derived(
-    !!result?.audioBlob || !!displayed?.audioFile || !!displayed?.audioData,
+    !!result?.audioBlob || !!dispSafe?.audioFile || !!dispSafe?.audioData,
   );
   /** True when the audio URL is ready to play */
   const audioReady = $derived(hasAudio && !!audioObjectUrl && !audioLoading);
@@ -56,8 +80,8 @@
   // reading it back — no feedback loop. Cleanup revokes the URL on re-run.
   $effect(() => {
     const blob = result?.audioBlob ?? null;
-    const audioFile = displayed?.audioFile ?? null;
-    const audioData = displayed?.audioData ?? null;
+    const audioFile = dispSafe?.audioFile ?? null;
+    const audioData = dispSafe?.audioData ?? null;
 
     let newUrl: string | null = null;
 
@@ -71,14 +95,26 @@
       audioLoading = true;
       audioObjectUrl = null;
       let cancelled = false;
-      vault.resolveImageUrl(audioFile).then((url) => {
-        if (!cancelled) {
-          audioObjectUrl = url || null;
-          audioLoading = false;
-        }
-      });
+      vault
+        .resolveImageUrl(audioFile)
+        .then((url) => {
+          if (!cancelled) {
+            audioObjectUrl = url || null;
+            audioLoading = false;
+          }
+        })
+        .catch((err) => {
+          console.error(
+            "[DetailSoundBite] Failed to resolve audio file URL",
+            err,
+          );
+          if (!cancelled) {
+            audioLoading = false;
+          }
+        });
       return () => {
         cancelled = true;
+        vault.releaseImageUrl(audioFile);
       };
     } else if (audioData) {
       // Legacy: base64-encoded audio stored directly in the entity.
@@ -260,17 +296,47 @@
         {/if}
 
         <!-- Transcript -->
-        <blockquote class="text-sm text-theme-text leading-relaxed italic">
-          "{displayed.transcript}"
-        </blockquote>
+        {#if isEditingText}
+          <div class="flex flex-col gap-2 mb-3">
+            <textarea
+              bind:value={editableTranscript}
+              class="w-full bg-theme-bg border border-theme-border rounded p-3 text-sm text-theme-text font-serif italic focus:border-theme-accent focus:ring-1 focus:ring-theme-accent resize-none focus:outline-none"
+              rows="4"
+              placeholder="Enter custom sound bite transcript..."
+            ></textarea>
+            <div class="flex justify-end gap-2">
+              <button
+                class="px-2.5 py-1 text-xs rounded border border-theme-border text-theme-muted hover:text-theme-text transition-colors"
+                onclick={cancelEditing}
+              >
+                Cancel
+              </button>
+              <button
+                class="px-2.5 py-1 text-xs rounded bg-theme-accent text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-1"
+                onclick={handleSynthesize}
+                disabled={!editableTranscript.trim() || isGenerating}
+              >
+                {#if isGenerating}
+                  <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+                  ></span>
+                {/if}
+                Synthesize Audio
+              </button>
+            </div>
+          </div>
+        {:else}
+          <blockquote class="text-sm text-theme-text leading-relaxed italic">
+            "{displayed.transcript}"
+          </blockquote>
+        {/if}
 
         <!-- Scholar byline -->
-        {#if displayed.voiceMode === "scholar" && (displayed.scholarName || soundBiteService.result?.scholarAttribution)}
+        {#if displayed.voiceMode === "scholar" && (dispSafe.scholarName || soundBiteService.result?.scholarAttribution)}
           {@const name =
-            displayed.scholarName ??
+            dispSafe.scholarName ??
             soundBiteService.result?.scholarAttribution?.name}
           {@const title =
-            displayed.scholarTitle ??
+            dispSafe.scholarTitle ??
             soundBiteService.result?.scholarAttribution?.title}
           <p class="text-xs text-theme-muted mt-2 text-right">
             — {name}{title ? `, ${title}` : ""}
@@ -278,8 +344,8 @@
         {/if}
 
         <!-- Voice profile badge — shows saved voice characteristics -->
-        {#if displayed.voiceProfile}
-          {@const vp = displayed.voiceProfile}
+        {#if dispSafe.voiceProfile}
+          {@const vp = dispSafe.voiceProfile}
           {@const parts = [
             vp.ageRange?.replace("-", " "),
             vp.gender,
@@ -300,16 +366,29 @@
           <div
             class="flex items-center gap-2 mt-3 pt-3 border-t border-theme-border"
           >
-            <!-- Regenerate -->
-            <button
-              class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
-              onclick={handleGenerate}
-              disabled={isGenerating}
-              title="Regenerate sound bite"
-            >
-              <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
-              Regenerate
-            </button>
+            {#if !isEditingText}
+              <!-- Regenerate -->
+              <button
+                class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
+                onclick={handleGenerate}
+                disabled={isGenerating}
+                title="Regenerate sound bite"
+              >
+                <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
+                Regenerate
+              </button>
+
+              <!-- Edit Text -->
+              <button
+                class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
+                onclick={startEditing}
+                disabled={isGenerating}
+                title="Edit transcript text"
+              >
+                <span class="icon-[lucide--edit] w-3 h-3"></span>
+                Edit Text
+              </button>
+            {/if}
 
             <div class="flex-1"></div>
 
@@ -335,17 +414,18 @@
               Copy
             </button>
 
-            <!-- Save / Remove -->
-            {#if saved}
-              <button
-                class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-danger transition-colors"
-                onclick={handleDelete}
-                title="Remove saved sound bite"
-              >
-                <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-                Remove
-              </button>
-            {:else}
+            <!-- Save / Discard / Remove -->
+            {#if result}
+              {#if saved}
+                <button
+                  class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
+                  onclick={() => soundBiteService.discardResult()}
+                  title="Discard unsaved changes and restore original"
+                >
+                  <span class="icon-[lucide--x-circle] w-3 h-3"></span>
+                  Discard
+                </button>
+              {/if}
               <button
                 class="flex items-center gap-1 text-xs text-theme-accent hover:opacity-80 transition-opacity"
                 onclick={handleSave}
@@ -354,6 +434,15 @@
                 <span class="icon-[lucide--save] w-3 h-3"></span>
                 Save
               </button>
+            {:else if saved}
+              <button
+                class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-danger transition-colors"
+                onclick={handleDelete}
+                title="Remove saved sound bite"
+              >
+                <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                Remove
+              </button>
             {/if}
           </div>
         {/if}
@@ -361,46 +450,92 @@
         <!-- Empty state — host -->
       {:else if !isGuest}
         <div class="flex flex-col items-center gap-3 py-2">
-          <p class="text-xs text-theme-muted text-center">
-            Generate a short audio clip in the voice of this entity or a named
-            scholar.
-          </p>
+          {#if isEditingText}
+            <p class="text-xs text-theme-muted text-center">
+              Write a custom transcript, then click Synthesize to generate its
+              voice.
+            </p>
 
-          <!-- Voice mode selector (empty state) -->
-          <div
-            class="flex items-center gap-1 text-xs"
-            role="group"
-            aria-label="Voice mode"
-          >
-            <button
-              class="px-3 py-1 rounded transition-colors {voiceMode === 'entity'
-                ? 'bg-theme-accent text-white'
-                : 'bg-theme-surface text-theme-muted hover:text-theme-text border border-theme-border'}"
-              onclick={() => (voiceMode = "entity")}
-              aria-pressed={voiceMode === "entity"}
-            >
-              Entity Voice
-            </button>
-            <button
-              class="px-3 py-1 rounded transition-colors {voiceMode ===
-              'scholar'
-                ? 'bg-theme-accent text-white'
-                : 'bg-theme-surface text-theme-muted hover:text-theme-text border border-theme-border'}"
-              onclick={() => (voiceMode = "scholar")}
-              aria-pressed={voiceMode === "scholar"}
-            >
-              Scholar Voice
-            </button>
-          </div>
+            <div class="w-full flex flex-col gap-2">
+              <textarea
+                bind:value={editableTranscript}
+                class="w-full bg-theme-bg border border-theme-border rounded p-3 text-sm text-theme-text font-serif italic focus:border-theme-accent focus:ring-1 focus:ring-theme-accent resize-none focus:outline-none"
+                rows="4"
+                placeholder="Enter custom sound bite transcript..."
+              ></textarea>
+              <div class="flex justify-end gap-2">
+                <button
+                  class="px-2.5 py-1 text-xs rounded border border-theme-border text-theme-muted hover:text-theme-text transition-colors"
+                  onclick={cancelEditing}
+                >
+                  Cancel
+                </button>
+                <button
+                  class="px-2.5 py-1 text-xs rounded bg-theme-accent text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-1"
+                  onclick={handleSynthesize}
+                  disabled={!editableTranscript.trim() || isGenerating}
+                >
+                  {#if isGenerating}
+                    <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+                    ></span>
+                  {/if}
+                  Synthesize Audio
+                </button>
+              </div>
+            </div>
+          {:else}
+            <p class="text-xs text-theme-muted text-center">
+              Generate a short audio clip in the voice of this entity or a named
+              scholar, or write custom text yourself.
+            </p>
 
-          <button
-            class="flex items-center gap-2 px-4 py-1.5 rounded bg-theme-accent text-white text-xs font-medium hover:opacity-90 transition-opacity"
-            onclick={handleGenerate}
-            disabled={isGenerating}
-          >
-            <span class="icon-[lucide--mic] w-3.5 h-3.5"></span>
-            Generate Sound Bite
-          </button>
+            <!-- Voice mode selector (empty state) -->
+            <div
+              class="flex items-center gap-1 text-xs"
+              role="group"
+              aria-label="Voice mode"
+            >
+              <button
+                class="px-3 py-1 rounded transition-colors {voiceMode ===
+                'entity'
+                  ? 'bg-theme-accent text-white'
+                  : 'bg-theme-surface text-theme-muted hover:text-theme-text border border-theme-border'}"
+                onclick={() => (voiceMode = "entity")}
+                aria-pressed={voiceMode === "entity"}
+              >
+                Entity Voice
+              </button>
+              <button
+                class="px-3 py-1 rounded transition-colors {voiceMode ===
+                'scholar'
+                  ? 'bg-theme-accent text-white'
+                  : 'bg-theme-surface text-theme-muted hover:text-theme-text border border-theme-border'}"
+                onclick={() => (voiceMode = "scholar")}
+                aria-pressed={voiceMode === "scholar"}
+              >
+                Scholar Voice
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button
+                class="flex items-center gap-2 px-4 py-1.5 rounded bg-theme-accent text-white text-xs font-medium hover:opacity-90 transition-opacity"
+                onclick={handleGenerate}
+                disabled={isGenerating}
+              >
+                <span class="icon-[lucide--mic] w-3.5 h-3.5"></span>
+                Generate Sound Bite
+              </button>
+              <button
+                class="flex items-center gap-2 px-4 py-1.5 rounded border border-theme-border text-theme-muted hover:text-theme-text text-xs font-medium transition-colors"
+                onclick={startEditing}
+                disabled={isGenerating}
+              >
+                <span class="icon-[lucide--edit-3] w-3.5 h-3.5"></span>
+                Write Custom Text
+              </button>
+            </div>
+          {/if}
         </div>
 
         <!-- Empty state — guest (no saved sound bite) -->

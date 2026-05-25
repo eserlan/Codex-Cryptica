@@ -184,7 +184,9 @@
               if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
               modalUIStore.openSoundBite(entity.id);
             }}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            class="px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest {entity.soundBite
+              ? 'border-theme-accent/30 text-theme-accent hover:border-theme-accent/50 hover:text-theme-accent/80'
+              : 'border-theme-border text-theme-secondary hover:text-theme-primary'}"
             title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
             aria-label="Sound bite"
             data-testid="zen-sound-bite-button"
@@ -192,7 +194,7 @@
             <span
               class="{entity.soundBite
                 ? 'icon-[lucide--volume-2]'
-                : 'icon-[lucide--volume-x]'} w-4 h-4"
+                : 'icon-[lucide--mic]'} w-4 h-4"
             ></span>
           </button>
         {/if}

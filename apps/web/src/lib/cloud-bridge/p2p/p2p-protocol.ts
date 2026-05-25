@@ -47,6 +47,7 @@ export type P2PMessage =
   | { type: "ENTITY_BATCH_UPDATE"; payload: Record<string, any> }
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
+  | { type: "SOUND_BITE_PLAY"; entityId: string }
   | VTTMessage;
 
 export function isValidP2PMessage(

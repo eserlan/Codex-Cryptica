@@ -8,6 +8,7 @@ import type {
   GuestPresenceStatus,
   GuestStore,
 } from "../../../stores/guest.svelte";
+import type { modalUIStore } from "../../../stores/ui/modal-ui.svelte";
 import type { MapAssetUrlCache } from "./map-asset-url-cache";
 import type { P2PClientTransport } from "../transport/client-transport";
 
@@ -32,6 +33,7 @@ export interface GuestHandlerContext {
   vault: typeof vault;
   sessionModeStore: typeof sessionModeStore;
   notificationStore: typeof notificationStore;
+  modalUIStore: typeof modalUIStore;
   mapSession: typeof mapSession;
   mapStore: typeof mapStore;
   themeStore: typeof themeStore;
