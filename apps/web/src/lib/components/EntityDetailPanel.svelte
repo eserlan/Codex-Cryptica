@@ -366,18 +366,7 @@
                   />
                 {/if}
               </div>
-              <div
-                role="tabpanel"
-                id={panelIds.inventory}
-                aria-labelledby={tabIds.inventory}
-                hidden={activeTab !== "inventory"}
-              >
-                {#if activeTab === "inventory"}
-                  <div class="text-theme-muted italic text-sm">
-                    Inventory coming soon...
-                  </div>
-                {/if}
-              </div>
+
               <div
                 role="tabpanel"
                 id={panelIds.map}
