@@ -64,4 +64,26 @@ describe("ExplorerUIStore", () => {
     store.toggleExplorerLabelGroup("v1", "G1");
     expect(Array.from(store.getCollapsedLabelGroups("v1"))).toEqual([]);
   });
+
+  it("handles collapsed entity states", () => {
+    const mockStorage = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    const persistence = new UIPersistence({ storage: mockStorage });
+    const store = new ExplorerUIStore(persistence);
+
+    expect(Array.from(store.getCollapsedEntities("v1"))).toEqual([]);
+
+    store.toggleExplorerEntityCollapse("v1", "e1");
+    expect(Array.from(store.getCollapsedEntities("v1"))).toEqual(["e1"]);
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_explorer_collapsed_entity_ids",
+      expect.stringContaining("e1"),
+    );
+
+    store.toggleExplorerEntityCollapse("v1", "e1");
+    expect(Array.from(store.getCollapsedEntities("v1"))).toEqual([]);
+  });
 });

@@ -131,12 +131,24 @@ export async function deleteEntity(
   const modifiedIds: string[] = [];
   for (const sourceId in newEntities) {
     const sourceEntity = newEntities[sourceId];
+    let isModified = false;
+    const updatedEntity = { ...sourceEntity };
+
     const hasConnection = sourceEntity.connections.some((c) => c.target === id);
     if (hasConnection) {
-      newEntities[sourceId] = {
-        ...sourceEntity,
-        connections: sourceEntity.connections.filter((c) => c.target !== id),
-      };
+      updatedEntity.connections = sourceEntity.connections.filter(
+        (c) => c.target !== id,
+      );
+      isModified = true;
+    }
+
+    if (sourceEntity.parent === id) {
+      updatedEntity.parent = undefined;
+      isModified = true;
+    }
+
+    if (isModified) {
+      newEntities[sourceId] = updatedEntity;
       modifiedIds.push(sourceId);
     }
   }
@@ -373,4 +385,32 @@ export function batchCreateEntities(
   }
 
   return { entities: newEntities, created };
+}
+
+export function detectCycle(
+  entityId: string,
+  potentialParentId: string | undefined,
+  entities: Record<string, LocalEntity>,
+): boolean {
+  if (!potentialParentId) return false;
+  if (entityId === potentialParentId) return true;
+
+  let currentId: string | undefined = potentialParentId;
+  const visited = new Set<string>();
+
+  while (currentId) {
+    if (visited.has(currentId)) {
+      return true;
+    }
+    visited.add(currentId);
+
+    if (currentId === entityId) {
+      return true;
+    }
+
+    const currentEntity = entities[currentId];
+    currentId = currentEntity?.parent;
+  }
+
+  return false;
 }

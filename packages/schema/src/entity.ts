@@ -134,6 +134,7 @@ export const EntitySchema = z.object({
   lastUpdated: z.number().optional(),
   updatedAt: z.number().optional(),
   _path: z.union([z.string(), z.array(z.string())]).optional(),
+  parent: z.string().optional(),
   soundBite: SoundBiteSchema.optional(),
   visibility: z.enum(["visible", "hidden"]).optional(),
 });
