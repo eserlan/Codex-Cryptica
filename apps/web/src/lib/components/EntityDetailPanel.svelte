@@ -86,25 +86,36 @@
     }
   });
 
-  // Cleanup lastSelectedNodePosition on unmount to prevent stale/incorrect zoom animation origins
+  // Clear lastSelectedNodePosition whenever entity changes (or component is destroyed).
+  // This prevents the next intro animation from inheriting a stale graph-node position
+  // from a previous entity when the user switches entities rapidly before the outro
+  // transition finishes (the cleanup effect only runs on destroy otherwise).
   $effect(() => {
+    // Track entity id so this effect re-runs (and its cleanup fires) on every
+    // entity change — not just on component destroy. This ensures
+    // lastSelectedNodePosition is cleared before the next intro animation,
+    // preventing rapid entity switching from animating from a stale node position.
+    void entity?.id;
     return () => {
       layoutUIStore.setLastSelectedNodePosition(null);
     };
   });
 
+  // ─── Action handlers ─────────────────────────────────────────────────────────
+  // All mutating actions guard on the live `entity` (not the stale `activeEntity`)
+  // so they cannot fire against the wrong entity during the exit animation.
+
   const startEditing = () => {
-    const current = entity || activeEntity;
-    if (!current) return;
-    editTitle = current.title;
-    editAliases = [...(current.aliases || [])];
-    editContent = current.content || "";
-    editLore = current.lore || "";
-    editType = current.type;
-    editImage = current.image || "";
-    editDate = current.date;
-    editStartDate = current.start_date;
-    editEndDate = current.end_date;
+    if (!entity) return;
+    editTitle = entity.title;
+    editAliases = [...(entity.aliases || [])];
+    editContent = entity.content || "";
+    editLore = entity.lore || "";
+    editType = entity.type;
+    editImage = entity.image || "";
+    editDate = entity.date;
+    editStartDate = entity.start_date;
+    editEndDate = entity.end_date;
     isEditing = true;
   };
 
@@ -113,11 +124,10 @@
   };
 
   const saveChanges = async () => {
-    const current = entity || activeEntity;
-    if (!current) return;
+    if (!entity) return;
     isSaving = true;
     try {
-      await vault.updateEntity(current.id, {
+      await vault.updateEntity(entity.id, {
         title: editTitle,
         aliases: $state.snapshot(editAliases),
         content: editContent,
@@ -141,11 +151,10 @@
   };
 
   const handleDelete = async () => {
-    const current = entity || activeEntity;
-    if (!current) return;
+    if (!entity) return;
     const confirmed = await notificationStore.confirm({
       title: "Delete Entity",
-      message: `Are you sure you want to permanently delete "${current.title}"? This action cannot be undone.`,
+      message: `Are you sure you want to permanently delete "${entity.title}"? This action cannot be undone.`,
       confirmLabel: "Delete permanently",
       cancelLabel: "Keep entity",
       isDangerous: true,
@@ -153,7 +162,7 @@
 
     if (confirmed) {
       try {
-        await vault.deleteEntity(current.id);
+        await vault.deleteEntity(entity.id);
         onClose();
       } catch (err: any) {
         console.error("Failed to delete entity", err);
@@ -165,11 +174,10 @@
   let isDraftActioning = $state(false);
 
   const handleApproveDraft = async () => {
-    const current = entity || activeEntity;
-    if (!current || isDraftActioning) return;
+    if (!entity || isDraftActioning) return;
     isDraftActioning = true;
     try {
-      await vault.updateEntity(current.id, { status: "active" });
+      await vault.updateEntity(entity.id, { status: "active" });
     } catch (err: any) {
       notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
@@ -178,11 +186,10 @@
   };
 
   const handleRejectDraft = async () => {
-    const current = entity || activeEntity;
-    if (!current || isDraftActioning) return;
+    if (!entity || isDraftActioning) return;
     isDraftActioning = true;
     try {
-      await vault.deleteEntity(current.id);
+      await vault.deleteEntity(entity.id);
       onClose();
     } catch (err: any) {
       notificationStore.notify(`Error: ${err.message}`, "error");

@@ -86,6 +86,26 @@ export type Era = z.infer<typeof EraSchema>;
 
 export const EntityTypeSchema = z.string();
 
+export const SoundBiteSchema = z.object({
+  transcript: z.string(),
+  audioFile: z.string().optional(), // vault-relative path e.g. "audio/{id}_soundbite.wav"
+  audioData: z.string().optional(), // legacy base64 fallback
+  voiceMode: z.enum(["entity", "scholar"]),
+  scholarName: z.string().optional(),
+  scholarTitle: z.string().optional(),
+  voiceProfile: z
+    .object({
+      gender: z.enum(["male", "female", "neutral"]),
+      ageRange: z.enum(["child", "young-adult", "middle-aged", "elder"]),
+      accent: z.string().nullable().optional(),
+      tone: z.string(),
+    })
+    .optional(),
+  generatedAt: z.number().optional(),
+});
+
+export type SoundBite = z.infer<typeof SoundBiteSchema>;
+
 export const EntitySchema = z.object({
   id: z.string(),
   type: EntityTypeSchema,
@@ -114,6 +134,8 @@ export const EntitySchema = z.object({
   lastUpdated: z.number().optional(),
   updatedAt: z.number().optional(),
   _path: z.union([z.string(), z.array(z.string())]).optional(),
+  soundBite: SoundBiteSchema.optional(),
+  visibility: z.enum(["visible", "hidden"]).optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

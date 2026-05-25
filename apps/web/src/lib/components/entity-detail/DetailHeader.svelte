@@ -16,6 +16,7 @@
   } from "$lib/components/search/search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
 
   let {
     entity,
@@ -101,6 +102,30 @@
         data-testid="find-in-graph-button"
       >
         <span class="icon-[lucide--target] w-5 h-5"></span>
+      </button>
+    {/if}
+    {#if !vault.isGuest || entity.soundBite}
+      <button
+        type="button"
+        onclick={() => {
+          // Skip loadFromEntity if the modal is already showing this entity —
+          // calling it again would reset result/error and interrupt active playback.
+          const alreadyOpen =
+            modalUIStore.soundBite?.show &&
+            modalUIStore.soundBite.entityId === entity.id;
+          if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
+          modalUIStore.openSoundBite(entity.id);
+        }}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        aria-label="Sound bite"
+        title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
+        data-testid="sound-bite-button"
+      >
+        <span
+          class="{entity.soundBite
+            ? 'icon-[lucide--volume-2]'
+            : 'icon-[lucide--volume-x]'} w-5 h-5"
+        ></span>
       </button>
     {/if}
     <button

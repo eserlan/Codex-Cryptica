@@ -115,6 +115,32 @@ export default {
         }
       }
 
+      // Map speechConfig → speech_config (required for TTS voice selection)
+      // The Google REST API uses deeply-nested snake_case names that differ from
+      // the camelCase SDK, so we have to translate each level explicitly.
+      // Only written to generation_config when a valid voice_name is present —
+      // sending an empty speech_config object causes a 400 from Google.
+      const rawSpeechConfig = rawConfig.speechConfig ?? rawConfig.speech_config;
+      if (rawSpeechConfig) {
+        const rawVoiceConfig =
+          rawSpeechConfig.voiceConfig ?? rawSpeechConfig.voice_config;
+        if (rawVoiceConfig) {
+          const rawPrebuilt =
+            rawVoiceConfig.prebuiltVoiceConfig ??
+            rawVoiceConfig.prebuilt_voice_config;
+          const voiceName = rawPrebuilt?.voiceName ?? rawPrebuilt?.voice_name;
+          if (voiceName) {
+            // Only assign when we have a concrete voice name — an empty or
+            // absent name would cause a 400 INVALID_ARGUMENT from Google.
+            generation_config.speech_config = {
+              voice_config: {
+                prebuilt_voice_config: { voice_name: voiceName },
+              },
+            };
+          }
+        }
+      }
+
       // CRITICAL: Google REST API throws 400 if system_instruction is found inside generation_config
       const systemKeys = [
         "systemInstruction",

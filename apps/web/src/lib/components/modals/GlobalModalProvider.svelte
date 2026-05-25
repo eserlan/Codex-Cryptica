@@ -148,6 +148,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.soundBite?.show}
+      {#await loadModal(() => import("$lib/components/modals/SoundBiteModal.svelte"), "SoundBiteModal") then SoundBiteModal}
+        {#if SoundBiteModal}
+          <SoundBiteModal />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
