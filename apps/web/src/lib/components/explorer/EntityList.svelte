@@ -4,9 +4,11 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { groupEntitiesForExplorer } from "./entityListGrouping";
+  import { buildEntityTree, type TreeNode } from "./entityTree";
   import type { Entity } from "schema";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import EntityListItem from "./EntityListItem.svelte";
 
   let {
     onSelect,
@@ -110,7 +112,9 @@
         const val = t.slice(1);
         if (val) {
           // Find case-insensitive match
-          const match = uniqueLabels.find((l) => l.toLowerCase() === val.toLowerCase());
+          const match = uniqueLabels.find(
+            (l) => l.toLowerCase() === val.toLowerCase(),
+          );
           if (match) {
             parsedLabels.add(match);
             hasLabelToken = true;
@@ -182,7 +186,6 @@
   let typeFilters = $state<Set<string>>(new Set());
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
-  const focusedEntityId = $derived(layoutUIStore.focusedEntityId);
   const viewMode = $derived(explorerUIStore.explorerViewMode);
   const allowedTypeSet = $derived.by(() =>
     allowedTypes ? new Set(allowedTypes) : null,
@@ -338,6 +341,53 @@
       typeFilters = nextFilters;
     }
   });
+
+  const collapsedEntities = $derived(
+    explorerUIStore.getCollapsedEntities(activeVaultId),
+  );
+
+  const entityTree = $derived(
+    buildEntityTree(vault.allEntities, filteredEntities),
+  );
+
+  let inlineCreationParentId = $state<string | null>(null);
+  let newChildTitle = $state("");
+  let newChildType = $state("character");
+  let isCreatingChild = $state(false);
+  let createChildError = $state<string | null>(null);
+
+  let isDragging = $state(false);
+
+  $effect(() => {
+    if (inlineCreationParentId && categories.list.length > 0) {
+      const currentIsValid = categories.list.some((c) => c.id === newChildType);
+      if (!currentIsValid) {
+        newChildType = categories.list[0].id;
+      }
+    }
+  });
+
+  async function handleCreateChild(parentId: string) {
+    if (!newChildTitle.trim() || isCreatingChild) return;
+    isCreatingChild = true;
+    createChildError = null;
+    try {
+      const id = await vault.createEntity(newChildType, newChildTitle, {
+        parent: parentId,
+      });
+      newChildTitle = "";
+      inlineCreationParentId = null;
+
+      const newEntity = vault.allEntities.find((e) => e.id === id);
+      if (newEntity && onSelect) {
+        onSelect(newEntity);
+      }
+    } catch (err: any) {
+      createChildError = err.message || String(err);
+    } finally {
+      isCreatingChild = false;
+    }
+  }
 </script>
 
 <div class="flex flex-col h-full min-h-0 {className}">
@@ -491,143 +541,121 @@
     class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
-    {#snippet entityItem(entity: Entity)}
-      {@const cat = categories.getCategory(entity.type)}
-      <div
-        class="group relative flex items-center rounded-xl border transition-all {entity.id ===
-        focusedEntityId
-          ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
-          : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
-        data-testid="entity-list-item"
-        data-entity-id={entity.id}
-      >
-        <button
-          type="button"
-          draggable={!!onDragStart}
-          ondragstart={(e) => onDragStart?.(e, entity.id)}
-          ondragend={() => onDragEnd?.()}
-          onclick={() => onSelect?.(entity)}
-          title={`Select ${entity.title}`}
-          class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl"
-        >
-          <span
-            class="{getIconClass(
-              cat?.icon,
-            )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
-          ></span>
-          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <div
-              class="truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text transition-colors group-hover:text-theme-primary"
-            >
-              {entity.title}
-            </div>
-            {#if entity.aliases && entity.aliases.length > 0}
-              <div
-                class="truncate text-[9px] text-theme-muted/70 font-mono italic"
-              >
-                aka: {entity.aliases.slice(0, 2).join(", ")}
-                {#if entity.aliases.length > 2}
-                  <span class="text-[8px] opacity-60">
-                    +{entity.aliases.length - 2} more
-                  </span>
-                {/if}
-              </div>
-            {/if}
-          </div>
-        </button>
+    {#snippet treeNode(node: TreeNode, depth: number)}
+      {@const entity = node.entity}
+      {@const hasChildren = node.children.length > 0}
+      {@const isCollapsed =
+        searchQuery.trim() !== "" ? false : collapsedEntities.has(entity.id)}
 
-        {#if entity.labels && entity.labels.length > 0}
+      <div class="space-y-1">
+        <EntityListItem
+          {entity}
+          isMatching={node.isMatchingQuery}
+          {hasChildren}
+          {isCollapsed}
+          {onSelect}
+          onDragStart={(e, entityId) => {
+            isDragging = true;
+            onDragStart?.(e, entityId);
+          }}
+          onDragEnd={() => {
+            isDragging = false;
+            onDragEnd?.();
+          }}
+          {onOpenZen}
+          {onFindInGraph}
+          {onApproveDraft}
+          {onRejectDraft}
+          onAddChild={(pId) => {
+            if (inlineCreationParentId === pId) {
+              inlineCreationParentId = null;
+              newChildTitle = "";
+            } else {
+              inlineCreationParentId = pId;
+              newChildTitle = "";
+              if (categories.list.length > 0) {
+                newChildType = categories.list[0].id;
+              }
+            }
+          }}
+        />
+
+        {#if inlineCreationParentId === entity.id}
           <div
-            class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0"
+            class={depth < 5 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
           >
-            {#each entity.labels.slice(0, 2) as label}
-              <button
-                type="button"
-                onclick={(e) => {
-                  e.stopPropagation();
-                  explorerUIStore.toggleLabelFilter(
-                    label,
-                    e.ctrlKey || e.metaKey,
-                  );
+            <div
+              class="flex items-center gap-2 p-2 border border-theme-border/50 bg-theme-surface/30 rounded-xl"
+            >
+              <span class="icon-[lucide--plus] w-3 h-3 text-theme-muted"></span>
+              <input
+                type="text"
+                bind:value={newChildTitle}
+                placeholder="New entity name..."
+                onkeydown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateChild(entity.id);
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    inlineCreationParentId = null;
+                    newChildTitle = "";
+                  }
                 }}
-                class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
-                  label,
-                )
-                  ? 'bg-theme-primary text-theme-bg border-theme-primary'
-                  : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
+                class="flex-1 bg-transparent border-none text-xs text-theme-text placeholder-theme-muted/50 focus:outline-none focus:ring-0 p-0"
+                aria-label="New entity name"
+                disabled={isCreatingChild}
+              />
+              <select
+                bind:value={newChildType}
+                class="bg-theme-bg/50 border border-theme-border/50 text-[10px] text-theme-muted uppercase tracking-wider rounded px-1.5 py-0.5 focus:outline-none focus:ring-0"
+                aria-label="New entity category"
+                disabled={isCreatingChild}
               >
-                {label}
+                {#each categories.list as cat}
+                  <option value={cat.id}>{cat.label}</option>
+                {/each}
+              </select>
+              <button
+                onclick={() => handleCreateChild(entity.id)}
+                class="p-1 text-theme-muted hover:text-theme-primary transition-colors flex items-center justify-center shrink-0"
+                title="Create child entity"
+                aria-label="Create child entity"
+                disabled={isCreatingChild}
+              >
+                <span class="icon-[lucide--check] w-3.5 h-3.5"></span>
               </button>
-            {/each}
-            {#if entity.labels.length > 2}
-              <div
-                class="text-[7px] text-theme-muted font-mono flex items-center"
+              <button
+                onclick={() => {
+                  inlineCreationParentId = null;
+                  newChildTitle = "";
+                }}
+                class="p-1 text-theme-muted hover:text-theme-primary transition-colors flex items-center justify-center shrink-0"
+                title="Cancel"
+                aria-label="Cancel"
+                disabled={isCreatingChild}
               >
-                +{entity.labels.length - 2}
+                <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+              </button>
+            </div>
+            {#if createChildError}
+              <div class="text-[10px] text-red-500/80 px-2.5 mt-1 font-mono">
+                {createChildError}
               </div>
             {/if}
           </div>
         {/if}
 
-        {#if onFindInGraph}
-          <button
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              onFindInGraph(entity, e);
-            }}
-            title="Find in Graph"
-            aria-label="Find {entity.title} in Graph"
-            class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100"
-          >
-            <span class="icon-[lucide--target] h-3.5 w-3.5"></span>
-          </button>
-        {/if}
-        {#if onOpenZen}
-          <button
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              onOpenZen(entity);
-            }}
-            title="Open in Zen Mode"
-            aria-label="Open {entity.title} in Zen Mode"
-            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 {!(
-              onApproveDraft &&
-              onRejectDraft &&
-              entity.status === 'draft'
-            )
-              ? 'rounded-r-xl'
+        {#if hasChildren && !isCollapsed}
+          <div
+            class="space-y-1 {depth < 5
+              ? 'border-l border-theme-border/15 ml-3 pl-2'
               : ''}"
           >
-            <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
-          </button>
-        {/if}
-        {#if onApproveDraft && onRejectDraft && entity.status === "draft"}
-          <button
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              onApproveDraft(entity);
-            }}
-            title="Approve draft"
-            aria-label="Approve {entity.title}"
-            class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-emerald-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100"
-          >
-            <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
-          </button>
-          <button
-            type="button"
-            onclick={(e) => {
-              e.stopPropagation();
-              onRejectDraft(entity);
-            }}
-            title="Reject draft"
-            aria-label="Reject {entity.title}"
-            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-red-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
-          >
-            <span class="icon-[lucide--trash-2] h-3.5 w-3.5"></span>
-          </button>
+            {#each node.children as child (child.entity.id)}
+              {@render treeNode(child, depth + 1)}
+            {/each}
+          </div>
         {/if}
       </div>
     {/snippet}
@@ -641,8 +669,31 @@
     {/snippet}
 
     {#if viewMode === "list"}
-      {#each filteredEntities as entity (entity.id)}
-        {@render entityItem(entity)}
+      {#if isDragging}
+        <div
+          class="border-2 border-dashed border-theme-border rounded-xl p-3 text-center text-xs text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-all mb-2"
+          role="none"
+          ondragover={(e) => {
+            if (!sessionModeStore.isGuestMode) {
+              e.preventDefault();
+            }
+          }}
+          ondrop={async (e) => {
+            if (sessionModeStore.isGuestMode) return;
+            e.preventDefault();
+            const draggedId =
+              e.dataTransfer?.getData("application/x-codex-entity-id") ||
+              e.dataTransfer?.getData("text/plain");
+            if (draggedId) {
+              await vault.updateEntity(draggedId, { parent: undefined });
+            }
+          }}
+        >
+          Move to Root
+        </div>
+      {/if}
+      {#each entityTree as node (node.entity.id)}
+        {@render treeNode(node, 0)}
       {:else}
         <div class="text-center py-10 px-4" data-testid="no-entities-found">
           <p class="text-xs text-theme-muted">No entities found</p>
@@ -673,14 +724,44 @@
         </button>
         {#if !isCollapsed}
           {#each labelEntities as entity (`${entity.id}:${label}`)}
-            {@render entityItem(entity)}
+            <EntityListItem
+              {entity}
+              {onSelect}
+              onDragStart={(e, entityId) => {
+                isDragging = true;
+                onDragStart?.(e, entityId);
+              }}
+              onDragEnd={() => {
+                isDragging = false;
+                onDragEnd?.();
+              }}
+              {onOpenZen}
+              {onFindInGraph}
+              {onApproveDraft}
+              {onRejectDraft}
+            />
           {/each}
         {/if}
       {/each}
       {#if groupedEntities.unlabeled && groupedEntities.unlabeled.length > 0}
         {@render sectionHeader("Unlabeled")}
         {#each groupedEntities.unlabeled as entity (entity.id)}
-          {@render entityItem(entity)}
+          <EntityListItem
+            {entity}
+            {onSelect}
+            onDragStart={(e, entityId) => {
+              isDragging = true;
+              onDragStart?.(e, entityId);
+            }}
+            onDragEnd={() => {
+              isDragging = false;
+              onDragEnd?.();
+            }}
+            {onOpenZen}
+            {onFindInGraph}
+            {onApproveDraft}
+            {onRejectDraft}
+          />
         {/each}
       {/if}
       {#if filteredEntities.length === 0}
