@@ -21,6 +21,7 @@ describe("GraphContextMenuController", () => {
         entities: {},
         updateEntity: vi.fn(),
         batchUpdate: vi.fn(),
+        bulkAddLabel: vi.fn(),
         deleteEntity: vi.fn(),
         resolveImageUrl: vi.fn(),
       },
@@ -88,6 +89,57 @@ describe("GraphContextMenuController", () => {
     expect(deps.notificationStore.notify).toHaveBeenCalledWith(
       "Updated 2 nodes.",
       "success",
+    );
+  });
+
+  it("should mark selected nodes important", async () => {
+    deps.vault.bulkAddLabel.mockResolvedValue(2);
+    controller.contextMenuOpen = true;
+    controller.selectedNodes = ["node-1", "node-2"];
+
+    await controller.handleMarkImportant();
+
+    expect(deps.vault.bulkAddLabel).toHaveBeenCalledWith(
+      ["node-1", "node-2"],
+      "important",
+    );
+    expect(deps.notificationStore.notify).toHaveBeenCalledWith(
+      'Marked 2 nodes as "important".',
+      "success",
+    );
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should report when selected nodes are already important", async () => {
+    deps.vault.bulkAddLabel.mockResolvedValue(0);
+    controller.selectedNodes = ["node-1"];
+
+    await controller.handleMarkImportant();
+
+    expect(deps.notificationStore.notify).toHaveBeenCalledWith(
+      'Already marked as "important".',
+      "info",
+    );
+  });
+
+  it("should not mark important when no nodes are selected", async () => {
+    controller.selectedNodes = [];
+
+    await controller.handleMarkImportant();
+
+    expect(deps.vault.bulkAddLabel).not.toHaveBeenCalled();
+    expect(deps.notificationStore.notify).not.toHaveBeenCalled();
+  });
+
+  it("should report important label failures", async () => {
+    deps.vault.bulkAddLabel.mockRejectedValue(new Error("save failed"));
+    controller.selectedNodes = ["node-1"];
+
+    await controller.handleMarkImportant();
+
+    expect(deps.notificationStore.notify).toHaveBeenCalledWith(
+      "Failed to mark important: save failed",
+      "error",
     );
   });
 

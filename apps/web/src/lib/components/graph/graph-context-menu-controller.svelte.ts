@@ -135,6 +135,44 @@ export class GraphContextMenuController {
     }
   };
 
+  handleMarkImportant = async () => {
+    const nodesToUpdate = $state.snapshot(this.selectedNodes);
+    if (nodesToUpdate.length === 0) return;
+
+    this.contextMenuOpen = false;
+    this.canvasPickerOpen = false;
+    this.categoryPickerOpen = false;
+    this.imagePickerOpen = false;
+
+    try {
+      const count = await this.deps.vault.bulkAddLabel(
+        nodesToUpdate,
+        "important",
+      );
+      if (count > 0) {
+        this.deps.notificationStore.notify(
+          count === 1
+            ? 'Marked as "important".'
+            : `Marked ${count} nodes as "important".`,
+          "success",
+        );
+      } else {
+        this.deps.notificationStore.notify(
+          nodesToUpdate.length === 1
+            ? 'Already marked as "important".'
+            : 'Selected nodes are already marked as "important".',
+          "info",
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to mark nodes important", err);
+      this.deps.notificationStore.notify(
+        `Failed to mark important: ${err.message}`,
+        "error",
+      );
+    }
+  };
+
   handleChooseFull = () => {
     this.clearPickerTimeout();
     this.canvasPickerOpen = false;
