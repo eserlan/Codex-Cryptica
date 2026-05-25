@@ -37,6 +37,7 @@
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
+  import VTTSharedImageLightbox from "$lib/components/vtt/VTTSharedImageLightbox.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
 
   // Logic & Hooks
@@ -407,6 +408,12 @@
   {/if}
 
   <GuestSessionBootstrap />
+  {#if sessionModeStore.isGuestMode}
+    <VTTSharedImageLightbox
+      imageState={mapSession.sharedTokenImage}
+      onClose={() => mapSession.clearSharedTokenImage()}
+    />
+  {/if}
 </div>
 
 <FatalErrorOverlay />

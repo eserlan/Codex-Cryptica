@@ -26,6 +26,7 @@ describe("ModalUIStore", () => {
       show: false,
       imageUrl: "",
       originRect: null,
+      imagePath: "",
     });
   });
 
@@ -87,14 +88,16 @@ describe("ModalUIStore", () => {
   it("handles lightbox", () => {
     const store = new ModalUIStore();
     const rect = { x: 10, y: 20, width: 100, height: 100 };
-    store.openLightbox("img.jpg", "A title", rect);
+    store.openLightbox("img.jpg", "A title", rect, "images/pic.png");
     expect(store.lightbox.show).toBe(true);
     expect(store.lightbox.imageUrl).toBe("img.jpg");
     expect(store.lightbox.title).toBe("A title");
     expect(store.lightbox.originRect).toEqual(rect);
+    expect(store.lightbox.imagePath).toBe("images/pic.png");
 
     store.closeLightbox();
     expect(store.lightbox.show).toBe(false);
     expect(store.lightbox.originRect).toBeNull();
+    expect(store.lightbox.imagePath).toBe("");
   });
 });
