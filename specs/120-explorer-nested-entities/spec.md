@@ -10,6 +10,9 @@
 ### Session 2026-05-26
 
 - Q: Visual Edit Actions in Guest Mode (P2P Collaborator Sessions) → A: Option A - Completely hide the "+" button and disable drag-and-drop hierarchy updates in Guest Mode.
+- Q: Indentation styling and Nesting Depth Limits → A: Option A - Support infinite logical nesting, but cap the visual indentation padding at 5 levels deep (e.g., maximum of 60px padding-left).
+- Q: Cycle Resolution Strategy → A: Option A - Automatically break the cycle by setting the parent of the youngest/last-modified entity in the cycle to null (promoting it to root level) and log a warning.
+- Q: Drag-and-Drop Placement Semantics → A: Option A - Dropping onto an item makes it a child. Dropping in a "Move to Root" dropzone makes it a root item. No inline ordering.
 
 ## User Scenarios & Testing (mandatory)
 
@@ -54,15 +57,15 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 
 **Acceptance Scenarios**:
 
-1. **Given** child entity "Neverwinter" under root and parent entity "Sword Coast", **When** dragging "Neverwinter" and dropping it onto "Sword Coast", **Then** "Neverwinter" should become a child of "Sword Coast" and indent accordingly.
-2. **Given** "Neverwinter" nested under "Sword Coast", **When** dragging "Neverwinter" and dropping it onto the root-level list, **Then** it should be re-parented to the root.
+1. **Given** child entity "Neverwinter" under root and parent entity "Sword Coast", **When** dragging "Neverwinter" and dropping it directly onto "Sword Coast", **Then** "Neverwinter" should become a child of "Sword Coast" and indent accordingly.
+2. **Given** "Neverwinter" nested under "Sword Coast", **When** dragging "Neverwinter" and dropping it onto the dedicated "Move to Root" dropzone, **Then** it should be re-parented to the root.
 
 ---
 
 ### Edge Cases
 
 - **Self-referential parent/Child cycles**: If entity A is set as its own parent, or A is a parent of B and B is set as parent of A.
-  - _Mitigation_: The UI must prevent selecting an entity's own descendants or itself as its parent. If a cycle is detected during load, the system must break it by setting the parent of the cyclic root to null and log a warning.
+  - _Mitigation_: The UI must prevent selecting an entity's own descendants or itself as its parent. If a cycle is detected during load, the system must break it by setting the parent of the youngest/last-modified entity in the cycle to null (promoting it to root level) and log a warning.
 - **Deleting a parent entity**: If a parent entity is deleted, what happens to its children?
   - _Mitigation_: To prevent accidental data loss, child entities are promoted to the root level (their parent link is set to null). Cascade deletion is avoided.
 - **Search filtering**: When search is active, matching children should not be hidden because their parents are collapsed.
@@ -77,7 +80,7 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 
 - **FR-001**: System MUST store the hierarchical relation via a `parent` field in the entity metadata (Zod schema: `parent: z.string().optional()`) containing the parent's entity ID.
 - **FR-002**: The `parent` field MUST be persisted in the frontmatter of the entity's Markdown file.
-- **FR-003**: The default "List View" in the Entity Explorer MUST render entities as a tree, using accordion toggles (expand/collapse chevron) and left padding/indentation (e.g. 12px or 16px per depth level).
+- **FR-003**: The default "List View" in the Entity Explorer MUST render entities as a tree, using accordion toggles (expand/collapse chevron) and left padding/indentation (e.g. 12px or 16px per depth level). Indentation padding MUST be capped at a maximum of 5 levels deep (e.g., 60px maximum padding-left) to preserve layout integrity on narrow sidebars.
 - **FR-004**: Users MUST be able to click the chevron to toggle the collapsed state of a parent entity. Collapse state MUST be persisted locally (e.g., in `explorerUIStore` or `localStorage`).
 - **FR-005**: The explorer item row MUST display a "+" button (on hover/focus) that triggers the creation of a new child entity under that parent.
 - **FR-006**: When search query is active, the explorer MUST display all matching entities and their ancestors, forcing ancestors to be expanded to reveal matching descendants.
