@@ -74,6 +74,7 @@ const mockProposal = {
   sourceId: "s",
   targetId: "t",
   type: "related_to",
+  label: "Former Mentor",
   context: "c",
   reason: "r",
   confidence: 0.9,
@@ -135,7 +136,12 @@ describe("proposerStore", () => {
     proposerStore.proposals["s"] = [p];
 
     await proposerStore.apply(p);
-    expect(mockVault.addConnection).toHaveBeenCalled();
+    expect(mockVault.addConnection).toHaveBeenCalledWith(
+      "s",
+      "t",
+      "related_to",
+      "Former Mentor",
+    );
     expect(proposerStore.proposals["s"]).toHaveLength(0);
 
     // Dismiss with history

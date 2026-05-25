@@ -4,6 +4,7 @@ export interface Proposal {
   sourceId: string;
   targetId: string;
   type: string;
+  label?: string;
   context: string;
   reason: string;
   confidence: number;

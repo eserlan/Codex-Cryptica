@@ -494,6 +494,7 @@ class ProposerStore {
       proposal.sourceId,
       proposal.targetId,
       proposal.type,
+      proposal.label,
     );
     if (!connectionCreated) {
       debugStore.warn("[ProposerStore] Failed to create vault connection", {
