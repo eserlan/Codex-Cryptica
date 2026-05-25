@@ -560,9 +560,40 @@ export const getGraphStyle = (
           : graph.nodeBorderWidth + 8,
         "border-style": "double",
         "underlay-color": tokens.accent || "#f59e0b",
-        "underlay-opacity": 0.28,
-        "underlay-padding": 10,
+        "underlay-opacity": 0.35,
+        "underlay-padding": isFantasy ? 12 : 14,
         "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
+        "font-weight": "bold",
+        "font-size": 11,
+        "text-border-color": tokens.accent || "#f59e0b",
+        "text-border-width": 1,
+        "text-border-opacity": 0.5,
+        "shadow-color": tokens.accent || "#f59e0b",
+        "shadow-blur": 12,
+        "shadow-opacity": 0.45,
+        "shadow-offset-x": 0,
+        "shadow-offset-y": 0,
+      },
+    },
+    {
+      selector: "node[isImportant][weight <= 2]",
+      style: {
+        width: 48,
+        height: 48,
+      },
+    },
+    {
+      selector: "node[isImportant][weight >= 3][weight <= 11]",
+      style: {
+        width: 72,
+        height: 72,
+      },
+    },
+    {
+      selector: "node[isImportant][weight >= 12]",
+      style: {
+        width: 108,
+        height: 108,
       },
     },
   ];
