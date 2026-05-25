@@ -554,22 +554,22 @@ export const getGraphStyle = (
     {
       selector: "node[isImportant]",
       style: {
-        "border-color": "#e11d48",
+        "border-color": "#8b5cf6",
         "border-width": isFantasy
-          ? graph.nodeBorderWidth + 3
-          : graph.nodeBorderWidth + 8,
+          ? graph.nodeBorderWidth + 4
+          : graph.nodeBorderWidth + 10,
         "border-style": "double",
-        "underlay-color": "#e11d48",
+        "underlay-color": "#8b5cf6",
         "underlay-opacity": 0.35,
-        "underlay-padding": isFantasy ? 12 : 14,
+        "underlay-padding": isFantasy ? 16 : 20,
         "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
         "font-weight": "bold",
-        "font-size": 11,
-        "text-border-color": "#e11d48",
-        "text-border-width": 1,
+        "font-size": 12,
+        "text-border-color": "#8b5cf6",
+        "text-border-width": 1.5,
         "text-border-opacity": 0.5,
-        "shadow-color": "#e11d48",
-        "shadow-blur": 12,
+        "shadow-color": "#8b5cf6",
+        "shadow-blur": 18,
         "shadow-opacity": 0.45,
         "shadow-offset-x": 0,
         "shadow-offset-y": 0,
@@ -578,22 +578,22 @@ export const getGraphStyle = (
     {
       selector: "node[isImportant][weight <= 2]",
       style: {
-        width: 48,
-        height: 48,
+        width: 60,
+        height: 60,
       },
     },
     {
       selector: "node[isImportant][weight >= 3][weight <= 11]",
       style: {
-        width: 72,
-        height: 72,
+        width: 90,
+        height: 90,
       },
     },
     {
       selector: "node[isImportant][weight >= 12]",
       style: {
-        width: 108,
-        height: 108,
+        width: 144,
+        height: 144,
       },
     },
   ];

@@ -488,30 +488,30 @@ describe("GraphTransformer", () => {
     expect(importantStyle.style.width).toBeUndefined();
     expect(importantStyle.style.height).toBeUndefined();
     expect(importantStyle.style["font-weight"]).toBe("bold");
-    expect(importantStyle.style["font-size"]).toBe(11);
-    expect(importantStyle.style["shadow-blur"]).toBe(12);
-    expect(importantStyle.style["border-color"]).toBe("#e11d48");
-    expect(importantStyle.style["underlay-color"]).toBe("#e11d48");
-    expect(importantStyle.style["text-border-color"]).toBe("#e11d48");
-    expect(importantStyle.style["shadow-color"]).toBe("#e11d48");
+    expect(importantStyle.style["font-size"]).toBe(12);
+    expect(importantStyle.style["shadow-blur"]).toBe(18);
+    expect(importantStyle.style["border-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["underlay-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["text-border-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["shadow-color"]).toBe("#8b5cf6");
 
     const importantSmallStyle = style.find(
       (s) => s.selector === "node[isImportant][weight <= 2]",
     );
     expect(importantSmallStyle).toBeDefined();
-    expect(importantSmallStyle.style.width).toBe(48);
+    expect(importantSmallStyle.style.width).toBe(60);
 
     const importantMediumStyle = style.find(
       (s) => s.selector === "node[isImportant][weight >= 3][weight <= 11]",
     );
     expect(importantMediumStyle).toBeDefined();
-    expect(importantMediumStyle.style.width).toBe(72);
+    expect(importantMediumStyle.style.width).toBe(90);
 
     const importantLargeStyle = style.find(
       (s) => s.selector === "node[isImportant][weight >= 12]",
     );
     expect(importantLargeStyle).toBeDefined();
-    expect(importantLargeStyle.style.width).toBe(108);
+    expect(importantLargeStyle.style.width).toBe(144);
   });
 
   it("should preserve revealed border treatment when a node is also important", () => {
