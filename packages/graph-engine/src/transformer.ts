@@ -556,12 +556,12 @@ export const getGraphStyle = (
       style: {
         "border-color": "#8b5cf6",
         "border-width": isFantasy
-          ? graph.nodeBorderWidth + 4
-          : graph.nodeBorderWidth + 10,
+          ? graph.nodeBorderWidth + 5
+          : graph.nodeBorderWidth + 14,
         "border-style": "double",
         "underlay-color": "#8b5cf6",
         "underlay-opacity": 0.35,
-        "underlay-padding": isFantasy ? 16 : 20,
+        "underlay-padding": isFantasy ? 24 : 30,
         "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
         "font-weight": "bold",
         "font-size": 12,
@@ -569,31 +569,10 @@ export const getGraphStyle = (
         "text-border-width": 1.5,
         "text-border-opacity": 0.5,
         "shadow-color": "#8b5cf6",
-        "shadow-blur": 18,
+        "shadow-blur": 24,
         "shadow-opacity": 0.45,
         "shadow-offset-x": 0,
         "shadow-offset-y": 0,
-      },
-    },
-    {
-      selector: "node[isImportant][weight <= 2]",
-      style: {
-        width: 60,
-        height: 60,
-      },
-    },
-    {
-      selector: "node[isImportant][weight >= 3][weight <= 11]",
-      style: {
-        width: 90,
-        height: 90,
-      },
-    },
-    {
-      selector: "node[isImportant][weight >= 12]",
-      style: {
-        width: 144,
-        height: 144,
       },
     },
   ];
