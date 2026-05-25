@@ -13,6 +13,7 @@ vi.mock("@google/generative-ai", () => {
             targetId: "target1",
             confidence: 0.9,
             type: "related",
+            label: "Former Mentor",
             reason: "test",
           },
         ]),
@@ -55,8 +56,42 @@ describe("ProposerService", () => {
     expect(proposals).toHaveLength(1);
     expect(proposals[0].targetId).toBe("target1");
     expect(proposals[0].confidence).toBe(0.9);
+    expect(proposals[0].label).toBe("Former Mentor");
     expect(proposals[0].vaultId).toBe(vaultId);
     expect(proposals[0].id).toBe(`${vaultId}:source1:target1`);
+  });
+
+  it("should fall back to a readable type when proposal label is missing", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify([
+            {
+              targetId: "target1",
+              confidence: 0.9,
+              type: "located_in",
+              reason: "test",
+            },
+          ]),
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
+
+    const dbName = `test-db-${crypto.randomUUID()}`;
+    service = new ProposerService(dbName, 1);
+    const proposals = await service.analyzeEntity(
+      "fake-key",
+      "gemini-1.5-flash",
+      vaultId,
+      "source1",
+      "Some content about target1",
+      [{ id: "target1", name: "Target One" }],
+    );
+
+    expect(proposals[0].label).toBe("Located In");
   });
 
   it("should save and retrieve proposals", async () => {

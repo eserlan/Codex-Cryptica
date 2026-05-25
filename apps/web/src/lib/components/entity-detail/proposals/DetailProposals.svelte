@@ -120,7 +120,7 @@
                   <span
                     class="text-xs text-theme-muted px-1.5 py-0.5 rounded bg-theme-bg border border-theme-border"
                   >
-                    {proposal.type}
+                    {proposal.label || proposal.type}
                   </span>
                   {#if proposal.confidence > 0.8}
                     <span
