@@ -330,7 +330,7 @@ class ProxiedGeminiTTSService implements TTSService {
       const styleInstruction = buildVoiceStyleInstruction(voiceProfile);
       if (styleInstruction) {
         debugStore.log(
-          `[ProxiedGeminiTTS] style instruction: "${styleInstruction}"`,
+          `[ProxiedGeminiTTS] style instruction: "${styleInstruction}" (computed but ignored for gemini-2.5-flash-preview-tts due to Google 500 bug)`,
         );
       }
 

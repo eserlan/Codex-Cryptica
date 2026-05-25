@@ -79,7 +79,7 @@ class GeminiTTSService implements TTSService {
     }
     try {
       const voiceName = buildGeminiVoiceName(voiceProfile);
-      const _styleInstruction = buildVoiceStyleInstruction(voiceProfile);
+      // const _styleInstruction = buildVoiceStyleInstruction(voiceProfile); // Bypassed due to Google TTS 500 crash on systemInstruction
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
 
       const requestBody: Record<string, unknown> = {
