@@ -5,11 +5,11 @@
     "date": "2026-05-25",
     "type": "minor",
     "highlights": [
-      "Interactive Sound Bites: Fully voiced quotes for campaign entities synthesized using Gemini 2.5 Flash Preview with 28 prebuilt voices, fully customizable transcripts, and a responsive floating audio control panel.",
-      "P2P Audio Broadcasting: Seamless peer-to-peer audio playback synchronization, enabling Dungeon Masters (hosts) to broadcast sound bites and play them instantly on all connected guest devices.",
-      "Real-Time Image Sharing: Hosts can broadcast entity images in real-time to guests, opening an elegant fullscreen light-box modal with smooth transitions on the guest's screen.",
-      "Scroll-Wheel Date Picker: An elegant, highly tactile scroll-wheel calendar selector for choosing dates and timelines in campaign chronologies.",
-      "Important Graph Indicators: Visual markers and custom context menu toggle controls to highlight \"important\" nodes on your relationship graph, making focal campaign entities stand out."
+      "Interactive Sound Bites: Bring your campaign characters to life with fully voiced quotes, customizable transcripts, and a beautiful floating player controls bar.",
+      "Live Audio Broadcasting: Play vocal performances directly on your players' devices in real-time, synchronized perfectly across all connected devices during a live session.",
+      "Instant Image Sharing: Project key illustrations, maps, and reference scenes instantly to all players' screens in full screen with elegant, immersive visual transitions.",
+      "Tactile Date Picker: A sleek, physical-feeling scroll-wheel calendar dial that makes setting dates and timelines a satisfying, fluid experience.",
+      "Prominent Entity Highlights: Easily mark key campaign figures and focal locations as 'important' to make them stand out on your network relationship graph."
     ]
   },
   {
@@ -18,9 +18,9 @@
     "date": "2026-05-24",
     "type": "patch",
     "highlights": [
-      "Historical Entity Autotagging: Entities with an end date are now automatically tagged with \"past\" in-memory on vault load, and dynamically updated during creation/edits.",
-      "Optimized Search Autocomplete: Selecting autocomplete suggestions now seamlessly clears completed tags from the search input prompt and transitions them into active sidebar filters.",
-      "Intelligent Re-triggering: Autocomplete dropdown triggers are fully optimized to correctly re-evaluate and reappear as you continue typing new labels."
+      "Smart Historical Tagging: Entities representing historical characters, fallen factions, or past eras are now automatically marked as 'past' to streamline timeline filtering.",
+      "Fluid Tag Search: Selecting suggestions from the search box automatically transitions them into active sidebar filters, keeping your search bar clean and intuitive.",
+      "Snappy Search Autocomplete: The search suggestion menu is smarter and re-evaluates instantly as you type, making it effortless to build multi-tag queries."
     ]
   },
   {
