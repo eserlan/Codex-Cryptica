@@ -30,6 +30,7 @@
 
   interface ConnectionListItem {
     id: string;
+    key: string;
     label: string;
     title: string;
     type: string;
@@ -57,6 +58,7 @@
       if (checkVisibility(c.target)) {
         result.push({
           id: c.target,
+          key: `${c.target}-out-${c.type}-${i}`,
           label: c.label || c.type,
           title: vault.entities[c.target]?.title || c.target,
           type: c.type,
@@ -72,6 +74,7 @@
       if (checkVisibility(item.sourceId)) {
         result.push({
           id: item.sourceId,
+          key: `${item.sourceId}-in-${item.connection.type}-${i}`,
           label: item.connection.label || item.connection.type,
           title: vault.entities[item.sourceId]?.title || item.sourceId,
           type: item.connection.type,
@@ -335,7 +338,7 @@
         </h3>
         {#if allConnections.length > 0}
           <div class="space-y-2">
-            {#each allConnections as conn (conn.id)}
+            {#each allConnections as conn (conn.key)}
               <div
                 class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
               >

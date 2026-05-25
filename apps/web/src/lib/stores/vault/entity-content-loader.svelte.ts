@@ -185,6 +185,7 @@ export class EntityContentLoader {
 
             const updatedEntity = {
               ...entityToUpdate,
+              ...(result.metadata || {}),
               content: finalContent,
               lore: finalLore,
             };
@@ -197,10 +198,18 @@ export class EntityContentLoader {
               `[EntityContentLoader] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
             );
 
+            // If content/lore changed, or if there are metadata keys on disk that weren't cached in memory
+            const metadataRestored = Object.keys(result.metadata || {}).some(
+              (key) =>
+                !(key in entityToUpdate) ||
+                entityToUpdate[key as keyof LocalEntity] === undefined,
+            );
+
             const isStale =
               finalContent !== (cached?.content ?? null) ||
-              finalLore !== (cached?.lore ?? null);
-            const hasContent = finalContent || finalLore;
+              finalLore !== (cached?.lore ?? null) ||
+              metadataRestored;
+            const hasContent = finalContent || finalLore || metadataRestored;
 
             if (isStale && (cached !== null || hasContent)) {
               cacheService.set(
@@ -231,7 +240,7 @@ export class EntityContentLoader {
 
   private async _readFromOpfs(
     id: string,
-  ): Promise<{ content: string; lore: string } | null> {
+  ): Promise<{ content: string; lore: string; metadata?: any } | null> {
     const entity = this.entities[id];
     if (!entity) return null;
     const path = entity._path || [`${id}.md`];
@@ -240,7 +249,7 @@ export class EntityContentLoader {
     const text = await readFileAsText(vaultDir, path).catch(() => null);
     if (!text) return null;
     const { metadata, content } = parseMarkdown(text);
-    return { content, lore: metadata.lore || "" };
+    return { content, lore: metadata.lore || "", metadata };
   }
 
   async internalLoadContent(id: string): Promise<void> {
@@ -251,6 +260,7 @@ export class EntityContentLoader {
       if (result) {
         this.deps.repository.entities[id] = {
           ...currentEntity,
+          ...(result.metadata || {}),
           content: result.content,
           lore: result.lore,
         };

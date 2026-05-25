@@ -23,6 +23,7 @@
 
   interface ConnectionListItem {
     id: string;
+    key: string;
     label: string;
     title: string;
     type: string;
@@ -41,10 +42,14 @@
       });
     };
     const result: ConnectionListItem[] = [];
-    for (const c of entity?.connections || []) {
+    const connections = entity?.connections || [];
+    const connectionsLength = connections.length;
+    for (let i = 0; i < connectionsLength; i++) {
+      const c = connections[i];
       if (checkVisibility(c.target)) {
         result.push({
           id: c.target,
+          key: `${c.target}-out-${c.type}-${i}`,
           label: c.label || c.type,
           title: vault.entities[c.target]?.title || c.target,
           type: c.type,
@@ -52,10 +57,14 @@
         });
       }
     }
-    for (const item of vault.inboundConnections[entity?.id || ""] || []) {
+    const inboundConnections = vault.inboundConnections[entity?.id || ""] || [];
+    const inboundLength = inboundConnections.length;
+    for (let i = 0; i < inboundLength; i++) {
+      const item = inboundConnections[i];
       if (checkVisibility(item.sourceId)) {
         result.push({
           id: item.sourceId,
+          key: `${item.sourceId}-in-${item.connection.type}-${i}`,
           label: item.connection.label || item.connection.type,
           title: vault.entities[item.sourceId]?.title || item.sourceId,
           type: item.connection.type,
@@ -283,7 +292,7 @@
         </h3>
         {#if allConnections.length > 0}
           <div class="space-y-2">
-            {#each allConnections as conn (`${conn.id}:${conn.type}:${conn.isOutbound}`)}
+            {#each allConnections as conn (conn.key)}
               <div
                 class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
               >

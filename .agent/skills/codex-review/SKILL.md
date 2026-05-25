@@ -17,6 +17,14 @@ This skill provides a meticulous code review process tailored specifically for t
 6. **Check Accessibility**: Ensure `Autocomplete` components have `ariaLabel` and that icons follow the Iconify class pattern.
 7. **Verify HTML & JS Semantics**: Ensure all action buttons have explicit `type="button"`, coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, and avoid user-agent sniffing by using environment flags like `import.meta.env.MODE === "test"`.
 
+## Review Output Guidelines
+
+When executing a code review under this skill, strictly follow these constraints for the output:
+
+- **No Compliments or Filler**: Do not list things that are "correct," "good," or "well-done." Avoid general praise or introductory/concluding pleasantries.
+- **Attention Items Only**: List _only_ specific defects, gaps, bugs, potential runtime failures, style-guide violations, or security/performance issues that need attention or fixing.
+- **Concrete Code Proposals**: For every single issue identified, you must provide a concrete, exact code proposal (using diff blocks or clear replacements) that resolves the issue.
+
 ## Reference Patterns
 
 For detailed examples of anti-patterns and the preferred implementations, refer to [patterns.md](references/patterns.md).
