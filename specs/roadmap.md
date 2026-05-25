@@ -18,6 +18,21 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.26.0 — The Multi-Sensory & Interactive Chronology Update (2026-05-25)
+
+- **Highlights**: Fully voiced entity quotes (Sound Bites) via Gemini 2.5 Flash Preview with 28 voices, real-time audio broadcasting, P2P image sharing and lightbox sync, tactile scroll-wheel timeline picker, and relationship graph important node markers.
+- **Associated Specifications**:
+  - [116-scroll-wheel-date-picker](./116-scroll-wheel-date-picker/spec.md) (Tactile scroll-wheel date picker)
+  - [118-graph-important-label](./118-graph-important-label/spec.md) (Graph important node markers and indicators)
+  - [119-sound-bite](./119-sound-bite/spec.md) (Interactive Sound Bite generation and customization)
+  - [119-show-entity-image](./119-show-entity-image/spec.md) (Real-time P2P host-to-guest image sharing and lightbox)
+
+### v0.25.1 — The Autotagging & Search Autocomplete Update (2026-05-24)
+
+- **Highlights**: Automatic temporal autotagging for historical entities, optimized search input tag autocomplete, and intelligent re-triggering of label selectors.
+- **Associated Specifications**:
+  - [112-autotag-entities-end-date](./112-autotag-entities-end-date/spec.md) (Historical temporal entity autotagging)
+
 ### v0.25.0 — The Art Direction Update (2026-05-23)
 
 - **Highlights**: Deterministic default Art Direction for AI image generation across Oracle entity/chat draw flows and front page cover art. The resolver now applies entity-specific art direction, normal user-authored art direction content, category composition defaults, active theme Default Art Style, and a global Codex Cryptica fallback. Category defaults tailor composition for characters, creatures, locations, items, factions, events, notes, and world covers, while `/draw` category hints fill gaps without overriding matched entity metadata. Custom art direction remains lore-native through ordinary notes/entities rather than a dedicated settings editor.

@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.26.0",
+    "title": "The Multi-Sensory & Interactive Chronology Update",
+    "date": "2026-05-25",
+    "type": "minor",
+    "highlights": [
+      "Interactive Sound Bites: Fully voiced quotes for campaign entities synthesized using Gemini 2.5 Flash Preview with 28 prebuilt voices, fully customizable transcripts, and a responsive floating audio control panel.",
+      "P2P Audio Broadcasting: Seamless peer-to-peer audio playback synchronization, enabling Dungeon Masters (hosts) to broadcast sound bites and play them instantly on all connected guest devices.",
+      "Real-Time Image Sharing: Hosts can broadcast entity images in real-time to guests, opening an elegant fullscreen light-box modal with smooth transitions on the guest's screen.",
+      "Scroll-Wheel Date Picker: An elegant, highly tactile scroll-wheel calendar selector for choosing dates and timelines in campaign chronologies.",
+      "Important Graph Indicators: Visual markers and custom context menu toggle controls to highlight \"important\" nodes on your relationship graph, making focal campaign entities stand out."
+    ]
+  },
+  {
     "version": "0.25.1",
     "title": "The Autotagging & Search Autocomplete Update",
     "date": "2026-05-24",
