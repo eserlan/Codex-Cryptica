@@ -26,9 +26,15 @@ function readableConnectionType(value: unknown): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function sanitizeConnectionLabel(value: unknown, fallbackType: unknown): string {
+function sanitizeConnectionLabel(
+  value: unknown,
+  fallbackType: unknown,
+): string {
   const raw = typeof value === "string" ? value : "";
-  const cleaned = raw.replace(/["'\n\r]/g, " ").replace(/\s+/g, " ").trim();
+  const cleaned = raw
+    .replace(/["'\n\r]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const fallback = readableConnectionType(fallbackType);
 
   if (!cleaned) return fallback;
@@ -240,8 +246,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
           vaultId,
           sourceId: entityId,
           targetId: p.targetId,
-          type: p.type || "related",
-          label: sanitizeConnectionLabel(p.label, p.type || "related"),
+          type: p.type || "related_to",
+          label: sanitizeConnectionLabel(p.label, p.type || "related_to"),
           context: p.context || "",
           reason: p.reason || "AI detected semantic link",
           confidence: p.confidence,
