@@ -490,6 +490,10 @@ describe("GraphTransformer", () => {
     expect(importantStyle.style["font-weight"]).toBe("bold");
     expect(importantStyle.style["font-size"]).toBe(11);
     expect(importantStyle.style["shadow-blur"]).toBe(12);
+    expect(importantStyle.style["border-color"]).toBe("#e11d48");
+    expect(importantStyle.style["underlay-color"]).toBe("#e11d48");
+    expect(importantStyle.style["text-border-color"]).toBe("#e11d48");
+    expect(importantStyle.style["shadow-color"]).toBe("#e11d48");
 
     const importantSmallStyle = style.find(
       (s) => s.selector === "node[isImportant][weight <= 2]",

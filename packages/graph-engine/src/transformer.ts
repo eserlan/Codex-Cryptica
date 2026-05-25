@@ -554,21 +554,21 @@ export const getGraphStyle = (
     {
       selector: "node[isImportant]",
       style: {
-        "border-color": tokens.accent || "#f59e0b",
+        "border-color": "#e11d48",
         "border-width": isFantasy
           ? graph.nodeBorderWidth + 3
           : graph.nodeBorderWidth + 8,
         "border-style": "double",
-        "underlay-color": tokens.accent || "#f59e0b",
+        "underlay-color": "#e11d48",
         "underlay-opacity": 0.35,
         "underlay-padding": isFantasy ? 12 : 14,
         "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
         "font-weight": "bold",
         "font-size": 11,
-        "text-border-color": tokens.accent || "#f59e0b",
+        "text-border-color": "#e11d48",
         "text-border-width": 1,
         "text-border-opacity": 0.5,
-        "shadow-color": tokens.accent || "#f59e0b",
+        "shadow-color": "#e11d48",
         "shadow-blur": 12,
         "shadow-opacity": 0.45,
         "shadow-offset-x": 0,
