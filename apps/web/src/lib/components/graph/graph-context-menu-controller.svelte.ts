@@ -58,6 +58,18 @@ export class GraphContextMenuController {
     return this.hasImage ? "Regen Image" : "Gen Image";
   });
 
+  isImportant = $derived.by(() => {
+    if (this.selectedNodes.length === 0) return false;
+    return this.selectedNodes.every((id) => {
+      const labels = this.deps.vault.entities[id]?.labels || [];
+      return labels.some((l) => l.toLowerCase() === "important");
+    });
+  });
+
+  importantActionLabel = $derived.by(() => {
+    return this.isImportant ? "Remove Important" : "Mark Important";
+  });
+
   setupEvents = () => {
     const openHandler = (evt: EventObject) => {
       const node = evt.target;
@@ -145,29 +157,44 @@ export class GraphContextMenuController {
     this.imagePickerOpen = false;
 
     try {
-      const count = await this.deps.vault.bulkAddLabel(
-        nodesToUpdate,
-        "important",
-      );
-      if (count > 0) {
-        this.deps.notificationStore.notify(
-          count === 1
-            ? 'Marked as "important".'
-            : `Marked ${count} nodes as "important".`,
-          "success",
+      if (this.isImportant) {
+        const count = await this.deps.vault.bulkRemoveLabel(
+          nodesToUpdate,
+          "important",
         );
+        if (count > 0) {
+          this.deps.notificationStore.notify(
+            count === 1
+              ? 'Removed "important" status.'
+              : `Removed "important" status from ${count} nodes.`,
+            "success",
+          );
+        }
       } else {
-        this.deps.notificationStore.notify(
-          nodesToUpdate.length === 1
-            ? 'Already marked as "important".'
-            : 'Selected nodes are already marked as "important".',
-          "info",
+        const count = await this.deps.vault.bulkAddLabel(
+          nodesToUpdate,
+          "important",
         );
+        if (count > 0) {
+          this.deps.notificationStore.notify(
+            count === 1
+              ? 'Marked as "important".'
+              : `Marked ${count} nodes as "important".`,
+            "success",
+          );
+        } else {
+          this.deps.notificationStore.notify(
+            nodesToUpdate.length === 1
+              ? 'Already marked as "important".'
+              : 'Selected nodes are already marked as "important".',
+            "info",
+          );
+        }
       }
     } catch (err: any) {
-      console.error("Failed to mark nodes important", err);
+      console.error("Failed to update important label", err);
       this.deps.notificationStore.notify(
-        `Failed to mark important: ${err.message}`,
+        `Failed to update important label: ${err.message}`,
         "error",
       );
     }
