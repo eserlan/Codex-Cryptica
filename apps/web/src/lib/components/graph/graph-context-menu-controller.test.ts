@@ -122,6 +122,38 @@ describe("GraphContextMenuController", () => {
     );
   });
 
+  it("should report when multiple selected nodes are already important", async () => {
+    deps.vault.bulkAddLabel.mockResolvedValue(0);
+    controller.selectedNodes = ["node-1", "node-2"];
+
+    await controller.handleMarkImportant();
+
+    expect(deps.vault.bulkAddLabel).toHaveBeenCalledWith(
+      ["node-1", "node-2"],
+      "important",
+    );
+    expect(deps.notificationStore.notify).toHaveBeenCalledWith(
+      'Selected nodes are already marked as "important".',
+      "info",
+    );
+  });
+
+  it("should close open graph submenus when marking nodes important", async () => {
+    deps.vault.bulkAddLabel.mockResolvedValue(1);
+    controller.contextMenuOpen = true;
+    controller.canvasPickerOpen = true;
+    controller.categoryPickerOpen = true;
+    controller.imagePickerOpen = true;
+    controller.selectedNodes = ["node-1"];
+
+    await controller.handleMarkImportant();
+
+    expect(controller.contextMenuOpen).toBe(false);
+    expect(controller.canvasPickerOpen).toBe(false);
+    expect(controller.categoryPickerOpen).toBe(false);
+    expect(controller.imagePickerOpen).toBe(false);
+  });
+
   it("should not mark important when no nodes are selected", async () => {
     controller.selectedNodes = [];
 
