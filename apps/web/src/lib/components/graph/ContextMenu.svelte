@@ -124,6 +124,7 @@
       </button>
 
       <button
+        type="button"
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap flex items-center gap-2"
         onclick={controller.handleMarkImportant}
