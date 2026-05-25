@@ -337,7 +337,7 @@ class ProxiedGeminiTTSService implements TTSService {
       const model = await aiClientManager.getModel(
         apiKey,
         "gemini-2.5-flash-preview-tts",
-        styleInstruction || undefined,
+        undefined, // bypass systemInstruction for TTS to prevent Google 500 error
       );
 
       const ttsRequest: Record<string, unknown> = {
@@ -351,10 +351,6 @@ class ProxiedGeminiTTSService implements TTSService {
           },
         },
       };
-
-      if (styleInstruction) {
-        ttsRequest.systemInstruction = styleInstruction;
-      }
 
       const result = await (model as any).generateContent(ttsRequest);
 
