@@ -7,7 +7,6 @@
   import ShareModal from "$lib/components/ShareModal.svelte";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
   import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
-  import VTTSharedImageLightbox from "$lib/components/vtt/VTTSharedImageLightbox.svelte";
   import {
     MapPageController,
     type MapPageControllerDependencies,
@@ -71,12 +70,6 @@
     </MapView>
     {#if controller.showVttShare}
       <ShareModal close={() => (controller.showVttShare = false)} />
-    {/if}
-    {#if sessionModeStore.isGuestMode}
-      <VTTSharedImageLightbox
-        imageState={mapSession.sharedTokenImage}
-        onClose={() => mapSession.clearSharedTokenImage()}
-      />
     {/if}
 
     <VTTGridColorMenu />

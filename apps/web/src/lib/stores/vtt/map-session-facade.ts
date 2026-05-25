@@ -254,6 +254,10 @@ export abstract class MapSessionFacade {
     return this.mediaManager.showTokenImageToPlayers(tokenId);
   }
 
+  showImageToPlayers(title: string, imagePath: string) {
+    return this.mediaManager.showImageToPlayers(title, imagePath);
+  }
+
   createSnapshot(): EncounterSession {
     return this.snapshotManager.createSnapshot();
   }

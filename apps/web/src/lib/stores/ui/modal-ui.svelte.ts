@@ -39,10 +39,12 @@ export class ModalUIStore {
     imageUrl: string;
     title?: string;
     originRect?: { x: number; y: number; width: number; height: number } | null;
+    imagePath?: string;
   }>({
     show: false,
     imageUrl: "",
     originRect: null,
+    imagePath: "",
   });
 
   // Derived properties for backwards compatibility
@@ -77,18 +79,21 @@ export class ModalUIStore {
     imageUrl: string,
     title?: string,
     originRect?: { x: number; y: number; width: number; height: number } | null,
+    imagePath?: string,
   ) {
     this.lightbox = {
       show: true,
       imageUrl,
       title,
       originRect: originRect ?? null,
+      imagePath: imagePath ?? "",
     };
   }
 
   closeLightbox() {
     this.lightbox.show = false;
     this.lightbox.originRect = null;
+    this.lightbox.imagePath = "";
   }
 
   openCanvasSelection(pendingEntities: string[]) {

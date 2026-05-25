@@ -7,6 +7,9 @@
   import { isEntityVisible } from "schema";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     entity,
@@ -170,12 +173,17 @@
         type="button"
         onclick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
-          modalUIStore.openLightbox(resolvedImageUrl, entity.title, {
-            x: rect.left,
-            y: rect.top,
-            width: rect.width,
-            height: rect.height,
-          });
+          modalUIStore.openLightbox(
+            resolvedImageUrl,
+            entity.title,
+            {
+              x: rect.left,
+              y: rect.top,
+              width: rect.width,
+              height: rect.height,
+            },
+            entity.image,
+          );
         }}
         class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
       >
@@ -190,6 +198,29 @@
           Click to enlarge
         </div>
       </button>
+      {#if p2pHost.isHosting}
+        <button
+          type="button"
+          onclick={() => {
+            const success = mapSession.showImageToPlayers(
+              entity.title,
+              entity.image,
+            );
+            if (success) {
+              notificationStore.notify("Shared image with guests", "success");
+            }
+          }}
+          class="w-full mt-2 bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden mb-4"
+          aria-label="Show image to guests"
+        >
+          <span class="icon-[lucide--share-2] w-4 h-4 text-theme-primary"
+          ></span>
+          <span
+            class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
+            >SHOW TO GUESTS</span
+          >
+        </button>
+      {/if}
     </div>
   {:else}
     <div class="px-4 md:px-6">

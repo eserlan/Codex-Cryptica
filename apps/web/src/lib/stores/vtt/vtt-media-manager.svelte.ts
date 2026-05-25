@@ -72,4 +72,24 @@ export class VTTMediaManager {
 
     return true;
   }
+
+  showImageToPlayers(title: string, imagePath: string) {
+    if (!imagePath) {
+      console.warn("[MapSession] showImageToPlayers missing imagePath");
+      return false;
+    }
+
+    console.log("[MapSession] showImageToPlayers", {
+      title,
+      imagePath,
+    });
+
+    this.deps.emit({
+      type: "SHOW_TOKEN_IMAGE",
+      title,
+      imagePath,
+    });
+
+    return true;
+  }
 }

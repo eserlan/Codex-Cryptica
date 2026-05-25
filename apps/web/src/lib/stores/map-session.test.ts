@@ -322,6 +322,19 @@ describe("MapSessionStore", () => {
     expect(store.sharedTokenImage).toBeNull();
   });
 
+  it("broadcasts a shared entity image reveal without persisting it to the session", () => {
+    const broadcaster = vi.fn();
+    store.setBroadcaster(broadcaster);
+
+    expect(store.showImageToPlayers("Dragon", "images/dragon.webp")).toBe(true);
+    expect(store.sharedTokenImage).toBeNull();
+    expect(broadcaster).toHaveBeenCalledWith({
+      type: "SHOW_TOKEN_IMAGE",
+      title: "Dragon",
+      imagePath: "images/dragon.webp",
+    });
+  });
+
   it("debounces draft persistence while a token is being dragged", async () => {
     vi.useFakeTimers();
     const token = store.addToken({ name: "Saver", x: 0, y: 0 });
