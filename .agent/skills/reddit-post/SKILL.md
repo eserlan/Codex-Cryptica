@@ -87,8 +87,9 @@ If the user references a feature outside this list (VTT, maps, timelines, dice r
 ## Core Style Rules
 
 - **Lead with value.** Open with what changed and why it matters before explaining how it works.
-- **Builder voice, not brand voice.** Prefer "I built," "I changed," "I learned," "this now lets you…" over launch language.
-- **Disclosure upfront.** Mention that Codex Cryptica is the author's own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
+- **Solo Dev Framing.** Always write in the first-person singular (**"I built"**, **"I changed"**, **"I'm trying to solve"**). Never use "we", "our", or corporate collective voice. This is a passion project built by a single developer (Espen), and the text should reflect that personal craft.
+- **Espen's Authentic Voice.** Keep prose casual, incredibly direct, concise, and highly practical. Avoid wrapping paragraphs in fluffy transitions, generic LLM summary paragraphs, or textbook introductions. Speak plainly, as if talking directly to another developer or GM over a chat window.
+- **Disclosure upfront.** Mention that Codex Cryptica is your own project in the opening or first comment of any post outside r/codexcryptica. Burying affiliation reads as astroturfing.
 - **Scannable but not over-formatted.** Short paragraphs, light bullets, occasional bold lead-ins. Avoid horizontal rules unless the post is genuinely long. No emoji unless the user or sub specifically supports it.
 - **Concrete over abstract.** A specific example or screenshot beats a paragraph of adjectives every time.
 - **One question at the end.** A genuine question that invites discussion. Not a CTA, not "what do you think?" — something the reader could actually answer.
