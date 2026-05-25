@@ -22,6 +22,7 @@ describe("GraphContextMenuController", () => {
         updateEntity: vi.fn(),
         batchUpdate: vi.fn(),
         bulkAddLabel: vi.fn(),
+        bulkRemoveLabel: vi.fn(),
         deleteEntity: vi.fn(),
         resolveImageUrl: vi.fn(),
       },
@@ -90,6 +91,49 @@ describe("GraphContextMenuController", () => {
       "Updated 2 nodes.",
       "success",
     );
+  });
+
+  it("should return correct labels and isImportant status", () => {
+    controller.selectedNodes = [];
+    expect(controller.isImportant).toBe(false);
+    expect(controller.importantActionLabel).toBe("Mark Important");
+
+    controller.selectedNodes = ["node-1", "node-2"];
+    deps.vault.entities = {
+      "node-1": { id: "node-1", labels: ["important"] },
+      "node-2": { id: "node-2", labels: ["not-important"] },
+    };
+    expect(controller.isImportant).toBe(false);
+    expect(controller.importantActionLabel).toBe("Mark Important");
+
+    deps.vault.entities = {
+      "node-1": { id: "node-1", labels: ["important"] },
+      "node-2": { id: "node-2", labels: ["IMPORTANT"] },
+    };
+    expect(controller.isImportant).toBe(true);
+    expect(controller.importantActionLabel).toBe("Remove Important");
+  });
+
+  it("should untoggle important status if nodes are already important", async () => {
+    deps.vault.bulkRemoveLabel.mockResolvedValue(2);
+    controller.contextMenuOpen = true;
+    controller.selectedNodes = ["node-1", "node-2"];
+    deps.vault.entities = {
+      "node-1": { id: "node-1", labels: ["important"] },
+      "node-2": { id: "node-2", labels: ["important"] },
+    };
+
+    await controller.handleMarkImportant();
+
+    expect(deps.vault.bulkRemoveLabel).toHaveBeenCalledWith(
+      ["node-1", "node-2"],
+      "important",
+    );
+    expect(deps.notificationStore.notify).toHaveBeenCalledWith(
+      'Removed "important" status from 2 nodes.',
+      "success",
+    );
+    expect(controller.contextMenuOpen).toBe(false);
   });
 
   it("should mark selected nodes important", async () => {
@@ -170,7 +214,7 @@ describe("GraphContextMenuController", () => {
     await controller.handleMarkImportant();
 
     expect(deps.notificationStore.notify).toHaveBeenCalledWith(
-      "Failed to mark important: save failed",
+      "Failed to update important label: save failed",
       "error",
     );
   });
