@@ -368,7 +368,12 @@
             {resolvedImageUrl}
             {isPopout}
             onShowLightbox={(rect) =>
-              modalUIStore.openLightbox(resolvedImageUrl, entity.title, rect)}
+              modalUIStore.openLightbox(
+                resolvedImageUrl,
+                entity.title,
+                rect,
+                entity.image,
+              )}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />

@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-25
-**Feature**: [spec.md](file:///home/espen/proj/remotecodexarcana/specs/119-show-entity-image/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

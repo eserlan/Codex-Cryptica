@@ -386,7 +386,12 @@ export class GraphContextMenuController {
 
     try {
       const url = await this.deps.vault.resolveImageUrl(entity.image);
-      this.deps.modalUIStore.openLightbox(url, entity.title);
+      this.deps.modalUIStore.openLightbox(
+        url,
+        entity.title,
+        null,
+        entity.image,
+      );
     } catch (err: any) {
       console.error("Failed to view image", err);
       this.deps.notificationStore.notify(

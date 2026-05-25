@@ -178,15 +178,20 @@
         <span class="icon-[lucide--external-link] w-6 h-6"></span>
       </button>
 
-      {#if p2pHost.isHosting}
+      {#if p2pHost.isHosting && modalUIStore.lightbox.imagePath}
         <button
           class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none"
           onclick={(e) => {
             e.stopPropagation();
-            const originalPath = modalUIStore.lightbox.imagePath || imageUrl;
-            const success = mapSession.showImageToPlayers(title, originalPath);
-            if (success) {
-              notificationStore.notify("Shared image with guests", "success");
+            const originalPath = modalUIStore.lightbox.imagePath;
+            if (originalPath) {
+              const success = mapSession.showImageToPlayers(
+                title,
+                originalPath,
+              );
+              if (success) {
+                notificationStore.notify("Shared image with guests", "success");
+              }
             }
           }}
           aria-label="Share image with guests"

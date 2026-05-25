@@ -1,6 +1,6 @@
 # Implementation Plan: Show Entity Image to Guests
 
-**Branch**: `119-show-entity-image` | **Date**: 2026-05-25 | **Spec**: [spec.md](file:///home/espen/proj/remotecodexarcana/specs/119-show-entity-image/spec.md)
+**Branch**: `119-show-entity-image` | **Date**: 2026-05-25 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/119-show-entity-image/spec.md`
 
 ## Summary
