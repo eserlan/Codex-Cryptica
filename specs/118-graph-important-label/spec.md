@@ -1,6 +1,6 @@
 # Feature Specification: Graph Important Label
 
-**Feature Branch**: `886-graph-important-label`
+**Feature Branch**: `118-graph-important-label`
 **Created**: 2026-05-25
 **Status**: Draft
 **Input**: User description: "Graph context menu to indicate importance. If some entities in the graph are more important than others, there should be a way to visually indicate that other than the number of connections. Provide an #important label that can be easily applied via the right-click context menu, in addition to existing label workflows."
