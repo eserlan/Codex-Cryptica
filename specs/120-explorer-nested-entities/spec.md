@@ -5,6 +5,12 @@
 **Status**: Draft  
 **Input**: User description: "In entity explorer, it should be possible to create entities under another entity (one to many, multiple layers deep). Nested Indentation & Accordion Toggles."
 
+## Clarifications
+
+### Session 2026-05-26
+
+- Q: Visual Edit Actions in Guest Mode (P2P Collaborator Sessions) → A: Option A - Completely hide the "+" button and disable drag-and-drop hierarchy updates in Guest Mode.
+
 ## User Scenarios & Testing (mandatory)
 
 ### User Story 1 - Expand/Collapse Hierarchical Nested View (Priority: P1)
@@ -63,6 +69,7 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
   - _Mitigation_: If an entity matches a search query, all its ancestors up to the root must be displayed and forced expanded so the matching node remains visible in its hierarchical context. Ancestors that do not match the query themselves should be visually dimmed or marked.
 - **Label Grouping view mode**: The Explorer has a "Group by Label" mode.
   - _Mitigation_: Hierarchy is only rendered when the Explorer is in "List View" mode. In "Group by Label" mode, entities are grouped flatly by their labels, ignoring the hierarchy, to maintain the label grouping's primary purpose.
+- **Guest Session permissions**: Guests should view the hierarchy, but they cannot create or re-parent entities. The "+" button for creating child entities is completely hidden, and drag-and-drop hierarchy updates are disabled in Guest Mode.
 
 ## Requirements (mandatory)
 
