@@ -568,11 +568,6 @@ export const getGraphStyle = (
         "text-border-color": "#8b5cf6",
         "text-border-width": 1.5,
         "text-border-opacity": 0.5,
-        "shadow-color": "#8b5cf6",
-        "shadow-blur": 24,
-        "shadow-opacity": 0.45,
-        "shadow-offset-x": 0,
-        "shadow-offset-y": 0,
       },
     },
   ];
