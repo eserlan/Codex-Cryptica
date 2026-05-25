@@ -105,23 +105,33 @@
   <div class="mb-4 space-y-4">
     {#if !editState.isEditing}
       <div class="space-y-2">
-        {#if entity?.labels?.length}
-          <div class="flex flex-wrap gap-1.5">
-            {#each entity.labels as label}
-              <LabelBadge
-                {label}
-                removable={!vault.isGuest}
-                onRemove={() => {
-                  if (entity) {
-                    vault.removeLabel(entity.id, label).catch((err) => {
-                      console.error(
-                        `[ZenSidebar] Failed to remove label: ${err}`,
-                      );
-                    });
-                  }
-                }}
+        {#if entity?.labels?.length || !vault.isGuest}
+          <div class="space-y-1">
+            {#if entity?.labels?.length}
+              <div class="flex flex-wrap gap-1.5">
+                {#each entity.labels as label}
+                  <LabelBadge
+                    {label}
+                    removable={!vault.isGuest}
+                    onRemove={() => {
+                      if (entity) {
+                        vault.removeLabel(entity.id, label).catch((err) => {
+                          console.error(
+                            `[ZenSidebar] Failed to remove label: ${err}`,
+                          );
+                        });
+                      }
+                    }}
+                  />
+                {/each}
+              </div>
+            {/if}
+            {#if !vault.isGuest}
+              <LabelInput
+                entityId={entity?.id || ""}
+                ariaLabel="Quick add label"
               />
-            {/each}
+            {/if}
           </div>
         {/if}
 
@@ -144,7 +154,7 @@
             class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
             for="zen-labels">Labels</label
           >
-          <LabelInput entityId={entity?.id || ""} />
+          <LabelInput entityId={entity?.id || ""} ariaLabel="Labels" />
         </div>
 
         <div class="space-y-1">

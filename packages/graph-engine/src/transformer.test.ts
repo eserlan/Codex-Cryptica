@@ -487,6 +487,18 @@ describe("GraphTransformer", () => {
     expect(importantStyle.style["underlay-opacity"]).toBeGreaterThan(0);
     expect(importantStyle.style.width).toBeUndefined();
     expect(importantStyle.style.height).toBeUndefined();
+    expect(importantStyle.style["font-weight"]).toBe("bold");
+    expect(importantStyle.style["font-size"]).toBe(12);
+    expect(importantStyle.style["shadow-blur"]).toBe(24);
+    expect(importantStyle.style["border-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["underlay-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["text-border-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["shadow-color"]).toBe("#8b5cf6");
+
+    const importantSmallStyle = style.find(
+      (s) => s.selector === "node[isImportant][weight <= 2]",
+    );
+    expect(importantSmallStyle).toBeUndefined();
   });
 
   it("should preserve revealed border treatment when a node is also important", () => {

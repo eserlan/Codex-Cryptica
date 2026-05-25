@@ -293,20 +293,19 @@
               : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
             'saving'
               ? 'opacity-75 cursor-wait'
-              : ''} {!vault.hasFolderHandle || !vault.isDirty
+              : ''} {vault.hasFolderHandle && !vault.isDirty
               ? 'opacity-50'
               : ''}"
             onclick={() => vault.saveToFolder()}
             title={!vault.hasFolderHandle
-              ? "No folder linked — connect a local folder first to enable saving."
+              ? "No folder linked — select a local folder to enable saving."
               : vault.isDirty
                 ? "Save to folder — writes all changes from the internal archive to your linked folder."
                 : "Up to date with local folder."}
             aria-label="SAVE TO FOLDER"
             aria-busy={vault.status === "saving"}
             disabled={vault.status === "saving" ||
-              !vault.hasFolderHandle ||
-              !vault.isDirty}
+              (vault.hasFolderHandle && !vault.isDirty)}
           >
             {#if vault.status === "saving"}
               <span
@@ -316,7 +315,7 @@
               SAVING...
             {:else}
               <span
-                class={vault.isDirty
+                class={vault.isDirty || !vault.hasFolderHandle
                   ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
                   : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
               ></span>

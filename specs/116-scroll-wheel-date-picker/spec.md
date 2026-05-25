@@ -3,7 +3,7 @@
 **Feature Branch**: `116-scroll-wheel-date-picker`  
 **Created**: 2026-05-24  
 **Status**: Draft  
-**Input**: User description: "Better date picker: dynamic scroll-wheel picker for custom calendars from GitHub issue #873"
+**Input**: User description: "Better date picker: dynamic scroll-wheel picker for custom calendars from GitHub issue #873 (tracked under specification #116)"
 
 ## Clarifications
 

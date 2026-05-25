@@ -10,9 +10,11 @@
   let {
     entityId,
     placeholder = "Add label...",
+    ariaLabel = "",
   }: {
     entityId: string;
     placeholder?: string;
+    ariaLabel?: string;
   } = $props();
 
   let inputValue = $state("");
@@ -131,6 +133,7 @@
     {id}
     bind:value={inputValue}
     {placeholder}
+    aria-label={ariaLabel || placeholder}
     role="combobox"
     aria-autocomplete="list"
     aria-expanded={showSuggestions && suggestions.length > 0}

@@ -554,15 +554,25 @@ export const getGraphStyle = (
     {
       selector: "node[isImportant]",
       style: {
-        "border-color": tokens.accent || "#f59e0b",
+        "border-color": "#8b5cf6",
         "border-width": isFantasy
-          ? graph.nodeBorderWidth + 3
-          : graph.nodeBorderWidth + 8,
+          ? graph.nodeBorderWidth + 5
+          : graph.nodeBorderWidth + 14,
         "border-style": "double",
-        "underlay-color": tokens.accent || "#f59e0b",
-        "underlay-opacity": 0.28,
-        "underlay-padding": 10,
+        "underlay-color": "#8b5cf6",
+        "underlay-opacity": 0.35,
+        "underlay-padding": isFantasy ? 24 : 30,
         "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
+        "font-weight": "bold",
+        "font-size": 12,
+        "text-border-color": "#8b5cf6",
+        "text-border-width": 1.5,
+        "text-border-opacity": 0.5,
+        "shadow-color": "#8b5cf6",
+        "shadow-blur": 24,
+        "shadow-opacity": 0.45,
+        "shadow-offset-x": 0,
+        "shadow-offset-y": 0,
       },
     },
   ];

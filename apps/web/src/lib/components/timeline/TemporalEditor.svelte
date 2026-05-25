@@ -1,12 +1,13 @@
 <script lang="ts">
-  import type { TemporalMetadata } from "chronology-engine";
+  import type { TemporalMetadata } from "schema";
+  import type { DateSelection } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { slide } from "svelte/transition";
   import TemporalPicker from "./TemporalPicker.svelte";
 
   let { value = $bindable(), label = "Chronological Date" } = $props<{
-    value?: TemporalMetadata;
+    value?: TemporalMetadata | DateSelection;
     label?: string;
   }>();
 
@@ -36,6 +37,7 @@
     >
     {#if value?.year !== undefined}
       <button
+        type="button"
         onclick={clear}
         class="text-[10px] text-red-500 hover:text-red-400 uppercase font-mono"
       >
@@ -46,6 +48,7 @@
 
   <!-- Picker Trigger -->
   <button
+    type="button"
     bind:this={triggerElement}
     onclick={() => (showPicker = !showPicker)}
     class="w-full text-left bg-theme-bg border border-theme-border/30 rounded px-3 py-2 flex items-center justify-between group hover:border-theme-primary transition-all"
@@ -72,6 +75,7 @@
 
   <div class="flex flex-col gap-1">
     <button
+      type="button"
       onclick={() => (showLabelInput = !showLabelInput)}
       class="text-[10px] text-theme-muted uppercase font-bold font-header text-left hover:text-theme-primary transition-colors flex items-center gap-1"
     >

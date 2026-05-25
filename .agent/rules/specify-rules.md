@@ -9,14 +9,19 @@ Auto-generated from all feature plans. Last updated: 2026-05-25
 ## Project Structure
 
 ```text
-backend/
-frontend/
-tests/
+apps/
+  web/
+packages/
+  graph-engine/
+  schema/
+specs/
+.specify/
 ```
 
 ## Commands
 
-pnpm test && pnpm run lint
+bun run test
+bun run lint
 
 ## Code Style
 
