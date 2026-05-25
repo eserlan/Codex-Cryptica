@@ -79,7 +79,7 @@ class GeminiTTSService implements TTSService {
     }
     try {
       const voiceName = buildGeminiVoiceName(voiceProfile);
-      const styleInstruction = buildVoiceStyleInstruction(voiceProfile);
+      const _styleInstruction = buildVoiceStyleInstruction(voiceProfile);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
 
       const requestBody: Record<string, unknown> = {
@@ -94,13 +94,9 @@ class GeminiTTSService implements TTSService {
         },
       };
 
-      // Pass accent + tone to Gemini as a natural-language style instruction.
-      // Gemini 2.5 Flash TTS honours this alongside the prebuilt voice name.
-      if (styleInstruction) {
-        requestBody.systemInstruction = {
-          parts: [{ text: styleInstruction }],
-        };
-      }
+      // Note: Passing styleInstruction/systemInstruction to gemini-2.5-flash-preview-tts
+      // currently causes Google's backend to throw an internal HTTP 500 crash.
+      // So we bypass it entirely.
 
       const response = await fetch(url, {
         method: "POST",
