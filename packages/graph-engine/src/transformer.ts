@@ -17,6 +17,7 @@ export interface GraphNode {
     image?: string;
     thumbnail?: string;
     labels?: string[];
+    isImportant?: boolean;
     date?: TemporalMetadata;
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
@@ -65,6 +66,16 @@ const formatDate = (date?: TemporalMetadata) => {
 const EMPTY_LABELS: string[] = [];
 
 const getTextureVariant = () => Math.floor(Math.random() * 4);
+
+const hasImportantLabel = (labels?: string[]) => {
+  if (!labels) return false;
+
+  for (let i = 0; i < labels.length; i++) {
+    if (labels[i].toLowerCase() === "important") return true;
+  }
+
+  return false;
+};
 
 export class GraphTransformer {
   static entitiesToElements(
@@ -156,6 +167,7 @@ export class GraphTransformer {
         labels: entity.labels ?? EMPTY_LABELS,
         textureVariant: getTextureVariant(),
       };
+      if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -538,6 +550,23 @@ export const getGraphStyle = (
     },
   }));
 
+  const importantStyles: any[] = [
+    {
+      selector: "node[isImportant]",
+      style: {
+        "border-color": tokens.accent || "#f59e0b",
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 3
+          : graph.nodeBorderWidth + 8,
+        "border-style": "double",
+        "underlay-color": tokens.accent || "#f59e0b",
+        "underlay-opacity": 0.28,
+        "underlay-padding": 10,
+        "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
+      },
+    },
+  ];
+
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
     // Reset opacity for image nodes — categoryStyles sets 0.4 which would bleed through portraits
@@ -638,6 +667,7 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
+    ...importantStyles,
     ...revealedStyles,
     ...selectionStyles,
   ];

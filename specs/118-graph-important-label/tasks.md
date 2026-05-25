@@ -16,9 +16,9 @@
 
 **Purpose**: Confirm feature context and avoid drifting from the Speckit artifacts.
 
-- [ ] T001 Review feature contracts in specs/118-graph-important-label/contracts/graph-important-label.md
-- [ ] T002 Review graph styling ownership in packages/graph-engine/src/transformer.ts
-- [ ] T003 Review existing graph context-menu behavior in apps/web/src/lib/components/graph/ContextMenu.svelte and apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
+- [X] T001 Review feature contracts in specs/118-graph-important-label/contracts/graph-important-label.md
+- [X] T002 Review graph styling ownership in packages/graph-engine/src/transformer.ts
+- [X] T003 Review existing graph context-menu behavior in apps/web/src/lib/components/graph/ContextMenu.svelte and apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
 
 ---
 
@@ -28,10 +28,10 @@
 
 **CRITICAL**: No user story should be considered complete until important-node graph data and visual styling are testable.
 
-- [ ] T004 [P] Add failing transformer test for deriving an important-node data flag from `labels: ["important"]` in packages/graph-engine/src/transformer.test.ts
-- [ ] T005 [P] Add failing graph style test proving important nodes get a non-text visual treatment in packages/graph-engine/src/transformer.test.ts
-- [ ] T006 Add derived important-node data flag in packages/graph-engine/src/transformer.ts
-- [ ] T007 Add important-node Cytoscape style that is visually distinct without using connection-count size as the only signal in packages/graph-engine/src/transformer.ts
+- [X] T004 [P] Add failing transformer test for deriving an important-node data flag from `labels: ["important"]` in packages/graph-engine/src/transformer.test.ts
+- [X] T005 [P] Add failing graph style test proving important nodes get a non-text visual treatment in packages/graph-engine/src/transformer.test.ts
+- [X] T006 Add derived important-node data flag in packages/graph-engine/src/transformer.ts
+- [X] T007 Add important-node Cytoscape style that is visually distinct without using connection-count size as the only signal in packages/graph-engine/src/transformer.ts
 
 **Checkpoint**: Graph engine can identify and style important entities independently of web UI.
 
@@ -45,16 +45,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Add controller test for marking a single selected node important in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
-- [ ] T009 [P] [US1] Add controller test for no-change feedback when a single target is already important in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
-- [ ] T010 [P] [US1] Add controller failure-path test for rejected label mutation in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T008 [P] [US1] Add controller test for marking a single selected node important in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T009 [P] [US1] Add controller test for no-change feedback when a single target is already important in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T010 [P] [US1] Add controller failure-path test for rejected label mutation in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Add `handleMarkImportant` controller action using `vault.bulkAddLabel([id], "important")` in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
-- [ ] T012 [US1] Add `Mark Important` menu item for editable graph sessions in apps/web/src/lib/components/graph/ContextMenu.svelte
-- [ ] T013 [US1] Ensure success, already-important, and failure messages use plain language in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
-- [ ] T014 [US1] Verify single-node important label changes flow through graph elements and style refresh in apps/web/src/lib/components/GraphView.svelte
+- [X] T011 [US1] Add `handleMarkImportant` controller action using `vault.bulkAddLabel([id], "important")` in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
+- [X] T012 [US1] Add `Mark Important` menu item for editable graph sessions in apps/web/src/lib/components/graph/ContextMenu.svelte
+- [X] T013 [US1] Ensure success, already-important, and failure messages use plain language in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
+- [X] T014 [US1] Verify single-node important label changes flow through graph elements and style refresh in apps/web/src/lib/components/GraphView.svelte
 
 **Checkpoint**: User Story 1 is independently functional and testable.
 
@@ -68,14 +68,14 @@
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Add controller test for applying `important` to multiple selected node ids in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
-- [ ] T016 [P] [US2] Add controller test for no-change feedback when all selected nodes are already important in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
-- [ ] T017 [P] [US2] Add controller test for empty selection no-op in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T015 [P] [US2] Add controller test for applying `important` to multiple selected node ids in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T016 [P] [US2] Add controller test for no-change feedback when all selected nodes are already important in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T017 [P] [US2] Add controller test for empty selection no-op in apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Ensure context-menu selection resolution preserves selected-node targets for the important action in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
-- [ ] T019 [US2] Ensure multi-select success and no-change copy reports selected-node outcomes in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
+- [X] T018 [US2] Ensure context-menu selection resolution preserves selected-node targets for the important action in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
+- [X] T019 [US2] Ensure multi-select success and no-change copy reports selected-node outcomes in apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts
 
 **Checkpoint**: User Stories 1 and 2 both work independently.
 
@@ -89,11 +89,11 @@
 
 ### Tests for User Story 3
 
-- [ ] T020 [P] [US3] Add component or controller-adjacent test coverage that the `Mark Important` menu item is not available when `vault.isGuest` is true in apps/web/src/lib/components/graph/ContextMenu.svelte or apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
+- [X] T020 [P] [US3] Add component or controller-adjacent test coverage that the `Mark Important` menu item is not available when `vault.isGuest` is true in apps/web/src/lib/components/graph/ContextMenu.svelte or apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Confirm the `Mark Important` menu item is rendered only inside the editable-session branch in apps/web/src/lib/components/graph/ContextMenu.svelte
+- [X] T021 [US3] Confirm the `Mark Important` menu item is rendered only inside the editable-session branch in apps/web/src/lib/components/graph/ContextMenu.svelte
 
 **Checkpoint**: Read-only sessions provide no graph context-menu path to mutate importance labels.
 
@@ -103,9 +103,9 @@
 
 **Purpose**: Final verification, documentation alignment, and PR hygiene.
 
-- [ ] T022 [P] Update specs/118-graph-important-label/quickstart.md if final user-facing behavior differs from the planned flow
-- [ ] T023 [P] Confirm no user-facing changelog entry is needed for implementation-only or planning-only changes in apps/web/src/lib/content/changelog/releases.json
-- [ ] T024 Run focused graph-engine tests for packages/graph-engine/src/transformer.test.ts
+- [X] T022 [P] Update specs/118-graph-important-label/quickstart.md if final user-facing behavior differs from the planned flow
+- [X] T023 [P] Confirm no user-facing changelog entry is needed for implementation-only or planning-only changes in apps/web/src/lib/content/changelog/releases.json
+- [X] T024 Run focused graph-engine tests for packages/graph-engine/src/transformer.test.ts
 - [ ] T025 Run focused web graph context-menu tests for apps/web/src/lib/components/graph/graph-context-menu-controller.test.ts
 - [ ] T026 Run repository validation with `bun run lint` and `bun run test`
 - [ ] T027 Update PR #891 summary if implementation scope or validation results change
