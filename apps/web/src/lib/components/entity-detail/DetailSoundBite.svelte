@@ -135,6 +135,8 @@
     };
   });
 
+  let autoplayBlocked = $state(false);
+
   // Auto-play when the host broadcasts a sound bite to all guests.
   // Fires once the audio URL is resolved and the <audio> element is mounted.
   $effect(() => {
@@ -143,8 +145,10 @@
     if (!audioEl) return;
 
     soundBiteService.pendingAutoPlay = false;
+    autoplayBlocked = false;
     audioEl.play().catch(() => {
       // Auto-play blocked by browser policy — user can click play manually.
+      autoplayBlocked = true;
     });
   });
 
@@ -284,6 +288,14 @@
             aria-label="Sound bite audio player"
             class="w-full h-8 mb-3 rounded"
           ></audio>
+          {#if autoplayBlocked}
+            <div
+              class="flex items-center gap-1.5 text-xs text-amber-500 font-medium mb-3"
+            >
+              <span class="icon-[lucide--volume-x] w-3.5 h-3.5 shrink-0"></span>
+              <span>Autoplay blocked by browser. Click Play to listen!</span>
+            </div>
+          {/if}
         {:else if audioLoading}
           <div class="flex items-center gap-1.5 text-xs text-theme-muted mb-3">
             <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
