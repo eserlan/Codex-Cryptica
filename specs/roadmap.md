@@ -18,6 +18,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.26.1 — The Nested Entities & Explorer Polish Update (2026-05-26)
+
+- **Highlights**: Deep folder tree nesting up to 8 levels, fully re-engineered native drag-and-drop workspace organization with cycle validation and dedicated root drop zone, inline subfolder/child entity creation, standard list item layout ARIA accessibility restructure, and cache reload persistence.
+- **Associated Specifications**:
+  - [120-explorer-nested-entities](./120-explorer-nested-entities/spec.md) (Logical parent-child nesting, inline creation, re-parenting, and drag-and-drop mechanics)
+
 ### v0.26.0 — The Multi-Sensory & Interactive Chronology Update (2026-05-25)
 
 - **Highlights**: Fully voiced entity quotes (Sound Bites) via Gemini 2.5 Flash Preview with 28 voices, real-time audio broadcasting, P2P image sharing and lightbox sync, tactile scroll-wheel timeline picker, and relationship graph important node markers.

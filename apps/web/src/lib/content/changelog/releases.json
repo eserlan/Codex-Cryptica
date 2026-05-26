@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.26.1",
+    "title": "The Nested Entities & Explorer Polish Update",
+    "date": "2026-05-26",
+    "type": "patch",
+    "highlights": [
+      "Deep Campaign Hierarchy: Nest folders and campaign notes up to 8 levels deep (previously 5) to organize massive campaign settings visually.",
+      "Re-engineered Drag-and-Drop: Rebuilt browser-native drag-and-drop to offer completely smooth, flicker-free moves with automatic parent-child cycle checking and a dedicated drop zone to promote folders back to the root level.",
+      "Inline Folder Creation: Hover over any explorer item and click '+' to instantly spawn and name nested child entities without opening full configuration dialogs.",
+      "HTML & ARIA Semantics: Rewrote explorer item rows as standard list items (role='listitem') containing a single interactive button, ensuring screen readers and keyboard navigation follow standard accessibility behavior.",
+      "Reload Persistence: Resolved a cache hydration issue, ensuring custom campaign folder nesting structures and visibility states correctly survive hard browser page reloads."
+    ]
+  },
+  {
     "version": "0.26.0",
     "title": "The Multi-Sensory & Interactive Chronology Update",
     "date": "2026-05-25",
