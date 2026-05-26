@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entity, Connection } from "schema";
+  import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
@@ -91,19 +91,34 @@
 
   let allConnections = $derived.by(() => {
     if (!entity) return [];
-    const outbound = entity.connections.map((c: Connection) => ({
-      ...c,
-      isOutbound: true,
-      displayTitle: vault.entities[c.target]?.title || c.target,
-      targetId: c.target,
-    }));
-    const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
-      ...item.connection,
-      isOutbound: false,
-      displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
-      targetId: item.sourceId,
-    }));
-    return [...outbound, ...inbound];
+
+    // ⚡ Bolt Optimization: Replace multiple .map() calls and array spread
+    // with imperative loops using .push() to eliminate intermediate array
+    // allocations and reduce GC overhead on reactive updates.
+    const result = [];
+
+    for (const c of entity.connections) {
+      result.push({
+        ...c,
+        isOutbound: true,
+        displayTitle: vault.entities[c.target]?.title || c.target,
+        targetId: c.target,
+      });
+    }
+
+    const inboundList = vault.inboundConnections[entity.id];
+    if (inboundList) {
+      for (const item of inboundList) {
+        result.push({
+          ...item.connection,
+          isOutbound: false,
+          displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
+          targetId: item.sourceId,
+        });
+      }
+    }
+
+    return result;
   });
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
