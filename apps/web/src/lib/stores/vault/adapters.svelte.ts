@@ -8,6 +8,7 @@ import {
   parseMarkdown,
   stringifyEntity,
   deriveIdFromPath,
+  sanitizeId,
 } from "../../utils/markdown";
 import { cacheService } from "../../services/cache.svelte";
 import type { IFileIOAdapter } from "@codex/vault-engine/src/repository.svelte";
@@ -49,13 +50,34 @@ export const fileIOAdapter: IFileIOAdapter = {
   },
   parseMarkdown: (text, path) => {
     const parsed = parseMarkdown(text);
-    const id = parsed.metadata.id || deriveIdFromPath(path);
+    const rawId = parsed.metadata.id || deriveIdFromPath(path);
+    const id = sanitizeId(rawId);
     const connections = parsed.metadata.connections || [];
+
+    let parent = parsed.metadata.parent
+      ? sanitizeId(parsed.metadata.parent)
+      : undefined;
+
+    // Derive parent from subdirectories if not explicitly defined in frontmatter
+    if (!parent && path && path.length > 1) {
+      for (let i = path.length - 2; i >= 0; i--) {
+        const dirId = sanitizeId(path[i]);
+        if (dirId !== id) {
+          parent = dirId;
+          break;
+        }
+      }
+    }
+
     const entity = {
       ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
-      title: parsed.metadata.title || id!,
+      title:
+        parsed.metadata.title ||
+        (path && path.length > 0
+          ? path[path.length - 1].replace(/\.(md|markdown)$/i, "")
+          : rawId),
       status: parsed.metadata.status || "active",
       tags: parsed.metadata.tags || [],
       labels: parsed.metadata.labels || parsed.metadata.tags || [],
@@ -63,6 +85,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       connections,
       content: parsed.content,
       lore: parsed.metadata.lore || "",
+      parent,
       _path: path,
     };
 

@@ -69,7 +69,7 @@ export class GDriveBackend implements ISyncBackend {
   }
 
   /**
-   * Scans the Drive folder for files.
+   * Scans the Drive folder for files recursively.
    */
   async scan(
     _vaultId: string,
@@ -77,38 +77,52 @@ export class GDriveBackend implements ISyncBackend {
   ): Promise<{ files: FileMetadata[]; nextToken?: string }> {
     if (!this.folderId) return { files: [] };
 
-    const query = `'${this.folderId}' in parents and trashed = false`;
-    const fields = "nextPageToken, files(id, name, modifiedTime, size)";
-    const baseUrl = `/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=1000`;
-
-    let url = baseUrl;
-    if (sinceToken) {
-      url += `&pageToken=${encodeURIComponent(sinceToken)}`;
-    }
-
     const allFiles: FileMetadata[] = [];
-    let hasMore = true;
 
-    while (hasMore) {
-      const response = await this.driveFetch(url);
-      const data = await response.json();
+    const scanFolder = async (
+      folderId: string,
+      pathPrefix: string[] = [],
+    ): Promise<void> => {
+      const query = `'${folderId}' in parents and trashed = false`;
+      const fields =
+        "nextPageToken, files(id, name, mimeType, modifiedTime, size)";
+      const baseUrl = `/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=1000`;
 
-      const files = data.files.map((f: any) => ({
-        path: f.name,
-        lastModified: new Date(f.modifiedTime).getTime(),
-        size: parseInt(f.size || "0"),
-        handle: f.id,
-      }));
-
-      allFiles.push(...files);
-
-      if (data.nextPageToken) {
-        url = `${baseUrl}&pageToken=${encodeURIComponent(data.nextPageToken)}`;
-      } else {
-        hasMore = false;
+      let url = baseUrl;
+      if (folderId === this.folderId && sinceToken) {
+        url += `&pageToken=${encodeURIComponent(sinceToken)}`;
       }
-    }
 
+      let hasMore = true;
+      while (hasMore) {
+        const response = await this.driveFetch(url);
+        const data = await response.json();
+
+        if (data.files) {
+          for (const f of data.files) {
+            const currentPath = [...pathPrefix, f.name].join("/");
+            if (f.mimeType === "application/vnd.google-apps.folder") {
+              await scanFolder(f.id, [...pathPrefix, f.name]);
+            } else {
+              allFiles.push({
+                path: currentPath,
+                lastModified: new Date(f.modifiedTime || Date.now()).getTime(),
+                size: parseInt(f.size || "0"),
+                handle: f.id,
+              });
+            }
+          }
+        }
+
+        if (data.nextPageToken) {
+          url = `${baseUrl}&pageToken=${encodeURIComponent(data.nextPageToken)}`;
+        } else {
+          hasMore = false;
+        }
+      }
+    };
+
+    await scanFolder(this.folderId);
     return { files: allFiles };
   }
 

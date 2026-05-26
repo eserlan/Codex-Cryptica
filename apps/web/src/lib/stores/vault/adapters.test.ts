@@ -21,6 +21,14 @@ vi.mock("../../utils/markdown", () => ({
   parseMarkdown: vi.fn(),
   stringifyEntity: vi.fn(),
   deriveIdFromPath: vi.fn(),
+  sanitizeId: vi.fn((x) =>
+    x
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, ""),
+  ),
 }));
 
 vi.mock("../../services/cache.svelte", () => ({
@@ -147,7 +155,7 @@ describe("Adapters", () => {
       vi.mocked(markdown.deriveIdFromPath).mockReturnValue("derived-id");
       const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
       expect(entity!.id).toBe("derived-id");
-      expect(entity!.title).toBe("derived-id");
+      expect(entity!.title).toBe("path");
       expect(entity!.type).toBe("note");
       expect(entity!.tags).toEqual([]);
       expect(entity!.labels).toEqual([]);

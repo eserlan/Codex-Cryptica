@@ -54,7 +54,30 @@ export class SyncStore {
 
   private syncAbortController: AbortController | null = null;
 
-  constructor(private deps: SyncStoreDependencies) {}
+  private unsubscribe: (() => void) | null = null;
+
+  constructor(private deps: SyncStoreDependencies) {
+    this.unsubscribe = appEventBus.subscribe(
+      "SYNC:DRIVE_PULL_COMPLETE",
+      async (event) => {
+        const activeId = this.deps.activeVaultId();
+        if (activeId && event.payload?.vaultId === activeId) {
+          debugStore.log(
+            `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
+          );
+          await cacheService.clearVault(activeId);
+          await this.loadFiles(false);
+        }
+      },
+    );
+  }
+
+  destroy() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+  }
 
   private isStale(vaultIdAtStart: string, signal: AbortSignal): boolean {
     return this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted;

@@ -103,6 +103,50 @@ describe("GDriveBackend", () => {
       expect(result.files[1].handle).toBe("file2");
       expect((result as any).nextToken).toBeUndefined();
     });
+
+    it("should recursively scan subfolders", async () => {
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              files: [
+                {
+                  id: "folder1",
+                  name: "NPCs",
+                  mimeType: "application/vnd.google-apps.folder",
+                },
+                {
+                  id: "file-root",
+                  name: "root.md",
+                  modifiedTime: "2023-01-01T00:00:00Z",
+                  size: "100",
+                },
+              ],
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              files: [
+                {
+                  id: "file-nested",
+                  name: "Bob.md",
+                  modifiedTime: "2023-01-02T00:00:00Z",
+                  size: "200",
+                },
+              ],
+            }),
+        });
+
+      const result = await backend.scan(vaultId);
+      expect(result.files).toHaveLength(2);
+      expect(result.files[0].path).toBe("NPCs/Bob.md");
+      expect(result.files[0].handle).toBe("file-nested");
+      expect(result.files[1].path).toBe("root.md");
+      expect(result.files[1].handle).toBe("file-root");
+    });
   });
 
   describe("download", () => {

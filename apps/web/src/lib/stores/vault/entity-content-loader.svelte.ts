@@ -2,7 +2,7 @@ import { vaultEventBus } from "./events.svelte";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { readFileAsText } from "../../utils/opfs";
-import { parseMarkdown } from "../../utils/markdown";
+import { parseMarkdown, sanitizeId } from "../../utils/markdown";
 import { VaultRepository } from "@codex/vault-engine";
 
 export interface ContentLoaderDependencies {
@@ -99,9 +99,21 @@ export class EntityContentLoader {
             return;
           }
 
-          const { content: freshContent } = parseMarkdown(text);
+          const { content: freshContent, metadata: freshMetadata } =
+            parseMarkdown(text);
+          const mergedMetadata = { ...(freshMetadata || {}) };
+          delete mergedMetadata.id;
+          if (mergedMetadata.parent) {
+            mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
+          }
+          for (const key of Object.keys(mergedMetadata)) {
+            if (mergedMetadata[key] === undefined) {
+              delete mergedMetadata[key];
+            }
+          }
           this.deps.repository.entities[id] = {
             ...currentEntity,
+            ...mergedMetadata,
             content: freshContent || currentEntity.content || "",
             lore: "",
           };
@@ -164,7 +176,7 @@ export class EntityContentLoader {
                 const text = await readFileAsText(localHandle, path);
                 if (text) {
                   const { metadata, content } = parseMarkdown(text);
-                  result = { content, lore: metadata.lore || "" };
+                  result = { content, lore: metadata.lore || "", metadata };
                 }
               }
             } catch (err) {
@@ -183,9 +195,21 @@ export class EntityContentLoader {
             const finalLore = result.lore || entityToUpdate.lore || "";
             const path = entityToUpdate._path || [`${id}.md`];
 
+            // Normalize and merge metadata
+            const mergedMetadata = { ...(result.metadata || {}) };
+            delete mergedMetadata.id;
+            if (mergedMetadata.parent) {
+              mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
+            }
+            for (const key of Object.keys(mergedMetadata)) {
+              if (mergedMetadata[key] === undefined) {
+                delete mergedMetadata[key];
+              }
+            }
+
             const updatedEntity = {
-              ...(result.metadata || {}),
               ...entityToUpdate,
+              ...mergedMetadata,
               content: finalContent,
               lore: finalLore,
             };
@@ -258,9 +282,20 @@ export class EntityContentLoader {
     try {
       const result = await this._readFromOpfs(id);
       if (result) {
+        const mergedMetadata = { ...(result.metadata || {}) };
+        delete mergedMetadata.id;
+        if (mergedMetadata.parent) {
+          mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
+        }
+        for (const key of Object.keys(mergedMetadata)) {
+          if (mergedMetadata[key] === undefined) {
+            delete mergedMetadata[key];
+          }
+        }
+
         this.deps.repository.entities[id] = {
-          ...(result.metadata || {}),
           ...currentEntity,
+          ...mergedMetadata,
           content: result.content,
           lore: result.lore,
         };
