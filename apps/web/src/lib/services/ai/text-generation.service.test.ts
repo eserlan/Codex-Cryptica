@@ -110,6 +110,19 @@ describe("DefaultTextGenerationService", () => {
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
+
+    it("should truncate long history content to keep payload small", async () => {
+      const veryLongContent = "A".repeat(3000);
+      await service.expandQuery("key", "him?", [
+        { role: "user", content: veryLongContent },
+      ]);
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "A".repeat(2000) + "... [truncated for length]",
+        ),
+      );
+    });
   });
 
   describe("distillContext", () => {
@@ -366,6 +379,29 @@ describe("DefaultTextGenerationService", () => {
       expect(chatOptions.history[0].role).toBe("user");
       expect(chatOptions.history[0].parts[0].text).toContain("User message 2");
       expect(chatOptions.history[1].role).toBe("model");
+    });
+
+    it("should truncate long chat history messages to prevent token bloat", async () => {
+      const onUpdate = vi.fn();
+      const veryLongContent = "B".repeat(5000);
+      const history = [
+        { role: "user", content: veryLongContent },
+        { role: "assistant", content: "Short reply" },
+      ];
+
+      await service.generateResponse(
+        "key",
+        "Query",
+        history,
+        "Context",
+        "model",
+        onUpdate,
+      );
+
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      expect(chatOptions.history[0].parts[0].text).toBe(
+        "B".repeat(4000) + "\n\n... [truncated for length]",
+      );
     });
   });
 

@@ -61,7 +61,14 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
       const conversationContext = cleanHistory
         .slice(-4)
-        .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+        .map((m) => {
+          const role = m.role.toUpperCase();
+          const content =
+            m.content.length > 2000
+              ? m.content.slice(0, 2000) + "... [truncated for length]"
+              : m.content;
+          return `${role}: ${content}`;
+        })
         .join("\n");
 
       const prompt = buildQueryExpansionPrompt(conversationContext, query);
@@ -382,7 +389,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
       if (m.role !== "user" && m.role !== "assistant") continue;
 
       const role = m.role === "assistant" ? "model" : "user";
-      const content = m.content?.trim() || "(empty message)";
+      const rawContent = m.content?.trim() || "(empty message)";
+      const content =
+        rawContent.length > 4000
+          ? rawContent.slice(0, 4000) + "\n\n... [truncated for length]"
+          : rawContent;
 
       if (sanitizedHistory.length === 0) {
         if (role === "user") {
