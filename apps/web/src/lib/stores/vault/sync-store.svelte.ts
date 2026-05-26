@@ -61,7 +61,7 @@ export class SyncStore {
         debugStore.log(
           `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
         );
-        cacheService.invalidatePreload();
+        await cacheService.clearVault(activeId);
         await this.loadFiles(false);
       }
     });

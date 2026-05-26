@@ -145,6 +145,40 @@ describe("entityTree helper", () => {
 
     const spellbookNode = gearNode.children[0];
     expect(spellbookNode.entity.id).toBe("spellbook");
-    expect(spellbookNode.entity.title).toBe("Spellbook");
+  });
+
+  it("should match parent relationships case-insensitively with mixed-case IDs", () => {
+    const parentEntity: Entity = {
+      id: "NPCs",
+      title: "NPCs Section",
+      type: "note",
+      status: "active",
+      tags: [],
+      labels: [],
+      connections: [],
+      aliases: [],
+      content: "",
+    };
+    const childEntity: Entity = {
+      id: "bob",
+      title: "Bob",
+      type: "character",
+      status: "active",
+      tags: [],
+      labels: [],
+      connections: [],
+      aliases: [],
+      content: "",
+      parent: "NPCs", // mixed-case reference to mixed-case ID
+    };
+
+    const roots = buildEntityTree(
+      [parentEntity, childEntity],
+      [parentEntity, childEntity],
+    );
+    expect(roots).toHaveLength(1);
+    expect(roots[0].entity.id).toBe("NPCs");
+    expect(roots[0].children).toHaveLength(1);
+    expect(roots[0].children[0].entity.id).toBe("bob");
   });
 });

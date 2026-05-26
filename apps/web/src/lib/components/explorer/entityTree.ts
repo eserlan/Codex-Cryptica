@@ -11,10 +11,10 @@ export function buildEntityTree(
   entities: Entity[],
   filteredEntities: Entity[],
 ): TreeNode[] {
-  // 1. Build a lookup record of all entities in the vault by ID
+  // 1. Build a lookup record of all entities in the vault by SANITIZED ID
   const allEntitiesMap = new Map<string, Entity>();
   for (const e of entities) {
-    allEntitiesMap.set(e.id, e);
+    allEntitiesMap.set(sanitizeId(e.id), e);
   }
 
   // 1b. Recursively discover missing parents (directories/folders) and create virtual entities
@@ -85,12 +85,15 @@ export function buildEntityTree(
   // 2. Identify the set of all visible entities.
   // It contains all matching entities (filteredEntities) plus all their ancestors.
   const visibleIds = new Set<string>();
-  const matchingIds = new Set<string>(filteredEntities.map((e) => e.id));
+  const matchingIds = new Set<string>(
+    filteredEntities.map((e) => sanitizeId(e.id)),
+  );
 
   for (const match of filteredEntities) {
     let current: Entity | undefined = match;
     while (current) {
-      visibleIds.add(current.id);
+      const currentSanitizedId = sanitizeId(current.id);
+      visibleIds.add(currentSanitizedId);
       if (current.parent) {
         current = allEntitiesMap.get(sanitizeId(current.parent));
       } else {

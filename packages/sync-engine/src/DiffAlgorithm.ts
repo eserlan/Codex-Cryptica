@@ -118,6 +118,7 @@ export class DiffAlgorithm {
           return {
             type: "EXPORT_TO_FS",
             path,
+            fsMetadata: fs,
             opfsMetadata: opfs,
             registryEntry: registry,
           };
@@ -140,6 +141,7 @@ export class DiffAlgorithm {
       return {
         type: "EXPORT_TO_FS",
         path,
+        fsMetadata: fs,
         opfsMetadata: opfs,
         registryEntry: registry,
       };
@@ -162,6 +164,7 @@ export class DiffAlgorithm {
         return {
           type: "EXPORT_TO_FS",
           path,
+          fsMetadata: fs,
           opfsMetadata: opfs,
           registryEntry: registry,
         };

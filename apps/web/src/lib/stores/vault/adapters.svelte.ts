@@ -50,7 +50,8 @@ export const fileIOAdapter: IFileIOAdapter = {
   },
   parseMarkdown: (text, path) => {
     const parsed = parseMarkdown(text);
-    const id = parsed.metadata.id || deriveIdFromPath(path);
+    const rawId = parsed.metadata.id || deriveIdFromPath(path);
+    const id = sanitizeId(rawId);
     const connections = parsed.metadata.connections || [];
 
     let parent = parsed.metadata.parent
@@ -72,7 +73,11 @@ export const fileIOAdapter: IFileIOAdapter = {
       ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
-      title: parsed.metadata.title || id!,
+      title:
+        parsed.metadata.title ||
+        (path && path.length > 0
+          ? path[path.length - 1].replace(/\.(md|markdown)$/i, "")
+          : rawId),
       status: parsed.metadata.status || "active",
       tags: parsed.metadata.tags || [],
       labels: parsed.metadata.labels || parsed.metadata.tags || [],

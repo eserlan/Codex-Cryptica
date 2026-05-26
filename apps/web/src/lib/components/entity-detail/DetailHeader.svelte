@@ -57,6 +57,16 @@
   };
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
+
+  const parentEntity = $derived(
+    entity?.parent ? vault.entities[entity.parent] : null,
+  );
+
+  const handleOpenParent = () => {
+    if (parentEntity) {
+      vault.selectedEntityId = parentEntity.id;
+    }
+  };
 </script>
 
 {#if isObscured}
@@ -200,6 +210,24 @@
                   {alias}
                 </div>
               {/each}
+            </div>
+          {/if}
+          {#if parentEntity}
+            <div
+              class="flex items-center gap-1.5 text-xs text-theme-muted mt-1.5"
+              data-testid="sidebar-parent-indicator"
+            >
+              <span
+                class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
+              ></span>
+              <span>Parent:</span>
+              <button
+                type="button"
+                onclick={handleOpenParent}
+                class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+              >
+                {parentEntity.title}
+              </button>
             </div>
           {/if}
         </div>

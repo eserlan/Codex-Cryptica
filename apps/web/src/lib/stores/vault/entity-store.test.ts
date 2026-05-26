@@ -36,6 +36,11 @@ vi.mock("./entities", () => ({
 vi.mock("../../utils/opfs", () => ({
   readFileAsText: vi.fn(),
   deleteOpfsEntry: vi.fn(),
+  walkOpfsDirectory: vi.fn(),
+  writeOpfsFile: vi.fn(),
+  isNotFoundError: vi.fn(() => false),
+  readOpfsBlob: vi.fn(),
+  getDirHandle: vi.fn(),
 }));
 
 vi.mock("../../utils/markdown", () => ({
