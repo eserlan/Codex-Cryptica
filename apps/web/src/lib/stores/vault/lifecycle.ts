@@ -212,7 +212,9 @@ export class VaultLifecycleManager {
         await this.deps.themeStore.loadForVault(id);
         await this.deps.loadFiles();
         this.deps.setInitialized(true);
-        this.deps.syncStore.setStatus("idle");
+        if (this.deps.syncStore.status === "loading") {
+          this.deps.syncStore.setStatus("idle");
+        }
 
         vaultEventBus.emit({ type: "VAULT_SWITCHED", vaultId: id });
       });

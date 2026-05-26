@@ -187,6 +187,7 @@ export class VaultStore {
       isGuest: () => this.isGuest,
       getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
       setStatus: (s) => this.syncStore.setStatus(s),
+      status: () => this.syncStore.status,
       setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
       onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
       isContentLoaded: (id) => loader.isContentLoaded(id),

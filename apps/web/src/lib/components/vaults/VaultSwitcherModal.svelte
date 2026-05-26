@@ -269,7 +269,10 @@
                       title="Folder permission required"
                       data-testid="needs-permission-badge"
                     >
-                      <span class="icon-[lucide--lock] w-3 h-3"></span>
+                      <span
+                        class="icon-[lucide--lock] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
                       LOCKED
                     </span>
                   {/if}

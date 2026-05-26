@@ -100,7 +100,13 @@ describe("VaultLifecycleManager", () => {
 
     deps = {
       syncStore: {
-        setStatus: vi.fn(),
+        _status: "idle",
+        get status() {
+          return this._status;
+        },
+        setStatus: vi.fn().mockImplementation(function (this: any, s) {
+          this._status = s;
+        }),
         setErrorMessage: vi.fn(),
         setHasConflictFiles: vi.fn(),
       },

@@ -316,7 +316,7 @@ export class SyncCoordinator {
     if (!localHandle) {
       try {
         this.notifier.alert(
-          "Please select a local folder to link this vault with. This is required to grant permission or reconnect a lost link.",
+          "Please select a local folder to link this vault with. This is required to establish or reconnect a lost folder link.",
         );
         localHandle = await this.ioAdapter.showDirectoryPicker();
         await this.ioAdapter.setLocalHandle(activeVaultId, localHandle);

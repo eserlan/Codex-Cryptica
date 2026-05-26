@@ -1,6 +1,6 @@
 # Implementation Plan: Vault Load/Save Confidence
 
-**Branch**: `121-vault-load-save-confidence` | **Date**: 2026-05-26 | **Spec**: [spec.md](file:///home/espen/proj/remotecodexarcana/specs/121-vault-load-save-confidence/spec.md)
+**Branch**: `121-vault-load-save-confidence` | **Date**: 2026-05-26 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/121-vault-load-save-confidence/spec.md`
 
 ## Summary

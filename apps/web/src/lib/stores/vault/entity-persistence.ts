@@ -21,6 +21,13 @@ export interface PersistenceDependencies {
       | "needs-permission"
       | "error",
   ) => void;
+  status?: () =>
+    | "idle"
+    | "loading"
+    | "saving"
+    | "saved"
+    | "needs-permission"
+    | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
   // loader delegation
@@ -49,7 +56,9 @@ export class EntityPersistenceService {
     if (!vaultIdAtStart) return Promise.resolve();
     if (sessionModeStore.isDemoMode) return Promise.resolve();
 
-    this.deps.setStatus("idle");
+    if (this.deps.status && this.deps.status() === "saved") {
+      this.deps.setStatus("idle");
+    }
 
     const id = entity.id;
 

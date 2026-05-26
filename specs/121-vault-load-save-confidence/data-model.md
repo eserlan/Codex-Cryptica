@@ -34,7 +34,7 @@ stateDiagram-v2
     idle --> saving : saveToFolder()
     idle --> needs-permission : loadFiles() [permission !== "granted"]
     needs-permission --> loading : Click "GRANT ACCESS" (Granted)
-    needs-permission --> error : Click "GRANT ACCESS" (Denied)
+    needs-permission --> needs-permission : Click "GRANT ACCESS" (Denied)
     loading --> idle : Load complete
     loading --> error : Load failed
     saving --> saved : Save successful

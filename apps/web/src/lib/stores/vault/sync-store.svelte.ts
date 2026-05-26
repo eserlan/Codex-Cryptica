@@ -102,11 +102,13 @@ export class SyncStore {
       }
       this.setStatus("needs-permission");
       this.errorMessage = "Permission denied for local folder.";
+      notificationStore.notify("Permission denied for local folder.", "error");
       return false;
     } catch (err: any) {
       debugStore.error("[SyncStore] Failed to ensure folder permission", err);
       this.setStatus("needs-permission");
       this.errorMessage = "Permission denied for local folder.";
+      notificationStore.notify("Permission denied for local folder.", "error");
       return false;
     }
   }
@@ -180,6 +182,7 @@ export class SyncStore {
       }
 
       // Silent check for local folder handle permission
+      let skipLocalSync = false;
       const localHandle = await this.deps.getActiveFolderHandle();
       this.hasFolderHandle = !!localHandle;
       if (localHandle && !isDemo) {
@@ -191,15 +194,8 @@ export class SyncStore {
             debugStore.log(
               `[SyncStore] Local folder permission is ${permission}. Skipping auto-sync.`,
             );
-            this._status = "needs-permission";
-            await this.deps.updateEntityCount(
-              vaultIdAtStart,
-              Object.keys(this.deps.repository.entities).length,
-            );
-            await this.deps.loadMaps(vaultIdAtStart);
-            await this.deps.loadCanvases(vaultIdAtStart);
-            void this.deps.getActiveVaultHandle();
-            return;
+            this.setStatus("needs-permission");
+            skipLocalSync = true;
           }
         } catch (err) {
           debugStore.warn(
@@ -235,7 +231,7 @@ export class SyncStore {
         return;
       }
 
-      if (localHandle) {
+      if (localHandle && !skipLocalSync) {
         debugStore.log(
           `[SyncStore] Local sync handle found for ${vaultIdAtStart}. Synchronizing...`,
         );

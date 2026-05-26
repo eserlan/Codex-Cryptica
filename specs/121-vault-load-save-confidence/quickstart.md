@@ -21,7 +21,7 @@ To verify that vault switching is non-blocking:
 
 1. Run the application in developmental mode:
    ```bash
-   pnpm run dev
+   bun run dev
    ```
 2. Link folders on multiple vaults.
 3. Switch vaults. If write operations take too long (simulated or actual), notice that the vault switch still completes within 5 seconds without blocking the UI indefinitely.
@@ -32,8 +32,8 @@ To run the updated test suites specifically covering these behaviors:
 
 ```bash
 # Run vault-engine tests
-pnpm --filter @codex/vault-engine test
+bun run --filter @codex/vault-engine test
 
 # Run web app tests
-pnpm --filter web test
+bun run --filter web test
 ```
