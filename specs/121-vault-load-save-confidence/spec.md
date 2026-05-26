@@ -5,6 +5,15 @@
 **Status**: Draft  
 **Input**: User description: "Vault Load/Save Confidence. Goal: Make vault folder operations more understandable, interrupt-safe, and observable without exposing implementation terminology."
 
+## Clarifications
+
+### Session 2026-05-26
+
+- Q: In the Vault Switcher modal list, should we query and display the "needs-permission" state and "Grant Access" action for all listed vaults, or only for the currently active vault? → A: Only for the currently active vault.
+- Q: If a folder handle is stored but permission is not granted, and the user cancels/denies the permission prompt, how should the application respond? → A: Retain the "needs-permission" status and show a temporary warning/error notification (do not delete the handle).
+- Q: When a vault switch save-drain timeout fires (after 5 seconds), what logging or notification should we trigger? → A: Log a warning to the console and proceed silently with the vault switch.
+- Q: When the vault status is "saved", what should happen if the user makes a new edit during the 3-second window? → A: Immediately interrupt the 3-second timer, revert the status to "idle", and mark the vault as dirty.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Silent Vault Load on Missing Permission (Priority: P1)
@@ -78,9 +87,10 @@ When switching vaults, the application flushes pending changes. If the flush ope
 - **FR-002**: System MUST transition status to "needs-permission" when a folder handle is stored but permission is not granted.
 - **FR-003**: System MUST show a high-contrast action-oriented "GRANT ACCESS" button in the UI when status is "needs-permission".
 - **FR-004**: System MUST request permission on user-triggered actions (load/save/grant click) and handle success and rejection cleanly.
-- **FR-005**: System MUST transition status to "saved" for 3 seconds after a successful folder save.
+- **FR-005**: System MUST transition status to "saved" for 3 seconds after a successful folder save, unless interrupted by a new edit, which MUST immediately revert the status to "idle".
 - **FR-006**: System MUST limit the time spent flushing pending saves during a vault switch to a maximum of 5 seconds, proceeding with the switch even if saves are still pending.
 - **FR-007**: System MUST replace remaining user-facing references to "sync" with directional "load/save/link" terms in user notifications and tooltips.
+- **FR-008**: System MUST only query and display the permission warning and action for the currently active vault in the Vault Switcher list.
 
 ### Key Entities
 
