@@ -290,6 +290,9 @@ export async function importVaultFromDrive(
       payload: { vaultId: newId, folderId: driveFolderId },
       metadata: { timestamp: Date.now(), vaultId: newId },
     });
+  } else if (vault.activeVaultId !== targetVaultId) {
+    // Switch to the existing matching vault so the user is taken to it
+    await vault.switchVault(targetVaultId);
   }
 
   // Pull — DiffAlgorithm only downloads files newer than local (via registry)

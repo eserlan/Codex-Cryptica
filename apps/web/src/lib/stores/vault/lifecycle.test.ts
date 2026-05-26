@@ -40,6 +40,7 @@ vi.mock("../vault-registry.svelte", () => ({
     createVault: vi.fn(),
     deleteVault: vi.fn(),
     setActiveVault: vi.fn(),
+    clearActiveVault: vi.fn(),
     updateEntityCount: vi.fn().mockResolvedValue(undefined),
     availableVaults: [],
     isInitialized: false,
@@ -128,6 +129,7 @@ describe("VaultLifecycleManager", () => {
         createVault: vi.fn().mockResolvedValue("test-id"),
         deleteVault: vi.fn(),
         setActiveVault: vi.fn(),
+        clearActiveVault: vi.fn().mockResolvedValue(undefined),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         availableVaults: [],
         isInitialized: false,
@@ -189,6 +191,22 @@ describe("VaultLifecycleManager", () => {
         "end-vault-2",
       ]);
     });
+
+    it("should recover the switchLock chain if a switch fails", async () => {
+      vi.mocked(deps.vaultRegistry.setActiveVault).mockRejectedValueOnce(
+        new Error("Switch failed"),
+      );
+
+      await expect(manager.switchVault("failing-vault")).rejects.toThrow(
+        "Switch failed",
+      );
+
+      // Subsequent switch should succeed and not be blocked or ignored
+      await manager.switchVault("working-vault");
+      expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith(
+        "working-vault",
+      );
+    });
   });
 
   describe("deleteVault", () => {
@@ -226,6 +244,7 @@ describe("VaultLifecycleManager", () => {
 
       await manager.deleteVault("only-vault");
 
+      expect(deps.vaultRegistry.clearActiveVault).toHaveBeenCalled();
       expect(deps.setInitialized).toHaveBeenCalledWith(false);
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
       expect(deps.vaultRegistry.deleteVault).toHaveBeenCalledWith("only-vault");

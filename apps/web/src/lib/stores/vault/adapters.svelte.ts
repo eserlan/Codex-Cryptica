@@ -8,6 +8,7 @@ import {
   parseMarkdown,
   stringifyEntity,
   deriveIdFromPath,
+  sanitizeId,
 } from "../../utils/markdown";
 import { cacheService } from "../../services/cache.svelte";
 import type { IFileIOAdapter } from "@codex/vault-engine/src/repository.svelte";
@@ -51,6 +52,22 @@ export const fileIOAdapter: IFileIOAdapter = {
     const parsed = parseMarkdown(text);
     const id = parsed.metadata.id || deriveIdFromPath(path);
     const connections = parsed.metadata.connections || [];
+
+    let parent = parsed.metadata.parent
+      ? sanitizeId(parsed.metadata.parent)
+      : undefined;
+
+    // Derive parent from subdirectories if not explicitly defined in frontmatter
+    if (!parent && path && path.length > 1) {
+      for (let i = path.length - 2; i >= 0; i--) {
+        const dirId = sanitizeId(path[i]);
+        if (dirId !== id) {
+          parent = dirId;
+          break;
+        }
+      }
+    }
+
     const entity = {
       ...parsed.metadata,
       id: id!,
@@ -63,6 +80,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       connections,
       content: parsed.content,
       lore: parsed.metadata.lore || "",
+      parent,
       _path: path,
     };
 

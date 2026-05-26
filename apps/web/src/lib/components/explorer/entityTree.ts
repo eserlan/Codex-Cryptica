@@ -1,4 +1,5 @@
 import type { Entity } from "schema";
+import { sanitizeId } from "../../utils/markdown";
 
 export interface TreeNode {
   entity: Entity;
@@ -16,6 +17,71 @@ export function buildEntityTree(
     allEntitiesMap.set(e.id, e);
   }
 
+  // 1b. Recursively discover missing parents (directories/folders) and create virtual entities
+  const virtualEntities = new Map<string, Entity>();
+  let foundNewMissing = true;
+  while (foundNewMissing) {
+    foundNewMissing = false;
+    const currentCandidates = [
+      ...allEntitiesMap.values(),
+      ...virtualEntities.values(),
+    ];
+
+    for (const e of currentCandidates) {
+      if (e.parent) {
+        const parentId = sanitizeId(e.parent);
+        if (!allEntitiesMap.has(parentId) && !virtualEntities.has(parentId)) {
+          let title = e.parent;
+          const path = (e as any)._path;
+          if (path && path.length > 1) {
+            for (let i = path.length - 2; i >= 0; i--) {
+              if (sanitizeId(path[i]) === parentId) {
+                title = path[i];
+                break;
+              }
+            }
+          }
+
+          if (title === parentId && title.length > 0) {
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+          }
+
+          let virtualParent: string | undefined = undefined;
+          if (path && path.length > 1) {
+            for (let i = path.length - 2; i >= 0; i--) {
+              if (sanitizeId(path[i]) === parentId && i > 0) {
+                virtualParent = sanitizeId(path[i - 1]);
+                break;
+              }
+            }
+          }
+
+          virtualEntities.set(parentId, {
+            id: parentId,
+            type: "note",
+            title: title,
+            status: "active",
+            parent: virtualParent,
+            tags: [],
+            labels: [],
+            connections: [],
+            content: "",
+            lore: "",
+            _path: path,
+            updatedAt: Date.now(),
+          } as any);
+
+          foundNewMissing = true;
+        }
+      }
+    }
+  }
+
+  // Add virtual entities to the main map
+  for (const [id, ve] of virtualEntities.entries()) {
+    allEntitiesMap.set(id, ve);
+  }
+
   // 2. Identify the set of all visible entities.
   // It contains all matching entities (filteredEntities) plus all their ancestors.
   const visibleIds = new Set<string>();
@@ -26,7 +92,7 @@ export function buildEntityTree(
     while (current) {
       visibleIds.add(current.id);
       if (current.parent) {
-        current = allEntitiesMap.get(current.parent);
+        current = allEntitiesMap.get(sanitizeId(current.parent));
       } else {
         break;
       }
@@ -49,7 +115,9 @@ export function buildEntityTree(
   // 4. Build the tree links
   const roots: TreeNode[] = [];
   for (const node of treeNodesMap.values()) {
-    const parentId = node.entity.parent;
+    const parentId = node.entity.parent
+      ? sanitizeId(node.entity.parent)
+      : undefined;
     if (parentId && treeNodesMap.has(parentId)) {
       const parentNode = treeNodesMap.get(parentId)!;
       parentNode.children.push(node);

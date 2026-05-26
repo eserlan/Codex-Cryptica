@@ -61,6 +61,10 @@ export function createEntity(
     ...initialData,
   } as LocalEntity;
 
+  if (entity.parent) {
+    entity.parent = sanitizeId(entity.parent);
+  }
+
   return applyAutoLabels(entity);
 }
 
@@ -77,6 +81,10 @@ export function updateEntity(
     ...updates,
     updatedAt: Date.now(),
   } as LocalEntity;
+
+  if (updated.parent) {
+    updated.parent = sanitizeId(updated.parent);
+  }
 
   updated = applyAutoLabels(updated);
 

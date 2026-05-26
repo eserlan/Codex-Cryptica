@@ -69,6 +69,7 @@ export class CacheService {
           // Content starts as empty — loaded lazily when the entity is opened.
           content: "",
           lore: undefined,
+          _path: graphData._path || filePath.split("/"),
         };
         map.set(`${vaultId}:${filePath}`, { lastModified, entity });
       }
@@ -127,6 +128,7 @@ export class CacheService {
         ...graphData,
         content: "",
         lore: undefined,
+        _path: graphData._path || _fp.split("/"),
       };
       return { lastModified, entity };
     } catch (err) {
@@ -216,6 +218,7 @@ export class CacheService {
           ...graphData,
           content: "",
           lore: undefined,
+          _path: graphData._path || filePath.split("/"),
         } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
       }
