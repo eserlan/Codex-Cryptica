@@ -18,6 +18,7 @@ import {
   buildStructuredDraftingPrompt,
 } from "./prompts/entity-creation";
 import { isAIEnabled } from "./capability-guard";
+import nlp from "compromise";
 
 function safeSnapshot<T>(obj: T): T {
   if (obj == null) return obj;
@@ -30,6 +31,77 @@ function safeSnapshot<T>(obj: T): T {
       return obj;
     }
   }
+}
+
+export function resolvePronounsLocally(query: string, history: any[]): string {
+  if (!history || history.length === 0) return query;
+
+  let candidateSubject = "";
+
+  // Scan backwards from the most recent message to identify a topic or subject
+  for (let i = history.length - 1; i >= 0; i--) {
+    const msg = history[i];
+    if (!msg.content || typeof msg.content !== "string") continue;
+
+    const text = msg.content;
+
+    // 1. Scan for Markdown bold patterns (highly specific tag/entity format in the app)
+    const boldMatches = text.match(/\*\*(.*?)\*\*/g);
+    if (boldMatches && boldMatches.length > 0) {
+      const boldText = boldMatches[0].replace(/\*\*/g, "").trim();
+      if (boldText.length > 1 && boldText.length < 50) {
+        candidateSubject = boldText;
+        break;
+      }
+    }
+
+    // Parse the message with compromise
+    const doc = nlp(text);
+
+    // 2. Scan for proper nouns
+    const properNoun = doc.match("#ProperNoun").first().text().trim();
+    if (properNoun) {
+      candidateSubject = properNoun;
+      break;
+    }
+
+    // 3. Scan for people names
+    const people = doc.people().first().text().trim();
+    if (people) {
+      candidateSubject = people;
+      break;
+    }
+
+    // 4. Scan for places
+    const places = doc.places().first().text().trim();
+    if (places) {
+      candidateSubject = places;
+      break;
+    }
+
+    // 5. Scan for general nouns
+    const firstNoun = doc.nouns().first().text().trim();
+    if (firstNoun) {
+      candidateSubject = firstNoun;
+      break;
+    }
+  }
+
+  if (!candidateSubject) return query;
+
+  const possessiveSuffix = candidateSubject.endsWith("s") ? "'" : "'s";
+  const possessiveReplacement = `${candidateSubject}${possessiveSuffix}`;
+
+  // Use robust native regex replacements to swap pronouns
+  let textResult = query;
+  const possessiveRegex = /\b(his|her|its|their|theirs)\b/gi;
+  const standardRegex =
+    /\b(he|she|it|they|him|her|them|that place|this place|that person|this person|the entity)\b/gi;
+
+  textResult = textResult.replace(possessiveRegex, possessiveReplacement);
+  textResult = textResult.replace(standardRegex, candidateSubject);
+
+  return textResult;
 }
 
 export class DefaultTextGenerationService implements TextGenerationService {
@@ -52,7 +124,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
     history: any[],
   ): Promise<string> {
     const cleanHistory = history ? safeSnapshot(history) : history;
-    if (!isAIEnabled()) return query;
+    if (!isAIEnabled()) {
+      return resolvePronounsLocally(query, cleanHistory);
+    }
     try {
       const basicModel = await this.aiClientManager.getModel(
         apiKey,
@@ -81,10 +155,10 @@ export class DefaultTextGenerationService implements TextGenerationService {
       return expanded;
     } catch (err) {
       console.error(
-        "[TextGenerationService] Query expansion failed, using original:",
+        "[TextGenerationService] Query expansion failed, falling back to local resolver:",
         err,
       );
-      return query;
+      return resolvePronounsLocally(query, cleanHistory);
     }
   }
 

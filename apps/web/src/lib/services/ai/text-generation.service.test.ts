@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DefaultTextGenerationService } from "./text-generation.service.svelte";
+import {
+  DefaultTextGenerationService,
+  resolvePronounsLocally,
+} from "./text-generation.service.svelte";
 import { TIER_MODES } from "schema";
 import * as capabilityGuard from "./capability-guard";
 
@@ -91,22 +94,26 @@ describe("DefaultTextGenerationService", () => {
       );
     });
 
-    it("should return original query if AI is disabled", async () => {
+    it("should resolve query locally if AI is disabled", async () => {
       vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
 
-      const result = await service.expandQuery("key", "him?", []);
-      expect(result).toBe("him?");
+      const result = await service.expandQuery("key", "Where does he live?", [
+        { role: "user", content: "Let's talk about **Sir Alden**." },
+      ]);
+      expect(result).toBe("Where does Sir Alden live?");
     });
 
-    it("should return original query on error", async () => {
+    it("should fall back to local resolver on error", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       mockModel.generateContent.mockRejectedValue(new Error("AI error"));
 
-      const result = await service.expandQuery("key", "Original query", []);
+      const result = await service.expandQuery("key", "What is its name?", [
+        { role: "user", content: "Tell me about the **Mystic Blade**." },
+      ]);
 
-      expect(result).toBe("Original query");
+      expect(result).toBe("What is Mystic Blade's name?");
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
@@ -122,6 +129,39 @@ describe("DefaultTextGenerationService", () => {
           "A".repeat(2000) + "... [truncated for length]",
         ),
       );
+    });
+  });
+
+  describe("resolvePronounsLocally", () => {
+    it("should resolve pronouns based on markdown bold entities", () => {
+      const history = [
+        {
+          role: "user",
+          content: "The legendary **Dulandir** is a vast place.",
+        },
+      ];
+      const query = "Where is that place located?";
+      const result = resolvePronounsLocally(query, history);
+      expect(result).toBe("Where is Dulandir located?");
+    });
+
+    it("should resolve possessives correctly", () => {
+      const history = [{ role: "user", content: "Here is **Sir Alden**." }];
+      const query = "What is his title?";
+      const result = resolvePronounsLocally(query, history);
+      expect(result).toBe("What is Sir Alden's title?");
+    });
+
+    it("should fall back to proper nouns if no markdown bold", () => {
+      const history = [{ role: "user", content: "Let's talk about Valerius." }];
+      const query = "Where does he live?";
+      const result = resolvePronounsLocally(query, history);
+      expect(result).toBe("Where does Valerius live?");
+    });
+
+    it("should return the original query if no history exists", () => {
+      const result = resolvePronounsLocally("Where does he live?", []);
+      expect(result).toBe("Where does he live?");
     });
   });
 
