@@ -73,6 +73,10 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 - **Label Grouping view mode**: The Explorer has a "Group by Label" mode.
   - _Mitigation_: Hierarchy is only rendered when the Explorer is in "List View" mode. In "Group by Label" mode, entities are grouped flatly by their labels, ignoring the hierarchy, to maintain the label grouping's primary purpose.
 - **Guest Session permissions**: Guests should view the hierarchy, but they cannot create or re-parent entities. The "+" button for creating child entities is completely hidden, and drag-and-drop hierarchy updates are disabled in Guest Mode.
+- **Google Drive Synchronization Duplicates**: GDrive sync can duplicate documents instead of versioning/overwriting them if file system metadata is missing during push actions.
+  - _Mitigation_: Sync coordinators MUST explicitly pass `fsMetadata: "fs"` in export-to-filesystem sync actions within `DiffAlgorithm.ts` to guarantee inline updates.
+- **Warm Cache Directory Staleness**: Pulling directory changes on a warm cache can result in flat folder structures until a hard reload.
+  - _Mitigation_: On a successful sync pull completion, the active vault cache and preload maps MUST be cleared (`cacheService.clearVault()`) and reloaded immediately to build the updated hierarchical tree.
 
 ## Requirements (mandatory)
 
@@ -88,13 +92,16 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 - **FR-008**: Native drag-and-drop actions MUST be flicker-free. Pointer events MUST be disabled (`pointer-events: none`) on all non-dragged explorer items during active drag sessions.
 - **FR-009**: Drag start state transitions (`isDragging`) MUST be protected against browser cancellation using a `requestAnimationFrame` queue combined with a validation check against the active `draggedEntityId`.
 - **FR-010**: HTML markup structure MUST keep interactive button descendants separated from composite button nodes, using `role="listitem"` on the outer row container and moving primary selection action to a dedicated inner button.
+- **FR-011**: The system MUST guarantee that file path attributes (`_path`) are normalized to a string array (`string[]`) before caching or rendering, preventing character-by-character iteration loops.
+- **FR-012**: GDrive pulls MUST clear the local active vault cache and trigger an automatic files reload to update the explorer hierarchy in real-time.
 
 ### Key Entities
 
 - **Entity**: Represents a markdown file in the vault.
-  - `id`: Unique identifier (string).
-  - `parent`: (New attribute) Optional string referencing the `id` of another Entity.
-  - `_path`: Array of strings representing the file path in OPFS. Note: The file location on disk can remain flat or follow the logical structure; using logical `parent` is the primary source of truth.
+- `id`: Unique identifier (string).
+- `parent`: (New attribute) Optional string referencing the `id` of another Entity.
+- `_path`: Array of strings representing the file path in OPFS. Note: The file location on disk can remain flat or follow the logical structure; using logical `parent` is the primary source of truth.
+- `isVirtual`: (New attribute) Optional boolean marking synthesized directories that do not exist on disk, disabling selection/Zen actions and enabling foldered expand/collapse only.
 
 ## Success Criteria (mandatory)
 
@@ -104,3 +111,4 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 - **SC-002**: Recursive rendering handles tree depth up to 8 levels with visual clarity.
 - **SC-003**: No infinite loops or application crashes are triggered when a parent-child cycle is loaded.
 - **SC-004**: Search returns matching entities within 100ms and displays their correct ancestor paths.
+- **SC-005**: Google Drive sync correctly updates existing documents on GDrive with standard API versioning rather than creating duplicate documents.
