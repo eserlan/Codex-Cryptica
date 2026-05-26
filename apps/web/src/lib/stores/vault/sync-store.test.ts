@@ -247,4 +247,180 @@ describe("SyncStore", () => {
       undefined,
     );
   });
+
+  describe("Silent Permission and Transient Status", () => {
+    it("US1: silently sets status to needs-permission on load if folder permission prompt is required", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("prompt"),
+      };
+
+      const updateEntityCount = vi.fn().mockResolvedValue(undefined);
+      const storeWithMockFolder = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue(null),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount,
+      });
+
+      await storeWithMockFolder.loadFiles(false);
+
+      expect(mockFolderHandle.queryPermission).toHaveBeenCalledWith({
+        mode: "readwrite",
+      });
+      expect(storeWithMockFolder.status).toBe("needs-permission");
+      expect(storeWithMockFolder.hasFolderHandle).toBe(true);
+      expect(updateEntityCount).toHaveBeenCalledWith("vault-1", 0);
+    });
+
+    it("US1: loads files normally if folder permission is already granted", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      const pullSpy = vi.fn();
+      const storeWithMockFolder = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          syncWithLocalFolder: pullSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await storeWithMockFolder.loadFiles(false);
+
+      expect(mockFolderHandle.queryPermission).toHaveBeenCalledWith({
+        mode: "readwrite",
+      });
+      expect(pullSpy).toHaveBeenCalled();
+      expect(storeWithMockFolder.status).toBe("idle");
+    });
+
+    it("US2: saveToFolder requests permission if status is needs-permission", async () => {
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("prompt"),
+        requestPermission: vi.fn().mockResolvedValue("granted"),
+      };
+      const pushSpy = vi
+        .fn()
+        .mockImplementation(async (_a, _b, _c, _d, onStateChange) => {
+          onStateChange({ status: "idle", syncType: null });
+        });
+
+      const storeWithMockFolder = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          push: pushSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await storeWithMockFolder.saveToFolder();
+
+      expect(mockFolderHandle.queryPermission).toHaveBeenCalled();
+      expect(mockFolderHandle.requestPermission).toHaveBeenCalledWith({
+        mode: "readwrite",
+      });
+      expect(pushSpy).toHaveBeenCalled();
+    });
+
+    it("US2: saveToFolder sets needs-permission on permission denial", async () => {
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("prompt"),
+        requestPermission: vi.fn().mockResolvedValue("denied"),
+      };
+      const pushSpy = vi.fn();
+
+      const storeWithMockFolder = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          push: pushSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await storeWithMockFolder.saveToFolder();
+
+      expect(mockFolderHandle.queryPermission).toHaveBeenCalled();
+      expect(mockFolderHandle.requestPermission).toHaveBeenCalled();
+      expect(pushSpy).not.toHaveBeenCalled();
+      expect(storeWithMockFolder.status).toBe("needs-permission");
+      expect(storeWithMockFolder.errorMessage).toBe(
+        "Permission denied for local folder.",
+      );
+    });
+
+    it("US3: transitions status to saved for 3 seconds on successful folder save", async () => {
+      vi.useFakeTimers();
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+      const pushSpy = vi
+        .fn()
+        .mockImplementation(async (_a, _b, _c, _d, onStateChange) => {
+          onStateChange({ status: "idle", syncType: null });
+        });
+
+      const storeWithMockFolder = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          push: pushSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await storeWithMockFolder.saveToFolder();
+
+      expect(storeWithMockFolder.status).toBe("saved");
+
+      vi.advanceTimersByTime(3000);
+      expect(storeWithMockFolder.status).toBe("idle");
+      vi.useRealTimers();
+    });
+  });
 });

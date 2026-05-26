@@ -12,7 +12,15 @@ export interface PersistenceDependencies {
   getSpecificVaultHandle: (
     vaultId: string,
   ) => Promise<FileSystemDirectoryHandle | undefined>;
-  setStatus: (status: "idle" | "loading" | "saving" | "error") => void;
+  setStatus: (
+    status:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) => void;
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
   // loader delegation
@@ -40,6 +48,8 @@ export class EntityPersistenceService {
     const vaultIdAtStart = this.deps.activeVaultId();
     if (!vaultIdAtStart) return Promise.resolve();
     if (sessionModeStore.isDemoMode) return Promise.resolve();
+
+    this.deps.setStatus("idle");
 
     const id = entity.id;
 

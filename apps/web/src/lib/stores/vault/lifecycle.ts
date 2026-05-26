@@ -174,7 +174,22 @@ export class VaultLifecycleManager {
         this.deps.syncStore.setStatus("loading");
 
         // Flush debounced saves and drain the queue before clearing state
-        await this.deps.flushPendingSaves();
+        try {
+          await Promise.race([
+            this.deps.flushPendingSaves(),
+            new Promise((_, reject) =>
+              setTimeout(
+                () =>
+                  reject(
+                    new Error("Save drain timed out or failed during switch"),
+                  ),
+                5000,
+              ),
+            ),
+          ]);
+        } catch (err: any) {
+          console.warn(`[VaultStore] ${err.message || err}`);
+        }
 
         // HARD CLEAR: Wipe all traces of the previous vault
         this.deps.repository.clear();

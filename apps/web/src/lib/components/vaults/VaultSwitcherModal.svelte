@@ -263,6 +263,16 @@
                     class="text-[10px] bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-header"
                     >ACTIVE</span
                   >
+                  {#if vault.status === "needs-permission"}
+                    <span
+                      class="text-[10px] bg-amber-500/20 text-amber-500 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-header flex items-center gap-1"
+                      title="Folder permission required"
+                      data-testid="needs-permission-badge"
+                    >
+                      <span class="icon-[lucide--lock] w-3 h-3"></span>
+                      LOCKED
+                    </span>
+                  {/if}
                 {/if}
               </div>
               <div class="text-xs text-theme-muted mt-1 font-header">

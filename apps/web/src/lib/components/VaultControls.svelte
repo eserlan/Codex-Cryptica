@@ -284,41 +284,73 @@
             ? 'flex-col gap-3'
             : 'gap-1.5 md:gap-3 items-center'}"
         >
-          <button
-            class="{btnAccent} {isVertical
-              ? 'py-3 text-sm justify-center gap-2'
-              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
-            'saving'
-              ? 'opacity-75 cursor-wait'
-              : ''} {vault.hasFolderHandle && !vault.isDirty
-              ? 'opacity-50'
-              : ''}"
-            onclick={() => vault.saveToFolder()}
-            title={!vault.hasFolderHandle
-              ? "No folder linked — select a local folder to enable saving."
-              : vault.isDirty
-                ? "Save to folder — writes all changes from the internal archive to your linked folder."
-                : "Up to date with local folder."}
-            aria-label="SAVE TO FOLDER"
-            aria-busy={vault.status === "saving"}
-            disabled={vault.status === "saving" ||
-              (vault.hasFolderHandle && !vault.isDirty)}
-          >
-            {#if vault.status === "saving"}
+          {#if vault.status === "needs-permission"}
+            <button
+              class="{isVertical
+                ? 'py-3 text-sm justify-center gap-2'
+                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+              onclick={() => vault.saveToFolder()}
+              title="Grant browser permission to access your linked local folder."
+              aria-label="GRANT ACCESS"
+              data-testid="grant-access-button"
+            >
+              <span class="icon-[lucide--lock] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
+              GRANT ACCESS
+            </button>
+          {:else if vault.status === "saved"}
+            <button
+              class="{isVertical
+                ? 'py-3 text-sm justify-center gap-2'
+                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-green-500 bg-green-500/10 text-green-400 cursor-default"
+              title="Changes successfully saved to folder."
+              aria-label="SAVED"
+              disabled
+              data-testid="saved-indicator-button"
+            >
               <span
-                class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                class="icon-[lucide--check-circle] w-3.5 h-3.5"
                 aria-hidden="true"
               ></span>
-              SAVING...
-            {:else}
-              <span
-                class={vault.isDirty || !vault.hasFolderHandle
-                  ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
-                  : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
-              ></span>
-              {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
-            {/if}
-          </button>
+              SAVED
+            </button>
+          {:else}
+            <button
+              class="{btnAccent} {isVertical
+                ? 'py-3 text-sm justify-center gap-2'
+                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
+              'saving'
+                ? 'opacity-75 cursor-wait'
+                : ''} {vault.hasFolderHandle && !vault.isDirty
+                ? 'opacity-50'
+                : ''}"
+              onclick={() => vault.saveToFolder()}
+              title={!vault.hasFolderHandle
+                ? "No folder linked — select a local folder to enable saving."
+                : vault.isDirty
+                  ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                  : "Up to date with local folder."}
+              aria-label="SAVE TO FOLDER"
+              aria-busy={vault.status === "saving"}
+              disabled={vault.status === "saving" ||
+                (vault.hasFolderHandle && !vault.isDirty)}
+            >
+              {#if vault.status === "saving"}
+                <span
+                  class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                  aria-hidden="true"
+                ></span>
+                SAVING...
+              {:else}
+                <span
+                  class={vault.isDirty || !vault.hasFolderHandle
+                    ? "icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                    : "icon-[lucide--cloud-check] w-3.5 h-3.5"}
+                ></span>
+                {#if isVertical}SAVE TO FOLDER{:else}SAVE{/if}
+              {/if}
+            </button>
+          {/if}
 
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
