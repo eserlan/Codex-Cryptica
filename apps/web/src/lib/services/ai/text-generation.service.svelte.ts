@@ -46,14 +46,19 @@ export async function resolvePronounsLocally(
   // Dynamic import compromise.js only when needed to avoid code bloat in the main bundle
   const { default: nlp } = await import("compromise");
 
-  // Scan backwards from the most recent message to identify a topic or subject
-  for (let i = boundedHistory.length - 1; i >= 0; i--) {
-    const msg = boundedHistory[i];
+  // Pass 1: Scan user messages in reverse chronological order to find the explicit subject of interest
+  const userMessages = boundedHistory.filter((msg) => msg.role === "user");
+  for (let i = userMessages.length - 1; i >= 0; i--) {
+    const msg = userMessages[i];
     if (!msg.content || typeof msg.content !== "string") continue;
+
+    // Ignore the current query itself since it contains the unresolved pronoun we are trying to resolve
+    if (msg.content.trim().toLowerCase() === query.trim().toLowerCase())
+      continue;
 
     const text = msg.content;
 
-    // 1. Scan for Markdown bold patterns (highly specific tag/entity format in the app)
+    // Check for bold patterns first in the user's previous queries
     const boldMatches = text.match(/\*\*(.*?)\*\*/g);
     if (boldMatches && boldMatches.length > 0) {
       const boldText = boldMatches[0].replace(/\*\*/g, "").trim();
@@ -63,35 +68,78 @@ export async function resolvePronounsLocally(
       }
     }
 
-    // Parse the message with compromise
     const doc = nlp(text);
 
-    // 2. Scan for proper nouns
+    // Check for proper nouns in user's query
     const properNoun = doc.match("#ProperNoun").first().text().trim();
     if (properNoun) {
       candidateSubject = properNoun;
       break;
     }
 
-    // 3. Scan for people names
+    // Check for people names in user's query
     const people = doc.people().first().text().trim();
     if (people) {
       candidateSubject = people;
       break;
     }
 
-    // 4. Scan for places
+    // Check for places in user's query
     const places = doc.places().first().text().trim();
     if (places) {
       candidateSubject = places;
       break;
     }
+  }
 
-    // 5. Scan for general nouns
-    const firstNoun = doc.nouns().first().text().trim();
-    if (firstNoun) {
-      candidateSubject = firstNoun;
-      break;
+  // Pass 2: Fallback to scanning all messages backwards (including assistant) if no user subject was matched
+  if (!candidateSubject) {
+    for (let i = boundedHistory.length - 1; i >= 0; i--) {
+      const msg = boundedHistory[i];
+      if (!msg.content || typeof msg.content !== "string") continue;
+
+      const text = msg.content;
+
+      // 1. Scan for Markdown bold patterns
+      const boldMatches = text.match(/\*\*(.*?)\*\*/g);
+      if (boldMatches && boldMatches.length > 0) {
+        const boldText = boldMatches[0].replace(/\*\*/g, "").trim();
+        if (boldText.length > 1 && boldText.length < 50) {
+          candidateSubject = boldText;
+          break;
+        }
+      }
+
+      // Parse the message with compromise
+      const doc = nlp(text);
+
+      // 2. Scan for proper nouns
+      const properNoun = doc.match("#ProperNoun").first().text().trim();
+      if (properNoun) {
+        candidateSubject = properNoun;
+        break;
+      }
+
+      // 3. Scan for people names
+      const people = doc.people().first().text().trim();
+      if (people) {
+        candidateSubject = people;
+        break;
+      }
+
+      // 4. Scan for places
+      const places = doc.places().first().text().trim();
+      if (places) {
+        candidateSubject = places;
+        break;
+      }
+
+      // 5. Scan for general nouns
+      const firstNoun = doc.nouns().first().text().trim();
+      if (firstNoun) {
+        candidateSubject = firstNoun;
+        break;
+      }
     }
   }
 

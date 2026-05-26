@@ -173,6 +173,20 @@ describe("DefaultTextGenerationService", () => {
       const result = await resolvePronounsLocally("Where does he live?", []);
       expect(result).toBe("Where does he live?");
     });
+
+    it("should prioritize subjects from the user's previous query over assistant bold matches", async () => {
+      const history = [
+        { role: "user" as const, content: "who is Kardos?" },
+        {
+          role: "assistant" as const,
+          content:
+            "While **Chief Grimgob** is nearby, Master Kardos is a powerful mage.",
+        },
+      ];
+      const query = "What does he do?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("What does Kardos do?");
+    });
   });
 
   describe("distillContext", () => {
