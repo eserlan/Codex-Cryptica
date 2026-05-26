@@ -100,7 +100,13 @@ describe("VaultLifecycleManager", () => {
 
     deps = {
       syncStore: {
-        setStatus: vi.fn(),
+        _status: "idle",
+        get status() {
+          return this._status;
+        },
+        setStatus: vi.fn().mockImplementation(function (this: any, s) {
+          this._status = s;
+        }),
         setErrorMessage: vi.fn(),
         setHasConflictFiles: vi.fn(),
       },
@@ -206,6 +212,31 @@ describe("VaultLifecycleManager", () => {
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith(
         "working-vault",
       );
+    });
+
+    it("US4: should switch vaults even if flushPendingSaves is hung and exceeds the 5-second timeout", async () => {
+      vi.useFakeTimers();
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      // Simulate flushPendingSaves never resolving
+      deps.flushPendingSaves.mockReturnValue(new Promise(() => {}));
+
+      const switchPromise = manager.switchVault("v2");
+
+      // Advance timers by 5000ms
+      await vi.advanceTimersByTimeAsync(5000);
+
+      await switchPromise;
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Save drain timed out or failed during switch"),
+      );
+      expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
+
+      consoleWarnSpy.mockRestore();
+      vi.useRealTimers();
     });
   });
 

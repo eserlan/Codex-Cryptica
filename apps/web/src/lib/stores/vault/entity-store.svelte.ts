@@ -19,7 +19,22 @@ export interface EntityStoreDependencies {
   getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   getServices: () => any;
   invalidateUrlCache?: (path: string) => void;
-  setStatus: (status: "idle" | "loading" | "saving" | "error") => void;
+  setStatus: (
+    status:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) => void;
+  status: () =>
+    | "idle"
+    | "loading"
+    | "saving"
+    | "saved"
+    | "needs-permission"
+    | "error";
   setErrorMessage: (msg: string | null) => void;
   // callbacks
   onEntityUpdate?: (entity: LocalEntity) => void;
@@ -97,6 +112,7 @@ export class EntityStore {
         isGuest: deps.isGuest,
         getSpecificVaultHandle: deps.getSpecificVaultHandle,
         setStatus: deps.setStatus,
+        status: deps.status,
         setErrorMessage: deps.setErrorMessage,
         onEntityUpdate: deps.onEntityUpdate,
         isContentLoaded: (id) => this.loader.isContentLoaded(id),

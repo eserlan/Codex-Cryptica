@@ -862,7 +862,7 @@ describe("VaultStore", () => {
 
       await testVault.saveToFolder();
       expect(testVault.syncCoordinator!.push).toHaveBeenCalled();
-      expect(testVault.status).toBe("saving");
+      expect(testVault.status).toBe("saved");
     });
 
     it("should handle loadFromFolder", async () => {

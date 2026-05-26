@@ -118,7 +118,7 @@ describe("SyncCoordinator", () => {
       expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
     });
 
-    it("should request permission if not granted", async () => {
+    it("should not request permission automatically and fallback to directory picker if permission not granted", async () => {
       const mockLocal = {
         values: () => ({ next: vi.fn().mockResolvedValue({}) }),
         queryPermission: vi.fn().mockResolvedValue("prompt"),
@@ -136,7 +136,8 @@ describe("SyncCoordinator", () => {
         vi.fn(),
       );
 
-      expect(mockLocal.requestPermission).toHaveBeenCalled();
+      expect(mockLocal.requestPermission).not.toHaveBeenCalled();
+      expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
     });
 
     it("should handle save queue timeout", async () => {

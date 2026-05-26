@@ -23,7 +23,9 @@ export interface SyncStoreDependencies {
 }
 
 export class SyncStore {
-  private _status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  private _status = $state<
+    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error"
+  >("idle");
   errorMessage = $state<string | null>(null);
   syncType = $state<"local" | null>(null);
   syncStats = $state({
@@ -41,6 +43,8 @@ export class SyncStore {
   get status() {
     if (this._status === "loading") return "loading";
     if (this._status === "error") return "error";
+    if (this._status === "needs-permission") return "needs-permission";
+    if (this._status === "saved") return "saved";
     if (this.deps.repository.pendingSaveCount > 0) return "saving";
     return this._status;
   }
@@ -53,6 +57,7 @@ export class SyncStore {
   }
 
   private syncAbortController: AbortController | null = null;
+  private savedTimer: any = null;
 
   private unsubscribe: (() => void) | null = null;
 
@@ -72,7 +77,44 @@ export class SyncStore {
     );
   }
 
+  private clearSavedTimer() {
+    if (this.savedTimer) {
+      clearTimeout(this.savedTimer);
+      this.savedTimer = null;
+    }
+  }
+
+  private async ensureFolderPermission(
+    localHandle: FileSystemDirectoryHandle,
+  ): Promise<boolean> {
+    try {
+      const permission = await localHandle.queryPermission({
+        mode: "readwrite",
+      });
+      if (permission === "granted") {
+        return true;
+      }
+      const requested = await localHandle.requestPermission({
+        mode: "readwrite",
+      });
+      if (requested === "granted") {
+        return true;
+      }
+      this.setStatus("needs-permission");
+      this.errorMessage = "Permission denied for local folder.";
+      notificationStore.notify("Permission denied for local folder.", "error");
+      return false;
+    } catch (err: any) {
+      debugStore.error("[SyncStore] Failed to ensure folder permission", err);
+      this.setStatus("needs-permission");
+      this.errorMessage = "Permission denied for local folder.";
+      notificationStore.notify("Permission denied for local folder.", "error");
+      return false;
+    }
+  }
+
   destroy() {
+    this.clearSavedTimer();
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
@@ -136,39 +178,60 @@ export class SyncStore {
           entities: entityMap,
         });
 
-        this._status = "idle";
+        this.setStatus("idle");
+      }
 
-        if (skipSyncIfWarm) {
-          debugStore.log(
-            "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
+      // Silent check for local folder handle permission
+      let skipLocalSync = false;
+      const localHandle = await this.deps.getActiveFolderHandle();
+      this.hasFolderHandle = !!localHandle;
+      if (localHandle && !isDemo) {
+        try {
+          const permission = await localHandle.queryPermission({
+            mode: "readwrite",
+          });
+          if (permission !== "granted") {
+            debugStore.log(
+              `[SyncStore] Local folder permission is ${permission}. Skipping auto-sync.`,
+            );
+            this.setStatus("needs-permission");
+            skipLocalSync = true;
+          }
+        } catch (err) {
+          debugStore.warn(
+            "[SyncStore] Failed to query local folder permission silently",
+            err,
           );
-          this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
-          await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
-          await this.deps.loadMaps(vaultIdAtStart);
-          await this.deps.loadCanvases(vaultIdAtStart);
-          void this.deps.getActiveVaultHandle();
-          return;
         }
       }
 
+      if (cachedMap.size > 0 && skipSyncIfWarm) {
+        debugStore.log(
+          "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
+        );
+        await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
+        await this.deps.loadMaps(vaultIdAtStart);
+        await this.deps.loadCanvases(vaultIdAtStart);
+        void this.deps.getActiveVaultHandle();
+        return;
+      }
+
       const vaultDir = await this.deps.getActiveVaultHandle();
-      this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (!vaultDir) {
         if (!isDemo) {
-          this._status = cachedMap.size > 0 ? "idle" : "error";
+          this.setStatus(cachedMap.size > 0 ? "idle" : "error");
           if (this._status === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
           }
         } else {
-          this._status = "idle";
+          this.setStatus("idle");
         }
         return;
       }
 
-      const localHandle = await this.deps.getActiveFolderHandle();
-      if (localHandle) {
+      if (localHandle && !skipLocalSync) {
         debugStore.log(
           `[SyncStore] Local sync handle found for ${vaultIdAtStart}. Synchronizing...`,
         );
@@ -191,7 +254,7 @@ export class SyncStore {
                   this.deps.activeVaultId() === vaultIdAtStart &&
                   !signal.aborted
                 ) {
-                  this._status = state.status;
+                  this.setStatus(state.status);
                   if (state.errorMessage) {
                     this.errorMessage = state.errorMessage;
                   }
@@ -272,7 +335,7 @@ export class SyncStore {
       ]);
 
       if (this._status === "loading") {
-        this._status = "idle";
+        this.setStatus("idle");
       }
 
       vaultEventBus.emit({
@@ -282,14 +345,14 @@ export class SyncStore {
     } catch (err: any) {
       if (err.name === "AbortError" || err.message === "AbortError") return;
       debugStore.error("[SyncStore] Load failed", err);
-      this._status = "error";
+      this.setStatus("error");
       this.errorMessage = err.message;
     } finally {
       if (!signal.aborted) {
         await this.checkForConflicts(signal);
       }
       if (this._status === "loading" && !signal.aborted) {
-        this._status = "idle";
+        this.setStatus("idle");
       }
     }
   }
@@ -305,6 +368,12 @@ export class SyncStore {
     const opfsHandle = await this.deps.getActiveVaultHandle();
     if (!opfsHandle) return;
 
+    const localHandle = await this.deps.getActiveFolderHandle();
+    if (localHandle) {
+      const hasPermission = await this.ensureFolderPermission(localHandle);
+      if (!hasPermission) return;
+    }
+
     this.failedFiles = [];
 
     await syncCoordinator.push(
@@ -314,7 +383,7 @@ export class SyncStore {
       () => this.deps.repository.waitForAllSaves(),
       (state) => {
         if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this._status = state.status;
+          this.setStatus(state.status);
           this.syncType = state.syncType;
           if (state.errorMessage) this.errorMessage = state.errorMessage;
           if (state.failedFiles) this.failedFiles = state.failedFiles;
@@ -333,6 +402,13 @@ export class SyncStore {
         payload: { vaultId: vaultIdAtStart },
         metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
       });
+
+      this.setStatus("saved");
+      this.savedTimer = setTimeout(() => {
+        if (this._status === "saved") {
+          this.setStatus("idle");
+        }
+      }, 3000);
     }
   }
 
@@ -358,6 +434,12 @@ export class SyncStore {
     const opfsHandle = await this.deps.getActiveVaultHandle();
     if (!opfsHandle) return;
 
+    const localHandle = await this.deps.getActiveFolderHandle();
+    if (localHandle) {
+      const hasPermission = await this.ensureFolderPermission(localHandle);
+      if (!hasPermission) return;
+    }
+
     this.failedFiles = [];
 
     await syncCoordinator.pull(
@@ -367,7 +449,7 @@ export class SyncStore {
       () => this.deps.repository.waitForAllSaves(),
       (state) => {
         if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this._status = state.status;
+          this.setStatus(state.status);
           this.syncType = state.syncType;
           if (state.errorMessage) this.errorMessage = state.errorMessage;
           if (state.failedFiles) this.failedFiles = state.failedFiles;
@@ -423,7 +505,12 @@ export class SyncStore {
     }
   }
 
-  setStatus(s: "idle" | "loading" | "saving" | "error") {
+  setStatus(
+    s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
+  ) {
+    if (s !== "saved") {
+      this.clearSavedTimer();
+    }
     this._status = s;
   }
 
