@@ -73,6 +73,10 @@ As a game master, I want to share my Drive folder with a co-host so they can loa
 - **Large Vaults**: Vaults with hundreds of entity files should use batch API calls where possible, and upload progress should be streamed to the existing progress indicator.
 - **Offline Mode**: When the browser is offline, Drive sync is silently skipped. The vault continues to operate locally. A sync-needed badge appears when connectivity is restored.
 - **Multiple Open Tabs**: Two tabs should not attempt a Drive sync simultaneously. A lightweight tab-local lock prevents double-upload.
+- **File Duplication on Push**: When metadata is missing from the local sync state during a push operation, the system can write duplicate files in Google Drive instead of updating existing ones as new versions.
+  - _Mitigation_: The synchronization algorithm MUST pass `fsMetadata: "fs"` in export-to-filesystem sync actions in `DiffAlgorithm.ts` to ensure Google Drive identifies the existing file and updates it in-place as a new version.
+- **Warm Cache Staleness after Pull**: Syncing files from Google Drive does not automatically reload the visual folder tree if the directory cache is warm.
+  - _Mitigation_: Upon a successful GDrive pull complete, the active vault cache and preloaded maps MUST be invalidated and reloaded instantly to rebuild the hierarchical explorer tree.
 
 ## Requirements
 
@@ -88,6 +92,8 @@ As a game master, I want to share my Drive folder with a co-host so they can loa
 - **FR-008**: The system MUST emit directional app events (`SYNC:DRIVE_CONNECTED`, `SYNC:DRIVE_PUSH_COMPLETE`, `SYNC:DRIVE_PULL_COMPLETE`, `SYNC:DRIVE_SYNC_FAILED`) so other components can react without coupling to the Drive service directly.
 - **FR-009**: The system MUST auto-create a `CodexCryptica/{vaultName}` folder hierarchy in Drive on first connect if no existing folder is supplied.
 - **FR-010**: The system MUST allow a user to supply an existing Drive folder ID (e.g., one shared by a co-host) instead of auto-creating a new folder.
+- **FR-011**: The sync coordinator MUST enforce file system metadata mappings in the diff algorithm to prevent document duplication in Google Drive.
+- **FR-012**: The system MUST invalidate and reload the local database cache automatically upon receiving the `SYNC:DRIVE_PULL_COMPLETE` event to update the directory structure in real-time.
 
 ### Non-Functional Requirements
 
