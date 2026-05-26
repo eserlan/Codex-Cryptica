@@ -125,7 +125,10 @@
     type="button"
     onclick={() => onSelect?.(entity)}
     title={`Select ${entity.title}`}
-    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl"
+    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl {!sessionModeStore.isGuestMode &&
+    onDragStart
+      ? 'cursor-grab active:cursor-grabbing'
+      : ''}"
   >
     <span
       class="{getIconClass(
