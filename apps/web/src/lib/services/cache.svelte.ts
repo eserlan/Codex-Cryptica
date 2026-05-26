@@ -181,6 +181,16 @@ export class CacheService {
           typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
         status: raw.status || "active",
         _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
+        parent: raw.parent ? String(raw.parent) : undefined,
+        date: raw.date,
+        start_date: raw.start_date,
+        end_date: raw.end_date,
+        visibility: raw.visibility,
+        discoverySource: raw.discoverySource
+          ? String(raw.discoverySource)
+          : undefined,
+        lastUpdated:
+          typeof raw.lastUpdated === "number" ? raw.lastUpdated : undefined,
         vaultId: String(vaultId),
         lastModified: Number(lastModified),
         filePath: String(filePath),

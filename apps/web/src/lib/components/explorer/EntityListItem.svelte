@@ -13,6 +13,9 @@
     isMatching = true,
     hasChildren = false,
     isCollapsed = false,
+    isDragging = false,
+    isDragSource = false,
+    draggable = false,
     onSelect,
     onDragStart,
     onDragEnd,
@@ -26,6 +29,9 @@
     isMatching?: boolean;
     hasChildren?: boolean;
     isCollapsed?: boolean;
+    isDragging?: boolean;
+    isDragSource?: boolean;
+    draggable?: boolean;
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
     onDragEnd?: () => void;
@@ -51,10 +57,27 @@
     ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
     : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'} {isDragOver
     ? 'border-theme-accent bg-theme-accent/10 ring-2 ring-theme-accent/20'
+    : ''} {!sessionModeStore.isGuestMode && draggable
+    ? 'cursor-grab active:cursor-grabbing'
+    : ''} {isDragging ? 'dragging-active' : ''} {isDragSource
+    ? 'dragging-source'
     : ''}"
   role="listitem"
   data-testid="entity-list-item"
   data-entity-id={entity.id}
+  draggable={!sessionModeStore.isGuestMode && draggable}
+  ondragstart={(e) => {
+    if (!draggable) return;
+    if (e.dataTransfer) {
+      e.dataTransfer.setData("application/x-codex-entity-id", entity.id);
+      e.dataTransfer.setData("text/plain", entity.id);
+      e.dataTransfer.effectAllowed = "move";
+    }
+    onDragStart?.(e, entity.id);
+  }}
+  ondragend={() => {
+    onDragEnd?.();
+  }}
   ondragover={(e) => {
     if (!sessionModeStore.isGuestMode) {
       e.preventDefault();
@@ -91,6 +114,7 @@
         e.stopPropagation();
         explorerUIStore.toggleExplorerEntityCollapse(activeVaultId, entity.id);
       }}
+      onmousedown={(e) => e.stopPropagation()}
       aria-expanded={!isCollapsed}
       aria-label={isCollapsed ? "Expand" : "Collapse"}
       title={isCollapsed ? "Expand" : "Collapse"}
@@ -108,21 +132,9 @@
 
   <button
     type="button"
-    draggable={!sessionModeStore.isGuestMode && !!onDragStart}
-    ondragstart={(e) => {
-      if (e.dataTransfer) {
-        e.dataTransfer.setData("application/x-codex-entity-id", entity.id);
-        e.dataTransfer.setData("text/plain", entity.id);
-        e.dataTransfer.effectAllowed = "move";
-      }
-      onDragStart?.(e, entity.id);
-    }}
-    ondragend={() => {
-      onDragEnd?.();
-    }}
     onclick={() => onSelect?.(entity)}
     title={`Select ${entity.title}`}
-    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl"
+    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-theme-primary rounded-l-xl"
   >
     <span
       class="{getIconClass(
@@ -157,6 +169,7 @@
             e.stopPropagation();
             explorerUIStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
           }}
+          onmousedown={(e) => e.stopPropagation()}
           class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
             label,
           )
@@ -181,6 +194,7 @@
         e.stopPropagation();
         onAddChild?.(entity.id);
       }}
+      onmousedown={(e) => e.stopPropagation()}
       title="Add child entity"
       aria-label="Add child entity to {entity.title}"
       class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100"
@@ -196,6 +210,7 @@
         e.stopPropagation();
         onFindInGraph(entity, e);
       }}
+      onmousedown={(e) => e.stopPropagation()}
       title="Find in Graph"
       aria-label="Find {entity.title} in Graph"
       class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100"
@@ -210,6 +225,7 @@
         e.stopPropagation();
         onOpenZen(entity);
       }}
+      onmousedown={(e) => e.stopPropagation()}
       title="Open in Zen Mode"
       aria-label="Open {entity.title} in Zen Mode"
       class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 {!(
@@ -230,6 +246,7 @@
         e.stopPropagation();
         onApproveDraft(entity);
       }}
+      onmousedown={(e) => e.stopPropagation()}
       title="Approve draft"
       aria-label="Approve {entity.title}"
       class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-emerald-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100"
@@ -242,6 +259,7 @@
         e.stopPropagation();
         onRejectDraft(entity);
       }}
+      onmousedown={(e) => e.stopPropagation()}
       title="Reject draft"
       aria-label="Reject {entity.title}"
       class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-red-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
@@ -250,3 +268,9 @@
     </button>
   {/if}
 </div>
+
+<style>
+  :global(.dragging-active:not(.dragging-source)) * {
+    pointer-events: none !important;
+  }
+</style>

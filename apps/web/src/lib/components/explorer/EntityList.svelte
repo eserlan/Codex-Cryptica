@@ -80,6 +80,7 @@
   let isCreatingChild = $state(false);
   let createChildError = $state<string | null>(null);
   let isDragging = $state(false);
+  let draggedEntityId = $state<string | null>(null);
 
   $effect(() => {
     if (inlineCreationParentId && categories.list.length > 0) {
@@ -135,15 +136,28 @@
           isMatching={node.isMatchingQuery}
           {hasChildren}
           {isCollapsed}
+          {isDragging}
+          isDragSource={entity.id === draggedEntityId}
+          draggable={!!onDragStart}
           {onSelect}
-          onDragStart={(e, entityId) => {
-            isDragging = true;
-            onDragStart?.(e, entityId);
-          }}
-          onDragEnd={() => {
-            isDragging = false;
-            onDragEnd?.();
-          }}
+          onDragStart={onDragStart
+            ? (e, entityId) => {
+                draggedEntityId = entityId;
+                requestAnimationFrame(() => {
+                  if (draggedEntityId === entityId) {
+                    isDragging = true;
+                  }
+                });
+                onDragStart?.(e, entityId);
+              }
+            : undefined}
+          onDragEnd={onDragStart
+            ? () => {
+                isDragging = false;
+                draggedEntityId = null;
+                onDragEnd?.();
+              }
+            : undefined}
           {onOpenZen}
           {onFindInGraph}
           {onApproveDraft}
@@ -164,7 +178,7 @@
 
         {#if inlineCreationParentId === entity.id}
           <div
-            class={depth < 5 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
+            class={depth < 8 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
           >
             <div
               class="flex items-center gap-2 p-2 border border-theme-border/50 bg-theme-surface/30 rounded-xl"
@@ -232,7 +246,7 @@
 
         {#if hasChildren && !isCollapsed}
           <div
-            class="space-y-1 {depth < 5
+            class="space-y-1 {depth < 8
               ? 'border-l border-theme-border/15 ml-3 pl-2'
               : ''}"
           >
@@ -310,15 +324,28 @@
           {#each labelEntities as entity (`${entity.id}:${label}`)}
             <EntityListItem
               {entity}
+              {isDragging}
+              isDragSource={entity.id === draggedEntityId}
+              draggable={!!onDragStart}
               {onSelect}
-              onDragStart={(e, entityId) => {
-                isDragging = true;
-                onDragStart?.(e, entityId);
-              }}
-              onDragEnd={() => {
-                isDragging = false;
-                onDragEnd?.();
-              }}
+              onDragStart={onDragStart
+                ? (e, entityId) => {
+                    draggedEntityId = entityId;
+                    requestAnimationFrame(() => {
+                      if (draggedEntityId === entityId) {
+                        isDragging = true;
+                      }
+                    });
+                    onDragStart?.(e, entityId);
+                  }
+                : undefined}
+              onDragEnd={onDragStart
+                ? () => {
+                    isDragging = false;
+                    draggedEntityId = null;
+                    onDragEnd?.();
+                  }
+                : undefined}
               {onOpenZen}
               {onFindInGraph}
               {onApproveDraft}
@@ -332,15 +359,28 @@
         {#each groupedEntities.unlabeled as entity (entity.id)}
           <EntityListItem
             {entity}
+            {isDragging}
+            isDragSource={entity.id === draggedEntityId}
+            draggable={!!onDragStart}
             {onSelect}
-            onDragStart={(e, entityId) => {
-              isDragging = true;
-              onDragStart?.(e, entityId);
-            }}
-            onDragEnd={() => {
-              isDragging = false;
-              onDragEnd?.();
-            }}
+            onDragStart={onDragStart
+              ? (e, entityId) => {
+                  draggedEntityId = entityId;
+                  requestAnimationFrame(() => {
+                    if (draggedEntityId === entityId) {
+                      isDragging = true;
+                    }
+                  });
+                  onDragStart?.(e, entityId);
+                }
+              : undefined}
+            onDragEnd={onDragStart
+              ? () => {
+                  isDragging = false;
+                  draggedEntityId = null;
+                  onDragEnd?.();
+                }
+              : undefined}
             {onOpenZen}
             {onFindInGraph}
             {onApproveDraft}
