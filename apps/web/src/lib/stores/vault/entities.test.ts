@@ -11,6 +11,7 @@ import {
   bulkAddLabel,
   bulkRemoveLabel,
   batchCreateEntities,
+  detectCycle,
 } from "./entities";
 import type { LocalEntity, BatchCreateInput } from "./types";
 
@@ -89,6 +90,17 @@ describe("Vault Entities Operations", () => {
         {},
       );
       expect(entity.labels).toEqual(["past"]);
+    });
+
+    it("should preserve parent field if present", () => {
+      const entities = {};
+      const entity = createEntity(
+        "Child",
+        "npc",
+        { parent: "parent-id" },
+        entities,
+      );
+      expect(entity.parent).toBe("parent-id");
     });
   });
 
@@ -207,6 +219,32 @@ describe("Vault Entities Operations", () => {
 
       expect(newEntities["e2"].connections).toHaveLength(0);
       expect(modifiedIds).toContain("e2");
+    });
+
+    it("should promote child entities to root level when parent is deleted", async () => {
+      const parent = {
+        id: "p1",
+        title: "Parent",
+        status: "active",
+        connections: [],
+      } as any;
+      const child = {
+        id: "c1",
+        title: "Child",
+        status: "active",
+        parent: "p1",
+        connections: [],
+      } as any;
+      const entities = { p1: parent, c1: child };
+
+      const { entities: newEntities, modifiedIds } = await deleteEntity(
+        mockVaultDir,
+        entities,
+        "p1",
+      );
+
+      expect(newEntities["c1"].parent).toBeUndefined();
+      expect(modifiedIds).toContain("c1");
     });
 
     it("should handle asset deletion errors and missing handles", async () => {
@@ -412,6 +450,40 @@ describe("Vault Entities Operations", () => {
       expect(createdEntity.title).toBe("The Misty Mountains");
       expect(entities[createdEntity.id]).toBeDefined();
       expect(entities[createdEntity.id].content).toBe("Very cold.");
+    });
+  });
+
+  describe("detectCycle", () => {
+    it("should return true if parent is the same as the entity itself", () => {
+      const entities = {};
+      expect(detectCycle("A", "A", entities)).toBe(true);
+    });
+
+    it("should return true if the potential parent is already a descendant of the entity", () => {
+      // A -> B. Making B the parent of A creates a cycle: B -> A -> B
+      const B = { id: "B", parent: "A" } as any;
+      const entities = { B };
+      expect(detectCycle("A", "B", entities)).toBe(true);
+    });
+
+    it("should return true for deeper cycles", () => {
+      // A -> C -> B. Making B the parent of A creates a cycle: B -> A -> C -> B
+      const C = { id: "C", parent: "A" } as any;
+      const B = { id: "B", parent: "C" } as any;
+      const entities = { B, C };
+      expect(detectCycle("A", "B", entities)).toBe(true);
+    });
+
+    it("should return false for valid parent chains", () => {
+      // A -> B -> C (valid)
+      const C = { id: "C" } as any;
+      const B = { id: "B", parent: "C" } as any;
+      const entities = { B, C };
+      expect(detectCycle("A", "B", entities)).toBe(false);
+    });
+
+    it("should return false if potential parent is undefined", () => {
+      expect(detectCycle("A", undefined, {})).toBe(false);
     });
   });
 });

@@ -30,6 +30,7 @@ export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   FRONT_PAGE: "front-page-hint-seen",
   VTT_MODE: "vtt-mode-hint-seen",
+  ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -382,6 +383,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle the glassmorphic fast scratchpad. Jot down thoughts, auto-save drafts, and use the 'Elevate' button to let the AI structure your raw notes into complete Character, Location, or Item draft entities.",
     icon: "icon-[lucide--zap]",
+  },
+  "entity-hierarchy": {
+    id: "entity-hierarchy",
+    title: "Nested Entities",
+    content:
+      "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.",
+    icon: "icon-[lucide--folder-tree]",
   },
 };
 

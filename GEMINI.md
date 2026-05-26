@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-23
+Auto-generated from all feature plans. Last updated: 2026-05-26
 
 ## Active Technologies
 
@@ -193,4 +193,4 @@ TypeScript: Follow standard conventions
 
 <!-- MANUAL ADDITIONS START -->
 
-- **User-Facing Changelogs**: Keep all entries in the changelog (`apps/web/src/lib/content/changelog/releases.json`) strictly focused on high-impact, user-facing features. Do not list under-the-hood technical refactors, code optimization, or architectural decomposition updates in the changelog highlights.
+<!-- MANUAL ADDITIONS END -->

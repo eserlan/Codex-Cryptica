@@ -20,7 +20,7 @@ With the UI store, P2P services, Map route, and Graph surface now modular, the l
 | 4    | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts`                   | 605        | Store Manager       | 🟡 WATCH    |
 | 5    | `apps/web/src/lib/stores/map.svelte.ts`                                     | 595        | Store (State)       | 🟡 WATCH    |
 | 6    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`                | 594        | UI Component        | 🟡 WATCH    |
-| 7    | `apps/web/src/lib/components/explorer/EntityList.svelte`                    | 510        | UI Component        | 🟡 WATCH    |
+| 7    | `apps/web/src/lib/components/explorer/EntityList.svelte`                    | 349        | UI Component        | 🟢 IMPROVED |
 | 8    | `apps/web/src/lib/stores/oracle.svelte.ts`                                  | 509        | Store (State/Logic) | 🟢 IMPROVED |
 | 9    | `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`         | 483        | Controller          | 🟢 NEW      |
 | 10   | `apps/web/src/lib/components/graph/graph-context-menu-controller.svelte.ts` | 441        | Controller          | 🟢 NEW      |
@@ -77,3 +77,4 @@ With the UI store, P2P services, Map route, and Graph surface now modular, the l
 - **`CanvasWorkspace.svelte`**: Staying modular at ~326 lines (down from 835).
 - **`entity-store.svelte.ts`**: Maintaining boundaries at ~450 lines (down from 920).
 - **`ai.ts`**: Effectively eliminated as a god file.
+- **EntityList.svelte**: **RESOLVED**. Reduced from 510 to 349 lines (despite adding multi-level tree hierarchy, child creation, and drag-and-drop mechanics) by decomposing card rendering into `EntityListItem.svelte` (~253 lines), search/autocomplete logic into `EntityListSearch.svelte` (~189 lines), and filter/label bar UI into `EntityListFilterBar.svelte` (~140 lines) with core filtering logic isolated to pure helper `entityListFiltering.ts` (Spec 120).
