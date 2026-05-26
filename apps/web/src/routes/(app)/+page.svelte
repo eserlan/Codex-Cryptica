@@ -205,6 +205,13 @@
       }}
       onkeydown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
+          const t = event.target as HTMLElement;
+          if (
+            t.tagName === "INPUT" ||
+            t.tagName === "TEXTAREA" ||
+            t.isContentEditable
+          )
+            return;
           event.preventDefault();
           dismissFrontPageOverlay();
         }
