@@ -121,9 +121,17 @@
     <div class="w-6 shrink-0 ml-1.5"></div>
   {/if}
 
-  <button
-    type="button"
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <div
+    role="button"
+    tabindex="0"
     onclick={() => onSelect?.(entity)}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onSelect?.(entity);
+      }
+    }}
     title={`Select ${entity.title}`}
     class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl {!sessionModeStore.isGuestMode &&
     onDragStart
@@ -152,7 +160,7 @@
         </div>
       {/if}
     </div>
-  </button>
+  </div>
 
   {#if entity.labels && entity.labels.length > 0}
     <div class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0">
