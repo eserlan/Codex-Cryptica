@@ -133,34 +133,38 @@ describe("DefaultTextGenerationService", () => {
   });
 
   describe("resolvePronounsLocally", () => {
-    it("should resolve pronouns based on markdown bold entities", () => {
+    it("should resolve pronouns based on markdown bold entities", async () => {
       const history = [
         {
-          role: "user",
+          role: "user" as const,
           content: "The legendary **Dulandir** is a vast place.",
         },
       ];
       const query = "Where is that place located?";
-      const result = resolvePronounsLocally(query, history);
+      const result = await resolvePronounsLocally(query, history);
       expect(result).toBe("Where is Dulandir located?");
     });
 
-    it("should resolve possessives correctly", () => {
-      const history = [{ role: "user", content: "Here is **Sir Alden**." }];
+    it("should resolve possessives correctly", async () => {
+      const history = [
+        { role: "user" as const, content: "Here is **Sir Alden**." },
+      ];
       const query = "What is his title?";
-      const result = resolvePronounsLocally(query, history);
+      const result = await resolvePronounsLocally(query, history);
       expect(result).toBe("What is Sir Alden's title?");
     });
 
-    it("should fall back to proper nouns if no markdown bold", () => {
-      const history = [{ role: "user", content: "Let's talk about Valerius." }];
+    it("should fall back to proper nouns if no markdown bold", async () => {
+      const history = [
+        { role: "user" as const, content: "Let's talk about Valerius." },
+      ];
       const query = "Where does he live?";
-      const result = resolvePronounsLocally(query, history);
+      const result = await resolvePronounsLocally(query, history);
       expect(result).toBe("Where does Valerius live?");
     });
 
-    it("should return the original query if no history exists", () => {
-      const result = resolvePronounsLocally("Where does he live?", []);
+    it("should return the original query if no history exists", async () => {
+      const result = await resolvePronounsLocally("Where does he live?", []);
       expect(result).toBe("Where does he live?");
     });
   });

@@ -3,6 +3,7 @@ import {
   TIER_MODES,
   type RelatedEntityContext,
   type TextGenerationService,
+  type ChatHistoryMessage,
 } from "schema";
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
@@ -18,7 +19,6 @@ import {
   buildStructuredDraftingPrompt,
 } from "./prompts/entity-creation";
 import { isAIEnabled } from "./capability-guard";
-import nlp from "compromise";
 
 function safeSnapshot<T>(obj: T): T {
   if (obj == null) return obj;
@@ -33,14 +33,22 @@ function safeSnapshot<T>(obj: T): T {
   }
 }
 
-export function resolvePronounsLocally(query: string, history: any[]): string {
+export async function resolvePronounsLocally(
+  query: string,
+  history: ChatHistoryMessage[],
+): Promise<string> {
   if (!history || history.length === 0) return query;
 
+  // Bound the history context to the last 4 messages to save performance
+  const boundedHistory = history.slice(-4);
   let candidateSubject = "";
 
+  // Dynamic import compromise.js only when needed to avoid code bloat in the main bundle
+  const { default: nlp } = await import("compromise");
+
   // Scan backwards from the most recent message to identify a topic or subject
-  for (let i = history.length - 1; i >= 0; i--) {
-    const msg = history[i];
+  for (let i = boundedHistory.length - 1; i >= 0; i--) {
+    const msg = boundedHistory[i];
     if (!msg.content || typeof msg.content !== "string") continue;
 
     const text = msg.content;
@@ -94,7 +102,8 @@ export function resolvePronounsLocally(query: string, history: any[]): string {
 
   // Use robust native regex replacements to swap pronouns
   let textResult = query;
-  const possessiveRegex = /\b(his|her|its|their|theirs)\b/gi;
+  // Exclude 'her' from possessive to avoid 'I saw her' -> 'I saw Sir Alden's'
+  const possessiveRegex = /\b(his|its|their|theirs)\b/gi;
   const standardRegex =
     /\b(he|she|it|they|him|her|them|that place|this place|that person|this person|the entity)\b/gi;
 
@@ -121,11 +130,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
   async expandQuery(
     apiKey: string,
     query: string,
-    history: any[],
+    history: ChatHistoryMessage[],
   ): Promise<string> {
     const cleanHistory = history ? safeSnapshot(history) : history;
     if (!isAIEnabled()) {
-      return resolvePronounsLocally(query, cleanHistory);
+      return await resolvePronounsLocally(query, cleanHistory);
     }
     try {
       const basicModel = await this.aiClientManager.getModel(
@@ -158,7 +167,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
         "[TextGenerationService] Query expansion failed, falling back to local resolver:",
         err,
       );
-      return resolvePronounsLocally(query, cleanHistory);
+      return await resolvePronounsLocally(query, cleanHistory);
     }
   }
 
