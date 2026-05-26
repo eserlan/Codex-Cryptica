@@ -36,7 +36,8 @@
     onAddChild?: (parentId: string) => void;
   } = $props();
 
-  let isDragOver = $state(false);
+  let dragCount = $state(0);
+  const isDragOver = $derived(dragCount > 0);
 
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
@@ -85,16 +86,18 @@
   ondragenter={(e) => {
     if (!sessionModeStore.isGuestMode) {
       e.preventDefault();
-      isDragOver = true;
+      dragCount++;
     }
   }}
   ondragleave={() => {
-    isDragOver = false;
+    if (!sessionModeStore.isGuestMode) {
+      dragCount--;
+    }
   }}
   ondrop={async (e) => {
     if (sessionModeStore.isGuestMode) return;
     e.preventDefault();
-    isDragOver = false;
+    dragCount = 0;
     const draggedId =
       e.dataTransfer?.getData("application/x-codex-entity-id") ||
       e.dataTransfer?.getData("text/plain");
