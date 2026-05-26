@@ -286,7 +286,9 @@ describe("EntityList", () => {
     ).toBeNull();
 
     // Drag-and-drop draggable should be false or not active
-    const parentRow = screen.getByText("Parent Entity").closest("button");
+    const parentRow = screen
+      .getByText("Parent Entity")
+      .closest("[role='listitem']");
     expect(parentRow?.getAttribute("draggable")).toBe("false");
   });
 });
