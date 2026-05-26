@@ -133,10 +133,52 @@ export class DefaultTextGenerationService implements TextGenerationService {
     history: ChatHistoryMessage[],
   ): Promise<string> {
     const cleanHistory = history ? safeSnapshot(history) : history;
-    if (!isAIEnabled()) {
-      return await resolvePronounsLocally(query, cleanHistory);
+
+    // Define pronouns to check for resolution
+    const PRONOUN_REGEX =
+      /\b(he|she|it|they|him|her|them|his|its|their|theirs|that place|this place|that person|this person|the entity)\b/i;
+    const hasPronouns = PRONOUN_REGEX.test(query);
+
+    // If there are no pronouns to resolve at all, it's already a standalone search query!
+    if (!hasPronouns) {
+      console.log(
+        `[TextGenerationService] No pronouns detected in query: "${query}". Returning as-is.`,
+      );
+      return query;
     }
+
+    // Try offline resolution first with Compromise.js
+    let locallyResolved = query;
     try {
+      locallyResolved = await resolvePronounsLocally(query, cleanHistory);
+    } catch (e) {
+      console.error(
+        "[TextGenerationService] Local pronoun resolution failed, falling back to AI:",
+        e,
+      );
+    }
+
+    // A local resolution is considered "good" if the query was successfully modified
+    // and no unresolved pronouns remain in the resolved output.
+    const isLocalResolutionGood =
+      locallyResolved !== query && !PRONOUN_REGEX.test(locallyResolved);
+
+    if (isLocalResolutionGood) {
+      console.log(
+        `[TextGenerationService] Primary local compromise resolver successfully expanded query: "${query}" -> "${locallyResolved}"`,
+      );
+      return locallyResolved;
+    }
+
+    // If local resolution was not successful, fall back to AI-powered query expansion
+    if (!isAIEnabled()) {
+      return locallyResolved;
+    }
+
+    try {
+      console.log(
+        `[TextGenerationService] Local resolver insufficient for query "${query}". Falling back to AI query expansion.`,
+      );
       const basicModel = await this.aiClientManager.getModel(
         apiKey,
         TIER_MODES.lite,
@@ -159,15 +201,15 @@ export class DefaultTextGenerationService implements TextGenerationService {
       const result = await basicModel.generateContent(prompt);
       const expanded = result.response.text().trim();
       console.log(
-        `[TextGenerationService] Expanded query: "${query}" -> "${expanded}"`,
+        `[TextGenerationService] AI Expanded query: "${query}" -> "${expanded}"`,
       );
       return expanded;
     } catch (err) {
       console.error(
-        "[TextGenerationService] Query expansion failed, falling back to local resolver:",
+        "[TextGenerationService] Fallback AI Query expansion failed, returning local resolution:",
         err,
       );
-      return await resolvePronounsLocally(query, cleanHistory);
+      return locallyResolved;
     }
   }
 

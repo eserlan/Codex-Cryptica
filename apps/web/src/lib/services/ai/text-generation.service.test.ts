@@ -79,9 +79,9 @@ describe("DefaultTextGenerationService", () => {
   });
 
   describe("expandQuery", () => {
-    it("should call model to expand query", async () => {
+    it("should call model to expand query when local resolution is insufficient", async () => {
       const result = await service.expandQuery("key", "him?", [
-        { role: "user", content: "Valerius" },
+        { role: "user" as const, content: "and but or if" },
       ]);
 
       expect(result).toBe("Generated content");
@@ -94,40 +94,46 @@ describe("DefaultTextGenerationService", () => {
       );
     });
 
+    it("should bypass AI completely when local resolution succeeds", async () => {
+      const result = await service.expandQuery("key", "Where does he live?", [
+        { role: "user" as const, content: "Let's talk about **Sir Alden**." },
+      ]);
+      expect(result).toBe("Where does Sir Alden live?");
+      expect(mockAiClientManager.getModel).not.toHaveBeenCalled();
+    });
+
     it("should resolve query locally if AI is disabled", async () => {
       vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
 
       const result = await service.expandQuery("key", "Where does he live?", [
-        { role: "user", content: "Let's talk about **Sir Alden**." },
+        { role: "user" as const, content: "Let's talk about **Sir Alden**." },
       ]);
       expect(result).toBe("Where does Sir Alden live?");
     });
 
-    it("should fall back to local resolver on error", async () => {
+    it("should fall back to local resolver on AI error when local resolution is insufficient", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       mockModel.generateContent.mockRejectedValue(new Error("AI error"));
 
       const result = await service.expandQuery("key", "What is its name?", [
-        { role: "user", content: "Tell me about the **Mystic Blade**." },
+        { role: "user" as const, content: "and but or if" },
       ]);
 
-      expect(result).toBe("What is Mystic Blade's name?");
+      expect(result).toBe("What is its name?");
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
 
-    it("should truncate long history content to keep payload small", async () => {
-      const veryLongContent = "A".repeat(3000);
+    it("should truncate long history content to keep payload small when falling back to AI", async () => {
+      const veryLongContent = "and but or if ".repeat(300);
       await service.expandQuery("key", "him?", [
-        { role: "user", content: veryLongContent },
+        { role: "user" as const, content: veryLongContent },
       ]);
 
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "A".repeat(2000) + "... [truncated for length]",
-        ),
+        expect.stringContaining("... [truncated for length]"),
       );
     });
   });
