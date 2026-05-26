@@ -16,6 +16,14 @@ function parseKey(key: string): { vaultId: string; filePath: string } {
   };
 }
 
+function normalizePath(
+  path: string | string[] | undefined,
+  filePath: string,
+): string[] {
+  const raw = path || filePath.split("/");
+  return typeof raw === "string" ? raw.split("/") : raw;
+}
+
 export class CacheService {
   /**
    * In-memory snapshot of the Dexie `graphEntities` table for the currently
@@ -69,7 +77,7 @@ export class CacheService {
           // Content starts as empty — loaded lazily when the entity is opened.
           content: "",
           lore: undefined,
-          _path: graphData._path || filePath.split("/"),
+          _path: normalizePath(graphData._path, filePath),
         };
         map.set(`${vaultId}:${filePath}`, { lastModified, entity });
       }
@@ -128,7 +136,7 @@ export class CacheService {
         ...graphData,
         content: "",
         lore: undefined,
-        _path: graphData._path || _fp.split("/"),
+        _path: normalizePath(graphData._path, _fp),
       };
       return { lastModified, entity };
     } catch (err) {
@@ -218,7 +226,7 @@ export class CacheService {
           ...graphData,
           content: "",
           lore: undefined,
-          _path: graphData._path || filePath.split("/"),
+          _path: normalizePath(graphData._path, filePath),
         } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
       }

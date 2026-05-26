@@ -55,9 +55,12 @@
     ? 'opacity-50'
     : ''} {entity.id === focusedEntityId
     ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
-    : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'} {isDragOver
+    : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'} {isDragOver &&
+  !(entity as any).isVirtual
     ? 'border-theme-accent bg-theme-accent/10 ring-2 ring-theme-accent/20'
-    : ''} {!sessionModeStore.isGuestMode && draggable
+    : ''} {!sessionModeStore.isGuestMode &&
+  draggable &&
+  !(entity as any).isVirtual
     ? 'cursor-grab active:cursor-grabbing'
     : ''} {isDragging ? 'dragging-active' : ''} {isDragSource
     ? 'dragging-source'
@@ -65,9 +68,11 @@
   role="listitem"
   data-testid="entity-list-item"
   data-entity-id={entity.id}
-  draggable={!sessionModeStore.isGuestMode && draggable}
+  draggable={!sessionModeStore.isGuestMode &&
+    draggable &&
+    !(entity as any).isVirtual}
   ondragstart={(e) => {
-    if (!draggable) return;
+    if (!draggable || (entity as any).isVirtual) return;
     if (e.dataTransfer) {
       e.dataTransfer.setData("application/x-codex-entity-id", entity.id);
       e.dataTransfer.setData("text/plain", entity.id);
@@ -79,12 +84,12 @@
     onDragEnd?.();
   }}
   ondragover={(e) => {
-    if (!sessionModeStore.isGuestMode) {
+    if (!sessionModeStore.isGuestMode && !(entity as any).isVirtual) {
       e.preventDefault();
     }
   }}
   ondragenter={(e) => {
-    if (!sessionModeStore.isGuestMode) {
+    if (!sessionModeStore.isGuestMode && !(entity as any).isVirtual) {
       e.preventDefault();
       isDragOver = true;
     }
@@ -93,7 +98,7 @@
     isDragOver = false;
   }}
   ondrop={async (e) => {
-    if (sessionModeStore.isGuestMode) return;
+    if (sessionModeStore.isGuestMode || (entity as any).isVirtual) return;
     e.preventDefault();
     isDragOver = false;
     const draggedId =
@@ -132,14 +137,28 @@
 
   <button
     type="button"
-    onclick={() => onSelect?.(entity)}
-    title={`Select ${entity.title}`}
-    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-theme-primary rounded-l-xl"
+    onclick={() => {
+      if ((entity as any).isVirtual) {
+        explorerUIStore.toggleExplorerEntityCollapse(activeVaultId, entity.id);
+      } else {
+        onSelect?.(entity);
+      }
+    }}
+    title={(entity as any).isVirtual
+      ? `Toggle ${entity.title}`
+      : `Select ${entity.title}`}
+    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-theme-primary rounded-l-xl {(
+      entity as any
+    ).isVirtual
+      ? 'rounded-r-xl'
+      : ''}"
   >
     <span
-      class="{getIconClass(
-        cat?.icon,
-      )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
+      class="{(entity as any).isVirtual
+        ? 'icon-[lucide--folder]'
+        : getIconClass(
+            cat?.icon,
+          )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
     ></span>
     <div class="flex-1 min-w-0 flex flex-col gap-0.5">
       <div
@@ -203,7 +222,7 @@
     </button>
   {/if}
 
-  {#if onFindInGraph}
+  {#if onFindInGraph && !(entity as any).isVirtual}
     <button
       type="button"
       onclick={(e) => {
@@ -218,7 +237,7 @@
       <span class="icon-[lucide--target] h-3.5 w-3.5"></span>
     </button>
   {/if}
-  {#if onOpenZen}
+  {#if onOpenZen && !(entity as any).isVirtual}
     <button
       type="button"
       onclick={(e) => {

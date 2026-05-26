@@ -32,7 +32,13 @@ export function buildEntityTree(
         const parentId = sanitizeId(e.parent);
         if (!allEntitiesMap.has(parentId) && !virtualEntities.has(parentId)) {
           let title = e.parent;
-          const path = (e as any)._path;
+          const pathRaw = (e as any)._path;
+          const path: string[] | undefined = Array.isArray(pathRaw)
+            ? pathRaw
+            : typeof pathRaw === "string"
+              ? pathRaw.split("/")
+              : undefined;
+
           if (path && path.length > 1) {
             for (let i = path.length - 2; i >= 0; i--) {
               if (sanitizeId(path[i]) === parentId) {
@@ -69,6 +75,7 @@ export function buildEntityTree(
             lore: "",
             _path: path,
             updatedAt: Date.now(),
+            isVirtual: true,
           } as any);
 
           foundNewMissing = true;
