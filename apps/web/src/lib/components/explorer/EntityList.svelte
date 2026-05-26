@@ -138,19 +138,26 @@
           {isCollapsed}
           {isDragging}
           isDragSource={entity.id === draggedEntityId}
+          draggable={!!onDragStart}
           {onSelect}
-          onDragStart={(e, entityId) => {
-            draggedEntityId = entityId;
-            requestAnimationFrame(() => {
-              isDragging = true;
-            });
-            onDragStart?.(e, entityId);
-          }}
-          onDragEnd={() => {
-            isDragging = false;
-            draggedEntityId = null;
-            onDragEnd?.();
-          }}
+          onDragStart={onDragStart
+            ? (e, entityId) => {
+                draggedEntityId = entityId;
+                requestAnimationFrame(() => {
+                  if (draggedEntityId === entityId) {
+                    isDragging = true;
+                  }
+                });
+                onDragStart?.(e, entityId);
+              }
+            : undefined}
+          onDragEnd={onDragStart
+            ? () => {
+                isDragging = false;
+                draggedEntityId = null;
+                onDragEnd?.();
+              }
+            : undefined}
           {onOpenZen}
           {onFindInGraph}
           {onApproveDraft}
@@ -319,19 +326,26 @@
               {entity}
               {isDragging}
               isDragSource={entity.id === draggedEntityId}
+              draggable={!!onDragStart}
               {onSelect}
-              onDragStart={(e, entityId) => {
-                draggedEntityId = entityId;
-                requestAnimationFrame(() => {
-                  isDragging = true;
-                });
-                onDragStart?.(e, entityId);
-              }}
-              onDragEnd={() => {
-                isDragging = false;
-                draggedEntityId = null;
-                onDragEnd?.();
-              }}
+              onDragStart={onDragStart
+                ? (e, entityId) => {
+                    draggedEntityId = entityId;
+                    requestAnimationFrame(() => {
+                      if (draggedEntityId === entityId) {
+                        isDragging = true;
+                      }
+                    });
+                    onDragStart?.(e, entityId);
+                  }
+                : undefined}
+              onDragEnd={onDragStart
+                ? () => {
+                    isDragging = false;
+                    draggedEntityId = null;
+                    onDragEnd?.();
+                  }
+                : undefined}
               {onOpenZen}
               {onFindInGraph}
               {onApproveDraft}
@@ -347,19 +361,26 @@
             {entity}
             {isDragging}
             isDragSource={entity.id === draggedEntityId}
+            draggable={!!onDragStart}
             {onSelect}
-            onDragStart={(e, entityId) => {
-              draggedEntityId = entityId;
-              requestAnimationFrame(() => {
-                isDragging = true;
-              });
-              onDragStart?.(e, entityId);
-            }}
-            onDragEnd={() => {
-              isDragging = false;
-              draggedEntityId = null;
-              onDragEnd?.();
-            }}
+            onDragStart={onDragStart
+              ? (e, entityId) => {
+                  draggedEntityId = entityId;
+                  requestAnimationFrame(() => {
+                    if (draggedEntityId === entityId) {
+                      isDragging = true;
+                    }
+                  });
+                  onDragStart?.(e, entityId);
+                }
+              : undefined}
+            onDragEnd={onDragStart
+              ? () => {
+                  isDragging = false;
+                  draggedEntityId = null;
+                  onDragEnd?.();
+                }
+              : undefined}
             {onOpenZen}
             {onFindInGraph}
             {onApproveDraft}

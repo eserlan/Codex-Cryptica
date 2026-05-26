@@ -15,6 +15,7 @@
     isCollapsed = false,
     isDragging = false,
     isDragSource = false,
+    draggable = false,
     onSelect,
     onDragStart,
     onDragEnd,
@@ -30,6 +31,7 @@
     isCollapsed?: boolean;
     isDragging?: boolean;
     isDragSource?: boolean;
+    draggable?: boolean;
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
     onDragEnd?: () => void;
@@ -55,24 +57,17 @@
     ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
     : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'} {isDragOver
     ? 'border-theme-accent bg-theme-accent/10 ring-2 ring-theme-accent/20'
-    : ''} {!sessionModeStore.isGuestMode && onDragStart
+    : ''} {!sessionModeStore.isGuestMode && draggable
     ? 'cursor-grab active:cursor-grabbing'
     : ''} {isDragging ? 'dragging-active' : ''} {isDragSource
     ? 'dragging-source'
     : ''}"
-  role="button"
-  tabindex="0"
+  role="listitem"
   data-testid="entity-list-item"
   data-entity-id={entity.id}
-  draggable={!sessionModeStore.isGuestMode && !!onDragStart}
-  onclick={() => onSelect?.(entity)}
-  onkeydown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onSelect?.(entity);
-    }
-  }}
+  draggable={!sessionModeStore.isGuestMode && draggable}
   ondragstart={(e) => {
+    if (!draggable) return;
     if (e.dataTransfer) {
       e.dataTransfer.setData("application/x-codex-entity-id", entity.id);
       e.dataTransfer.setData("text/plain", entity.id);
@@ -135,9 +130,11 @@
     <div class="w-6 shrink-0 ml-1.5"></div>
   {/if}
 
-  <div
+  <button
+    type="button"
+    onclick={() => onSelect?.(entity)}
     title={`Select ${entity.title}`}
-    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left select-none"
+    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-theme-primary rounded-l-xl"
   >
     <span
       class="{getIconClass(
@@ -161,7 +158,7 @@
         </div>
       {/if}
     </div>
-  </div>
+  </button>
 
   {#if entity.labels && entity.labels.length > 0}
     <div class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0">
