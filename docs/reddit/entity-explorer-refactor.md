@@ -44,4 +44,10 @@ To speed up note-taking, you don't need to open separate creation menus to add s
 
 ---
 
+### A quick note on the technical side
+
+Under the hood, the hierarchy is built using Svelte 5 runes (`$state` and `$derived`) to calculate nested relationships reactively on the client side. Drag stability is managed via `requestAnimationFrame` guards on drag starts to prevent browser-level cancellations, and hover flicker is solved by temporarily disabling pointer events on non-dragged elements. I also cleaned up the HTML semantics, switching the outer rows to `role="listitem"` and moving row selection to an inner button so screen readers don't see nested buttons inside focusable rows.
+
+---
+
 **Question:** How do you prefer to organize your campaign vaults? Do you keep things relatively flat and rely on search, or do you prefer a deep nested structure?
