@@ -187,6 +187,13 @@ describe("DefaultTextGenerationService", () => {
       const result = await resolvePronounsLocally(query, history);
       expect(result).toBe("What does Kardos do?");
     });
+
+    it("should resolve lowercase names in user queries by falling back to general nouns", async () => {
+      const history = [{ role: "user" as const, content: "who's kardos" }];
+      const query = "what does he do?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("what does kardos do?");
+    });
   });
 
   describe("distillContext", () => {

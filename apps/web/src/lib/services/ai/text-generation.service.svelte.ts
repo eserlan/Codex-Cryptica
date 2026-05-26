@@ -90,6 +90,13 @@ export async function resolvePronounsLocally(
       candidateSubject = places;
       break;
     }
+
+    // Check for general nouns in user's query (critical fallback for lowercase names like 'kardos')
+    const firstNoun = doc.nouns().first().text().trim();
+    if (firstNoun) {
+      candidateSubject = firstNoun;
+      break;
+    }
   }
 
   // Pass 2: Fallback to scanning all messages backwards (including assistant) if no user subject was matched
