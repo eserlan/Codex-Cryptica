@@ -24,11 +24,11 @@ While it worked okay for simple vaults, it had some frustrating bugs when handli
 
 Here is what I changed:
 
-### 🌲 Support for Deeper campaign folders
+### Support for Deeper campaign folders
 
 I increased the nesting depth limit from 5 levels to 8. This supports more complex campaign setups (e.g., World → Continent → Kingdom → City → District → Building → Room).
 
-### 🫳 Stable Native Drag-and-Drop
+### Stable Native Drag-and-Drop
 
 Browser-native drag-and-drop in deep trees is notoriously finicky. I resolved a few major pain points:
 
@@ -37,7 +37,7 @@ Browser-native drag-and-drop in deep trees is notoriously finicky. I resolved a 
 - **Drop to Root:** Added a dedicated drop target at the top of the tree list to make it easy to move any nested entity back to the root level.
 - **Reload Persistence:** Fixed a cache hydration bug that caused custom parent/child structures and visibility flags to get lost on a hard page reload.
 
-### ♿ HTML Semantics & ARIA Cleanup
+### HTML Semantics & ARIA Cleanup
 
 Originally, the outer container for each row was a focusable `div` with `role="button"`. Since this row contains other real buttons (like expand/collapse, add child, and delete), this created an invalid accessibility tree (interactive controls nested inside a composite "button").
 
