@@ -3,6 +3,7 @@ import {
   TIER_MODES,
   type RelatedEntityContext,
   type TextGenerationService,
+  type ChatHistoryMessage,
 } from "schema";
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
@@ -32,6 +33,141 @@ function safeSnapshot<T>(obj: T): T {
   }
 }
 
+export async function resolvePronounsLocally(
+  query: string,
+  history: ChatHistoryMessage[],
+): Promise<string> {
+  if (!history || history.length === 0) return query;
+
+  // Bound the history context to the last 4 messages to save performance
+  const boundedHistory = history.slice(-4);
+  let candidateSubject = "";
+
+  // Dynamic import compromise.js only when needed to avoid code bloat in the main bundle
+  const { default: nlp } = await import("compromise");
+
+  // Pass 1: Scan user messages in reverse chronological order to find the explicit subject of interest
+  const userMessages = boundedHistory.filter((msg) => msg.role === "user");
+  for (let i = userMessages.length - 1; i >= 0; i--) {
+    const msg = userMessages[i];
+    if (!msg.content || typeof msg.content !== "string") continue;
+
+    // Ignore the current query itself since it contains the unresolved pronoun we are trying to resolve
+    if (msg.content.trim().toLowerCase() === query.trim().toLowerCase())
+      continue;
+
+    const text = msg.content;
+
+    // Check for bold patterns first in the user's previous queries
+    const boldMatches = text.match(/\*\*(.*?)\*\*/g);
+    if (boldMatches && boldMatches.length > 0) {
+      const boldText = boldMatches[0].replace(/\*\*/g, "").trim();
+      if (boldText.length > 1 && boldText.length < 50) {
+        candidateSubject = boldText;
+        break;
+      }
+    }
+
+    const doc = nlp(text);
+
+    // Check for proper nouns in user's query
+    const properNoun = doc.match("#ProperNoun").first().text().trim();
+    if (properNoun) {
+      candidateSubject = properNoun;
+      break;
+    }
+
+    // Check for people names in user's query
+    const people = doc.people().first().text().trim();
+    if (people) {
+      candidateSubject = people;
+      break;
+    }
+
+    // Check for places in user's query
+    const places = doc.places().first().text().trim();
+    if (places) {
+      candidateSubject = places;
+      break;
+    }
+
+    // Check for general nouns in user's query (critical fallback for lowercase names like 'kardos')
+    const firstNoun = doc.nouns().first().text().trim();
+    if (firstNoun) {
+      candidateSubject = firstNoun;
+      break;
+    }
+  }
+
+  // Pass 2: Fallback to scanning all messages backwards (including assistant) if no user subject was matched
+  if (!candidateSubject) {
+    for (let i = boundedHistory.length - 1; i >= 0; i--) {
+      const msg = boundedHistory[i];
+      if (!msg.content || typeof msg.content !== "string") continue;
+
+      const text = msg.content;
+
+      // 1. Scan for Markdown bold patterns
+      const boldMatches = text.match(/\*\*(.*?)\*\*/g);
+      if (boldMatches && boldMatches.length > 0) {
+        const boldText = boldMatches[0].replace(/\*\*/g, "").trim();
+        if (boldText.length > 1 && boldText.length < 50) {
+          candidateSubject = boldText;
+          break;
+        }
+      }
+
+      // Parse the message with compromise
+      const doc = nlp(text);
+
+      // 2. Scan for proper nouns
+      const properNoun = doc.match("#ProperNoun").first().text().trim();
+      if (properNoun) {
+        candidateSubject = properNoun;
+        break;
+      }
+
+      // 3. Scan for people names
+      const people = doc.people().first().text().trim();
+      if (people) {
+        candidateSubject = people;
+        break;
+      }
+
+      // 4. Scan for places
+      const places = doc.places().first().text().trim();
+      if (places) {
+        candidateSubject = places;
+        break;
+      }
+
+      // 5. Scan for general nouns
+      const firstNoun = doc.nouns().first().text().trim();
+      if (firstNoun) {
+        candidateSubject = firstNoun;
+        break;
+      }
+    }
+  }
+
+  if (!candidateSubject) return query;
+
+  const possessiveSuffix = candidateSubject.endsWith("s") ? "'" : "'s";
+  const possessiveReplacement = `${candidateSubject}${possessiveSuffix}`;
+
+  // Use robust native regex replacements to swap pronouns
+  let textResult = query;
+  // Exclude 'her' from possessive to avoid 'I saw her' -> 'I saw Sir Alden's'
+  const possessiveRegex = /\b(his|its|their|theirs)\b/gi;
+  const standardRegex =
+    /\b(he|she|it|they|him|her|them|that place|this place|that person|this person|the entity)\b/gi;
+
+  textResult = textResult.replace(possessiveRegex, possessiveReplacement);
+  textResult = textResult.replace(standardRegex, candidateSubject);
+
+  return textResult;
+}
+
 export class DefaultTextGenerationService implements TextGenerationService {
   constructor(private aiClientManager = defaultAiClientManager) {}
 
@@ -49,11 +185,55 @@ export class DefaultTextGenerationService implements TextGenerationService {
   async expandQuery(
     apiKey: string,
     query: string,
-    history: any[],
+    history: ChatHistoryMessage[],
   ): Promise<string> {
     const cleanHistory = history ? safeSnapshot(history) : history;
-    if (!isAIEnabled()) return query;
+
+    // Define pronouns to check for resolution
+    const PRONOUN_REGEX =
+      /\b(he|she|it|they|him|her|them|his|its|their|theirs|that place|this place|that person|this person|the entity)\b/i;
+    const hasPronouns = PRONOUN_REGEX.test(query);
+
+    // If there are no pronouns to resolve at all, it's already a standalone search query!
+    if (!hasPronouns) {
+      console.log(
+        `[TextGenerationService] No pronouns detected in query: "${query}". Returning as-is.`,
+      );
+      return query;
+    }
+
+    // Try offline resolution first with Compromise.js
+    let locallyResolved = query;
     try {
+      locallyResolved = await resolvePronounsLocally(query, cleanHistory);
+    } catch (e) {
+      console.error(
+        "[TextGenerationService] Local pronoun resolution failed, falling back to AI:",
+        e,
+      );
+    }
+
+    // A local resolution is considered "good" if the query was successfully modified
+    // and no unresolved pronouns remain in the resolved output.
+    const isLocalResolutionGood =
+      locallyResolved !== query && !PRONOUN_REGEX.test(locallyResolved);
+
+    if (isLocalResolutionGood) {
+      console.log(
+        `[TextGenerationService] Primary local compromise resolver successfully expanded query: "${query}" -> "${locallyResolved}"`,
+      );
+      return locallyResolved;
+    }
+
+    // If local resolution was not successful, fall back to AI-powered query expansion
+    if (!isAIEnabled()) {
+      return locallyResolved;
+    }
+
+    try {
+      console.log(
+        `[TextGenerationService] Local resolver insufficient for query "${query}". Falling back to AI query expansion.`,
+      );
       const basicModel = await this.aiClientManager.getModel(
         apiKey,
         TIER_MODES.lite,
@@ -76,15 +256,15 @@ export class DefaultTextGenerationService implements TextGenerationService {
       const result = await basicModel.generateContent(prompt);
       const expanded = result.response.text().trim();
       console.log(
-        `[TextGenerationService] Expanded query: "${query}" -> "${expanded}"`,
+        `[TextGenerationService] AI Expanded query: "${query}" -> "${expanded}"`,
       );
       return expanded;
     } catch (err) {
       console.error(
-        "[TextGenerationService] Query expansion failed, using original:",
+        "[TextGenerationService] Fallback AI Query expansion failed, returning local resolution:",
         err,
       );
-      return query;
+      return locallyResolved;
     }
   }
 
