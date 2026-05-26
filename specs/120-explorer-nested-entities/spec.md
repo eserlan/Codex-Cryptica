@@ -10,7 +10,7 @@
 ### Session 2026-05-26
 
 - Q: Visual Edit Actions in Guest Mode (P2P Collaborator Sessions) → A: Option A - Completely hide the "+" button and disable drag-and-drop hierarchy updates in Guest Mode.
-- Q: Indentation styling and Nesting Depth Limits → A: Option A - Support infinite logical nesting, but cap the visual indentation padding at 5 levels deep (e.g., maximum of 60px padding-left).
+- Q: Indentation styling and Nesting Depth Limits → A: Option A - Support infinite logical nesting, but cap the visual indentation padding at 8 levels deep (e.g., maximum of 96px padding-left).
 - Q: Cycle Resolution Strategy → A: Option A - Automatically break the cycle by setting the parent of the youngest/last-modified entity in the cycle to null (promoting it to root level) and log a warning.
 - Q: Drag-and-Drop Placement Semantics → A: Option A - Dropping onto an item makes it a child. Dropping in a "Move to Root" dropzone makes it a root item. No inline ordering.
 
@@ -80,7 +80,7 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 
 - **FR-001**: System MUST store the hierarchical relation via a `parent` field in the entity metadata (Zod schema: `parent: z.string().optional()`) containing the parent's entity ID.
 - **FR-002**: The `parent` field MUST be persisted in the frontmatter of the entity's Markdown file.
-- **FR-003**: The default "List View" in the Entity Explorer MUST render entities as a tree, using accordion toggles (expand/collapse chevron) and left padding/indentation (e.g. 12px or 16px per depth level). Indentation padding MUST be capped at a maximum of 5 levels deep (e.g., 60px maximum padding-left) to preserve layout integrity on narrow sidebars.
+- **FR-003**: The default "List View" in the Entity Explorer MUST render entities as a tree, using accordion toggles (expand/collapse chevron) and left padding/indentation (e.g. 12px or 16px per depth level). Indentation padding MUST be capped at a maximum of 8 levels deep (e.g., 96px maximum padding-left) to preserve layout integrity on narrow sidebars.
 - **FR-004**: Users MUST be able to click the chevron to toggle the collapsed state of a parent entity. Collapse state MUST be persisted locally (e.g., in `explorerUIStore` or `localStorage`).
 - **FR-005**: The explorer item row MUST display a "+" button (on hover/focus) that triggers the creation of a new child entity under that parent.
 - **FR-006**: When search query is active, the explorer MUST display all matching entities and their ancestors, forcing ancestors to be expanded to reveal matching descendants.

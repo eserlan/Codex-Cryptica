@@ -19,8 +19,8 @@
 
 **Purpose**: Register parent attribute schema and persistence structure
 
-- [ ] T001 Register parent field in entity schema definition in packages/schema/src/entity.ts
-- [ ] T002 Update UI storage keys and type declarations in apps/web/src/lib/stores/ui/persistence.ts
+- [x] T001 Register parent field in entity schema definition in packages/schema/src/entity.ts
+- [x] T002 Update UI storage keys and type declarations in apps/web/src/lib/stores/ui/persistence.ts
 
 ---
 
@@ -30,12 +30,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 [P] Write unit tests for child entity creation and parent delete promotion in apps/web/src/lib/stores/vault/entities.test.ts
-- [ ] T004 Implement parent field initialization in createEntity and child promotion in deleteEntity in apps/web/src/lib/stores/vault/entities.ts
-- [ ] T005 [P] Write unit tests for collapsed entity persistence in apps/web/src/lib/stores/ui/explorer-ui.test.ts
-- [ ] T006 Implement getCollapsedEntities and toggleExplorerEntityCollapse in apps/web/src/lib/stores/ui/explorer-ui.svelte.ts
-- [ ] T007 [P] Write cycle-detection unit tests in apps/web/src/lib/stores/vault/entities.test.ts
-- [ ] T008 Implement cycle-detection utility function detectCycle in apps/web/src/lib/stores/vault/entities.ts
+- [x] T003 [P] Write unit tests for child entity creation and parent delete promotion in apps/web/src/lib/stores/vault/entities.test.ts
+- [x] T004 Implement parent field initialization in createEntity and child promotion in deleteEntity in apps/web/src/lib/stores/vault/entities.ts
+- [x] T005 [P] Write unit tests for collapsed entity persistence in apps/web/src/lib/stores/ui/explorer-ui.test.ts
+- [x] T006 Implement getCollapsedEntities and toggleExplorerEntityCollapse in apps/web/src/lib/stores/ui/explorer-ui.svelte.ts
+- [x] T007 [P] Write cycle-detection unit tests in apps/web/src/lib/stores/vault/entities.test.ts
+- [x] T008 Implement cycle-detection utility function detectCycle in apps/web/src/lib/stores/vault/entities.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -45,11 +45,11 @@
 
 **Goal**: Render a collapsible, nested indented tree structure in the Entity Explorer List View
 
-**Independent Test**: Launch local dev server, create nested entities, click chevrons to collapse/expand. Verify depth cap at 5 levels and search dimensions.
+**Independent Test**: Launch local dev server, create nested entities, click chevrons to collapse/expand. Verify depth cap at 8 levels and search dimensions.
 
-- [ ] T009 [P] [US1] Write unit tests for tree structure derived calculation and search filtering in apps/web/src/lib/components/explorer/EntityList.test.ts
-- [ ] T010 [US1] Implement derived tree nodes calculation and search-dimming logic in apps/web/src/lib/components/explorer/EntityList.svelte
-- [ ] T011 [US1] Implement Svelte 5 recursive snippet and styling with cap depth at 5 levels in apps/web/src/lib/components/explorer/EntityList.svelte
+- [x] T009 [P] [US1] Write unit tests for tree structure derived calculation and search filtering in apps/web/src/lib/components/explorer/EntityList.test.ts
+- [x] T010 [US1] Implement derived tree nodes calculation and search-dimming logic in apps/web/src/lib/components/explorer/EntityList.svelte
+- [x] T011 [US1] Implement Svelte 5 recursive snippet and styling with cap depth at 8 levels in apps/web/src/lib/components/explorer/EntityList.svelte
 
 **Checkpoint**: At this point, User Story 1 (MVP) is fully functional and testable independently.
 
@@ -61,8 +61,8 @@
 
 **Independent Test**: Hover parent, click "+", fill form and submit, verify child nests instantly. Verify controls are hidden in Guest Mode.
 
-- [ ] T012 [US2] Implement inline child creation form state and keyboard keydown handlers in apps/web/src/lib/components/explorer/EntityList.svelte
-- [ ] T013 [US2] Style "+" child button and inline form with Tailwind 4 theme tokens, hiding them for guest sessions in apps/web/src/lib/components/explorer/EntityList.svelte
+- [x] T012 [US2] Implement inline child creation form state and keyboard keydown handlers in apps/web/src/lib/components/explorer/EntityList.svelte
+- [x] T013 [US2] Style "+" child button and inline form with Tailwind 4 theme tokens, hiding them for guest sessions in apps/web/src/lib/components/explorer/EntityList.svelte
 
 **Checkpoint**: At this point, child entities can be created directly from the tree hierarchy.
 
@@ -74,8 +74,8 @@
 
 **Independent Test**: Drag an entity, drop directly onto another entity to re-parent it, or onto the "Move to Root" dropzone to promote it. Verify cycle check blocks invalid loops.
 
-- [ ] T014 [US3] Implement dragstart and drop re-parenting event handlers in apps/web/src/lib/components/explorer/EntityList.svelte
-- [ ] T015 [US3] Add a visual "Move to Root" dropzone header shown only during active dragging in apps/web/src/lib/components/explorer/EntityList.svelte
+- [x] T014 [US3] Implement dragstart and drop re-parenting event handlers in apps/web/src/lib/components/explorer/EntityList.svelte
+- [x] T015 [US3] Add a visual "Move to Root" dropzone header shown only during active dragging in apps/web/src/lib/components/explorer/EntityList.svelte
 
 **Checkpoint**: Full hierarchical tree manipulation via drag-and-drop is fully operational.
 
@@ -85,9 +85,9 @@
 
 **Purpose**: Validate code quality, test suite execution, and documentation
 
-- [ ] T016 Verify code against strict lint rules using bun run lint in package.json
-- [ ] T017 Run unit tests to verify 100% test pass using bun run test in package.json
-- [ ] T018 [P] Add user help documentation and hint keys in apps/web/src/lib/config/help-content.ts
+- [x] T016 Verify code against strict lint rules using bun run lint in package.json
+- [x] T017 Run unit tests to verify 100% test pass using bun run test in package.json
+- [x] T018 [P] Add user help documentation and hint keys in apps/web/src/lib/config/help-content.ts
 
 ---
 
