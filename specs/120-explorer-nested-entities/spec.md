@@ -85,6 +85,9 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 - **FR-005**: The explorer item row MUST display a "+" button (on hover/focus) that triggers the creation of a new child entity under that parent.
 - **FR-006**: When search query is active, the explorer MUST display all matching entities and their ancestors, forcing ancestors to be expanded to reveal matching descendants.
 - **FR-007**: Deleting an entity MUST update all its immediate children to set their `parent` field to null (promoting them to root level).
+- **FR-008**: Native drag-and-drop actions MUST be flicker-free. Pointer events MUST be disabled (`pointer-events: none`) on all non-dragged explorer items during active drag sessions.
+- **FR-009**: Drag start state transitions (`isDragging`) MUST be protected against browser cancellation using a `requestAnimationFrame` queue combined with a validation check against the active `draggedEntityId`.
+- **FR-010**: HTML markup structure MUST keep interactive button descendants separated from composite button nodes, using `role="listitem"` on the outer row container and moving primary selection action to a dedicated inner button.
 
 ### Key Entities
 
@@ -98,6 +101,6 @@ As a worldbuilder reorganizing my lore structure, I want to move an entity from 
 ### Measurable Outcomes
 
 - **SC-001**: Users can expand or collapse nested levels in less than 50ms (instantaneous UI feedback).
-- **SC-002**: Recursive rendering handles tree depth up to 5 levels with visual clarity.
+- **SC-002**: Recursive rendering handles tree depth up to 8 levels with visual clarity.
 - **SC-003**: No infinite loops or application crashes are triggered when a parent-child cycle is loaded.
 - **SC-004**: Search returns matching entities within 100ms and displays their correct ancestor paths.
