@@ -214,6 +214,14 @@ export class SearchService {
                 this.normalizeEntities(event.payload.entities),
               );
               break;
+
+            case VAULT_EVENTS.BATCH_UPDATED: {
+              const entities = this.normalizeEntities(event.payload.entities);
+              if (entities.length > 0) {
+                await this.indexBatch(entities);
+              }
+              break;
+            }
           }
         },
         "search-service",

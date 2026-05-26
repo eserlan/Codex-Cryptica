@@ -67,7 +67,11 @@ vi.mock("../debug.svelte", () => ({
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("EntityStore", () => {
-  let repository: { entities: Record<string, LocalEntity>; saveQueue: any };
+  let repository: {
+    entities: Record<string, LocalEntity>;
+    saveQueue: any;
+    enqueueSave: ReturnType<typeof vi.fn>;
+  };
   let store: EntityStore;
 
   beforeEach(() => {
@@ -102,7 +106,12 @@ describe("EntityStore", () => {
       saveQueue: {
         enqueue: vi.fn((_key, fn) => fn()),
       },
+      enqueueSave: vi.fn(),
     };
+    // Delegate enqueueSave → saveQueue.enqueue so existing assertions on saveQueue.enqueue still pass.
+    repository.enqueueSave.mockImplementation((_key: any, fn: any) =>
+      repository.saveQueue.enqueue(_key, fn),
+    );
 
     store = new EntityStore({
       repository: repository as any,

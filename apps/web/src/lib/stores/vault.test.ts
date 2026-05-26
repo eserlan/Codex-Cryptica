@@ -239,7 +239,12 @@ describe("VaultStore", () => {
         waitForAllSaves: vi.fn().mockResolvedValue(undefined),
       },
       waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      enqueueSave: vi.fn(),
     };
+    // Delegate enqueueSave → saveQueue.enqueue so assertions on saveQueue.enqueue still pass.
+    mockRepository.enqueueSave.mockImplementation((id: any, cb: any) =>
+      mockRepository.saveQueue.enqueue(id, cb),
+    );
 
     testVault = new VaultStore(mockRepository);
   });

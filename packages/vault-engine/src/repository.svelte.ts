@@ -28,12 +28,20 @@ const SKEW_MS = 500;
 export class VaultRepository {
   entities = $state<Record<string, LocalEntity>>({});
   saveQueue = new KeyedTaskQueue();
+  private _pendingSaveCount = $state(0);
   private _currentLoadId = 0;
 
   constructor(private ioAdapter: IFileIOAdapter) {}
 
   get pendingSaveCount() {
-    return this.saveQueue.totalPendingCount;
+    return this._pendingSaveCount;
+  }
+
+  enqueueSave<T>(key: string, task: () => Promise<T>): Promise<T> {
+    this._pendingSaveCount++;
+    return this.saveQueue.enqueue(key, task).finally(() => {
+      this._pendingSaveCount--;
+    });
   }
 
   async loadFiles(

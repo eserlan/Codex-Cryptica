@@ -23,7 +23,7 @@ Use these filters when choosing what to build next:
 
 ## Recommended Feature Backlog
 
-### 1. Chronology Quality Pass
+### 1. Chronology Quality Pass (Implemented)
 
 **Goal**: Finish the scroll-wheel date picker and make campaign chronology feel reliable across entity details, timeline views, and custom calendar settings.
 
@@ -46,7 +46,7 @@ Use these filters when choosing what to build next:
 - Keep Svelte components focused on display, interaction, and user confirmation.
 - Test engine behavior before UI behavior, then add component tests for keyboard and failure paths.
 
-### 2. Vault Load/Save Confidence
+### 2. Vault Load/Save Confidence (Implemented)
 
 **Goal**: Make vault folder operations more understandable, interrupt-safe, and observable without exposing implementation terminology.
 
@@ -178,6 +178,7 @@ Use these filters when choosing what to build next:
 - Resolve search services once for bulk operations.
 - Add batch indexing paths where the underlying search service supports it.
 - Avoid re-indexing unchanged content during metadata-only edits when possible.
+- Fix double worker round-trip in `SearchService.indexBatch`: when `context` is absent (the `BATCH_CREATED`/`BATCH_UPDATED` handler path), the method calls both `api.addBatchProgressive` (to obtain a result object) and then `api.addBatch` again with the same entries. The context-less path should call only `api.addBatch`.
 
 **Payoff**:
 
@@ -219,13 +220,13 @@ Use these filters when choosing what to build next:
 
 ## Suggested Delivery Order
 
-1. Finish and verify the scroll-wheel date picker feature.
-2. Land vault load/save reliability improvements that reduce data-loss and switching risk.
+1. [IMPLEMENTED] Finish and verify the scroll-wheel date picker feature.
+2. [IMPLEMENTED] Land vault load/save reliability improvements that reduce data-loss and switching risk.
 3. Add bulk entity operations with batch event/indexing support.
 4. Improve Oracle action preview, cancellation, and retry flows.
 5. Polish graph/map navigation and saved view state.
 
-This order keeps the active chronology work moving, then addresses the highest-risk local-first data paths before adding broader workflow features.
+This completed order shows that active chronology work and the highest-risk local-first data paths are now fully implemented.
 
 ## Spec Kit Follow-Up Candidates
 
