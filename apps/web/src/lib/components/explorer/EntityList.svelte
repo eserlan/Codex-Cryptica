@@ -80,6 +80,7 @@
   let isCreatingChild = $state(false);
   let createChildError = $state<string | null>(null);
   let isDragging = $state(false);
+  let draggedEntityId = $state<string | null>(null);
 
   $effect(() => {
     if (inlineCreationParentId && categories.list.length > 0) {
@@ -135,8 +136,11 @@
           isMatching={node.isMatchingQuery}
           {hasChildren}
           {isCollapsed}
+          {isDragging}
+          isDragSource={entity.id === draggedEntityId}
           {onSelect}
           onDragStart={(e, entityId) => {
+            draggedEntityId = entityId;
             requestAnimationFrame(() => {
               isDragging = true;
             });
@@ -144,6 +148,7 @@
           }}
           onDragEnd={() => {
             isDragging = false;
+            draggedEntityId = null;
             onDragEnd?.();
           }}
           {onOpenZen}
@@ -312,8 +317,11 @@
           {#each labelEntities as entity (`${entity.id}:${label}`)}
             <EntityListItem
               {entity}
+              {isDragging}
+              isDragSource={entity.id === draggedEntityId}
               {onSelect}
               onDragStart={(e, entityId) => {
+                draggedEntityId = entityId;
                 requestAnimationFrame(() => {
                   isDragging = true;
                 });
@@ -321,6 +329,7 @@
               }}
               onDragEnd={() => {
                 isDragging = false;
+                draggedEntityId = null;
                 onDragEnd?.();
               }}
               {onOpenZen}
@@ -336,8 +345,11 @@
         {#each groupedEntities.unlabeled as entity (entity.id)}
           <EntityListItem
             {entity}
+            {isDragging}
+            isDragSource={entity.id === draggedEntityId}
             {onSelect}
             onDragStart={(e, entityId) => {
+              draggedEntityId = entityId;
               requestAnimationFrame(() => {
                 isDragging = true;
               });
@@ -345,6 +357,7 @@
             }}
             onDragEnd={() => {
               isDragging = false;
+              draggedEntityId = null;
               onDragEnd?.();
             }}
             {onOpenZen}

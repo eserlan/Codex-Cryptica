@@ -13,6 +13,8 @@
     isMatching = true,
     hasChildren = false,
     isCollapsed = false,
+    isDragging = false,
+    isDragSource = false,
     onSelect,
     onDragStart,
     onDragEnd,
@@ -26,6 +28,8 @@
     isMatching?: boolean;
     hasChildren?: boolean;
     isCollapsed?: boolean;
+    isDragging?: boolean;
+    isDragSource?: boolean;
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
     onDragEnd?: () => void;
@@ -36,8 +40,7 @@
     onAddChild?: (parentId: string) => void;
   } = $props();
 
-  let dragCount = $state(0);
-  const isDragOver = $derived(dragCount > 0);
+  let isDragOver = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
@@ -54,6 +57,8 @@
     ? 'border-theme-accent bg-theme-accent/10 ring-2 ring-theme-accent/20'
     : ''} {!sessionModeStore.isGuestMode && onDragStart
     ? 'cursor-grab active:cursor-grabbing'
+    : ''} {isDragging ? 'dragging-active' : ''} {isDragSource
+    ? 'dragging-source'
     : ''}"
   role="button"
   tabindex="0"
@@ -86,18 +91,16 @@
   ondragenter={(e) => {
     if (!sessionModeStore.isGuestMode) {
       e.preventDefault();
-      dragCount++;
+      isDragOver = true;
     }
   }}
   ondragleave={() => {
-    if (!sessionModeStore.isGuestMode) {
-      dragCount--;
-    }
+    isDragOver = false;
   }}
   ondrop={async (e) => {
     if (sessionModeStore.isGuestMode) return;
     e.preventDefault();
-    dragCount = 0;
+    isDragOver = false;
     const draggedId =
       e.dataTransfer?.getData("application/x-codex-entity-id") ||
       e.dataTransfer?.getData("text/plain");
@@ -268,3 +271,9 @@
     </button>
   {/if}
 </div>
+
+<style>
+  :global(.dragging-active:not(.dragging-source)) * {
+    pointer-events: none !important;
+  }
+</style>
