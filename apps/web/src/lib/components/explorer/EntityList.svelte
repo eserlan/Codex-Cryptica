@@ -171,7 +171,7 @@
 
         {#if inlineCreationParentId === entity.id}
           <div
-            class={depth < 5 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
+            class={depth < 8 ? "ml-3 pl-2 border-l border-theme-border/15" : ""}
           >
             <div
               class="flex items-center gap-2 p-2 border border-theme-border/50 bg-theme-surface/30 rounded-xl"
@@ -239,7 +239,7 @@
 
         {#if hasChildren && !isCollapsed}
           <div
-            class="space-y-1 {depth < 5
+            class="space-y-1 {depth < 8
               ? 'border-l border-theme-border/15 ml-3 pl-2'
               : ''}"
           >
