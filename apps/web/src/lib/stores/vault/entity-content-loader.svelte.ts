@@ -184,8 +184,8 @@ export class EntityContentLoader {
             const path = entityToUpdate._path || [`${id}.md`];
 
             const updatedEntity = {
-              ...entityToUpdate,
               ...(result.metadata || {}),
+              ...entityToUpdate,
               content: finalContent,
               lore: finalLore,
             };
@@ -259,8 +259,8 @@ export class EntityContentLoader {
       const result = await this._readFromOpfs(id);
       if (result) {
         this.deps.repository.entities[id] = {
-          ...currentEntity,
           ...(result.metadata || {}),
+          ...currentEntity,
           content: result.content,
           lore: result.lore,
         };
