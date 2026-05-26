@@ -239,7 +239,7 @@ describe("EntityList", () => {
     expect(screen.getByText("Child Entity")).not.toBeNull();
     const parentContainer = screen
       .getByText("Parent Entity")
-      .closest("[role='listitem']");
+      .closest("[data-testid='entity-list-item']");
     expect(parentContainer).not.toBeNull();
     // Non-matching ancestor should have opacity-50 (dimmed) class applied
     expect(parentContainer?.className).toContain("opacity-50");
@@ -288,7 +288,7 @@ describe("EntityList", () => {
     // Drag-and-drop draggable should be false or not active
     const parentRow = screen
       .getByText("Parent Entity")
-      .closest("[role='listitem']");
+      .closest("[data-testid='entity-list-item']");
     expect(parentRow?.getAttribute("draggable")).toBe("false");
   });
 });

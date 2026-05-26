@@ -54,10 +54,18 @@
     : ''} {!sessionModeStore.isGuestMode && onDragStart
     ? 'cursor-grab active:cursor-grabbing'
     : ''}"
-  role="listitem"
+  role="button"
+  tabindex="0"
   data-testid="entity-list-item"
   data-entity-id={entity.id}
   draggable={!sessionModeStore.isGuestMode && !!onDragStart}
+  onclick={() => onSelect?.(entity)}
+  onkeydown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect?.(entity);
+    }
+  }}
   ondragstart={(e) => {
     if (e.dataTransfer) {
       e.dataTransfer.setData("application/x-codex-entity-id", entity.id);
@@ -121,22 +129,9 @@
     <div class="w-6 shrink-0 ml-1.5"></div>
   {/if}
 
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
   <div
-    role="button"
-    tabindex="0"
-    onclick={() => onSelect?.(entity)}
-    onkeydown={(e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        onSelect?.(entity);
-      }
-    }}
     title={`Select ${entity.title}`}
-    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl {!sessionModeStore.isGuestMode &&
-    onDragStart
-      ? 'cursor-grab active:cursor-grabbing'
-      : ''}"
+    class="flex flex-1 min-w-0 items-center gap-2 p-2.5 pl-1 text-left select-none"
   >
     <span
       class="{getIconClass(
