@@ -1088,5 +1088,38 @@ describe("EntityStore", () => {
       await store.internalLoadContent("nonexistent");
       // Should not throw
     });
+
+    it("should preserve in-memory metadata (like parent relationship) and not overwrite it with old data from disk", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+
+      // In-memory has parent set
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        parent: "parent-node",
+      };
+
+      // Disk has older metadata (no parent) and the actual file content
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue(
+        "Old content from disk",
+      );
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          type: "character",
+          // no parent field on disk
+        },
+        content: "Hydrated content from disk",
+      });
+
+      await store.internalLoadContent("hero");
+
+      // Verifies content is hydrated, but in-memory parent is preserved!
+      expect(repository.entities.hero.content).toBe(
+        "Hydrated content from disk",
+      );
+      expect(repository.entities.hero.parent).toBe("parent-node");
+    });
   });
 });
