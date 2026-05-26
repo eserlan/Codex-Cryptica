@@ -27,17 +27,17 @@
   );
 
   function toggleTypeFilter(type: string, event: MouseEvent) {
-    if (allowedTypeSet && !allowedTypeSet.has(type)) {
-      return;
-    }
-
-    const isMulti = event.ctrlKey || event.metaKey;
-
     if (type === "all") {
       typeFilters = new Set();
       explorerUIStore.clearLabelFilters();
       return;
     }
+
+    if (allowedTypeSet && !allowedTypeSet.has(type)) {
+      return;
+    }
+
+    const isMulti = event.ctrlKey || event.metaKey;
 
     if (isMulti) {
       const newFilters = new Set(typeFilters);
