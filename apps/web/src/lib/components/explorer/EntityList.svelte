@@ -137,7 +137,9 @@
           {isCollapsed}
           {onSelect}
           onDragStart={(e, entityId) => {
-            isDragging = true;
+            requestAnimationFrame(() => {
+              isDragging = true;
+            });
             onDragStart?.(e, entityId);
           }}
           onDragEnd={() => {
@@ -312,7 +314,9 @@
               {entity}
               {onSelect}
               onDragStart={(e, entityId) => {
-                isDragging = true;
+                requestAnimationFrame(() => {
+                  isDragging = true;
+                });
                 onDragStart?.(e, entityId);
               }}
               onDragEnd={() => {
@@ -334,7 +338,9 @@
             {entity}
             {onSelect}
             onDragStart={(e, entityId) => {
-              isDragging = true;
+              requestAnimationFrame(() => {
+                isDragging = true;
+              });
               onDragStart?.(e, entityId);
             }}
             onDragEnd={() => {
