@@ -156,6 +156,24 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.showVaultSwitcher}
+      {#await loadModal(() => import("$lib/components/vaults/VaultSwitcherModal.svelte"), "VaultSwitcherModal") then VaultSwitcherModal}
+        {#if VaultSwitcherModal}
+          <VaultSwitcherModal
+            onClose={() => modalUIStore.closeVaultSwitcher()}
+          />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if modalUIStore.showShare}
+      {#await loadModal(() => import("$lib/components/ShareModal.svelte"), "ShareModal") then ShareModal}
+        {#if ShareModal}
+          <ShareModal close={() => modalUIStore.closeShare()} />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}

@@ -1,8 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import ShareModal from "$lib/components/ShareModal.svelte";
-  import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
@@ -10,6 +8,7 @@
   import { goto } from "$app/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
 
   let { orientation = "horizontal" } = $props<{
@@ -17,8 +16,6 @@
   }>();
 
   let showForm = $state(false);
-  let showShare = $state(false);
-  let showVaultSwitcher = $state(false);
   let newTitle = $state("");
   let newType = $state<string>("character");
   let isCreating = $state(false);
@@ -155,11 +152,11 @@
       class="flex items-center gap-2 rounded transition-colors group {isVertical
         ? 'justify-center w-full py-3 min-h-[44px]'
         : 'px-3 py-2 hover:bg-chrome-bg/50'}"
-      onclick={() => (showVaultSwitcher = true)}
+      onclick={() => modalUIStore.openVaultSwitcher()}
       title="Switch Vault"
       data-testid="open-vault-button"
       aria-haspopup="dialog"
-      aria-expanded={showVaultSwitcher}
+      aria-expanded={modalUIStore.showVaultSwitcher}
     >
       <span
         class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
@@ -325,7 +322,7 @@
 
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
-            onclick={() => (showShare = true)}
+            onclick={() => modalUIStore.openShare()}
             title="Share Campaign"
             aria-label={isVertical
               ? "SHARE - Share Campaign"
@@ -339,14 +336,6 @@
       {/if}
     {/if}
   </div>
-
-  {#if showShare}
-    <ShareModal close={() => (showShare = false)} />
-  {/if}
-
-  {#if showVaultSwitcher}
-    <VaultSwitcherModal onClose={() => (showVaultSwitcher = false)} />
-  {/if}
 
   {#if showForm}
     <form

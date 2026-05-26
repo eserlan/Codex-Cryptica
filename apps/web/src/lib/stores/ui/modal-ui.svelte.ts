@@ -55,6 +55,9 @@ export class ModalUIStore {
     entityId: null,
   });
 
+  showVaultSwitcher = $state(false);
+  showShare = $state(false);
+
   // Derived properties for backwards compatibility
   get readModeNodeId() {
     return this.zenModeEntityId;
@@ -110,6 +113,22 @@ export class ModalUIStore {
 
   closeSoundBite() {
     this.soundBite = { show: false, entityId: null };
+  }
+
+  openVaultSwitcher() {
+    this.showVaultSwitcher = true;
+  }
+
+  closeVaultSwitcher() {
+    this.showVaultSwitcher = false;
+  }
+
+  openShare() {
+    this.showShare = true;
+  }
+
+  closeShare() {
+    this.showShare = false;
   }
 
   openCanvasSelection(pendingEntities: string[]) {
@@ -174,6 +193,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v2__";
+const KEY = "__codex_modal_ui_store__v3__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());
