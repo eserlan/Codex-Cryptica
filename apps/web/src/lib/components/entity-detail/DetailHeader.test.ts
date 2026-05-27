@@ -143,7 +143,7 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
     }).not.toThrow();
   });
 
-  it("renders parent indicator when entity has a parent", () => {
+  it("does not render parent indicator under the header anymore", () => {
     const mockEntity = {
       id: "entity-1",
       title: "Child Entity",
@@ -152,7 +152,7 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
       labels: [],
     } as any;
 
-    const { getByTestId, getByText } = render(DetailHeader, {
+    const { queryByTestId } = render(DetailHeader, {
       entity: mockEntity,
       isEditing: false,
       editTitle: "",
@@ -160,8 +160,7 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
       onClose: () => {},
     });
 
-    const indicator = getByTestId("sidebar-parent-indicator");
-    expect(indicator).toBeTruthy();
-    expect(getByText("Mock Parent Entity")).toBeTruthy();
+    const indicator = queryByTestId("sidebar-parent-indicator");
+    expect(indicator).toBeNull();
   });
 });
