@@ -7,8 +7,45 @@
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import { isEntityVisible, type Entity } from "schema";
+  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
 
   let editingConnectionTarget = $state<string | null>(null);
+  let isAddingConnection = $state(false);
+  let newConnectionTargetName = $state("");
+  let newConnectionTargetId = $state<string | null>(null);
+  let newConnectionType = $state("related_to");
+  let newConnectionLabel = $state("");
+  let addConnectionError = $state<string | null>(null);
+
+  const handleAddConnection = async () => {
+    addConnectionError = null;
+    if (!entity) return;
+    if (!newConnectionTargetId) {
+      addConnectionError = "Please select a valid entity.";
+      return;
+    }
+    if (newConnectionTargetId === entity.id) {
+      addConnectionError = "Cannot connect an entity to itself.";
+      return;
+    }
+
+    const success = await vault.addConnection(
+      entity.id,
+      newConnectionTargetId,
+      newConnectionType,
+      newConnectionLabel,
+    );
+
+    if (success) {
+      isAddingConnection = false;
+      newConnectionTargetName = "";
+      newConnectionTargetId = null;
+      newConnectionType = "related_to";
+      newConnectionLabel = "";
+    } else {
+      addConnectionError = "Failed to create connection.";
+    }
+  };
 
   let {
     entity,
@@ -32,6 +69,8 @@
     title: string;
     type: string;
     isOutbound: boolean;
+    isChild?: boolean;
+    isParent?: boolean;
   }
 
   const allConnections = $derived.by(() => {
@@ -78,6 +117,45 @@
         });
       }
     }
+
+    // Add parent if exists
+    const parentId = entity?.parent;
+    if (parentId && checkVisibility(parentId)) {
+      const parentEntity = vault.entities[parentId];
+      if (parentEntity) {
+        result.push({
+          id: parentId,
+          key: `${parentId}-parent`,
+          displayLabel: "Parent",
+          rawLabel: "Parent",
+          title: parentEntity.title,
+          type: "parent",
+          isOutbound: false,
+          isParent: true,
+        });
+      }
+    }
+
+    // Add children if exist
+    const entityId = entity?.id || "";
+    const allEntities = Object.values(vault.entities);
+    const children = allEntities.filter((e) => e.parent === entityId);
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (checkVisibility(child.id)) {
+        result.push({
+          id: child.id,
+          key: `${child.id}-child-${i}`,
+          displayLabel: "Child",
+          rawLabel: "Child",
+          title: child.title,
+          type: "child",
+          isOutbound: false,
+          isChild: true,
+        });
+      }
+    }
+
     return result;
   });
 
@@ -291,15 +369,137 @@
 
     {#if !(isPopout && vault.isGuest)}
       <div class="block md:hidden space-y-4 pt-6 border-t border-theme-border">
-        <h3
-          class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest border-b border-theme-border pb-2"
+        <div
+          class="flex items-center justify-between border-b border-theme-border pb-2"
         >
-          Connections
-        </h3>
+          <h3
+            class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest"
+          >
+            Connections
+          </h3>
+          {#if !vault.isGuest && !isAddingConnection}
+            <button
+              type="button"
+              onclick={() => (isAddingConnection = true)}
+              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
+              aria-label="Add new connection"
+            >
+              <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+              ADD
+            </button>
+          {/if}
+        </div>
+
+        {#if isAddingConnection}
+          <div
+            class="p-3 bg-theme-bg border border-theme-primary/30 rounded-md space-y-3 shadow-md"
+          >
+            <div class="flex items-center justify-between">
+              <span
+                class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest font-header"
+                >New Connection</span
+              >
+              <button
+                type="button"
+                onclick={() => {
+                  isAddingConnection = false;
+                  newConnectionTargetName = "";
+                  newConnectionTargetId = null;
+                  newConnectionType = "related_to";
+                  newConnectionLabel = "";
+                  addConnectionError = null;
+                }}
+                class="text-theme-muted hover:text-theme-text"
+                aria-label="Cancel adding connection"
+              >
+                <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+              </button>
+            </div>
+
+            <div class="space-y-1">
+              <label
+                for="new-connection-target"
+                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                >Target Entity</label
+              >
+              <Autocomplete
+                bind:value={newConnectionTargetName}
+                bind:selectedId={newConnectionTargetId}
+                placeholder="Search entities..."
+                id="new-connection-target-mobile"
+                ariaLabel="Search target entity"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label
+                for="new-connection-type"
+                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                >Relationship Type</label
+              >
+              <select
+                id="new-connection-type-mobile"
+                bind:value={newConnectionType}
+                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
+              >
+                <option value="related_to">Default (Grey)</option>
+                <option value="neutral">Neutral (Amber)</option>
+                <option value="friendly">Friendly (Blue)</option>
+                <option value="enemy">Enemy (Red)</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label
+                for="new-connection-label"
+                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                >Custom Label (Optional)</label
+              >
+              <input
+                id="new-connection-label-mobile"
+                type="text"
+                bind:value={newConnectionLabel}
+                placeholder="e.g. Ally, Rivalling, Secret"
+                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
+              />
+            </div>
+
+            {#if addConnectionError}
+              <p class="text-xs text-theme-danger font-semibold">
+                {addConnectionError}
+              </p>
+            {/if}
+
+            <div class="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onclick={() => {
+                  isAddingConnection = false;
+                  newConnectionTargetName = "";
+                  newConnectionTargetId = null;
+                  newConnectionType = "related_to";
+                  newConnectionLabel = "";
+                  addConnectionError = null;
+                }}
+                class="text-[10px] font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onclick={handleAddConnection}
+                class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        {/if}
+
         {#if allConnections.length > 0}
           <div class="space-y-2">
             {#each allConnections as conn (conn.key)}
-              {#if editingConnectionTarget === conn.id && conn.isOutbound}
+              {#if editingConnectionTarget === conn.id && conn.isOutbound && !conn.isChild && !conn.isParent}
                 <div class="p-1">
                   <ConnectionEditor
                     sourceId={entity?.id || ""}
@@ -322,9 +522,13 @@
                     class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
                     <span
-                      class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isOutbound
-                        ? 'bg-theme-primary'
-                        : 'bg-blue-500'}"
+                      class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
+                        ? 'bg-emerald-500'
+                        : conn.isParent
+                          ? 'bg-purple-500'
+                          : conn.isOutbound
+                            ? 'bg-theme-primary'
+                            : 'bg-blue-500'}"
                     ></span>
                     <div class="flex-1 min-w-0">
                       <div
@@ -341,7 +545,7 @@
                   </button>
                   {#if !vault.isGuest}
                     <div class="flex items-center gap-1">
-                      {#if conn.isOutbound}
+                      {#if conn.isOutbound && !conn.isChild && !conn.isParent}
                         <button
                           type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
@@ -358,7 +562,11 @@
                         onclick={() => {
                           const entityId = entity?.id;
                           if (!entityId) return;
-                          if (conn.isOutbound) {
+                          if (conn.isChild) {
+                            vault.updateEntity(conn.id, { parent: undefined });
+                          } else if (conn.isParent) {
+                            vault.updateEntity(entityId, { parent: undefined });
+                          } else if (conn.isOutbound) {
                             vault.removeConnection(
                               entityId,
                               conn.id,
