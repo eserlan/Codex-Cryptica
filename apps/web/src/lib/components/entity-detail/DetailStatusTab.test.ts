@@ -155,7 +155,7 @@ describe("DetailStatusTab", () => {
     expect(screen.queryByLabelText("Delete connection")).toBeNull();
   });
 
-  it("renders child and parent connections successfully", () => {
+  it("renders child connection successfully but not parent in connection list", () => {
     const testEntity = {
       ...mockEntity,
       parent: "parent-entity",
@@ -170,9 +170,9 @@ describe("DetailStatusTab", () => {
       editEndDate: undefined as any,
     });
 
-    expect(screen.getByText("Parent Entity")).toBeTruthy();
+    expect(screen.queryByText("Parent Entity")).toBeNull();
     expect(screen.getByText("Child Entity")).toBeTruthy();
-    expect(screen.getByText("Parent")).toBeTruthy();
+    expect(screen.queryByText("Parent")).toBeNull();
     expect(screen.getByText("Child")).toBeTruthy();
   });
 
@@ -242,7 +242,6 @@ describe("DetailStatusTab", () => {
   it("clicks establish custom connection button on child row to pre-populate form", async () => {
     const testEntity = {
       ...mockEntity,
-      parent: "parent-entity",
     };
 
     render(DetailStatusTab, {
@@ -266,6 +265,6 @@ describe("DetailStatusTab", () => {
     const autocompleteInput = screen.getByTestId(
       "mock-autocomplete",
     ) as HTMLInputElement;
-    expect(autocompleteInput.value).toBe("Parent Entity");
+    expect(autocompleteInput.value).toBe("Child Entity");
   });
 });

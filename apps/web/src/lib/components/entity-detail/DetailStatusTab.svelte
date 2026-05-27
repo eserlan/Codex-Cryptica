@@ -179,22 +179,6 @@
       }
     }
 
-    // Add parent if exists
-    const parentId = entity.parent;
-    if (parentId && checkVisibility(parentId)) {
-      const parentEntity = vault.entities[parentId];
-      if (parentEntity) {
-        result.push({
-          targetId: parentId,
-          type: "parent",
-          label: "Parent",
-          isOutbound: false,
-          isParent: true,
-          displayTitle: parentEntity.title,
-        });
-      }
-    }
-
     // Add children if exist
     const entityId = entity.id;
     const allEntities = Object.values(vault.entities);

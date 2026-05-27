@@ -164,10 +164,10 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     expect(queryByRole("combobox", { name: /relationship type/i })).toBeNull();
   });
 
-  it("renders child and parent entities as connections", () => {
+  it("renders child connections but not parent in connection list", () => {
     const mockEntity = vault.entities["entity-1"];
 
-    const { getByText, getAllByText } = render(ZenSidebar, {
+    const { getByText, queryByText, getAllByText } = render(ZenSidebar, {
       entity: mockEntity,
       editState: { isEditing: false, aliases: [] },
       resolvedImageUrl: "",
@@ -176,9 +176,9 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
       onDelete: async () => {},
     });
 
-    // Check that Parent (Entity Two) and Child (Entity Child) are rendered
-    expect(getByText("Parent")).toBeTruthy();
-    expect(getAllByText("Entity Two").length).toBeGreaterThan(0);
+    // Check that Parent label is not rendered, but Child and Entity Child are
+    expect(queryByText("Parent")).toBeNull();
+    expect(getAllByText("Entity Two").length).toBeGreaterThan(0); // rendered as direct ALLY connection
     expect(getByText("Child")).toBeTruthy();
     expect(getByText("Entity Child")).toBeTruthy();
   });
