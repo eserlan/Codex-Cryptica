@@ -8,6 +8,7 @@ This file is the Codex-facing instruction layer for this repository.
 - [`.codex/commands`](./.codex/commands) is a shared mirror for Codex CLI compatibility.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
+- **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
 
 ## How Codex Should Work Here
 
@@ -22,7 +23,8 @@ This file is the Codex-facing instruction layer for this repository.
   - `plan.md`
   - `tasks.md`
   - `checklists/requirements.md`
-  - `.specify/memory/constitution.md`
+  - [`.specify/memory/constitution.md`](./.specify/memory/constitution.md)
+  - [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md)
 
 ## Repository Rules
 

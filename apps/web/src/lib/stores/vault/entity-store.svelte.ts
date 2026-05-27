@@ -49,6 +49,7 @@ export class EntityStore {
   public loader: EntityContentLoader;
   private persistence: EntityPersistenceService;
   private mutations: EntityMutationService;
+  private _eventBusUnsubscribe?: () => void;
 
   get entities() {
     return this.repository.entities;
@@ -105,6 +106,30 @@ export class EntityStore {
       this.loader = loader;
       this.persistence = persistence;
       this.mutations = mutations;
+
+      const originalOnEntityDelete = this.mutations.deps?.onEntityDelete;
+      const originalOnBatchUpdate = this.mutations.deps?.onBatchUpdate;
+
+      this.mutations.registerStoreCallbacks({
+        onEntityDelete: (id) => {
+          this.patchDeleteEntity(id);
+          originalOnEntityDelete?.(id);
+        },
+        onBatchUpdate: (updates) => {
+          originalOnBatchUpdate?.(updates);
+        },
+        onConnectionAdded: (sourceId, targetId, connection) => {
+          this.patchAddConnection(sourceId, targetId, connection);
+        },
+        onConnectionRemoved: (sourceId, targetId, type) => {
+          this.patchRemoveConnection(sourceId, targetId, type);
+        },
+        onConnectionUpdated: (sourceId, targetId, oldType, connection) => {
+          this.patchUpdateConnection(sourceId, targetId, oldType, connection);
+        },
+        getInboundConnections: () => this.inboundConnections,
+        getParentToChildren: () => this.parentToChildren,
+      });
     } else {
       const deps = depsOrRepository as EntityStoreDependencies;
       this.repository = deps.repository;
@@ -180,15 +205,19 @@ export class EntityStore {
 
     this.initializeInboundConnections();
 
-    vaultEventBus.subscribe((event) => {
+    if (this._eventBusUnsubscribe) {
+      this._eventBusUnsubscribe();
+    }
+    this._eventBusUnsubscribe = vaultEventBus.subscribe((event) => {
       if (
         event.type === "CACHE_LOADED" ||
         event.type === "SYNC_COMPLETE" ||
-        event.type === "VAULT_SWITCHED"
+        event.type === "VAULT_SWITCHED" ||
+        event.type === "SYNC_CHUNK_READY"
       ) {
         this.initializeInboundConnections();
       }
-    });
+    }, "EntityStore-InboundRebuild");
     const labelData = $derived.by(() => {
       const labels = new Set<string>();
       const counts: Record<string, number> = {};

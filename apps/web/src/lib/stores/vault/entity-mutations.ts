@@ -47,7 +47,27 @@ export interface MutationDependencies {
 }
 
 export class EntityMutationService {
-  constructor(private deps: MutationDependencies) {}
+  constructor(public deps: MutationDependencies) {}
+
+  registerStoreCallbacks(
+    callbacks: Partial<
+      Pick<
+        MutationDependencies,
+        | "onEntityDelete"
+        | "onBatchUpdate"
+        | "onConnectionAdded"
+        | "onConnectionRemoved"
+        | "onConnectionUpdated"
+        | "getInboundConnections"
+        | "getParentToChildren"
+      >
+    >,
+  ) {
+    this.deps = {
+      ...this.deps,
+      ...callbacks,
+    };
+  }
 
   get entities() {
     return this.deps.repository.entities;

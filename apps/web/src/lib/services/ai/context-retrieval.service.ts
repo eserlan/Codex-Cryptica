@@ -40,12 +40,13 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
         if (entry.status === "draft") continue;
 
         if (vault.isGuest) {
-          const dummyEntity = {
+          const realEntity = vault.entities?.[entry.entityId];
+          const checkEntity = realEntity || {
             visibility: entry.visibility,
             labels: entry.labels,
           };
           if (
-            !isEntityVisible(dummyEntity as any, {
+            !isEntityVisible(checkEntity as any, {
               sharedMode: true,
               defaultVisibility: vault.defaultVisibility,
             })
@@ -478,12 +479,13 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
           const title = entry.actualTitle;
           if (title && !internalExclusions.has(title)) {
             if (vault.isGuest) {
-              const dummyEntity = {
+              const realEntity = vault.entities?.[entry.entityId];
+              const checkEntity = realEntity || {
                 visibility: entry.visibility,
                 labels: entry.labels,
               };
               if (
-                !isEntityVisible(dummyEntity as any, {
+                !isEntityVisible(checkEntity as any, {
                   sharedMode: true,
                   defaultVisibility: vault.defaultVisibility,
                 })

@@ -73,7 +73,18 @@ export class VaultRepository {
     const total = mdFiles.length;
     const newEntities: Record<string, LocalEntity> = {};
 
-    const processFile = async (fileEntry: FileEntry) => {
+    const processFile = async (
+      fileEntry: FileEntry,
+    ): Promise<
+      | { entity: LocalEntity; isHit: true }
+      | {
+          entity: LocalEntity;
+          isHit: false;
+          filePath: string;
+          lastModified: number;
+        }
+      | null
+    > => {
       const filePath = fileEntry.path.join("/");
       const file = await fileEntry.handle.getFile();
       const lastModified = Math.floor(file.lastModified);
@@ -129,10 +140,10 @@ export class VaultRepository {
           updatedEntities[res.entity.id] = res.entity;
           if (!res.isHit) {
             newOrChanged[res.entity.id] = res.entity;
-            if (this.ioAdapter.setCachedEntitiesBulk && (res as any).filePath) {
+            if (this.ioAdapter.setCachedEntitiesBulk) {
               cacheEntriesToWrite.push({
-                path: (res as any).filePath,
-                lastModified: (res as any).lastModified,
+                path: res.filePath,
+                lastModified: res.lastModified,
                 entity: res.entity,
               });
             }

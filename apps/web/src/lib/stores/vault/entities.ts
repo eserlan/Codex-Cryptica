@@ -143,7 +143,17 @@ export async function deleteEntity(
   if (inboundConnections) {
     const incomingSourceIds =
       inboundConnections[id]?.map((c) => c.sourceId) || [];
-    const childIds = childrenIds || [];
+
+    let childIds = childrenIds;
+    if (!childIds) {
+      childIds = [];
+      for (const entityId in newEntities) {
+        if (newEntities[entityId].parent === id) {
+          childIds.push(entityId);
+        }
+      }
+    }
+
     targetIdsToCleanup = new Set([...incomingSourceIds, ...childIds]);
   } else {
     targetIdsToCleanup = new Set(Object.keys(newEntities));
