@@ -72,6 +72,17 @@ The required changes were focused on dependency injection and test-runner compat
 - Replaced a `vi.mocked(...)` call in `OpfsBackend` tests with a direct typed mock function cast.
 - Replaced one `await expect(promise).resolves.not.toThrow()` with direct `await`.
 
+## Current Boundary
+
+Phases 1 through 4 cover the low-risk pure-package migration for this PR. There are no remaining obvious default `test` script switches that should be folded into the same change without introducing broader harness work.
+
+That does not mean Bun-native testing is exhausted. Further improvements should be tracked as follow-up work:
+
+- Audit deferred packages that may only be blocked by small Vitest compatibility assumptions.
+- Keep `test:coverage` on Vitest until Bun coverage can replace the current package coverage workflow cleanly.
+- Improve timing and reporting notes so future migrations compare package counts and runtime consistently.
+- Treat `apps/web` as a separate migration problem because Svelte, browser, and DOM-heavy tests need a dedicated harness strategy.
+
 ## Deferred Packages
 
 These packages should stay on Vitest until their failure modes are handled explicitly:
