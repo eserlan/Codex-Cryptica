@@ -98,3 +98,10 @@ Based on benchmarks of Svelte-related business logic, migrating **800+ of your 1
 
 - **95%+ Reduction in TDD Latency**: Your logic unit-tests will complete before your editor finishes autosaving.
 - **Smarter Resource Usage**: Bun avoids spawning dozens of heavy Node.js runtime instances across your Turborepo workspace.
+
+## Follow-Up Work
+
+A full probe of all six deferred packages (canvas-engine, graph-engine, importer,
+map-engine, oracle-engine, vault-engine) was run on 2026-05-28. Findings, proposed
+phases (5–9), and a per-package pass/fail log are in
+[bun-native-test-deferred-audit.md](./bun-native-test-deferred-audit.md).
