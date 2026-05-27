@@ -68,7 +68,12 @@ export class CalendarEngine {
     date: TemporalMetadata | DateSelection,
     configOrSnapshot: WorldCalendar | CalendarSnapshot,
   ): boolean {
-    if (date.year === undefined || date.year === null) return false;
+    if (
+      date.year === undefined ||
+      date.year === null ||
+      !Number.isSafeInteger(date.year)
+    )
+      return false;
 
     const config = getConfig(configOrSnapshot);
     const months = this.getMonths(config);
@@ -85,7 +90,12 @@ export class CalendarEngine {
       }
 
       if (date.precision === "day") {
-        if (!date.unitId || date.day === undefined) return false;
+        if (
+          !date.unitId ||
+          date.day === undefined ||
+          !Number.isSafeInteger(date.day)
+        )
+          return false;
         const month = months.find((m) => m.id === date.unitId);
         if (!month) return false;
         return date.day >= 1 && date.day <= month.days;
@@ -103,10 +113,15 @@ export class CalendarEngine {
     // Legacy TemporalMetadata shape
     const legacyDate = date as TemporalMetadata;
     if (legacyDate.month !== undefined) {
-      if (legacyDate.month < 1 || legacyDate.month > months.length)
+      if (
+        !Number.isSafeInteger(legacyDate.month) ||
+        legacyDate.month < 1 ||
+        legacyDate.month > months.length
+      )
         return false;
 
       if (legacyDate.day !== undefined) {
+        if (!Number.isSafeInteger(legacyDate.day)) return false;
         const monthDays = months[legacyDate.month - 1].days;
         if (legacyDate.day < 1 || legacyDate.day > monthDays) return false;
       }

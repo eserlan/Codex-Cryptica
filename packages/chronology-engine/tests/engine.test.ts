@@ -485,4 +485,102 @@ describe("CalendarEngine", () => {
       expect(parseDirectDateInput("12.5.01.2024", DEFAULT_CALENDAR)).toBeNull();
     });
   });
+
+  describe("Invalid/Extreme Date Values Validation", () => {
+    it("should reject non-integer / floating-point years, months, and days", () => {
+      // Float year in DateSelection
+      expect(
+        calendarEngine.isValid(
+          { precision: "year", year: 2024.5 },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+      // Float year in legacy format
+      expect(calendarEngine.isValid({ year: 2024.5 }, DEFAULT_CALENDAR)).toBe(
+        false,
+      );
+      // Float month in legacy format
+      expect(
+        calendarEngine.isValid({ year: 2024, month: 1.5 }, DEFAULT_CALENDAR),
+      ).toBe(false);
+      // Float day in DateSelection
+      expect(
+        calendarEngine.isValid(
+          { precision: "day", year: 2024, unitId: "january", day: 15.5 },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+      // Float day in legacy format
+      expect(
+        calendarEngine.isValid(
+          { year: 2024, month: 1, day: 15.5 },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+    });
+
+    it("should reject non-safe-integer/overflow years, months, and days", () => {
+      const hugeNumber = Number.MAX_SAFE_INTEGER + 10;
+      expect(
+        calendarEngine.isValid({ year: hugeNumber }, DEFAULT_CALENDAR),
+      ).toBe(false);
+      expect(
+        calendarEngine.isValid(
+          { precision: "year", year: hugeNumber },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+      expect(
+        calendarEngine.isValid(
+          { year: 2024, month: hugeNumber },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+      expect(
+        calendarEngine.isValid(
+          { precision: "day", year: 2024, unitId: "january", day: hugeNumber },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+    });
+
+    it("should reject NaN, Infinity, and non-numeric year/month/day values", () => {
+      expect(
+        calendarEngine.isValid({ year: Number.NaN }, DEFAULT_CALENDAR),
+      ).toBe(false);
+      expect(
+        calendarEngine.isValid(
+          { year: Number.POSITIVE_INFINITY },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+      expect(
+        calendarEngine.isValid(
+          { year: 2024, month: Number.NaN },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+      expect(
+        calendarEngine.isValid(
+          { precision: "day", year: 2024, unitId: "january", day: Number.NaN },
+          DEFAULT_CALENDAR,
+        ),
+      ).toBe(false);
+    });
+
+    it("should parseDirectDateInput with negative, float and extreme inputs correctly", () => {
+      // Float parts should return null
+      expect(parseDirectDateInput("12.5/01/2024", DEFAULT_CALENDAR)).toBeNull();
+      expect(parseDirectDateInput("12/1.5/2024", DEFAULT_CALENDAR)).toBeNull();
+      expect(parseDirectDateInput("12/01/2024.5", DEFAULT_CALENDAR)).toBeNull();
+
+      // Extreme values should return null
+      expect(
+        parseDirectDateInput("12019999999999999999", DEFAULT_CALENDAR),
+      ).toBeNull();
+      expect(
+        parseDirectDateInput("99999999999999990112", DEFAULT_CALENDAR),
+      ).toBeNull();
+    });
+  });
 });

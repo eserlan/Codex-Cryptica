@@ -401,6 +401,8 @@ export class SyncStore {
       () => this.checkForConflicts(),
     );
 
+    if (this.deps.activeVaultId() !== vaultIdAtStart) return;
+
     if (this._status !== "error") {
       const { updateLastSavedToFolder } = await import("./registry");
       await updateLastSavedToFolder(vaultIdAtStart);
@@ -466,6 +468,8 @@ export class SyncStore {
       },
       () => this.checkForConflicts(),
     );
+
+    if (this.deps.activeVaultId() !== vaultIdAtStart) return;
 
     if (this._status !== "error") {
       appEventBus.emit({
