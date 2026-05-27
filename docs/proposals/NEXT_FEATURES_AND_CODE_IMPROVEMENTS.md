@@ -135,7 +135,7 @@ Use these filters when choosing what to build next:
 - Keep visual state separate from entity data unless the user explicitly saves a view preset.
 - Add tests around graph state transitions where practical, and use targeted browser checks for layout regressions.
 
-### 6. [FEAT] Vault Portability And Round-Trip Confidence
+### 6. [FEAT] Vault Portability And Round-Trip Confidence ([#941](https://github.com/eserlan/Codex-Cryptica/issues/941))
 
 **Goal**: Let users move vaults between devices, share campaign drafts, and recover from corruption without losing fidelity.
 
@@ -149,7 +149,7 @@ Use these filters when choosing what to build next:
 
 - Add an explicit "Export Vault" action that emits a deterministic folder snapshot (markdown + metadata + canvas/map blobs).
 - Add an "Import Vault" action that validates schema before committing entities to the store.
-- Add a checkpoint/snapshot mechanism before destructive IndexedDB migrations (see Code Improvement H).
+- Add a checkpoint/snapshot mechanism before destructive IndexedDB migrations (see Code Improvement H, [#944](https://github.com/eserlan/Codex-Cryptica/issues/944)).
 - Round-trip integration test: build entity with every schema field → export → re-import → assert deep-equal.
 
 **Engineering notes**:
@@ -243,7 +243,7 @@ Use these filters when choosing what to build next:
 - Less user confusion around vault operations.
 - Changelog stays focused on visible improvements.
 
-### F. [TECH] Entity Store Hot-Path Optimizations
+### F. [TECH] Entity Store Hot-Path Optimizations ([#942](https://github.com/eserlan/Codex-Cryptica/issues/942))
 
 **Problem**: Several reactive paths in `apps/web/src/lib/stores/vault/` and adjacent services do work that scales with the whole vault when a much smaller delta would do. These show up as small UI hitches today but block scaling to multi-thousand-entity campaigns.
 
@@ -261,7 +261,7 @@ Use these filters when choosing what to build next:
 - Snappier reactive updates during bulk edits and connection changes.
 - Oracle prompts no longer linearly slower as the vault grows.
 
-### G. [TECH] God-File Decomposition: SearchService And P2P Boundary
+### G. [TECH] God-File Decomposition: SearchService And P2P Boundary ([#943](https://github.com/eserlan/Codex-Cryptica/issues/943))
 
 **Problem**: A few service classes have grown into multi-responsibility coordinators that make further work risky.
 
@@ -281,7 +281,7 @@ Use these filters when choosing what to build next:
 - Unblocks background/incremental indexing, mobile touch drag, and future P2P message versions.
 - P2P desync bugs surface at ingest instead of as silent state corruption later.
 
-### H. [TECH] Data Integrity At Trust Boundaries
+### H. [TECH] Data Integrity At Trust Boundaries ([#944](https://github.com/eserlan/Codex-Cryptica/issues/944))
 
 **Problem**: Several places treat external or recovered data as trusted: YAML frontmatter parsed during import, entity records read back from IndexedDB after a partial sync, and schema migrations that mutate data destructively without a rollback path.
 
@@ -298,7 +298,7 @@ Use these filters when choosing what to build next:
 - Foundation for the Vault Portability feature (Feature 6).
 - Less risk that a future schema bump leaves vaults in an unrecoverable state.
 
-### I. [TECH] AI/Oracle Surface Hardening
+### I. [TECH] AI/Oracle Surface Hardening ([#945](https://github.com/eserlan/Codex-Cryptica/issues/945))
 
 **Problem**: The AI pipeline blends user-controlled content directly into LLM prompts, and the Cloudflare Worker proxy can echo Gemini error responses to logs. Offline/quota failures also surface as silent stuck spinners rather than actionable messages.
 
@@ -315,7 +315,7 @@ Use these filters when choosing what to build next:
 - No vault content leaks into Cloudflare logs on upstream errors.
 - Users with flaky connectivity get a clear failure instead of a permanent spinner.
 
-### J. [TECH] CI, Build, And Lint Hygiene
+### J. [TECH] CI, Build, And Lint Hygiene ([#946](https://github.com/eserlan/Codex-Cryptica/issues/946))
 
 **Problem**: CI runs lint, tests, and build, but does not run type-checking standalone, has no bundle-size signal, runs E2E only on a nightly cron, and accumulates `@ts-expect-error` / Svelte-rule warnings that drift over time.
 
@@ -333,7 +333,7 @@ Use these filters when choosing what to build next:
 - Real UI breakage detected before staging, not the morning after.
 - Lint-debt drift stops, dependency drift slows.
 
-### K. [TECH] UX Safety Polish: Focus, Errors, And Unsaved Edits
+### K. [TECH] UX Safety Polish: Focus, Errors, And Unsaved Edits ([#947](https://github.com/eserlan/Codex-Cryptica/issues/947))
 
 **Problem**: A handful of small UX/safety gaps undermine confidence in otherwise-solid flows: image-upload and import errors still call `alert()`, modals do not trap focus or restore it on close, the entity detail panel discards unsaved edits silently when the user navigates away, and empty states are inconsistent across views.
 
@@ -351,7 +351,7 @@ Use these filters when choosing what to build next:
 - Fewer "I lost my edits" moments in the primary authoring surface.
 - Clearer onboarding for new vaults.
 
-### L. [TECH] Targeted Test Coverage For Risky, Stateful Surfaces
+### L. [TECH] Targeted Test Coverage For Risky, Stateful Surfaces ([#948](https://github.com/eserlan/Codex-Cryptica/issues/948))
 
 **Problem**: A few high-risk surfaces still have minimal coverage relative to their complexity, particularly the file-sync conflict engine and the vault round-trip path.
 
@@ -373,15 +373,20 @@ Use these filters when choosing what to build next:
 1. [IMPLEMENTED] Finish and verify the scroll-wheel date picker feature.
 2. [IMPLEMENTED] Land vault load/save reliability improvements that reduce data-loss and switching risk.
 3. [IMPLEMENTED] Fix search indexing performance and correctness (batch filtering, frozen status, metadata coverage). ([#933](https://github.com/eserlan/Codex-Cryptica/issues/933), [PR #939](https://github.com/eserlan/Codex-Cryptica/pull/939))
-4. [TECH] Entity store hot-path optimizations (Code Improvement F) — small, mostly self-contained, unblocks bulk editing work.
-5. [TECH] Data integrity at trust boundaries (Code Improvement H) — prerequisite for safe vault portability and AI-driven edits.
+4. [TECH] Entity store hot-path optimizations (Code Improvement F, [#942](https://github.com/eserlan/Codex-Cryptica/issues/942)) — small, mostly self-contained, unblocks bulk editing work.
+5. [TECH] Data integrity at trust boundaries (Code Improvement H, [#944](https://github.com/eserlan/Codex-Cryptica/issues/944)) — prerequisite for safe vault portability and AI-driven edits.
 6. [FEAT] Add bulk entity operations with batch event/indexing support. ([#930](https://github.com/eserlan/Codex-Cryptica/issues/930))
-7. [TECH] AI/Oracle surface hardening (Code Improvement I) — pair with Feature 4 work.
+7. [TECH] AI/Oracle surface hardening (Code Improvement I, [#945](https://github.com/eserlan/Codex-Cryptica/issues/945)) — pair with Feature 4 work.
 8. [FEAT] Improve Oracle action preview, cancellation, and retry flows. ([#931](https://github.com/eserlan/Codex-Cryptica/issues/931))
-9. [FEAT] Vault portability and round-trip confidence (Feature 6) — depends on H and L.
+9. [FEAT] Vault portability and round-trip confidence (Feature 6, [#941](https://github.com/eserlan/Codex-Cryptica/issues/941)) — depends on H and L.
 10. [FEAT] Polish graph/map navigation and saved view state. ([#932](https://github.com/eserlan/Codex-Cryptica/issues/932))
 
-Cross-cutting tracks (G god-file decomposition, J CI/build hygiene, K UX safety polish, L targeted tests) should run alongside feature work rather than wait for a single milestone.
+Cross-cutting tracks should run alongside feature work rather than wait for a single milestone:
+
+- Code Improvement G — God-file decomposition ([#943](https://github.com/eserlan/Codex-Cryptica/issues/943))
+- Code Improvement J — CI, build, and lint hygiene ([#946](https://github.com/eserlan/Codex-Cryptica/issues/946))
+- Code Improvement K — UX safety polish ([#947](https://github.com/eserlan/Codex-Cryptica/issues/947))
+- Code Improvement L — Targeted test coverage ([#948](https://github.com/eserlan/Codex-Cryptica/issues/948))
 
 ## Spec Kit Follow-Up Candidates
 
