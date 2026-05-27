@@ -21,6 +21,7 @@
     style="bottom: 1rem; left: calc({chatSidebarOffset} + 1rem);"
   >
     <button
+      type="button"
       class={getMeasurementToolButtonClass(mapSession.measurement.active)}
       onclick={(e) => {
         e.stopPropagation();
@@ -68,6 +69,7 @@
       class="flex gap-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border p-1.5 rounded-lg shadow-lg items-center"
     >
       <button
+        type="button"
         class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
         onclick={() =>
           (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
@@ -83,6 +85,7 @@
 
       {#if mapStore.isGMMode}
         <button
+          type="button"
           class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
           onclick={() => (mapStore.showFog = !mapStore.showFog)}
         >
@@ -90,6 +93,16 @@
         </button>
 
         <button
+          type="button"
+          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
+          onclick={() => (mapStore.showLabels = !mapStore.showLabels)}
+          title="Toggle Pin Labels"
+        >
+          LABELS: {mapStore.showLabels ? "ON" : "OFF"}
+        </button>
+
+        <button
+          type="button"
           class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
           oncontextmenu={(e) => {
@@ -103,29 +116,31 @@
 
         <VTTModeToggle />
 
-        <div class="flex items-center gap-2 px-2">
-          <span
-            class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
-            >Brush Size</span
-          >
-          <input
-            type="range"
-            min="10"
-            max="500"
-            bind:value={mapStore.brushRadius}
-            class="w-24 accent-theme-primary h-1"
-          />
-          <span class="text-[9px] text-theme-primary font-mono w-6"
-            >{mapStore.brushRadius}px</span
-          >
-        </div>
+        {#if mapStore.showFog}
+          <div class="flex items-center gap-2 px-2">
+            <span
+              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+              >Brush Size</span
+            >
+            <input
+              type="range"
+              min="10"
+              max="500"
+              bind:value={mapStore.brushRadius}
+              class="w-24 accent-theme-primary h-1"
+            />
+            <span class="text-[9px] text-theme-primary font-mono w-6"
+              >{mapStore.brushRadius}px</span
+            >
+          </div>
 
-        <div
-          class="flex flex-col justify-center px-2 text-[10px] text-theme-muted/90 font-semibold italic leading-tight"
-        >
-          <span>Alt+Drag to Reveal</span>
-          <span>Alt+Shift+Drag to Hide</span>
-        </div>
+          <div
+            class="flex flex-col justify-center px-2 text-[10px] text-theme-muted/90 font-semibold italic leading-tight"
+          >
+            <span>Alt+Drag to Reveal</span>
+            <span>Alt+Shift+Drag to Hide</span>
+          </div>
+        {/if}
       {/if}
     </div>
   </div>

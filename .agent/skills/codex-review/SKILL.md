@@ -1,6 +1,6 @@
 ---
 name: codex-review
-description: Specialist code review for Codex-Cryptica project. Use to identify race conditions, AI parsing issues, worker proxy mismatches, and project-specific anti-patterns in Svelte 5 and TypeScript.
+description: Specialist code review for Codex-Cryptica project. Use to identify race conditions, AI parsing issues, worker proxy mismatches, and project-specific anti-patterns in Svelte 5 and TypeScript. Always initiates and incorporates the general review processes defined in `code-review:code-review`.
 ---
 
 # Codex Review
@@ -16,6 +16,7 @@ This skill provides a meticulous code review process tailored specifically for t
 5. **Enforce Performance Heuristics**: Ensure synchronous AI processing in loops (like auto-archive) is limited to small batches (< 5).
 6. **Check Accessibility**: Ensure `Autocomplete` components have `ariaLabel` and that icons follow the Iconify class pattern.
 7. **Verify HTML & JS Semantics**: Ensure all action buttons have explicit `type="button"`, coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, and avoid user-agent sniffing by using environment flags like `import.meta.env.MODE === "test"`.
+8. **Incorporate General Branch Review**: Initiate and perform the complete branch changes review defined in `code-review:code-review`, applying the comprehensive guidelines, reviewer persona, and critical constraints set by `code-review:code-review-commons` to audit code quality, style, and correctness.
 
 ## Review Output Guidelines
 
@@ -34,3 +35,4 @@ For detailed examples of anti-patterns and the preferred implementations, refer 
 - "Perform a /codex-review of these changes."
 - "Review my Svelte 5 component for race conditions."
 - "Check if my new AI command parser is robust."
+- "Run codex-review and code-review:code-review on my branch changes."

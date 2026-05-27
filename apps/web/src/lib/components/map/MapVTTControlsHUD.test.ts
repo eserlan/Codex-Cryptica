@@ -8,6 +8,7 @@ const mapStoreMock = vi.hoisted(() => ({
   showFog: true,
   showGrid: false,
   brushRadius: 50,
+  showLabels: true,
 }));
 
 const mapSessionMock = vi.hoisted(() => ({
