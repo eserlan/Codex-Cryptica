@@ -150,16 +150,19 @@
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (checkVisibility(child.id)) {
-        result.push({
-          id: child.id,
-          key: `${child.id}-child-${i}`,
-          displayLabel: "Child",
-          rawLabel: "Child",
-          title: child.title,
-          type: "child",
-          isOutbound: false,
-          isChild: true,
-        });
+        const alreadyConnected = result.some((c) => c.id === child.id);
+        if (!alreadyConnected) {
+          result.push({
+            id: child.id,
+            key: `${child.id}-child-${i}`,
+            displayLabel: "Child",
+            rawLabel: "Child",
+            title: child.title,
+            type: "child",
+            isOutbound: false,
+            isChild: true,
+          });
+        }
       }
     }
 

@@ -217,4 +217,25 @@ describe("DetailStatusTab", () => {
       "Special Friend",
     );
   });
+
+  it("does not render duplicate child connections if already connected directly", () => {
+    const testEntity = {
+      ...mockEntity,
+      connections: [
+        { target: "child-entity", type: "friendly", label: "Friend of" },
+      ],
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.getByText("Child Entity")).toBeTruthy();
+    expect(screen.queryByText("Child")).toBeNull();
+  });
 });

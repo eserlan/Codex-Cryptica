@@ -202,14 +202,17 @@
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (checkVisibility(child.id)) {
-        result.push({
-          targetId: child.id,
-          type: "child",
-          label: "Child",
-          isOutbound: false,
-          isChild: true,
-          displayTitle: child.title,
-        });
+        const alreadyConnected = result.some((c) => c.targetId === child.id);
+        if (!alreadyConnected) {
+          result.push({
+            targetId: child.id,
+            type: "child",
+            label: "Child",
+            isOutbound: false,
+            isChild: true,
+            displayTitle: child.title,
+          });
+        }
       }
     }
 
