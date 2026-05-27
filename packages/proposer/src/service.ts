@@ -69,7 +69,7 @@ export class ProposerService implements IProposerService {
         // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
         // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
         // for creating the 'proposals' store.
-        upgrade(db, oldVersion) {
+        upgrade(db, oldVersion, _newVersion, transaction) {
           if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
             const store = db.createObjectStore(PROPOSAL_STORE, {
               keyPath: "id",
@@ -80,7 +80,7 @@ export class ProposerService implements IProposerService {
             store.createIndex("by-vault-status", ["vaultId", "status"]);
             store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
           } else if (oldVersion < 8) {
-            const store = (db as any).transaction.objectStore(PROPOSAL_STORE);
+            const store = transaction.objectStore(PROPOSAL_STORE);
             if (!store.indexNames.contains("by-vault")) {
               store.createIndex("by-vault", "vaultId");
             }
