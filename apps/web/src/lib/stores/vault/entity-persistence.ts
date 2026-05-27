@@ -85,8 +85,8 @@ export class EntityPersistenceService {
           this._saveVaultIds.delete(id);
           this.deps.repository
             .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
-            .then(() => resolvers.forEach((r) => r()))
-            .catch(() => resolvers.forEach((r) => r()));
+            .catch(() => {})
+            .finally(() => resolvers.forEach((r) => r()));
         }, SAVE_DEBOUNCE_MS),
       );
     });
@@ -107,10 +107,8 @@ export class EntityPersistenceService {
       if (vaultId) {
         const p = this.deps.repository
           .enqueueSave(id, () => this._persistEntity(id, vaultId))
-          .then(() => {
-            resolvers.forEach((r) => r());
-          })
-          .catch(() => {
+          .catch(() => {})
+          .finally(() => {
             resolvers.forEach((r) => r());
           });
         promises.push(p);
