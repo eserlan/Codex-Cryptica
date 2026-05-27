@@ -27,7 +27,8 @@
   interface ConnectionListItem {
     id: string;
     key: string;
-    label: string;
+    displayLabel: string;
+    rawLabel?: string;
     title: string;
     type: string;
     isOutbound: boolean;
@@ -53,7 +54,8 @@
         result.push({
           id: c.target,
           key: `${c.target}-out-${c.type}-${i}`,
-          label: c.label || c.type,
+          displayLabel: c.label || c.type,
+          rawLabel: c.label,
           title: vault.entities[c.target]?.title || c.target,
           type: c.type,
           isOutbound: true,
@@ -68,7 +70,8 @@
         result.push({
           id: item.sourceId,
           key: `${item.sourceId}-in-${item.connection.type}-${i}`,
-          label: item.connection.label || item.connection.type,
+          displayLabel: item.connection.label || item.connection.type,
+          rawLabel: item.connection.label,
           title: vault.entities[item.sourceId]?.title || item.sourceId,
           type: item.connection.type,
           isOutbound: false,
@@ -303,7 +306,7 @@
                     connection={{
                       target: conn.id,
                       type: conn.type,
-                      label: conn.label || "",
+                      label: conn.rawLabel || "",
                     }}
                     onSave={() => (editingConnectionTarget = null)}
                     onCancel={() => (editingConnectionTarget = null)}
@@ -327,7 +330,7 @@
                       <div
                         class="text-xs text-theme-muted uppercase tracking-widest font-header"
                       >
-                        {conn.label}
+                        {conn.displayLabel}
                       </div>
                       <div
                         class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"

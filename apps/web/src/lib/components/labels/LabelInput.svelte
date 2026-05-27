@@ -131,6 +131,7 @@
   <input
     type="text"
     {id}
+    data-shortcuts="ignore"
     bind:value={inputValue}
     {placeholder}
     aria-label={ariaLabel || placeholder}

@@ -40,17 +40,23 @@
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.repeat || e.isComposing) return;
     if (e.key === "Enter") {
       e.preventDefault();
+      e.stopPropagation();
       handleSave();
     } else if (e.key === "Escape") {
       e.preventDefault();
+      e.stopPropagation();
       onCancel();
     }
   };
 </script>
 
-<div class="p-3 bg-theme-bg border border-theme-primary rounded-md space-y-3">
+<div
+  data-shortcuts="ignore"
+  class="p-3 bg-theme-bg border border-theme-primary rounded-md space-y-3"
+>
   <div>
     <label
       for="relationship-type"

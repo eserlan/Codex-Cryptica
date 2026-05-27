@@ -200,16 +200,9 @@
       const isTextarea = activeEl?.tagName === "TEXTAREA";
 
       if (e.key === "Enter" && isInput) {
-        const input = activeEl as HTMLInputElement;
         if (
-          input.placeholder?.toLowerCase().includes("alias") &&
-          input.value.trim() !== ""
-        ) {
-          return;
-        }
-        if (
-          input.placeholder?.toLowerCase().includes("label") &&
-          input.value.trim() !== ""
+          activeEl.closest('[data-shortcuts="ignore"]') ||
+          activeEl.closest('[role="combobox"]')
         ) {
           return;
         }
@@ -222,6 +215,9 @@
 
       if (e.key === "Escape" && (isInput || isTextarea)) {
         if (activeEl?.getAttribute("aria-expanded") === "true") {
+          return;
+        }
+        if (activeEl.closest('[data-shortcuts="ignore"]')) {
           return;
         }
 

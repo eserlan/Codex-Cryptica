@@ -40,6 +40,7 @@
 </script>
 
 <div
+  data-shortcuts="ignore"
   class="flex flex-wrap items-center gap-1.5 p-1.5 bg-theme-bg/30 border border-theme-border rounded-lg focus-within:border-theme-primary/50 focus-within:ring-1 focus-within:ring-theme-primary/20 transition-all min-h-[36px]"
 >
   {#each aliases as alias, i}

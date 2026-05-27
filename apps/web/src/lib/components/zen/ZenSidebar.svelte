@@ -34,7 +34,8 @@
   interface ConnectionListItem {
     id: string;
     key: string;
-    label: string;
+    displayLabel: string;
+    rawLabel?: string;
     title: string;
     type: string;
     isOutbound: boolean;
@@ -62,7 +63,8 @@
         result.push({
           id: c.target,
           key: `${c.target}-out-${c.type}-${i}`,
-          label: c.label || c.type,
+          displayLabel: c.label || c.type,
+          rawLabel: c.label,
           title: vault.entities[c.target]?.title || c.target,
           type: c.type,
           isOutbound: true,
@@ -78,7 +80,8 @@
         result.push({
           id: item.sourceId,
           key: `${item.sourceId}-in-${item.connection.type}-${i}`,
-          label: item.connection.label || item.connection.type,
+          displayLabel: item.connection.label || item.connection.type,
+          rawLabel: item.connection.label,
           title: vault.entities[item.sourceId]?.title || item.sourceId,
           type: item.connection.type,
           isOutbound: false,
@@ -349,7 +352,7 @@
                     connection={{
                       target: conn.id,
                       type: conn.type,
-                      label: conn.label || "",
+                      label: conn.rawLabel || "",
                     }}
                     onSave={() => (editingConnectionTarget = null)}
                     onCancel={() => (editingConnectionTarget = null)}
@@ -373,7 +376,7 @@
                       <div
                         class="text-xs text-theme-muted uppercase tracking-widest font-header"
                       >
-                        {conn.label}
+                        {conn.displayLabel}
                       </div>
                       <div
                         class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
@@ -444,6 +447,7 @@
     {#if editState.isEditing && !vault.isGuest}
       <div class="mt-6 pt-6 border-t border-theme-border">
         <button
+          type="button"
           onclick={onDelete}
           class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
         >
