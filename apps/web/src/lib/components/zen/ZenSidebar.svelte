@@ -614,6 +614,23 @@
                           ></span>
                         </button>
                       {/if}
+                      {#if conn.isChild || conn.isParent}
+                        <button
+                          type="button"
+                          onclick={() => {
+                            isAddingConnection = true;
+                            newConnectionTargetId = conn.id;
+                            newConnectionTargetName = conn.title;
+                            newConnectionType = "related_to";
+                            newConnectionLabel = "";
+                          }}
+                          class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                          aria-label="Establish custom connection"
+                          title="Establish custom connection"
+                        >
+                          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+                        </button>
+                      {/if}
                       <button
                         type="button"
                         onclick={() => {
