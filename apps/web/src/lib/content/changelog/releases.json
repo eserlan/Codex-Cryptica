@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.26.2",
+    "title": "The Vault Save Confidence & Chronology Quality Update",
+    "date": "2026-05-26",
+    "type": "patch",
+    "highlights": [
+      "Silent Permission Checks: Verification of directory permissions is now fully silent at startup, preventing annoying browser picker prompts when you open the app.",
+      "Clear Access Grants: A prominent 'GRANT ACCESS' button appears in the sidebar when a vault folder handle needs permission, making recovery simple and clear.",
+      "Instant Save Confirmation: The status indicator displays a clear 3-second 'SAVED' checkmark before returning to idle, with immediate keypress interruption if you start editing again.",
+      "Interrupt-Safe Vault Switching: A 5-second timeout during vault switching prevents the app from hanging if background saves get stuck, proceeding with the vault switch safely."
+    ]
+  },
+  {
     "version": "0.26.1",
     "title": "The Nested Entities & Explorer Polish Update",
     "date": "2026-05-26",
