@@ -23,7 +23,9 @@ describe("OpfsBackend", () => {
 
   it("reuses cached hashes when file metadata is unchanged", async () => {
     const alpha = makeBlob("alpha", 100);
-    vi.mocked(registry.getOpfsStatesByVault).mockResolvedValue([
+    (
+      registry.getOpfsStatesByVault as ReturnType<typeof vi.fn>
+    ).mockResolvedValue([
       {
         vaultId: "vault-1",
         filePath: "notes/alpha.md",
