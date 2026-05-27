@@ -12,10 +12,19 @@
     ariaLabel?: string;
   }>();
 
-  // When value changes, simulate selection of target-1
+  // When value changes, simulate selection of corresponding test entity ID
   $effect(() => {
     if (value) {
-      selectedId = "target-1";
+      const lower = value.toLowerCase();
+      if (lower === "entity child") {
+        selectedId = "entity-child";
+      } else if (lower === "child entity") {
+        selectedId = "child-entity";
+      } else if (lower === "parent entity") {
+        selectedId = "parent-entity";
+      } else {
+        selectedId = "target-1";
+      }
     } else {
       selectedId = null;
     }

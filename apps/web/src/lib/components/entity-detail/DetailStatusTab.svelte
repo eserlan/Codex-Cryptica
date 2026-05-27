@@ -182,7 +182,9 @@
     // Add children if exist
     const entityId = entity.id;
     const allEntities = Object.values(vault.entities);
-    const children = allEntities.filter((e) => e.parent === entityId);
+    const children = allEntities.filter(
+      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
+    );
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (checkVisibility(child.id)) {
@@ -454,7 +456,7 @@
 
     <ul class="space-y-3">
       {#each allConnections as conn}
-        {#if editingConnectionTarget === conn.targetId && conn.isOutbound && !conn.isChild && !conn.isParent}
+        {#if editingConnectionTarget === conn.targetId && conn.isOutbound && !conn.isChild}
           <li>
             <ConnectionEditor
               sourceId={entity.id}
@@ -468,18 +470,14 @@
             <span
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
                 ? 'icon-[lucide--chevron-down]'
-                : conn.isParent
-                  ? 'icon-[lucide--chevron-up]'
-                  : conn.isOutbound
-                    ? 'icon-[lucide--arrow-up-right]'
-                    : 'icon-[lucide--arrow-down-left]'}"
+                : conn.isOutbound
+                  ? 'icon-[lucide--arrow-up-right]'
+                  : 'icon-[lucide--arrow-down-left]'}"
               style:color={conn.isChild
                 ? "#10b981"
-                : conn.isParent
-                  ? "#a855f7"
-                  : conn.isOutbound
-                    ? "var(--theme-icon-active)"
-                    : "var(--theme-icon-default)"}
+                : conn.isOutbound
+                  ? "var(--theme-icon-active)"
+                  : "var(--theme-icon-default)"}
             ></span>
             <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
               <button
@@ -501,49 +499,30 @@
                   >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
                   <span class="text-theme-secondary">{entity.title}</span>
+                {:else if conn.isOutbound}
+                  <span class="text-theme-secondary">{entity.title}</span>
+                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <strong
+                    class="text-theme-text group-hover:text-theme-primary transition"
+                    >{conn.label || conn.type}</strong
+                  >
+                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span class="text-theme-text">{conn.displayTitle}</span>
                 {:else}
-                  {#if conn.isParent}
-                    <span class="text-theme-text">{conn.displayTitle}</span>
-                    <span class="relation-arrow icon-[lucide--move-right]"
-                    ></span>
-                    <strong
-                      class="text-theme-text group-hover:text-theme-primary transition"
-                      >Parent</strong
-                    >
-                    <span class="relation-arrow icon-[lucide--move-right]"
-                    ></span>
-                    <span class="text-theme-secondary">{entity.title}</span>
-                  {:else}
-                    {#if conn.isOutbound}
-                      <span class="text-theme-secondary">{entity.title}</span>
-                      <span class="relation-arrow icon-[lucide--move-right]"
-                      ></span>
-                      <strong
-                        class="text-theme-text group-hover:text-theme-primary transition"
-                        >{conn.label || conn.type}</strong
-                      >
-                      <span class="relation-arrow icon-[lucide--move-right]"
-                      ></span>
-                      <span class="text-theme-text">{conn.displayTitle}</span>
-                    {:else}
-                      <span class="text-theme-text">{conn.displayTitle}</span>
-                      <span class="relation-arrow icon-[lucide--move-right]"
-                      ></span>
-                      <strong
-                        class="text-theme-text group-hover:text-theme-primary transition"
-                        >{conn.label || conn.type}</strong
-                      >
-                      <span class="relation-arrow icon-[lucide--move-right]"
-                      ></span>
-                      <span class="text-theme-secondary">{entity.title}</span>
-                    {/if}
-                  {/if}
+                  <span class="text-theme-text">{conn.displayTitle}</span>
+                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <strong
+                    class="text-theme-text group-hover:text-theme-primary transition"
+                    >{conn.label || conn.type}</strong
+                  >
+                  <span class="relation-arrow icon-[lucide--move-right]"></span>
+                  <span class="text-theme-secondary">{entity.title}</span>
                 {/if}
               </button>
 
               {#if !vault.isGuest}
                 <div class="flex items-center gap-1">
-                  {#if conn.isOutbound && !conn.isChild && !conn.isParent}
+                  {#if conn.isOutbound && !conn.isChild}
                     <button
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => (editingConnectionTarget = conn.targetId)}
@@ -553,7 +532,7 @@
                       <span class="icon-[lucide--pencil] w-3 h-3"></span>
                     </button>
                   {/if}
-                  {#if conn.isChild || conn.isParent}
+                  {#if conn.isChild}
                     <button
                       class="text-theme-muted hover:text-theme-primary transition p-1"
                       onclick={() => {
@@ -576,8 +555,6 @@
                         vault.updateEntity(conn.targetId, {
                           parent: undefined,
                         });
-                      } else if (conn.isParent) {
-                        vault.updateEntity(entity.id, { parent: undefined });
                       } else if (conn.isOutbound) {
                         vault.removeConnection(
                           entity.id,

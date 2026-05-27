@@ -37,7 +37,7 @@
         entity.id,
         newConnectionTargetId,
         newConnectionType,
-        newConnectionLabel,
+        newConnectionLabel.trim() || undefined,
       );
 
       if (success) {
@@ -125,28 +125,12 @@
       }
     }
 
-    // Add parent if exists
-    const parentId = entity?.parent;
-    if (parentId && checkVisibility(parentId)) {
-      const parentEntity = vault.entities[parentId];
-      if (parentEntity) {
-        result.push({
-          id: parentId,
-          key: `${parentId}-parent`,
-          displayLabel: "Parent",
-          rawLabel: "Parent",
-          title: parentEntity.title,
-          type: "parent",
-          isOutbound: false,
-          isParent: true,
-        });
-      }
-    }
-
     // Add children if exist
     const entityId = entity?.id || "";
     const allEntities = Object.values(vault.entities);
-    const children = allEntities.filter((e) => e.parent === entityId);
+    const children = allEntities.filter(
+      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
+    );
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
       if (checkVisibility(child.id)) {
@@ -510,7 +494,7 @@
         {#if allConnections.length > 0}
           <div class="space-y-2">
             {#each allConnections as conn (conn.key)}
-              {#if editingConnectionTarget === conn.id && conn.isOutbound && !conn.isChild && !conn.isParent}
+              {#if editingConnectionTarget === conn.id && conn.isOutbound && !conn.isChild}
                 <div class="p-1">
                   <ConnectionEditor
                     sourceId={entity?.id || ""}
@@ -535,11 +519,9 @@
                     <span
                       class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
                         ? 'bg-emerald-500'
-                        : conn.isParent
-                          ? 'bg-purple-500'
-                          : conn.isOutbound
-                            ? 'bg-theme-primary'
-                            : 'bg-blue-500'}"
+                        : conn.isOutbound
+                          ? 'bg-theme-primary'
+                          : 'bg-blue-500'}"
                     ></span>
                     <div class="flex-1 min-w-0">
                       <div
@@ -556,7 +538,7 @@
                   </button>
                   {#if !vault.isGuest}
                     <div class="flex items-center gap-1">
-                      {#if conn.isOutbound && !conn.isChild && !conn.isParent}
+                      {#if conn.isOutbound && !conn.isChild}
                         <button
                           type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
@@ -568,7 +550,7 @@
                           ></span>
                         </button>
                       {/if}
-                      {#if conn.isChild || conn.isParent}
+                      {#if conn.isChild}
                         <button
                           type="button"
                           onclick={() => {
@@ -592,8 +574,6 @@
                           if (!entityId) return;
                           if (conn.isChild) {
                             vault.updateEntity(conn.id, { parent: undefined });
-                          } else if (conn.isParent) {
-                            vault.updateEntity(entityId, { parent: undefined });
                           } else if (conn.isOutbound) {
                             vault.removeConnection(
                               entityId,

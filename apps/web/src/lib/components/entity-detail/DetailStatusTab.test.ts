@@ -239,7 +239,7 @@ describe("DetailStatusTab", () => {
     expect(screen.queryByText("Child")).toBeNull();
   });
 
-  it("clicks establish custom connection button on child row to pre-populate form", async () => {
+  it("clicks establish custom connection button on child row to pre-populate form and connect", async () => {
     const testEntity = {
       ...mockEntity,
     };
@@ -266,5 +266,16 @@ describe("DetailStatusTab", () => {
       "mock-autocomplete",
     ) as HTMLInputElement;
     expect(autocompleteInput.value).toBe("Child Entity");
+
+    // Submit and assert that vault.addConnection was called with pre-populated child entity ID
+    const connectBtn = screen.getByRole("button", { name: /^connect$/i });
+    await fireEvent.click(connectBtn);
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "child-entity",
+      "related_to",
+      undefined,
+    );
   });
 });
