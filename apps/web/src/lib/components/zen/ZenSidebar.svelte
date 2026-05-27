@@ -360,6 +360,7 @@
                   class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
                 >
                   <button
+                    type="button"
                     onclick={() => onNavigate(conn.id)}
                     class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
@@ -386,6 +387,7 @@
                     <div class="flex items-center gap-1">
                       {#if conn.isOutbound}
                         <button
+                          type="button"
                           onclick={() => (editingConnectionTarget = conn.id)}
                           class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
                           aria-label="Edit connection"
@@ -396,6 +398,7 @@
                         </button>
                       {/if}
                       <button
+                        type="button"
                         onclick={() => {
                           const entityId = entity?.id;
                           if (!entityId) return;
@@ -423,6 +426,7 @@
                   {/if}
 
                   <button
+                    type="button"
                     onclick={() => onNavigate(conn.id)}
                     class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
                     aria-label="Navigate to {conn.title}"
