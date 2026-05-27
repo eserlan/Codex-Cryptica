@@ -180,7 +180,7 @@ export class VaultStore {
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
       flushPendingSaves: (timeoutMs) =>
-        this.entityStore.flushPendingSaves(timeoutMs),
+        this.entityStore?.flushPendingSaves(timeoutMs),
     });
 
     const persistence = new EntityPersistenceService({
