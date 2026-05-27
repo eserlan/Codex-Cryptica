@@ -424,4 +424,92 @@ describe("SyncStore", () => {
       vi.useRealTimers();
     });
   });
+
+  describe("waitForSaves integration", () => {
+    it("should trigger flushPendingSaves when pull, push, or syncWithLocalFolder is executed", async () => {
+      const flushPendingSavesSpy = vi.fn().mockResolvedValue(undefined);
+      const syncWithLocalFolderSpy = vi
+        .fn()
+        .mockImplementation(async (_a, _b, _c, _d, waitForSaves, _e) => {
+          await waitForSaves();
+        });
+
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      const testStore = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          syncWithLocalFolder: syncWithLocalFolderSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+        flushPendingSaves: flushPendingSavesSpy,
+      });
+
+      await testStore.loadFiles(false); // Force sync, triggers syncWithLocalFolder
+
+      expect(syncWithLocalFolderSpy).toHaveBeenCalled();
+      expect(flushPendingSavesSpy).toHaveBeenCalled();
+    });
+
+    it("should trigger flushPendingSaves during saveToFolder and loadFromFolder", async () => {
+      const flushPendingSavesSpy = vi.fn().mockResolvedValue(undefined);
+      const pushSpy = vi
+        .fn()
+        .mockImplementation(async (_a, _b, _c, waitForSaves, _d) => {
+          await waitForSaves();
+        });
+      const pullSpy = vi
+        .fn()
+        .mockImplementation(async (_a, _b, _c, waitForSaves, _d) => {
+          await waitForSaves();
+        });
+
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      const testStore = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          push: pushSpy,
+          pull: pullSpy,
+          syncWithLocalFolder: vi.fn().mockResolvedValue({
+            created: [],
+            updated: [],
+            deleted: [],
+          }),
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+        flushPendingSaves: flushPendingSavesSpy,
+      });
+
+      await testStore.saveToFolder();
+      expect(pushSpy).toHaveBeenCalled();
+      expect(flushPendingSavesSpy).toHaveBeenCalledTimes(1);
+
+      await testStore.loadFromFolder();
+      expect(pullSpy).toHaveBeenCalled();
+      expect(flushPendingSavesSpy).toHaveBeenCalledTimes(2);
+    });
+  });
 });
