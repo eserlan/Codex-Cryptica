@@ -4,6 +4,12 @@ import { ProposerService } from "../src/service";
 import "fake-indexeddb/auto";
 import { openDB } from "idb";
 
+function useMockModel(generateContent: ReturnType<typeof vi.fn>): void {
+  (GoogleGenerativeAI as any).prototype.getGenerativeModel = vi
+    .fn()
+    .mockReturnValue({ generateContent });
+}
+
 vi.mock("@google/generative-ai", () => {
   const generateContent = vi.fn().mockResolvedValue({
     response: {
@@ -75,10 +81,7 @@ describe("ProposerService", () => {
           ]),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
 
     const dbName = `test-db-${crypto.randomUUID()}`;
     service = new ProposerService(dbName, 1);
@@ -321,10 +324,7 @@ describe("ProposerService", () => {
           ]),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -352,10 +352,7 @@ describe("ProposerService", () => {
           ]),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -379,10 +376,7 @@ describe("ProposerService", () => {
           }),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposal = await service.generateConnectionProposal(
       "key",
       "model",
@@ -401,10 +395,7 @@ describe("ProposerService", () => {
         text: () => "Invalid JSON",
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposal = await service.generateConnectionProposal(
       "key",
       "model",
@@ -429,10 +420,7 @@ describe("ProposerService", () => {
           }),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseConnectionIntent(
       "key",
       "model",
@@ -449,10 +437,7 @@ describe("ProposerService", () => {
         text: () => "Garbage",
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseConnectionIntent("key", "model", "input");
     expect(intent.sourceName).toBe("");
     expect(intent.targetName).toBe("");
@@ -468,10 +453,7 @@ describe("ProposerService", () => {
           }),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseMergeIntent(
       "key",
       "model",
@@ -487,10 +469,7 @@ describe("ProposerService", () => {
         text: () => "Garbage",
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseMergeIntent("key", "model", "input");
     expect(intent.sourceName).toBe("");
     expect(intent.targetName).toBe("");
