@@ -153,7 +153,7 @@ Use these filters when choosing what to build next:
 - Fewer race-condition mistakes during vault switching.
 - Easier unit testing for cancellation paths.
 
-### B. Save Queue Efficiency
+### B. Save Queue Efficiency (Implemented)
 
 **Problem**: Rapid content edits can enqueue repeated saves for the same entity.
 
