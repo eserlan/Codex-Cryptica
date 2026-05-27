@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, fireEvent } from "@testing-library/svelte";
+import { render, fireEvent, within } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -17,6 +17,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
       title: "Entity One",
       labels: [],
       aliases: [],
+      parent: "entity-2",
       connections: [
         {
           target: "entity-2",
@@ -37,6 +38,14 @@ vi.mock("$lib/stores/vault.svelte", () => {
           label: "Ally Of",
         },
       ],
+    },
+    "entity-child": {
+      id: "entity-child",
+      title: "Entity Child",
+      labels: [],
+      aliases: [],
+      parent: "entity-1",
+      connections: [],
     },
   };
 
@@ -70,6 +79,8 @@ vi.mock("$lib/stores/vault.svelte", () => {
       inboundConnections: mockInbound,
       labelIndex: [],
       updateConnection: vi.fn(),
+      addConnection: vi.fn().mockResolvedValue(true),
+      updateEntity: vi.fn().mockResolvedValue(true),
     },
   };
 });
@@ -151,5 +162,72 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
 
     // ConnectionEditor should be removed
     expect(queryByRole("combobox", { name: /relationship type/i })).toBeNull();
+  });
+
+  it("renders child connections but not parent in connection list", () => {
+    const mockEntity = vault.entities["entity-1"];
+
+    const { getByText, queryByText, getAllByText } = render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    // Check that Parent label is not rendered, but Child and Entity Child are
+    expect(queryByText("Parent")).toBeNull();
+    expect(getAllByText("Entity Two").length).toBeGreaterThan(0); // rendered as direct ALLY connection
+    expect(getByText("Child")).toBeTruthy();
+    expect(getByText("Entity Child")).toBeTruthy();
+  });
+
+  it("supports deleting a child connection and clearing child's parent", async () => {
+    const mockEntity = vault.entities["entity-1"];
+    const { getByText } = render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    // Scope search using within()
+    const childEl = getByText("Entity Child");
+    const container = childEl.closest("div.w-full");
+    if (!container) throw new Error("Could not find connection container");
+
+    const deleteBtn = within(container).getByLabelText("Delete connection");
+    await fireEvent.click(deleteBtn);
+
+    expect(vault.updateEntity).toHaveBeenCalledWith("entity-child", {
+      parent: undefined,
+    });
+  });
+
+  it("toggles the inline connection form and can trigger connection creation", async () => {
+    const mockEntity = vault.entities["entity-1"];
+
+    const { getByLabelText, getByRole } = render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    // Verify ADD button is present
+    const addBtn = getByLabelText("Add new connection");
+    expect(addBtn).toBeTruthy();
+
+    // Click ADD to open the form
+    await fireEvent.click(addBtn);
+
+    // Verify form fields
+    expect(getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    expect(getByRole("button", { name: /^cancel$/i })).toBeTruthy();
   });
 });

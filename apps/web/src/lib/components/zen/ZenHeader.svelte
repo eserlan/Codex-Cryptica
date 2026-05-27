@@ -70,7 +70,6 @@
       layoutUIStore.findInGraph();
     }, 300);
   };
-
   const parentEntity = $derived(
     entity?.parent ? vault.entities[entity.parent] : null,
   );
