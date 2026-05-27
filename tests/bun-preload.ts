@@ -90,6 +90,12 @@ if (typeof globalThis.DOMMatrix === "undefined") {
 }
 
 // 3. Svelte 5 Runes Shim (needed for vault-engine, canvas-engine, oracle-engine)
+// NOTE: These shims are simplified for unit tests running outside Svelte compiler transforms.
+// Limitations:
+// - `$derived` expects expressions wrapped by the Svelte compiler in production, but here it acts as a passthrough or immediate function evaluator.
+// - `$effect.active` always returns false.
+// - `$effect.root` evaluates the function immediately and does not return the actual teardown function.
+// - Re-assigning or replacing `$derived` in other tests might break the attached `.by` helper.
 const stateShim = (init: unknown) => init;
 (stateShim as any).snapshot = (init: unknown) => init;
 
