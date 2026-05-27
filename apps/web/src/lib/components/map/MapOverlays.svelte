@@ -89,7 +89,7 @@
       pin.entityId && vault.entities ? vault.entities[pin.entityId] : null}
     {@const labelText = entity ? entity.title : "Unlinked Pin"}
     <div
-      class="absolute pointer-events-none -translate-x-1/2 -translate-y-[28px] z-30 transition-all duration-300 ease-out"
+      class="absolute pointer-events-none -translate-x-1/2 -translate-y-[34px] z-30 transition-all duration-300 ease-out"
       style:left={`${pos.x}px`}
       style:top={`${pos.y}px`}
       class:opacity-100={mapStore.showLabels}
