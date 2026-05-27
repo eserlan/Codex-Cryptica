@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render } from "@testing-library/svelte";
+import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenSidebar from "./ZenSidebar.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -69,6 +69,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
       entities: mockEntities,
       inboundConnections: mockInbound,
       labelIndex: [],
+      updateConnection: vi.fn(),
     },
   };
 });
@@ -116,5 +117,39 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     // The connections header and elements should be rendered correctly
     const items = queryAllByText("Entity Two");
     expect(items.length).toBeGreaterThan(0);
+  });
+
+  it("renders edit button for outbound connections and toggles ConnectionEditor on click", async () => {
+    const mockEntity = vault.entities["entity-1"];
+
+    const { getByLabelText, getByRole, queryByRole } = render(ZenSidebar, {
+      entity: mockEntity,
+      editState: { isEditing: false, aliases: [] },
+      resolvedImageUrl: "",
+      onShowLightbox: () => {},
+      onNavigate: () => {},
+      onDelete: async () => {},
+    });
+
+    // Verify edit button is present
+    const editBtn = getByLabelText("Edit connection");
+    expect(editBtn).toBeTruthy();
+
+    // ConnectionEditor select/input should NOT be in the document initially
+    expect(queryByRole("combobox", { name: /relationship type/i })).toBeNull();
+
+    // Click edit button
+    await fireEvent.click(editBtn);
+
+    // ConnectionEditor should be rendered
+    const selectEl = getByRole("combobox", { name: /relationship type/i });
+    expect(selectEl).toBeTruthy();
+
+    // Click cancel button inside ConnectionEditor
+    const cancelBtn = getByRole("button", { name: /cancel/i });
+    await fireEvent.click(cancelBtn);
+
+    // ConnectionEditor should be removed
+    expect(queryByRole("combobox", { name: /relationship type/i })).toBeNull();
   });
 });
