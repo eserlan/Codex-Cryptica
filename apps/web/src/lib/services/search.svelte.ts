@@ -14,6 +14,19 @@ import { VAULT_EVENTS } from "@codex/vault-engine";
 import { quickNoteStore } from "../stores/quicknote.svelte";
 
 const INDEX_BATCH_SIZE = 100;
+
+// Fields that FlexSearch indexes — used by the BATCH_UPDATED handler to skip
+// re-indexing when none of an entity's searchable fields changed.
+// Keep in sync with mapToSearchEntry().
+const BATCH_UPDATED_SEARCH_FIELDS = new Set([
+  "title",
+  "aliases",
+  "content",
+  "tags",
+  "labels",
+  "lore",
+  "metadata", // fanned into the `keywords` field via Object.values(entity.metadata)
+]);
 const READY_PROGRESS: SearchIndexProgress = {
   status: "idle",
   vaultId: null,
@@ -224,19 +237,13 @@ export class SearchService {
               // field FlexSearch actually indexes.
               const patches: Record<string, Record<string, unknown>> = event
                 .payload.patches ?? {};
-              const SEARCH_FIELDS = [
-                "title",
-                "aliases",
-                "content",
-                "tags",
-                "labels",
-                "lore",
-              ] as const;
               const entitiesToIndex = entities.filter((e: any) => {
                 const patch = patches[e.id];
                 // No patch entry for this entity → re-index conservatively.
                 if (!patch) return true;
-                return SEARCH_FIELDS.some((field) => field in patch);
+                return Object.keys(patch).some((k) =>
+                  BATCH_UPDATED_SEARCH_FIELDS.has(k),
+                );
               });
 
               if (entitiesToIndex.length > 0) {
@@ -781,7 +788,9 @@ export class SearchService {
     const runId = this.createRunId(vaultId);
     const markReady = options.markReady ?? true;
     const saveOnReady = options.saveOnReady ?? true;
-    this.pendingRetryEntities = entities;
+    // Fix C7: pendingRetryEntities is set AFTER clear() succeeds so that a
+    // failed clear() (e.g. worker torn down) does not overwrite a valid prior
+    // retry list with the new (possibly different) entities array.
     this.emitProgress({
       status: "rebuilding",
       vaultId,
@@ -799,6 +808,7 @@ export class SearchService {
 
     try {
       await this.clear();
+      this.pendingRetryEntities = entities;
       await this.indexBatch(entities, {
         runId,
         vaultId,

@@ -303,6 +303,24 @@ describe("SearchService — BATCH_UPDATED patch filtering", () => {
     expect(sentEntries).toHaveLength(1);
     expect(sentEntries[0].id).toBe("e-pf-9");
   });
+
+  it("re-indexes when patch only changes metadata (fans into keywords field)", async () => {
+    // Regression for review finding C1: metadata was absent from SEARCH_FIELDS,
+    // so custom-property changes would silently skip re-indexing.
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-meta-1")],
+      patches: { "e-meta-1": { metadata: { chapter: "Act 2" } } },
+    });
+    await flush();
+
+    // metadata values are fanned into the FlexSearch `keywords` field via
+    // mapToSearchEntry — must trigger a re-index.
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
