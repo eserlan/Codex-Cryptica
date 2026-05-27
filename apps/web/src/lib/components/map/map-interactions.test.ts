@@ -195,7 +195,7 @@ describe("MapInteractionManager", () => {
     manager.onMouseDown(
       new MouseEvent("mousedown", { clientX: 100, clientY: 100, button: 0 }),
     );
-    // Move slightly (within click gesture threshold of 4px)
+    // Move slightly (within click gesture threshold of 5px)
     manager.onMouseMove(
       new MouseEvent("mousemove", { clientX: 102, clientY: 102 }),
     );
