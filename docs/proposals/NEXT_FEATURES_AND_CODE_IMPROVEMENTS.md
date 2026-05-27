@@ -137,7 +137,7 @@ Use these filters when choosing what to build next:
 
 ## Recommended Code Improvement Backlog
 
-### A. Event And Store Boundaries
+### A. Event And Store Boundaries (Implemented)
 
 **Problem**: Some workflows still rely on repeated single-entity events or duplicated async race checks.
 

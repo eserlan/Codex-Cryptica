@@ -179,6 +179,8 @@ export class VaultStore {
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
+      flushPendingSaves: (timeoutMs) =>
+        this.entityStore?.flushPendingSaves(timeoutMs),
     });
 
     const persistence = new EntityPersistenceService({

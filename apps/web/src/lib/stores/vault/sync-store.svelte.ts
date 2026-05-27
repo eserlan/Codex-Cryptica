@@ -20,6 +20,7 @@ export interface SyncStoreDependencies {
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
+  flushPendingSaves?: (timeoutMs?: number) => Promise<void>;
 }
 
 export class SyncStore {
@@ -81,6 +82,14 @@ export class SyncStore {
     if (this.savedTimer) {
       clearTimeout(this.savedTimer);
       this.savedTimer = null;
+    }
+  }
+
+  private async waitForSaves(timeoutMs?: number): Promise<void> {
+    if (this.deps.flushPendingSaves) {
+      await this.deps.flushPendingSaves(timeoutMs);
+    } else {
+      await this.deps.repository.waitForAllSaves(timeoutMs);
     }
   }
 
@@ -244,7 +253,7 @@ export class SyncStore {
               vaultDir,
               "pull",
               this.deps.repository.entities,
-              () => this.deps.repository.waitForAllSaves(),
+              () => this.waitForSaves(),
               (state: {
                 status: "saving" | "loading" | "idle" | "error";
                 syncType: "local" | null;
@@ -380,7 +389,7 @@ export class SyncStore {
       vaultIdAtStart,
       opfsHandle,
       this.deps.repository.entities,
-      () => this.deps.repository.waitForAllSaves(),
+      () => this.waitForSaves(),
       (state) => {
         if (this.deps.activeVaultId() === vaultIdAtStart) {
           this.setStatus(state.status);
@@ -446,7 +455,7 @@ export class SyncStore {
       vaultIdAtStart,
       opfsHandle,
       this.deps.repository.entities,
-      () => this.deps.repository.waitForAllSaves(),
+      () => this.waitForSaves(),
       (state) => {
         if (this.deps.activeVaultId() === vaultIdAtStart) {
           this.setStatus(state.status);

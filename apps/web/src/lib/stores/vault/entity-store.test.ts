@@ -1136,4 +1136,137 @@ describe("EntityStore", () => {
       expect(repository.entities.hero.parent).toBe("parent-node");
     });
   });
+
+  describe("flushPendingSaves", () => {
+    it("should clear timeouts and flush all pending saves concurrently", async () => {
+      const repositoryMock = {
+        entities: {
+          "entity-1": { id: "entity-1", title: "E1" },
+          "entity-2": { id: "entity-2", title: "E2" },
+        },
+        enqueueSave: vi.fn().mockImplementation((id, cb) => cb()),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const setStatus = vi.fn();
+      const storeWithPending = new EntityStore({
+        repository: repositoryMock as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus,
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      // Schedule two saves (will be debounced)
+      const save1 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-1"],
+      );
+      const save2 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-2"],
+      );
+
+      // Flush them immediately before their 400ms timer runs
+      await storeWithPending.flushPendingSaves();
+
+      // Check both enqueueSave were called
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-1",
+        expect.any(Function),
+      );
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-2",
+        expect.any(Function),
+      );
+      // Check that waitForAllSaves was called at the end
+      expect(repositoryMock.waitForAllSaves).toHaveBeenCalled();
+
+      // The promises from scheduleSave should resolve
+      await Promise.all([save1, save2]);
+    });
+
+    it("should propagate timeoutMs to waitForAllSaves", async () => {
+      const repositoryMock = {
+        entities: {
+          "entity-1": { id: "entity-1", title: "E1" },
+        },
+        enqueueSave: vi.fn().mockImplementation((id, cb) => cb()),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const storeWithPending = new EntityStore({
+        repository: repositoryMock as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      storeWithPending.scheduleSave(repositoryMock.entities["entity-1"]);
+      await storeWithPending.flushPendingSaves(2000);
+
+      expect(repositoryMock.waitForAllSaves).toHaveBeenCalledWith(2000);
+    });
+
+    it("should handle individual save rejections gracefully and still wait for other saves", async () => {
+      const repositoryMock = {
+        entities: {
+          "entity-1": { id: "entity-1", title: "E1" },
+          "entity-2": { id: "entity-2", title: "E2" },
+        },
+        enqueueSave: vi.fn().mockImplementation((id, cb) => {
+          if (id === "entity-1") {
+            return Promise.reject(new Error("Failure"));
+          }
+          return cb();
+        }),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const storeWithPending = new EntityStore({
+        repository: repositoryMock as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const save1 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-1"],
+      );
+      const save2 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-2"],
+      );
+
+      // Should not throw, should resolve successfully
+      await storeWithPending.flushPendingSaves();
+
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-1",
+        expect.any(Function),
+      );
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-2",
+        expect.any(Function),
+      );
+      expect(repositoryMock.waitForAllSaves).toHaveBeenCalled();
+
+      // Ensure save promises are resolved/settled (either resolve or swallow error in scheduleSave)
+      await Promise.all([save1, save2]);
+    });
+  });
 });

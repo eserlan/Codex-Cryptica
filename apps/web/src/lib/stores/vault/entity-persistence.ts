@@ -85,14 +85,15 @@ export class EntityPersistenceService {
           this._saveVaultIds.delete(id);
           this.deps.repository
             .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
-            .then(() => resolvers.forEach((r) => r()))
-            .catch(() => resolvers.forEach((r) => r()));
+            .catch(() => {})
+            .finally(() => resolvers.forEach((r) => r()));
         }, SAVE_DEBOUNCE_MS),
       );
     });
   }
 
-  async flushPendingSaves(): Promise<void> {
+  async flushPendingSaves(timeoutMs?: number): Promise<void> {
+    const promises: Promise<void>[] = [];
     for (const [id, timer] of this._saveTimers) {
       clearTimeout(timer);
       this._saveTimers.delete(id);
@@ -104,13 +105,19 @@ export class EntityPersistenceService {
       const vaultId = this._saveVaultIds.get(id);
       this._saveVaultIds.delete(id);
       if (vaultId) {
-        await this.deps.repository.enqueueSave(id, () =>
-          this._persistEntity(id, vaultId),
-        );
+        const p = this.deps.repository
+          .enqueueSave(id, () => this._persistEntity(id, vaultId))
+          .catch(() => {})
+          .finally(() => {
+            resolvers.forEach((r) => r());
+          });
+        promises.push(p);
+      } else {
+        resolvers.forEach((r) => r());
       }
-      resolvers.forEach((r) => r());
     }
-    await this.deps.repository.waitForAllSaves();
+    await Promise.all(promises);
+    await this.deps.repository.waitForAllSaves(timeoutMs);
   }
 
   private async _persistEntity(
