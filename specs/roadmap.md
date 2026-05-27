@@ -18,6 +18,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.26.2 — The Vault Save Confidence & Chronology Quality Update (2026-05-26)
+
+- **Highlights**: Silent validation of local directory permission on app startup to prevent intrusive picker prompts, direct UI action to grant permissions, a 3-second transient visual confirmation for folder saves, and a non-blocking 5-second save-drain timeout when switching vaults.
+- **Associated Specifications**:
+  - [121-vault-load-save-confidence](./121-vault-load-save-confidence/spec.md) (Vault folder operations clarity, safety, and permission recovery)
+
 ### v0.26.1 — The Nested Entities & Explorer Polish Update (2026-05-26)
 
 - **Highlights**: Deep folder tree nesting up to 8 levels, fully re-engineered native drag-and-drop workspace organization with cycle validation and dedicated root drop zone, inline subfolder/child entity creation, standard list item layout ARIA accessibility restructure, and cache reload persistence.

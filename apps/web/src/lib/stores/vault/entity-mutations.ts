@@ -211,7 +211,7 @@ export class EntityMutationService {
     }
 
     const lockKey = id;
-    return this.deps.repository.saveQueue.enqueue(lockKey, async () => {
+    return this.deps.repository.enqueueSave(lockKey, async () => {
       const vaultHandle = await this.deps.getActiveVaultHandle();
       const localHandle = await this.deps.getActiveFolderHandle();
       const activeVaultId = this.deps.activeVaultId();
@@ -303,14 +303,8 @@ export class EntityMutationService {
     if (updatedSource) {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
+      // Connections are not search-indexed; Svelte 5 reactivity drives UI re-renders.
+      // No ENTITY_UPDATED event needed here.
       return true;
     }
     return false;
@@ -334,14 +328,8 @@ export class EntityMutationService {
     if (updatedSource) {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
+      // Connections are not search-indexed; Svelte 5 reactivity drives UI re-renders.
+      // No ENTITY_UPDATED event needed here.
       return true;
     }
     return false;
@@ -361,14 +349,8 @@ export class EntityMutationService {
     if (updatedSource) {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
+      // CONNECTION_REMOVED carries the full semantic; ENTITY_UPDATED with a
+      // connections-only patch was redundant and triggered unnecessary fan-out.
       vaultEventBus.emit({
         type: "CONNECTION_REMOVED",
         vaultId: this.deps.activeVaultId() || "unknown",
@@ -376,7 +358,6 @@ export class EntityMutationService {
         targetId,
         connectionType: type,
       });
-
       return true;
     }
     return false;
@@ -435,13 +416,15 @@ export class EntityMutationService {
     if (modifiedIds.length > 0) {
       this.entities = entities;
       const changed: LocalEntity[] = [];
+      const savePromises: Promise<void>[] = [];
       for (const id of modifiedIds) {
         const entity = entities[id];
         if (entity) {
-          await this.deps.persistence.scheduleSave(entity);
+          savePromises.push(this.deps.persistence.scheduleSave(entity));
           changed.push(entity);
         }
       }
+      await Promise.all(savePromises);
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
@@ -460,13 +443,15 @@ export class EntityMutationService {
     if (modifiedIds.length > 0) {
       this.entities = entities;
       const changed: LocalEntity[] = [];
+      const savePromises: Promise<void>[] = [];
       for (const id of modifiedIds) {
         const entity = entities[id];
         if (entity) {
-          await this.deps.persistence.scheduleSave(entity);
+          savePromises.push(this.deps.persistence.scheduleSave(entity));
           changed.push(entity);
         }
       }
+      await Promise.all(savePromises);
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
