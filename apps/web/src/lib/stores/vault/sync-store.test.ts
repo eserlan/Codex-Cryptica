@@ -3,6 +3,8 @@ import { createMockOpfs } from "../../../tests/mocks/storage";
 import { cacheService } from "../../services/cache.svelte";
 import { SyncStore } from "./sync-store.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { appEventBus } from "@codex/events";
+import { vaultEventBus } from "./events.svelte";
 
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
@@ -510,6 +512,197 @@ describe("SyncStore", () => {
       await testStore.loadFromFolder();
       expect(pullSpy).toHaveBeenCalled();
       expect(flushPendingSavesSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("Failure Modes & Race Conditions", () => {
+    it("US2: loadFromFolder sets needs-permission on permission denial", async () => {
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("prompt"),
+        requestPermission: vi.fn().mockResolvedValue("denied"),
+      };
+      const pullSpy = vi.fn();
+
+      const storeWithMockFolder = new SyncStore({
+        activeVaultId: () => "vault-1",
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          pull: pullSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await storeWithMockFolder.loadFromFolder();
+
+      expect(mockFolderHandle.queryPermission).toHaveBeenCalled();
+      expect(mockFolderHandle.requestPermission).toHaveBeenCalled();
+      expect(pullSpy).not.toHaveBeenCalled();
+      expect(storeWithMockFolder.status).toBe("needs-permission");
+      expect(storeWithMockFolder.errorMessage).toBe(
+        "Permission denied for local folder.",
+      );
+    });
+
+    it("aborts loadFiles early and does not emit completion events if vault is switched during loading", async () => {
+      let resolveLoadFiles: () => void = () => {};
+      const loadFilesPromise = new Promise<void>((resolve) => {
+        resolveLoadFiles = resolve;
+      });
+      repository.loadFiles.mockReturnValue(loadFilesPromise);
+
+      let activeVault = "vault-1";
+      const testStore = new SyncStore({
+        activeVaultId: () => activeVault,
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue(null),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(null),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const vaultOpeningSpy = vi.spyOn(vaultEventBus, "emit");
+
+      // Start loadFiles (which waits on loadFilesPromise)
+      const runLoad = testStore.loadFiles(false);
+
+      expect(testStore.status).toBe("loading");
+
+      // Mid-execution: Switch vault ID
+      activeVault = "vault-2";
+
+      // Resolve the loadFiles promise
+      resolveLoadFiles();
+      await runLoad;
+
+      // Verify that loadMaps and updateEntityCount were NOT called for vault-1
+      expect(testStore.deps.loadMaps).not.toHaveBeenCalled();
+      expect(testStore.deps.updateEntityCount).not.toHaveBeenCalled();
+
+      // Verify that SYNC_COMPLETE was NOT emitted for vault-1
+      const syncCompleteEmitted = vaultOpeningSpy.mock.calls.some(
+        (call) =>
+          call[0].type === "SYNC_COMPLETE" && call[0].vaultId === "vault-1",
+      );
+      expect(syncCompleteEmitted).toBe(false);
+    });
+
+    it("aborts saveToFolder early and does not update registry or emit complete event if vault is switched during execution", async () => {
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      let resolvePush: (value: any) => void = () => {};
+      const pushPromise = new Promise<void>((resolve) => {
+        resolvePush = resolve;
+      });
+
+      const pushSpy = vi.fn().mockReturnValue(pushPromise);
+      let activeVault = "vault-1";
+
+      const testStore = new SyncStore({
+        activeVaultId: () => activeVault,
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          push: pushSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const appEventEmitSpy = vi.spyOn(appEventBus, "emit");
+
+      const runSave = testStore.saveToFolder();
+
+      // Switch vault ID mid-save
+      activeVault = "vault-2";
+
+      resolvePush(undefined);
+      await runSave;
+
+      // Verify that SYNC:LOCAL_PUSH_COMPLETE was NOT emitted for vault-1
+      const pushCompleteEmitted = appEventEmitSpy.mock.calls.some(
+        (call) =>
+          call[0].type === "SYNC:LOCAL_PUSH_COMPLETE" &&
+          call[0].payload?.vaultId === "vault-1",
+      );
+      expect(pushCompleteEmitted).toBe(false);
+
+      // Verify status was not set to "saved" for the new or old vault
+      expect(testStore.status).not.toBe("saved");
+    });
+
+    it("aborts loadFromFolder early and does not loadFiles or emit complete event if vault is switched during execution", async () => {
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      let resolvePull: (value: any) => void = () => {};
+      const pullPromise = new Promise<void>((resolve) => {
+        resolvePull = resolve;
+      });
+
+      const pullSpy = vi.fn().mockReturnValue(pullPromise);
+      let activeVault = "vault-1";
+
+      const testStore = new SyncStore({
+        activeVaultId: () => activeVault,
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({
+          pull: pullSpy,
+        } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const appEventEmitSpy = vi.spyOn(appEventBus, "emit");
+      const loadFilesSpy = vi
+        .spyOn(testStore, "loadFiles")
+        .mockResolvedValue(undefined);
+
+      const runLoad = testStore.loadFromFolder();
+
+      // Switch vault ID mid-load
+      activeVault = "vault-2";
+
+      resolvePull(undefined);
+      await runLoad;
+
+      // Verify that SYNC:LOCAL_PULL_COMPLETE was NOT emitted for vault-1
+      const pullCompleteEmitted = appEventEmitSpy.mock.calls.some(
+        (call) =>
+          call[0].type === "SYNC:LOCAL_PULL_COMPLETE" &&
+          call[0].payload?.vaultId === "vault-1",
+      );
+      expect(pullCompleteEmitted).toBe(false);
+
+      // Verify loadFiles was NOT called on the store
+      expect(loadFilesSpy).not.toHaveBeenCalled();
     });
   });
 });

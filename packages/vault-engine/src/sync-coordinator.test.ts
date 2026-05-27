@@ -263,5 +263,38 @@ describe("SyncCoordinator", () => {
 
       expect(mockEngine.sync).not.toHaveBeenCalled();
     });
+
+    it("should handle AbortError thrown during sync and revert status to idle", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      const abortError = new Error("aborted");
+      abortError.name = "AbortError";
+      mockEngine.sync.mockRejectedValue(abortError);
+
+      const onStateChange = vi.fn();
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        "pull",
+        {},
+        vi.fn().mockResolvedValue(undefined),
+        onStateChange,
+        vi.fn(),
+      );
+
+      expect(onStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "loading", syncType: "local" }),
+      );
+      expect(onStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "idle", syncType: null }),
+      );
+      expect(onStateChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({ status: "error" }),
+      );
+    });
   });
 });
