@@ -14,6 +14,12 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     entities: {
       "target-1": { id: "target-1", title: "Target 1" },
       "source-1": { id: "source-1", title: "Source 1" },
+      "parent-entity": { id: "parent-entity", title: "Parent Entity" },
+      "child-entity": {
+        id: "child-entity",
+        title: "Child Entity",
+        parent: "entity-1",
+      },
     },
     inboundConnections: {
       "entity-1": [
@@ -24,6 +30,8 @@ vi.mock("$lib/stores/vault.svelte", () => ({
       ],
     },
     removeConnection: vi.fn(),
+    addConnection: vi.fn().mockResolvedValue(true),
+    updateEntity: vi.fn().mockResolvedValue(true),
   },
 }));
 
@@ -80,7 +88,7 @@ describe("DetailStatusTab", () => {
     expect(screen.getByText("Source 1")).toBeTruthy();
 
     const deleteButtons = screen.getAllByLabelText("Delete connection");
-    expect(deleteButtons).toHaveLength(2);
+    expect(deleteButtons).toHaveLength(3);
   });
 
   it("calls vault.removeConnection when deleting an outbound connection", async () => {
@@ -138,5 +146,45 @@ describe("DetailStatusTab", () => {
     });
 
     expect(screen.queryByLabelText("Delete connection")).toBeNull();
+  });
+
+  it("renders child and parent connections successfully", () => {
+    const testEntity = {
+      ...mockEntity,
+      parent: "parent-entity",
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.getByText("Parent Entity")).toBeTruthy();
+    expect(screen.getByText("Child Entity")).toBeTruthy();
+    expect(screen.getByText("Parent")).toBeTruthy();
+    expect(screen.getByText("Child")).toBeTruthy();
+  });
+
+  it("toggles inline connection form and can cancel or connect", async () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    // Toggle form on
+    const addBtn = screen.getByLabelText("Add new connection");
+    await fireEvent.click(addBtn);
+
+    // Verify form fields
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
   });
 });
