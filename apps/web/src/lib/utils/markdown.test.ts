@@ -160,4 +160,98 @@ describe("markdown.ts utility", () => {
       expect(lines[1]).toContain("updatedAt: 1000");
     });
   });
+
+  describe("Vault Round-Trip Integration", () => {
+    it("should serialize a fully populated entity and re-parse it with full fidelity", () => {
+      const fullEntity = {
+        id: "eldrin-shadoweaver",
+        type: "character",
+        title: "Eldrin Shadoweaver",
+        tags: ["mage", "shadow", "ancient"],
+        labels: ["important", "past"],
+        aliases: ["The Shadow Mage", "Eldrin"],
+        connections: [
+          {
+            targetId: "shadow-keep",
+            type: "located_in",
+            label: "Home Sanctuary",
+          },
+        ],
+        content:
+          "# Eldrin Shadoweaver\nAn ancient shadow mage who dwells in the keeping of shadows.",
+        lore: "He was born before the first moon fell.",
+        image: "images/eldrin.png",
+        thumbnail: "images/eldrin_thumb.png",
+        date: {
+          precision: "day",
+          year: 1240,
+          unitId: "january",
+          day: 12,
+          calendarRevision: 1,
+        },
+        start_date: {
+          precision: "year",
+          year: 1100,
+          calendarRevision: 1,
+        },
+        end_date: {
+          precision: "year",
+          year: 1300,
+          calendarRevision: 1,
+        },
+        metadata: {
+          coordinates: { x: 150, y: 350 },
+          width: 200,
+          height: 100,
+        },
+        status: "active",
+        discoverySource: "ancient-scrolls",
+        lastUpdated: 1716800000000,
+        updatedAt: 1716800000000,
+        parent: "mage-guild",
+        soundBite: {
+          transcript: "The shadows whisper of things to come.",
+          voiceMode: "entity",
+          voiceProfile: {
+            gender: "male",
+            ageRange: "elder",
+            tone: "gravelly",
+          },
+        },
+        visibility: "visible",
+      };
+
+      const serialized = stringifyEntity(fullEntity as any);
+
+      const parsedResult = parseMarkdown(serialized);
+
+      // Verify frontmatter metadata parses back correctly
+      expect(parsedResult.metadata.id).toBe(fullEntity.id);
+      expect(parsedResult.metadata.type).toBe(fullEntity.type);
+      expect(parsedResult.metadata.title).toBe(fullEntity.title);
+      expect(parsedResult.metadata.tags).toEqual(fullEntity.tags);
+      expect(parsedResult.metadata.labels).toEqual(fullEntity.labels);
+      expect(parsedResult.metadata.aliases).toEqual(fullEntity.aliases);
+      expect(parsedResult.metadata.connections).toEqual(fullEntity.connections);
+      expect(parsedResult.metadata.lore).toBe(fullEntity.lore);
+      expect(parsedResult.metadata.image).toBe(fullEntity.image);
+      expect(parsedResult.metadata.thumbnail).toBe(fullEntity.thumbnail);
+      expect(parsedResult.metadata.date).toEqual(fullEntity.date);
+      expect(parsedResult.metadata.start_date).toEqual(fullEntity.start_date);
+      expect(parsedResult.metadata.end_date).toEqual(fullEntity.end_date);
+      expect(parsedResult.metadata.metadata).toEqual(fullEntity.metadata);
+      expect(parsedResult.metadata.status).toBe(fullEntity.status);
+      expect(parsedResult.metadata.discoverySource).toBe(
+        fullEntity.discoverySource,
+      );
+      expect(parsedResult.metadata.lastUpdated).toBe(fullEntity.lastUpdated);
+      expect(parsedResult.metadata.updatedAt).toBe(fullEntity.updatedAt);
+      expect(parsedResult.metadata.parent).toBe(fullEntity.parent);
+      expect(parsedResult.metadata.soundBite).toEqual(fullEntity.soundBite);
+      expect(parsedResult.metadata.visibility).toBe(fullEntity.visibility);
+
+      // Verify content parses back correctly
+      expect(parsedResult.content.trim()).toBe(fullEntity.content.trim());
+    });
+  });
 });
