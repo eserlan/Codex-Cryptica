@@ -1,0 +1,3 @@
+[test]
+watch = false
+preload = ["./tests/bun-preload.ts"]
