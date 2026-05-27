@@ -425,7 +425,7 @@
 
             <div class="space-y-1">
               <label
-                for="new-connection-target"
+                for="new-connection-target-mobile"
                 class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
                 >Target Entity</label
               >
@@ -440,7 +440,7 @@
 
             <div class="space-y-1">
               <label
-                for="new-connection-type"
+                for="new-connection-type-mobile"
                 class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
                 >Relationship Type</label
               >
@@ -458,7 +458,7 @@
 
             <div class="space-y-1">
               <label
-                for="new-connection-label"
+                for="new-connection-label-mobile"
                 class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
                 >Custom Label (Optional)</label
               >

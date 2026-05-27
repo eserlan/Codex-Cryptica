@@ -58,6 +58,13 @@ vi.mock("./proposals/DetailProposals.svelte", () => ({
   default: vi.fn(),
 }));
 
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+  const mod = await import("./MockAutocomplete.svelte");
+  return {
+    default: mod.default,
+  };
+});
+
 describe("DetailStatusTab", () => {
   const mockEntity = {
     id: "entity-1",
@@ -186,5 +193,28 @@ describe("DetailStatusTab", () => {
     // Verify form fields
     expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
+
+    // Fill in target using our MockAutocomplete
+    const autocompleteInput = screen.getByTestId("mock-autocomplete");
+    await fireEvent.input(autocompleteInput, { target: { value: "Target 1" } });
+
+    // Fill custom label
+    const customLabelInput = screen.getByPlaceholderText(
+      "e.g. Ally, Rivalling, Secret",
+    );
+    await fireEvent.input(customLabelInput, {
+      target: { value: "Special Friend" },
+    });
+
+    // Submit
+    const connectBtn = screen.getByRole("button", { name: /^connect$/i });
+    await fireEvent.click(connectBtn);
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "target-1",
+      "related_to",
+      "Special Friend",
+    );
   });
 });

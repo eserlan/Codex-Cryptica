@@ -53,18 +53,24 @@
 
     try {
       isConnecting = true;
-      await vault.addConnection(entity.id, newConnectionTargetId, {
-        type: newConnectionType,
-        label: newConnectionLabel.trim() || undefined,
-      });
+      const success = await vault.addConnection(
+        entity.id,
+        newConnectionTargetId,
+        newConnectionType,
+        newConnectionLabel.trim() || undefined,
+      );
 
-      // Reset state
-      isAddingConnection = false;
-      newConnectionTargetName = "";
-      newConnectionTargetId = null;
-      newConnectionType = "related_to";
-      newConnectionLabel = "";
-      addConnectionError = null;
+      if (success) {
+        // Reset state
+        isAddingConnection = false;
+        newConnectionTargetName = "";
+        newConnectionTargetId = null;
+        newConnectionType = "related_to";
+        newConnectionLabel = "";
+        addConnectionError = null;
+      } else {
+        addConnectionError = "Failed to add connection.";
+      }
     } catch (err: any) {
       addConnectionError = err.message || "Failed to add connection.";
     } finally {
