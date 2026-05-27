@@ -1,103 +1,108 @@
 # Bun Native Test Migration Blueprint
 
-This document details an engineering blueprint to migrate eligible pure TypeScript packages from Vitest to native **Bun Test (`bun test`)**. By decoupling logic testing from Node.js-based test runners, we can accelerate execution speeds for our **1,500+ unit tests** from tens of seconds to sub-second runtimes.
+This blueprint tracks a staged migration from Vitest to native `bun test` for packages that are safe to run without Vite, Svelte transforms, or browser-heavy test harnesses.
 
----
+The first local compatibility probe was run on 2026-05-27 with Bun 1.3.14:
 
-## 📊 Package Eligibility Assessment
-
-A review of the workspace structure shows that the codebase is split cleanly into a SvelteKit web application and a collection of decoupled, domain-specific logic packages.
-
-Below is the migration categorization for each workspace package:
-
-| Package                          | Purpose / Domain                          | Primary Type | Migration Compatibility                 | Recommended Action                         |
-| :------------------------------- | :---------------------------------------- | :----------- | :-------------------------------------- | :----------------------------------------- |
-| **`packages/dice-engine`**       | Randomization & Dice Syntax Parser        | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/events`**            | Event Bus & Cross-tab Broadcaster         | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/chronology-engine`** | Temporal Calendar Math & Timelines        | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/map-engine`**        | Vector math, Session structures           | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/schema`**            | Shared Zod Schemas & Validation           | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/proposer`**          | Node connection suggestion algorithms     | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/search-engine`**     | FlexSearch Indexing Configs               | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/canvas-engine`**     | Spatial Coordinates & Operations          | Pure TS      | 🟢 **100% (Instant)**                   | Move to `bun test` immediately             |
-| **`packages/sync-engine`**       | OPFS / Cloud Sync Reconcilers             | Pure TS      | 🟡 **High (Requires Node Mock)**        | Migrate with light browser API polyfills   |
-| **`packages/importer`**          | Document/Data Parsing Engines (PDF, DOCX) | Pure TS      | 🟡 **High (Uses Node fs)**              | Migrate (Bun natively supports Node APIs)  |
-| **`packages/editor-core`**       | Markdown Editor Algorithms & AST          | Pure TS      | 🟡 **High (Requires DOM mock)**         | Migrate using `happy-dom` in `bunfig.toml` |
-| **`packages/graph-engine`**      | Cytoscape.js wrappers and styling         | Hybrid / Web | 🔴 **Medium (Cytoscape uses DOM)**      | Leave in Vitest or use HappyDOM plugin     |
-| **`packages/oracle-engine`**     | AI context retrieval and parsing          | Hybrid / Web | 🔴 **Medium (Tied to DOM/Web Workers)** | Leave in Vitest                            |
-| **`apps/web`**                   | Svelte 5 UI, Router, components           | Svelte 5 UI  | 🔴 **Not recommended (Web/Svelte)**     | Leave in Vitest                            |
-
----
-
-## 🚀 Step-by-Step Implementation Guide
-
-To move pure TS packages to `bun test` without breaking the Svelte integration inside `apps/web`, we will configure a **Hybrid Test Pipeline**.
-
-### Step 1: Initialize Bun Test Configuration
-
-Create a global `bunfig.toml` at the root of the workspace to set up test runner behaviors:
-
-```toml
-# bunfig.toml
-[test]
-# Watch files for fast development feedback loops
-watch = false
-# Setup preload for environment polyfills if needed
-preload = ["./tests/bun-preload.ts"]
+```text
+bun test packages
+548 pass, 186 fail, 2 errors, 734 tests, 2.86s
 ```
 
-If some packages require minimal DOM mocking (e.g. `window`, `document`), add them in `tests/bun-preload.ts`:
+That result confirms the migration should be incremental. Some packages run cleanly under Bun today, while others depend on Svelte rune transforms, Vitest-only helper APIs, browser globals, DOM/canvas APIs, or package-specific mocks.
 
-```typescript
-// tests/bun-preload.ts
-import { GlobalWindow } from "happy-dom";
+## Phase 1 Scope
 
-if (typeof window === "undefined") {
-  const window = new GlobalWindow();
-  globalThis.window = window as any;
-  globalThis.document = window.document as any;
-}
-```
+Move only the packages that passed local `bun test` probes without code changes:
 
-### Step 2: Update Eligible `package.json` Test Scripts
+| Package                      | Probe Result    | Phase 1 Action                  |
+| :--------------------------- | :-------------- | :------------------------------ |
+| `packages/chronology-engine` | 39 pass, 0 fail | Set `test` script to `bun test` |
+| `packages/dice-engine`       | 18 pass, 0 fail | Set `test` script to `bun test` |
+| `packages/editor-core`       | 41 pass, 0 fail | Set `test` script to `bun test` |
+| `packages/schema`            | 47 pass, 0 fail | Set `test` script to `bun test` |
 
-For every `🟢 100% compatible` package (e.g., `packages/chronology-engine/package.json`), replace the test script:
+Keep `test:coverage` on Vitest during phase 1. Bun-native coverage can be evaluated separately after the basic runner migration is stable.
 
-```json
-{
-  "name": "chronology-engine",
-  "scripts": {
--   "test": "vitest run",
-+   "test": "bun test"
-  }
-}
-```
+## Phase 2 Complete
 
-### Step 3: Run the Global Pipeline
+Move the next pure TypeScript package after fixing Bun-compatible test assertions:
 
-You can continue to orchestrate your workspace using Bun filters. Your CI and pre-commit pipelines will run instantaneously because Bun will execute `bun test` on eligible packages in parallel, running the remaining web tests via Vitest:
+| Package                  | Probe Result    | Phase 2 Action                  |
+| :----------------------- | :-------------- | :------------------------------ |
+| `packages/search-engine` | 45 pass, 0 fail | Set `test` script to `bun test` |
 
-```bash
-# Run all workspace tests (both bun test and vitest packages)
-bun run test
+Phase 2 kept `test:coverage` on Vitest. The package tests still import Vitest test helpers so the existing coverage command continues to work, but the default package test command now runs through Bun.
 
-# Run only pure tests instantly during active TDD:
-bun test packages/chronology-engine packages/dice-engine
-```
+The required test changes were limited to runner compatibility:
 
----
+- Added an explicit `beforeEach` import in `tests/smoke.test.ts`.
+- Replaced `await expect(promise).resolves.not.toThrow()` patterns with direct `await` calls followed by concrete state assertions.
 
-## ⚡ Speed Projections (Vitest vs. Bun Test)
+## Phase 3 Scope
 
-Based on benchmarks of Svelte-related business logic, migrating **800+ of your 1,500 tests** (the pure logic subset) to native Bun Test will reduce compilation and run overhead to virtually zero:
+Move two small packages after replacing Vitest-only helper APIs with runner-compatible test setup:
 
-```
-[Current Vitest Execution for Logic Tests] ⏱️ 12.0s - 18.0s
-[Proposed Bun Test Execution for Logic Tests] ⏱️ 0.15s - 0.4s
-```
+| Package             | Probe Result    | Phase 3 Action                  |
+| :------------------ | :-------------- | :------------------------------ |
+| `packages/proposer` | 22 pass, 0 fail | Set `test` script to `bun test` |
+| `packages/events`   | 13 pass, 0 fail | Set `test` script to `bun test` |
 
-- **95%+ Reduction in TDD Latency**: Your logic unit-tests will complete before your editor finishes autosaving.
-- **Smarter Resource Usage**: Bun avoids spawning dozens of heavy Node.js runtime instances across your Turborepo workspace.
+Phase 3 also keeps `test:coverage` on Vitest for both packages.
+
+The required test changes were limited to compatibility:
+
+- Replaced `vi.mocked(GoogleGenerativeAI)` in `packages/proposer` with direct prototype assignment through a small `useMockModel` helper.
+- Replaced `vi.stubGlobal` / `vi.unstubAllGlobals` in `packages/events` with explicit `globalThis.BroadcastChannel` save and restore logic.
+
+## Phase 4 Scope
+
+Move the largest remaining pure-package candidate after replacing fake-timer-dependent retry tests with injected retry delays:
+
+| Package                | Probe Result    | Phase 4 Action                  |
+| :--------------------- | :-------------- | :------------------------------ |
+| `packages/sync-engine` | 82 pass, 0 fail | Set `test` script to `bun test` |
+
+Phase 4 keeps `test:coverage` on Vitest.
+
+The required changes were focused on dependency injection and test-runner compatibility:
+
+- Added optional wait/delay injection to `FileSystemBackend` and `GDriveBackend`, preserving real `setTimeout` delays by default.
+- Updated retry tests to inject a resolved wait function instead of relying on `vi.runAllTimersAsync` or `vi.advanceTimersByTimeAsync`.
+- Replaced a `vi.mocked(...)` call in `OpfsBackend` tests with a direct typed mock function cast.
+- Replaced one `await expect(promise).resolves.not.toThrow()` with direct `await`.
+
+## Current Boundary
+
+Phases 1 through 4 cover the low-risk pure-package migration for this PR. There are no remaining obvious default `test` script switches that should be folded into the same change without introducing broader harness work.
+
+That does not mean Bun-native testing is exhausted. Further improvements should be tracked as follow-up work:
+
+- Audit deferred packages that may only be blocked by small Vitest compatibility assumptions.
+- Keep `test:coverage` on Vitest until Bun coverage can replace the current package coverage workflow cleanly.
+- Improve timing and reporting notes so future migrations compare package counts and runtime consistently.
+- Treat `apps/web` as a separate migration problem because Svelte, browser, and DOM-heavy tests need a dedicated harness strategy.
+
+## Deferred Packages
+
+These packages should stay on Vitest until their failure modes are handled explicitly:
+
+| Package                  | Current Bun Failure Mode                                           | Recommendation                                                          |
+| :----------------------- | :----------------------------------------------------------------- | :---------------------------------------------------------------------- |
+| `packages/canvas-engine` | Svelte rune globals such as `$state` are not transformed by Bun    | Keep on Vitest unless the Svelte-stateful code is split from pure logic |
+| `packages/graph-engine`  | `vi.stubGlobal`, DOM, worker, and Cytoscape-style test assumptions | Keep on Vitest for now                                                  |
+| `packages/importer`      | Missing browser APIs such as `FileReader` and `DOMMatrix`          | Add targeted polyfills or keep on Vitest                                |
+| `packages/map-engine`    | Canvas renderer tests need canvas/browser mocks                    | Keep on Vitest until a Bun canvas harness exists                        |
+| `packages/oracle-engine` | Svelte rune globals, browser globals, and Vitest-only helpers      | Keep on Vitest                                                          |
+| `packages/vault-engine`  | Svelte rune globals such as `$state` are not transformed by Bun    | Keep on Vitest unless pure repository logic is separated                |
+
+## Migration Rules
+
+- Migrate package-by-package only after `bun test <package>` passes locally.
+- Do not classify packages containing `.svelte.ts` rune code as pure TypeScript unless their tests avoid the rune-backed modules or use a working transform.
+- Keep browser, DOM, canvas, worker, and IndexedDB-heavy tests on Vitest until Bun-specific preload/polyfill requirements are documented and verified.
+- Prefer explicit imports from `vitest` or `bun:test`; avoid relying on runner globals in package tests.
+- Update this document with measured pass/fail results before expanding the Bun-native scope.
 
 ## Follow-Up Work
 

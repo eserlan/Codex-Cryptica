@@ -18,7 +18,10 @@ describe("FileSystemBackend", () => {
       }),
     };
 
-    backend = new FileSystemBackend(mockRootHandle);
+    backend = new FileSystemBackend(
+      mockRootHandle,
+      vi.fn().mockResolvedValue(undefined),
+    );
   });
 
   describe("scan", () => {
@@ -193,17 +196,11 @@ describe("FileSystemBackend", () => {
         .mockRejectedValueOnce(error)
         .mockResolvedValue(mockFile);
 
-      // We need to mock setTimeout or it will take a while
-      vi.useFakeTimers();
       const uploadPromise = backend.upload("test.md", new Blob(["data"]));
-
-      // Wait for the retry timer
-      await vi.runAllTimersAsync();
 
       const result = await uploadPromise;
       expect(result.path).toBe("test.md");
       expect(mockRootHandle.getFileHandle).toHaveBeenCalledTimes(3); // 1st try (fail), 2nd try (success), 3rd try (final verification)
-      vi.useRealTimers();
     });
 
     it("should abort on write failure", async () => {
@@ -228,21 +225,12 @@ describe("FileSystemBackend", () => {
       error.name = "NotFoundError";
       mockRootHandle.getFileHandle.mockRejectedValue(error);
 
-      vi.useFakeTimers();
       const uploadPromise = backend.upload("test.md", new Blob(["data"]));
 
       // Catch it early to avoid unhandled rejection in Vitest
       uploadPromise.catch(() => {});
 
-      // Wait for all retries (3 tries total)
-      // 1st attempt fails immediately
-      await vi.advanceTimersByTimeAsync(1000); // 1st retry delay
-      // 2nd attempt fails
-      await vi.advanceTimersByTimeAsync(2000); // 2nd retry delay
-      // 3rd attempt fails and rethrows original error
-
       await expect(uploadPromise).rejects.toThrow("Not found");
-      vi.useRealTimers();
     });
 
     it("should handle Directory NotFoundError in resolveFileHandle", async () => {
