@@ -1,6 +1,6 @@
 ---
 name: codex-review
-description: Specialist code review for Codex-Cryptica project. Use to identify race conditions, AI parsing issues, worker proxy mismatches, and project-specific anti-patterns in Svelte 5 and TypeScript.
+description: Specialist code review for Codex-Cryptica project. Use to identify race conditions, AI parsing issues, worker proxy mismatches, and project-specific anti-patterns in Svelte 5 and TypeScript. Always initiates and incorporates the general review processes defined in `code-review:code-review`.
 ---
 
 # Codex Review
@@ -13,9 +13,10 @@ This skill provides a meticulous code review process tailored specifically for t
 2. **Check for Race Conditions**: Audit all async event handlers in `.svelte` files (e.g., `handleCommit`, `handleSave`). Ensure `isCommitting` guards are present.
 3. **Verify AI Grounding**: In `oracle-parser.ts`, ensure regex patterns for deterministic commands use `\s*$` to prevent matching when additional user descriptions are provided.
 4. **Audit Worker Proxies**: If a new AI method is added to `TextGenerationService`, verify it is correctly exposed in `oracle.worker.ts` and bound in `OracleStore`.
-5. **Enforce Performance Heuristics**: Ensure synchronous AI processing in loops (like auto-archive) is limited to small batches (< 5).
-6. **Check Accessibility**: Ensure `Autocomplete` components have `ariaLabel` and that icons follow the Iconify class pattern.
-7. **Verify HTML & JS Semantics**: Ensure all action buttons have explicit `type="button"`, coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, and avoid user-agent sniffing by using environment flags like `import.meta.env.MODE === "test"`.
+5. **Enforce Performance Heuristics**: Ensure synchronous AI processing in loops (like auto-archive) is limited to small batches (< 5), and check that simple selection/click gestures do not trigger unconditional disk/database writes.
+6. **Check Accessibility**: Ensure `Autocomplete` components have `ariaLabel`, icons follow the Iconify class pattern, and transition elements that fade out or hide are dynamically given `aria-hidden` attributes to keep the accessibility tree clean.
+7. **Verify HTML & JS Semantics**: Ensure all action buttons have explicit `type="button"`, coordinate/number fallbacks use nullish coalescing (`??`) rather than logical OR to prevent falsy `0` bugs, avoid user-agent sniffing, and ensure highly-interactive canvas or map dragging interfaces use pointer displacement gates (e.g., 5px threshold) to prevent micro-movement drift on simple clicks.
+8. **Incorporate General Branch Review**: Initiate and perform the complete branch changes review defined in `code-review:code-review`, applying the comprehensive guidelines, reviewer persona, and critical constraints set by `code-review:code-review-commons` to audit code quality, style, and correctness.
 
 ## Review Output Guidelines
 
@@ -34,3 +35,4 @@ For detailed examples of anti-patterns and the preferred implementations, refer 
 - "Perform a /codex-review of these changes."
 - "Review my Svelte 5 component for race conditions."
 - "Check if my new AI command parser is robust."
+- "Run codex-review and code-review:code-review on my branch changes."

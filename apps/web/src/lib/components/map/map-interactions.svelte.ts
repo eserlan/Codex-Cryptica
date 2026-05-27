@@ -32,6 +32,12 @@ export class MapInteractionManager {
     tokenId: string;
     offset: { x: number; y: number };
   } | null>(null);
+  pinDragState = $state<{
+    pinId: string;
+    originalCoordinates?: { x: number; y: number };
+    hasMoved?: boolean;
+    offset: { x: number; y: number };
+  } | null>(null);
   contextMenu = $state<{
     x: number;
     y: number;
@@ -196,6 +202,30 @@ export class MapInteractionManager {
       }
     }
 
+    if (this.cachedRect && e.button === 0 && !e.altKey) {
+      const clickedPin = findClickedPin(
+        mapStore.pins,
+        (point) => mapStore.project(point),
+        this.lastMousePos.x,
+        this.lastMousePos.y,
+      );
+
+      if (clickedPin) {
+        const imgPoint = mapStore.unproject(this.lastMousePos);
+        this.pinDragState = {
+          pinId: clickedPin.id,
+          originalCoordinates: { ...clickedPin.coordinates },
+          hasMoved: false,
+          offset: {
+            x: imgPoint.x - clickedPin.coordinates.x,
+            y: imgPoint.y - clickedPin.coordinates.y,
+          },
+        };
+        this.isPanning = false;
+        return;
+      }
+    }
+
     if (mapSession.gridMoveMode && mapStore.isGMMode && this.cachedRect) {
       e.preventDefault();
       e.stopPropagation();
@@ -244,6 +274,30 @@ export class MapInteractionManager {
       } else {
         mapSession.requestTokenMove(this.dragState.tokenId, nextX, nextY, true);
         p2pGuestService.requestTokenMove(this.dragState.tokenId, nextX, nextY);
+      }
+      this.lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
+    if (this.pinDragState) {
+      if (mapStore.isGMMode && !sessionModeStore.isGuestMode) {
+        const dist = Math.sqrt(
+          Math.pow(mouseX - this.mouseDownPos.x, 2) +
+            Math.pow(mouseY - this.mouseDownPos.y, 2),
+        );
+        if (dist >= 5) {
+          this.pinDragState.hasMoved = true;
+        }
+
+        if (this.pinDragState.hasMoved) {
+          const imgPoint = mapStore.unproject({ x: mouseX, y: mouseY });
+          const nextX = imgPoint.x - this.pinDragState.offset.x;
+          const nextY = imgPoint.y - this.pinDragState.offset.y;
+          mapStore.updatePinCoordinatesInMemory(this.pinDragState.pinId, {
+            x: nextX,
+            y: nextY,
+          });
+        }
       }
       this.lastMousePos = { x: mouseX, y: mouseY };
       return;
@@ -335,6 +389,39 @@ export class MapInteractionManager {
       }
       mapSession.draggingTokenId = null;
       this.dragState = null;
+      this.isPanning = false;
+      return;
+    }
+
+    if (this.pinDragState) {
+      const pinId = this.pinDragState.pinId;
+      const originalCoordinates = this.pinDragState.originalCoordinates;
+      const hasMoved = this.pinDragState.hasMoved;
+      this.pinDragState = null;
+
+      const clickGesture = isClickGesture(
+        { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+        { x: e.clientX, y: e.clientY },
+      );
+
+      if (clickGesture) {
+        if (
+          originalCoordinates &&
+          mapStore.isGMMode &&
+          !sessionModeStore.isGuestMode
+        ) {
+          mapStore.updatePinCoordinatesInMemory(pinId, originalCoordinates);
+        }
+        this.selectedPinId = pinId;
+        const pin = mapStore.pins.find((p) => p.id === pinId);
+        if (pin && pin.entityId) {
+          vault.selectedEntityId = pin.entityId;
+        }
+      } else {
+        if (hasMoved && mapStore.isGMMode && !sessionModeStore.isGuestMode) {
+          await vault.saveMaps();
+        }
+      }
       this.isPanning = false;
       return;
     }
@@ -504,7 +591,7 @@ export class MapInteractionManager {
       );
 
       if (hitToken) {
-        const gridSize = mapStore.gridSize || 50;
+        const gridSize = mapStore.gridSize ?? 50;
         const currentScale = Math.round(hitToken.width / gridSize);
         let nextScale = currentScale + (e.deltaY < 0 ? 1 : -1);
         nextScale = Math.max(1, Math.min(4, nextScale));

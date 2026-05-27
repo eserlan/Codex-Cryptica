@@ -8,6 +8,7 @@ const mapStoreMock = vi.hoisted(() => ({
   showFog: true,
   showGrid: false,
   brushRadius: 50,
+  showLabels: true,
 }));
 
 const mapSessionMock = vi.hoisted(() => ({
@@ -54,6 +55,7 @@ describe("MapVTTControlsHUD", () => {
     mapStoreMock.isGMMode = true;
     mapStoreMock.showFog = true;
     mapStoreMock.showGrid = false;
+    mapStoreMock.showLabels = true;
     mapSessionMock.vttEnabled = true;
     mapSessionMock.measurement.active = false;
   });
@@ -69,6 +71,18 @@ describe("MapVTTControlsHUD", () => {
 
     expect(mapStoreMock.showFog).toBe(false);
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
+  });
+
+  it("toggles labels visibility", async () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "LABELS: ON" }));
+
+    expect(mapStoreMock.showLabels).toBe(false);
   });
 
   it("toggles the measurement tool", async () => {

@@ -86,6 +86,32 @@ This reference documents specific anti-patterns and quality standards for the Co
   </div>
   ```
 
+### Pointer Click-Drag Drift Prevention
+
+- **Issue**: On highly interactive coordinate-based canvases, maps, or drag-and-drop grids, simple mouse/pointer click selections can trigger tiny coordinates changes (micro-movements/sub-pixel drift) due to hardware sensitivity or handshake jitters. This causes elements to "drift" from their precise coordinates on a simple selection click.
+- **Pattern**: Implement a pointer displacement gate (e.g., `threshold = 5px`) in mouse/pointer move listeners. Defer initiating dragging states or updating core coordinate variables until the physical distance between the initial pointer position and the current pointer position is equal to or greater than the threshold.
+- **Example**:
+
+  ```typescript
+  // Inside onMouseMove / onPointerMove
+  const dx = currentX - startX;
+  const dy = currentY - startY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  if (!isDragging && distance < 5) {
+    // Gate dragging initialization/coordinate update to prevent click drift
+    return;
+  }
+
+  isDragging = true;
+  updateCoordinates(currentX, currentY);
+  ```
+
+### Visually Hidden Transition Elements & Accessibility Trees
+
+- **Issue**: Elements that use Tailwind transition classes (like `opacity-0`, `scale-95`, or `pointer-events-none`) to fade out or animate away are still present in the DOM. Even when fully invisible to sighted users, they remain visible to assistive technologies (screen readers, keyboard focus tabs, etc.), resulting in an inaccessible experience.
+- **Pattern**: Dynamically apply `aria-hidden="true"` or `inert` to transition elements, modal overlays, or backdrops when their visibility state is closed or hidden, or conditionally unmount them entirely if Svelte transitions are used instead.
+
 ## Event Bus & Lifecycles
 
 ### Subscription Memory Leaks in Stores & Tests
@@ -140,6 +166,29 @@ class FeatureStore {
     for (const label of uniqueLabels) {
       counts[label] = (counts[label] || 0) + 1;
     }
+  }
+  ```
+
+### Guarding Against Unconditional Disk Writes on Click Selections
+
+- **Issue**: Triggering persistent database, vault, or local file-system writes (e.g., `vault.saveMaps()`) on interaction click handlers (like selecting an element or map pin) when no layout, coordinate, or metadata changes have actually occurred. This causes massive I/O performance bottlenecks.
+- **Pattern**: Gate persistence writes to only occur if structural data, coordinates, or core state have actually mutated. Ensure click selection handlers purely modify transient interactive UI state.
+- **Example**:
+
+  ```typescript
+  // Bad: saves every time a pin is selected/clicked
+  function handlePinClick(pinId) {
+    interactions.selectedPinId = pinId;
+    saveMapLayout(); // Redundant write!
+  }
+
+  // Good: separates selection (UI-only) from dragging (persistence-necessary)
+  function handlePinClick(pinId) {
+    interactions.selectedPinId = pinId;
+  }
+  function handlePinDragEnd(pinId, newCoords) {
+    updatePinCoords(pinId, newCoords);
+    saveMapLayout(); // Saved only on actual mutation
   }
   ```
 
