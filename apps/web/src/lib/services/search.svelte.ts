@@ -14,6 +14,19 @@ import { VAULT_EVENTS } from "@codex/vault-engine";
 import { quickNoteStore } from "../stores/quicknote.svelte";
 
 const INDEX_BATCH_SIZE = 100;
+
+// Fields that FlexSearch indexes — used by the BATCH_UPDATED handler to skip
+// re-indexing when none of an entity's searchable fields changed.
+// Keep in sync with mapToSearchEntry().
+const BATCH_UPDATED_SEARCH_FIELDS = new Set([
+  "title",
+  "aliases",
+  "content",
+  "tags",
+  "labels",
+  "lore",
+  "metadata", // fanned into the `keywords` field via Object.values(entity.metadata)
+]);
 const READY_PROGRESS: SearchIndexProgress = {
   status: "idle",
   vaultId: null,
@@ -217,8 +230,24 @@ export class SearchService {
 
             case VAULT_EVENTS.BATCH_UPDATED: {
               const entities = this.normalizeEntities(event.payload.entities);
-              if (entities.length > 0) {
-                await this.indexBatch(entities);
+              if (entities.length === 0) break;
+
+              // Fix #3: Skip re-indexing when only non-search metadata changed.
+              // Check each entity's patch; only queue those that touched a
+              // field FlexSearch actually indexes.
+              const patches: Record<string, Record<string, unknown>> = event
+                .payload.patches ?? {};
+              const entitiesToIndex = entities.filter((e: any) => {
+                const patch = patches[e.id];
+                // No patch entry for this entity → re-index conservatively.
+                if (!patch) return true;
+                return Object.keys(patch).some((k) =>
+                  BATCH_UPDATED_SEARCH_FIELDS.has(k),
+                );
+              });
+
+              if (entitiesToIndex.length > 0) {
+                await this.indexBatch(entitiesToIndex);
               }
               break;
             }
@@ -754,11 +783,14 @@ export class SearchService {
     source: "metadata" | "retry",
     options: { markReady?: boolean; saveOnReady?: boolean } = {},
   ) {
-    const api = await this.ensureWorker();
+    // Fix #1: Don't resolve the worker twice. indexBatch (and this.clear)
+    // each call ensureWorker() themselves; no separate resolution needed here.
     const runId = this.createRunId(vaultId);
     const markReady = options.markReady ?? true;
     const saveOnReady = options.saveOnReady ?? true;
-    this.pendingRetryEntities = entities;
+    // Fix C7: pendingRetryEntities is set AFTER clear() succeeds so that a
+    // failed clear() (e.g. worker torn down) does not overwrite a valid prior
+    // retry list with the new (possibly different) entities array.
     this.emitProgress({
       status: "rebuilding",
       vaultId,
@@ -775,7 +807,8 @@ export class SearchService {
     });
 
     try {
-      await api.clear();
+      await this.clear();
+      this.pendingRetryEntities = entities;
       await this.indexBatch(entities, {
         runId,
         vaultId,
@@ -834,46 +867,46 @@ export class SearchService {
           chunkEntries.push(entry);
         }
         const cleanChunkEntries = $state.snapshot(chunkEntries);
-        if (context && !this.isActiveRun(context.vaultId, context.runId)) {
-          return;
-        }
-        const result: ProgressiveBatchResult = context
-          ? await api.addBatchProgressive(cleanChunkEntries, {
+
+        if (context) {
+          // Fix #2 + #4: Progressive path — single API call, no redundant
+          // fake-result construction. Guard stale runs before every chunk.
+          if (!this.isActiveRun(context.vaultId, context.runId)) return;
+          const result: ProgressiveBatchResult = await api.addBatchProgressive(
+            cleanChunkEntries,
+            {
               runId: context.runId,
               vaultId: context.vaultId,
               batchIndex: Math.floor(i / INDEX_BATCH_SIZE),
               indexedBefore: this.progress.indexedCount,
               totalCount: context.totalCount,
-            })
-          : {
-              runId: "legacy",
-              vaultId: this.activeVaultId ?? "legacy",
-              acceptedCount: cleanChunkEntries.length,
-              failedIds: [],
-            };
-
-        if (!context) {
+            },
+          );
+          if (this.isActiveRun(result.vaultId, result.runId)) {
+            const indexedCount =
+              this.progress.indexedCount + result.acceptedCount;
+            this.emitProgress({
+              status: "partial",
+              vaultId: result.vaultId,
+              runId: result.runId,
+              indexedCount,
+              totalCount: context.totalCount,
+              isPartial: true,
+              canRetry: false,
+              message:
+                context.totalCount === null
+                  ? "Search is still indexing."
+                  : `Search is still indexing (${indexedCount}/${context.totalCount}).`,
+              error:
+                result.failedIds.length > 0
+                  ? `Failed to index ${result.failedIds.length} records.`
+                  : null,
+            });
+          }
+        } else {
+          // Non-progressive path: fire-and-forget batch with no progress
+          // tracking. No fake ProgressiveBatchResult construction needed.
           await api.addBatch(cleanChunkEntries);
-        } else if (this.isActiveRun(result.vaultId, result.runId)) {
-          const indexedCount =
-            this.progress.indexedCount + result.acceptedCount;
-          this.emitProgress({
-            status: "partial",
-            vaultId: result.vaultId,
-            runId: result.runId,
-            indexedCount,
-            totalCount: context.totalCount,
-            isPartial: true,
-            canRetry: false,
-            message:
-              context.totalCount === null
-                ? "Search is still indexing."
-                : `Search is still indexing (${indexedCount}/${context.totalCount}).`,
-            error:
-              result.failedIds.length > 0
-                ? `Failed to index ${result.failedIds.length} records.`
-                : null,
-          });
         }
         await this.delay(0);
       }

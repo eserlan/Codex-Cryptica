@@ -704,5 +704,115 @@ describe("SyncStore", () => {
       // Verify loadFiles was NOT called on the store
       expect(loadFilesSpy).not.toHaveBeenCalled();
     });
+
+    it("resets status to idle after vault-switch during saveToFolder (no frozen save spinner)", async () => {
+      // Regression for review finding C4: onStateChange vault-ID guard
+      // suppresses the final idle transition when vault switches mid-push,
+      // leaving _status stuck at "saving" indefinitely.
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      let resolvePush: (value: any) => void = () => {};
+      let capturedOnStateChange: ((state: any) => void) | null = null;
+
+      const pushSpy = vi
+        .fn()
+        .mockImplementation(
+          (_vaultId, _opfs, _entities, _waitFn, onStateChange) => {
+            capturedOnStateChange = onStateChange;
+            return new Promise((resolve) => {
+              resolvePush = resolve;
+            });
+          },
+        );
+
+      let activeVault = "vault-1";
+      const testStore = new SyncStore({
+        activeVaultId: () => activeVault,
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({ push: pushSpy } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const runSave = testStore.saveToFolder();
+
+      // Flush setup awaits so pushSpy (and therefore capturedOnStateChange)
+      // is populated before we try to invoke the callback.
+      await new Promise((r) => setTimeout(r, 0));
+
+      // Coordinator fires "saving" while vault still matches.
+      capturedOnStateChange?.({ status: "saving", syncType: "local" });
+      expect(testStore.status).toBe("saving");
+
+      // Vault switches — coordinator's final "idle" callback will be suppressed.
+      activeVault = "vault-2";
+
+      resolvePush(undefined);
+      await runSave;
+
+      // The finally block must have cleared the frozen status.
+      expect(testStore.status).toBe("idle");
+    });
+
+    it("resets status to idle after vault-switch during loadFromFolder (no frozen load spinner)", async () => {
+      // Regression for review finding C4: same race on the pull side.
+      const mockFolderHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+
+      let resolvePull: (value: any) => void = () => {};
+      let capturedOnStateChange: ((state: any) => void) | null = null;
+
+      const pullSpy = vi
+        .fn()
+        .mockImplementation(
+          (_vaultId, _opfs, _entities, _waitFn, onStateChange) => {
+            capturedOnStateChange = onStateChange;
+            return new Promise((resolve) => {
+              resolvePull = resolve;
+            });
+          },
+        );
+
+      let activeVault = "vault-1";
+      const testStore = new SyncStore({
+        activeVaultId: () => activeVault,
+        activeVaultRecord: () => mockVaultRecord,
+        repository: repository as any,
+        getSyncCoordinator: vi.fn().mockResolvedValue({ pull: pullSpy } as any),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+        getActiveFolderHandle: vi
+          .fn()
+          .mockResolvedValue(mockFolderHandle as any),
+        ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+        loadMaps: vi.fn().mockResolvedValue(undefined),
+        loadCanvases: vi.fn().mockResolvedValue(undefined),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const runLoad = testStore.loadFromFolder();
+
+      // Flush setup awaits so pullSpy is called and capturedOnStateChange set.
+      await new Promise((r) => setTimeout(r, 0));
+
+      capturedOnStateChange?.({ status: "loading", syncType: "local" });
+      expect(testStore.status).toBe("loading");
+
+      activeVault = "vault-2";
+
+      resolvePull(undefined);
+      await runLoad;
+
+      expect(testStore.status).toBe("idle");
+    });
   });
 });

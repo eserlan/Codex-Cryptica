@@ -130,8 +130,10 @@ export class SyncStore {
     }
   }
 
-  private isStale(vaultIdAtStart: string, signal: AbortSignal): boolean {
-    return this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted;
+  private isStale(vaultIdAtStart: string, signal?: AbortSignal): boolean {
+    return (
+      this.deps.activeVaultId() !== vaultIdAtStart || (signal?.aborted ?? false)
+    );
   }
 
   async loadFiles(skipSyncIfWarm = true) {
@@ -385,41 +387,50 @@ export class SyncStore {
 
     this.failedFiles = [];
 
-    await syncCoordinator.push(
-      vaultIdAtStart,
-      opfsHandle,
-      this.deps.repository.entities,
-      () => this.waitForSaves(),
-      (state) => {
-        if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this.setStatus(state.status);
-          this.syncType = state.syncType;
-          if (state.errorMessage) this.errorMessage = state.errorMessage;
-          if (state.failedFiles) this.failedFiles = state.failedFiles;
-        }
-      },
-      () => this.checkForConflicts(),
-    );
+    try {
+      await syncCoordinator.push(
+        vaultIdAtStart,
+        opfsHandle,
+        this.deps.repository.entities,
+        () => this.waitForSaves(),
+        (state) => {
+          if (this.deps.activeVaultId() === vaultIdAtStart) {
+            this.setStatus(state.status);
+            this.syncType = state.syncType;
+            if (state.errorMessage) this.errorMessage = state.errorMessage;
+            if (state.failedFiles) this.failedFiles = state.failedFiles;
+          }
+        },
+        () => this.checkForConflicts(),
+      );
 
-    if (this.deps.activeVaultId() !== vaultIdAtStart) return;
+      if (this.isStale(vaultIdAtStart)) return;
 
-    if (this._status !== "error") {
-      const { updateLastSavedToFolder } = await import("./registry");
-      await updateLastSavedToFolder(vaultIdAtStart);
+      if (this._status !== "error") {
+        const { updateLastSavedToFolder } = await import("./registry");
+        await updateLastSavedToFolder(vaultIdAtStart);
 
-      appEventBus.emit({
-        type: "SYNC:LOCAL_PUSH_COMPLETE",
-        domain: "sync",
-        payload: { vaultId: vaultIdAtStart },
-        metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
-      });
+        appEventBus.emit({
+          type: "SYNC:LOCAL_PUSH_COMPLETE",
+          domain: "sync",
+          payload: { vaultId: vaultIdAtStart },
+          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+        });
 
-      this.setStatus("saved");
-      this.savedTimer = setTimeout(() => {
-        if (this._status === "saved") {
-          this.setStatus("idle");
-        }
-      }, 3000);
+        this.setStatus("saved");
+        this.savedTimer = setTimeout(() => {
+          if (this._status === "saved") {
+            this.setStatus("idle");
+          }
+        }, 3000);
+      }
+    } finally {
+      // Fix C4: if vault switched mid-save the onStateChange vault-ID guard
+      // suppresses the coordinator's final idle transition, leaving _status
+      // stuck at "saving"/"loading". Reset it so the UI doesn't freeze.
+      if (this._status === "saving" || this._status === "loading") {
+        this.setStatus("idle");
+      }
     }
   }
 
@@ -453,45 +464,55 @@ export class SyncStore {
 
     this.failedFiles = [];
 
-    await syncCoordinator.pull(
-      vaultIdAtStart,
-      opfsHandle,
-      this.deps.repository.entities,
-      () => this.waitForSaves(),
-      (state) => {
-        if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this.setStatus(state.status);
-          this.syncType = state.syncType;
-          if (state.errorMessage) this.errorMessage = state.errorMessage;
-          if (state.failedFiles) this.failedFiles = state.failedFiles;
-        }
-      },
-      () => this.checkForConflicts(),
-    );
+    try {
+      await syncCoordinator.pull(
+        vaultIdAtStart,
+        opfsHandle,
+        this.deps.repository.entities,
+        () => this.waitForSaves(),
+        (state) => {
+          if (this.deps.activeVaultId() === vaultIdAtStart) {
+            this.setStatus(state.status);
+            this.syncType = state.syncType;
+            if (state.errorMessage) this.errorMessage = state.errorMessage;
+            if (state.failedFiles) this.failedFiles = state.failedFiles;
+          }
+        },
+        () => this.checkForConflicts(),
+      );
 
-    if (this.deps.activeVaultId() !== vaultIdAtStart) return;
+      if (this.isStale(vaultIdAtStart)) return;
 
-    if (this._status !== "error") {
-      appEventBus.emit({
-        type: "SYNC:LOCAL_PULL_COMPLETE",
-        domain: "sync",
-        payload: { vaultId: vaultIdAtStart },
-        metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
-      });
+      if (this._status !== "error") {
+        appEventBus.emit({
+          type: "SYNC:LOCAL_PULL_COMPLETE",
+          domain: "sync",
+          payload: { vaultId: vaultIdAtStart },
+          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+        });
 
-      await this.loadFiles();
+        await this.loadFiles();
+      }
+    } finally {
+      // Fix C4: mirror of saveToFolder — reset stuck transitional status
+      // if vault switched while the pull was in flight.
+      if (this._status === "saving" || this._status === "loading") {
+        this.setStatus("idle");
+      }
     }
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
+    const vaultIdAtStart = activeVaultId;
 
     const syncCoordinator = await this.deps.getSyncCoordinator();
     if (!syncCoordinator) return;
 
     const opfsHandle = await this.deps.getActiveVaultHandle();
-    if (!opfsHandle || signal?.aborted) return;
+    // Fix C8: guard vault switch that may have occurred during the awaits above.
+    if (!opfsHandle || this.isStale(vaultIdAtStart, signal)) return;
 
     await syncCoordinator.cleanupConflictFiles(
       activeVaultId,

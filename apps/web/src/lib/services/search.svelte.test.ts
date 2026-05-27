@@ -193,6 +193,137 @@ describe("SearchService — BATCH_CREATED", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Tests: BATCH_CREATED — non-progressive path uses addBatch only (issue #933)
+// ---------------------------------------------------------------------------
+describe("SearchService — BATCH_CREATED non-progressive path", () => {
+  it("calls addBatch but NOT addBatchProgressive for non-progressive indexing", async () => {
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_CREATED, {
+      entities: [makeEntity("e-np-1")],
+    });
+    await flush();
+
+    // Fix #4: single API call — addBatch only, no addBatchProgressive.
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+    expect(api.addBatchProgressive).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests: BATCH_UPDATED — patch-field filtering (issue #933)
+// ---------------------------------------------------------------------------
+describe("SearchService — BATCH_UPDATED patch filtering", () => {
+  it("skips all entities when patches only contain non-search fields", async () => {
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-pf-1"), makeEntity("e-pf-2")],
+      patches: {
+        "e-pf-1": { connections: [] },
+        "e-pf-2": { connections: [] },
+      },
+    });
+    await flush();
+
+    // Fix #3: zero re-index work for connection-only patches.
+    expect(api.addBatch).not.toHaveBeenCalled();
+  });
+
+  it("indexes only the entities whose patch touches a search field", async () => {
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-pf-3"), makeEntity("e-pf-4")],
+      patches: {
+        "e-pf-3": { title: "Updated Title" }, // search-relevant
+        "e-pf-4": { connections: [] }, // not search-relevant
+      },
+    });
+    await flush();
+
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+    const sentEntries = api.addBatch.mock.calls[0][0] as any[];
+    expect(sentEntries).toHaveLength(1);
+    expect(sentEntries[0].id).toBe("e-pf-3");
+  });
+
+  it("re-indexes all entities when patches object is absent", async () => {
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-pf-5"), makeEntity("e-pf-6")],
+      // no patches key at all — conservative fallback: re-index everything
+    });
+    await flush();
+
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+    expect(api.addBatch.mock.calls[0][0]).toHaveLength(2);
+  });
+
+  it("indexes entities whose patch includes content or lore", async () => {
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-pf-7")],
+      patches: { "e-pf-7": { content: "new body text" } },
+    });
+    await flush();
+
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("indexes entities with no patch entry conservatively", async () => {
+    // patches exists but doesn't include every entity ID
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-pf-8"), makeEntity("e-pf-9")],
+      patches: {
+        "e-pf-8": { connections: [] }, // not search-relevant
+        // e-pf-9 has no patch entry → re-index conservatively
+      },
+    });
+    await flush();
+
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+    const sentEntries = api.addBatch.mock.calls[0][0] as any[];
+    expect(sentEntries).toHaveLength(1);
+    expect(sentEntries[0].id).toBe("e-pf-9");
+  });
+
+  it("re-indexes when patch only changes metadata (fans into keywords field)", async () => {
+    // Regression for review finding C1: metadata was absent from SEARCH_FIELDS,
+    // so custom-property changes would silently skip re-indexing.
+    const { api, eventBus } = makeService();
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
+
+    emitVaultEvent(eventBus, VAULT_EVENTS.BATCH_UPDATED, {
+      entities: [makeEntity("e-meta-1")],
+      patches: { "e-meta-1": { metadata: { chapter: "Act 2" } } },
+    });
+    await flush();
+
+    // metadata values are fanned into the FlexSearch `keywords` field via
+    // mapToSearchEntry — must trigger a re-index.
+    expect(api.addBatch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Tests: ENTITY_UPDATED — connection-only patch must NOT trigger indexing
 // ---------------------------------------------------------------------------
 describe("SearchService — ENTITY_UPDATED with connection-only patch", () => {
