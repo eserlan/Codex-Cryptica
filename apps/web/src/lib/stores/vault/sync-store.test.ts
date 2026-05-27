@@ -62,6 +62,7 @@ describe("SyncStore", () => {
       loadMaps: vi.fn().mockResolvedValue(undefined),
       loadCanvases: vi.fn().mockResolvedValue(undefined),
       updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      flushPendingSaves: vi.fn().mockResolvedValue(undefined),
     });
   });
 

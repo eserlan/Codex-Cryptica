@@ -172,8 +172,8 @@ export class EntityStore {
     return this.persistence.scheduleSave(entity);
   }
 
-  async flushPendingSaves(): Promise<void> {
-    return this.persistence.flushPendingSaves();
+  async flushPendingSaves(timeoutMs?: number): Promise<void> {
+    return this.persistence.flushPendingSaves(timeoutMs);
   }
 
   // --- Loader Delegation ---
