@@ -211,15 +211,13 @@ export class VaultRepository {
   ): Promise<void> {
     onStatusChange("saving");
 
-    return this.saveQueue
-      .enqueue(entity.id, async () => {
-        await this.saveToDisk(vaultHandle, activeVaultId, entity, isGuest);
-        onStatusChange("idle");
-      })
-      .catch((err) => {
-        console.error("Save failed for", entity.title, err);
-        onStatusChange("error");
-      });
+    return this.enqueueSave(entity.id, async () => {
+      await this.saveToDisk(vaultHandle, activeVaultId, entity, isGuest);
+      onStatusChange("idle");
+    }).catch((err) => {
+      console.error("Save failed for", entity.title, err);
+      onStatusChange("error");
+    });
   }
 
   async waitForAllSaves(timeoutMs = 8000): Promise<void> {
