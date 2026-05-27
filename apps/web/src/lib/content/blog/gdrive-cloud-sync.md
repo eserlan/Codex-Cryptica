@@ -42,7 +42,7 @@ When you pull from Drive, Codex doesn't re-download everything. It compares what
 
 ## Import from Drive on any device
 
-Already backed up your vault on another machine? Open **Settings → Cloud Sync**, click **Browse Drive**, and Codex lists every vault subfolder it finds in your `CodexCryptica/` folder. One click and the differential pull kicks off — you're back up to speed without copying a single file by hand.
+Already backed up your vault on another machine? Open Settings, choose the **Vault** tab, scroll to the **Cloud Sync** section, and click **Browse Drive**. Codex will list every vault subfolder it finds in your `CodexCryptica/` folder. One click and the differential pull kicks off — you're back up to speed without copying a single file by hand.
 
 ## Share a vault with your co-GM
 
@@ -58,7 +58,7 @@ The first join uses a slightly broader Drive scope so Codex can read a folder it
 
 ## Try it now
 
-Head to **Settings → Cloud Sync** and click **Connect Google Drive**. The first time you connect you'll go through a standard Google OAuth flow — takes about thirty seconds.
+Head to Settings, select the **Vault** tab, scroll to the **Cloud Sync** section, and click **Connect Google Drive**. The first time you connect you'll go through a standard Google OAuth flow — takes about thirty seconds.
 
 If you run into anything, the [help article](/help/gdrive-cloud-sync) has a step-by-step walkthrough.
 

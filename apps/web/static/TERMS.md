@@ -4,17 +4,17 @@ By using Codex Cryptica, you agree to the following terms. This is a local-first
 
 ## 1. Description of Service
 
-Codex Cryptica is a creative writing and lore management tool. It provides local storage, optional folder synchronization, and AI-assisted content generation via Google Gemini.
+Codex Cryptica is a creative writing and lore management tool. It provides local storage, optional folder integration, and AI-assisted content generation via Google Gemini.
 
 ## 2. Data Ownership and Responsibility
 
 - **Your Data:** You own all content you create. We do not have access to your internal archives.
-- **Responsibility:** Since Codex Cryptica stores data locally in your browser (OPFS), you are responsible for maintaining backups. We recommend using the "Sync to Folder" feature to mirror your data to a stable location on your computer.
+- **Responsibility:** Since Codex Cryptica stores data locally in your browser (OPFS), you are responsible for maintaining backups. We recommend using the "Save to Folder" feature to mirror your data to a stable location on your computer.
 - **Loss of Data:** We are not liable for any data loss resulting from browser cache clearing, device failure, or synchronization errors.
 
-## 3. Local Folder Synchronization
+## 3. Local Folder Integration
 
-- **Mechanism:** The synchronization feature uses the Web File System Access API to mirror files between your browser and a local directory.
+- **Mechanism:** The folder saving feature uses the Web File System Access API to mirror files between your browser and a local directory.
 - **Cloud Providers:** If you sync to a folder managed by a third-party service (e.g., Google Drive, Dropbox), you are subject to that provider's terms and conditions. Codex Cryptica is not responsible for the performance or security of these services.
 
 ## 4. AI Content Generation
