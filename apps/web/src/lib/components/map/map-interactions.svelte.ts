@@ -34,6 +34,8 @@ export class MapInteractionManager {
   } | null>(null);
   pinDragState = $state<{
     pinId: string;
+    originalCoordinates?: { x: number; y: number };
+    hasMoved?: boolean;
     offset: { x: number; y: number };
   } | null>(null);
   contextMenu = $state<{
@@ -212,6 +214,8 @@ export class MapInteractionManager {
         const imgPoint = mapStore.unproject(this.lastMousePos);
         this.pinDragState = {
           pinId: clickedPin.id,
+          originalCoordinates: { ...clickedPin.coordinates },
+          hasMoved: false,
           offset: {
             x: imgPoint.x - clickedPin.coordinates.x,
             y: imgPoint.y - clickedPin.coordinates.y,
@@ -276,13 +280,25 @@ export class MapInteractionManager {
     }
 
     if (this.pinDragState) {
-      const imgPoint = mapStore.unproject({ x: mouseX, y: mouseY });
-      const nextX = imgPoint.x - this.pinDragState.offset.x;
-      const nextY = imgPoint.y - this.pinDragState.offset.y;
-      mapStore.updatePinCoordinatesInMemory(this.pinDragState.pinId, {
-        x: nextX,
-        y: nextY,
-      });
+      if (mapStore.isGMMode && !sessionModeStore.isGuestMode) {
+        const dist = Math.sqrt(
+          Math.pow(mouseX - this.mouseDownPos.x, 2) +
+            Math.pow(mouseY - this.mouseDownPos.y, 2),
+        );
+        if (dist >= 5) {
+          this.pinDragState.hasMoved = true;
+        }
+
+        if (this.pinDragState.hasMoved) {
+          const imgPoint = mapStore.unproject({ x: mouseX, y: mouseY });
+          const nextX = imgPoint.x - this.pinDragState.offset.x;
+          const nextY = imgPoint.y - this.pinDragState.offset.y;
+          mapStore.updatePinCoordinatesInMemory(this.pinDragState.pinId, {
+            x: nextX,
+            y: nextY,
+          });
+        }
+      }
       this.lastMousePos = { x: mouseX, y: mouseY };
       return;
     }
@@ -379,19 +395,31 @@ export class MapInteractionManager {
 
     if (this.pinDragState) {
       const pinId = this.pinDragState.pinId;
+      const originalCoordinates = this.pinDragState.originalCoordinates;
+      const hasMoved = this.pinDragState.hasMoved;
       this.pinDragState = null;
-      await vault.saveMaps();
 
-      if (
-        isClickGesture(
-          { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
-          { x: e.clientX, y: e.clientY },
-        )
-      ) {
+      const clickGesture = isClickGesture(
+        { x: this.mouseDownPos.x, y: this.mouseDownPos.y },
+        { x: e.clientX, y: e.clientY },
+      );
+
+      if (clickGesture) {
+        if (
+          originalCoordinates &&
+          mapStore.isGMMode &&
+          !sessionModeStore.isGuestMode
+        ) {
+          mapStore.updatePinCoordinatesInMemory(pinId, originalCoordinates);
+        }
         this.selectedPinId = pinId;
         const pin = mapStore.pins.find((p) => p.id === pinId);
         if (pin && pin.entityId) {
           vault.selectedEntityId = pin.entityId;
+        }
+      } else {
+        if (hasMoved && mapStore.isGMMode && !sessionModeStore.isGuestMode) {
+          await vault.saveMaps();
         }
       }
       this.isPanning = false;

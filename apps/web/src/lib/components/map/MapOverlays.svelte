@@ -98,9 +98,11 @@
         pin.id === interactions.selectedPinId}
       class:scale-95={!mapStore.showLabels ||
         pin.id === interactions.selectedPinId}
+      aria-hidden={!mapStore.showLabels ||
+        pin.id === interactions.selectedPinId}
     >
       <div
-        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-xs flex items-center"
+        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
       >
         {labelText}
       </div>
