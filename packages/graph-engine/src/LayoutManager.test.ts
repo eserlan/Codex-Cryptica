@@ -435,32 +435,34 @@ describe("LayoutManager", () => {
 
   it("should stop redraw even when the fit animation completion is missed", async () => {
     const originalSetTimeout = globalThis.setTimeout;
-    (globalThis as any).setTimeout = (cb: () => void, ms: number) => {
-      if (ms === 1200) {
-        return originalSetTimeout(cb, 5);
-      }
-      return originalSetTimeout(cb, ms);
-    };
+    try {
+      (globalThis as any).setTimeout = (cb: () => void, ms: number) => {
+        if (ms === 1200) {
+          return originalSetTimeout(cb, 5);
+        }
+        return originalSetTimeout(cb, ms);
+      };
 
-    mockCy.animate.mockImplementation(() => {});
-    const onLayoutStop = vi.fn();
+      mockCy.animate.mockImplementation(() => {});
+      const onLayoutStop = vi.fn();
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+      await layoutManager.apply({
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      });
 
-    expect(onLayoutStop).not.toHaveBeenCalled();
-    await new Promise((resolve) => originalSetTimeout(resolve, 10));
-    expect(onLayoutStop).toHaveBeenCalledTimes(1);
-
-    globalThis.setTimeout = originalSetTimeout;
+      expect(onLayoutStop).not.toHaveBeenCalled();
+      await new Promise((resolve) => originalSetTimeout(resolve, 10));
+      expect(onLayoutStop).toHaveBeenCalledTimes(1);
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
   });
 
   it("should stop redraw if the worker errors", async () => {
@@ -485,35 +487,37 @@ describe("LayoutManager", () => {
 
   it("should stop redraw if the worker never replies", async () => {
     const originalSetTimeout = globalThis.setTimeout;
-    (globalThis as any).setTimeout = (cb: () => void, ms: number) => {
-      if (ms === 15000) {
-        return originalSetTimeout(cb, 5);
-      }
-      return originalSetTimeout(cb, ms);
-    };
+    try {
+      (globalThis as any).setTimeout = (cb: () => void, ms: number) => {
+        if (ms === 15000) {
+          return originalSetTimeout(cb, 5);
+        }
+        return originalSetTimeout(cb, ms);
+      };
 
-    (globalThis as any).Worker = SilentWorker as any;
-    layoutManager = new LayoutManager(mockCy as unknown as Core);
-    const onLayoutStop = vi.fn();
+      (globalThis as any).Worker = SilentWorker as any;
+      layoutManager = new LayoutManager(mockCy as unknown as Core);
+      const onLayoutStop = vi.fn();
 
-    const applyPromise = layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+      const applyPromise = layoutManager.apply({
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      });
 
-    await new Promise((resolve) => originalSetTimeout(resolve, 10));
-    await applyPromise;
+      await new Promise((resolve) => originalSetTimeout(resolve, 10));
+      await applyPromise;
 
-    expect(mockCy.animate).not.toHaveBeenCalled();
-    expect(onLayoutStop).toHaveBeenCalledTimes(1);
-
-    globalThis.setTimeout = originalSetTimeout;
+      expect(mockCy.animate).not.toHaveBeenCalled();
+      expect(onLayoutStop).toHaveBeenCalledTimes(1);
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
   });
 
   it("should stop redraw when an in-flight worker is stopped", async () => {
