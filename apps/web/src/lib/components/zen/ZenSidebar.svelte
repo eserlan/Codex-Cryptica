@@ -17,6 +17,7 @@
   let newConnectionType = $state("related_to");
   let newConnectionLabel = $state("");
   let addConnectionError = $state<string | null>(null);
+  let isConnecting = $state(false);
 
   const handleAddConnection = async () => {
     addConnectionError = null;
@@ -29,22 +30,28 @@
       addConnectionError = "Cannot connect an entity to itself.";
       return;
     }
+    if (isConnecting) return;
 
-    const success = await vault.addConnection(
-      entity.id,
-      newConnectionTargetId,
-      newConnectionType,
-      newConnectionLabel,
-    );
+    try {
+      isConnecting = true;
+      const success = await vault.addConnection(
+        entity.id,
+        newConnectionTargetId,
+        newConnectionType,
+        newConnectionLabel,
+      );
 
-    if (success) {
-      isAddingConnection = false;
-      newConnectionTargetName = "";
-      newConnectionTargetId = null;
-      newConnectionType = "related_to";
-      newConnectionLabel = "";
-    } else {
-      addConnectionError = "Failed to create connection.";
+      if (success) {
+        isAddingConnection = false;
+        newConnectionTargetName = "";
+        newConnectionTargetId = null;
+        newConnectionType = "related_to";
+        newConnectionLabel = "";
+      } else {
+        addConnectionError = "Failed to create connection.";
+      }
+    } finally {
+      isConnecting = false;
     }
   };
 
@@ -532,10 +539,11 @@
               </button>
               <button
                 type="button"
+                disabled={isConnecting}
                 onclick={handleAddConnection}
-                class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition"
+                class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Connect
+                {isConnecting ? "Connecting..." : "Connect"}
               </button>
             </div>
           </div>

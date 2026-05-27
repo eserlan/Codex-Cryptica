@@ -38,6 +38,7 @@
   let newConnectionType = $state("related_to");
   let newConnectionLabel = $state("");
   let addConnectionError = $state<string | null>(null);
+  let isConnecting = $state(false);
 
   async function handleAddConnection() {
     if (!newConnectionTargetId) {
@@ -48,8 +49,10 @@
       addConnectionError = "Cannot connect an entity to itself.";
       return;
     }
+    if (isConnecting) return;
 
     try {
+      isConnecting = true;
       await vault.addConnection(entity.id, newConnectionTargetId, {
         type: newConnectionType,
         label: newConnectionLabel.trim() || undefined,
@@ -64,6 +67,8 @@
       addConnectionError = null;
     } catch (err: any) {
       addConnectionError = err.message || "Failed to add connection.";
+    } finally {
+      isConnecting = false;
     }
   }
 
@@ -444,10 +449,11 @@
           </button>
           <button
             type="button"
+            disabled={isConnecting}
             onclick={handleAddConnection}
-            class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition"
+            class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Connect
+            {isConnecting ? "Connecting..." : "Connect"}
           </button>
         </div>
       </div>
