@@ -69,7 +69,7 @@ Use these filters when choosing what to build next:
 - Preserve compatibility aliases temporarily where call sites are still migrating.
 - Add tests for successful save, permission failure, cancellation, and timeout behavior.
 
-### 3. Bulk Editing And Organization Tools ([#930](https://github.com/eserlan/Codex-Cryptica/issues/930))
+### 3. [FEAT] Bulk Editing And Organization Tools ([#930](https://github.com/eserlan/Codex-Cryptica/issues/930))
 
 **Goal**: Improve large-vault workflows where users need to clean up many entities without repetitive detail-panel editing.
 
@@ -91,7 +91,7 @@ Use these filters when choosing what to build next:
 - Ensure search indexing can process batch changes efficiently.
 - Use existing entity-store boundaries and avoid adding one-off bulk mutation paths in components.
 
-### 4. Oracle Workflow Reliability ([#931](https://github.com/eserlan/Codex-Cryptica/issues/931))
+### 4. [FEAT] Oracle Workflow Reliability ([#931](https://github.com/eserlan/Codex-Cryptica/issues/931))
 
 **Goal**: Make Oracle actions easier to trust by showing what will change and keeping execution recoverable.
 
@@ -113,7 +113,7 @@ Use these filters when choosing what to build next:
 - Keep user API keys and generated context local.
 - Test success, cancellation, provider error, and rejected-action paths.
 
-### 5. Graph And Map Interaction Polish ([#932](https://github.com/eserlan/Codex-Cryptica/issues/932))
+### 5. [FEAT] Graph And Map Interaction Polish ([#932](https://github.com/eserlan/Codex-Cryptica/issues/932))
 
 **Goal**: Improve graph readability and navigation for large campaigns without changing the core data model.
 
@@ -169,7 +169,7 @@ Use these filters when choosing what to build next:
 - More reliable vault switching.
 - Better behavior in throttled browser tabs or permission edge cases.
 
-### C. Search Indexing Performance ([#933](https://github.com/eserlan/Codex-Cryptica/issues/933))
+### C. [TECH] Search Indexing Performance ([#933](https://github.com/eserlan/Codex-Cryptica/issues/933))
 
 **Problem**: Cache-loaded and batch-update flows can perform indexing serially.
 
@@ -186,7 +186,7 @@ Use these filters when choosing what to build next:
 - Better performance for bulk edits.
 - Less unnecessary work on large campaigns.
 
-### D. Test Coverage For Local-First Failure Modes ([#934](https://github.com/eserlan/Codex-Cryptica/issues/934))
+### D. [TECH] Test Coverage For Local-First Failure Modes ([#934](https://github.com/eserlan/Codex-Cryptica/issues/934))
 
 **Problem**: The riskiest behavior is not the happy path; it is interruption, permission loss, stale vault handles, and invalid persisted state.
 
@@ -202,7 +202,7 @@ Use these filters when choosing what to build next:
 - Less regression risk around user data.
 - Clearer confidence before release.
 
-### E. Documentation And Naming Cleanup ([#935](https://github.com/eserlan/Codex-Cryptica/issues/935))
+### E. [TECH] Documentation And Naming Cleanup ([#935](https://github.com/eserlan/Codex-Cryptica/issues/935))
 
 **Problem**: Older docs and internal names still mix "sync" language with directional load/save behavior.
 
@@ -222,9 +222,9 @@ Use these filters when choosing what to build next:
 
 1. [IMPLEMENTED] Finish and verify the scroll-wheel date picker feature.
 2. [IMPLEMENTED] Land vault load/save reliability improvements that reduce data-loss and switching risk.
-3. Add bulk entity operations with batch event/indexing support. ([#930](https://github.com/eserlan/Codex-Cryptica/issues/930))
-4. Improve Oracle action preview, cancellation, and retry flows. ([#931](https://github.com/eserlan/Codex-Cryptica/issues/931))
-5. Polish graph/map navigation and saved view state. ([#932](https://github.com/eserlan/Codex-Cryptica/issues/932))
+3. [FEAT] Add bulk entity operations with batch event/indexing support. ([#930](https://github.com/eserlan/Codex-Cryptica/issues/930))
+4. [FEAT] Improve Oracle action preview, cancellation, and retry flows. ([#931](https://github.com/eserlan/Codex-Cryptica/issues/931))
+5. [FEAT] Polish graph/map navigation and saved view state. ([#932](https://github.com/eserlan/Codex-Cryptica/issues/932))
 
 This completed order shows that active chronology work and the highest-risk local-first data paths are now fully implemented.
 
