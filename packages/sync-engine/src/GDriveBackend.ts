@@ -31,6 +31,8 @@ export class GDriveBackend implements ISyncBackend {
   constructor(
     private readonly authService: IGDriveAuthService,
     private readonly vaultId: string,
+    private readonly wait = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms)),
   ) {}
 
   /**
@@ -233,7 +235,7 @@ export class GDriveBackend implements ISyncBackend {
         retryCount < 1
       ) {
         // Transient error, wait 500ms and retry once
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await this.wait(500);
         return this.driveFetch(endpoint, options, isFullUrl, retryCount + 1);
       }
 

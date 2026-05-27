@@ -13,7 +13,11 @@ describe("GDriveBackend", () => {
       getAccessToken: vi.fn().mockResolvedValue("test-token"),
       signOut: vi.fn().mockResolvedValue(undefined),
     };
-    backend = new GDriveBackend(mockAuthService, vaultId);
+    backend = new GDriveBackend(
+      mockAuthService,
+      vaultId,
+      vi.fn().mockResolvedValue(undefined),
+    );
     backend.setVaultFolderId(folderId);
 
     // Mock global fetch
@@ -38,7 +42,7 @@ describe("GDriveBackend", () => {
           Promise.resolve({ id: folderId, name: "Vault", trashed: false }),
       });
 
-      await expect(backend.connect()).resolves.not.toThrow();
+      await backend.connect();
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/files/${folderId}`),
         expect.any(Object),
@@ -233,8 +237,6 @@ describe("GDriveBackend", () => {
     });
 
     it("should retry once on 500 Internal Server Error", async () => {
-      vi.useFakeTimers();
-
       (global.fetch as any)
         .mockResolvedValueOnce({ ok: false, status: 500 })
         .mockResolvedValueOnce({
@@ -242,17 +244,8 @@ describe("GDriveBackend", () => {
           json: () => Promise.resolve({ id: folderId }),
         });
 
-      const fetchPromise = backend.connect();
-
-      // First call happens immediately
-      await vi.advanceTimersByTimeAsync(0);
-
-      // Wait for backoff
-      await vi.advanceTimersByTimeAsync(500);
-
-      await fetchPromise;
+      await backend.connect();
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      vi.useRealTimers();
     });
   });
 });
