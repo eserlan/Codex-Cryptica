@@ -19,6 +19,14 @@ export interface IFileIOAdapter {
     lastModified: number,
     entity: LocalEntity,
   ): Promise<void>;
+  setCachedEntitiesBulk?(
+    vaultId: string,
+    entries: Array<{
+      path: string;
+      lastModified: number;
+      entity: LocalEntity;
+    }>,
+  ): Promise<void>;
   parseMarkdown(text: string, filePath: string[]): LocalEntity | null;
   isNotFoundError(err: any): boolean;
 }
@@ -84,13 +92,15 @@ export class VaultRepository {
       const entity = this.ioAdapter.parseMarkdown(text, fileEntry.path);
 
       if (entity) {
-        await this.ioAdapter.setCachedEntity(
-          activeVaultId,
-          filePath,
-          lastModified,
-          entity,
-        );
-        return { entity, isHit: false };
+        if (!this.ioAdapter.setCachedEntitiesBulk) {
+          await this.ioAdapter.setCachedEntity(
+            activeVaultId,
+            filePath,
+            lastModified,
+            entity,
+          );
+        }
+        return { entity, isHit: false, filePath, lastModified };
       }
 
       return null;
@@ -107,6 +117,11 @@ export class VaultRepository {
 
       const updatedEntities: Record<string, LocalEntity> = {};
       const newOrChanged: Record<string, LocalEntity> = {};
+      const cacheEntriesToWrite: Array<{
+        path: string;
+        lastModified: number;
+        entity: LocalEntity;
+      }> = [];
 
       for (const res of chunkResults) {
         if (res) {
@@ -114,8 +129,25 @@ export class VaultRepository {
           updatedEntities[res.entity.id] = res.entity;
           if (!res.isHit) {
             newOrChanged[res.entity.id] = res.entity;
+            if (this.ioAdapter.setCachedEntitiesBulk && (res as any).filePath) {
+              cacheEntriesToWrite.push({
+                path: (res as any).filePath,
+                lastModified: (res as any).lastModified,
+                entity: res.entity,
+              });
+            }
           }
         }
+      }
+
+      if (
+        cacheEntriesToWrite.length > 0 &&
+        this.ioAdapter.setCachedEntitiesBulk
+      ) {
+        await this.ioAdapter.setCachedEntitiesBulk(
+          activeVaultId,
+          cacheEntriesToWrite,
+        );
       }
 
       // Update incrementally to allow search/UI to work during load.

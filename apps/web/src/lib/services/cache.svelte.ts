@@ -240,6 +240,109 @@ export class CacheService {
   }
 
   /**
+   * Bulk persists multiple graph entities and their content to Dexie and updates
+   * the in-memory preload cache in a single transaction.
+   */
+  async bulkSet(
+    entries: Array<{
+      path: string;
+      lastModified: number;
+      entity: LocalEntity;
+    }>,
+  ): Promise<void> {
+    if (entries.length === 0) return;
+    try {
+      const graphRecords: any[] = [];
+      const contentRecords: any[] = [];
+      const preloadUpdates: Array<{
+        path: string;
+        lastModified: number;
+        entity: LocalEntity;
+      }> = [];
+
+      for (const entry of entries) {
+        const { path, lastModified, entity } = entry;
+        const raw = JSON.parse(JSON.stringify($state.snapshot(entity)));
+        const { vaultId, filePath } = parseKey(path);
+        const { content, lore, ...graphData } = raw;
+
+        const graphRecord = {
+          id: String(raw.id),
+          type: String(raw.type),
+          title: String(raw.title),
+          tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
+          labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+          aliases: Array.isArray(raw.aliases) ? [...raw.aliases] : [],
+          connections: Array.isArray(raw.connections) ? raw.connections : [],
+          image: raw.image ? String(raw.image) : undefined,
+          thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
+          metadata: raw.metadata ?? {},
+          soundBite: raw.soundBite,
+          updatedAt:
+            typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+          status: raw.status || "active",
+          _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
+          parent: raw.parent ? String(raw.parent) : undefined,
+          date: raw.date,
+          start_date: raw.start_date,
+          end_date: raw.end_date,
+          visibility: raw.visibility,
+          discoverySource: raw.discoverySource
+            ? String(raw.discoverySource)
+            : undefined,
+          lastUpdated:
+            typeof raw.lastUpdated === "number" ? raw.lastUpdated : undefined,
+          vaultId: String(vaultId),
+          lastModified: Number(lastModified),
+          filePath: String(filePath),
+        };
+
+        graphRecords.push(graphRecord);
+        contentRecords.push({
+          entityId: String(raw.id),
+          vaultId: String(vaultId),
+          content: String(content || ""),
+          lore: String(lore || ""),
+        });
+
+        preloadUpdates.push({
+          path,
+          lastModified,
+          entity: {
+            ...graphData,
+            content: "",
+            lore: undefined,
+            _path: normalizePath(graphData._path, filePath),
+          } as LocalEntity,
+        });
+      }
+
+      await entityDb.transaction(
+        "rw",
+        [entityDb.graphEntities, entityDb.entityContent],
+        async () => {
+          await entityDb.graphEntities.bulkPut(graphRecords);
+          await entityDb.entityContent.bulkPut(contentRecords);
+        },
+      );
+
+      if (this.preloaded) {
+        for (const update of preloadUpdates) {
+          this.preloaded.set(update.path, {
+            lastModified: update.lastModified,
+            entity: update.entity,
+          });
+        }
+      }
+    } catch (err) {
+      debugStore.error(
+        `[CacheService] Failed bulk save of ${entries.length} entities to Dexie:`,
+        err,
+      );
+    }
+  }
+
+  /**
    * Removes a specific entity from the graph metadata and content tables in Dexie.
    * Format of `path` is `"<vaultId>:<filePath>"`.
    */

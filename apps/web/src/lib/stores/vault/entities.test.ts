@@ -247,6 +247,60 @@ describe("Vault Entities Operations", () => {
       expect(modifiedIds).toContain("c1");
     });
 
+    it("should surgically cleanup connections and parents when inboundConnections and childrenIds are provided", async () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        connections: [],
+      } as any;
+      const e2 = {
+        id: "e2",
+        title: "E2",
+        status: "active",
+        connections: [{ target: "e1", type: "enemy" }],
+      } as any;
+      const child = {
+        id: "c1",
+        title: "Child",
+        status: "active",
+        parent: "e1",
+        connections: [],
+      } as any;
+      const unrelated = {
+        id: "unrelated",
+        title: "Unrelated",
+        status: "active",
+        connections: [{ target: "other", type: "friend" }],
+      } as any;
+      const entities = { e1, e2, c1: child, unrelated };
+
+      const mockInbound = {
+        e1: [
+          {
+            sourceId: "e2",
+            connection: { target: "e1", type: "enemy" } as any,
+          },
+        ],
+      };
+      const mockChildren = ["c1"];
+
+      const { entities: newEntities, modifiedIds } = await deleteEntity(
+        mockVaultDir,
+        entities,
+        "e1",
+        mockInbound,
+        mockChildren,
+      );
+
+      expect(newEntities["e2"].connections).toHaveLength(0);
+      expect(newEntities["c1"].parent).toBeUndefined();
+      expect(newEntities["unrelated"].connections).toHaveLength(1); // untouched
+      expect(modifiedIds).toContain("e2");
+      expect(modifiedIds).toContain("c1");
+      expect(modifiedIds).not.toContain("unrelated");
+    });
+
     it("should handle asset deletion errors and missing handles", async () => {
       const e1 = {
         id: "e1",

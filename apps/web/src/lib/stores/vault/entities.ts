@@ -98,6 +98,8 @@ export async function deleteEntity(
   vaultDir: FileSystemDirectoryHandle,
   entities: Record<string, LocalEntity>,
   id: string,
+  inboundConnections?: Record<string, { sourceId: string; connection: any }[]>,
+  childrenIds?: string[],
 ): Promise<{
   entities: Record<string, LocalEntity>;
   deletedEntity: LocalEntity | null;
@@ -134,11 +136,22 @@ export async function deleteEntity(
   delete newEntities[id];
 
   // 4. Cleanup connections FROM other nodes TO this node
-  // Since inboundConnections is now derived, we just need to ensure
-  // any entity that linked to this one is updated.
+  // Since inboundConnections is now derived or state-managed, we can surgically target only affected entities.
   const modifiedIds: string[] = [];
-  for (const sourceId in newEntities) {
+  let targetIdsToCleanup: Set<string>;
+
+  if (inboundConnections) {
+    const incomingSourceIds =
+      inboundConnections[id]?.map((c) => c.sourceId) || [];
+    const childIds = childrenIds || [];
+    targetIdsToCleanup = new Set([...incomingSourceIds, ...childIds]);
+  } else {
+    targetIdsToCleanup = new Set(Object.keys(newEntities));
+  }
+
+  for (const sourceId of targetIdsToCleanup) {
     const sourceEntity = newEntities[sourceId];
+    if (!sourceEntity) continue;
     let isModified = false;
     const updatedEntity = { ...sourceEntity };
 
