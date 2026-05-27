@@ -97,13 +97,8 @@
       class:scale-95={!mapStore.showLabels}
     >
       <div
-        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-xs flex items-center gap-1"
+        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-xs flex items-center"
       >
-        <span
-          class="w-1.5 h-1.5 rounded-full"
-          style:background-color={pin.visuals.color ||
-            "var(--color-theme-primary, #78350f)"}
-        ></span>
         {labelText}
       </div>
     </div>
