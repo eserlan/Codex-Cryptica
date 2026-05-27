@@ -70,10 +70,6 @@
       layoutUIStore.findInGraph();
     }, 300);
   };
-
-  const parentEntity = $derived(
-    entity?.parent ? vault.entities[entity.parent] : null,
-  );
 </script>
 
 <header
@@ -144,24 +140,6 @@
                   {alias}
                 </div>
               {/each}
-            </div>
-          {/if}
-          {#if parentEntity}
-            <div
-              class="flex items-center gap-1.5 text-xs text-theme-muted mt-1.5"
-              data-testid="zen-parent-indicator"
-            >
-              <span
-                class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
-              ></span>
-              <span>Parent:</span>
-              <button
-                type="button"
-                onclick={() => modalUIStore.openZenMode(parentEntity.id)}
-                class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
-              >
-                {parentEntity.title}
-              </button>
             </div>
           {/if}
         </div>
