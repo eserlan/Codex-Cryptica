@@ -4,9 +4,12 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { isEntityVisible, type Entity } from "schema";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+
+  let editingConnectionTarget = $state<string | null>(null);
 
   let {
     entity,
@@ -31,7 +34,8 @@
   interface ConnectionListItem {
     id: string;
     key: string;
-    label: string;
+    displayLabel: string;
+    rawLabel?: string;
     title: string;
     type: string;
     isOutbound: boolean;
@@ -59,7 +63,8 @@
         result.push({
           id: c.target,
           key: `${c.target}-out-${c.type}-${i}`,
-          label: c.label || c.type,
+          displayLabel: c.label || c.type,
+          rawLabel: c.label,
           title: vault.entities[c.target]?.title || c.target,
           type: c.type,
           isOutbound: true,
@@ -75,7 +80,8 @@
         result.push({
           id: item.sourceId,
           key: `${item.sourceId}-in-${item.connection.type}-${i}`,
-          label: item.connection.label || item.connection.type,
+          displayLabel: item.connection.label || item.connection.type,
+          rawLabel: item.connection.label,
           title: vault.entities[item.sourceId]?.title || item.sourceId,
           type: item.connection.type,
           isOutbound: false,
@@ -339,57 +345,97 @@
         {#if allConnections.length > 0}
           <div class="space-y-2">
             {#each allConnections as conn (conn.key)}
-              <div
-                class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-              >
-                <button
-                  onclick={() => onNavigate(conn.id)}
-                  class="flex-1 min-w-0 flex items-center gap-3 text-left"
-                >
-                  <span
-                    class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isOutbound
-                      ? 'bg-theme-primary'
-                      : 'bg-blue-500'}"
-                  ></span>
-                  <div class="flex-1 min-w-0">
-                    <div
-                      class="text-xs text-theme-muted uppercase tracking-widest font-header"
-                    >
-                      {conn.label}
-                    </div>
-                    <div
-                      class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
-                    >
-                      {conn.title}
-                    </div>
-                  </div>
-                </button>
-
-                {#if !vault.isGuest}
-                  <button
-                    onclick={() => {
-                      const entityId = entity?.id;
-                      if (!entityId) return;
-                      if (conn.isOutbound) {
-                        vault.removeConnection(entityId, conn.id, conn.type);
-                      } else {
-                        vault.removeConnection(conn.id, entityId, conn.type);
-                      }
+              {#if editingConnectionTarget === conn.id && conn.isOutbound}
+                <div class="p-1">
+                  <ConnectionEditor
+                    sourceId={entity?.id || ""}
+                    connection={{
+                      target: conn.id,
+                      type: conn.type,
+                      label: conn.rawLabel || "",
                     }}
-                    class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
-                    aria-label="Delete connection"
-                    title="Delete connection"
+                    onSave={() => (editingConnectionTarget = null)}
+                    onCancel={() => (editingConnectionTarget = null)}
+                  />
+                </div>
+              {:else}
+                <div
+                  class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+                >
+                  <button
+                    type="button"
+                    onclick={() => onNavigate(conn.id)}
+                    class="flex-1 min-w-0 flex items-center gap-3 text-left"
                   >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                    <span
+                      class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isOutbound
+                        ? 'bg-theme-primary'
+                        : 'bg-blue-500'}"
+                    ></span>
+                    <div class="flex-1 min-w-0">
+                      <div
+                        class="text-xs text-theme-muted uppercase tracking-widest font-header"
+                      >
+                        {conn.displayLabel}
+                      </div>
+                      <div
+                        class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
+                      >
+                        {conn.title}
+                      </div>
+                    </div>
                   </button>
-                {/if}
 
-                <button
-                  onclick={() => onNavigate(conn.id)}
-                  class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
-                  aria-label="Navigate to {conn.title}"
-                ></button>
-              </div>
+                  {#if !vault.isGuest}
+                    <div class="flex items-center gap-1">
+                      {#if conn.isOutbound}
+                        <button
+                          type="button"
+                          onclick={() => (editingConnectionTarget = conn.id)}
+                          class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                          aria-label="Edit connection"
+                          title="Edit connection"
+                        >
+                          <span class="icon-[lucide--pencil] w-3.5 h-3.5"
+                          ></span>
+                        </button>
+                      {/if}
+                      <button
+                        type="button"
+                        onclick={() => {
+                          const entityId = entity?.id;
+                          if (!entityId) return;
+                          if (conn.isOutbound) {
+                            vault.removeConnection(
+                              entityId,
+                              conn.id,
+                              conn.type,
+                            );
+                          } else {
+                            vault.removeConnection(
+                              conn.id,
+                              entityId,
+                              conn.type,
+                            );
+                          }
+                        }}
+                        class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                        aria-label="Delete connection"
+                        title="Delete connection"
+                      >
+                        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                      </button>
+                    </div>
+                  {/if}
+
+                  <button
+                    type="button"
+                    onclick={() => onNavigate(conn.id)}
+                    class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
+                    aria-label="Navigate to {conn.title}"
+                  ></button>
+                </div>
+              {/if}
             {/each}
           </div>
         {:else}
@@ -401,6 +447,7 @@
     {#if editState.isEditing && !vault.isGuest}
       <div class="mt-6 pt-6 border-t border-theme-border">
         <button
+          type="button"
           onclick={onDelete}
           class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
         >

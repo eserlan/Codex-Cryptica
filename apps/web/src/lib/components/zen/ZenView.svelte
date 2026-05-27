@@ -193,6 +193,41 @@
       return;
     }
 
+    if (isEditing) {
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl?.tagName === "INPUT" || activeEl?.tagName === "SELECT";
+      const isTextarea = activeEl?.tagName === "TEXTAREA";
+
+      if (e.key === "Enter" && isInput) {
+        if (
+          activeEl.closest('[data-shortcuts="ignore"]') ||
+          activeEl.closest('[role="combobox"]')
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        await saveChanges();
+        return;
+      }
+
+      if (e.key === "Escape" && (isInput || isTextarea)) {
+        if (activeEl?.getAttribute("aria-expanded") === "true") {
+          return;
+        }
+        if (activeEl.closest('[data-shortcuts="ignore"]')) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        cancelEditing();
+        return;
+      }
+    }
+
     if (
       document.activeElement?.tagName === "INPUT" ||
       document.activeElement?.tagName === "TEXTAREA" ||

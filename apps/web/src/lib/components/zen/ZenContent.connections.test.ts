@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render } from "@testing-library/svelte";
+import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
 import ZenContent from "./ZenContent.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -66,6 +66,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
       entities: mockEntities,
       inboundConnections: mockInbound,
       labelIndex: [],
+      updateConnection: vi.fn(),
     },
   };
 });
@@ -110,5 +111,46 @@ describe("ZenContent with duplicate/mutual connections", () => {
     // Connections should render successfully
     const items = queryAllByText("Entity Two");
     expect(items.length).toBeGreaterThan(0);
+  });
+
+  it("renders edit button for outbound connections and toggles ConnectionEditor on click", async () => {
+    const mockEntity = vault.entities["entity-1"];
+
+    const { getAllByLabelText, getAllByRole, queryAllByRole } = render(
+      ZenContent,
+      {
+        entity: mockEntity,
+        editState: { isEditing: false, aliases: [] },
+        scrollContainer: undefined,
+        onNavigate: () => {},
+      },
+    );
+
+    // Verify edit buttons are present (for the two outbound connections)
+    const editBtns = getAllByLabelText("Edit connection");
+    expect(editBtns.length).toBe(2);
+
+    // ConnectionEditor select/input should NOT be in the document initially
+    expect(
+      queryAllByRole("combobox", { name: /relationship type/i }).length,
+    ).toBe(0);
+
+    // Click the first edit button
+    await fireEvent.click(editBtns[0]);
+
+    // ConnectionEditor should be rendered
+    const selectEl = getAllByRole("combobox", {
+      name: /relationship type/i,
+    })[0];
+    expect(selectEl).toBeTruthy();
+
+    // Click cancel button inside ConnectionEditor
+    const cancelBtn = getAllByRole("button", { name: /cancel/i })[0];
+    await fireEvent.click(cancelBtn);
+
+    // ConnectionEditor should be removed
+    expect(
+      queryAllByRole("combobox", { name: /relationship type/i }).length,
+    ).toBe(0);
   });
 });
