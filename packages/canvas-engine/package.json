@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "bun test",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\""
   },

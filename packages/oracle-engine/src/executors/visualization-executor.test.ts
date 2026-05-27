@@ -1,9 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { VisualizationExecutor } from "./visualization-executor";
+
+const originalURL = globalThis.URL;
 
 describe("VisualizationExecutor", () => {
   beforeEach(() => {
-    vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "blob-url") });
+    (globalThis as any).URL = {
+      createObjectURL: vi.fn(() => "blob-url"),
+      revokeObjectURL: originalURL?.revokeObjectURL,
+    } as any;
+  });
+
+  afterEach(() => {
+    (globalThis as any).URL = originalURL;
   });
 
   it("should draw an entity in demo mode", async () => {
