@@ -238,4 +238,34 @@ describe("DetailStatusTab", () => {
     expect(screen.getByText("Child Entity")).toBeTruthy();
     expect(screen.queryByText("Child")).toBeNull();
   });
+
+  it("clicks establish custom connection button on child row to pre-populate form", async () => {
+    const testEntity = {
+      ...mockEntity,
+      parent: "parent-entity",
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    const establishButtons = screen.getAllByLabelText(
+      "Establish custom connection",
+    );
+    expect(establishButtons.length).toBeGreaterThan(0);
+
+    await fireEvent.click(establishButtons[0]);
+
+    // Verify the connection form is open and has target pre-filled
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    const autocompleteInput = screen.getByTestId(
+      "mock-autocomplete",
+    ) as HTMLInputElement;
+    expect(autocompleteInput.value).toBe("Parent Entity");
+  });
 });
