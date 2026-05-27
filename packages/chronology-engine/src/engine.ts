@@ -65,10 +65,11 @@ export class CalendarEngine {
    * Validate if a date structure is valid under the given calendar rules.
    */
   isValid(
-    date: TemporalMetadata | DateSelection,
+    date: TemporalMetadata | DateSelection | null | undefined,
     configOrSnapshot: WorldCalendar | CalendarSnapshot,
   ): boolean {
     if (
+      !date ||
       date.year === undefined ||
       date.year === null ||
       !Number.isSafeInteger(date.year)

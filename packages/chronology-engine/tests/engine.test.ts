@@ -566,6 +566,8 @@ describe("CalendarEngine", () => {
           DEFAULT_CALENDAR,
         ),
       ).toBe(false);
+      expect(calendarEngine.isValid(null, DEFAULT_CALENDAR)).toBe(false);
+      expect(calendarEngine.isValid(undefined, DEFAULT_CALENDAR)).toBe(false);
     });
 
     it("should parseDirectDateInput with negative, float and extreme inputs correctly", () => {
