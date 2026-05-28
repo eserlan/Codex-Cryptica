@@ -10,6 +10,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
+  import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -20,6 +21,7 @@
   let newType = $state<string>("character");
   let isCreating = $state(false);
   let createError = $state<string | null>(null);
+  let useTemplate = $state(true);
 
   // Logic
   let isVertical = $derived(orientation === "vertical");
@@ -61,7 +63,17 @@
     isCreating = true;
     createError = null;
     try {
-      const id = await vault.createEntity(newType, newTitle);
+      let resolvedContent = "";
+      if (useTemplate) {
+        resolvedContent = await entityTemplateService.resolveTemplate(
+          newType,
+          themeStore.worldThemeId,
+          vault.getActiveFolderHandle() || vault.getActiveVaultHandle(),
+        );
+      }
+      const id = await vault.createEntity(newType, newTitle, {
+        content: resolvedContent,
+      });
       vault.selectedEntityId = id;
       newTitle = "";
       showForm = false;
@@ -401,6 +413,27 @@
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
+
+      <label
+        class="flex items-center gap-2 cursor-pointer group select-none text-[10px] md:text-xs text-chrome-muted hover:text-chrome-text {isVertical
+          ? 'py-1'
+          : 'px-1'}"
+      >
+        <input type="checkbox" bind:checked={useTemplate} class="sr-only" />
+        <div
+          class="w-7 h-4 bg-chrome-bg border border-chrome-border rounded-full relative transition-colors {useTemplate
+            ? 'bg-chrome-accent/20 border-chrome-accent/50'
+            : ''}"
+        >
+          <div
+            class="absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-chrome-muted transition-all {useTemplate
+              ? 'translate-x-3 bg-chrome-accent'
+              : ''}"
+          ></div>
+        </div>
+        <span>Start from default format</span>
+      </label>
+
       <button
         type="submit"
         class="{btnPrimary} {isVertical
