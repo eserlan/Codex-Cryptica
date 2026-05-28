@@ -33,22 +33,42 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     vault: VaultMinimal,
   ): string | undefined {
     const queryLower = query.toLowerCase();
-    // Fast path: use titleAliasIndex if available
-    if (vault.titleAliasIndex) {
-      if (vault.titleAliasIndex.has(queryLower)) {
-        const id = vault.titleAliasIndex.get(queryLower)!;
-        const e = vault.entities[id];
-        if (
-          e &&
-          (!vault.isGuest ||
-            isEntityVisible(e, {
+
+    if ((vault as any).titleAndAliasIndex) {
+      const index = (vault as any).titleAndAliasIndex;
+      for (const entry of index) {
+        if (entry.status === "draft") continue;
+
+        if (vault.isGuest) {
+          const realEntity = vault.entities?.[entry.entityId];
+          const checkEntity = realEntity || {
+            visibility: entry.visibility,
+            labels: entry.labels,
+          };
+          if (
+            !isEntityVisible(checkEntity as any, {
               sharedMode: true,
               defaultVisibility: vault.defaultVisibility,
-            }))
-        ) {
-          return id;
+            })
+          ) {
+            continue;
+          }
+        }
+
+        const text = entry.lowercaseText;
+        let matched = false;
+        if (text.length > 2) {
+          if (queryLower.includes(text)) matched = true;
+        } else {
+          const pattern = new RegExp(`\\b${this.escapeRegExp(text)}\\b`);
+          if (pattern.test(queryLower)) matched = true;
+        }
+
+        if (matched) {
+          return entry.entityId;
         }
       }
+      return undefined;
     }
 
     const matches = [];
@@ -442,17 +462,48 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     let finalContent = Array.from(contextMap.values()).join("\n\n");
     if (contextMap.size === 0 && excludeTitles.size === 0) {
-      let allTitles =
-        !vault.isGuest && internalExclusions.size === 0
-          ? vault.allTitlesString || ""
-          : "";
-      if (!allTitles) {
-        // Fallback calculation...
-        // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
+      // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
+      // to avoid an extra titles array from .map(), reducing GC overhead.
+      // When vault.allEntities is present, this also avoids an Object.values() allocation.
+      let allTitles = "";
+      let first = true;
+
+      if ((vault as any).titleAndAliasIndex) {
+        const index = (vault as any).titleAndAliasIndex;
+        const seen = new Set<string>();
+        for (const entry of index) {
+          if (entry.isAlias || entry.status === "draft") continue;
+          if (seen.has(entry.entityId)) continue;
+          seen.add(entry.entityId);
+
+          const title = entry.actualTitle;
+          if (title && !internalExclusions.has(title)) {
+            if (vault.isGuest) {
+              const realEntity = vault.entities?.[entry.entityId];
+              const checkEntity = realEntity || {
+                visibility: entry.visibility,
+                labels: entry.labels,
+              };
+              if (
+                !isEntityVisible(checkEntity as any, {
+                  sharedMode: true,
+                  defaultVisibility: vault.defaultVisibility,
+                })
+              ) {
+                continue;
+              }
+            }
+            if (!first) {
+              allTitles += ", ";
+            }
+            allTitles += title;
+            first = false;
+          }
+        }
+      } else {
         const allEntities =
           vault.allEntities || Object.values(vault.entities || {});
         const count = allEntities.length;
-        let first = true;
         for (let i = 0; i < count; i++) {
           const e = allEntities[i];
           const title = e.title;
@@ -476,6 +527,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
           }
         }
       }
+
       if (allTitles) {
         finalContent = `--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`;
       }

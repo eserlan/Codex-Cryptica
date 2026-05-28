@@ -240,25 +240,28 @@ export class CacheService {
   }
 
   /**
-   * Bulk-saves multiple entities in a single Dexie transaction.
-   * Significantly faster than calling `set()` in a loop.
+   * Bulk persists multiple graph entities and their content to Dexie and updates
+   * the in-memory preload cache in a single transaction.
    */
   async bulkSet(
-    items: Array<{ path: string; lastModified: number; entity: LocalEntity }>,
+    entries: Array<{
+      path: string;
+      lastModified: number;
+      entity: LocalEntity;
+    }>,
   ): Promise<void> {
-    if (!items.length) return;
-
+    if (entries.length === 0) return;
     try {
       const graphRecords: any[] = [];
       const contentRecords: any[] = [];
-      const preloadedUpdates: Array<{
+      const preloadUpdates: Array<{
         path: string;
         lastModified: number;
         entity: LocalEntity;
       }> = [];
 
-      for (const { path, lastModified, entity } of items) {
-        // Ensure serialization
+      for (const entry of entries) {
+        const { path, lastModified, entity } = entry;
         const raw = JSON.parse(JSON.stringify($state.snapshot(entity)));
         const { vaultId, filePath } = parseKey(path);
         const { content, lore, ...graphData } = raw;
@@ -302,15 +305,16 @@ export class CacheService {
           lore: String(lore || ""),
         });
 
-        if (this.preloaded) {
-          const graphEntity: LocalEntity = {
+        preloadUpdates.push({
+          path,
+          lastModified,
+          entity: {
             ...graphData,
             content: "",
             lore: undefined,
             _path: normalizePath(graphData._path, filePath),
-          } as LocalEntity;
-          preloadedUpdates.push({ path, lastModified, entity: graphEntity });
-        }
+          } as LocalEntity,
+        });
       }
 
       await entityDb.transaction(
@@ -322,9 +326,8 @@ export class CacheService {
         },
       );
 
-      // Apply updates to the in-memory cache
       if (this.preloaded) {
-        for (const update of preloadedUpdates) {
+        for (const update of preloadUpdates) {
           this.preloaded.set(update.path, {
             lastModified: update.lastModified,
             entity: update.entity,
@@ -333,7 +336,7 @@ export class CacheService {
       }
     } catch (err) {
       debugStore.error(
-        `[CacheService] Failed to bulk save ${items.length} entities to Dexie:`,
+        `[CacheService] Failed bulk save of ${entries.length} entities to Dexie:`,
         err,
       );
     }

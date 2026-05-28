@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { OracleActionExecutor } from "./oracle-executor";
 
+const originalNavigator = globalThis.navigator;
+const originalURL = globalThis.URL;
+
 describe("OracleActionExecutor - Detailed", () => {
   let executor: OracleActionExecutor;
   let mockContext: any;
@@ -8,7 +11,7 @@ describe("OracleActionExecutor - Detailed", () => {
   let mockDraftingEngine: any;
 
   beforeEach(() => {
-    vi.stubGlobal("navigator", { onLine: true });
+    (globalThis as any).navigator = { onLine: true } as any;
 
     mockGenerator = {
       identifyPrimaryEntity: vi
@@ -101,7 +104,8 @@ describe("OracleActionExecutor - Detailed", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    (globalThis as any).navigator = originalNavigator;
+    (globalThis as any).URL = originalURL;
   });
 
   describe("executeCreate", () => {
@@ -556,7 +560,7 @@ describe("OracleActionExecutor - Detailed", () => {
 
   describe("executeChat", () => {
     it("should handle offline mode", async () => {
-      vi.stubGlobal("navigator", { onLine: false });
+      (globalThis as any).navigator = { onLine: false } as any;
 
       await executor.execute(
         {
@@ -573,7 +577,8 @@ describe("OracleActionExecutor - Detailed", () => {
         }),
       );
 
-      vi.unstubAllGlobals();
+      (globalThis as any).navigator = originalNavigator;
+      (globalThis as any).URL = originalURL;
     });
 
     it("should handle disabled AI intent", async () => {
@@ -590,7 +595,10 @@ describe("OracleActionExecutor - Detailed", () => {
 
     it("should handle image intent", async () => {
       mockContext.effectiveApiKey = "key";
-      vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "blob-url") });
+      (globalThis as any).URL = {
+        createObjectURL: vi.fn(() => "blob-url"),
+        revokeObjectURL: originalURL?.revokeObjectURL,
+      } as any;
 
       await executor.execute(
         { type: "chat", query: "/draw orc", isAIIntent: true },
@@ -598,7 +606,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
-      vi.unstubAllGlobals();
+      (globalThis as any).URL = originalURL;
     });
 
     it("should NOT proactively trigger plot analysis for conversational queries", async () => {
@@ -1022,7 +1030,14 @@ describe("OracleActionExecutor - Detailed", () => {
 
   describe("drawing", () => {
     beforeEach(() => {
-      vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "url") });
+      (globalThis as any).URL = {
+        createObjectURL: vi.fn(() => "url"),
+        revokeObjectURL: originalURL?.revokeObjectURL,
+      } as any;
+    });
+
+    afterEach(() => {
+      (globalThis as any).URL = originalURL;
     });
 
     it("should draw entity in demo mode", async () => {

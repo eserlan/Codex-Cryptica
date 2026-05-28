@@ -22,17 +22,23 @@ class MockBroadcastChannel {
 describe("CrossTabBroadcaster", () => {
   let bus: AppEventBus;
   let broadcaster: CrossTabBroadcaster;
+  let originalBroadcastChannel: typeof globalThis.BroadcastChannel | undefined;
 
   beforeEach(() => {
     MockBroadcastChannel.instances = [];
-    vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
+    originalBroadcastChannel = globalThis.BroadcastChannel;
+    globalThis.BroadcastChannel = MockBroadcastChannel as any;
     bus = new AppEventBus();
     broadcaster = new CrossTabBroadcaster(bus);
   });
 
   afterEach(() => {
-    broadcaster.destroy();
-    vi.unstubAllGlobals();
+    broadcaster?.destroy();
+    if (originalBroadcastChannel === undefined) {
+      delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+    } else {
+      globalThis.BroadcastChannel = originalBroadcastChannel;
+    }
   });
 
   it("broadcasts local sync events as JSON strings", () => {

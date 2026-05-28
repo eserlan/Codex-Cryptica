@@ -98,8 +98,8 @@ export async function deleteEntity(
   vaultDir: FileSystemDirectoryHandle,
   entities: Record<string, LocalEntity>,
   id: string,
-  inboundMap?: import("./relationships").InboundMap,
-  parentToChildren?: Map<string, Set<string>>,
+  inboundConnections?: Record<string, { sourceId: string; connection: any }[]>,
+  childrenIds?: string[],
 ): Promise<{
   entities: Record<string, LocalEntity>;
   deletedEntity: LocalEntity | null;
@@ -136,27 +136,32 @@ export async function deleteEntity(
   delete newEntities[id];
 
   // 4. Cleanup connections FROM other nodes TO this node
+  // Since inboundConnections is now derived or state-managed, we can surgically target only affected entities.
   const modifiedIds: string[] = [];
+  let targetIdsToCleanup: Set<string>;
 
-  let idsToCheck: Iterable<string>;
-  if (inboundMap && parentToChildren) {
-    const toCheck = new Set<string>();
-    const inbounds = inboundMap[id] || [];
-    for (const c of inbounds) toCheck.add(c.sourceId);
+  if (inboundConnections) {
+    const incomingSourceIds =
+      inboundConnections[id]?.map((c) => c.sourceId) || [];
 
-    const children = parentToChildren.get(id);
-    if (children) {
-      for (const childId of children) toCheck.add(childId);
+    let childIds = childrenIds;
+    if (!childIds) {
+      childIds = [];
+      for (const entityId in newEntities) {
+        if (newEntities[entityId].parent === id) {
+          childIds.push(entityId);
+        }
+      }
     }
-    idsToCheck = toCheck;
+
+    targetIdsToCleanup = new Set([...incomingSourceIds, ...childIds]);
   } else {
-    idsToCheck = Object.keys(newEntities);
+    targetIdsToCleanup = new Set(Object.keys(newEntities));
   }
 
-  for (const sourceId of idsToCheck) {
+  for (const sourceId of targetIdsToCleanup) {
     const sourceEntity = newEntities[sourceId];
     if (!sourceEntity) continue;
-
     let isModified = false;
     const updatedEntity = { ...sourceEntity };
 

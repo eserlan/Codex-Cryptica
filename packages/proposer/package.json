@@ -7,7 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "bun test",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {

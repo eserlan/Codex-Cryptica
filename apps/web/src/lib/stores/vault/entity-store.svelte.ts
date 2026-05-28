@@ -6,6 +6,7 @@ import type { InboundMap } from "./relationships";
 import { EntityContentLoader } from "./entity-content-loader.svelte";
 import { EntityPersistenceService } from "./entity-persistence";
 import { EntityMutationService } from "./entity-mutations";
+import { vaultEventBus } from "./events.svelte";
 
 export interface EntityStoreDependencies {
   repository: VaultRepository;
@@ -48,6 +49,7 @@ export class EntityStore {
   public loader: EntityContentLoader;
   private persistence: EntityPersistenceService;
   private mutations: EntityMutationService;
+  private _eventBusUnsubscribe?: () => void;
 
   get entities() {
     return this.repository.entities;
@@ -59,18 +61,19 @@ export class EntityStore {
 
   allEntities: LocalEntity[];
   allActiveEntities: LocalEntity[];
-  inboundConnections: InboundMap = $state({});
-  titleAliasIndex: Map<string, string>;
-  parentToChildren: Map<string, Set<string>>;
-  labelData: { index: string[]; counts: Record<string, number> };
-
-  get labelIndex() {
-    return this.labelData.index;
-  }
-
-  get labelCounts() {
-    return this.labelData.counts;
-  }
+  inboundConnections = $state<InboundMap>({});
+  parentToChildren: Record<string, string[]>;
+  labelIndex: string[];
+  labelCounts: Record<string, number>;
+  titleAndAliasIndex: Array<{
+    lowercaseText: string;
+    entityId: string;
+    actualTitle: string;
+    isAlias: boolean;
+    visibility?: string;
+    labels?: string[];
+    status: string;
+  }>;
 
   constructor(
     depsOrRepository: EntityStoreDependencies | VaultRepository,
@@ -103,6 +106,30 @@ export class EntityStore {
       this.loader = loader;
       this.persistence = persistence;
       this.mutations = mutations;
+
+      const originalOnEntityDelete = this.mutations.deps?.onEntityDelete;
+      const originalOnBatchUpdate = this.mutations.deps?.onBatchUpdate;
+
+      this.mutations.registerStoreCallbacks({
+        onEntityDelete: (id) => {
+          this.patchDeleteEntity(id);
+          originalOnEntityDelete?.(id);
+        },
+        onBatchUpdate: (updates) => {
+          originalOnBatchUpdate?.(updates);
+        },
+        onConnectionAdded: (sourceId, targetId, connection) => {
+          this.patchAddConnection(sourceId, targetId, connection);
+        },
+        onConnectionRemoved: (sourceId, targetId, type) => {
+          this.patchRemoveConnection(sourceId, targetId, type);
+        },
+        onConnectionUpdated: (sourceId, targetId, oldType, connection) => {
+          this.patchUpdateConnection(sourceId, targetId, oldType, connection);
+        },
+        getInboundConnections: () => this.inboundConnections,
+        getParentToChildren: () => this.parentToChildren,
+      });
     } else {
       const deps = depsOrRepository as EntityStoreDependencies;
       this.repository = deps.repository;
@@ -139,10 +166,22 @@ export class EntityStore {
         getActiveFolderHandle: deps.getActiveFolderHandle,
         getServices: deps.getServices,
         invalidateUrlCache: deps.invalidateUrlCache,
-        onEntityDelete: deps.onEntityDelete,
+        onEntityDelete: (id) => {
+          this.patchDeleteEntity(id);
+          if (deps.onEntityDelete) deps.onEntityDelete(id);
+        },
         onBatchUpdate: deps.onBatchUpdate,
         updateEntityCount: deps.updateEntityCount,
-        getInboundMap: () => this.inboundConnections,
+        onConnectionAdded: (sourceId, targetId, connection) => {
+          this.patchAddConnection(sourceId, targetId, connection);
+        },
+        onConnectionRemoved: (sourceId, targetId, type) => {
+          this.patchRemoveConnection(sourceId, targetId, type);
+        },
+        onConnectionUpdated: (sourceId, targetId, oldType, connection) => {
+          this.patchUpdateConnection(sourceId, targetId, oldType, connection);
+        },
+        getInboundConnections: () => this.inboundConnections,
         getParentToChildren: () => this.parentToChildren,
       });
     }
@@ -155,107 +194,107 @@ export class EntityStore {
     this.allActiveEntities = $derived.by(() =>
       this.allEntities.filter((e) => e.status !== "draft"),
     );
-
-    this.titleAliasIndex = $derived.by(() => {
-      const index = new Map<string, string>();
-      for (const entity of this.allEntities) {
-        index.set(entity.title.toLowerCase(), entity.id);
-        if (entity.aliases) {
-          for (const alias of entity.aliases) {
-            index.set(alias.toLowerCase(), entity.id);
-          }
-        }
-      }
-      return index;
-    });
-
     this.parentToChildren = $derived.by(() => {
-      const map = new Map<string, Set<string>>();
+      const map: Record<string, string[]> = {};
       for (const entity of this.allEntities) {
         if (entity.parent) {
-          if (!map.has(entity.parent)) {
-            map.set(entity.parent, new Set());
+          if (!map[entity.parent]) {
+            map[entity.parent] = [];
           }
-          map.get(entity.parent)!.add(entity.id);
+          map[entity.parent].push(entity.id);
         }
       }
       return map;
     });
 
-    this.labelData = $derived.by(() => {
-      const index = new Set<string>();
+    this.initializeInboundConnections();
+
+    if (this._eventBusUnsubscribe) {
+      this._eventBusUnsubscribe();
+    }
+    this._eventBusUnsubscribe = vaultEventBus.subscribe((event) => {
+      if (
+        event.type === "CACHE_LOADED" ||
+        event.type === "SYNC_COMPLETE" ||
+        event.type === "VAULT_SWITCHED" ||
+        event.type === "SYNC_CHUNK_READY"
+      ) {
+        this.initializeInboundConnections();
+      }
+    }, "EntityStore-InboundRebuild");
+    const labelData = $derived.by(() => {
+      const labels = new Set<string>();
       const counts: Record<string, number> = {};
-      for (const entity of this.allActiveEntities) {
+
+      for (const entity of this.allEntities) {
         if (entity.labels) {
-          const uniqueLabels = new Set(entity.labels);
-          for (const l of uniqueLabels) {
-            index.add(l);
-            counts[l] = (counts[l] || 0) + 1;
+          const isDraft = entity.status === "draft";
+          for (const l of entity.labels) {
+            labels.add(l);
+          }
+
+          if (!isDraft) {
+            const uniqueLabels = new Set(entity.labels);
+            for (const l of uniqueLabels) {
+              counts[l] = (counts[l] || 0) + 1;
+            }
           }
         }
       }
-      return { index: Array.from(index).sort(), counts };
+
+      return {
+        index: Array.from(labels).sort(),
+        counts,
+      };
     });
 
-    import("./events.svelte").then(({ vaultEventBus }) => {
-      vaultEventBus.subscribe((event) => {
-        if (event.type === "CACHE_LOADED" || event.type === "SYNC_COMPLETE") {
-          this.inboundConnections = vaultRelationships.rebuildInboundMap(
-            this.entities,
-          );
-        } else if (event.type === "CONNECTION_ADDED") {
-          const { sourceId, targetId, connectionType, label, strength } = event;
-          if (!this.inboundConnections[targetId]) {
-            this.inboundConnections[targetId] = [];
-          }
-          this.inboundConnections[targetId].push({
-            sourceId,
-            connection: {
-              target: targetId,
-              type: connectionType,
-              label: label,
-              strength: strength !== undefined ? strength : 1.0,
-            },
+    this.labelIndex = $derived(labelData.index);
+    this.labelCounts = $derived(labelData.counts);
+
+    this.titleAndAliasIndex = $derived.by(() => {
+      const idx: Array<{
+        lowercaseText: string;
+        entityId: string;
+        actualTitle: string;
+        isAlias: boolean;
+        visibility?: string;
+        labels?: string[];
+        status: string;
+      }> = [];
+
+      for (const entity of this.allEntities) {
+        if (entity.title) {
+          idx.push({
+            lowercaseText: entity.title.toLowerCase(),
+            entityId: entity.id,
+            actualTitle: entity.title,
+            isAlias: false,
+            visibility: entity.visibility,
+            labels: entity.labels,
+            status: entity.status || "active",
           });
-        } else if (event.type === "CONNECTION_UPDATED") {
-          const { sourceId, targetId, oldType, newType, newLabel } = event;
-          const targetInbound = this.inboundConnections[targetId];
-          if (targetInbound) {
-            const idx = targetInbound.findIndex(
-              (c) => c.sourceId === sourceId && c.connection.type === oldType,
-            );
-            if (idx !== -1) {
-              targetInbound[idx].connection.type = newType;
-              if (newLabel !== undefined) {
-                targetInbound[idx].connection.label = newLabel;
-              }
-            }
-          }
-        } else if (event.type === "CONNECTION_REMOVED") {
-          const { sourceId, targetId, connectionType } = event;
-          const targetInbound = this.inboundConnections[targetId];
-          if (targetInbound) {
-            this.inboundConnections[targetId] = targetInbound.filter(
-              (c) =>
-                !(
-                  c.sourceId === sourceId &&
-                  c.connection.type === connectionType
-                ),
-            );
-          }
-        } else if (event.type === "ENTITY_DELETED") {
-          const { entityId } = event;
-          delete this.inboundConnections[entityId];
-          for (const targetId in this.inboundConnections) {
-            const arr = this.inboundConnections[targetId];
-            if (arr.some((c) => c.sourceId === entityId)) {
-              this.inboundConnections[targetId] = arr.filter(
-                (c) => c.sourceId !== entityId,
-              );
+        }
+
+        if (entity.aliases && Array.isArray(entity.aliases)) {
+          for (const alias of entity.aliases) {
+            if (alias) {
+              idx.push({
+                lowercaseText: alias.toLowerCase(),
+                entityId: entity.id,
+                actualTitle: entity.title,
+                isAlias: true,
+                visibility: entity.visibility,
+                labels: entity.labels,
+                status: entity.status || "active",
+              });
             }
           }
         }
-      });
+      }
+
+      return idx.sort(
+        (a, b) => b.lowercaseText.length - a.lowercaseText.length,
+      );
     });
   }
 
@@ -376,5 +415,71 @@ export class EntityStore {
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.mutations.batchCreateEntities(newEntitiesList);
+  }
+
+  // --- Delta Connection Patching (O(1) Hot-Path Optimization) ---
+
+  initializeInboundConnections() {
+    this.inboundConnections = vaultRelationships.rebuildInboundMap(
+      this.entities,
+    );
+  }
+
+  patchAddConnection(sourceId: string, targetId: string, connection: any) {
+    if (!this.inboundConnections[targetId]) {
+      this.inboundConnections[targetId] = [];
+    }
+    const list = this.inboundConnections[targetId];
+    const exists = list.some(
+      (item) =>
+        item.sourceId === sourceId && item.connection.type === connection.type,
+    );
+    if (!exists) {
+      this.inboundConnections[targetId] = [...list, { sourceId, connection }];
+    }
+  }
+
+  patchRemoveConnection(sourceId: string, targetId: string, type: string) {
+    const list = this.inboundConnections[targetId];
+    if (list) {
+      this.inboundConnections[targetId] = list.filter(
+        (item) =>
+          !(item.sourceId === sourceId && item.connection.type === type),
+      );
+    }
+  }
+
+  patchUpdateConnection(
+    sourceId: string,
+    targetId: string,
+    oldType: string,
+    connection: any,
+  ) {
+    const list = this.inboundConnections[targetId];
+    if (list) {
+      const idx = list.findIndex(
+        (item) =>
+          item.sourceId === sourceId && item.connection.type === oldType,
+      );
+      if (idx !== -1) {
+        const updated = [...list];
+        updated[idx] = { sourceId, connection };
+        this.inboundConnections[targetId] = updated;
+      }
+    }
+  }
+
+  patchDeleteEntity(id: string) {
+    delete this.inboundConnections[id];
+
+    for (const targetId in this.inboundConnections) {
+      const list = this.inboundConnections[targetId];
+      if (list) {
+        const filtered = list.filter((item) => item.sourceId !== id);
+        if (filtered.length !== list.length) {
+          this.inboundConnections[targetId] = filtered;
+        }
+      }
+    }
   }
 }

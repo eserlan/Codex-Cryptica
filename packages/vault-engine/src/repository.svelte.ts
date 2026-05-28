@@ -19,9 +19,9 @@ export interface IFileIOAdapter {
     lastModified: number,
     entity: LocalEntity,
   ): Promise<void>;
-  setCachedEntities?(
-    items: Array<{
-      vaultId: string;
+  setCachedEntitiesBulk?(
+    vaultId: string,
+    entries: Array<{
       path: string;
       lastModified: number;
       entity: LocalEntity;
@@ -73,7 +73,18 @@ export class VaultRepository {
     const total = mdFiles.length;
     const newEntities: Record<string, LocalEntity> = {};
 
-    const processFile = async (fileEntry: FileEntry) => {
+    const processFile = async (
+      fileEntry: FileEntry,
+    ): Promise<
+      | { entity: LocalEntity; isHit: true }
+      | {
+          entity: LocalEntity;
+          isHit: false;
+          filePath: string;
+          lastModified: number;
+        }
+      | null
+    > => {
       const filePath = fileEntry.path.join("/");
       const file = await fileEntry.handle.getFile();
       const lastModified = Math.floor(file.lastModified);
@@ -92,7 +103,15 @@ export class VaultRepository {
       const entity = this.ioAdapter.parseMarkdown(text, fileEntry.path);
 
       if (entity) {
-        return { entity, isHit: false, lastModified, filePath };
+        if (!this.ioAdapter.setCachedEntitiesBulk) {
+          await this.ioAdapter.setCachedEntity(
+            activeVaultId,
+            filePath,
+            lastModified,
+            entity,
+          );
+        }
+        return { entity, isHit: false, filePath, lastModified };
       }
 
       return null;
@@ -109,8 +128,7 @@ export class VaultRepository {
 
       const updatedEntities: Record<string, LocalEntity> = {};
       const newOrChanged: Record<string, LocalEntity> = {};
-      const entitiesToCache: Array<{
-        vaultId: string;
+      const cacheEntriesToWrite: Array<{
         path: string;
         lastModified: number;
         entity: LocalEntity;
@@ -122,35 +140,25 @@ export class VaultRepository {
           updatedEntities[res.entity.id] = res.entity;
           if (!res.isHit) {
             newOrChanged[res.entity.id] = res.entity;
-            entitiesToCache.push({
-              vaultId: activeVaultId,
-              path: res.filePath,
-              lastModified: res.lastModified,
-              entity: res.entity,
-            });
+            if (this.ioAdapter.setCachedEntitiesBulk) {
+              cacheEntriesToWrite.push({
+                path: res.filePath,
+                lastModified: res.lastModified,
+                entity: res.entity,
+              });
+            }
           }
         }
       }
 
-      if (entitiesToCache.length > 0) {
-        try {
-          if (this.ioAdapter.setCachedEntities) {
-            await this.ioAdapter.setCachedEntities(entitiesToCache);
-          } else {
-            await Promise.all(
-              entitiesToCache.map((item) =>
-                this.ioAdapter.setCachedEntity(
-                  item.vaultId,
-                  item.path,
-                  item.lastModified,
-                  item.entity,
-                ),
-              ),
-            );
-          }
-        } catch (e) {
-          console.warn("Failed to cache parsed entities in chunk", e);
-        }
+      if (
+        cacheEntriesToWrite.length > 0 &&
+        this.ioAdapter.setCachedEntitiesBulk
+      ) {
+        await this.ioAdapter.setCachedEntitiesBulk(
+          activeVaultId,
+          cacheEntriesToWrite,
+        );
       }
 
       // Update incrementally to allow search/UI to work during load.

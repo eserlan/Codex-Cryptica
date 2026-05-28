@@ -35,6 +35,7 @@ vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     get: vi.fn(),
     set: vi.fn(),
+    bulkSet: vi.fn(),
   },
 }));
 
@@ -120,6 +121,17 @@ describe("Adapters", () => {
       expect(cacheService.set).toHaveBeenCalledWith("v1:path", 123, {
         id: "e1",
       });
+    });
+
+    it("should set cached entities in bulk", async () => {
+      await adapters.fileIOAdapter.setCachedEntitiesBulk!("v1", [
+        { path: "path1", lastModified: 100, entity: { id: "e1" } as any },
+        { path: "path2", lastModified: 200, entity: { id: "e2" } as any },
+      ]);
+      expect(cacheService.bulkSet).toHaveBeenCalledWith([
+        { path: "v1:path1", lastModified: 100, entity: { id: "e1" } },
+        { path: "v1:path2", lastModified: 200, entity: { id: "e2" } },
+      ]);
     });
 
     it("should parse markdown with all fields", () => {

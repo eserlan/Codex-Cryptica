@@ -23,12 +23,51 @@ export interface MutationDependencies {
   getServices: () => IVaultServices | null;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
-  getInboundMap?: () => import("./relationships").InboundMap;
-  getParentToChildren?: () => Map<string, Set<string>>;
+  onConnectionAdded?: (
+    sourceId: string,
+    targetId: string,
+    connection: any,
+  ) => void;
+  onConnectionRemoved?: (
+    sourceId: string,
+    targetId: string,
+    connectionType: string,
+  ) => void;
+  onConnectionUpdated?: (
+    sourceId: string,
+    targetId: string,
+    oldType: string,
+    connection: any,
+  ) => void;
+  getInboundConnections?: () => Record<
+    string,
+    { sourceId: string; connection: any }[]
+  >;
+  getParentToChildren?: () => Record<string, string[]>;
 }
 
 export class EntityMutationService {
-  constructor(private deps: MutationDependencies) {}
+  constructor(public deps: MutationDependencies) {}
+
+  registerStoreCallbacks(
+    callbacks: Partial<
+      Pick<
+        MutationDependencies,
+        | "onEntityDelete"
+        | "onBatchUpdate"
+        | "onConnectionAdded"
+        | "onConnectionRemoved"
+        | "onConnectionUpdated"
+        | "getInboundConnections"
+        | "getParentToChildren"
+      >
+    >,
+  ) {
+    this.deps = {
+      ...this.deps,
+      ...callbacks,
+    };
+  }
 
   get entities() {
     return this.deps.repository.entities;
@@ -222,15 +261,19 @@ export class EntityMutationService {
         const entity = this.entities[id];
         const path = entity?._path || [`${id}.md`];
 
+        const inboundConns = this.deps.getInboundConnections?.();
+        const parentToChildren = this.deps.getParentToChildren?.();
+        const childrenIds = parentToChildren
+          ? parentToChildren[id] || []
+          : undefined;
+
         const { entities, deletedEntity, modifiedIds } =
           await vaultEntities.deleteEntity(
             vaultHandle,
             this.entities,
             id,
-            this.deps.getInboundMap ? this.deps.getInboundMap() : undefined,
-            this.deps.getParentToChildren
-              ? this.deps.getParentToChildren()
-              : undefined,
+            inboundConns,
+            childrenIds,
           );
 
         if (deletedEntity) {
@@ -314,15 +357,12 @@ export class EntityMutationService {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
 
-      vaultEventBus.emit({
-        type: "CONNECTION_ADDED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        sourceId,
-        targetId,
-        connectionType: type,
-        label,
-        strength,
-      });
+      const newConn = updatedSource.connections.find(
+        (c) => c.target === targetId && c.type === type,
+      );
+      if (newConn && this.deps.onConnectionAdded) {
+        this.deps.onConnectionAdded(sourceId, targetId, newConn);
+      }
       return true;
     }
     return false;
@@ -347,15 +387,12 @@ export class EntityMutationService {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
 
-      vaultEventBus.emit({
-        type: "CONNECTION_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        sourceId,
-        targetId,
-        oldType,
-        newType,
-        newLabel,
-      });
+      const updatedConn = updatedSource.connections.find(
+        (c) => c.target === targetId && c.type === newType,
+      );
+      if (updatedConn && this.deps.onConnectionUpdated) {
+        this.deps.onConnectionUpdated(sourceId, targetId, oldType, updatedConn);
+      }
       return true;
     }
     return false;
@@ -375,6 +412,11 @@ export class EntityMutationService {
     if (updatedSource) {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
+
+      if (this.deps.onConnectionRemoved) {
+        this.deps.onConnectionRemoved(sourceId, targetId, type);
+      }
+
       // CONNECTION_REMOVED carries the full semantic; ENTITY_UPDATED with a
       // connections-only patch was redundant and triggered unnecessary fan-out.
       vaultEventBus.emit({
