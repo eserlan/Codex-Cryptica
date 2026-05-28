@@ -65,7 +65,7 @@ With the UI store, P2P services, Map route, and Graph surface now modular, the l
 
 ## Historical Successes (Previously Fixed & Maintained)
 
-- **`apps/web/src/lib/services/search.svelte.ts`**: **IMPROVED**. Reduced from 923 lines to 741 by extracting `SearchProgressCoordinator` (138 lines, no worker/eventbus/db deps) and `SearchIndexLifecycle` (152 lines, no worker dep) as focused collaborators. Progress state and vault event routing are now independently unit-testable; 71 tests cover the decomposed pieces (Issue #962, plan: `docs/refactoring/SEARCH_SERVICE_REFACTOR.md`).
+- **`apps/web/src/lib/services/search.svelte.ts`**: **IMPROVED**. Reduced from 923 lines to 282 by extracting `SearchProgressCoordinator` (138 lines, no worker/eventbus/db deps), `SearchIndexLifecycle` (152 lines, no worker dep), `SearchIndexPipeline` (~355 lines), and `SearchIndexPersistence` (~139 lines) as focused collaborators. Progress state, vault event routing, indexing pipeline logic, and persistence boundaries are now independently unit-testable; 71 tests cover the decomposed pieces (Issue #962, plan: `docs/refactoring/SEARCH_SERVICE_REFACTOR.md`).
 
 - **`GraphView.svelte` & `ContextMenu.svelte`**: **RESOLVED**. Reduced from ~700 lines each to ~340 and ~290 lines respectively by extracting orchestration and action logic into `GraphViewController` and `GraphContextMenuController` (Spec 825/826).
 - **`oracle-executor.ts`**: **RESOLVED**. Reduced from 1,135 to 153 lines by extracting logic into 9 specialized command executors (Spec 097).
