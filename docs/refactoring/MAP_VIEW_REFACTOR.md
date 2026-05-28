@@ -90,3 +90,7 @@ To minimize risk and avoid breaking VTT interactions, this refactor should be ex
 ## Summary
 
 By executing this refactor, we successfully eliminated the largest god file in the project. `MapView.svelte` has been reduced from 1,536 lines to 328 lines, resulting in a cleaner UI hierarchy, easier testing for complex map gestures, and a more maintainable VTT environment.
+
+## Follow-up
+
+The extracted `MapInteractionManager` now carries the interaction-state complexity that previously lived inside `MapView.svelte`. Track the second-stage decomposition in [MAP_INTERACTION_MANAGER_GODFILE_ANALYSIS.md](./MAP_INTERACTION_MANAGER_GODFILE_ANALYSIS.md).
