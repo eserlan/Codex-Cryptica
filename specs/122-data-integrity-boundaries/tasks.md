@@ -73,7 +73,7 @@
 - [x] T011 [P] [US2] Implement file extension checks in `packages/importer/src/utils/validation.ts`
 - [x] T012 [P] [US2] Implement markdown YAML validation in `packages/vault-engine/src/parser.ts`
 - [x] T013 [US2] Update bulk import loop to silently skip and summarize invalid files in `apps/web/src/lib/components/settings/ImportSettings.svelte`
-- [x] T014 [US2] Update UI to show rejected files in `apps/web/src/lib/components/ImportSettings.svelte`
+- [x] T014 [US2] Update UI to show rejected files in `apps/web/src/lib/components/settings/ImportSettings.svelte`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 

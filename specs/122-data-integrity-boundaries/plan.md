@@ -50,28 +50,31 @@ specs/122-data-integrity-boundaries/
 ### Source Code (repository root)
 
 ```text
-packages/
-├── schema/
-│   ├── src/
-│   │   └── entity.ts         # Zod schemas for entities
-│   └── package.json
-├── vault-engine/
-│   ├── src/
-│   │   ├── migrations/       # Migration logic and snapshots
-│   │   ├── repository.svelte.ts # Read-back validation
-│   │   └── parser.ts         # Markdown YAML validation
-│   └── tests/
-│       ├── migrations.test.ts
-│       └── validation.test.ts
-├── importer/
-│   ├── src/
-│   │   └── utils/validation.ts # File extension checks
-│   └── tests/
-└── web/
-    └── src/
-        └── lib/
-            └── components/
-                └── ImportSettings.svelte
+.
+├── packages/
+│   ├── schema/
+│   │   ├── src/
+│   │   │   └── entity.ts         # Zod schemas for entities
+│   │   └── package.json
+│   ├── vault-engine/
+│   │   ├── src/
+│   │   │   ├── migrations/       # Migration logic and snapshots
+│   │   │   ├── repository.svelte.ts # Read-back validation
+│   │   │   └── parser.ts         # Markdown YAML validation
+│   │   └── tests/
+│   │       ├── migrations.test.ts
+│   │       └── validation.test.ts
+│   └── importer/
+│       ├── src/
+│       │   └── utils/validation.ts # File extension checks
+│       └── tests/
+└── apps/
+    └── web/
+        └── src/
+            └── lib/
+                └── components/
+                    └── settings/
+                        └── ImportSettings.svelte
 ```
 
 **Structure Decision**: Logic is heavily concentrated in the workspace packages (`schema`, `vault-engine`, `importer`) to adhere to the Library-First principle.

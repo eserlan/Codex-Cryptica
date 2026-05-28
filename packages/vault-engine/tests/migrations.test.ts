@@ -163,10 +163,12 @@ describe("Vault Schema Migrations", () => {
     const entry = await store.getEntry(3);
     expect(entry).toBeDefined();
     expect(entry?.status).toBe("success");
-    expect(entry?.rollbackSnapshotId).toBe("snapshots/v2_before_v3");
+    expect(entry?.rollbackSnapshotId).toMatch(
+      /^snapshots\/v2_before_v3_\d{4}-\d{2}-\d{2}T/,
+    );
   });
 
-  it("T017: should copy existing OPFS contents into the rollback snapshot", async () => {
+  it("T018: should copy existing OPFS contents into the rollback snapshot", async () => {
     const opfsRoot = createMemoryDirectory();
     opfsRoot.setFile(["vaults", "main", "entity.md"], "before migration");
 
@@ -174,14 +176,12 @@ describe("Vault Schema Migrations", () => {
       opfsRoot.setFile(["vaults", "main", "entity.md"], "after migration");
     });
 
+    const entry = await store.getEntry(4);
+    expect(entry?.rollbackSnapshotId).toBeDefined();
+    const snapshotPath = entry?.rollbackSnapshotId.split("/") ?? [];
+
     expect(
-      await opfsRoot.readText([
-        "snapshots",
-        "v3_before_v4",
-        "vaults",
-        "main",
-        "entity.md",
-      ]),
+      await opfsRoot.readText([...snapshotPath, "vaults", "main", "entity.md"]),
     ).toBe("before migration");
     expect(await opfsRoot.readText(["vaults", "main", "entity.md"])).toBe(
       "after migration",

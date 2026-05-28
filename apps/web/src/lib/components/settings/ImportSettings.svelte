@@ -29,6 +29,9 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
 
+  type MarkdownFrontmatterValidator =
+    typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
+
   let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
 
   let step = $state<"upload" | "processing" | "review" | "complete">("upload");
@@ -63,6 +66,15 @@
     new JsonParser(),
     new PdfParser(pdfWorker),
   ];
+
+  let markdownFrontmatterValidator: MarkdownFrontmatterValidator | null = null;
+
+  const getMarkdownFrontmatterValidator = async () => {
+    markdownFrontmatterValidator ??= (await import("@codex/vault-engine"))
+      .validateMarkdownFrontmatter;
+
+    return markdownFrontmatterValidator;
+  };
 
   const handleFiles = async (files: File[]) => {
     const apiKey = oracle.effectiveApiKey || "";
@@ -118,8 +130,8 @@
         const result = await parser.parse(file);
 
         if (isMarkdown) {
-          const { validateMarkdownFrontmatter } =
-            await import("@codex/vault-engine");
+          const validateMarkdownFrontmatter =
+            await getMarkdownFrontmatterValidator();
           const validation = validateMarkdownFrontmatter(result.text);
           if (!validation.success) {
             console.warn(`Skipping ${file.name}: invalid YAML frontmatter`);

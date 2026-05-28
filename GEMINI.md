@@ -4,8 +4,8 @@ Auto-generated from all feature plans. Last updated: 2026-05-28
 
 ## Active Technologies
 
-- TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper) (944-data-integrity-boundaries)
-- IndexedDB (Metadata/Cache), OPFS (Vault Files) (944-data-integrity-boundaries)
+- TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper) (122-data-integrity-boundaries)
+- IndexedDB (Metadata/Cache), OPFS (Vault Files) (122-data-integrity-boundaries)
 
 - TypeScript 6.0.3 + zod (874-art-direction-clarification)
 

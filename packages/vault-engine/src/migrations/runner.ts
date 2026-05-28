@@ -34,11 +34,20 @@ async function copyDirectoryContents(
   }
 }
 
+function createSnapshotName(targetVersion: number): string {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const nonce =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  return `v${targetVersion - 1}_before_v${targetVersion}_${timestamp}_${nonce}`;
+}
+
 async function createMigrationSnapshot(
   opfsRoot: FileSystemDirectoryHandle,
   targetVersion: number,
 ): Promise<string> {
-  const snapshotName = `v${targetVersion - 1}_before_v${targetVersion}`;
+  const snapshotName = createSnapshotName(targetVersion);
   const snapshotsDir = await opfsRoot.getDirectoryHandle("snapshots", {
     create: true,
   });
