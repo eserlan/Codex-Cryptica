@@ -53,6 +53,22 @@ A user can override the built-in system default templates by putting their own m
 
 ---
 
+### User Story 4 - Theme-Based System Default Templates (Priority: P3)
+
+When a vault has a specific theme/genre configured (such as "Fantasy" or "Sci-Fi"), and the user has not provided custom templates, the system defaults should automatically adapt to match that theme's flavor instead of falling back to the standard generic defaults.
+
+**Why this priority**: Enhances immersion and provides highly specific structure tailored to the campaign's setting. Kept as P3 to ensure core mechanics work first.
+
+**Independent Test**: Can be tested by configuring a vault's theme to "Fantasy", creating a new Character entity with the template option enabled, and verifying that the inserted document uses the Fantasy Character template (e.g., includes "Lineage", "Oaths", or "Magical Affinity") instead of the standard generic template.
+
+**Acceptance Scenarios**:
+
+1. **Given** a vault configured with the "Fantasy" theme and no custom templates, **When** the user creates a new Character entity, **Then** the template includes high-fantasy fields like `Lineage`, `Oaths`, and `Magical Affinity`.
+2. **Given** a vault configured with the "Sci-Fi" theme and no custom templates, **When** the user creates a new Character entity, **Then** the template includes sci-fi fields like `Augmentations`, `Corporate Ties`, and `Street Reputation`.
+3. **Given** a vault configured with an unknown or unsupported theme, **When** any new entity is created, **Then** it gracefully falls back to the generic system default templates.
+
+---
+
 ### Edge Cases
 
 - **Custom template folder structure missing**: If the `.cc/templates/` folder does not exist in the vault, the system MUST gracefully fall back to the system defaults without throwing errors.
@@ -69,6 +85,7 @@ A user can override the built-in system default templates by putting their own m
 - **FR-004**: System MUST check for local file overrides at `.cc/templates/{type}.md` or `.codex/templates/{type}.md` (prioritizing `.cc/templates/` over `.codex/templates/` or matching the vault's active config folder).
 - **FR-005**: If a local override file exists, the system MUST read and use its contents as the template instead of the built-in defaults.
 - **FR-006**: If no local override file exists or if reading fails, the system MUST gracefully fall back to the system default template.
+- **FR-007**: System MUST provide theme-specific default fallback templates (e.g., "Fantasy", "Sci-Fi") matching the active vault's theme configuration if no custom local template files exist.
 
 ### Key Entities _(include if feature involves data)_
 
