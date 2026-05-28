@@ -1,7 +1,7 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Data Integrity At Trust Boundaries
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `122-data-integrity-boundaries` | **Date**: 2026-05-28 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/122-data-integrity-boundaries/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
