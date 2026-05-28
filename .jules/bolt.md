@@ -100,3 +100,8 @@
 ## 2026-05-18 - [Performance Insight: Array allocation in map selection loop]
 **Learning:** Replaced the inline array allocation `{#each Object.values(vault.maps) as map (map.id)}` with the pre-cached property `{#each vault.allMaps as map (map.id)}` in Svelte 5.
 **Action:** When a Svelte UI component requires an array representation of a record/map located in a store, pre-calculate the array natively at the store level using `$derived.by(() => Object.values(this.X))` and expose it as a property to prevent redundant array allocations and unnecessary garbage collection overhead on UI updates.
+
+## 2026-05-18 - [Performance Insight: Array allocation and call stack overhead in Math.max spread]
+
+**Learning:** When extracting the maximum value from an array of objects based on a property, using `Math.max(...array.map(obj => obj.value))` is an anti-pattern. This iterates twice, allocates an intermediate array, and pushes all items to the call stack, which can cause a `RangeError: Maximum call stack size exceeded` if the array is very large.
+**Action:** Replace `Math.max(...array.map(...))` with an imperative `for...of` loop to eliminate array allocation, reduce iteration passes, and completely avoid call stack size limitations.
