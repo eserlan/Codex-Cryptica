@@ -73,6 +73,17 @@ import { SearchService } from "$lib/services/search.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
 import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 
+// Helpers to access collaborator internals without fragile prototype traversal
+function coordinator(s: SearchService) {
+  return (s as any).coordinator;
+}
+function pipeline(s: SearchService) {
+  return (s as any).pipeline;
+}
+function persistence(s: SearchService) {
+  return (s as any).persistence;
+}
+
 describe("SearchService", () => {
   let service: SearchService;
 
@@ -115,7 +126,6 @@ describe("SearchService", () => {
           }),
       );
 
-      // Trigger worker initialization
       await (service as any).ensureWorker();
 
       const entities = Array.from({ length: 102 }, (_, index) => ({
@@ -125,7 +135,7 @@ describe("SearchService", () => {
         type: "note",
       }));
 
-      const batchPromise = (service as any).indexBatch(entities);
+      const batchPromise = pipeline(service).indexBatch(entities);
 
       await vi.waitFor(() => {
         expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
@@ -160,7 +170,6 @@ describe("SearchService", () => {
   it("should load an index from IndexedDB", async () => {
     const { entityDb } = await import("$lib/utils/entity-db");
 
-    // Mock the db response
     vi.spyOn(entityDb.searchIndex, "get").mockResolvedValueOnce({
       vaultId: "test-vault",
       data: { _docIds: ["1"], someSegment: "data" },
@@ -178,7 +187,6 @@ describe("SearchService", () => {
   it("should skip saving an empty index", async () => {
     const { entityDb } = await import("$lib/utils/entity-db");
 
-    // Mock the export to return an empty-ish index (only metadata)
     mockApi.exportIndex.mockResolvedValueOnce({ _docIds: [] });
     const putSpy = vi
       .spyOn(entityDb.searchIndex, "put")
@@ -186,14 +194,12 @@ describe("SearchService", () => {
 
     await service.saveIndex("test-vault");
 
-    // Should NOT have called put because length is <= 1
     expect(putSpy).not.toHaveBeenCalled();
   });
 
   it("should save a populated index to IndexedDB", async () => {
     const { entityDb } = await import("$lib/utils/entity-db");
 
-    // Mock the export to return a populated index
     mockApi.exportIndex.mockResolvedValueOnce({
       _docIds: ["1"],
       segment1: "data",
@@ -204,7 +210,6 @@ describe("SearchService", () => {
 
     await service.saveIndex("test-vault");
 
-    // Should have called put because length is > 1
     expect(putSpy).toHaveBeenCalledWith({
       vaultId: "test-vault",
       data: { _docIds: ["1"], segment1: "data" },
@@ -213,28 +218,23 @@ describe("SearchService", () => {
   });
 
   it("should bridge logs from worker to debugStore", async () => {
-    // Trigger worker creation
     await (service as any).ensureWorker();
 
-    // Get the callback passed to setLogger
     const logCallback = (mockApi.setLogger as any).mock.calls[0][0];
     expect(logCallback).toBeDefined();
 
-    // Test info level (should map to log)
     logCallback("info", "Test info message", { foo: "bar" });
     expect(debugStore.log).toHaveBeenCalledWith(
       "[SearchEngine] Test info message",
       { foo: "bar" },
     );
 
-    // Test warn level
     logCallback("warn", "Test warn message");
     expect(debugStore.warn).toHaveBeenCalledWith(
       "[SearchEngine] Test warn message",
       undefined,
     );
 
-    // Test error level
     logCallback("error", "Test error message");
     expect(debugStore.error).toHaveBeenCalledWith(
       "[SearchEngine] Test error message",
@@ -244,14 +244,11 @@ describe("SearchService", () => {
 
   describe("Vault Events", () => {
     beforeEach(async () => {
-      // Reset the bus and recreate the service to ensure clean slate
       vaultEventBus.reset(false);
       service = new SearchService();
       await (service as any).ensureWorker();
 
-      // Initialize the vault ID
       vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "v1" });
-      // Small wait for the async listener to process
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
@@ -259,11 +256,11 @@ describe("SearchService", () => {
       await vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "new-vault" });
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(mockApi.clear).toHaveBeenCalled();
-      expect((service as any).activeVaultId).toBe("new-vault");
+      expect(coordinator(service).activeVaultId).toBe("new-vault");
     });
 
     it("should ignore events from other vaults", async () => {
-      const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
+      const indexBatchSpy = vi.spyOn(pipeline(service), "indexBatch");
       vaultEventBus.emit({
         type: "SYNC_CHUNK_READY",
         vaultId: "WRONG_VAULT",
@@ -275,15 +272,14 @@ describe("SearchService", () => {
     });
 
     it("should rebuild index on CACHE_LOADED if loadIndex fails", async () => {
-      vi.spyOn(service as any, "loadIndex").mockResolvedValue(false);
-      const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
+      vi.spyOn(persistence(service), "loadIndex").mockResolvedValue(false);
+      const indexBatchSpy = vi.spyOn(pipeline(service), "indexBatch");
 
       const entities = {
         "1": { id: "1", title: "Note 1", content: "body", type: "note" },
       } as any;
       vaultEventBus.emit({ type: "CACHE_LOADED", vaultId: "v1", entities });
 
-      // Wait for the async loadIndex + indexBatch to complete
       await vi.waitFor(() => {
         expect(indexBatchSpy).toHaveBeenCalled();
       });
@@ -293,11 +289,11 @@ describe("SearchService", () => {
         vaultId: "v1",
         totalCount: 1,
       });
-      expect((service as any).needsFullContentSweep).toBe(true);
+      expect(pipeline(service).needsFullContentSweep).toBe(true);
     });
 
     it("should index chunks on SYNC_CHUNK_READY", async () => {
-      const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
+      const indexBatchSpy = vi.spyOn(pipeline(service), "indexBatch");
       const entities = {
         "1": { id: "1", title: "T1" },
         "2": { id: "2" },
@@ -316,24 +312,26 @@ describe("SearchService", () => {
 
     it("should run background sync on SYNC_COMPLETE if needed", async () => {
       vi.useFakeTimers();
-      (service as any).needsFullContentSweep = true;
-      const syncSpy = vi
-        .spyOn(service as any, "indexContentInBackground")
-        .mockResolvedValue(undefined);
+      try {
+        pipeline(service).needsFullContentSweep = true;
+        const syncSpy = vi
+          .spyOn(pipeline(service), "indexContentInBackground")
+          .mockResolvedValue(undefined);
 
-      vaultEventBus.emit({ type: "SYNC_COMPLETE", vaultId: "v1" });
+        vaultEventBus.emit({ type: "SYNC_COMPLETE", vaultId: "v1" });
 
-      // Advance the 3000ms delay
-      vi.advanceTimersByTime(3000);
-      await Promise.resolve(); // flush microtasks
+        vi.advanceTimersByTime(3000);
+        await Promise.resolve();
 
-      expect(syncSpy).toHaveBeenCalledWith("v1");
-      expect((service as any).needsFullContentSweep).toBe(false);
-      vi.useRealTimers();
+        expect(syncSpy).toHaveBeenCalledWith("v1");
+        expect(pipeline(service).needsFullContentSweep).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("should index on ENTITY_UPDATED if relevant fields changed", async () => {
-      const indexSpy = vi.spyOn(service, "index");
+      const indexSpy = vi.spyOn(pipeline(service), "indexEntity");
       const entity = { id: "1", title: "Updated" };
 
       vaultEventBus.emit({
@@ -348,7 +346,7 @@ describe("SearchService", () => {
     });
 
     it("should skip index on ENTITY_UPDATED if no relevant fields changed", async () => {
-      const indexSpy = vi.spyOn(service, "index");
+      const indexSpy = vi.spyOn(pipeline(service), "indexEntity");
       vaultEventBus.emit({
         type: "ENTITY_UPDATED",
         vaultId: "v1",
@@ -360,7 +358,7 @@ describe("SearchService", () => {
     });
 
     it("should remove on ENTITY_DELETED", async () => {
-      const removeSpy = vi.spyOn(service, "remove");
+      const removeSpy = vi.spyOn(pipeline(service), "remove");
       vaultEventBus.emit({
         type: "ENTITY_DELETED",
         vaultId: "v1",
@@ -371,7 +369,7 @@ describe("SearchService", () => {
     });
 
     it("should index batch on BATCH_CREATED", async () => {
-      const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
+      const indexBatchSpy = vi.spyOn(pipeline(service), "indexBatch");
       vaultEventBus.emit({
         type: "BATCH_CREATED",
         vaultId: "v1",
@@ -397,66 +395,64 @@ describe("SearchService", () => {
 
   it("should index content in background using Dexie and batching", async () => {
     vi.useFakeTimers();
-    const { entityDb } = await import("$lib/utils/entity-db");
-    const indexBatchSpy = vi
-      .spyOn(service as any, "indexBatch")
-      .mockResolvedValue(undefined);
+    try {
+      const { entityDb } = await import("$lib/utils/entity-db");
+      const indexBatchSpy = vi
+        .spyOn(pipeline(service), "indexBatch")
+        .mockResolvedValue(undefined);
 
-    await (service as any).ensureWorker();
-    (service as any).activeVaultId = "v1";
+      await (service as any).ensureWorker();
+      coordinator(service).activeVaultId = "v1";
 
-    // Mock Dexie iteration
-    const mockRecords = Array.from({ length: 120 }, (_, i) => ({
-      entityId: `${i}`,
-      content: `content ${i}`,
-      vaultId: "v1",
-    }));
+      const mockRecords = Array.from({ length: 120 }, (_, i) => ({
+        entityId: `${i}`,
+        content: `content ${i}`,
+        vaultId: "v1",
+      }));
 
-    const mockMetadatas = mockRecords.map((r) => ({
-      id: r.entityId,
-      title: `Title ${r.entityId}`,
-    }));
+      const mockMetadatas = mockRecords.map((r) => ({
+        id: r.entityId,
+        title: `Title ${r.entityId}`,
+      }));
 
-    let contentCallCount = 0;
-    vi.spyOn(entityDb.entityContent, "where").mockReturnValue({
-      equals: vi.fn().mockReturnValue({
-        offset: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
-        toArray: vi.fn().mockImplementation(() => {
-          if (contentCallCount === 0) {
-            contentCallCount++;
-            return Promise.resolve(mockRecords.slice(0, 100));
-          } else if (contentCallCount === 1) {
-            contentCallCount++;
-            return Promise.resolve(mockRecords.slice(100));
-          }
-          return Promise.resolve([]);
+      let contentCallCount = 0;
+      vi.spyOn(entityDb.entityContent, "where").mockReturnValue({
+        equals: vi.fn().mockReturnValue({
+          offset: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          toArray: vi.fn().mockImplementation(() => {
+            if (contentCallCount === 0) {
+              contentCallCount++;
+              return Promise.resolve(mockRecords.slice(0, 100));
+            } else if (contentCallCount === 1) {
+              contentCallCount++;
+              return Promise.resolve(mockRecords.slice(100));
+            }
+            return Promise.resolve([]);
+          }),
         }),
-      }),
-    } as any);
+      } as any);
 
-    vi.spyOn(entityDb.graphEntities, "where").mockReturnValue({
-      equals: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(mockMetadatas),
-      }),
-    } as any);
+      vi.spyOn(entityDb.graphEntities, "where").mockReturnValue({
+        equals: vi.fn().mockReturnValue({
+          toArray: vi.fn().mockResolvedValue(mockMetadatas),
+        }),
+      } as any);
 
-    const promise = (service as any).indexContentInBackground("v1");
+      const promise = pipeline(service).indexContentInBackground("v1");
 
-    // Advance timers for the 500ms delay inside the batch loop
-    await vi.runAllTimersAsync();
-    await promise;
+      await vi.runAllTimersAsync();
+      await promise;
 
-    // Should have indexed in batches of 100
-    expect(indexBatchSpy).toHaveBeenCalledTimes(2); // One for 100, one for remaining 20
-    expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(100);
-    expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(20);
-
-    vi.useRealTimers();
+      expect(indexBatchSpy).toHaveBeenCalledTimes(2);
+      expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(100);
+      expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(20);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("should terminate correctly", async () => {
-    // Trigger worker creation
     await (service as any).ensureWorker();
 
     const releaseSpy = vi.fn();
@@ -477,7 +473,6 @@ describe("SearchService", () => {
   describe("AutoSave and VisibilityChange", () => {
     beforeEach(async () => {
       vi.useFakeTimers();
-      // Ensure worker is ready so callbacks are registered
       await (service as any).ensureWorker();
     });
 
@@ -487,20 +482,17 @@ describe("SearchService", () => {
 
     it("should debounce auto-save", async () => {
       const saveIndexSpy = vi
-        .spyOn(service, "saveIndex")
+        .spyOn(persistence(service), "saveIndex")
         .mockResolvedValue(undefined);
-      (service as any).activeVaultId = "v1";
-      (service as any).isDirty = true;
+      coordinator(service).activeVaultId = "v1";
+      coordinator(service).isDirty = true;
 
-      // Trigger change callback (simulated via API proxy)
       const changeCallback = (mockApi.setChangeCallback as any).mock
         .calls[0][0];
       changeCallback();
 
-      // Should NOT have called saveIndex immediately
       expect(saveIndexSpy).not.toHaveBeenCalled();
 
-      // Fast-forward time
       vi.advanceTimersByTime(2000);
 
       expect(saveIndexSpy).toHaveBeenCalledWith("v1");
@@ -508,12 +500,11 @@ describe("SearchService", () => {
 
     it("should trigger emergency save on visibilitychange hidden", async () => {
       const saveIndexSpy = vi
-        .spyOn(service, "saveIndex")
+        .spyOn(persistence(service), "saveIndex")
         .mockResolvedValue(undefined);
-      (service as any).activeVaultId = "v1";
-      (service as any).isDirty = true;
+      coordinator(service).activeVaultId = "v1";
+      coordinator(service).isDirty = true;
 
-      // Mock visibilityState
       Object.defineProperty(document, "visibilityState", {
         configurable: true,
         get: () => "hidden",
@@ -526,10 +517,10 @@ describe("SearchService", () => {
 
     it("should skip emergency save if NOT dirty", async () => {
       const saveIndexSpy = vi
-        .spyOn(service, "saveIndex")
+        .spyOn(persistence(service), "saveIndex")
         .mockResolvedValue(undefined);
-      (service as any).activeVaultId = "v1";
-      (service as any).isDirty = false;
+      coordinator(service).activeVaultId = "v1";
+      coordinator(service).isDirty = false;
 
       Object.defineProperty(document, "visibilityState", {
         configurable: true,
@@ -557,7 +548,7 @@ describe("SearchService", () => {
         },
       };
 
-      const entry = (service as any).mapToSearchEntry(entity);
+      const entry = pipeline(service).mapToSearchEntry(entity);
 
       expect(entry.id).toBe("e1");
       expect(entry.path).toBe("folder/sub");
@@ -597,10 +588,10 @@ describe("SearchService", () => {
         throw new Error("Query Error");
       });
 
-      (service as any).api = mockApi;
-      (service as any).activeVaultId = "v1";
+      await (service as any).ensureWorker();
+      coordinator(service).activeVaultId = "v1";
 
-      await (service as any).indexContentInBackground("v1");
+      await pipeline(service).indexContentInBackground("v1");
 
       expect(debugStore.warn).toHaveBeenCalledWith(
         expect.stringContaining("Background content sync failed"),
