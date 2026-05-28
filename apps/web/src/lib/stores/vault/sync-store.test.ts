@@ -123,9 +123,11 @@ describe("SyncStore", () => {
               content: "Cached Content",
               lore: "Cached Lore",
               type: "character",
+              tags: [],
               labels: [],
               aliases: [],
               connections: [],
+              status: "active",
             },
           },
         ],
@@ -587,8 +589,8 @@ describe("SyncStore", () => {
       await runLoad;
 
       // Verify that loadMaps and updateEntityCount were NOT called for vault-1
-      expect(testStore.deps.loadMaps).not.toHaveBeenCalled();
-      expect(testStore.deps.updateEntityCount).not.toHaveBeenCalled();
+      expect((testStore as any).deps.loadMaps).not.toHaveBeenCalled();
+      expect((testStore as any).deps.updateEntityCount).not.toHaveBeenCalled();
 
       // Verify that SYNC_COMPLETE was NOT emitted for vault-1
       const syncCompleteEmitted = vaultOpeningSpy.mock.calls.some(
@@ -750,7 +752,12 @@ describe("SyncStore", () => {
       await new Promise((r) => setTimeout(r, 0));
 
       // Coordinator fires "saving" while vault still matches.
-      capturedOnStateChange?.({ status: "saving", syncType: "local" });
+      if (capturedOnStateChange) {
+        (capturedOnStateChange as NonNullable<typeof capturedOnStateChange>)({
+          status: "saving",
+          syncType: "local",
+        });
+      }
       expect(testStore.status).toBe("saving");
 
       // Vault switches — coordinator's final "idle" callback will be suppressed.
@@ -804,7 +811,12 @@ describe("SyncStore", () => {
       // Flush setup awaits so pullSpy is called and capturedOnStateChange set.
       await new Promise((r) => setTimeout(r, 0));
 
-      capturedOnStateChange?.({ status: "loading", syncType: "local" });
+      if (capturedOnStateChange) {
+        (capturedOnStateChange as NonNullable<typeof capturedOnStateChange>)({
+          status: "loading",
+          syncType: "local",
+        });
+      }
       expect(testStore.status).toBe("loading");
 
       activeVault = "vault-2";

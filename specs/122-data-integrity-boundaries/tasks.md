@@ -17,9 +17,9 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create `packages/schema/src/entity.ts` and define core Zod schemas
-- [ ] T002 [P] Create `packages/vault-engine/tests/validation.test.ts` skeleton
-- [ ] T003 [P] Create `packages/vault-engine/tests/migrations.test.ts` skeleton
+- [x] T001 Create `packages/schema/src/entity.ts` and define core Zod schemas
+- [x] T002 [P] Create `packages/vault-engine/tests/validation.test.ts` skeleton
+- [x] T003 [P] Create `packages/vault-engine/tests/migrations.test.ts` skeleton
 
 ---
 
@@ -29,8 +29,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Implement `idb` store setup for `migration_log` in `packages/vault-engine/src/migrations/store.ts`
-- [ ] T005 Update `packages/schema` exports to expose all validation logic in index files
+- [x] T004 Implement `idb` store setup for `migration_log` in `packages/vault-engine/src/migrations/store.ts`
+- [x] T005 Update `packages/schema` exports to expose all validation logic in index files
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -46,12 +46,12 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T006 [P] [US1] Integration test for quarantine logic in `packages/vault-engine/tests/validation.test.ts`
+- [x] T006 [P] [US1] Integration test for quarantine logic in `packages/vault-engine/tests/validation.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement read-back schema validation in `packages/vault-engine/src/repository.svelte.ts`
-- [ ] T008 [US1] Implement quarantine logging in `packages/vault-engine/src/repository.svelte.ts`
+- [x] T007 [US1] Implement read-back schema validation in `packages/vault-engine/src/repository.svelte.ts`
+- [x] T008 [US1] Implement quarantine logging in `packages/vault-engine/src/repository.svelte.ts`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -65,15 +65,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T009 [P] [US2] Unit test for file extension validation in `packages/importer/tests/validation.test.ts`
-- [ ] T010 [P] [US2] Integration test for YAML frontmatter rejection in `packages/vault-engine/tests/validation.test.ts`
+- [x] T009 [P] [US2] Unit test for file extension validation in `packages/importer/tests/validation.test.ts`
+- [x] T010 [P] [US2] Integration test for YAML frontmatter rejection in `packages/vault-engine/tests/validation.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T011 [P] [US2] Implement file extension checks in `packages/importer/src/utils/validation.ts`
-- [ ] T012 [P] [US2] Implement markdown YAML validation in `packages/vault-engine/src/parser.ts`
-- [ ] T013 [US2] Update bulk import loop to silently skip and summarize invalid files in `packages/importer/src/importer.ts`
-- [ ] T014 [US2] Update UI to show rejected files in `apps/web/src/lib/components/ImportSettings.svelte`
+- [x] T011 [P] [US2] Implement file extension checks in `packages/importer/src/utils/validation.ts`
+- [x] T012 [P] [US2] Implement markdown YAML validation in `packages/vault-engine/src/parser.ts`
+- [x] T013 [US2] Update bulk import loop to silently skip and summarize invalid files in `apps/web/src/lib/components/settings/ImportSettings.svelte`
+- [x] T014 [US2] Update UI to show rejected files in `apps/web/src/lib/components/ImportSettings.svelte`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -87,15 +87,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T015 [P] [US3] Unit test for migration snapshot failure (storage limit) in `packages/vault-engine/tests/migrations.test.ts`
-- [ ] T016 [P] [US3] Unit test for log pruning in `packages/vault-engine/tests/migrations.test.ts`
-- [ ] T017 [P] [US3] Integration test for successful migration reversibility in `packages/vault-engine/tests/migrations.test.ts`
+- [x] T015 [P] [US3] Unit test for migration snapshot failure (storage limit) in `packages/vault-engine/tests/migrations.test.ts`
+- [x] T016 [P] [US3] Unit test for log pruning in `packages/vault-engine/tests/migrations.test.ts`
+- [x] T017 [P] [US3] Integration test for successful migration reversibility in `packages/vault-engine/tests/migrations.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Implement pre-migration OPFS snapshot logic in `packages/vault-engine/src/migrations/runner.ts`
-- [ ] T019 [US3] Implement snapshot storage failure abort logic in `packages/vault-engine/src/migrations/runner.ts`
-- [ ] T020 [US3] Implement `migration_log` retention policy (prune to last 5) in `packages/vault-engine/src/migrations/store.ts`
+- [x] T018 [US3] Implement pre-migration OPFS snapshot logic in `packages/vault-engine/src/migrations/runner.ts`
+- [x] T019 [US3] Implement snapshot storage failure abort logic in `packages/vault-engine/src/migrations/runner.ts`
+- [x] T020 [US3] Implement `migration_log` retention policy (prune to last 5) in `packages/vault-engine/src/migrations/store.ts`
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -105,9 +105,9 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T021 Code cleanup and refactoring in `packages/vault-engine`
+- [x] T021 Code cleanup and refactoring in `packages/vault-engine`
 - [ ] T022 Validate end-to-end user workflows manually
-- [ ] T023 Run quickstart.md validation
+- [x] T023 Run quickstart.md validation
 
 ---
 

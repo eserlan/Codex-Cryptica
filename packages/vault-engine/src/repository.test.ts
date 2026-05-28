@@ -67,7 +67,7 @@ describe("VaultRepository", () => {
     mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
     mockAdapter.getCachedEntity.mockResolvedValue({
       lastModified: 100,
-      entity: { id: "e1", title: "Cached Entity" } as any,
+      entity: { id: "e1", type: "note", title: "Cached Entity" } as any,
     });
 
     await repository.loadFiles("vault-1", mockHandle);
@@ -167,7 +167,7 @@ describe("VaultRepository", () => {
     mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
     mockAdapter.getCachedEntity.mockResolvedValue({
       lastModified: 100,
-      entity: { id: "e1", title: "E1" } as any,
+      entity: { id: "e1", type: "note", title: "E1" } as any,
     });
 
     await repository.loadFiles("vault-1", mockHandle);
@@ -207,7 +207,7 @@ describe("VaultRepository", () => {
     mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
     mockAdapter.getCachedEntity.mockResolvedValue({
       lastModified: 100,
-      entity: { id: "e1", title: "Markdown" } as any,
+      entity: { id: "e1", type: "note", title: "Markdown" } as any,
     });
 
     await repository.loadFiles("vault-1", mockHandle);
@@ -233,7 +233,7 @@ describe("VaultRepository", () => {
     mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
     mockAdapter.getCachedEntity.mockResolvedValue({
       lastModified: 100,
-      entity: { id: "e1", title: "Old", updatedAt: 100 } as any,
+      entity: { id: "e1", type: "note", title: "Old", updatedAt: 100 } as any,
     });
 
     await repository.loadFiles("vault-1", mockHandle);
@@ -265,7 +265,13 @@ describe("VaultRepository", () => {
     mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
     mockAdapter.getCachedEntity.mockResolvedValue({
       lastModified: 100,
-      entity: { id: "e1", title: "E1", content: "", lore: "" } as any,
+      entity: {
+        id: "e1",
+        type: "note",
+        title: "E1",
+        content: "",
+        lore: "",
+      } as any,
     });
 
     await repository.loadFiles("vault-1", mockHandle);
@@ -297,6 +303,7 @@ describe("VaultRepository", () => {
       lastModified: 100,
       entity: {
         id: "e1",
+        type: "note",
         title: "E1",
         content: "New Content",
         lore: "New Lore",
@@ -320,7 +327,7 @@ describe("VaultRepository", () => {
     mockAdapter.walkDirectory.mockResolvedValue(mockFiles as any);
     mockAdapter.getCachedEntity.mockResolvedValue({
       lastModified: 100,
-      entity: { id: "some-id", title: "title" } as any,
+      entity: { id: "some-id", type: "note", title: "title" } as any,
     });
 
     const start = Date.now();
