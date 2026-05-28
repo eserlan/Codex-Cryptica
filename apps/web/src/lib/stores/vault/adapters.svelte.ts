@@ -48,6 +48,14 @@ export const fileIOAdapter: IFileIOAdapter = {
   setCachedEntity: async (vaultId, path, lastModified, entity) => {
     await cacheService.set(`${vaultId}:${path}`, lastModified, entity);
   },
+  setCachedEntities: async (items) => {
+    const formattedItems = items.map((item) => ({
+      path: `${item.vaultId}:${item.path}`,
+      lastModified: item.lastModified,
+      entity: item.entity,
+    }));
+    await cacheService.bulkSet(formattedItems);
+  },
   parseMarkdown: (text, path) => {
     const parsed = parseMarkdown(text);
     const rawId = parsed.metadata.id || deriveIdFromPath(path);

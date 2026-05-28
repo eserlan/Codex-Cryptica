@@ -23,6 +23,8 @@ export interface MutationDependencies {
   getServices: () => IVaultServices | null;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
+  getInboundMap?: () => import("./relationships").InboundMap;
+  getParentToChildren?: () => Map<string, Set<string>>;
 }
 
 export class EntityMutationService {
@@ -221,7 +223,15 @@ export class EntityMutationService {
         const path = entity?._path || [`${id}.md`];
 
         const { entities, deletedEntity, modifiedIds } =
-          await vaultEntities.deleteEntity(vaultHandle, this.entities, id);
+          await vaultEntities.deleteEntity(
+            vaultHandle,
+            this.entities,
+            id,
+            this.deps.getInboundMap ? this.deps.getInboundMap() : undefined,
+            this.deps.getParentToChildren
+              ? this.deps.getParentToChildren()
+              : undefined,
+          );
 
         if (deletedEntity) {
           this.entities = entities;
@@ -303,8 +313,16 @@ export class EntityMutationService {
     if (updatedSource) {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
-      // Connections are not search-indexed; Svelte 5 reactivity drives UI re-renders.
-      // No ENTITY_UPDATED event needed here.
+
+      vaultEventBus.emit({
+        type: "CONNECTION_ADDED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        connectionType: type,
+        label,
+        strength,
+      });
       return true;
     }
     return false;
@@ -328,8 +346,16 @@ export class EntityMutationService {
     if (updatedSource) {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
-      // Connections are not search-indexed; Svelte 5 reactivity drives UI re-renders.
-      // No ENTITY_UPDATED event needed here.
+
+      vaultEventBus.emit({
+        type: "CONNECTION_UPDATED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        oldType,
+        newType,
+        newLabel,
+      });
       return true;
     }
     return false;

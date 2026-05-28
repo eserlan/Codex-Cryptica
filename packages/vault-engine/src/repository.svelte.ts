@@ -19,6 +19,14 @@ export interface IFileIOAdapter {
     lastModified: number,
     entity: LocalEntity,
   ): Promise<void>;
+  setCachedEntities?(
+    items: Array<{
+      vaultId: string;
+      path: string;
+      lastModified: number;
+      entity: LocalEntity;
+    }>,
+  ): Promise<void>;
   parseMarkdown(text: string, filePath: string[]): LocalEntity | null;
   isNotFoundError(err: any): boolean;
 }
@@ -77,20 +85,14 @@ export class VaultRepository {
 
       if (cached && Math.abs(cached.lastModified - lastModified) <= SKEW_MS) {
         const entity: LocalEntity = { ...cached.entity, _path: fileEntry.path };
-        return { entity, isHit: true };
+        return { entity, isHit: true, lastModified, filePath };
       }
 
       const text = await this.ioAdapter.readFileAsText(fileEntry);
       const entity = this.ioAdapter.parseMarkdown(text, fileEntry.path);
 
       if (entity) {
-        await this.ioAdapter.setCachedEntity(
-          activeVaultId,
-          filePath,
-          lastModified,
-          entity,
-        );
-        return { entity, isHit: false };
+        return { entity, isHit: false, lastModified, filePath };
       }
 
       return null;
@@ -107,6 +109,12 @@ export class VaultRepository {
 
       const updatedEntities: Record<string, LocalEntity> = {};
       const newOrChanged: Record<string, LocalEntity> = {};
+      const entitiesToCache: Array<{
+        vaultId: string;
+        path: string;
+        lastModified: number;
+        entity: LocalEntity;
+      }> = [];
 
       for (const res of chunkResults) {
         if (res) {
@@ -114,7 +122,30 @@ export class VaultRepository {
           updatedEntities[res.entity.id] = res.entity;
           if (!res.isHit) {
             newOrChanged[res.entity.id] = res.entity;
+            entitiesToCache.push({
+              vaultId: activeVaultId,
+              path: res.filePath,
+              lastModified: res.lastModified,
+              entity: res.entity,
+            });
           }
+        }
+      }
+
+      if (entitiesToCache.length > 0) {
+        if (this.ioAdapter.setCachedEntities) {
+          await this.ioAdapter.setCachedEntities(entitiesToCache);
+        } else {
+          await Promise.all(
+            entitiesToCache.map((item) =>
+              this.ioAdapter.setCachedEntity(
+                item.vaultId,
+                item.path,
+                item.lastModified,
+                item.entity,
+              ),
+            ),
+          );
         }
       }
 

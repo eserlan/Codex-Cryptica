@@ -31,6 +31,24 @@ export type VaultEvent =
       patches?: Record<string, Partial<LocalEntity>>;
     }
   | {
+      type: "CONNECTION_ADDED";
+      vaultId: string;
+      sourceId: string;
+      targetId: string;
+      connectionType: string;
+      label?: string;
+      strength?: number;
+    }
+  | {
+      type: "CONNECTION_UPDATED";
+      vaultId: string;
+      sourceId: string;
+      targetId: string;
+      oldType: string;
+      newType: string;
+      newLabel?: string;
+    }
+  | {
       type: "CONNECTION_REMOVED";
       vaultId: string;
       sourceId: string;
@@ -180,6 +198,34 @@ export class VaultEventBus {
           type: VAULT_EVENTS.VAULT_DELETED,
           domain: "vault",
           payload: { vaultId: event.vaultId },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "CONNECTION_ADDED":
+        appEvent = {
+          type: VAULT_EVENTS.CONNECTION_ADDED,
+          domain: "vault",
+          payload: {
+            sourceId: event.sourceId,
+            targetId: event.targetId,
+            connectionType: event.connectionType,
+            label: event.label,
+            strength: event.strength,
+          },
+          metadata: { timestamp, vaultId: event.vaultId },
+        };
+        break;
+      case "CONNECTION_UPDATED":
+        appEvent = {
+          type: VAULT_EVENTS.CONNECTION_UPDATED,
+          domain: "vault",
+          payload: {
+            sourceId: event.sourceId,
+            targetId: event.targetId,
+            oldType: event.oldType,
+            newType: event.newType,
+            newLabel: event.newLabel,
+          },
           metadata: { timestamp, vaultId: event.vaultId },
         };
         break;

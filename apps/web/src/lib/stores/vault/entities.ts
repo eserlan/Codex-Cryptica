@@ -98,6 +98,8 @@ export async function deleteEntity(
   vaultDir: FileSystemDirectoryHandle,
   entities: Record<string, LocalEntity>,
   id: string,
+  inboundMap?: import("./relationships").InboundMap,
+  parentToChildren?: Map<string, Set<string>>,
 ): Promise<{
   entities: Record<string, LocalEntity>;
   deletedEntity: LocalEntity | null;
@@ -134,11 +136,27 @@ export async function deleteEntity(
   delete newEntities[id];
 
   // 4. Cleanup connections FROM other nodes TO this node
-  // Since inboundConnections is now derived, we just need to ensure
-  // any entity that linked to this one is updated.
   const modifiedIds: string[] = [];
-  for (const sourceId in newEntities) {
+
+  let idsToCheck: Iterable<string>;
+  if (inboundMap && parentToChildren) {
+    const toCheck = new Set<string>();
+    const inbounds = inboundMap[id] || [];
+    for (const c of inbounds) toCheck.add(c.sourceId);
+
+    const children = parentToChildren.get(id);
+    if (children) {
+      for (const childId of children) toCheck.add(childId);
+    }
+    idsToCheck = toCheck;
+  } else {
+    idsToCheck = Object.keys(newEntities);
+  }
+
+  for (const sourceId of idsToCheck) {
     const sourceEntity = newEntities[sourceId];
+    if (!sourceEntity) continue;
+
     let isModified = false;
     const updatedEntity = { ...sourceEntity };
 

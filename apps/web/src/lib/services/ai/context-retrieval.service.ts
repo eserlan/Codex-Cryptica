@@ -33,6 +33,24 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     vault: VaultMinimal,
   ): string | undefined {
     const queryLower = query.toLowerCase();
+    // Fast path: use titleAliasIndex if available
+    if (vault.titleAliasIndex) {
+      if (vault.titleAliasIndex.has(queryLower)) {
+        const id = vault.titleAliasIndex.get(queryLower)!;
+        const e = vault.entities[id];
+        if (
+          e &&
+          (!vault.isGuest ||
+            isEntityVisible(e, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            }))
+        ) {
+          return id;
+        }
+      }
+    }
+
     const matches = [];
     const entities = vault.entities || {};
 
@@ -424,35 +442,35 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     let finalContent = Array.from(contextMap.values()).join("\n\n");
     if (contextMap.size === 0 && excludeTitles.size === 0) {
-      // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
-      // to avoid an extra titles array from .map(), reducing GC overhead.
-      // When vault.allEntities is present, this also avoids an Object.values() allocation.
-      // Fallback to Object.values(vault.entities) if allEntities is not available (e.g. in some tests)
-      const allEntities =
-        vault.allEntities || Object.values(vault.entities || {});
-      const count = allEntities.length;
-      let allTitles = "";
-      let first = true;
-      for (let i = 0; i < count; i++) {
-        const e = allEntities[i];
-        const title = e.title;
-        if (title && !internalExclusions.has(title)) {
-          // Enforce Fog of War for guests in title list
-          if (
-            vault.isGuest &&
-            !isEntityVisible(e, {
-              sharedMode: true,
-              defaultVisibility: vault.defaultVisibility,
-            })
-          ) {
-            continue;
-          }
+      let allTitles = vault.allTitlesString || "";
+      if (!allTitles) {
+        // Fallback calculation...
+        // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
+        const allEntities =
+          vault.allEntities || Object.values(vault.entities || {});
+        const count = allEntities.length;
+        let first = true;
+        for (let i = 0; i < count; i++) {
+          const e = allEntities[i];
+          const title = e.title;
+          if (title && !internalExclusions.has(title)) {
+            // Enforce Fog of War for guests in title list
+            if (
+              vault.isGuest &&
+              !isEntityVisible(e, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              })
+            ) {
+              continue;
+            }
 
-          if (!first) {
-            allTitles += ", ";
+            if (!first) {
+              allTitles += ", ";
+            }
+            allTitles += title;
+            first = false;
           }
-          allTitles += title;
-          first = false;
         }
       }
       if (allTitles) {
