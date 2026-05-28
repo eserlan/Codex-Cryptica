@@ -8,7 +8,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "bun test",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -1,6 +1,11 @@
 /**
  * Bun Test Preload - Environment Polyfills and Svelte 5 Rune Shims
  */
+import { vi } from "vitest";
+
+if (typeof vi.unstubAllGlobals !== "function") {
+  (vi as any).unstubAllGlobals = () => {};
+}
 
 // 1. FileReader Shim (needed for packages/importer)
 if (typeof globalThis.FileReader === "undefined") {

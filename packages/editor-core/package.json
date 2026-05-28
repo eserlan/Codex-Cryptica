@@ -7,7 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "bun test",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
