@@ -66,10 +66,14 @@
       let resolvedLore = "";
       let resolvedContent = "";
       if (useTemplate) {
+        const folderHandle = await vault.getActiveFolderHandle();
+        const vaultHandle = await vault.getActiveVaultHandle();
+        const customTemplatesDirHandle = folderHandle ?? vaultHandle;
+
         resolvedLore = await entityTemplateService.resolveTemplate(
           newType,
           themeStore.worldThemeId,
-          vault.getActiveFolderHandle() || vault.getActiveVaultHandle(),
+          customTemplatesDirHandle,
         );
         resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
@@ -259,6 +263,7 @@
       {:else}
         <!-- Main Actions -->
         <button
+          type="button"
           class={isVertical
             ? `${btnGhost} py-3 text-sm justify-center`
             : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
