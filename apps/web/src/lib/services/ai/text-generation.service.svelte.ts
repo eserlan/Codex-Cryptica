@@ -1,5 +1,6 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import { classifyApiError } from "./api-error-classifier";
+import { u } from "./prompts/user-content";
 import {
   TIER_MODES,
   type RelatedEntityContext,
@@ -627,8 +628,8 @@ export class DefaultTextGenerationService implements TextGenerationService {
       // but BEFORE the current query. This keeps the history prefix stable
       // for Gemini's implicit caching.
       const finalQuery = context
-        ? `[VAULT LORE CONTEXT]\n${context.trim()}\n\n${prefixContext}[USER QUERY]\n${query}`
-        : `${prefixContext}${query}`;
+        ? `[VAULT LORE CONTEXT]\n${u(context.trim())}\n\n${prefixContext}[USER QUERY]\n${u(query)}`
+        : `${prefixContext}${u(query)}`;
 
       const result = await chat.sendMessageStream(finalQuery);
       let fullText = "";

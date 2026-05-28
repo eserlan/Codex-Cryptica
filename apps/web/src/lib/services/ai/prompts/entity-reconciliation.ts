@@ -13,11 +13,12 @@ export function buildEntityReconciliationPrompt(
   const relatedSection =
     relatedEntities.length > 0
       ? `\nRELATED ENTITY CONTEXT:\n${relatedEntities
-          .map(
-            (related) =>
-              `- ${related.title} (${related.type})${
+          .map((related) =>
+            u(
+              `${related.title} (${related.type})${
                 related.relation ? ` [${related.relation}]` : ""
-              }: ${u(related.summary)}`,
+              }: ${related.summary}`,
+            ),
           )
           .join("\n")}\n`
       : "";

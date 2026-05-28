@@ -67,54 +67,47 @@ export class DefaultImageGenerationService implements ImageGenerationService {
   ): Promise<Blob> {
     assertAIEnabled();
 
+    // Fetch the raw API response, classifying network/quota/offline errors.
+    // processImageResponse is called outside this block so its specific
+    // messages (no image data, text returned) propagate without being replaced.
+    let rawData: any;
     try {
       if (!apiKey) {
         console.log(
           `[ImageGenerationService] Generating image via proxy: ${modelName}`,
         );
         const model = await this.aiClientManager.getModel("", modelName);
-
         const response = await (model as any).generateContent({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             response_modalities: ["IMAGE"],
           },
         });
-
-        return this.processImageResponse(response.rawResponse || response);
-      }
-
-      console.log(
-        `[ImageGenerationService] Generating image directly with model: ${modelName}`,
-      );
-      const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }],
-            },
-          ],
-          generationConfig: {
-            response_modalities: ["IMAGE"],
+        rawData = response.rawResponse || response;
+      } else {
+        console.log(
+          `[ImageGenerationService] Generating image directly with model: ${modelName}`,
+        );
+        const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
           },
-        }),
-      });
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_modalities: ["IMAGE"] },
+          }),
+        });
 
-      if (!response.ok) {
-        const err = await response.json();
-        const message = err.error?.message || response.statusText;
-        throw new Error(`Image Generation Error (${modelName}): ${message}`);
+        if (!response.ok) {
+          const err = await response.json();
+          const message = err.error?.message || response.statusText;
+          throw new Error(`Image Generation Error (${modelName}): ${message}`);
+        }
+        rawData = await response.json();
       }
-
-      const data = await response.json();
-      return this.processImageResponse(data);
     } catch (err: unknown) {
       const classified = classifyApiError(err);
       console.error(
@@ -127,6 +120,8 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           : classified.message;
       throw new Error(message, { cause: err });
     }
+
+    return this.processImageResponse(rawData);
   }
 
   private processImageResponse(data: any): Blob {

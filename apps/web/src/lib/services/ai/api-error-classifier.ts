@@ -36,5 +36,5 @@ export function classifyApiError(err: unknown): ClassifiedError {
       message: "The Oracle cannot process this request due to safety policies.",
     };
   }
-  return { type: "unknown", message: `Generation failed: ${msg}` };
+  return { type: "unknown", message: "Generation failed. Please try again." };
 }

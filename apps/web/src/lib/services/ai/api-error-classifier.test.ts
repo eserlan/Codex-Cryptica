@@ -48,17 +48,18 @@ describe("classifyApiError", () => {
     expect(result.message).toContain("safety policies");
   });
 
-  it("returns unknown for generic errors", () => {
+  it("returns unknown for generic errors with a generic message", () => {
     vi.stubGlobal("navigator", { onLine: true });
     const result = classifyApiError(new Error("Internal server error"));
     expect(result.type).toBe("unknown");
-    expect(result.message).toContain("Internal server error");
+    expect(result.message).toBe("Generation failed. Please try again.");
+    expect(result.message).not.toContain("Internal server error");
   });
 
-  it("handles non-Error values", () => {
+  it("handles non-Error values with a generic message", () => {
     vi.stubGlobal("navigator", { onLine: true });
     const result = classifyApiError("something went wrong");
     expect(result.type).toBe("unknown");
-    expect(result.message).toContain("something went wrong");
+    expect(result.message).toBe("Generation failed. Please try again.");
   });
 });
