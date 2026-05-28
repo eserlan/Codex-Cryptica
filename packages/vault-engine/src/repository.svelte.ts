@@ -155,10 +155,14 @@ export class VaultRepository {
         cacheEntriesToWrite.length > 0 &&
         this.ioAdapter.setCachedEntitiesBulk
       ) {
-        await this.ioAdapter.setCachedEntitiesBulk(
-          activeVaultId,
-          cacheEntriesToWrite,
-        );
+        try {
+          await this.ioAdapter.setCachedEntitiesBulk(
+            activeVaultId,
+            cacheEntriesToWrite,
+          );
+        } catch (e) {
+          console.warn("Failed to cache parsed entities in bulk", e);
+        }
       }
 
       // Update incrementally to allow search/UI to work during load.
