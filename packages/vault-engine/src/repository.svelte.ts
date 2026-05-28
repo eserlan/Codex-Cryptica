@@ -96,7 +96,7 @@ export class VaultRepository {
 
       if (cached && Math.abs(cached.lastModified - lastModified) <= SKEW_MS) {
         const entity: LocalEntity = { ...cached.entity, _path: fileEntry.path };
-        return { entity, isHit: true };
+        return { entity, isHit: true, lastModified, filePath };
       }
 
       const text = await this.ioAdapter.readFileAsText(fileEntry);
@@ -155,10 +155,14 @@ export class VaultRepository {
         cacheEntriesToWrite.length > 0 &&
         this.ioAdapter.setCachedEntitiesBulk
       ) {
-        await this.ioAdapter.setCachedEntitiesBulk(
-          activeVaultId,
-          cacheEntriesToWrite,
-        );
+        try {
+          await this.ioAdapter.setCachedEntitiesBulk(
+            activeVaultId,
+            cacheEntriesToWrite,
+          );
+        } catch (e) {
+          console.warn("Failed to cache parsed entities in bulk", e);
+        }
       }
 
       // Update incrementally to allow search/UI to work during load.

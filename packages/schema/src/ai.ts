@@ -15,6 +15,8 @@ export interface VaultMinimal {
   isGuest: boolean;
   activeVaultId?: string;
   loadEntityContent?: (id: string) => Promise<void>;
+  titleAliasIndex?: Map<string, string>;
+  allTitlesString?: string;
 }
 
 export interface ChatHistoryMessage {
