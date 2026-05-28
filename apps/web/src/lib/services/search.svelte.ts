@@ -97,9 +97,9 @@ export class SearchService {
       documentRef,
       callbacks: {
         onVaultSwitch: async (vaultId) => {
-          await this.coordinator.cancelIndexing("Vault switched.", false);
-          // Set activeVaultId before pipeline.clear() so the stale-vault guard
-          // rejects any old-vault events that arrive during the clear() await.
+          void this.coordinator.cancelIndexing("Vault switched.", false);
+          // Set activeVaultId synchronously before any yields (awaits) so that
+          // incoming new-vault events (like CACHE_LOADED) are not filtered out by the stale-vault guard.
           this.coordinator.activeVaultId = vaultId;
           this.coordinator.isDirty = false;
           await this.pipeline.clear();
