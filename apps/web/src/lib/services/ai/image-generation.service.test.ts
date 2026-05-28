@@ -163,7 +163,7 @@ describe("DefaultImageGenerationService", () => {
       );
     });
 
-    it("should handle generic API errors", async () => {
+    it("should handle generic API errors with a generic user-facing message", async () => {
       (global.fetch as any).mockResolvedValue({
         ok: false,
         statusText: "Bad Request",
@@ -172,7 +172,7 @@ describe("DefaultImageGenerationService", () => {
 
       await expect(
         service.generateImage("key", "prompt", "model"),
-      ).rejects.toThrow("Image Generation Error (model): Invalid Params");
+      ).rejects.toThrow("Generation failed. Please try again.");
     });
 
     it("should throw if AI returns text instead of image", async () => {

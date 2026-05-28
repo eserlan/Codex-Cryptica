@@ -6,6 +6,7 @@ import {
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 import { GEMINI_API_BASE_URL } from "../../config/oracle-constants";
+import { classifyApiError } from "./api-error-classifier";
 
 export class DefaultImageGenerationService implements ImageGenerationService {
   constructor(private aiClientManager = defaultAiClientManager) {}
@@ -66,76 +67,61 @@ export class DefaultImageGenerationService implements ImageGenerationService {
   ): Promise<Blob> {
     assertAIEnabled();
 
-    // If no API key, use proxy path via client manager
-    if (!apiKey) {
-      console.log(
-        `[ImageGenerationService] Generating image via proxy: ${modelName}`,
-      );
-      const model = await this.aiClientManager.getModel("", modelName);
-
-      const response = await (model as any).generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_modalities: ["IMAGE"],
-        },
-      });
-
-      // Use the raw response for consistent parsing
-      return this.processImageResponse(response.rawResponse || response);
-    }
-
+    // Fetch the raw API response, classifying network/quota/offline errors.
+    // processImageResponse is called outside this block so its specific
+    // messages (no image data, text returned) propagate without being replaced.
+    let rawData: any;
     try {
-      console.log(
-        `[ImageGenerationService] Generating image directly with model: ${modelName}`,
-      );
-      const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
+      if (!apiKey) {
+        console.log(
+          `[ImageGenerationService] Generating image via proxy: ${modelName}`,
+        );
+        const model = await this.aiClientManager.getModel("", modelName);
+        const response = await (model as any).generateContent({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             response_modalities: ["IMAGE"],
           },
-        }),
-      });
+        });
+        rawData = response.rawResponse || response;
+      } else {
+        console.log(
+          `[ImageGenerationService] Generating image directly with model: ${modelName}`,
+        );
+        const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_modalities: ["IMAGE"] },
+          }),
+        });
 
-      if (!response.ok) {
-        const err = await response.json();
-        const message = err.error?.message || response.statusText;
-
-        if (
-          message.toLowerCase().includes("safety") ||
-          message.toLowerCase().includes("block")
-        ) {
-          throw new Error(
-            "The Oracle cannot visualize this request due to safety policies.",
-          );
+        if (!response.ok) {
+          const err = await response.json();
+          const message = err.error?.message || response.statusText;
+          throw new Error(`Image Generation Error (${modelName}): ${message}`);
         }
-        throw new Error(`Image Generation Error (${modelName}): ${message}`);
+        rawData = await response.json();
       }
-
-      const data = await response.json();
-      return this.processImageResponse(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const classified = classifyApiError(err);
       console.error(
         `[ImageGenerationService] Image generation failed:`,
-        err.message,
+        classified.message,
       );
-      throw err;
+      const message =
+        classified.type === "safety"
+          ? "The Oracle cannot visualize this request due to safety policies."
+          : classified.message;
+      throw new Error(message, { cause: err });
     }
+
+    return this.processImageResponse(rawData);
   }
 
   private processImageResponse(data: any): Blob {

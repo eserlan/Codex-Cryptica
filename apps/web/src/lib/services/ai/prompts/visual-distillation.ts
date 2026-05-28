@@ -1,3 +1,5 @@
+import { u } from "./user-content";
+
 export function buildVisualCanonResolutionPrompt(
   query: string,
   context: string,
@@ -5,10 +7,10 @@ export function buildVisualCanonResolutionPrompt(
   return `You are the Visual Canon Interpreter for the Lore Oracle. Your task is to resolve established artistic direction and visual motifs from the vault before any image is generated.
 
 VAULT CONTEXT:
-${context}
+${u(context)}
 
 USER REQUEST:
-${query}
+${u(query)}
 
 Search the vault context for established:
 - art direction
@@ -47,7 +49,7 @@ VISUAL CANON SUMMARY:
 ${canonSummary}
 
 ORIGINAL REQUEST:
-${userQuery}
+${u(userQuery)}
 
 GUIDELINES:
 - Emphasize distinctive setting identity.
