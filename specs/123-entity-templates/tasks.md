@@ -117,8 +117,10 @@
 
 **Purpose**: General optimizations, document validation, and formatting
 
-- [ ] T015 Perform code linting and formatting across changed files (`apps/web/src/lib/services/EntityTemplateService.svelte.ts`, `apps/web/src/lib/components/VaultControls.svelte`, etc.) using `bun run lint` and `bun run lint:types`
-- [ ] T016 Run the complete unit test suite `bun run test` to verify zero regression across existing stores and services
+- [ ] T015 Create a user-facing help guide article at `apps/web/src/lib/content/help/default-templates.md` describing custom override structures and UI controls per Constitution VII
+- [ ] T016 Create a devlog/blog announcement article at `apps/web/src/lib/content/blog/default-entity-templates.md` announcing Customizable Default Entity Templates
+- [ ] T017 Perform code linting and formatting across changed files (`apps/web/src/lib/services/EntityTemplateService.svelte.ts`, `apps/web/src/lib/components/VaultControls.svelte`, etc.) using `bun run lint` and `bun run lint:types`
+- [ ] T018 Run the complete unit test suite `bun run test` to verify zero regression across existing stores and services
 
 ---
 
