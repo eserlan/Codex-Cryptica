@@ -45,21 +45,6 @@ export class GraphStore {
       defaultVisibility: this.vault.defaultVisibility,
     };
 
-    // DEBUG VISIBILITY
-    if (this.vault.isGuest) {
-      console.log("[GraphStore] Visibility Check:", {
-        settings,
-        totalEntities: allEntities.length,
-        sampleEntity: allEntities[0]
-          ? {
-              id: allEntities[0].id,
-              labels: allEntities[0].labels,
-              visible: isEntityVisible(allEntities[0], settings),
-            }
-          : "none",
-      });
-    }
-
     // OPTIMIZATION: Build visible list and valid ID set in a single pass
     // to avoid multiple iterations and array allocations.
     // Also passes validIds to GraphTransformer to skip set reconstruction.
