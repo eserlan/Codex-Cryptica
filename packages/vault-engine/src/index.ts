@@ -6,3 +6,6 @@ export * from "./sync-coordinator";
 export * from "./asset-manager";
 export * from "./services/WorldService";
 export * from "./services/ActivityService";
+export * from "./parser";
+export * from "./migrations/runner";
+export * from "./migrations/store";

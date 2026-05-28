@@ -50,7 +50,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/120-explorer-nested-entities/plan.md).
+shell commands, and other important information, read the [current plan](./specs/122-data-integrity-boundaries/plan.md).
 
 <!-- SPECKIT END -->
 

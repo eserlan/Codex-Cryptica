@@ -3,6 +3,7 @@ import * as migration from "./migration";
 import { createVaultDir, writeOpfsFile } from "../../utils/opfs";
 import { getDB, getPersistedHandle } from "../../utils/idb";
 import { walkDirectory } from "../../utils/fs";
+import { runMigration as runSafeMigration } from "@codex/vault-engine";
 
 vi.mock("../../utils/opfs", () => ({
   createVaultDir: vi.fn(),
@@ -21,6 +22,18 @@ vi.mock("../../utils/fs", () => ({
   walkDirectory: vi.fn(),
 }));
 
+vi.mock("@codex/vault-engine", () => ({
+  migrationStore: {},
+  runMigration: vi.fn(
+    async (
+      _root: FileSystemDirectoryHandle,
+      _store: unknown,
+      _version: number,
+      task: () => Promise<void>,
+    ) => task(),
+  ),
+}));
+
 vi.mock("../debug.svelte", () => ({
   debugStore: {
     log: vi.fn(),
@@ -35,6 +48,14 @@ describe("Vault Migration", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(runSafeMigration).mockImplementation(
+      async (
+        _root: FileSystemDirectoryHandle,
+        _store: unknown,
+        _version: number,
+        task: () => Promise<void>,
+      ) => task(),
+    );
     mockOpfsRoot = {
       getDirectoryHandle: vi.fn(),
       entries: async function* () {},
@@ -140,6 +161,12 @@ describe("Vault Migration", () => {
         "opfsMigrationComplete",
       );
       expect(onComplete).toHaveBeenCalled();
+      expect(runSafeMigration).toHaveBeenCalledWith(
+        mockOpfsRoot,
+        expect.anything(),
+        1,
+        expect.any(Function),
+      );
     });
 
     it("should handle silent migration permission failure", async () => {
@@ -210,6 +237,32 @@ describe("Vault Migration", () => {
       expect(updateStatus).toHaveBeenCalledWith(
         "error",
         expect.stringContaining("Disk error"),
+      );
+    });
+
+    it("should surface snapshot failures even during silent migration", async () => {
+      const mockLegacy = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      };
+      vi.mocked(runSafeMigration).mockRejectedValue(
+        new Error(
+          "Migration aborted: Pre-migration snapshot failed. Storage full",
+        ),
+      );
+
+      const updateStatus = vi.fn();
+
+      await migration.runMigration(
+        mockOpfsRoot,
+        mockLegacy as any,
+        true,
+        vi.fn(),
+        updateStatus,
+      );
+
+      expect(updateStatus).toHaveBeenCalledWith(
+        "error",
+        "A migration snapshot could not be created. Clear storage space and try again.",
       );
     });
   });

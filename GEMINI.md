@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-26
+Auto-generated from all feature plans. Last updated: 2026-05-28
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper) (122-data-integrity-boundaries)
+- IndexedDB (Metadata/Cache), OPFS (Vault Files) (122-data-integrity-boundaries)
 
 - TypeScript 6.0.3 + zod (874-art-direction-clarification)
 
@@ -186,6 +189,8 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+
+- 944-data-integrity-boundaries: Added TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper)
 
 - 874-art-direction-clarification: Added TypeScript 6.0.3 + None (Browser Native APIs) / Zod
 

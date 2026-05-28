@@ -1,5 +1,6 @@
 import { KeyedTaskQueue } from "./queue";
 import type { LocalEntity, FileEntry } from "./types";
+import { EntitySchema } from "schema";
 
 export interface IFileIOAdapter {
   walkDirectory(dir: FileSystemDirectoryHandle): Promise<FileEntry[]>;
@@ -95,8 +96,17 @@ export class VaultRepository {
       );
 
       if (cached && Math.abs(cached.lastModified - lastModified) <= SKEW_MS) {
-        const entity: LocalEntity = { ...cached.entity, _path: fileEntry.path };
-        return { entity, isHit: true, lastModified, filePath };
+        const parsed = EntitySchema.safeParse(cached.entity);
+        if (parsed.success) {
+          const entity: LocalEntity = { ...parsed.data, _path: fileEntry.path };
+          return { entity, isHit: true, lastModified, filePath };
+        } else {
+          console.warn(
+            `[VaultRepository] Quarantined corrupted cached entity at ${filePath}`,
+            parsed.error,
+          );
+          // Fall through to re-parse from disk
+        }
       }
 
       const text = await this.ioAdapter.readFileAsText(fileEntry);
