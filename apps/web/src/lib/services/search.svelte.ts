@@ -10,34 +10,14 @@ import type {
 import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { appEventBus } from "@codex/events";
-import { VAULT_EVENTS } from "@codex/vault-engine";
 import { quickNoteStore } from "../stores/quicknote.svelte";
+import {
+  SearchProgressCoordinator,
+  type TimerApi,
+} from "./search-progress-coordinator";
+import { SearchIndexLifecycle } from "./search-index-lifecycle";
 
 const INDEX_BATCH_SIZE = 100;
-
-// Fields that FlexSearch indexes — used by the BATCH_UPDATED handler to skip
-// re-indexing when none of an entity's searchable fields changed.
-// Keep in sync with mapToSearchEntry().
-const BATCH_UPDATED_SEARCH_FIELDS = new Set([
-  "title",
-  "aliases",
-  "content",
-  "tags",
-  "labels",
-  "lore",
-  "metadata", // fanned into the `keywords` field via Object.values(entity.metadata)
-]);
-const READY_PROGRESS: SearchIndexProgress = {
-  status: "idle",
-  vaultId: null,
-  runId: null,
-  indexedCount: 0,
-  totalCount: null,
-  isPartial: false,
-  canRetry: false,
-  message: "Search is idle.",
-  error: null,
-};
 
 type SearchApi = Pick<
   SearchEngine,
@@ -53,10 +33,6 @@ type SearchApi = Pick<
   | "importIndex"
 >;
 
-type TimerApi = Pick<typeof globalThis, "setTimeout" | "clearTimeout"> & {
-  now?: () => number;
-};
-
 export interface SearchServiceDependencies {
   workerFactory?: () => Worker;
   api?: Comlink.Remote<SearchApi> | SearchApi;
@@ -71,191 +47,110 @@ export interface SearchServiceDependencies {
 export class SearchService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<SearchApi> | SearchApi | null = null;
-  private isDirty = false;
-  private activeVaultId: string | null = null;
-  private saveTimeout: any = null;
   private indexQueue: Promise<void> = Promise.resolve();
   private initPromise: Promise<void> | null = null;
   private isInitialized = false;
   private needsFullContentSweep = false;
-  private activeRunId: string | null = null;
-  // --- Reactive Progress State ---
-  private progress: SearchIndexProgress = { ...READY_PROGRESS };
-  private progressListeners = new Set<
-    (progress: SearchIndexProgress) => void
-  >();
-  private pendingRetryEntities: any[] = [];
-  private retryNeedsContentSweep = false;
-  private runCounter = 0;
 
   private workerFactory: () => Worker;
   private db: typeof entityDb;
-  private eventBus: typeof appEventBus;
   private debug: typeof debugStore;
   private timers: TimerApi;
   private windowRef: Window | undefined;
-  private documentRef: Document | undefined;
+  private coordinator: SearchProgressCoordinator;
 
   constructor(dependencies: SearchServiceDependencies = {}) {
     this.workerFactory =
       dependencies.workerFactory ?? (() => new SearchWorker());
     this.api = dependencies.api ?? null;
     this.db = dependencies.db ?? entityDb;
-    this.eventBus = dependencies.eventBus ?? appEventBus;
     this.debug = dependencies.debug ?? debugStore;
     this.timers = dependencies.timers ?? globalThis;
     this.windowRef =
       dependencies.windowRef ??
       (typeof window !== "undefined" ? window : undefined);
-    this.documentRef =
+    const documentRef =
       dependencies.documentRef ??
       (typeof document !== "undefined" ? document : undefined);
     this.isInitialized = Boolean(this.api);
 
-    if (this.windowRef) {
-      // Defer worker initialization until first use or vault event
-      // Bridge logs from worker to main thread log service
+    this.coordinator = new SearchProgressCoordinator({
+      debug: this.debug,
+      timers: this.timers,
+      windowRef: this.windowRef,
+      onScheduledSave: (vaultId) => this.saveIndex(vaultId),
+    });
 
-      // Final emergency save on page reload/exit
-      this.windowRef.addEventListener("visibilitychange", () => {
-        if (
-          this.documentRef?.visibilityState === "hidden" &&
-          this.isDirty &&
-          this.activeVaultId
-        ) {
-          this.saveIndex(this.activeVaultId);
-        }
-      });
-
-      // Subscribe to vault lifecycle events via AppEventBus
-      this.eventBus.subscribe(
-        "VAULT:*",
-        async (event) => {
-          // VALIDATION: All sync/load events MUST match the current active vault ID
-          // to prevent cross-vault index contamination during rapid switches.
-          // VAULT_OPENING and VAULT_SWITCHED are exempt — they drive the transition.
-          const vaultId = event.metadata.vaultId;
-          if (
-            vaultId &&
-            vaultId !== this.activeVaultId &&
-            event.type !== VAULT_EVENTS.VAULT_OPENING &&
-            event.type !== VAULT_EVENTS.VAULT_SWITCHED
-          ) {
-            return;
-          }
-
-          switch (event.type) {
-            case VAULT_EVENTS.VAULT_OPENING:
-              if (this.activeVaultId !== vaultId) {
-                await this.cancelIndexing("Vault switched.", false);
-                this.activeVaultId = vaultId!;
-                this.isDirty = false;
-                await this.clear();
-              }
-              break;
-
-            case VAULT_EVENTS.CACHE_LOADED: {
-              const restored = await this.loadIndex(vaultId!);
-              if (!restored) {
-                const entities = this.normalizeEntities(event.payload.entities);
-                this.debug.log(
-                  `[SearchService] Cold boot: Rebuilding index for ${vaultId}`,
-                );
-                await this.rebuildFromEntities(vaultId!, entities, "metadata", {
-                  markReady: false,
-                  saveOnReady: false,
-                });
-                this.needsFullContentSweep = true;
-                this.debug.log(`[SearchService] Metadata indexing complete.`);
-              } else {
-                this.needsFullContentSweep = false;
-                this.debug.log(
-                  `[SearchService] Warm boot: Restored index for ${vaultId}`,
-                );
-              }
-              break;
-            }
-
-            case VAULT_EVENTS.SYNC_CHUNK_READY: {
-              const entities = this.normalizeEntities(event.payload.entities);
-              if (entities.length > 0) {
-                await this.indexBatch(entities);
-              }
-              break;
-            }
-
-            case VAULT_EVENTS.SYNC_COMPLETE:
-              if (this.needsFullContentSweep) {
-                this.timers.setTimeout(() => {
-                  this.indexContentInBackground(vaultId!);
-                }, 3000);
-                this.needsFullContentSweep = false;
-              }
-              break;
-
-            case VAULT_EVENTS.VAULT_SWITCHED:
-              // Fallback: sync activeVaultId if VAULT_OPENING was missed
-              if (this.activeVaultId !== event.payload.id) {
-                await this.cancelIndexing("Vault switched.", false);
-                this.activeVaultId = event.payload.id;
-                this.isDirty = false;
-                await this.clear();
-              }
-              break;
-
-            case VAULT_EVENTS.ENTITY_UPDATED: {
-              const { patch, entity } = event.payload;
-              if (
-                patch.title !== undefined ||
-                patch.aliases !== undefined ||
-                patch.content !== undefined ||
-                patch.tags !== undefined ||
-                patch.labels !== undefined ||
-                patch.lore !== undefined
-              ) {
-                await this.index(this.mapToSearchEntry(entity));
-              }
-              break;
-            }
-
-            case VAULT_EVENTS.ENTITY_DELETED:
-              await this.remove(event.payload.entityId);
-              break;
-
-            case VAULT_EVENTS.BATCH_CREATED:
-              await this.indexBatch(
-                this.normalizeEntities(event.payload.entities),
-              );
-              break;
-
-            case VAULT_EVENTS.BATCH_UPDATED: {
-              const entities = this.normalizeEntities(event.payload.entities);
-              if (entities.length === 0) break;
-
-              // Fix #3: Skip re-indexing when only non-search metadata changed.
-              // Check each entity's patch; only queue those that touched a
-              // field FlexSearch actually indexes.
-              const patches: Record<string, Record<string, unknown>> = event
-                .payload.patches ?? {};
-              const entitiesToIndex = entities.filter((e: any) => {
-                const patch = patches[e.id];
-                // No patch entry for this entity → re-index conservatively.
-                if (!patch) return true;
-                return Object.keys(patch).some((k) =>
-                  BATCH_UPDATED_SEARCH_FIELDS.has(k),
-                );
-              });
-
-              if (entitiesToIndex.length > 0) {
-                await this.indexBatch(entitiesToIndex);
-              }
-              break;
-            }
+    new SearchIndexLifecycle({
+      eventBus: dependencies.eventBus ?? appEventBus,
+      coordinator: this.coordinator,
+      windowRef: this.windowRef,
+      documentRef,
+      callbacks: {
+        onVaultSwitch: async (vaultId) => {
+          await this.coordinator.cancelIndexing("Vault switched.", false);
+          this.coordinator.activeVaultId = vaultId;
+          this.coordinator.isDirty = false;
+          await this.clear();
+        },
+        onCacheLoaded: async (vaultId, entities) => {
+          const restored = await this.loadIndex(vaultId);
+          if (!restored) {
+            this.debug.log(
+              `[SearchService] Cold boot: Rebuilding index for ${vaultId}`,
+            );
+            await this.rebuildFromEntities(vaultId, entities, "metadata", {
+              markReady: false,
+              saveOnReady: false,
+            });
+            this.needsFullContentSweep = true;
+            this.debug.log(`[SearchService] Metadata indexing complete.`);
+          } else {
+            this.needsFullContentSweep = false;
+            this.debug.log(
+              `[SearchService] Warm boot: Restored index for ${vaultId}`,
+            );
           }
         },
-        "search-service",
-      );
-    }
+        onSyncChunk: async (entities) => {
+          await this.indexBatch(entities);
+        },
+        onSyncComplete: async (vaultId) => {
+          if (this.needsFullContentSweep) {
+            this.timers.setTimeout(() => {
+              this.indexContentInBackground(vaultId);
+            }, 3000);
+            this.needsFullContentSweep = false;
+          }
+        },
+        onEntityUpdated: async (entity: any, patch: any) => {
+          if (
+            patch.title !== undefined ||
+            patch.aliases !== undefined ||
+            patch.content !== undefined ||
+            patch.tags !== undefined ||
+            patch.labels !== undefined ||
+            patch.lore !== undefined
+          ) {
+            await this.index(this.mapToSearchEntry(entity));
+          }
+        },
+        onEntityDeleted: async (entityId) => {
+          await this.remove(entityId);
+        },
+        onBatchCreated: async (entities) => {
+          await this.indexBatch(entities);
+        },
+        onBatchUpdated: async (entities) => {
+          await this.indexBatch(entities);
+        },
+        onVisibilityHide: () => {
+          if (this.coordinator.isDirty && this.coordinator.activeVaultId) {
+            this.saveIndex(this.coordinator.activeVaultId);
+          }
+        },
+      },
+    });
   }
 
   /**
@@ -263,13 +158,14 @@ export class SearchService {
    * restored from cache and might be missing body text in the FlexSearch index.
    */
   private async indexContentInBackground(vaultId: string) {
-    if (!this.api || this.activeVaultId !== vaultId) return;
+    if (!this.api || this.coordinator.activeVaultId !== vaultId) return;
 
     this.debug.log(`[SearchService] Starting background content sync...`);
     const start = performance.now();
     let indexedCount = 0;
     const BATCH_SIZE = INDEX_BATCH_SIZE;
-    const runId = this.activeRunId ?? this.createRunId(vaultId);
+    const runId =
+      this.coordinator.activeRunId ?? this.coordinator.createRunId(vaultId);
     let totalCount: number | null;
 
     try {
@@ -283,8 +179,8 @@ export class SearchService {
 
       // Reset progress counters for the content sweep stage to avoid flickering
       // with metadata counts and ensure totalCount matches the sweep scope.
-      this.emitProgress({
-        ...this.progress,
+      this.coordinator.emitProgress({
+        ...this.coordinator.getIndexProgress(),
         status: "partial",
         indexedCount: 0,
         totalCount,
@@ -296,11 +192,11 @@ export class SearchService {
         .equals(vaultId)
         .toArray();
 
-      const metaMap = new Map(metadatas.map((m) => [m.id, m]));
+      const metaMap = new Map(metadatas.map((m: any) => [m.id, m]));
 
       let offset = 0;
       while (true) {
-        if (this.activeVaultId !== vaultId) {
+        if (this.coordinator.activeVaultId !== vaultId) {
           this.debug.log(
             `[SearchService] Background sync aborted (vault switched).`,
           );
@@ -349,8 +245,8 @@ export class SearchService {
       this.debug.log(
         `[SearchService] Background sync complete. Indexed ${indexedCount} content records in ${(performance.now() - start).toFixed(2)}ms`,
       );
-      if (this.isActiveRun(vaultId, runId)) {
-        this.emitProgress({
+      if (this.coordinator.isActiveRun(vaultId, runId)) {
+        this.coordinator.emitProgress({
           status: "ready",
           vaultId,
           runId,
@@ -365,8 +261,8 @@ export class SearchService {
       }
     } catch (err) {
       this.debug.warn(`[SearchService] Background content sync failed`, err);
-      this.retryNeedsContentSweep = true;
-      this.failIndexing(vaultId, runId, err);
+      this.coordinator.retryNeedsContentSweep = true;
+      this.coordinator.failIndexing(vaultId, runId, err);
     }
   }
 
@@ -397,8 +293,8 @@ export class SearchService {
     // Event-based change tracking
     this.api.setChangeCallback(
       Comlink.proxy(() => {
-        this.isDirty = true;
-        this.scheduleAutoSave();
+        this.coordinator.isDirty = true;
+        this.coordinator.scheduleAutoSave();
       }),
     );
 
@@ -427,20 +323,6 @@ export class SearchService {
     }
 
     return this.api as Comlink.Remote<SearchEngine>;
-  }
-
-  private scheduleAutoSave() {
-    if (!this.windowRef || !this.activeVaultId) return;
-    if (this.progress.isPartial || this.progress.status === "rebuilding") {
-      return;
-    }
-
-    if (this.saveTimeout) this.timers.clearTimeout(this.saveTimeout);
-    this.saveTimeout = this.timers.setTimeout(() => {
-      if (this.isDirty && this.activeVaultId) {
-        this.saveIndex(this.activeVaultId);
-      }
-    }, 2000); // Debounce saves by 2 seconds
   }
 
   terminate() {
@@ -536,7 +418,7 @@ export class SearchService {
 
   async clear(): Promise<void> {
     const api = await this.ensureWorker();
-    this.isDirty = false;
+    this.coordinator.isDirty = false;
     return api.clear();
   }
 
@@ -546,12 +428,12 @@ export class SearchService {
    */
   async loadIndex(vaultId: string): Promise<boolean> {
     const api = await this.ensureWorker();
-    this.activeVaultId = vaultId;
+    this.coordinator.activeVaultId = vaultId;
     try {
       const record = await this.db.searchIndex.get(vaultId);
       if (record && record.data) {
-        const runId = this.createRunId(vaultId);
-        this.emitProgress({
+        const runId = this.coordinator.createRunId(vaultId);
+        this.coordinator.emitProgress({
           status: "restoring",
           vaultId,
           runId,
@@ -563,8 +445,8 @@ export class SearchService {
           error: null,
         });
         await api.importIndex(record.data);
-        this.isDirty = false; // Reset dirty state after load
-        this.emitProgress({
+        this.coordinator.isDirty = false;
+        this.coordinator.emitProgress({
           status: "ready",
           vaultId,
           runId,
@@ -591,7 +473,8 @@ export class SearchService {
    */
   async saveIndex(vaultId: string): Promise<void> {
     const api = await this.ensureWorker();
-    if (this.progress.vaultId === vaultId && this.progress.isPartial) {
+    const p = this.coordinator.getIndexProgress();
+    if (p.vaultId === vaultId && p.isPartial) {
       this.debug.log(`[SearchService] Save skipped: Rebuild is still partial.`);
       return;
     }
@@ -639,7 +522,7 @@ export class SearchService {
           data: rawData,
           updatedAt: Date.now(),
         });
-        this.isDirty = false; // Reset dirty state after successful save
+        this.coordinator.isDirty = false;
         this.debug.log(
           `[SearchService] Save finished: Persisted index for ${vaultId} (${keyCount} keys) in ${(performance.now() - start).toFixed(2)}ms`,
         );
@@ -676,33 +559,24 @@ export class SearchService {
     };
   }
 
-  private normalizeEntities(entities: any): any[] {
-    if (Array.isArray(entities)) return entities;
-    if (entities && typeof entities === "object")
-      return Object.values(entities);
-    return [];
-  }
-
   getIndexProgress(): SearchIndexProgress {
-    return { ...this.progress };
+    return this.coordinator.getIndexProgress();
   }
 
   subscribeIndexProgress(
     callback: (progress: SearchIndexProgress) => void,
   ): () => void {
-    this.progressListeners.add(callback);
-    callback(this.getIndexProgress());
-    return () => this.progressListeners.delete(callback);
+    return this.coordinator.subscribeIndexProgress(callback);
   }
 
   async retryIndexing(): Promise<void> {
-    if (!this.activeVaultId) return;
-    const vaultId = this.activeVaultId;
-    const retryContentSweep = this.retryNeedsContentSweep;
-    this.retryNeedsContentSweep = false;
+    if (!this.coordinator.activeVaultId) return;
+    const vaultId = this.coordinator.activeVaultId;
+    const retryContentSweep = this.coordinator.retryNeedsContentSweep;
+    this.coordinator.retryNeedsContentSweep = false;
     const entities =
-      this.pendingRetryEntities.length > 0
-        ? this.pendingRetryEntities
+      this.coordinator.pendingRetryEntities.length > 0
+        ? this.coordinator.pendingRetryEntities
         : await this.db.graphEntities
             .where("vaultId")
             .equals(vaultId)
@@ -711,7 +585,7 @@ export class SearchService {
       markReady: !retryContentSweep,
       saveOnReady: !retryContentSweep,
     });
-    if (retryContentSweep && this.activeVaultId === vaultId) {
+    if (retryContentSweep && this.coordinator.activeVaultId === vaultId) {
       await this.indexContentInBackground(vaultId);
     }
   }
@@ -720,57 +594,7 @@ export class SearchService {
     reason = "Indexing cancelled.",
     canRetry = true,
   ): Promise<void> {
-    if (!this.activeRunId) return;
-    this.emitProgress({
-      status: "cancelled",
-      vaultId: this.activeVaultId,
-      runId: this.activeRunId,
-      indexedCount: this.progress.indexedCount,
-      totalCount: this.progress.totalCount,
-      isPartial: false,
-      canRetry,
-      message: reason,
-      error: null,
-    });
-    this.activeRunId = null;
-  }
-
-  private emitProgress(progress: SearchIndexProgress) {
-    this.progress = { ...progress };
-    for (const listener of this.progressListeners) {
-      try {
-        listener(this.getIndexProgress());
-      } catch (err) {
-        this.debug.warn("[SearchService] Progress listener failed", err);
-      }
-    }
-  }
-
-  private createRunId(vaultId: string): string {
-    this.runCounter += 1;
-    const runId = `${vaultId}:${Date.now()}:${this.runCounter}`;
-    this.activeRunId = runId;
-    return runId;
-  }
-
-  private isActiveRun(vaultId: string, runId: string): boolean {
-    return this.activeVaultId === vaultId && this.activeRunId === runId;
-  }
-
-  private failIndexing(vaultId: string, runId: string, err: unknown) {
-    if (!this.isActiveRun(vaultId, runId)) return;
-    const message = err instanceof Error ? err.message : "Unknown error";
-    this.emitProgress({
-      status: "failed",
-      vaultId,
-      runId,
-      indexedCount: this.progress.indexedCount,
-      totalCount: this.progress.totalCount,
-      isPartial: true,
-      canRetry: true,
-      message: "Search may be incomplete. Retry indexing.",
-      error: message,
-    });
+    return this.coordinator.cancelIndexing(reason, canRetry);
   }
 
   private delay(ms: number): Promise<void> {
@@ -783,15 +607,10 @@ export class SearchService {
     source: "metadata" | "retry",
     options: { markReady?: boolean; saveOnReady?: boolean } = {},
   ) {
-    // Fix #1: Don't resolve the worker twice. indexBatch (and this.clear)
-    // each call ensureWorker() themselves; no separate resolution needed here.
-    const runId = this.createRunId(vaultId);
+    const runId = this.coordinator.createRunId(vaultId);
     const markReady = options.markReady ?? true;
     const saveOnReady = options.saveOnReady ?? true;
-    // Fix C7: pendingRetryEntities is set AFTER clear() succeeds so that a
-    // failed clear() (e.g. worker torn down) does not overwrite a valid prior
-    // retry list with the new (possibly different) entities array.
-    this.emitProgress({
+    this.coordinator.emitProgress({
       status: "rebuilding",
       vaultId,
       runId,
@@ -808,15 +627,15 @@ export class SearchService {
 
     try {
       await this.clear();
-      this.pendingRetryEntities = entities;
+      this.coordinator.pendingRetryEntities = entities;
       await this.indexBatch(entities, {
         runId,
         vaultId,
         totalCount: entities.length,
       });
-      if (!this.isActiveRun(vaultId, runId)) return;
+      if (!this.coordinator.isActiveRun(vaultId, runId)) return;
       if (!markReady) {
-        this.emitProgress({
+        this.coordinator.emitProgress({
           status: "partial",
           vaultId,
           runId,
@@ -829,7 +648,7 @@ export class SearchService {
         });
         return;
       }
-      this.emitProgress({
+      this.coordinator.emitProgress({
         status: "ready",
         vaultId,
         runId,
@@ -844,7 +663,7 @@ export class SearchService {
         await this.saveIndex(vaultId);
       }
     } catch (err) {
-      this.failIndexing(vaultId, runId, err);
+      this.coordinator.failIndexing(vaultId, runId, err);
     }
   }
 
@@ -856,9 +675,6 @@ export class SearchService {
 
     // Serialize indexing jobs to prevent overlapping worker updates.
     const queued = this.indexQueue.then(async () => {
-      // ⚡ Bolt Optimization: Replace full array .map() with incremental imperative loop processing.
-      // Avoids allocating a massive intermediate array for all entities during cold boot,
-      // reducing peak memory and GC pressure.
       for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
         const chunkEntries: any[] = [];
         const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
@@ -869,23 +685,23 @@ export class SearchService {
         const cleanChunkEntries = $state.snapshot(chunkEntries);
 
         if (context) {
-          // Fix #2 + #4: Progressive path — single API call, no redundant
-          // fake-result construction. Guard stale runs before every chunk.
-          if (!this.isActiveRun(context.vaultId, context.runId)) return;
+          if (!this.coordinator.isActiveRun(context.vaultId, context.runId))
+            return;
           const result: ProgressiveBatchResult = await api.addBatchProgressive(
             cleanChunkEntries,
             {
               runId: context.runId,
               vaultId: context.vaultId,
               batchIndex: Math.floor(i / INDEX_BATCH_SIZE),
-              indexedBefore: this.progress.indexedCount,
+              indexedBefore: this.coordinator.getIndexProgress().indexedCount,
               totalCount: context.totalCount,
             },
           );
-          if (this.isActiveRun(result.vaultId, result.runId)) {
+          if (this.coordinator.isActiveRun(result.vaultId, result.runId)) {
             const indexedCount =
-              this.progress.indexedCount + result.acceptedCount;
-            this.emitProgress({
+              this.coordinator.getIndexProgress().indexedCount +
+              result.acceptedCount;
+            this.coordinator.emitProgress({
               status: "partial",
               vaultId: result.vaultId,
               runId: result.runId,
@@ -904,8 +720,7 @@ export class SearchService {
             });
           }
         } else {
-          // Non-progressive path: fire-and-forget batch with no progress
-          // tracking. No fake ProgressiveBatchResult construction needed.
+          // Non-progressive path: fire-and-forget batch with no progress tracking.
           await api.addBatch(cleanChunkEntries);
         }
         await this.delay(0);

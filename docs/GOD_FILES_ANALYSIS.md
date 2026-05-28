@@ -55,10 +55,6 @@ With the UI store, P2P services, Map route, and Graph surface now modular, the l
 
 ---
 
-## In-Progress Refactors
-
-- **`apps/web/src/lib/services/search.svelte.ts`** (~923 lines): 🔵 IN PROGRESS (Issue #962, plan: `docs/refactoring/SEARCH_SERVICE_REFACTOR.md`). Three-phase decomposition: extract `SearchProgressCoordinator` (progress state machine) and `SearchIndexLifecycle` (vault event routing) from `SearchService`; reduce facade to ≤ 350 lines.
-
 ## Next Recommended Refactor Order
 
 1. **`packages/map-engine/src/renderer.ts` / `packages/graph-engine/src/LayoutManager.ts`**: Reduce engine-core breadth before more UI layers depend on them.
@@ -68,6 +64,8 @@ With the UI store, P2P services, Map route, and Graph surface now modular, the l
 ---
 
 ## Historical Successes (Previously Fixed & Maintained)
+
+- **`apps/web/src/lib/services/search.svelte.ts`**: **IMPROVED**. Reduced from 923 lines to 741 by extracting `SearchProgressCoordinator` (138 lines, no worker/eventbus/db deps) and `SearchIndexLifecycle` (152 lines, no worker dep) as focused collaborators. Progress state and vault event routing are now independently unit-testable; 71 tests cover the decomposed pieces (Issue #962, plan: `docs/refactoring/SEARCH_SERVICE_REFACTOR.md`).
 
 - **`GraphView.svelte` & `ContextMenu.svelte`**: **RESOLVED**. Reduced from ~700 lines each to ~340 and ~290 lines respectively by extracting orchestration and action logic into `GraphViewController` and `GraphContextMenuController` (Spec 825/826).
 - **`oracle-executor.ts`**: **RESOLVED**. Reduced from 1,135 to 153 lines by extracting logic into 9 specialized command executors (Spec 097).
