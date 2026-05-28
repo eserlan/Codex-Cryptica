@@ -8,6 +8,14 @@ This document maps the evolution of Codex Cryptica from its architectural founda
 
 The following high-impact candidate specifications target performance, scaling, and multiplayer resilience in local-first environments.
 
+### [PROPOSED] Default Entity Templates with Local Overrides
+
+- **Target Area**: Entity Creation & Vault-Level Templates (`apps/web/src/lib/stores/vault/` & `packages/vault-engine/`)
+- **Objective**: Standardize entity creation with high-quality default Markdown templates, while allowing vault-specific customization and theme-adapted templates.
+- **Details**: Pre-populates newly created Character, Faction, Location, Item, Event, Creature, or Note entities with beautiful default markdown structures (like Goals, Secrets, and Story Hooks). Provides a visual toggle to disable template populating. Supports vault-level overrides via local markdown files in `.cc/templates/{type}.md` (case-insensitive conversion). Adapts default structures dynamically to configured world genres (e.g., High-Fantasy vs. Cyberpunk). Detailed in [123-entity-templates](./123-entity-templates/spec.md).
+
+---
+
 ### [PROPOSED] Direct P2P Audio/Video Integration
 
 - **Target Area**: P2P Networking & VTT UI (`apps/web/src/lib/services/p2p/`)
