@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "bun:test";
+import { describe, it, expect, vi } from "vitest";
 import { VaultRepository } from "../src/repository.svelte";
 import type { IFileIOAdapter } from "../src/repository.svelte";
 import type { LocalEntity, FileEntry } from "../src/types";

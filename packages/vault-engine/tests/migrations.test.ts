@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { describe, it, expect, vi, beforeEach } from "bun:test";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MigrationStore } from "../src/migrations/store";
 import { runMigration } from "../src/migrations/runner";
 
