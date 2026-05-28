@@ -69,9 +69,25 @@ When a vault has a specific theme/genre configured (such as "Fantasy" or "Sci-Fi
 
 ---
 
+### User Story 5 - Help & Guide Integration (Priority: P2)
+
+To ensure high feature discoverability and clear instructions on setting up custom overrides, the system provides user-facing documentation in the Help System and an accompanying blog announcement post.
+
+**Why this priority**: Required by project Constitution (Principle VII) to support self-serve custom template configuration.
+
+**Independent Test**: Confirm that the "Default Entity Templates" help guide is searchable and viewable in the Help sidebar, and that the announcement article is accessible via the Devlog/Blog.
+
+**Acceptance Scenarios**:
+
+1. **Given** the help center is open, **When** searching for "templates" or "default formats", **Then** the "Default Entity Templates" guide is returned.
+2. **Given** the blog/devlog index, **When** viewing articles, **Then** the announcement "No More Blank Pages: Introducing Default Entity Templates" is listed.
+
+---
+
 ### Edge Cases
 
 - **Custom template folder structure missing**: If the `.cc/templates/` folder does not exist in the vault, the system MUST gracefully fall back to the system defaults without throwing errors.
+
 - **Empty custom template file**: If a custom template file (e.g., `.cc/templates/character.md`) exists but is completely empty, the system MUST treat it as a valid choice, resulting in a blank entity page rather than falling back to the system default template. This allows users to explicitly disable default formats for a specific type.
 - **Case sensitivity of template names**: Match custom templates to entity types case-insensitively by mapping the entity type to its lowercase file name (e.g., `Character` maps to `.cc/templates/character.md`, `Faction` to `.cc/templates/faction.md`).
 
@@ -86,6 +102,8 @@ When a vault has a specific theme/genre configured (such as "Fantasy" or "Sci-Fi
 - **FR-005**: If a local override file exists, the system MUST read and use its contents as the template instead of the built-in defaults.
 - **FR-006**: If no local override file exists or if reading fails, the system MUST gracefully fall back to the system default template.
 - **FR-007**: System MUST provide theme-specific default fallback templates (e.g., "Fantasy", "Sci-Fi") matching the active vault's theme configuration if no custom local template files exist.
+
+- **FR-008**: System MUST supply a user help article explaining templates and setup at `apps/web/src/lib/content/help/default-templates.md` and a blog announcement post at `apps/web/src/lib/content/blog/default-entity-templates.md`.
 
 ### Key Entities _(include if feature involves data)_
 
