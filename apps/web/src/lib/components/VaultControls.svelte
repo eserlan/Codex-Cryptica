@@ -63,16 +63,19 @@
     isCreating = true;
     createError = null;
     try {
+      let resolvedLore = "";
       let resolvedContent = "";
       if (useTemplate) {
-        resolvedContent = await entityTemplateService.resolveTemplate(
+        resolvedLore = await entityTemplateService.resolveTemplate(
           newType,
           themeStore.worldThemeId,
           vault.getActiveFolderHandle() || vault.getActiveVaultHandle(),
         );
+        resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
       const id = await vault.createEntity(newType, newTitle, {
         content: resolvedContent,
+        lore: resolvedLore,
       });
       vault.selectedEntityId = id;
       newTitle = "";

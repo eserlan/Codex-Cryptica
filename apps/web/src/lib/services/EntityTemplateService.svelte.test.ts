@@ -252,4 +252,45 @@ describe("EntityTemplateService", () => {
       expect(result).toBe(GENERIC_TEMPLATES.character);
     });
   });
+
+  // --- extractSummary Tests ---
+  describe("Summary Extraction (extractSummary)", () => {
+    it("should extract correct summary under ## Summary header", () => {
+      const template =
+        "## Summary\nThis is the short form summary.\n\n## Appearance\nDetailed desc";
+      expect(service.extractSummary(template)).toBe(
+        "This is the short form summary.",
+      );
+    });
+
+    it("should ignore empty lines between header and text", () => {
+      const template =
+        "## Summary\n\n\n  This is the short form summary with whitespace.  \n\n## Appearance";
+      expect(service.extractSummary(template)).toBe(
+        "This is the short form summary with whitespace.",
+      );
+    });
+
+    it("should return empty string if ## Summary has no text content before next header", () => {
+      const template = "## Summary\n## Appearance\nDetailed desc";
+      expect(service.extractSummary(template)).toBe("");
+    });
+
+    it("should work with Windows-style line endings", () => {
+      const template =
+        "## Summary\r\nThis is windows newline summary.\r\n\r\n## Appearance";
+      expect(service.extractSummary(template)).toBe(
+        "This is windows newline summary.",
+      );
+    });
+
+    it("should return empty string if there is no Summary header", () => {
+      const template = "## Introduction\nSome text\n## Appearance";
+      expect(service.extractSummary(template)).toBe("");
+    });
+
+    it("should return empty string for empty template", () => {
+      expect(service.extractSummary("")).toBe("");
+    });
+  });
 });

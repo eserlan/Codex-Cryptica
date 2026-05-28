@@ -114,6 +114,29 @@ export class EntityTemplateService {
 
     return "";
   }
+
+  /**
+   * Extracts the summary line under the '## Summary' header from a template.
+   */
+  extractSummary(templateText: string): string {
+    if (!templateText) return "";
+    const lines = templateText.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (/^##?\s+summary/i.test(line)) {
+        for (let j = i + 1; j < lines.length; j++) {
+          const subLine = lines[j].trim();
+          if (subLine && !subLine.startsWith("#")) {
+            return subLine;
+          }
+          if (subLine.startsWith("#")) {
+            break;
+          }
+        }
+      }
+    }
+    return "";
+  }
 }
 
 // Lazy-load dependencies on default import to avoid circular dependency / premature initialization issues
