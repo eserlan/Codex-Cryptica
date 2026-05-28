@@ -147,6 +147,10 @@ export class EntityStore {
       });
     }
 
+    this.inboundConnections = vaultRelationships.rebuildInboundMap(
+      this.entities,
+    );
+
     this.allEntities = $derived.by(() => Object.values(this.entities));
     this.allActiveEntities = $derived.by(() =>
       this.allEntities.filter((e) => e.status !== "draft"),
@@ -154,7 +158,7 @@ export class EntityStore {
 
     this.titleAliasIndex = $derived.by(() => {
       const index = new Map<string, string>();
-      for (const entity of this.allActiveEntities) {
+      for (const entity of this.allEntities) {
         index.set(entity.title.toLowerCase(), entity.id);
         if (entity.aliases) {
           for (const alias of entity.aliases) {

@@ -442,7 +442,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     let finalContent = Array.from(contextMap.values()).join("\n\n");
     if (contextMap.size === 0 && excludeTitles.size === 0) {
-      let allTitles = vault.allTitlesString || "";
+      let allTitles =
+        !vault.isGuest && internalExclusions.size === 0
+          ? vault.allTitlesString || ""
+          : "";
       if (!allTitles) {
         // Fallback calculation...
         // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass

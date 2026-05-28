@@ -133,19 +133,23 @@ export class VaultRepository {
       }
 
       if (entitiesToCache.length > 0) {
-        if (this.ioAdapter.setCachedEntities) {
-          await this.ioAdapter.setCachedEntities(entitiesToCache);
-        } else {
-          await Promise.all(
-            entitiesToCache.map((item) =>
-              this.ioAdapter.setCachedEntity(
-                item.vaultId,
-                item.path,
-                item.lastModified,
-                item.entity,
+        try {
+          if (this.ioAdapter.setCachedEntities) {
+            await this.ioAdapter.setCachedEntities(entitiesToCache);
+          } else {
+            await Promise.all(
+              entitiesToCache.map((item) =>
+                this.ioAdapter.setCachedEntity(
+                  item.vaultId,
+                  item.path,
+                  item.lastModified,
+                  item.entity,
+                ),
               ),
-            ),
-          );
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to cache parsed entities in chunk", e);
         }
       }
 
