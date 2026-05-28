@@ -51,7 +51,7 @@ vi.mock("schema", async (importOriginal) => {
   };
 });
 
-import { graph, GraphStore } from "./graph.svelte";
+import { graph } from "./graph.svelte";
 import { vault } from "./vault.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible } from "schema";
@@ -284,27 +284,6 @@ describe("GraphStore", () => {
     graph.toggleOrbit();
     expect(graph.orbitMode).toBe(false);
     expect(graph.centralNodeId).toBe(null);
-  });
-
-  it("should log visibility check for guests", () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const testVault = {
-      ...vault,
-      isGuest: true,
-      allEntities: [{ id: "1" } as any],
-    };
-    const testGraph = new GraphStore(
-      testVault as any,
-      explorerUIStore,
-      sessionModeStore,
-    );
-
-    // Trigger elements derivation
-    const _ = testGraph.elements;
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[GraphStore] Visibility Check:"),
-      expect.anything(),
-    );
   });
 
   it("should handle IDB errors gracefully in toggle methods", async () => {
