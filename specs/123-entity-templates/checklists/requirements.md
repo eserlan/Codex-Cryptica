@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-28
-**Feature**: [spec.md](file:///home/espen/proj/Codex-Arcana/specs/123-entity-templates/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

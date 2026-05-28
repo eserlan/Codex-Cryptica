@@ -429,7 +429,7 @@
       >
         <input type="checkbox" bind:checked={useTemplate} class="sr-only" />
         <div
-          class="w-7 h-4 bg-chrome-bg border border-chrome-border rounded-full relative transition-colors {useTemplate
+          class="w-7 h-4 bg-chrome-bg border border-chrome-border rounded-full relative transition-colors group-focus-within:border-chrome-accent group-focus-within:ring-2 group-focus-within:ring-chrome-accent/30 {useTemplate
             ? 'bg-chrome-accent/20 border-chrome-accent/50'
             : ''}"
         >

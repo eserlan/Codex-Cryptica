@@ -1,7 +1,7 @@
 # Implementation Plan: Default Entity Templates
 
-**Branch**: `123-entity-templates` | **Date**: 2026-05-28 | **Spec**: [/specs/123-entity-templates/spec.md](file:///home/espen/proj/Codex-Arcana/specs/123-entity-templates/spec.md)
-**Input**: Feature specification from `/specs/123-entity-templates/spec.md`
+**Branch**: `123-entity-templates` | **Date**: 2026-05-28 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `spec.md`
 
 ## Summary
 

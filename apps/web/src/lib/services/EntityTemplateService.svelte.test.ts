@@ -4,6 +4,13 @@ import {
   GENERIC_TEMPLATES,
   FANTASY_TEMPLATES,
   SCIFI_TEMPLATES,
+  MODERN_TEMPLATES,
+  CYBERPUNK_TEMPLATES,
+  APOCALYPTIC_TEMPLATES,
+  HORROR_TEMPLATES,
+  FALLOUT_TEMPLATES,
+  STARWARS_TEMPLATES,
+  STARTREK_TEMPLATES,
 } from "./EntityTemplateConstants";
 
 describe("EntityTemplateService", () => {
@@ -90,9 +97,85 @@ describe("EntityTemplateService", () => {
       expect(result).toBe(SCIFI_TEMPLATES.character);
     });
 
-    it("should fall back to generic template for non-character types even if fantasy theme is selected", async () => {
+    it("should return horror character template when theme is horror", async () => {
+      const result = await service.resolveTemplate("character", "horror");
+      expect(result).toBe(HORROR_TEMPLATES.character);
+    });
+
+    it("should return horror character template when theme has light/dark suffix (horror_light)", async () => {
+      const result = await service.resolveTemplate("character", "horror_light");
+      expect(result).toBe(HORROR_TEMPLATES.character);
+    });
+
+    it("should return fallout character template when theme is fallout", async () => {
+      const result = await service.resolveTemplate("character", "fallout");
+      expect(result).toBe(FALLOUT_TEMPLATES.character);
+    });
+
+    it("should return fallout character template when theme has light/dark suffix (fallout_light)", async () => {
+      const result = await service.resolveTemplate(
+        "character",
+        "fallout_light",
+      );
+      expect(result).toBe(FALLOUT_TEMPLATES.character);
+    });
+
+    it("should return theme-specific template for non-character types when available (e.g., fantasy location)", async () => {
       const result = await service.resolveTemplate("location", "fantasy");
-      expect(result).toBe(GENERIC_TEMPLATES.location);
+      expect(result).toBe(FANTASY_TEMPLATES.location);
+    });
+
+    it("should return cyberpunk-specific templates correctly", async () => {
+      const resultChar = await service.resolveTemplate(
+        "character",
+        "cyberpunk",
+      );
+      const resultItem = await service.resolveTemplate("item", "cyberpunk");
+      expect(resultChar).toBe(CYBERPUNK_TEMPLATES.character);
+      expect(resultItem).toBe(CYBERPUNK_TEMPLATES.item);
+    });
+
+    it("should return star wars-specific templates correctly", async () => {
+      const resultChar = await service.resolveTemplate("character", "starwars");
+      const resultFaction = await service.resolveTemplate(
+        "faction",
+        "starwars",
+      );
+      expect(resultChar).toBe(STARWARS_TEMPLATES.character);
+      expect(resultFaction).toBe(STARWARS_TEMPLATES.faction);
+    });
+
+    it("should return star trek-specific templates correctly", async () => {
+      const resultChar = await service.resolveTemplate("character", "startrek");
+      const resultCreature = await service.resolveTemplate(
+        "creature",
+        "startrek",
+      );
+      expect(resultChar).toBe(STARTREK_TEMPLATES.character);
+      expect(resultCreature).toBe(STARTREK_TEMPLATES.creature);
+    });
+
+    it("should return modern-specific templates correctly", async () => {
+      const resultChar = await service.resolveTemplate("character", "modern");
+      const resultLocation = await service.resolveTemplate(
+        "location",
+        "modern",
+      );
+      expect(resultChar).toBe(MODERN_TEMPLATES.character);
+      expect(resultLocation).toBe(MODERN_TEMPLATES.location);
+    });
+
+    it("should return apocalyptic-specific templates correctly", async () => {
+      const resultChar = await service.resolveTemplate(
+        "character",
+        "apocalyptic",
+      );
+      const resultFaction = await service.resolveTemplate(
+        "faction",
+        "apocalyptic",
+      );
+      expect(resultChar).toBe(APOCALYPTIC_TEMPLATES.character);
+      expect(resultFaction).toBe(APOCALYPTIC_TEMPLATES.faction);
     });
 
     it("should fall back to generic template if theme is unsupported/unknown", async () => {

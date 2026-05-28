@@ -2,6 +2,13 @@ import {
   GENERIC_TEMPLATES,
   FANTASY_TEMPLATES,
   SCIFI_TEMPLATES,
+  MODERN_TEMPLATES,
+  CYBERPUNK_TEMPLATES,
+  APOCALYPTIC_TEMPLATES,
+  HORROR_TEMPLATES,
+  FALLOUT_TEMPLATES,
+  STARWARS_TEMPLATES,
+  STARTREK_TEMPLATES,
 } from "./EntityTemplateConstants";
 
 export interface EntityTemplateServiceDeps {
@@ -32,12 +39,13 @@ export class EntityTemplateService {
   ): Promise<string> {
     const normalizedType = type.toLowerCase();
 
-    // Resolve active theme ID
+    // Resolve active theme ID and extract its base theme name (stripping light/dark suffixes)
     const activeThemeId = (
       themeId ||
       this.deps.themeStore?.worldThemeId ||
       "workspace"
     ).toLowerCase();
+    const baseThemeId = activeThemeId.replace(/_(light|dark)$/, "");
 
     // 1. Check local file overrides if a directory handle is provided
     if (customTemplatesDirHandle) {
@@ -95,16 +103,58 @@ export class EntityTemplateService {
 
     // 2. Fallback to theme-specific system default templates
     if (
-      activeThemeId === "fantasy" &&
+      baseThemeId === "fantasy" &&
       FANTASY_TEMPLATES[normalizedType] !== undefined
     ) {
       return FANTASY_TEMPLATES[normalizedType];
     }
     if (
-      activeThemeId === "scifi" &&
+      baseThemeId === "scifi" &&
       SCIFI_TEMPLATES[normalizedType] !== undefined
     ) {
       return SCIFI_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "modern" &&
+      MODERN_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return MODERN_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "cyberpunk" &&
+      CYBERPUNK_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return CYBERPUNK_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "apocalyptic" &&
+      APOCALYPTIC_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return APOCALYPTIC_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "horror" &&
+      HORROR_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return HORROR_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "fallout" &&
+      FALLOUT_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return FALLOUT_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "starwars" &&
+      STARWARS_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return STARWARS_TEMPLATES[normalizedType];
+    }
+    if (
+      baseThemeId === "startrek" &&
+      STARTREK_TEMPLATES[normalizedType] !== undefined
+    ) {
+      return STARTREK_TEMPLATES[normalizedType];
     }
 
     // 3. Fallback to standard generic templates
@@ -139,7 +189,7 @@ export class EntityTemplateService {
   }
 }
 
-// Lazy-load dependencies on default import to avoid circular dependency / premature initialization issues
+// Late-bind store reference dynamically in the getter to avoid circular dependency / premature initialization issues
 import { themeStore } from "../stores/theme.svelte";
 export const entityTemplateService = new EntityTemplateService({
   get themeStore() {
