@@ -86,6 +86,7 @@ export class SearchService {
       timers,
       coordinator: this.coordinator,
       getApi: () => this.ensureWorker(),
+      isApiReady: () => this.isInitialized,
       onSaveRequired: (vaultId) => this.persistence.saveIndex(vaultId),
     });
 
@@ -97,6 +98,8 @@ export class SearchService {
       callbacks: {
         onVaultSwitch: async (vaultId) => {
           await this.coordinator.cancelIndexing("Vault switched.", false);
+          // Set activeVaultId before pipeline.clear() so the stale-vault guard
+          // rejects any old-vault events that arrive during the clear() await.
           this.coordinator.activeVaultId = vaultId;
           this.coordinator.isDirty = false;
           await this.pipeline.clear();
@@ -125,7 +128,7 @@ export class SearchService {
         onSyncChunk: (entities) => this.pipeline.indexBatch(entities),
         onSyncComplete: async (vaultId) => {
           if (this.pipeline.needsFullContentSweep) {
-            (timers as any).setTimeout(() => {
+            timers.setTimeout(() => {
               this.pipeline.indexContentInBackground(vaultId);
             }, 3000);
             this.pipeline.needsFullContentSweep = false;

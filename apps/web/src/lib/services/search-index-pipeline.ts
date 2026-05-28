@@ -13,6 +13,19 @@ import type {
 
 const INDEX_BATCH_SIZE = 100;
 
+// Fields that FlexSearch indexes via mapToSearchEntry — exported so
+// SearchIndexLifecycle can use the same set for BATCH_UPDATED filtering.
+// Keep adjacent to mapToSearchEntry so they stay in sync.
+export const BATCH_UPDATED_SEARCH_FIELDS = new Set([
+  "title",
+  "aliases",
+  "content",
+  "tags",
+  "labels",
+  "lore",
+  "metadata",
+]);
+
 type PipelineApi = Pick<
   SearchEngine,
   "add" | "addBatch" | "addBatchProgressive" | "remove" | "clear"
@@ -24,6 +37,7 @@ export interface SearchIndexPipelineDeps {
   timers?: TimerApi;
   coordinator: SearchProgressCoordinator;
   getApi: () => Promise<Comlink.Remote<PipelineApi> | PipelineApi>;
+  isApiReady: () => boolean;
   onSaveRequired: (vaultId: string) => Promise<void>;
 }
 
@@ -33,6 +47,7 @@ export class SearchIndexPipeline {
   private timers: TimerApi;
   private coordinator: SearchProgressCoordinator;
   private getApi: () => Promise<Comlink.Remote<PipelineApi> | PipelineApi>;
+  private isApiReady: () => boolean;
   private onSaveRequired: (vaultId: string) => Promise<void>;
   private indexQueue: Promise<void> = Promise.resolve();
   needsFullContentSweep = false;
@@ -43,6 +58,7 @@ export class SearchIndexPipeline {
     this.timers = deps.timers ?? globalThis;
     this.coordinator = deps.coordinator;
     this.getApi = deps.getApi;
+    this.isApiReady = deps.isApiReady;
     this.onSaveRequired = deps.onSaveRequired;
   }
 
@@ -204,7 +220,8 @@ export class SearchIndexPipeline {
   }
 
   async indexContentInBackground(vaultId: string) {
-    if (this.coordinator.activeVaultId !== vaultId) return;
+    if (!this.isApiReady() || this.coordinator.activeVaultId !== vaultId)
+      return;
 
     this.debug.log(`[SearchIndexPipeline] Starting background content sync...`);
     const start = performance.now();
