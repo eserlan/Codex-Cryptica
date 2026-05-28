@@ -463,17 +463,22 @@ export class VTTTokenManager {
 
     const mapStore = this.deps.getMapStore();
     const offset = mapStore.gridSize || 50;
+    // ⚡ Bolt Optimization: Use imperative loop instead of ...allTokens.map to find max zIndex
+    // to avoid intermediate array allocation and spread operator overhead.
+    let maxZ = source.zIndex;
+    for (const token of this.allTokens) {
+      if (token.zIndex > maxZ) {
+        maxZ = token.zIndex;
+      }
+    }
+
     const clone: Token = {
       ...source,
       id: crypto.randomUUID(),
       name: this.getClonedTokenName(source.name),
       x: source.x + offset,
       y: source.y + offset,
-      zIndex:
-        Math.max(
-          ...this.allTokens.map((token) => token.zIndex),
-          source.zIndex,
-        ) + 1,
+      zIndex: maxZ + 1,
     };
 
     this.tokens = {

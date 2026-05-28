@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+const originalWorker = globalThis.Worker;
 import {
   getLayoutCollisionSize,
   LayoutManager,
@@ -85,7 +87,7 @@ describe("LayoutManager", () => {
 
   beforeEach(() => {
     capturedPostMessage = null;
-    vi.stubGlobal("Worker", FakeWorker);
+    (globalThis as any).Worker = FakeWorker as any;
 
     const emptyCollection: any = {
       nonempty: vi.fn().mockReturnValue(false),
@@ -130,7 +132,7 @@ describe("LayoutManager", () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.unstubAllGlobals();
+    (globalThis as any).Worker = originalWorker;
   });
 
   it("should initialize with a cy instance", () => {
@@ -432,28 +434,39 @@ describe("LayoutManager", () => {
   });
 
   it("should stop redraw even when the fit animation completion is missed", async () => {
-    vi.useFakeTimers();
-    mockCy.animate.mockImplementation(() => {});
-    const onLayoutStop = vi.fn();
+    const originalSetTimeout = globalThis.setTimeout;
+    try {
+      (globalThis as any).setTimeout = (cb: () => void, ms: number) => {
+        if (ms === 1200) {
+          return originalSetTimeout(cb, 5);
+        }
+        return originalSetTimeout(cb, ms);
+      };
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+      mockCy.animate.mockImplementation(() => {});
+      const onLayoutStop = vi.fn();
 
-    expect(onLayoutStop).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1200);
-    expect(onLayoutStop).toHaveBeenCalledTimes(1);
+      await layoutManager.apply({
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      });
+
+      expect(onLayoutStop).not.toHaveBeenCalled();
+      await new Promise((resolve) => originalSetTimeout(resolve, 10));
+      expect(onLayoutStop).toHaveBeenCalledTimes(1);
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
   });
 
   it("should stop redraw if the worker errors", async () => {
-    vi.stubGlobal("Worker", ErrorWorker);
+    (globalThis as any).Worker = ErrorWorker as any;
     layoutManager = new LayoutManager(mockCy as unknown as Core);
     const onLayoutStop = vi.fn();
 
@@ -473,31 +486,42 @@ describe("LayoutManager", () => {
   });
 
   it("should stop redraw if the worker never replies", async () => {
-    vi.useFakeTimers();
-    vi.stubGlobal("Worker", SilentWorker);
-    layoutManager = new LayoutManager(mockCy as unknown as Core);
-    const onLayoutStop = vi.fn();
+    const originalSetTimeout = globalThis.setTimeout;
+    try {
+      (globalThis as any).setTimeout = (cb: () => void, ms: number) => {
+        if (ms === 15000) {
+          return originalSetTimeout(cb, 5);
+        }
+        return originalSetTimeout(cb, ms);
+      };
 
-    const applyPromise = layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+      (globalThis as any).Worker = SilentWorker as any;
+      layoutManager = new LayoutManager(mockCy as unknown as Core);
+      const onLayoutStop = vi.fn();
 
-    await vi.advanceTimersByTimeAsync(15000);
-    await applyPromise;
+      const applyPromise = layoutManager.apply({
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      });
 
-    expect(mockCy.animate).not.toHaveBeenCalled();
-    expect(onLayoutStop).toHaveBeenCalledTimes(1);
+      await new Promise((resolve) => originalSetTimeout(resolve, 10));
+      await applyPromise;
+
+      expect(mockCy.animate).not.toHaveBeenCalled();
+      expect(onLayoutStop).toHaveBeenCalledTimes(1);
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
   });
 
   it("should stop redraw when an in-flight worker is stopped", async () => {
-    vi.stubGlobal("Worker", SilentWorker);
+    (globalThis as any).Worker = SilentWorker as any;
     layoutManager = new LayoutManager(mockCy as unknown as Core);
     const onLayoutStop = vi.fn();
 
@@ -579,7 +603,7 @@ describe("LayoutManager", () => {
         });
       }
     }
-    vi.stubGlobal("Worker", FormatWorker);
+    (globalThis as any).Worker = FormatWorker as any;
     layoutManager = new LayoutManager(mockCy as unknown as Core);
 
     await layoutManager.apply({

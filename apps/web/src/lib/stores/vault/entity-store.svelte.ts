@@ -186,6 +186,10 @@ export class EntityStore {
       });
     }
 
+    this.inboundConnections = vaultRelationships.rebuildInboundMap(
+      this.entities,
+    );
+
     this.allEntities = $derived.by(() => Object.values(this.entities));
     this.allActiveEntities = $derived.by(() =>
       this.allEntities.filter((e) => e.status !== "draft"),

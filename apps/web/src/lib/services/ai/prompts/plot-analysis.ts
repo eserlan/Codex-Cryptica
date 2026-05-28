@@ -1,3 +1,5 @@
+import { u } from "./user-content";
+
 export function buildPlotCanonResolutionPrompt(
   subjectContext: string,
   connectionsContext: string,
@@ -6,13 +8,13 @@ export function buildPlotCanonResolutionPrompt(
   return `You are a Master Plot Archivist and Canon Interpreter. Your task is to resolve established vault threads and tensions before generating adventure seeds.
 
 --- SUBJECT CONTEXT ---
-${subjectContext}
+${u(subjectContext)}
 
 --- CONNECTED ENTITIES ---
-${connectionsContext}
+${u(connectionsContext)}
 
 --- USER REQUEST ---
-${userQuery}
+${u(userQuery)}
 
 TASK:
 Search the vault context above to identify:
@@ -45,7 +47,7 @@ export function buildPlotGenerationPrompt(
 ${canonSummary}
 
 --- USER REQUEST ---
-${userQuery}
+${u(userQuery)}
 
 RULES:
 - Grow plots from established lore and canon roots.

@@ -1,4 +1,5 @@
 import type { Entity, RelatedEntityContext } from "schema";
+import { u } from "./user-content";
 
 export function buildEntityReconciliationPrompt(
   entity: Entity,
@@ -12,11 +13,12 @@ export function buildEntityReconciliationPrompt(
   const relatedSection =
     relatedEntities.length > 0
       ? `\nRELATED ENTITY CONTEXT:\n${relatedEntities
-          .map(
-            (related) =>
-              `- ${related.title} (${related.type})${
+          .map((related) =>
+            u(
+              `${related.title} (${related.type})${
                 related.relation ? ` [${related.relation}]` : ""
               }: ${related.summary}`,
+            ),
           )
           .join("\n")}\n`
       : "";
@@ -57,17 +59,17 @@ ${categorySection}
 
 CURRENT RECORD:
 --- CURRENT CHRONICLE ---
-${entity.content || ""}
+${u(entity.content || "")}
 
 --- CURRENT LORE ---
-${entity.lore || ""}
+${u(entity.lore || "")}
 
 NEW PASSAGE:
 --- INCOMING CHRONICLE CANDIDATE ---
-${incoming.chronicle || ""}
+${u(incoming.chronicle || "")}
 
 --- INCOMING LORE CANDIDATE ---
-${incoming.lore || ""}
+${u(incoming.lore || "")}
 ${relatedSection}
 
 RULES:

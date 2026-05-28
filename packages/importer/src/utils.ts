@@ -1,4 +1,5 @@
 import TurndownService from "turndown";
+export * from "./utils/validation";
 
 export function htmlToMarkdown(html: string): string {
   const turndownService = new TurndownService({

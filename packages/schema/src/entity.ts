@@ -107,7 +107,7 @@ export const SoundBiteSchema = z.object({
 export type SoundBite = z.infer<typeof SoundBiteSchema>;
 
 export const EntitySchema = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   type: EntityTypeSchema,
   title: z.string().min(1),
   tags: z.array(z.string()).default([]),

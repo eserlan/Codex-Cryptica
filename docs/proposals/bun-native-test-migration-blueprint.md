@@ -106,7 +106,7 @@ These packages should stay on Vitest until their failure modes are handled expli
 
 ## Follow-Up Work
 
-1. Evaluate `packages/importer`; it may be viable with targeted browser API polyfills, but it is no longer a low-risk pure runner switch.
-2. Evaluate `packages/map-engine` only after deciding on a Bun-compatible canvas test harness.
-3. Split Svelte rune-backed stores from pure logic in `canvas-engine`, `oracle-engine`, and `vault-engine` before considering migration.
-4. Re-run `bun test packages` after each package migration and record the result here.
+A full probe of all six deferred packages (canvas-engine, graph-engine, importer,
+map-engine, oracle-engine, vault-engine) was run on 2026-05-28. Findings, proposed
+phases (5–9), and a per-package pass/fail log are in
+[bun-native-test-deferred-audit.md](./bun-native-test-deferred-audit.md).

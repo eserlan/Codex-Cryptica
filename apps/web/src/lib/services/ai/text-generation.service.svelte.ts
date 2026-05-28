@@ -1,4 +1,6 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
+import { classifyApiError } from "./api-error-classifier";
+import { u } from "./prompts/user-content";
 import {
   TIER_MODES,
   type RelatedEntityContext,
@@ -617,13 +619,17 @@ export class DefaultTextGenerationService implements TextGenerationService {
           },
         };
 
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      throw new Error("You appear to be offline. Generation is unavailable.");
+    }
+
     try {
       // 2. Prefix Stability: Always place dynamic Lore Context AFTER history
       // but BEFORE the current query. This keeps the history prefix stable
       // for Gemini's implicit caching.
       const finalQuery = context
-        ? `[VAULT LORE CONTEXT]\n${context.trim()}\n\n${prefixContext}[USER QUERY]\n${query}`
-        : `${prefixContext}${query}`;
+        ? `[VAULT LORE CONTEXT]\n${u(context.trim())}\n\n${prefixContext}[USER QUERY]\n${u(query)}`
+        : `${prefixContext}${u(query)}`;
 
       const result = await chat.sendMessageStream(finalQuery);
       let fullText = "";
@@ -632,16 +638,10 @@ export class DefaultTextGenerationService implements TextGenerationService {
         fullText += chunkText;
         await onUpdate(fullText);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Gemini API Error:", err);
-      if (err.message?.includes("429")) {
-        throw new Error("API rate limit exceeded. Please wait a moment.", {
-          cause: err,
-        });
-      }
-      throw new Error(`Lore Oracle Error: ${err.message || "Unknown error"}`, {
-        cause: err,
-      });
+      const classified = classifyApiError(err);
+      throw new Error(classified.message, { cause: err });
     }
   }
 }

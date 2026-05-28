@@ -186,18 +186,18 @@ export default {
         responseData = responseText ? JSON.parse(responseText) : {};
       } catch {
         console.error(
-          "[Oracle Proxy] Failed to parse Gemini response:",
-          responseText,
+          "[Oracle Proxy] Non-JSON from Gemini. Status:",
+          geminiResponse.status,
         );
         return new Response(
           JSON.stringify({
             error: {
-              message: "Proxy error: Received invalid JSON from Gemini API",
-              details: responseText,
+              message: "Proxy error: Received invalid response from upstream",
+              code: "UPSTREAM_PARSE_ERROR",
             },
           }),
           {
-            status: 502, // Bad Gateway
+            status: 502,
             headers: {
               ...getCorsHeaders(request.headers, env),
               "Content-Type": "application/json",
@@ -215,12 +215,15 @@ export default {
         },
       });
     } catch (error) {
-      console.error("[Oracle Proxy] Error:", error);
+      console.error(
+        "[Oracle Proxy] Internal error:",
+        error instanceof Error ? error.message : "unknown",
+      );
       return new Response(
         JSON.stringify({
           error: {
             message: "Proxy error: Failed to forward request to Gemini API",
-            details: error instanceof Error ? error.message : "Unknown error",
+            code: "PROXY_INTERNAL_ERROR",
           },
         }),
         {

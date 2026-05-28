@@ -66,6 +66,12 @@ export class VaultStore {
   get allEntities() {
     return this.entityStore.allEntities;
   }
+  get titleAliasIndex() {
+    return this.entityStore.titleAliasIndex;
+  }
+  get allTitlesString() {
+    return this.entityStore.allEntities.map((e) => e.title).join(", ");
+  }
   get status() {
     return this.syncStore.status;
   }

@@ -3,18 +3,18 @@
 **File:** `apps/web/src/lib/components/map/map-interactions.svelte.ts`  
 **Original Size:** 626 lines  
 **Post-refactor Size:** 407 lines  
-**Status:** In progress; first decomposition pass implemented  
+**Status:** First decomposition pass merged in [PR #967](https://github.com/eserlan/Codex-Cryptica/pull/967)
 **Parent Issue:** [#943](https://github.com/eserlan/Codex-Cryptica/issues/943)
 
 ## 1. Executive Summary
 
-`MapInteractionManager` was created during the first `MapView.svelte` decomposition to move interaction logic out of a 1,500+ line component. That extraction was successful, but the new class has become its own multi-responsibility coordinator. It now owns canvas gestures, VTT token selection, token drag state, pin editing, fog painting, grid fitting, measurement interactions, context menu hit testing, and direct calls into several stores and P2P services.
+`MapInteractionManager` was created during the first `MapView.svelte` decomposition to move interaction logic out of a 1,500+ line component. That extraction was successful, but the new class became its own multi-responsibility coordinator. It owned canvas gestures, VTT token selection, token drag state, pin editing, fog painting, grid fitting, measurement interactions, context menu hit testing, and direct calls into several stores and P2P services.
 
-The next refactor should not move logic back into Svelte components. It should split the interaction state machine into focused handlers with narrow injected dependencies, leaving `MapInteractionManager` as the event router and canvas gesture coordinator.
+PR #967 completed the first decomposition pass. The refactor did not move logic back into Svelte components; it split the interaction state machine into focused handlers with narrow injected dependencies, leaving `MapInteractionManager` as the event router and canvas gesture coordinator.
 
 ## 0. Implementation Snapshot
 
-The branch `965-map-interaction-manager-decomposition` implements the first decomposition pass described by this analysis. The extracted handler set is broader than the initial token/pin proposal because several later candidates proved isolated enough to move safely in the same pass.
+PR #967 implemented the first decomposition pass described by this analysis. The extracted handler set is broader than the initial token/pin proposal because several later candidates proved isolated enough to move safely in the same pass.
 
 Current structure:
 
@@ -63,11 +63,11 @@ Verification for this pass:
 - Targeted ESLint passed for `map-interactions.svelte.ts` and `apps/web/src/lib/components/map/interactions`.
 - Svelte autofixer passed for `map-interactions.svelte.ts`.
 
-## 2. Current Responsibilities
+## 2. Current Responsibilities After PR #967
 
 ### A. Canvas Gesture Coordination
 
-The class tracks pointer coordinates, cached container bounds, panning, wheel zoom, keyboard pan/zoom, pointer-over state, and ARIA announcements.
+The class still tracks pointer coordinates, cached container bounds, panning, wheel zoom, keyboard pan/zoom, pointer-over state, and ARIA announcements.
 
 Relevant code:
 
@@ -75,11 +75,11 @@ Relevant code:
 - `onKeyDown`, `onKeyUp`, `onMouseDown`, `onMouseMove`, `onMouseUp`, `onWheel`
 - `getKeyboardViewportUpdate`, `getZoomViewportUpdate`, `shouldIgnoreMapKeyboardEvent`
 
-This is the responsibility that should remain in `MapInteractionManager`.
+This remains the core responsibility of `MapInteractionManager`.
 
 ### B. VTT Token Selection
 
-The manager hit-tests tokens and directly mutates selection state:
+Token selection is now delegated to `TokenSelectionManager`:
 
 - click selection
 - empty-space deselection
@@ -88,7 +88,7 @@ The manager hit-tests tokens and directly mutates selection state:
 - multi-token box selection
 - context-menu token lookup
 
-Relevant code:
+Extracted from:
 
 - `hitTestToken(mapSession.allTokens, ...)`
 - `mapSession.setSelection`
@@ -97,11 +97,11 @@ Relevant code:
 - `mapSession.setMultiSelection`
 - `mapSession.clearSelection`
 
-This should be extracted into `TokenSelectionManager`.
+Implemented in `apps/web/src/lib/components/map/interactions/token-selection-manager.ts`.
 
 ### C. VTT Token Dragging
 
-The manager owns drag state and coordinates host-vs-guest movement behavior:
+Token dragging is now delegated to `TokenDragHandler`:
 
 - permission check through `canMoveToken`
 - drag offset calculation
@@ -111,7 +111,7 @@ The manager owns drag state and coordinates host-vs-guest movement behavior:
 - guest move confirmation on mouse-up
 - setting and clearing `draggingTokenId`
 
-Relevant code:
+Extracted from:
 
 - `dragState`
 - `mapSession.canMoveToken(hitToken.id, p2pGuestService.peerId, mapStore.isGMMode)`
@@ -121,11 +121,11 @@ Relevant code:
 - `mapSession.confirmTokenMove`
 - `mapSession.draggingTokenId`
 
-This should be extracted into `TokenDragHandler`.
+Implemented in `apps/web/src/lib/components/map/interactions/token-drag-handler.ts`.
 
 ### D. Pin Selection And Editing
 
-Pin interactions are unrelated to VTT token movement but share the same mouse handlers:
+Pin interactions are now delegated to `PinInteractionHandler`:
 
 - pin hit testing
 - pin drag state
@@ -135,7 +135,7 @@ Pin interactions are unrelated to VTT token movement but share the same mouse ha
 - map persistence through `vault.saveMaps`
 - entity focus through `vault.selectedEntityId`
 
-Relevant code:
+Extracted from:
 
 - `pinDragState`
 - `findClickedPin`
@@ -143,11 +143,11 @@ Relevant code:
 - `vault.saveMaps`
 - `vault.selectedEntityId`
 
-This should be extracted after token handling, likely into `PinInteractionHandler`.
+Implemented in `apps/web/src/lib/components/map/interactions/pin-interaction-handler.ts`.
 
 ### E. Fog Painting
 
-The class starts, moves, and finishes fog painting, then broadcasts fog sync when needed.
+Fog painting is now delegated to `FogInteractionHandler`. The handler starts, moves, and finishes fog painting, then broadcasts fog sync when needed.
 
 Relevant code:
 
@@ -156,11 +156,11 @@ Relevant code:
 - `await this.painter.finish()`
 - `p2pHost.broadcastActiveMapFogSync`
 
-This can remain in the manager initially because it is canvas gesture behavior, but the P2P sync callback should be injected instead of imported directly.
+Implemented in `apps/web/src/lib/components/map/interactions/fog-interaction-handler.ts`.
 
 ### F. Grid Tools
 
-The class owns grid move mode and grid fit mode:
+Grid move and grid fit are now delegated to `GridInteractionHandler`:
 
 - Enter commits grid move
 - Escape cancels grid modes
@@ -177,29 +177,29 @@ Relevant code:
 - `mapStore.gridSize`, `gridOffsetX`, `gridOffsetY`
 - `notificationStore.clearNotification`
 
-This can stay in the manager for the first token-focused split, but it is a good later candidate for `GridInteractionHandler`.
+Implemented in `apps/web/src/lib/components/map/interactions/grid-interaction-handler.svelte.ts`.
 
 ### G. Measurement Tool
 
-The manager updates active measurements during mouse move and click:
+Measurement behavior is now delegated to `MeasurementInteractionHandler`:
 
 - live measurement endpoint updates
 - first click starts measurement
 - second click locks measurement
 - third click restarts measurement
 
-Relevant code:
+Extracted from:
 
 - `mapSession.measurement`
 - `mapSession.setMeasurementStart`
 - `mapSession.setMeasurementEnd`
 - `mapSession.setMeasurementLocked`
 
-This is VTT tool behavior and can move to a later `MeasurementInteractionHandler` after token and pin extraction.
+Implemented in `apps/web/src/lib/components/map/interactions/measurement-interaction-handler.ts`.
 
-## 3. Coupling Problems
+## 3. Coupling Problems Addressed
 
-`MapInteractionManager` imports concrete global stores and services directly:
+Before PR #967, `MapInteractionManager` imported concrete global stores and services directly:
 
 - `mapStore`
 - `mapSession`
@@ -209,11 +209,11 @@ This is VTT tool behavior and can move to a later `MeasurementInteractionHandler
 - `notificationStore`
 - `sessionModeStore`
 
-That makes unit tests depend on broad module mocks and makes the class hard to reuse for touch input or alternate pointer-event handling. The current tests mock whole stores instead of small behavior-specific interfaces, so a change in one map subsystem can break unrelated interaction tests.
+That made unit tests depend on broad module mocks and made the class hard to reuse for touch input or alternate pointer-event handling.
 
-The refactor should introduce constructor-based dependencies and narrow adapters. This aligns with the project constitution and matches the direction already used in VTT managers.
+PR #967 introduced constructor-based handlers, narrow dependency interfaces, and default adapters in `interaction-adapters.ts` plus `map-interaction-handler-factory.ts`. `MapInteractionManager` still imports `mapStore`, `mapSession`, and `sessionModeStore` for remaining pan/zoom, keyboard, and resize permission routing, but it no longer imports `vault`, `p2pGuestService`, `p2pHost`, `notificationStore`, or token hit-testing helpers directly.
 
-## 4. Proposed Architecture
+## 4. Implemented Architecture
 
 ```text
 apps/web/src/lib/components/map/
@@ -235,7 +235,7 @@ apps/web/src/lib/components/map/
 
 ### `MapInteractionManager` Target Role
 
-The manager should keep:
+The manager now keeps:
 
 - DOM event entry points
 - container rect caching
@@ -243,7 +243,7 @@ The manager should keep:
 - pan/zoom/keyboard viewport updates
 - interaction priority ordering
 - overlay state exposure needed by `MapOverlays.svelte`
-- delegating token, pin, grid, fog, and measurement work to focused handlers
+- delegating token, pin, grid, fog, measurement, context menu, resize, box selection, and double-click creation work to focused handlers
 
 Target size: 250-350 lines remains the long-term goal. The first pass reduced the file to 407 lines while keeping pan/zoom and event ordering in place.
 
@@ -258,7 +258,7 @@ Responsibilities:
 - calculate tokens inside box-select rectangle
 - expose no Svelte global stores directly
 
-Proposed dependencies:
+Implemented dependency shape:
 
 ```ts
 export interface TokenSelectionDependencies {
@@ -283,7 +283,7 @@ Responsibilities:
 - confirm guest movement on drag end
 - clear local drag state
 
-Proposed dependencies:
+Implemented dependency shape:
 
 ```ts
 export interface TokenDragDependencies {
@@ -322,7 +322,7 @@ Responsibilities:
 - persist maps only after a meaningful drag
 - focus linked entity on pin click
 
-Proposed dependencies:
+Implemented dependency shape:
 
 ```ts
 export interface PinInteractionDependencies {
@@ -371,11 +371,11 @@ The refactor must preserve the existing ordering in `onMouseDown`, `onMouseMove`
 6. Treat a pan click as a map click.
 7. Clear panning.
 
-## 6. Testing Strategy
+## 6. Testing Coverage
 
-The current `map-interactions.test.ts` covers panning, wheel zoom, box selection start, Escape multi-selection clearing, and basic pin drag behavior. Token behavior needs more focused coverage before extraction.
+PR #967 preserved the existing `map-interactions.test.ts` coverage for panning, wheel zoom, box selection start, Escape multi-selection clearing, and basic pin drag behavior. It also added focused tests for each extracted handler.
 
-### Add tests before extracting token handling
+### Token handling tests
 
 - movable token mousedown starts drag, sets `draggingTokenId`, and applies normal selection
 - `Ctrl`/`Meta` on token mousedown adds to selection without replacing existing selection
@@ -389,7 +389,7 @@ The current `map-interactions.test.ts` covers panning, wheel zoom, box selection
 - box selection ignores tiny click rectangles
 - clicking empty VTT space clears token selection
 
-### Add tests before extracting pin handling
+### Pin handling tests
 
 - pin click selects pin and linked entity without saving maps
 - pin drag below threshold restores original coordinates
@@ -397,7 +397,18 @@ The current `map-interactions.test.ts` covers panning, wheel zoom, box selection
 - guest mode cannot mutate pin coordinates or save maps
 - Alt-click over a pin starts fog painting instead of pin dragging
 
-### Add tests around interaction priority
+### Additional handler tests
+
+- grid move commit/cancel
+- grid fit start/update/commit/cancel
+- live measurement end updates
+- measurement start/lock/restart clicks
+- context menu open/clear and token hit lookup
+- shift-wheel token resize
+- fog paint begin/move/finish and fog-sync broadcast
+- double-click token/pin creation routing
+
+### Interaction priority coverage
 
 - token hit wins over pin hit when VTT mode is enabled and token is movable
 - box-select shortcut wins over token drag for GM `Ctrl`/`Meta`
@@ -405,11 +416,11 @@ The current `map-interactions.test.ts` covers panning, wheel zoom, box selection
 - active pin drag suppresses panning
 - active grid fit suppresses panning
 
-## 7. Refactor Phases
+## 7. Completed Refactor Phases
 
 ### Phase 1: Add narrow dependency adapters
 
-Introduce default adapters for map, session, vault, peer, notification, and mode dependencies while preserving the public constructor shape used by `MapView.svelte`.
+Implemented default adapters for map, session, vault, peer, notification, and mode dependencies while preserving the public constructor shape used by `MapView.svelte`.
 
 Deliverables:
 
@@ -419,7 +430,7 @@ Deliverables:
 
 ### Phase 2: Extract `TokenSelectionManager`
 
-Move token hit testing and selection rules out of the main manager. Keep stateful overlay geometry in `MapInteractionManager`, but delegate the selected token calculation.
+Moved token hit testing and selection rules out of the main manager.
 
 Deliverables:
 
@@ -429,7 +440,7 @@ Deliverables:
 
 ### Phase 3: Extract `TokenDragHandler`
 
-Move token drag lifecycle out of the main manager.
+Moved token drag lifecycle out of the main manager.
 
 Deliverables:
 
@@ -439,7 +450,7 @@ Deliverables:
 
 ### Phase 4: Extract `PinInteractionHandler`
 
-Move pin drag/click/persistence handling out of the main manager.
+Moved pin drag/click/persistence handling out of the main manager.
 
 Deliverables:
 
@@ -479,20 +490,19 @@ Deliverables:
 - Do not replace mouse events with pointer events in the same PR. Pointer/touch support should come after the handlers are isolated.
 - Do not refactor `VTTTokenManager` at the same time; this analysis is scoped to `MapInteractionManager`.
 
-## 9. Acceptance Criteria
+## 9. Acceptance Criteria Status
 
-- `MapInteractionManager` no longer imports `p2pGuestService`, `p2pHost`, or `vault` directly.
-- Token selection logic is unit-testable without Svelte store module mocks.
-- Token drag logic is unit-testable without a real peer session or full map session store.
-- Pin drag/click persistence behavior is unit-testable without the full vault store.
-- Existing map interaction tests still pass.
-- New tests cover both expected paths and at least one meaningful negative path for each extracted handler.
-- User-visible behavior for pan, zoom, grid fit, fog painting, token drag, token selection, pin click, and pin drag remains unchanged.
+- [x] `MapInteractionManager` no longer imports `p2pGuestService`, `p2pHost`, or `vault` directly.
+- [x] Token selection logic is unit-testable without Svelte store module mocks.
+- [x] Token drag logic is unit-testable without a real peer session or full map session store.
+- [x] Pin drag/click persistence behavior is unit-testable without the full vault store.
+- [x] Existing map interaction tests still pass.
+- [x] New tests cover expected and negative paths for extracted handlers.
+- [x] User-visible behavior for pan, zoom, grid fit, fog painting, token drag, token selection, pin click, and pin drag remains unchanged.
 
-## 10. Recommended Subtasks
+## 10. Remaining Follow-ups
 
-1. Create `TokenSelectionManager` and `TokenDragHandler` behind injected adapters.
-2. Move existing token selection and drag tests from broad manager mocks to focused handler tests.
-3. Extract `PinInteractionHandler` once token behavior is stable.
-4. Revisit `MapInteractionManager` size and decide whether grid and measurement need their own handlers.
-5. Update `docs/refactoring/MAP_VIEW_REFACTOR.md` with a short note that the original map refactor is complete and this document tracks the second-stage interaction split.
+1. Consider extracting pan/zoom and keyboard viewport movement if the manager grows again.
+2. Consider replacing mouse-only events with pointer events in a separate touch/mobile drag feature.
+3. Keep new map interaction features in `apps/web/src/lib/components/map/interactions/` unless they are genuinely pan/zoom event routing.
+4. Avoid adding direct `vault`, P2P service, or notification imports back into `MapInteractionManager`; use handler dependencies and adapters instead.

@@ -1,8 +1,14 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-26
+Auto-generated from all feature plans. Last updated: 2026-05-28
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine` (123-entity-templates)
+- OPFS (Vault Files) for custom overrides, IndexedDB for settings if persistent (or local-only UI state as specified) (123-entity-templates)
+
+- TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper) (122-data-integrity-boundaries)
+- IndexedDB (Metadata/Cache), OPFS (Vault Files) (122-data-integrity-boundaries)
 
 - TypeScript 6.0.3 + zod (874-art-direction-clarification)
 
@@ -187,9 +193,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 874-art-direction-clarification: Added TypeScript 6.0.3 + None (Browser Native APIs) / Zod
+- 123-entity-templates: Added TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine`
 
-- 109-quicknote-scratchpad: Added Svelte 5, Svelte 5 Runes, Dexie (IndexedDB), and Cytoscape.js integration.
+- 944-data-integrity-boundaries: Added TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper)
+
+- 874-art-direction-clarification: Added TypeScript 6.0.3 + None (Browser Native APIs) / Zod
 
 <!-- MANUAL ADDITIONS START -->
 
