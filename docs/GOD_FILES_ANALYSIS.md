@@ -1,6 +1,6 @@
 # God File Analysis Report: Codex-Cryptica
 
-_(Last updated: May 28, 2026)_
+_(Last updated: May 20, 2026)_
 
 This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
 
@@ -54,10 +54,6 @@ With the UI store, P2P services, Map route, and Graph surface now modular, the l
 - For `oracle.svelte.ts`, continue extracting state/logic into focused manager modules if size creeps up.
 
 ---
-
-## In-Progress Refactors
-
-- **`apps/web/src/lib/services/search.svelte.ts`** (~923 lines): 🔵 IN PROGRESS (Issue #962, plan: `docs/refactoring/SEARCH_SERVICE_REFACTOR.md`). Three-phase decomposition: extract `SearchProgressCoordinator` (progress state machine) and `SearchIndexLifecycle` (vault event routing) from `SearchService`; reduce facade to ≤ 350 lines.
 
 ## Next Recommended Refactor Order
 
