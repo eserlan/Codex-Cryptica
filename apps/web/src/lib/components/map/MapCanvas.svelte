@@ -12,6 +12,7 @@
     CanvasRedrawScheduler,
     hasActivePings,
   } from "./map-canvas-scheduler";
+  import { PING_DURATION_MS } from "$lib/stores/vtt/vtt-measurement-manager.svelte";
 
   interface EnrichedToken extends Token {
     label: string;
@@ -43,8 +44,6 @@
     label: string;
     valid: boolean;
   }
-
-  const PING_DURATION_MS = 3000;
 
   let {
     mapImage,
@@ -177,7 +176,8 @@
         const now = Date.now();
         for (const ping of vttPings) {
           const elapsed = now - ping.timestamp;
-          if (elapsed > PING_DURATION_MS) continue;
+          // Use >= so this matches hasActivePings (elapsed < duration === active).
+          if (elapsed >= PING_DURATION_MS) continue;
 
           const progress = elapsed / PING_DURATION_MS;
           const pingPoint = mapStore.project({
@@ -302,8 +302,9 @@
 
   // Trigger a redraw whenever any input that affects the canvas changes.
   $effect(() => {
-    // Touch every reactive read to register dependencies. `void` keeps the
-    // expressions from being tree-shaken.
+    // Read each reactive value so Svelte 5 registers it as a dependency of
+    // this effect. `void` marks the read as intentionally unused so ESLint's
+    // no-unused-expressions rule lets it pass.
     void canvas;
     void mapImage;
     void maskCanvas;

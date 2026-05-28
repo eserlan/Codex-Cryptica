@@ -7,6 +7,13 @@ import type {
 import type { Point } from "schema";
 import { hashToColor, cloneMeasurement } from "$lib/utils/vtt-helpers";
 
+/**
+ * How long a ping stays alive — both for visual animation in MapCanvas and
+ * for the manager's cleanup timeout below.  Centralised so the two can't
+ * drift out of sync.
+ */
+export const PING_DURATION_MS = 3000;
+
 export interface VTTMeasurementManagerDependencies {
   emit: (message: VTTMessage) => void;
   getMyPeerId: () => string | null;
@@ -235,7 +242,7 @@ export class VTTMeasurementManager {
         }
       }
       this.pingTimeouts.delete(ping.peerId);
-    }, 3000);
+    }, PING_DURATION_MS);
     this.pingTimeouts.set(ping.peerId, timeoutId);
   }
 
