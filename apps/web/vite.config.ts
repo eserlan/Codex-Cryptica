@@ -22,7 +22,9 @@ try {
 
 let usePolling = false;
 try {
-  usePolling = readFileSync("/proc/version", "utf8").toLowerCase().includes("microsoft");
+  usePolling = readFileSync("/proc/version", "utf8")
+    .toLowerCase()
+    .includes("microsoft");
 } catch {
   // Ignore
 }
@@ -176,7 +178,8 @@ export default defineConfig({
   },
   server: {
     headers: {
-      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "credentialless",
     },
     hmr: {
       host: "localhost",
@@ -187,6 +190,12 @@ export default defineConfig({
     fs: {
       // Allow serving files from the workspace root and all packages
       allow: [resolve(__dirname, "../../")],
+    },
+  },
+  preview: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "credentialless",
     },
   },
   optimizeDeps: {
