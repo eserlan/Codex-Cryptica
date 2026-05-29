@@ -10,6 +10,7 @@ import type {
   SearchProgressCoordinator,
   TimerApi,
 } from "./search-progress-coordinator";
+import { buildSearchAliases, buildSearchKeywords } from "./search-entry-fields";
 
 const INDEX_BATCH_SIZE = 100;
 
@@ -346,16 +347,13 @@ export class SearchIndexPipeline {
 
   private mapToSearchEntry(entity: any): SearchEntry {
     const path = entity._path?.join("/") || `${entity.id}.md`;
-    const keywords = [
-      ...(entity.labels || entity.tags || []),
-      entity.lore || "",
-      ...Object.values(entity.metadata || {}).flat(),
-    ].join(" ");
+    const keywords = buildSearchKeywords(entity);
+    const aliases = buildSearchAliases(entity);
 
     return {
       id: entity.id,
       title: entity.title,
-      aliases: (entity.aliases || []).join(" "),
+      aliases,
       content: entity.content || "",
       type: entity.type,
       path,

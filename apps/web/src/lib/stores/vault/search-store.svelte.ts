@@ -1,5 +1,6 @@
 import { ServiceRegistry } from "./service-registry";
 import type { LocalEntity } from "./types";
+import { buildSearchAliases, buildSearchKeywords } from "../../services/search-entry-fields";
 
 export class SearchStore {
   constructor(private _serviceRegistry: ServiceRegistry) {
@@ -10,16 +11,13 @@ export class SearchStore {
 
   private async indexEntity(entity: LocalEntity, services: any) {
     const path = entity._path?.join("/") || `${entity.id}.md`;
-    const keywords = [
-      ...(entity.labels || entity.tags || []),
-      entity.lore || "",
-      ...Object.values(entity.metadata || {}).flat(),
-    ].join(" ");
+    const keywords = buildSearchKeywords(entity);
+    const aliases = buildSearchAliases(entity);
 
     await services.search.index({
       id: entity.id,
       title: entity.title,
-      aliases: (entity.aliases || []).join(" "),
+      aliases,
       content: entity.content,
       lore: entity.lore,
       type: entity.type,
