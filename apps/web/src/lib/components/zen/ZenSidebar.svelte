@@ -6,8 +6,12 @@
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
-  import { isEntityVisible, type Entity } from "schema";
+  import { isEntityVisible, resolveArtDirection, type Entity } from "schema";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+
+  import { debugStore } from "$lib/stores/debug.svelte";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
 
   let editingConnectionTarget = $state<string | null>(null);
@@ -76,6 +80,84 @@
   }>();
 
   let isImageLoaded = $state(false);
+  let isDraggingOver = $state(false);
+
+  const handleDragOver = (e: DragEvent) => {
+    if (vault.isGuest) return;
+    e.preventDefault();
+    if (
+      e.dataTransfer?.types.includes("application/codex-image-id") ||
+      e.dataTransfer?.types.includes("Files")
+    ) {
+      isDraggingOver = true;
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleDragLeave = () => {
+    if (vault.isGuest) return;
+    isDraggingOver = false;
+  };
+
+  const handleDrop = async (e: DragEvent) => {
+    if (vault.isGuest) return;
+    e.preventDefault();
+    isDraggingOver = false;
+
+    if (!entity) return;
+
+    const customId = e.dataTransfer?.getData("application/codex-image-id");
+    const message = customId
+      ? oracle.messages.find((m) => m.id === customId)
+      : null;
+
+    if (message?.imageBlob) {
+      try {
+        const { image, thumbnail } = await vault.saveImageToVault(
+          message.imageBlob,
+          entity.id,
+        );
+        await vault.updateEntity(entity.id, { image, thumbnail });
+      } catch (err) {
+        debugStore.error("[ZenSidebar] Failed to save Oracle image:", err);
+        alert("Failed to archive image from Oracle.");
+      }
+      return;
+    }
+
+    // Fallback to standard file drop
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      await handleFileDrop(e.dataTransfer.files[0]);
+    }
+  };
+
+  async function handleFileDrop(file: File) {
+    if (!entity || !file) return;
+    if (file.type.startsWith("image/")) {
+      try {
+        const { image, thumbnail } = await vault.saveImageToVault(
+          file,
+          entity.id,
+        );
+        await vault.updateEntity(entity.id, { image, thumbnail });
+      } catch (err) {
+        debugStore.error("[ZenSidebar] Failed to save external file:", err);
+        alert("Failed to save external image.");
+      }
+    }
+  }
+
+  const artDirectionPrompt = $derived.by(() => {
+    if (!entity) return "";
+    const res = resolveArtDirection({
+      surface: "entity",
+      subject: entity.title,
+      categoryId: entity.type,
+      themeId: themeStore.activeTheme?.id || "default",
+      entityArtDirection: entity.artDirection,
+    });
+    return res.prompt;
+  });
 
   $effect(() => {
     // Reset loaded state when image URL changes
@@ -261,7 +343,16 @@
   </div>
 
   <!-- Image -->
-  <div class="mb-4">
+  <div
+    class="relative mb-4 {isDraggingOver
+      ? 'ring-2 ring-oracle-primary ring-offset-4 ring-offset-black bg-oracle-primary/10'
+      : ''} transition-all rounded-lg"
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
+    role="region"
+    aria-label="Image drop zone"
+  >
     {#if !isVisible && vault.isGuest}
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
@@ -304,9 +395,14 @@
         aria-label="View full size image"
       >
         {#if !isImageLoaded}
-          <div class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2">
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
+          >
             <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
-            <span class="text-[10px] font-mono uppercase tracking-wider opacity-40">Resolving Neural Visual...</span>
+            <span
+              class="text-[10px] font-mono uppercase tracking-wider opacity-40"
+              >Resolving Neural Visual...</span
+            >
           </div>
         {/if}
         <img
@@ -314,9 +410,15 @@
           alt={entity.title}
           loading="lazy"
           decoding="async"
-          onload={() => { isImageLoaded = true; }}
-          onerror={() => { isImageLoaded = true; }}
-          class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90 group-hover:opacity-100 scale-100' : 'opacity-0 scale-95'}"
+          onload={() => {
+            isImageLoaded = true;
+          }}
+          onerror={() => {
+            isImageLoaded = true;
+          }}
+          class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded
+            ? 'opacity-90 group-hover:opacity-100 scale-100'
+            : 'opacity-0 scale-95'}"
         />
         <div
           class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-xs font-header tracking-widest uppercase px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
@@ -325,44 +427,86 @@
         </div>
       </button>
     {:else}
-      <div
-        class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
-      >
-        <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
-          <span
-            class="icon-[lucide--image] w-6 h-6 md:w-12 md:h-12 opacity-30 md:opacity-50"
-          ></span>
-          <span
-            class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
-            >No Image</span
-          >
-        </div>
-
-        {#if isVisualizing || regenerationService.isGenerating}
-          <div
-            class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 border border-theme-primary/20"
-          >
+      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (oracle.apiKey || !entity?.artDirection)}
+        <div
+          class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
+        >
+          <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
             <span
-              class="icon-[lucide--loader-2] w-6 h-6 animate-spin text-theme-primary"
-              aria-hidden="true"
+              class="icon-[lucide--image] w-6 h-6 md:w-12 md:h-12 opacity-30 md:opacity-50"
             ></span>
-            <div
-              class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
-              aria-live="polite"
+            <span
+              class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
+              >No Image</span
             >
-              {#if isVisualizing}
-                {#if oracle.activeStyleTitle}
-                  Visualizing in {oracle.activeStyleTitle}
-                {:else}
-                  Building Visual
-                {/if}
-              {:else}
-                Expanding Lore
-              {/if}
-            </div>
           </div>
-        {/if}
-      </div>
+
+          {#if isVisualizing || regenerationService.isGenerating}
+            <div
+              class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 border border-theme-primary/20"
+            >
+              <span
+                class="icon-[lucide--loader-2] w-6 h-6 animate-spin text-theme-primary"
+                aria-hidden="true"
+              ></span>
+              <div
+                class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
+                aria-live="polite"
+              >
+                {#if isVisualizing}
+                  {#if oracle.activeStyleTitle}
+                    Visualizing in {oracle.activeStyleTitle}
+                  {:else}
+                    Building Visual
+                  {/if}
+                {:else}
+                  Expanding Lore
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </div>
+      {:else}
+        <button
+          type="button"
+          onclick={async () => {
+            await navigator.clipboard.writeText(artDirectionPrompt);
+            notificationStore.notify(
+              "Copied image prompt to clipboard",
+              "success",
+            );
+          }}
+          class="w-full aspect-square rounded-lg border border-theme-border overflow-hidden relative flex flex-col shadow-inner bg-theme-bg/30 group text-left cursor-pointer hover:border-theme-primary transition focus:outline-none focus:border-theme-primary"
+        >
+          <div
+            class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100"
+          >
+            <span class="icon-[lucide--pen-tool] w-4 h-4"></span>
+            <span
+              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              >Image Prompt</span
+            >
+          </div>
+          <div
+            class="absolute top-2 right-2 flex items-center gap-1 opacity-0 text-theme-primary select-none pointer-events-none transition-opacity group-hover:opacity-100 group-focus:opacity-100"
+          >
+            <span class="icon-[lucide--copy] w-3 h-3"></span>
+            <span
+              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              >Click to Copy</span
+            >
+          </div>
+          <div
+            class="flex-1 overflow-y-auto custom-scrollbar p-6 pt-8 flex items-center justify-center h-full w-full"
+          >
+            <p
+              class="text-xs md:text-sm text-theme-muted/80 italic font-serif text-center leading-relaxed"
+            >
+              {artDirectionPrompt}
+            </p>
+          </div>
+        </button>
+      {/if}
     {/if}
 
     {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
@@ -371,7 +515,9 @@
           onclick={() => oracle.drawEntity(entity.id)}
           disabled={isVisualizing}
           class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
-          aria-label="Draw visualization for {entity.title}"
+          aria-label={oracle.apiKey
+            ? `Draw visualization for ${entity.title}`
+            : `Generate image prompt for ${entity.title}`}
           aria-busy={isVisualizing}
         >
           {#if isVisualizing}
@@ -386,7 +532,7 @@
               {#if oracle.activeStyleTitle}
                 STYLE: {oracle.activeStyleTitle.toUpperCase()}
               {:else}
-                VISUALIZING...
+                {oracle.apiKey ? "VISUALIZING..." : "GENERATING..."}
               {/if}
             </span>
           {:else}
@@ -399,7 +545,7 @@
             ></span>
             <span
               class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
-              >DRAW VISUAL</span
+              >{oracle.apiKey ? "DRAW VISUAL" : "GENERATE PROMPT"}</span
             >
           {/if}
         </button>

@@ -10,10 +10,12 @@
 
   let {
     value = $bindable(),
+    referenceValue,
     trigger,
     onClose,
   }: {
     value?: TemporalMetadata | DateSelection;
+    referenceValue?: TemporalMetadata | DateSelection;
     trigger: HTMLElement;
     onClose: () => void;
   } = $props();
@@ -23,16 +25,30 @@
   let y = $state(0);
 
   // Conversion from legacy TemporalMetadata to activeSelection DateSelection
-  function toDateSelection(val: TemporalMetadata | undefined): DateSelection {
+  function toDateSelection(
+    val: TemporalMetadata | DateSelection | undefined,
+    refVal: TemporalMetadata | DateSelection | undefined,
+  ): DateSelection {
     const config = calendarStore.config;
     const months = calendarEngine.getMonths(config);
     const revision = config.revision || 1;
 
-    if (!val) {
+    const hasValidYear = val && "year" in val && val.year !== undefined;
+
+    if (!val || !hasValidYear) {
+      if (refVal && "year" in refVal && refVal.year !== undefined) {
+        return {
+          precision: ("precision" in refVal && refVal.precision) ? (refVal.precision as any) : "year",
+          year: refVal.year,
+          calendarRevision: revision,
+          label: val?.label || undefined,
+        };
+      }
       return {
         precision: "year",
         year: config.presentYear || 0,
         calendarRevision: revision,
+        label: val?.label || undefined,
       };
     }
 
@@ -68,7 +84,7 @@
     };
   }
 
-  let activeSelection = $state<DateSelection>(toDateSelection(value));
+  let activeSelection = $state<DateSelection>(toDateSelection(value, referenceValue));
 
   let directDateInput = $state("");
   let directDateError = $state("");
@@ -83,6 +99,9 @@
   // Store references to scroll containers
   let scrollElements = $state<Record<string, HTMLDivElement>>({});
   let directEntryModes = $state<Record<string, boolean>>({});
+
+  // Keep track of active programmatic scroll sync targets to prevent scroll feedback loops
+  const lastProgrammaticScroll: Record<string, number> = {};
 
   // Deriving the dynamic columns state from activeSelection
   const columns = $derived(
@@ -127,12 +146,53 @@
           if (index !== -1) {
             const targetScrollTop = index * 40;
             if (Math.abs(container.scrollTop - targetScrollTop) > 2) {
+              lastProgrammaticScroll[col.id] = Date.now();
               container.scrollTop = targetScrollTop;
             }
           }
         }
       }
     });
+  });
+
+  // Custom velocity-sensitive mouse wheel handler for the year column
+  $effect(() => {
+    const yearContainer = scrollElements["year"];
+    if (!yearContainer) return;
+
+    let wheelAccumulator = 0;
+    const handleYearWheel = (e: WheelEvent) => {
+      // Only process vertical scrolling
+      if (Math.abs(e.deltaY) === 0) return;
+      e.preventDefault();
+      
+      wheelAccumulator += e.deltaY;
+      const speed = Math.abs(e.deltaY);
+      
+      let stepSize = 1;
+      // High speed thresholds
+      if (speed > 300) stepSize = 25;
+      else if (speed > 100) stepSize = 10;
+      else if (speed > 50) stepSize = 5;
+
+      // Sensitivity - how much accumulation is required to trigger a tick
+      const threshold = speed > 50 ? 20 : 40;
+      
+      if (Math.abs(wheelAccumulator) >= threshold) {
+        const ticks = Math.sign(wheelAccumulator) * Math.floor(Math.abs(wheelAccumulator) / threshold);
+        wheelAccumulator -= ticks * threshold;
+        
+        const patch = { year: activeSelection.year + (ticks * stepSize) };
+        activeSelection = calendarEngine.applyParentChange(
+          activeSelection,
+          patch,
+          calendarStore.getSnapshot(),
+        );
+      }
+    };
+
+    yearContainer.addEventListener("wheel", handleYearWheel, { passive: false });
+    return () => yearContainer.removeEventListener("wheel", handleYearWheel);
   });
 
   const updatePosition = async () => {
@@ -264,6 +324,10 @@
   };
 
   const onWheelScroll = (colId: string, event: Event) => {
+    // Ignore scroll events for 150ms after a programmatic scroll
+    if (Date.now() - (lastProgrammaticScroll[colId] || 0) < 150) {
+      return;
+    }
     const container = event.currentTarget as HTMLDivElement;
     const index = Math.round(container.scrollTop / 40);
     const col = columns.find((c) => c.id === colId);
@@ -506,6 +570,8 @@
         aria-labelledby="manual-tab"
         class="space-y-3"
       >
+
+
         <!-- Precision Toggle -->
         <div
           class="flex bg-theme-bg p-0.5 rounded-md border border-theme-border/30"
@@ -640,7 +706,7 @@
                     tabindex="0"
                     onscroll={(e) => onWheelScroll(col.id, e)}
                     onkeydown={(e) => handleColumnKeydown(col.id, e)}
-                    class="w-full h-[130px] overflow-y-auto relative scroll-smooth snap-y snap-mandatory select-none custom-scrollbar outline-none focus:bg-theme-primary/5 transition-colors"
+                    class="w-full h-[130px] overflow-y-auto relative snap-y snap-mandatory select-none custom-scrollbar outline-none focus:bg-theme-primary/5 transition-colors"
                   >
                     <!-- Top spacer -->
                     <div class="h-[45px]" aria-hidden="true"></div>

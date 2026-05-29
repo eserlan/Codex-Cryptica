@@ -40,8 +40,12 @@
   }
 
   let explorerTab = $state<"all" | "review">("all");
+  // ⚡ Bolt Optimization: Replace .filter().length with .reduce() to avoid intermediate array allocation
   let draftCount = $derived(
-    vault.allEntities.filter((e) => e.status === "draft").length,
+    vault.allEntities.reduce(
+      (count, e) => count + (e.status === "draft" ? 1 : 0),
+      0,
+    ),
   );
 
   const actioningIds = $state(new Set<string>());

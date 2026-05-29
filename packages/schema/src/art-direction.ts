@@ -42,7 +42,7 @@ export interface ResolvedArtDirection {
   themeId?: string;
 }
 
-const MAX_CONTEXT_TEMPLATE_LENGTH = 1200;
+const MAX_CONTEXT_TEMPLATE_LENGTH = 4000;
 
 function capPrompt(prompt: string): string {
   return prompt.length > MAX_CONTEXT_TEMPLATE_LENGTH

@@ -10,9 +10,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-
-  import { calendarEngine } from "chronology-engine";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { getTemporalLabel } from "./detail-tabs";
 
   let {
     entity,
@@ -87,55 +85,7 @@
     });
   });
 
-  const getTemporalLabel = (type: string, field: "date" | "start" | "end") => {
-    const t = type.toLowerCase();
-    if (field === "date") return "Occurrence";
-    if (field === "start") {
-      if (
-        ["npc", "creature", "character", "monster"].some((x) => t.includes(x))
-      )
-        return "Born";
-      if (
-        ["faction", "location", "city", "organization", "guild"].some((x) =>
-          t.includes(x),
-        )
-      )
-        return "Founded";
-      if (["item", "artifact", "object", "weapon"].some((x) => t.includes(x)))
-        return "Created";
-      return "Started";
-    }
-    if (field === "end") {
-      if (
-        ["npc", "creature", "character", "monster"].some((x) => t.includes(x))
-      )
-        return "Died";
-      if (
-        ["faction", "location", "city", "organization", "guild"].some((x) =>
-          t.includes(x),
-        )
-      )
-        return "Dissolved";
-      if (["item", "artifact", "object", "weapon"].some((x) => t.includes(x)))
-        return "Destroyed";
-      return "Ended";
-    }
-    return "Date";
-  };
 
-  const formatDate = (date: Entity["date"]) => {
-    if (!date || date.year === undefined) return "";
-    try {
-      return calendarEngine.format(date as any, calendarStore.config);
-    } catch {
-      if (date.label) return date.label;
-      let str = `${date.year}`;
-      const month = "month" in date ? (date as any).month : undefined;
-      if (month !== undefined) str += `/${month}`;
-      if (date.day !== undefined) str += `/${date.day}`;
-      return str;
-    }
-  };
 
   let allConnections = $derived.by(() => {
     if (!entity) return [];
@@ -214,7 +164,7 @@
   );
 </script>
 
-<div class="space-y-7 md:space-y-9">
+<div class="space-y-4 md:space-y-6">
   <!-- Temporal Metadata -->
   {#if isEditing}
     <div class="space-y-4">
@@ -222,67 +172,21 @@
         <TemporalEditor
           bind:value={editStartDate}
           label={getTemporalLabel(editType, "start")}
+          referenceValue={editEndDate}
         />
         <TemporalEditor
           bind:value={editEndDate}
           label={getTemporalLabel(editType, "end")}
+          referenceValue={editStartDate}
         />
       </div>
     </div>
-  {:else if entity.date?.year !== undefined || entity.start_date?.year !== undefined || entity.end_date?.year !== undefined}
-    <div
-      class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono border-b border-theme-border pb-4"
-      style:border-color={isFantasyTheme
-        ? "var(--theme-selected-border)"
-        : undefined}
-    >
-      {#if entity.date?.year !== undefined}
-        <div class="flex items-baseline gap-2">
-          <span
-            class="font-bold uppercase font-header"
-            style:color="var(--theme-section-title)"
-            >{getTemporalLabel(entity.type, "date")}:</span
-          >
-          <span class="text-theme-text">{formatDate(entity.date)}</span>
-        </div>
-      {/if}
-      {#if entity.start_date?.year !== undefined}
-        <div class="flex items-baseline gap-2">
-          <span
-            class="font-bold uppercase font-header"
-            style:color="var(--theme-section-title)"
-            >{getTemporalLabel(entity.type, "start")}:</span
-          >
-          <span class="text-theme-text">{formatDate(entity.start_date)}</span>
-        </div>
-      {/if}
-      {#if entity.end_date?.year !== undefined}
-        <div class="flex items-baseline gap-2">
-          <span
-            class="font-bold uppercase font-header"
-            style:color="var(--theme-section-title)"
-            >{getTemporalLabel(entity.type, "end")}:</span
-          >
-          <span class="text-theme-text">{formatDate(entity.end_date)}</span>
-        </div>
-      {/if}
-    </div>
+
   {/if}
 
   <!-- Chronicle -->
   {#if isEditing || isVisible}
     <div>
-      <h3
-        class="font-header text-lg mb-3 border-b border-theme-border pb-1 {isFantasyTheme
-          ? 'uppercase tracking-[0.16em] text-sm'
-          : 'italic'}"
-        style:color="var(--theme-section-title)"
-        style:border-color={isFantasyTheme
-          ? "var(--theme-selected-border)"
-          : undefined}
-      >
-        {themeStore.jargon.chronicle_header}
-      </h3>
       <div
         class="prose-content {draft
           ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'

@@ -6,9 +6,10 @@
   import { slide } from "svelte/transition";
   import TemporalPicker from "./TemporalPicker.svelte";
 
-  let { value = $bindable(), label = "Chronological Date" } = $props<{
+  let { value = $bindable(), label = "Chronological Date", referenceValue } = $props<{
     value?: TemporalMetadata | DateSelection;
     label?: string;
+    referenceValue?: TemporalMetadata | DateSelection;
   }>();
 
   let showPicker = $state(false);
@@ -68,6 +69,7 @@
   {#if showPicker && triggerElement}
     <TemporalPicker
       bind:value
+      {referenceValue}
       trigger={triggerElement}
       onClose={() => (showPicker = false)}
     />

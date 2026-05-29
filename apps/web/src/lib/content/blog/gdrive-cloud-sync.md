@@ -60,6 +60,6 @@ The first join uses a slightly broader Drive scope so Codex can read a folder it
 
 Head to Settings, select the **Vault** tab, scroll to the **Cloud Sync** section, and click **Connect Google Drive**. The first time you connect you'll go through a standard Google OAuth flow — takes about thirty seconds.
 
-If you run into anything, the [help article](/help/gdrive-cloud-sync) has a step-by-step walkthrough.
+If you run into anything, the [help article](/help#help/gdrive-cloud-sync) has a step-by-step walkthrough.
 
 Happy world-building.
