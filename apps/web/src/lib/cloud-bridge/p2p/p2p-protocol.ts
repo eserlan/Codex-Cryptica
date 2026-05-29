@@ -5,7 +5,7 @@ import type {
   SessionSnapshotPayload,
   VTTMessage,
 } from "../../../types/vtt";
-import { debugStore } from "../../../stores/debug.svelte";
+import { debugStore } from "../../stores/debug.svelte";
 
 const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 
