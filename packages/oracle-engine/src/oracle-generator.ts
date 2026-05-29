@@ -55,10 +55,7 @@ export class OracleGenerator {
     return artDirection.prompt;
   }
 
-  private appendVisualLabels(
-    basePrompt: string,
-    labels?: string[],
-  ): string {
+  private appendVisualLabels(basePrompt: string, labels?: string[]): string {
     const cleanLabels = (labels || []).filter(Boolean);
     if (cleanLabels.length === 0) return basePrompt;
 
@@ -318,7 +315,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      "imagen-3.0-fast-generate-001",
     );
   }
 
@@ -356,7 +353,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      "imagen-3.0-fast-generate-001",
     );
   }
 
