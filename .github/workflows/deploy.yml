@@ -263,16 +263,7 @@ jobs:
 
           echo "[Bundle report](${DEPLOYMENT_URL}/bundle-report.html)" >> "$GITHUB_STEP_SUMMARY"
 
-          COMMENT=$(cat <<EOF
-🚀 **Preview Deployment Ready!**
-
-**URL:** ${DEPLOYMENT_URL}
-**Bundle report:** ${DEPLOYMENT_URL}/bundle-report.html
-**Branch:** \`${BRANCH}\`
-
-_Changes will be live shortly._
-EOF
-)
+          COMMENT="$(printf '🚀 **Preview Deployment Ready!**\n\n**URL:** %s\n**Bundle report:** %s/bundle-report.html\n**Branch:** `%s`\n\n_Changes will be live shortly._' "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$BRANCH")"
 
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
