@@ -195,6 +195,10 @@
     height: 100%;
   }
 
+  :global(.ProseMirror > :first-child) {
+    margin-top: 0 !important;
+  }
+
   :global(.ProseMirror table) {
     border-collapse: collapse;
     margin: 1rem 0;

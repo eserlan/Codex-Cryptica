@@ -4,7 +4,8 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { fade } from "svelte/transition";
-  import { isEntityVisible } from "schema";
+  import { isEntityVisible, resolveArtDirection } from "schema";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
@@ -40,6 +41,18 @@
       sharedMode: vault.isGuest,
       defaultVisibility: vault.defaultVisibility,
     });
+  });
+
+  const artDirectionPrompt = $derived.by(() => {
+    if (!entity) return "";
+    const res = resolveArtDirection({
+      surface: "entity",
+      subject: entity.title,
+      categoryId: entity.type,
+      themeId: themeStore.activeTheme?.id || "default",
+      entityArtDirection: entity.artDirection,
+    });
+    return res.prompt;
   });
 
   $effect(() => {
@@ -243,25 +256,25 @@
     </div>
   {:else}
     <div class="px-4 md:px-6">
-      <div
-        class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
-      >
-        <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
-          <span class="icon-[lucide--image] w-4 h-4 md:w-8 md:h-8 opacity-20"
-          ></span>
-          <span
-            class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
-            >No Image</span
-          >
-        </div>
+      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (oracle.apiKey || !entity.artDirection)}
+        <div
+          class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
+        >
+          <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
+            <span class="icon-[lucide--image] w-4 h-4 md:w-8 md:h-8 opacity-20"
+            ></span>
+            <span
+              class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+              >No Image</span
+            >
+          </div>
 
-        {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest}
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={isVisualizing}
               class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
-              aria-label="Draw visualization for {entity.title}"
+              aria-label={oracle.apiKey ? `Draw visualization for ${entity.title}` : `Generate image prompt for ${entity.title}`}
               aria-busy={isVisualizing}
             >
               {#if isVisualizing}
@@ -276,7 +289,7 @@
                   {#if oracle.activeStyleTitle}
                     STYLE: {oracle.activeStyleTitle.toUpperCase()}
                   {:else}
-                    VISUALIZING...
+                    {oracle.apiKey ? 'VISUALIZING...' : 'GENERATING...'}
                   {/if}
                 </span>
               {:else}
@@ -289,34 +302,57 @@
                 ></span>
                 <span
                   class="text-[8px] md:text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
-                  >DRAW VISUAL</span
+                  >{oracle.apiKey ? 'DRAW VISUAL' : 'GENERATE PROMPT'}</span
                 >
               {/if}
             </button>
           </div>
-        {/if}
 
-        {#if isVisualizing}
-          <div
-            class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 border border-theme-primary/20"
-          >
-            <span
-              class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
-              aria-hidden="true"
-            ></span>
+          {#if isVisualizing}
             <div
-              class="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-4"
-              aria-live="polite"
+              class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 border border-theme-primary/20"
             >
-              {#if oracle.activeStyleTitle}
-                Visualizing in {oracle.activeStyleTitle}
-              {:else}
-                Building Visual
-              {/if}
+              <span
+                class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+                aria-hidden="true"
+              ></span>
+              <div
+                class="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-4"
+                aria-live="polite"
+              >
+                {#if oracle.activeStyleTitle}
+                  {oracle.apiKey ? `Visualizing in ${oracle.activeStyleTitle}` : `Generating prompt in ${oracle.activeStyleTitle}`}
+                {:else}
+                  {oracle.apiKey ? 'Building Visual' : 'Generating Prompt'}
+                {/if}
+              </div>
             </div>
+          {/if}
+        </div>
+      {:else}
+        <button
+          type="button"
+          onclick={async () => {
+            await navigator.clipboard.writeText(artDirectionPrompt);
+            notificationStore.notify("Copied image prompt to clipboard", "success");
+          }}
+          class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative flex flex-col shadow-inner bg-theme-bg/30 group text-left cursor-pointer hover:border-theme-primary transition focus:outline-none focus:border-theme-primary"
+        >
+          <div class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100">
+            <span class="icon-[lucide--pen-tool] w-4 h-4"></span>
+            <span class="text-[8px] font-header uppercase tracking-widest font-bold">Image Prompt</span>
           </div>
-        {/if}
-      </div>
+          <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 text-theme-primary select-none pointer-events-none transition-opacity group-hover:opacity-100 group-focus:opacity-100">
+            <span class="icon-[lucide--copy] w-3 h-3"></span>
+            <span class="text-[8px] font-header uppercase tracking-widest font-bold">Click to Copy</span>
+          </div>
+          <div class="flex-1 overflow-y-auto custom-scrollbar p-6 pt-8 flex items-center justify-center h-full w-full">
+            <p class="text-sm md:text-base text-theme-muted/80 italic font-serif text-center leading-relaxed">
+              {artDirectionPrompt}
+            </p>
+          </div>
+        </button>
+      {/if}
     </div>
   {/if}
 

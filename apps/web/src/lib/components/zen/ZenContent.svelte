@@ -201,18 +201,23 @@
     return "Date";
   };
 
+  import { calendarEngine } from "chronology-engine";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+
   const formatDate = (date: any) => {
     if (!date || date.year === undefined) return "";
-    if (date.label) return date.label;
-
-    const parts: string[] = [];
-    if (date.day !== undefined)
-      parts.push(date.day.toString().padStart(2, "0"));
-    if (date.month !== undefined)
-      parts.push(date.month.toString().padStart(2, "0"));
-    parts.push(date.year.toString());
-
-    return parts.join("/");
+    try {
+      return calendarEngine.format(date, calendarStore.config);
+    } catch {
+      if (date.label) return date.label;
+      const parts = [];
+      if (date.day !== undefined)
+        parts.push(date.day.toString().padStart(2, "0"));
+      if (date.month !== undefined)
+        parts.push(date.month.toString().padStart(2, "0"));
+      parts.push(date.year.toString());
+      return parts.join("/");
+    }
   };
 
   const draft = $derived(
@@ -244,6 +249,7 @@
               editState?.type ?? entity?.type ?? "",
               "start",
             )}
+            referenceValue={editState.endDate}
           />
           <TemporalEditor
             bind:value={editState.endDate}
@@ -251,14 +257,15 @@
               editState?.type ?? entity?.type ?? "",
               "end",
             )}
+            referenceValue={editState.startDate}
           />
         </div>
       </div>
-    {:else if entity?.start_date || entity?.end_date}
+    {:else if entity?.date || entity?.start_date || entity?.end_date}
       <div
         class="flex flex-wrap gap-8 p-4 bg-theme-primary/5 border border-theme-border rounded"
       >
-        {#if entity?.start_date}
+        {#if entity?.date}
           <div class="flex flex-col">
             <span
               class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
@@ -266,21 +273,34 @@
               {getTemporalLabel(entity?.type || "", "start")}
             </span>
             <span class="text-lg font-header text-theme-primary"
-              >{formatDate(entity?.start_date)}</span
+              >{formatDate(entity?.date)}</span
             >
           </div>
-        {/if}
-        {#if entity?.end_date}
-          <div class="flex flex-col">
-            <span
-              class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
-            >
-              {getTemporalLabel(entity?.type || "", "end")}
-            </span>
-            <span class="text-lg font-header text-theme-primary"
-              >{formatDate(entity?.end_date)}</span
-            >
-          </div>
+        {:else}
+          {#if entity?.start_date}
+            <div class="flex flex-col">
+              <span
+                class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              >
+                {getTemporalLabel(entity?.type || "", "start")}
+              </span>
+              <span class="text-lg font-header text-theme-primary"
+                >{formatDate(entity?.start_date)}</span
+              >
+            </div>
+          {/if}
+          {#if entity?.end_date}
+            <div class="flex flex-col">
+              <span
+                class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              >
+                {getTemporalLabel(entity?.type || "", "end")}
+              </span>
+              <span class="text-lg font-header text-theme-primary"
+                >{formatDate(entity?.end_date)}</span
+              >
+            </div>
+          {/if}
         {/if}
       </div>
     {/if}

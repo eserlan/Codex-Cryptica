@@ -341,7 +341,7 @@
               />
             </div>
 
-            <div class="p-4 md:p-6">
+            <div class="px-4 pb-4 pt-2 md:px-6 md:pb-6 md:pt-2">
               <div
                 role="tabpanel"
                 id={panelIds.status}

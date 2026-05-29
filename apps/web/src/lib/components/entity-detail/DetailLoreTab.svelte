@@ -2,7 +2,6 @@
   import type { Entity } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let {
@@ -25,13 +24,6 @@
 {#if !vault.isGuest}
   <div class="space-y-4">
     <div>
-      <div
-        class="flex items-center gap-3 text-xs uppercase tracking-widest text-theme-muted mb-6 font-header"
-      >
-        <span class="text-theme-accent icon-[lucide--file-text] w-4 h-4"></span>
-        <span>{themeStore.jargon.lore_header}</span>
-        <div class="h-px bg-theme-border flex-1 ml-2"></div>
-      </div>
       {#if isEditing && !draft}
         <div class="h-96">
           <MarkdownEditor

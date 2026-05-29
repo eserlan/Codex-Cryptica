@@ -72,8 +72,8 @@ export async function resolvePronounsLocally(
 
     const doc = nlp(text);
 
-    // Check for proper nouns in user's query
-    const properNoun = doc.match("#ProperNoun").first().text().trim();
+    // Check for proper nouns in user's query (excluding verbs, pronouns, etc. to prevent start-of-sentence false positives)
+    const properNoun = doc.match("#ProperNoun").not("#Verb").not("#Pronoun").not("#Preposition").not("#Conjunction").first().text().trim();
     if (properNoun) {
       candidateSubject = properNoun;
       break;
@@ -122,8 +122,8 @@ export async function resolvePronounsLocally(
       // Parse the message with compromise
       const doc = nlp(text);
 
-      // 2. Scan for proper nouns
-      const properNoun = doc.match("#ProperNoun").first().text().trim();
+      // 2. Scan for proper nouns (excluding verbs, pronouns, etc. to prevent start-of-sentence false positives)
+      const properNoun = doc.match("#ProperNoun").not("#Verb").not("#Pronoun").not("#Preposition").not("#Conjunction").first().text().trim();
       if (properNoun) {
         candidateSubject = properNoun;
         break;

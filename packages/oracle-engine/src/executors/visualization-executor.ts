@@ -63,28 +63,44 @@ export class VisualizationExecutor
     const generator = this.generator || context.generator;
     if (!generator) throw new Error("Generator not available in context.");
 
-    const blob = await generator.generateEntityVisualization(entityId, context);
+    try {
+      const blob = await generator.generateEntityVisualization(entityId, context);
 
-    if (context.isDemoMode) {
-      const imageUrl = URL.createObjectURL(blob);
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "",
-        type: "image",
-        imageUrl,
-        imageBlob: blob,
-        entityId,
-      });
-    } else {
-      const { image, thumbnail } = await context.vault.saveImageToVault(
-        blob,
-        entityId,
-      );
-      await context.vault.updateEntity(entityId, {
-        image,
-        thumbnail,
-      });
+      if (context.isDemoMode) {
+        const imageUrl = URL.createObjectURL(blob);
+        await context.chatHistory.addMessage({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "",
+          type: "image",
+          imageUrl,
+          imageBlob: blob,
+          entityId,
+        });
+      } else {
+        const { image, thumbnail } = await context.vault.saveImageToVault(
+          blob,
+          entityId,
+        );
+        await context.vault.updateEntity(entityId, {
+          image,
+          thumbnail,
+        });
+      }
+    } catch (err: any) {
+      if (err.message && err.message.startsWith("MISSING_KEY_PROMPT|")) {
+        const prompt = err.message.split("MISSING_KEY_PROMPT|")[1];
+        await context.chatHistory.addMessage({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
+        });
+        await context.vault.updateEntity(entityId, {
+          artDirection: prompt,
+        });
+        return;
+      }
+      throw err;
     }
   }
 
@@ -98,17 +114,38 @@ export class VisualizationExecutor
     const generator = this.generator || context.generator;
     if (!generator) throw new Error("Generator not available in context.");
 
-    const blob = await generator.generateMessageVisualization(message, context);
-    const imageUrl = URL.createObjectURL(blob);
-    const updatedMsgs = [...context.chatHistory.messages];
-    updatedMsgs[msgIndex] = {
-      ...message,
-      type: "image",
-      imageUrl,
-      imageBlob: blob,
-      isDrawing: false,
-      hasDrawAction: false,
-    };
-    context.chatHistory.setMessages(updatedMsgs);
+    try {
+      const blob = await generator.generateMessageVisualization(message, context);
+      const imageUrl = URL.createObjectURL(blob);
+      const updatedMsgs = [...context.chatHistory.messages];
+      updatedMsgs[msgIndex] = {
+        ...message,
+        type: "image",
+        imageUrl,
+        imageBlob: blob,
+        isDrawing: false,
+        hasDrawAction: false,
+      };
+      context.chatHistory.setMessages(updatedMsgs);
+    } catch (err: any) {
+      if (err.message && err.message.startsWith("MISSING_KEY_PROMPT|")) {
+        const prompt = err.message.split("MISSING_KEY_PROMPT|")[1];
+        await context.chatHistory.addMessage({
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `Image generation requires an API key. You can copy and paste the generated prompt below into an external image generator:\n\n\`\`\`text\n${prompt}\n\`\`\``,
+        });
+        
+        // Update the message state to remove the drawing state
+        const updatedMsgs = [...context.chatHistory.messages];
+        updatedMsgs[msgIndex] = {
+          ...message,
+          isDrawing: false,
+        };
+        context.chatHistory.setMessages(updatedMsgs);
+        return;
+      }
+      throw err;
+    }
   }
 }
