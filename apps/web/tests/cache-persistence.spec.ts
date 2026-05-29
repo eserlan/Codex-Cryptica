@@ -13,7 +13,16 @@ import { test, expect } from "@playwright/test";
  * exposed globals, then reload and read back via CacheService.get.
  * This bypasses OPFS (unavailable in the Playwright sandbox) while still
  * exercising the real Dexie + $state.snapshot() code path.
+ *
+ * The dynamic import path below is a Vite-resolved browser URL, not a
+ * TypeScript module path — tsc never executes page.evaluate() callbacks.
+ * We use a runtime variable to prevent tsc from treating the string as a
+ * module specifier and emitting a "Cannot find module" error.
  */
+
+// Stored in a variable so tsc doesn't try to resolve it as a module path.
+// Vite resolves this correctly at runtime inside page.evaluate().
+const CACHE_SERVICE_PATH = ["/src/lib/services", "cache.svelte.ts"].join("/");
 
 async function waitForVaultIdle(page: any) {
   await page.waitForFunction(
@@ -62,43 +71,40 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
       _path: [`${entityId}.md`],
     };
 
-    // Write via CacheService.set()
     const writeResult = await page.evaluate(
-      async ({ p, e }: { p: string; e: any }) => {
+      async ({ p, e, modulePath }: { p: string; e: any; modulePath: string }) => {
         try {
-          const { cacheService } = await import(
-            "/src/lib/services/cache.svelte.ts"
-          );
-          await cacheService.set(p, Date.now(), e as any);
+          const { cacheService } = await import(modulePath);
+          await cacheService.set(p, Date.now(), e);
           return { ok: true, error: null };
         } catch (err: any) {
           return { ok: false, error: err?.message ?? String(err) };
         }
       },
-      { p: path, e: entity },
+      { p: path, e: entity, modulePath: CACHE_SERVICE_PATH },
     );
 
     expect(writeResult.error).toBeNull();
     expect(writeResult.ok).toBe(true);
 
-    // Reload
     await page.reload();
     await waitForVaultIdle(page);
 
-    // Read back — must still be there
     const readResult = await page.evaluate(
-      async (p: string) => {
+      async ({ p, modulePath }: { p: string; modulePath: string }) => {
         try {
-          const { cacheService } = await import(
-            "/src/lib/services/cache.svelte.ts"
-          );
+          const { cacheService } = await import(modulePath);
           const hit = await cacheService.get(p);
-          return { title: hit?.entity?.title ?? null, labels: hit?.entity?.labels ?? null, error: null };
+          return {
+            title: hit?.entity?.title ?? null,
+            labels: hit?.entity?.labels ?? null,
+            error: null,
+          };
         } catch (err: any) {
           return { title: null, labels: null, error: err?.message ?? String(err) };
         }
       },
-      path,
+      { p: path, modulePath: CACHE_SERVICE_PATH },
     );
 
     expect(readResult.error).toBeNull();
@@ -106,11 +112,9 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
     expect(readResult.labels).toContain("important");
   });
 
-  test("CacheService.bulkSet() writes survive a page reload", async ({
-    page,
-  }) => {
-    const vaultId = `e2e-bulk-vault-${Date.now()}`;
+  test("CacheService.bulkSet() writes survive a page reload", async ({ page }) => {
     const ts = Date.now();
+    const vaultId = `e2e-bulk-vault-${ts}`;
 
     const entries = [0, 1, 2].map((i) => ({
       path: `${vaultId}:entity-${ts}-${i}.md`,
@@ -131,36 +135,29 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
       },
     }));
 
-    // Write via CacheService.bulkSet()
     const writeResult = await page.evaluate(
-      async (ents: typeof entries) => {
+      async ({ ents, modulePath }: { ents: typeof entries; modulePath: string }) => {
         try {
-          const { cacheService } = await import(
-            "/src/lib/services/cache.svelte.ts"
-          );
+          const { cacheService } = await import(modulePath);
           await cacheService.bulkSet(ents as any);
           return { ok: true, error: null };
         } catch (err: any) {
           return { ok: false, error: err?.message ?? String(err) };
         }
       },
-      entries,
+      { ents: entries, modulePath: CACHE_SERVICE_PATH },
     );
 
     expect(writeResult.error).toBeNull();
     expect(writeResult.ok).toBe(true);
 
-    // Reload
     await page.reload();
     await waitForVaultIdle(page);
 
-    // Read all three back
     const readResult = await page.evaluate(
-      async (paths: string[]) => {
+      async ({ paths, modulePath }: { paths: string[]; modulePath: string }) => {
         try {
-          const { cacheService } = await import(
-            "/src/lib/services/cache.svelte.ts"
-          );
+          const { cacheService } = await import(modulePath);
           const titles: (string | null)[] = [];
           for (const p of paths) {
             const hit = await cacheService.get(p);
@@ -171,10 +168,14 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
           return { titles: [], error: err?.message ?? String(err) };
         }
       },
-      entries.map((e) => e.path),
+      { paths: entries.map((e) => e.path), modulePath: CACHE_SERVICE_PATH },
     );
 
     expect(readResult.error).toBeNull();
-    expect(readResult.titles).toEqual(["Bulk Entity 0", "Bulk Entity 1", "Bulk Entity 2"]);
+    expect(readResult.titles).toEqual([
+      "Bulk Entity 0",
+      "Bulk Entity 1",
+      "Bulk Entity 2",
+    ]);
   });
 });
