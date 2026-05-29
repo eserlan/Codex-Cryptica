@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import { EntityStore } from "./entity-store.svelte";
 import type { LocalEntity } from "./types";
 import * as vaultEntities from "./entities";
@@ -11,7 +11,7 @@ vi.hoisted(() => {
   (global as any).$derived.by = vi.fn((fn) => fn());
 });
 
-vi.mock("./events", () => ({
+vi.mock("./events.svelte", () => ({
   vaultEventBus: {
     emit: vi.fn(),
     reset: vi.fn(),
@@ -36,6 +36,11 @@ vi.mock("./entities", () => ({
 vi.mock("../../utils/opfs", () => ({
   readFileAsText: vi.fn(),
   deleteOpfsEntry: vi.fn(),
+  walkOpfsDirectory: vi.fn(),
+  writeOpfsFile: vi.fn(),
+  isNotFoundError: vi.fn(() => false),
+  readOpfsBlob: vi.fn(),
+  getDirHandle: vi.fn(),
 }));
 
 vi.mock("../../utils/markdown", () => ({
@@ -59,17 +64,13 @@ vi.mock("../debug.svelte", () => ({
   },
 }));
 
-vi.mock("../ui.svelte", () => ({
-  uiStore: {
-    isDemoMode: false,
-    notify: vi.fn(),
-  },
-}));
-
-import { uiStore } from "../ui.svelte";
-
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 describe("EntityStore", () => {
-  let repository: { entities: Record<string, LocalEntity>; saveQueue: any };
+  let repository: {
+    entities: Record<string, LocalEntity>;
+    saveQueue: any;
+    enqueueSave: ReturnType<typeof vi.fn>;
+  };
   let store: EntityStore;
 
   beforeEach(() => {
@@ -86,10 +87,9 @@ describe("EntityStore", () => {
           type: "character",
           status: "active",
           labels: [],
-          tags: [],
           aliases: [],
           connections: [],
-        } as LocalEntity,
+        } as unknown as LocalEntity,
         place: {
           id: "place",
           title: "Place",
@@ -98,15 +98,19 @@ describe("EntityStore", () => {
           type: "location",
           status: "active",
           labels: ["important"],
-          tags: [],
           aliases: [],
           connections: [],
-        } as LocalEntity,
+        } as unknown as LocalEntity,
       },
       saveQueue: {
         enqueue: vi.fn((_key, fn) => fn()),
       },
+      enqueueSave: vi.fn(),
     };
+    // Delegate enqueueSave → saveQueue.enqueue so existing assertions on saveQueue.enqueue still pass.
+    repository.enqueueSave.mockImplementation((_key: any, fn: any) =>
+      repository.saveQueue.enqueue(_key, fn),
+    );
 
     store = new EntityStore({
       repository: repository as any,
@@ -114,6 +118,7 @@ describe("EntityStore", () => {
       isGuest: () => false,
       getGuestFile: vi.fn(),
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -129,6 +134,54 @@ describe("EntityStore", () => {
     expect(store.allEntities).toHaveLength(2);
   });
 
+  it("derives the label counts and excludes drafts from counts but keeps them in index", () => {
+    repository.entities.draftPlace = {
+      id: "draftPlace",
+      title: "Draft Place",
+      content: "",
+      lore: "",
+      type: "location",
+      status: "draft",
+      labels: ["important", "new-label"],
+      aliases: [],
+      connections: [],
+    } as unknown as LocalEntity;
+
+    repository.entities.activePlace = {
+      id: "activePlace",
+      title: "Active Place",
+      content: "",
+      lore: "",
+      type: "location",
+      status: "active",
+      labels: ["new-label", "new-label"], // Duplicate labels on single entity
+      aliases: [],
+      connections: [],
+    } as unknown as LocalEntity;
+
+    const testStore = new EntityStore({
+      repository: repository as any,
+      activeVaultId: () => "vault-1",
+      isGuest: () => false,
+      getGuestFile: vi.fn(),
+      setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
+      setErrorMessage: vi.fn(),
+      getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+      getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+      getServices: () => ({ ai: { clearStyleCache: vi.fn() } }),
+      invalidateUrlCache: vi.fn(),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
+    });
+
+    expect(testStore.labelIndex).toEqual(["important", "new-label"]);
+    expect(testStore.labelCounts).toEqual({
+      important: 1,
+      "new-label": 1, // Correctly de-duplicated and counted as 1
+    });
+  });
+
   it("creates an entity and marks it as loaded and updates count", async () => {
     const newEntity = { id: "new-entity", title: "New Entity" };
     vi.mocked(vaultEntities.createEntity).mockReturnValue(newEntity as any);
@@ -139,6 +192,7 @@ describe("EntityStore", () => {
       activeVaultId: () => "vault-1",
       isGuest: () => false,
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -166,6 +220,7 @@ describe("EntityStore", () => {
       activeVaultId: () => "vault-1",
       isGuest: () => false,
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({}),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -198,7 +253,7 @@ describe("EntityStore", () => {
 
   it("handles batch updates", async () => {
     const success = await store.batchUpdate({
-      hero: { tags: ["new-tag"] },
+      hero: { labels: ["new-tag"] },
     });
 
     expect(success).toBe(true);
@@ -261,6 +316,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -291,6 +347,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage,
         getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -319,6 +376,7 @@ describe("EntityStore", () => {
         activeVaultId: () => null,
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -334,13 +392,14 @@ describe("EntityStore", () => {
 
     it("should return immediately in demo mode", async () => {
       const setStatus = vi.fn();
-      uiStore.isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
 
       const storeDemo = new EntityStore({
         repository: repository as any,
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -353,7 +412,7 @@ describe("EntityStore", () => {
 
       expect(setStatus).not.toHaveBeenCalled();
 
-      uiStore.isDemoMode = false;
+      sessionModeStore.isDemoMode = false;
     });
 
     it("should return early when entity does not exist in repository", async () => {
@@ -363,6 +422,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -383,6 +443,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -421,6 +482,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -452,6 +514,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -487,7 +550,7 @@ describe("EntityStore", () => {
     it("should skip entities not in the current set", async () => {
       const result = await store.batchUpdate({
         nonexistent: { title: "X" },
-        hero: { tags: ["tag"] },
+        hero: { labels: ["tag"] },
       });
       expect(result).toBe(true);
     });
@@ -499,6 +562,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -509,11 +573,11 @@ describe("EntityStore", () => {
       });
 
       await storeWithCallback.batchUpdate({
-        hero: { tags: ["new"] },
+        hero: { labels: ["new"] },
       });
 
       expect(onBatchUpdate).toHaveBeenCalledWith({
-        hero: { tags: ["new"] },
+        hero: { labels: ["new"] },
       });
     });
 
@@ -548,6 +612,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -572,6 +637,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => true,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -586,13 +652,14 @@ describe("EntityStore", () => {
     });
 
     it("should delete from memory in demo mode", async () => {
-      uiStore.isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
       const onEntityDelete = vi.fn();
       const demoStore = new EntityStore({
         repository: repository as any,
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -607,7 +674,7 @@ describe("EntityStore", () => {
       expect(repository.entities.hero).toBeUndefined();
       expect(onEntityDelete).toHaveBeenCalledWith("hero");
 
-      uiStore.isDemoMode = false;
+      sessionModeStore.isDemoMode = false;
     });
 
     it("should save modified entities after deletion", async () => {
@@ -760,8 +827,16 @@ describe("EntityStore", () => {
   describe("batchCreateEntities", () => {
     it("should create multiple entities and save them", async () => {
       const created = [
-        { id: "e1", title: "Entity 1", status: "active" } as LocalEntity,
-        { id: "e2", title: "Entity 2", status: "active" } as LocalEntity,
+        {
+          id: "e1",
+          title: "Entity 1",
+          status: "active",
+        } as unknown as LocalEntity,
+        {
+          id: "e2",
+          title: "Entity 2",
+          status: "active",
+        } as unknown as LocalEntity,
       ];
       vi.mocked(vaultEntities.batchCreateEntities).mockReturnValue({
         entities: { ...repository.entities, e1: created[0], e2: created[1] },
@@ -854,7 +929,7 @@ describe("EntityStore", () => {
 
     it("should set entities on repository", () => {
       const newEntities = {
-        newOne: { id: "newOne", status: "active" } as LocalEntity,
+        newOne: { id: "newOne", status: "active" } as unknown as LocalEntity,
       };
       store.entities = newEntities;
       expect(repository.entities).toBe(newEntities);
@@ -881,6 +956,7 @@ describe("EntityStore", () => {
         isGuest: () => false,
         getGuestFile: vi.fn(),
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -911,6 +987,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -946,6 +1023,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -985,6 +1063,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -1020,6 +1099,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile: vi.fn(),
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -1049,6 +1129,287 @@ describe("EntityStore", () => {
     it("should return early when entity does not exist", async () => {
       await store.internalLoadContent("nonexistent");
       // Should not throw
+    });
+
+    it("should preserve in-memory metadata (like parent relationship) and not overwrite it with old data from disk", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+
+      // In-memory has parent set
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        parent: "parent-node",
+      };
+
+      // Disk has older metadata (no parent) and the actual file content
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue(
+        "Old content from disk",
+      );
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          type: "character",
+          // no parent field on disk
+        },
+        content: "Hydrated content from disk",
+      });
+
+      await store.internalLoadContent("hero");
+
+      // Verifies content is hydrated, but in-memory parent is preserved!
+      expect(repository.entities.hero.content).toBe(
+        "Hydrated content from disk",
+      );
+      expect(repository.entities.hero.parent).toBe("parent-node");
+    });
+  });
+
+  describe("flushPendingSaves", () => {
+    it("should clear timeouts and flush all pending saves concurrently", async () => {
+      const repositoryMock = {
+        entities: {
+          "entity-1": { id: "entity-1", title: "E1" },
+          "entity-2": { id: "entity-2", title: "E2" },
+        } as unknown as Record<string, LocalEntity>,
+        enqueueSave: vi.fn().mockImplementation((id, cb) => cb()),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const setStatus = vi.fn();
+      const storeWithPending = new EntityStore({
+        repository: repositoryMock as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      // Schedule two saves (will be debounced)
+      const save1 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-1"],
+      );
+      const save2 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-2"],
+      );
+
+      // Flush them immediately before their 400ms timer runs
+      await storeWithPending.flushPendingSaves();
+
+      // Check both enqueueSave were called
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-1",
+        expect.any(Function),
+      );
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-2",
+        expect.any(Function),
+      );
+      // Check that waitForAllSaves was called at the end
+      expect(repositoryMock.waitForAllSaves).toHaveBeenCalled();
+
+      // The promises from scheduleSave should resolve
+      await Promise.all([save1, save2]);
+    });
+
+    it("should propagate timeoutMs to waitForAllSaves", async () => {
+      const repositoryMock = {
+        entities: {
+          "entity-1": { id: "entity-1", title: "E1" },
+        } as unknown as Record<string, LocalEntity>,
+        enqueueSave: vi.fn().mockImplementation((id, cb) => cb()),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const storeWithPending = new EntityStore({
+        repository: repositoryMock as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      storeWithPending.scheduleSave(repositoryMock.entities["entity-1"]);
+      await storeWithPending.flushPendingSaves(2000);
+
+      expect(repositoryMock.waitForAllSaves).toHaveBeenCalledWith(2000);
+    });
+
+    it("should handle individual save rejections gracefully and still wait for other saves", async () => {
+      const repositoryMock = {
+        entities: {
+          "entity-1": { id: "entity-1", title: "E1" },
+          "entity-2": { id: "entity-2", title: "E2" },
+        } as unknown as Record<string, LocalEntity>,
+        enqueueSave: vi.fn().mockImplementation((id, cb) => {
+          if (id === "entity-1") {
+            return Promise.reject(new Error("Failure"));
+          }
+          return cb();
+        }),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const storeWithPending = new EntityStore({
+        repository: repositoryMock as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const save1 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-1"],
+      );
+      const save2 = storeWithPending.scheduleSave(
+        repositoryMock.entities["entity-2"],
+      );
+
+      // Should not throw, should resolve successfully
+      await storeWithPending.flushPendingSaves();
+
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-1",
+        expect.any(Function),
+      );
+      expect(repositoryMock.enqueueSave).toHaveBeenCalledWith(
+        "entity-2",
+        expect.any(Function),
+      );
+      expect(repositoryMock.waitForAllSaves).toHaveBeenCalled();
+
+      // Ensure save promises are resolved/settled (either resolve or swallow error in scheduleSave)
+      await Promise.all([save1, save2]);
+    });
+  });
+
+  describe("Incremental Index Maintenance", () => {
+    it("correctly de-duplicates labels and updates index / counts when entity is added", () => {
+      const initialMap = { ...repository.entities };
+      const newMap = {
+        ...initialMap,
+        newHero: {
+          id: "newHero",
+          title: "New Hero",
+          content: "Keystroke tests",
+          lore: "",
+          type: "character",
+          status: "active",
+          labels: ["important", "important", "new-label"],
+          aliases: ["Hero Jr", "Newbie"],
+          connections: [],
+        } as unknown as LocalEntity,
+      };
+
+      store.handleEntitiesUpdate(initialMap, newMap);
+
+      expect(store.labelIndex).toEqual(["important", "new-label"]);
+      // important was 1 (from place), newHero adds it once (de-duplicated). total = 2.
+      expect(store.labelCounts["important"]).toBe(2);
+      expect(store.labelCounts["new-label"]).toBe(1);
+
+      // Verify title and alias index sorted by length
+      const match = store.titleAndAliasIndex.find(
+        (t) => t.entityId === "newHero" && t.isAlias,
+      );
+      expect(match).toBeDefined();
+    });
+
+    it("correctly handles label counting when a draft is updated to active", () => {
+      const initialMap = { ...repository.entities };
+      const draftEntity = {
+        id: "hero",
+        title: "Hero",
+        content: "",
+        lore: "",
+        type: "character",
+        status: "draft",
+        labels: ["important", "another-label"],
+        aliases: [],
+        connections: [],
+      } as unknown as LocalEntity;
+
+      const activeEntity = {
+        ...draftEntity,
+        status: "active",
+      } as unknown as LocalEntity;
+
+      const map1 = { ...initialMap, hero: draftEntity };
+      const map2 = { ...initialMap, hero: activeEntity };
+
+      store.handleEntitiesUpdate(map1, map2);
+
+      // hero had draft label 'important' and 'another-label'.
+      // Now hero is active, so counts must increment.
+      expect(store.labelCounts["important"]).toBe(2); // hero(1) + place(1)
+      expect(store.labelCounts["another-label"]).toBe(1);
+    });
+
+    it("correctly decrements de-duplicated labels on deletion", () => {
+      const initialMap = {
+        hero: {
+          id: "hero",
+          title: "Hero",
+          content: "",
+          lore: "",
+          type: "character",
+          status: "active",
+          labels: ["important", "important"],
+          aliases: [],
+          connections: [],
+        } as unknown as LocalEntity,
+      };
+
+      const emptyMap: Record<string, LocalEntity> = {};
+
+      repository.entities = { ...initialMap };
+      store.handleEntitiesUpdate(initialMap, initialMap); // build initial
+      expect(store.labelCounts["important"]).toBe(1);
+
+      repository.entities = emptyMap;
+      store.handleEntitiesUpdate(initialMap, emptyMap);
+      expect(store.labelCounts["important"]).toBeUndefined();
+    });
+
+    it("executes rapid keystroke updates on the in-place O(N) search / update path", () => {
+      const initialMap = { ...repository.entities };
+      const heroUpdated = {
+        ...initialMap.hero,
+        content: "Draft character content typed rapid",
+        updatedAt: Date.now(),
+      } as unknown as LocalEntity;
+
+      const newMap = { ...initialMap, hero: heroUpdated };
+
+      // Ensure no indices change
+      const prevLabelIndex = [...store.labelIndex];
+      const prevLabelCounts = { ...store.labelCounts };
+
+      store.handleEntitiesUpdate(initialMap, newMap);
+
+      expect(store.labelIndex).toEqual(prevLabelIndex);
+      expect(store.labelCounts).toEqual(prevLabelCounts);
+      expect(store.allEntities.find((e) => e.id === "hero")?.content).toBe(
+        "Draft character content typed rapid",
+      );
     });
   });
 });

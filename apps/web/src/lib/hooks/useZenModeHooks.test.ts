@@ -94,16 +94,12 @@ describe("ZenMode Hooks", () => {
 
   describe("useZenModeActions", () => {
     let mockVault: any;
-    let mockUiStore: any;
     let mockEditState: any;
 
     beforeEach(() => {
       mockVault = {
         updateEntity: vi.fn().mockResolvedValue(undefined),
         deleteEntity: vi.fn().mockResolvedValue(undefined),
-      };
-      mockUiStore = {
-        notify: vi.fn(),
       };
       mockEditState = createEditState(null);
       mockEditState.start(mockEntity);
@@ -112,7 +108,6 @@ describe("ZenMode Hooks", () => {
     it("should call updateEntity on save", async () => {
       const actions = createZenModeActions(mockEditState, {
         vault: mockVault,
-        uiStore: mockUiStore,
       });
       mockEditState.title = "New Title";
       await actions.saveChanges("test-id");

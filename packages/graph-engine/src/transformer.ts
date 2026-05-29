@@ -17,6 +17,7 @@ export interface GraphNode {
     image?: string;
     thumbnail?: string;
     labels?: string[];
+    isImportant?: boolean;
     date?: TemporalMetadata;
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
@@ -50,7 +51,8 @@ const formatDate = (date?: TemporalMetadata) => {
 
   // Optimization: Manual string construction is faster than template literals or padStart
   // for this specific case in hot loops.
-  const { year, month, day } = date;
+  const { year, day } = date;
+  const month = "month" in date ? (date as any).month : undefined;
   let str = "" + year;
 
   if (month !== undefined) {
@@ -65,6 +67,16 @@ const formatDate = (date?: TemporalMetadata) => {
 const EMPTY_LABELS: string[] = [];
 
 const getTextureVariant = () => Math.floor(Math.random() * 4);
+
+const hasImportantLabel = (labels?: string[]) => {
+  if (!labels) return false;
+
+  for (let i = 0; i < labels.length; i++) {
+    if (labels[i].toLowerCase() === "important") return true;
+  }
+
+  return false;
+};
 
 export class GraphTransformer {
   static entitiesToElements(
@@ -156,6 +168,7 @@ export class GraphTransformer {
         labels: entity.labels ?? EMPTY_LABELS,
         textureVariant: getTextureVariant(),
       };
+      if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
       if (isRevealed) (nodeData as any).isRevealed = true;
@@ -219,6 +232,57 @@ export class GraphTransformer {
 
     return elements;
   }
+
+  static quickNotesToElements(
+    notes: { id?: number; content: string; createdAt: number }[],
+    totalCount: number,
+  ): GraphElement[] {
+    const elements: GraphElement[] = [];
+    const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+    const baseCount = Math.max(10, totalCount);
+    const spiralRadius = Math.max(1200, Math.sqrt(baseCount) * 100);
+
+    const notesCount = notes.length;
+    for (let i = 0; i < notesCount; i++) {
+      const note = notes[i];
+      if (!note.id) continue;
+
+      const id = `quicknote-${note.id}`;
+      const trimmed = note.content.trim();
+      const firstLine = trimmed ? trimmed.split("\n")[0] : "Untitled Note";
+      const label =
+        firstLine.length > 30
+          ? firstLine.substring(0, 30) + "..."
+          : firstLine || "Untitled Note";
+
+      const nodeData: GraphNode["data"] = {
+        id,
+        label,
+        type: "quicknote",
+        status: "draft",
+        weight: 1,
+        labels: ["quicknote"],
+        textureVariant: 0,
+      };
+      (nodeData as any).isQuickNote = true;
+      (nodeData as any).isPendingLayout = true;
+
+      const angle = (totalCount + i) * GOLDEN_ANGLE;
+      const distance =
+        spiralRadius * Math.sqrt((totalCount + i + 0.5) / baseCount);
+
+      elements.push({
+        group: "nodes",
+        data: nodeData,
+        position: {
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+        },
+      });
+    }
+
+    return elements;
+  }
 }
 
 /**
@@ -269,6 +333,9 @@ const getThemeTextureVariantStyles = (texture?: string) => {
     },
   ];
 };
+
+const RESOLVED_IMAGE_NODE_SELECTOR =
+  "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']";
 
 const getFantasyNodeStyle = (
   template: StylingTemplate,
@@ -375,17 +442,13 @@ export const getGraphStyle = (
 
   if (showImages) {
     baseStyle.push({
-      selector:
-        "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
+      selector: RESOLVED_IMAGE_NODE_SELECTOR,
       style: {
         "background-fit": "cover",
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-opacity": 1,
-        "border-width": isFantasy
-          ? graph.nodeBorderWidth + 5
-          : graph.nodeBorderWidth + 6,
         "border-color": tokens.primary,
       },
     });
@@ -488,21 +551,27 @@ export const getGraphStyle = (
     },
   }));
 
-  // Image width override ensures that nodes with images have thick borders
-  // even if category styles (which come before) set a thinner width.
-  const imageWidthOverride = showImages
-    ? [
-        {
-          selector:
-            "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
-          style: {
-            "border-width": isFantasy
-              ? graph.nodeBorderWidth + 5
-              : graph.nodeBorderWidth + 8,
-          },
-        },
-      ]
-    : [];
+  const importantStyles: any[] = [
+    {
+      selector: "node[isImportant]",
+      style: {
+        "border-color": "#8b5cf6",
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 5
+          : graph.nodeBorderWidth + 14,
+        "border-style": "double",
+        "underlay-color": "#8b5cf6",
+        "underlay-opacity": 0.35,
+        "underlay-padding": isFantasy ? 24 : 30,
+        "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
+        "font-weight": "bold",
+        "font-size": 12,
+        "text-border-color": "#8b5cf6",
+        "text-border-width": 1.5,
+        "text-border-opacity": 0.5,
+      },
+    },
+  ];
 
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
@@ -604,7 +673,7 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
-    ...imageWidthOverride,
+    ...importantStyles,
     ...revealedStyles,
     ...selectionStyles,
   ];

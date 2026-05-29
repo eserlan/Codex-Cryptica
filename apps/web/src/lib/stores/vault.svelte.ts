@@ -1,4 +1,3 @@
-import { uiStore } from "./ui.svelte";
 import { base } from "$app/paths";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
@@ -35,6 +34,7 @@ import { migrateStructure } from "./vault/migration";
 import { VaultMessenger } from "./vault/messenger";
 import { VaultStorageManager } from "./vault/storage";
 import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 export class VaultStore {
   // Reactive State
@@ -66,10 +66,24 @@ export class VaultStore {
   get allEntities() {
     return this.entityStore.allEntities;
   }
+  get titleAndAliasIndex() {
+    return this.entityStore.titleAndAliasIndex;
+  }
+  get allTitlesString() {
+    return this.entityStore.allEntities.map((e) => e.title).join(", ");
+  }
   get status() {
     return this.syncStore.status;
   }
-  set status(value: "idle" | "loading" | "saving" | "error") {
+  set status(
+    value:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) {
     this.syncStore.setStatus(value);
   }
   get errorMessage() {
@@ -105,6 +119,9 @@ export class VaultStore {
   get labelIndex() {
     return this.entityStore.labelIndex;
   }
+  get labelCounts() {
+    return this.entityStore.labelCounts;
+  }
   get maps() {
     return mapRegistry.maps;
   }
@@ -124,7 +141,7 @@ export class VaultStore {
     return this.repository.saveQueue;
   }
   get isGuest() {
-    return !!uiStore.isGuestMode;
+    return !!sessionModeStore.isGuestMode;
   }
   get services() {
     return this.serviceRegistry.services;
@@ -176,6 +193,8 @@ export class VaultStore {
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
+      flushPendingSaves: (timeoutMs) =>
+        this.entityStore?.flushPendingSaves(timeoutMs),
     });
 
     const persistence = new EntityPersistenceService({
@@ -184,6 +203,7 @@ export class VaultStore {
       isGuest: () => this.isGuest,
       getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
       setStatus: (s) => this.syncStore.setStatus(s),
+      status: () => this.syncStore.status,
       setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
       onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
       isContentLoaded: (id) => loader.isContentLoaded(id),
@@ -261,7 +281,7 @@ export class VaultStore {
   async init() {
     // Guest popout tabs pre-populate the vault via applyGuestPayload before
     // this runs — skip full init so loadFiles() doesn't overwrite that data.
-    if (uiStore.isGuestMode) {
+    if (sessionModeStore.isGuestMode) {
       this.isInitialized = true;
       return;
     }
@@ -273,7 +293,7 @@ export class VaultStore {
       const pref = await db.get("settings", "defaultVisibility");
       if (pref) this.defaultVisibility = pref as any;
 
-      if (uiStore.isDemoMode) {
+      if (sessionModeStore.isDemoMode) {
         this.isInitialized = true;
         return;
       }
@@ -305,7 +325,7 @@ export class VaultStore {
       debugStore.error("[VaultStore] Init failed", err);
       console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
 
-      uiStore.isGuestMode = true;
+      sessionModeStore.isGuestMode = true;
       this.status = "idle";
       this.errorMessage =
         err?.name === "QuotaExceededError"
@@ -496,5 +516,5 @@ if (
   (import.meta.env.DEV || (window as any).__E2E__)
 ) {
   (window as any).vault = vault;
-  console.log("[VaultStore] Module loaded, vault attached to window");
+  debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

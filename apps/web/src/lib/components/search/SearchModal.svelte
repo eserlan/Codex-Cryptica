@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { SearchResult } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
@@ -13,13 +12,96 @@
     dispatchSearchEntityFocus,
     resolveSearchResultEntityId,
   } from "./search-focus";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
 
+  // Unique labels in the current vault
+  const uniqueLabels = $derived.by(() => {
+    const labelsSet = new Set<string>();
+    const entities = vault.allEntities || [];
+    for (let i = 0; i < entities.length; i++) {
+      const labels = entities[i].labels || [];
+      for (let j = 0; j < labels.length; j++) {
+        if (labels[j]) {
+          labelsSet.add(labels[j]);
+        }
+      }
+    }
+    return Array.from(labelsSet).sort((a, b) => a.localeCompare(b));
+  });
+
+  // Autocomplete state
+  let isFocused = $state(false);
+  let autocompleteDismissed = $state(false);
+  let autocompleteActiveIndex = $state(-1);
+
+  const activeWord = $derived.by(() => {
+    const query = searchStore.query;
+    if (!query) return "";
+    const words = query.split(/\s+/);
+    return words[words.length - 1] || "";
+  });
+
+  const isLabelAutocompleteActive = $derived(
+    activeWord.startsWith("#") || activeWord.startsWith("@"),
+  );
+
+  const autocompletePrefix = $derived(activeWord[0] || "");
+  const autocompleteSearch = $derived(activeWord.slice(1).toLowerCase());
+
+  const suggestions = $derived.by(() => {
+    if (!isLabelAutocompleteActive) return [];
+    return uniqueLabels
+      .filter((label) => label.toLowerCase().includes(autocompleteSearch))
+      .slice(0, 10);
+  });
+
+  // Reset dismissed state when the word being typed changes
+  $effect(() => {
+    const _word = activeWord; // track dependency
+    untrack(() => {
+      autocompleteDismissed = false;
+    });
+  });
+
+  const showAutocomplete = $derived(
+    isFocused &&
+      isLabelAutocompleteActive &&
+      !autocompleteDismissed &&
+      suggestions.length > 0,
+  );
+
+  $effect(() => {
+    if (!showAutocomplete || suggestions.length === 0) {
+      autocompleteActiveIndex = -1;
+    } else if (autocompleteActiveIndex >= suggestions.length) {
+      autocompleteActiveIndex = suggestions.length - 1;
+    }
+  });
+
+  function selectLabel(label: string) {
+    const query = searchStore.query;
+    const words = query.split(/\s+/);
+    if (words.length > 0) {
+      words.pop(); // Remove the autocomplete prefix (e.g. #p)
+    }
+    const newQuery = words.join(" ").trim() + (words.length > 0 ? " " : "");
+    searchStore.setQuery(newQuery);
+    // Keep focus
+    inputElement?.focus();
+
+    // Auto-apply selected label to active filters
+    if (!explorerUIStore.labelFilters.has(label)) {
+      explorerUIStore.toggleLabelFilter(label, true);
+    }
+  }
+
   const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
-  const hasLeftSidebar = $derived(uiStore.leftSidebarOpen);
+  const hasLeftSidebar = $derived(layoutUIStore.leftSidebarOpen);
   const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
   let overlayClass = $derived(
     `fixed z-[95] flex items-start justify-center bg-black/50 backdrop-blur-sm max-md:inset-x-0 max-md:top-[var(--header-height,65px)] max-md:bottom-14 ${
@@ -29,7 +111,7 @@
     }`,
   );
   let dialogClass = $derived(
-    "w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body",
+    "w-full max-w-2xl bg-chrome-surface rounded-lg shadow-2xl overflow-hidden border border-chrome-border flex flex-col max-h-[70vh] font-body",
   );
 
   // Auto-focus input when modal opens; clear pending debounce when closed
@@ -55,9 +137,46 @@
     if (!searchStore.isOpen) return;
 
     if (event.key === "Escape") {
+      if (showAutocomplete) {
+        autocompleteDismissed = true;
+        event.preventDefault();
+        return;
+      }
       searchStore.close();
       event.preventDefault();
       return;
+    }
+
+    if (showAutocomplete && suggestions.length > 0) {
+      if (event.key === "ArrowDown") {
+        autocompleteActiveIndex =
+          (autocompleteActiveIndex + 1) % suggestions.length;
+        event.preventDefault();
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        autocompleteActiveIndex =
+          (autocompleteActiveIndex - 1 + suggestions.length) %
+          suggestions.length;
+        event.preventDefault();
+        return;
+      }
+
+      if (event.key === "Enter" || event.key === "Tab") {
+        if (
+          autocompleteActiveIndex >= 0 &&
+          autocompleteActiveIndex < suggestions.length
+        ) {
+          event.preventDefault();
+          selectLabel(suggestions[autocompleteActiveIndex]);
+          return;
+        } else if (event.key === "Tab" && suggestions.length > 0) {
+          event.preventDefault();
+          selectLabel(suggestions[0]);
+          return;
+        }
+      }
     }
 
     if (event.key === "ArrowDown") {
@@ -87,6 +206,27 @@
     if (event) {
       event.preventDefault();
       event.stopPropagation();
+    }
+
+    if (event && event instanceof MouseEvent) {
+      layoutUIStore.setLastSelectedNodePosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    } else {
+      layoutUIStore.setLastSelectedNodePosition(null);
+    }
+
+    if (result.type === "quicknote" || result.id?.startsWith("quicknote-")) {
+      const noteIdStr = result.id.replace("quicknote-", "");
+      const noteId = parseInt(noteIdStr, 10);
+      if (!isNaN(noteId)) {
+        import("$lib/stores/quicknote.svelte").then(({ quickNoteStore }) => {
+          void quickNoteStore.openNoteById(noteId);
+        });
+      }
+      searchStore.close();
+      return;
     }
 
     const selectedEntityId = resolveSearchResultEntityId(result);
@@ -133,11 +273,11 @@
   >
     <div class={dialogClass}>
       <!-- Input Header -->
-      <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div class="p-4 border-b border-chrome-border">
         <div class="relative">
           <span
             aria-hidden="true"
-            class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-zinc-400"
+            class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-chrome-muted"
           ></span>
           <input
             bind:this={inputElement}
@@ -145,28 +285,117 @@
             value={searchStore.query}
             oninput={handleInput}
             onkeydown={handleKeydown}
+            onfocus={() => (isFocused = true)}
+            onblur={() => setTimeout(() => (isFocused = false), 200)}
             placeholder="Search notes..."
-            class="w-full pl-10 pr-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-none rounded-md focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500"
+            class="w-full pl-10 pr-4 py-2 bg-chrome-bg border-none rounded-md focus:ring-2 focus:ring-chrome-accent text-chrome-text placeholder-chrome-muted"
             role="combobox"
             aria-autocomplete="list"
             aria-expanded="true"
-            aria-controls={searchStore.results.length > 0
-              ? "search-results-list"
-              : undefined}
+            aria-controls={showAutocomplete && suggestions.length > 0
+              ? "search-autocomplete-listbox"
+              : searchStore.results.length > 0
+                ? "search-results-list"
+                : undefined}
             aria-label="Search notes"
             data-testid="search-modal-input"
-            aria-activedescendant={searchStore.results.length > 0
-              ? `search-result-${searchStore.selectedIndex}`
-              : undefined}
+            aria-activedescendant={showAutocomplete && suggestions.length > 0 && autocompleteActiveIndex >= 0
+              ? `search-autocomplete-option-${autocompleteActiveIndex}`
+              : searchStore.results.length > 0
+                ? `search-result-${searchStore.selectedIndex}`
+                : undefined}
           />
+
+          {#if showAutocomplete && suggestions.length > 0}
+            <div
+              id="search-autocomplete-listbox"
+              role="listbox"
+              aria-label="Autocomplete suggestions"
+              class="absolute z-[100] left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-lg border border-chrome-border bg-chrome-surface/95 backdrop-blur-md p-1 shadow-lg"
+            >
+              {#each suggestions as label, index}
+                <button
+                  type="button"
+                  id={`search-autocomplete-option-${index}`}
+                  role="option"
+                  aria-selected={autocompleteActiveIndex === index}
+                  onclick={() => selectLabel(label)}
+                  class="w-full text-left px-3 py-2 text-xs rounded-md hover:bg-chrome-accent/10 text-chrome-text hover:text-chrome-accent font-mono transition-colors flex items-center gap-1.5 {autocompleteActiveIndex ===
+                  index
+                    ? 'bg-chrome-accent/10 text-chrome-accent'
+                    : ''}"
+                >
+                  <span class="text-chrome-accent/60">{autocompletePrefix}</span>
+                  <span>{label}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
+
+        {#if explorerUIStore.labelFilters.size > 0}
+          <div
+            class="flex flex-wrap gap-1.5 mt-3"
+            data-testid="active-label-filters"
+          >
+            {#each Array.from(explorerUIStore.labelFilters) as activeLabel}
+              <button
+                type="button"
+                onclick={() =>
+                  explorerUIStore.toggleLabelFilter(activeLabel, true)}
+                class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded-full bg-chrome-accent/10 text-chrome-accent border border-chrome-accent/20 hover:bg-chrome-accent/20 hover:border-chrome-accent/30 transition-all shadow-sm cursor-pointer"
+                title="Click to remove filter"
+                aria-label={`Remove ${activeLabel} filter`}
+              >
+                <span>#{activeLabel}</span>
+                <span
+                  class="icon-[lucide--x] w-3 h-3 text-chrome-accent/60 hover:text-chrome-accent transition-colors"
+                ></span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+        {#if searchStore.indexProgress.status !== "idle" && searchStore.indexProgress.status !== "ready"}
+          <div
+            class="mt-3 flex items-center justify-between gap-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-100 dark:border-amber-900"
+            role="status"
+            data-testid="search-index-progress"
+          >
+            <span>
+              {searchStore.indexProgress.message}
+              {#if searchStore.indexProgress.totalCount !== null}
+                <span class="font-medium">
+                  {searchStore.indexProgress.indexedCount}/{searchStore
+                    .indexProgress.totalCount}
+                </span>
+              {/if}
+            </span>
+            {#if searchStore.indexProgress.canRetry}
+              <button
+                type="button"
+                class="rounded bg-amber-200 px-2 py-1 font-medium text-amber-950 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-50 dark:hover:bg-amber-700"
+                onclick={() => searchStore.retryIndexing()}
+              >
+                Retry indexing
+              </button>
+            {/if}
+          </div>
+        {:else if searchStore.indexProgress.isPartial}
+          <div
+            class="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-100 dark:border-amber-900"
+            role="status"
+            data-testid="search-index-progress"
+          >
+            Search is still indexing. Results may be incomplete.
+          </div>
+        {/if}
       </div>
 
       <!-- Results List -->
       <div class="flex-1 overflow-y-auto p-2">
         {#if searchStore.results.length === 0 && searchStore.query}
           <div
-            class="p-12 flex flex-col items-center justify-center gap-3 text-zinc-500"
+            class="p-12 flex flex-col items-center justify-center gap-3 text-chrome-muted"
             role="status"
           >
             <span
@@ -174,8 +403,7 @@
             ></span>
             <div class="text-sm">
               We couldn't find any notes matching "<span
-                class="font-medium text-zinc-900 dark:text-zinc-100"
-                >{searchStore.query}</span
+                class="font-medium text-chrome-text">{searchStore.query}</span
               >"
             </div>
           </div>
@@ -196,8 +424,8 @@
                 aria-selected={index === searchStore.selectedIndex}
                 class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content cursor-pointer
                   {index === searchStore.selectedIndex
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
-                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
+                  ? 'bg-chrome-accent/10 text-chrome-accent'
+                  : 'hover:bg-chrome-muted/10 text-chrome-text'}"
                 onclick={(e) => selectResult(result, e)}
                 onkeydown={(e) => e.key === "Enter" && selectResult(result, e)}
                 data-testid="search-result"
@@ -219,7 +447,7 @@
 
                   {#if result.status === "draft"}
                     <span
-                      class="ml-2 px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[9px] font-bold uppercase tracking-wider text-zinc-500 border border-zinc-300 dark:border-zinc-700"
+                      class="ml-2 px-1.5 py-0.5 rounded bg-chrome-bg text-[9px] font-bold uppercase tracking-wider text-chrome-muted border border-chrome-border"
                     >
                       Draft
                     </span>
@@ -227,7 +455,7 @@
 
                   {#if isCanvasPage}
                     <button
-                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
+                      class="ml-auto p-1.5 rounded-md bg-chrome-accent/10 text-chrome-accent hover:bg-chrome-accent hover:text-chrome-surface transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
                         e.stopPropagation();
@@ -248,10 +476,10 @@
                     </button>
                   {/if}
                 </span>
-                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                <div class="flex items-center gap-2 text-xs text-chrome-muted">
                   {#if result.type}
                     <span
-                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-chrome-bg"
                       style="color: {categories.getColor(result.type)}"
                     >
                       {categories.getCategory(result.type)?.label ||
@@ -261,9 +489,7 @@
                   <span class="truncate">{result.path}</span>
                 </div>
                 {#if result.excerpt}
-                  <p
-                    class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
-                  >
+                  <p class="text-sm text-chrome-text/80 line-clamp-2 mt-1">
                     {@html renderMarkdown(result.excerpt, {
                       query: searchStore.query,
                       inline: true,
@@ -278,20 +504,23 @@
 
       <!-- Footer -->
       <div
-        class="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 flex justify-between"
+        class="px-4 py-2 bg-chrome-bg border-t border-chrome-border text-xs text-chrome-muted flex justify-between"
       >
         <span
-          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd
+            class="font-body px-1 bg-chrome-surface border border-chrome-border rounded"
             >↵</kbd
           > to select</span
         >
         <span
-          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd
+            class="font-body px-1 bg-chrome-surface border border-chrome-border rounded"
             >↑↓</kbd
           > to navigate</span
         >
         <span
-          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd
+            class="font-body px-1 bg-chrome-surface border border-chrome-border rounded"
             >esc</kbd
           > to close</span
         >
@@ -304,10 +533,10 @@
   @reference "../../../app.css";
 
   .preview-content :global(code) {
-    @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+    @apply bg-chrome-bg px-1 rounded font-mono text-[0.9em];
   }
   .preview-content :global(strong) {
-    @apply font-bold text-zinc-900 dark:text-zinc-100;
+    @apply font-bold text-chrome-text;
   }
   .preview-content :global(em) {
     @apply italic;

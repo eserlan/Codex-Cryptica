@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import type { RecentActivity } from "@codex/vault-engine";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { renderMarkdown } from "$lib/utils/markdown";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { activity } = $props<{ activity: RecentActivity }>();
   let imageUrl = $state("");
@@ -36,14 +37,14 @@
   );
 
   const openInGraph = () => {
-    uiStore.dismissWorldPage();
+    onboardingStore.dismissWorldPage();
     vault.selectedEntityId = activity.id;
   };
 
   const openInZenMode = () => {
-    uiStore.dismissWorldPage();
+    onboardingStore.dismissWorldPage();
     vault.selectedEntityId = activity.id;
-    uiStore.openZenMode(activity.id);
+    modalUIStore.openZenMode(activity.id);
   };
 
   const handleCardClick = (event: MouseEvent) => {
@@ -170,13 +171,13 @@
           {@html renderedExcerpt}
         </p>
 
-        {#if activity.tags.length > 0}
+        {#if (activity.labels || activity.tags || []).length > 0}
           <div class="mt-4 flex flex-wrap gap-2">
-            {#each activity.tags as tag (tag)}
+            {#each activity.labels || activity.tags || [] as label}
               <span
                 class="rounded-full border border-theme-primary/20 bg-[color-mix(in_srgb,var(--color-theme-primary)_10%,var(--color-theme-bg))] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-theme-secondary backdrop-blur-sm"
               >
-                {tag}
+                {label}
               </span>
             {/each}
           </div>

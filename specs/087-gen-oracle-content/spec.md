@@ -2,7 +2,7 @@
 
 **Feature Branch**: `087-gen-oracle-content`  
 **Created**: 2026-04-19  
-**Status**: In Progress
+**Status**: Implemented
 **Input**: User description: "auto gen content based on oracle chat https://github.com/eserlan/Codex-Cryptica/issues/642. Shift focus: Automagical background generation during chat instead of explicit /create command."
 
 ## Clarifications
@@ -146,6 +146,9 @@ As a lore keeper, I want to choose how much the Oracle changes my vault and grap
   - **FR-009.3**: The default mode MUST avoid automatic graph mutation; connection edges MUST NOT be created automatically unless the user has selected `Auto-apply`.
   - **FR-009.4**: Manual entity commits MUST still respect the Connection Discovery mode for follow-up analysis.
   - **FR-009.5**: Deterministic slash-command creation MUST respect the Connection Discovery mode unless the command explicitly requests connection creation.
+
+- **FR-010**: System MUST reconcile newly discovered entities through a secondary AI pass to ensure high-quality formatting of Lore and Chronicle fields before creation.
+- **FR-011**: System MUST limit synchronous AI reconciliation during large discovery batches (e.g., more than 5 entities) to maintain UI responsiveness and conversational flow.
 
 ### Key Entities _(include if feature involves data)_
 

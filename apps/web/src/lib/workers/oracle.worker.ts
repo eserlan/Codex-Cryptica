@@ -1,12 +1,12 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
 import { aiClientManager } from "../services/ai/client-manager";
-import { DefaultTextGenerationService } from "../services/ai/text-generation.service";
-import { draftingEngine } from "@codex/oracle-engine";
+import { DefaultTextGenerationService } from "../services/ai/text-generation.service.svelte";
+import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
 import type {
   OracleWorkerEvent,
   DiscoveryProposal,
-} from "@codex/oracle-engine";
+} from "../../../../../packages/oracle-engine/src/types";
 
 /**
  * OracleWorker handles heavy-lifting AI and logic tasks off the main thread.
@@ -46,12 +46,14 @@ class OracleWorker {
     modelName: string,
     target: any,
     sources: any[],
+    options?: { isGuest?: boolean },
   ): Promise<any> {
     return this.textGeneration.generateMergeProposal(
       apiKey,
       modelName,
       target,
       sources,
+      options,
     );
   }
 
@@ -61,6 +63,8 @@ class OracleWorker {
     entity: any,
     incoming: { chronicle: string; lore: string },
     relatedEntities: any[] = [],
+    categories: any[] = [],
+    options?: { isGuest?: boolean },
   ): Promise<any> {
     return this.textGeneration.reconcileEntityUpdate(
       apiKey,
@@ -68,6 +72,8 @@ class OracleWorker {
       entity,
       incoming,
       relatedEntities,
+      categories,
+      options,
     );
   }
 
@@ -77,6 +83,7 @@ class OracleWorker {
     subject: any,
     connectedEntities: any[],
     userQuery: string,
+    options?: { isGuest?: boolean },
   ): Promise<string> {
     return this.textGeneration.generatePlotAnalysis(
       apiKey,
@@ -84,6 +91,7 @@ class OracleWorker {
       subject,
       connectedEntities,
       userQuery,
+      options,
     );
   }
 
@@ -165,6 +173,31 @@ class OracleWorker {
         payload: err.message,
       });
       throw err;
+    } finally {
+      this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
+    }
+  }
+
+  async generateStructuredEntity(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+    categories?: string[],
+    vaultId?: string,
+    requestId?: string,
+  ): Promise<void> {
+    this.emit({ type: "ORACLE_THINKING_START", vaultId, requestId });
+    try {
+      return await this.textGeneration.generateStructuredEntity(
+        apiKey,
+        query,
+        context,
+        modelName,
+        onUpdate,
+        categories,
+      );
     } finally {
       this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
     }

@@ -1,0 +1,28 @@
+description = "Perform a meticulous code review for Codex-Cryptica, catching project-specific anti-patterns and generic bugs."
+
+prompt = """
+---
+description: Perform a meticulous code review for Codex-Cryptica.
+---
+
+# Specialist Code Review
+
+You are a Principal Software Engineer performing a code review. You must combine standard best practices with project-specific rules.
+
+## Step 1: Initialize Context
+Activate the following skills to load your specialized instructions:
+- `codex-review` (Project-specific anti-patterns, reactivity audit, and strict output guidelines)
+
+## Step 2: Retrieve Code
+- If arguments are provided (e.g., a SHA or range), use them.
+- Default: Call `git diff origin/staging...HEAD -U5` to get the changes in the current branch.
+
+## Step 3: Analysis and Report
+- Deeply audit the changes against the `codex-review` patterns.
+- **Strict Output Guidelines**: Adhere strictly to the `codex-review` SKILL guidelines. Output **ONLY** actionable attention/fixing items and their concrete code proposals. Do not include any filler praise, compliments, or list things that are already correct.
+
+## User Input
+```text
+$ARGUMENTS
+```
+"""

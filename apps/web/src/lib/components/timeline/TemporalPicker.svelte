@@ -1,62 +1,138 @@
 <script lang="ts">
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { graph } from "$lib/stores/graph.svelte";
-  import type { TemporalMetadata } from "chronology-engine";
-  import { calendarEngine } from "chronology-engine";
+  import type { TemporalMetadata } from "schema";
+  import type { DateSelection } from "chronology-engine";
+  import { calendarEngine, parseDirectDateInput } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick } from "svelte";
-  import { fade, scale, slide } from "svelte/transition";
+  import { scale, slide } from "svelte/transition";
 
   let {
     value = $bindable(),
     trigger,
     onClose,
   }: {
-    value?: TemporalMetadata;
+    value?: TemporalMetadata | DateSelection;
     trigger: HTMLElement;
     onClose: () => void;
   } = $props();
 
   let pickerElement = $state<HTMLElement>();
-  let manualInputRef = $state<HTMLInputElement>();
   let x = $state(0);
   let y = $state(0);
 
-  let selectedYear = $state(value?.year || 0);
-  let selectedMonth = $state(value?.month);
-  let selectedDay = $state(value?.day);
+  // Conversion from legacy TemporalMetadata to activeSelection DateSelection
+  function toDateSelection(val: TemporalMetadata | undefined): DateSelection {
+    const config = calendarStore.config;
+    const months = calendarEngine.getMonths(config);
+    const revision = config.revision || 1;
 
-  let quickInput = $state("");
+    if (!val) {
+      return {
+        precision: "year",
+        year: config.presentYear || 0,
+        calendarRevision: revision,
+      };
+    }
 
-  let precision = $state<"year" | "month" | "day">(
-    (() => {
-      return selectedDay !== undefined
-        ? "day"
-        : selectedMonth !== undefined
-          ? "month"
-          : "year";
-    })(),
-  );
+    if ("precision" in val && val.precision) {
+      return { ...val } as DateSelection;
+    }
+
+    let precision: "year" | "unit" | "day" = "year";
+    let unitId: string | undefined = undefined;
+    let day: number | undefined = undefined;
+
+    const month = val && "month" in val ? (val as any).month : undefined;
+    if (month !== undefined) {
+      precision = val.day !== undefined ? "day" : "unit";
+      const mIndex = month - 1;
+      if (mIndex >= 0 && mIndex < months.length) {
+        unitId = months[mIndex].id;
+      } else {
+        unitId = months[0]?.id;
+      }
+      if (val.day !== undefined) {
+        day = val.day;
+      }
+    }
+
+    return {
+      precision,
+      year: val.year,
+      unitId,
+      day,
+      calendarRevision: revision,
+      label: val.label,
+    };
+  }
+
+  let activeSelection = $state<DateSelection>(toDateSelection(value));
+
+  let directDateInput = $state("");
+  let directDateError = $state("");
+  let isDirectDateEditing = $state(false);
 
   let activeTab = $state<"era" | "manual">("manual");
   let selectedEraId = $state<string | null>(null);
-  let isManualYearEntry = $state(false);
 
-  // Year Picker Navigation State
-  let yearPickerView = $state<"years" | "decades" | "centuries">("years");
-  let viewBaseYear = $state(Math.floor((value?.year || 0) / 10) * 10);
+  // Keyboard live region announcement
+  let announcementText = $state("");
+
+  // Store references to scroll containers
+  let scrollElements = $state<Record<string, HTMLDivElement>>({});
+  let directEntryModes = $state<Record<string, boolean>>({});
+
+  // Deriving the dynamic columns state from activeSelection
+  const columns = $derived(
+    calendarEngine.deriveWheelColumns(
+      activeSelection,
+      calendarStore.getSnapshot(),
+    ),
+  );
+
+  // Active repair state
+  const repairState = $derived(
+    calendarEngine.getRepairState(activeSelection, calendarStore.getSnapshot()),
+  );
+
+  const formatDirectDateInput = (sel: DateSelection) => {
+    if (sel.precision === "day" && sel.day !== undefined && sel.unitId) {
+      const config = calendarStore.config;
+      const months = calendarEngine.getMonths(config);
+      const mIndex = months.findIndex((m) => m.id === sel.unitId) + 1;
+      if (mIndex > 0) {
+        return `${String(sel.day).padStart(2, "0")}${String(mIndex).padStart(2, "0")}${sel.year}`;
+      }
+    }
+    return "";
+  };
 
   $effect(() => {
-    if (precision === "year") {
-      selectedMonth = undefined;
-      selectedDay = undefined;
-    } else if (precision === "month") {
-      selectedDay = undefined;
-      if (selectedMonth === undefined) selectedMonth = 1;
-    } else if (precision === "day") {
-      if (selectedMonth === undefined) selectedMonth = 1;
-      if (selectedDay === undefined) selectedDay = 1;
+    if (!isDirectDateEditing) {
+      directDateInput = formatDirectDateInput(activeSelection);
+      directDateError = "";
     }
+  });
+
+  // Sync scroll positions of the columns when the selection changes programmatically
+  $effect(() => {
+    const _sel = activeSelection;
+    tick().then(() => {
+      for (const col of columns) {
+        const container = scrollElements[col.id];
+        if (container) {
+          const index = col.options.findIndex((o) => o.id === col.selectedId);
+          if (index !== -1) {
+            const targetScrollTop = index * 40;
+            if (Math.abs(container.scrollTop - targetScrollTop) > 2) {
+              container.scrollTop = targetScrollTop;
+            }
+          }
+        }
+      }
+    });
   });
 
   const updatePosition = async () => {
@@ -103,31 +179,168 @@
   });
 
   const save = () => {
+    if (directDateError) return;
+
+    // Normalize properties according to precision to keep saved structures clean and unambiguous
+    const cleanSelection = { ...activeSelection };
+    if (cleanSelection.precision === "year") {
+      delete cleanSelection.unitId;
+      delete cleanSelection.day;
+      delete cleanSelection.anchorId;
+    } else if (cleanSelection.precision === "unit") {
+      delete cleanSelection.day;
+      delete cleanSelection.anchorId;
+    } else if (cleanSelection.precision === "day") {
+      delete cleanSelection.anchorId;
+    } else if (cleanSelection.precision === "anchor") {
+      delete cleanSelection.unitId;
+      delete cleanSelection.day;
+    }
+
+    // Save as rich DateSelection structure
     value = {
-      year: selectedYear,
-      month: precision !== "year" ? selectedMonth : undefined,
-      day: precision === "day" ? selectedDay : undefined,
-      label: value?.label, // Preserve label if it exists
+      ...cleanSelection,
+      calendarRevision: calendarStore.config.revision || 1,
     };
     onClose();
   };
 
   const selectEra = (era: any) => {
-    selectedYear = era.start_year;
-    viewBaseYear = Math.floor(era.start_year / 10) * 10;
+    const patch: Partial<DateSelection> = { year: era.start_year };
+    activeSelection = calendarEngine.applyParentChange(
+      activeSelection,
+      patch,
+      calendarStore.getSnapshot(),
+    );
     selectedEraId = era.id;
     activeTab = "manual";
-    yearPickerView = "years";
-    isManualYearEntry = false;
   };
 
-  const toggleManualEntry = async () => {
-    isManualYearEntry = !isManualYearEntry;
-    if (isManualYearEntry) {
-      await tick();
-      manualInputRef?.focus();
-      manualInputRef?.select();
+  const handleDirectDateInput = (e: Event) => {
+    directDateInput = (e.target as HTMLInputElement).value;
+    if (!directDateInput.trim()) {
+      directDateError = "";
+      return;
     }
+
+    const parsed = parseDirectDateInput(directDateInput, calendarStore.config);
+    if (!parsed) {
+      directDateError = "Use DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY.";
+      return;
+    }
+
+    const months = calendarEngine.getMonths(calendarStore.config);
+    let unitId = months[0]?.id;
+    if (parsed.month !== undefined) {
+      unitId = months[parsed.month - 1]?.id || months[0]?.id;
+    }
+
+    activeSelection = {
+      precision: "day",
+      year: parsed.year,
+      unitId,
+      day: parsed.day,
+      calendarRevision: calendarStore.config.revision || 1,
+    };
+    directDateError = "";
+  };
+
+  const selectOption = (colId: string, optionId: string) => {
+    let patch: Partial<DateSelection> = {};
+    if (colId === "year") {
+      patch = { year: Number(optionId) };
+    } else if (colId === "unit") {
+      patch = { unitId: optionId };
+    } else if (colId === "day") {
+      patch = { day: Number(optionId) };
+    } else if (colId === "anchor") {
+      patch = { anchorId: optionId };
+    }
+    activeSelection = calendarEngine.applyParentChange(
+      activeSelection,
+      patch,
+      calendarStore.getSnapshot(),
+    );
+  };
+
+  const onWheelScroll = (colId: string, event: Event) => {
+    const container = event.currentTarget as HTMLDivElement;
+    const index = Math.round(container.scrollTop / 40);
+    const col = columns.find((c) => c.id === colId);
+    if (!col) return;
+    const option = col.options[index];
+    if (option && option.id !== col.selectedId) {
+      selectOption(colId, option.id);
+    }
+  };
+
+  const handleColumnKeydown = (colId: string, event: KeyboardEvent) => {
+    const col = columns.find((c) => c.id === colId);
+    if (!col) return;
+    const index = col.options.findIndex((o) => o.id === col.selectedId);
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (index > 0) {
+        const opt = col.options[index - 1];
+        selectOption(colId, opt.id);
+        announceValue(colId, opt.label);
+      }
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (index < col.options.length - 1) {
+        const opt = col.options[index + 1];
+        selectOption(colId, opt.id);
+        announceValue(colId, opt.label);
+      }
+    }
+  };
+
+  const announceValue = (colId: string, label: string) => {
+    announcementText = `${colId} selected: ${label}`;
+  };
+
+  const commitDirectColInput = (colId: string, text: string) => {
+    const val = Number.parseInt(text, 10);
+    if (Number.isNaN(val)) {
+      directEntryModes[colId] = false;
+      return;
+    }
+
+    let patch: Partial<DateSelection> = {};
+    if (colId === "year") {
+      patch = { year: val };
+    } else if (colId === "day") {
+      const config = calendarStore.config;
+      const months = calendarEngine.getMonths(config);
+      const activeUnitId = activeSelection.unitId || (months[0]?.id ?? "");
+      const month = months.find((m) => m.id === activeUnitId) || months[0];
+      const maxDays = month ? month.days : 30;
+      if (val < 1 || val > maxDays) {
+        directDateError = `Day must be between 1 and ${maxDays}`;
+        directEntryModes[colId] = false;
+        return;
+      }
+      patch = { day: val };
+    }
+
+    activeSelection = calendarEngine.applyParentChange(
+      activeSelection,
+      patch,
+      calendarStore.getSnapshot(),
+    );
+    directEntryModes[colId] = false;
+    directDateError = "";
+  };
+
+  const confirmRepair = () => {
+    if (repairState) {
+      activeSelection = { ...repairState.suggestedSelection };
+    }
+  };
+
+  const focusOnMount = (el: HTMLInputElement) => {
+    el.focus();
   };
 
   const focusableElements = $derived.by(() => {
@@ -141,8 +354,13 @@
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
-    if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON")
+    if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON") {
+      if (directDateError) {
+        e.preventDefault();
+        return;
+      }
       save();
+    }
 
     // Simple Focus Trap
     if (e.key === "Tab") {
@@ -169,8 +387,8 @@
     graph.eras.find((e) => e.id === selectedEraId) ||
       graph.eras.find(
         (e) =>
-          selectedYear >= e.start_year &&
-          (!e.end_year || selectedYear <= e.end_year),
+          activeSelection.year >= e.start_year &&
+          (!e.end_year || activeSelection.year <= e.end_year),
       ),
   );
 
@@ -179,83 +397,11 @@
     const era = graph.eras.find((e) => e.id === selectedEraId);
     if (!era) return false;
     return (
-      selectedYear < era.start_year ||
+      activeSelection.year < era.start_year ||
       (era.end_year !== null &&
         era.end_year !== undefined &&
-        selectedYear > era.end_year)
+        activeSelection.year > era.end_year)
     );
-  });
-
-  // Pure UI Year Picker Helpers
-  const navigateView = (direction: number) => {
-    const step =
-      yearPickerView === "years"
-        ? 12
-        : yearPickerView === "decades"
-          ? 120
-          : 1200;
-    viewBaseYear += direction * step;
-  };
-
-  const zoomOut = () => {
-    if (yearPickerView === "years") {
-      yearPickerView = "decades";
-      viewBaseYear = Math.floor(viewBaseYear / 100) * 100;
-    } else if (yearPickerView === "decades") {
-      yearPickerView = "centuries";
-      viewBaseYear = Math.floor(viewBaseYear / 1000) * 1000;
-    }
-  };
-
-  const handleQuickInput = (e: Event) => {
-    const val = (e.target as HTMLInputElement).value;
-    quickInput = val;
-    const parsed = calendarEngine.parse(val, calendarStore.config);
-    if (parsed) {
-      selectedYear = parsed.year;
-      if (parsed.month !== undefined) {
-        selectedMonth = parsed.month;
-        precision = parsed.day !== undefined ? "day" : "month";
-      } else {
-        precision = "year";
-      }
-      if (parsed.day !== undefined) {
-        selectedDay = parsed.day;
-      }
-
-      // Update navigation view to match the new year
-      viewBaseYear = Math.floor(selectedYear / 10) * 10;
-    }
-  };
-
-  const selectInGrid = (val: number) => {
-    if (yearPickerView === "centuries") {
-      viewBaseYear = val;
-      yearPickerView = "decades";
-    } else if (yearPickerView === "decades") {
-      viewBaseYear = val;
-      yearPickerView = "years";
-    } else {
-      selectedYear = val;
-    }
-  };
-
-  const gridItems = $derived.by(() => {
-    const items = [];
-    const step =
-      yearPickerView === "years" ? 1 : yearPickerView === "decades" ? 10 : 100;
-    for (let i = 0; i < 12; i++) {
-      items.push(viewBaseYear + i * step);
-    }
-    return items;
-  });
-
-  const viewTitle = $derived.by(() => {
-    if (yearPickerView === "years")
-      return `${viewBaseYear} - ${viewBaseYear + 11}`;
-    if (yearPickerView === "decades")
-      return `${viewBaseYear} - ${viewBaseYear + 119}`;
-    return `${viewBaseYear} - ${viewBaseYear + 1199}`;
   });
 </script>
 
@@ -272,9 +418,20 @@
   onkeydown={handleKeydown}
   transition:scale={{ start: 0.95, duration: 150 }}
 >
+  <!-- Accessible ARIA Live region for announcements -->
+  <div
+    class="sr-only"
+    role="status"
+    aria-live="polite"
+    data-testid="aria-announcement"
+  >
+    {announcementText}
+  </div>
+
   <!-- Header / Tabs -->
   <div class="flex border-b border-theme-border bg-theme-bg/50" role="tablist">
     <button
+      type="button"
       role="tab"
       aria-selected={activeTab === "era"}
       aria-controls="era-panel"
@@ -288,6 +445,7 @@
       Eras
     </button>
     <button
+      type="button"
       role="tab"
       aria-selected={activeTab === "manual"}
       aria-controls="manual-panel"
@@ -303,7 +461,7 @@
   </div>
 
   <!-- Content -->
-  <div class="p-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+  <div class="p-3 max-h-[360px] overflow-y-auto custom-scrollbar space-y-3">
     {#if activeTab === "era"}
       <div
         id="era-panel"
@@ -313,6 +471,7 @@
       >
         {#each graph.eras as era}
           <button
+            type="button"
             class="w-full text-left p-2 rounded hover:bg-theme-primary/10 border border-transparent hover:border-theme-primary/20 transition-all group"
             data-testid="era-select-button"
             onclick={() => selectEra(era)}
@@ -374,151 +533,236 @@
         <div
           class="flex bg-theme-bg p-0.5 rounded-md border border-theme-border/30"
         >
-          {#each ["year", "month", "day"] as p}
+          {#each ["year", "unit", "day", ...(calendarStore.config.anchors?.length ? ["anchor"] : [])] as p}
             <button
-              class="flex-1 py-1 text-[9px] font-bold uppercase font-header tracking-tighter transition-all rounded {precision ===
+              type="button"
+              class="flex-1 py-1 text-[9px] font-bold uppercase font-header tracking-tighter transition-all rounded {activeSelection.precision ===
               p
                 ? 'bg-theme-primary text-theme-bg shadow-sm'
                 : 'text-theme-muted hover:text-theme-text'}"
-              onclick={() => (precision = p as any)}
+              onclick={() => {
+                let newPrec = p as any;
+                let patch: Partial<DateSelection> = { precision: newPrec };
+                if (newPrec === "unit" && !activeSelection.unitId) {
+                  patch.unitId = calendarStore.config.months[0]?.id;
+                } else if (newPrec === "day") {
+                  if (!activeSelection.unitId) {
+                    patch.unitId = calendarStore.config.months[0]?.id;
+                  }
+                  if (activeSelection.day === undefined) {
+                    patch.day = 1;
+                  }
+                } else if (newPrec === "anchor" && !activeSelection.anchorId) {
+                  patch.anchorId = calendarStore.config.anchors?.[0]?.id;
+                }
+                activeSelection = calendarEngine.applyParentChange(
+                  activeSelection,
+                  patch,
+                  calendarStore.getSnapshot(),
+                );
+              }}
             >
               {p}
             </button>
           {/each}
         </div>
 
-        <!-- Pure UI Year Picker / Manual Entry -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <button
-              onclick={() => navigateView(-1)}
-              aria-label="Navigate Previous"
-              disabled={isManualYearEntry}
-              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors disabled:opacity-0"
-            >
-              <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
-            </button>
-            <button
-              onclick={zoomOut}
-              disabled={isManualYearEntry}
-              class="text-[10px] font-bold text-theme-text uppercase font-header tracking-widest hover:text-theme-primary transition-colors disabled:pointer-events-none"
-            >
-              {isManualYearEntry ? "Manual Entry" : viewTitle}
-            </button>
-            <div class="flex items-center gap-1">
-              <button
-                onclick={toggleManualEntry}
-                aria-label="Toggle Manual Entry"
-                class="p-1 hover:bg-theme-primary/10 rounded {isManualYearEntry
-                  ? 'text-theme-primary'
-                  : 'text-theme-muted'} hover:text-theme-primary transition-colors"
-              >
-                <span class="icon-[lucide--keyboard] w-4 h-4"></span>
-              </button>
-              <button
-                onclick={() => navigateView(1)}
-                aria-label="Navigate Next"
-                disabled={isManualYearEntry}
-                class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors disabled:opacity-0"
-              >
-                <span class="icon-[lucide--chevron-right] w-4 h-4"></span>
-              </button>
-            </div>
-          </div>
-
-          {#if isManualYearEntry}
-            <div transition:fade class="space-y-1">
-              <label
-                for="manual-year-input"
-                class="text-[9px] font-bold text-theme-muted uppercase font-header tracking-widest"
-                >Year</label
-              >
-              <input
-                id="manual-year-input"
-                bind:this={manualInputRef}
-                type="number"
-                bind:value={selectedYear}
-                class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
-                placeholder="Enter Year..."
-              />
-            </div>
-          {:else}
-            <div class="grid grid-cols-3 gap-1" transition:fade>
-              {#each gridItems as item}
-                <button
-                  onclick={() => selectInGrid(item)}
-                  class="py-2 text-[11px] font-header rounded border transition-all {selectedYear ===
-                    item && yearPickerView === 'years'
-                    ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-[0_0_10px_rgba(var(--color-primary),0.3)]'
-                    : 'bg-theme-bg/50 border-theme-border/30 text-theme-text hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
-                >
-                  {item}
-                </button>
-              {/each}
-            </div>
-          {/if}
-
-          {#if isYearOutOfRange}
+        <!-- Direct typing Input -->
+        <div class="space-y-1">
+          <label
+            for="direct-date-input"
+            class="text-[9px] font-bold text-theme-muted uppercase font-header tracking-widest"
+            >Quick Entry</label
+          >
+          <input
+            id="direct-date-input"
+            type="text"
+            value={directDateInput}
+            oninput={handleDirectDateInput}
+            onfocus={() => (isDirectDateEditing = true)}
+            onblur={() => (isDirectDateEditing = false)}
+            class="w-full bg-theme-bg border {directDateError
+              ? 'border-red-500/70'
+              : 'border-theme-border'} rounded px-3 py-1.5 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
+            placeholder="DDMMYYYY, DDMM-YYYY, or DD/MM/-YYYY"
+            aria-invalid={!!directDateError}
+            aria-describedby={directDateError ? "direct-date-error" : undefined}
+          />
+          {#if directDateError}
             <div
-              transition:slide
-              class="text-[8px] text-red-500 font-bold uppercase font-header text-center py-1 bg-red-500/5 rounded border border-red-500/20"
+              id="direct-date-error"
+              role="alert"
+              aria-live="polite"
+              class="text-[9px] text-red-500 font-bold uppercase font-header"
             >
-              Year {selectedYear} is outside {selectedEra?.name}
-            </div>
-          {:else if selectedEra}
-            <div
-              transition:slide
-              class="text-[8px] text-theme-primary/70 font-bold uppercase font-header flex items-center justify-center gap-1 py-1"
-            >
-              <span class="w-1 h-1 rounded-full bg-theme-primary animate-pulse"
-              ></span>
-              Part of {selectedEra.name}
+              {directDateError}
             </div>
           {/if}
         </div>
 
-        {#if precision !== "year"}
-          <!-- Month Selection -->
-          <div class="space-y-1" transition:fade>
-            <label
-              class="text-[10px] font-bold text-theme-muted uppercase font-header tracking-wider"
-              for="picker-month">Month</label
+        <!-- Scroll Wheels Columns Container -->
+        <div
+          class="relative flex justify-center bg-theme-bg border border-theme-border/30 rounded-lg overflow-hidden h-[160px]"
+        >
+          <!-- Centered lens highlights for visual alignment and Premium feedback -->
+          <div
+            class="absolute left-0 right-0 top-[60px] h-[40px] border-y border-theme-primary/30 bg-theme-primary/5 pointer-events-none z-10"
+          ></div>
+
+          <!-- Vertical gradient overlays for 3D roll aesthetics -->
+          <div
+            class="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-theme-bg to-transparent pointer-events-none z-10"
+          ></div>
+          <div
+            class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-theme-bg to-transparent pointer-events-none z-10"
+          ></div>
+
+          <!-- Side-by-side Wheels -->
+          <div class="flex w-full divide-x divide-theme-border/10">
+            {#each columns as col}
+              <div class="flex-1 flex flex-col items-center relative min-w-0">
+                <!-- Header -->
+                <div
+                  class="text-[8px] font-bold text-theme-muted uppercase font-header tracking-wider py-1 border-b border-theme-border/10 w-full text-center bg-theme-surface/50 z-20"
+                >
+                  {col.label}
+                </div>
+
+                {#if directEntryModes[col.id]}
+                  <div
+                    class="flex-1 flex items-center justify-center h-[130px] w-full bg-theme-surface/30 z-20"
+                  >
+                    <input
+                      type="text"
+                      value={col.selectedId}
+                      onkeydown={(e) => {
+                        if (e.key === "Enter") {
+                          commitDirectColInput(
+                            col.id,
+                            (e.target as HTMLInputElement).value,
+                          );
+                        } else if (e.key === "Escape") {
+                          directEntryModes[col.id] = false;
+                        }
+                      }}
+                      onblur={(e) =>
+                        commitDirectColInput(
+                          col.id,
+                          (e.target as HTMLInputElement).value,
+                        )}
+                      class="w-16 bg-theme-bg border border-theme-primary rounded px-1.5 py-0.5 text-xs text-theme-text font-mono text-center outline-none"
+                      placeholder="Type..."
+                      use:focusOnMount
+                    />
+                  </div>
+                {:else}
+                  <div
+                    bind:this={scrollElements[col.id]}
+                    role="listbox"
+                    aria-label="{col.label} column"
+                    tabindex="0"
+                    onscroll={(e) => onWheelScroll(col.id, e)}
+                    onkeydown={(e) => handleColumnKeydown(col.id, e)}
+                    class="w-full h-[130px] overflow-y-auto relative scroll-smooth snap-y snap-mandatory select-none custom-scrollbar outline-none focus:bg-theme-primary/5 transition-colors"
+                  >
+                    <!-- Top spacer -->
+                    <div class="h-[45px]" aria-hidden="true"></div>
+
+                    {#each col.options as option}
+                      <button
+                        type="button"
+                        id="opt-{col.id}-{option.id}"
+                        role="option"
+                        tabindex="-1"
+                        aria-selected={col.selectedId === option.id}
+                        onclick={() => selectOption(col.id, option.id)}
+                        class="h-10 w-full flex items-center justify-center snap-center text-[10px] font-semibold tracking-wider uppercase transition-colors hover:text-theme-primary {col.selectedId ===
+                        option.id
+                          ? 'text-theme-primary font-bold text-xs'
+                          : 'text-theme-muted'}"
+                      >
+                        <!-- Truncate long options with ellipses inside the track -->
+                        <span class="truncate px-2" title={option.label}
+                          >{option.label}</span
+                        >
+                      </button>
+                    {/each}
+
+                    <!-- Bottom spacer -->
+                    <div class="h-[45px]" aria-hidden="true"></div>
+                  </div>
+
+                  {#if col.canDirectEnter}
+                    <button
+                      type="button"
+                      onclick={() => (directEntryModes[col.id] = true)}
+                      class="absolute bottom-1 right-1 p-0.5 bg-theme-surface/80 hover:bg-theme-primary/10 hover:text-theme-primary border border-theme-border/30 rounded text-theme-muted transition-all z-20"
+                      aria-label="Direct jump to {col.label}"
+                    >
+                      <span class="icon-[lucide--keyboard] w-3 h-3"></span>
+                    </button>
+                  {/if}
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Inline repair banner -->
+        {#if repairState}
+          <div
+            data-testid="repair-warning-banner"
+            class="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-theme-text space-y-1"
+          >
+            <div
+              class="font-bold flex items-center gap-1 text-yellow-500 uppercase font-header tracking-wider"
             >
-            <select
-              id="picker-month"
-              bind:value={selectedMonth}
-              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
-              data-testid="month-selector"
+              <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
+              Calendar Conflict
+            </div>
+            <p class="text-[10px] leading-snug text-theme-muted">
+              The calendar configuration changed. Selected values are invalid.
+            </p>
+            <button
+              type="button"
+              onclick={confirmRepair}
+              class="w-full py-1 text-[9px] font-bold uppercase font-header tracking-wider bg-yellow-500 hover:bg-yellow-400 text-theme-bg transition-colors rounded"
             >
-              <option
-                value={undefined}
-                disabled
-                selected={selectedMonth === undefined}>Select month...</option
-              >
-              {#each calendarEngine.getMonths(calendarStore.config) as month, i}
-                <option value={i + 1}>{month.name}</option>
-              {/each}
-            </select>
+              Confirm Repair
+            </button>
           </div>
         {/if}
 
-        {#if precision === "day" && selectedMonth}
-          <!-- Day Selection -->
-          <div class="space-y-1" transition:fade>
-            <label
-              class="text-[10px] font-bold text-theme-muted uppercase font-header tracking-wider"
-              for="picker-day">Day</label
-            >
-            <input
-              id="picker-day"
-              type="number"
-              min="1"
-              max={calendarEngine.getMonths(calendarStore.config)[
-                selectedMonth - 1
-              ]?.days || 31}
-              bind:value={selectedDay}
-              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
-            />
+        <!-- Full Synchronized Preview Box below the wheels -->
+        <div
+          class="p-2 bg-theme-bg/50 border border-theme-border/20 rounded-lg text-center"
+          data-testid="synchronized-preview"
+        >
+          <div
+            class="text-[8px] font-bold text-theme-muted uppercase font-header tracking-wider mb-0.5"
+          >
+            Preview
+          </div>
+          <div class="text-xs font-semibold font-mono text-theme-primary">
+            {calendarEngine.format(activeSelection, calendarStore.config)}
+          </div>
+        </div>
+
+        {#if isYearOutOfRange}
+          <div
+            transition:slide
+            class="text-[8px] text-red-500 font-bold uppercase font-header text-center py-1 bg-red-500/5 rounded border border-red-500/20"
+          >
+            Year {activeSelection.year} is outside {selectedEra?.name}
+          </div>
+        {:else if selectedEra}
+          <div
+            transition:slide
+            class="text-[8px] text-theme-primary/70 font-bold uppercase font-header flex items-center justify-center gap-1 py-1"
+          >
+            <span class="w-1 h-1 rounded-full bg-theme-primary animate-pulse"
+            ></span>
+            Part of {selectedEra.name}
           </div>
         {/if}
       </div>
@@ -530,14 +774,17 @@
     class="p-3 border-t border-theme-border flex gap-2 bg-theme-bg/30 shrink-0"
   >
     <button
+      type="button"
       class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
       onclick={onClose}
     >
       Cancel
     </button>
     <button
+      type="button"
       class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
       data-testid="apply-date-button"
+      disabled={!!directDateError || !!repairState}
       onclick={save}
     >
       Apply
@@ -547,7 +794,7 @@
 
 <style>
   .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;

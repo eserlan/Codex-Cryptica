@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ChatHistoryService } from "./chat-history.svelte";
 
+const originalBroadcastChannel = globalThis.BroadcastChannel;
+const originalURL = globalThis.URL;
+
 describe("ChatHistoryService", () => {
   let service: ChatHistoryService;
   let mockDB: any;
 
   beforeEach(() => {
-    vi.stubGlobal(
-      "BroadcastChannel",
-      vi.fn().mockImplementation(
-        class {
-          postMessage = vi.fn();
-          onmessage = null;
-        },
-      ),
-    );
+    (globalThis as any).BroadcastChannel = vi.fn().mockImplementation(
+      class {
+        postMessage = vi.fn();
+        onmessage = null;
+      } as any,
+    ) as any;
 
     service = new ChatHistoryService();
     mockDB = {
@@ -24,6 +24,11 @@ describe("ChatHistoryService", () => {
         delete: vi.fn().mockResolvedValue(undefined),
       },
     };
+  });
+
+  afterEach(() => {
+    (globalThis as any).BroadcastChannel = originalBroadcastChannel;
+    (globalThis as any).URL = originalURL;
   });
 
   it("should initialize with empty messages", async () => {
@@ -49,7 +54,10 @@ describe("ChatHistoryService", () => {
   });
 
   it("should initialize and restore blob URLs", async () => {
-    vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "restored-url") });
+    (globalThis as any).URL = {
+      createObjectURL: vi.fn(() => "restored-url"),
+      revokeObjectURL: originalURL?.revokeObjectURL,
+    } as any;
     mockDB.appSettings.get.mockResolvedValue({
       value: [
         { id: "1", role: "assistant", imageBlob: new Blob([]), content: "img" },
@@ -57,17 +65,20 @@ describe("ChatHistoryService", () => {
     });
     await service.init(mockDB, "vault-1");
     expect(service.messages[0].imageUrl).toBe("restored-url");
-    vi.unstubAllGlobals();
+    (globalThis as any).URL = originalURL;
   });
 
   it("should handle removeMessage with blob URL", async () => {
-    vi.stubGlobal("URL", { revokeObjectURL: vi.fn() });
+    (globalThis as any).URL = {
+      revokeObjectURL: vi.fn(),
+      createObjectURL: originalURL?.createObjectURL,
+    } as any;
     await service.init(mockDB, "vault-1");
     const msg = { id: "1", role: "assistant", imageUrl: "blob:123" } as any;
     await service.addMessage(msg);
     await service.removeMessage("1");
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:123");
-    vi.unstubAllGlobals();
+    (globalThis as any).URL = originalURL;
   });
 
   it("should strip blob URLs when saving to DB", async () => {
@@ -106,11 +117,14 @@ describe("ChatHistoryService", () => {
     });
 
     // Should not throw - errors are silently caught
-    await expect(service.addMessage({ id: "1" } as any)).resolves.not.toThrow();
+    await service.addMessage({ id: "1" } as any);
   });
 
   it("should revoke blob URLs on destroy", async () => {
-    vi.stubGlobal("URL", { revokeObjectURL: vi.fn() });
+    (globalThis as any).URL = {
+      revokeObjectURL: vi.fn(),
+      createObjectURL: originalURL?.createObjectURL,
+    } as any;
     await service.init(mockDB, "vault-1");
 
     const msg = { id: "1", role: "assistant", imageUrl: "blob:test123" } as any;
@@ -119,7 +133,7 @@ describe("ChatHistoryService", () => {
     service.destroy();
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test123");
-    vi.unstubAllGlobals();
+    (globalThis as any).URL = originalURL;
   });
 
   it("should handle destroy with no blob URLs", async () => {
@@ -202,10 +216,10 @@ describe("ChatHistoryService", () => {
     });
 
     it("should revoke blob URLs from the old vault on switch", async () => {
-      vi.stubGlobal("URL", {
+      (globalThis as any).URL = {
         revokeObjectURL: vi.fn(),
         createObjectURL: vi.fn(() => "new-url"),
-      });
+      } as any;
 
       await service.init(mockDB, "vault-1");
       service.messages = [
@@ -221,7 +235,7 @@ describe("ChatHistoryService", () => {
       await service.switchVault("vault-2");
 
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:old");
-      vi.unstubAllGlobals();
+      (globalThis as any).URL = originalURL;
     });
 
     it("should only apply results from the last concurrent switch call", async () => {

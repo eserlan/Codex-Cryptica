@@ -2,11 +2,13 @@
   import { goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { IS_STAGING } from "$lib/config";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
   import DriveStatus from "./DriveStatus.svelte";
+  import P2PStatus from "./P2PStatus.svelte";
   import { openFrontPage } from "./app-header-actions";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -16,7 +18,7 @@
     headerEl?: HTMLElement;
   } = $props();
 
-  const isStaging = $derived(IS_STAGING || uiStore.isStaging);
+  const isStaging = $derived(IS_STAGING || sessionModeStore.isStaging);
 
   const handleBrandClick = () => {
     openFrontPage();
@@ -26,8 +28,7 @@
 
 <header
   bind:this={headerEl}
-  class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border sticky top-0 z-[70] flex flex-col gap-3"
-  style:background-image="var(--bg-texture-overlay)"
+  class="px-4 md:px-6 py-3 md:py-4 bg-chrome-surface border-b border-chrome-border sticky top-0 z-[70] flex flex-col gap-3"
 >
   {#if isStaging}
     <div
@@ -55,7 +56,7 @@
     <!-- Mobile: Left (Menu + Brand) -->
     <div class="flex items-center gap-2 md:gap-3 shrink-0">
       <button
-        class="md:hidden text-theme-muted hover:text-theme-primary transition-colors"
+        class="md:hidden text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
         aria-label="Toggle menu"
       >
@@ -64,8 +65,8 @@
 
       <!-- Die Roller Toggle -->
       <button
-        class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"
-        onclick={() => (uiStore.showDiceModal = true)}
+        class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
+        onclick={() => (modalUIStore.showDiceModal = true)}
         aria-label="Open Die Roller"
         title="Open Die Roller"
         data-testid="dice-roller-button"
@@ -76,21 +77,21 @@
       </button>
 
       <h1
-        class="text-lg md:text-xl font-bold text-theme-text font-header tracking-wide flex items-center gap-2 md:gap-3 shrink-0 transition-colors"
+        class="text-lg md:text-xl font-bold text-chrome-text font-sans tracking-wide flex items-center gap-2 md:gap-3 shrink-0 transition-colors"
         data-testid="header-title"
       >
         <button
           type="button"
-          class="relative z-[70] flex items-center gap-2 md:gap-3 text-inherit hover:text-theme-primary transition-colors cursor-pointer text-left"
+          class="relative z-[70] flex items-center gap-2 md:gap-3 text-inherit hover:text-chrome-accent transition-colors cursor-pointer text-left"
           onclick={handleBrandClick}
           aria-label="Go to front page"
           title="Go to front page"
           data-testid="header-front-page-button"
         >
-          <span class="icon-[lucide--book-open] w-5 h-5 text-theme-primary">
+          <span class="icon-[lucide--book-open] w-5 h-5 text-chrome-accent">
           </span>
           <span class="hidden sm:inline">Codex Cryptica</span>
-          <span class="sm:hidden text-theme-primary">CC</span>
+          <span class="sm:hidden text-chrome-accent">CC</span>
         </button>
       </h1>
     </div>
@@ -99,13 +100,13 @@
     <div class="flex-1 max-w-xl md:px-4 flex justify-end md:justify-center">
       <div class="hidden md:block w-full relative group">
         <span
-          class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-theme-muted group-focus-within:text-theme-primary transition-colors"
+          class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-chrome-muted group-focus-within:text-chrome-accent transition-colors"
         ></span>
         <input
           type="text"
           placeholder="Search (Cmd+K)..."
           aria-label="Search notes"
-          class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-body text-theme-text transition-all placeholder:text-theme-muted/50"
+          class="w-full bg-chrome-bg border border-chrome-border hover:border-chrome-text/30 focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent/30 rounded py-1.5 pl-10 pr-4 text-sm font-sans text-chrome-text transition-all placeholder:text-chrome-muted/50"
           onfocus={() => searchStore.open()}
           value={searchStore.query}
           oninput={(e) => searchStore.setQuery(e.currentTarget.value)}
@@ -113,7 +114,7 @@
         />
       </div>
       <button
-        class="md:hidden p-2 text-theme-muted hover:text-theme-primary transition-colors"
+        class="md:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => searchStore.open()}
         aria-label="Search"
       >
@@ -124,12 +125,13 @@
     <!-- Desktop: Right Controls -->
     <div class="hidden md:flex items-center gap-4 shrink-0">
       <DriveStatus />
+      <P2PStatus />
       <VaultControls />
       <button
-        class="w-8 h-8 flex items-center justify-center border transition-all {uiStore.showSettings
-          ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
-          : 'border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary'} relative"
-        onclick={() => uiStore.toggleSettings("vault")}
+        class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
+          ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'
+          : 'border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent'} relative"
+        onclick={() => modalUIStore.toggleSettings("vault")}
         title="Application Settings"
         aria-label="Open Application Settings"
         data-testid="settings-button"

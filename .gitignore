@@ -40,6 +40,7 @@ out/
 
 # Gemini
 .gemini/skills/
+.gemini/antigravity-cli/
 
 # OS
 .DS_Store
@@ -74,3 +75,5 @@ blogPics/
 .vercel/
 .netlify/
 .cache/
+.eslintcache
+.claude/

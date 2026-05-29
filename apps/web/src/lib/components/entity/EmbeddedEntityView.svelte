@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import ZenView from "../zen/ZenView.svelte";
   import { fade } from "svelte/transition";
+  import { focusEntity } from "$lib/stores/ui/navigation";
 
   let { entityId } = $props<{ entityId: string }>();
 
   function handleClose() {
-    uiStore.focusEntity(null);
+    focusEntity(null);
   }
 </script>
 

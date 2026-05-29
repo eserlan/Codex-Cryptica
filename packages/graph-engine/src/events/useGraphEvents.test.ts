@@ -110,4 +110,27 @@ describe("setupGraphEvents", () => {
 
     expect(mockElements.removeClass).toHaveBeenCalledWith("lod-low lod-medium");
   });
+
+  it("should dynamically scale wheelSensitivity based on zoom level", () => {
+    mockCy.options = vi.fn();
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.batch = vi.fn((cb) => cb());
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    const zoomHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "pan zoom",
+    )[1];
+
+    mockCy.zoom = vi.fn().mockReturnValue(0.2);
+    zoomHandler();
+    expect(mockCy.options).toHaveBeenCalledWith({ wheelSensitivity: 3.0 });
+
+    mockCy.zoom = vi.fn().mockReturnValue(2.0);
+    zoomHandler();
+    expect(mockCy.options).toHaveBeenCalledWith({ wheelSensitivity: 0.5 });
+  });
 });

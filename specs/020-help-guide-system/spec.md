@@ -2,7 +2,7 @@
 
 **Feature Branch**: `020-help-guide-system`  
 **Created**: 2026-01-30  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "a help and guide system that explains the different features of the application to the user"
 
 ## User Scenarios & Testing _(mandatory)_

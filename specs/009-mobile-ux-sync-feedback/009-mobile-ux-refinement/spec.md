@@ -2,7 +2,6 @@
 
 **Feature Branch**: `009-mobile-ux-refinement`  
 **Created**: 2026-01-27  
-**Status**: Draft  
 **Input**: User description: "Fixing the mobile view and missing visual indication during sync."
 
 ## User Scenarios & Testing

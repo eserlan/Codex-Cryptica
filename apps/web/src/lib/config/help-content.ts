@@ -30,6 +30,7 @@ export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   FRONT_PAGE: "front-page-hint-seen",
   VTT_MODE: "vtt-mode-hint-seen",
+  ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -159,6 +160,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.",
     icon: "icon-[lucide--folder-sync]",
   },
+  "search-indexing": {
+    id: "search-indexing",
+    title: "Search Indexing",
+    content:
+      "Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.",
+    icon: "icon-[lucide--search-check]",
+  },
   "vault-save": {
     id: "vault-save",
     title: "Save to Folder",
@@ -226,7 +234,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "era-date-picker",
     title: "Pick Dates",
     content:
-      "Pick years quickly without typing. Click the grid to zoom into specific decades and years.",
+      "Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
     icon: "icon-[lucide--calendar]",
   },
   "import-resume": {
@@ -247,7 +255,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "draw-button",
     title: "Instant Visualization",
     content:
-      "For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.",
+      "For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.",
     icon: "icon-[lucide--brush]",
   },
   "demo-mode": {
@@ -361,6 +369,27 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.",
     icon: "icon-[lucide--sparkles]",
+  },
+  "p2p-connection-manager": {
+    id: "p2p-connection-manager",
+    title: "P2P Connection Manager",
+    content:
+      "Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.",
+    icon: "icon-[lucide--wifi]",
+  },
+  "quicknote-scratchpad": {
+    id: "quicknote-scratchpad",
+    title: "QuickNote Fast Scratchpad",
+    content:
+      "Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle the glassmorphic fast scratchpad. Jot down thoughts, auto-save drafts, and use the 'Elevate' button to let the AI structure your raw notes into complete Character, Location, or Item draft entities.",
+    icon: "icon-[lucide--zap]",
+  },
+  "entity-hierarchy": {
+    id: "entity-hierarchy",
+    title: "Nested Entities",
+    content:
+      "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.",
+    icon: "icon-[lucide--folder-tree]",
   },
 };
 

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./VTTChat.svelte", () => ({
   default: function VTTChatMock() {
@@ -16,19 +16,15 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    isGuestMode: false,
-    confirm: vi.fn().mockResolvedValue(true),
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 import VTTChatSidebar from "./VTTChatSidebar.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+
+beforeEach(() => {
+  notificationStore.confirm = vi.fn().mockResolvedValue(true);
+  sessionModeStore.isGuestMode = false;
+});
 
 describe("VTTChatSidebar", () => {
   it("renders a host-only clear button that is disabled when the chat is empty", () => {
@@ -65,7 +61,7 @@ describe("VTTChatSidebar", () => {
   });
 
   it("clears chat after confirmation when the host clicks clear", async () => {
-    mapSession.chatMessages = [
+    (mapSession as any).chatMessages = [
       {
         type: "CHAT_MESSAGE",
         sender: "GM",
@@ -80,7 +76,7 @@ describe("VTTChatSidebar", () => {
       screen.getByRole("button", { name: "Clear VTT Chat" }),
     );
 
-    expect(uiStore.confirm).toHaveBeenCalledWith(
+    expect(notificationStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Clear VTT Chat",
         isDangerous: true,
@@ -90,7 +86,7 @@ describe("VTTChatSidebar", () => {
   });
 
   it("hides the clear button for guests", () => {
-    uiStore.isGuestMode = true;
+    sessionModeStore.isGuestMode = true;
 
     render(VTTChatSidebar);
 

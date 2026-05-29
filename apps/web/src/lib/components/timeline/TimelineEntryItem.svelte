@@ -8,14 +8,10 @@
 
   const formatDate = (date: TimelineEntry["date"]) => {
     if (date.label) return date.label;
-
-    const parts: string[] = [];
-    if (date.day !== undefined)
-      parts.push(date.day.toString().padStart(2, "0"));
-    if (date.month !== undefined)
-      parts.push(date.month.toString().padStart(2, "0"));
-    parts.push(date.year.toString());
-
+    const parts = [date.year];
+    const month = "month" in date ? (date as any).month : undefined;
+    if (month) parts.push(month);
+    if (date.day) parts.push(date.day);
     return parts.join("/");
   };
 

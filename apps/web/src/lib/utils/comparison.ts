@@ -11,12 +11,32 @@ export function isTemporalMetadataEqual(
   if (a === b) return true;
   if (!a || !b) return false;
 
+  const aMonth = "month" in a ? (a as any).month : undefined;
+  const bMonth = "month" in b ? (b as any).month : undefined;
+
+  const aPrecision = "precision" in a ? (a as any).precision : undefined;
+  const bPrecision = "precision" in b ? (b as any).precision : undefined;
+
+  const aUnitId = "unitId" in a ? (a as any).unitId : undefined;
+  const bUnitId = "unitId" in b ? (b as any).unitId : undefined;
+
+  const aAnchorId = "anchorId" in a ? (a as any).anchorId : undefined;
+  const bAnchorId = "anchorId" in b ? (b as any).anchorId : undefined;
+
+  const aRevision =
+    "calendarRevision" in a ? (a as any).calendarRevision : undefined;
+  const bRevision =
+    "calendarRevision" in b ? (b as any).calendarRevision : undefined;
+
   return (
-    // NOTE: If TemporalMetadata schema changes, update this comparison.
     a.year === b.year &&
-    a.month === b.month &&
+    aMonth === bMonth &&
     a.day === b.day &&
-    a.label === b.label
+    a.label === b.label &&
+    aPrecision === bPrecision &&
+    aUnitId === bUnitId &&
+    aAnchorId === bAnchorId &&
+    aRevision === bRevision
   );
 }
 

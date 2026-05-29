@@ -1,8 +1,28 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-28
+Auto-generated from all feature plans. Last updated: 2026-05-28
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine` (123-entity-templates)
+- OPFS (Vault Files) for custom overrides, IndexedDB for settings if persistent (or local-only UI state as specified) (123-entity-templates)
+
+- TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper) (122-data-integrity-boundaries)
+- IndexedDB (Metadata/Cache), OPFS (Vault Files) (122-data-integrity-boundaries)
+
+- TypeScript 6.0.3 + zod (874-art-direction-clarification)
+
+- TypeScript 6.0.3, Svelte 5 Runes + Svelte 5, Dexie (IndexedDB), Cytoscape.js (109-quicknote-scratchpad)
+- IndexedDB (`quick_notes` store) (109-quicknote-scratchpad)
+
+- TypeScript 6.0.3, Svelte 5 Runes + `@google/generative-ai`, `idb` (IndexedDB), `flexsearch`, `comlink` (102-oracle-store-decoupling)
+- OPFS (Vault Files), IndexedDB (Chat History, Sync Registry), LocalStorage (UI State) (102-oracle-store-decoupling)
+
+- TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, Vitest, existing VTT managers under `apps/web/src/lib/stores/vtt/`, `VTTSessionService`, P2P host/guest services (099-map-session-decomposition)
+- Browser `sessionStorage`/`localStorage` for VTT drafts/popouts, OPFS-backed encounter snapshot persistence via `VTTSessionService` (099-map-session-decomposition)
+
+- TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events` (098-p2p-host-service-decoupling)
+- OPFS (Vault Files), IndexedDB (Registry) (098-p2p-host-service-decoupling)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb` (096-gdrive-cloud-sync)
 - OPFS (Primary), IndexedDB (Metadata), Google Drive (Cloud Mirror) (096-gdrive-cloud-sync)
@@ -147,7 +167,7 @@ specs/          # Feature specifications
 
 ## Commands
 
-pnpm test; pnpm run lint
+bun run test; bun run lint
 
 ## Code Style
 
@@ -155,10 +175,15 @@ TypeScript: Follow standard conventions
 
 ## Implementation Guardrails (AI Guidelines)
 
+- **Agent Operational Protocol**: You MUST strictly follow these behavioral rules:
+  1.  **Think First**: Before changing code, state the goal, assumptions, and any uncertainty. Do not silently guess when the request is ambiguous.
+  2.  **Simple Solutions**: Solve only the requested problem. Do not add extra features, abstractions, or "future-proofing" unless clearly needed (YAGNI).
+  3.  **Surgical Changes**: Touch only the files and code required. Do not refactor, reformat, or "clean up" unrelated code.
+  4.  **Verify Everything**: Define success criteria upfront. Run relevant tests, builds, and linting. Explicitly state what was and was not verified.
 - **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`).
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - **Reactive Snapshots**: Use `$state.snapshot(obj)` when passing state to non-reactive logic or async handlers to prevent stale references.
-- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `pnpm test` passes with your changes.
+- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `bun run test` passes with your changes.
 - **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
 - **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
@@ -168,12 +193,12 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 096-gdrive-cloud-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Google Identity Services (GIS), Drive REST v3, `@codex/sync-engine`, `idb`
-- 095-ai-regen-button: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`, `@codex/vault-engine`, `@codex/oracle-engine`
-- 094-app-event-bus: Added TypeScript 5.9.3 + None (Browser Native APIs only)
+- 123-entity-templates: Added TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine`
 
-- 093-directional-vault-sync: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@codex/sync-engine`, `@codex/vault-engine`, `idb`
+- 944-data-integrity-boundaries: Added TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper)
 
-- 092-approve-draft-entities: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4
+- 874-art-direction-clarification: Added TypeScript 6.0.3 + None (Browser Native APIs) / Zod
 
 <!-- MANUAL ADDITIONS START -->
+
+<!-- MANUAL ADDITIONS END -->

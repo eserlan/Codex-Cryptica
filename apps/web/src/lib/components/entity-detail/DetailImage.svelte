@@ -3,9 +3,13 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { isEntityVisible } from "schema";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     entity,
@@ -19,6 +23,14 @@
 
   let resolvedImageUrl = $state("");
   let isDraggingOver = $state(false);
+  let isImageLoaded = $state(false);
+
+  $effect(() => {
+    // Reset loaded state when image URL changes
+    if (resolvedImageUrl) {
+      isImageLoaded = false;
+    }
+  });
   const isVisualizing = $derived(oracle.isVisualizingEntity(entity?.id));
 
   // Check if this entity is visible in guest/shared mode
@@ -32,17 +44,28 @@
 
   $effect(() => {
     const imagePath = entity?.image;
+    const thumbnailPath = entity?.thumbnail;
     let stale = false;
 
-    if (imagePath) {
-      vault.resolveImageUrl(imagePath).then((url) => {
-        if (!stale && entity?.image === imagePath) {
-          resolvedImageUrl = url;
-        }
-      });
-    } else {
-      resolvedImageUrl = "";
-    }
+    const resolveImage = async () => {
+      let url = "";
+      if (imagePath) {
+        url = await vault.resolveImageUrl(imagePath);
+      }
+      // Fallback to thumbnail if full image resolution fails (e.g. timeout on large P2P file)
+      if (!url && thumbnailPath) {
+        url = await vault.resolveImageUrl(thumbnailPath);
+      }
+
+      if (
+        !stale &&
+        (entity?.image === imagePath || entity?.thumbnail === thumbnailPath)
+      ) {
+        resolvedImageUrl = url;
+      }
+    };
+
+    resolveImage();
 
     return () => {
       stale = true;
@@ -155,13 +178,38 @@
   {:else if entity.image}
     <div class="px-4 md:px-6">
       <button
-        onclick={() => uiStore.openLightbox(resolvedImageUrl, entity.title)}
-        class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
+        type="button"
+        onclick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          modalUIStore.openLightbox(
+            resolvedImageUrl,
+            entity.title,
+            {
+              x: rect.left,
+              y: rect.top,
+              width: rect.width,
+              height: rect.height,
+            },
+            entity.image,
+          );
+        }}
+        disabled={!resolvedImageUrl}
+        class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30 disabled:cursor-wait"
       >
+        {#if !isImageLoaded}
+          <div class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2">
+            <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
+            <span class="text-[9px] font-mono uppercase tracking-wider opacity-40">Resolving Neural Visual...</span>
+          </div>
+        {/if}
         <img
           src={resolvedImageUrl}
           alt={entity.title}
-          class="w-full h-auto max-h-48 md:max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
+          loading="lazy"
+          decoding="async"
+          onload={() => { isImageLoaded = true; }}
+          onerror={() => { isImageLoaded = true; }}
+          class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90 group-hover:opacity-100 scale-100' : 'opacity-0 scale-95'}"
         />
         <div
           class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
@@ -169,6 +217,29 @@
           Click to enlarge
         </div>
       </button>
+      {#if p2pHost.isHosting}
+        <button
+          type="button"
+          onclick={() => {
+            const success = mapSession.showImageToPlayers(
+              entity.title,
+              entity.image,
+            );
+            if (success) {
+              notificationStore.notify("Shared image with guests", "success");
+            }
+          }}
+          class="w-full mt-2 bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden mb-4"
+          aria-label="Show image to guests"
+        >
+          <span class="icon-[lucide--share-2] w-4 h-4 text-theme-primary"
+          ></span>
+          <span
+            class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
+            >SHOW TO GUESTS</span
+          >
+        </button>
+      {/if}
     </div>
   {:else}
     <div class="px-4 md:px-6">
@@ -184,7 +255,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.aiDisabled}
+        {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest}
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}

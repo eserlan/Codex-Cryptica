@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import FrontPage from "$lib/components/world/FrontPage.svelte";
   import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
   const vaultId = $derived(page.params.id);
   const selectedEntity = $derived.by(() => {
@@ -18,15 +18,13 @@
   });
 </script>
 
-{#if !uiStore.dismissedWorldPage}
+{#if !onboardingStore.dismissedWorldPage}
   {#key vault.activeVaultId}
     <FrontPage />
   {/key}
 {/if}
 
-{#if selectedEntity}
-  <EntityDetailPanel
-    entity={selectedEntity}
-    onClose={() => (vault.selectedEntityId = null)}
-  />
-{/if}
+<EntityDetailPanel
+  entity={selectedEntity}
+  onClose={() => (vault.selectedEntityId = null)}
+/>

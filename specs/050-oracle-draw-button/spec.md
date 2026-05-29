@@ -2,7 +2,7 @@
 
 **Feature Branch**: `050-oracle-draw-button`  
 **Created**: 2026-02-19  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "if advanced oracle, lets have a draw button https://github.com/eserlan/Codex-Cryptica/issues/191"
 
 ## User Scenarios & Testing _(mandatory)_
@@ -68,7 +68,7 @@ As a World Builder who has imported text-only campaign data, I want a "Draw" but
 - **FR-005**: System MUST show a persistent loading indicator within the UI container (chat message, sidepanel, or Zen mode) while image generation is in progress.
 - **FR-006**: Once generated, the image MUST be displayed within the same context, replacing the "Draw" button.
 - **FR-007**: Images generated from the Entity Detail Sidepanel or Zen Mode MUST be automatically saved to the vault and associated with the active entity.
-- **FR-008**: System MUST automatically ground all "Draw" actions against any "Art Style" or "Visual Aesthetic" notes found in the vault to ensure stylistic consistency.
+- **FR-008**: System MUST automatically ground all "Draw" actions against any "Art Style", "Art Direction", or "Visual Aesthetic" guides found in the vault, prioritizing entities with these keywords in their title to ensure stylistic consistency.
 - **FR-009**: System SHOULD provide a "Style Grounding Indicator" (e.g., a tooltip or status text) indicating that a "Global Art Style" is being applied to the generation.
 - **FR-010**: System MUST persist the state of the "Draw" button (or the resulting image) in the chat history.
 - **FR-011**: System MUST hide all "Draw" buttons when AI features are globally disabled (`aiDisabled` in UIStore), regardless of the user's tier.

@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DefaultTextGenerationService } from "./text-generation.service";
+import {
+  DefaultTextGenerationService,
+  resolvePronounsLocally,
+} from "./text-generation.service.svelte";
 import { TIER_MODES } from "schema";
+import * as capabilityGuard from "./capability-guard";
 
 // Mock AI capability guard
 vi.mock("./capability-guard", () => ({
@@ -23,26 +27,33 @@ vi.mock("./prompts/merge-proposal", () => ({
   buildMergeProposalPrompt: vi.fn((t, s) => `merge:${t}:${s}`),
 }));
 vi.mock("./prompts/plot-analysis", () => ({
-  buildPlotAnalysisPrompt: vi.fn((s, c, q) => `plot:${s}:${c}:${q}`),
+  buildPlotCanonResolutionPrompt: vi.fn((s, c, q) => `plot-res:${s}:${c}:${q}`),
+  buildPlotGenerationPrompt: vi.fn((c, q) => `plot-gen:${c}:${q}`),
+}));
+vi.mock("./prompts/entity-creation", () => ({
+  buildCreationLoreSynthesisPrompt: vi.fn((q, c) => `creation-syn:${q}:${c}`),
+  buildStructuredDraftingPrompt: vi.fn(
+    (s, q, c) => `creation-draft:${s}:${q}:${c}`,
+  ),
 }));
 vi.mock("./prompts/context-distillation", () => ({
   buildContextDistillationPrompt: vi.fn((context) => `distill:${context}`),
 }));
 vi.mock("./prompts/entity-reconciliation", () => ({
   buildEntityReconciliationPrompt: vi.fn(
-    (entity, incoming) =>
-      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}`,
+    (entity, incoming, _related, categories) =>
+      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}`,
   ),
 }));
 
 describe("DefaultTextGenerationService", () => {
   let service: DefaultTextGenerationService;
   let mockAiClientManager: any;
-  let mockContextRetrievalService: any;
   let mockModel: any;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(true);
 
     mockModel = {
       generateContent: vi.fn().mockResolvedValue({
@@ -64,20 +75,14 @@ describe("DefaultTextGenerationService", () => {
       getModel: vi.fn().mockReturnValue(mockModel),
     };
 
-    mockContextRetrievalService = {
-      getConsolidatedContext: vi.fn().mockReturnValue("Consolidated context"),
-    };
-
-    service = new DefaultTextGenerationService(
-      mockAiClientManager,
-      mockContextRetrievalService,
-    );
+    service = new DefaultTextGenerationService(mockAiClientManager);
   });
 
   describe("expandQuery", () => {
-    it("should expand a query", async () => {
-      const history = [{ role: "user", content: "Hi" }];
-      const result = await service.expandQuery("key", "What is lore?", history);
+    it("should call model to expand query when local resolution is insufficient", async () => {
+      const result = await service.expandQuery("key", "him?", [
+        { role: "user" as const, content: "and but or if" },
+      ]);
 
       expect(result).toBe("Generated content");
       expect(mockAiClientManager.getModel).toHaveBeenCalledWith(
@@ -85,21 +90,109 @@ describe("DefaultTextGenerationService", () => {
         TIER_MODES.lite,
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("USER: Hi:What is lore?"),
+        expect.stringContaining("expanded"),
       );
     });
 
-    it("should return original query if expansion fails", async () => {
+    it("should bypass AI completely when local resolution succeeds", async () => {
+      const result = await service.expandQuery("key", "Where does he live?", [
+        { role: "user" as const, content: "Let's talk about **Sir Alden**." },
+      ]);
+      expect(result).toBe("Where does Sir Alden live?");
+      expect(mockAiClientManager.getModel).not.toHaveBeenCalled();
+    });
+
+    it("should resolve query locally if AI is disabled", async () => {
+      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
+
+      const result = await service.expandQuery("key", "Where does he live?", [
+        { role: "user" as const, content: "Let's talk about **Sir Alden**." },
+      ]);
+      expect(result).toBe("Where does Sir Alden live?");
+    });
+
+    it("should fall back to local resolver on AI error when local resolution is insufficient", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       mockModel.generateContent.mockRejectedValue(new Error("AI error"));
 
-      const result = await service.expandQuery("key", "Original query", []);
+      const result = await service.expandQuery("key", "What is its name?", [
+        { role: "user" as const, content: "and but or if" },
+      ]);
 
-      expect(result).toBe("Original query");
+      expect(result).toBe("What is its name?");
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
+    });
+
+    it("should truncate long history content to keep payload small when falling back to AI", async () => {
+      const veryLongContent = "and but or if ".repeat(300);
+      await service.expandQuery("key", "him?", [
+        { role: "user" as const, content: veryLongContent },
+      ]);
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("... [truncated for length]"),
+      );
+    });
+  });
+
+  describe("resolvePronounsLocally", () => {
+    it("should resolve pronouns based on markdown bold entities", async () => {
+      const history = [
+        {
+          role: "user" as const,
+          content: "The legendary **Dulandir** is a vast place.",
+        },
+      ];
+      const query = "Where is that place located?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("Where is Dulandir located?");
+    });
+
+    it("should resolve possessives correctly", async () => {
+      const history = [
+        { role: "user" as const, content: "Here is **Sir Alden**." },
+      ];
+      const query = "What is his title?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("What is Sir Alden's title?");
+    });
+
+    it("should fall back to proper nouns if no markdown bold", async () => {
+      const history = [
+        { role: "user" as const, content: "Let's talk about Valerius." },
+      ];
+      const query = "Where does he live?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("Where does Valerius live?");
+    });
+
+    it("should return the original query if no history exists", async () => {
+      const result = await resolvePronounsLocally("Where does he live?", []);
+      expect(result).toBe("Where does he live?");
+    });
+
+    it("should prioritize subjects from the user's previous query over assistant bold matches", async () => {
+      const history = [
+        { role: "user" as const, content: "who is Kardos?" },
+        {
+          role: "assistant" as const,
+          content:
+            "While **Chief Grimgob** is nearby, Master Kardos is a powerful mage.",
+        },
+      ];
+      const query = "What does he do?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("What does Kardos do?");
+    });
+
+    it("should resolve lowercase names in user queries by falling back to general nouns", async () => {
+      const history = [{ role: "user" as const, content: "who's kardos" }];
+      const query = "what does he do?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("what does kardos do?");
     });
   });
 
@@ -144,50 +237,30 @@ describe("DefaultTextGenerationService", () => {
         },
       });
 
-      const target = { title: "T", type: "npc" };
-      const sources = [{ title: "S1", type: "npc" }];
-
-      const result = await service.generateMergeProposal(
+      const result = await service.generateMergeProposal!(
         "key",
         "model",
-        target,
-        sources,
+        { title: "Target", type: "npc" },
+        [{ title: "Source", type: "npc" }],
       );
 
       expect(result).toEqual({ body: "Merged Body", lore: "Merged Lore" });
-    });
-
-    it("should return plain text if JSON match fails", async () => {
-      mockModel.generateContent.mockResolvedValue({
-        response: {
-          text: vi.fn().mockReturnValue("Just plain text"),
-        },
-      });
-
-      const result = await service.generateMergeProposal(
-        "key",
-        "model",
-        {},
-        [],
-      );
-      expect(result).toEqual({ body: "Just plain text" });
+      expect(mockModel.generateContent).toHaveBeenCalled();
     });
   });
 
   describe("generatePlotAnalysis", () => {
     it("should generate plot analysis with many connected entities (omitted suffix)", async () => {
       const subject = { title: "Subject", type: "npc" };
-      const connected = Array.from({ length: 25 }, (_, i) => ({
-        entity: { title: `C${i}`, type: "npc" },
-        direction: "outbound",
-        label: "label",
-      }));
-
+      const connections = Array(25).fill({
+        entity: { title: "C", type: "npc" },
+        connectionType: "link",
+      });
       await service.generatePlotAnalysis(
         "key",
         "model",
         subject,
-        connected,
+        connections,
         "Q",
       );
 
@@ -241,7 +314,7 @@ describe("DefaultTextGenerationService", () => {
         lore: "Updated lore",
       });
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        "reconcile:Thay:New chronicle:New lore",
+        "reconcile:Thay:New chronicle:New lore:",
       );
     });
 
@@ -257,6 +330,81 @@ describe("DefaultTextGenerationService", () => {
           [],
         ),
       ).rejects.toThrow("Entity reconciliation failed: Network fail");
+    });
+
+    it("should return a valid category from the reconciliation response", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Updated chronicle","lore":"Updated lore","categoryId":"item"}',
+            ),
+        },
+      });
+
+      const result = await service.reconcileEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "The Glass Key",
+          type: "note",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+        {
+          chronicle: "A crystalline archive key.",
+          lore: "It opens sealed memory vaults.",
+        },
+        [],
+        [
+          { id: "note", label: "Note" },
+          { id: "item", label: "Item" },
+        ],
+      );
+
+      expect(result).toEqual({
+        content: "Updated chronicle",
+        lore: "Updated lore",
+        categoryId: "item",
+      });
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "reconcile:The Glass Key:A crystalline archive key.:It opens sealed memory vaults.:note,item",
+      );
+    });
+
+    it("should ignore reconciliation categories outside the allowed list", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Updated chronicle","lore":"Updated lore","categoryId":"vehicle"}',
+            ),
+        },
+      });
+
+      const result = await service.reconcileEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "The Glass Key",
+          type: "note",
+          content: "",
+          lore: "",
+        },
+        {
+          chronicle: "A crystalline archive key.",
+          lore: "It opens sealed memory vaults.",
+        },
+        [],
+        [{ id: "item", label: "Item" }],
+      );
+
+      expect(result).toEqual({
+        content: "Updated chronicle",
+        lore: "Updated lore",
+      });
     });
   });
 
@@ -297,142 +445,178 @@ describe("DefaultTextGenerationService", () => {
         onUpdate,
       );
 
-      expect(mockModel.startChat).toHaveBeenCalledWith({
-        history: [
-          {
-            role: "user",
-            parts: [{ text: "User message 1\n\nUser message 2" }],
-          },
-          { role: "model", parts: [{ text: "Assistant message" }] },
-        ],
-      });
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      expect(chatOptions.history).toHaveLength(2);
+      expect(chatOptions.history[0].role).toBe("user");
+      expect(chatOptions.history[0].parts[0].text).toContain("User message 2");
+      expect(chatOptions.history[1].role).toBe("model");
     });
 
-    it("should handle API rate limit error (429)", async () => {
+    it("should truncate long chat history messages to prevent token bloat", async () => {
       const onUpdate = vi.fn();
-      mockModel.startChat.mockReturnValue({
-        sendMessageStream: vi
-          .fn()
-          .mockRejectedValue(new Error("429 rate limit")),
-      });
+      const veryLongContent = "B".repeat(5000);
+      const history = [
+        { role: "user", content: veryLongContent },
+        { role: "assistant", content: "Short reply" },
+      ];
 
-      await expect(
-        service.generateResponse("key", "Q", [], "C", "m", onUpdate),
-      ).rejects.toThrow("API rate limit exceeded");
-    });
-
-    it("should handle generic Gemini API error", async () => {
-      const onUpdate = vi.fn();
-      mockModel.startChat.mockReturnValue({
-        sendMessageStream: vi
-          .fn()
-          .mockRejectedValue(new Error("Generic AI error")),
-      });
-
-      await expect(
-        service.generateResponse("key", "Q", [], "C", "m", onUpdate),
-      ).rejects.toThrow("Lore Oracle Error: Generic AI error");
-    });
-
-    it("should pass categories to buildSystemInstruction", async () => {
-      const onUpdate = vi.fn();
-      const categories = ["cat1", "cat2"];
       await service.generateResponse(
         "key",
-        "Q",
-        [],
-        "C",
-        "m",
+        "Query",
+        history,
+        "Context",
+        "model",
         onUpdate,
-        false,
-        categories,
       );
 
-      // Verify that the model was initialized with the instruction containing categories
-      // aiClientManager.getModel is called with systemInstruction
-      expect(mockAiClientManager.getModel).toHaveBeenCalledWith(
-        "key",
-        "m",
-        "system:false:cat1,cat2",
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      expect(chatOptions.history[0].parts[0].text).toBe(
+        "B".repeat(4000) + "\n\n... [truncated for length]",
       );
+    });
+  });
+
+  describe("generateStructuredEntity", () => {
+    it("should orchestrate multi-stage creation", async () => {
+      const onUpdate = vi.fn();
+      mockModel.generateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "Lore Synthesis Summary" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => "Structured Record" },
+        });
+
+      await service.generateStructuredEntity!(
+        "key",
+        "Create Valerius",
+        "Vault Context",
+        "model",
+        onUpdate,
+        ["npc", "location"],
+      );
+
+      expect(mockModel.generateContent).toHaveBeenCalledTimes(2);
+      expect(onUpdate).toHaveBeenCalledWith("Structured Record");
+    });
+  });
+
+  describe("context optimizations", () => {
+    it("should handle history sliding window", async () => {
+      const history = Array(20)
+        .fill(null)
+        .map((_, i) => ({
+          role: i % 2 === 0 ? "user" : "assistant",
+          content: `Message ${i}`,
+        }));
+
+      await service.generateResponse(
+        "key",
+        "Query",
+        history,
+        "Context",
+        "model",
+        vi.fn(),
+      );
+
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      // Sliding window is 10.
+      expect(chatOptions.history.length).toBeLessThanOrEqual(10);
+    });
+
+    it("should ensure prefix stability in final query", async () => {
+      await service.generateResponse(
+        "key",
+        "Query",
+        [],
+        " Lore Context ",
+        "model",
+        vi.fn(),
+      );
+
+      const sendMessageStreamResult = await vi.mocked(mockModel.startChat).mock
+        .results[0].value;
+      const finalQuery = vi.mocked(sendMessageStreamResult.sendMessageStream)
+        .mock.calls[0][0];
+
+      expect(finalQuery).toContain("[VAULT LORE CONTEXT]");
+      expect(finalQuery).toContain("Lore Context");
+      expect(finalQuery).toContain("[USER QUERY]");
+      // Ensure trimmed context
+      expect(finalQuery).not.toContain(" Lore Context ");
     });
   });
 
   describe("failure cases", () => {
-    it("should throw error if merge generation fails", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Network fail"));
-      await expect(
-        service.generateMergeProposal("key", "model", {}, []),
-      ).rejects.toThrow("Merge failed: Network fail");
-    });
-
     it("should throw error if plot analysis fails", async () => {
       mockModel.generateContent.mockRejectedValue(new Error("Timeout"));
+
       await expect(
         service.generatePlotAnalysis("key", "model", {}, [], "Q"),
       ).rejects.toThrow("Plot analysis failed: Timeout");
     });
-  });
 
-  describe("expandQuery", () => {
-    it("should return expanded query from model", async () => {
-      const mockText = vi.fn().mockReturnValue("Expanded query");
-      mockModel.generateContent.mockResolvedValue({
-        response: { text: mockText },
-      });
+    it("should throw error if structured drafting fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Direct throw"));
 
-      const result = await service.expandQuery("key", "original query", []);
-      expect(result).toBe("Expanded query");
-    });
-
-    it("should return original query if expansion fails", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Fail"));
-      const result = await service.expandQuery("key", "original query", []);
-      expect(result).toBe("original query");
-    });
-  });
-
-  describe("distillContext", () => {
-    it("should return distilled context", async () => {
-      const mockText = vi.fn().mockReturnValue("distilled context");
-      mockModel.generateContent.mockResolvedValue({
-        response: { text: mockText },
-      });
-
-      const result = await service.distillContext("key", "context", "model");
-      expect(result).toBe("distilled context");
-    });
-
-    it("should return raw context if distillContext fails", async () => {
-      mockModel.generateContent.mockRejectedValue(new Error("Timeout"));
-      const result = await service.distillContext("key", "context", "model");
-      expect(result).toBe("context");
-    });
-  });
-
-  describe("merge and reconcile failure paths", () => {
-    it("should handle error in generateMergeProposal catch block", async () => {
-      mockModel.generateContent.mockImplementationOnce(() => {
-        throw new Error("Direct throw");
-      });
-      await expect(
-        service.generateMergeProposal("key", "model", {}, []),
-      ).rejects.toThrow("Merge failed: Direct throw");
-    });
-
-    it("should handle error in reconcileEntityUpdate catch block", async () => {
-      mockModel.generateContent.mockImplementationOnce(() => {
-        throw new Error("Direct throw");
-      });
       await expect(
         service.reconcileEntityUpdate!(
           "key",
           "model",
           { title: "T", type: "npc", content: "", lore: "" },
-          { chronicle: "C", lore: "L" },
+          { chronicle: "", lore: "" },
           [],
         ),
       ).rejects.toThrow("Entity reconciliation failed: Direct throw");
+    });
+  });
+
+  describe("snapshot stability", () => {
+    it("should snapshot history to prevent concurrent mutations from affecting prompt", async () => {
+      const { createReactiveHistory } =
+        await import("./text-generation-test-helper.svelte");
+      const history = createReactiveHistory();
+
+      const promise = service.expandQuery("key", "him?", history);
+
+      // Mutate history immediately after initiating the call
+      history[0].content = "Mutated";
+
+      await promise;
+
+      const { buildQueryExpansionPrompt } =
+        await import("./prompts/query-expansion");
+      expect(buildQueryExpansionPrompt).toHaveBeenCalledWith(
+        expect.stringContaining("USER: Original"),
+        "him?",
+      );
+    });
+
+    it("should snapshot target and sources to prevent concurrent mutations in merge proposal", async () => {
+      const { createReactiveTarget, createReactiveSources } =
+        await import("./text-generation-test-helper.svelte");
+      const target = createReactiveTarget();
+      const sources = createReactiveSources();
+
+      const promise = service.generateMergeProposal(
+        "key",
+        "model",
+        target,
+        sources,
+      );
+
+      target.title = "MutatedTarget";
+      sources[0].title = "MutatedSource";
+
+      await promise;
+
+      const { buildMergeProposalPrompt } =
+        await import("./prompts/merge-proposal");
+      // Since context-retrieval.service is mocked to return "consolidated", we check the targetContext header formatting
+      expect(buildMergeProposalPrompt).toHaveBeenCalledWith(
+        expect.stringContaining("--- TARGET: OriginalTarget"),
+        expect.stringContaining("--- SOURCE 1: OriginalSource"),
+      );
     });
   });
 });

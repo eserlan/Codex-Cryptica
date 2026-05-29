@@ -1,9 +1,9 @@
 import { render, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { requestZenPopoutPayload } from "$lib/utils/zen-popout";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 type MutableVaultMock = {
   activeVaultId: string | null;
@@ -24,16 +24,6 @@ vi.mock("$app/state", () => ({
       id: "vault-123",
       entityId: "entity-1",
     },
-  },
-}));
-
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    isGuestMode: false,
-    openZenMode: vi.fn(),
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 
@@ -69,7 +59,7 @@ describe("/vault/[id]/entity/[entityId] page", () => {
     mutableVault.status = "idle";
     mutableVault.repository.entities = entities;
     mutableVault.entities = entities;
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
     vi.clearAllMocks();
   });
 
@@ -84,7 +74,7 @@ describe("/vault/[id]/entity/[entityId] page", () => {
     expect(vault.switchVault).not.toHaveBeenCalled();
 
     await waitFor(() => {
-      expect(uiStore.isGuestMode).toBe(true);
+      expect(sessionModeStore.isGuestMode).toBe(true);
     });
 
     expect(vault.switchVault).not.toHaveBeenCalled();

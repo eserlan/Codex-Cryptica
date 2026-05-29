@@ -25,35 +25,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10.5.0
-          run_install: false
+          bun-version: latest
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
+      - name: Setup Bun cache
         uses: actions/cache@v5
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Install Playwright Browsers
-        run: pnpm --filter=web exec playwright install --with-deps chromium
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
 
       - name: Run E2E Tests
         env:
@@ -62,7 +52,7 @@ jobs:
         working-directory: apps/web
         # We use 'github' for annotations and 'list' for logs.
         # The HTML report is for the artifact.
-        run: pnpm exec playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
+        run: bunx playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
 
       - name: Upload Playwright Report
         if: always()

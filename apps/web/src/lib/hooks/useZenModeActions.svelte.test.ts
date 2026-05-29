@@ -5,10 +5,17 @@ vi.mock("$lib/utils/zen-popout", () => ({
   openEntityPopout: vi.fn(),
 }));
 
+vi.mock("$lib/stores/ui/navigation", () => ({
+  focusEntity: vi.fn(),
+}));
+
 import { openEntityPopout } from "$lib/utils/zen-popout";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { focusEntity } from "$lib/stores/ui/navigation";
 
 describe("useZenModeActions", () => {
-  let mockUiStore: any;
   let mockVault: any;
   let mockEditState: any;
 
@@ -16,11 +23,8 @@ describe("useZenModeActions", () => {
     vi.clearAllMocks();
     vi.stubGlobal("confirm", vi.fn());
 
-    // Mock stores
-    mockUiStore = {
-      notify: vi.fn(),
-      confirm: vi.fn().mockResolvedValue(true),
-    };
+    notificationStore.notify = vi.fn();
+    notificationStore.confirm = vi.fn().mockResolvedValue(true);
     mockVault = {
       updateEntity: vi.fn().mockResolvedValue(undefined),
       deleteEntity: vi.fn().mockResolvedValue(undefined),
@@ -42,7 +46,6 @@ describe("useZenModeActions", () => {
 
   it("should initialize with isSaving as false", () => {
     const actions = createZenModeActions(mockEditState, {
-      uiStore: mockUiStore,
       vault: mockVault,
     });
     expect(actions.isSaving).toBe(false);
@@ -51,7 +54,6 @@ describe("useZenModeActions", () => {
   describe("saveChanges", () => {
     it("should update entity and stop editing on success", async () => {
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -81,7 +83,6 @@ describe("useZenModeActions", () => {
       mockVault.updateEntity.mockRejectedValueOnce(new Error("Save failed"));
 
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -96,7 +97,6 @@ describe("useZenModeActions", () => {
     it("should accept editState as a getter function", async () => {
       const getter = vi.fn().mockReturnValue(mockEditState);
       const actions = createZenModeActions(getter, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -109,10 +109,9 @@ describe("useZenModeActions", () => {
     const mockEntity = { id: "e1", title: "Target" } as any;
 
     it("should do nothing if confirm is cancelled", async () => {
-      mockUiStore.confirm.mockResolvedValue(false);
+      vi.mocked(notificationStore.confirm).mockResolvedValue(false);
       const onDeleted = vi.fn();
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -123,17 +122,16 @@ describe("useZenModeActions", () => {
     });
 
     it("should delete entity and notify on success", async () => {
-      mockUiStore.confirm.mockResolvedValue(true);
+      vi.mocked(notificationStore.confirm).mockResolvedValue(true);
       const onDeleted = vi.fn();
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
       await actions.handleDelete(mockEntity, onDeleted);
 
       expect(mockVault.deleteEntity).toHaveBeenCalledWith("e1");
-      expect(mockUiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         '"Target" deleted.',
         "success",
       );
@@ -142,20 +140,19 @@ describe("useZenModeActions", () => {
     });
 
     it("should notify error on failure", async () => {
-      mockUiStore.confirm.mockResolvedValue(true);
+      vi.mocked(notificationStore.confirm).mockResolvedValue(true);
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       mockVault.deleteEntity.mockRejectedValueOnce(new Error("Delete failed"));
 
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
       await actions.handleDelete(mockEntity, vi.fn());
 
-      expect(mockUiStore.notify).toHaveBeenCalledWith(
+      expect(notificationStore.notify).toHaveBeenCalledWith(
         "Error: Delete failed",
         "error",
       );
@@ -169,7 +166,6 @@ describe("useZenModeActions", () => {
       mockEditState.isEditing = false;
       const onClose = vi.fn();
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -179,10 +175,9 @@ describe("useZenModeActions", () => {
 
     it("should ask for confirmation if editing", async () => {
       mockEditState.isEditing = true;
-      mockUiStore.confirm.mockResolvedValue(false); // User says "Keep editing"
+      vi.mocked(notificationStore.confirm).mockResolvedValue(false); // User says "Keep editing"
       const onClose = vi.fn();
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -193,10 +188,9 @@ describe("useZenModeActions", () => {
 
     it("should close and stop editing if user confirms discard", async () => {
       mockEditState.isEditing = true;
-      mockUiStore.confirm.mockResolvedValue(true); // User says "Discard"
+      vi.mocked(notificationStore.confirm).mockResolvedValue(true); // User says "Discard"
       const onClose = vi.fn();
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
@@ -211,37 +205,35 @@ describe("useZenModeActions", () => {
 
     beforeEach(() => {
       mockVault.entities = { e1: mockEntity };
-      mockUiStore.showZenMode = false;
-      mockUiStore.mainViewMode = "visualization";
-      mockUiStore.closeZenMode = vi.fn();
-      mockUiStore.focusEntity = vi.fn();
+      modalUIStore.showZenMode = false;
+      layoutUIStore.mainViewMode = "visualization";
+      modalUIStore.closeZenMode = vi.fn();
+      vi.mocked(focusEntity).mockClear();
     });
 
     it("should call openEntityPopout and close views", async () => {
-      mockUiStore.showZenMode = true;
+      modalUIStore.showZenMode = true;
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
       await actions.handlePopOut("e1");
 
       expect(openEntityPopout).toHaveBeenCalled();
-      expect(mockUiStore.closeZenMode).toHaveBeenCalled();
+      expect(modalUIStore.closeZenMode).toHaveBeenCalled();
     });
 
     it("should close focus mode if active", async () => {
-      mockUiStore.showZenMode = false;
-      mockUiStore.mainViewMode = "focus";
+      modalUIStore.showZenMode = false;
+      layoutUIStore.mainViewMode = "focus";
       const actions = createZenModeActions(mockEditState, {
-        uiStore: mockUiStore,
         vault: mockVault,
       });
 
       await actions.handlePopOut("e1");
 
       expect(openEntityPopout).toHaveBeenCalled();
-      expect(mockUiStore.focusEntity).toHaveBeenCalledWith(null);
+      expect(focusEntity).toHaveBeenCalledWith(null);
     });
   });
 });

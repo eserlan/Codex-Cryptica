@@ -1,22 +1,45 @@
-import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
-import type { StylingTemplate, JargonMap } from "schema";
+import {
+  THEMES,
+  DEFAULT_THEME,
+  DEFAULT_JARGON,
+  WORKSPACE_DARK,
+  FANTASY_DARK,
+  MODERN_DARK,
+  SCIFI_LIGHT,
+  CYBERPUNK_LIGHT,
+  APOCALYPTIC_LIGHT,
+  HORROR_LIGHT,
+  FALLOUT_LIGHT,
+  STARWARS_LIGHT,
+  STARTREK_LIGHT,
+} from "schema";
+import type {
+  StylingTemplate,
+  JargonMap,
+  AppAppearanceId,
+  ResolvedAppAppearanceId,
+  WorldThemeId,
+} from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import { uiStore as defaultUiStore } from "./ui.svelte";
 import {
   getOpfsRoot,
   getVaultDir,
   readFileAsText,
   writeOpfsFile,
 } from "../utils/opfs";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
+const APPEARANCE_KEY = "codex-cryptica-app-appearance";
 const CONFIG_PATH = [".codex", "config.json"];
 
 export interface IThemeStorage {
   loadLocal(): string | null;
   saveLocal(id: string): void;
+  loadAppAppearance(): string | null;
+  saveAppAppearance(id: string): void;
   loadFromCache(vaultId: string): Promise<string | null>;
   saveToCache(vaultId: string, id: string): Promise<void>;
   loadFromDisk(vaultId: string): Promise<string | null>;
@@ -24,8 +47,10 @@ export interface IThemeStorage {
 }
 
 export class ThemeStore {
-  currentThemeId = $state<string>(DEFAULT_THEME.id); // Will be set in constructor/init
-  previewThemeId = $state<string | null>(null);
+  appAppearanceId = $state<AppAppearanceId>("system");
+  worldThemeId = $state<WorldThemeId>(DEFAULT_THEME.id);
+  previewThemeId = $state<WorldThemeId | null>(null);
+  isSystemDark = $state<boolean>(false);
 
   /**
    * Optional callback for when the theme is explicitly changed.
@@ -33,15 +58,71 @@ export class ThemeStore {
   onThemeUpdate?: (id: string) => void;
 
   // Dependencies
-  private uiStore: typeof defaultUiStore;
+  private sessionModeStore: typeof sessionModeStore;
   private storage: IThemeStorage;
   private getVault: () => any;
 
-  activeTheme = $derived(
-    this.previewThemeId
-      ? THEMES[this.previewThemeId]
-      : THEMES[this.currentThemeId] || DEFAULT_THEME,
+  activeTheme = $derived.by(() => {
+    const rawId = this.previewThemeId || this.worldThemeId || DEFAULT_THEME.id;
+    const id = rawId.replace(/_(light|dark)$/, "") as WorldThemeId;
+    const isDark = this.resolvedAppAppearanceId === "neutral-dark";
+
+    if (isDark) {
+      switch (id) {
+        case "workspace":
+          return WORKSPACE_DARK;
+        case "fantasy":
+          return FANTASY_DARK;
+        case "modern":
+          return MODERN_DARK;
+        default:
+          return (THEMES as any)[id] || DEFAULT_THEME;
+      }
+    } else {
+      switch (id) {
+        case "workspace":
+          return THEMES.workspace;
+        case "fantasy":
+          return THEMES.fantasy;
+        case "modern":
+          return THEMES.modern;
+        case "scifi":
+          return SCIFI_LIGHT;
+        case "cyberpunk":
+          return CYBERPUNK_LIGHT;
+        case "apocalyptic":
+          return APOCALYPTIC_LIGHT;
+        case "horror":
+          return HORROR_LIGHT;
+        case "fallout":
+          return FALLOUT_LIGHT;
+        case "starwars":
+          return STARWARS_LIGHT;
+        case "startrek":
+          return STARTREK_LIGHT;
+        default:
+          return DEFAULT_THEME;
+      }
+    }
+  });
+
+  resolvedAppAppearanceId = $derived<ResolvedAppAppearanceId>(
+    this.appAppearanceId === "system"
+      ? this.isSystemDark
+        ? "neutral-dark"
+        : "neutral-light"
+      : this.appAppearanceId === "neutral-dark"
+        ? "neutral-dark"
+        : "neutral-light",
   );
+
+  get currentThemeId(): string {
+    return this.worldThemeId;
+  }
+
+  set currentThemeId(id: string) {
+    void this.setTheme(id);
+  }
 
   /**
    * Resolved jargon for the active theme, falling back to defaults.
@@ -63,7 +144,7 @@ export class ThemeStore {
   }
 
   constructor(
-    uiStore: typeof defaultUiStore = defaultUiStore,
+    sessionStore: typeof sessionModeStore = sessionModeStore,
     getVault?: () => any,
     storage: IThemeStorage = {
       loadLocal() {
@@ -73,6 +154,14 @@ export class ThemeStore {
       saveLocal(id) {
         if (!browser) return;
         localStorage.setItem(STORAGE_KEY, id);
+      },
+      loadAppAppearance() {
+        if (!browser) return null;
+        return localStorage.getItem(APPEARANCE_KEY);
+      },
+      saveAppAppearance(id) {
+        if (!browser) return;
+        localStorage.setItem(APPEARANCE_KEY, id);
       },
       async loadFromCache(vaultId) {
         const db = await getDB();
@@ -119,26 +208,69 @@ export class ThemeStore {
       },
     },
   ) {
-    this.uiStore = uiStore;
+    this.sessionModeStore = sessionStore;
     this.storage = storage;
     this.getVault =
       getVault || (() => import("./vault.svelte").then((m) => m.vault));
 
+    // Media query listener for prefers-color-scheme
+    if (
+      browser &&
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function"
+    ) {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      this.isSystemDark = mediaQuery.matches;
+
+      // Use modern addEventListener if available, fallback to addListener
+      const listener = (e: MediaQueryListEvent) => {
+        this.isSystemDark = e.matches;
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener("change", listener);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(listener);
+      }
+    }
+
+    // Apply initial app appearance
+    const initialAppearance = this.storage.loadAppAppearance();
+    if (
+      initialAppearance &&
+      (initialAppearance === "neutral-light" ||
+        initialAppearance === "neutral-dark" ||
+        initialAppearance === "system")
+    ) {
+      this.appAppearanceId = initialAppearance;
+    } else {
+      this.appAppearanceId = "system";
+    }
+
     // Apply initial theme
     const initial = this.storage.loadLocal();
-    if (initial && THEMES[initial]) {
-      this.currentThemeId = initial;
+    if (initial && THEMES[initial as WorldThemeId]) {
+      this.worldThemeId = initial as WorldThemeId;
+    } else {
+      this.worldThemeId = DEFAULT_THEME.id;
     }
 
     // Apply initial theme immediately if in browser to prevent flash
     // before the first $effect runs.
     if (browser) {
-      this.applyTheme(this.activeTheme);
+      this.applyTheme(
+        this.activeTheme,
+        this.resolvedAppAppearanceId,
+        this.appAppearanceId,
+      );
     }
 
     $effect.root(() => {
       $effect(() => {
-        this.applyTheme(this.activeTheme);
+        this.applyTheme(
+          this.activeTheme,
+          this.resolvedAppAppearanceId,
+          this.appAppearanceId,
+        );
       });
     });
   }
@@ -154,45 +286,61 @@ export class ThemeStore {
       await this.loadForVault(activeVaultId);
     } else {
       const stored = this.storage.loadLocal();
-      if (stored && THEMES[stored] && this.currentThemeId !== stored) {
-        this.currentThemeId = stored;
+      if (
+        stored &&
+        THEMES[stored as WorldThemeId] &&
+        this.worldThemeId !== stored
+      ) {
+        this.worldThemeId = stored as WorldThemeId;
       }
     }
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || this.uiStore.isDemoMode) return;
+    if (!browser || this.sessionModeStore.isDemoMode) return;
 
     this.previewThemeId = null; // Clear any preview on vault switch
 
     try {
       // Priority 1: OPFS (Vault Source of Truth)
       const opfsTheme = await this.storage.loadFromDisk(vaultId);
-      if (opfsTheme && THEMES[opfsTheme]) {
-        if (this.currentThemeId !== opfsTheme) {
-          this.currentThemeId = opfsTheme;
+      if (opfsTheme && THEMES[opfsTheme as WorldThemeId]) {
+        if (this.worldThemeId !== opfsTheme) {
+          this.worldThemeId = opfsTheme as WorldThemeId;
         }
         this.storage.saveLocal(opfsTheme);
-        this.applyTheme(this.activeTheme);
+        this.applyTheme(
+          this.activeTheme,
+          this.resolvedAppAppearanceId,
+          this.appAppearanceId,
+        );
         return;
       }
 
       // Priority 2: IndexedDB (Local Cache)
       const stored = await this.storage.loadFromCache(vaultId);
-      if (stored && THEMES[stored]) {
-        if (this.currentThemeId !== stored) {
-          this.currentThemeId = stored;
+      if (stored && THEMES[stored as WorldThemeId]) {
+        if (this.worldThemeId !== stored) {
+          this.worldThemeId = stored as WorldThemeId;
         }
         this.storage.saveLocal(stored);
-        this.applyTheme(this.activeTheme);
+        this.applyTheme(
+          this.activeTheme,
+          this.resolvedAppAppearanceId,
+          this.appAppearanceId,
+        );
         return;
       }
 
       // Fallback: Reset to default for new/empty vaults
-      if (this.currentThemeId !== DEFAULT_THEME.id) {
-        this.currentThemeId = DEFAULT_THEME.id;
+      if (this.worldThemeId !== DEFAULT_THEME.id) {
+        this.worldThemeId = DEFAULT_THEME.id;
         this.storage.saveLocal(DEFAULT_THEME.id);
-        this.applyTheme(this.activeTheme);
+        this.applyTheme(
+          this.activeTheme,
+          this.resolvedAppAppearanceId,
+          this.appAppearanceId,
+        );
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
@@ -200,13 +348,13 @@ export class ThemeStore {
   }
 
   async setTheme(id: string) {
-    if (!THEMES[id]) return;
+    if (!THEMES[id as WorldThemeId]) return;
 
-    this.currentThemeId = id;
+    this.worldThemeId = id as WorldThemeId;
     this.onThemeUpdate?.(id);
     if (browser) {
       // Don't persist theme if in demo mode
-      if (this.uiStore.isDemoMode) return;
+      if (this.sessionModeStore.isDemoMode) return;
 
       this.storage.saveLocal(id);
 
@@ -227,16 +375,32 @@ export class ThemeStore {
     }
   }
 
-  previewTheme(id: string | null) {
-    this.previewThemeId = id;
+  setAppAppearance(id: AppAppearanceId) {
+    this.appAppearanceId = id;
+    if (browser && !this.sessionModeStore.isDemoMode) {
+      this.storage.saveAppAppearance(id);
+    }
   }
 
-  private applyTheme(theme: StylingTemplate) {
+  previewTheme(id: string | null) {
+    this.previewThemeId = id as WorldThemeId | null;
+  }
+
+  private applyTheme(
+    theme: StylingTemplate,
+    appearance: ResolvedAppAppearanceId,
+    appearanceChoice: AppAppearanceId,
+  ) {
     if (typeof document === "undefined") return;
 
     const root = document.documentElement;
     const tokens = theme.tokens;
     root.dataset.theme = theme.id;
+    root.dataset.appAppearance = appearance;
+    root.dataset.appAppearanceChoice = appearanceChoice;
+    root.dataset.worldTheme = (
+      this.previewThemeId || this.worldThemeId
+    ).replace(/_(light|dark)$/, "");
 
     root.style.setProperty("--color-bg-primary", tokens.background);
     root.style.setProperty("--color-bg-surface", tokens.surface);

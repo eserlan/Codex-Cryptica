@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Proposal } from "@codex/proposer";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
 const {
   mockVault,
   mockOracle,
-  mockUiStore,
   mockDebugStore,
   mockAnalyzeEntity,
   mockVaultEventBus,
@@ -21,10 +21,6 @@ const {
   mockOracle: {
     effectiveApiKey: "test-key",
   },
-  mockUiStore: {
-    aiDisabled: false,
-    connectionDiscoveryMode: "suggest",
-  },
   mockDebugStore: {
     log: vi.fn(),
     warn: vi.fn(),
@@ -39,9 +35,8 @@ const {
 
 vi.mock("./vault.svelte", () => ({ vault: mockVault }));
 vi.mock("./oracle.svelte", () => ({ oracle: mockOracle }));
-vi.mock("./ui.svelte", () => ({ uiStore: mockUiStore }));
 vi.mock("./debug.svelte", () => ({ debugStore: mockDebugStore }));
-vi.mock("./vault/events", () => ({ vaultEventBus: mockVaultEventBus }));
+vi.mock("./vault/events.svelte", () => ({ vaultEventBus: mockVaultEventBus }));
 vi.mock("../cloud-bridge/proposer-bridge", () => ({
   proposerBridge: { analyzeEntity: mockAnalyzeEntity },
 }));
@@ -79,6 +74,7 @@ const mockProposal = {
   sourceId: "s",
   targetId: "t",
   type: "related_to",
+  label: "Former Mentor",
   context: "c",
   reason: "r",
   confidence: 0.9,
@@ -97,7 +93,7 @@ describe("proposerStore", () => {
     mockVault.allEntities = Object.values(mockVault.entities);
     mockVault.activeVaultId = "test-vault";
     mockVault.selectedEntityId = "s";
-    mockUiStore.aiDisabled = false;
+    discoveryPolicyStore.aiDisabled = false;
     mockAnalyzeEntity.mockResolvedValue([]);
 
     const { proposerStore } = await import("./proposer.svelte");
@@ -123,12 +119,12 @@ describe("proposerStore", () => {
     expect(proposerStore.proposals["s"]).toHaveLength(1);
 
     // Skip if disabled
-    mockUiStore.aiDisabled = true;
+    discoveryPolicyStore.aiDisabled = true;
     await proposerStore.analyzeCurrentEntity();
     expect(mockAnalyzeEntity).toHaveBeenCalledTimes(1);
 
     // Skip if no vault
-    mockUiStore.aiDisabled = false;
+    discoveryPolicyStore.aiDisabled = false;
     mockVault.activeVaultId = null;
     await proposerStore.analyzeEntityById("s");
     expect(mockAnalyzeEntity).toHaveBeenCalledTimes(1);
@@ -140,7 +136,12 @@ describe("proposerStore", () => {
     proposerStore.proposals["s"] = [p];
 
     await proposerStore.apply(p);
-    expect(mockVault.addConnection).toHaveBeenCalled();
+    expect(mockVault.addConnection).toHaveBeenCalledWith(
+      "s",
+      "t",
+      "related_to",
+      "Former Mentor",
+    );
     expect(proposerStore.proposals["s"]).toHaveLength(0);
 
     // Dismiss with history
@@ -152,6 +153,10 @@ describe("proposerStore", () => {
 
   it("handles verify and undo branches", async () => {
     const { proposerStore } = await import("./proposer.svelte");
+    const loadSpy = vi
+      .spyOn(proposerStore, "loadGlobalProposals")
+      .mockResolvedValue(undefined);
+
     const p = { ...mockProposal, sourceId: "s", targetId: "t" };
     proposerStore.allAcceptedProposals = [p];
     proposerStore.proposals["s"] = [p];
@@ -159,9 +164,13 @@ describe("proposerStore", () => {
     await proposerStore.verify(p);
     expect(mockService.verifyProposal).toHaveBeenCalled();
     expect(proposerStore.allVerifiedProposals).toHaveLength(1);
+    expect(loadSpy).toHaveBeenCalled();
+
+    loadSpy.mockClear();
 
     await proposerStore.undo(p);
     expect(mockVault.removeConnection).toHaveBeenCalled();
+    expect(loadSpy).toHaveBeenCalled();
   });
 
   it("handles reEvaluate", async () => {
@@ -402,5 +411,56 @@ describe("proposerStore", () => {
       "p-high",
       "p-mid",
     ]);
+  });
+
+  it("loads global proposals on VAULT_SWITCHED event", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+    const loadSpy = vi
+      .spyOn(proposerStore, "loadGlobalProposals")
+      .mockResolvedValue(undefined);
+
+    const busListener = mockVaultEventBus.subscribe.mock.calls.find(
+      (call) => typeof call[0] === "function",
+    )?.[0];
+
+    if (!busListener) throw new Error("Bus listener not found");
+    await busListener({ type: "VAULT_SWITCHED" });
+
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it("synchronizes global proposals on mutation methods", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+    const loadSpy = vi
+      .spyOn(proposerStore, "loadGlobalProposals")
+      .mockResolvedValue(undefined);
+
+    const p = { ...mockProposal, sourceId: "s", targetId: "t" };
+
+    // Test verify
+    await proposerStore.verify(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test undo
+    await proposerStore.undo(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test apply
+    await proposerStore.apply(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test dismiss
+    await proposerStore.dismiss(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test reEvaluate
+    await proposerStore.reEvaluate(p);
+    expect(loadSpy).toHaveBeenLastCalledWith();
+
+    // Test analyzeEntityById
+    await proposerStore.analyzeEntityById("s");
+    expect(loadSpy).toHaveBeenLastCalledWith();
   });
 });

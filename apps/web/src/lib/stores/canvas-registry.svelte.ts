@@ -1,6 +1,5 @@
 import { getVaultDir } from "../utils/opfs";
 import { vaultRegistry } from "./vault-registry.svelte";
-import { uiStore } from "./ui.svelte";
 import {
   saveCanvasToDisk,
   loadCanvasesFromDisk,
@@ -8,6 +7,7 @@ import {
 } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
 import type { Canvas, CanvasNode } from "@codex/canvas-engine";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -122,7 +122,7 @@ class CanvasRegistryStore {
     }
 
     if (
-      !(await uiStore.confirm({
+      !(await notificationStore.confirm({
         title: "Delete Canvas",
         message: `Are you sure you want to delete canvas "${data.name}"?`,
         confirmLabel: "Delete",
@@ -148,10 +148,13 @@ class CanvasRegistryStore {
       delete nextCanvases[id];
       this.canvases = nextCanvases;
 
-      uiStore.notify(`Deleted workspace "${data.name}"`, "success");
+      notificationStore.notify(`Deleted workspace "${data.name}"`, "success");
     } catch (e: any) {
       console.error("[CanvasRegistryStore] Failed to delete canvas file", e);
-      uiStore.notify(`Failed to delete canvas: ${e.message}`, "error");
+      notificationStore.notify(
+        `Failed to delete canvas: ${e.message}`,
+        "error",
+      );
     }
   }
 
@@ -198,7 +201,7 @@ class CanvasRegistryStore {
       } catch (err) {
         console.error("[CanvasRegistryStore] Failed to save canvas", id, err);
         this.status = "error";
-        uiStore.notify(
+        notificationStore.notify(
           "Failed to save canvas data. Please check your storage quota.",
           "error",
         );

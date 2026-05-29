@@ -2,9 +2,9 @@
   import type { ChatCommand } from "$lib/config/chat-commands";
   import CommandMenu from "$lib/components/oracle/CommandMenu.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { tick } from "svelte";
   import VTTChatMessage from "./VTTChatMessage.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let input = $state("");
   let scrollContainer = $state<HTMLDivElement>();
@@ -123,7 +123,7 @@
       <button
         type="button"
         class="w-10 h-10 flex items-center justify-center border border-theme-border bg-theme-bg/50 text-theme-muted rounded hover:border-theme-primary hover:text-theme-primary transition-all active:scale-95 shadow-inner shrink-0 self-end"
-        onclick={() => (uiStore.showDiceModal = true)}
+        onclick={() => (modalUIStore.showDiceModal = true)}
         aria-label="Open Dice Roller"
         title="Open Dice Roller"
         data-testid="vtt-dice-roller-button"

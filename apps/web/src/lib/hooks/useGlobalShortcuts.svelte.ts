@@ -6,9 +6,14 @@ interface ShortcutContext {
     toggle: () => void;
     close: () => void;
   };
-  uiStore: {
+  modalUIStore: {
     showSettings: boolean;
     closeSettings: () => void;
+  };
+  quickNoteStore: {
+    isOpen: boolean;
+    toggle: () => void;
+    close: () => void;
   };
 }
 
@@ -40,12 +45,24 @@ export function useGlobalShortcuts(context: ShortcutContext) {
       context.searchStore.toggle();
     }
 
-    // Escape to close active modals/settings
+    // Cmd+I or Ctrl+I for QuickNote Scratchpad
+    if (
+      (e.key === "i" || e.key === "I") &&
+      (e.metaKey || e.ctrlKey) &&
+      !e.shiftKey
+    ) {
+      e.preventDefault();
+      context.quickNoteStore.toggle();
+    }
+
+    // Escape to close active modals/settings/scratchpads
     if (e.key === "Escape") {
       if (context.searchStore.isOpen) {
         context.searchStore.close();
-      } else if (context.uiStore.showSettings) {
-        context.uiStore.closeSettings();
+      } else if (context.modalUIStore.showSettings) {
+        context.modalUIStore.closeSettings();
+      } else if (context.quickNoteStore.isOpen) {
+        context.quickNoteStore.close();
       }
     }
   };

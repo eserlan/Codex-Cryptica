@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { uiStore } from "$stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
   import { VERSION } from "$lib/config";
   import releases from "../../content/changelog/releases.json";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
   let previousActiveElement: HTMLElement | null = null;
   let dialogElement = $state<HTMLElement>();
@@ -10,10 +10,10 @@
 
   // Only treat a new minor version as "new" for the auto-prompt and header copy.
   const hasUnseenMinorReleases = $derived.by(() => {
-    if (!uiStore.lastSeenVersion) return true;
+    if (!onboardingStore.lastSeenVersion) return true;
 
     const currentStoredMinor = parseInt(
-      uiStore.lastSeenVersion.split(".")[1] || "0",
+      onboardingStore.lastSeenVersion.split(".")[1] || "0",
       10,
     );
 
@@ -24,25 +24,25 @@
   });
 
   const close = () => {
-    uiStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
-    uiStore.showChangelog = false;
+    onboardingStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
+    onboardingStore.showChangelog = false;
   };
 
   $effect(() => {
-    if (!uiStore.showChangelog) return;
+    if (!onboardingStore.showChangelog) return;
 
     previousActiveElement = document.activeElement as HTMLElement;
 
-    const timeout = window.setTimeout(() => {
+    const frame = requestAnimationFrame(() => {
       if (closeButton) {
         closeButton.focus();
       } else {
         dialogElement?.focus();
       }
-    }, 0);
+    });
 
     return () => {
-      window.clearTimeout(timeout);
+      cancelAnimationFrame(frame);
       previousActiveElement?.focus();
       previousActiveElement = null;
     };
@@ -74,7 +74,7 @@
   };
 </script>
 
-{#if uiStore.showChangelog}
+{#if onboardingStore.showChangelog}
   <!-- Backdrop -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->

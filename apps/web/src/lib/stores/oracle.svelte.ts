@@ -1,26 +1,20 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
-import * as Comlink from "comlink";
-import { appEventBus } from "@codex/events";
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
-import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
+import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service.svelte";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
-import { searchService as defaultSearchService } from "../services/search";
+import { searchService as defaultSearchService } from "../services/search.svelte";
 import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
-import { uiStore as defaultUiStore } from "./ui.svelte";
 import { themeStore as defaultThemeStore } from "./theme.svelte";
 import { sessionActivity } from "../services/SessionActivityService";
 import {
   DraftingEngine,
   draftingEngine as defaultDraftingEngine,
-  buildRelatedEntityContext,
   ChatHistoryService,
-  OracleCommandParser,
   OracleActionExecutor,
   OracleSettingsService,
   UndoRedoService,
-  ORACLE_EVENTS,
   type ChatMessage,
   type UndoableAction,
   type OracleExecutionContext,
@@ -33,29 +27,68 @@ import {
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import { categories as defaultCategories } from "./categories.svelte";
 import type { TextGenerationService } from "schema";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+
+import { type IOracleStore } from "./oracle/types";
+import { OracleUiManager } from "./oracle/ui-manager.svelte";
+import { OracleChatManager } from "./oracle/chat-manager.svelte";
+import { OracleContextManager } from "./oracle/context-manager.svelte";
+import { OracleActionManager } from "./oracle/action-manager.svelte";
+import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
+import { OracleReconciliationManager } from "./oracle/reconciliation-manager.svelte";
 
 export type { ChatMessage, UndoableAction };
 
-type OracleUiSnapshot = {
-  aiDisabled: boolean;
-  isDemoMode: boolean;
-  entityDiscoveryMode?: string;
-  connectionDiscoveryMode?: string;
-  autoArchive?: boolean;
-  activeThemeId?: string;
-};
+export class OracleStore implements IOracleStore {
+  // Managers
+  ui: OracleUiManager;
+  chat: OracleChatManager;
+  context: OracleContextManager;
+  actions: OracleActionManager;
+  settingsManager: OracleSettingsManager;
+  reconciliation: OracleReconciliationManager;
 
-export class OracleStore {
   // Reactive UI state
-  isOpen = $state(false);
-  isModal = $state(false);
+  get isOpen() {
+    return this.ui.isOpen;
+  }
+  set isOpen(v) {
+    this.ui.isOpen = v;
+  }
+
+  get isModal() {
+    return this.ui.isModal;
+  }
+  set isModal(v) {
+    this.ui.isModal = v;
+  }
+
   isInitialized = $state(false);
-  visualizingEntityId = $state<string | null>(null);
-  visualizingMessageId = $state<string | null>(null);
+
+  get isThinking() {
+    return this.ui.isThinking;
+  }
+
+  get visualizingEntityId() {
+    return this.ui.visualizingEntityId;
+  }
+  set visualizingEntityId(v) {
+    this.ui.visualizingEntityId = v;
+  }
+
+  get visualizingMessageId() {
+    return this.ui.visualizingMessageId;
+  }
+  set visualizingMessageId(v) {
+    this.ui.visualizingMessageId = v;
+  }
 
   // Dependencies
   private _vault?: typeof defaultVault;
-  private _uiStore?: typeof defaultUiStore;
+  private _discoveryPolicyStore?: any;
+  private _sessionModeStore?: any;
   private _themeStore?: typeof defaultThemeStore;
   private _graph?: typeof defaultGraph;
   private _diceHistory?: typeof defaultDiceHistory;
@@ -69,51 +102,50 @@ export class OracleStore {
   private _categories?: typeof defaultCategories;
   private _draftingEngine?: DraftingEngine;
 
-  private get vault() {
+  get vault() {
     return this._vault ?? defaultVault;
   }
-  private get uiStore() {
-    return this._uiStore ?? defaultUiStore;
+  get discoveryPolicyStore() {
+    return this._discoveryPolicyStore ?? discoveryPolicyStore;
   }
-  private get themeStore() {
-    return this._themeStore ?? defaultThemeStore;
+  get sessionModeStore() {
+    return this._sessionModeStore ?? sessionModeStore;
   }
-  private get graph() {
-    return this._graph ?? defaultGraph;
+  get notificationStore() {
+    return notificationStore;
   }
-  private get diceHistory() {
-    return this._diceHistory ?? defaultDiceHistory;
-  }
-  private get contextRetrieval() {
-    return this._contextRetrieval ?? defaultContextRetrieval;
-  }
-  private get textGeneration(): TextGenerationService {
-    return (
-      this._textGeneration ??
-      (oracleBridge.isReady
-        ? (oracleBridge.textGeneration as any)
-        : defaultTextGeneration)
-    );
-  }
-  private get imageGeneration() {
-    return this._imageGeneration ?? defaultImageGeneration;
-  }
-  private get searchService() {
-    return this._searchService ?? defaultSearchService;
-  }
-  private get diceEngine() {
-    return this._diceEngine ?? defaultDiceEngine;
-  }
-  private get diceParser() {
-    return this._diceParser ?? defaultDiceParser;
-  }
-  private get sessionActivity() {
+  get sessionActivity() {
     return this._sessionActivity ?? sessionActivity;
   }
-  private get categories() {
+  get themeStore() {
+    return this._themeStore ?? defaultThemeStore;
+  }
+  get graph() {
+    return this._graph ?? defaultGraph;
+  }
+  get contextRetrieval() {
+    return this._contextRetrieval ?? defaultContextRetrieval;
+  }
+  get imageGeneration() {
+    return this._imageGeneration ?? defaultImageGeneration;
+  }
+  get searchService() {
+    return this._searchService ?? defaultSearchService;
+  }
+  get diceParser() {
+    return this._diceParser ?? defaultDiceParser;
+  }
+  get diceEngine() {
+    return this._diceEngine ?? defaultDiceEngine;
+  }
+  get diceHistory() {
+    return this._diceHistory ?? defaultDiceHistory;
+  }
+  get categories() {
     return this._categories ?? defaultCategories;
   }
-  private get draftingEngine(): DraftingEngine {
+
+  get draftingEngine() {
     return (
       this._draftingEngine ??
       (oracleBridge.isReady
@@ -121,20 +153,28 @@ export class OracleStore {
         : defaultDraftingEngine)
     );
   }
+  get textGeneration(): TextGenerationService {
+    return (
+      this._textGeneration ??
+      (oracleBridge.isReady
+        ? (oracleBridge.textGeneration as any)
+        : defaultTextGeneration)
+    );
+  }
 
   // Internal Engine Services
-  private chatHistoryService: ChatHistoryService;
-  private settingsService: OracleSettingsService;
-  private undoRedo: UndoRedoService;
-  private executor: OracleActionExecutor;
+  chatHistoryService: ChatHistoryService;
+  settingsService: OracleSettingsService;
+  undoRedo: UndoRedoService;
+  executor: OracleActionExecutor;
   private eventBus: BroadcastChannel | null = null;
-  private isChatHistoryReady = false;
   private vaultSwitchedHandler: ((e: Event) => void) | null = null;
 
   constructor(
     deps: {
       vault?: typeof defaultVault;
-      uiStore?: typeof defaultUiStore;
+      discoveryPolicyStore?: any;
+      sessionModeStore?: any;
       graph?: typeof defaultGraph;
       diceHistory?: typeof defaultDiceHistory;
       contextRetrieval?: typeof defaultContextRetrieval;
@@ -150,10 +190,18 @@ export class OracleStore {
       settingsService?: OracleSettingsService;
       undoRedo?: UndoRedoService;
       executor?: OracleActionExecutor;
+      // Manager injections for testing
+      ui?: OracleUiManager;
+      chat?: OracleChatManager;
+      context?: OracleContextManager;
+      actions?: OracleActionManager;
+      settingsManager?: OracleSettingsManager;
+      reconciliation?: OracleReconciliationManager;
     } = {},
   ) {
     this._vault = deps.vault;
-    this._uiStore = deps.uiStore;
+    this._discoveryPolicyStore = deps.discoveryPolicyStore;
+    this._sessionModeStore = deps.sessionModeStore;
     this._graph = deps.graph;
     this._diceHistory = deps.diceHistory;
     this._contextRetrieval = deps.contextRetrieval;
@@ -174,6 +222,16 @@ export class OracleStore {
     this.executor =
       deps.executor ?? new OracleActionExecutor(undefined, this.draftingEngine);
 
+    // Initialize Managers
+    this.ui = deps.ui ?? new OracleUiManager(this);
+    this.chat = deps.chat ?? new OracleChatManager(this);
+    this.context = deps.context ?? new OracleContextManager(this);
+    this.actions = deps.actions ?? new OracleActionManager(this);
+    this.settingsManager =
+      deps.settingsManager ?? new OracleSettingsManager(this);
+    this.reconciliation =
+      deps.reconciliation ?? new OracleReconciliationManager(this);
+
     // Initialize Event Bus for Hybrid Communication
     if (
       typeof window !== "undefined" &&
@@ -187,8 +245,8 @@ export class OracleStore {
     if (typeof window !== "undefined") {
       this.vaultSwitchedHandler = (e: Event) => {
         const newVaultId = (e as CustomEvent<{ id: string }>).detail?.id;
-        if (newVaultId && this.isChatHistoryReady) {
-          void this.chatHistoryService.switchVault(newVaultId);
+        if (newVaultId && this.chat.isChatHistoryReady) {
+          void this.chat.switchVault(newVaultId);
         }
       };
       window.addEventListener("vault-switched", this.vaultSwitchedHandler);
@@ -201,7 +259,7 @@ export class OracleStore {
   public destroy() {
     this.eventBus?.close();
     this.eventBus = null;
-    this.chatHistoryService.destroy();
+    this.chat.destroy();
     if (this.vaultSwitchedHandler && typeof window !== "undefined") {
       window.removeEventListener("vault-switched", this.vaultSwitchedHandler);
       this.vaultSwitchedHandler = null;
@@ -212,12 +270,15 @@ export class OracleStore {
     if (event.vaultId && event.vaultId !== this.vault.activeVaultId) return;
 
     switch (event.type) {
+      case "ORACLE_THINKING_START":
+        this.ui.updateThinking(1);
+        break;
+      case "ORACLE_THINKING_END":
+        this.ui.updateThinking(-1);
+        break;
       case "ORACLE_ENTITY_DISCOVERED":
         if (event.requestId) {
-          void this.chatHistoryService.addProposal(
-            event.requestId,
-            event.payload,
-          );
+          void this.chat.addProposal(event.requestId, event.payload);
         }
         break;
       case "ORACLE_ERROR":
@@ -229,44 +290,40 @@ export class OracleStore {
   async init() {
     if (this.isInitialized) return;
 
-    await this.chatHistoryService.init(
+    await this.chat.init(
       entityDb as any,
       this.vault.activeVaultId ?? "default",
     );
-    this.isChatHistoryReady = true;
-    await this.settingsService.init(entityDb as any);
+    await this.settingsManager.init(entityDb as any);
 
     this.isInitialized = true;
   }
 
   async loadForVault(vaultId: string) {
-    // If not initialized yet, standard init will pick up active vault
     if (!this.isInitialized) {
       return this.init();
     }
-
-    // Already initialized, force a reload of history for the new vault
-    await this.chatHistoryService.switchVault(vaultId);
+    await this.chat.switchVault(vaultId);
   }
 
   get messages() {
-    return this.chatHistoryService?.messages ?? [];
+    return this.chat.messages;
   }
 
   get settings() {
-    return this.settingsService?.settings;
+    return this.settingsManager.settings;
   }
 
   get apiKey() {
-    return this.settings?.apiKey;
+    return this.settingsManager.apiKey;
   }
 
   get connectionMode() {
-    return this.settings?.connectionMode || "system-proxy";
+    return this.settingsManager.connectionMode;
   }
 
   get isLoading() {
-    return this.settingsService?.isLoading || false;
+    return this.settingsManager.isLoading;
   }
 
   get isEnabled() {
@@ -274,395 +331,120 @@ export class OracleStore {
   }
 
   get modelName() {
-    return this.settings?.modelName || "gemini-1.5-flash";
+    return this.settingsManager.modelName;
   }
 
   get activeStyleTitle() {
-    return this.settingsService?.activeStyleTitle || null;
+    return this.settingsManager.activeStyleTitle;
   }
 
   get undoStack() {
-    return this.undoRedo?.undoStack ?? [];
+    return this.actions.undoStack;
   }
 
   get redoStack() {
-    return this.undoRedo?.redoStack ?? [];
+    return this.actions.redoStack;
   }
 
   get tier() {
-    return this.uiStore.aiDisabled ? "lite" : "advanced";
+    return this.settingsManager.tier;
   }
 
   get effectiveApiKey(): string | null {
     return this.apiKey || null;
   }
 
-  private createUiStoreSnapshot(): OracleUiSnapshot {
-    return {
-      aiDisabled: this.uiStore.aiDisabled,
-      isDemoMode: this.uiStore.isDemoMode,
-      entityDiscoveryMode: this.uiStore.entityDiscoveryMode,
-      connectionDiscoveryMode: this.uiStore.connectionDiscoveryMode,
-      autoArchive: (this.uiStore as any).autoArchive,
-      activeThemeId: this.themeStore.activeTheme?.id,
-    };
-  }
-
   getExecutionContext(): OracleExecutionContext {
-    const isWorker = oracleBridge.isReady;
-
-    /**
-     * Helper to wrap a method with Comlink.proxy only if it exists.
-     * Prevents "Cannot convert undefined or null to object" errors in tests.
-     */
-    const wrap = (method: any) => {
-      if (!method) return undefined;
-      return isWorker ? Comlink.proxy(method) : method;
-    };
-
-    return {
-      vaultId: this.vault.activeVaultId,
-      vault: {
-        activeVaultId: this.vault.activeVaultId,
-        selectedEntityId: this.vault.selectedEntityId,
-        entities: $state.snapshot(this.vault.entities),
-        inboundConnections: $state.snapshot(this.vault.inboundConnections),
-        isGuest: this.vault.isGuest,
-        createEntity: wrap(this.vault.createEntity?.bind(this.vault)),
-        updateEntity: wrap(this.vault.updateEntity?.bind(this.vault)),
-        addConnection: wrap(this.vault.addConnection?.bind(this.vault)),
-        removeConnection: wrap(this.vault.removeConnection?.bind(this.vault)),
-        saveImageToVault: wrap(this.vault.saveImageToVault?.bind(this.vault)),
-        loadEntityContent: wrap(this.vault.loadEntityContent?.bind(this.vault)),
-      },
-      uiStore: this.createUiStoreSnapshot(),
-      chatHistory: {
-        messages: $state.snapshot(this.chatHistoryService.messages),
-        getMessages: wrap(() => [...this.chatHistoryService.messages]),
-        addMessage: wrap(
-          this.chatHistoryService.addMessage?.bind(this.chatHistoryService),
-        ),
-        updateMessage: wrap(
-          this.chatHistoryService.updateMessage?.bind(this.chatHistoryService),
-        ),
-        setMessages: wrap(
-          this.chatHistoryService.setMessages?.bind(this.chatHistoryService),
-        ),
-        clearMessages: wrap(
-          this.chatHistoryService.clearMessages?.bind(this.chatHistoryService),
-        ),
-        addProposal: wrap(
-          this.chatHistoryService.addProposal?.bind(this.chatHistoryService),
-        ),
-      },
-      contextRetrieval: {
-        retrieveContext: wrap(
-          this.contextRetrieval.retrieveContext?.bind(this.contextRetrieval),
-        ),
-        getConsolidatedContext: wrap(
-          this.contextRetrieval.getConsolidatedContext?.bind(
-            this.contextRetrieval,
-          ),
-        ),
-      },
-      imageGeneration: {
-        distillVisualPrompt: wrap(
-          this.imageGeneration.distillVisualPrompt?.bind(this.imageGeneration),
-        ),
-        generateImage: wrap(
-          this.imageGeneration.generateImage?.bind(this.imageGeneration),
-        ),
-      },
-      textGeneration: {
-        // Explicitly forward calls to handle proxy enumerable issues
-        expandQuery: (apiKey: string, query: string, history: any[]) =>
-          this.textGeneration.expandQuery(
-            apiKey,
-            query,
-            $state.snapshot(history),
-          ),
-        generateResponse: (
-          apiKey: string,
-          query: string,
-          history: any[],
-          context: string,
-          modelName: string,
-          onUpdate: (partial: string) => void,
-          demoMode?: boolean,
-          categories?: string[],
-          options?: {
-            requestId?: string;
-            vaultId?: string;
-            existingEntities?: any[];
-          },
-        ) => {
-          const callback = isWorker
-            ? Comlink.proxy(onUpdate)
-            : (onUpdate as any);
-
-          return this.textGeneration.generateResponse(
-            apiKey,
-            query,
-            $state.snapshot(history),
-            context,
-            modelName,
-            callback,
-            demoMode,
-            categories ? $state.snapshot(categories) : undefined,
-            {
-              ...options,
-              requestId: options?.requestId || undefined,
-              vaultId:
-                options?.vaultId || this.vault.activeVaultId || undefined,
-              existingEntities: options?.existingEntities
-                ? $state.snapshot(options.existingEntities)
-                : $state.snapshot(Object.values(this.vault.entities || {})),
-            },
-          );
-        },
-        reconcileEntityUpdate: wrap(
-          this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
-        ),
-      },
-      searchService: {
-        search: wrap(this.searchService.search?.bind(this.searchService)),
-      },
-      diceParser: {
-        parse: wrap(this.diceParser.parse?.bind(this.diceParser)),
-      },
-      diceEngine: {
-        execute: wrap(this.diceEngine.execute?.bind(this.diceEngine)),
-      },
-      diceHistory: {
-        addResult: wrap(this.diceHistory.addResult?.bind(this.diceHistory)),
-      },
-      graph: {
-        requestFit: wrap(this.graph.requestFit?.bind(this.graph)),
-      },
-      undoRedo: {
-        pushUndoAction: wrap(this.undoRedo.pushUndoAction?.bind(this.undoRedo)),
-      },
-      tier: this.tier,
-      effectiveApiKey: this.effectiveApiKey,
-      modelName: this.modelName,
-      isDemoMode: this.uiStore.isDemoMode,
-      automationPolicy: $state.snapshot(this.uiStore.oracleAutomationPolicy),
-      proposeConnectionsForEntity: wrap(
-        async (
-          entityId: string,
-          options?: { apply?: boolean; analysisText?: string },
-        ) => {
-          const { proposerStore } = await import("./proposer.svelte");
-          if (options?.apply) {
-            return proposerStore.analyzeAndApplyEntityById(
-              entityId,
-              options.analysisText,
-            );
-          }
-          return proposerStore.analyzeEntityById(
-            entityId,
-            false,
-            options?.analysisText,
-          );
-        },
-      ),
-      logActivity: wrap((event: any) =>
-        this.sessionActivity.addEvent?.({
-          type: event.type,
-          title: event.title,
-          entityType: event.entityType,
-          entityId: event.entityId,
-        }),
-      ),
-      draftingEngine: this.draftingEngine,
-      categories: $state.snapshot(this.categories.list),
-    } as OracleExecutionContext;
+    return this.context.getExecutionContext();
   }
 
   async undo() {
-    await this.undoRedo.undo((action) => {
-      if (action?.messageId) {
-        appEventBus.emit({
-          type: ORACLE_EVENTS.UNDO_PERFORMED,
-          domain: "oracle",
-          payload: { messageId: action.messageId },
-          metadata: { timestamp: Date.now(), sync: true },
-        });
-      }
-    });
+    await this.actions.undo();
   }
 
   async redo() {
-    await this.undoRedo.redo();
+    await this.actions.redo();
   }
 
   async sendMessage(content: string) {
-    if (!content.trim()) return;
-
-    const intent = OracleCommandParser.parse(content, this.uiStore.aiDisabled);
-
-    await this.executor.execute(intent, this.getExecutionContext());
+    await this.chat.sendMessage(content);
   }
 
   /** Alias for sendMessage used by chat commands */
   async ask(content: string) {
-    return this.sendMessage(content);
+    await this.chat.ask(content);
   }
 
   async regenerate(entityId: string, onPartial?: (partial: string) => void) {
-    await this.executor.execute(
-      { type: "regenerate", entityId },
-      this.getExecutionContext(),
-      onPartial,
-    );
+    await this.actions.regenerate(entityId, onPartial);
   }
 
   async drawEntity(entityId: string) {
-    if (this.visualizingEntityId === entityId) return;
-
-    this.visualizingEntityId = entityId;
-    try {
-      await this.executor.drawEntity(entityId, this.getExecutionContext());
-    } finally {
-      if (this.visualizingEntityId === entityId) {
-        this.visualizingEntityId = null;
-      }
-    }
+    await this.actions.drawEntity(entityId);
   }
 
   async drawMessage(messageId: string) {
-    if (this.visualizingMessageId === messageId) return;
-
-    this.visualizingMessageId = messageId;
-    try {
-      await this.executor.drawMessage(messageId, this.getExecutionContext());
-    } finally {
-      if (this.visualizingMessageId === messageId) {
-        this.visualizingMessageId = null;
-      }
-    }
+    await this.actions.drawMessage(messageId);
   }
 
   isVisualizingEntity(entityId: string | null | undefined) {
-    return Boolean(entityId && this.visualizingEntityId === entityId);
+    return this.ui.isVisualizingEntity(entityId);
   }
 
   isVisualizingMessage(messageId: string | null | undefined) {
-    return Boolean(messageId && this.visualizingMessageId === messageId);
+    return this.ui.isVisualizingMessage(messageId);
   }
 
   async clearMessages() {
-    if (
-      await this.uiStore.confirm({
-        title: "Clear History",
-        message:
-          "Are you sure you want to clear your conversation history? This cannot be undone.",
-        confirmLabel: "Clear History",
-        isDangerous: true,
-      })
-    ) {
-      await this.chatHistoryService.clear();
-      this.sessionActivity.clear();
-    }
+    await this.chat.clearMessages();
   }
 
   async removeMessage(id: string) {
-    await this.chatHistoryService.removeMessage(id);
+    await this.chat.removeMessage(id);
+  }
+
+  async reconcileSmartApply(
+    entityId: string,
+    incoming: { chronicle?: string; lore?: string },
+  ): Promise<{ content?: string; lore?: string; categoryId?: string }> {
+    return this.reconciliation.reconcileSmartApply(entityId, incoming);
   }
 
   async reconcileDiscoveryProposal(proposal: DiscoveryProposal) {
-    if (!proposal.entityId) {
-      throw new Error("Discovery proposal does not target an existing record.");
-    }
+    return this.reconciliation.reconcileDiscoveryProposal(proposal);
+  }
 
-    const existing = this.vault.entities[proposal.entityId];
-    if (!existing) {
-      throw new Error(`Entity ${proposal.entityId} was not found.`);
-    }
-
-    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
-      return {
-        content: existing.content || proposal.draft.chronicle,
-        lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
-      };
-    }
-
-    try {
-      // We MUST snapshot reactive state before sending to a worker (PR Fix)
-      const snapExisting = $state.snapshot(existing);
-      const snapIncoming = $state.snapshot({
-        chronicle: proposal.draft.chronicle,
-        lore: proposal.draft.lore,
-      });
-      const snapContext = $state.snapshot(
-        buildRelatedEntityContext({
-          entity: existing,
-          incoming: {
-            chronicle: proposal.draft.chronicle,
-            lore: proposal.draft.lore,
-          },
-          vault: this.vault,
-          getConsolidatedContext: (related) =>
-            this.contextRetrieval.getConsolidatedContext(related),
-        }),
-      );
-
-      return await this.textGeneration.reconcileEntityUpdate(
-        this.effectiveApiKey || "",
-        this.modelName,
-        snapExisting,
-        snapIncoming,
-        snapContext,
-      );
-    } catch {
-      return {
-        content: existing.content || proposal.draft.chronicle,
-        lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
-      };
-    }
+  async reconcileNewEntityDraft(
+    title: string,
+    type: string,
+    draft: { chronicle: string; lore: string },
+  ): Promise<{ content: string; lore: string; categoryId?: string }> {
+    return this.reconciliation.reconcileNewEntityDraft(title, type, draft);
   }
 
   async proposeConnectionsForEntity(
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },
   ) {
-    const { proposerStore } = await import("./proposer.svelte");
-    if (options?.apply) {
-      return proposerStore.analyzeAndApplyEntityById(
-        entityId,
-        options.analysisText,
-      );
-    }
-    return proposerStore.analyzeEntityById(
-      entityId,
-      false,
-      options?.analysisText,
-    );
+    return this.reconciliation.proposeConnectionsForEntity(entityId, options);
   }
 
   async handleDiscoveryConnectionsForEntity(
     entityId: string,
     analysisText?: string,
   ) {
-    const mode = this.uiStore.connectionDiscoveryMode;
-    if (mode === "off") {
-      return 0;
-    }
-
-    return this.proposeConnectionsForEntity(entityId, {
-      apply: mode === "auto-apply",
+    return this.reconciliation.handleDiscoveryConnectionsForEntity(
+      entityId,
       analysisText,
-    });
+    );
   }
 
   async startWizard(type: "connection" | "merge") {
-    await this.chatHistoryService.startWizard(type);
+    await this.chat.startWizard(type);
   }
 
   async reset() {
-    if (this.chatHistoryService) {
-      await this.chatHistoryService.setMessages([]);
-    }
+    await this.chat.reset();
   }
 
   pushUndoAction(
@@ -671,51 +453,39 @@ export class OracleStore {
     messageId?: string,
     redo?: () => Promise<void>,
   ) {
-    this.undoRedo.pushUndoAction(description, undo, messageId, redo);
+    this.actions.pushUndoAction(description, undo, messageId, redo);
   }
 
   async updateSettings(settings: any) {
-    await this.settingsService.updateSettings(settings);
+    await this.settingsManager.updateSettings(settings);
   }
 
   async setKey(key: string) {
-    if (this.apiKey === key) return;
-    await this.settingsService.updateSettings({ apiKey: key });
+    await this.settingsManager.setKey(key);
   }
 
   async clearKey() {
-    await this.settingsService.updateSettings({ apiKey: undefined });
+    await this.settingsManager.clearKey();
   }
 
   async updateMessageEntity(messageId: string, entityId: string | null) {
-    await this.chatHistoryService.updateMessage(messageId, {
-      entityId: entityId || undefined,
-    });
+    await this.chat.updateMessageEntity(messageId, entityId);
   }
 
   toggle() {
-    this.isOpen = !this.isOpen;
-    if (this.isOpen) {
-      this.init();
-    }
+    this.ui.toggle();
   }
 
   toggleModal() {
-    this.isModal = !this.isModal;
-    if (!this.isOpen) {
-      this.open(this.isModal);
-    }
+    this.ui.toggleModal();
   }
 
   open(modal = false) {
-    this.isOpen = true;
-    this.isModal = modal;
-    this.init();
+    this.ui.open(modal);
   }
 
   close() {
-    this.isOpen = false;
-    this.isModal = false;
+    this.ui.close();
   }
 
   // Test-only image helper
@@ -725,12 +495,7 @@ export class OracleStore {
     imageBlob: Blob,
     entityId?: string,
   ) {
-    await this.chatHistoryService.addTestImageMessage(
-      content,
-      imageUrl,
-      imageBlob,
-      entityId,
-    );
+    await this.chat.addTestImageMessage(content, imageUrl, imageBlob, entityId);
   }
 }
 

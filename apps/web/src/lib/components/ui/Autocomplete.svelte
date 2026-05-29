@@ -3,14 +3,14 @@
 </script>
 
 <script lang="ts">
-  import { searchService } from "$lib/services/search";
+  import { searchService } from "$lib/services/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { SearchResult } from "schema";
   import { isEntityVisible } from "schema";
-  import { ui } from "$lib/stores/ui.svelte";
   import { onDestroy, onMount, tick } from "svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let {
     value = $bindable(""),
@@ -103,7 +103,7 @@
 
         // Filter results based on visibility settings (same as searchStore)
         const settings = {
-          sharedMode: ui.sharedMode,
+          sharedMode: sessionModeStore.sharedMode,
           defaultVisibility: vault.defaultVisibility,
         };
 

@@ -1,11 +1,12 @@
 <script lang="ts">
   import { Handle, Position, type NodeProps } from "@xyflow/svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { renderMarkdown } from "$lib/utils/markdown";
   import { Edit2, Check, X } from "lucide-svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { data, selected }: NodeProps = $props();
 
@@ -17,7 +18,7 @@
   let imageUrl = $state<string | null>(null);
 
   // Access global state to detect if we are currently connecting anywhere on the canvas
-  const isConnecting = $derived(uiStore.isConnecting);
+  const isConnecting = $derived(connectionModeStore.isConnecting);
 
   $effect(() => {
     if (entity?.image) {
@@ -56,9 +57,12 @@
       node.style.height = node.scrollHeight + "px";
     };
     node.addEventListener("input", resize);
-    setTimeout(resize, 0);
+    const frame = requestAnimationFrame(resize);
     return {
-      destroy: () => node.removeEventListener("input", resize),
+      destroy: () => {
+        node.removeEventListener("input", resize);
+        cancelAnimationFrame(frame);
+      },
     };
   }
 
@@ -81,12 +85,12 @@
     }
   }
 
-  const isCtrlPressed = $derived(uiStore.isModifierPressed);
+  const isCtrlPressed = $derived(connectionModeStore.isModifierPressed);
   let isHovered = $state(false);
 
   function onDoubleClick() {
     if (entity) {
-      uiStore.openZenMode(entity.id);
+      modalUIStore.openZenMode(entity.id);
     }
   }
 </script>
@@ -94,7 +98,9 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="bg-theme-surface border rounded-lg shadow-lg min-w-[200px] max-w-[300px] transition-all group select-none flex flex-col focus:outline-none relative
-    {isConnecting && isHovered && uiStore.connectingNodeId !== data?.id
+    {isConnecting &&
+  isHovered &&
+  connectionModeStore.connectingNodeId !== data?.id
     ? 'border-[3px] border-red-400 ring-4 ring-red-400/50 cursor-crosshair scale-[1.02]'
     : isCtrlPressed && isHovered
       ? 'nodrag border-[3px] border-amber-400 ring-4 ring-amber-400/50 cursor-crosshair'
@@ -142,6 +148,8 @@
           <img
             src={imageUrl}
             alt={entity?.title}
+            loading="lazy"
+            decoding="async"
             class="w-full h-full object-cover object-[center_20%] transition-transform duration-500 group-hover:scale-105"
           />
         </div>
@@ -228,13 +236,13 @@
           {/if}
         </div>
 
-        {#if entity?.tags && entity.tags.length > 0}
+        {#if entity?.labels && entity.labels.length > 0}
           <div class="flex flex-wrap gap-1 mt-3">
-            {#each entity.tags.slice(0, 5) as tag}
+            {#each entity.labels.slice(0, 5) as label}
               <span
                 class="px-1.5 py-0.5 bg-theme-bg border border-theme-border rounded text-[9px] text-theme-muted"
               >
-                {tag}
+                {label}
               </span>
             {/each}
           </div>

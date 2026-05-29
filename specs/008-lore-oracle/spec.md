@@ -1,5 +1,7 @@
 # Feature Specification: Lore Oracle (Cloud AI Assistant)
 
+**Status**: Implemented
+
 ## Background
 
 Users desire a natural language interface to query their vault ("Who is the king?"). Running local LLMs proves too resource-intensive for mobile/tablet devices. Therefore, we will implement an **Opt-In Cloud Oracle** powered by Google Gemini.
@@ -27,6 +29,12 @@ Users desire a natural language interface to query their vault ("Who is the king
 - System MUST fallback to keyword extraction if direct fuzzy search returns no results.
 - System MUST track sent context within a session to avoid sending redundant data in subsequent turns.
 
+- System MUST maintain conversation coherence by including previous message history in requests to the Gemini API.
+- System MUST support multi-turn history even when using the system-provided proxy (no custom API key mode).
+- System MUST implement a **Sliding Window** (default: 10 messages) for conversation history to prevent excessive token usage and payload size.
+- System MUST optimize prompt structure for **Implicit Caching** by maintaining prefix stability (System -> History -> Lore Context -> Query).
+- System MUST automatically retrieve and apply the global "Art Style" to inform tone and sensory details, but MUST explicitly instruct the AI NOT to mention the style by name or cite it as a source in the generated prose.
+
 ### FR-003: Integrated Chat UI
 
 - System MUST provide a docked chat window in the main application.
@@ -39,6 +47,20 @@ Users desire a natural language interface to query their vault ("Who is the king
 - System MUST intelligently select between "COPY TO CHRONICLE" (concise) or "COPY TO LORE" (expansive) based on the content length of the response (default threshold: 400 characters) or explicitly detected user intent (e.g., keywords like "blurb", "chronicle", "short desc").
 - At most ONE archival button should be visible per message.
 - These actions MUST automatically update the target entity (appending or creating) and navigate the user to the appropriate tab in the Detail Panel.
+
+### FR-005: Multi-Stage Visual Depiction Workflow
+
+- System MUST handle `/draw` requests using a multi-stage cognitive architecture:
+  1. **Intent Trigger:** Only activate on explicit user request for visual content.
+  2. **Visual Canon Resolution:** Resolve established artistic direction, motifs, and faction aesthetics from the vault.
+  3. **Visual Prompt Generation:** Generate high-fidelity prompts grounded in the resolved canon, avoiding generic fantasy defaults.
+
+### FR-006: Multi-Stage Plot Generation Workflow
+
+- System MUST handle `/plot` requests using a multi-stage cognitive architecture:
+  1. **Intent Trigger:** Only activate on explicit user request for plot hooks, adventure seeds, or campaign developments.
+  2. **Plot Canon Resolution:** Search the vault for unresolved threads, faction agendas, and historical consequences to identify fertile ground for story development.
+  3. **Plot Generation:** Generate 3-5 actionable plot options grounded in established canon, following a structured format (Premise, Canon Roots, Complication, Player Hook, Possible Outcomes).
 
 ## Constraints
 

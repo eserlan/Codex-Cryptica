@@ -15,6 +15,32 @@ function normalizeTargetId(value: string): string {
     .replace(/^-|-$/g, "");
 }
 
+function readableConnectionType(value: unknown): string {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return "Related";
+
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function sanitizeConnectionLabel(
+  value: unknown,
+  fallbackType: unknown,
+): string {
+  const raw = typeof value === "string" ? value : "";
+  const cleaned = raw
+    .replace(/["'\n\r]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const fallback = readableConnectionType(fallbackType);
+
+  if (!cleaned) return fallback;
+  return cleaned.slice(0, 40).trim() || fallback;
+}
+
 export class ProposerService implements IProposerService {
   private dbPromise: Promise<IDBPDatabase<any>> | undefined;
   private config: ProposerConfig = {
@@ -43,7 +69,7 @@ export class ProposerService implements IProposerService {
         // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
         // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
         // for creating the 'proposals' store.
-        upgrade(db, oldVersion) {
+        upgrade(db, oldVersion, _newVersion, transaction) {
           if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
             const store = db.createObjectStore(PROPOSAL_STORE, {
               keyPath: "id",
@@ -54,7 +80,7 @@ export class ProposerService implements IProposerService {
             store.createIndex("by-vault-status", ["vaultId", "status"]);
             store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
           } else if (oldVersion < 8) {
-            const store = (db as any).transaction.objectStore(PROPOSAL_STORE);
+            const store = transaction.objectStore(PROPOSAL_STORE);
             if (!store.indexNames.contains("by-vault")) {
               store.createIndex("by-vault", "vaultId");
             }
@@ -142,12 +168,15 @@ Output a JSON array of objects with this schema:
 [
   {
     "targetId": "string (ID from list)",
-    "type": "string (e.g. 'related', 'ally', 'rival', 'located_in')",
+    "type": "string (stable category, e.g. 'related_to', 'friendly', 'enemy', 'neutral', 'located_in', 'part_of')",
+    "label": "string (short natural relationship name, e.g. 'Former Mentor', 'Sworn Enemy', 'Rules Over', 'Member Of')",
     "reason": "string (short explanation)",
     "context": "string (snippet from source text)",
     "confidence": number
   }
 ]
+
+Use "type" for broad grouping and "label" for the specific connection name the user should see. Keep labels under 40 characters.
 
 Only return the JSON. If no connections are found, return empty array [].`;
 
@@ -217,7 +246,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
           vaultId,
           sourceId: entityId,
           targetId: p.targetId,
-          type: p.type || "related",
+          type: p.type || "related_to",
+          label: sanitizeConnectionLabel(p.label, p.type || "related_to"),
           context: p.context || "",
           reason: p.reason || "AI detected semantic link",
           confidence: p.confidence,

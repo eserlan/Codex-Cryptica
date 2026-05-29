@@ -2,7 +2,7 @@
 
 **Feature Branch**: `044-oracle-chat-commands`  
 **Created**: 2026-02-16  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Implement /connect oracle command for entity connection with entity autocomplete (3+ chars) and AI-powered connection type proposals. Also implement a slash command menu UI to show available commands like /draw, /create, and /connect when '/' is typed in chat."
 
 ## User Scenarios & Testing _(mandatory)_
@@ -69,6 +69,19 @@ As a lore keeper, I want to merge two entities using natural language or a guide
 2. **Given** a merge request, **When** the user confirms, **Then** the source entity is absorbed into the target, connections are re-mapped, and the source is deleted.
 3. **Given** a natural language input like `/merge the village notes into the kingdom entry`, **When** the command is submitted, **Then** the Lore Oracle identifies the source and target entities.
 
+### User Story 5 - Intelligent Command Parsing (Priority: P2)
+
+As a lore keeper, I want the Oracle to distinguish between literal commands (e.g., creating an empty node) and descriptive requests (e.g., generating a full entity from context), so that I can use the same slash syntax for both manual and AI-assisted workflows.
+
+**Why this priority**: Prevents user frustration when descriptive input is ignored by a rigid parser.
+
+**Independent Test**: Type `/create "Bob" the legendary wizard` and verify that the Oracle processes the full description via AI instead of just creating an empty node named "Bob".
+
+**Acceptance Scenarios**:
+
+1. **Given** a command like `/create "Name"`, **When** no description follows, **Then** the system immediately creates an empty entity.
+2. **Given** a command like `/create "Name" description`, **When** extra text exists, **Then** the system delegates the creation to the AI engine for full reconciliation.
+
 ---
 
 ### Edge Cases
@@ -96,6 +109,8 @@ As a lore keeper, I want to merge two entities using natural language or a guide
 - **FR-007**: System MUST persist changes to the vault immediately upon user confirmation.
 - **FR-008**: System MUST prevent selecting the same entity as both source and target.
 - **FR-009**: System MUST support natural language parsing for `/connect` and `/merge` commands.
+- **FR-010**: Slash commands MUST use strict regex matching to distinguish between deterministic executions (e.g., immediate empty creation) and AI-assisted requests (e.g., entity generation from description).
+- **FR-011**: System MUST support manual and automatic linking of chat messages to vault entities to maintain conversational context.
 
 ### Key Entities _(include if feature involves data)_
 

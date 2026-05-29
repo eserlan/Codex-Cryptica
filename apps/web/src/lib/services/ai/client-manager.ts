@@ -74,12 +74,19 @@ export class DefaultAIClientManager {
       systemInstruction,
 
       startChat: (options: any = {}) => {
-        const _history = options.history || [];
+        const history = options.history || [];
         const model = this.createProxyModel(modelName, systemInstruction);
 
         return {
           sendMessageStream: async (query: string) => {
-            const result = await (model as any).generateContent(query);
+            const contents = [
+              ...history,
+              { role: "user", parts: [{ text: query }] },
+            ];
+
+            const result = await (model as any).generateContent({
+              contents,
+            });
 
             return {
               stream: (async function* () {
@@ -148,12 +155,20 @@ export class DefaultAIClientManager {
           }),
         }));
 
+        const requestSysInst =
+          raw?.systemInstruction ?? raw?.system_instruction;
+        const finalSysInst =
+          systemInstruction ??
+          (typeof requestSysInst === "string"
+            ? requestSysInst
+            : requestSysInst?.parts?.[0]?.text);
+
         try {
           const body = {
             model: modelName,
             contents,
-            system_instruction: systemInstruction
-              ? { parts: [{ text: systemInstruction }] }
+            system_instruction: finalSysInst
+              ? { parts: [{ text: finalSysInst }] }
               : undefined,
             generationConfig,
           };

@@ -3,12 +3,15 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { focusEntity } from "$lib/stores/ui/navigation";
 
   const isSpecialEnv =
     import.meta.env.DEV ||
@@ -84,17 +87,17 @@
   });
 
   const dismissFrontPageOverlay = () => {
-    uiStore.dismissWorldPage();
+    onboardingStore.dismissWorldPage();
   };
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       // 0. If settings or dice modal is open, let them handle Escape
-      if (uiStore.showSettings || uiStore.showDiceModal) return;
+      if (modalUIStore.showSettings || modalUIStore.showDiceModal) return;
 
       // 1. If an entity is focused (EmbeddedEntityView), close it
-      if (uiStore.mainViewMode === "focus") {
-        uiStore.focusEntity(null);
+      if (layoutUIStore.mainViewMode === "focus") {
+        focusEntity(null);
         return;
       }
 
@@ -106,8 +109,8 @@
 
       // 3. If the front page is visible, dismiss it
       if (
-        !uiStore.isLandingPageVisible &&
-        !uiStore.dismissedWorldPage &&
+        !onboardingStore.isLandingPageVisible &&
+        !onboardingStore.dismissedWorldPage &&
         !selectedEntity
       ) {
         dismissFrontPageOverlay();
@@ -133,7 +136,7 @@
   // to prevent race conditions during dynamic imports.
   $effect(() => {
     const isSkippingLanding =
-      browser && (!uiStore.isLandingPageVisible || isGuestMode);
+      browser && (!onboardingStore.isLandingPageVisible || isGuestMode);
     const isVaultReady = vault.isInitialized || isGuestMode;
 
     if (
@@ -146,7 +149,7 @@
 </script>
 
 <svelte:head>
-  {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
+  {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <script type="application/ld+json">
       {JSON.stringify(schemaOrg)}
     </script>
@@ -156,18 +159,18 @@
 <svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
 <div
-  class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
+  class="h-[var(--app-content-height)] flex bg-chrome-bg text-chrome-text overflow-hidden relative"
 >
   <div class="flex-1 relative overflow-hidden">
-    {#if uiStore.mainViewMode === "focus" && uiStore.focusedEntityId && EmbeddedEntityView}
-      <EmbeddedEntityView entityId={uiStore.focusedEntityId} />
+    {#if layoutUIStore.mainViewMode === "focus" && layoutUIStore.focusedEntityId && EmbeddedEntityView}
+      <EmbeddedEntityView entityId={layoutUIStore.focusedEntityId} />
     {:else if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
       {#key vault.activeVaultId}
         <GraphView bind:selectedId={vault.selectedEntityId} />
       {/key}
-    {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
+    {:else if !onboardingStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
-        class="absolute inset-0 bg-theme-bg flex items-center justify-center"
+        class="absolute inset-0 bg-chrome-bg flex items-center justify-center"
         aria-hidden="true"
       >
         <div
@@ -179,7 +182,7 @@
     {/if}
   </div>
 
-  {#if selectedEntity && EntityDetailPanel}
+  {#if EntityDetailPanel}
     <EntityDetailPanel
       entity={selectedEntity}
       onClose={() => (vault.selectedEntityId = null)}
@@ -187,7 +190,7 @@
   {/if}
 
   <!-- Vault Front Page Overlay -->
-  {#if FrontPage && vault.isInitialized && uiStore.skipWelcomeScreen && !uiStore.dismissedWorldPage && !selectedEntity}
+  {#if FrontPage && vault.isInitialized && onboardingStore.skipWelcomeScreen && !onboardingStore.dismissedWorldPage && !selectedEntity}
     <div
       data-testid="front-page-overlay"
       class={`absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm ${selectedEntity ? "pointer-events-none" : ""}`}
@@ -202,6 +205,13 @@
       }}
       onkeydown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
+          const t = event.target as HTMLElement;
+          if (
+            t.tagName === "INPUT" ||
+            t.tagName === "TEXTAREA" ||
+            t.isContentEditable
+          )
+            return;
           event.preventDefault();
           dismissFrontPageOverlay();
         }
@@ -217,7 +227,7 @@
   {/if}
 
   <!-- Marketing Layer -->
-  {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
+  {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
       class="marketing-layer absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
       style:background-image="var(--bg-texture-overlay)"
@@ -252,7 +262,7 @@
           >
             <button
               onclick={() => {
-                uiStore.dismissLandingPage();
+                onboardingStore.dismissLandingPage();
               }}
               class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
             >
@@ -289,9 +299,9 @@
               <input
                 type="checkbox"
                 id="skip-welcome"
-                checked={uiStore.skipWelcomeScreen}
+                checked={onboardingStore.skipWelcomeScreen}
                 onchange={(e) =>
-                  uiStore.toggleWelcomeScreen(e.currentTarget.checked)}
+                  onboardingStore.toggleWelcomeScreen(e.currentTarget.checked)}
                 class="w-4 h-4 accent-theme-primary cursor-pointer"
               />
               <label

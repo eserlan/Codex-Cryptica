@@ -2,7 +2,6 @@
 
 **Feature**: Intelligent Oracle Data Separation
 **Branch**: `022-oracle-data-parsing`
-**Status**: Ready
 
 ## Implementation Strategy
 

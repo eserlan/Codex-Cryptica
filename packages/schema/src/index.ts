@@ -8,3 +8,5 @@ export * from "./jargon";
 export * from "./map";
 export * from "./ai";
 export * from "./sync";
+export * from "./art-direction";
+export * from "./migrations";

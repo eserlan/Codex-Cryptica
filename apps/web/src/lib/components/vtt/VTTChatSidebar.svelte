@@ -1,22 +1,25 @@
 <script lang="ts">
   import VTTChat from "./VTTChat.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     collapsed = $bindable(false),
+    setCollapsed,
   }: {
     collapsed?: boolean;
+    setCollapsed?: (collapsed: boolean) => void;
   } = $props();
 
   const canClearChat = $derived(
-    !uiStore.isGuestMode && mapSession.chatMessages.length > 0,
+    !sessionModeStore.isGuestMode && mapSession.chatMessages.length > 0,
   );
 
   const handleClearChat = async () => {
     if (!canClearChat) return;
     if (
-      !(await uiStore.confirm({
+      !(await notificationStore.confirm({
         title: "Clear VTT Chat",
         message:
           "Clear the VTT chat for everyone in this session? This removes the current shared chat history.",
@@ -29,6 +32,11 @@
     }
     mapSession.clearChatMessages();
   };
+
+  function updateCollapsed(nextCollapsed: boolean) {
+    collapsed = nextCollapsed;
+    setCollapsed?.(nextCollapsed);
+  }
 </script>
 
 <aside
@@ -45,7 +53,7 @@
     >
       <button
         class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-        onclick={() => (collapsed = false)}
+        onclick={() => updateCollapsed(false)}
         aria-label="Expand VTT Chat Sidebar"
         aria-expanded="false"
         type="button"
@@ -92,7 +100,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-          {#if !uiStore.isGuestMode}
+          {#if !sessionModeStore.isGuestMode}
             <button
               class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
               onclick={handleClearChat}
@@ -107,7 +115,7 @@
 
           <button
             class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-            onclick={() => (collapsed = true)}
+            onclick={() => updateCollapsed(true)}
             aria-label="Collapse VTT Chat Sidebar"
             aria-expanded="true"
             type="button"

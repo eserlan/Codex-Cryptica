@@ -1,21 +1,114 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
+import { resolveArtDirection } from "schema";
+
+interface VisualEntityLike {
+  id?: string;
+  title: string;
+  type?: string;
+  categoryId?: string;
+  labels?: string[];
+  content?: string;
+  lore?: string;
+  artDirection?: string;
+}
 
 export class OracleGenerator {
-  private buildEntityVisualQuery(entity: {
-    title: string;
-    labels?: string[];
-  }): string {
-    const labels = (entity.labels || []).filter(Boolean);
-    if (labels.length === 0) {
-      return `A visualization of ${entity.title}`;
+  private buildEntityVisualQuery(
+    entity: VisualEntityLike,
+    context?: OracleExecutionContext,
+  ): string {
+    const artDirection = resolveArtDirection({
+      subject: entity.title,
+      entityId: entity.id,
+      entityTitle: entity.title,
+      categoryId: entity.categoryId || entity.type,
+      categoryLabel: entity.type,
+      themeId: context?.uiStore?.activeThemeId,
+      surface: "entity",
+      entityArtDirection: this.extractEntityArtDirection(entity),
+    });
+
+    return this.appendVisualLabels(artDirection.prompt, entity.labels);
+  }
+
+  private buildMessageVisualQuery(
+    message: ChatMessage,
+    entity: VisualEntityLike | null,
+    context: OracleExecutionContext,
+  ): string {
+    if (entity) {
+      return this.buildEntityVisualQuery(entity, context);
     }
 
-    return `A visualization of ${entity.title}
+    const commandSubject = this.extractDrawCommandSubject(message.content);
+    const artDirection = resolveArtDirection({
+      subject: commandSubject.subject,
+      surface: "chat",
+      categoryId: commandSubject.categoryId,
+      categoryIdIsHint: Boolean(commandSubject.categoryId),
+      themeId: context.uiStore?.activeThemeId,
+      userAuthoredArtDirection: this.extractArtDirectionFromText(
+        message.content,
+      ),
+    });
+
+    return artDirection.prompt;
+  }
+
+  private appendVisualLabels(basePrompt: string, labels?: string[]): string {
+    const cleanLabels = (labels || []).filter(Boolean);
+    if (cleanLabels.length === 0) return basePrompt;
+
+    return `${basePrompt}
 
 HIGH-PRIORITY VISUAL LABELS:
-${labels.map((label) => `- ${label}`).join("\n")}
+${cleanLabels.map((label) => `- ${label}`).join("\n")}
 
 Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
+  }
+
+  private extractEntityArtDirection(entity: VisualEntityLike) {
+    return (
+      entity.artDirection ||
+      this.extractArtDirectionFromText(entity.content) ||
+      this.extractArtDirectionFromText(entity.lore)
+    );
+  }
+
+  private extractArtDirectionFromText(text?: string) {
+    if (!text) return undefined;
+    const match = text.match(
+      /(?:^|\n)#{1,4}\s*(?:art direction|default art style|visual direction)\s*\n+([\s\S]*?)(?=\n#{1,4}\s|\n---|\s*$)/i,
+    );
+    return match?.[1]?.trim();
+  }
+
+  private extractMessageSubject(content: string) {
+    const firstLine = content
+      .split("\n")
+      .map((line) => line.trim())
+      .find(Boolean);
+    return (firstLine || content).slice(0, 180);
+  }
+
+  private extractDrawCommandSubject(content: string): {
+    subject: string;
+    categoryId?: string;
+  } {
+    const firstLine = this.extractMessageSubject(content);
+    const match = firstLine.match(/^\/(?:draw|image)\s+(.+)$/i);
+    if (!match) return { subject: firstLine };
+
+    const rawSubject = match[1].trim();
+    const categoryMatch = rawSubject.match(
+      /^(character|npc|creature|location|place|item|object|faction|event|note|concept|world|cover)\s+(.+)$/i,
+    );
+    if (!categoryMatch) return { subject: rawSubject };
+
+    return {
+      categoryId: categoryMatch[1].toLowerCase(),
+      subject: categoryMatch[2].trim(),
+    };
   }
 
   /**
@@ -132,6 +225,67 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
   }
 
   /**
+   * Orchestrates the construction of context and the generation of a structured entity creation response.
+   */
+  async generateCreationResponse(
+    query: string,
+    context: OracleExecutionContext,
+    onPartial: (partial: string) => void,
+  ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
+    const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
+    const apiKey = context.effectiveApiKey || "";
+
+    const { primaryEntityId, sourceIds, searchQuery } =
+      await this.identifyPrimaryEntity(query, context);
+
+    const lastEntityId = context.chatHistory.messages.findLast(
+      (m: ChatMessage) => m.entityId,
+    )?.entityId;
+
+    const { content: aiContext } =
+      await context.contextRetrieval.retrieveContext(
+        searchQuery,
+        alreadySentTitles,
+        context.vault,
+        lastEntityId,
+        false,
+      );
+
+    const categoryList = Array.from(
+      new Set(
+        (context.categories || [])
+          .map((c: any) => String(c?.id || "").trim())
+          .filter(Boolean),
+      ),
+    );
+
+    if (context.textGeneration.generateStructuredEntity) {
+      await context.textGeneration.generateStructuredEntity(
+        apiKey,
+        query,
+        aiContext,
+        context.modelName,
+        onPartial,
+        categoryList,
+      );
+    } else {
+      // Fallback to normal response if method not implemented
+      await context.textGeneration.generateResponse(
+        apiKey,
+        query,
+        context.chatHistory.messages.slice(0, -2),
+        aiContext,
+        context.modelName,
+        onPartial,
+        context.isDemoMode,
+        categoryList,
+      );
+    }
+
+    return { primaryEntityId, sourceIds };
+  }
+
+  /**
    * Orchestrates the creation of a visual visualization for an entity.
    */
   async generateEntityVisualization(
@@ -152,16 +306,22 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
       apiKey,
-      this.buildEntityVisualQuery(entity),
+      this.buildEntityVisualQuery(entity, context),
       aiContext,
       context.modelName,
       context.isDemoMode,
     );
 
+    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
+    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl
+      }
     );
   }
 
@@ -190,16 +350,22 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
       apiKey,
-      entity ? this.buildEntityVisualQuery(entity) : message.content,
+      this.buildMessageVisualQuery(message, entity, context),
       aiContext,
       context.modelName,
       context.isDemoMode,
     );
 
+    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
+    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl
+      }
     );
   }
 

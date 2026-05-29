@@ -2,7 +2,7 @@
 
 **Feature Branch**: `058-map-mode`  
 **Created**: 2026-02-23  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "map mode https://github.com/eserlan/Codex-Cryptica/issues/237"
 
 ## User Scenarios & Testing _(mandatory)_
@@ -24,34 +24,35 @@ As a Lore Keeper, I want to upload a custom world or tactical image and use it a
 
 ### User Story 2 - Spatial Lore Pins (Priority: P1)
 
-As a Lore Keeper, I want to drop pins on my map and link them directly to my existing notes, so that clicking a geographic location instantly surfaces the relevant lore.
+As a Lore Keeper, I want to drop pins on my map and link them directly to my existing notes, so that clicking a geographic location instantly surfaces the relevant lore. I also want to be able to drag existing pins on the map to easily rearrange their coordinates.
 
-**Why this priority**: Connects the new spatial mode with the existing knowledge base.
+**Why this priority**: Connects the new spatial mode with the existing knowledge base, and supports intuitive organization of pin coordinates.
 
-**Independent Test**: Can be tested by dropping a pin, linking it to an NPC note, and verifying that clicking the pin opens the NPC detail panel.
+**Independent Test**: Can be tested by dropping a pin, dragging it to a new location, verifying that coordinates update live, and that clicking the pin selects/opens the note.
 
 **Acceptance Scenarios**:
 
 1. **Given** a map is active, **When** I double-click/long-press an area, **Then** a new pin is created at those coordinates.
 2. **Given** a map is active, **When** I drag an entity from the Entity Explorer and drop it on the map, **Then** a pin pre-linked to that entity is created at the drop position.
-3. **Given** a pin exists, **When** I select an existing chronicle to link, **Then** the pin's metadata is updated and the link is persisted.
-4. **Given** a linked pin, **When** I click it, **Then** the linked note opens in the side-panel.
+3. **Given** a map with existing pins, **When** I click and drag a pin to a new coordinate, **Then** its position is updated live in-memory and persisted back to the vault on release.
+4. **Given** a pin, **When** I click/tap on it (releasing without triggering the dragging threshold), **Then** the linked note opens in the side-panel.
 
 ---
 
 ### User Story 3 - Fog of War Progression (Priority: P2)
 
-As a Lore Keeper, I want to mask areas of the map that players haven't reached, so that I can manage mystery and reveal the world as the campaign progresses.
+As a Lore Keeper, I want to mask areas of the map that players haven't reached, so that I can manage mystery and reveal the world as the campaign progresses. By default, maps should start with Fog of War off, and the brush controls and guidelines should only be visible when Fog of War is enabled.
 
 **Why this priority**: Critical for "Discovery" play loop and GM control.
 
-**Independent Test**: Can be tested by "painting" a mask over an area and verifying it is opaque until explicitly revealed.
+**Independent Test**: Verify that maps initialize with fog disabled. Enable fog, verify brush size slider and "Alt+Drag" keyboard guides appear, paint a mask, and verify the state is persisted.
 
 **Acceptance Scenarios**:
 
-1. **Given** a map, **When** I enter "Fog Mode" and select an area to mask, **Then** that area is covered by a themed overlay.
-2. **Given** a masked area, **When** I reveal it, **Then** the mask is removed and the underlying map detail is visible.
-3. **Given** a revealed map area, **When** the app is reloaded, **Then** the reveal state is persisted to the vault.
+1. **Given** a map, **When** I load the map, **Then** Fog of War is OFF by default.
+2. **Given** a map, **When** I turn Fog of War ON, **Then** the brush size slider and keyboard guides ("Alt+Drag to Reveal") are shown in the bottom control bar/HUD.
+3. **Given** a map, **When** Fog of War is OFF, **Then** the brush size slider and guidelines are hidden.
+4. **Given** a masked area, **When** I reveal it, **Then** the mask is removed and the underlying map detail is visible.
 
 ---
 
@@ -98,6 +99,8 @@ As a Lore Keeper, I want to attach maps to specific entities (like a city or a t
 - **FR-009**: System MUST support deep-linking from map pins to specific entity detail tabs (Overview vs Map) via Zen Mode.
 - **FR-010**: System MUST provide a mechanism to permanently delete map assets and their associated metadata.
 - **FR-011**: System MUST show a direct "Enter Sub-map" action on pins linked to entities that contain their own map assets.
+- **FR-012**: System MUST provide a toggle to show/hide pin labels inside the map controls HUD.
+- **FR-013**: System MUST support directly dragging and repositioning existing pins with live coordinate preview and automatic vault saving on drop.
 
 ### Key Entities _(include if feature involves data)_
 

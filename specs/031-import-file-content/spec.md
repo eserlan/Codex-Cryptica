@@ -2,7 +2,7 @@
 
 **Feature Branch**: `031-import-file-content`
 **Created**: 2026-02-01
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "We should be able to import various files (jsons, pure text, word doc, pdfs) and extract content (and art and connections) for auto import into codex"
 
 ## User Scenarios & Testing

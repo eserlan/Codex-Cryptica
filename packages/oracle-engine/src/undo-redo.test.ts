@@ -1,20 +1,23 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { UndoRedoService } from "./undo-redo.svelte";
+
+const originalBroadcastChannel = globalThis.BroadcastChannel;
 
 describe("UndoRedoService", () => {
   let service: UndoRedoService;
 
   beforeEach(() => {
-    vi.stubGlobal(
-      "BroadcastChannel",
-      vi.fn().mockImplementation(
-        class {
-          postMessage = vi.fn();
-          onmessage = null;
-        },
-      ),
-    );
+    (globalThis as any).BroadcastChannel = vi.fn().mockImplementation(
+      class {
+        postMessage = vi.fn();
+        onmessage = null;
+      } as any,
+    ) as any;
     service = new UndoRedoService();
+  });
+
+  afterEach(() => {
+    (globalThis as any).BroadcastChannel = originalBroadcastChannel;
   });
 
   it("should push undo actions and clear redo stack", async () => {

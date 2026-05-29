@@ -74,6 +74,65 @@ test.describe("Node Read Mode", () => {
     await expect(modal).not.toBeVisible();
   });
 
+  test("uses the full mobile row for long Zen mode titles", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+
+    const longTitle =
+      "Doc Ripperdoc with a title long enough to wrap across the mobile header";
+
+    const id = await page.evaluate(async (title) => {
+      const entityId = await (window as any).vault.createEntity(
+        "character",
+        title,
+        {
+          content: "# Long title verification",
+        },
+      );
+      (window as any).__TEST_IDS__ = { id: entityId };
+      return entityId;
+    }, longTitle);
+
+    await page.waitForFunction(
+      (entityId) => !!(window as any).vault?.entities?.[entityId],
+      id,
+    );
+
+    await page.evaluate(() => {
+      const { id } = (window as any).__TEST_IDS__;
+      (window as any).uiStore.openZenMode(id);
+    });
+
+    const modal = page.getByTestId("zen-mode-modal");
+    await expect(modal).toBeVisible();
+
+    const title = modal.getByTestId("entity-title");
+    await expect(title).toHaveText(longTitle);
+
+    const metrics = await title.evaluate((element) => {
+      const header = element.closest('[data-testid="zen-header"]');
+      const titleRect = element.getBoundingClientRect();
+      const headerRect = header?.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+
+      return {
+        titleHeight: titleRect.height,
+        titleWidth: titleRect.width,
+        headerWidth: headerRect?.width ?? 0,
+        overflow: style.overflow,
+        textOverflow: style.textOverflow,
+        whiteSpace: style.whiteSpace,
+      };
+    });
+
+    expect(metrics.whiteSpace).toBe("normal");
+    expect(metrics.overflow).toBe("visible");
+    expect(metrics.textOverflow).not.toBe("ellipsis");
+    expect(metrics.titleWidth).toBeGreaterThan(metrics.headerWidth * 0.85);
+    expect(metrics.titleHeight).toBeGreaterThan(40);
+  });
+
   test("Open Lightbox and Close with Escape", async ({ page }) => {
     // 1. Setup Data with Image
     const id = await page.evaluate(async () => {

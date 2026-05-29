@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { clipboardService } from "$lib/services/ClipboardService";
   import { createEditState } from "$lib/hooks/useEditState.svelte";
@@ -8,7 +7,11 @@
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
+  import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusEntity } from "$lib/stores/ui/navigation";
 
   let {
     entityId,
@@ -46,11 +49,10 @@
     persistZenPopoutPayload(vault.activeVaultId ?? "guest", entity, true);
   });
 
-  let activeTab = $derived(uiStore.zenModeActiveTab);
+  let activeTab = $derived(modalUIStore.zenModeActiveTab);
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
-  let tabInventory = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
@@ -58,13 +60,24 @@
 
   $effect(() => {
     let isStale = false;
-    if (entity?.image) {
-      vault.resolveImageUrl(entity.image).then((url) => {
-        if (!isStale) resolvedImageUrl = url;
-      });
-    } else {
-      resolvedImageUrl = "";
-    }
+    const imagePath = entity?.image;
+    const thumbnailPath = entity?.thumbnail;
+
+    const resolveImage = async () => {
+      let url = "";
+      if (imagePath) {
+        url = await vault.resolveImageUrl(imagePath);
+      }
+      if (!url && thumbnailPath) {
+        url = await vault.resolveImageUrl(thumbnailPath);
+      }
+      if (!isStale) {
+        resolvedImageUrl = url;
+      }
+    };
+
+    resolveImage();
+
     return () => {
       isStale = true;
     };
@@ -111,7 +124,7 @@
     try {
       await vault.updateEntity(entity.id, { status: "active" });
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       isDraftActioning = false;
     }
@@ -124,7 +137,7 @@
       await vault.deleteEntity(entity.id);
       onClose();
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       isDraftActioning = false;
     }
@@ -133,7 +146,7 @@
   const navigateTo = async (id: string) => {
     if (editState.isEditing) {
       if (
-        !(await uiStore.confirm({
+        !(await notificationStore.confirm({
           title: "Unsaved Changes",
           message: "Discard unsaved changes to navigate?",
           confirmLabel: "Discard",
@@ -145,44 +158,74 @@
     }
 
     // Check if we are in modal mode or embedded mode
-    if (uiStore.showZenMode) {
-      uiStore.zenModeEntityId = id;
+    if (modalUIStore.showZenMode) {
+      modalUIStore.zenModeEntityId = id;
     } else {
-      uiStore.focusEntity(id);
+      focusEntity(id);
     }
   };
 
   const handleTabKeydown = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      const tabs: ("overview" | "inventory" | "map")[] = [
-        "overview",
-        "inventory",
-        "map",
-      ];
+      const tabs: ("overview" | "map")[] = ["overview", "map"];
       const currentIndex = tabs.indexOf(activeTab);
       const nextIndex =
         e.key === "ArrowRight"
           ? (currentIndex + 1) % tabs.length
           : (currentIndex - 1 + tabs.length) % tabs.length;
 
-      uiStore.zenModeActiveTab = tabs[nextIndex];
-      const nextTab = uiStore.zenModeActiveTab;
+      modalUIStore.zenModeActiveTab = tabs[nextIndex];
+      const nextTab = modalUIStore.zenModeActiveTab;
       if (nextTab === "overview") tabOverview?.focus();
-      else if (nextTab === "inventory") tabInventory?.focus();
       else if (nextTab === "map") tabMap?.focus();
     }
   };
 
   // Handle keyboard shortcuts
   const handleKeydown = async (e: KeyboardEvent) => {
-    if (uiStore.lightbox.show) {
+    if (modalUIStore.lightbox.show) {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        uiStore.closeLightbox();
+        modalUIStore.closeLightbox();
       }
       return;
+    }
+
+    if (isEditing) {
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl?.tagName === "INPUT" || activeEl?.tagName === "SELECT";
+      const isTextarea = activeEl?.tagName === "TEXTAREA";
+
+      if (e.key === "Enter" && isInput) {
+        if (
+          activeEl.closest('[data-shortcuts="ignore"]') ||
+          activeEl.closest('[role="combobox"]')
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        await saveChanges();
+        return;
+      }
+
+      if (e.key === "Escape" && (isInput || isTextarea)) {
+        if (activeEl?.getAttribute("aria-expanded") === "true") {
+          return;
+        }
+        if (activeEl.closest('[data-shortcuts="ignore"]')) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        cancelEditing();
+        return;
+      }
     }
 
     if (
@@ -214,8 +257,8 @@
     }
   };
 
-  const ariaRole = $derived(uiStore.showZenMode ? "dialog" : "region");
-  const ariaModal = $derived(uiStore.showZenMode ? "true" : undefined);
+  const ariaRole = $derived(modalUIStore.showZenMode ? "dialog" : "region");
+  const ariaModal = $derived(modalUIStore.showZenMode ? "true" : undefined);
 
   export function requestClose() {
     actions.handleClose(onClose);
@@ -263,6 +306,7 @@
       onCancelEdit={cancelEditing}
       onSave={saveChanges}
       onClose={() => actions.handleClose(onClose)}
+      onDelete={handleDelete}
       onPopOut={typeof onPopOut === "function"
         ? () => {
             onPopOut();
@@ -294,28 +338,12 @@
         'overview'
           ? 'text-theme-primary border-theme-primary'
           : 'text-theme-muted border-transparent hover:text-theme-text'}"
-        onclick={() => (uiStore.zenModeActiveTab = "overview")}
+        onclick={() => (modalUIStore.zenModeActiveTab = "overview")}
         onkeydown={handleTabKeydown}
       >
         OVERVIEW
       </button>
       {#if !vault.isGuest}
-        <button
-          bind:this={tabInventory}
-          role="tab"
-          id="tab-inventory"
-          aria-selected={activeTab === "inventory"}
-          aria-controls="panel-inventory"
-          tabindex={activeTab === "inventory" ? 0 : -1}
-          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
-          'inventory'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (uiStore.zenModeActiveTab = "inventory")}
-          onkeydown={handleTabKeydown}
-        >
-          INVENTORY
-        </button>
         <button
           bind:this={tabMap}
           role="tab"
@@ -327,7 +355,7 @@
           'map'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (uiStore.zenModeActiveTab = "map")}
+          onclick={() => (modalUIStore.zenModeActiveTab = "map")}
           onkeydown={handleTabKeydown}
         >
           MAP
@@ -352,8 +380,13 @@
             bind:editState
             {resolvedImageUrl}
             {isPopout}
-            onShowLightbox={() =>
-              uiStore.openLightbox(resolvedImageUrl, entity.title)}
+            onShowLightbox={(rect) =>
+              modalUIStore.openLightbox(
+                resolvedImageUrl,
+                entity.title,
+                rect,
+                entity.image,
+              )}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />
@@ -363,7 +396,7 @@
             bind:editState
             bind:scrollContainer
             onNavigate={navigateTo}
-            showConnections={true}
+            {isPopout}
           />
         </div>
       {:else if activeTab === "map"}
@@ -380,17 +413,11 @@
             <DetailMapTab {entity} />
           </div>
         </div>
-      {:else if activeTab === "inventory"}
-        <div
-          role="tabpanel"
-          id="panel-inventory"
-          aria-labelledby="tab-inventory"
-          class="flex-1 p-8 flex items-center justify-center text-theme-muted font-header text-sm italic"
-        >
-          Inventory system initialization pending...
-        </div>
       {/if}
     </div>
+
+    <!-- Inline Preview Overlay for AI Drafts -->
+    <InlinePreviewOverlay />
   {:else}
     <div class="flex-1 flex items-center justify-center p-12 text-center">
       <div class="max-w-md space-y-4">

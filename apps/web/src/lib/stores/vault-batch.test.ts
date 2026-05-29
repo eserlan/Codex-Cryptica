@@ -14,7 +14,7 @@ vi.hoisted(() => {
 });
 
 // Mock Services
-vi.mock("../services/search", () => ({
+vi.mock("../services/search.svelte", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),

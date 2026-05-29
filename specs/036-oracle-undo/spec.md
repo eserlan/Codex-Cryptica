@@ -2,7 +2,7 @@
 
 **Feature Branch**: `036-oracle-undo`  
 **Created**: 2026-02-03  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "revert (ctrl+z) in the oracle" (Issue #80)
 
 ## User Scenarios & Testing
@@ -11,7 +11,7 @@
 
 As a user, I want to undo the last "Smart Apply", "Copy to Chronicle", or "Copy to Lore" action in the Oracle so that I can immediately revert accidental changes to my nodes.
 
-**Why this priority**: "Smart Apply" is a destructive action that overwrites existing content. Accidental clicks or poor AI suggestions can lead to data loss if not reversible. This is the core pain point of Issue #80.
+**Why this priority**: "Smart Apply" uses AI reconciliation to merge incoming content with the existing entity record, but the result may still be unwanted or poorly merged. Accidental clicks or poor reconciliation output can lead to data loss if not reversible. This is the core pain point of Issue #80.
 
 **Independent Test**:
 
@@ -25,7 +25,7 @@ As a user, I want to undo the last "Smart Apply", "Copy to Chronicle", or "Copy 
 
 **Acceptance Scenarios**:
 
-1. **Given** an entity with content "Original Content", **When** I click "Smart Apply" with new content "New Content", **Then** the entity content becomes "New Content".
+1. **Given** an entity with existing content, **When** I click "Smart Apply" with incoming oracle content, **Then** the entity chronicle and lore are updated to the AI-reconciled result merging both.
 2. **Given** I have just performed a "Smart Apply", **When** I press `Ctrl+Z` (or Command+Z on Mac) while the Oracle window is focused (and not in the input field), **Then** the entity content reverts to "Original Content".
 3. **Given** I have just performed a "Smart Apply", **When** I click the "Undo" button that appears on the chat message, **Then** the entity content reverts to "Original Content".
 

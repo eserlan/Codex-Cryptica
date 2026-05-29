@@ -2,12 +2,13 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import {
     consumeZenPopoutPayload,
     requestZenPopoutPayload,
     type ZenPopoutPayload,
   } from "$lib/utils/zen-popout";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const VAULT_INIT_TIMEOUT_MS = 5000;
   const VAULT_INIT_POLL_MS = 50;
@@ -32,7 +33,7 @@
     };
     vault.isInitialized = true;
     vault.status = "idle";
-    if (payload.isGuest) uiStore.isGuestMode = true;
+    if (payload.isGuest) sessionModeStore.isGuestMode = true;
     return payload.entity.id;
   };
 
@@ -52,7 +53,7 @@
 
         // 2. If not found but we have an opener, request it via postMessage
         if (!payload && window.opener) {
-          uiStore.isGuestMode = true; // Set early to prevent default vault load
+          sessionModeStore.isGuestMode = true; // Set early to prevent default vault load
           payload = await requestZenPopoutPayload(eid);
 
           if (!payload) {
@@ -66,13 +67,13 @@
           // Guest Flow (or Handover Flow)
           const loadedEntityId = applyGuestPayload(payload);
           if (vault.entities[loadedEntityId]) {
-            uiStore.openZenMode(loadedEntityId);
+            modalUIStore.openZenMode(loadedEntityId);
           } else {
             error = `Failed to load entity ${loadedEntityId} into memory.`;
           }
         } else {
           // Host Flow
-          uiStore.isGuestMode = false;
+          sessionModeStore.isGuestMode = false;
           if (vault.activeVaultId !== vid) {
             await vault.switchVault(vid);
           } else {
@@ -92,7 +93,7 @@
           }
 
           if (vault.entities[eid]) {
-            uiStore.openZenMode(eid);
+            modalUIStore.openZenMode(eid);
           } else {
             error = `Entity "${eid}" not found in vault "${vid}".`;
             console.warn(

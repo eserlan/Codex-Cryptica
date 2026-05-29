@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import TokenDetail from "./TokenDetail.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { mapStore } from "$lib/stores/map.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
@@ -16,15 +17,6 @@ vi.mock("$lib/stores/map.svelte", () => ({
   mapStore: {
     isGMMode: false,
     activeMapId: "map-1",
-  },
-}));
-
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    isGuestMode: false,
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 
@@ -57,8 +49,7 @@ describe("TokenDetail", () => {
   });
 
   it("hides management and metadata blocks for guests", async () => {
-    const { uiStore } = await import("$lib/stores/ui.svelte");
-    uiStore.isGuestMode = true;
+    sessionModeStore.isGuestMode = true;
     mapStore.isGMMode = false;
     mapSession.tokens["token-1"].entityId = "entity-1";
 
@@ -77,8 +68,7 @@ describe("TokenDetail", () => {
 
   it("removes the token directly in GM mode", async () => {
     mapStore.isGMMode = true;
-    const { uiStore } = await import("$lib/stores/ui.svelte");
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
     render(TokenDetail);
 
     await waitFor(() =>
@@ -92,8 +82,7 @@ describe("TokenDetail", () => {
 
   it("shows a host-only reveal button for tokens with an image", async () => {
     mapStore.isGMMode = true;
-    const { uiStore } = await import("$lib/stores/ui.svelte");
-    uiStore.isGuestMode = false;
+    sessionModeStore.isGuestMode = false;
     const revealSpy = vi.spyOn(mapSession, "showTokenImageToPlayers");
     mapSession.tokens["token-1"].imageUrl = "images/goblin.webp";
 
@@ -109,10 +98,19 @@ describe("TokenDetail", () => {
 
   it("hides add to initiative when the token is already in initiative", async () => {
     mapStore.isGMMode = true;
-    const { uiStore } = await import("$lib/stores/ui.svelte");
-    uiStore.isGuestMode = false;
-    mapSession.initiativeOrder = ["token-1"];
-    mapSession.initiativeValues = { "token-1": 12 };
+    sessionModeStore.isGuestMode = false;
+    mapSession.initiativeManager.setSnapshotData(
+      ["token-1"],
+      mapSession.initiativeValues,
+      mapSession.round,
+      mapSession.turnIndex,
+    );
+    mapSession.initiativeManager.setSnapshotData(
+      mapSession.initiativeOrder,
+      { "token-1": 12 },
+      mapSession.round,
+      mapSession.turnIndex,
+    );
 
     render(TokenDetail);
 

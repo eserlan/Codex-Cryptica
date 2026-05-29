@@ -2,7 +2,7 @@
 
 **Feature Branch**: `069-pop-out-help-window`  
 **Created**: 2026-03-13  
-**Status**: Draft
+**Status**: Implemented
 
 ## Goal
 

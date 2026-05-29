@@ -12,8 +12,13 @@
   import { mergeGuestEntityUpdate } from "$lib/utils/guest-entity-merge";
   import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import { appEventBus } from "@codex/events";
+  import { VAULT_EVENTS } from "@codex/vault-engine";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { untrack } from "svelte";
 
   const shareId = $derived(
     building ? null : page.url.searchParams.get("shareId"),
@@ -26,15 +31,16 @@
   let isConnectedToHost = $state(false);
 
   const syncGuestGraphPayload = (graph: any) => {
-    vault.repository.entities = Object.fromEntries(
-      Object.entries(graph.entities).map(([id, entity]: [string, any]) => [
+    const parsedEntities = Object.entries(graph.entities).map(
+      ([id, entity]: [string, any]) => ({
+        ...entity,
         id,
-        {
-          ...entity,
-          _path:
-            typeof entity._path === "string" ? [entity._path] : entity._path,
-        },
-      ]),
+        _path: typeof entity._path === "string" ? [entity._path] : entity._path,
+      }),
+    );
+
+    vault.repository.entities = Object.fromEntries(
+      parsedEntities.map((e) => [e.id, e]),
     );
 
     if (graph.defaultVisibility) {
@@ -45,7 +51,30 @@
       themeStore.previewTheme(graph.themeId);
     }
 
-    uiStore.sharedMode = true;
+    // Explicitly set a vault ID and emit lifecycle events so services (like search/RAG) initialize correctly
+    vaultRegistry.activeVaultId = `guest-${shareId}`;
+
+    appEventBus.emit({
+      type: VAULT_EVENTS.VAULT_OPENING,
+      domain: "vault",
+      payload: {},
+      metadata: {
+        vaultId: vault.activeVaultId ?? undefined,
+        timestamp: Date.now(),
+      },
+    });
+
+    appEventBus.emit({
+      type: VAULT_EVENTS.CACHE_LOADED,
+      domain: "vault",
+      payload: { entities: parsedEntities },
+      metadata: {
+        vaultId: vault.activeVaultId ?? undefined,
+        timestamp: Date.now(),
+      },
+    });
+
+    sessionModeStore.sharedMode = true;
     vault.isInitialized = true;
     vault.status = "idle";
   };
@@ -72,15 +101,9 @@
     if (!browser || !isConnectedToHost) return;
 
     const handleBeforeUnload = (_e: BeforeUnloadEvent) => {
-      // Send leave message synchronously (best effort)
+      // Best-effort synchronous leave; leaveSession() sends and disconnects
       try {
-        const connection = (p2pGuestService as any).connection;
-        if (connection?.open) {
-          connection.send({
-            type: "GUEST_LEAVE",
-            payload: { displayName: uiStore.guestUsername },
-          });
-        }
+        void p2pGuestService.leaveSession();
       } catch {
         // Ignore errors during unload
       }
@@ -98,83 +121,117 @@
       !isGuestMode ||
       !shareId ||
       !shareId.startsWith("p2p-") ||
-      !uiStore.guestUsername
+      !sessionModeStore.guestUsername
     ) {
       return;
     }
 
     const peerId = shareId.substring(4);
-    uiStore.isGuestMode = true;
-    vault.status = "loading";
-    vault.selectedEntityId = null;
 
-    p2pGuestService
-      .connectToHost(
-        peerId,
-        (graph) => {
-          syncGuestGraphPayload(graph);
-        },
-        (updatedEntity) => {
-          vault.repository.entities[updatedEntity.id] = mergeGuestEntityUpdate(
-            vault.repository.entities[updatedEntity.id],
-            updatedEntity,
-          );
-        },
-        (deletedId) => {
-          delete vault.repository.entities[deletedId];
-        },
-        (batchUpdates) => {
-          vault.batchUpdate(batchUpdates);
-        },
-        (themeId) => {
-          themeStore.previewTheme(themeId);
-        },
-        uiStore.guestUsername ?? undefined,
-        (reason, displayName) => {
-          if (reason === "duplicate-display-name") {
-            joinRejectionMessage = `Display name "${displayName}" is already in use. Choose a different name.`;
-          } else {
-            joinRejectionMessage = `Join request was rejected: ${reason}`;
-          }
-        },
-      )
-      .then(() => {
-        isConnectedToHost = true;
-        return navigateToGuestView();
-      })
-      .catch((err) => {
-        console.error("[Guest Mode] Failed to connect to host:", err);
-        vault.selectedEntityId = null;
-        uiStore.guestUsername = null;
-        uiStore.isGuestMode = false;
-        vault.status = "error";
-        vault.errorMessage = "Failed to connect to shared campaign.";
-      });
+    untrack(() => {
+      sessionModeStore.isGuestMode = true;
+      vault.status = "loading";
+      vault.selectedEntityId = null;
+
+      p2pGuestService
+        .connectToHost(
+          peerId,
+          (graph) => {
+            syncGuestGraphPayload(graph);
+          },
+          (updatedEntity) => {
+            const oldEntity = vault.repository.entities[updatedEntity.id];
+            const newEntity = mergeGuestEntityUpdate(oldEntity, updatedEntity);
+            vault.repository.entities[updatedEntity.id] = newEntity;
+
+            appEventBus.emit({
+              type: VAULT_EVENTS.ENTITY_UPDATED,
+              domain: "vault",
+              payload: {
+                id: newEntity.id,
+                entity: newEntity,
+                patch: updatedEntity,
+              },
+              metadata: {
+                vaultId: vault.activeVaultId ?? undefined,
+                timestamp: Date.now(),
+              },
+            });
+          },
+          (deletedId) => {
+            delete vault.repository.entities[deletedId];
+
+            appEventBus.emit({
+              type: VAULT_EVENTS.ENTITY_DELETED,
+              domain: "vault",
+              payload: { entityId: deletedId },
+              metadata: {
+                vaultId: vault.activeVaultId ?? undefined,
+                timestamp: Date.now(),
+              },
+            });
+          },
+          (batchUpdates) => {
+            vault.batchUpdate(batchUpdates);
+          },
+          (themeId) => {
+            themeStore.previewTheme(themeId);
+          },
+          sessionModeStore.guestUsername ?? undefined,
+          (reason, displayName) => {
+            if (reason === "duplicate-display-name") {
+              joinRejectionMessage = `Display name "${displayName}" is already in use. Choose a different name.`;
+            } else {
+              joinRejectionMessage = `Join request was rejected: ${reason}`;
+            }
+          },
+        )
+        .then(() => {
+          isConnectedToHost = true;
+          return navigateToGuestView();
+        })
+        .catch((err) => {
+          console.error("[Guest Mode] Failed to connect to host:", err);
+          vault.selectedEntityId = null;
+          sessionModeStore.guestUsername = null;
+          sessionModeStore.isGuestMode = false;
+          vault.status = "error";
+          vault.errorMessage = "Failed to connect to shared campaign.";
+        });
+    });
   });
 
   $effect(() => {
-    if (!isGuestMode || !uiStore.isGuestMode || !uiStore.guestUsername) {
+    if (
+      !isGuestMode ||
+      !sessionModeStore.isGuestMode ||
+      !sessionModeStore.guestUsername
+    ) {
       return;
     }
 
     const { status, currentEntityId, currentEntityTitle } =
       buildGuestPresencePayload({
         selectedEntityId: vault.selectedEntityId,
-        zenModeEntityId: uiStore.showZenMode ? uiStore.zenModeEntityId : null,
+        zenModeEntityId: modalUIStore.showZenMode
+          ? modalUIStore.zenModeEntityId
+          : null,
         entities: vault.entities,
       });
 
-    p2pGuestService.updateGuestStatus({
-      status,
-      currentEntityId,
-      currentEntityTitle,
+    untrack(() => {
+      p2pGuestService.updateGuestStatus({
+        status,
+        currentEntityId,
+        currentEntityTitle,
+      });
     });
   });
 </script>
 
-{#if isGuestMode && !uiStore.guestUsername && !building}
+{#if isGuestMode && !sessionModeStore.guestUsername && !building}
   <GuestLoginModal
-    onJoin={(username) => uiStore.setGuestUsername(username)}
+    onJoin={(username) => sessionModeStore.setGuestUsername(username)}
     rejectionMessage={joinRejectionMessage}
   />
 {/if}

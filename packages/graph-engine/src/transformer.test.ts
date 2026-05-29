@@ -197,6 +197,38 @@ describe("GraphTransformer", () => {
     expect(node2?.data.labels).toEqual([]);
   });
 
+  it("should derive important node data from labels case-insensitively", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        labels: ["faction-a", "Important"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n2",
+        type: "npc",
+        title: "Node 2",
+        labels: ["ordinary"],
+        connections: [],
+        content: "",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const importantNode = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n1",
+    );
+    const ordinaryNode = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n2",
+    );
+
+    expect(importantNode?.data.isImportant).toBe(true);
+    expect(ordinaryNode?.data.isImportant).toBeUndefined();
+  });
+
   it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
     const entities: any[] = [
       {
@@ -379,7 +411,7 @@ describe("GraphTransformer", () => {
     );
   });
 
-  it("should have thicker borders for nodes and even thicker for images", () => {
+  it("should keep image node borders at normal entity thickness", () => {
     const mockTemplate = {
       tokens: {
         primary: "#000",
@@ -404,16 +436,100 @@ describe("GraphTransformer", () => {
     const baseStyle = style.find((s) => s.selector === "node");
     expect(baseStyle.style["border-width"]).toBe(3);
 
-    // Image override should be +8
-    const imageOverride = style.find(
+    const imageStyle = style.find(
       (s) =>
-        s.selector.includes("resolvedImage") && s.style["border-width"] === 9,
+        s.selector ===
+        "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
     );
-    expect(imageOverride).toBeDefined();
+    expect(imageStyle).toBeDefined();
+    expect(imageStyle.style["border-width"]).toBeUndefined();
+    expect(
+      style.some(
+        (s) =>
+          s.selector ===
+          "node[image], node[thumbnail], node[resolvedImage][resolvedImage != 'none']",
+      ),
+    ).toBe(false);
 
     // Revealed should be +10
     const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
     expect(revealedStyle.style["border-width"]).toBe(11);
+  });
+
+  it("should include a non-text visual style for important nodes", () => {
+    const mockTemplate = {
+      tokens: {
+        primary: "#000",
+        accent: "#f59e0b",
+        background: "#fff",
+        text: "#333",
+        surface: "#eee",
+        fontHeader: "Arial",
+        fontBody: "Arial",
+      },
+      graph: {
+        nodeShape: "ellipse",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#ccc",
+        edgeStyle: "solid",
+      },
+    } as any;
+
+    const style = getGraphStyle(mockTemplate, [], false);
+    const importantStyle = style.find(
+      (s) => s.selector === "node[isImportant]",
+    );
+
+    expect(importantStyle).toBeDefined();
+    expect(importantStyle.style.label).toBeUndefined();
+    expect(importantStyle.style["border-style"]).toBe("double");
+    expect(importantStyle.style["underlay-opacity"]).toBeGreaterThan(0);
+    expect(importantStyle.style.width).toBeUndefined();
+    expect(importantStyle.style.height).toBeUndefined();
+    expect(importantStyle.style["font-weight"]).toBe("bold");
+    expect(importantStyle.style["font-size"]).toBe(12);
+    expect(importantStyle.style["border-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["underlay-color"]).toBe("#8b5cf6");
+    expect(importantStyle.style["text-border-color"]).toBe("#8b5cf6");
+
+    const importantSmallStyle = style.find(
+      (s) => s.selector === "node[isImportant][weight <= 2]",
+    );
+    expect(importantSmallStyle).toBeUndefined();
+  });
+
+  it("should preserve revealed border treatment when a node is also important", () => {
+    const mockTemplate = {
+      tokens: {
+        primary: "#000",
+        accent: "#f59e0b",
+        background: "#fff",
+        text: "#333",
+        surface: "#eee",
+        fontHeader: "Arial",
+        fontBody: "Arial",
+      },
+      graph: {
+        nodeShape: "ellipse",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#ccc",
+        edgeStyle: "solid",
+      },
+    } as any;
+
+    const style = getGraphStyle(mockTemplate, [], false);
+    const importantStyleIndex = style.findIndex(
+      (s) => s.selector === "node[isImportant]",
+    );
+    const revealedStyleIndex = style.findIndex(
+      (s) => s.selector === "node[isRevealed]",
+    );
+
+    expect(importantStyleIndex).toBeGreaterThan(-1);
+    expect(revealedStyleIndex).toBeGreaterThan(importantStyleIndex);
+    expect(style[revealedStyleIndex].style["border-width"]).toBe(11);
   });
 
   it("should keep fantasy shield borders controlled for image and revealed nodes", () => {
@@ -442,11 +558,13 @@ describe("GraphTransformer", () => {
     const baseStyle = style.find((s) => s.selector === "node");
     expect(baseStyle.style["border-width"]).toBe(2);
 
-    const imageOverride = style.find(
+    const imageStyle = style.find(
       (s) =>
-        s.selector.includes("resolvedImage") && s.style["border-width"] === 7,
+        s.selector.includes("resolvedImage") &&
+        s.style["background-image"] === "data(resolvedImage)",
     );
-    expect(imageOverride).toBeDefined();
+    expect(imageStyle).toBeDefined();
+    expect(imageStyle.style["border-width"]).toBeUndefined();
 
     const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
     expect(revealedStyle.style["border-width"]).toBe(4);

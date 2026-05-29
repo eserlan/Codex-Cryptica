@@ -2,21 +2,24 @@
   import type { DiscoveryProposal } from "@codex/oracle-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$stores/ui.svelte";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     dispatchSearchEntityFocus,
   } from "$lib/components/search/search-focus";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   interface Props {
     proposal: DiscoveryProposal;
     onCommit?: () => void;
+    onLink?: (entityId: string) => void;
   }
 
-  let { proposal, onCommit }: Props = $props();
+  let { proposal, onCommit, onLink }: Props = $props();
   let isCommitting = $state(false);
 
-  let isGuest = $derived(vault.isGuest || uiStore.isDemoMode);
+  let isGuest = $derived(vault.isGuest || sessionModeStore.isDemoMode);
 
   async function handleCommit() {
     if (isCommitting || isGuest) return;
@@ -32,24 +35,29 @@
           });
           const connectionCount =
             await oracle.handleDiscoveryConnectionsForEntity(proposal.entityId);
-          uiStore.notify(
+          notificationStore.notify(
             buildCommitNotice("Updated", proposal.title, connectionCount),
             "success",
           );
         }
       } else {
-        // New Entity
+        // New Entity — reconcile draft through AI to structure chronicle/lore properly
+        const reconciled = await oracle.reconcileNewEntityDraft(
+          proposal.title,
+          proposal.type,
+          proposal.draft,
+        );
         const entityId = await vault.createEntity(
-          proposal.type as any,
+          (reconciled.categoryId || proposal.type) as any,
           proposal.title,
           {
-            lore: proposal.draft.lore,
-            content: proposal.draft.chronicle,
+            content: reconciled.content,
+            lore: reconciled.lore,
           },
         );
         const connectionCount =
           await oracle.handleDiscoveryConnectionsForEntity(entityId);
-        uiStore.notify(
+        notificationStore.notify(
           buildCommitNotice("Created", proposal.title, connectionCount),
           "success",
         );
@@ -72,11 +80,11 @@
     title: string,
     connectionCount: number | void,
   ) {
-    if (uiStore.connectionDiscoveryMode === "off") {
+    if (discoveryPolicyStore.connectionDiscoveryMode === "off") {
       return `${action} ${title}`;
     }
 
-    if (uiStore.connectionDiscoveryMode === "auto-apply") {
+    if (discoveryPolicyStore.connectionDiscoveryMode === "auto-apply") {
       const count = connectionCount || 0;
       if (count > 0) {
         return `${action} ${title} and added ${count} connection${count === 1 ? "" : "s"}`;
@@ -156,20 +164,33 @@
     >
   </button>
 
-  <button
-    class="ml-2 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-    onclick={handleCommit}
-    disabled={isCommitting || isGuest}
-    aria-busy={isCommitting}
-    title={commitTitle}
-    aria-label={commitLabel}
-  >
-    {#if isCommitting}
-      <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
-    {:else if proposal.entityId}
-      <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
-    {:else}
-      <span class="icon-[lucide--plus] w-3 h-3"></span>
+  {#if !isGuest}
+    <button
+      class="ml-2 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+      onclick={handleCommit}
+      disabled={isCommitting}
+      aria-busy={isCommitting}
+      title={commitTitle}
+      aria-label={commitLabel}
+    >
+      {#if isCommitting}
+        <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+      {:else if proposal.entityId}
+        <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
+      {:else}
+        <span class="icon-[lucide--plus] w-3 h-3"></span>
+      {/if}
+    </button>
+
+    {#if proposal.entityId && onLink}
+      <button
+        class="ml-1 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center border-l border-theme-primary/10 pl-2"
+        onclick={() => onLink(proposal.entityId!)}
+        title="Link message to this entity"
+        aria-label={`Link message to ${proposal.title}`}
+      >
+        <span class="icon-[lucide--link] w-3 h-3"></span>
+      </button>
     {/if}
-  </button>
+  {/if}
 </div>

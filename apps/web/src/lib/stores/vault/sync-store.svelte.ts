@@ -1,12 +1,13 @@
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import type { LocalEntity } from "./types";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { SyncCoordinator, VaultRepository } from "@codex/vault-engine";
 import { appEventBus } from "@codex/events";
 import { fileIOAdapter } from "./adapters.svelte";
-import { uiStore } from "../ui.svelte";
 import type { VaultRecord } from "../../utils/idb";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 export interface SyncStoreDependencies {
   activeVaultId: () => string | null;
@@ -19,10 +20,13 @@ export interface SyncStoreDependencies {
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
+  flushPendingSaves?: (timeoutMs?: number) => Promise<void>;
 }
 
 export class SyncStore {
-  private _status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  private _status = $state<
+    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error"
+  >("idle");
   errorMessage = $state<string | null>(null);
   syncType = $state<"local" | null>(null);
   syncStats = $state({
@@ -40,6 +44,8 @@ export class SyncStore {
   get status() {
     if (this._status === "loading") return "loading";
     if (this._status === "error") return "error";
+    if (this._status === "needs-permission") return "needs-permission";
+    if (this._status === "saved") return "saved";
     if (this.deps.repository.pendingSaveCount > 0) return "saving";
     return this._status;
   }
@@ -47,16 +53,87 @@ export class SyncStore {
   get isDirty() {
     const record = this.deps.activeVaultRecord();
     if (!record) return false;
-    if (uiStore.isDemoMode || this.status === "loading") return false;
+    if (sessionModeStore.isDemoMode || this.status === "loading") return false;
     return (record.lastInternalChange || 0) > (record.lastSavedToFolder || 0);
   }
 
   private syncAbortController: AbortController | null = null;
+  private savedTimer: any = null;
 
-  constructor(private deps: SyncStoreDependencies) {}
+  private unsubscribe: (() => void) | null = null;
 
-  private isStale(vaultIdAtStart: string, signal: AbortSignal): boolean {
-    return this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted;
+  constructor(private deps: SyncStoreDependencies) {
+    this.unsubscribe = appEventBus.subscribe(
+      "SYNC:DRIVE_PULL_COMPLETE",
+      async (event) => {
+        const activeId = this.deps.activeVaultId();
+        if (activeId && event.payload?.vaultId === activeId) {
+          debugStore.log(
+            `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
+          );
+          await cacheService.clearVault(activeId);
+          await this.loadFiles(false);
+        }
+      },
+    );
+  }
+
+  private clearSavedTimer() {
+    if (this.savedTimer) {
+      clearTimeout(this.savedTimer);
+      this.savedTimer = null;
+    }
+  }
+
+  private async waitForSaves(timeoutMs?: number): Promise<void> {
+    if (this.deps.flushPendingSaves) {
+      await this.deps.flushPendingSaves(timeoutMs);
+    } else {
+      await this.deps.repository.waitForAllSaves(timeoutMs);
+    }
+  }
+
+  private async ensureFolderPermission(
+    localHandle: FileSystemDirectoryHandle,
+  ): Promise<boolean> {
+    try {
+      const permission = await localHandle.queryPermission({
+        mode: "readwrite",
+      });
+      if (permission === "granted") {
+        return true;
+      }
+      const requested = await localHandle.requestPermission({
+        mode: "readwrite",
+      });
+      if (requested === "granted") {
+        return true;
+      }
+      this.setStatus("needs-permission");
+      this.errorMessage = "Permission denied for local folder.";
+      notificationStore.notify("Permission denied for local folder.", "error");
+      return false;
+    } catch (err: any) {
+      debugStore.error("[SyncStore] Failed to ensure folder permission", err);
+      this.setStatus("needs-permission");
+      this.errorMessage = "Permission denied for local folder.";
+      notificationStore.notify("Permission denied for local folder.", "error");
+      return false;
+    }
+  }
+
+  destroy() {
+    this.clearSavedTimer();
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+  }
+
+  private isStale(vaultIdAtStart: string, signal?: AbortSignal): boolean {
+    return (
+      this.deps.activeVaultId() !== vaultIdAtStart || (signal?.aborted ?? false)
+    );
   }
 
   async loadFiles(skipSyncIfWarm = true) {
@@ -91,7 +168,8 @@ export class SyncStore {
 
       this.deps.repository.entities = {};
 
-      const isDemo = uiStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
+      const isDemo =
+        sessionModeStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
       const cachedMap = !isDemo
         ? await cacheService.preloadVault(vaultIdAtStart)
         : new Map();
@@ -111,39 +189,60 @@ export class SyncStore {
           entities: entityMap,
         });
 
-        this._status = "idle";
+        this.setStatus("idle");
+      }
 
-        if (skipSyncIfWarm) {
-          debugStore.log(
-            "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
+      // Silent check for local folder handle permission
+      let skipLocalSync = false;
+      const localHandle = await this.deps.getActiveFolderHandle();
+      this.hasFolderHandle = !!localHandle;
+      if (localHandle && !isDemo) {
+        try {
+          const permission = await localHandle.queryPermission({
+            mode: "readwrite",
+          });
+          if (permission !== "granted") {
+            debugStore.log(
+              `[SyncStore] Local folder permission is ${permission}. Skipping auto-sync.`,
+            );
+            this.setStatus("needs-permission");
+            skipLocalSync = true;
+          }
+        } catch (err) {
+          debugStore.warn(
+            "[SyncStore] Failed to query local folder permission silently",
+            err,
           );
-          this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
-          await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
-          await this.deps.loadMaps(vaultIdAtStart);
-          await this.deps.loadCanvases(vaultIdAtStart);
-          void this.deps.getActiveVaultHandle();
-          return;
         }
       }
 
+      if (cachedMap.size > 0 && skipSyncIfWarm) {
+        debugStore.log(
+          "[SyncStore] Cache is warm. Skipping OPFS background sync for instant load.",
+        );
+        await this.deps.updateEntityCount(vaultIdAtStart, cachedMap.size);
+        await this.deps.loadMaps(vaultIdAtStart);
+        await this.deps.loadCanvases(vaultIdAtStart);
+        void this.deps.getActiveVaultHandle();
+        return;
+      }
+
       const vaultDir = await this.deps.getActiveVaultHandle();
-      this.hasFolderHandle = !!(await this.deps.getActiveFolderHandle());
       if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (!vaultDir) {
         if (!isDemo) {
-          this._status = cachedMap.size > 0 ? "idle" : "error";
-          if (this._status === "error") {
+          this.setStatus(cachedMap.size > 0 ? "idle" : "error");
+          if ((this._status as string) === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
           }
         } else {
-          this._status = "idle";
+          this.setStatus("idle");
         }
         return;
       }
 
-      const localHandle = await this.deps.getActiveFolderHandle();
-      if (localHandle) {
+      if (localHandle && !skipLocalSync) {
         debugStore.log(
           `[SyncStore] Local sync handle found for ${vaultIdAtStart}. Synchronizing...`,
         );
@@ -156,7 +255,7 @@ export class SyncStore {
               vaultDir,
               "pull",
               this.deps.repository.entities,
-              () => this.deps.repository.waitForAllSaves(),
+              () => this.waitForSaves(),
               (state: {
                 status: "saving" | "loading" | "idle" | "error";
                 syncType: "local" | null;
@@ -166,7 +265,7 @@ export class SyncStore {
                   this.deps.activeVaultId() === vaultIdAtStart &&
                   !signal.aborted
                 ) {
-                  this._status = state.status;
+                  this.setStatus(state.status);
                   if (state.errorMessage) {
                     this.errorMessage = state.errorMessage;
                   }
@@ -247,7 +346,7 @@ export class SyncStore {
       ]);
 
       if (this._status === "loading") {
-        this._status = "idle";
+        this.setStatus("idle");
       }
 
       vaultEventBus.emit({
@@ -257,14 +356,14 @@ export class SyncStore {
     } catch (err: any) {
       if (err.name === "AbortError" || err.message === "AbortError") return;
       debugStore.error("[SyncStore] Load failed", err);
-      this._status = "error";
+      this.setStatus("error");
       this.errorMessage = err.message;
     } finally {
       if (!signal.aborted) {
         await this.checkForConflicts(signal);
       }
       if (this._status === "loading" && !signal.aborted) {
-        this._status = "idle";
+        this.setStatus("idle");
       }
     }
   }
@@ -280,34 +379,58 @@ export class SyncStore {
     const opfsHandle = await this.deps.getActiveVaultHandle();
     if (!opfsHandle) return;
 
+    const localHandle = await this.deps.getActiveFolderHandle();
+    if (localHandle) {
+      const hasPermission = await this.ensureFolderPermission(localHandle);
+      if (!hasPermission) return;
+    }
+
     this.failedFiles = [];
 
-    await syncCoordinator.push(
-      vaultIdAtStart,
-      opfsHandle,
-      this.deps.repository.entities,
-      () => this.deps.repository.waitForAllSaves(),
-      (state) => {
-        if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this._status = state.status;
-          this.syncType = state.syncType;
-          if (state.errorMessage) this.errorMessage = state.errorMessage;
-          if (state.failedFiles) this.failedFiles = state.failedFiles;
-        }
-      },
-      () => this.checkForConflicts(),
-    );
+    try {
+      await syncCoordinator.push(
+        vaultIdAtStart,
+        opfsHandle,
+        this.deps.repository.entities,
+        () => this.waitForSaves(),
+        (state) => {
+          if (this.deps.activeVaultId() === vaultIdAtStart) {
+            this.setStatus(state.status);
+            this.syncType = state.syncType;
+            if (state.errorMessage) this.errorMessage = state.errorMessage;
+            if (state.failedFiles) this.failedFiles = state.failedFiles;
+          }
+        },
+        () => this.checkForConflicts(),
+      );
 
-    if (this._status !== "error") {
-      const { updateLastSavedToFolder } = await import("./registry");
-      await updateLastSavedToFolder(vaultIdAtStart);
+      if (this.isStale(vaultIdAtStart)) return;
 
-      appEventBus.emit({
-        type: "SYNC:LOCAL_PUSH_COMPLETE",
-        domain: "sync",
-        payload: { vaultId: vaultIdAtStart },
-        metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
-      });
+      if (this._status !== "error") {
+        const { updateLastSavedToFolder } = await import("./registry");
+        await updateLastSavedToFolder(vaultIdAtStart);
+
+        appEventBus.emit({
+          type: "SYNC:LOCAL_PUSH_COMPLETE",
+          domain: "sync",
+          payload: { vaultId: vaultIdAtStart },
+          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+        });
+
+        this.setStatus("saved");
+        this.savedTimer = setTimeout(() => {
+          if (this._status === "saved") {
+            this.setStatus("idle");
+          }
+        }, 3000);
+      }
+    } finally {
+      // Fix C4: if vault switched mid-save the onStateChange vault-ID guard
+      // suppresses the coordinator's final idle transition, leaving _status
+      // stuck at "saving"/"loading". Reset it so the UI doesn't freeze.
+      if (this._status === "saving" || this._status === "loading") {
+        this.setStatus("idle");
+      }
     }
   }
 
@@ -317,7 +440,7 @@ export class SyncStore {
     const vaultIdAtStart = activeVaultId;
 
     if (this.isDirty) {
-      const confirmed = await uiStore.confirm({
+      const confirmed = await notificationStore.confirm({
         title: "Overwrite Internal Work?",
         message:
           "Warning: You have unsaved internal changes. Loading from the folder will overwrite your current work. Continue?",
@@ -333,45 +456,63 @@ export class SyncStore {
     const opfsHandle = await this.deps.getActiveVaultHandle();
     if (!opfsHandle) return;
 
+    const localHandle = await this.deps.getActiveFolderHandle();
+    if (localHandle) {
+      const hasPermission = await this.ensureFolderPermission(localHandle);
+      if (!hasPermission) return;
+    }
+
     this.failedFiles = [];
 
-    await syncCoordinator.pull(
-      vaultIdAtStart,
-      opfsHandle,
-      this.deps.repository.entities,
-      () => this.deps.repository.waitForAllSaves(),
-      (state) => {
-        if (this.deps.activeVaultId() === vaultIdAtStart) {
-          this._status = state.status;
-          this.syncType = state.syncType;
-          if (state.errorMessage) this.errorMessage = state.errorMessage;
-          if (state.failedFiles) this.failedFiles = state.failedFiles;
-        }
-      },
-      () => this.checkForConflicts(),
-    );
+    try {
+      await syncCoordinator.pull(
+        vaultIdAtStart,
+        opfsHandle,
+        this.deps.repository.entities,
+        () => this.waitForSaves(),
+        (state) => {
+          if (this.deps.activeVaultId() === vaultIdAtStart) {
+            this.setStatus(state.status);
+            this.syncType = state.syncType;
+            if (state.errorMessage) this.errorMessage = state.errorMessage;
+            if (state.failedFiles) this.failedFiles = state.failedFiles;
+          }
+        },
+        () => this.checkForConflicts(),
+      );
 
-    if (this._status !== "error") {
-      appEventBus.emit({
-        type: "SYNC:LOCAL_PULL_COMPLETE",
-        domain: "sync",
-        payload: { vaultId: vaultIdAtStart },
-        metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
-      });
+      if (this.isStale(vaultIdAtStart)) return;
 
-      await this.loadFiles();
+      if (this._status !== "error") {
+        appEventBus.emit({
+          type: "SYNC:LOCAL_PULL_COMPLETE",
+          domain: "sync",
+          payload: { vaultId: vaultIdAtStart },
+          metadata: { timestamp: Date.now(), vaultId: vaultIdAtStart },
+        });
+
+        await this.loadFiles();
+      }
+    } finally {
+      // Fix C4: mirror of saveToFolder — reset stuck transitional status
+      // if vault switched while the pull was in flight.
+      if (this._status === "saving" || this._status === "loading") {
+        this.setStatus("idle");
+      }
     }
   }
 
   async cleanupConflictFiles(signal?: AbortSignal) {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
+    const vaultIdAtStart = activeVaultId;
 
     const syncCoordinator = await this.deps.getSyncCoordinator();
     if (!syncCoordinator) return;
 
     const opfsHandle = await this.deps.getActiveVaultHandle();
-    if (!opfsHandle || signal?.aborted) return;
+    // Fix C8: guard vault switch that may have occurred during the awaits above.
+    if (!opfsHandle || this.isStale(vaultIdAtStart, signal)) return;
 
     await syncCoordinator.cleanupConflictFiles(
       activeVaultId,
@@ -398,7 +539,12 @@ export class SyncStore {
     }
   }
 
-  setStatus(s: "idle" | "loading" | "saving" | "error") {
+  setStatus(
+    s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
+  ) {
+    if (s !== "saved") {
+      this.clearSavedTimer();
+    }
     this._status = s;
   }
 

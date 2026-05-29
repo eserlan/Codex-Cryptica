@@ -1,7 +1,6 @@
 <script lang="ts">
   import { driveStore } from "$lib/stores/drive.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import {
     connectVaultToDrive,
     disconnectVaultFromDrive,
@@ -14,6 +13,7 @@
   import { onMount } from "svelte";
   import { getDB } from "$lib/utils/idb";
   import { SyncRegistry, CloudSyncMetadataService } from "@codex/sync-engine";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let isConnecting = $state(false);
   let isPushing = $state(false);
@@ -54,7 +54,7 @@
     );
     if (!vault.activeVaultId) {
       console.warn("[DriveSettings] Cannot connect: No active vault ID found.");
-      uiStore.notify("No active vault selected.", "error");
+      notificationStore.notify("No active vault selected.", "error");
       return;
     }
     isConnecting = true;
@@ -68,10 +68,13 @@
         "[DriveSettings] connectVaultToDrive complete. Loading metadata...",
       );
       await loadMetadata();
-      uiStore.notify("Connected to Google Drive", "success");
+      notificationStore.notify("Connected to Google Drive", "success");
     } catch (e: any) {
       console.error("[DriveSettings] Connection flow failed:", e);
-      uiStore.notify(e.message || "Failed to connect to Google Drive", "error");
+      notificationStore.notify(
+        e.message || "Failed to connect to Google Drive",
+        "error",
+      );
     } finally {
       isConnecting = false;
     }
@@ -79,7 +82,7 @@
 
   async function handleDisconnect() {
     if (!vault.activeVaultId) return;
-    const confirmed = await uiStore.confirm({
+    const confirmed = await notificationStore.confirm({
       title: "Disconnect Google Drive?",
       message:
         "This will stop mirroring this vault to the cloud. Your local data will be preserved.",
@@ -90,23 +93,23 @@
     if (confirmed) {
       await disconnectVaultFromDrive(vault.activeVaultId);
       metadata = null;
-      uiStore.notify("Google Drive disconnected", "info");
+      notificationStore.notify("Google Drive disconnected", "info");
     }
   }
 
   async function handlePush() {
     if (!vault.activeVaultId) return;
     isPushing = true;
-    uiStore.notify(
+    notificationStore.notify(
       "Cloud sync started in background. You can continue working.",
       "info",
     );
     try {
       await pushVaultToDrive(vault.activeVaultId);
       await loadMetadata();
-      uiStore.notify("Vault saved to Google Drive", "success");
+      notificationStore.notify("Vault saved to Google Drive", "success");
     } catch (e: any) {
-      uiStore.notify(e.message || "Failed to push to Drive", "error");
+      notificationStore.notify(e.message || "Failed to push to Drive", "error");
     } finally {
       isPushing = false;
     }
@@ -114,7 +117,7 @@
 
   async function handlePull() {
     if (!vault.activeVaultId) return;
-    const confirmed = await uiStore.confirm({
+    const confirmed = await notificationStore.confirm({
       title: "Overwrite from Cloud?",
       message:
         "This will replace your local vault content with the version stored on Google Drive. Continue?",
@@ -125,13 +128,19 @@
     if (!confirmed) return;
 
     isPulling = true;
-    uiStore.notify("Cloud pull started in background. Please wait...", "info");
+    notificationStore.notify(
+      "Cloud pull started in background. Please wait...",
+      "info",
+    );
     try {
       await pullVaultFromDrive(vault.activeVaultId);
       await loadMetadata();
-      uiStore.notify("Vault loaded from Google Drive", "success");
+      notificationStore.notify("Vault loaded from Google Drive", "success");
     } catch (e: any) {
-      uiStore.notify(e.message || "Failed to pull from Drive", "error");
+      notificationStore.notify(
+        e.message || "Failed to pull from Drive",
+        "error",
+      );
     } finally {
       isPulling = false;
     }
@@ -143,7 +152,10 @@
     try {
       driveVaults = await listDriveVaults();
     } catch (e: any) {
-      uiStore.notify(e.message || "Failed to list Drive vaults", "error");
+      notificationStore.notify(
+        e.message || "Failed to list Drive vaults",
+        "error",
+      );
     } finally {
       isLoadingDriveVaults = false;
     }
@@ -151,14 +163,14 @@
 
   async function handleImportVault(id: string, name: string) {
     isImporting = true;
-    uiStore.notify(`Importing vault "${name}" from Drive…`, "info");
+    notificationStore.notify(`Importing vault "${name}" from Drive…`, "info");
     try {
       await importVaultFromDrive(id, name);
       driveVaults = null;
       await loadMetadata();
-      uiStore.notify(`Vault "${name}" loaded from Drive`, "success");
+      notificationStore.notify(`Vault "${name}" loaded from Drive`, "success");
     } catch (e: any) {
-      uiStore.notify(e.message || "Failed to import vault", "error");
+      notificationStore.notify(e.message || "Failed to import vault", "error");
     } finally {
       isImporting = false;
     }
@@ -168,14 +180,17 @@
     const link = shareLink.trim();
     if (!link) return;
     isJoining = true;
-    uiStore.notify("Connecting to shared vault…", "info");
+    notificationStore.notify("Connecting to shared vault…", "info");
     try {
       await joinSharedVault(link);
       shareLink = "";
       await loadMetadata();
-      uiStore.notify("Shared vault loaded successfully", "success");
+      notificationStore.notify("Shared vault loaded successfully", "success");
     } catch (e: any) {
-      uiStore.notify(e.message || "Failed to join shared vault", "error");
+      notificationStore.notify(
+        e.message || "Failed to join shared vault",
+        "error",
+      );
     } finally {
       isJoining = false;
     }

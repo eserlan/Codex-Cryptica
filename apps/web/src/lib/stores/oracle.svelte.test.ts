@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { OracleStore } from "./oracle.svelte";
 import { vault as mockVault } from "./vault.svelte";
-import { uiStore as mockUiStore } from "./ui.svelte";
 import { textGenerationService, contextRetrievalService } from "../services/ai";
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("comlink", () => ({
   proxy: vi.fn((x) => x),
@@ -26,6 +26,18 @@ const { mockAnalyzeEntityById, mockAnalyzeAndApplyEntityById } = vi.hoisted(
   }),
 );
 
+const mockUiStore = {
+  confirm: vi.fn().mockResolvedValue(true),
+  aiDisabled: false,
+  isDemoMode: false,
+  entityDiscoveryMode: "suggest",
+  connectionDiscoveryMode: "suggest",
+  oracleAutomationPolicy: {
+    entityDiscovery: "suggest",
+    connectionDiscovery: "suggest",
+  },
+};
+
 // Mock dependencies
 vi.mock("../utils/idb", () => ({
   getDB: vi.fn().mockResolvedValue({
@@ -46,20 +58,6 @@ vi.mock("../utils/idb", () => ({
 vi.mock("./graph.svelte", () => ({
   graph: {
     requestFit: vi.fn(),
-  },
-}));
-
-vi.mock("./ui.svelte", () => ({
-  uiStore: {
-    confirm: vi.fn().mockResolvedValue(true),
-    aiDisabled: false,
-    isDemoMode: false,
-    entityDiscoveryMode: "suggest",
-    connectionDiscoveryMode: "suggest",
-    oracleAutomationPolicy: {
-      entityDiscovery: "suggest",
-      connectionDiscovery: "suggest",
-    },
   },
 }));
 
@@ -118,7 +116,7 @@ vi.mock("../services/ai", () => ({
   },
 }));
 
-vi.mock("../services/search", () => ({
+vi.mock("../services/search.svelte", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([{ id: "e1", title: "Entity 1" }]),
   },
@@ -137,8 +135,9 @@ describe("OracleStore", () => {
   let mockExecutor: any;
   let mockSessionActivity: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    (mockVault as any).isGuest = false;
     (mockUiStore as any).aiDisabled = false;
     (mockUiStore as any).isDemoMode = false;
     (mockUiStore as any).entityDiscoveryMode = "suggest";
@@ -147,6 +146,7 @@ describe("OracleStore", () => {
       entityDiscovery: "suggest",
       connectionDiscovery: "suggest",
     };
+    notificationStore.confirm = vi.fn().mockResolvedValue(true);
 
     mockChatHistory = {
       messages: [],
@@ -247,7 +247,8 @@ describe("OracleStore", () => {
 
     oracle = new OracleStore({
       vault: mockVault as any,
-      uiStore: mockUiStore as any,
+      discoveryPolicyStore: mockUiStore as any,
+      sessionModeStore: mockUiStore as any,
       diceHistory: mockDiceHistory as any,
       textGeneration: textGenerationService as any,
       contextRetrieval: contextRetrievalService as any,
@@ -361,12 +362,12 @@ describe("OracleStore", () => {
 
     it("should clear key and messages", async () => {
       await oracle.clearKey();
-      expect(mockSettings.updateSettings).toHaveBeenCalledWith({
-        apiKey: undefined,
-      });
+      expect(mockSettings.clearKey).toHaveBeenCalled();
+    });
 
+    it("should clear messages", async () => {
       await oracle.clearMessages();
-      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+      expect(notificationStore.confirm).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "Clear History",
           isDangerous: true,
@@ -377,11 +378,11 @@ describe("OracleStore", () => {
     });
 
     it("should not clear messages when confirmation is cancelled", async () => {
-      vi.mocked(mockUiStore.confirm).mockResolvedValue(false);
+      vi.mocked(notificationStore.confirm).mockResolvedValue(false);
 
       await oracle.clearMessages();
 
-      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+      expect(notificationStore.confirm).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "Clear History",
           isDangerous: true,
@@ -443,6 +444,7 @@ describe("OracleStore", () => {
             type: "npc",
           }),
         ],
+        expect.any(Array),
       );
     });
 
@@ -487,6 +489,15 @@ describe("OracleStore", () => {
 
       expect(context.searchService).toBeDefined();
       expect(typeof context.searchService.search).toBe("function");
+    });
+
+    it("should expose generatePlotAnalysis through the textGeneration context", () => {
+      const context = oracle.getExecutionContext();
+
+      expect(context.textGeneration).toBeDefined();
+      expect(typeof context.textGeneration.generatePlotAnalysis).toBe(
+        "function",
+      );
     });
 
     it("should expose oracle automation policy through the execution context", () => {
@@ -540,7 +551,8 @@ describe("OracleStore", () => {
     it("should handle missing methods in getExecutionContext (defensive wrapping)", () => {
       const bareOracle = new OracleStore({
         vault: { activeVaultId: "v1", entities: {} } as any,
-        uiStore: mockUiStore as any,
+        discoveryPolicyStore: mockUiStore as any,
+        sessionModeStore: mockUiStore as any,
         diceHistory: {} as any,
         searchService: {} as any,
         diceParser: {} as any,
@@ -574,6 +586,7 @@ describe("OracleStore", () => {
       // Chat history methods
       expect(typeof context.chatHistory.addMessage).toBe("function");
       expect(typeof context.chatHistory.setMessages).toBe("function");
+      expect(typeof context.chatHistory.removeMessage).toBe("function");
 
       // Context retrieval methods (Regressed in previous version)
       expect(context.contextRetrieval).toBeDefined();
@@ -711,6 +724,178 @@ describe("OracleStore", () => {
 
       expect(result.content).toBe("C");
       expect(result.lore).toBe("L\n\nmore");
+    });
+
+    it("should bypass AI reconciliation for guest users in reconcileDiscoveryProposal", async () => {
+      (mockVault as any).isGuest = true;
+      (mockVault as any).entities = {
+        e1: { id: "e1", title: "E1", content: "C", lore: "L" },
+      };
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+
+      const result = await oracle.reconcileDiscoveryProposal({
+        entityId: "e1",
+        title: "E1",
+        draft: { chronicle: "new", lore: "more" },
+      } as any);
+
+      expect(result.content).toBe("C");
+      expect(result.lore).toBe("L\n\nmore");
+      expect(
+        (oracle as any).textGeneration.reconcileEntityUpdate,
+      ).not.toHaveBeenCalled();
+    });
+
+    describe("reconcileSmartApply", () => {
+      beforeEach(() => {
+        (mockVault as any).entities = {
+          target: {
+            id: "target",
+            title: "Zariel",
+            type: "npc",
+            content: "Old chronicle",
+            lore: "Old lore",
+            connections: [],
+          },
+        };
+      });
+
+      it("calls reconcileEntityUpdate with snapshotted args and returns selective fields", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({
+            content: "Merged chronicle",
+            lore: "Merged lore",
+          });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        });
+
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).toHaveBeenCalledWith(
+          "test-key",
+          "test-model",
+          expect.objectContaining({ id: "target" }),
+          { chronicle: "New chronicle", lore: "New lore" },
+          expect.any(Array),
+          expect.any(Array),
+        );
+        expect(result).toEqual({
+          content: "Merged chronicle",
+          lore: "Merged lore",
+          categoryId: undefined,
+        });
+      });
+
+      it("returns full reconciled result even when only chronicle is incoming", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({
+            content: "Merged chronicle",
+            lore: "Enriched lore",
+          });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+        });
+
+        expect(result.content).toBe("Merged chronicle");
+        expect(result.lore).toBe("Enriched lore");
+      });
+
+      it("falls back to existing content when AI returns empty strings", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockResolvedValue({ content: "", lore: "" });
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        });
+
+        expect(result.content).toBe("Old chronicle");
+        expect(result.lore).toBe("Old lore");
+      });
+
+      it("falls back to local append when AI is disabled", async () => {
+        (mockUiStore as any).aiDisabled = true;
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "Appended",
+          lore: "New lore",
+        });
+
+        expect(result).toEqual({
+          content: "Old chronicle\n\nAppended",
+          lore: "Old lore\n\nNew lore",
+        });
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+      });
+
+      it("falls back to local append when in guest mode", async () => {
+        (mockVault as any).isGuest = true;
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+
+        const result = await oracle.reconcileSmartApply("target", {
+          chronicle: "Guest Appended",
+          lore: "Guest Lore",
+        });
+
+        expect(result).toEqual({
+          content: "Old chronicle\n\nGuest Appended",
+          lore: "Old lore\n\nGuest Lore",
+        });
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+      });
+
+      it("falls back to local append when reconcileEntityUpdate throws", async () => {
+        (oracle as any).textGeneration.reconcileEntityUpdate = vi
+          .fn()
+          .mockRejectedValue(new Error("AI error"));
+
+        const result = await oracle.reconcileSmartApply("target", {
+          lore: "Extra lore",
+        });
+
+        expect(result).toEqual({ lore: "Old lore\n\nExtra lore" });
+      });
+
+      it("throws when entity is not found", async () => {
+        (mockVault as any).entities = {};
+        await expect(
+          oracle.reconcileSmartApply("missing", { chronicle: "x" }),
+        ).rejects.toThrow("Entity missing not found.");
+      });
+    });
+
+    describe("reconcileNewEntityDraft", () => {
+      it("should bypass AI reconciliation and use raw draft for guest users", async () => {
+        (mockVault as any).isGuest = true;
+        const result = await oracle.reconcileNewEntityDraft(
+          "New Subject",
+          "npc",
+          {
+            chronicle: "guest chronicle",
+            lore: "guest lore",
+          },
+        );
+
+        expect(
+          (oracle as any).textGeneration.reconcileEntityUpdate,
+        ).not.toHaveBeenCalled();
+        expect(result).toEqual({
+          content: "guest chronicle",
+          lore: "guest lore",
+        });
+      });
     });
 
     it("should reset the store", () => {

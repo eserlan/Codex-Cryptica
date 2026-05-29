@@ -3,37 +3,40 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSearchStore, mockUiStore, mockVault, mockCategories } = vi.hoisted(
-  () => ({
-    mockSearchStore: {
-      isOpen: true,
-      query: "",
-      results: [],
-      selectedIndex: 0,
-      setQuery: vi.fn(),
-      setSelectedIndex: vi.fn(),
-      selectCurrent: vi.fn(),
-      close: vi.fn(),
+const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
+  mockSearchStore: {
+    isOpen: true,
+    query: "",
+    results: [],
+    selectedIndex: 0,
+    setQuery: vi.fn(),
+    setSelectedIndex: vi.fn(),
+    selectCurrent: vi.fn(),
+    close: vi.fn(),
+    retryIndexing: vi.fn(),
+    indexProgress: {
+      status: "idle",
+      vaultId: null,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
     },
-    mockUiStore: {
-      leftSidebarOpen: false,
-    },
-    mockVault: {
-      selectedEntityId: null as string | null,
-    },
-    mockCategories: {
-      getCategory: vi.fn(() => ({ icon: "lucide:file-text", label: "Note" })),
-      getColor: vi.fn(() => "#888888"),
-    },
-  }),
-);
+  } as any,
+  mockVault: {
+    selectedEntityId: null as string | null,
+  },
+  mockCategories: {
+    getCategory: vi.fn(() => ({ icon: "lucide:file-text", label: "Note" })),
+    getColor: vi.fn(() => "#888888"),
+  },
+}));
 
 vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: mockSearchStore,
-}));
-
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: mockUiStore,
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -65,6 +68,7 @@ vi.mock("./search-focus", () => ({
 }));
 
 import SearchModal from "./SearchModal.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 describe("SearchModal", () => {
   beforeEach(() => {
@@ -76,12 +80,24 @@ describe("SearchModal", () => {
     mockSearchStore.setSelectedIndex.mockReset();
     mockSearchStore.selectCurrent.mockReset();
     mockSearchStore.close.mockReset();
-    mockUiStore.leftSidebarOpen = false;
+    mockSearchStore.retryIndexing.mockReset();
+    mockSearchStore.indexProgress = {
+      status: "idle",
+      vaultId: null,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
+    };
+    layoutUIStore.leftSidebarOpen = false;
     mockVault.selectedEntityId = null;
   });
 
   it("anchors to the main area when the left sidebar is open", () => {
-    mockUiStore.leftSidebarOpen = true;
+    layoutUIStore.leftSidebarOpen = true;
 
     const { container } = render(SearchModal);
 
@@ -113,5 +129,43 @@ describe("SearchModal", () => {
     expect(modal.className).toContain("md:left-0");
     expect(modal.className).toContain("md:right-0");
     expect(modal.className).toContain("justify-center");
+  });
+
+  it("shows partial indexing progress counts", () => {
+    mockSearchStore.indexProgress = {
+      status: "partial",
+      vaultId: "vault-1",
+      runId: "run-1",
+      indexedCount: 42,
+      totalCount: 100,
+      isPartial: true,
+      canRetry: false,
+      message: "Search is still indexing.",
+      error: null,
+    };
+
+    render(SearchModal);
+
+    const progress = screen.getByTestId("search-index-progress");
+    expect(progress.textContent).toContain("Search is still indexing.");
+    expect(progress.textContent).toContain("42/100");
+  });
+
+  it("shows retry action when indexing failed", () => {
+    mockSearchStore.indexProgress = {
+      status: "failed",
+      vaultId: "vault-1",
+      runId: "run-1",
+      indexedCount: 20,
+      totalCount: 100,
+      isPartial: true,
+      canRetry: true,
+      message: "Search may be incomplete. Retry indexing.",
+      error: "worker failed",
+    };
+
+    render(SearchModal);
+
+    expect(screen.getByRole("button", { name: "Retry indexing" })).toBeTruthy();
   });
 });

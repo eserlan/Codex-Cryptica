@@ -21,15 +21,14 @@ vi.mock("$app/state", () => ({
     url: new URL("https://example.com/map?shareId=p2p-guest-123&view=map"),
   },
 }));
-
-import { uiStore } from "$lib/stores/ui.svelte";
 import GuestSessionBootstrap from "./GuestSessionBootstrap.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("GuestSessionBootstrap", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    uiStore.guestUsername = null;
-    uiStore.isGuestMode = false;
+    sessionModeStore.guestUsername = null;
+    sessionModeStore.isGuestMode = false;
   });
 
   it("shows the guest login modal when opening a shared map link", () => {

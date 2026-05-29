@@ -63,6 +63,7 @@ export type OracleIntentType =
   | "wizard"
   | "help"
   | "clear"
+  | "draw"
   | "error";
 
 /**
@@ -91,8 +92,15 @@ export interface OracleIntent {
  */
 export interface RegenerationDraft {
   entityId: string;
+  /** Optional ID of the ChatMessage that triggered this draft proposal */
+  messageId?: string;
+  source?: "regenerate" | "oracle-chat" | "merge";
   chronicle: string;
   lore: string;
+  merge?: {
+    sourceIds: string[];
+    finalContent: unknown;
+  };
   timestamp: number;
 }
 
@@ -146,10 +154,15 @@ export interface OracleExecutionContext {
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;
   modelName: string;
+  imageProvider?: "gemini" | "custom";
+  customImageBaseUrl?: string;
+  customImageApiKey?: string;
+  customImageModel?: string;
   isDemoMode?: boolean;
   vault: any;
   uiStore: any;
   chatHistory: any;
+  generator?: any;
   textGeneration?: any;
   imageGeneration?: any;
   contextRetrieval?: any;
@@ -161,8 +174,10 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  eventBus?: any;
   categories?: Category[];
   automationPolicy?: OracleAutomationPolicy;
+  commandStack?: string[];
   proposeConnectionsForEntity?: (
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },
@@ -189,4 +204,15 @@ export interface OracleWorkerEvent {
   payload?: any;
   vaultId?: string;
   requestId?: string;
+}
+
+/**
+ * Interface for specialized command executors
+ */
+export interface OracleCommandExecutor {
+  execute(
+    intent: OracleIntent,
+    context: OracleExecutionContext,
+    onPartialResponse?: (partial: string) => void,
+  ): Promise<void>;
 }

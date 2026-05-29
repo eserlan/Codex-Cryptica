@@ -8,7 +8,7 @@
     ConnectionMode,
   } from "@xyflow/svelte";
   import { CanvasStore } from "@codex/canvas-engine";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
@@ -18,9 +18,11 @@
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
-  import { onDestroy } from "svelte";
+
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
 
@@ -116,6 +118,7 @@
   }
 
   function handlePaneContextMenu({ event }: { event: MouseEvent }) {
+    if (vault.isGuest) return;
     event.preventDefault();
     logic.contextMenu = {
       x: event.clientX,
@@ -137,6 +140,7 @@
   }
 
   function onDragOver(event: DragEvent) {
+    if (vault.isGuest) return;
     event.preventDefault();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = "move";
@@ -144,6 +148,7 @@
   }
 
   function onDrop(event: DragEvent) {
+    if (vault.isGuest) return;
     event.preventDefault();
     const entityId = event.dataTransfer?.getData("application/codex-entity");
     if (!entityId) return;
@@ -155,15 +160,17 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
-  onDestroy(() => {
-    logic.flushSave();
+  $effect(() => {
+    return () => {
+      logic.flushSave();
+    };
   });
 </script>
 
 <div
   class="canvas-container {logic.isConnecting
     ? 'is-connecting'
-    : ''} flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
+    : ''} flex h-[var(--app-content-height)] w-full overflow-hidden relative"
   tabindex="-1"
   role="none"
 >
@@ -186,14 +193,15 @@
       bind:edges={logic.edges}
       {nodeTypes}
       {edgeTypes}
-      onconnect={logic.onConnect}
+      onconnect={!vault.isGuest ? logic.onConnect : undefined}
       onconnectstart={() => {
+        if (vault.isGuest) return;
         logic.isConnecting = true;
-        uiStore.isConnecting = true;
+        connectionModeStore.isConnecting = true;
       }}
       onconnectend={() => {
         logic.isConnecting = false;
-        uiStore.isConnecting = false;
+        connectionModeStore.isConnecting = false;
       }}
       onnodecontextmenu={onNodeContextMenu}
       onedgecontextmenu={onEdgeContextMenu}
@@ -209,7 +217,7 @@
       fitView
     >
       <Background gap={20} />
-      {#if !uiStore.isGuestMode}
+      {#if !sessionModeStore.isGuestMode}
         <Controls />
       {/if}
       <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />

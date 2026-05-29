@@ -2,7 +2,7 @@
 
 **Feature Branch**: `022-oracle-data-parsing`  
 **Created**: 2026-01-30  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "better oracle output interpretation. when the user creates info about a node, where we get both chronicle and lore data, id like the copy to node function to intelligently separate chronicle data (the short desc) and the rest, and place it appropriately in the model (and reflected in the ui) that way the user dont have to copy chronicle data from the lore gen into the chronicle section of the deails panel"
 
 ## User Scenarios & Testing _(mandatory)_

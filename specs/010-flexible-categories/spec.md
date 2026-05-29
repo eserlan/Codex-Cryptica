@@ -1,5 +1,7 @@
 # Spec 010: Flexible Node Categories
 
+**Status**: Implemented
+
 ## Background
 
 Currently, the Codex Cryptica uses a hardcoded set of categories (`npc`, `location`, `item`, `event`, `faction`). This is restrictive for world-builders who want to define their own ontologies (e.g., "Deity", "Starship", "Ingredient").

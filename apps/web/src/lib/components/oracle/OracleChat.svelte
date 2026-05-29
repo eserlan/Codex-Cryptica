@@ -1,12 +1,12 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$stores/ui.svelte";
   import ChatMessage from "./ChatMessage.svelte";
   import CommandMenu from "./CommandMenu.svelte";
   import { chatCommands } from "../../config/chat-commands";
   import { fade } from "svelte/transition";
   import { tick } from "svelte";
   import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -229,7 +229,7 @@
       class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded-full text-[10px] tracking-widest transition-all active:scale-95 shadow-lg shadow-theme-primary/20"
       onclick={() => {
         if (onOpenSettings) onOpenSettings();
-        else uiStore.openSettings();
+        else modalUIStore.openSettings();
       }}
     >
       OPEN SETTINGS
@@ -328,12 +328,25 @@
       <ChatMessage bind:message={oracle.messages[i]} />
     {/each}
 
-    {#if oracle.isLoading}
-      <div class="flex justify-start" transition:fade>
+    {#if oracle.isLoading || oracle.isThinking}
+      <div
+        class="flex justify-start"
+        transition:fade
+        role="status"
+        aria-live="polite"
+      >
         <div
-          class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-header animate-pulse"
+          class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-header animate-pulse flex items-center gap-2"
         >
-          Consulting archives...
+          <span
+            class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+            aria-hidden="true"
+          ></span>
+          <span
+            >{oracle.isThinking
+              ? "Consulting archives..."
+              : "Accessing..."}</span
+          >
         </div>
       </div>
     {/if}

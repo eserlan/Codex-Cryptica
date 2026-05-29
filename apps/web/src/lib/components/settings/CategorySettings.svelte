@@ -1,9 +1,9 @@
 <script lang="ts">
   import { categories } from "$lib/stores/categories.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { sanitizeId } from "$lib/utils/markdown";
   import { getIconClass } from "$lib/utils/icon";
   import { fade, scale } from "svelte/transition";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let newLabel = $state("");
   let newColor = $state("#60a5fa");
@@ -147,7 +147,7 @@
         <button
           onclick={async () => {
             if (
-              await uiStore.confirm({
+              await notificationStore.confirm({
                 title: "Delete Category",
                 message: `Delete category "${cat.label}"? Entities using this category will fallback to default style.`,
                 confirmLabel: "Delete",

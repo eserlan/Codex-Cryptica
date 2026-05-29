@@ -2,15 +2,12 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
   maps: {},
   saveMaps: vi.fn(),
-}));
-
-const uiMock = vi.hoisted(() => ({
-  sharedMode: false,
 }));
 
 function makeMap(id: string, isWorldMap = false) {
@@ -29,10 +26,6 @@ vi.mock("./vault.svelte", () => ({
   vault: vaultMock,
 }));
 
-vi.mock("./ui.svelte", () => ({
-  uiStore: uiMock,
-}));
-
 import { MapStore } from "./map.svelte";
 
 describe("MapStore settings persistence", () => {
@@ -40,7 +33,7 @@ describe("MapStore settings persistence", () => {
     window.localStorage.clear();
     vaultMock.activeVaultId = "vault-a";
     vaultMock.maps = {};
-    uiMock.sharedMode = false;
+    sessionModeStore.sharedMode = false;
   });
 
   afterEach(() => {
@@ -59,6 +52,7 @@ describe("MapStore settings persistence", () => {
     store.gridOffsetX = 12;
     store.gridOffsetY = -8;
     store.gridColor = "#fbbf24";
+    store.showLabels = true;
 
     await waitFor(() => {
       const raw = window.localStorage.getItem("codex-map-settings:map-a");
@@ -71,6 +65,7 @@ describe("MapStore settings persistence", () => {
         gridOffsetX: 12,
         gridOffsetY: -8,
         gridColor: "#fbbf24",
+        showLabels: true,
       });
     });
   });
@@ -84,6 +79,7 @@ describe("MapStore settings persistence", () => {
         brushRadius: 96,
         gridSize: 64,
         gridColor: "#3b82f6",
+        showLabels: true,
       }),
     );
     window.localStorage.setItem(
@@ -94,6 +90,7 @@ describe("MapStore settings persistence", () => {
         brushRadius: 44,
         gridSize: 80,
         gridColor: null,
+        showLabels: false,
       }),
     );
 
@@ -105,6 +102,7 @@ describe("MapStore settings persistence", () => {
     expect(store.brushRadius).toBe(96);
     expect(store.gridSize).toBe(64);
     expect(store.gridColor).toBe("#3b82f6");
+    expect(store.showLabels).toBe(true);
 
     store.selectMap("map-b");
     expect(store.showFog).toBe(true);
@@ -112,6 +110,7 @@ describe("MapStore settings persistence", () => {
     expect(store.brushRadius).toBe(44);
     expect(store.gridSize).toBe(80);
     expect(store.gridColor).toBe(null);
+    expect(store.showLabels).toBe(false);
   });
 
   it("restores the last selected map and viewport on reload", async () => {

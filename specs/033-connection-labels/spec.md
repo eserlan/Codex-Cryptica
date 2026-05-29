@@ -2,7 +2,7 @@
 
 **Feature Branch**: `033-connection-labels`
 **Created**: 2026-02-02
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "the ability to "label" connections friendly, enemy or neutral, and visually represent it"
 
 ## User Scenarios & Testing

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    uiStore,
-    MIN_LEFT_SIDEBAR_WIDTH,
-    MAX_SIDEBAR_VW,
-  } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import ResizerHandle from "./ResizerHandle.svelte";
+  import {
+    layoutUIStore,
+    MAX_SIDEBAR_VW,
+    MIN_LEFT_SIDEBAR_WIDTH,
+  } from "$lib/stores/ui/layout-ui.svelte";
 
   let OracleSidebarPanel = $state<any>(null);
   let EntityExplorer = $state<any>(null);
@@ -39,35 +39,35 @@
   });
 </script>
 
-{#if uiStore.leftSidebarOpen}
+{#if layoutUIStore.leftSidebarOpen}
   <aside
-    class="w-full md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0
+    class="w-full md:h-full bg-chrome-surface border-chrome-border flex flex-col z-[85] shadow-xl relative shrink-0
            max-md:fixed max-md:inset-0 md:border-r md:bottom-0"
-    style:width={uiStore.isMobile ? "100%" : `${uiStore.leftSidebarWidth}px`}
-    style:background-color="var(--theme-panel-fill)"
-    style:background-image="var(--bg-texture-overlay)"
+    style:width={layoutUIStore.isMobile
+      ? "100%"
+      : `${layoutUIStore.leftSidebarWidth}px`}
     data-testid="sidebar-panel-host"
   >
-    {#if !uiStore.isMobile}
+    {#if !layoutUIStore.isMobile}
       <ResizerHandle
         side="left"
         minWidth={MIN_LEFT_SIDEBAR_WIDTH}
         maxWidthVW={MAX_SIDEBAR_VW}
-        currentWidth={uiStore.leftSidebarWidth}
-        onResize={(w) => uiStore.setLeftSidebarWidth(w)}
+        currentWidth={layoutUIStore.leftSidebarWidth}
+        onResize={(w) => layoutUIStore.setLeftSidebarWidth(w)}
       />
     {/if}
 
-    {#if uiStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
+    {#if layoutUIStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
       <OracleSidebarPanel />
-    {:else if uiStore.activeSidebarTool === "explorer" && EntityExplorer}
+    {:else if layoutUIStore.activeSidebarTool === "explorer" && EntityExplorer}
       <EntityExplorer />
-    {:else if uiStore.activeSidebarTool === "ai-assessment" && AIAssessment}
+    {:else if layoutUIStore.activeSidebarTool === "ai-assessment" && AIAssessment}
       <AIAssessment />
     {:else}
       <div class="flex-1 flex items-center justify-center p-8 text-center">
         <div
-          class="animate-pulse text-theme-muted font-mono text-[10px] uppercase tracking-widest"
+          class="animate-pulse text-chrome-muted font-mono text-[10px] uppercase tracking-widest"
         >
           Initializing System...
         </div>

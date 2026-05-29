@@ -4,16 +4,8 @@ import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ActivityBar from "./ActivityBar.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
-
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    aiDisabled: false,
-    connectionDiscoveryMode: "suggest",
-    activeSidebarTool: null,
-    toggleSidebarTool: vi.fn(),
-  },
-}));
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
@@ -34,8 +26,10 @@ vi.mock("$app/paths", () => ({
 describe("ActivityBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    uiStore.aiDisabled = false;
-    uiStore.connectionDiscoveryMode = "suggest";
+    discoveryPolicyStore.aiDisabled = false;
+    discoveryPolicyStore.connectionDiscoveryMode = "suggest";
+    layoutUIStore.activeSidebarTool = "none";
+    layoutUIStore.toggleSidebarTool = vi.fn();
   });
 
   it("shows AI Assessment when enabled", () => {
@@ -44,19 +38,19 @@ describe("ActivityBar", () => {
   });
 
   it("hides AI Assessment when AI is disabled", () => {
-    uiStore.aiDisabled = true;
+    discoveryPolicyStore.aiDisabled = true;
     render(ActivityBar);
     expect(screen.queryByTestId("activity-bar-ai-assessment")).toBeNull();
   });
 
   it("hides AI Assessment when connection discovery is off", () => {
-    uiStore.connectionDiscoveryMode = "off";
+    discoveryPolicyStore.connectionDiscoveryMode = "off";
     render(ActivityBar);
     expect(screen.queryByTestId("activity-bar-ai-assessment")).toBeNull();
   });
 
   it("shows AI Assessment when connection discovery is auto-apply", () => {
-    uiStore.connectionDiscoveryMode = "auto-apply";
+    discoveryPolicyStore.connectionDiscoveryMode = "auto-apply";
     render(ActivityBar);
     expect(screen.getByTestId("activity-bar-ai-assessment")).toBeDefined();
   });

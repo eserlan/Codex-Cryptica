@@ -79,7 +79,7 @@ vi.mock("./vault/migration", () => ({
   migrateStructure: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../services/search", () => ({
+vi.mock("../services/search.svelte", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
@@ -196,12 +196,12 @@ import { VaultStore } from "./vault.svelte";
 import { cacheService } from "../services/cache.svelte";
 import { readFileAsText } from "../utils/opfs";
 import { createSyncEngine, fileIOAdapter } from "./vault/adapters.svelte";
-import { uiStore } from "./ui.svelte";
 import * as vaultMigration from "./vault/migration";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("VaultStore", () => {
   let testVault: VaultStore;
@@ -210,9 +210,9 @@ describe("VaultStore", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockPostMessage.mockClear();
-    uiStore.isGuestMode = false;
-    uiStore.isDemoMode = false;
-    uiStore.activeDemoTheme = null;
+    sessionModeStore.isGuestMode = false;
+    sessionModeStore.isDemoMode = false;
+    sessionModeStore.activeDemoTheme = null;
 
     // Ensure window is defined with dispatchEvent
     vi.stubGlobal("window", {
@@ -239,7 +239,12 @@ describe("VaultStore", () => {
         waitForAllSaves: vi.fn().mockResolvedValue(undefined),
       },
       waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      enqueueSave: vi.fn(),
     };
+    // Delegate enqueueSave → saveQueue.enqueue so assertions on saveQueue.enqueue still pass.
+    mockRepository.enqueueSave.mockImplementation((id: any, cb: any) =>
+      mockRepository.saveQueue.enqueue(id, cb),
+    );
 
     testVault = new VaultStore(mockRepository);
   });
@@ -328,11 +333,11 @@ describe("VaultStore", () => {
     });
 
     it("should handle demo mode in init", async () => {
-      uiStore.isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
       await testVault.init();
       expect(testVault.isInitialized).toBe(true);
       expect(testVault.status).toBe("idle");
-      uiStore.isDemoMode = false;
+      sessionModeStore.isDemoMode = false;
     });
 
     it("should trigger migration if required", async () => {
@@ -375,7 +380,7 @@ describe("VaultStore", () => {
       try {
         await testVault.init();
 
-        expect(uiStore.isGuestMode).toBe(true);
+        expect(sessionModeStore.isGuestMode).toBe(true);
         expect(testVault.isInitialized).toBe(true);
         expect(testVault.status).toBe("idle");
         expect(fetchMock).toHaveBeenCalledWith("/vault-samples/fantasy.json");
@@ -508,14 +513,14 @@ describe("VaultStore", () => {
       const deleteSpy = vi.fn();
       testVault.onEntityDelete = deleteSpy;
 
-      uiStore.isDemoMode = true;
+      sessionModeStore.isDemoMode = true;
       mockRepository.entities = { d1: { id: "d1" } };
 
       await testVault.deleteEntity("d1");
 
       expect(deleteSpy).toHaveBeenCalledWith("d1");
       expect(testVault.entities["d1"]).toBeUndefined();
-      uiStore.isDemoMode = false;
+      sessionModeStore.isDemoMode = false;
     });
 
     it("should immediately update cache when saving", async () => {
@@ -559,7 +564,7 @@ describe("VaultStore", () => {
     });
 
     it("should handle search index errors in scheduleSave", async () => {
-      const { searchService } = await import("../services/search");
+      const { searchService } = await import("../services/search.svelte");
       vi.mocked(searchService.index).mockRejectedValueOnce(
         new Error("Search Error"),
       );
@@ -582,7 +587,7 @@ describe("VaultStore", () => {
       vi.spyOn(testVault.entityStore, "batchCreateEntities").mockImplementation(
         async (newEntities) => {
           testVault.entityStore.markContentLoaded("b1");
-          const { vaultEventBus } = await import("./vault/events");
+          const { vaultEventBus } = await import("./vault/events.svelte");
           vaultEventBus.emit({
             type: "BATCH_CREATED",
             vaultId: "v1",
@@ -764,7 +769,7 @@ describe("VaultStore", () => {
     });
 
     it("should ensure asset persisted with demo theme fetcher", async () => {
-      uiStore.activeDemoTheme = "fantasy";
+      sessionModeStore.activeDemoTheme = "fantasy";
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         blob: () => Promise.resolve(new Blob()),
@@ -788,7 +793,7 @@ describe("VaultStore", () => {
       );
       expect(result).toBe(true);
       expect(mockFetch).toHaveBeenCalled();
-      uiStore.activeDemoTheme = null;
+      sessionModeStore.activeDemoTheme = null;
     });
   });
 
@@ -862,7 +867,7 @@ describe("VaultStore", () => {
 
       await testVault.saveToFolder();
       expect(testVault.syncCoordinator!.push).toHaveBeenCalled();
-      expect(testVault.status).toBe("saving");
+      expect(testVault.status).toBe("saved");
     });
 
     it("should handle loadFromFolder", async () => {

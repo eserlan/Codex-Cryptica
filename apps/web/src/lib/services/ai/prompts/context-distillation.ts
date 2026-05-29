@@ -1,3 +1,5 @@
+import { u } from "./user-content";
+
 export function buildContextDistillationPrompt(context: string): string {
   return `You are a campaign archivist. Condense the following vault excerpts into a concise, factual world digest for a front-page briefing.
 
@@ -11,7 +13,7 @@ Rules:
 - Do not include an introduction, conclusion, or meta commentary.
 
 Vault excerpts:
-${context}
+${u(context)}
 
 Concise world digest:`;
 }

@@ -26,6 +26,7 @@ describe("OracleSettingsService", () => {
       expect(service.tier).toBe("advanced");
       expect(service.isLoading).toBe(false);
       expect(service.activeStyleTitle).toBe(null);
+      expect(service.imageProvider).toBe("gemini");
     });
 
     it("should accept optional db in constructor", () => {
@@ -57,6 +58,22 @@ describe("OracleSettingsService", () => {
 
       expect(service.apiKey).toBe(null);
       expect(service.tier).toBe("advanced");
+      expect(service.imageProvider).toBe("gemini");
+    });
+
+    it("should preserve gemini as image provider when no API key is set", async () => {
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce({ value: "gemini" });
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+
+      expect(service.apiKey).toBe(null);
+      expect(service.imageProvider).toBe("gemini");
     });
   });
 

@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
 type MutableVaultMock = {
   activeVaultId: string | null;
@@ -27,16 +27,6 @@ vi.mock("$lib/components/EntityDetailPanel.svelte", async () => ({
   default: (await import("./__tests__/EntityDetailPanelStub.svelte")).default,
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
-    dismissedWorldPage: false,
-    skipWelcomeScreen: false,
-    openLightbox: vi.fn(),
-    closeLightbox: vi.fn(),
-    lightbox: { show: false, imageUrl: "", title: "" },
-  },
-}));
-
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     activeVaultId: null as string | null,
@@ -49,8 +39,8 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 describe("/vault/[id] page", () => {
   beforeEach(() => {
     const mutableVault = vault as unknown as MutableVaultMock;
-    uiStore.dismissedWorldPage = false;
-    uiStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedWorldPage = false;
+    onboardingStore.skipWelcomeScreen = false;
     mutableVault.activeVaultId = null;
     mutableVault.selectedEntityId = null;
     mutableVault.entities = {};
@@ -67,7 +57,7 @@ describe("/vault/[id] page", () => {
   });
 
   it("hides the front page only after the world page is dismissed", () => {
-    uiStore.dismissedWorldPage = true;
+    onboardingStore.dismissedWorldPage = true;
 
     render(RoutePage);
 

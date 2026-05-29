@@ -1,11 +1,13 @@
-import { uiStore as defaultUiStore } from "$lib/stores/ui.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
 import { base } from "$app/paths";
 import { openEntityPopout } from "$lib/utils/zen-popout";
 import type { Entity } from "schema";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { focusEntity } from "$lib/stores/ui/navigation";
 
 export interface ZenModeActionsDependencies {
-  uiStore?: typeof defaultUiStore;
   vault?: typeof defaultVault;
 }
 
@@ -13,7 +15,6 @@ export function createZenModeActions(
   editStateOrGetter: any | (() => any),
   deps: ZenModeActionsDependencies = {},
 ) {
-  const uiStore = deps.uiStore ?? defaultUiStore;
   const vault = deps.vault ?? defaultVault;
 
   const getEditState = () =>
@@ -48,7 +49,7 @@ export function createZenModeActions(
 
   const handleDelete = async (entity: Entity, onDeleted: () => void) => {
     if (
-      await uiStore.confirm({
+      await notificationStore.confirm({
         title: "Delete Entity",
         message: `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
         isDangerous: true,
@@ -56,12 +57,12 @@ export function createZenModeActions(
     ) {
       try {
         await vault.deleteEntity(entity.id);
-        uiStore.notify(`"${entity.title}" deleted.`, "success");
+        notificationStore.notify(`"${entity.title}" deleted.`, "success");
         getEditState().isEditing = false;
         onDeleted();
       } catch (err: any) {
         console.error("[ZenModeActions] Failed to delete entity", err);
-        uiStore.notify(`Error: ${err.message}`, "error");
+        notificationStore.notify(`Error: ${err.message}`, "error");
       }
     }
   };
@@ -70,7 +71,7 @@ export function createZenModeActions(
     const editState = getEditState();
     if (editState.isEditing) {
       if (
-        !(await uiStore.confirm({
+        !(await notificationStore.confirm({
           title: "Discard Changes",
           message: "Discard unsaved changes?",
           isDangerous: true,
@@ -122,10 +123,10 @@ export function createZenModeActions(
     );
 
     // Close whatever view we're in
-    if (uiStore.showZenMode) {
-      uiStore.closeZenMode();
-    } else if (uiStore.mainViewMode === "focus") {
-      uiStore.focusEntity(null);
+    if (modalUIStore.showZenMode) {
+      modalUIStore.closeZenMode();
+    } else if (layoutUIStore.mainViewMode === "focus") {
+      focusEntity(null);
     }
   };
 

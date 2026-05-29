@@ -141,30 +141,7 @@
         }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
       >
     {/if}
-    <button
-      id={tabIds.inventory}
-      type="button"
-      role="tab"
-      aria-selected={activeTab === "inventory"}
-      aria-controls={panelIds.inventory}
-      tabindex={activeTab === "inventory" ? 0 : -1}
-      data-testid="tab-inventory"
-      class={activeTab === "inventory"
-        ? isFantasyTheme
-          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
-          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : isFantasyTheme
-          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
-          : "hover:text-theme-text transition"}
-      style:border-color={activeTab === "inventory" && isFantasyTheme
-        ? "var(--theme-focus-border)"
-        : undefined}
-      style:background-color={activeTab === "inventory" && isFantasyTheme
-        ? "var(--theme-focus-bg)"
-        : undefined}
-      onclick={() => (activeTab = "inventory")}
-      >{themeStore.jargon.tab_inventory.toUpperCase()}</button
-    >
+
     <button
       id={tabIds.map}
       type="button"

@@ -1,9 +1,9 @@
 import { vault } from "./vault.svelte";
-import { uiStore } from "./ui.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
 import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
@@ -15,6 +15,7 @@ type PersistedMapSettings = {
   gridOffsetX: number;
   gridOffsetY: number;
   gridColor: string | null;
+  showLabels: boolean;
 };
 
 type PersistedMapPageState = {
@@ -23,13 +24,14 @@ type PersistedMapPageState = {
 };
 
 const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
-  showFog: true,
+  showFog: false,
   showGrid: false,
   brushRadius: 50,
   gridSize: 50,
   gridOffsetX: 0,
   gridOffsetY: 0,
   gridColor: null,
+  showLabels: true,
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -45,9 +47,10 @@ export class MapStore {
   });
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
-  showFog = $state(true);
+  showFog = $state(false);
+  showLabels = $state(true);
   // GM Mode is active whenever we are NOT in Shared Mode (Player View)
-  isGMMode = $derived(!uiStore.sharedMode);
+  isGMMode = $derived(!sessionModeStore.sharedMode);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);
@@ -57,6 +60,7 @@ export class MapStore {
   gridColor = $state<string | null>(null); // null means use theme primary
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
+  private _persistTimer: ReturnType<typeof setTimeout> | null = null;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -95,9 +99,10 @@ export class MapStore {
             this.gridOffsetX,
             this.gridOffsetY,
             this.gridColor,
+            this.showLabels,
           ];
           void tracked;
-          this.persistSettings();
+          this.schedulePersistSettings();
         });
       });
     }
@@ -178,10 +183,22 @@ export class MapStore {
           typeof parsed.gridColor === "string" || parsed.gridColor === null
             ? parsed.gridColor
             : DEFAULT_MAP_SETTINGS.gridColor,
+        showLabels:
+          typeof parsed.showLabels === "boolean"
+            ? parsed.showLabels
+            : DEFAULT_MAP_SETTINGS.showLabels,
       };
     } catch {
       return null;
     }
+  }
+
+  private schedulePersistSettings() {
+    if (this._persistTimer !== null) clearTimeout(this._persistTimer);
+    this._persistTimer = setTimeout(() => {
+      this._persistTimer = null;
+      this.persistSettings();
+    }, 250);
   }
 
   private persistSettings() {
@@ -201,6 +218,7 @@ export class MapStore {
       gridOffsetX: this.gridOffsetX,
       gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
+      showLabels: this.showLabels,
     };
 
     try {
@@ -319,6 +337,7 @@ export class MapStore {
       this.gridOffsetX = next.gridOffsetX ?? 0;
       this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
+      this.showLabels = next.showLabels;
     } finally {
       this.isRestoringSettings = false;
     }
@@ -542,6 +561,7 @@ export class MapStore {
       visuals,
     };
 
+    if (!vault.maps) return;
     const map = vault.maps[this.activeMapId];
     if (map) {
       map.pins = [...map.pins, newPin];
@@ -549,8 +569,18 @@ export class MapStore {
     }
   }
 
+  updatePinCoordinatesInMemory(pinId: string, coordinates: Point) {
+    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
+    const map = vault.maps[this.activeMapId];
+    if (map) {
+      map.pins = map.pins.map((p) =>
+        p.id === pinId ? { ...p, coordinates } : p,
+      );
+    }
+  }
+
   async removePin(pinId: string) {
-    if (!this.activeMapId || !vault.maps[this.activeMapId]) {
+    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) {
       return;
     }
 

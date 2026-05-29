@@ -3,6 +3,8 @@ import { base } from "$app/paths";
 import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
+import { initOracleEventListeners } from "../../listeners/oracle-events";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 /**
  * Core system bootstrapping.
@@ -14,7 +16,7 @@ export function bootSystem(stores: {
   graph: any;
   calendar: any;
   vault: any;
-  uiStore: any;
+  sessionModeStore: any;
   oracle?: any;
 }): boolean {
   debugStore.log("System booting: Initializing heavy stores...");
@@ -24,7 +26,7 @@ export function bootSystem(stores: {
   stores.calendar.init();
 
   // Initialize staging state
-  stores.uiStore.isStaging = IS_STAGING;
+  stores.sessionModeStore.isStaging = IS_STAGING;
 
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);
@@ -43,8 +45,11 @@ export function bootSystem(stores: {
  * Sets up global error and rejection handlers.
  * Returns a cleanup function.
  */
-export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
+export function initializeGlobalListeners(calendarStore: any) {
   if (!browser) return () => {};
+
+  // Initialize Oracle action listeners
+  const unsubOracle: () => void = initOracleEventListeners();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
@@ -74,7 +79,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
     }
 
     console.error("[Fatal Error MSG]", event.message, event.error?.stack);
-    uiStore.setGlobalError(event.message, event.error?.stack);
+    notificationStore.setGlobalError(event.message, event.error?.stack);
   };
 
   const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -98,7 +103,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
     }
 
     console.error("[Fatal Rejection]", event);
-    uiStore.setGlobalError(
+    notificationStore.setGlobalError(
       message || "Unhandled Promise Rejection",
       reason?.stack,
     );
@@ -113,6 +118,7 @@ export function initializeGlobalListeners(uiStore: any, calendarStore: any) {
   window.addEventListener("vault-switched", handleVaultSwitched);
 
   return () => {
+    unsubOracle();
     window.removeEventListener("error", handleGlobalError);
     window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     window.removeEventListener("vault-switched", handleVaultSwitched);
@@ -132,7 +138,14 @@ export function setupWindowGlobals(context: {
   calendarStore: any;
   helpStore: any;
   categories: any;
-  uiStore: any;
+  onboardingStore?: any;
+  sessionModeStore?: any;
+  notificationStore?: any;
+  layoutUIStore?: any;
+  modalUIStore?: any;
+  discoveryPolicyStore?: any;
+  connectionModeStore?: any;
+  explorerUIStore?: any;
   isEntityVisible: any;
   eventBus?: any;
 }) {
@@ -145,8 +158,244 @@ export function setupWindowGlobals(context: {
 
   if (!isSpecialEnv) return;
 
-  console.log("[WindowGlobals] Attaching:", Object.keys(context));
+  debugStore.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
+  (window as any).codexUI = {
+    onboarding: context.onboardingStore,
+    session: context.sessionModeStore,
+    notification: context.notificationStore,
+    layout: context.layoutUIStore,
+    modal: context.modalUIStore,
+    discovery: context.discoveryPolicyStore,
+    connection: context.connectionModeStore,
+    explorer: context.explorerUIStore,
+  };
+
+  // Backwards compatibility layer for legacy E2E tests accessing window.uiStore
+  (window as any).uiStore = new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (typeof prop !== "string") return undefined;
+
+        // OnboardingStore properties
+        if (
+          [
+            "dismissedWorldPage",
+            "dismissedLandingPage",
+            "skipWelcomeScreen",
+            "lastSeenVersion",
+            "showChangelog",
+            "isLandingPageVisible",
+          ].includes(prop)
+        ) {
+          return context.onboardingStore?.[prop];
+        }
+
+        // SessionModeStore properties
+        if (
+          [
+            "isDemoMode",
+            "sharedMode",
+            "isGuestMode",
+            "guestUsername",
+            "setGuestUsername",
+          ].includes(prop)
+        ) {
+          const val = context.sessionModeStore?.[prop];
+          if (typeof val === "function") {
+            return val.bind(context.sessionModeStore);
+          }
+          return val;
+        }
+
+        // LayoutUIStore properties
+        if (
+          [
+            "leftSidebarWidth",
+            "rightSidebarWidth",
+            "leftSidebarOpen",
+            "activeSidebarTool",
+            "mainViewMode",
+            "focusedEntityId",
+            "isMobile",
+            "vttSidebarCollapsed",
+            "vttChatSidebarCollapsed",
+            "vttEntityListCollapsed",
+            "findNodeCounter",
+            "lastSelectedNodePosition",
+            "toggleSidebarTool",
+            "closeSidebar",
+            "setLeftSidebarWidth",
+            "setRightSidebarWidth",
+            "toggleVttSidebar",
+            "toggleVttChatSidebar",
+            "toggleVttEntityList",
+            "findInGraph",
+            "setLastSelectedNodePosition",
+          ].includes(prop)
+        ) {
+          const val = context.layoutUIStore?.[prop];
+          if (typeof val === "function") {
+            return val.bind(context.layoutUIStore);
+          }
+          return val;
+        }
+
+        // ModalUIStore properties
+        if (
+          [
+            "showSettings",
+            "activeTab",
+            "readModeNodeId",
+            "zenModeEntityId",
+            "zenModeActiveTab",
+            "showZenMode",
+            "openZenMode",
+            "closeZenMode",
+            "openReadMode",
+            "closeReadMode",
+          ].includes(prop)
+        ) {
+          const val = context.modalUIStore?.[prop];
+          if (typeof val === "function") {
+            return val.bind(context.modalUIStore);
+          }
+          return val;
+        }
+
+        // DiscoveryPolicyStore properties
+        if (
+          ["showUnindexedNotification", "acknowledgedUnindexed"].includes(prop)
+        ) {
+          return context.discoveryPolicyStore?.[prop];
+        }
+
+        // ConnectionModeStore properties
+        if (["connectionMode"].includes(prop)) {
+          return context.connectionModeStore?.[prop];
+        }
+
+        // ExplorerUIStore properties
+        if (
+          ["selectedLabels", "expandedCategories", "searchQuery"].includes(prop)
+        ) {
+          return context.explorerUIStore?.[prop];
+        }
+
+        return undefined;
+      },
+      set(_target, prop, value) {
+        if (typeof prop !== "string") return false;
+
+        // OnboardingStore properties
+        if (
+          [
+            "dismissedWorldPage",
+            "dismissedLandingPage",
+            "skipWelcomeScreen",
+            "lastSeenVersion",
+            "showChangelog",
+            "isLandingPageVisible",
+          ].includes(prop)
+        ) {
+          if (context.onboardingStore) {
+            context.onboardingStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // SessionModeStore properties
+        if (
+          ["isDemoMode", "sharedMode", "isGuestMode", "guestUsername"].includes(
+            prop,
+          )
+        ) {
+          if (context.sessionModeStore) {
+            context.sessionModeStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // LayoutUIStore properties
+        if (
+          [
+            "leftSidebarWidth",
+            "rightSidebarWidth",
+            "leftSidebarOpen",
+            "activeSidebarTool",
+            "mainViewMode",
+            "focusedEntityId",
+            "isMobile",
+            "vttSidebarCollapsed",
+            "vttChatSidebarCollapsed",
+            "vttEntityListCollapsed",
+            "findNodeCounter",
+            "lastSelectedNodePosition",
+          ].includes(prop)
+        ) {
+          if (context.layoutUIStore) {
+            context.layoutUIStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // ModalUIStore properties
+        if (
+          [
+            "showSettings",
+            "activeTab",
+            "readModeNodeId",
+            "zenModeEntityId",
+            "zenModeActiveTab",
+            "showZenMode",
+          ].includes(prop)
+        ) {
+          if (context.modalUIStore) {
+            context.modalUIStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // DiscoveryPolicyStore properties
+        if (
+          ["showUnindexedNotification", "acknowledgedUnindexed"].includes(prop)
+        ) {
+          if (context.discoveryPolicyStore) {
+            context.discoveryPolicyStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // ConnectionModeStore properties
+        if (["connectionMode"].includes(prop)) {
+          if (context.connectionModeStore) {
+            context.connectionModeStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // ExplorerUIStore properties
+        if (
+          ["selectedLabels", "expandedCategories", "searchQuery"].includes(prop)
+        ) {
+          if (context.explorerUIStore) {
+            context.explorerUIStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        return false;
+      },
+    },
+  );
 
   // Lazy-load dynamic AI services if not already present
   import("../../services/ai")

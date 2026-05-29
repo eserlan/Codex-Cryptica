@@ -3,8 +3,9 @@
   import { base } from "$app/paths";
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { guestRoster } from "$lib/stores/guest";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { guestStore } from "$lib/stores/guest.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let draggedIndex = $state<number | null>(null);
   let {
@@ -17,8 +18,10 @@
 
   const entries = $derived(mapSession.initiativeEntries);
   const activeTokenId = $derived(mapSession.activeTokenId);
-  const roster = $derived($guestRoster);
-  const canManageTokens = $derived(mapStore.isGMMode && !uiStore.isGuestMode);
+  const roster = $derived(guestStore.guestRoster);
+  const canManageTokens = $derived(
+    mapStore.isGMMode && !sessionModeStore.isGuestMode,
+  );
   const canAdvanceTurn = $derived(
     mapSession.canAdvanceTurn(mapSession.myPeerId, mapStore.isGMMode),
   );
@@ -190,7 +193,7 @@
                   class="shrink-0 text-theme-muted hover:text-theme-primary transition-colors active:scale-90"
                   onclick={(e) => {
                     e.stopPropagation();
-                    uiStore.openZenMode(token.entityId!);
+                    modalUIStore.openZenMode(token.entityId!);
                   }}
                   onmousedown={(e) => e.stopPropagation()}
                   title="Look at {token.name}"

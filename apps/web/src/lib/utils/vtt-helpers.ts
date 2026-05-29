@@ -1,5 +1,26 @@
 import type { Point, ViewportTransform } from "schema";
-import type { Token } from "../../types/vtt";
+import type { Token, MeasurementState } from "../../types/vtt";
+
+export function hashToColor(input: string) {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue} 75% 55%)`;
+}
+
+export function cloneMeasurement(
+  measurement: MeasurementState,
+): MeasurementState {
+  return {
+    active: measurement.active,
+    start: measurement.start ? { ...measurement.start } : null,
+    end: measurement.end ? { ...measurement.end } : null,
+    locked: measurement.locked,
+  };
+}
 
 export function snapToGrid(
   point: Point,

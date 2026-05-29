@@ -2,7 +2,7 @@
 
 **Feature Branch**: `issue/688-offload-ai-creation`  
 **Created**: 2026-04-23  
-**Status**: Implemented  
+**Status**: Implemented
 **Input**: User description: "offload ai entity (and connection) creation to a background worker"
 
 ## User Scenarios & Testing _(mandatory)_
@@ -49,6 +49,18 @@ As a user, I want to be able to find entities the Oracle has recently auto-creat
 1. **Given** an AI-generated entity in "Draft" status, **When** I search for its title in the global search modal, **Then** it appears in the results with a "Draft" badge.
 2. **Given** a draft entity exists, **When** I ask the Oracle a follow-up question about it, **Then** the Oracle successfully retrieves it as RAG context and provides an accurate answer.
 
+### User Story 4 - Visual Thinking Indicator (Priority: P2)
+
+As a user, I want a visual cue when the Oracle is processing a complex request, so that I know the system is active even if text generation hasn't started yet.
+
+**Why this priority**: Essential for feedback during high-latency phases like context retrieval or initial worker startup.
+
+**Independent Test**: Send a complex request to the Oracle and verify a "Consulting archives..." status appears immediately.
+
+**Acceptance Scenarios**:
+
+1. **Given** a new Oracle request is sent, **When** the AI is processing, **Then** a visual loading indicator (pulse/spinner) with thinking text is displayed in the chat message stream.
+
 ---
 
 ### Edge Cases
@@ -69,6 +81,7 @@ As a user, I want to be able to find entities the Oracle has recently auto-creat
 - **FR-006**: System MUST ensure entity discovery is idempotent to avoid duplicate proposals from real-time events and final batch results.
 - **FR-007**: System MUST include entities with `status: 'draft'` in Oracle context retrieval to maintain conversational continuity.
 - **FR-008**: System MUST allow users to find `draft` entities in the global search UI.
+- **FR-009**: System MUST emit `ORACLE_THINKING_START` and `ORACLE_THINKING_END` events from the worker to allow the UI to display a processing indicator.
 
 ### Key Entities
 

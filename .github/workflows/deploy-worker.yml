@@ -45,20 +45,14 @@ jobs:
         with:
           fetch-depth: 1
       
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10.5.0
-          run_install: false
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
 
       - name: Install Wrangler CLI
-        run: pnpm add -g wrangler@latest
-      
+        run: npm install -g wrangler@latest
+
       - name: Verify Wrangler Installation
         run: wrangler --version
       

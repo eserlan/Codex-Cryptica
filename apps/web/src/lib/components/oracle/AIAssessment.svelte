@@ -1,8 +1,10 @@
 <script lang="ts">
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import type { Proposal } from "@codex/proposer";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let assessmentTab = $state<"pending" | "finalized">("pending");
   let isLoading = $state(true);
@@ -39,7 +41,7 @@
   };
 
   const handleUndo = async (proposal: Proposal) => {
-    const confirmed = await uiStore.confirm({
+    const confirmed = await notificationStore.confirm({
       title: "Undo Connection",
       message:
         "This will remove the connection from your vault and move it back to rejected history. Are you sure?",
@@ -85,7 +87,7 @@
       </div>
     </div>
     <button
-      onclick={() => uiStore.toggleSidebarTool("ai-assessment")}
+      onclick={() => layoutUIStore.toggleSidebarTool("ai-assessment")}
       class="p-1.5 rounded-md transition-all"
       style:color="var(--theme-icon-default)"
       aria-label="Close Assessment"
@@ -181,7 +183,7 @@
                   <span
                     class="text-[10px] text-theme-muted px-1.5 py-0.5 rounded bg-theme-bg border border-theme-border uppercase tracking-wider"
                   >
-                    {proposal.type}
+                    {proposal.label || proposal.type}
                   </span>
                   {#if proposal.confidence > 0.8}
                     <span class="text-[10px] text-green-400 font-mono">
@@ -244,7 +246,8 @@
                     <div class="space-y-2 flex-1 min-w-0">
                       <div class="flex items-center gap-2 flex-wrap">
                         <button
-                          onclick={() => uiStore.openZenMode(proposal.sourceId)}
+                          onclick={() =>
+                            modalUIStore.openZenMode(proposal.sourceId)}
                           class="text-theme-text font-bold text-sm truncate hover:text-theme-primary transition-colors text-left"
                         >
                           {vault.entities[proposal.sourceId]?.title ||
@@ -254,7 +257,8 @@
                           class="icon-[lucide--arrow-right] w-3 h-3 text-theme-muted"
                         ></span>
                         <button
-                          onclick={() => uiStore.openZenMode(proposal.targetId)}
+                          onclick={() =>
+                            modalUIStore.openZenMode(proposal.targetId)}
                           class="text-theme-text font-bold text-sm truncate hover:text-theme-primary transition-colors text-left"
                         >
                           {vault.entities[proposal.targetId]?.title ||

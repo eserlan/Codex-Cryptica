@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NodeMergeService } from "./node-merge.service";
+import { NodeMergeService } from "./node-merge.service.svelte";
 import { vault } from "../stores/vault.svelte";
 import { oracle } from "../stores/oracle.svelte";
-import { textGenerationService } from "./ai/text-generation.service";
+import { textGenerationService } from "./ai/text-generation.service.svelte";
 
 // Mock the dependencies
 vi.mock("../stores/vault.svelte", () => ({
@@ -23,7 +23,7 @@ vi.mock("../stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("./ai/text-generation.service", () => ({
+vi.mock("./ai/text-generation.service.svelte", () => ({
   textGenerationService: {
     generateMergeProposal: vi.fn(),
   },
@@ -177,6 +177,7 @@ describe("NodeMergeService", () => {
         expect.any(String),
         expect.any(Object),
         expect.any(Array),
+        { isGuest: undefined },
       );
     });
   });
@@ -240,6 +241,27 @@ describe("NodeMergeService", () => {
       const updates = vi.mocked(vault.updateEntity).mock.calls[0][1];
       expect(updates.connections!).toHaveLength(1);
       expect(updates.connections![0].target).toBe("other");
+    });
+
+    it("should preserve intentionally empty lore updates", async () => {
+      vault.entities["t"] = {
+        id: "t",
+        title: "T",
+        lore: "Existing lore",
+        connections: [],
+      } as any;
+
+      const proposal = {
+        targetId: "t",
+        suggestedFrontmatter: { lore: "" },
+        suggestedBody: "Body",
+        outgoingConnections: [],
+      } as any;
+
+      await service.executeMerge(proposal, ["t"]);
+
+      const updates = vi.mocked(vault.updateEntity).mock.calls[0][1];
+      expect(updates.lore).toBe("");
     });
   });
 

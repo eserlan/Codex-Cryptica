@@ -1,18 +1,20 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { guestRoster } from "$lib/stores/guest";
+  import { guestStore } from "$lib/stores/guest.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   const selectedToken = $derived(mapSession.selectedToken);
   const linkedEntity = $derived.by(() => {
     if (!selectedToken?.entityId) return null;
     return vault.entities[selectedToken.entityId] || null;
   });
-  const canManageToken = $derived(mapStore.isGMMode && !uiStore.isGuestMode);
+  const canManageToken = $derived(
+    mapStore.isGMMode && !sessionModeStore.isGuestMode,
+  );
   const guests = $derived.by(() =>
-    Object.values($guestRoster).sort((a, b) =>
+    Object.values(guestStore.guestRoster).sort((a, b) =>
       a.displayName.localeCompare(b.displayName),
     ),
   );

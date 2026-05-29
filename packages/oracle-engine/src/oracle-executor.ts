@@ -1,24 +1,50 @@
-import type {
-  OracleIntent,
-  OracleExecutionContext,
-  ChatMessage,
-  ConnectionDiscoveryMode,
-  EntityDiscoveryMode,
-  DiscoveryProposal,
-} from "./types";
-import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
 import { DraftingEngine, draftingEngine } from "./drafting-engine";
-import { buildRelatedEntityContext } from "./reconciliation-context";
+import { DiceExecutor } from "./executors/dice-executor";
+import { MetaExecutor } from "./executors/meta-executor";
+import { CreateExecutor } from "./executors/create-executor";
+import { ConnectExecutor } from "./executors/connect-executor";
+import { MergeExecutor } from "./executors/merge-executor";
+import { PlotExecutor } from "./executors/plot-executor";
+import { VisualizationExecutor } from "./executors/visualization-executor";
+import { RegenerateExecutor } from "./executors/regenerate-executor";
+import { ChatExecutor } from "./executors/chat-executor";
+import type { OracleIntent, OracleExecutionContext } from "./types";
 
+/**
+ * Main dispatcher for Oracle actions.
+ * Follows the Command Pattern by delegating execution to specialized handlers.
+ * Leverages Dependency Injection for all sub-executors.
+ */
 export class OracleActionExecutor {
   private generator: OracleGenerator;
   private draftingEngine: DraftingEngine;
 
+  // Sub-Executors
+  private diceExecutor = new DiceExecutor();
+  private metaExecutor = new MetaExecutor();
+  private createExecutor = new CreateExecutor();
+  private connectExecutor = new ConnectExecutor();
+  private mergeExecutor = new MergeExecutor();
+  private plotExecutor: PlotExecutor;
+  private visualizationExecutor: VisualizationExecutor;
+  private regenerateExecutor: RegenerateExecutor;
+  private chatExecutor: ChatExecutor;
+
   constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
     this.generator = generator ?? new OracleGenerator();
     this.draftingEngine = engine ?? draftingEngine;
+
+    // Inject dependencies into handlers
+    this.plotExecutor = new PlotExecutor(this.generator);
+    this.visualizationExecutor = new VisualizationExecutor(this.generator);
+    this.regenerateExecutor = new RegenerateExecutor(this.generator);
+    this.chatExecutor = new ChatExecutor(this.generator, this.draftingEngine);
   }
+
+  /**
+   * Routes an intent to the appropriate specialized executor.
+   */
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
@@ -26,67 +52,38 @@ export class OracleActionExecutor {
   ): Promise<void> {
     switch (intent.type) {
       case "help":
-        await this.executeHelp(context);
+      case "clear":
+        await this.metaExecutor.execute(intent, context);
         break;
       case "regenerate":
-        {
-          const entityId = intent.entityId || context.vault.selectedEntityId;
-          if (entityId) {
-            await this.executeRegenerate(entityId, context, onPartialResponse);
-          } else {
-            await context.chatHistory.addMessage({
-              id: crypto.randomUUID(),
-              role: "system",
-              content:
-                "❌ Please select an entity in the graph or sidebar to regenerate its content.",
-            });
-          }
-        }
-        break;
-      case "clear":
-        await context.chatHistory.clearMessages();
-        break;
-      case "roll":
-        await this.executeRoll(intent.formula!, context);
-        break;
-      case "create":
-        await this.executeCreate(
-          intent.entityName!,
-          intent.entityType!,
-          context,
-        );
-        break;
-      case "connect":
-        await this.executeConnect(
-          intent.sourceName!,
-          intent.label!,
-          intent.targetName!,
-          context,
-        );
-        break;
-      case "merge":
-        await this.executeMerge(
-          intent.sourceName!,
-          intent.targetName!,
-          context,
-        );
-        break;
-      case "connect-ai":
-        await this.executeConnectAI(intent.query!, context);
-        break;
-      case "merge-ai":
-        await this.executeMergeAI(intent.query!, context);
-        break;
-      case "plot":
-        await this.executePlot(intent.query!, context);
-        break;
-      case "chat":
-        await this.executeChat(
-          intent.query!,
-          intent.isAIIntent!,
+        await this.regenerateExecutor.execute(
+          intent,
           context,
           onPartialResponse,
         );
+        break;
+      case "roll":
+        await this.diceExecutor.execute(intent, context);
+        break;
+      case "create":
+        await this.createExecutor.execute(intent, context);
+        break;
+      case "connect":
+      case "connect-ai":
+        await this.connectExecutor.execute(intent, context);
+        break;
+      case "merge":
+      case "merge-ai":
+        await this.mergeExecutor.execute(intent, context);
+        break;
+      case "plot":
+        await this.plotExecutor.execute(intent, context);
+        break;
+      case "draw":
+        await this.visualizationExecutor.execute(intent, context);
+        break;
+      case "chat":
+        await this.chatExecutor.execute(intent, context, onPartialResponse);
         break;
       case "error":
         await context.chatHistory.addMessage({
@@ -100,906 +97,12 @@ export class OracleActionExecutor {
     }
   }
 
-  private async executeHelp(context: OracleExecutionContext) {
-    const isAIDisabled = context.uiStore.aiDisabled;
-
-    const msg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "system",
-      content: isAIDisabled
-        ? `### Restricted Mode Active
-AI features are disabled. The Oracle is restricted to functional utility commands only. Natural language processing is disabled.
-
-**Available Commands:**
-- \`/roll [formula]\`: Roll dice (e.g. \`/roll 2d20kh1 + 5\`).
-- \`/create "Name" [as "Type"]\`: Create a new record.
-- \`/connect "Entity A" label "Entity B"\`: Create a connection.
-- \`/merge "Source" into "Target"\`: Merge two entities.
-- \`/clear\`: Clear chat history.
-- \`/help\`: Show this message.
-
-**Keyboard Shortcuts:**
-- \`Cmd/Ctrl + Z\`: Undo (Regret)
-- \`Cmd/Ctrl + Y\`: Redo (Reregret)
-- \`Cmd/Ctrl + K\`: Search.\``
-        : `### Oracle Command Guide
-The Lore Oracle supports several slash commands to help you manage your vault:
-
-**AI Powered:**
-- \`/draw [subject]\`: Visualize an entity or scene.
-- \`/create [description]\`: Automatically create a new entity from a text description.
-- \`/plot [entity name]\`: Analyse story tensions around an entity (rivals, risks, secrets). E.g. \`/plot threats around Count Dukoo\`.
-- \`/connect oracle\`: Start the guided connection wizard.
-- \`/merge oracle\`: Start the guided merge wizard.
-
-**Utility:**
-- \`/roll [formula]\`: Interactive dice roller (e.g. \`/roll 4d6!\`).
-- \`/create "Name" [as "Type"]\`: Quick deterministic creation.
-- \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
-- \`/merge "Source" into "Target"\`: Quick deterministic merge.
-- \`/clear\`: Clear conversation history.
-- \`/help\`: Show this guide.
-
-**Keyboard Shortcuts:**
-- \`Cmd/Ctrl + Z\`: Undo (Regret) last action.
-- \`Cmd/Ctrl + Y\` or \`Cmd + Shift + Z\`: Redo (Reregret).
-- \`Cmd/Ctrl + K\`: Search.\``,
-    };
-    await context.chatHistory.addMessage(msg);
-  }
-
-  private async executeRegenerate(
-    entityId: string,
-    context: OracleExecutionContext,
-    onPartialResponse?: (partial: string) => void,
-  ) {
-    const entity = context.vault.entities[entityId];
-    if (!entity) return;
-
-    try {
-      if (context.vault.isGuest)
-        throw new Error("Guest users cannot regenerate content.");
-
-      const assistantMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "",
-        entityId,
-      };
-      await context.chatHistory.addMessage(assistantMsg);
-
-      const handlePartial = (partial: string) => {
-        assistantMsg.content = partial;
-        void context.chatHistory.updateMessage?.(
-          assistantMsg.id,
-          { content: partial },
-          false,
-        );
-        onPartialResponse?.(partial);
-      };
-
-      await this.generator.generateRegenerationResponse(
-        entityId,
-        context,
-        handlePartial,
-      );
-
-      // Final update to set the proposals/metadata
-      const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
-        ...context.chatHistory.messages,
-      ];
-      const idx = finalMsgs.findIndex(
-        (m: ChatMessage) => m.id === assistantMsg.id,
-      );
-      if (idx !== -1) {
-        finalMsgs[idx].content = assistantMsg.content;
-      }
-      await context.chatHistory.setMessages(finalMsgs);
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Regeneration failed for **${entity.title}**: ${err.message}`,
-      });
-    }
-  }
-
-  private async executeRoll(formula: string, context: OracleExecutionContext) {
-    if (!formula) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: "❌ Please specify a roll formula (e.g. /roll 1d20).",
-      });
-      return;
-    }
-
-    try {
-      const command = context.diceParser.parse(formula);
-      const result = context.diceEngine.execute(command);
-      await context.diceHistory.addResult(result, "chat");
-
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: "",
-        type: "roll",
-        rollResult: result,
-      });
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Roll failed: ${err.message}`,
-      });
-    }
-  }
-
-  private async executeCreate(
-    name: string,
-    type: string,
-    context: OracleExecutionContext,
-  ) {
-    try {
-      if (context.vault.isGuest)
-        throw new Error("Guest users cannot create nodes.");
-
-      const id = await context.vault.createEntity(type as any, name, {
-        content: "",
-        lore: "",
-      });
-      const analysisText = this.buildCreateConnectionContext(name, context);
-      const connectionMode = this.getConnectionDiscoveryMode(context);
-      const appliedConnections = await this.handleConnectionDiscovery(
-        id,
-        context,
-        analysisText,
-      );
-      const connectionSuffix =
-        connectionMode === "auto-apply" && appliedConnections > 0
-          ? ` and added ${appliedConnections} connection${appliedConnections === 1 ? "" : "s"}`
-          : connectionMode === "suggest"
-            ? " and queued connection suggestions"
-            : "";
-
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `✅ Created node: **${name}** (${type.toUpperCase()})${connectionSuffix}`,
-      });
-
-      context.vault.selectedEntityId = id;
-      // Graph sync will trigger a real layout+fit after the node is added.
-      // Forcing an immediate fit here can zoom to temporary seed positions.
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ ${err.message}`,
-      });
-    }
-  }
-
-  private buildCreateConnectionContext(
-    name: string,
-    context: OracleExecutionContext,
-  ): string | undefined {
-    const recentMessages = (context.chatHistory?.messages || [])
-      .slice(-8)
-      .map((message: ChatMessage) => message.content?.trim())
-      .filter((content: string | undefined): content is string =>
-        Boolean(content),
-      );
-
-    if (recentMessages.length === 0) {
-      return undefined;
-    }
-
-    const joined = recentMessages.join("\n\n");
-    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const nameRegex = new RegExp(`\\b${escapedName}\\b`, "i");
-
-    if (nameRegex.test(joined)) {
-      return joined;
-    }
-
-    return `${name}\n\n${joined}`;
-  }
-
-  private async executeConnect(
-    sourceName: string,
-    label: string,
-    targetName: string,
-    context: OracleExecutionContext,
-    type?: string,
-  ) {
-    try {
-      const sourceRes = await context.searchService.search(sourceName, {
-        limit: 1,
-      });
-      const targetRes = await context.searchService.search(targetName, {
-        limit: 1,
-      });
-
-      if (!sourceRes[0])
-        throw new Error(`Could not find source entity: "${sourceName}"`);
-      if (!targetRes[0])
-        throw new Error(`Could not find target entity: "${targetName}"`);
-
-      const sourceId = sourceRes[0].id;
-      const targetId = targetRes[0].id;
-      const source = context.vault.entities[sourceId];
-      const target = context.vault.entities[targetId];
-
-      if (source && target) {
-        const typeToUse = type || "related_to";
-        const success = await context.vault.addConnection(
-          source.id,
-          target.id,
-          typeToUse,
-          label,
-        );
-
-        if (success) {
-          await context.chatHistory.addMessage({
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
-          });
-
-          context.undoRedo.pushUndoAction(
-            `Connect ${source.title} to ${target.title}`,
-            async () => {
-              await context.vault.removeConnection(
-                source.id,
-                target.id,
-                typeToUse,
-              );
-            },
-            undefined,
-            async () => {
-              await context.vault.addConnection(
-                source.id,
-                target.id,
-                typeToUse,
-                label,
-              );
-            },
-          );
-        } else {
-          throw new Error("Vault refused to create connection.");
-        }
-      } else {
-        throw new Error(
-          `Entity "${!source ? sourceName : targetName}" was found in search but is missing from the active vault.`,
-        );
-      }
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ ${err.message}`,
-      });
-    }
-  }
-
-  private async executeMerge(
-    sourceName: string,
-    targetName: string,
-    context: OracleExecutionContext,
-  ) {
-    try {
-      const sourceRes = await context.searchService.search(sourceName, {
-        limit: 1,
-      });
-      const targetRes = await context.searchService.search(targetName, {
-        limit: 1,
-      });
-
-      if (!sourceRes[0])
-        throw new Error(`Could not find source entity: "${sourceName}"`);
-      if (!targetRes[0])
-        throw new Error(`Could not find target entity: "${targetName}"`);
-
-      const sourceId = sourceRes[0].id;
-      const targetId = targetRes[0].id;
-
-      if (sourceId === targetId)
-        throw new Error("Cannot merge an entity into itself.");
-
-      const sourceEntity = context.vault.entities[sourceId];
-      const targetEntity = context.vault.entities[targetId];
-
-      if (sourceEntity && targetEntity) {
-        const proposal = await context.nodeMergeService.proposeMerge({
-          sourceNodeIds: [sourceId, targetId],
-          targetNodeId: targetId,
-          strategy: "concat",
-        });
-
-        const beforeTarget = JSON.parse(
-          JSON.stringify(context.vault.entities[targetId]),
-        );
-        const beforeSource = JSON.parse(
-          JSON.stringify(context.vault.entities[sourceId]),
-        );
-
-        await context.nodeMergeService.executeMerge(proposal, [
-          sourceId,
-          targetId,
-        ]);
-
-        await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
-        });
-
-        context.undoRedo.pushUndoAction(
-          `Merge ${sourceEntity.title} into ${targetEntity.title}`,
-          async () => {
-            await context.vault.createEntity(
-              beforeSource.type,
-              beforeSource.title,
-              { ...beforeSource },
-            );
-            context.vault.updateEntity(targetId, beforeTarget);
-          },
-          undefined,
-          async () => {
-            await context.nodeMergeService.executeMerge(proposal, [
-              sourceId,
-              targetId,
-            ]);
-          },
-        );
-      } else {
-        throw new Error(
-          `Entity resolution failed for "${sourceName}" or "${targetName}".`,
-        );
-      }
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ ${err.message}`,
-      });
-    }
-  }
-
-  private async executeConnectAI(
-    query: string,
-    context: OracleExecutionContext,
-  ) {
-    const apiKey = context.effectiveApiKey || "";
-
-    try {
-      const { ProposerService } = await import("@codex/proposer");
-      const proposer = new ProposerService();
-      const intent = await proposer.parseConnectionIntent(
-        apiKey,
-        context.modelName,
-        query,
-      );
-
-      if (intent && intent.sourceName?.trim() && intent.targetName?.trim()) {
-        await this.executeConnect(
-          intent.sourceName,
-          intent.label || "",
-          intent.targetName,
-          context,
-          intent.type,
-        );
-      } else {
-        throw new Error(
-          'AI could not understand connection names. Please use explicit format: `/connect "A" to "B"`.',
-        );
-      }
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ ${err.message}`,
-      });
-    }
-  }
-
-  private async executeMergeAI(query: string, context: OracleExecutionContext) {
-    const apiKey = context.effectiveApiKey || "";
-
-    try {
-      const { ProposerService } = await import("@codex/proposer");
-      const proposer = new ProposerService();
-      const intent = await proposer.parseMergeIntent(
-        apiKey,
-        context.modelName,
-        query,
-      );
-
-      if (intent && intent.sourceName?.trim() && intent.targetName?.trim()) {
-        await this.executeMerge(intent.sourceName, intent.targetName, context);
-      } else {
-        throw new Error(
-          'AI could not understand merge names. Please use explicit format: `/merge "Source" into "Target"`.',
-        );
-      }
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ ${err.message}`,
-      });
-    }
-  }
-
-  private async executePlot(subject: string, context: OracleExecutionContext) {
-    if (context.uiStore.aiDisabled) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "❌ The /plot command is powered by AI and is disabled. Enable AI in settings to use story tension analysis.",
-      });
-      return;
-    }
-
-    const apiKey = context.effectiveApiKey || "";
-
-    try {
-      if (!subject) {
-        throw new Error(
-          "Please specify an entity. Usage: `/plot [entity name]` or `/plot threats around [entity name]`",
-        );
-      }
-
-      const results = await context.searchService.search(subject, { limit: 1 });
-      if (!results[0]) throw new Error(`Could not find entity: "${subject}"`);
-
-      const entityId = results[0].id;
-      const entity = context.vault.entities[entityId];
-      if (!entity) throw new Error(`Entity not found in vault: "${subject}"`);
-
-      const uniqueConnectedIds = new Set<string>();
-      const connectedEntities: any[] = [];
-
-      for (const conn of entity.connections || []) {
-        if (!uniqueConnectedIds.has(conn.target)) {
-          const connEntity = context.vault.entities[conn.target];
-          if (connEntity) {
-            uniqueConnectedIds.add(conn.target);
-            connectedEntities.push({
-              entity: connEntity,
-              connectionType: conn.type,
-              label: conn.label,
-              direction: "outbound",
-            });
-          }
-        }
-      }
-
-      const inbound = context.vault.inboundConnections[entityId] || [];
-      for (const { sourceId, connection } of inbound) {
-        if (!uniqueConnectedIds.has(sourceId)) {
-          const connEntity = context.vault.entities[sourceId];
-          if (connEntity) {
-            uniqueConnectedIds.add(sourceId);
-            connectedEntities.push({
-              entity: connEntity,
-              connectionType: connection.type,
-              label: connection.label,
-              direction: "inbound",
-            });
-          }
-        }
-      }
-
-      const analysis = await context.textGeneration.generatePlotAnalysis(
-        apiKey,
-        context.modelName,
-        entity,
-        connectedEntities,
-        `/plot ${subject}`,
-      );
-
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: analysis,
-        entityId,
-        sources: [entityId, ...connectedEntities.map((c) => c.entity.id)],
-      });
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ ${err.message}`,
-      });
-    }
-  }
-
-  private async executeChat(
-    query: string,
-    isAIIntent: boolean,
-    context: OracleExecutionContext,
-    onPartialResponse?: (partial: string) => void,
-  ) {
-    if (!query.trim()) return;
-
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "user",
-        content: query,
-      });
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "The Oracle is currently offline. Conversational expansion and AI generation are suspended.",
-      });
-      return;
-    }
-
-    const userMsgId = crypto.randomUUID();
-    await context.chatHistory.addMessage({
-      id: userMsgId,
-      role: "user",
-      content: query,
-    });
-
-    if (!isAIIntent) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "AI features are disabled. Only utility slash commands are supported. Type /help for a list of available commands.",
-      });
-      return;
-    }
-
-    const isImageRequest = OracleCommandParser.detectImageIntent(query);
-
-    const assistantMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: "",
-      type: isImageRequest ? "image" : "text",
-    };
-    await context.chatHistory.addMessage(assistantMsg);
-
-    const handlePartialResponse = (partial: string) => {
-      assistantMsg.content = partial;
-      void context.chatHistory.updateMessage?.(
-        assistantMsg.id,
-        { content: partial },
-        false, // skip persistence during streaming
-      );
-      onPartialResponse?.(partial);
-    };
-
-    try {
-      if (isImageRequest) {
-        // Identify the primary entity to attach the image to, without triggering
-        // a full (and redundant) text generation response.
-        const { primaryEntityId } = await this.generator.identifyPrimaryEntity(
-          query,
-          context,
-        );
-
-        assistantMsg.content = query;
-        assistantMsg.entityId = primaryEntityId;
-
-        const blob = await this.generator.generateMessageVisualization(
-          assistantMsg,
-          context,
-        );
-        const imageUrl = URL.createObjectURL(blob);
-
-        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
-          ...context.chatHistory.messages,
-        ];
-        const lastIdx = finalMsgs.findIndex(
-          (m: any) => m.id === assistantMsg.id,
-        );
-        if (lastIdx !== -1) {
-          finalMsgs[lastIdx].imageUrl = imageUrl;
-          finalMsgs[lastIdx].imageBlob = blob;
-          finalMsgs[lastIdx].content =
-            `Generated visualization for: "${query}"`;
-          finalMsgs[lastIdx].entityId = primaryEntityId;
-        }
-        await context.chatHistory.setMessages(finalMsgs);
-
-        // Auto-attach to entity if possible
-        if (primaryEntityId && !context.isDemoMode) {
-          const { image, thumbnail } = await context.vault.saveImageToVault(
-            blob,
-            primaryEntityId,
-          );
-          await context.vault.updateEntity(primaryEntityId, {
-            image,
-            thumbnail,
-          });
-        }
-      } else {
-        const { primaryEntityId, sourceIds } =
-          await this.generator.generateChatResponse(
-            query,
-            context,
-            handlePartialResponse,
-            {
-              requestId: assistantMsg.id,
-              vaultId: context.vaultId,
-            },
-          );
-
-        // Final update with entity context — read live messages, not the stale snapshot
-        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
-          ...context.chatHistory.messages,
-        ];
-        const userMsgIndex = finalMsgs.findIndex(
-          (m: any) => m.id === userMsgId,
-        );
-        const assistantMsgIndex = finalMsgs.findIndex(
-          (m: any) => m.id === assistantMsg.id,
-        );
-
-        if (userMsgIndex !== -1) {
-          finalMsgs[userMsgIndex].entityId = primaryEntityId;
-        }
-        if (assistantMsgIndex !== -1) {
-          finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
-          finalMsgs[assistantMsgIndex].sources = sourceIds;
-          finalMsgs[assistantMsgIndex].hasDrawAction =
-            context.tier === "advanced";
-        }
-
-        // Proactive Extraction
-        try {
-          const entityDiscoveryMode = this.getEntityDiscoveryMode(context);
-          if (entityDiscoveryMode === "off") {
-            await context.chatHistory.setMessages(finalMsgs);
-            return;
-          }
-
-          const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
-          const engineToUse = context.draftingEngine ?? this.draftingEngine;
-          const proposals = await engineToUse.propose(combinedText, {
-            existingEntities: Object.values(context.vault.entities || {}),
-            history: context.chatHistory.messages,
-            categories: context.categories,
-          });
-
-          if (proposals.length > 0) {
-            const existingProposals =
-              finalMsgs[assistantMsgIndex].proposals || [];
-            const newProposals = proposals.filter(
-              (p: DiscoveryProposal) =>
-                !existingProposals.some(
-                  (e: DiscoveryProposal) => e.title === p.title,
-                ),
-            );
-
-            finalMsgs[assistantMsgIndex].proposals = [
-              ...existingProposals,
-              ...newProposals,
-            ];
-
-            for (const p of newProposals) {
-              await context.logActivity?.({
-                type: "discovery",
-                title: p.title,
-                entityType: p.type,
-                entityId: p.entityId,
-              });
-            }
-
-            // Handle Auto-Archive if enabled (skip for guests and demo mode)
-            const autoArchiveEnabled = entityDiscoveryMode === "auto-create";
-            if (
-              autoArchiveEnabled &&
-              !context.vault.isGuest &&
-              !context.isDemoMode
-            ) {
-              for (const p of proposals) {
-                if (!p.entityId) {
-                  const id = await context.vault.createEntity(
-                    p.type as any,
-                    p.title,
-                    {
-                      lore: p.draft.lore,
-                      content: p.draft.chronicle,
-                      status: "draft",
-                    },
-                  );
-                  await context.logActivity?.({
-                    type: "archive",
-                    title: p.title,
-                    entityType: p.type,
-                    entityId: id,
-                  });
-                  await this.handleConnectionDiscovery(id, context);
-                } else {
-                  const existing = context.vault.entities[p.entityId];
-                  if (existing) {
-                    if (context.textGeneration?.reconcileEntityUpdate) {
-                      try {
-                        const reconciled =
-                          await context.textGeneration.reconcileEntityUpdate(
-                            context.effectiveApiKey || "",
-                            context.modelName,
-                            existing,
-                            {
-                              chronicle: p.draft.chronicle,
-                              lore: p.draft.lore,
-                            },
-                            buildRelatedEntityContext({
-                              entity: existing,
-                              incoming: {
-                                chronicle: p.draft.chronicle,
-                                lore: p.draft.lore,
-                              },
-                              vault: context.vault,
-                              getConsolidatedContext: (related) =>
-                                context.contextRetrieval.getConsolidatedContext(
-                                  related,
-                                ),
-                            }),
-                          );
-
-                        await context.vault.updateEntity(p.entityId, {
-                          content: reconciled.content,
-                          lore: reconciled.lore,
-                        });
-                      } catch {
-                        await context.vault.updateEntity(p.entityId, {
-                          lore: (existing.lore || "") + "\n\n" + p.draft.lore,
-                        });
-                      }
-                    } else {
-                      await context.vault.updateEntity(p.entityId, {
-                        lore: (existing.lore || "") + "\n\n" + p.draft.lore,
-                      });
-                    }
-                    await context.logActivity?.({
-                      type: "update",
-                      title: p.title,
-                      entityType: p.type,
-                      entityId: p.entityId,
-                    });
-                    await this.handleConnectionDiscovery(p.entityId, context);
-                  }
-                }
-              }
-            }
-          }
-        } catch (extractErr) {
-          console.warn("[OracleExecutor] Extraction failed", extractErr);
-        }
-
-        await context.chatHistory.setMessages(finalMsgs);
-      }
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: err.message || "Error generating response.",
-      });
-    }
-  }
-
-  private getEntityDiscoveryMode(
-    context: OracleExecutionContext,
-  ): EntityDiscoveryMode {
-    if (context.automationPolicy?.entityDiscovery) {
-      return context.automationPolicy.entityDiscovery;
-    }
-    if (context.uiStore?.entityDiscoveryMode) {
-      return context.uiStore.entityDiscoveryMode;
-    }
-    return context.uiStore?.autoArchive ? "auto-create" : "suggest";
-  }
-
-  private getConnectionDiscoveryMode(
-    context: OracleExecutionContext,
-  ): ConnectionDiscoveryMode {
-    return (
-      context.automationPolicy?.connectionDiscovery ||
-      context.uiStore?.connectionDiscoveryMode ||
-      "suggest"
-    );
-  }
-
-  private async handleConnectionDiscovery(
-    entityId: string,
-    context: OracleExecutionContext,
-    analysisText?: string,
-  ) {
-    const mode = this.getConnectionDiscoveryMode(context);
-    if (mode === "off" || !context.proposeConnectionsForEntity) {
-      return 0;
-    }
-
-    try {
-      return (
-        (await context.proposeConnectionsForEntity(entityId, {
-          apply: mode === "auto-apply",
-          analysisText,
-        })) || 0
-      );
-    } catch (error: unknown) {
-      console.warn(
-        "[OracleExecutor] Failed to handle connection discovery",
-        error,
-      );
-      return 0;
-    }
-  }
-
+  /**
+   * Public API for direct entity visualization.
+   */
   async drawEntity(entityId: string, context: OracleExecutionContext) {
-    const entity = context.vault.entities[entityId];
-    if (!entity) return;
-
     try {
-      const blob = await this.generator.generateEntityVisualization(
-        entityId,
-        context,
-      );
-
-      if (context.isDemoMode) {
-        const imageUrl = URL.createObjectURL(blob);
-        await context.chatHistory.addMessage({
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "",
-          type: "image",
-          imageUrl,
-          imageBlob: blob,
-          entityId,
-        });
-      } else {
-        const { image, thumbnail } = await context.vault.saveImageToVault(
-          blob,
-          entityId,
-        );
-        await context.vault.updateEntity(entityId, {
-          image,
-          thumbnail,
-        });
-      }
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Image generation failed for **${entity.title}**: ${err.message}`,
-      });
-    }
-  }
-
-  async drawMessage(messageId: string, context: OracleExecutionContext) {
-    const msgIndex = context.chatHistory.messages.findIndex(
-      (m: any) => m.id === messageId,
-    );
-    if (msgIndex === -1) return;
-
-    const message = context.chatHistory.messages[msgIndex];
-
-    try {
-      const blob = await this.generator.generateMessageVisualization(
-        message,
-        context,
-      );
-      const imageUrl = URL.createObjectURL(blob);
-      const updatedMsgs = [...context.chatHistory.messages];
-      updatedMsgs[msgIndex] = {
-        ...message,
-        type: "image",
-        imageUrl,
-        imageBlob: blob,
-        isDrawing: false,
-        hasDrawAction: false,
-      };
-      context.chatHistory.setMessages(updatedMsgs);
+      await this.visualizationExecutor.drawEntity(entityId, context);
     } catch (err: any) {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
@@ -1009,11 +112,42 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     }
   }
 
+  /**
+   * Public API for direct message visualization.
+   */
+  async drawMessage(messageId: string, context: OracleExecutionContext) {
+    try {
+      await this.visualizationExecutor.drawMessage(messageId, context);
+    } catch (err: any) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Image generation failed: ${err.message}`,
+      });
+    }
+  }
+
+  /**
+   * Public API for direct entity regeneration.
+   */
   async regenerateEntity(
     entityId: string,
     context: OracleExecutionContext,
     onPartialResponse?: (partial: string) => void,
   ) {
-    await this.executeRegenerate(entityId, context, onPartialResponse);
+    try {
+      await this.regenerateExecutor.execute(
+        { type: "regenerate", entityId },
+        context,
+        onPartialResponse,
+      );
+    } catch (err: any) {
+      // execute() usually catches errors, but we wrap for safety and parity
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Regeneration failed: ${err.message}`,
+      });
+    }
   }
 }

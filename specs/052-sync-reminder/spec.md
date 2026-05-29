@@ -2,7 +2,7 @@
 
 **Feature Branch**: `052-sync-reminder`  
 **Created**: 2026-02-20  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Let's remind the user to sync once in a while, so that the data gets on the users pc, not only in the browser idb. https://github.com/eserlan/Codex-Cryptica/issues/199"
 
 ## User Scenarios & Testing _(mandatory)_

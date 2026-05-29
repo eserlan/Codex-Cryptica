@@ -1,18 +1,20 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fly, fade } from "svelte/transition";
   import DiceVault from "./DiceVault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { openDiceWindow } from "$lib/stores/ui/navigation";
 </script>
 
-{#if uiStore.showDiceModal}
+{#if modalUIStore.showDiceModal}
   <!-- Backdrop -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 bg-theme-bg/80 backdrop-blur-md z-[100] flex items-center justify-center p-4"
     onclick={() => {
-      uiStore.showDiceModal = false;
+      modalUIStore.showDiceModal = false;
     }}
-    onkeydown={(e) => e.key === "Escape" && (uiStore.showDiceModal = false)}
+    onkeydown={(e) =>
+      e.key === "Escape" && (modalUIStore.showDiceModal = false)}
     transition:fade={{ duration: 200 }}
     role="button"
     tabindex="0"
@@ -42,7 +44,7 @@
           <!-- Detach Button -->
           <button
             class="p-1.5 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
-            onclick={() => uiStore.openDiceWindow()}
+            onclick={() => openDiceWindow()}
             title="Pop out into new window"
             aria-label="Pop out into new window"
           >
@@ -51,7 +53,7 @@
           <button
             class="p-1.5 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
             onclick={() => {
-              uiStore.showDiceModal = false;
+              modalUIStore.showDiceModal = false;
             }}
             aria-label="Close"
           >

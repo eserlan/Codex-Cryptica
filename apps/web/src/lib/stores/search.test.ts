@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 vi.hoisted(() => {
   (global as any).localStorage = {
@@ -13,9 +13,35 @@ vi.hoisted(() => {
   (global as any).$state.raw = (v: any) => v;
 });
 
-vi.mock("$lib/services/search", () => ({
+vi.mock("$lib/services/search.svelte", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
+    getIndexProgress: vi.fn(() => ({
+      status: "idle",
+      vaultId: null,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
+    })),
+    subscribeIndexProgress: vi.fn((callback) => {
+      callback({
+        status: "idle",
+        vaultId: null,
+        runId: null,
+        indexedCount: 0,
+        totalCount: null,
+        isPartial: false,
+        canRetry: false,
+        message: "Search is idle.",
+        error: null,
+      });
+      return vi.fn();
+    }),
+    retryIndexing: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -31,12 +57,6 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
-vi.mock("./ui.svelte", () => ({
-  ui: {
-    sharedMode: false,
-  },
-}));
-
 vi.mock("./debug.svelte", () => ({
   debugStore: {
     log: vi.fn(),
@@ -46,24 +66,27 @@ vi.mock("./debug.svelte", () => ({
 }));
 
 import { SearchStore } from "./search.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 describe("SearchStore", () => {
   let store: SearchStore;
   let mockVault: any;
-  let mockUi: any;
   let mockSearchService: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const { vault } = await import("./vault.svelte");
-    const { ui } = await import("./ui.svelte");
-    const { searchService } = await import("$lib/services/search");
+    const { searchService } = await import("$lib/services/search.svelte");
 
     mockVault = vault;
-    mockUi = ui;
+    sessionModeStore.sharedMode = false;
     mockSearchService = searchService;
 
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+  });
+
+  afterEach(() => {
+    store?.destroy();
   });
 
   it("loads valid recents from localStorage", () => {
@@ -80,7 +103,8 @@ describe("SearchStore", () => {
     vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(recents));
 
     // Need to re-instantiate to trigger loadRecents in constructor
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store?.destroy();
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
     store.open();
 
     expect(store.recents).toHaveLength(1);
@@ -92,7 +116,8 @@ describe("SearchStore", () => {
     vi.mocked(localStorage.getItem).mockReturnValue("invalid-json");
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store?.destroy();
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
 
     expect(store.recents).toEqual([]);
     expect(spy).toHaveBeenCalled();
@@ -103,7 +128,8 @@ describe("SearchStore", () => {
     vi.mocked(localStorage.getItem).mockReturnValue(
       JSON.stringify({ not: "an array" }),
     );
-    store = new SearchStore(mockVault, mockUi, mockSearchService);
+    store?.destroy();
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
     expect(store.recents).toEqual([]);
   });
 
@@ -160,7 +186,8 @@ describe("SearchStore", () => {
           { id: "no-path", path: "" }, // filtered out by .filter(entry => entry.path)
         ]),
       );
-      store = new SearchStore(mockVault, mockUi, mockSearchService);
+      store?.destroy();
+      store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
       expect(store.recents).toHaveLength(1);
       expect(store.recents[0].id).toBe("valid");
     });
@@ -192,6 +219,37 @@ describe("SearchStore", () => {
     expect(store.selectedIndex).toBe(0);
     expect(store.isLoading).toBe(false);
     expect(store.isOpen).toBe(false);
+  });
+
+  it("mirrors search indexing progress from the service", () => {
+    const progress = {
+      status: "partial",
+      vaultId: "vault-1",
+      runId: "run-1",
+      indexedCount: 10,
+      totalCount: 20,
+      isPartial: true,
+      canRetry: false,
+      message: "Search is still indexing.",
+      error: null,
+    };
+
+    mockSearchService.subscribeIndexProgress.mockImplementationOnce(
+      (callback: any) => {
+        callback(progress);
+        return vi.fn();
+      },
+    );
+
+    store?.destroy();
+    store = new SearchStore(mockVault, sessionModeStore, mockSearchService);
+
+    expect(store.indexProgress).toEqual(progress);
+  });
+
+  it("delegates retry indexing to the service", async () => {
+    await store.retryIndexing();
+    expect(mockSearchService.retryIndexing).toHaveBeenCalled();
   });
 
   it("responds to vault-switched event", () => {
@@ -242,6 +300,35 @@ describe("SearchStore", () => {
       expect(store.results).toHaveLength(1);
       expect(store.results[0].id).toBe("visible-1");
       expect(store.isLoading).toBe(false);
+    });
+
+    it("keeps visibility filtering while search results are partial", async () => {
+      store.indexProgress = {
+        status: "partial",
+        vaultId: "vault-1",
+        runId: "run-1",
+        indexedCount: 1,
+        totalCount: 2,
+        isPartial: true,
+        canRetry: false,
+        message: "Search is still indexing.",
+        error: null,
+      };
+      const rawResults = [{ id: "visible-1" }, { id: "private-1" }] as any;
+      mockSearchService.search.mockResolvedValue(rawResults);
+      mockVault.entities = {
+        "visible-1": { id: "visible-1", visibility: "public" },
+        "private-1": { id: "private-1", visibility: "private" },
+      };
+
+      const { isEntityVisible } = await import("schema");
+      vi.mocked(isEntityVisible).mockImplementation(
+        (entity: any) => entity.visibility === "public",
+      );
+
+      await store.setQuery("partial");
+
+      expect(store.results).toEqual([{ id: "visible-1" }]);
     });
 
     it("handles results where entity is not found in vault", async () => {

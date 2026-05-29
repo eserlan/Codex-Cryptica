@@ -2,11 +2,13 @@
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
   import { graph } from "$lib/stores/graph.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { guestRoster } from "$lib/stores/guest";
+  import { guestStore } from "$lib/stores/guest.svelte";
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { cy, isLayoutRunning, onApplyLayout, selectedCount } = $props<{
     cy: Core | undefined;
@@ -25,11 +27,11 @@
   let currentZoom = $state(1);
 
   const closeMenuIfMobile = () => {
-    if (ui.isMobile) isMobileMenuOpen = false;
+    if (layoutUIStore.isMobile) isMobileMenuOpen = false;
   };
 
   $effect(() => {
-    if (!ui.isMobile) {
+    if (!layoutUIStore.isMobile) {
       isMobileMenuOpen = false;
     }
   });
@@ -48,17 +50,22 @@
   });
 
   const canConnect = $derived(selectedCount === 2);
-  const isConnecting = $derived(ui.showSelectionConnector || ui.isConnecting);
+  const isConnecting = $derived(
+    connectionModeStore.showSelectionConnector ||
+      connectionModeStore.isConnecting,
+  );
   const connectionTooltip = $derived(
     selectedCount === 2
       ? "Connect Selected Nodes"
-      : ui.isConnecting
+      : connectionModeStore.isConnecting
         ? "Exit Connect Mode"
         : "Enter Connect Mode (C)",
   );
 
   const activeGuests = $derived.by(() =>
-    Object.values($guestRoster).sort((a, b) => a.joinedAt - b.joinedAt),
+    Object.values(guestStore.guestRoster).sort(
+      (a, b) => a.joinedAt - b.joinedAt,
+    ),
   );
 
   const guestPanelHeight = $derived(
@@ -69,7 +76,7 @@
 </script>
 
 {#snippet toolbarItems()}
-  {#if !ui.isMobile}
+  {#if !layoutUIStore.isMobile}
     <button
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
         ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -118,7 +125,7 @@
       ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
     >
     <button
-      class="w-8 h-8 flex-shrink-0 {ui.isMobile
+      class="w-8 h-8 flex-shrink-0 {layoutUIStore.isMobile
         ? 'flex'
         : 'hidden sm:flex'} items-center justify-center border transition {graph.stableLayout
         ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -136,16 +143,17 @@
           : 'icon-[lucide--pin-off]'} w-4 h-4"
       ></span></button
     >
-    {#if !ui.isGuestMode}
+    {#if !sessionModeStore.isGuestMode}
       <button
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
         onclick={() => {
           if (canConnect) {
-            ui.showSelectionConnector = !ui.showSelectionConnector;
+            connectionModeStore.showSelectionConnector =
+              !connectionModeStore.showSelectionConnector;
           } else {
-            ui.toggleConnectMode();
+            connectionModeStore.toggleConnectMode();
           }
           closeMenuIfMobile();
         }}
@@ -173,33 +181,37 @@
     >
   </div>
   <div
-    class="h-6 w-px bg-theme-border/30 mx-2 {ui.isMobile
+    class="h-6 w-px bg-theme-border/30 mx-2 {layoutUIStore.isMobile
       ? ''
       : 'hidden md:block'} flex-shrink-0"
   ></div>
+  {#if !sessionModeStore.isGuestMode}
+    <button
+      class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
+        ? 'flex'
+        : 'hidden md:flex'} transition {sessionModeStore.sharedMode
+        ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
+        : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+      onclick={() => {
+        sessionModeStore.sharedMode = !sessionModeStore.sharedMode;
+        closeMenuIfMobile();
+      }}
+      title={sessionModeStore.sharedMode
+        ? "Exit Shared Mode"
+        : "Enter Shared Mode"}
+      data-testid="shared-mode-toggle"
+      aria-pressed={sessionModeStore.sharedMode}
+      aria-label="Toggle player view mode"
+    >
+      <span
+        class={sessionModeStore.sharedMode
+          ? "icon-[lucide--eye] w-4 h-4"
+          : "icon-[lucide--eye-off] w-4 h-4"}
+      ></span></button
+    >
+  {/if}
   <button
-    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
-      ? 'flex'
-      : 'hidden md:flex'} transition {ui.sharedMode
-      ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
-      : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-    onclick={() => {
-      ui.sharedMode = !ui.sharedMode;
-      closeMenuIfMobile();
-    }}
-    title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
-    data-testid="shared-mode-toggle"
-    aria-pressed={ui.sharedMode}
-    aria-label="Toggle player view mode"
-  >
-    <span
-      class={ui.sharedMode
-        ? "icon-[lucide--eye] w-4 h-4"
-        : "icon-[lucide--eye-off] w-4 h-4"}
-    ></span></button
-  >
-  <button
-    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showLabels
       ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -214,7 +226,7 @@
     ><span class="icon-[lucide--type] w-4 h-4"></span></button
   >
   <button
-    class="w-8 h-8 flex-shrink-0 items-center justify-center border {ui.isMobile
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
       ? 'flex'
       : 'hidden md:flex'} transition {graph.showImages
       ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -230,7 +242,7 @@
   >
 
   <div
-    class="{ui.isMobile
+    class="{layoutUIStore.isMobile
       ? 'flex'
       : 'hidden sm:flex'} items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
   >
@@ -252,106 +264,104 @@
   </div>
 {/snippet}
 
-{#if !ui.isGuestMode}
-  <div
-    class="absolute bottom-4 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:left-6 z-20 flex flex-col gap-2 items-center md:items-start max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)]"
-  >
-    {#if cy}
-      <div class="relative hidden md:block">
-        <Minimap
-          {cy}
-          absolute={false}
-          width={192}
-          height={128}
-          isExpanded={showMinimap}
-        />
-      </div>
-    {/if}
+<div
+  class="absolute bottom-4 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:left-6 z-20 flex flex-col gap-2 items-center md:items-start max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)]"
+>
+  {#if cy}
+    <div class="relative hidden md:block">
+      <Minimap
+        {cy}
+        absolute={false}
+        width={192}
+        height={128}
+        isExpanded={showMinimap}
+      />
+    </div>
+  {/if}
 
-    {#if !vault.isGuest && activeGuests.length > 0}
-      <div
-        class="pointer-events-auto w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-xs text-theme-text shadow-lg backdrop-blur overflow-hidden"
-        style:height={`${guestPanelHeight}px`}
-        style:max-height="calc(100vh - 6rem)"
-        transition:fade
-      >
-        <div class="flex items-center justify-between gap-3 mb-2">
-          <div
-            class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
-          >
-            <span class="icon-[lucide--users] w-3 h-3"></span>
-            Active Guests
-          </div>
-          <span class="text-theme-muted font-mono">{activeGuests.length}</span>
-        </div>
+  {#if !vault.isGuest && activeGuests.length > 0}
+    <div
+      class="pointer-events-auto w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-xs text-theme-text shadow-lg backdrop-blur overflow-hidden"
+      style:height={`${guestPanelHeight}px`}
+      style:max-height="calc(var(--app-viewport-height) - 6rem)"
+      transition:fade
+    >
+      <div class="flex items-center justify-between gap-3 mb-2">
         <div
-          class="space-y-1.5 overflow-y-auto pr-1"
-          style:max-height="calc(100% - 1.75rem)"
+          class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
         >
-          {#each activeGuests as guest (guest.peerId)}
-            <div class="flex items-start gap-2">
-              <span
-                class="mt-1 w-2 h-2 rounded-full shrink-0 {guest.status ===
-                'viewing'
-                  ? 'bg-theme-primary'
-                  : 'bg-theme-muted'}"
-              ></span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-theme-text truncate"
-                    >{guest.displayName}</span
-                  >
-                  <span
-                    class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[10px] text-theme-muted"
-                  >
-                    {guest.status === "viewing" ? "viewing" : "connected"}
-                  </span>
-                </div>
-                <div class="truncate text-theme-text/70">
-                  {guest.currentEntityTitle
-                    ? `Viewing ${guest.currentEntityTitle}`
-                    : "Connected"}
-                </div>
+          <span class="icon-[lucide--users] w-3 h-3"></span>
+          Active Guests
+        </div>
+        <span class="text-theme-muted font-mono">{activeGuests.length}</span>
+      </div>
+      <div
+        class="space-y-1.5 overflow-y-auto pr-1"
+        style:max-height="calc(100% - 1.75rem)"
+      >
+        {#each activeGuests as guest (guest.peerId)}
+          <div class="flex items-start gap-2">
+            <span
+              class="mt-1 w-2 h-2 rounded-full shrink-0 {guest.status ===
+              'viewing'
+                ? 'bg-theme-primary'
+                : 'bg-theme-muted'}"
+            ></span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-theme-text truncate"
+                  >{guest.displayName}</span
+                >
+                <span
+                  class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[10px] text-theme-muted"
+                >
+                  {guest.status === "viewing" ? "viewing" : "connected"}
+                </span>
+              </div>
+              <div class="truncate text-theme-text/70">
+                {guest.currentEntityTitle
+                  ? `Viewing ${guest.currentEntityTitle}`
+                  : "Connected"}
               </div>
             </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
-    <div
-      class="flex flex-col md:flex-row gap-1 items-center justify-center md:justify-start p-1.5 md:p-0 rounded-full md:rounded-none
-             {ui.isMobile
-        ? 'bg-transparent border-none backdrop-blur-none'
-        : 'bg-theme-surface/60 md:bg-transparent border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none'}"
-    >
-      {#if !ui.isMobile}
-        {@render toolbarItems()}
-      {:else}
-        {#if isMobileMenuOpen}
-          <div
-            id="mobile-graph-controls"
-            class="flex gap-1 items-center flex-wrap justify-center bg-theme-surface/95 p-2 rounded-xl border border-theme-border shadow-xl backdrop-blur mb-2"
-            transition:fade
-          >
-            {@render toolbarItems()}
           </div>
-        {/if}
-        <button
-          onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
-          class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
-          class:rotate-45={isMobileMenuOpen}
-          aria-label="Graph Controls"
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="mobile-graph-controls"
-        >
-          <span
-            class="{isMobileMenuOpen
-              ? 'icon-[lucide--x]'
-              : 'icon-[lucide--settings-2]'} w-5 h-5"
-          ></span>
-        </button>
-      {/if}
+        {/each}
+      </div>
     </div>
+  {/if}
+
+  <div
+    class="flex flex-col md:flex-row gap-1 items-center justify-center md:justify-start p-1.5 md:p-0 rounded-full md:rounded-none
+             {layoutUIStore.isMobile
+      ? 'bg-transparent border-none backdrop-blur-none'
+      : 'bg-theme-surface/60 md:bg-transparent border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none'}"
+  >
+    {#if !layoutUIStore.isMobile}
+      {@render toolbarItems()}
+    {:else}
+      {#if isMobileMenuOpen}
+        <div
+          id="mobile-graph-controls"
+          class="flex gap-1 items-center flex-wrap justify-center bg-theme-surface/95 p-2 rounded-xl border border-theme-border shadow-xl backdrop-blur mb-2"
+          transition:fade
+        >
+          {@render toolbarItems()}
+        </div>
+      {/if}
+      <button
+        onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
+        class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
+        class:rotate-45={isMobileMenuOpen}
+        aria-label="Graph Controls"
+        aria-expanded={isMobileMenuOpen}
+        aria-controls="mobile-graph-controls"
+      >
+        <span
+          class="{isMobileMenuOpen
+            ? 'icon-[lucide--x]'
+            : 'icon-[lucide--settings-2]'} w-5 h-5"
+        ></span>
+      </button>
+    {/if}
   </div>
-{/if}
+</div>

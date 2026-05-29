@@ -1,13 +1,14 @@
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
-import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { debugStore } from "./debug.svelte";
-import { vaultEventBus } from "./vault/events";
+import { vaultEventBus } from "./vault/events.svelte";
 import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
 import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import { notificationStore } from "./ui/notification.svelte";
 
 class ProposerStore {
   private service: ProposerService | null = null;
@@ -24,6 +25,13 @@ class ProposerStore {
           event.sourceId,
           event.targetId,
           event.connectionType,
+        );
+      } else if (event.type === "VAULT_SWITCHED") {
+        void this.loadGlobalProposals().catch((err) =>
+          debugStore.error(
+            "[ProposerStore] Failed to load global proposals on vault switch",
+            { error: err },
+          ),
         );
       }
     });
@@ -72,12 +80,12 @@ class ProposerStore {
   allAcceptedProposals = $state<Proposal[]>([]);
   allVerifiedProposals = $state<Proposal[]>([]);
 
-  activeProposals = $derived.by(() => {
-    if (!vault.selectedEntityId) return [];
+  getActiveProposalsForEntity(entityId: string | null | undefined) {
+    if (!entityId) return [];
 
     // Deduplicate from history/store load so old DB states don't cause duplicate keys
     // We pick the best proposal per target (highest confidence, then latest timestamp)
-    const raw = this.proposals[vault.selectedEntityId] || [];
+    const raw = this.proposals[entityId] || [];
     const bestByTarget = new Map<string, Proposal>();
 
     for (const p of raw) {
@@ -98,12 +106,16 @@ class ProposerStore {
     return Array.from(bestByTarget.values()).sort(
       (a, b) => b.confidence - a.confidence,
     );
+  }
+
+  activeProposals = $derived.by(() => {
+    return this.getActiveProposalsForEntity(vault.selectedEntityId);
   });
 
-  activeHistory = $derived.by(() => {
-    if (!vault.selectedEntityId) return [];
+  getActiveHistoryForEntity(entityId: string | null | undefined) {
+    if (!entityId) return [];
 
-    const raw = this.history[vault.selectedEntityId] || [];
+    const raw = this.history[entityId] || [];
     const bestByTarget = new Map<string, Proposal>();
 
     for (const p of raw) {
@@ -118,6 +130,10 @@ class ProposerStore {
     return Array.from(bestByTarget.values()).sort(
       (a, b) => b.timestamp - a.timestamp,
     );
+  }
+
+  activeHistory = $derived.by(() => {
+    return this.getActiveHistoryForEntity(vault.selectedEntityId);
   });
 
   private getService(): ProposerService {
@@ -197,17 +213,16 @@ class ProposerStore {
       return;
     }
 
-    this.isLoadingProposals = true;
-    try {
-      const service = this.getService();
-      this.allPendingProposals = await service.getAllPendingProposals(vaultId);
-      this.allAcceptedProposals =
-        await service.getAllAcceptedProposals(vaultId);
-      this.allVerifiedProposals =
-        await service.getAllVerifiedProposals(vaultId);
-    } finally {
-      this.isLoadingProposals = false;
-    }
+    const service = this.getService();
+    [
+      this.allPendingProposals,
+      this.allAcceptedProposals,
+      this.allVerifiedProposals,
+    ] = await Promise.all([
+      service.getAllPendingProposals(vaultId),
+      service.getAllAcceptedProposals(vaultId),
+      service.getAllVerifiedProposals(vaultId),
+    ]);
   }
 
   async verify(proposal: Proposal) {
@@ -236,6 +251,8 @@ class ProposerStore {
     debugStore.log("[ProposerStore] Verified AI connection", {
       proposalId: proposal.id,
     });
+
+    await this.loadGlobalProposals();
   }
 
   async undo(proposal: Proposal) {
@@ -285,10 +302,12 @@ class ProposerStore {
     debugStore.log("[ProposerStore] Undid AI connection", {
       proposalId: proposal.id,
     });
+
+    await this.loadGlobalProposals();
   }
 
   async analyzeCurrentEntity() {
-    if (uiStore.aiDisabled) return;
+    if (discoveryPolicyStore.aiDisabled) return;
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isEntityAnalyzing(entityId)) return;
     await this.analyzeEntityById(entityId, true);
@@ -298,8 +317,9 @@ class ProposerStore {
     entityId: string,
     requireSelection = false,
     analysisText?: string,
+    isManual = false,
   ) {
-    if (uiStore.aiDisabled) return;
+    if (discoveryPolicyStore.aiDisabled) return;
 
     if (this.isEntityAnalyzing(entityId)) {
       debugStore.warn(
@@ -361,8 +381,9 @@ class ProposerStore {
       const sourceText = analysisText?.trim()
         ? analysisText.trim()
         : `${entity.content || ""} 
+ 
 
- ${entity.lore || ""}`.trim();
+  ${entity.lore || ""}`.trim();
 
       debugStore.log("[ProposerStore] Starting connection analysis", {
         entityId,
@@ -412,9 +433,14 @@ class ProposerStore {
         error: err,
       });
       this.setAnalysisError(entityId, err.message || "Analysis failed");
+      if (isManual) {
+        notificationStore.notify(err.message || "Analysis failed", "error");
+      }
     } finally {
       this.finishAnalysis(entityId);
     }
+
+    await this.loadGlobalProposals();
   }
 
   async analyzeAndApplyEntityById(entityId: string, analysisText?: string) {
@@ -468,6 +494,7 @@ class ProposerStore {
       proposal.sourceId,
       proposal.targetId,
       proposal.type,
+      proposal.label,
     );
     if (!connectionCreated) {
       debugStore.warn("[ProposerStore] Failed to create vault connection", {
@@ -492,6 +519,8 @@ class ProposerStore {
       targetId: proposal.targetId,
       type: proposal.type,
     });
+
+    await this.loadGlobalProposals();
     return true;
   }
 
@@ -517,6 +546,8 @@ class ProposerStore {
     if (this.history[proposal.sourceId].length > 20) {
       this.history[proposal.sourceId].pop();
     }
+
+    await this.loadGlobalProposals();
   }
 
   async reEvaluate(proposal: Proposal) {
@@ -534,6 +565,8 @@ class ProposerStore {
       ...this.proposals[proposal.sourceId],
       proposal,
     ];
+
+    await this.loadGlobalProposals();
   }
 
   async clearVault(vaultId: string) {

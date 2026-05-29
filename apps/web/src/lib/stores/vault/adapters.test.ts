@@ -3,10 +3,10 @@ import * as adapters from "./adapters.svelte";
 import * as opfs from "../../utils/opfs";
 import * as markdown from "../../utils/markdown";
 import { cacheService } from "../../services/cache.svelte";
-import { uiStore } from "../ui.svelte";
 import * as imageProcessing from "../../utils/image-processing";
 import { getDB } from "../../utils/idb";
 import { LocalSyncService, SyncRegistry } from "@codex/sync-engine";
+import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
 vi.mock("../../utils/opfs", () => ({
   walkOpfsDirectory: vi.fn(),
@@ -21,18 +21,21 @@ vi.mock("../../utils/markdown", () => ({
   parseMarkdown: vi.fn(),
   stringifyEntity: vi.fn(),
   deriveIdFromPath: vi.fn(),
+  sanitizeId: vi.fn((x) =>
+    x
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, ""),
+  ),
 }));
 
 vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     get: vi.fn(),
     set: vi.fn(),
-  },
-}));
-
-vi.mock("../ui.svelte", () => ({
-  uiStore: {
-    notify: vi.fn(),
+    bulkSet: vi.fn(),
   },
 }));
 
@@ -59,6 +62,7 @@ vi.stubGlobal("$state", {
 describe("Adapters", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    notificationStore.notify = vi.fn();
   });
 
   describe("fileIOAdapter", () => {
@@ -119,6 +123,17 @@ describe("Adapters", () => {
       });
     });
 
+    it("should set cached entities in bulk", async () => {
+      await adapters.fileIOAdapter.setCachedEntitiesBulk!("v1", [
+        { path: "path1", lastModified: 100, entity: { id: "e1" } as any },
+        { path: "path2", lastModified: 200, entity: { id: "e2" } as any },
+      ]);
+      expect(cacheService.bulkSet).toHaveBeenCalledWith([
+        { path: "v1:path1", lastModified: 100, entity: { id: "e1" } },
+        { path: "v1:path2", lastModified: 200, entity: { id: "e2" } },
+      ]);
+    });
+
     it("should parse markdown with all fields", () => {
       vi.mocked(markdown.parseMarkdown).mockReturnValue({
         metadata: {
@@ -152,13 +167,51 @@ describe("Adapters", () => {
       vi.mocked(markdown.deriveIdFromPath).mockReturnValue("derived-id");
       const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
       expect(entity!.id).toBe("derived-id");
-      expect(entity!.title).toBe("derived-id");
+      expect(entity!.title).toBe("path");
       expect(entity!.type).toBe("note");
       expect(entity!.tags).toEqual([]);
       expect(entity!.labels).toEqual([]);
       expect(entity!.connections).toEqual([]);
       expect(entity!.lore).toBe("");
       expect(entity!._path).toEqual(["path"]);
+    });
+
+    it("should automatically add 'past' label during parse if entity has valid end_date", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: [],
+          end_date: { year: 1800 },
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toContain("past");
+    });
+
+    it("should remove 'past' label during parse if entity has no end_date", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: ["past"],
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label during parse if already present and end_date is valid", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: ["past"],
+          end_date: { year: 1800 },
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toEqual(["past"]);
     });
 
     it("should check isNotFoundError", () => {
@@ -255,10 +308,10 @@ describe("Adapters", () => {
   describe("syncNotifier", () => {
     it("should notify", () => {
       adapters.syncNotifier.notify("msg", "success");
-      expect(uiStore.notify).toHaveBeenCalledWith("msg", "success");
+      expect(notificationStore.notify).toHaveBeenCalledWith("msg", "success");
 
       adapters.syncNotifier.notify("msg", "warning");
-      expect(uiStore.notify).toHaveBeenCalledWith("msg", "info");
+      expect(notificationStore.notify).toHaveBeenCalledWith("msg", "info");
     });
 
     it("should alert", () => {

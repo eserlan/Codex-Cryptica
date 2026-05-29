@@ -4,8 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ChangelogModal from "./ChangelogModal.svelte";
-import { uiStore } from "$lib/stores/ui.svelte";
 import releases from "../../content/changelog/releases.json";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
 describe("ChangelogModal", () => {
   beforeEach(() => {
@@ -19,8 +19,8 @@ describe("ChangelogModal", () => {
       play: vi.fn(),
       reverse: vi.fn(),
     } as unknown as Animation);
-    uiStore.showChangelog = true;
-    uiStore.lastSeenVersion = "0.16.5";
+    onboardingStore.showChangelog = true;
+    onboardingStore.lastSeenVersion = "0.16.5";
   });
 
   it("moves focus into the dialog, traps tab navigation, and restores focus on close", async () => {
@@ -48,7 +48,7 @@ describe("ChangelogModal", () => {
     expect(document.activeElement).toBe(closeButton);
 
     await fireEvent.click(closeButton);
-    expect(uiStore.showChangelog).toBe(false);
+    expect(onboardingStore.showChangelog).toBe(false);
     expect(window.localStorage.getItem("codex_last_seen_version")).toBe(
       releases[0].version,
     );

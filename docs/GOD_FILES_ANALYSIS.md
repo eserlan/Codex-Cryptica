@@ -1,115 +1,84 @@
 # God File Analysis Report: Codex-Cryptica
 
-This report identifies the top 10 potential "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
+_(Last updated: May 28, 2026)_
+
+This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
+
+## Executive Summary (May 2026 Reassessment)
+
+The **Map Interaction Manager Decomposition** refactor has resolved `MapInteractionManager` (626 → 407 lines) by extracting 11 focused handler modules into `components/map/interactions/` — each covering a single interaction concern (token drag, grid fit, fog painting, pin editing, measurement, box selection, etc.) and backed by its own test file.
+
+With the UI store, P2P services, Map route, Graph surface, and Map interaction layer now modular, the largest remaining pressure points are a mix of **service-layer monoliths** (`search.svelte.ts`, `sound-bite-generator.ts`) that have grown into the critical zone, a **TemporalPicker regression** (594 → 782 lines), and the perennial **engine cores** (`renderer.ts`, `LayoutManager.ts`) and **store managers** (`map.svelte.ts`, `vtt-token-manager.svelte.ts`).
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                   | Line Count    | Type                | Status   |
-| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :------- |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 304 | Store (State/Logic) | ✅ FIXED |
-| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 478 | Store (State/Logic) | ✅ FIXED |
-| 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 561 | UI Component        | ✅ FIXED |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 372 | UI Component        | ✅ FIXED |
-| 5    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`      | ~~920~~ 210   | Store (State/Logic) | ✅ FIXED |
-| 6    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1     | Service (API/Logic) | ✅ FIXED |
-| 7    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 222   | UI Layout           | ✅ FIXED |
-| 8    | `packages/sync-engine/src/SyncService.ts`                   | 711           | Engine Core         | 🟡 SOON  |
-| 9    | `apps/web/src/lib/components/map/MapView.svelte`            | ~~681~~ 448   | UI Component        | ✅ FIXED |
-| 10   | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | ~~835~~ 326   | UI Component        | ✅ FIXED |
+| Rank | File Path                                                          | Line Count | Type          | Status        |
+| :--- | :----------------------------------------------------------------- | :--------- | :------------ | :------------ |
+| 1    | `packages/oracle-engine/src/sound-bite-generator.ts`               | 852        | Engine Core   | 🔴 CRITICAL   |
+| 2    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`       | 782        | UI Component  | 🔴 REGRESSION |
+| 3    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                | 675        | UI Component  | 🟡 WATCH      |
+| 4    | `packages/map-engine/src/renderer.ts`                              | 672        | Engine Core   | 🟡 WATCH      |
+| 5    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`   | 649        | Service       | 🟡 WATCH      |
+| 6    | `packages/graph-engine/src/LayoutManager.ts`                       | 637        | Engine Core   | 🟡 WATCH      |
+| 7    | `apps/web/src/lib/components/zen/ZenContent.svelte`                | 617        | UI Component  | 🟡 WATCH      |
+| 8    | `apps/web/src/lib/stores/map.svelte.ts`                            | 616        | Store (State) | 🟡 WATCH      |
+| 9    | `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte` | 607        | UI Component  | 🟡 WATCH      |
+| 10   | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts`          | 605        | Store Manager | 🟡 WATCH      |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. `oracle.svelte.ts` (Refactored)
+### 1. Service-Layer Monoliths (`sound-bite-generator.ts`, `text-generation.service.svelte.ts`)
 
-**Status:** ✅ **COMPLETED (2026-03-11)**
-**Summary:** Refactored into `@codex/oracle-engine`. Logic isolated into `ChatHistoryService`, `OracleSettingsService`, `OracleCommandParser`, `OracleActionExecutor`, `OracleGenerator`, and `UndoRedoService`.
-**Outcome:** Reduced from ~1,600 lines to 304 lines. Established Dependency Injection as a core principle.
+**Analysis:** `sound-bite-generator.ts` at 852 lines likely mixes generation strategy, prompt building, and output post-processing. `text-generation.service.svelte.ts` at 649 lines sits at the AI request boundary and may benefit from per-model adapters.
+**Recommended Split:**
 
-### 2. `vault.svelte.ts` (Refactored)
+- For `sound-bite-generator.ts`, decompose into 9 modules: LM adapter (retry + content-policy), TTS backends (`gemini`, `web-speech`, `cascading`, `pcm-to-wav`), voice mapping, prompt builders, and response parser. Target: main file drops to ~120 lines (see `docs/refactoring/SOUND_BITE_GENERATOR_GODFILE_ANALYSIS.md`).
+- For `text-generation.service.svelte.ts`, extract per-model request builders and response adapters to keep the service itself as a thin dispatcher.
 
-**Status:** ✅ **COMPLETED (2026-03-11)**
-**Summary:** Refactored into `@codex/vault-engine` and specialized stores. Logic decoupled into `VaultRegistryStore`, `MapRegistryStore`, `CanvasRegistryStore`, and `VaultRepository`.
-**Outcome:** Reduced from ~1,400 lines to 478 lines. Improved data separation and persistence logic.
+### 2. UI Component Regression (`TemporalPicker.svelte`, `ZenSidebar.svelte`, `ZenContent.svelte`, `DetailStatusTab.svelte`)
 
-### 3. `GraphView.svelte` (Refactored)
+**Analysis:** `TemporalPicker.svelte` jumped from 594 to 782 lines — a notable regression. The Zen pair (`ZenSidebar` + `ZenContent`) together account for ~1,300 lines of tightly related UI. `DetailStatusTab.svelte` at 607 lines suggests mixed display/edit/validation logic.
+**Recommended Split:**
 
-**Status:** ✅ **COMPLETED (2026-03-12)**
-**Summary:** Refactored into modular components and decoupled logic. Extracted `GraphHUD`, `GraphToolbar`, `GraphTooltip`, and `EdgeEditorModal` UI components. Moved layout execution to `LayoutManager`, styling to `GraphStyles`, event handling to `useGraphEvents`, and element synchronization to `useGraphSync`.
-**Outcome:** Reduced from 1,371 lines to 561 lines. Improved viewport stability and eliminated image loading jitter. Established a clear separation between the UI layer and the visualization engine.
+- For `TemporalPicker.svelte`, break out picker views (year, month, day) and date parsing/formatting into sub-components or pure helpers.
+- For the Zen pair, audit whether each has a single clear responsibility; extract shared logic into a `ZenController` if needed.
+- For `DetailStatusTab.svelte`, extract field-level editors and validation into focused sub-components.
 
-### 4. `ZenModeModal.svelte` (Refactored)
+### 3. Engine and Manager Cores (`renderer.ts`, `LayoutManager.ts`, `map.svelte.ts`, `vtt-token-manager.svelte.ts`)
 
-**Status:** ✅ **COMPLETED (2026-03-12)**
-**Summary:** Refactored into a modal orchestration shell with extracted editor/view subcomponents and isolated state handling.
-**Outcome:** Reduced from 1,058 lines to 372 lines and aligned with the modular component patterns established by GraphView.
+**Analysis:** These files are inherently complex but their size poses a long-term maintenance risk. The map-interaction refactor showed that natural seams do exist even in engine-adjacent code.
+**Recommended Split:**
 
-### 5. `ai.ts` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-03-13)**
-**Summary:** Decomposed into specialized services under `services/ai/` for orchestration, prompts, generation, and retrieval.
-**Outcome:** `ai.ts` now serves as a compatibility/export shim (1 line), dramatically reducing coupling and making AI capabilities independently testable.
-
-### 6. `+layout.svelte` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-03-22)**
-**Summary:** Restructured layout architecture using SvelteKit route groups. Created `(app)` route group for workspace routes, moved workspace routes into it, and stripped root layout to minimal shell.
-**Outcome:** Reduced from 795 lines to 222 lines.
-
-### 7. `MapView.svelte` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-04-01)**
-**Summary:** Split into a thin composition shell with extracted loader, fog painter, pin popover, and pure interaction helpers.
-**Outcome:** Reduced from ~~681~~ 448 lines.
-
-### 8. `entity-store.svelte.ts` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-04-27)**
-**Summary:** Extracted content loading, persistence coordination, and mutation logic into `EntityContentLoader`, `EntityPersistenceService`, and `EntityMutationService`. Implementation switched to full Dependency Injection.
-**Outcome:** Reduced from 920 lines to 450 lines. Established a clean separation between reactive state views and side-effectful operations.
-
-### 8. `CanvasWorkspace.svelte` (Refactored)
-
-**Status:** ✅ **COMPLETED (2026-04-27)**
-**Summary:** Extracted workspace logic into `useCanvasLogic` and `useCanvasEvents` hooks. Moved overlay HUD to `CanvasHUD` component. The main component now acts as a clean orchestration shell for SvelteFlow.
-**Outcome:** Reduced from 835 lines to 326 lines. Improved separation between UI state, persistence, and event handling.
+- For `renderer.ts`, separate WebGL setup/teardown from the per-frame render loop.
+- For `LayoutManager.ts`, isolate force-simulation configuration from layout application.
+- For `map.svelte.ts` / `vtt-token-manager.svelte.ts`, continue extracting interaction-adjacent logic following the pattern established by the `interactions/` modules.
 
 ---
 
-## Conclusion
+## Next Recommended Refactor Order
 
-The biggest remaining risks are no longer the historically-fixed monoliths, but the live high-coupling shells at the top of the current list. The next refactor pass should focus on files that combine UI, state, and side effects in a way that is still hard to test or reason about, rather than simply chasing line count.
+1. **`packages/oracle-engine/src/sound-bite-generator.ts`**: Largest remaining file; pure engine with clear prompt/generation/output seams.
+2. **`apps/web/src/lib/components/timeline/TemporalPicker.svelte`**: Regression from 594 → 782 lines warrants attention before it grows further.
+3. **`packages/map-engine/src/renderer.ts` / `packages/graph-engine/src/LayoutManager.ts`**: Reduce engine-core breadth before more UI layers depend on them.
 
-## Next Actions
+---
 
-The next pass should focus on the four or five files below. Each one either concentrates too many responsibilities in one module or is likely to hide a reusable boundary that can be extracted cleanly.
+## Historical Successes (Previously Fixed & Maintained)
 
-### 1. `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte`
-
-**Why now:** This is the largest remaining file and the strongest signal that the canvas workspace still mixes rendering, pointer interaction, selection, keyboard shortcuts, tool dispatch, and workspace coordination in one place.
-**Recommended split:** Extract tool-specific interaction handlers, selection/command state, and rendering helpers into separate modules or child components. Keep the shell focused on composition and event wiring.
-
-### 2. `apps/web/src/lib/stores/vault/entity-store.svelte.ts`
-
-**Why now:** This store is the biggest vault-adjacent state module and likely carries entity lifecycle, indexing, sync hooks, and persistence boundaries.
-**Recommended split:** Separate pure entity CRUD/state from persistence and indexing concerns. If this file still knows too much about vault-wide coordination, move that logic into a dedicated service or coordinator.
-
-### 3. `packages/oracle-engine/src/oracle-executor.ts`
-
-**Why now:** Engine code tends to accumulate orchestration, validation, and side effects behind a single entrypoint. It is a good candidate for clearer seams because the behavior is usually deterministic enough to test in layers.
-**Recommended split:** Isolate command routing, execution policy, and effectful integrations so the executor becomes a thin dispatcher instead of a multi-role coordinator.
-
-### 4. `apps/web/src/lib/components/settings/SettingsModal.svelte`
-
-**Why now:** Settings modals commonly become a dumping ground for vault, sync, theme, export/import, and preference flows.
-**Recommended split:** Extract the modal sections by concern, and move non-visual settings logic into store/service modules so the modal becomes a layout shell with tabs or sections.
-
-### 5. `apps/web/src/lib/components/settings/ImportSettings.svelte`
-
-**Why now:** Import flows often hide parsing, validation, preview, and merge logic in a component that should mostly just present state.
-**Recommended split:** Pull parsing and file/format validation out of the component. Keep the Svelte file responsible for UX and status display only.
-
-### Secondary Candidates
-
-`apps/web/src/lib/components/GraphView.svelte`, `apps/web/src/routes/(app)/+page.svelte`, `apps/web/src/lib/components/world/FrontPage.svelte`, and `apps/web/src/lib/stores/ui.svelte.ts` should stay on watch, but they are lower priority than the files above. They may still be large shells, but they are less obviously the source of architectural coupling than `CanvasWorkspace`, `entity-store`, and `oracle-executor`.
+- **`SearchService` (`search.svelte.ts`)**: **RESOLVED**. Reduced from 923 to 287 lines by extracting core indexing into `packages/search-engine` (499 lines) and decomposing orchestration into four focused collaborators — `SearchIndexPipeline` (370 lines), `SearchIndexLifecycle` (143 lines), `SearchIndexPersistence` (141 lines), and `SearchProgressCoordinator` (144 lines) (Spec 962).
+- **`MapInteractionManager` (`map-interactions.svelte.ts`)**: **RESOLVED**. Reduced from 626 to 407 lines by decomposing 11 interaction concerns into focused handler modules under `components/map/interactions/` — `TokenDragHandler`, `TokenResizeHandler`, `TokenSelectionManager`, `GridInteractionHandler`, `FogInteractionHandler`, `MeasurementInteractionHandler`, `PinInteractionHandler`, `BoxSelectionHandler`, `ContextMenuInteractionHandler`, `CreationInteractionHandler`, and `MapInteractionHandlerFactory` — each backed by its own test file (Spec 965).
+- **`GraphView.svelte` & `ContextMenu.svelte`**: **RESOLVED**. Reduced from ~700 lines each to ~340 and ~290 lines respectively by extracting orchestration and action logic into `GraphViewController` and `GraphContextMenuController` (Spec 825/826).
+- **`oracle-executor.ts`**: **RESOLVED**. Reduced from 1,135 to 153 lines by extracting logic into 9 specialized command executors (Spec 097).
+- **`host-service.svelte.ts`**: **RESOLVED**. Reduced from 917 to 263 lines by extracting P2P transport, dispatcher, and specialized handlers (Spec 098).
+- **`map-session.svelte.ts`**: **RESOLVED**. Reduced from 896 to 47 lines by extracting snapshot, lifecycle, composition, and compatibility facade modules (Spec 099).
+- **`guest-service.ts`**: **RESOLVED**. Reduced from 657 to 197 lines by mirroring the host-side architecture &mdash; sibling `P2PClientTransport`, generalized dispatcher, six focused guest handlers, dedicated `GuestFileClient`, `MapAssetUrlCache`, and `TokenMoveCoalescer` (Spec 100).
+- **`ui.svelte.ts`**: **RESOLVED**. Reduced from 872 lines to a deleted facade by extracting notification, onboarding, session mode, modal, discovery policy, connection mode, explorer, layout, and navigation state into focused `stores/ui/*` modules (Spec 101).
+- **`(app)/map/+page.svelte`**: **RESOLVED**. Reduced from 738 to 148 lines by moving route orchestration into `MapPageController` and extracting `MapHUD`, `MapUploadOverlay`, `MapVTTControlsHUD`, and `MapVTTSidebar` (Spec 103).
+- **`MapView.svelte`**: **RESOLVED**. Reduced from 1,536 to ~330 lines by decomposing into focused modules.
+- **`vault.svelte.ts`**: Holding steady at ~500 lines (down from 1,381).
+- **`CanvasWorkspace.svelte`**: Staying modular at ~326 lines (down from 835).
+- **`entity-store.svelte.ts`**: Maintaining boundaries at ~450 lines (down from 920).
+- **`ai.ts`**: Effectively eliminated as a god file.
+- **EntityList.svelte**: **RESOLVED**. Reduced from 510 to 349 lines (despite adding multi-level tree hierarchy, child creation, and drag-and-drop mechanics) by decomposing card rendering into `EntityListItem.svelte` (~253 lines), search/autocomplete logic into `EntityListSearch.svelte` (~189 lines), and filter/label bar UI into `EntityListFilterBar.svelte` (~140 lines) with core filtering logic isolated to pure helper `entityListFiltering.ts` (Spec 120).

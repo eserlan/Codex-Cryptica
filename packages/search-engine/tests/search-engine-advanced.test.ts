@@ -89,8 +89,8 @@ describe("SearchEngine – setLogger", () => {
     engine.setLogger(() => {
       throw new Error("logger exploded");
     });
-    // Should not propagate the error
-    await expect(engine.add(makeEntry("safe"))).resolves.not.toThrow();
+    await engine.add(makeEntry("safe"));
+    expect(engine.docCount).toBe(1);
   });
 });
 
@@ -137,7 +137,8 @@ describe("SearchEngine – setChangeCallback", () => {
     throwingEngine.setChangeCallback(() => {
       throw new Error("callback exploded");
     });
-    await expect(throwingEngine.add(makeEntry("safe2"))).resolves.not.toThrow();
+    await throwingEngine.add(makeEntry("safe2"));
+    expect(throwingEngine.docCount).toBe(1);
   });
 });
 
@@ -275,7 +276,8 @@ describe("SearchEngine – error-path guards", () => {
   it("remove resolves without throwing when index is null", async () => {
     const engine = new SearchEngine();
     (engine as any).index = null;
-    await expect(engine.remove("ghost")).resolves.not.toThrow();
+    await engine.remove("ghost");
+    expect(engine.docCount).toBe(0);
   });
 
   it("exportIndex returns {} when index is null", async () => {
@@ -292,7 +294,7 @@ describe("SearchEngine – importIndex", () => {
   it("handles payload without _docIds without throwing", async () => {
     const engine = new SearchEngine();
     await engine.clear();
-    await expect(engine.importIndex({})).resolves.not.toThrow();
+    await engine.importIndex({});
     // docCount stays 0 because no _docIds were present
     expect(engine.docCount).toBe(0);
   });

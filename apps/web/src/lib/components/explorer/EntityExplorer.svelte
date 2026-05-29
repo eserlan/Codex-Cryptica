@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
   import { Database, X } from "lucide-svelte";
@@ -9,10 +8,13 @@
   } from "$lib/components/search/search-focus";
 
   import type { Entity } from "schema";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   function handleSelect(entity: Entity) {
-    uiStore.openZenMode(entity.id);
-    if (uiStore.isMobile) uiStore.closeSidebar();
+    modalUIStore.openZenMode(entity.id);
+    if (layoutUIStore.isMobile) layoutUIStore.closeSidebar();
   }
 
   function onDragStart(event: DragEvent, entityId: string) {
@@ -22,11 +24,19 @@
     }
   }
 
-  function handleFindInGraph(entity: Entity) {
+  function handleFindInGraph(entity: Entity, event?: MouseEvent) {
+    if (event) {
+      layoutUIStore.setLastSelectedNodePosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    } else {
+      layoutUIStore.setLastSelectedNodePosition(null);
+    }
     dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = entity.id;
-    uiStore.findInGraph();
-    if (uiStore.isMobile) uiStore.closeSidebar();
+    layoutUIStore.findInGraph();
+    if (layoutUIStore.isMobile) layoutUIStore.closeSidebar();
   }
 
   let explorerTab = $state<"all" | "review">("all");
@@ -46,7 +56,7 @@
     try {
       await vault.updateEntity(entity.id, { status: "active" });
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       actioningIds.delete(entity.id);
     }
@@ -58,7 +68,7 @@
     try {
       await vault.deleteEntity(entity.id);
     } catch (err: any) {
-      uiStore.notify(`Error: ${err.message}`, "error");
+      notificationStore.notify(`Error: ${err.message}`, "error");
     } finally {
       actioningIds.delete(entity.id);
     }
@@ -99,7 +109,7 @@
       </div>
     </div>
     <button
-      onclick={() => uiStore.toggleSidebarTool("explorer")}
+      onclick={() => layoutUIStore.toggleSidebarTool("explorer")}
       class="p-1.5 rounded-md transition-all"
       style:color="var(--theme-icon-default)"
       aria-label="Close Explorer"

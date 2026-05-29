@@ -22,7 +22,9 @@ describe("Import Integration", () => {
         id: "test-id",
         suggestedTitle: item.title,
         suggestedType: item.type,
-        content: item.content,
+        content:
+          item.content ||
+          `${item.chronicle || ""}\n\n${item.lore || ""}`.trim(),
         frontmatter: item.frontmatter,
         detectedLinks: item.detectedLinks,
         suggestedFilename: item.title.toLowerCase().replace(/ /g, "-"),

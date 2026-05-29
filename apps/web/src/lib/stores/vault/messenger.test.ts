@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { VaultMessenger } from "./messenger";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 
-vi.mock("./events", () => ({
+vi.mock("./events.svelte", () => ({
   vaultEventBus: {
     subscribe: vi.fn(),
   },

@@ -1,7 +1,6 @@
 # Research: Google Drive Cloud Bridge
 
 **Feature**: Google Drive Cloud Bridge
-**Status**: Phase 0 Complete
 
 ## 1. Authentication & Authorization
 

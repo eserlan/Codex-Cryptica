@@ -2,7 +2,7 @@
 
 **Feature Branch**: `063-add-intro-blog`  
 **Created**: 2026-02-28  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Add introductory blog post about spatial intelligence: https://github.com/eserlan/Codex-Cryptica/issues/305"
 
 ## User Scenarios & Testing _(mandatory)_

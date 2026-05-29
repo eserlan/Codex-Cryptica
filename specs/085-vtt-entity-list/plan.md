@@ -55,7 +55,8 @@ apps/web/src/
 │   │   ├── explorer/
 │   │   │   └── EntityList.svelte (reused)
 │   │   └── map/
-│   │       └── MapView.svelte (updated for drag preview)
+│   │       ├── MapView.svelte (updated as coordinator)
+│   │       └── MapCanvas.svelte (updated for drag preview rendering)
 │   ├── stores/
 │   │   ├── map-session.svelte.ts (updated for drag state)
 │   │   └── ui.svelte.ts (updated for persistence)

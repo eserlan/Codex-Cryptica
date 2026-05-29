@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-gh-pages-deploy`  
 **Created**: 2026-01-26  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Host Codex Cryptica as a static SPA on GitHub Pages with automated deployment via GitHub Actions"
 
 ## User Scenarios & Testing

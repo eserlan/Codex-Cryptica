@@ -7,26 +7,26 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "vite": "^8.0.10",
-    "zod": "^4.4.1"
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "vite": "^8.0.14",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "@xyflow/svelte": "^1.5.2",
     "svelte": "^5.55.4"
   },
   "devDependencies": {
-    "@sveltejs/kit": "^2.57.1",
-    "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^4.1.5",
-    "eslint": "^10.2.1",
+    "@sveltejs/kit": "^2.60.1",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.7",
+    "eslint": "^10.4.0",
     "schema": "workspace:*",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.7"
   }
 }

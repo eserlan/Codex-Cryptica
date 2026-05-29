@@ -107,3 +107,19 @@ if (typeof window !== "undefined") {
   (global as any).localStorage = new Storage();
   (global as any).sessionStorage = new Storage();
 }
+
+// Svelte 5 Runes stub for Vitest
+const stateStub = (v: any) => v;
+stateStub.snapshot = (v: any) => v;
+
+(global as any).$state = stateStub;
+(global as any).$derived = (v: any) => v;
+(global as any).$effect = (v: any) => v;
+(global as any).$props = (v: any) => v;
+
+if (typeof window !== "undefined") {
+  (window as any).$state = stateStub;
+  (window as any).$derived = (global as any).$derived;
+  (window as any).$effect = (global as any).$effect;
+  (window as any).$props = (global as any).$props;
+}

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `021-share-campaigns`
 **Created**: 2026-01-30
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "Other users need to access campaigns, we need a way to share campaigns (read only for now)"
 
 ## User Scenarios & Testing
@@ -49,11 +49,23 @@ The owner decides to stop sharing the campaign.
 1. **Given** a campaign is shared, **When** I click "Stop Sharing" or "Regenerate Link", **Then** the old link no longer works.
 2. **Given** a revoked link, **When** a recipient tries to access it, **Then** they see an "Access Denied" or "Link Expired" message.
 
-### Edge Cases
+### edge Cases
 
 - What happens when the owner deletes a shared campaign? (Link should 404/expire)
 - What happens if the recipient is already the owner? (Should just open normally with edit rights)
 - What happens if the link is malformed? (Error message)
+
+## Permission Model
+
+Guests (collaborators) operate under a "Player View" constraint to ensure both vault integrity and Lore privacy.
+
+| Action Category     |    Host (Owner)     |                                      Guest (Collaborator)                                       |
+| :------------------ | :-----------------: | :---------------------------------------------------------------------------------------------: |
+| **Visibility**      |     Full Access     | **Restricted**: Only "Content" (Chronicle) is visible. "Lore" (GM Secrets) is strictly omitted. |
+| **Fog of War**      |     Full Access     |      **Enforced**: Entities tagged as `hidden` are invisible in Graph, Search, and Oracle.      |
+| **Persistence**     | Full (Disk + Cloud) |                 **None**: Changes are in-memory only and discarded on refresh.                  |
+| **AI Intelligence** |      Advanced       |    **Tuned**: Oracle only uses player-facing content; AI reconciliation (recon) is bypassed.    |
+| **Collaboration**   |    Full Control     |       **Read-Only**: Mutation-heavy actions (Delete, Merge, Connect) are hidden/disabled.       |
 
 ## Requirements
 
@@ -63,11 +75,17 @@ The owner decides to stop sharing the campaign.
 - **FR-002**: System MUST enforce read-only access for users accessing via the share link (unless they are the owner).
 - **FR-003**: System MUST allow public access via link but REQUIRE visitors to provide a temporary username before viewing.
 - **FR-004**: System MUST allow owners to invalidate or regenerate the share link, effectively revoking access for previous links.
-- **FR-005**: System MUST visually distinguish shared campaigns from owned campaigns in the dashboard (e.g., "Shared with me" filter or badge).
+- **FR-005**: System MUST visually distinguish shared campaigns from owned campaigns in the dashboard.
 - **FR-006**: System MUST automatically copy a newly generated share link to the owner's clipboard.
 - **FR-007**: System MUST show the host a lightweight active guest roster with each guest's temporary display name and current session status.
 - **FR-008**: System MUST remove guests from the active roster when they disconnect.
 - **FR-009**: System MUST prevent any modification (updates, creates, deletes) of campaign entities by share-link recipients.
+- **FR-010**: System MUST strictly omit the `lore` field from entities sent to guests via the transport layer (P2P).
+- **FR-011**: System MUST enforce Fog of War in the Oracle; hidden entities MUST be excluded from AI context lookups for guests.
+- **FR-012**: System MUST bypass AI reconciliation (refined category/content merging) for guests to ensure speed and sandbox isolation.
+- **FR-013**: System MUST hide mutation-heavy context menu options (Connect, Merge, Label, etc.) for guest users in Graph and Canvas views.
+- **FR-014**: System MUST disable interactive canvas mutations (entity drops, edge drawing) for guest users.
+- **FR-015**: System MUST hide the AI Assessment/Quality Control tool from guests.
 
 ### Key Entities
 

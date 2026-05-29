@@ -2,7 +2,7 @@
 
 **Feature Branch**: `057-add-llms-txt`  
 **Created**: 2026-02-22  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "intro llms.txt https://github.com/eserlan/Codex-Cryptica/issues/229"
 
 ## User Scenarios & Testing _(mandatory)_

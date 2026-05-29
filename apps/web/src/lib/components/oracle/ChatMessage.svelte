@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import DOMPurify from "dompurify";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import { parseOracleResponse } from "editor-core";
@@ -8,8 +6,6 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { graph } from "$lib/stores/graph.svelte";
-  import { parserService } from "$lib/services/parser";
-  import { clipboardService } from "$lib/services/ClipboardService";
   import ImageMessage from "./ImageMessage.svelte";
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
@@ -19,21 +15,20 @@
     canOverrideTarget,
     getTargetEntityId,
     isLoreMessage,
-    renderMessageHtml,
     shouldShowActions,
     shouldShowCreateAction,
   } from "./chat-message.helpers";
-  import { ChatMessageActions } from "./chat-message.actions";
+  import { ChatMessageController } from "./chat-message-controller.svelte";
   import { sanitizeId } from "$lib/utils/markdown";
-  import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
-  import { appEventBus } from "@codex/events";
-  import { ORACLE_EVENTS } from "@codex/oracle-engine";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import Autocomplete from "../ui/Autocomplete.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
-  const chatMessageActions = new ChatMessageActions({
+  const controller = new ChatMessageController({
     oracle,
     vault,
     graph,
+    regenerationService,
   });
 
   let targetEntity = $derived(
@@ -48,21 +43,15 @@
     canOverrideTarget(targetEntity?.id ?? null, activeEntity?.id ?? null),
   );
 
-  let isSaved = $state(false);
-  let isCopied = $state(false);
-  let showDiscoveryChips = $state(false);
-  let htmlCache = $state("");
-  let lastParsedContent = "";
-
   onMount(() => {
-    return appEventBus.subscribe(ORACLE_EVENTS.UNDO_PERFORMED, (event) => {
-      if (
-        event.type === ORACLE_EVENTS.UNDO_PERFORMED &&
-        event.payload.messageId === message.id
-      ) {
-        isSaved = false;
-      }
-    });
+    controller.subscribeToUndo(message);
+    return () => {
+      controller.destroy();
+    };
+  });
+
+  $effect(() => {
+    controller.consumeSelectedEntity(message);
   });
 
   let isLastAction = $derived(
@@ -75,103 +64,50 @@
     detectedId ? !!vault.entities[detectedId] : false,
   );
   let showCreate = $derived(
-    shouldShowCreateAction(parsed, alreadyExists, isSaved),
+    shouldShowCreateAction(parsed, alreadyExists, controller.isSaved),
   );
   let isLore = $derived(isLoreMessage(message, oracle.messages));
   let showActions = $derived(
     shouldShowActions(message, parsed, oracle.isLoading),
   );
-  let visibleProposals = $derived(
-    (message.proposals ?? []).filter(isVisibleDiscoveryProposal),
-  );
+  let visibleProposals = $derived(controller.getVisibleProposals(message));
 
   $effect(() => {
-    if (message.content && message.content !== lastParsedContent) {
-      const currentContent = message.content;
-      renderMessageHtml(currentContent, parserService, browser, DOMPurify)
-        .then((html) => {
-          if (currentContent !== message.content) return;
-          htmlCache = html;
-          lastParsedContent = currentContent;
-        })
-        .catch((err) => {
-          console.error("[ChatMessage] Parsing failed:", err);
-          htmlCache = `<p class="text-red-400">Failed to render chronicle.</p>`;
-        });
-    }
+    controller.resetSavedWhenDraftCleared(message, isLastAction);
   });
 
-  async function copyToClipboard() {
-    if (!message.content) return;
-
-    try {
-      let contentToCopy = htmlCache;
-      if (!contentToCopy) {
-        contentToCopy = await renderMessageHtml(
-          message.content,
-          parserService,
-          browser,
-          DOMPurify,
-        );
-      }
-
-      const success = await clipboardService.copyHtmlAndText(
-        contentToCopy,
-        message.content,
-      );
-
-      if (success) {
-        isCopied = true;
-        setTimeout(() => (isCopied = false), 2000);
-      }
-    } catch (err) {
-      console.error("[ChatMessage] Clipboard copy failed:", err);
-    }
-  }
+  $effect(() => {
+    controller.renderContent(message);
+  });
 
   const applySmart = async () => {
-    await chatMessageActions.applySmart({
+    await controller.applySmart({
       message,
       parsed,
       activeEntityId: activeEntity?.id ?? null,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
     });
   };
 
   const createAsNode = async () => {
-    await chatMessageActions.createAsNode({
-      message,
-      parsed,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
-    });
+    await controller.createAsNode({ message, parsed });
   };
 
   const copyToChronicle = async () => {
-    await chatMessageActions.copyToChronicle({
+    await controller.copyToChronicle({
       message,
       activeEntityId: activeEntity?.id ?? null,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
     });
   };
 
   const copyToLore = async () => {
-    await chatMessageActions.copyToLore({
+    await controller.copyToLore({
       message,
       activeEntityId: activeEntity?.id ?? null,
-      setSaved: (saved) => {
-        isSaved = saved;
-      },
     });
   };
 
   const handleUndo = async () => {
-    await chatMessageActions.undo();
+    await controller.undo();
   };
 </script>
 
@@ -189,7 +125,7 @@
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
   >
     {#if message.role === "assistant" || message.role === "system"}
-      {#if message.type === "wizard"}
+      {#if message.type === "wizard" && !vault.isGuest}
         {#if message.wizardType === "connection"}
           <ConnectionWizard bind:message />
         {:else if message.wizardType === "merge"}
@@ -211,8 +147,8 @@
               ? 'mt-4 border-t border-theme-border/30 pt-2'
               : ''}"
           >
-            {#if htmlCache}
-              {@html htmlCache}
+            {#if controller.htmlCache}
+              {@html controller.htmlCache}
             {:else}
               <div class="space-y-2 animate-pulse py-1">
                 <div class="bg-theme-border/20 h-3 w-full rounded"></div>
@@ -231,8 +167,10 @@
             <button
               type="button"
               class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/20 bg-theme-primary/5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary/80 font-header transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
-              onclick={() => (showDiscoveryChips = !showDiscoveryChips)}
-              aria-expanded={showDiscoveryChips}
+              onclick={() =>
+                (controller.showDiscoveryChips =
+                  !controller.showDiscoveryChips)}
+              aria-expanded={controller.showDiscoveryChips}
               aria-controls={`found-lore-${message.id}`}
             >
               <span class="icon-[lucide--sparkles] w-3 h-3"></span>
@@ -244,19 +182,23 @@
               <span
                 class={[
                   "icon-[lucide--chevron-down] w-3 h-3 transition-transform",
-                  showDiscoveryChips ? "rotate-180" : "",
+                  controller.showDiscoveryChips ? "rotate-180" : "",
                 ]}
               ></span>
             </button>
 
-            {#if showDiscoveryChips}
+            {#if controller.showDiscoveryChips}
               <div
                 id={`found-lore-${message.id}`}
                 class="mt-2 flex flex-wrap gap-2 items-center"
                 transition:fade
               >
                 {#each visibleProposals as proposal (`${proposal.entityId ?? "new"}:${proposal.title}`)}
-                  <DiscoveryChip {proposal} />
+                  <DiscoveryChip
+                    {proposal}
+                    onLink={(entityId) =>
+                      oracle.updateMessageEntity(message.id, entityId)}
+                  />
                 {/each}
               </div>
             {/if}
@@ -268,13 +210,13 @@
           class="absolute bottom-1 right-2 opacity-0 group-hover/msg:opacity-100 group-focus-within/msg:opacity-100 focus-within:opacity-100 transition-opacity"
         >
           <button
-            onclick={copyToClipboard}
+            onclick={() => controller.copyToClipboard(message)}
             class="p-1 rounded bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary transition-all flex items-center gap-1.5"
             title="Copy rich text to clipboard"
             aria-label="Copy rich text to clipboard"
             type="button"
           >
-            {#if isCopied}
+            {#if controller.isCopied}
               <span
                 class="text-[9px] font-bold tracking-tighter uppercase font-header"
                 >Copied!</span
@@ -286,12 +228,28 @@
           </button>
         </div>
 
-        {#if showActions && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
-          {#if !isSaved}
+        {#if showActions && !vault.isGuest && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
+          {#if !controller.isSaved}
             <div
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"
               transition:fade
             >
+              {#if controller.isSelectingEntity}
+                <div class="w-full mb-2" transition:fade>
+                  <Autocomplete
+                    bind:selectedId={controller.selectedEntityId}
+                    placeholder="Search for an entity..."
+                    ariaLabel="Search for an entity"
+                  />
+                  <button
+                    onclick={() => (controller.isSelectingEntity = false)}
+                    class="mt-1 text-[9px] text-theme-muted hover:text-theme-primary font-bold uppercase tracking-widest font-header"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              {/if}
+
               {#if message.hasDrawAction}
                 <button
                   onclick={() => oracle.drawMessage(message.id)}
@@ -328,12 +286,24 @@
               {#if showCreate}
                 <button
                   onclick={createAsNode}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative"
+                  disabled={controller.activeAction !== null}
+                  aria-busy={controller.activeAction === "create"}
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span class="icon-[lucide--plus-circle] w-3.5 h-3.5 shrink-0"
-                  ></span>
+                  {#if controller.activeAction === "create"}
+                    <span
+                      class="icon-[lucide--loader-2] w-3.5 h-3.5 shrink-0 animate-spin"
+                      aria-hidden="true"
+                    ></span>
+                  {:else}
+                    <span
+                      class="icon-[lucide--plus-circle] w-3.5 h-3.5 shrink-0"
+                    ></span>
+                  {/if}
                   <span class="truncate font-header"
-                    >CREATE AS {parsed.type?.toUpperCase() || "NEW NODE"}: {parsed.title?.toUpperCase()}</span
+                    >{controller.activeAction === "create"
+                      ? "CREATING..."
+                      : `CREATE AS ${parsed.type?.toUpperCase() || "NEW NODE"}: ${parsed.title?.toUpperCase()}`}</span
                   >
 
                   <!-- Tooltip for Create -->
@@ -350,6 +320,55 @@
                   </div>
                 </button>
               {/if}
+
+              <div
+                class="flex items-center rounded text-[10px] font-bold tracking-widest bg-theme-surface border border-theme-border text-theme-muted group/link relative"
+              >
+                <button
+                  onclick={() =>
+                    (controller.isSelectingEntity =
+                      !controller.isSelectingEntity)}
+                  class="flex items-center gap-1.5 px-2 py-1 transition-all hover:bg-theme-primary hover:text-black hover:border-theme-primary"
+                  title={message.entityId
+                    ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
+                    : "Link this message to an entity"}
+                  aria-label={message.entityId
+                    ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}. Click to change.`
+                    : "Link this message to an entity"}
+                  type="button"
+                >
+                  <span
+                    class={message.entityId
+                      ? "icon-[lucide--link-2] w-3 h-3 text-theme-primary"
+                      : "icon-[lucide--link] w-3 h-3 shrink-0"}
+                    aria-hidden="true"
+                  ></span>
+                  <span class="font-header truncate max-w-[120px]">
+                    {message.entityId
+                      ? (
+                          vault.entities[message.entityId]?.title || "LINKED"
+                        ).toUpperCase()
+                      : "LINK ENTITY"}
+                  </span>
+                </button>
+                {#if message.entityId}
+                  <button
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      oracle.updateMessageEntity(message.id, null);
+                    }}
+                    class="pr-1.5 pl-0.5 py-1 hover:text-red-400 transition-colors"
+                    title="Clear link"
+                    aria-label="Clear entity link"
+                    type="button"
+                  >
+                    <span
+                      class="icon-[lucide--x] w-2.5 h-2.5"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                {/if}
+              </div>
 
               {#if targetEntity || activeEntity}
                 {#if canOverride}
@@ -371,12 +390,25 @@
                 {#if parsed.wasSplit}
                   <button
                     onclick={applySmart}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative"
+                    disabled={controller.activeAction !== null}
+                    aria-busy={controller.activeAction === "apply"}
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"></span>
+                    {#if controller.activeAction === "apply"}
+                      <span
+                        class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
+                        aria-hidden="true"
+                      ></span>
+                    {:else}
+                      <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"
+                      ></span>
+                    {/if}
                     <span class="truncate font-header"
-                      >SMART APPLY TO {(
+                      >{controller.activeAction === "apply"
+                        ? "APPLYING..."
+                        : "SMART APPLY TO"}
+                      {(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()}</span
                     >
@@ -408,13 +440,24 @@
                 {:else if !isLore}
                   <button
                     onclick={copyToChronicle}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px]"
+                    disabled={controller.activeAction !== null}
+                    aria-busy={controller.activeAction === "chronicle"}
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
-                    ></span>
+                    {#if controller.activeAction === "chronicle"}
+                      <span
+                        class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
+                        aria-hidden="true"
+                      ></span>
+                    {:else}
+                      <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
+                      ></span>
+                    {/if}
                     <span class="truncate font-header"
-                      >COPY TO CHRONICLE ({(
+                      >{controller.activeAction === "chronicle"
+                        ? "COPYING..."
+                        : "COPY TO CHRONICLE"} ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span
                     >
@@ -422,13 +465,24 @@
                 {:else}
                   <button
                     onclick={copyToLore}
-                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px]"
+                    disabled={controller.activeAction !== null}
+                    aria-busy={controller.activeAction === "lore"}
+                    class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
-                    ></span>
+                    {#if controller.activeAction === "lore"}
+                      <span
+                        class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
+                        aria-hidden="true"
+                      ></span>
+                    {:else}
+                      <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
+                      ></span>
+                    {/if}
                     <span class="truncate font-header"
-                      >COPY TO LORE ({(
+                      >{controller.activeAction === "lore"
+                        ? "COPYING..."
+                        : "COPY TO LORE"} ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span
                     >
@@ -437,27 +491,38 @@
               {/if}
             </div>
           {:else}
-            <!-- Saved State with Undo -->
+            <!-- Saved/Proposed State -->
             <div
               class="mt-3 pt-2 border-t border-theme-border flex items-center justify-between"
               transition:fade
+              role="status"
+              aria-live="polite"
             >
-              <span
-                class="text-[10px] text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
-              >
-                <span class="icon-[lucide--check-circle] w-3 h-3"></span>
-                SAVED
-              </span>
-
-              {#if isLastAction}
-                <button
-                  onclick={handleUndo}
-                  class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
-                  title="Undo changes (Ctrl+Z)"
+              {#if regenerationService.pendingDraft?.messageId === message.id}
+                <span
+                  class="text-[10px] text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >
-                  <span class="icon-[lucide--undo-2] w-3 h-3"></span>
-                  UNDO
-                </button>
+                  <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+                  DRAFT PROPOSED
+                </span>
+              {:else}
+                <span
+                  class="text-[10px] text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
+                >
+                  <span class="icon-[lucide--check-circle] w-3 h-3"></span>
+                  SAVED
+                </span>
+
+                {#if isLastAction}
+                  <button
+                    onclick={handleUndo}
+                    class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
+                    title="Undo changes (Ctrl+Z)"
+                  >
+                    <span class="icon-[lucide--undo-2] w-3 h-3"></span>
+                    UNDO
+                  </button>
+                {/if}
               {/if}
             </div>
           {/if}

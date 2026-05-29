@@ -4,10 +4,11 @@
   import {
     nodeMergeService,
     type IMergedContentProposal,
-  } from "$lib/services/node-merge.service";
+  } from "$lib/services/node-merge.service.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
 
@@ -27,6 +28,7 @@
   let strategy = $state<"concat" | "ai">("concat");
 
   const handleNext = async () => {
+    if (isProposing) return;
     error = null;
     if (step === "SELECT_SOURCE") {
       if (!sourceId) {
@@ -70,33 +72,20 @@
 
   const handleMerge = async () => {
     if (!proposal || !sourceId || !targetId) return;
+    if (step === "MERGING") return;
 
     step = "MERGING";
     try {
-      // Capture state for Undo (optional but good practice for Oracle)
       const sId = sourceId;
       const tId = targetId;
       const entitiesSnapshot = $state.snapshot(vault.entities);
       const beforeTarget = entitiesSnapshot[tId];
       const beforeSource = entitiesSnapshot[sId];
 
-      await nodeMergeService.executeMerge(proposal, [sId, tId]);
-
-      // Push Undo
-      oracle.pushUndoAction(
-        `Merge ${beforeSource.title} into ${beforeTarget.title}`,
-        async () => {
-          await vault.createEntity(beforeSource.type, beforeSource.title, {
-            ...beforeSource,
-            id: beforeSource.id,
-          });
-          await vault.updateEntity(tId, beforeTarget);
-        },
-        message.id,
-      );
+      regenerationService.proposeMergeDraft(proposal, [sId, tId], message.id);
 
       step = "DONE";
-      message.content = `Merged **${beforeSource.title}** into **${beforeTarget.title}**.`;
+      message.content = `Prepared a merge draft for **${beforeSource.title}** into **${beforeTarget.title}**. Review it in the entity panel before saving.`;
       message.type = "text";
     } catch (err: any) {
       error = err.message;
@@ -127,6 +116,7 @@
         bind:value={sourceName}
         bind:selectedId={sourceId}
         placeholder={`Type source ${themeStore.jargon.entity.toLowerCase()} name...`}
+        ariaLabel={`Source ${themeStore.jargon.entity.toLowerCase()} to absorb`}
       />
     </div>
   {:else if step === "SELECT_TARGET"}
@@ -149,6 +139,7 @@
         bind:value={targetName}
         bind:selectedId={targetId}
         placeholder="Type target entity name..."
+        ariaLabel={`Target ${themeStore.jargon.entity.toLowerCase()} to merge into`}
       />
     </div>
   {:else if step === "REVIEW"}
@@ -250,7 +241,7 @@
         class="text-green-400 font-bold uppercase font-header tracking-widest text-[10px] flex items-center justify-center gap-2"
       >
         <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
-        {themeStore.resolveJargon("entity", 2)} Merged
+        Merge Draft Prepared
       </span>
     </div>
   {/if}

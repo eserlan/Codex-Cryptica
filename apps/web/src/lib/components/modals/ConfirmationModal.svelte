@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-  const dialog = $derived(uiStore.confirmationDialog);
+  const dialog = $derived(notificationStore.confirmationDialog);
 
   const handleCancel = () => {
-    uiStore.resolveConfirmation(false);
+    notificationStore.resolveConfirmation(false);
   };
 
   const handleConfirm = () => {
-    uiStore.resolveConfirmation(true);
+    notificationStore.resolveConfirmation(true);
   };
 
   const handleKeydown = (e: KeyboardEvent) => {

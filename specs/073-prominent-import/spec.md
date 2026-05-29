@@ -2,7 +2,8 @@
 
 **Feature Branch**: `073-prominent-import`  
 **Created**: 2026-03-14  
-**Status**: Draft  
+**Status**: Superseded
+**Superseded By**: 102-oracle-store-decoupling
 **Input**: User description: "make the import feature more prominent https://github.com/eserlan/Codex-Cryptica/issues/445"
 
 ## User Scenarios & Testing _(mandatory)_

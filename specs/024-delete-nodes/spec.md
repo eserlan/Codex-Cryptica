@@ -2,7 +2,7 @@
 
 **Feature Branch**: `024-delete-nodes`  
 **Created**: 2026-01-31  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "i need a way to delete nodes"
 
 ## User Scenarios & Testing _(mandatory)_

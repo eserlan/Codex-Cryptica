@@ -24,7 +24,9 @@ export function groupEntitiesForExplorer(
       continue;
     }
 
-    for (const label of entity.labels) {
+    // Deduplicate labels for this entity to prevent duplicate entries in the same group
+    const uniqueLabels = new Set(entity.labels);
+    for (const label of uniqueLabels) {
       let labelGroup = groups.get(label);
       if (!labelGroup) {
         labelGroup = [];

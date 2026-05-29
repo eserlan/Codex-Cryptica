@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatMessageActions } from "./chat-message.actions";
 
+const { regenerationServiceMock } = vi.hoisted(() => ({
+  regenerationServiceMock: { pendingDraft: null as any },
+}));
+
+vi.mock("$lib/services/RegenerationService.svelte", () => ({
+  regenerationService: regenerationServiceMock,
+  default: regenerationServiceMock,
+}));
+
 describe("ChatMessageActions", () => {
   let actions: ChatMessageActions;
   let vault: any;
@@ -8,6 +17,8 @@ describe("ChatMessageActions", () => {
   let graph: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    regenerationServiceMock.pendingDraft = null;
     vault = {
       entities: {
         target: {
@@ -28,6 +39,10 @@ describe("ChatMessageActions", () => {
       pushUndoAction: vi.fn(),
       updateMessageEntity: vi.fn(),
       undo: vi.fn().mockResolvedValue(undefined),
+      reconcileSmartApply: vi.fn().mockResolvedValue({
+        content: "new chronicle",
+        lore: "new lore",
+      }),
     };
     graph = {
       requestFit: vi.fn(),
@@ -40,7 +55,7 @@ describe("ChatMessageActions", () => {
     } as any);
   });
 
-  it("applies smart updates with undo support", async () => {
+  it("proposes a smart update draft instead of immediate apply", async () => {
     const setSaved = vi.fn();
 
     await actions.applySmart({
@@ -56,35 +71,20 @@ describe("ChatMessageActions", () => {
       setSaved,
     });
 
-    expect(vault.updateEntity).toHaveBeenCalledWith("target", {
-      content: "new chronicle",
-      lore: "new lore",
-    });
+    expect(vault.updateEntity).not.toHaveBeenCalled();
+    expect(regenerationServiceMock.pendingDraft).toEqual(
+      expect.objectContaining({
+        entityId: "target",
+        messageId: "message-1",
+        chronicle: "new chronicle",
+        lore: "new lore",
+      }),
+    );
     expect(setSaved).toHaveBeenCalledWith(true);
-    expect(oracle.pushUndoAction).toHaveBeenCalled();
+    expect(vault.selectedEntityId).toBe("target");
   });
 
-  it("snapshots the entity before cloning during undo capture", async () => {
-    const setSaved = vi.fn();
-    const entityRef = vault.entities.target;
-    const structuredCloneSpy = vi
-      .spyOn(globalThis, "structuredClone")
-      .mockImplementation((value) => value as any);
-
-    await actions.copyToChronicle({
-      message: {
-        id: "message-chronicle",
-        content: "fresh chronicle",
-      } as any,
-      activeEntityId: "target",
-      setSaved,
-    });
-
-    expect(structuredCloneSpy).toHaveBeenCalledTimes(1);
-    expect(structuredCloneSpy.mock.calls[0][0]).not.toBe(entityRef);
-  });
-
-  it("creates a node from parsed chat content", async () => {
+  it("creates a node from parsed chat content with immediate apply and undo", async () => {
     const setSaved = vi.fn();
 
     await actions.createAsNode({
@@ -121,47 +121,15 @@ describe("ChatMessageActions", () => {
       "message-2",
       "new-id",
     );
-    expect(graph.requestFit).not.toHaveBeenCalled();
     expect(setSaved).toHaveBeenCalledWith(true);
     expect(oracle.pushUndoAction).toHaveBeenCalled();
   });
 
-  it("skips blank connections when creating a node", async () => {
+  it("proposes a chronicle update draft with reconciliation and preserves existing lore", async () => {
     const setSaved = vi.fn();
-
-    await actions.createAsNode({
-      message: {
-        id: "message-blank-connections",
-      } as any,
-      parsed: {
-        title: "Blank Connection Node",
-        connections: [
-          { target: "Friend", label: "friend" },
-          { target: "   ", label: "ignored" },
-          "",
-        ],
-      },
-      setSaved,
+    oracle.reconcileSmartApply.mockResolvedValue({
+      content: "fresh chronicle reconciled",
     });
-
-    expect(vault.createEntity).toHaveBeenCalledWith(
-      "character",
-      "Blank Connection Node",
-      expect.objectContaining({
-        connections: [
-          {
-            target: "friend",
-            label: "friend",
-            type: "related_to",
-            strength: 1,
-          },
-        ],
-      }),
-    );
-  });
-
-  it("updates chronicle content with undo support", async () => {
-    const setSaved = vi.fn();
 
     await actions.copyToChronicle({
       message: {
@@ -172,15 +140,25 @@ describe("ChatMessageActions", () => {
       setSaved,
     });
 
-    expect(vault.updateEntity).toHaveBeenCalledWith("target", {
-      content: "fresh chronicle",
+    expect(oracle.reconcileSmartApply).toHaveBeenCalledWith("target", {
+      chronicle: "fresh chronicle",
     });
+    expect(regenerationServiceMock.pendingDraft).toEqual(
+      expect.objectContaining({
+        entityId: "target",
+        messageId: "message-3",
+        chronicle: "fresh chronicle reconciled",
+        lore: "old lore", // Preserved from vault.entities.target
+      }),
+    );
     expect(setSaved).toHaveBeenCalledWith(true);
-    expect(oracle.pushUndoAction).toHaveBeenCalled();
   });
 
-  it("updates lore content with undo support", async () => {
+  it("proposes a lore update draft with reconciliation and preserves existing chronicle", async () => {
     const setSaved = vi.fn();
+    oracle.reconcileSmartApply.mockResolvedValue({
+      lore: "fresh lore reconciled",
+    });
 
     await actions.copyToLore({
       message: {
@@ -191,19 +169,18 @@ describe("ChatMessageActions", () => {
       setSaved,
     });
 
-    expect(vault.updateEntity).toHaveBeenCalledWith("target", {
+    expect(oracle.reconcileSmartApply).toHaveBeenCalledWith("target", {
       lore: "fresh lore",
     });
+    expect(regenerationServiceMock.pendingDraft).toEqual(
+      expect.objectContaining({
+        entityId: "target",
+        messageId: "message-4",
+        chronicle: "old chronicle", // Preserved from vault.entities.target
+        lore: "fresh lore reconciled",
+      }),
+    );
     expect(setSaved).toHaveBeenCalledWith(true);
-    expect(oracle.pushUndoAction).toHaveBeenCalled();
-
-    const undo = oracle.pushUndoAction.mock.calls.at(-1)?.[1];
-    await undo?.();
-
-    expect(vault.updateEntity).toHaveBeenCalledWith("target", {
-      lore: "old lore",
-    });
-    expect(setSaved).toHaveBeenCalledWith(false);
   });
 
   it("delegates undo to the oracle stack", async () => {

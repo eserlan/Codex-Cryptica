@@ -2,7 +2,7 @@
 
 **Feature Branch**: `030-rich-text-formatting`
 **Created**: 2026-02-01
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "better rich text formatting controls in edit mode, both detail panel and zen mode"
 
 ## User Scenarios & Testing
