@@ -234,23 +234,27 @@ describe("SearchService progressive indexing", () => {
     let failContentRead = true;
     let contentReads = 0;
     const db = createDb({ graphEntities: metadata });
-    db.entityContent.where = vi.fn(() => {
+    db.entityContent.where = vi.fn((field) => {
       if (failContentRead) {
         throw new Error("content read failed");
       }
+      if (field === "vaultId") {
+        return {
+          equals: vi.fn(() => ({
+            count: vi.fn().mockResolvedValue(contentRecords.length),
+          })),
+        } as any;
+      }
       return {
-        equals: vi.fn(() => ({
-          count: vi.fn().mockResolvedValue(contentRecords.length),
-          offset: vi.fn(() => ({
-            limit: vi.fn(() => ({
-              toArray: vi.fn().mockImplementation(async () => {
-                contentReads += 1;
-                return contentReads === 1 ? contentRecords : [];
-              }),
-            })),
+        between: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            toArray: vi.fn().mockImplementation(async () => {
+              contentReads += 1;
+              return contentReads === 1 ? contentRecords : [];
+            }),
           })),
         })),
-      };
+      } as any;
     });
     const { service, handler } = createHarness({ api, db });
 
