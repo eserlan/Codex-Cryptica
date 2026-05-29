@@ -409,3 +409,34 @@ describe("createStaleGuard", () => {
     expect(isStale(controller.signal)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Tests: Vault Switching Race Condition & cold-boot indexing
+// ---------------------------------------------------------------------------
+describe("SearchService — Vault Switching Race Condition", () => {
+  it("synchronously updates activeVaultId on VAULT_OPENING to prevent discarding subsequent new-vault events", async () => {
+    const { service, api, eventBus } = makeService();
+
+    // 1. Establish initial vault ID
+    service.coordinator.activeVaultId = "vault-1";
+
+    // 2. Dispatch VAULT_OPENING for vault-2
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-2");
+
+    // 3. Dispatch CACHE_LOADED for vault-2 immediately (synchronously, in same microtask tick)
+    emitVaultEvent(
+      eventBus,
+      VAULT_EVENTS.CACHE_LOADED,
+      { entities: [makeEntity("entity-a")] },
+      "vault-2",
+    );
+
+    await flush();
+
+    // 4. Verify activeVaultId is updated to vault-2
+    expect(service.coordinator.activeVaultId).toBe("vault-2");
+
+    // 5. Verify CACHE_LOADED is processed (indexBatch is called and triggers addBatchProgressive)
+    expect(api.addBatchProgressive).toHaveBeenCalled();
+  });
+});

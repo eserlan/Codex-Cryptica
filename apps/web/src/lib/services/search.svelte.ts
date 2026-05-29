@@ -12,7 +12,7 @@ import {
 } from "./search-progress-coordinator";
 import { SearchIndexLifecycle } from "./search-index-lifecycle";
 import { SearchIndexPersistence } from "./search-index-persistence";
-import { SearchIndexPipeline } from "./search-index-pipeline";
+import { SearchIndexPipeline } from "./search-index-pipeline.svelte";
 
 type SearchApi = Pick<
   SearchEngine,

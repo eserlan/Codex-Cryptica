@@ -1,7 +1,7 @@
 import { VAULT_EVENTS } from "@codex/vault-engine";
 import { appEventBus } from "@codex/events";
 import type { SearchProgressCoordinator } from "./search-progress-coordinator";
-import { BATCH_UPDATED_SEARCH_FIELDS } from "./search-index-pipeline";
+import { BATCH_UPDATED_SEARCH_FIELDS } from "./search-index-pipeline.svelte";
 
 export type LifecycleCallbacks = {
   onVaultSwitch(vaultId: string): Promise<void>;
