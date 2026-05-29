@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: "cloudflare-pages"
+  group: "cloudflare-pages-${{ github.ref }}"
   cancel-in-progress: true
 
 permissions:
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   type-check:
-    name: Deploy Type Check
+    name: Type Check
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -61,8 +61,7 @@ jobs:
         run: bun run lint:types
 
   lint-test:
-    name: Deploy Lint and Test
-    needs: type-check
+    name: Lint and Test
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -103,14 +102,15 @@ jobs:
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: deploy-coverage
+          name: coverage
           path: |
             apps/*/coverage/
             packages/*/coverage/
           retention-days: 7
 
   build:
-    needs: lint-test
+    name: Build
+    needs: [type-check, lint-test]
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -256,8 +256,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Construct the preview URL using Cloudflare Pages branch slugging rules:
-          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
           BRANCH="${{ github.head_ref }}"
           CF_BRANCH=$(printf '%s' "$BRANCH" \
             | tr '[:upper:]' '[:lower:]' \
@@ -273,7 +271,6 @@ jobs:
 
           _Changes will be live shortly._"
 
-          # Check if a comment already exists to avoid spamming
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
           if [ -n "$EXISTING_COMMENT_ID" ]; then
