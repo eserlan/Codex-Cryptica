@@ -49,8 +49,10 @@ export class OracleSettingsService {
   activeStyleTitle = $state<string | null>(null);
 
   /** Image Provider Setting */
-  imageProvider = $state<"gemini" | "custom">("custom");
-  customImageBaseUrl = $state<string>("https://api.together.xyz/v1/images/generations");
+  imageProvider = $state<"gemini" | "custom">("gemini");
+  customImageBaseUrl = $state<string>(
+    "https://api.together.xyz/v1/images/generations",
+  );
   customImageApiKey = $state<string>("");
   customImageModel = $state<string>("black-forest-labs/FLUX.1-schnell");
 
@@ -101,16 +103,15 @@ export class OracleSettingsService {
     this.tier = tierSetting?.value ?? "advanced";
 
     const providerSetting = await db.appSettings.get("image_provider");
-    this.imageProvider = providerSetting?.value ?? "custom";
-    if (this.imageProvider === "gemini" && !this.apiKey) {
-      this.imageProvider = "custom";
-    }
+    this.imageProvider = providerSetting?.value ?? "gemini";
     const baseUrlSetting = await db.appSettings.get("custom_image_base_url");
-    this.customImageBaseUrl = baseUrlSetting?.value ?? "https://api.together.xyz/v1/images/generations";
+    this.customImageBaseUrl =
+      baseUrlSetting?.value ?? "https://api.together.xyz/v1/images/generations";
     const apiKeySetting = await db.appSettings.get("custom_image_api_key");
     this.customImageApiKey = apiKeySetting?.value ?? "";
     const modelSetting = await db.appSettings.get("custom_image_model");
-    this.customImageModel = modelSetting?.value ?? "black-forest-labs/FLUX.1-schnell";
+    this.customImageModel =
+      modelSetting?.value ?? "black-forest-labs/FLUX.1-schnell";
 
     this.broadcast();
   }
@@ -161,13 +162,34 @@ export class OracleSettingsService {
     model?: string;
   }) {
     if (this.db) {
-      if (settings.provider !== undefined) await this.db.appSettings.put({ key: "image_provider", value: settings.provider, updatedAt: Date.now() });
-      if (settings.baseUrl !== undefined) await this.db.appSettings.put({ key: "custom_image_base_url", value: settings.baseUrl, updatedAt: Date.now() });
-      if (settings.apiKey !== undefined) await this.db.appSettings.put({ key: "custom_image_api_key", value: settings.apiKey, updatedAt: Date.now() });
-      if (settings.model !== undefined) await this.db.appSettings.put({ key: "custom_image_model", value: settings.model, updatedAt: Date.now() });
+      if (settings.provider !== undefined)
+        await this.db.appSettings.put({
+          key: "image_provider",
+          value: settings.provider,
+          updatedAt: Date.now(),
+        });
+      if (settings.baseUrl !== undefined)
+        await this.db.appSettings.put({
+          key: "custom_image_base_url",
+          value: settings.baseUrl,
+          updatedAt: Date.now(),
+        });
+      if (settings.apiKey !== undefined)
+        await this.db.appSettings.put({
+          key: "custom_image_api_key",
+          value: settings.apiKey,
+          updatedAt: Date.now(),
+        });
+      if (settings.model !== undefined)
+        await this.db.appSettings.put({
+          key: "custom_image_model",
+          value: settings.model,
+          updatedAt: Date.now(),
+        });
     }
     if (settings.provider !== undefined) this.imageProvider = settings.provider;
-    if (settings.baseUrl !== undefined) this.customImageBaseUrl = settings.baseUrl;
+    if (settings.baseUrl !== undefined)
+      this.customImageBaseUrl = settings.baseUrl;
     if (settings.apiKey !== undefined) this.customImageApiKey = settings.apiKey;
     if (settings.model !== undefined) this.customImageModel = settings.model;
     this.broadcast();
