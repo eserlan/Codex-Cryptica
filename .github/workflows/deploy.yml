@@ -196,8 +196,6 @@ jobs:
             echo "| Build directory | $(du -sh apps/web/build | cut -f1) |"
             echo "| JavaScript assets | $(find apps/web/build -type f -name '*.js' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
             echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
-            echo
-            echo "Bundle treemap is served at \`<deploy-url>/bundle-report.html\` and also in the \`bundle-report\` artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
@@ -259,6 +257,8 @@ jobs:
             | cut -c1-28 \
             | sed -E 's/-+$//')
           DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
+
+          echo "[Bundle report](${DEPLOYMENT_URL}/bundle-report.html)" >> "$GITHUB_STEP_SUMMARY"
 
           COMMENT="🚀 **Preview Deployment Ready!**
 
