@@ -230,9 +230,12 @@
       <span class="text-sm text-theme-text font-bold uppercase font-header block mb-3">Image Generation Provider</span>
       
       <div class="flex gap-4 mb-4">
-        <label class="flex items-center gap-2 text-sm text-theme-text">
-          <input type="radio" name="img_provider" value="gemini" checked={oracle.settings.imageProvider === 'gemini'} onchange={() => oracle.updateSettings({ imageProvider: 'gemini' })} />
+        <label class="flex items-center gap-2 text-sm text-theme-text" class:opacity-50={!oracle.apiKey}>
+          <input type="radio" name="img_provider" value="gemini" checked={oracle.settings.imageProvider === 'gemini'} disabled={!oracle.apiKey} onchange={() => oracle.updateSettings({ imageProvider: 'gemini' })} />
           Google Gemini API
+          {#if !oracle.apiKey}
+            <span class="text-[10px] bg-theme-muted/20 px-1.5 py-0.5 rounded text-theme-muted">Requires own key</span>
+          {/if}
         </label>
         <label class="flex items-center gap-2 text-sm text-theme-text">
           <input type="radio" name="img_provider" value="custom" checked={oracle.settings.imageProvider === 'custom'} onchange={() => oracle.updateSettings({ imageProvider: 'custom' })} />
