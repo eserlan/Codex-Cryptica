@@ -416,9 +416,16 @@ describe("SearchService", () => {
       }));
 
       let contentCallCount = 0;
-      vi.spyOn(entityDb.entityContent, "where").mockReturnValue({
-        equals: vi.fn().mockReturnValue({
-          offset: vi.fn().mockReturnThis(),
+      vi.spyOn(entityDb.entityContent, "where").mockImplementation((indexName?: any) => {
+        if (indexName === "vaultId") {
+          return {
+            equals: vi.fn().mockReturnValue({
+              count: vi.fn().mockResolvedValue(120),
+            }),
+          } as any;
+        }
+        return {
+          between: vi.fn().mockReturnThis(),
           limit: vi.fn().mockReturnThis(),
           toArray: vi.fn().mockImplementation(() => {
             if (contentCallCount === 0) {
@@ -430,8 +437,8 @@ describe("SearchService", () => {
             }
             return Promise.resolve([]);
           }),
-        }),
-      } as any);
+        } as any;
+      });
 
       vi.spyOn(entityDb.graphEntities, "where").mockReturnValue({
         equals: vi.fn().mockReturnValue({

@@ -4,6 +4,7 @@ import type {
   ProgressiveBatchResult,
 } from "@codex/search-engine";
 import type * as Comlink from "comlink";
+import Dexie from "dexie";
 import { entityDb } from "../utils/entity-db";
 import { debugStore } from "../stores/debug.svelte";
 import type {
@@ -254,7 +255,7 @@ export class SearchIndexPipeline {
         .toArray();
 
       const metaMap = new Map(metadatas.map((m: any) => [m.id, m]));
-      let offset = 0;
+      let lastSeenId = "";
 
       while (true) {
         if (this.coordinator.activeVaultId !== vaultId) {
@@ -265,9 +266,8 @@ export class SearchIndexPipeline {
         }
 
         const records = await this.db.entityContent
-          .where("vaultId")
-          .equals(vaultId)
-          .offset(offset)
+          .where("[vaultId+entityId]")
+          .between([vaultId, lastSeenId], [vaultId, Dexie.maxKey], false, true)
           .limit(INDEX_BATCH_SIZE)
           .toArray();
 
@@ -291,7 +291,7 @@ export class SearchIndexPipeline {
         }
 
         if (records.length < INDEX_BATCH_SIZE) break;
-        offset += records.length;
+        lastSeenId = records[records.length - 1].entityId;
 
         // Stagger batches to let the main thread and IndexedDB breathe.
         await this.delay(500);
