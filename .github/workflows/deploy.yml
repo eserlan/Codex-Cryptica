@@ -154,9 +154,12 @@ jobs:
       - name: Copy bundle report into build output
         run: |
           REPORT=$(find apps/web/.svelte-kit/output -name "bundle-report.html" | head -n 1)
-          if [ -n "$REPORT" ]; then
-            cp "$REPORT" apps/web/build/bundle-report.html
+          if [ -z "$REPORT" ]; then
+            echo "::error::bundle-report.html not found in Vite build output — visualizer may not have run"
+            exit 1
           fi
+          mkdir -p apps/web/build
+          cp "$REPORT" apps/web/build/bundle-report.html
 
       - name: Upload intermediate artifact
         uses: actions/upload-artifact@v7
@@ -260,13 +263,16 @@ jobs:
 
           echo "[Bundle report](${DEPLOYMENT_URL}/bundle-report.html)" >> "$GITHUB_STEP_SUMMARY"
 
-          COMMENT="🚀 **Preview Deployment Ready!**
+          COMMENT=$(cat <<EOF
+🚀 **Preview Deployment Ready!**
 
-          **URL:** ${DEPLOYMENT_URL}
-          **Bundle report:** ${DEPLOYMENT_URL}/bundle-report.html
-          **Branch:** \`${BRANCH}\`
+**URL:** ${DEPLOYMENT_URL}
+**Bundle report:** ${DEPLOYMENT_URL}/bundle-report.html
+**Branch:** \`${BRANCH}\`
 
-          _Changes will be live shortly._"
+_Changes will be live shortly._
+EOF
+)
 
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
