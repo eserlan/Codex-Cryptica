@@ -23,6 +23,10 @@ export interface MutationDependencies {
   getServices: () => IVaultServices | null;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
+  onEntitiesUpdated?: (
+    oldEntities: Record<string, LocalEntity>,
+    newEntities: Record<string, LocalEntity>,
+  ) => void;
   onConnectionAdded?: (
     sourceId: string,
     targetId: string,
@@ -55,6 +59,7 @@ export class EntityMutationService {
         MutationDependencies,
         | "onEntityDelete"
         | "onBatchUpdate"
+        | "onEntitiesUpdated"
         | "onConnectionAdded"
         | "onConnectionRemoved"
         | "onConnectionUpdated"
@@ -74,7 +79,9 @@ export class EntityMutationService {
   }
 
   set entities(val: Record<string, LocalEntity>) {
+    const oldVal = this.deps.repository.entities;
     this.deps.repository.entities = val;
+    this.deps.onEntitiesUpdated?.(oldVal, val);
   }
 
   async createEntity(
