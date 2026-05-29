@@ -60,6 +60,7 @@ export class MapStore {
   gridColor = $state<string | null>(null); // null means use theme primary
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
+  private _persistTimer: ReturnType<typeof setTimeout> | null = null;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -101,7 +102,7 @@ export class MapStore {
             this.showLabels,
           ];
           void tracked;
-          this.persistSettings();
+          this.schedulePersistSettings();
         });
       });
     }
@@ -190,6 +191,14 @@ export class MapStore {
     } catch {
       return null;
     }
+  }
+
+  private schedulePersistSettings() {
+    if (this._persistTimer !== null) clearTimeout(this._persistTimer);
+    this._persistTimer = setTimeout(() => {
+      this._persistTimer = null;
+      this.persistSettings();
+    }, 250);
   }
 
   private persistSettings() {
