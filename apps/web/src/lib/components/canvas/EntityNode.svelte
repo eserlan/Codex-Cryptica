@@ -57,9 +57,12 @@
       node.style.height = node.scrollHeight + "px";
     };
     node.addEventListener("input", resize);
-    setTimeout(resize, 0);
+    const frame = requestAnimationFrame(resize);
     return {
-      destroy: () => node.removeEventListener("input", resize),
+      destroy: () => {
+        node.removeEventListener("input", resize);
+        cancelAnimationFrame(frame);
+      },
     };
   }
 

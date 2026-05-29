@@ -113,11 +113,12 @@
     if (show) {
       const prevFocus = document.activeElement as HTMLElement;
       // Small delay to allow DOM to update
-      setTimeout(() => {
+      const frame = requestAnimationFrame(() => {
         closeLightboxBtn?.focus();
-      }, 0);
+      });
 
       return () => {
+        cancelAnimationFrame(frame);
         prevFocus?.focus();
       };
     }
