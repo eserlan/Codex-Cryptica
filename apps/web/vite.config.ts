@@ -20,6 +20,16 @@ try {
   console.warn("Could not get git hash for versioning", e);
 }
 
+let usePolling = false;
+try {
+  usePolling = readFileSync("/proc/version", "utf8").toLowerCase().includes("microsoft");
+} catch {
+  // Ignore
+}
+if (process.env.VITE_USE_POLLING === "true") {
+  usePolling = true;
+}
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
@@ -172,7 +182,7 @@ export default defineConfig({
       host: "localhost",
     },
     watch: {
-      usePolling: true,
+      usePolling,
     },
     fs: {
       // Allow serving files from the workspace root and all packages
