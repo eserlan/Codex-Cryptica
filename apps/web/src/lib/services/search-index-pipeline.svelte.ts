@@ -346,16 +346,51 @@ export class SearchIndexPipeline {
 
   private mapToSearchEntry(entity: any): SearchEntry {
     const path = entity._path?.join("/") || `${entity.id}.md`;
-    const keywords = [
-      ...(entity.labels || entity.tags || []),
-      entity.lore || "",
-      ...Object.values(entity.metadata || {}).flat(),
-    ].join(" ");
+
+    // Avoid spreading, flattening, and intermediate arrays for keywords
+    const keywordBuffer: string[] = [];
+
+    const labelsOrTags = entity.labels || entity.tags;
+    if (labelsOrTags && Array.isArray(labelsOrTags)) {
+      for (let i = 0; i < labelsOrTags.length; i++) {
+        const tag = labelsOrTags[i];
+        if (tag) {
+          keywordBuffer.push(tag);
+        }
+      }
+    }
+
+    if (entity.lore) {
+      keywordBuffer.push(entity.lore);
+    }
+
+    if (entity.metadata && typeof entity.metadata === "object") {
+      const vals = Object.values(entity.metadata);
+      for (let i = 0; i < vals.length; i++) {
+        const val = vals[i];
+        if (Array.isArray(val)) {
+          for (let j = 0; j < val.length; j++) {
+            const innerVal = val[j];
+            if (innerVal) {
+              keywordBuffer.push(innerVal);
+            }
+          }
+        } else if (val) {
+          keywordBuffer.push(typeof val === "string" ? val : String(val));
+        }
+      }
+    }
+
+    const keywords = keywordBuffer.join(" ");
+    const aliases =
+      entity.aliases && Array.isArray(entity.aliases)
+        ? entity.aliases.join(" ")
+        : "";
 
     return {
       id: entity.id,
       title: entity.title,
-      aliases: (entity.aliases || []).join(" "),
+      aliases,
       content: entity.content || "",
       type: entity.type,
       path,
