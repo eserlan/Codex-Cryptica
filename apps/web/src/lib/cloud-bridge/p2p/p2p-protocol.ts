@@ -5,6 +5,7 @@ import type {
   SessionSnapshotPayload,
   VTTMessage,
 } from "../../../types/vtt";
+import { debugStore } from "../../stores/debug.svelte";
 
 const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 
@@ -79,7 +80,7 @@ export async function encodeSessionSnapshot(
     source.pipeThrough(new CompressionStream("gzip")),
   ).arrayBuffer();
   const ratio = ((1 - data.byteLength / json.length) * 100).toFixed(1);
-  console.log(
+  debugStore.log(
     `[P2P] SESSION_SNAPSHOT_GZIP: ${json.length} → ${data.byteLength} bytes (${ratio}% smaller)`,
   );
   return { type: "SESSION_SNAPSHOT_GZIP", data };
