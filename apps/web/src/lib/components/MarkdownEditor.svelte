@@ -157,7 +157,11 @@
     void entityIndex;
     void currentEntityId;
     void onEntityClick;
-    if (editor && !editor.isEditable) {
+    // Always dispatch when deps change so the cached DecorationSet stays current
+    // even when entityIndex updates while the editor is in edit mode.
+    // The editable gate lives in props.decorations() — not here — so dispatching
+    // in edit mode is harmless: the plugin simply returns DecorationSet.empty.
+    if (editor) {
       editor.view.dispatch(
         editor.state.tr.setMeta(ENTITY_INDEX_CHANGED_META, true),
       );

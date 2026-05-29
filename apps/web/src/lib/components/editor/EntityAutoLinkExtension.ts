@@ -124,6 +124,10 @@ export function createEntityAutoLinkExtension(
             // Single delegated click listener — O(1) memory regardless of
             // decoration count (plan.md Decision 3).
             function handleClick(e: MouseEvent) {
+              // Mirror the decoration gate: ignore clicks while editable so
+              // future features or external code that emit data-entity-id in
+              // edit mode cannot accidentally trigger navigation.
+              if (editor.isEditable) return;
               const target = (e.target as HTMLElement).closest<HTMLElement>(
                 "[data-entity-id]",
               );

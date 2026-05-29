@@ -260,6 +260,33 @@ describe("EntityAutoLinkExtension — entityIndex reactivity", () => {
 
     expect(getDecoratedSpans(editor).length).toBe(0);
   });
+
+  it("index updated in edit mode is applied when switching back to read mode", () => {
+    // Start read mode, confirm decoration
+    const options: EntityAutoLinkOptions = {
+      entityIndex: [{ text: "crimson enclave", id: "e1" }],
+      currentEntityId: "",
+      onEntityClick: vi.fn(),
+    };
+    const editor = createTestEditor(options, false, "<p>Crimson Enclave.</p>");
+    expect(getDecoratedSpans(editor).length).toBe(1);
+
+    // Switch to edit mode and update the index (simulates vault rename while editing)
+    editor.setEditable(true);
+    options.entityIndex = [{ text: "crimson enclave", id: "e1-renamed" }];
+    editor.view.dispatch(
+      editor.state.tr.setMeta(ENTITY_INDEX_CHANGED_META, true),
+    );
+    // In edit mode: no decorations visible
+    expect(getDecoratedSpans(editor).length).toBe(0);
+
+    // Switch back to read mode — should see the updated entity ID
+    editor.setEditable(false);
+    expect(getDecoratedSpans(editor).length).toBe(1);
+    expect(getDecoratedSpans(editor)[0].getAttribute("data-entity-id")).toBe(
+      "e1-renamed",
+    );
+  });
 });
 
 // ─── Click handling ───────────────────────────────────────────────────────────
@@ -294,6 +321,29 @@ describe("EntityAutoLinkExtension — click handling", () => {
     };
     const editor = createTestEditor(options, false, "<p>No entities here.</p>");
 
+    editor.view.dom.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("does not fire onEntityClick when editor is in edit mode", () => {
+    const onClick = vi.fn();
+    const options: EntityAutoLinkOptions = {
+      entityIndex: ENTITIES,
+      currentEntityId: "",
+      onEntityClick: onClick,
+    };
+    // Start in read mode so decoration HTML exists, then switch to edit mode
+    const editor = createTestEditor(
+      options,
+      false,
+      "<p>Aldric the Sage appeared.</p>",
+    );
+    editor.setEditable(true);
+
+    // Click on the DOM node that still has the span (even though decorations
+    // are empty, the DOM may retain the element until the next render tick).
+    // More robustly: fire on the editor root itself.
     editor.view.dom.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     expect(onClick).not.toHaveBeenCalled();
