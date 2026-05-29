@@ -1,4 +1,3 @@
-// @ts-expect-error js-yaml does not have local type declarations in editor-core
 import { load } from "js-yaml";
 import type { BlogArticle } from "./types";
 

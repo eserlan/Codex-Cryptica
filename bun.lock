@@ -172,6 +172,7 @@
         "schema": "workspace:*",
       },
       "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
         "@vitest/coverage-v8": "^4.1.7",
         "jsdom": "^29.1.1",
         "typescript": "^6.0.3",
