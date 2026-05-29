@@ -1,4 +1,5 @@
 import { graph as defaultGraph } from "$lib/stores/graph.svelte";
+import { debugStore } from "$lib/stores/debug.svelte";
 import {
   oracle as defaultOracle,
   type ChatMessage,
@@ -104,16 +105,16 @@ export class ChatMessageActions {
       params.activeEntityId,
     );
 
-    console.log("[Oracle] Smart Apply triggered for:", finalTargetId);
+    debugStore.log("[Oracle] Smart Apply triggered for:", finalTargetId);
 
     if (!finalTargetId || !params.message.content) {
-      console.warn("[Oracle] Smart Apply aborted: Missing target or content");
+      debugStore.warn("[Oracle] Smart Apply aborted: Missing target or content");
       return;
     }
 
     const entity = this.vault.entities[finalTargetId] as EntityLike | undefined;
     if (!entity) {
-      console.error(
+      debugStore.error(
         "[Oracle] Smart Apply failed: Entity not found in vault",
         finalTargetId,
       );
@@ -125,7 +126,7 @@ export class ChatMessageActions {
     if (params.parsed.lore) incoming.lore = params.parsed.lore;
 
     if (Object.keys(incoming).length === 0) {
-      console.warn("[Oracle] Smart Apply aborted: No updates extracted");
+      debugStore.warn("[Oracle] Smart Apply aborted: No updates extracted");
       return;
     }
 
@@ -134,7 +135,7 @@ export class ChatMessageActions {
       incoming,
     );
 
-    console.log("[Oracle] Smart Apply reconciled updates:", updates);
+    debugStore.log("[Oracle] Smart Apply reconciled updates:", updates);
 
     // Instead of immediate update with undo, use the draft flow for a unified experience
     this.regenerationService.pendingDraft = {

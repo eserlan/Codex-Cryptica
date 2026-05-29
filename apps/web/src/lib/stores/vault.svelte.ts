@@ -516,5 +516,5 @@ if (
   (import.meta.env.DEV || (window as any).__E2E__)
 ) {
   (window as any).vault = vault;
-  console.log("[VaultStore] Module loaded, vault attached to window");
+  debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

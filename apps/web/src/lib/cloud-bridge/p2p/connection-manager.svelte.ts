@@ -1,4 +1,5 @@
 import { createPeer, type PeerFactory } from "./peer-factory";
+import { debugStore } from "../../stores/debug.svelte";
 
 export interface ConnectionState {
   status:
@@ -542,7 +543,7 @@ export class PeerJSConnectionManager {
         this.setStatus("reconnecting");
         const delay = this.reconnectDelays[this._state.retryCount];
         this._state.retryCount++;
-        console.log(
+        debugStore.log(
           `[P2P Connection] Reconnecting in ${delay}ms (Attempt ${this._state.retryCount}/${this.reconnectDelays.length})...`,
         );
 

@@ -1,4 +1,5 @@
 import { vault as defaultVault } from "../../stores/vault.svelte";
+import { debugStore } from "../../stores/debug.svelte";
 import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
 import { guestStore as defaultGuestStore } from "../../stores/guest.svelte";
 import { mapStore as defaultMapStore } from "../../stores/map.svelte";
@@ -85,14 +86,14 @@ export class P2PHostService {
 
   private setupTransportListeners() {
     this.transport.on("connection", (conn: P2PConnection) => {
-      console.log("[P2P Host] New guest connected:", conn.peer);
+      debugStore.log("[P2P Host] New guest connected:", conn.peer);
       this.connections.push(conn);
     });
 
     this.transport.on("data", async ({ conn, data }) => {
       if (data && typeof data === "object") {
         if (data.type === "handshake") {
-          console.log("[P2P Host] Received handshake from:", conn.peer);
+          debugStore.log("[P2P Host] Received handshake from:", conn.peer);
           const ack = {
             type: "handshake_ack",
             senderId: this.transport.id || "",
@@ -177,7 +178,7 @@ export class P2PHostService {
 
     this.state.status = "connecting";
     const id = await this.transport.start(peerId);
-    console.log("[P2P Host] Hosting started. ID:", id);
+    debugStore.log("[P2P Host] Hosting started. ID:", id);
 
     this._isHosting = true;
     this.state.status = "connected";

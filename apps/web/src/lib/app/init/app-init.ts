@@ -158,7 +158,7 @@ export function setupWindowGlobals(context: {
 
   if (!isSpecialEnv) return;
 
-  console.log("[WindowGlobals] Attaching:", Object.keys(context));
+  debugStore.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
   (window as any).codexUI = {
     onboarding: context.onboardingStore,

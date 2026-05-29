@@ -1,6 +1,7 @@
 import { BaseHandler, type P2PHandlerContext } from "./base-handler";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
+import { debugStore } from "../../../stores/debug.svelte";
 
 export class FileHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
@@ -18,7 +19,7 @@ export class FileHandler extends BaseHandler {
     const { vault } = context;
 
     try {
-      console.log(`[P2P Host] Handling file request for: ${path}`);
+      debugStore.log(`[P2P Host] Handling file request for: ${path}`);
       const vaultHandle = await vault.getActiveVaultHandle();
 
       if (!vaultHandle) {
