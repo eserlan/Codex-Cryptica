@@ -18,7 +18,7 @@ test("cross-origin isolation headers are active and window is isolated", async (
     // Verify Cross-Origin-Opener-Policy header
     const coop = headers["cross-origin-opener-policy"];
     expect(coop).toBeDefined();
-    expect(coop).toBe("same-origin");
+    expect(coop).toBe("same-origin-allow-popups");
 
     // Verify Cross-Origin-Embedder-Policy header
     const coep = headers["cross-origin-embedder-policy"];
@@ -27,6 +27,8 @@ test("cross-origin isolation headers are active and window is isolated", async (
   }
 
   // Evaluate self.crossOriginIsolated on the client page
+  // Note: same-origin-allow-popups does not grant crossOriginIsolated,
+  // but it's required to prevent breaking Google Drive OAuth popups.
   const isIsolated = await page.evaluate(() => self.crossOriginIsolated);
-  expect(isIsolated).toBe(true);
+  expect(isIsolated).toBe(false);
 });
