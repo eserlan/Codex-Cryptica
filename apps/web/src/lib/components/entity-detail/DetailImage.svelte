@@ -23,6 +23,14 @@
 
   let resolvedImageUrl = $state("");
   let isDraggingOver = $state(false);
+  let isImageLoaded = $state(false);
+
+  $effect(() => {
+    // Reset loaded state when image URL changes
+    if (resolvedImageUrl) {
+      isImageLoaded = false;
+    }
+  });
   const isVisualizing = $derived(oracle.isVisualizingEntity(entity?.id));
 
   // Check if this entity is visible in guest/shared mode
@@ -185,14 +193,23 @@
             entity.image,
           );
         }}
-        class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
+        disabled={!resolvedImageUrl}
+        class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30 disabled:cursor-wait"
       >
+        {#if !isImageLoaded}
+          <div class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2">
+            <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
+            <span class="text-[9px] font-mono uppercase tracking-wider opacity-40">Resolving Neural Visual...</span>
+          </div>
+        {/if}
         <img
           src={resolvedImageUrl}
           alt={entity.title}
           loading="lazy"
           decoding="async"
-          class="w-full h-auto max-h-48 md:max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
+          onload={() => { isImageLoaded = true; }}
+          onerror={() => { isImageLoaded = true; }}
+          class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90 group-hover:opacity-100 scale-100' : 'opacity-0 scale-95'}"
         />
         <div
           class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
