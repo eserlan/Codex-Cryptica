@@ -24,16 +24,6 @@ async function waitForVaultIdle(page: any) {
   );
 }
 
-/** Expose cacheService on window so evaluate() can reach it. */
-async function exposeCacheService(page: any) {
-  await page.evaluate(async () => {
-    if (!(window as any).__cacheService) {
-      const mod = await import("/src/lib/services/cache.svelte.ts");
-      (window as any).__cacheService = mod.cacheService;
-    }
-  });
-}
-
 test.describe("CacheService persistence (set + bulkSet)", () => {
   test.describe.configure({ mode: "serial" });
 
