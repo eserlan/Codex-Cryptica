@@ -50,9 +50,9 @@ export class OracleSettingsService {
 
   /** Image Provider Setting */
   imageProvider = $state<"gemini" | "custom">("gemini");
-  customImageBaseUrl = $state<string>("");
+  customImageBaseUrl = $state<string>("https://api.together.xyz/v1/images/generations");
   customImageApiKey = $state<string>("");
-  customImageModel = $state<string>("");
+  customImageModel = $state<string>("black-forest-labs/FLUX.1-schnell");
 
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
@@ -103,11 +103,11 @@ export class OracleSettingsService {
     const providerSetting = await db.appSettings.get("image_provider");
     this.imageProvider = providerSetting?.value ?? "gemini";
     const baseUrlSetting = await db.appSettings.get("custom_image_base_url");
-    this.customImageBaseUrl = baseUrlSetting?.value ?? "";
+    this.customImageBaseUrl = baseUrlSetting?.value ?? "https://api.together.xyz/v1/images/generations";
     const apiKeySetting = await db.appSettings.get("custom_image_api_key");
     this.customImageApiKey = apiKeySetting?.value ?? "";
     const modelSetting = await db.appSettings.get("custom_image_model");
-    this.customImageModel = modelSetting?.value ?? "";
+    this.customImageModel = modelSetting?.value ?? "black-forest-labs/FLUX.1-schnell";
 
     this.broadcast();
   }

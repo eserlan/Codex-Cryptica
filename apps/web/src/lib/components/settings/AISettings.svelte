@@ -243,17 +243,17 @@
       {#if oracle.settings.imageProvider === 'custom'}
         <div class="space-y-4 p-4 bg-theme-bg/50 border border-theme-border rounded">
           <div>
-            <label class="block text-xs uppercase font-bold text-theme-text/80 mb-1">Base URL</label>
-            <input type="text" class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm" placeholder="https://api.together.xyz/v1/images/generations" value={oracle.settings.customImageBaseUrl} onchange={(e) => oracle.updateSettings({ customImageBaseUrl: e.currentTarget.value })} />
+            <label class="block text-xs uppercase font-bold text-theme-text/80 mb-1" for="customImageBaseUrl">Base URL</label>
+            <input id="customImageBaseUrl" type="text" class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm" placeholder="https://api.together.xyz/v1/images/generations" value={oracle.settings.customImageBaseUrl} onchange={(e) => oracle.updateSettings({ customImageBaseUrl: e.currentTarget.value })} />
             <p class="text-[11px] text-theme-muted mt-1">Must be an OpenAI-compatible /v1/images/generations endpoint.</p>
           </div>
           <div>
-            <label class="block text-xs uppercase font-bold text-theme-text/80 mb-1">API Key</label>
-            <input type="password" class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm" placeholder="sk-..." value={oracle.settings.customImageApiKey} onchange={(e) => oracle.updateSettings({ customImageApiKey: e.currentTarget.value })} />
+            <label class="block text-xs uppercase font-bold text-theme-text/80 mb-1" for="customImageApiKey">API Key</label>
+            <input id="customImageApiKey" type="password" class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm" placeholder="sk-..." value={oracle.settings.customImageApiKey} onchange={(e) => oracle.updateSettings({ customImageApiKey: e.currentTarget.value })} />
           </div>
           <div>
-            <label class="block text-xs uppercase font-bold text-theme-text/80 mb-1">Model Name</label>
-            <input type="text" class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm" placeholder="black-forest-labs/FLUX.1-schnell" value={oracle.settings.customImageModel} onchange={(e) => oracle.updateSettings({ customImageModel: e.currentTarget.value })} />
+            <label class="block text-xs uppercase font-bold text-theme-text/80 mb-1" for="customImageModel">Model Name</label>
+            <input id="customImageBaseUrl" type="text" class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm" placeholder="black-forest-labs/FLUX.1-schnell" value={oracle.settings.customImageModel} onchange={(e) => oracle.updateSettings({ customImageModel: e.currentTarget.value })} />
           </div>
         </div>
       {/if}
