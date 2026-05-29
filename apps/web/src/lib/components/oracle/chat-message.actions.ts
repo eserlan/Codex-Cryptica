@@ -135,7 +135,17 @@ export class ChatMessageActions {
       incoming,
     );
 
-    debugStore.log("[Oracle] Smart Apply reconciled updates:", updates);
+    debugStore.log(
+      "[Oracle] Smart Apply reconciled updates:",
+      // Log a summary only — `updates` may contain full content/lore strings
+      // which would hold large references in debugStore's ring buffer.
+      Object.fromEntries(
+        Object.entries(updates ?? {}).map(([k, v]) => [
+          k,
+          typeof v === "string" ? `${v.length} chars` : v,
+        ]),
+      ),
+    );
 
     // Instead of immediate update with undo, use the draft flow for a unified experience
     this.regenerationService.pendingDraft = {
