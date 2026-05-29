@@ -19,7 +19,7 @@ const worldService = new WorldServiceImplementation({
     generateImage: (apiKey: string, prompt: string, modelName: string) => {
       const isCustom = oracle.settings.imageProvider === "custom";
       const targetKey = isCustom && oracle.settings.customImageApiKey ? oracle.settings.customImageApiKey : apiKey;
-      const targetModel = isCustom && oracle.settings.customImageModel ? oracle.settings.customImageModel : modelName;
+      const targetModel = isCustom ? (oracle.settings.customImageModel || "black-forest-labs/FLUX.1-schnell") : modelName;
       return imageGenerationService.generateImage(targetKey, prompt, targetModel, {
         provider: oracle.settings.imageProvider as "gemini" | "custom",
         baseUrl: oracle.settings.customImageBaseUrl

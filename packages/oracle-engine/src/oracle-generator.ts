@@ -313,7 +313,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     );
 
     const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
-    const targetModel = context.imageProvider === "custom" && context.customImageModel ? context.customImageModel : "gemini-2.5-flash-image";
+    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
       targetKey,
       visualPrompt,
@@ -357,7 +357,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     );
 
     const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
-    const targetModel = context.imageProvider === "custom" && context.customImageModel ? context.customImageModel : "gemini-2.5-flash-image";
+    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
       targetKey,
       visualPrompt,
