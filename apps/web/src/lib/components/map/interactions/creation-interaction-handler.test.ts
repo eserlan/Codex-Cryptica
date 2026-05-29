@@ -14,12 +14,15 @@ describe("CreationInteractionHandler", () => {
     setPendingTokenCoords = vi.fn();
     setPendingPinCoords = vi.fn();
     handler = new CreationInteractionHandler({
-      unproject: (point) => ({ x: point.x + 1, y: point.y + 2 }),
+      unproject: (point: { x: number; y: number }) => ({
+        x: point.x + 1,
+        y: point.y + 2,
+      }),
       isVttEnabled: () => vttEnabled,
       canCreateTokens: () => canCreateTokens,
       setPendingTokenCoords,
       setPendingPinCoords,
-    });
+    } as any);
   });
 
   it("sets pending token coordinates for VTT host mode", () => {

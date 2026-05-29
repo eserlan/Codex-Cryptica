@@ -23,11 +23,14 @@ describe("MeasurementInteractionHandler", () => {
     });
     handler = new MeasurementInteractionHandler({
       getMeasurement: () => measurement,
-      unproject: (point) => ({ x: point.x + 1, y: point.y + 2 }),
+      unproject: (point: { x: number; y: number }) => ({
+        x: point.x + 1,
+        y: point.y + 2,
+      }),
       setMeasurementStart,
       setMeasurementEnd,
       setMeasurementLocked,
-    });
+    } as any);
   });
 
   it("updates live measurement end silently while active and unlocked", () => {

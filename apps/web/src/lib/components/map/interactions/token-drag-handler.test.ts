@@ -41,8 +41,8 @@ describe("TokenDragHandler", () => {
     setDraggingTokenId = vi.fn();
     handler = new TokenDragHandler({
       getTokens: () => tokens,
-      project: (point) => point,
-      unproject: (point) => point,
+      project: (point: { x: number; y: number }) => point,
+      unproject: (point: { x: number; y: number }) => point,
       isHostMode: () => isHost,
       getPeerId: () => "peer-a",
       canMoveToken,
@@ -51,7 +51,7 @@ describe("TokenDragHandler", () => {
       sendTokenMoveRequest,
       confirmTokenMove,
       setDraggingTokenId,
-    });
+    } as any);
   });
 
   it("starts dragging a movable token and records the image-space offset", () => {

@@ -28,7 +28,7 @@ describe("FogInteractionHandler", () => {
       canPaint: () => canPaint,
       shouldBroadcastFogSync: () => shouldBroadcast,
       broadcastFogSync,
-    });
+    } as any);
   });
 
   it("starts painting only when allowed", () => {

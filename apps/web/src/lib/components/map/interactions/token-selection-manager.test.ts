@@ -42,13 +42,13 @@ describe("TokenSelectionManager", () => {
     setMultiSelection = vi.fn();
     manager = new TokenSelectionManager({
       getTokens: () => tokens,
-      project: (point) => point,
+      project: (point: { x: number; y: number }) => point,
       getSelectedTokens: () => selectedTokens,
       setSelection,
       addToSelection,
       removeFromSelection,
       setMultiSelection,
-    });
+    } as any);
   });
 
   it("selects a token without modifiers", () => {

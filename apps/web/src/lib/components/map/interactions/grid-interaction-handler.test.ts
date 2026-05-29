@@ -21,29 +21,29 @@ describe("GridInteractionHandler", () => {
     clearNotification = vi.fn();
     handler = new GridInteractionHandler({
       isGridMoveMode: () => gridMoveMode,
-      setGridMoveMode: (active) => {
+      setGridMoveMode: (active: boolean) => {
         gridMoveMode = active;
       },
       isGridFitMode: () => gridFitMode,
-      setGridFitMode: (active) => {
+      setGridFitMode: (active: boolean) => {
         gridFitMode = active;
       },
       isHostMode: () => hostMode,
       getViewport: () => ({ pan: { x: 25, y: 75 }, zoom: 2 }),
       getCanvasSize: () => ({ width: 800, height: 600 }),
       getGridSize: () => gridSize,
-      setGridSize: (next) => {
+      setGridSize: (next: number) => {
         gridSize = next;
       },
-      setGridOffset: (offset) => {
+      setGridOffset: (offset: { x: number; y: number }) => {
         gridOffset = offset;
       },
-      setShowGridSettings: (show) => {
+      setShowGridSettings: (show: boolean) => {
         showGridSettings = show;
       },
-      unproject: (point) => point,
+      unproject: (point: { x: number; y: number }) => point,
       clearNotification,
-    });
+    } as any);
   });
 
   it("commits grid move offset and exits move mode", () => {
