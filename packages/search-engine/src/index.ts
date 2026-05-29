@@ -112,19 +112,22 @@ export class SearchEngine {
           field: "title",
           tokenize: "full",
           optimize: true,
-          resolution: 9,
+          // resolution 9 is the FlexSearch maximum and doubles index memory
+          // vs resolution 6 with no practical recall difference for short
+          // fields like titles (typically < 60 chars).
+          resolution: 6,
         },
         {
           field: "aliases",
           tokenize: "full",
           optimize: true,
-          resolution: 9,
+          resolution: 6,
         },
         {
           field: "keywords",
           tokenize: "full",
           optimize: true,
-          resolution: 9,
+          resolution: 6,
         },
         {
           field: "content",
