@@ -12,12 +12,12 @@ export interface RedrawSchedulerDeps {
 const defaultDeps = (): RedrawSchedulerDeps => ({
   raf:
     typeof requestAnimationFrame !== "undefined"
-      ? requestAnimationFrame
+      ? (cb) => requestAnimationFrame(cb)
       : (cb) =>
           setTimeout(() => cb(performance.now()), 16) as unknown as number,
   cancel:
     typeof cancelAnimationFrame !== "undefined"
-      ? cancelAnimationFrame
+      ? (id) => cancelAnimationFrame(id)
       : (id) => clearTimeout(id as unknown as ReturnType<typeof setTimeout>),
 });
 

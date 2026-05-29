@@ -205,7 +205,8 @@
 
     if (headerEl) {
       const updateHeight = () => {
-        const height = headerEl!.getBoundingClientRect().height;
+        if (!headerEl) return;
+        const height = headerEl.getBoundingClientRect().height;
         document.documentElement.style.setProperty(
           "--header-height",
           `${height}px`,
