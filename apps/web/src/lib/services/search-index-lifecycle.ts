@@ -1,7 +1,7 @@
 import { VAULT_EVENTS } from "@codex/vault-engine";
 import { appEventBus } from "@codex/events";
 import type { SearchProgressCoordinator } from "./search-progress-coordinator";
-import { BATCH_UPDATED_SEARCH_FIELDS } from "./search-index-pipeline";
+import { BATCH_UPDATED_SEARCH_FIELDS } from "./search-index-pipeline.svelte";
 
 export type LifecycleCallbacks = {
   onVaultSwitch(vaultId: string): Promise<void>;
@@ -47,7 +47,7 @@ export class SearchIndexLifecycle {
 
     this.eventBus.subscribe(
       "VAULT:*",
-      async (event) => {
+      async (event: any) => {
         // VALIDATION: All sync/load events MUST match the current active vault ID
         // to prevent cross-vault index contamination during rapid switches.
         // VAULT_OPENING and VAULT_SWITCHED are exempt — they drive the transition.
