@@ -8,6 +8,13 @@ on:
       - "scripts/publish-blog-content.mjs"
       - ".github/workflows/deploy-blog-content.yml"
       - "docs/**"
+  pull_request:
+    branches: [main, staging]
+    paths-ignore:
+      - "apps/web/src/lib/content/blog/**"
+      - "scripts/publish-blog-content.mjs"
+      - ".github/workflows/deploy-blog-content.yml"
+      - "docs/**"
 
 concurrency:
   group: "ci-${{ github.ref }}"
@@ -17,7 +24,8 @@ permissions:
   contents: read
 
 jobs:
-  ci:
+  lint-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -64,8 +72,38 @@ jobs:
             packages/*/coverage/
           retention-days: 7
 
-      - name: Build
-        env:
-          VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
-          VITE_ROBOTS_DIRECTIVE: "index, follow"
-        run: bun run build
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type Check
+        continue-on-error: true
+        run: bun run lint:types

@@ -55,21 +55,6 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint and Test
-        run: |
-          bun run lint
-          bun run test:coverage
-
-      - name: Upload Coverage Reports
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: coverage
-          path: |
-            apps/*/coverage/
-            packages/*/coverage/
-          retention-days: 7
-
       - name: Build Application
         env:
           VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
@@ -96,6 +81,31 @@ jobs:
           path: apps/web/build/
           include-hidden-files: true
           retention-days: 30
+
+      - name: Upload Bundle Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-report
+          path: |
+            apps/web/.svelte-kit/output/**/bundle-report.html
+            apps/web/.svelte-kit/output/**/bundle-stats.json
+          include-hidden-files: true
+          retention-days: 30
+
+      - name: Summarize Bundle Size
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Bundle size"
+            echo
+            echo "| Metric | Size |"
+            echo "| --- | ---: |"
+            echo "| Build directory | $(du -sh apps/web/build | cut -f1) |"
+            echo "| JavaScript assets | $(find apps/web/build -type f -name '*.js' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
+            echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
+            echo
+            echo "Bundle treemap and stats are available in the \`bundle-report\` artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
