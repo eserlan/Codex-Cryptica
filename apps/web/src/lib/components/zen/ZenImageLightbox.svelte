@@ -221,6 +221,8 @@
       <img
         src={loadedUrl}
         alt={title}
+        loading="lazy"
+        decoding="async"
         class="max-w-full max-h-full object-contain shadow-2xl rounded pointer-events-none"
         transition:zoomFrom
       />

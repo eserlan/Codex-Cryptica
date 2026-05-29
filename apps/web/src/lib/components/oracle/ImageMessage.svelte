@@ -57,6 +57,8 @@
       <img
         src={message.imageUrl}
         alt={message.content}
+        loading="lazy"
+        decoding="async"
         class="w-full rounded-lg border border-theme-border shadow-lg cursor-zoom-in group-hover:border-theme-primary/50 transition-all"
         draggable="true"
         ondragstart={handleDragStart}
