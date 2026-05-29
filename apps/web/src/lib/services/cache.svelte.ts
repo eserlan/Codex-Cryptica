@@ -1,4 +1,4 @@
-import { entityDb } from "../utils/entity-db";
+import { entityDb, type GraphEntityRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 import { debugStore } from "../stores/debug.svelte";
 
@@ -171,38 +171,16 @@ export class CacheService {
       // Separate heavy text from graph metadata
       const { content, lore, ...graphData } = raw;
 
-      // Explicitly shape the Dexie record to match the GraphEntityRecord
-      // schema and coerce values to the expected primitive types.
+      // Explicitly shape the Dexie record to match the GraphEntityRecord schema.
+      // Since `raw` is a non-reactive deep copy from $state.snapshot(), we can trust its structure.
       const graphRecord = {
-        id: String(raw.id),
-        type: String(raw.type),
-        title: String(raw.title),
-        tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
-        labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
-        aliases: Array.isArray(raw.aliases) ? [...raw.aliases] : [],
-        connections: Array.isArray(raw.connections) ? raw.connections : [],
-        image: raw.image ? String(raw.image) : undefined,
-        thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
-        metadata: raw.metadata ?? {},
-        soundBite: raw.soundBite,
-        updatedAt:
-          typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+        ...graphData,
+        updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
         status: raw.status || "active",
-        _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
-        parent: raw.parent ? String(raw.parent) : undefined,
-        date: raw.date,
-        start_date: raw.start_date,
-        end_date: raw.end_date,
-        visibility: raw.visibility,
-        discoverySource: raw.discoverySource
-          ? String(raw.discoverySource)
-          : undefined,
-        lastUpdated:
-          typeof raw.lastUpdated === "number" ? raw.lastUpdated : undefined,
-        vaultId: String(vaultId),
-        lastModified: Number(lastModified),
-        filePath: String(filePath),
-      };
+        vaultId,
+        lastModified,
+        filePath,
+      } as unknown as GraphEntityRecord;
 
       await entityDb.transaction(
         "rw",
@@ -250,7 +228,7 @@ export class CacheService {
   ): Promise<void> {
     if (entries.length === 0) return;
     try {
-      const graphRecords: any[] = [];
+      const graphRecords: GraphEntityRecord[] = [];
       const contentRecords: any[] = [];
       const preloadUpdates: Array<{
         path: string;
@@ -265,35 +243,13 @@ export class CacheService {
         const { content, lore, ...graphData } = raw;
 
         const graphRecord = {
-          id: String(raw.id),
-          type: String(raw.type),
-          title: String(raw.title),
-          tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
-          labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
-          aliases: Array.isArray(raw.aliases) ? [...raw.aliases] : [],
-          connections: Array.isArray(raw.connections) ? raw.connections : [],
-          image: raw.image ? String(raw.image) : undefined,
-          thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
-          metadata: raw.metadata ?? {},
-          soundBite: raw.soundBite,
-          updatedAt:
-            typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+          ...graphData,
+          updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
           status: raw.status || "active",
-          _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
-          parent: raw.parent ? String(raw.parent) : undefined,
-          date: raw.date,
-          start_date: raw.start_date,
-          end_date: raw.end_date,
-          visibility: raw.visibility,
-          discoverySource: raw.discoverySource
-            ? String(raw.discoverySource)
-            : undefined,
-          lastUpdated:
-            typeof raw.lastUpdated === "number" ? raw.lastUpdated : undefined,
-          vaultId: String(vaultId),
-          lastModified: Number(lastModified),
-          filePath: String(filePath),
-        };
+          vaultId,
+          lastModified,
+          filePath,
+        } as unknown as GraphEntityRecord;
 
         graphRecords.push(graphRecord);
         contentRecords.push({
