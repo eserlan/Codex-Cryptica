@@ -415,10 +415,11 @@ describe("createStaleGuard", () => {
 // ---------------------------------------------------------------------------
 describe("SearchService — Vault Switching Race Condition", () => {
   it("synchronously updates activeVaultId on VAULT_OPENING to prevent discarding subsequent new-vault events", async () => {
-    const { service, api, eventBus } = makeService();
+    const { api, eventBus } = makeService();
 
     // 1. Establish initial vault ID
-    service.coordinator.activeVaultId = "vault-1";
+    emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-1");
+    await flush();
 
     // 2. Dispatch VAULT_OPENING for vault-2
     emitVaultEvent(eventBus, VAULT_EVENTS.VAULT_OPENING, {}, "vault-2");
@@ -433,10 +434,10 @@ describe("SearchService — Vault Switching Race Condition", () => {
 
     await flush();
 
-    // 4. Verify activeVaultId is updated to vault-2
-    expect(service.coordinator.activeVaultId).toBe("vault-2");
-
-    // 5. Verify CACHE_LOADED is processed (indexBatch is called and triggers addBatchProgressive)
-    expect(api.addBatchProgressive).toHaveBeenCalled();
+    // 4. Verify CACHE_LOADED is processed by the worker for the new vault
+    expect(api.addBatchProgressive).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ id: "entity-a" })]),
+      expect.objectContaining({ vaultId: "vault-2" }),
+    );
   });
 });
