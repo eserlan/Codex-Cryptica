@@ -151,6 +151,20 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: bun run build
 
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+          path: coverage-download/
+
+      - name: Copy coverage into build output
+        run: |
+          if [ -d "coverage-download/apps/web/coverage" ]; then
+            cp -r coverage-download/apps/web/coverage apps/web/build/coverage
+          else
+            echo "::warning::Web coverage directory not found — skipping"
+          fi
+
       - name: Copy bundle report into build output
         run: |
           REPORT=$(find apps/web/.svelte-kit/output -name "bundle-report.html" | head -n 1)
@@ -260,7 +274,7 @@ jobs:
 
           echo "[Bundle report](${DEPLOYMENT_URL}/bundle-report.html)" >> "$GITHUB_STEP_SUMMARY"
 
-          COMMENT="$(printf '🚀 **Preview Deployment Ready!**\n\n**URL:** %s\n**Bundle report:** %s/bundle-report.html\n**Branch:** `%s`\n\n_Changes will be live shortly._' "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$BRANCH")"
+          COMMENT="$(printf '🚀 **Preview Deployment Ready!**\n\n**URL:** %s\n**Bundle report:** %s/bundle-report.html\n**Coverage:** %s/coverage/\n**Branch:** `%s`\n\n_Changes will be live shortly._' "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$BRANCH")"
 
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
