@@ -42,6 +42,10 @@ export interface EntityStoreDependencies {
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
+  onEntitiesUpdated?: (
+    oldEntities: Record<string, LocalEntity>,
+    newEntities: Record<string, LocalEntity>,
+  ) => void;
 }
 
 export class EntityStore {
@@ -111,6 +115,7 @@ export class EntityStore {
 
       const originalOnEntityDelete = this.mutations.deps?.onEntityDelete;
       const originalOnBatchUpdate = this.mutations.deps?.onBatchUpdate;
+      const originalOnEntitiesUpdated = this.mutations.deps?.onEntitiesUpdated;
 
       this.mutations.registerStoreCallbacks({
         onEntityDelete: (id) => {
@@ -122,6 +127,7 @@ export class EntityStore {
         },
         onEntitiesUpdated: (oldVal, val) => {
           this.handleEntitiesUpdate(oldVal, val);
+          originalOnEntitiesUpdated?.(oldVal, val);
         },
         onConnectionAdded: (sourceId, targetId, connection) => {
           this.patchAddConnection(sourceId, targetId, connection);
@@ -178,6 +184,7 @@ export class EntityStore {
         onBatchUpdate: deps.onBatchUpdate,
         onEntitiesUpdated: (oldVal, val) => {
           this.handleEntitiesUpdate(oldVal, val);
+          if (deps.onEntitiesUpdated) deps.onEntitiesUpdated(oldVal, val);
         },
         updateEntityCount: deps.updateEntityCount,
         onConnectionAdded: (sourceId, targetId, connection) => {
@@ -355,7 +362,7 @@ export class EntityStore {
           this.incrementalUpdate(oldEnt, newEnt);
         } else {
           // Cold content or timestamp update path (e.g. keystroke inside editor).
-          // Update in place to run at ultra-fast O(1) complexity.
+          // Update in place to run with O(N) lookup, bypassing expensive index rebuilds.
           const idx = this.allEntities.findIndex((e) => e.id === id);
           if (idx !== -1) {
             this.allEntities[idx] = newEnt;
@@ -429,9 +436,9 @@ export class EntityStore {
     if (entity.labels) {
       const isDraft = entity.status === "draft";
       let labelsAdded = false;
+      const uniqueLabels = new Set(entity.labels);
 
-      for (let j = 0; j < entity.labels.length; j++) {
-        const l = entity.labels[j];
+      for (const l of uniqueLabels) {
         if (!this.labelIndex.includes(l)) {
           this.labelIndex.push(l);
           labelsAdded = true;
@@ -475,8 +482,8 @@ export class EntityStore {
 
     if (entity.labels) {
       const isDraft = entity.status === "draft";
-      for (let j = 0; j < entity.labels.length; j++) {
-        const l = entity.labels[j];
+      const uniqueLabels = new Set(entity.labels);
+      for (const l of uniqueLabels) {
         if (!isDraft && this.labelCounts[l] !== undefined) {
           this.labelCounts[l]--;
           if (this.labelCounts[l] <= 0) {
@@ -585,8 +592,8 @@ export class EntityStore {
     }
 
     if (wasActive && oldEntity.labels) {
-      for (let j = 0; j < oldEntity.labels.length; j++) {
-        const l = oldEntity.labels[j];
+      const uniqueOldLabels = new Set(oldEntity.labels);
+      for (const l of uniqueOldLabels) {
         if (this.labelCounts[l] !== undefined) {
           this.labelCounts[l]--;
           if (this.labelCounts[l] <= 0) {
