@@ -1,5 +1,9 @@
+import type { ChatHistoryMessage } from "schema";
+
 export function createReactiveHistory() {
-  const history = $state([{ role: "user", content: "Original" }]);
+  const history = $state<ChatHistoryMessage[]>([
+    { role: "user", content: "Original" },
+  ]);
   return history;
 }
 

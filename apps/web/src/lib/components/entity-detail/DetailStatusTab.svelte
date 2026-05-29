@@ -130,7 +130,8 @@
     } catch {
       if (date.label) return date.label;
       let str = `${date.year}`;
-      if (date.month !== undefined) str += `/${date.month}`;
+      const month = "month" in date ? (date as any).month : undefined;
+      if (month !== undefined) str += `/${month}`;
       if (date.day !== undefined) str += `/${date.day}`;
       return str;
     }

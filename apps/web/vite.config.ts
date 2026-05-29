@@ -80,7 +80,6 @@ export default defineConfig({
       minThreads: 1,
     },
     setupFiles: ["tests/setup.ts"],
-    // @ts-expect-error environmentMatchGlobs is valid at runtime in vitest 4.x but missing from the bundled types
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],
       ["src/lib/config/**", "node"],
@@ -149,7 +148,7 @@ export default defineConfig({
         "**/*.md",
       ],
     },
-  },
+  } as any,
   ssr: {
     noExternal: [
       "graph-engine",

@@ -31,18 +31,18 @@ describe("TokenResizeHandler", () => {
     updateToken = vi.fn();
     const tokenSelection = new TokenSelectionManager({
       getTokens: () => tokens,
-      project: (point) => point,
+      project: (point: { x: number; y: number }) => point,
       getSelectedTokens: () => new Set(),
       setSelection: vi.fn(),
       addToSelection: vi.fn(),
       removeFromSelection: vi.fn(),
       setMultiSelection: vi.fn(),
-    });
+    } as any);
     handler = new TokenResizeHandler({
       tokenSelection,
       getGridSize: () => 50,
       updateToken,
-    });
+    } as any);
   });
 
   it("resizes the token under the pointer by one grid step", () => {

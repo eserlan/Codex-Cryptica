@@ -16,6 +16,7 @@ import type {
   SoundBite,
   Entity,
   VaultEntitySummary,
+  VoiceProfile,
 } from "schema";
 import {
   SoundBiteGenerationError,
@@ -26,7 +27,6 @@ import {
   buildVoiceStyleInstruction,
   buildGeminiVoiceName,
   type TTSService,
-  type VoiceProfile,
 } from "@codex/oracle-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";

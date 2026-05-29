@@ -77,7 +77,12 @@ export class VaultRepository {
     const processFile = async (
       fileEntry: FileEntry,
     ): Promise<
-      | { entity: LocalEntity; isHit: true }
+      | {
+          entity: LocalEntity;
+          isHit: true;
+          filePath: string;
+          lastModified: number;
+        }
       | {
           entity: LocalEntity;
           isHit: false;

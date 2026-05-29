@@ -25,7 +25,7 @@ export interface AppEventRegistry {
   // Domain packages extend this interface with module augmentation.
 }
 
-type RegisteredAppEventRegistry = import("@codex/events").AppEventRegistry;
+type RegisteredAppEventRegistry = AppEventRegistry;
 
 export type AppEventType = Extract<keyof RegisteredAppEventRegistry, string>;
 

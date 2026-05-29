@@ -5,6 +5,7 @@ import { PinInteractionHandler } from "./pin-interaction-handler";
 function pin(input: Partial<MapPin> & { id: string; x: number; y: number }) {
   return {
     id: input.id,
+    mapId: input.mapId ?? "",
     entityId: input.entityId,
     coordinates: { x: input.x, y: input.y },
     visuals: {},
@@ -30,13 +31,13 @@ describe("PinInteractionHandler", () => {
     selectEntity = vi.fn();
     handler = new PinInteractionHandler({
       getPins: () => pins,
-      project: (point) => point,
-      unproject: (point) => point,
+      project: (point: { x: number; y: number }) => point,
+      unproject: (point: { x: number; y: number }) => point,
       canEditPins: () => canEdit,
       updatePinCoordinates,
       saveMaps,
       selectEntity,
-    });
+    } as any);
   });
 
   it("selects a clicked pin and linked entity without saving maps", async () => {

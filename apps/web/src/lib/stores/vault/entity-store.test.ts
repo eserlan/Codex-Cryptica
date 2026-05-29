@@ -65,7 +65,6 @@ vi.mock("../debug.svelte", () => ({
 }));
 
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-
 describe("EntityStore", () => {
   let repository: {
     entities: Record<string, LocalEntity>;
@@ -90,7 +89,7 @@ describe("EntityStore", () => {
           labels: [],
           aliases: [],
           connections: [],
-        } as LocalEntity,
+        } as unknown as LocalEntity,
         place: {
           id: "place",
           title: "Place",
@@ -101,7 +100,7 @@ describe("EntityStore", () => {
           labels: ["important"],
           aliases: [],
           connections: [],
-        } as LocalEntity,
+        } as unknown as LocalEntity,
       },
       saveQueue: {
         enqueue: vi.fn((_key, fn) => fn()),
@@ -119,6 +118,7 @@ describe("EntityStore", () => {
       isGuest: () => false,
       getGuestFile: vi.fn(),
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -145,7 +145,7 @@ describe("EntityStore", () => {
       labels: ["important", "new-label"],
       aliases: [],
       connections: [],
-    } as LocalEntity;
+    } as unknown as LocalEntity;
 
     repository.entities.activePlace = {
       id: "activePlace",
@@ -157,7 +157,7 @@ describe("EntityStore", () => {
       labels: ["new-label", "new-label"], // Duplicate labels on single entity
       aliases: [],
       connections: [],
-    } as LocalEntity;
+    } as unknown as LocalEntity;
 
     const testStore = new EntityStore({
       repository: repository as any,
@@ -165,6 +165,7 @@ describe("EntityStore", () => {
       isGuest: () => false,
       getGuestFile: vi.fn(),
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -191,6 +192,7 @@ describe("EntityStore", () => {
       activeVaultId: () => "vault-1",
       isGuest: () => false,
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -218,6 +220,7 @@ describe("EntityStore", () => {
       activeVaultId: () => "vault-1",
       isGuest: () => false,
       setStatus: vi.fn(),
+      status: vi.fn().mockReturnValue("idle" as const),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({}),
       getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -313,6 +316,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -343,6 +347,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage,
         getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -371,6 +376,7 @@ describe("EntityStore", () => {
         activeVaultId: () => null,
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -393,6 +399,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -415,6 +422,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -435,6 +443,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -473,6 +482,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -504,6 +514,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -551,6 +562,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -600,6 +612,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -624,6 +637,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => true,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -645,6 +659,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -812,8 +827,16 @@ describe("EntityStore", () => {
   describe("batchCreateEntities", () => {
     it("should create multiple entities and save them", async () => {
       const created = [
-        { id: "e1", title: "Entity 1", status: "active" } as LocalEntity,
-        { id: "e2", title: "Entity 2", status: "active" } as LocalEntity,
+        {
+          id: "e1",
+          title: "Entity 1",
+          status: "active",
+        } as unknown as LocalEntity,
+        {
+          id: "e2",
+          title: "Entity 2",
+          status: "active",
+        } as unknown as LocalEntity,
       ];
       vi.mocked(vaultEntities.batchCreateEntities).mockReturnValue({
         entities: { ...repository.entities, e1: created[0], e2: created[1] },
@@ -906,7 +929,7 @@ describe("EntityStore", () => {
 
     it("should set entities on repository", () => {
       const newEntities = {
-        newOne: { id: "newOne", status: "active" } as LocalEntity,
+        newOne: { id: "newOne", status: "active" } as unknown as LocalEntity,
       };
       store.entities = newEntities;
       expect(repository.entities).toBe(newEntities);
@@ -933,6 +956,7 @@ describe("EntityStore", () => {
         isGuest: () => false,
         getGuestFile: vi.fn(),
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({}),
@@ -963,6 +987,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -998,6 +1023,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -1037,6 +1063,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -1072,6 +1099,7 @@ describe("EntityStore", () => {
         isGuest: () => true,
         getGuestFile: vi.fn(),
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
         getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
@@ -1143,7 +1171,7 @@ describe("EntityStore", () => {
         entities: {
           "entity-1": { id: "entity-1", title: "E1" },
           "entity-2": { id: "entity-2", title: "E2" },
-        },
+        } as unknown as Record<string, LocalEntity>,
         enqueueSave: vi.fn().mockImplementation((id, cb) => cb()),
         waitForAllSaves: vi.fn().mockResolvedValue(undefined),
       };
@@ -1154,6 +1182,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus,
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -1193,7 +1222,7 @@ describe("EntityStore", () => {
       const repositoryMock = {
         entities: {
           "entity-1": { id: "entity-1", title: "E1" },
-        },
+        } as unknown as Record<string, LocalEntity>,
         enqueueSave: vi.fn().mockImplementation((id, cb) => cb()),
         waitForAllSaves: vi.fn().mockResolvedValue(undefined),
       };
@@ -1203,6 +1232,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -1222,7 +1252,7 @@ describe("EntityStore", () => {
         entities: {
           "entity-1": { id: "entity-1", title: "E1" },
           "entity-2": { id: "entity-2", title: "E2" },
-        },
+        } as unknown as Record<string, LocalEntity>,
         enqueueSave: vi.fn().mockImplementation((id, cb) => {
           if (id === "entity-1") {
             return Promise.reject(new Error("Failure"));
@@ -1237,6 +1267,7 @@ describe("EntityStore", () => {
         activeVaultId: () => "vault-1",
         isGuest: () => false,
         setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
         getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),

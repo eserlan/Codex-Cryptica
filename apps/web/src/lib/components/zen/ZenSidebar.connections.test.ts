@@ -199,7 +199,9 @@ describe("ZenSidebar with duplicate/mutual connections", () => {
     const container = childEl.closest("div.w-full");
     if (!container) throw new Error("Could not find connection container");
 
-    const deleteBtn = within(container).getByLabelText("Delete connection");
+    const deleteBtn = within(container as HTMLElement).getByLabelText(
+      "Delete connection",
+    );
     await fireEvent.click(deleteBtn);
 
     expect(vault.updateEntity).toHaveBeenCalledWith("entity-child", {

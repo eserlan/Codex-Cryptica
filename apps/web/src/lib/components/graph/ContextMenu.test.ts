@@ -112,8 +112,8 @@ describe("ContextMenu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cxttapHandler = undefined;
-    vault.isGuest = false;
-    vault.entities = {};
+    (vault as any).isGuest = false;
+    (vault as any).entities = {};
   });
 
   it("shows Mark Important for editable graph sessions", async () => {
@@ -127,7 +127,7 @@ describe("ContextMenu", () => {
   });
 
   it("hides Mark Important for guest graph sessions", async () => {
-    vault.isGuest = true;
+    (vault as any).isGuest = true;
     render(ContextMenu, { cy: createCy() as any });
 
     await openNodeMenu();

@@ -47,19 +47,29 @@ vi.mock("./ProposalHistory.svelte", () => ({
   default: vi.fn(),
 }));
 
+function conn(target: string) {
+  return { target, type: "related" as const, strength: 1 };
+}
+function inbound(sourceId: string) {
+  return {
+    sourceId,
+    connection: { target: sourceId, type: "related" as const, strength: 1 },
+  };
+}
+
 describe("DetailProposals Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vault.selectedEntityId = "entity-1";
     vault.status = "idle";
-    vault.isGuest = false;
+    (vault as any).isGuest = false;
     vault.entities["entity-1"] = {
       id: "entity-1",
       title: "Entity 1",
       connections: [],
-    };
-    vault.inboundConnections = {};
+    } as any;
+    (vault as any).inboundConnections = {};
     discoveryPolicyStore.aiDisabled = false;
     (proposerStore.getActiveProposalsForEntity as any).mockReturnValue([]);
     (proposerStore.getActiveHistoryForEntity as any).mockReturnValue([]);
@@ -82,11 +92,8 @@ describe("DetailProposals Component", () => {
 
   it("auto-proposes when total connection count (outbound + inbound) is <= 4", async () => {
     // entity-1 has 2 outbound + 1 inbound = 3 total connections (below threshold)
-    vault.entities["entity-1"].connections = [
-      { target: "t1" },
-      { target: "t2" },
-    ];
-    vault.inboundConnections["entity-1"] = [{ sourceId: "t3" }];
+    vault.entities["entity-1"].connections = [conn("t1"), conn("t2")];
+    vault.inboundConnections["entity-1"] = [inbound("t3")];
     const mockProposals = [
       {
         id: "1",
@@ -118,14 +125,11 @@ describe("DetailProposals Component", () => {
   it("skips auto-proposing when outbound + inbound connections > 4 and renders manual button", async () => {
     // entity-1 has 3 outbound + 2 inbound = 5 total connections (above threshold)
     vault.entities["entity-1"].connections = [
-      { target: "t1" },
-      { target: "t2" },
-      { target: "t3" },
+      conn("t1"),
+      conn("t2"),
+      conn("t3"),
     ];
-    vault.inboundConnections["entity-1"] = [
-      { sourceId: "t4" },
-      { sourceId: "t5" },
-    ];
+    vault.inboundConnections["entity-1"] = [inbound("t4"), inbound("t5")];
     const mockProposals = [
       {
         id: "1",
@@ -164,14 +168,11 @@ describe("DetailProposals Component", () => {
 
   it("shows loading and disabled state when analyzing is true", async () => {
     vault.entities["entity-1"].connections = [
-      { target: "t1" },
-      { target: "t2" },
-      { target: "t3" },
+      conn("t1"),
+      conn("t2"),
+      conn("t3"),
     ];
-    vault.inboundConnections["entity-1"] = [
-      { sourceId: "t4" },
-      { sourceId: "t5" },
-    ];
+    vault.inboundConnections["entity-1"] = [inbound("t4"), inbound("t5")];
     const mockProposals = [
       {
         id: "1",
@@ -199,14 +200,11 @@ describe("DetailProposals Component", () => {
   it("renders section with manual button when suppressed but zero pending proposals and history", async () => {
     // 5 total connections → suppressed, but no proposals or history at all
     vault.entities["entity-1"].connections = [
-      { target: "t1" },
-      { target: "t2" },
-      { target: "t3" },
+      conn("t1"),
+      conn("t2"),
+      conn("t3"),
     ];
-    vault.inboundConnections["entity-1"] = [
-      { sourceId: "t4" },
-      { sourceId: "t5" },
-    ];
+    vault.inboundConnections["entity-1"] = [inbound("t4"), inbound("t5")];
     // both mocks already return [] by default
 
     render(DetailProposals, { isEditing: false });
@@ -223,14 +221,11 @@ describe("DetailProposals Component", () => {
   it("keeps auto-proposing suppressed when connection count drops below 5 mid-session", async () => {
     // Start with 5 total connections (3 outbound + 2 inbound) → suppressed
     vault.entities["entity-1"].connections = [
-      { target: "t1" },
-      { target: "t2" },
-      { target: "t3" },
+      conn("t1"),
+      conn("t2"),
+      conn("t3"),
     ];
-    vault.inboundConnections["entity-1"] = [
-      { sourceId: "t4" },
-      { sourceId: "t5" },
-    ];
+    vault.inboundConnections["entity-1"] = [inbound("t4"), inbound("t5")];
     const mockProposals = [
       {
         id: "1",
@@ -256,7 +251,7 @@ describe("DetailProposals Component", () => {
     // Note: vault is a plain object mock (not Svelte reactive state), so this mutation
     // does NOT trigger Svelte reactivity — it validates suppression stickiness via
     // rerender rather than a reactive re-evaluation of loadAndEvaluate.
-    vault.entities["entity-1"].connections = [{ target: "t1" }];
+    vault.entities["entity-1"].connections = [conn("t1")];
     vault.inboundConnections["entity-1"] = [];
     await rerender({ isEditing: false });
 

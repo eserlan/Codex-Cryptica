@@ -248,8 +248,8 @@ export class ThemeStore {
 
     // Apply initial theme
     const initial = this.storage.loadLocal();
-    if (initial && THEMES[initial]) {
-      this.worldThemeId = initial;
+    if (initial && THEMES[initial as WorldThemeId]) {
+      this.worldThemeId = initial as WorldThemeId;
     } else {
       this.worldThemeId = DEFAULT_THEME.id;
     }
@@ -286,8 +286,12 @@ export class ThemeStore {
       await this.loadForVault(activeVaultId);
     } else {
       const stored = this.storage.loadLocal();
-      if (stored && THEMES[stored] && this.worldThemeId !== stored) {
-        this.worldThemeId = stored;
+      if (
+        stored &&
+        THEMES[stored as WorldThemeId] &&
+        this.worldThemeId !== stored
+      ) {
+        this.worldThemeId = stored as WorldThemeId;
       }
     }
   }
@@ -300,9 +304,9 @@ export class ThemeStore {
     try {
       // Priority 1: OPFS (Vault Source of Truth)
       const opfsTheme = await this.storage.loadFromDisk(vaultId);
-      if (opfsTheme && THEMES[opfsTheme]) {
+      if (opfsTheme && THEMES[opfsTheme as WorldThemeId]) {
         if (this.worldThemeId !== opfsTheme) {
-          this.worldThemeId = opfsTheme;
+          this.worldThemeId = opfsTheme as WorldThemeId;
         }
         this.storage.saveLocal(opfsTheme);
         this.applyTheme(
@@ -315,9 +319,9 @@ export class ThemeStore {
 
       // Priority 2: IndexedDB (Local Cache)
       const stored = await this.storage.loadFromCache(vaultId);
-      if (stored && THEMES[stored]) {
+      if (stored && THEMES[stored as WorldThemeId]) {
         if (this.worldThemeId !== stored) {
-          this.worldThemeId = stored;
+          this.worldThemeId = stored as WorldThemeId;
         }
         this.storage.saveLocal(stored);
         this.applyTheme(
@@ -344,9 +348,9 @@ export class ThemeStore {
   }
 
   async setTheme(id: string) {
-    if (!THEMES[id]) return;
+    if (!THEMES[id as WorldThemeId]) return;
 
-    this.worldThemeId = id;
+    this.worldThemeId = id as WorldThemeId;
     this.onThemeUpdate?.(id);
     if (browser) {
       // Don't persist theme if in demo mode
@@ -379,7 +383,7 @@ export class ThemeStore {
   }
 
   previewTheme(id: string | null) {
-    this.previewThemeId = id;
+    this.previewThemeId = id as WorldThemeId | null;
   }
 
   private applyTheme(

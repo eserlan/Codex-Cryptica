@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 [ -d "$HOME/.bun/bin" ] && export PATH="$HOME/.bun/bin:$PATH"
-bunx lint-staged
+bun run lint:types && bunx lint-staged
