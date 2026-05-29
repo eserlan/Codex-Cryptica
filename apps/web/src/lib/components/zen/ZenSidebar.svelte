@@ -315,6 +315,7 @@
           loading="lazy"
           decoding="async"
           onload={() => { isImageLoaded = true; }}
+          onerror={() => { isImageLoaded = true; }}
           class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90 group-hover:opacity-100 scale-100' : 'opacity-0 scale-95'}"
         />
         <div

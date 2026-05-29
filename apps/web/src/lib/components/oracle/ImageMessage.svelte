@@ -75,6 +75,7 @@
         loading="lazy"
         decoding="async"
         onload={() => { isImageLoaded = true; }}
+        onerror={() => { isImageLoaded = true; }}
         class="w-full h-full object-contain cursor-zoom-in group-hover:scale-105 transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90' : 'opacity-0'}"
         draggable="true"
         ondragstart={handleDragStart}

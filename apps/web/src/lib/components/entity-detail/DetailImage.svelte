@@ -193,7 +193,8 @@
             entity.image,
           );
         }}
-        class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
+        disabled={!resolvedImageUrl}
+        class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30 disabled:cursor-wait"
       >
         {#if !isImageLoaded}
           <div class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2">
@@ -207,6 +208,7 @@
           loading="lazy"
           decoding="async"
           onload={() => { isImageLoaded = true; }}
+          onerror={() => { isImageLoaded = true; }}
           class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90 group-hover:opacity-100 scale-100' : 'opacity-0 scale-95'}"
         />
         <div
