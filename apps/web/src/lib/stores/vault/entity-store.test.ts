@@ -1300,4 +1300,116 @@ describe("EntityStore", () => {
       await Promise.all([save1, save2]);
     });
   });
+
+  describe("Incremental Index Maintenance", () => {
+    it("correctly de-duplicates labels and updates index / counts when entity is added", () => {
+      const initialMap = { ...repository.entities };
+      const newMap = {
+        ...initialMap,
+        newHero: {
+          id: "newHero",
+          title: "New Hero",
+          content: "Keystroke tests",
+          lore: "",
+          type: "character",
+          status: "active",
+          labels: ["important", "important", "new-label"],
+          aliases: ["Hero Jr", "Newbie"],
+          connections: [],
+        } as unknown as LocalEntity,
+      };
+
+      store.handleEntitiesUpdate(initialMap, newMap);
+
+      expect(store.labelIndex).toEqual(["important", "new-label"]);
+      // important was 1 (from place), newHero adds it once (de-duplicated). total = 2.
+      expect(store.labelCounts["important"]).toBe(2);
+      expect(store.labelCounts["new-label"]).toBe(1);
+
+      // Verify title and alias index sorted by length
+      const match = store.titleAndAliasIndex.find(
+        (t) => t.entityId === "newHero" && t.isAlias,
+      );
+      expect(match).toBeDefined();
+    });
+
+    it("correctly handles label counting when a draft is updated to active", () => {
+      const initialMap = { ...repository.entities };
+      const draftEntity = {
+        id: "hero",
+        title: "Hero",
+        content: "",
+        lore: "",
+        type: "character",
+        status: "draft",
+        labels: ["important", "another-label"],
+        aliases: [],
+        connections: [],
+      } as unknown as LocalEntity;
+
+      const activeEntity = {
+        ...draftEntity,
+        status: "active",
+      } as unknown as LocalEntity;
+
+      const map1 = { ...initialMap, hero: draftEntity };
+      const map2 = { ...initialMap, hero: activeEntity };
+
+      store.handleEntitiesUpdate(map1, map2);
+
+      // hero had draft label 'important' and 'another-label'.
+      // Now hero is active, so counts must increment.
+      expect(store.labelCounts["important"]).toBe(2); // hero(1) + place(1)
+      expect(store.labelCounts["another-label"]).toBe(1);
+    });
+
+    it("correctly decrements de-duplicated labels on deletion", () => {
+      const initialMap = {
+        hero: {
+          id: "hero",
+          title: "Hero",
+          content: "",
+          lore: "",
+          type: "character",
+          status: "active",
+          labels: ["important", "important"],
+          aliases: [],
+          connections: [],
+        } as unknown as LocalEntity,
+      };
+
+      const emptyMap: Record<string, LocalEntity> = {};
+
+      repository.entities = { ...initialMap };
+      store.handleEntitiesUpdate(initialMap, initialMap); // build initial
+      expect(store.labelCounts["important"]).toBe(1);
+
+      repository.entities = emptyMap;
+      store.handleEntitiesUpdate(initialMap, emptyMap);
+      expect(store.labelCounts["important"]).toBeUndefined();
+    });
+
+    it("executes rapid keystroke updates on the in-place O(N) search / update path", () => {
+      const initialMap = { ...repository.entities };
+      const heroUpdated = {
+        ...initialMap.hero,
+        content: "Draft character content typed rapid",
+        updatedAt: Date.now(),
+      } as unknown as LocalEntity;
+
+      const newMap = { ...initialMap, hero: heroUpdated };
+
+      // Ensure no indices change
+      const prevLabelIndex = [...store.labelIndex];
+      const prevLabelCounts = { ...store.labelCounts };
+
+      store.handleEntitiesUpdate(initialMap, newMap);
+
+      expect(store.labelIndex).toEqual(prevLabelIndex);
+      expect(store.labelCounts).toEqual(prevLabelCounts);
+      expect(store.allEntities.find((e) => e.id === "hero")?.content).toBe(
+        "Draft character content typed rapid",
+      );
+    });
+  });
 });
