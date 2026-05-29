@@ -1,4 +1,4 @@
-import { entityDb } from "../utils/entity-db";
+import { entityDb, type GraphEntityRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 import { debugStore } from "../stores/debug.svelte";
 
@@ -180,7 +180,7 @@ export class CacheService {
         vaultId,
         lastModified,
         filePath,
-      };
+      } as unknown as GraphEntityRecord;
 
       await entityDb.transaction(
         "rw",
@@ -228,7 +228,7 @@ export class CacheService {
   ): Promise<void> {
     if (entries.length === 0) return;
     try {
-      const graphRecords: any[] = [];
+      const graphRecords: GraphEntityRecord[] = [];
       const contentRecords: any[] = [];
       const preloadUpdates: Array<{
         path: string;
@@ -249,7 +249,7 @@ export class CacheService {
           vaultId,
           lastModified,
           filePath,
-        };
+        } as unknown as GraphEntityRecord;
 
         graphRecords.push(graphRecord);
         contentRecords.push({
