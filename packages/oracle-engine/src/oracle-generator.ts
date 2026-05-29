@@ -315,7 +315,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "imagen-3.0-fast-generate-001",
+      "gemini-2.5-flash-image",
     );
   }
 
@@ -353,7 +353,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "imagen-3.0-fast-generate-001",
+      "gemini-2.5-flash-image",
     );
   }
 
