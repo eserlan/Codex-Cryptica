@@ -112,7 +112,7 @@
   $effect(() => {
     if (show) {
       const prevFocus = document.activeElement as HTMLElement;
-      // Small delay to allow DOM to update
+      // Wait for next paint/animation frame to allow DOM to update and focus
       const frame = requestAnimationFrame(() => {
         closeLightboxBtn?.focus();
       });
