@@ -51,7 +51,7 @@
 </script>
 
 <div
-  class="group relative flex items-center rounded-xl border transition-all {!isMatching
+  class="[content-visibility:auto] [contain-intrinsic-size:0_56px] group relative flex items-center rounded-xl border transition-all {!isMatching
     ? 'opacity-50'
     : ''} {entity.id === focusedEntityId
     ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'

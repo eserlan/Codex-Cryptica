@@ -560,7 +560,7 @@
                 </div>
               {:else}
                 <div
-                  class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+                  class="[content-visibility:auto] [contain-intrinsic-size:0_44px] w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
                 >
                   <button
                     type="button"
