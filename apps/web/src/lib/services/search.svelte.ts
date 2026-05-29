@@ -1,6 +1,5 @@
 import type { SearchResult, SearchOptions } from "schema";
 import * as Comlink from "comlink";
-import SearchWorker from "../workers/search.worker?worker";
 import type { SearchEngine, SearchIndexProgress } from "@codex/search-engine";
 import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
@@ -29,7 +28,7 @@ type SearchApi = Pick<
 >;
 
 export interface SearchServiceDependencies {
-  workerFactory?: () => Worker;
+  workerFactory?: () => Worker | Promise<Worker>;
   api?: Comlink.Remote<SearchApi> | SearchApi;
   db?: typeof entityDb;
   eventBus?: typeof appEventBus;
@@ -45,7 +44,7 @@ export class SearchService {
   private initPromise: Promise<void> | null = null;
   private isInitialized = false;
 
-  private workerFactory: () => Worker;
+  private workerFactory: () => Worker | Promise<Worker>;
   private debug: typeof debugStore;
   private windowRef: Window | undefined;
   private coordinator: SearchProgressCoordinator;
@@ -54,7 +53,11 @@ export class SearchService {
 
   constructor(dependencies: SearchServiceDependencies = {}) {
     this.workerFactory =
-      dependencies.workerFactory ?? (() => new SearchWorker());
+      dependencies.workerFactory ??
+      (() =>
+        import("../workers/search.worker?worker").then(
+          (m) => new m.default(),
+        ));
     this.api = dependencies.api ?? null;
     this.debug = dependencies.debug ?? debugStore;
     const timers = dependencies.timers ?? globalThis;
@@ -158,13 +161,14 @@ export class SearchService {
     });
   }
 
-  private initWorker() {
+  private async initWorker() {
     if (this.worker || this.api) return;
 
-    this.worker = this.workerFactory();
+    const workerInstance = await this.workerFactory();
+    this.worker = workerInstance;
     this.api = Comlink.wrap<SearchApi>(this.worker);
 
-    this.api.setLogger(
+    await this.api.setLogger(
       Comlink.proxy(
         (level: "info" | "warn" | "error", msg: string, data?: any) => {
           const message = `[SearchEngine] ${msg}`;
@@ -175,7 +179,7 @@ export class SearchService {
       ),
     );
 
-    this.api.setChangeCallback(
+    await this.api.setChangeCallback(
       Comlink.proxy(() => {
         this.coordinator.isDirty = true;
         this.coordinator.scheduleAutoSave();
@@ -183,7 +187,6 @@ export class SearchService {
     );
 
     this.isInitialized = true;
-    this.initPromise = Promise.resolve();
   }
 
   private async ensureWorker(): Promise<Comlink.Remote<SearchEngine>> {
@@ -192,7 +195,9 @@ export class SearchService {
         "[SearchService] Search worker cannot be initialized in SSR environment",
       );
     }
-    if (!this.api) this.initWorker();
+    if (!this.api && !this.initPromise) {
+      this.initPromise = this.initWorker();
+    }
     if (this.initPromise) await this.initPromise;
     if (!this.api || !this.isInitialized) {
       throw new Error("[SearchService] Search worker failed to initialize");
