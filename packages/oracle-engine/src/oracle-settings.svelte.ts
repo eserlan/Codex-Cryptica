@@ -48,6 +48,12 @@ export class OracleSettingsService {
   /** Currently active style title (for AI art generation) */
   activeStyleTitle = $state<string | null>(null);
 
+  /** Image Provider Setting */
+  imageProvider = $state<"gemini" | "custom">("gemini");
+  customImageBaseUrl = $state<string>("");
+  customImageApiKey = $state<string>("");
+  customImageModel = $state<string>("");
+
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
 
@@ -68,6 +74,10 @@ export class OracleSettingsService {
           this.apiKey = data.apiKey;
           this.tier = data.tier || "advanced";
           this.activeStyleTitle = data.activeStyleTitle || null;
+          this.imageProvider = data.imageProvider || "gemini";
+          this.customImageBaseUrl = data.customImageBaseUrl || "";
+          this.customImageApiKey = data.customImageApiKey || "";
+          this.customImageModel = data.customImageModel || "";
         } else if (type === "REQUEST_STATE") {
           this.broadcast();
         }
@@ -89,6 +99,16 @@ export class OracleSettingsService {
 
     const tierSetting = await db.appSettings.get("ai_tier");
     this.tier = tierSetting?.value ?? "advanced";
+
+    const providerSetting = await db.appSettings.get("image_provider");
+    this.imageProvider = providerSetting?.value ?? "gemini";
+    const baseUrlSetting = await db.appSettings.get("custom_image_base_url");
+    this.customImageBaseUrl = baseUrlSetting?.value ?? "";
+    const apiKeySetting = await db.appSettings.get("custom_image_api_key");
+    this.customImageApiKey = apiKeySetting?.value ?? "";
+    const modelSetting = await db.appSettings.get("custom_image_model");
+    this.customImageModel = modelSetting?.value ?? "";
+
     this.broadcast();
   }
 
@@ -103,6 +123,10 @@ export class OracleSettingsService {
         apiKey: this.apiKey,
         tier: this.tier,
         activeStyleTitle: this.activeStyleTitle,
+        imageProvider: this.imageProvider,
+        customImageBaseUrl: this.customImageBaseUrl,
+        customImageApiKey: this.customImageApiKey,
+        customImageModel: this.customImageModel,
       },
     });
   }
@@ -121,6 +145,28 @@ export class OracleSettingsService {
       });
     }
     this.tier = tier;
+    this.broadcast();
+  }
+
+  /**
+   * Sets the custom image provider settings.
+   */
+  async setCustomImageSettings(settings: {
+    provider?: "gemini" | "custom";
+    baseUrl?: string;
+    apiKey?: string;
+    model?: string;
+  }) {
+    if (this.db) {
+      if (settings.provider !== undefined) await this.db.appSettings.put({ key: "image_provider", value: settings.provider, updatedAt: Date.now() });
+      if (settings.baseUrl !== undefined) await this.db.appSettings.put({ key: "custom_image_base_url", value: settings.baseUrl, updatedAt: Date.now() });
+      if (settings.apiKey !== undefined) await this.db.appSettings.put({ key: "custom_image_api_key", value: settings.apiKey, updatedAt: Date.now() });
+      if (settings.model !== undefined) await this.db.appSettings.put({ key: "custom_image_model", value: settings.model, updatedAt: Date.now() });
+    }
+    if (settings.provider !== undefined) this.imageProvider = settings.provider;
+    if (settings.baseUrl !== undefined) this.customImageBaseUrl = settings.baseUrl;
+    if (settings.apiKey !== undefined) this.customImageApiKey = settings.apiKey;
+    if (settings.model !== undefined) this.customImageModel = settings.model;
     this.broadcast();
   }
 
@@ -228,6 +274,10 @@ export class OracleSettingsService {
       modelName: this.modelName,
       activeStyleTitle: this.activeStyleTitle,
       connectionMode: this.connectionMode,
+      imageProvider: this.imageProvider,
+      customImageBaseUrl: this.customImageBaseUrl,
+      customImageApiKey: this.customImageApiKey,
+      customImageModel: this.customImageModel,
     };
   }
 
@@ -242,5 +292,12 @@ export class OracleSettingsService {
     if (updates.tier) await this.setTier(updates.tier);
     if (updates.activeStyleTitle !== undefined)
       this.setStyle(updates.activeStyleTitle);
+
+    await this.setCustomImageSettings({
+      provider: updates.imageProvider,
+      baseUrl: updates.customImageBaseUrl,
+      apiKey: updates.customImageApiKey,
+      model: updates.customImageModel,
+    });
   }
 }

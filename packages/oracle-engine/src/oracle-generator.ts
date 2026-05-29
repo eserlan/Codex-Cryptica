@@ -312,10 +312,16 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
+    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
+    const targetModel = context.imageProvider === "custom" && context.customImageModel ? context.customImageModel : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-2.5-flash-image",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl
+      }
     );
   }
 
@@ -350,10 +356,16 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
+    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
+    const targetModel = context.imageProvider === "custom" && context.customImageModel ? context.customImageModel : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-2.5-flash-image",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl
+      }
     );
   }
 

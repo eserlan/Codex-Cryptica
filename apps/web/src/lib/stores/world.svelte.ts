@@ -15,7 +15,20 @@ const WORLD_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 const worldService = new WorldServiceImplementation({
   db: entityDb,
-  imageGenerator: imageGenerationService,
+  imageGenerator: {
+    generateImage: (apiKey, prompt, modelName) => {
+      const isCustom = oracle.settings.imageProvider === "custom";
+      const targetKey = isCustom && oracle.settings.customImageApiKey ? oracle.settings.customImageApiKey : apiKey;
+      const targetModel = isCustom && oracle.settings.customImageModel ? oracle.settings.customImageModel : modelName;
+      return imageGenerationService.generateImage(targetKey, prompt, targetModel, {
+        provider: oracle.settings.imageProvider as "gemini" | "custom",
+        baseUrl: oracle.settings.customImageBaseUrl
+      });
+    },
+    distillVisualPrompt: (apiKey, query, context, modelName, demoMode) => {
+      return imageGenerationService.distillVisualPrompt(apiKey, query, context, modelName, demoMode);
+    }
+  },
   assetManager: {
     saveImageToVault: async (blob, entityId, originalName) => {
       return vault.saveImageToVault(blob, entityId, originalName);

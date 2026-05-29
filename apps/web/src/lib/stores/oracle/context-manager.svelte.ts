@@ -193,6 +193,10 @@ export class OracleContextManager {
       tier: s.tier,
       effectiveApiKey: s.effectiveApiKey,
       modelName: s.modelName,
+      imageProvider: s.imageProvider,
+      customImageBaseUrl: s.customImageBaseUrl,
+      customImageApiKey: s.customImageApiKey,
+      customImageModel: s.customImageModel,
       isDemoMode: s.sessionModeStore.isDemoMode,
       automationPolicy: $state.snapshot(
         s.discoveryPolicyStore.oracleAutomationPolicy,
