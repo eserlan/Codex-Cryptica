@@ -124,11 +124,17 @@ export interface TextGenerationService {
   ): Promise<void>;
 }
 
+export interface ImageGenerationOptions {
+  provider?: "gemini" | "custom";
+  baseUrl?: string;
+}
+
 export interface ImageGenerationService {
   generateImage(
     apiKey: string,
     prompt: string,
     modelName: string,
+    options?: ImageGenerationOptions,
   ): Promise<Blob>;
   distillVisualPrompt(
     apiKey: string,

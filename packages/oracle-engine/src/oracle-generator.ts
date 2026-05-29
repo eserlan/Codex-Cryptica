@@ -55,10 +55,7 @@ export class OracleGenerator {
     return artDirection.prompt;
   }
 
-  private appendVisualLabels(
-    basePrompt: string,
-    labels?: string[],
-  ): string {
+  private appendVisualLabels(basePrompt: string, labels?: string[]): string {
     const cleanLabels = (labels || []).filter(Boolean);
     if (cleanLabels.length === 0) return basePrompt;
 
@@ -315,10 +312,16 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
+    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
+    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl
+      }
     );
   }
 
@@ -353,10 +356,16 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
+    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
+    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl
+      }
     );
   }
 
