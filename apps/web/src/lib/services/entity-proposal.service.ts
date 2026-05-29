@@ -83,11 +83,12 @@ ${sourceContext.slice(0, 3000)}`;
       throw new Error("Vault is required to create entity");
     }
 
-    const entity = await this.deps.vault.createEntity(categoryId, title, {
+    const entityId = await this.deps.vault.createEntity(categoryId, title, {
       content: templateContent,
       discoverySource: "Proposed from text",
     });
 
+    const entity = this.deps.vault.entities[entityId] || { id: entityId, title, categoryId };
     return { entity, categoryInferred };
   }
 }

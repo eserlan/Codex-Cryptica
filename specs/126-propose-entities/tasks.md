@@ -37,5 +37,5 @@ These tasks establish the foundational utilities and services required before bu
 ## Phase 5: Polish & Cross-Cutting Concerns
 
 - [x] T015 Verify end-to-end functionality across both Sidebar and Zen mode flows
-- [x] T016 Run linter and ensure no type errors (`pnpm run lint`)
-- [x] T017 Ensure all new Vitest unit tests pass (`pnpm test`)
+- [x] T016 Run linter and ensure no type errors (`bun run lint`)
+- [x] T017 Ensure all new Vitest unit tests pass (`bun test`)

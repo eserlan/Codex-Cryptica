@@ -19,6 +19,6 @@ export interface IEntityProposalService {
    * @param title The proposed entity title
    * @param sourceContext The markdown content of the originating entity
    */
-  acceptProposal(title: string, sourceContext: string): Promise<Entity>;
+  acceptProposal(title: string, sourceContext: string, apiKey?: string): Promise<{ entity: Entity; categoryInferred: boolean }>;
 }
 ```

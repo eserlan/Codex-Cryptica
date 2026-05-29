@@ -3,7 +3,7 @@
 ## How to extract proposals
 
 ```typescript
-import { extractProposals } from "@codex/editor-core/utils/text-parsing";
+import { extractProposals } from "editor-core";
 
 const markdown =
   "The **Crimson Guard** is a faction. [**The King**](entity:123) commands them.";
@@ -21,10 +21,10 @@ const entityProposalService = getContext("entityProposalService");
 
 // User clicks on "Crimson Guard" proposal
 async function onAccept(title: string) {
-  const newEntity = await entityProposalService.acceptProposal(
-    title,
-    currentEntity.content,
-  );
+    const { entity: newEntity } = await entityProposalService.acceptProposal(
+      title,
+      currentEntity.content,
+    );
   // Navigate to newEntity or update UI
 }
 ```

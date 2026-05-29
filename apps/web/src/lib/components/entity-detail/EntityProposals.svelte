@@ -53,7 +53,7 @@
   }
 </script>
 
-{#if !isEditing && proposals.length > 0}
+{#if !isEditing && !vault.isGuest && proposals.length > 0}
   <div
     class="mt-8 border-t border-theme-border pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
   >
