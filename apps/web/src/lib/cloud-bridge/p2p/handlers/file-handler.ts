@@ -139,7 +139,15 @@ export class FileHandler extends BaseHandler {
             });
 
             // Brief yield to keep UI responsive if many chunks
-            if (i % 10 === 0) await new Promise((r) => setTimeout(r, 0));
+            if (i % 10 === 0) {
+              await new Promise<void>((r) => {
+                if (typeof requestAnimationFrame !== "undefined") {
+                  requestAnimationFrame(() => r());
+                } else {
+                  setTimeout(r, 0);
+                }
+              });
+            }
           }
         }
       } else {
