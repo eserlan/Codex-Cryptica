@@ -11,6 +11,12 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import {
+    createEntityAutoLinkExtension,
+    ENTITY_INDEX_CHANGED_META,
+    type EntityAutoLinkOptions,
+  } from "./editor/EntityAutoLinkExtension";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
 
   import EditorToolbar from "./editor/EditorToolbar.svelte";
   import EditorBubbleMenu from "./editor/EditorBubbleMenu.svelte";
@@ -21,11 +27,36 @@
     content = "",
     editable = true,
     onUpdate,
+    entityIndex = [],
+    currentEntityId = "",
+    onEntityClick = () => {},
   }: {
     content: string;
     editable?: boolean;
     onUpdate?: (markdown: string) => void;
+    /** Flat array of vault entity titles + aliases (lowercase) for auto-link detection. */
+    entityIndex?: EntityIndexEntry[];
+    /** ID of the entity being viewed — suppresses self-links. */
+    currentEntityId?: string;
+    /** Navigation callback invoked when a detected entity link is clicked. */
+    onEntityClick?: (id: string) => void;
   } = $props();
+
+  // Options object shared with the EntityAutoLinkExtension closure.
+  // Getters are used so the plugin reads current prop values at call-time
+  // rather than capturing initial values (avoids Svelte state_referenced_locally
+  // warning and keeps the object in sync without mutation).
+  const autoLinkOptions: EntityAutoLinkOptions = {
+    get entityIndex() {
+      return entityIndex;
+    },
+    get currentEntityId() {
+      return currentEntityId;
+    },
+    get onEntityClick() {
+      return onEntityClick;
+    },
+  };
 
   let element: HTMLDivElement;
   let editor = $state<Editor | null>(null);
@@ -56,6 +87,7 @@
         TableHeader,
         TableCell,
         EmbedExtension,
+        createEntityAutoLinkExtension(autoLinkOptions),
         Link.configure({
           openOnClick: false,
           autolink: true,
@@ -112,6 +144,23 @@
   $effect(() => {
     if (editor && editor.isEditable !== editable) {
       editor.setEditable(editable);
+    }
+  });
+
+  // Entity auto-link reactivity bridge: when entityIndex, currentEntityId, or
+  // onEntityClick props change, dispatch a no-op transaction so the plugin's
+  // apply hook re-sorts options.entityIndex and rebuilds decorations.
+  // The options object uses getters so it always reads current prop values;
+  // these reads declare reactive dependencies that fire this $effect on change.
+  $effect(() => {
+    // Declare reactive dependencies (getters read current prop values at call-time).
+    void entityIndex;
+    void currentEntityId;
+    void onEntityClick;
+    if (editor && !editor.isEditable) {
+      editor.view.dispatch(
+        editor.state.tr.setMeta(ENTITY_INDEX_CHANGED_META, true),
+      );
     }
   });
 

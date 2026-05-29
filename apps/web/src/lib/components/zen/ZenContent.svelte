@@ -1,5 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
@@ -225,6 +226,14 @@
       ? regenerationService.pendingDraft
       : null,
   );
+
+  // Entity auto-link: build flat index of titles + aliases for mention detection.
+  const entityIndex = $derived<EntityIndexEntry[]>(
+    Object.values(vault.entities).flatMap((e) => [
+      { text: e.title.toLowerCase(), id: e.id },
+      ...e.aliases.map((a) => ({ text: a.toLowerCase(), id: e.id })),
+    ]),
+  );
 </script>
 
 <div
@@ -338,6 +347,9 @@
                 ? draft.chronicle
                 : entity?.content || "No records found."}
               editable={false}
+              {entityIndex}
+              currentEntityId={entity?.id ?? ""}
+              onEntityClick={(id) => onNavigate(id)}
             />
           </div>
         {:else}
@@ -383,6 +395,9 @@
                 ? draft.lore
                 : entity?.lore || "No detailed lore available."}
               editable={false}
+              {entityIndex}
+              currentEntityId={entity?.id ?? ""}
+              onEntityClick={(id) => onNavigate(id)}
             />
           </div>
         {/if}
