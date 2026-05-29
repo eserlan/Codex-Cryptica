@@ -753,10 +753,7 @@ describe("SyncStore", () => {
 
       // Coordinator fires "saving" while vault still matches.
       if (capturedOnStateChange) {
-        (capturedOnStateChange as NonNullable<typeof capturedOnStateChange>)({
-          status: "saving",
-          syncType: "local",
-        });
+        (capturedOnStateChange as any)({ status: "saving", syncType: "local" });
       }
       expect(testStore.status).toBe("saving");
 
@@ -812,7 +809,7 @@ describe("SyncStore", () => {
       await new Promise((r) => setTimeout(r, 0));
 
       if (capturedOnStateChange) {
-        (capturedOnStateChange as NonNullable<typeof capturedOnStateChange>)({
+        (capturedOnStateChange as any)({
           status: "loading",
           syncType: "local",
         });

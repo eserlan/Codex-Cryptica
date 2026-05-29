@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen, fireEvent } from "@testing-library/svelte";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import TemporalPicker from "./TemporalPicker.svelte";
 
 vi.mock("$app/paths", () => ({

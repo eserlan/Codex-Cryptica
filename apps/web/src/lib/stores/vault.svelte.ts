@@ -66,8 +66,8 @@ export class VaultStore {
   get allEntities() {
     return this.entityStore.allEntities;
   }
-  get titleAliasIndex() {
-    return this.entityStore.titleAliasIndex;
+  get titleAndAliasIndex() {
+    return this.entityStore.titleAndAliasIndex;
   }
   get allTitlesString() {
     return this.entityStore.allEntities.map((e) => e.title).join(", ");
@@ -75,7 +75,15 @@ export class VaultStore {
   get status() {
     return this.syncStore.status;
   }
-  set status(value: "idle" | "loading" | "saving" | "error") {
+  set status(
+    value:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) {
     this.syncStore.setStatus(value);
   }
   get errorMessage() {

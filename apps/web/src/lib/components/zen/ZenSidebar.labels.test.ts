@@ -44,7 +44,7 @@ vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
 
 describe("ZenSidebar labels addition when not editing", () => {
   it("renders LabelInput when not editing, user is not a guest, and entity has labels", () => {
-    vault.isGuest = false;
+    (vault as any).isGuest = false;
 
     const mockEntity = {
       id: "entity-1",
@@ -67,7 +67,7 @@ describe("ZenSidebar labels addition when not editing", () => {
   });
 
   it("renders LabelInput when not editing, user is not a guest, and entity has NO labels", () => {
-    vault.isGuest = false;
+    (vault as any).isGuest = false;
 
     const mockEntity = {
       id: "entity-1",
@@ -90,7 +90,7 @@ describe("ZenSidebar labels addition when not editing", () => {
   });
 
   it("does NOT render LabelInput when user is a guest", () => {
-    vault.isGuest = true; // GUEST
+    (vault as any).isGuest = true; // GUEST
 
     const mockEntity = {
       id: "entity-1",

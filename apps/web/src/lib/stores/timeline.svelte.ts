@@ -60,8 +60,9 @@ class TimelineStore {
 
     return list.sort((a, b) => {
       if (a.date.year !== b.date.year) return a.date.year - b.date.year;
-      if ((a.date.month ?? 1) !== (b.date.month ?? 1))
-        return (a.date.month ?? 1) - (b.date.month ?? 1);
+      const aMonth = "month" in a.date ? (a.date as any).month : undefined;
+      const bMonth = "month" in b.date ? (b.date as any).month : undefined;
+      if ((aMonth ?? 1) !== (bMonth ?? 1)) return (aMonth ?? 1) - (bMonth ?? 1);
       if ((a.date.day ?? 1) !== (b.date.day ?? 1))
         return (a.date.day ?? 1) - (b.date.day ?? 1);
       return a.title.localeCompare(b.title);

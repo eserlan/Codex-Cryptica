@@ -186,6 +186,7 @@ describe("MapInteractionManager", () => {
     mapStore.pins = [
       {
         id: "pin-a",
+        mapId: "",
         coordinates: { x: 100, y: 100 },
         entityId: "entity-123",
         visuals: {},

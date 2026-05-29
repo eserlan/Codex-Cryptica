@@ -1,4 +1,5 @@
 import { vaultEventBus } from "./events.svelte";
+import type { LocalEntity } from "./types";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { readFileAsText } from "../../utils/opfs";
@@ -101,7 +102,7 @@ export class EntityContentLoader {
 
           const { content: freshContent, metadata: freshMetadata } =
             parseMarkdown(text);
-          const mergedMetadata = { ...(freshMetadata || {}) };
+          const mergedMetadata: any = { ...(freshMetadata || {}) };
           delete mergedMetadata.id;
           if (mergedMetadata.parent) {
             mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
@@ -116,7 +117,7 @@ export class EntityContentLoader {
             ...mergedMetadata,
             content: freshContent || currentEntity.content || "",
             lore: "",
-          };
+          } as LocalEntity;
           this._contentLoadedIds.add(id);
           this._contentVerifiedIds.add(id);
         } catch (err) {
@@ -196,7 +197,7 @@ export class EntityContentLoader {
             const path = entityToUpdate._path || [`${id}.md`];
 
             // Normalize and merge metadata
-            const mergedMetadata = { ...(result.metadata || {}) };
+            const mergedMetadata: any = { ...(result.metadata || {}) };
             delete mergedMetadata.id;
             if (mergedMetadata.parent) {
               mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
@@ -212,7 +213,7 @@ export class EntityContentLoader {
               ...mergedMetadata,
               content: finalContent,
               lore: finalLore,
-            };
+            } as LocalEntity;
 
             this.deps.repository.entities[id] = updatedEntity;
             this._contentLoadedIds.add(id);
@@ -226,7 +227,7 @@ export class EntityContentLoader {
             const metadataRestored = Object.keys(result.metadata || {}).some(
               (key) =>
                 !(key in entityToUpdate) ||
-                entityToUpdate[key as keyof LocalEntity] === undefined,
+                (entityToUpdate as any)[key] === undefined,
             );
 
             const isStale =

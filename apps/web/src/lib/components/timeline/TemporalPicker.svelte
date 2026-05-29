@@ -44,9 +44,10 @@
     let unitId: string | undefined = undefined;
     let day: number | undefined = undefined;
 
-    if (val.month !== undefined) {
+    const month = val && "month" in val ? (val as any).month : undefined;
+    if (month !== undefined) {
       precision = val.day !== undefined ? "day" : "unit";
-      const mIndex = val.month - 1;
+      const mIndex = month - 1;
       if (mIndex >= 0 && mIndex < months.length) {
         unitId = months[mIndex].id;
       } else {

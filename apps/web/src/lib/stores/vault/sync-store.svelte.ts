@@ -233,7 +233,7 @@ export class SyncStore {
       if (!vaultDir) {
         if (!isDemo) {
           this.setStatus(cachedMap.size > 0 ? "idle" : "error");
-          if (this._status === "error") {
+          if ((this._status as string) === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
           }
         } else {

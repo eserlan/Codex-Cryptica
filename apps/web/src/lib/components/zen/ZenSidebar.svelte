@@ -85,6 +85,7 @@
     isOutbound: boolean;
     isChild?: boolean;
     isParent?: boolean;
+    strength?: number;
   }
 
   let allConnections = $derived.by(() => {
@@ -114,6 +115,7 @@
           title: vault.entities[c.target]?.title || c.target,
           type: c.type,
           isOutbound: true,
+          strength: c.strength,
         });
       }
     }
@@ -131,6 +133,7 @@
           title: vault.entities[item.sourceId]?.title || item.sourceId,
           type: item.connection.type,
           isOutbound: false,
+          strength: item.connection.strength,
         });
       }
     }
@@ -546,6 +549,7 @@
                     connection={{
                       target: conn.id,
                       type: conn.type,
+                      strength: conn.strength ?? 1,
                       label: conn.rawLabel || "",
                     }}
                     onSave={() => (editingConnectionTarget = null)}

@@ -439,7 +439,7 @@ export function detectCycle(
       return true;
     }
 
-    const currentEntity = entities[currentId];
+    const currentEntity: LocalEntity | undefined = entities[currentId];
     currentId = currentEntity?.parent;
   }
 

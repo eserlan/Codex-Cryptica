@@ -467,7 +467,7 @@ describe("Vault Entities Operations", () => {
           connections: [],
           content: "Content 1",
           updatedAt: 100,
-        } as LocalEntity,
+        } as unknown as LocalEntity,
       ];
 
       const { entities, created } = batchCreateEntities(

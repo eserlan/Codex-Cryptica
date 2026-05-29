@@ -304,7 +304,7 @@
             ? 'flex-col gap-3'
             : 'gap-1.5 md:gap-3 items-center'}"
         >
-          {#if vault.status === "needs-permission"}
+          {#if (vault.status as string) === "needs-permission"}
             <button
               class="{isVertical
                 ? 'py-3 text-sm justify-center gap-2'
@@ -318,7 +318,7 @@
               ></span>
               GRANT ACCESS
             </button>
-          {:else if vault.status === "saved"}
+          {:else if (vault.status as string) === "saved"}
             <button
               class="{isVertical
                 ? 'py-3 text-sm justify-center gap-2'

@@ -51,7 +51,8 @@ const formatDate = (date?: TemporalMetadata) => {
 
   // Optimization: Manual string construction is faster than template literals or padStart
   // for this specific case in hot loops.
-  const { year, month, day } = date;
+  const { year, day } = date;
+  const month = "month" in date ? (date as any).month : undefined;
   let str = "" + year;
 
   if (month !== undefined) {
