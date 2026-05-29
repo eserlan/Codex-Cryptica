@@ -112,8 +112,8 @@ export class SearchEngine {
           field: "title",
           tokenize: "full",
           optimize: true,
-          // resolution 9 is the FlexSearch maximum and doubles index memory
-          // vs resolution 6 with no practical recall difference for short
+          // resolution 9 is the FlexSearch maximum; resolution 6 uses ~40%
+          // less index memory with no practical recall difference for short
           // fields like titles (typically < 60 chars).
           resolution: 6,
         },
