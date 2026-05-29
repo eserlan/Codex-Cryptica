@@ -151,6 +151,13 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: bun run build
 
+      - name: Copy bundle report into build output
+        run: |
+          REPORT=$(find apps/web/.svelte-kit/output -name "bundle-report.html" | head -n 1)
+          if [ -n "$REPORT" ]; then
+            cp "$REPORT" apps/web/build/bundle-report.html
+          fi
+
       - name: Upload intermediate artifact
         uses: actions/upload-artifact@v7
         with:
@@ -190,7 +197,7 @@ jobs:
             echo "| JavaScript assets | $(find apps/web/build -type f -name '*.js' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
             echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
             echo
-            echo "Bundle treemap and stats are available in the \`bundle-report\` artifact."
+            echo "Bundle treemap is served at \`<deploy-url>/bundle-report.html\` and also in the \`bundle-report\` artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
@@ -256,6 +263,7 @@ jobs:
           COMMENT="🚀 **Preview Deployment Ready!**
 
           **URL:** ${DEPLOYMENT_URL}
+          **Bundle report:** ${DEPLOYMENT_URL}/bundle-report.html
           **Branch:** \`${BRANCH}\`
 
           _Changes will be live shortly._"
