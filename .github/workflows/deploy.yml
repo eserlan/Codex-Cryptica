@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main, staging]
+    branches: [staging]
     paths-ignore:
       - "apps/web/src/lib/content/blog/**"
       - "scripts/publish-blog-content.mjs"
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: "cloudflare-pages"
+  group: "cloudflare-pages-${{ github.ref }}"
   cancel-in-progress: true
 
 permissions:
@@ -24,7 +24,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
+  type-check:
+    name: Type Check
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -55,10 +56,47 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint and Test
-        run: |
-          bun run lint
-          bun run test:coverage
+      - name: Type Check
+        continue-on-error: true
+        run: bun run lint:types
+
+  lint-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Test
+        run: bun run test:coverage
 
       - name: Upload Coverage Reports
         uses: actions/upload-artifact@v7
@@ -69,6 +107,39 @@ jobs:
             apps/*/coverage/
             packages/*/coverage/
           retention-days: 7
+
+  build:
+    name: Build
+    needs: [type-check, lint-test]
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
 
       - name: Build Application
         env:
@@ -97,6 +168,31 @@ jobs:
           include-hidden-files: true
           retention-days: 30
 
+      - name: Upload Bundle Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-report
+          path: |
+            apps/web/.svelte-kit/output/**/bundle-report.html
+            apps/web/.svelte-kit/output/**/bundle-stats.json
+          include-hidden-files: true
+          retention-days: 30
+
+      - name: Summarize Bundle Size
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Bundle size"
+            echo
+            echo "| Metric | Size |"
+            echo "| --- | ---: |"
+            echo "| Build directory | $(du -sh apps/web/build | cut -f1) |"
+            echo "| JavaScript assets | $(find apps/web/build -type f -name '*.js' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
+            echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
+            echo
+            echo "Bundle treemap and stats are available in the \`bundle-report\` artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: build
@@ -119,17 +215,6 @@ jobs:
         with:
           name: dist
           path: dist/
-
-      - name: Deploy Production to Cloudflare Pages
-        if: github.ref_name == 'main' && github.event_name == 'push'
-        uses: cloudflare/wrangler-action@v4
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica
 
       - name: Deploy Staging to Cloudflare Pages
         if: github.ref_name == 'staging' && github.event_name == 'push'
@@ -160,8 +245,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Construct the preview URL using Cloudflare Pages branch slugging rules:
-          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
           BRANCH="${{ github.head_ref }}"
           CF_BRANCH=$(printf '%s' "$BRANCH" \
             | tr '[:upper:]' '[:lower:]' \
@@ -177,7 +260,6 @@ jobs:
 
           _Changes will be live shortly._"
 
-          # Check if a comment already exists to avoid spamming
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
           if [ -n "$EXISTING_COMMENT_ID" ]; then
@@ -185,14 +267,6 @@ jobs:
           else
             gh api -X POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -f body="$COMMENT"
           fi
-
-      - name: Notify Discord on Production Deploy
-        if: github.ref_name == 'main' && success() && github.event_name == 'push'
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
 
       - name: Notify Discord on Staging Deploy
         if: github.ref_name == 'staging' && success() && github.event_name == 'push'

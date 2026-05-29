@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { execSync } from "node:child_process";
 import { svelteTesting } from "@testing-library/svelte/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(
@@ -20,7 +21,25 @@ try {
 }
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit() as any, svelteTesting()],
+  plugins: [
+    tailwindcss(),
+    sveltekit() as any,
+    svelteTesting(),
+    visualizer({
+      emitFile: true,
+      filename: "bundle-report.html",
+      template: "treemap",
+      gzipSize: true,
+      brotliSize: true,
+    }),
+    visualizer({
+      emitFile: true,
+      filename: "bundle-stats.json",
+      template: "raw-data",
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ],
   resolve: {
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
@@ -47,6 +66,7 @@ export default defineConfig({
     format: "es",
   },
   build: {
+    chunkSizeWarningLimit: 900,
     minify: "esbuild",
     target: "es2020",
   },
