@@ -196,8 +196,8 @@ export class VaultHandler extends BaseHandler {
   ) {
     const { vault, themeStore, mapStore, mapSession } = context;
 
-    // Use shallow copy as entities are essentially read-only snapshots for transport here
-    const rawEntities = { ...vault.entities };
+    // Get a non-reactive snapshot of entities for transport
+    const rawEntities = $state.snapshot(vault.entities);
     const graph = buildSharedGraphPayload(
       rawEntities,
       vault.defaultVisibility,
