@@ -145,6 +145,8 @@
           <img
             src={imageUrl}
             alt={entity?.title}
+            loading="lazy"
+            decoding="async"
             class="w-full h-full object-cover object-[center_20%] transition-transform duration-500 group-hover:scale-105"
           />
         </div>

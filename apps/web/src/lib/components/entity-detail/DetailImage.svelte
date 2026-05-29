@@ -190,6 +190,8 @@
         <img
           src={resolvedImageUrl}
           alt={entity.title}
+          loading="lazy"
+          decoding="async"
           class="w-full h-auto max-h-48 md:max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
         />
         <div
