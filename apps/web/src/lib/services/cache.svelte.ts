@@ -162,19 +162,17 @@ export class CacheService {
     entity: LocalEntity,
   ): Promise<void> {
     try {
-      // Svelte 5: Ensure we have a non-reactive, serializable clone.
-      // We use JSON.parse/stringify as the absolute filter to strip any
-      // Proxies, Symbols, or non-serializable garbage that Dexie/IndexedDB might reject.
-      const raw = JSON.parse(JSON.stringify($state.snapshot(entity)));
+      // $state.snapshot() returns a deep non-reactive POJO — Proxies and
+      // Symbols are already stripped, so a second JSON round-trip is redundant.
+      const raw = $state.snapshot(entity) as Record<string, any>;
 
       const { vaultId, filePath } = parseKey(path);
 
       // Separate heavy text from graph metadata
       const { content, lore, ...graphData } = raw;
 
-      // We manually construct the record to be absolutely sure no hidden
-      // non-serializable fields (like Proxies or nested arrays with issues)
-      // are passed to Dexie.
+      // Explicitly shape the Dexie record to match the GraphEntityRecord
+      // schema and coerce values to the expected primitive types.
       const graphRecord = {
         id: String(raw.id),
         type: String(raw.type),
@@ -262,7 +260,7 @@ export class CacheService {
 
       for (const entry of entries) {
         const { path, lastModified, entity } = entry;
-        const raw = JSON.parse(JSON.stringify($state.snapshot(entity)));
+        const raw = $state.snapshot(entity) as Record<string, any>;
         const { vaultId, filePath } = parseKey(path);
         const { content, lore, ...graphData } = raw;
 
