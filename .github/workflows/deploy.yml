@@ -151,6 +151,30 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: bun run build
 
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+          path: coverage-download/
+
+      - name: Copy coverage into build output
+        run: |
+          if [ -d "coverage-download/apps/web/coverage" ]; then
+            cp -r coverage-download/apps/web/coverage apps/web/build/coverage
+          else
+            echo "::warning::Web coverage directory not found — skipping"
+          fi
+
+      - name: Copy bundle report into build output
+        run: |
+          REPORT=$(find apps/web/.svelte-kit/output -name "bundle-report.html" | head -n 1)
+          if [ -z "$REPORT" ]; then
+            echo "::error::bundle-report.html not found in Vite build output — visualizer may not have run"
+            exit 1
+          fi
+          mkdir -p apps/web/build
+          cp "$REPORT" apps/web/build/bundle-report.html
+
       - name: Upload intermediate artifact
         uses: actions/upload-artifact@v7
         with:
@@ -189,14 +213,15 @@ jobs:
             echo "| Build directory | $(du -sh apps/web/build | cut -f1) |"
             echo "| JavaScript assets | $(find apps/web/build -type f -name '*.js' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
             echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
-            echo
-            echo "Bundle treemap and stats are available in the \`bundle-report\` artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
     steps:
@@ -219,9 +244,6 @@ jobs:
       - name: Deploy Staging to Cloudflare Pages
         if: github.ref_name == 'staging' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v4
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -231,9 +253,6 @@ jobs:
         if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
         id: deploy_preview
         uses: cloudflare/wrangler-action@v4
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -253,12 +272,9 @@ jobs:
             | sed -E 's/-+$//')
           DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
 
-          COMMENT="🚀 **Preview Deployment Ready!**
+          echo "[Bundle report](${DEPLOYMENT_URL}/bundle-report.html)" >> "$GITHUB_STEP_SUMMARY"
 
-          **URL:** ${DEPLOYMENT_URL}
-          **Branch:** \`${BRANCH}\`
-
-          _Changes will be live shortly._"
+          COMMENT="$(printf '🚀 **Preview Deployment Ready!**\n\n**URL:** %s\n**Bundle report:** %s/bundle-report.html\n**Coverage:** %s/coverage/\n**Branch:** `%s`\n\n_Changes will be live shortly._' "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$BRANCH")"
 
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
