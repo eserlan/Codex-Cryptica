@@ -57,7 +57,8 @@ export const initGraph = async (options: GraphOptions) => {
         selector: "node",
         style: {
           "background-color": "#666",
-          label: "data(label)", // Updated to use label
+          label: (node: any) =>
+            node.data("isPast") ? `${node.data("label")}*` : node.data("label"),
         },
       },
       {

@@ -18,6 +18,7 @@ export interface GraphNode {
     thumbnail?: string;
     labels?: string[];
     isImportant?: boolean;
+    isPast?: boolean;
     date?: TemporalMetadata;
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
@@ -160,7 +161,7 @@ export class GraphTransformer {
       );
       const nodeData: GraphNode["data"] = {
         id: entity.id,
-        label: hasPast ? `${entity.title}*` : entity.title,
+        label: entity.title,
         type: entity.type,
         status: entity.status,
         weight: weights.get(entity.id) ?? 0,
@@ -171,6 +172,7 @@ export class GraphTransformer {
         labels: entity.labels ?? EMPTY_LABELS,
         textureVariant: getTextureVariant(),
       };
+      if (hasPast) nodeData.isPast = true;
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
@@ -403,7 +405,8 @@ export const getGraphStyle = (
         width: 32,
         height: 32,
         shape: graph.nodeShape,
-        label: "data(label)",
+        label: (node: any) =>
+          node.data("isPast") ? `${node.data("label")}*` : node.data("label"),
         color: tokens.text,
         "font-family": sanitizeFontForCytoscape(tokens.fontHeader),
         "font-size": 10,

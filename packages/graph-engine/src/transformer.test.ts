@@ -257,8 +257,10 @@ describe("GraphTransformer", () => {
       (e): e is GraphNode => e.group === "nodes" && e.data.id === "n2",
     );
 
-    expect(deadNode?.data.label).toBe("Dead Hero*");
+    expect(deadNode?.data.label).toBe("Dead Hero");
+    expect(deadNode?.data.isPast).toBe(true);
     expect(livingNode?.data.label).toBe("Living Legend");
+    expect(livingNode?.data.isPast).toBeUndefined();
   });
 
   it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
