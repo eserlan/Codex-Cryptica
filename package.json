@@ -2,25 +2,31 @@
   "name": "codex-cryptica",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.3.14",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
-    "node": ">=24.0.0",
-    "pnpm": ">=10.0.0"
+    "bun": ">=1.3.0"
   },
-  "packageManager": "pnpm@10.5.0",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint lint:types",
-    "lint:fix": "turbo run lint -- --fix",
-    "test": "turbo run test",
-    "test:affected": "turbo run test --filter=[origin/staging]...",
-    "test:coverage": "turbo run test:coverage",
-    "test:e2e": "pnpm --filter=web run test:e2e",
+    "preinstall": "node -e \"if (!/bun/.test(process.env.npm_config_user_agent || '')) { console.error('\\u001b[31mError: Please use Bun to install dependencies in this repository (run \\`bun install\\`).\\u001b[0m\\n'); process.exit(1); }\"",
+    "build": "bun run --filter '*' build",
+    "dev": "bun run --filter web dev",
+    "lint": "bun run --filter '*' lint",
+    "lint:affected": "bun run --filter '*' lint -- --cache --cache-strategy content",
+    "lint:types": "bun run --filter '*' lint:types",
+    "lint:fix": "bun run --filter '*' lint -- --fix",
+    "test": "BUN_NUM_THREADS=2 bun run --filter '*' test",
+    "test:affected": "BUN_NUM_THREADS=2 bun run --filter '*' test -- --changed",
+    "test:coverage": "BUN_NUM_THREADS=2 bun run --filter '*' test:coverage",
+    "test:e2e": "BUN_NUM_THREADS=2 bun run --filter web test:e2e",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "commitlint": "commitlint --edit",
     "prepare": "husky",
-    "assets:sync": "node scripts/upload-images.mjs",
-    "deploy:pages": "pnpm run build --filter=web && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
+    "assets:sync": "bun scripts/upload-images.mjs",
+    "deploy:pages": "bun run build && wrangler pages deploy apps/web/build --project-name=codex-cryptica --branch=$(git rev-parse --abbrev-ref HEAD)",
     "deploy:oracle": "bash apps/workers/oracle-proxy/deploy.sh"
   },
   "lint-staged": {
@@ -37,30 +43,32 @@
     "@emnapi/core": "^1.10.0",
     "@emnapi/runtime": "^1.10.0",
     "@eslint/js": "^10.0.1",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
-    "@typescript-eslint/parser": "^8.59.3",
+    "@types/js-yaml": "^4.0.9",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
     "commitlint-config-gitmoji": "^2.3.1",
     "deepmerge": "^4.3.1",
     "esbuild": "^0.28.0",
-    "eslint": "10.3.0",
+    "eslint": "10.4.0",
     "eslint-plugin-svelte": "^3.17.1",
     "gitmoji-cli": "^9.7.0",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.4",
+    "js-yaml": "^4.1.1",
+    "lint-staged": "^17.0.5",
     "prettier": "3.8.3",
-    "prettier-plugin-svelte": "^3.5.2",
+    "prettier-plugin-svelte": "^4.0.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "svelte-eslint-parser": "^1.6.1",
     "ts-morph": "^28.0.0",
-    "turbo": "^2.9.14",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.59.3",
-    "vite": "^8.0.13",
+    "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.14",
     "vitefu": "^1.1.3",
-    "wrangler": "^4.90.1"
+    "wrangler": "^4.93.1"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@tiptap/extension-bubble-menu": "^3.23.4"
+    "@tiptap/extension-bubble-menu": "^3.23.6"
   }
 }

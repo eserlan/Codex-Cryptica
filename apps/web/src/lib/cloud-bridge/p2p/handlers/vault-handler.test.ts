@@ -1,21 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { VaultHandler } from "./vault-handler";
 
-const { mockGet } = vi.hoisted(() => ({
-  mockGet: vi.fn(),
-}));
-
-vi.mock("svelte/store", () => ({
-  get: mockGet,
-}));
-
 describe("VaultHandler", () => {
   let handler: VaultHandler;
   let mockContext: any;
   let mockConn: any;
 
   beforeEach(() => {
-    mockGet.mockReturnValue({});
     handler = new VaultHandler();
     mockContext = {
       vault: {
@@ -24,13 +15,15 @@ describe("VaultHandler", () => {
         batchUpdate: vi.fn(),
         deleteEntity: vi.fn(),
       },
-      guestRoster: {
-        subscribe: vi.fn(),
-        update: vi.fn(),
+      guestStore: {
+        guestRoster: {},
       },
       mapSession: {
         rebindGuestOwnership: vi.fn(),
         clearGuestOwnership: vi.fn(),
+      },
+      mapStore: {
+        activeMap: null,
       },
       transport: { broadcast: vi.fn() },
       themeStore: { currentThemeId: "dark" },
@@ -63,7 +56,10 @@ describe("VaultHandler", () => {
     } as any;
     await handler.handle(msg, mockConn, mockContext);
 
-    expect(mockContext.guestRoster.update).toHaveBeenCalled();
+    expect(mockContext.guestStore.guestRoster["g1"]).toBeDefined();
+    expect(mockContext.guestStore.guestRoster["g1"].displayName).toBe(
+      "Player 1",
+    );
     expect(mockContext.mapSession.rebindGuestOwnership).toHaveBeenCalledWith(
       "g1",
       "Player 1",

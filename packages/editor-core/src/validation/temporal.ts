@@ -9,7 +9,8 @@ export function validateTemporal(data: TemporalMetadata): string | null {
     return "Year must be a valid number.";
   }
 
-  if (data.month !== undefined && (data.month < 1 || data.month > 12)) {
+  const month = "month" in data ? (data as any).month : undefined;
+  if (month !== undefined && (month < 1 || month > 12)) {
     return "Month must be between 1 and 12.";
   }
 
@@ -37,8 +38,9 @@ export function validateTemporalRange(
   }
 
   if (start.year === end.year) {
-    const startMonth = start.month ?? 1;
-    const endMonth = end.month ?? 1;
+    const startMonth =
+      ("month" in start ? (start as any).month : undefined) ?? 1;
+    const endMonth = ("month" in end ? (end as any).month : undefined) ?? 1;
     if (startMonth > endMonth) {
       return "Start month cannot be after end month.";
     }

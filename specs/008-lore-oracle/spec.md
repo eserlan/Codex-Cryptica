@@ -1,5 +1,7 @@
 # Feature Specification: Lore Oracle (Cloud AI Assistant)
 
+**Status**: Implemented
+
 ## Background
 
 Users desire a natural language interface to query their vault ("Who is the king?"). Running local LLMs proves too resource-intensive for mobile/tablet devices. Therefore, we will implement an **Opt-In Cloud Oracle** powered by Google Gemini.

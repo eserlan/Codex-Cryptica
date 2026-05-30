@@ -1,12 +1,12 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
 import { aiClientManager } from "../services/ai/client-manager";
-import { DefaultTextGenerationService } from "../services/ai/text-generation.service";
-import { draftingEngine } from "@codex/oracle-engine";
+import { DefaultTextGenerationService } from "../services/ai/text-generation.service.svelte";
+import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
 import type {
   OracleWorkerEvent,
   DiscoveryProposal,
-} from "@codex/oracle-engine";
+} from "../../../../../packages/oracle-engine/src/types";
 
 /**
  * OracleWorker handles heavy-lifting AI and logic tasks off the main thread.

@@ -116,7 +116,7 @@ vi.mock("../services/ai", () => ({
   },
 }));
 
-vi.mock("../services/search", () => ({
+vi.mock("../services/search.svelte", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([{ id: "e1", title: "Entity 1" }]),
   },

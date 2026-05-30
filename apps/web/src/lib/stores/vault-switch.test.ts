@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createMockOpfs, createMockIDB } from "../../tests/mocks/storage";
 import * as opfsUtils from "../utils/opfs";
 import * as idbUtils from "../utils/idb";
-import { vaultEventBus } from "./vault/events";
+import { vaultEventBus } from "./vault/events.svelte";
 
 const {
   mockMapRegistry,
@@ -71,7 +71,7 @@ vi.mock("./canvas-registry.svelte", () => ({
 }));
 
 // Mock Services
-vi.mock("../services/search", () => ({
+vi.mock("../services/search.svelte", () => ({
   searchService: mockSearchService,
 }));
 

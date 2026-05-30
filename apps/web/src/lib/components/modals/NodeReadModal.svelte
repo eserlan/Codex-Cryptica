@@ -209,13 +209,13 @@
       <!-- Body -->
       <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
         {#if entity}
-          <!-- Metadata / Tags -->
-          {#if entity.tags && entity.tags.length > 0}
+          <!-- Metadata / Labels -->
+          {#if entity.labels && entity.labels.length > 0}
             <div class="flex flex-wrap gap-2 mb-6">
-              {#each entity.tags as tag}
+              {#each entity.labels as label}
                 <span
                   class="text-[10px] font-mono px-2 py-1 bg-green-900/20 text-green-400 border border-green-900/30 rounded"
-                  >#{tag}</span
+                  >#{label}</span
                 >
               {/each}
             </div>

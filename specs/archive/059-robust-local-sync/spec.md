@@ -4,7 +4,7 @@
 
 **Feature Branch**: `059-robust-local-sync`  
 **Created**: 2026-02-24  
-**Status**: Superseded by 093-directional-vault-sync
+**Status**: Implemented
 **Input**: User description: "more robust local file syncing https://github.com/eserlan/Codex-Cryptica/issues/250"
 
 ## User Scenarios & Testing _(mandatory)_

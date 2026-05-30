@@ -69,10 +69,8 @@ vi.mock("../../stores/map-session.svelte", () => {
 import { P2PHostService } from "./host-service.svelte";
 import { vault } from "../../stores/vault.svelte";
 import { themeStore } from "../../stores/theme.svelte";
-import { guestRoster } from "../../stores/guest";
+import { guestStore } from "../../stores/guest.svelte";
 import { mapStore } from "../../stores/map.svelte";
-import { get } from "svelte/store";
-
 const { MockConnection, MockPeer } = vi.hoisted(() => {
   class MockConnection {
     peer: string;
@@ -244,7 +242,7 @@ describe("P2P Services", () => {
             Promise.resolve(new Blob(["image"], { type: "image/webp" })),
         }),
       );
-      guestRoster.set({});
+      guestStore.guestRoster = {};
 
       // Reset mockMapSession
       for (const key in mockTokens) delete mockTokens[key];
@@ -255,7 +253,7 @@ describe("P2P Services", () => {
       hostService = new P2PHostService({
         vault,
         themeStore,
-        guestRoster,
+        guestStore,
         mapStore,
         peerFactory: (id?: string) => new MockPeer(id ?? "mock-peer-id"),
       });
@@ -561,8 +559,8 @@ describe("P2P Services", () => {
         payload: { displayName: "Ava" },
       });
 
-      expect(get(guestRoster)["guest-1"]).toBeDefined();
-      expect(get(guestRoster)["guest-1"].displayName).toBe("Ava");
+      expect(guestStore.guestRoster["guest-1"]).toBeDefined();
+      expect(guestStore.guestRoster["guest-1"].displayName).toBe("Ava");
     });
 
     it("should clear guest roster and ownership when a connection closes", async () => {
@@ -579,14 +577,99 @@ describe("P2P Services", () => {
         payload: { displayName: "Ava" },
       });
 
-      expect(get(guestRoster)["guest-1"]).toBeDefined();
+      expect(guestStore.guestRoster["guest-1"]).toBeDefined();
 
       mockConn.emit("close");
 
-      expect(get(guestRoster)["guest-1"]).toBeUndefined();
+      expect(guestStore.guestRoster["guest-1"]).toBeUndefined();
       expect(mockMapSession.clearGuestOwnership).toHaveBeenCalledWith(
         "guest-1",
       );
+    });
+
+    it("should respond to handshake with a handshake_ack message", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "handshake",
+        senderId: "guest-1",
+        timestamp: Date.now(),
+        payload: { clientPeerId: "guest-1" },
+      });
+
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "handshake_ack",
+          senderId: "mock-peer-id",
+        }),
+      );
+    });
+
+    it("should respond to ping with a pong message", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      const pingTimestamp = 123456789;
+      mockConn.emit("data", {
+        type: "ping",
+        senderId: "guest-1",
+        timestamp: pingTimestamp,
+        payload: null,
+      });
+
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "pong",
+          senderId: "mock-peer-id",
+          timestamp: pingTimestamp,
+        }),
+      );
+    });
+
+    it("should unwrap a PeerJSMessage envelope before dispatching", async () => {
+      await startHostingHelper(hostService);
+      const transport = (hostService as any).transport;
+      const peerInstance = (transport as any).peer;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      const dispatchSpy = vi
+        .spyOn((hostService as any).dispatcher, "dispatch")
+        .mockResolvedValue(true);
+
+      const wrappedPayload = {
+        type: "GET_FILE",
+        path: "images/test.png",
+        requestId: "req-123",
+      };
+
+      mockConn.emit("data", {
+        type: "GET_FILE",
+        senderId: "guest-1",
+        timestamp: Date.now(),
+        payload: wrappedPayload,
+      });
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        wrappedPayload,
+        expect.any(Object),
+        expect.any(Object),
+      );
+
+      dispatchSpy.mockRestore();
     });
 
     it("should stop hosting and clear connections", async () => {

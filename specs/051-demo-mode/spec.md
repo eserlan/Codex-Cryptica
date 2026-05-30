@@ -2,7 +2,7 @@
 
 **Feature Branch**: `051-demo-mode`  
 **Created**: 2026-02-19  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "demo mode https://github.com/eserlan/Codex-Arcana/issues/193"
 
 ## User Scenarios & Testing _(mandatory)_

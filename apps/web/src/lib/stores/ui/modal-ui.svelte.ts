@@ -16,7 +16,7 @@ export class ModalUIStore {
 
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
-  zenModeActiveTab = $state<"overview" | "inventory" | "map">("overview");
+  zenModeActiveTab = $state<"overview" | "map">("overview");
 
   mergeDialog = $state<{
     open: boolean;
@@ -38,10 +38,25 @@ export class ModalUIStore {
     show: boolean;
     imageUrl: string;
     title?: string;
+    originRect?: { x: number; y: number; width: number; height: number } | null;
+    imagePath?: string;
   }>({
     show: false,
     imageUrl: "",
+    originRect: null,
+    imagePath: "",
   });
+
+  soundBite = $state<{
+    show: boolean;
+    entityId: string | null;
+  }>({
+    show: false,
+    entityId: null,
+  });
+
+  showVaultSwitcher = $state(false);
+  showShare = $state(false);
 
   // Derived properties for backwards compatibility
   get readModeNodeId() {
@@ -71,16 +86,49 @@ export class ModalUIStore {
     this.bulkLabelDialog = { open: false, entityIds: [] };
   }
 
-  openLightbox(imageUrl: string, title?: string) {
+  openLightbox(
+    imageUrl: string,
+    title?: string,
+    originRect?: { x: number; y: number; width: number; height: number } | null,
+    imagePath?: string,
+  ) {
     this.lightbox = {
       show: true,
       imageUrl,
       title,
+      originRect: originRect ?? null,
+      imagePath: imagePath ?? "",
     };
   }
 
   closeLightbox() {
     this.lightbox.show = false;
+    this.lightbox.originRect = null;
+    this.lightbox.imagePath = "";
+  }
+
+  openSoundBite(entityId: string) {
+    this.soundBite = { show: true, entityId };
+  }
+
+  closeSoundBite() {
+    this.soundBite = { show: false, entityId: null };
+  }
+
+  openVaultSwitcher() {
+    this.showVaultSwitcher = true;
+  }
+
+  closeVaultSwitcher() {
+    this.showVaultSwitcher = false;
+  }
+
+  openShare() {
+    this.showShare = true;
+  }
+
+  closeShare() {
+    this.showShare = false;
   }
 
   openCanvasSelection(pendingEntities: string[]) {
@@ -115,10 +163,7 @@ export class ModalUIStore {
     }
   }
 
-  openZenMode(
-    entityId: string,
-    tab: "overview" | "inventory" | "map" = "overview",
-  ) {
+  openZenMode(entityId: string, tab: "overview" | "map" = "overview") {
     this.zenModeEntityId = entityId;
     this.zenModeActiveTab = tab;
     this.showZenMode = true;
@@ -143,6 +188,11 @@ export class ModalUIStore {
   }
 }
 
-const KEY = "__codex_modal_ui_store__";
+// The version suffix must be bumped whenever the shape of ModalUIStore changes
+// (new $state fields added/removed). This ensures Vite HMR never serves a
+// cached instance that predates the current class definition — which would
+// cause new properties to be undefined and their reactive assignments to be
+// silently dropped.
+const KEY = "__codex_modal_ui_store__v3__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

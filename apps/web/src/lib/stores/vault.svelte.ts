@@ -66,10 +66,24 @@ export class VaultStore {
   get allEntities() {
     return this.entityStore.allEntities;
   }
+  get titleAndAliasIndex() {
+    return this.entityStore.titleAndAliasIndex;
+  }
+  get allTitlesString() {
+    return this.entityStore.allEntities.map((e) => e.title).join(", ");
+  }
   get status() {
     return this.syncStore.status;
   }
-  set status(value: "idle" | "loading" | "saving" | "error") {
+  set status(
+    value:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) {
     this.syncStore.setStatus(value);
   }
   get errorMessage() {
@@ -104,6 +118,9 @@ export class VaultStore {
   }
   get labelIndex() {
     return this.entityStore.labelIndex;
+  }
+  get labelCounts() {
+    return this.entityStore.labelCounts;
   }
   get maps() {
     return mapRegistry.maps;
@@ -179,6 +196,8 @@ export class VaultStore {
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
+      flushPendingSaves: (timeoutMs) =>
+        this.entityStore?.flushPendingSaves(timeoutMs),
     });
 
     const persistence = new EntityPersistenceService({
@@ -187,6 +206,7 @@ export class VaultStore {
       isGuest: () => this.isGuest,
       getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
       setStatus: (s) => this.syncStore.setStatus(s),
+      status: () => this.syncStore.status,
       setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
       onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
       isContentLoaded: (id) => loader.isContentLoaded(id),
@@ -499,5 +519,5 @@ if (
   (import.meta.env.DEV || (window as any).__E2E__)
 ) {
   (window as any).vault = vault;
-  console.log("[VaultStore] Module loaded, vault attached to window");
+  debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

@@ -1,8 +1,7 @@
 # Tasks: AI Regenerate Entity Description
 
 **Feature**: AI Regenerate Entity Description  
-**Branch**: `095-ai-regen-button`  
-**Status**: Ready for Implementation
+**Branch**: `095-ai-regen-button`
 
 ## Dependencies
 

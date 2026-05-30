@@ -110,6 +110,7 @@ if (!HTMLElement.prototype.animate) {
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     activeTheme: {
+      id: "cyberpunk",
       name: "Neon Night",
       description:
         "Cyberpunk, neon-noir, corporate control, street-level rebellion, hackers, implants, and high-tech urban danger.",
@@ -288,6 +289,7 @@ describe("FrontPage", () => {
     expect(modalUIStore.openLightbox).toHaveBeenCalledWith(
       "resolved://image",
       "World cover",
+      expect.any(Object),
     );
   });
 
@@ -331,6 +333,17 @@ describe("FrontPage", () => {
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
         "Portrait composition, vertical framing, approximately 2:3 aspect ratio.",
+      ),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("Default Art Style: Moonfall"),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("atmospheric world cover art"),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Theme Style: Moonfall. Digital concept art style",
       ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(

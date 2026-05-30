@@ -2,7 +2,7 @@
 
 **Feature Branch**: `080-fantasy-theme-refresh`  
 **Created**: 2026-04-12  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Fantasy Classic required changes: replace cyan text with dark ink, replace pink borders and accents with brown, remove multi-colour icons in favor of a single muted brown system, use gold accents only for active tabs, selected elements, and key highlights, warm panels to match parchment, and reduce the overly soft card feel."
 
 ## User Scenarios & Testing _(mandatory)_

@@ -3,11 +3,14 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { calendarEngine } from "chronology-engine";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
   import {
     createEntityDetailTabIds,
     getNextEntityDetailTabInList,
     entityDetailTabs,
     type EntityDetailTab,
+    getTemporalLabel,
   } from "./detail-tabs";
 
   let {
@@ -33,6 +36,39 @@
   );
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 
+  const formatDate = (date: Entity["date"]) => {
+    if (!date || date.year === undefined) return "";
+    try {
+      return calendarEngine.format(date as any, calendarStore.config);
+    } catch {
+      if (date.label) return date.label;
+      let str = `${date.year}`;
+      const month = "month" in date ? (date as any).month : undefined;
+      if (month !== undefined) str += `/${month}`;
+      if (date.day !== undefined) str += `/${date.day}`;
+      return str;
+    }
+  };
+
+  const dateText = $derived.by(() => {
+    if (!entity) return "";
+    if (entity.date?.year !== undefined) {
+      return formatDate(entity.date);
+    }
+    const parts: string[] = [];
+    if (entity.start_date?.year !== undefined) {
+      parts.push(
+        `${getTemporalLabel(entity.type, "start")}: ${formatDate(entity.start_date)}`,
+      );
+    }
+    if (entity.end_date?.year !== undefined) {
+      parts.push(
+        `${getTemporalLabel(entity.type, "end")}: ${formatDate(entity.end_date)}`,
+      );
+    }
+    return parts.join(" – ");
+  });
+
   const handleTabKeydown = (event: KeyboardEvent) => {
     if (
       event.key !== "ArrowRight" &&
@@ -54,9 +90,9 @@
   };
 </script>
 
-<div class="px-4 md:p-6">
+<div class="px-4 pt-2 pb-0 md:px-6 md:pt-4 md:pb-0">
   {#if isEditing}
-    <div class="mb-4">
+    <div class="mb-2">
       <label
         class="block text-[10px] text-theme-secondary font-bold mb-1"
         for="entity-type">CATEGORY</label
@@ -73,10 +109,12 @@
     </div>
   {:else}
     <div
-      class="text-xs font-bold tracking-widest uppercase font-header mb-4"
+      class="text-[10px] font-bold tracking-widest uppercase font-header mb-2"
       style:color="var(--theme-meta-text)"
     >
-      {entity.type}
+      {entity.type}{#if dateText}
+        <span class="font-mono font-normal normal-case ml-2">({dateText})</span>
+      {/if}
     </div>
   {/if}
 
@@ -141,30 +179,7 @@
         }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
       >
     {/if}
-    <button
-      id={tabIds.inventory}
-      type="button"
-      role="tab"
-      aria-selected={activeTab === "inventory"}
-      aria-controls={panelIds.inventory}
-      tabindex={activeTab === "inventory" ? 0 : -1}
-      data-testid="tab-inventory"
-      class={activeTab === "inventory"
-        ? isFantasyTheme
-          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
-          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : isFantasyTheme
-          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
-          : "hover:text-theme-text transition"}
-      style:border-color={activeTab === "inventory" && isFantasyTheme
-        ? "var(--theme-focus-border)"
-        : undefined}
-      style:background-color={activeTab === "inventory" && isFantasyTheme
-        ? "var(--theme-focus-bg)"
-        : undefined}
-      onclick={() => (activeTab = "inventory")}
-      >{themeStore.jargon.tab_inventory.toUpperCase()}</button
-    >
+
     <button
       id={tabIds.map}
       type="button"

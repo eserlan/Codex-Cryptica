@@ -27,16 +27,16 @@ Codex Cryptica is built on **Local-First** principles. This means your data is s
 
 ## 2. Multi-Device Synchronization
 
-While your data is local, you can easily access it across different machines by using **Local Folder Synchronization.**
+While your data is local, you can easily access it across different machines by using **Local Folder Integration.**
 
 ### Setting up a Cloud Mirror:
 
 1.  **Install a Cloud Client:** Install a service like **Google Drive for Desktop**, **Dropbox**, or **iCloud** on your computer.
-2.  **Sync to a Local Folder:** In Codex, go to **Settings > Archive** and click **Sync to Folder**.
+2.  **Link to a Local Folder:** In Codex, click the **SAVE TO FOLDER** button in the bottom-left sidebar (or the Save icon in the Vault Selector).
 3.  **Choose your Cloud Directory:** Select a folder inside your Google Drive or Dropbox directory.
-4.  **Automatic Updates:** Codex will now keep your internal archives mirrored to that folder, and your OS will handle the cloud sync automatically.
+4.  **Automatic Updates:** Codex will now keep your internal archives mirrored to that folder, and your OS will handle the cloud mirroring automatically.
 
-To open your world on a second device, simply use the **Open Folder** button in the Archive Selector and choose that same synced directory.
+To open your world on a second device, simply use the **Open Folder** button in the Vault Selector and choose that same synced directory.
 
 ## 3. Working with the Lore Oracle
 
@@ -56,6 +56,6 @@ The Knowledge Graph and Spatial Maps provide a bird's-eye view of your campaign.
 
 - **Keep it Modular:** Use many small entities instead of a few massive ones. This helps both you and the AI find information faster.
 - **Use Labels:** Categorize your lore with custom labels to filter the graph and keep your notes organized.
-- **Regular Syncs:** Click the **Sync** button at the end of each session to ensure your local backup is up to date.
+- **Regular Saves:** Click the **SAVE TO FOLDER** button at the end of each session to ensure your local backup is up to date.
 
 Happy world-building!

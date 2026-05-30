@@ -1,7 +1,8 @@
 # Feature Specification: Modal Dice Roller Refinement (079)
 
+**Status**: Implemented
+
 **Branch**: `modal-dice-roller`
-**Status**: Planning
 **Objective**: Transform the existing basic dice modal into a premium, tactile, and highly functional "Dice Vault" that supports saved presets, advanced formula building, and immersive visual feedback.
 
 ## Core Vision

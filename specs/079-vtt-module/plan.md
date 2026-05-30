@@ -2,7 +2,6 @@
 
 **Branch**: `079-vtt-light` | **Date**: 2026-04-05 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/079-vtt-light/spec.md`
-**Status**: Implemented
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 

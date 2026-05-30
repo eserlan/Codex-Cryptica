@@ -1,6 +1,7 @@
 import { BaseHandler, type P2PHandlerContext } from "./base-handler";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
+import { debugStore } from "../../../stores/debug.svelte";
 
 export class FileHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
@@ -18,7 +19,7 @@ export class FileHandler extends BaseHandler {
     const { vault } = context;
 
     try {
-      console.log(`[P2P Host] Handling file request for: ${path}`);
+      debugStore.log(`[P2P Host] Handling file request for: ${path}`);
       const vaultHandle = await vault.getActiveVaultHandle();
 
       if (!vaultHandle) {
@@ -79,6 +80,12 @@ export class FileHandler extends BaseHandler {
               }
             }
           }
+        } else if (parts.length > 1) {
+          let currentDir = vaultHandle;
+          for (let i = 0; i < parts.length - 1; i++) {
+            currentDir = await currentDir.getDirectoryHandle(parts[i]);
+          }
+          fileHandle = await currentDir.getFileHandle(parts[parts.length - 1]);
         }
       } catch (err) {
         console.error(`[P2P Host] Error accessing path: ${path}`, err);
@@ -132,7 +139,15 @@ export class FileHandler extends BaseHandler {
             });
 
             // Brief yield to keep UI responsive if many chunks
-            if (i % 10 === 0) await new Promise((r) => setTimeout(r, 0));
+            if (i % 10 === 0) {
+              await new Promise<void>((r) => {
+                if (typeof requestAnimationFrame !== "undefined") {
+                  requestAnimationFrame(() => r());
+                } else {
+                  setTimeout(r, 0);
+                }
+              });
+            }
           }
         }
       } else {

@@ -2,7 +2,6 @@
 
 **Branch**: `feat/changelog-page` | **Date**: 2026-04-16 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/081-in-app-changelog/spec.md`
-**Status**: In Progress
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 

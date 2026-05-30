@@ -40,6 +40,7 @@ vi.mock("../vault-registry.svelte", () => ({
     createVault: vi.fn(),
     deleteVault: vi.fn(),
     setActiveVault: vi.fn(),
+    clearActiveVault: vi.fn(),
     updateEntityCount: vi.fn().mockResolvedValue(undefined),
     availableVaults: [],
     isInitialized: false,
@@ -99,7 +100,13 @@ describe("VaultLifecycleManager", () => {
 
     deps = {
       syncStore: {
-        setStatus: vi.fn(),
+        _status: "idle",
+        get status() {
+          return this._status;
+        },
+        setStatus: vi.fn().mockImplementation(function (this: any, s) {
+          this._status = s;
+        }),
         setErrorMessage: vi.fn(),
         setHasConflictFiles: vi.fn(),
       },
@@ -128,6 +135,7 @@ describe("VaultLifecycleManager", () => {
         createVault: vi.fn().mockResolvedValue("test-id"),
         deleteVault: vi.fn(),
         setActiveVault: vi.fn(),
+        clearActiveVault: vi.fn().mockResolvedValue(undefined),
         updateEntityCount: vi.fn().mockResolvedValue(undefined),
         availableVaults: [],
         isInitialized: false,
@@ -189,6 +197,47 @@ describe("VaultLifecycleManager", () => {
         "end-vault-2",
       ]);
     });
+
+    it("should recover the switchLock chain if a switch fails", async () => {
+      vi.mocked(deps.vaultRegistry.setActiveVault).mockRejectedValueOnce(
+        new Error("Switch failed"),
+      );
+
+      await expect(manager.switchVault("failing-vault")).rejects.toThrow(
+        "Switch failed",
+      );
+
+      // Subsequent switch should succeed and not be blocked or ignored
+      await manager.switchVault("working-vault");
+      expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith(
+        "working-vault",
+      );
+    });
+
+    it("US4: should switch vaults even if flushPendingSaves is hung and exceeds the 5-second timeout", async () => {
+      vi.useFakeTimers();
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      // Simulate flushPendingSaves never resolving
+      deps.flushPendingSaves.mockReturnValue(new Promise(() => {}));
+
+      const switchPromise = manager.switchVault("v2");
+
+      // Advance timers by 5000ms
+      await vi.advanceTimersByTimeAsync(5000);
+
+      await switchPromise;
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Save drain timed out or failed during switch"),
+      );
+      expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
+
+      consoleWarnSpy.mockRestore();
+      vi.useRealTimers();
+    });
   });
 
   describe("deleteVault", () => {
@@ -226,6 +275,7 @@ describe("VaultLifecycleManager", () => {
 
       await manager.deleteVault("only-vault");
 
+      expect(deps.vaultRegistry.clearActiveVault).toHaveBeenCalled();
       expect(deps.setInitialized).toHaveBeenCalledWith(false);
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
       expect(deps.vaultRegistry.deleteVault).toHaveBeenCalledWith("only-vault");

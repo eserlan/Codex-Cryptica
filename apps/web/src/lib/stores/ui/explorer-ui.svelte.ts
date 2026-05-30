@@ -11,6 +11,7 @@ export class ExplorerUIStore {
 
   explorerViewMode = $state<"list" | "label">("list");
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
+  explorerCollapsedEntityIds = $state<Record<string, string[]>>({});
   labelFilters = $state<Set<string>>(new Set());
 
   constructor(persistence: UIPersistence = new DefaultPersistence()) {
@@ -45,6 +46,27 @@ export class ExplorerUIStore {
           return parsed as ExplorerCollapsedLabelGroups;
         }
         throw new Error("Invalid collapsed label groups");
+      },
+      {},
+    );
+
+    this.explorerCollapsedEntityIds = this.persistence.read(
+      UI_STORAGE_KEYS.EXPLORER_COLLAPSED_ENTITY_IDS,
+      (v) => {
+        const parsed = JSON.parse(v);
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed) &&
+          Object.values(parsed).every(
+            (value) =>
+              Array.isArray(value) &&
+              value.every((item) => typeof item === "string"),
+          )
+        ) {
+          return parsed as Record<string, string[]>;
+        }
+        throw new Error("Invalid collapsed entity IDs");
       },
       {},
     );
@@ -110,6 +132,37 @@ export class ExplorerUIStore {
     this.explorerCollapsedLabelGroups = nextState;
     this.persistence.write(
       UI_STORAGE_KEYS.EXPLORER_COLLAPSED_LABEL_GROUPS,
+      nextState,
+    );
+  }
+
+  getCollapsedEntities(vaultId: string | null): Set<string> {
+    const scope = this.getExplorerLabelGroupScope(vaultId);
+    return new Set(this.explorerCollapsedEntityIds[scope] ?? []);
+  }
+
+  toggleExplorerEntityCollapse(vaultId: string | null, entityId: string) {
+    const scope = this.getExplorerLabelGroupScope(vaultId);
+    const nextEntities = new Set(this.explorerCollapsedEntityIds[scope] ?? []);
+
+    if (nextEntities.has(entityId)) {
+      nextEntities.delete(entityId);
+    } else {
+      nextEntities.add(entityId);
+    }
+
+    const nextState = { ...this.explorerCollapsedEntityIds };
+    if (nextEntities.size === 0) {
+      delete nextState[scope];
+    } else {
+      nextState[scope] = Array.from(nextEntities).sort((a, b) =>
+        a.localeCompare(b),
+      );
+    }
+
+    this.explorerCollapsedEntityIds = nextState;
+    this.persistence.write(
+      UI_STORAGE_KEYS.EXPLORER_COLLAPSED_ENTITY_IDS,
       nextState,
     );
   }

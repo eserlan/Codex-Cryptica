@@ -1,7 +1,6 @@
 import { BaseHandler, type P2PHandlerContext } from "./base-handler";
 import type { P2PMessage } from "../p2p-protocol";
 import type { P2PConnection } from "../transport/transport-interface";
-import { get } from "svelte/store";
 import {
   normalizeGuestName,
   upsertGuestRoster,
@@ -41,9 +40,9 @@ export class VaultHandler extends BaseHandler {
     context: P2PHandlerContext,
   ) {
     const peerId = conn.peer;
-    const { guestRoster, mapSession } = context;
+    const { guestStore, mapSession } = context;
     const displayName = normalizeGuestName(payload?.displayName, peerId);
-    const currentRoster = get(guestRoster) as Record<string, any>;
+    const currentRoster = guestStore.guestRoster as Record<string, any>;
 
     const hasDuplicateName = Object.values(currentRoster).some(
       (guest: any) =>
@@ -62,19 +61,17 @@ export class VaultHandler extends BaseHandler {
       return;
     }
 
-    guestRoster.update((current: any) =>
-      upsertGuestRoster(current, peerId, {
-        displayName,
-        status: "connected",
-        currentEntityId: null,
-        currentEntityTitle: null,
-      }),
-    );
+    guestStore.guestRoster = upsertGuestRoster(guestStore.guestRoster, peerId, {
+      displayName,
+      status: "connected",
+      currentEntityId: null,
+      currentEntityTitle: null,
+    });
 
     mapSession.rebindGuestOwnership(peerId, displayName);
     this.sendGuestRosterSnapshot(conn, context);
 
-    const guest = (get(guestRoster) as Record<string, any>)[peerId];
+    const guest = (guestStore.guestRoster as Record<string, any>)[peerId];
     if (guest) {
       await this.sendInitialState(conn, context);
       context.transport.broadcast({
@@ -95,7 +92,7 @@ export class VaultHandler extends BaseHandler {
     context: P2PHandlerContext,
   ) {
     const roster = Object.values(
-      get(context.guestRoster) as Record<string, any>,
+      context.guestStore.guestRoster as Record<string, any>,
     );
     for (const guest of roster as any[]) {
       conn.send({
@@ -117,14 +114,15 @@ export class VaultHandler extends BaseHandler {
     context: P2PHandlerContext,
   ) {
     const peerId = conn.peer;
-    const departingGuest = (get(context.guestRoster) as Record<string, any>)[
-      peerId
-    ];
+    const departingGuest = (
+      context.guestStore.guestRoster as Record<string, any>
+    )[peerId];
 
     if (departingGuest) {
       context.mapSession.clearGuestOwnership(peerId);
-      context.guestRoster.update((current: any) =>
-        removeGuestFromRoster(current, peerId),
+      context.guestStore.guestRoster = removeGuestFromRoster(
+        context.guestStore.guestRoster,
+        peerId,
       );
 
       context.transport.broadcast({
@@ -146,9 +144,9 @@ export class VaultHandler extends BaseHandler {
     payload: any,
     context: P2PHandlerContext,
   ) {
-    const existingGuest = (get(context.guestRoster) as Record<string, any>)[
-      peerId
-    ];
+    const existingGuest = (
+      context.guestStore.guestRoster as Record<string, any>
+    )[peerId];
     if (!existingGuest) return;
 
     const currentEntityId = payload?.currentEntityId || null;
@@ -163,17 +161,21 @@ export class VaultHandler extends BaseHandler {
       existingGuest.displayName || peerId,
     );
 
-    context.guestRoster.update((current: any) =>
-      upsertGuestRoster(current, peerId, {
+    context.guestStore.guestRoster = upsertGuestRoster(
+      context.guestStore.guestRoster,
+      peerId,
+      {
         displayName,
         status: deriveGuestPresenceStatus(payload?.status, currentEntityId),
         currentEntityId,
         currentEntityTitle,
-      }),
+      },
     );
 
     context.mapSession.rebindGuestOwnership(peerId, displayName);
-    const guest = (get(context.guestRoster) as Record<string, any>)[peerId];
+    const guest = (context.guestStore.guestRoster as Record<string, any>)[
+      peerId
+    ];
     if (guest) {
       context.transport.broadcast({
         type: "GUEST_STATUS",
@@ -194,8 +196,8 @@ export class VaultHandler extends BaseHandler {
   ) {
     const { vault, themeStore, mapStore, mapSession } = context;
 
-    // Use shallow copy as entities are essentially read-only snapshots for transport here
-    const rawEntities = { ...vault.entities };
+    // Get a non-reactive snapshot of entities for transport
+    const rawEntities = $state.snapshot(vault.entities);
     const graph = buildSharedGraphPayload(
       rawEntities,
       vault.defaultVisibility,

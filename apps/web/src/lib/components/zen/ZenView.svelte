@@ -53,7 +53,6 @@
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
-  let tabInventory = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
@@ -169,11 +168,7 @@
   const handleTabKeydown = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      const tabs: ("overview" | "inventory" | "map")[] = [
-        "overview",
-        "inventory",
-        "map",
-      ];
+      const tabs: ("overview" | "map")[] = ["overview", "map"];
       const currentIndex = tabs.indexOf(activeTab);
       const nextIndex =
         e.key === "ArrowRight"
@@ -183,7 +178,6 @@
       modalUIStore.zenModeActiveTab = tabs[nextIndex];
       const nextTab = modalUIStore.zenModeActiveTab;
       if (nextTab === "overview") tabOverview?.focus();
-      else if (nextTab === "inventory") tabInventory?.focus();
       else if (nextTab === "map") tabMap?.focus();
     }
   };
@@ -197,6 +191,41 @@
         modalUIStore.closeLightbox();
       }
       return;
+    }
+
+    if (isEditing) {
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl?.tagName === "INPUT" || activeEl?.tagName === "SELECT";
+      const isTextarea = activeEl?.tagName === "TEXTAREA";
+
+      if (e.key === "Enter" && isInput) {
+        if (
+          activeEl.closest('[data-shortcuts="ignore"]') ||
+          activeEl.closest('[role="combobox"]')
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        await saveChanges();
+        return;
+      }
+
+      if (e.key === "Escape" && (isInput || isTextarea)) {
+        if (activeEl?.getAttribute("aria-expanded") === "true") {
+          return;
+        }
+        if (activeEl.closest('[data-shortcuts="ignore"]')) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        cancelEditing();
+        return;
+      }
     }
 
     if (
@@ -316,22 +345,6 @@
       </button>
       {#if !vault.isGuest}
         <button
-          bind:this={tabInventory}
-          role="tab"
-          id="tab-inventory"
-          aria-selected={activeTab === "inventory"}
-          aria-controls="panel-inventory"
-          tabindex={activeTab === "inventory" ? 0 : -1}
-          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
-          'inventory'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (modalUIStore.zenModeActiveTab = "inventory")}
-          onkeydown={handleTabKeydown}
-        >
-          INVENTORY
-        </button>
-        <button
           bind:this={tabMap}
           role="tab"
           id="tab-map"
@@ -367,13 +380,24 @@
             bind:editState
             {resolvedImageUrl}
             {isPopout}
-            onShowLightbox={() =>
-              modalUIStore.openLightbox(resolvedImageUrl, entity.title)}
+            onShowLightbox={(rect) =>
+              modalUIStore.openLightbox(
+                resolvedImageUrl,
+                entity.title,
+                rect,
+                entity.image,
+              )}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />
 
-          <ZenContent {entity} bind:editState bind:scrollContainer />
+          <ZenContent
+            {entity}
+            bind:editState
+            bind:scrollContainer
+            onNavigate={navigateTo}
+            {isPopout}
+          />
         </div>
       {:else if activeTab === "map"}
         <div
@@ -388,15 +412,6 @@
           >
             <DetailMapTab {entity} />
           </div>
-        </div>
-      {:else if activeTab === "inventory"}
-        <div
-          role="tabpanel"
-          id="panel-inventory"
-          aria-labelledby="tab-inventory"
-          class="flex-1 p-8 flex items-center justify-center text-theme-muted font-header text-sm italic"
-        >
-          Inventory system initialization pending...
         </div>
       {/if}
     </div>

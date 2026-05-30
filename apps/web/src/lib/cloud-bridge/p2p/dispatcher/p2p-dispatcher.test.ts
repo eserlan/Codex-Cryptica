@@ -122,4 +122,36 @@ describe("P2PDispatcher", () => {
     expect(handled).toBe(false);
     expect(handler.handle).not.toHaveBeenCalled();
   });
+
+  it("should silently ignore internal and silent out-of-band message types", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const dispatcher = new P2PDispatcher();
+
+    const handler: P2PMessageHandler = {
+      canHandle: vi.fn(() => true),
+      handle: vi.fn(),
+    };
+    dispatcher.register(handler);
+
+    const silentTypes = [
+      "handshake",
+      "handshake_ack",
+      "ping",
+      "pong",
+      "FILE_RESPONSE",
+    ];
+    for (const type of silentTypes) {
+      const handled = await dispatcher.dispatch(
+        { type } as any,
+        {} as any,
+        {} as any,
+      );
+      expect(handled).toBe(false);
+      expect(handler.canHandle).not.toHaveBeenCalled();
+      expect(handler.handle).not.toHaveBeenCalled();
+    }
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
 });

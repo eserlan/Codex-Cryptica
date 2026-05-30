@@ -246,9 +246,34 @@
     showCoverEditor = false;
   };
 
-  const openCoverLightbox = () => {
+  const openCoverLightbox = (
+    e?:
+      | MouseEvent
+      | { x: number; y: number; width: number; height: number }
+      | null,
+  ) => {
     if (coverImageUrl) {
-      modalUIStore.openLightbox(coverImageUrl, "World cover");
+      let rect: { x: number; y: number; width: number; height: number } | null =
+        null;
+      if (e instanceof MouseEvent && e.currentTarget) {
+        const clientRect = (
+          e.currentTarget as HTMLElement
+        ).getBoundingClientRect();
+        rect = {
+          x: clientRect.left,
+          y: clientRect.top,
+          width: clientRect.width,
+          height: clientRect.height,
+        };
+      } else if (
+        e &&
+        typeof e === "object" &&
+        !(e instanceof MouseEvent) &&
+        "x" in e
+      ) {
+        rect = e as { x: number; y: number; width: number; height: number };
+      }
+      modalUIStore.openLightbox(coverImageUrl, "World cover", rect);
     }
   };
 
@@ -261,8 +286,8 @@
 
 <section
   data-testid="front-page-shell"
-  class="front-page-shell relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
-  style={`background-color: ${themeTokens.background}; background-image: radial-gradient(circle at top, rgba(${hexToRgb(
+  class="front-page-shell world-canvas relative isolate min-h-[calc(var(--app-content-height)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
+  style={`background-color: ${themeTokens.background}; background-image: var(--bg-texture-overlay), radial-gradient(circle at top, rgba(${hexToRgb(
     themeTokens.primary,
   )}, 0.16), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
     themeTokens.background,
@@ -295,12 +320,12 @@
       ></div>
     {/if}
     <div
-      class="absolute inset-0 pointer-events-none opacity-65 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.05),rgba(0,0,0,0.7)),linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.65))]"
-      style={`background-image: radial-gradient(circle at top, rgba(${hexToRgb(
+      class="absolute inset-0 pointer-events-none opacity-65"
+      style={`background-image: var(--frontpage-vignette), radial-gradient(circle at top, rgba(${hexToRgb(
         themeTokens.primary,
       )}, 0.08), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
         themeTokens.background,
-      )}, 0.1), rgba(${hexToRgb(themeTokens.background)}, 0.75))`}
+      )}, 0.1), rgba(${hexToRgb(themeTokens.background)}, 0.75));`}
     ></div>
     <div
       class="absolute inset-0 pointer-events-none opacity-40 bg-[linear-gradient(transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"

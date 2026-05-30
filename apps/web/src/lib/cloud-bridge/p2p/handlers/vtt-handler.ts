@@ -28,9 +28,10 @@ export class VTTHandler extends BaseHandler {
             | { image?: string }
             | undefined)
         : null;
-      const roster = (await import("svelte/store")).get(
-        context.guestRoster,
-      ) as Record<string, { displayName?: string } | undefined>;
+      const roster = context.guestStore.guestRoster as Record<
+        string,
+        { displayName?: string } | undefined
+      >;
       const guest = roster[connection.peer];
 
       mapSession.addToken({

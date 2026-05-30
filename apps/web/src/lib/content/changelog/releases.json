@@ -1,5 +1,105 @@
 [
   {
+    "version": "0.26.2",
+    "title": "The Vault Save Confidence & Chronology Quality Update",
+    "date": "2026-05-26",
+    "type": "patch",
+    "highlights": [
+      "Silent Permission Checks: Verification of directory permissions is now fully silent at startup, preventing annoying browser picker prompts when you open the app.",
+      "Clear Access Grants: A prominent 'GRANT ACCESS' button appears in the sidebar when a vault folder handle needs permission, making recovery simple and clear.",
+      "Instant Save Confirmation: The status indicator displays a clear 3-second 'SAVED' checkmark before returning to idle, with immediate keypress interruption if you start editing again.",
+      "Interrupt-Safe Vault Switching: A 5-second timeout during vault switching prevents the app from hanging if background saves get stuck, proceeding with the vault switch safely."
+    ]
+  },
+  {
+    "version": "0.26.1",
+    "title": "The Nested Entities & Explorer Polish Update",
+    "date": "2026-05-26",
+    "type": "patch",
+    "highlights": [
+      "Deep Campaign Hierarchy: Nest folders and campaign notes up to 8 levels deep (previously 5) to organize massive campaign settings visually.",
+      "Re-engineered Drag-and-Drop: Rebuilt browser-native drag-and-drop to offer completely smooth, flicker-free moves with automatic parent-child cycle checking and a dedicated drop zone to promote folders back to the root level.",
+      "Inline Folder Creation: Hover over any explorer item and click '+' to instantly spawn and name nested child entities without opening full configuration dialogs.",
+      "HTML & ARIA Semantics: Rewrote explorer item rows as standard list items (role='listitem') containing a single interactive button, ensuring screen readers and keyboard navigation follow standard accessibility behavior.",
+      "Reload Persistence: Resolved a cache hydration issue, ensuring custom campaign folder nesting structures and visibility states correctly survive hard browser page reloads."
+    ]
+  },
+  {
+    "version": "0.26.0",
+    "title": "The Multi-Sensory & Interactive Chronology Update",
+    "date": "2026-05-25",
+    "type": "minor",
+    "highlights": [
+      "Interactive Sound Bites: Bring your campaign characters to life with fully voiced quotes, customizable transcripts, and a beautiful floating player controls bar.",
+      "Live Audio Broadcasting: Play vocal performances directly on your players' devices in real-time, synchronized perfectly across all connected devices during a live session.",
+      "Instant Image Sharing: Project key illustrations, maps, and reference scenes instantly to all players' screens in full screen with elegant, immersive visual transitions.",
+      "Tactile Date Picker: A sleek, physical-feeling scroll-wheel calendar dial that makes setting dates and timelines a satisfying, fluid experience.",
+      "Prominent Entity Highlights: Easily mark key campaign figures and focal locations as 'important' to make them stand out on your network relationship graph."
+    ]
+  },
+  {
+    "version": "0.25.1",
+    "title": "The Autotagging & Search Autocomplete Update",
+    "date": "2026-05-24",
+    "type": "patch",
+    "highlights": [
+      "Smart Historical Tagging: Entities representing historical characters, fallen factions, or past eras are now automatically marked as 'past' to streamline timeline filtering.",
+      "Fluid Tag Search: Selecting suggestions from the search box automatically transitions them into active sidebar filters, keeping your search bar clean and intuitive.",
+      "Snappy Search Autocomplete: The search suggestion menu is smarter and re-evaluates instantly as you type, making it effortless to build multi-tag queries."
+    ]
+  },
+  {
+    "version": "0.25.0",
+    "title": "The Art Direction Update",
+    "date": "2026-05-23",
+    "type": "minor",
+    "highlights": [
+      "Default Art Prompts: Image generation now resolves consistent Art Direction before drawing, so visuals stay grounded in your world instead of starting from a generic prompt.",
+      "Category Defaults: Characters, creatures, locations, items, factions, events, notes, and world covers now receive composition guidance tailored to what you are drawing.",
+      "Theme-Aware Visual Style: Active world themes now contribute Default Art Style guidance for generated images while preserving stronger entity and note-based art direction.",
+      "World Cover Direction: Front page cover generation now combines world-cover composition with the active theme's visual style for more coherent campaign covers.",
+      "Lore-Native Customization: Add sections such as Art Direction, Default Art Style, or Visual Direction to normal notes/entities to guide image generation without a separate settings form.",
+      "Smarter Draw Commands: Commands like /draw character Almos can use category hints when no matched entity metadata is available, while real entity categories still take precedence."
+    ]
+  },
+  {
+    "version": "0.24.0",
+    "title": "The Dual-Layer Theming & Chrome Stabilization Update",
+    "date": "2026-05-23",
+    "type": "minor",
+    "highlights": [
+      "Dual-Layer Appearance: App chrome and world genre themes are now separated, keeping navigation, settings, and workspace controls stable while vault themes change.",
+      "Neutral App Chrome: Headers, sidebars, panels, and status indicators now use consistent neutral light/dark styling instead of inheriting campaign texture and genre colors.",
+      "System Appearance Support: The workspace can follow the device's light or dark preference while preserving the active world theme for campaign content.",
+      "Theme Counterparts: Selectable world themes now resolve matching light and dark counterparts so campaign mood survives appearance changes.",
+      "Settings Clarity: Appearance controls now distinguish app-level display mode from vault-level world themes."
+    ]
+  },
+  {
+    "version": "0.23.0",
+    "title": "The Animated Transitions & State Persistence Update",
+    "date": "2026-05-22",
+    "type": "minor",
+    "highlights": [
+      "Tactile Panel Opening: The entity detail panel now dynamically expands and scales directly from the node, button, or search result you clicked.",
+      "Mobile Bottom Sheet: The detail panel slides up smoothly as a clean bottom drawer on mobile displays to optimize reading space.",
+      "Navigational Cross-Fade: Moving between connected entities within the panel smoothly fades the inner text without jarring frame movements.",
+      "Canvas Visual Feedback: Selecting nodes on the relationship graph triggers a soft, glowing ripple underlay animation.",
+      "Workspace State Persistence: Restores your workspace exactly as you left it. Sidebar toggles, active tools, selected entities, and detailed Zen mode writing progress are now safely remembered per vault.",
+      "Smart Proposal Throttle: Auto-scan triggers are now paused when an entity already has 5 or more connections, preventing AI generation clutter. Includes an optional manual scan trigger and an increased 5-second buffer when navigating."
+    ]
+  },
+  {
+    "version": "0.22.0",
+    "title": "The Spatial & Scratchpad Update",
+    "date": "2026-05-22",
+    "type": "minor",
+    "highlights": [
+      "QuickNote Scratchpad: A lightning-fast overlay (Ctrl+I / Cmd+I) to dump ideas instantly without losing your flow.",
+      "Make Entity: Instantly convert fleeting note scraps into fully structured Codex Cryptica entities (Characters, Locations, Items, Factions, or Events) using the Oracle AI engine."
+    ]
+  },
+  {
     "version": "0.21.0",
     "title": "The Mobile Ergonomics Update",
     "date": "2026-04-26",

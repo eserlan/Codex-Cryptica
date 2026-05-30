@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DefaultTextGenerationService } from "./text-generation.service";
+import {
+  DefaultTextGenerationService,
+  resolvePronounsLocally,
+} from "./text-generation.service.svelte";
 import { TIER_MODES } from "schema";
 import * as capabilityGuard from "./capability-guard";
 
@@ -46,7 +49,6 @@ vi.mock("./prompts/entity-reconciliation", () => ({
 describe("DefaultTextGenerationService", () => {
   let service: DefaultTextGenerationService;
   let mockAiClientManager: any;
-  let mockContextRetrievalService: any;
   let mockModel: any;
 
   beforeEach(() => {
@@ -73,20 +75,13 @@ describe("DefaultTextGenerationService", () => {
       getModel: vi.fn().mockReturnValue(mockModel),
     };
 
-    mockContextRetrievalService = {
-      getConsolidatedContext: vi.fn().mockReturnValue("consolidated"),
-    };
-
-    service = new DefaultTextGenerationService(
-      mockAiClientManager,
-      mockContextRetrievalService as any,
-    );
+    service = new DefaultTextGenerationService(mockAiClientManager);
   });
 
   describe("expandQuery", () => {
-    it("should call model to expand query", async () => {
+    it("should call model to expand query when local resolution is insufficient", async () => {
       const result = await service.expandQuery("key", "him?", [
-        { role: "user", content: "Valerius" },
+        { role: "user" as const, content: "and but or if" },
       ]);
 
       expect(result).toBe("Generated content");
@@ -99,24 +94,105 @@ describe("DefaultTextGenerationService", () => {
       );
     });
 
-    it("should return original query if AI is disabled", async () => {
-      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
-
-      const result = await service.expandQuery("key", "him?", []);
-      expect(result).toBe("him?");
+    it("should bypass AI completely when local resolution succeeds", async () => {
+      const result = await service.expandQuery("key", "Where does he live?", [
+        { role: "user" as const, content: "Let's talk about **Sir Alden**." },
+      ]);
+      expect(result).toBe("Where does Sir Alden live?");
+      expect(mockAiClientManager.getModel).not.toHaveBeenCalled();
     });
 
-    it("should return original query on error", async () => {
+    it("should resolve query locally if AI is disabled", async () => {
+      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
+
+      const result = await service.expandQuery("key", "Where does he live?", [
+        { role: "user" as const, content: "Let's talk about **Sir Alden**." },
+      ]);
+      expect(result).toBe("Where does Sir Alden live?");
+    });
+
+    it("should fall back to local resolver on AI error when local resolution is insufficient", async () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       mockModel.generateContent.mockRejectedValue(new Error("AI error"));
 
-      const result = await service.expandQuery("key", "Original query", []);
+      const result = await service.expandQuery("key", "What is its name?", [
+        { role: "user" as const, content: "and but or if" },
+      ]);
 
-      expect(result).toBe("Original query");
+      expect(result).toBe("What is its name?");
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
+    });
+
+    it("should truncate long history content to keep payload small when falling back to AI", async () => {
+      const veryLongContent = "and but or if ".repeat(300);
+      await service.expandQuery("key", "him?", [
+        { role: "user" as const, content: veryLongContent },
+      ]);
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("... [truncated for length]"),
+      );
+    });
+  });
+
+  describe("resolvePronounsLocally", () => {
+    it("should resolve pronouns based on markdown bold entities", async () => {
+      const history = [
+        {
+          role: "user" as const,
+          content: "The legendary **Dulandir** is a vast place.",
+        },
+      ];
+      const query = "Where is that place located?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("Where is Dulandir located?");
+    });
+
+    it("should resolve possessives correctly", async () => {
+      const history = [
+        { role: "user" as const, content: "Here is **Sir Alden**." },
+      ];
+      const query = "What is his title?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("What is Sir Alden's title?");
+    });
+
+    it("should fall back to proper nouns if no markdown bold", async () => {
+      const history = [
+        { role: "user" as const, content: "Let's talk about Valerius." },
+      ];
+      const query = "Where does he live?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("Where does Valerius live?");
+    });
+
+    it("should return the original query if no history exists", async () => {
+      const result = await resolvePronounsLocally("Where does he live?", []);
+      expect(result).toBe("Where does he live?");
+    });
+
+    it("should prioritize subjects from the user's previous query over assistant bold matches", async () => {
+      const history = [
+        { role: "user" as const, content: "who is Kardos?" },
+        {
+          role: "assistant" as const,
+          content:
+            "While **Chief Grimgob** is nearby, Master Kardos is a powerful mage.",
+        },
+      ];
+      const query = "What does he do?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("What does Kardos do?");
+    });
+
+    it("should resolve lowercase names in user queries by falling back to general nouns", async () => {
+      const history = [{ role: "user" as const, content: "who's kardos" }];
+      const query = "what does he do?";
+      const result = await resolvePronounsLocally(query, history);
+      expect(result).toBe("what does kardos do?");
     });
   });
 
@@ -375,6 +451,29 @@ describe("DefaultTextGenerationService", () => {
       expect(chatOptions.history[0].parts[0].text).toContain("User message 2");
       expect(chatOptions.history[1].role).toBe("model");
     });
+
+    it("should truncate long chat history messages to prevent token bloat", async () => {
+      const onUpdate = vi.fn();
+      const veryLongContent = "B".repeat(5000);
+      const history = [
+        { role: "user", content: veryLongContent },
+        { role: "assistant", content: "Short reply" },
+      ];
+
+      await service.generateResponse(
+        "key",
+        "Query",
+        history,
+        "Context",
+        "model",
+        onUpdate,
+      );
+
+      const chatOptions = vi.mocked(mockModel.startChat).mock.calls[0][0];
+      expect(chatOptions.history[0].parts[0].text).toBe(
+        "B".repeat(4000) + "\n\n... [truncated for length]",
+      );
+    });
   });
 
   describe("generateStructuredEntity", () => {
@@ -469,6 +568,55 @@ describe("DefaultTextGenerationService", () => {
           [],
         ),
       ).rejects.toThrow("Entity reconciliation failed: Direct throw");
+    });
+  });
+
+  describe("snapshot stability", () => {
+    it("should snapshot history to prevent concurrent mutations from affecting prompt", async () => {
+      const { createReactiveHistory } =
+        await import("./text-generation-test-helper.svelte");
+      const history = createReactiveHistory();
+
+      const promise = service.expandQuery("key", "him?", history);
+
+      // Mutate history immediately after initiating the call
+      history[0].content = "Mutated";
+
+      await promise;
+
+      const { buildQueryExpansionPrompt } =
+        await import("./prompts/query-expansion");
+      expect(buildQueryExpansionPrompt).toHaveBeenCalledWith(
+        expect.stringContaining("USER: Original"),
+        "him?",
+      );
+    });
+
+    it("should snapshot target and sources to prevent concurrent mutations in merge proposal", async () => {
+      const { createReactiveTarget, createReactiveSources } =
+        await import("./text-generation-test-helper.svelte");
+      const target = createReactiveTarget();
+      const sources = createReactiveSources();
+
+      const promise = service.generateMergeProposal(
+        "key",
+        "model",
+        target,
+        sources,
+      );
+
+      target.title = "MutatedTarget";
+      sources[0].title = "MutatedSource";
+
+      await promise;
+
+      const { buildMergeProposalPrompt } =
+        await import("./prompts/merge-proposal");
+      // Since context-retrieval.service is mocked to return "consolidated", we check the targetContext header formatting
+      expect(buildMergeProposalPrompt).toHaveBeenCalledWith(
+        expect.stringContaining("--- TARGET: OriginalTarget"),
+        expect.stringContaining("--- SOURCE 1: OriginalSource"),
+      );
     });
   });
 });

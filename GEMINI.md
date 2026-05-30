@@ -1,8 +1,21 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-20
+Auto-generated from all feature plans. Last updated: 2026-05-30
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, `@google/generative-ai` (for category inference and template filling), `zod` (126-propose-entities)
+
+- TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine` (123-entity-templates)
+- OPFS (Vault Files) for custom overrides, IndexedDB for settings if persistent (or local-only UI state as specified) (123-entity-templates)
+
+- TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper) (122-data-integrity-boundaries)
+- IndexedDB (Metadata/Cache), OPFS (Vault Files) (122-data-integrity-boundaries)
+
+- TypeScript 6.0.3 + zod (874-art-direction-clarification)
+
+- TypeScript 6.0.3, Svelte 5 Runes + Svelte 5, Dexie (IndexedDB), Cytoscape.js (109-quicknote-scratchpad)
+- IndexedDB (`quick_notes` store) (109-quicknote-scratchpad)
 
 - TypeScript 6.0.3, Svelte 5 Runes + `@google/generative-ai`, `idb` (IndexedDB), `flexsearch`, `comlink` (102-oracle-store-decoupling)
 - OPFS (Vault Files), IndexedDB (Chat History, Sync Registry), LocalStorage (UI State) (102-oracle-store-decoupling)
@@ -156,7 +169,7 @@ specs/          # Feature specifications
 
 ## Commands
 
-pnpm test; pnpm run lint
+bun run test; bun run lint
 
 ## Code Style
 
@@ -172,7 +185,7 @@ TypeScript: Follow standard conventions
 - **Style Guide Adherence**: ALWAYS read and adhere to `@docs/STYLE_GUIDE.md`. All UI components MUST use Svelte 5 Runes and Tailwind 4 semantic tokens (e.g., `text-theme-primary`).
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - **Reactive Snapshots**: Use `$state.snapshot(obj)` when passing state to non-reactive logic or async handlers to prevent stale references.
-- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `pnpm test` passes with your changes.
+- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `bun run test` passes with your changes.
 - **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
 - **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
@@ -182,10 +195,12 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 102-oracle-store-decoupling: Added TypeScript 6.0.3, Svelte 5 Runes + `@google/generative-ai`, `idb` (IndexedDB), `flexsearch`, `comlink`
+- 126-propose-entities: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, `@google/generative-ai` (for category inference and template filling), `zod`
 
-- 099-map-session-decomposition: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, Vitest, existing VTT managers under `apps/web/src/lib/stores/vtt/`, `VTTSessionService`, P2P host/guest services
+- 123-entity-templates: Added TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine`
 
-- 098-p2p-host-service-decoupling: Added TypeScript 5.9.x + `PeerJS`, Svelte 5 (Runes), `@codex/events`
+- 944-data-integrity-boundaries: Added TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper)
 
 <!-- MANUAL ADDITIONS START -->
+
+<!-- MANUAL ADDITIONS END -->

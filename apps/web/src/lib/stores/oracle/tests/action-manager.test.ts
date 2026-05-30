@@ -48,4 +48,32 @@ describe("OracleActionManager", () => {
       undefined,
     );
   });
+
+  it("should draw an entity through the shared execution context", async () => {
+    const context = { uiStore: { activeThemeId: "fantasy" } };
+    mockStore.getExecutionContext.mockReturnValue(context);
+
+    await manager.drawEntity("entity-1");
+
+    expect(mockStore.ui.visualizingEntityId).toBeNull();
+    expect(mockExecutor.drawEntity).toHaveBeenCalledWith("entity-1", context);
+  });
+
+  it("should not start a duplicate entity draw while one is active", async () => {
+    mockStore.ui.visualizingEntityId = "entity-1";
+
+    await manager.drawEntity("entity-1");
+
+    expect(mockExecutor.drawEntity).not.toHaveBeenCalled();
+  });
+
+  it("should draw a message through the shared execution context", async () => {
+    const context = { uiStore: { activeThemeId: "cyberpunk" } };
+    mockStore.getExecutionContext.mockReturnValue(context);
+
+    await manager.drawMessage("message-1");
+
+    expect(mockStore.ui.visualizingMessageId).toBeNull();
+    expect(mockExecutor.drawMessage).toHaveBeenCalledWith("message-1", context);
+  });
 });

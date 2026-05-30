@@ -15,6 +15,8 @@ export interface VaultMinimal {
   isGuest: boolean;
   activeVaultId?: string;
   loadEntityContent?: (id: string) => Promise<void>;
+  titleAliasIndex?: Map<string, string>;
+  allTitlesString?: string;
 }
 
 export interface ChatHistoryMessage {
@@ -122,11 +124,17 @@ export interface TextGenerationService {
   ): Promise<void>;
 }
 
+export interface ImageGenerationOptions {
+  provider?: "gemini" | "custom";
+  baseUrl?: string;
+}
+
 export interface ImageGenerationService {
   generateImage(
     apiKey: string,
     prompt: string,
     modelName: string,
+    options?: ImageGenerationOptions,
   ): Promise<Blob>;
   distillVisualPrompt(
     apiKey: string,
@@ -135,4 +143,63 @@ export interface ImageGenerationService {
     modelName: string,
     demoMode?: boolean,
   ): Promise<string>;
+}
+
+// ─── Sound Bite ───────────────────────────────────────────────────────────────
+
+export type SoundBiteVoiceMode = "entity" | "scholar";
+
+export interface VaultEntitySummary {
+  title: string;
+  type: string;
+  summary: string;
+}
+
+/**
+ * Voice characteristics used for TTS synthesis.
+ * Shared between oracle-engine (generation) and the persisted SoundBite entity field.
+ */
+export interface VoiceProfile {
+  gender: "male" | "female" | "neutral";
+  ageRange: "child" | "young-adult" | "middle-aged" | "elder";
+  /** e.g. "Hungarian", "Queen's English", null/undefined if unspecified */
+  accent?: string | null;
+  /** e.g. "gruff", "serene", "commanding", "scholarly" */
+  tone: string;
+}
+
+export interface SoundBiteRequest {
+  entity: Entity;
+  voiceMode: SoundBiteVoiceMode;
+  /** Condensed list of other vault entities for scholar lookup */
+  vaultEntitySummaries: VaultEntitySummary[];
+  /**
+   * When provided, reuse this voice profile for TTS instead of the one the
+   * LLM infers — preserves speaker timbre across same-mode regenerations.
+   * Only applied when the saved bite's voiceMode matches the current mode.
+   */
+  voiceProfile?: VoiceProfile;
+}
+
+export interface ScholarAttribution {
+  name: string;
+  title: string;
+}
+
+export interface SoundBiteResult {
+  transcript: string;
+  audioBlob: Blob | null; // null if TTS unavailable/failed
+  voiceMode: SoundBiteVoiceMode;
+  scholarAttribution?: ScholarAttribution;
+  /** The voice profile used for TTS — save this to preserve voice consistency on regeneration */
+  voiceProfile: VoiceProfile;
+}
+
+export interface SoundBiteGenerationService {
+  generateSoundBite(
+    apiKey: string,
+    modelName: string,
+    request: SoundBiteRequest,
+    options?: { isGuest?: boolean; isDemoMode?: boolean },
+  ): Promise<SoundBiteResult>;
 }

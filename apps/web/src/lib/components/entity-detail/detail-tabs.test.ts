@@ -23,11 +23,10 @@ describe("entity detail tab ids", () => {
 
   it("wraps keyboard navigation across the tab list", () => {
     expect(getNextEntityDetailTab("status", "ArrowRight")).toBe("lore");
-    expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("inventory");
+    expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("status");
     expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("map");
-    expect(getNextEntityDetailTab("inventory", "ArrowLeft")).toBe("lore");
-    expect(getNextEntityDetailTab("inventory", "Home")).toBe("status");
+    expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");
     expect(getNextEntityDetailTab("status", "End")).toBe("map");
   });
 
@@ -36,10 +35,10 @@ describe("entity detail tab ids", () => {
 
     expect(
       getNextEntityDetailTabInList(visibleTabs, "status", "ArrowRight"),
-    ).toBe("inventory");
-    expect(
-      getNextEntityDetailTabInList(visibleTabs, "inventory", "ArrowLeft"),
-    ).toBe("status");
+    ).toBe("map");
+    expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowLeft")).toBe(
+      "status",
+    );
     expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
       "map",
     );

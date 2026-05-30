@@ -32,6 +32,22 @@ export const getGraphStyles = (
       },
     },
     {
+      selector: "node[type = 'quicknote']",
+      style: {
+        "border-style": "dotted",
+        "border-color": theme.tokens.accent || "#f59e0b",
+        "border-width": 3,
+        "background-color": theme.tokens.accent || "#f59e0b",
+        "background-opacity": 0.15,
+        "underlay-color": theme.tokens.accent || "#f59e0b",
+        "underlay-padding": 8,
+        "underlay-opacity": 0.15,
+        "underlay-shape": "ellipse",
+        opacity: 0.9,
+        "text-opacity": 0.9,
+      },
+    },
+    {
       selector: ".category-filtered-out",
       style: {
         display: "none",

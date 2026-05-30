@@ -1,7 +1,6 @@
 # Implementation Plan - Fuzzy Search
 
 **Feature**: Fuzzy Search (`004-fuzzy-search`)
-**Status**: Planned
 
 ## Technical Context
 

@@ -2,7 +2,6 @@
 
 **Feature**: Vault Detachment and Switching
 **Branch**: `023-switch-vaults`
-**Status**: Ready
 
 ## Implementation Strategy
 

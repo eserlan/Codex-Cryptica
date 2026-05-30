@@ -135,6 +135,8 @@
           <img
             src={url}
             alt={linkedMap.name}
+            loading="lazy"
+            decoding="async"
             class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
           />
         {/await}

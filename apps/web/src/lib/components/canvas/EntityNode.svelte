@@ -57,9 +57,12 @@
       node.style.height = node.scrollHeight + "px";
     };
     node.addEventListener("input", resize);
-    setTimeout(resize, 0);
+    const frame = requestAnimationFrame(resize);
     return {
-      destroy: () => node.removeEventListener("input", resize),
+      destroy: () => {
+        node.removeEventListener("input", resize);
+        cancelAnimationFrame(frame);
+      },
     };
   }
 
@@ -145,6 +148,8 @@
           <img
             src={imageUrl}
             alt={entity?.title}
+            loading="lazy"
+            decoding="async"
             class="w-full h-full object-cover object-[center_20%] transition-transform duration-500 group-hover:scale-105"
           />
         </div>
@@ -231,13 +236,13 @@
           {/if}
         </div>
 
-        {#if entity?.tags && entity.tags.length > 0}
+        {#if entity?.labels && entity.labels.length > 0}
           <div class="flex flex-wrap gap-1 mt-3">
-            {#each entity.tags.slice(0, 5) as tag}
+            {#each entity.labels.slice(0, 5) as label}
               <span
                 class="px-1.5 py-0.5 bg-theme-bg border border-theme-border rounded text-[9px] text-theme-muted"
               >
-                {tag}
+                {label}
               </span>
             {/each}
           </div>

@@ -1,21 +1,161 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
+  import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import { isEntityVisible, type Entity } from "schema";
+  import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
+
+  let editingConnectionTarget = $state<string | null>(null);
+  let isAddingConnection = $state(false);
+  let newConnectionTargetName = $state("");
+  let newConnectionTargetId = $state<string | null>(null);
+  let newConnectionType = $state("related_to");
+  let newConnectionLabel = $state("");
+  let addConnectionError = $state<string | null>(null);
+  let isConnecting = $state(false);
+
+  const handleAddConnection = async () => {
+    addConnectionError = null;
+    if (!entity) return;
+    if (!newConnectionTargetId) {
+      addConnectionError = "Please select a valid entity.";
+      return;
+    }
+    if (newConnectionTargetId === entity.id) {
+      addConnectionError = "Cannot connect an entity to itself.";
+      return;
+    }
+    if (isConnecting) return;
+
+    try {
+      isConnecting = true;
+      const success = await vault.addConnection(
+        entity.id,
+        newConnectionTargetId,
+        newConnectionType,
+        newConnectionLabel.trim() || undefined,
+      );
+
+      if (success) {
+        isAddingConnection = false;
+        newConnectionTargetName = "";
+        newConnectionTargetId = null;
+        newConnectionType = "related_to";
+        newConnectionLabel = "";
+      } else {
+        addConnectionError = "Failed to create connection.";
+      }
+    } finally {
+      isConnecting = false;
+    }
+  };
 
   let {
     entity,
     editState = $bindable(),
     scrollContainer = $bindable(),
+    onNavigate = () => {},
+    isPopout = false,
   } = $props<{
     entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
+    onNavigate?: (id: string) => void;
+    isPopout?: boolean;
   }>();
+
+  interface ConnectionListItem {
+    id: string;
+    key: string;
+    displayLabel: string;
+    rawLabel?: string;
+    title: string;
+    type: string;
+    isOutbound: boolean;
+    isChild?: boolean;
+    isParent?: boolean;
+    strength?: number;
+  }
+
+  const allConnections = $derived.by(() => {
+    if (!entity) return [] as ConnectionListItem[];
+    const checkVisibility = (targetId: string) => {
+      const targetEntity = vault.entities[targetId];
+      if (!targetEntity) return false;
+      if (!vault.isGuest) return true;
+      return isEntityVisible(targetEntity, {
+        sharedMode: vault.isGuest,
+        defaultVisibility: vault.defaultVisibility,
+      });
+    };
+    const result: ConnectionListItem[] = [];
+    const connections = entity?.connections || [];
+    const connectionsLength = connections.length;
+    for (let i = 0; i < connectionsLength; i++) {
+      const c = connections[i];
+      if (checkVisibility(c.target)) {
+        result.push({
+          id: c.target,
+          key: `${c.target}-out-${c.type}-${i}`,
+          displayLabel: c.label || c.type,
+          rawLabel: c.label,
+          title: vault.entities[c.target]?.title || c.target,
+          type: c.type,
+          isOutbound: true,
+          strength: c.strength,
+        });
+      }
+    }
+    const inboundConnections = vault.inboundConnections[entity?.id || ""] || [];
+    const inboundLength = inboundConnections.length;
+    for (let i = 0; i < inboundLength; i++) {
+      const item = inboundConnections[i];
+      if (checkVisibility(item.sourceId)) {
+        result.push({
+          id: item.sourceId,
+          key: `${item.sourceId}-in-${item.connection.type}-${i}`,
+          displayLabel: item.connection.label || item.connection.type,
+          rawLabel: item.connection.label,
+          title: vault.entities[item.sourceId]?.title || item.sourceId,
+          type: item.connection.type,
+          isOutbound: false,
+          strength: item.connection.strength,
+        });
+      }
+    }
+
+    // Add children if exist
+    const entityId = entity?.id || "";
+    const allEntities = Object.values(vault.entities);
+    const children = allEntities.filter(
+      (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
+    );
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (checkVisibility(child.id)) {
+        const alreadyConnected = result.some((c) => c.id === child.id);
+        if (!alreadyConnected) {
+          result.push({
+            id: child.id,
+            key: `${child.id}-child-${i}`,
+            displayLabel: "Child",
+            rawLabel: "Child",
+            title: child.title,
+            type: "child",
+            isOutbound: false,
+            isChild: true,
+          });
+        }
+      }
+    }
+
+    return result;
+  });
 
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
@@ -62,19 +202,37 @@
     return "Date";
   };
 
+  import { calendarEngine } from "chronology-engine";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+
   const formatDate = (date: any) => {
     if (!date || date.year === undefined) return "";
-    if (date.label) return date.label;
-    let str = `${date.year}`;
-    if (date.month !== undefined) str += `/${date.month}`;
-    if (date.day !== undefined) str += `/${date.day}`;
-    return str;
+    try {
+      return calendarEngine.format(date, calendarStore.config);
+    } catch {
+      if (date.label) return date.label;
+      const parts = [];
+      if (date.day !== undefined)
+        parts.push(date.day.toString().padStart(2, "0"));
+      if (date.month !== undefined)
+        parts.push(date.month.toString().padStart(2, "0"));
+      parts.push(date.year.toString());
+      return parts.join("/");
+    }
   };
 
   const draft = $derived(
     entity && regenerationService.pendingDraft?.entityId === entity.id
       ? regenerationService.pendingDraft
       : null,
+  );
+
+  // Entity auto-link: build flat index of titles + aliases for mention detection.
+  const entityIndex = $derived<EntityIndexEntry[]>(
+    Object.values(vault.entities).flatMap((e) => [
+      { text: e.title.toLowerCase(), id: e.id },
+      ...e.aliases.map((a) => ({ text: a.toLowerCase(), id: e.id })),
+    ]),
   );
 </script>
 
@@ -100,6 +258,7 @@
               editState?.type ?? entity?.type ?? "",
               "start",
             )}
+            referenceValue={editState.endDate}
           />
           <TemporalEditor
             bind:value={editState.endDate}
@@ -107,14 +266,15 @@
               editState?.type ?? entity?.type ?? "",
               "end",
             )}
+            referenceValue={editState.startDate}
           />
         </div>
       </div>
-    {:else if entity?.start_date || entity?.end_date}
+    {:else if entity?.date || entity?.start_date || entity?.end_date}
       <div
         class="flex flex-wrap gap-8 p-4 bg-theme-primary/5 border border-theme-border rounded"
       >
-        {#if entity?.start_date}
+        {#if entity?.date}
           <div class="flex flex-col">
             <span
               class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
@@ -122,21 +282,34 @@
               {getTemporalLabel(entity?.type || "", "start")}
             </span>
             <span class="text-lg font-header text-theme-primary"
-              >{formatDate(entity?.start_date)}</span
+              >{formatDate(entity?.date)}</span
             >
           </div>
-        {/if}
-        {#if entity?.end_date}
-          <div class="flex flex-col">
-            <span
-              class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
-            >
-              {getTemporalLabel(entity?.type || "", "end")}
-            </span>
-            <span class="text-lg font-header text-theme-primary"
-              >{formatDate(entity?.end_date)}</span
-            >
-          </div>
+        {:else}
+          {#if entity?.start_date}
+            <div class="flex flex-col">
+              <span
+                class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              >
+                {getTemporalLabel(entity?.type || "", "start")}
+              </span>
+              <span class="text-lg font-header text-theme-primary"
+                >{formatDate(entity?.start_date)}</span
+              >
+            </div>
+          {/if}
+          {#if entity?.end_date}
+            <div class="flex flex-col">
+              <span
+                class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              >
+                {getTemporalLabel(entity?.type || "", "end")}
+              </span>
+              <span class="text-lg font-header text-theme-primary"
+                >{formatDate(entity?.end_date)}</span
+              >
+            </div>
+          {/if}
         {/if}
       </div>
     {/if}
@@ -174,6 +347,9 @@
                 ? draft.chronicle
                 : entity?.content || "No records found."}
               editable={false}
+              {entityIndex}
+              currentEntityId={entity?.id ?? ""}
+              onEntityClick={(id) => onNavigate(id)}
             />
           </div>
         {:else}
@@ -219,8 +395,263 @@
                 ? draft.lore
                 : entity?.lore || "No detailed lore available."}
               editable={false}
+              {entityIndex}
+              currentEntityId={entity?.id ?? ""}
+              onEntityClick={(id) => onNavigate(id)}
             />
           </div>
+        {/if}
+      </div>
+    {/if}
+
+    {#if !(isPopout && vault.isGuest)}
+      <div class="block md:hidden space-y-4 pt-6 border-t border-theme-border">
+        <div
+          class="flex items-center justify-between border-b border-theme-border pb-2"
+        >
+          <h3
+            class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest"
+          >
+            Connections
+          </h3>
+          {#if !vault.isGuest && !isAddingConnection}
+            <button
+              type="button"
+              onclick={() => (isAddingConnection = true)}
+              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
+              aria-label="Add new connection"
+            >
+              <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+              ADD
+            </button>
+          {/if}
+        </div>
+
+        {#if isAddingConnection}
+          <div
+            class="p-3 bg-theme-bg border border-theme-primary/30 rounded-md space-y-3 shadow-md"
+          >
+            <div class="flex items-center justify-between">
+              <span
+                class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest font-header"
+                >New Connection</span
+              >
+              <button
+                type="button"
+                onclick={() => {
+                  isAddingConnection = false;
+                  newConnectionTargetName = "";
+                  newConnectionTargetId = null;
+                  newConnectionType = "related_to";
+                  newConnectionLabel = "";
+                  addConnectionError = null;
+                }}
+                class="text-theme-muted hover:text-theme-text"
+                aria-label="Cancel adding connection"
+              >
+                <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+              </button>
+            </div>
+
+            <div class="space-y-1">
+              <label
+                for="new-connection-target-mobile"
+                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                >Target Entity</label
+              >
+              <Autocomplete
+                bind:value={newConnectionTargetName}
+                bind:selectedId={newConnectionTargetId}
+                placeholder="Search entities..."
+                id="new-connection-target-mobile"
+                ariaLabel="Search target entity"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label
+                for="new-connection-type-mobile"
+                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                >Relationship Type</label
+              >
+              <select
+                id="new-connection-type-mobile"
+                bind:value={newConnectionType}
+                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
+              >
+                <option value="related_to">Default (Grey)</option>
+                <option value="neutral">Neutral (Amber)</option>
+                <option value="friendly">Friendly (Blue)</option>
+                <option value="enemy">Enemy (Red)</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label
+                for="new-connection-label-mobile"
+                class="block text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                >Custom Label (Optional)</label
+              >
+              <input
+                id="new-connection-label-mobile"
+                type="text"
+                bind:value={newConnectionLabel}
+                placeholder="e.g. Ally, Rivalling, Secret"
+                class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary"
+              />
+            </div>
+
+            {#if addConnectionError}
+              <p class="text-xs text-theme-danger font-semibold">
+                {addConnectionError}
+              </p>
+            {/if}
+
+            <div class="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onclick={() => {
+                  isAddingConnection = false;
+                  newConnectionTargetName = "";
+                  newConnectionTargetId = null;
+                  newConnectionType = "related_to";
+                  newConnectionLabel = "";
+                  addConnectionError = null;
+                }}
+                class="text-[10px] font-bold text-theme-muted hover:text-theme-text tracking-wider uppercase px-3 py-1.5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isConnecting}
+                onclick={handleAddConnection}
+                class="text-[10px] bg-theme-primary text-theme-bg font-bold tracking-wider uppercase px-3 py-1.5 rounded hover:bg-theme-secondary transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isConnecting ? "Connecting..." : "Connect"}
+              </button>
+            </div>
+          </div>
+        {/if}
+
+        {#if allConnections.length > 0}
+          <div class="space-y-2">
+            {#each allConnections as conn (conn.key)}
+              {#if editingConnectionTarget === conn.id && conn.isOutbound && !conn.isChild}
+                <div class="p-1">
+                  <ConnectionEditor
+                    sourceId={entity?.id || ""}
+                    connection={{
+                      target: conn.id,
+                      type: conn.type,
+                      strength: conn.strength ?? 1,
+                      label: conn.rawLabel || "",
+                    }}
+                    onSave={() => (editingConnectionTarget = null)}
+                    onCancel={() => (editingConnectionTarget = null)}
+                  />
+                </div>
+              {:else}
+                <div
+                  class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+                >
+                  <button
+                    type="button"
+                    onclick={() => onNavigate(conn.id)}
+                    class="flex-1 min-w-0 flex items-center gap-3 text-left"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isChild
+                        ? 'bg-emerald-500'
+                        : conn.isOutbound
+                          ? 'bg-theme-primary'
+                          : 'bg-blue-500'}"
+                    ></span>
+                    <div class="flex-1 min-w-0">
+                      <div
+                        class="text-xs text-theme-muted uppercase tracking-widest font-header"
+                      >
+                        {conn.displayLabel}
+                      </div>
+                      <div
+                        class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
+                      >
+                        {conn.title}
+                      </div>
+                    </div>
+                  </button>
+                  {#if !vault.isGuest}
+                    <div class="flex items-center gap-1">
+                      {#if conn.isOutbound && !conn.isChild}
+                        <button
+                          type="button"
+                          onclick={() => (editingConnectionTarget = conn.id)}
+                          class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                          aria-label="Edit connection"
+                          title="Edit connection"
+                        >
+                          <span class="icon-[lucide--pencil] w-3.5 h-3.5"
+                          ></span>
+                        </button>
+                      {/if}
+                      {#if conn.isChild}
+                        <button
+                          type="button"
+                          onclick={() => {
+                            isAddingConnection = true;
+                            newConnectionTargetId = conn.id;
+                            newConnectionTargetName = conn.title;
+                            newConnectionType = "related_to";
+                            newConnectionLabel = "";
+                          }}
+                          class="text-theme-muted hover:text-theme-primary transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                          aria-label="Establish custom connection"
+                          title="Establish custom connection"
+                        >
+                          <span class="icon-[lucide--plus] w-3.5 h-3.5"></span>
+                        </button>
+                      {/if}
+                      <button
+                        type="button"
+                        onclick={() => {
+                          const entityId = entity?.id;
+                          if (!entityId) return;
+                          if (conn.isChild) {
+                            vault.updateEntity(conn.id, { parent: undefined });
+                          } else if (conn.isOutbound) {
+                            vault.removeConnection(
+                              entityId,
+                              conn.id,
+                              conn.type,
+                            );
+                          } else {
+                            vault.removeConnection(
+                              conn.id,
+                              entityId,
+                              conn.type,
+                            );
+                          }
+                        }}
+                        class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                        aria-label="Delete connection"
+                        title="Delete connection"
+                      >
+                        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                      </button>
+                    </div>
+                  {/if}
+                  <button
+                    type="button"
+                    onclick={() => onNavigate(conn.id)}
+                    class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
+                    aria-label="Navigate to {conn.title}"
+                  ></button>
+                </div>
+              {/if}
+            {/each}
+          </div>
+        {:else}
+          <p class="text-xs text-theme-muted italic">No known connections.</p>
         {/if}
       </div>
     {/if}

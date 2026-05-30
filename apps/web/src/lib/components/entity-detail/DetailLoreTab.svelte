@@ -2,7 +2,7 @@
   import type { Entity } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let {
@@ -20,18 +20,19 @@
       ? regenerationService.pendingDraft
       : null,
   );
+
+  // Entity auto-link: build flat index of titles + aliases for mention detection.
+  const entityIndex = $derived<EntityIndexEntry[]>(
+    Object.values(vault.entities).flatMap((e) => [
+      { text: e.title.toLowerCase(), id: e.id },
+      ...e.aliases.map((a) => ({ text: a.toLowerCase(), id: e.id })),
+    ]),
+  );
 </script>
 
 {#if !vault.isGuest}
   <div class="space-y-4">
     <div>
-      <div
-        class="flex items-center gap-3 text-xs uppercase tracking-widest text-theme-muted mb-6 font-header"
-      >
-        <span class="text-theme-accent icon-[lucide--file-text] w-4 h-4"></span>
-        <span>{themeStore.jargon.lore_header}</span>
-        <div class="h-px bg-theme-border flex-1 ml-2"></div>
-      </div>
       {#if isEditing && !draft}
         <div class="h-96">
           <MarkdownEditor
@@ -60,6 +61,11 @@
               ? draft.lore
               : entity.lore || "No detailed lore available."}
             editable={false}
+            {entityIndex}
+            currentEntityId={entity.id}
+            onEntityClick={(id) => {
+              vault.selectedEntityId = id;
+            }}
           />
         </div>
       {/if}

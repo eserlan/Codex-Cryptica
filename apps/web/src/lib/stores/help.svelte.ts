@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import { base } from "$app/paths";
 import { VERSION } from "$lib/config";
+import { debugStore } from "$lib/stores/debug.svelte";
 import {
   type GuideStep,
   ONBOARDING_TOUR,
@@ -19,7 +20,7 @@ interface HelpStoreState {
   dismissedHints: string[];
 }
 
-const SEARCH_FIELDS = ["title", "tags", "content"];
+const SEARCH_FIELDS = ["title", "labels", "content"];
 
 export class HelpStore {
   // Walkthrough State
@@ -103,7 +104,7 @@ export class HelpStore {
 
           // Version Tracking
           if (loaded.lastSeenVersion !== VERSION) {
-            console.log(
+            debugStore.log(
               `[HelpStore] Version updated: ${loaded.lastSeenVersion} -> ${VERSION}`,
             );
             this.state.lastSeenVersion = VERSION;

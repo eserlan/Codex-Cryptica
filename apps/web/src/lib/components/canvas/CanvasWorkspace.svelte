@@ -18,7 +18,7 @@
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
-  import { onDestroy } from "svelte";
+
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -34,7 +34,7 @@
   );
   const canvasId = $derived(canvas?.id);
 
-  const logic = createCanvasLogic(engine);
+  const logic = createCanvasLogic(() => engine);
 
   useCanvasEvents({
     onQuickSpawn: (id, pos, screenPos) =>
@@ -160,15 +160,17 @@
     logic.handleQuickSpawn(entityId, position);
   }
 
-  onDestroy(() => {
-    logic.flushSave();
+  $effect(() => {
+    return () => {
+      logic.flushSave();
+    };
   });
 </script>
 
 <div
   class="canvas-container {logic.isConnecting
     ? 'is-connecting'
-    : ''} flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
+    : ''} flex h-[var(--app-content-height)] w-full overflow-hidden relative"
   tabindex="-1"
   role="none"
 >

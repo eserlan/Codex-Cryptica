@@ -1,4 +1,4 @@
-import { searchService as defaultSearchService } from "../search";
+import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 
@@ -6,8 +6,15 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
   private cachedVaultId: string | null = null;
+  private _searchService: any;
 
-  constructor(private searchService = defaultSearchService) {}
+  constructor(searchService?: any) {
+    this._searchService = searchService;
+  }
+
+  private get searchService() {
+    return this._searchService || defaultSearchService;
+  }
 
   getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {
     const parts = [];
@@ -26,6 +33,44 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     vault: VaultMinimal,
   ): string | undefined {
     const queryLower = query.toLowerCase();
+
+    if ((vault as any).titleAndAliasIndex) {
+      const index = (vault as any).titleAndAliasIndex;
+      for (const entry of index) {
+        if (entry.status === "draft") continue;
+
+        if (vault.isGuest) {
+          const realEntity = vault.entities?.[entry.entityId];
+          const checkEntity = realEntity || {
+            visibility: entry.visibility,
+            labels: entry.labels,
+          };
+          if (
+            !isEntityVisible(checkEntity as any, {
+              sharedMode: true,
+              defaultVisibility: vault.defaultVisibility,
+            })
+          ) {
+            continue;
+          }
+        }
+
+        const text = entry.lowercaseText;
+        let matched = false;
+        if (text.length > 2) {
+          if (queryLower.includes(text)) matched = true;
+        } else {
+          const pattern = new RegExp(`\\b${this.escapeRegExp(text)}\\b`);
+          if (pattern.test(queryLower)) matched = true;
+        }
+
+        if (matched) {
+          return entry.entityId;
+        }
+      }
+      return undefined;
+    }
+
     const matches = [];
     const entities = vault.entities || {};
 
@@ -168,7 +213,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     // Enforce Fog of War for guests in search results
     if (vault.isGuest) {
-      results = results.filter((res) => {
+      results = results.filter((res: any) => {
         const entity = vault.entities[res.id];
         return (
           entity &&
@@ -212,7 +257,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
         // Enforce Fog of War for guests in keyword results
         if (vault.isGuest) {
-          results = results.filter((res) => {
+          results = results.filter((res: any) => {
             const entity = vault.entities[res.id];
             return (
               entity &&
@@ -419,34 +464,69 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
       // to avoid an extra titles array from .map(), reducing GC overhead.
       // When vault.allEntities is present, this also avoids an Object.values() allocation.
-      // Fallback to Object.values(vault.entities) if allEntities is not available (e.g. in some tests)
-      const allEntities =
-        vault.allEntities || Object.values(vault.entities || {});
-      const count = allEntities.length;
       let allTitles = "";
       let first = true;
-      for (let i = 0; i < count; i++) {
-        const e = allEntities[i];
-        const title = e.title;
-        if (title && !internalExclusions.has(title)) {
-          // Enforce Fog of War for guests in title list
-          if (
-            vault.isGuest &&
-            !isEntityVisible(e, {
-              sharedMode: true,
-              defaultVisibility: vault.defaultVisibility,
-            })
-          ) {
-            continue;
-          }
 
-          if (!first) {
-            allTitles += ", ";
+      if ((vault as any).titleAndAliasIndex) {
+        const index = (vault as any).titleAndAliasIndex;
+        const seen = new Set<string>();
+        for (const entry of index) {
+          if (entry.isAlias || entry.status === "draft") continue;
+          if (seen.has(entry.entityId)) continue;
+          seen.add(entry.entityId);
+
+          const title = entry.actualTitle;
+          if (title && !internalExclusions.has(title)) {
+            if (vault.isGuest) {
+              const realEntity = vault.entities?.[entry.entityId];
+              const checkEntity = realEntity || {
+                visibility: entry.visibility,
+                labels: entry.labels,
+              };
+              if (
+                !isEntityVisible(checkEntity as any, {
+                  sharedMode: true,
+                  defaultVisibility: vault.defaultVisibility,
+                })
+              ) {
+                continue;
+              }
+            }
+            if (!first) {
+              allTitles += ", ";
+            }
+            allTitles += title;
+            first = false;
           }
-          allTitles += title;
-          first = false;
+        }
+      } else {
+        const allEntities =
+          vault.allEntities || Object.values(vault.entities || {});
+        const count = allEntities.length;
+        for (let i = 0; i < count; i++) {
+          const e = allEntities[i];
+          const title = e.title;
+          if (title && !internalExclusions.has(title)) {
+            // Enforce Fog of War for guests in title list
+            if (
+              vault.isGuest &&
+              !isEntityVisible(e, {
+                sharedMode: true,
+                defaultVisibility: vault.defaultVisibility,
+              })
+            ) {
+              continue;
+            }
+
+            if (!first) {
+              allTitles += ", ";
+            }
+            allTitles += title;
+            first = false;
+          }
         }
       }
+
       if (allTitles) {
         finalContent = `--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`;
       }

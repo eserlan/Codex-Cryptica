@@ -161,7 +161,7 @@
 <svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
 
 <div
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+  class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 backdrop-blur-sm"
   transition:fade
   role="button"
   tabindex="0"
@@ -263,6 +263,19 @@
                     class="text-[10px] bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-header"
                     >ACTIVE</span
                   >
+                  {#if (vault.status as string) === "needs-permission"}
+                    <span
+                      class="text-[10px] bg-amber-500/20 text-amber-500 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-header flex items-center gap-1"
+                      title="Folder permission required"
+                      data-testid="needs-permission-badge"
+                    >
+                      <span
+                        class="icon-[lucide--lock] w-3 h-3"
+                        aria-hidden="true"
+                      ></span>
+                      LOCKED
+                    </span>
+                  {/if}
                 {/if}
               </div>
               <div class="text-xs text-theme-muted mt-1 font-header">
@@ -289,17 +302,45 @@
                   <span class="icon-[lucide--download-cloud] w-3.5 h-3.5"
                   ></span>
                 </button>
-              {/if}
 
-              <button
-                class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                onclick={() => handleImportToVault(v)}
-                title="Restore from Folder"
-                aria-label="Restore {v.name} from Folder"
-                disabled={isLoading || !!editingId}
-              >
-                <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
-              </button>
+                <button
+                  type="button"
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-accent hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                  onclick={() => vault.saveToFolder()}
+                  title={!vault.hasFolderHandle
+                    ? "No folder linked — select a local folder to enable saving."
+                    : vault.isDirty
+                      ? "Save to folder — writes all changes from the internal archive to your linked folder."
+                      : "Up to date with local folder."}
+                  aria-label="Save to Folder"
+                  aria-busy={vault.status === "saving"}
+                  disabled={isLoading ||
+                    !!editingId ||
+                    vault.status === "saving" ||
+                    (vault.hasFolderHandle && !vault.isDirty)}
+                >
+                  {#if vault.status === "saving"}
+                    <span
+                      class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                    ></span>
+                  {:else if !vault.isDirty && vault.hasFolderHandle}
+                    <span class="icon-[lucide--cloud-check] w-3.5 h-3.5"></span>
+                  {:else}
+                    <span class="icon-[lucide--upload-cloud] w-3.5 h-3.5"
+                    ></span>
+                  {/if}
+                </button>
+              {:else}
+                <button
+                  class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  onclick={() => handleImportToVault(v)}
+                  title="Restore from Folder"
+                  aria-label="Restore {v.name} from Folder"
+                  disabled={isLoading || !!editingId}
+                >
+                  <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
+                </button>
+              {/if}
 
               <button
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"

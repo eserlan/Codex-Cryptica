@@ -4,7 +4,8 @@
 
 **Feature Branch**: `060-robust-gdrive-sync`  
 **Created**: 2026-02-25  
-**Status**: Superseded by 093-directional-vault-sync
+**Status**: Superseded
+**Superseded By**: 096-gdrive-cloud-sync
 **Input**: User description: "more robust gdrive sync https://github.com/eserlan/Codex-Cryptica/issues/262"
 
 ## User Scenarios & Testing _(mandatory)_

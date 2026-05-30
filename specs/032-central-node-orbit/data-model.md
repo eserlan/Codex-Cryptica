@@ -1,7 +1,6 @@
 # Data Model: Central Node Orbit Layout
 
 **Feature**: `032-central-node-orbit`
-**Status**: Draft
 
 ## Runtime State (Ephemeral)
 

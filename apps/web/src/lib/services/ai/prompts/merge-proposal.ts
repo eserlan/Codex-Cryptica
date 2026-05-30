@@ -1,12 +1,14 @@
+import { u } from "./user-content";
+
 export function buildMergeProposalPrompt(
   targetContext: string,
   sourceContext: string,
 ): string {
   return `You are a master archivist. Merge the following records into a single cohesive entry.
-    
-${targetContext}
 
-${sourceContext}
+${u(targetContext)}
+
+${u(sourceContext)}
 
 INSTRUCTIONS:
 1. Create a single, unified description (Markdown) that incorporates all key information.

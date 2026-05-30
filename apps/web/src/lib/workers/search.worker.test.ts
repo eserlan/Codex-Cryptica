@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 
 // Mock the SearchEngine and exposeSearchEngine from @codex/search-engine
-const mockSearchEngine = vi.fn();
+const mockEngineInstance = {
+  addBatchProgressive: vi.fn(),
+};
+const mockSearchEngine = vi.fn(function SearchEngineMock() {
+  return mockEngineInstance;
+});
 const mockExposeSearchEngine = vi.fn();
 
 vi.mock("@codex/search-engine", () => ({
@@ -18,8 +23,7 @@ describe("search.worker.ts", () => {
     expect(mockSearchEngine).toHaveBeenCalledTimes(1);
 
     // Verify exposeSearchEngine was called with the engine instance
-    expect(mockExposeSearchEngine).toHaveBeenCalledWith(
-      expect.any(mockSearchEngine),
-    );
+    expect(mockExposeSearchEngine).toHaveBeenCalledWith(mockEngineInstance);
+    expect(mockEngineInstance.addBatchProgressive).toBeTypeOf("function");
   });
 });

@@ -2,7 +2,7 @@
   import {
     nodeMergeService,
     type IMergedContentProposal,
-  } from "$lib/services/node-merge.service";
+  } from "$lib/services/node-merge.service.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
@@ -59,6 +59,7 @@
 
   const handleMerge = async () => {
     if (!proposal || !targetId) return;
+    if (isLoading) return;
 
     // Check for unsaved changes (T011)
     if (nodeMergeService.checkUnsavedChanges(sourceNodeIds)) {

@@ -14,6 +14,12 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     entities: {
       "target-1": { id: "target-1", title: "Target 1" },
       "source-1": { id: "source-1", title: "Source 1" },
+      "parent-entity": { id: "parent-entity", title: "Parent Entity" },
+      "child-entity": {
+        id: "child-entity",
+        title: "Child Entity",
+        parent: "entity-1",
+      },
     },
     inboundConnections: {
       "entity-1": [
@@ -24,6 +30,8 @@ vi.mock("$lib/stores/vault.svelte", () => ({
       ],
     },
     removeConnection: vi.fn(),
+    addConnection: vi.fn().mockResolvedValue(true),
+    updateEntity: vi.fn().mockResolvedValue(true),
   },
 }));
 
@@ -49,6 +57,13 @@ vi.mock("$lib/components/connections/ConnectionEditor.svelte", () => ({
 vi.mock("./proposals/DetailProposals.svelte", () => ({
   default: vi.fn(),
 }));
+
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+  const mod = await import("./MockAutocomplete.svelte");
+  return {
+    default: mod.default,
+  };
+});
 
 describe("DetailStatusTab", () => {
   const mockEntity = {
@@ -80,7 +95,7 @@ describe("DetailStatusTab", () => {
     expect(screen.getByText("Source 1")).toBeTruthy();
 
     const deleteButtons = screen.getAllByLabelText("Delete connection");
-    expect(deleteButtons).toHaveLength(2);
+    expect(deleteButtons).toHaveLength(3);
   });
 
   it("calls vault.removeConnection when deleting an outbound connection", async () => {
@@ -138,5 +153,129 @@ describe("DetailStatusTab", () => {
     });
 
     expect(screen.queryByLabelText("Delete connection")).toBeNull();
+  });
+
+  it("renders child connection successfully but not parent in connection list", () => {
+    const testEntity = {
+      ...mockEntity,
+      parent: "parent-entity",
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.queryByText("Parent Entity")).toBeNull();
+    expect(screen.getByText("Child Entity")).toBeTruthy();
+    expect(screen.queryByText("Parent")).toBeNull();
+    expect(screen.getByText("Child")).toBeTruthy();
+  });
+
+  it("toggles inline connection form and can cancel or connect", async () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    // Toggle form on
+    const addBtn = screen.getByLabelText("Add new connection");
+    await fireEvent.click(addBtn);
+
+    // Verify form fields
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
+
+    // Fill in target using our MockAutocomplete
+    const autocompleteInput = screen.getByTestId("mock-autocomplete");
+    await fireEvent.input(autocompleteInput, { target: { value: "Target 1" } });
+
+    // Fill custom label
+    const customLabelInput = screen.getByPlaceholderText(
+      "e.g. Ally, Rivalling, Secret",
+    );
+    await fireEvent.input(customLabelInput, {
+      target: { value: "Special Friend" },
+    });
+
+    // Submit
+    const connectBtn = screen.getByRole("button", { name: /^connect$/i });
+    await fireEvent.click(connectBtn);
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "target-1",
+      "related_to",
+      "Special Friend",
+    );
+  });
+
+  it("does not render duplicate child connections if already connected directly", () => {
+    const testEntity = {
+      ...mockEntity,
+      connections: [
+        { target: "child-entity", type: "friendly", label: "Friend of" },
+      ],
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.getByText("Child Entity")).toBeTruthy();
+    expect(screen.queryByText("Child")).toBeNull();
+  });
+
+  it("clicks establish custom connection button on child row to pre-populate form and connect", async () => {
+    const testEntity = {
+      ...mockEntity,
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    const establishButtons = screen.getAllByLabelText(
+      "Establish custom connection",
+    );
+    expect(establishButtons.length).toBeGreaterThan(0);
+
+    await fireEvent.click(establishButtons[0]);
+
+    // Verify the connection form is open and has target pre-filled
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    const autocompleteInput = screen.getByTestId(
+      "mock-autocomplete",
+    ) as HTMLInputElement;
+    expect(autocompleteInput.value).toBe("Child Entity");
+
+    // Submit and assert that vault.addConnection was called with pre-populated child entity ID
+    const connectBtn = screen.getByRole("button", { name: /^connect$/i });
+    await fireEvent.click(connectBtn);
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "child-entity",
+      "related_to",
+      undefined,
+    );
   });
 });

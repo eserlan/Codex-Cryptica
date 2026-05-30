@@ -2,7 +2,7 @@
 
 **Feature Branch**: `040-connections-proposer`  
 **Created**: 2026-02-12  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Implement a feature that can identify and suggest potential connections between entities in the vault."
 
 ## User Scenarios & Testing _(mandatory)_

@@ -2,7 +2,8 @@
 
 **Feature Branch**: `073-dexie-entity-store`  
 **Created**: 2026-03-15  
-**Status**: Implemented  
+**Status**: Superseded
+**Superseded By**: 102-oracle-store-decoupling
 **Input**: Issue #450 — "Introduce Dexie on top of idb — Then start to use it as the primary store for the graph db — This should improve perf significantly. Only load entity details when needed (Ie when the node is opened)"
 
 ## User Scenarios & Testing _(mandatory)_

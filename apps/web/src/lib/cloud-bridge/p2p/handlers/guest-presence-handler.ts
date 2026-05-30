@@ -31,13 +31,15 @@ export class GuestPresenceHandler extends BaseHandler<GuestHandlerContext> {
   ) {
     context.session.joinAccepted = true;
     const p = message.payload || message;
-    context.guestRoster.update((current) =>
-      upsertGuestRoster(current, p.peerId, {
+    context.guestStore.guestRoster = upsertGuestRoster(
+      context.guestStore.guestRoster,
+      p.peerId,
+      {
         displayName: p.displayName,
         status: p.status,
         currentEntityId: p.currentEntityId ?? null,
         currentEntityTitle: p.currentEntityTitle ?? null,
-      }),
+      },
     );
 
     const pending = context.session.pendingStatus;
@@ -61,7 +63,7 @@ export class GuestPresenceHandler extends BaseHandler<GuestHandlerContext> {
     context.mapSession.myPeerId = null;
     context.session.pendingStatus = null;
     context.session.joinAccepted = false;
-    context.guestRoster.set({});
+    context.guestStore.guestRoster = {};
     context.sessionModeStore.guestUsername = null;
     context.sessionModeStore.isGuestMode = true;
     context.vault.status = "idle";

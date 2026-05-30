@@ -39,12 +39,12 @@
       >
         {@html tooltipContent}
       </div>
-      {#if hoveredEntity?.tags?.length}
+      {#if hoveredEntity?.labels?.length}
         <div class="flex flex-wrap gap-1 mt-1">
-          {#each hoveredEntity.tags as tag}
+          {#each hoveredEntity.labels as label}
             <span
               class="px-1.5 py-0.5 bg-theme-primary/10 border border-theme-primary/20 text-theme-primary text-xs font-mono rounded"
-              >{tag}</span
+              >{label}</span
             >
           {/each}
         </div>

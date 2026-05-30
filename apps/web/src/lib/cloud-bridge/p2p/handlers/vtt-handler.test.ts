@@ -20,7 +20,7 @@ describe("VTTHandler", () => {
       },
       transport: { broadcast: vi.fn() },
       vault: { entities: {} },
-      guestRoster: { subscribe: vi.fn() },
+      guestStore: { guestRoster: {} },
     };
     mockConn = { peer: "g1", send: vi.fn() };
   });

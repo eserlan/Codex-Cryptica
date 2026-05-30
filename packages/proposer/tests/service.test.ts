@@ -4,6 +4,12 @@ import { ProposerService } from "../src/service";
 import "fake-indexeddb/auto";
 import { openDB } from "idb";
 
+function useMockModel(generateContent: ReturnType<typeof vi.fn>): void {
+  (GoogleGenerativeAI as any).prototype.getGenerativeModel = vi
+    .fn()
+    .mockReturnValue({ generateContent });
+}
+
 vi.mock("@google/generative-ai", () => {
   const generateContent = vi.fn().mockResolvedValue({
     response: {
@@ -13,6 +19,7 @@ vi.mock("@google/generative-ai", () => {
             targetId: "target1",
             confidence: 0.9,
             type: "related",
+            label: "Former Mentor",
             reason: "test",
           },
         ]),
@@ -55,8 +62,39 @@ describe("ProposerService", () => {
     expect(proposals).toHaveLength(1);
     expect(proposals[0].targetId).toBe("target1");
     expect(proposals[0].confidence).toBe(0.9);
+    expect(proposals[0].label).toBe("Former Mentor");
     expect(proposals[0].vaultId).toBe(vaultId);
     expect(proposals[0].id).toBe(`${vaultId}:source1:target1`);
+  });
+
+  it("should fall back to a readable type when proposal label is missing", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify([
+            {
+              targetId: "target1",
+              confidence: 0.9,
+              type: "located_in",
+              reason: "test",
+            },
+          ]),
+      },
+    });
+    useMockModel(generateContent);
+
+    const dbName = `test-db-${crypto.randomUUID()}`;
+    service = new ProposerService(dbName, 1);
+    const proposals = await service.analyzeEntity(
+      "fake-key",
+      "gemini-1.5-flash",
+      vaultId,
+      "source1",
+      "Some content about target1",
+      [{ id: "target1", name: "Target One" }],
+    );
+
+    expect(proposals[0].label).toBe("Located In");
   });
 
   it("should save and retrieve proposals", async () => {
@@ -286,10 +324,7 @@ describe("ProposerService", () => {
           ]),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -317,10 +352,7 @@ describe("ProposerService", () => {
           ]),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -344,10 +376,7 @@ describe("ProposerService", () => {
           }),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposal = await service.generateConnectionProposal(
       "key",
       "model",
@@ -366,10 +395,7 @@ describe("ProposerService", () => {
         text: () => "Invalid JSON",
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const proposal = await service.generateConnectionProposal(
       "key",
       "model",
@@ -394,10 +420,7 @@ describe("ProposerService", () => {
           }),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseConnectionIntent(
       "key",
       "model",
@@ -414,10 +437,7 @@ describe("ProposerService", () => {
         text: () => "Garbage",
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseConnectionIntent("key", "model", "input");
     expect(intent.sourceName).toBe("");
     expect(intent.targetName).toBe("");
@@ -433,10 +453,7 @@ describe("ProposerService", () => {
           }),
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseMergeIntent(
       "key",
       "model",
@@ -452,12 +469,134 @@ describe("ProposerService", () => {
         text: () => "Garbage",
       },
     });
-    const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
-      .fn()
-      .mockReturnValue(mockModel);
+    useMockModel(generateContent);
     const intent = await service.parseMergeIntent("key", "model", "input");
     expect(intent.sourceName).toBe("");
     expect(intent.targetName).toBe("");
+  });
+
+  describe("DB Upgrade, Migration, and Concurrency Tests", () => {
+    it("should handle blocked database upgrade gracefully by closing the connection", async () => {
+      const dbName = `test-db-blocked-${crypto.randomUUID()}`;
+
+      // 1. Open first connection at v7
+      const service1 = new ProposerService(dbName, 7);
+      const db1 = await service1["getDB"]();
+      expect(db1.version).toBe(7);
+
+      // 2. Open second connection at v8. This will trigger 'versionchange' on db1,
+      // calling our blocking/versionchange handler which closes db1.
+      const db2 = await openDB(dbName, 8, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("proposals")) {
+            db.createObjectStore("proposals", { keyPath: "id" });
+          }
+        },
+      });
+
+      expect(db2.version).toBe(8);
+
+      // Clean up
+      db2.close();
+    });
+
+    it("should migrate schema and create new indices from v7 to v8", async () => {
+      const dbName = `test-db-migrate-${crypto.randomUUID()}`;
+
+      // 1. Initialize a database at v7 with proposal store but only some indices
+      const dbV7 = await openDB(dbName, 7, {
+        upgrade(db) {
+          const store = db.createObjectStore("proposals", { keyPath: "id" });
+          store.createIndex("by-source", "sourceId");
+          store.createIndex("by-status", "status");
+        },
+      });
+
+      // Put some initial data
+      await dbV7.put("proposals", {
+        id: "p1",
+        sourceId: "source1",
+        status: "pending",
+        vaultId: "vault1",
+      });
+
+      dbV7.close();
+
+      // 2. Open using ProposerService at v8 to trigger upgrade migration
+      const serviceV8 = new ProposerService(dbName, 8);
+      const dbV8 = await serviceV8["getDB"]();
+
+      expect(dbV8.version).toBe(8);
+
+      // 3. Assert new indices exist
+      const tx = dbV8.transaction("proposals", "readonly");
+      const store = tx.objectStore("proposals");
+      expect(store.indexNames.contains("by-vault")).toBe(true);
+      expect(store.indexNames.contains("by-vault-status")).toBe(true);
+      expect(store.indexNames.contains("by-vault-source")).toBe(true);
+
+      // 4. Assert existing data is fully accessible through new indices
+      const byVaultResults = await dbV8.getAllFromIndex(
+        "proposals",
+        "by-vault",
+        "vault1",
+      );
+      expect(byVaultResults).toHaveLength(1);
+      expect(byVaultResults[0].id).toBe("p1");
+
+      const byVaultStatusResults = await dbV8.getAllFromIndex(
+        "proposals",
+        "by-vault-status",
+        ["vault1", "pending"],
+      );
+      expect(byVaultStatusResults).toHaveLength(1);
+      expect(byVaultStatusResults[0].id).toBe("p1");
+
+      dbV8.close();
+    });
+
+    it("should support concurrent reads and index accessibility", async () => {
+      const dbName = `test-db-concurrent-${crypto.randomUUID()}`;
+      const serviceInstance = new ProposerService(dbName, 8);
+      const db = await serviceInstance["getDB"]();
+
+      // Populate database
+      await db.put("proposals", {
+        id: "p1",
+        vaultId: "vault1",
+        status: "pending",
+        sourceId: "s1",
+      });
+      await db.put("proposals", {
+        id: "p2",
+        vaultId: "vault1",
+        status: "accepted",
+        sourceId: "s2",
+      });
+      await db.put("proposals", {
+        id: "p3",
+        vaultId: "vault2",
+        status: "pending",
+        sourceId: "s1",
+      });
+
+      // Perform concurrent reads using different indices
+      const [res1, res2, res3] = await Promise.all([
+        db.getAllFromIndex("proposals", "by-vault", "vault1"),
+        db.getAllFromIndex("proposals", "by-vault-status", [
+          "vault1",
+          "accepted",
+        ]),
+        db.getAllFromIndex("proposals", "by-vault-source", ["vault2", "s1"]),
+      ]);
+
+      expect(res1).toHaveLength(2);
+      expect(res2).toHaveLength(1);
+      expect(res2[0].id).toBe("p2");
+      expect(res3).toHaveLength(1);
+      expect(res3[0].id).toBe("p3");
+
+      db.close();
+    });
   });
 });

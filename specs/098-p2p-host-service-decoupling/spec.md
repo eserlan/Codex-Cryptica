@@ -2,7 +2,7 @@
 
 **Feature Branch**: `098-p2p-host-service-decoupling`  
 **Created**: 2026-05-17  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: Analysis of `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` (918 lines)
 
 ## Clarifications

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `012-minimap`  
 **Created**: 2026-01-29  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Implement the minimap"
 
 ## User Scenarios & Testing

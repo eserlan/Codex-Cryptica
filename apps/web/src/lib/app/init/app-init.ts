@@ -158,7 +158,7 @@ export function setupWindowGlobals(context: {
 
   if (!isSpecialEnv) return;
 
-  console.log("[WindowGlobals] Attaching:", Object.keys(context));
+  debugStore.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
   (window as any).codexUI = {
     onboarding: context.onboardingStore,
@@ -170,6 +170,232 @@ export function setupWindowGlobals(context: {
     connection: context.connectionModeStore,
     explorer: context.explorerUIStore,
   };
+
+  // Backwards compatibility layer for legacy E2E tests accessing window.uiStore
+  (window as any).uiStore = new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (typeof prop !== "string") return undefined;
+
+        // OnboardingStore properties
+        if (
+          [
+            "dismissedWorldPage",
+            "dismissedLandingPage",
+            "skipWelcomeScreen",
+            "lastSeenVersion",
+            "showChangelog",
+            "isLandingPageVisible",
+          ].includes(prop)
+        ) {
+          return context.onboardingStore?.[prop];
+        }
+
+        // SessionModeStore properties
+        if (
+          [
+            "isDemoMode",
+            "sharedMode",
+            "isGuestMode",
+            "guestUsername",
+            "setGuestUsername",
+          ].includes(prop)
+        ) {
+          const val = context.sessionModeStore?.[prop];
+          if (typeof val === "function") {
+            return val.bind(context.sessionModeStore);
+          }
+          return val;
+        }
+
+        // LayoutUIStore properties
+        if (
+          [
+            "leftSidebarWidth",
+            "rightSidebarWidth",
+            "leftSidebarOpen",
+            "activeSidebarTool",
+            "mainViewMode",
+            "focusedEntityId",
+            "isMobile",
+            "vttSidebarCollapsed",
+            "vttChatSidebarCollapsed",
+            "vttEntityListCollapsed",
+            "findNodeCounter",
+            "lastSelectedNodePosition",
+            "toggleSidebarTool",
+            "closeSidebar",
+            "setLeftSidebarWidth",
+            "setRightSidebarWidth",
+            "toggleVttSidebar",
+            "toggleVttChatSidebar",
+            "toggleVttEntityList",
+            "findInGraph",
+            "setLastSelectedNodePosition",
+          ].includes(prop)
+        ) {
+          const val = context.layoutUIStore?.[prop];
+          if (typeof val === "function") {
+            return val.bind(context.layoutUIStore);
+          }
+          return val;
+        }
+
+        // ModalUIStore properties
+        if (
+          [
+            "showSettings",
+            "activeTab",
+            "readModeNodeId",
+            "zenModeEntityId",
+            "zenModeActiveTab",
+            "showZenMode",
+            "openZenMode",
+            "closeZenMode",
+            "openReadMode",
+            "closeReadMode",
+          ].includes(prop)
+        ) {
+          const val = context.modalUIStore?.[prop];
+          if (typeof val === "function") {
+            return val.bind(context.modalUIStore);
+          }
+          return val;
+        }
+
+        // DiscoveryPolicyStore properties
+        if (
+          ["showUnindexedNotification", "acknowledgedUnindexed"].includes(prop)
+        ) {
+          return context.discoveryPolicyStore?.[prop];
+        }
+
+        // ConnectionModeStore properties
+        if (["connectionMode"].includes(prop)) {
+          return context.connectionModeStore?.[prop];
+        }
+
+        // ExplorerUIStore properties
+        if (
+          ["selectedLabels", "expandedCategories", "searchQuery"].includes(prop)
+        ) {
+          return context.explorerUIStore?.[prop];
+        }
+
+        return undefined;
+      },
+      set(_target, prop, value) {
+        if (typeof prop !== "string") return false;
+
+        // OnboardingStore properties
+        if (
+          [
+            "dismissedWorldPage",
+            "dismissedLandingPage",
+            "skipWelcomeScreen",
+            "lastSeenVersion",
+            "showChangelog",
+            "isLandingPageVisible",
+          ].includes(prop)
+        ) {
+          if (context.onboardingStore) {
+            context.onboardingStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // SessionModeStore properties
+        if (
+          ["isDemoMode", "sharedMode", "isGuestMode", "guestUsername"].includes(
+            prop,
+          )
+        ) {
+          if (context.sessionModeStore) {
+            context.sessionModeStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // LayoutUIStore properties
+        if (
+          [
+            "leftSidebarWidth",
+            "rightSidebarWidth",
+            "leftSidebarOpen",
+            "activeSidebarTool",
+            "mainViewMode",
+            "focusedEntityId",
+            "isMobile",
+            "vttSidebarCollapsed",
+            "vttChatSidebarCollapsed",
+            "vttEntityListCollapsed",
+            "findNodeCounter",
+            "lastSelectedNodePosition",
+          ].includes(prop)
+        ) {
+          if (context.layoutUIStore) {
+            context.layoutUIStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // ModalUIStore properties
+        if (
+          [
+            "showSettings",
+            "activeTab",
+            "readModeNodeId",
+            "zenModeEntityId",
+            "zenModeActiveTab",
+            "showZenMode",
+          ].includes(prop)
+        ) {
+          if (context.modalUIStore) {
+            context.modalUIStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // DiscoveryPolicyStore properties
+        if (
+          ["showUnindexedNotification", "acknowledgedUnindexed"].includes(prop)
+        ) {
+          if (context.discoveryPolicyStore) {
+            context.discoveryPolicyStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // ConnectionModeStore properties
+        if (["connectionMode"].includes(prop)) {
+          if (context.connectionModeStore) {
+            context.connectionModeStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        // ExplorerUIStore properties
+        if (
+          ["selectedLabels", "expandedCategories", "searchQuery"].includes(prop)
+        ) {
+          if (context.explorerUIStore) {
+            context.explorerUIStore[prop] = value;
+            return true;
+          }
+          return false;
+        }
+
+        return false;
+      },
+    },
+  );
 
   // Lazy-load dynamic AI services if not already present
   import("../../services/ai")

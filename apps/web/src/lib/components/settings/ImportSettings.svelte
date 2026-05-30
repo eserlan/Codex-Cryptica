@@ -18,6 +18,8 @@
     clearRegistryEntry,
     splitTextIntoChunks,
     mergeEntities,
+    getFileExtension,
+    validateImportFile,
   } from "@codex/importer";
   import type { DiscoveredEntity } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
@@ -26,6 +28,9 @@
   import { aiClientManager } from "$lib/services/ai/client-manager";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+
+  type MarkdownFrontmatterValidator =
+    typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
 
   let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
 
@@ -36,6 +41,7 @@
   let totalChunks = $state(0);
   let showResumeToast = $state(false);
   let currentFileHash = $state("");
+  let rejectedFiles = $state<{ name: string; reason: string }[]>([]);
 
   $effect(() => {
     modalUIStore.isImporting = step === "processing" || step === "review";
@@ -61,6 +67,15 @@
     new PdfParser(pdfWorker),
   ];
 
+  let markdownFrontmatterValidator: MarkdownFrontmatterValidator | null = null;
+
+  const getMarkdownFrontmatterValidator = async () => {
+    markdownFrontmatterValidator ??= (await import("@codex/vault-engine"))
+      .validateMarkdownFrontmatter;
+
+    return markdownFrontmatterValidator;
+  };
+
   const handleFiles = async (files: File[]) => {
     const apiKey = oracle.effectiveApiKey || "";
 
@@ -71,6 +86,7 @@
 
     discoveredEntities = [];
     extractedAssets.clear();
+    rejectedFiles = [];
 
     const signal = connectionModeStore.abortSignal;
 
@@ -83,6 +99,18 @@
     for (const file of files) {
       if (signal.aborted) break;
 
+      const extension = getFileExtension(file.name);
+      const isMarkdown = extension === ".md" || extension === ".markdown";
+
+      const fileValidation = validateImportFile(file);
+      if (!fileValidation.success) {
+        rejectedFiles.push({
+          name: file.name,
+          reason: fileValidation.reason,
+        });
+        continue;
+      }
+
       statusMessage = `Hashing ${file.name}...`;
       const hash = await calculateFileHash(file);
       currentFileHash = hash;
@@ -90,12 +118,30 @@
       const parser = parsers.find((p) => p.accepts(file));
       if (!parser) {
         console.error(`No parser for ${file.name}`);
+        rejectedFiles.push({
+          name: file.name,
+          reason: "Unsupported file type",
+        });
         continue;
       }
 
       try {
         statusMessage = `Parsing ${file.name}...`;
         const result = await parser.parse(file);
+
+        if (isMarkdown) {
+          const validateMarkdownFrontmatter =
+            await getMarkdownFrontmatterValidator();
+          const validation = validateMarkdownFrontmatter(result.text);
+          if (!validation.success) {
+            console.warn(`Skipping ${file.name}: invalid YAML frontmatter`);
+            rejectedFiles.push({
+              name: file.name,
+              reason: "Invalid YAML frontmatter",
+            });
+            continue;
+          }
+        }
 
         // Store assets for dimension lookups later
         result.assets.forEach((asset) => {
@@ -503,6 +549,28 @@
           </button>
         </div>
       {:else if step === "review"}
+        {#if rejectedFiles.length > 0}
+          <div
+            class="mx-4 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded flex flex-col gap-2"
+            transition:slide
+          >
+            <div class="flex items-center gap-2">
+              <span class="icon-[lucide--alert-triangle] w-4 h-4 text-red-400"
+              ></span>
+              <span
+                class="text-sm font-bold text-red-400 uppercase tracking-wider"
+                >Skipped {rejectedFiles.length} Invalid File(s)</span
+              >
+            </div>
+            <ul
+              class="text-xs text-red-400/80 leading-tight space-y-1 pl-6 list-disc"
+            >
+              {#each rejectedFiles as file (`${file.name}:${file.reason}`)}
+                <li><strong>{file.name}</strong>: {file.reason}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
         <ReviewList
           entities={discoveredEntities}
           onSave={handleSave}

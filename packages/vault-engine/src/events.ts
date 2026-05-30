@@ -11,6 +11,8 @@ export const VAULT_EVENTS = {
   BATCH_UPDATED: "VAULT:BATCH_UPDATED",
   SYNC_COMPLETE: "VAULT:SYNC_COMPLETE",
   SYNC_CHUNK_READY: "VAULT:SYNC_CHUNK_READY",
+  CONNECTION_ADDED: "VAULT:CONNECTION_ADDED",
+  CONNECTION_UPDATED: "VAULT:CONNECTION_UPDATED",
   CONNECTION_REMOVED: "VAULT:CONNECTION_REMOVED",
 } as const;
 
@@ -27,6 +29,26 @@ declare module "@codex/events" {
     "VAULT:VAULT_SWITCHED": AppEventDefinition<"vault", { id: string }>;
     "VAULT:VAULT_DELETED": AppEventDefinition<"vault", { vaultId: string }>;
     "VAULT:ENTITY_DELETED": AppEventDefinition<"vault", { entityId: string }>;
+    "VAULT:CONNECTION_ADDED": AppEventDefinition<
+      "vault",
+      {
+        sourceId: string;
+        targetId: string;
+        connectionType: string;
+        label?: string;
+        strength?: number;
+      }
+    >;
+    "VAULT:CONNECTION_UPDATED": AppEventDefinition<
+      "vault",
+      {
+        sourceId: string;
+        targetId: string;
+        oldType: string;
+        newType: string;
+        newLabel?: string;
+      }
+    >;
     "VAULT:CONNECTION_REMOVED": AppEventDefinition<
       "vault",
       { sourceId: string; targetId: string; connectionType: string }

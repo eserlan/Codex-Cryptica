@@ -21,12 +21,21 @@ vi.mock("../../utils/markdown", () => ({
   parseMarkdown: vi.fn(),
   stringifyEntity: vi.fn(),
   deriveIdFromPath: vi.fn(),
+  sanitizeId: vi.fn((x) =>
+    x
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, ""),
+  ),
 }));
 
 vi.mock("../../services/cache.svelte", () => ({
   cacheService: {
     get: vi.fn(),
     set: vi.fn(),
+    bulkSet: vi.fn(),
   },
 }));
 
@@ -114,6 +123,17 @@ describe("Adapters", () => {
       });
     });
 
+    it("should set cached entities in bulk", async () => {
+      await adapters.fileIOAdapter.setCachedEntitiesBulk!("v1", [
+        { path: "path1", lastModified: 100, entity: { id: "e1" } as any },
+        { path: "path2", lastModified: 200, entity: { id: "e2" } as any },
+      ]);
+      expect(cacheService.bulkSet).toHaveBeenCalledWith([
+        { path: "v1:path1", lastModified: 100, entity: { id: "e1" } },
+        { path: "v1:path2", lastModified: 200, entity: { id: "e2" } },
+      ]);
+    });
+
     it("should parse markdown with all fields", () => {
       vi.mocked(markdown.parseMarkdown).mockReturnValue({
         metadata: {
@@ -147,13 +167,51 @@ describe("Adapters", () => {
       vi.mocked(markdown.deriveIdFromPath).mockReturnValue("derived-id");
       const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
       expect(entity!.id).toBe("derived-id");
-      expect(entity!.title).toBe("derived-id");
+      expect(entity!.title).toBe("path");
       expect(entity!.type).toBe("note");
       expect(entity!.tags).toEqual([]);
       expect(entity!.labels).toEqual([]);
       expect(entity!.connections).toEqual([]);
       expect(entity!.lore).toBe("");
       expect(entity!._path).toEqual(["path"]);
+    });
+
+    it("should automatically add 'past' label during parse if entity has valid end_date", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: [],
+          end_date: { year: 1800 },
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toContain("past");
+    });
+
+    it("should remove 'past' label during parse if entity has no end_date", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: ["past"],
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label during parse if already present and end_date is valid", () => {
+      vi.mocked(markdown.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "e1",
+          labels: ["past"],
+          end_date: { year: 1800 },
+        },
+        content: "content",
+      } as any);
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
+      expect(entity!.labels).toEqual(["past"]);
     });
 
     it("should check isNotFoundError", () => {

@@ -9,13 +9,33 @@ import { entityDb } from "$lib/utils/entity-db";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { imageGenerationService } from "$lib/services/ai/image-generation.service";
-import { textGenerationService } from "$lib/services/ai/text-generation.service";
+import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
 
-const WORLD_IMAGE_MODEL = "gemini-3.1-flash-image-preview";
+const WORLD_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 const worldService = new WorldServiceImplementation({
   db: entityDb,
-  imageGenerator: imageGenerationService,
+  imageGenerator: {
+    generateImage: (apiKey: string, prompt: string, modelName: string) => {
+      const isCustom = oracle.settings.imageProvider === "custom";
+      const targetKey =
+        isCustom && oracle.settings.customImageApiKey
+          ? oracle.settings.customImageApiKey
+          : apiKey;
+      const targetModel = isCustom
+        ? oracle.settings.customImageModel || "black-forest-labs/FLUX.1-schnell"
+        : modelName;
+      return imageGenerationService.generateImage(
+        targetKey,
+        prompt,
+        targetModel,
+        {
+          provider: oracle.settings.imageProvider as "gemini" | "custom",
+          baseUrl: oracle.settings.customImageBaseUrl,
+        },
+      );
+    },
+  },
   assetManager: {
     saveImageToVault: async (blob, entityId, originalName) => {
       return vault.saveImageToVault(blob, entityId, originalName);

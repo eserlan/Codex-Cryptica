@@ -2,7 +2,7 @@
 
 **Feature Branch**: `issue/688-offload-ai-creation`  
 **Created**: 2026-04-23  
-**Status**: Implemented  
+**Status**: Implemented
 **Input**: User description: "offload ai entity (and connection) creation to a background worker"
 
 ## User Scenarios & Testing _(mandatory)_

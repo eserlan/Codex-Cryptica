@@ -1,21 +1,114 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
+import { resolveArtDirection } from "schema";
+
+interface VisualEntityLike {
+  id?: string;
+  title: string;
+  type?: string;
+  categoryId?: string;
+  labels?: string[];
+  content?: string;
+  lore?: string;
+  artDirection?: string;
+}
 
 export class OracleGenerator {
-  private buildEntityVisualQuery(entity: {
-    title: string;
-    labels?: string[];
-  }): string {
-    const labels = (entity.labels || []).filter(Boolean);
-    if (labels.length === 0) {
-      return `A visualization of ${entity.title}`;
+  private buildEntityVisualQuery(
+    entity: VisualEntityLike,
+    context?: OracleExecutionContext,
+  ): string {
+    const artDirection = resolveArtDirection({
+      subject: entity.title,
+      entityId: entity.id,
+      entityTitle: entity.title,
+      categoryId: entity.categoryId || entity.type,
+      categoryLabel: entity.type,
+      themeId: context?.uiStore?.activeThemeId,
+      surface: "entity",
+      entityArtDirection: this.extractEntityArtDirection(entity),
+    });
+
+    return this.appendVisualLabels(artDirection.prompt, entity.labels);
+  }
+
+  private buildMessageVisualQuery(
+    message: ChatMessage,
+    entity: VisualEntityLike | null,
+    context: OracleExecutionContext,
+  ): string {
+    if (entity) {
+      return this.buildEntityVisualQuery(entity, context);
     }
 
-    return `A visualization of ${entity.title}
+    const commandSubject = this.extractDrawCommandSubject(message.content);
+    const artDirection = resolveArtDirection({
+      subject: commandSubject.subject,
+      surface: "chat",
+      categoryId: commandSubject.categoryId,
+      categoryIdIsHint: Boolean(commandSubject.categoryId),
+      themeId: context.uiStore?.activeThemeId,
+      userAuthoredArtDirection: this.extractArtDirectionFromText(
+        message.content,
+      ),
+    });
+
+    return artDirection.prompt;
+  }
+
+  private appendVisualLabels(basePrompt: string, labels?: string[]): string {
+    const cleanLabels = (labels || []).filter(Boolean);
+    if (cleanLabels.length === 0) return basePrompt;
+
+    return `${basePrompt}
 
 HIGH-PRIORITY VISUAL LABELS:
-${labels.map((label) => `- ${label}`).join("\n")}
+${cleanLabels.map((label) => `- ${label}`).join("\n")}
 
 Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
+  }
+
+  private extractEntityArtDirection(entity: VisualEntityLike) {
+    return (
+      entity.artDirection ||
+      this.extractArtDirectionFromText(entity.content) ||
+      this.extractArtDirectionFromText(entity.lore)
+    );
+  }
+
+  private extractArtDirectionFromText(text?: string) {
+    if (!text) return undefined;
+    const match = text.match(
+      /(?:^|\n)#{1,4}\s*(?:art direction|default art style|visual direction)\s*\n+([\s\S]*?)(?=\n#{1,4}\s|\n---|\s*$)/i,
+    );
+    return match?.[1]?.trim();
+  }
+
+  private extractMessageSubject(content: string) {
+    const firstLine = content
+      .split("\n")
+      .map((line) => line.trim())
+      .find(Boolean);
+    return (firstLine || content).slice(0, 180);
+  }
+
+  private extractDrawCommandSubject(content: string): {
+    subject: string;
+    categoryId?: string;
+  } {
+    const firstLine = this.extractMessageSubject(content);
+    const match = firstLine.match(/^\/(?:draw|image)\s+(.+)$/i);
+    if (!match) return { subject: firstLine };
+
+    const rawSubject = match[1].trim();
+    const categoryMatch = rawSubject.match(
+      /^(character|npc|creature|location|place|item|object|faction|event|note|concept|world|cover)\s+(.+)$/i,
+    );
+    if (!categoryMatch) return { subject: rawSubject };
+
+    return {
+      categoryId: categoryMatch[1].toLowerCase(),
+      subject: categoryMatch[2].trim(),
+    };
   }
 
   /**
@@ -213,16 +306,33 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
       apiKey,
-      this.buildEntityVisualQuery(entity),
+      this.buildEntityVisualQuery(entity, context),
       aiContext,
       context.modelName,
       context.isDemoMode,
     );
 
+    const targetKey =
+      context.imageProvider === "custom" && context.customImageApiKey
+        ? context.customImageApiKey
+        : apiKey;
+    const targetModel =
+      context.imageProvider === "custom"
+        ? context.customImageModel || "black-forest-labs/FLUX.1-schnell"
+        : "gemini-2.5-flash-image";
+
+    if (!targetKey) {
+      throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
+    }
+
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl,
+      },
     );
   }
 
@@ -251,16 +361,33 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
       apiKey,
-      entity ? this.buildEntityVisualQuery(entity) : message.content,
+      this.buildMessageVisualQuery(message, entity, context),
       aiContext,
       context.modelName,
       context.isDemoMode,
     );
 
+    const targetKey =
+      context.imageProvider === "custom" && context.customImageApiKey
+        ? context.customImageApiKey
+        : apiKey;
+    const targetModel =
+      context.imageProvider === "custom"
+        ? context.customImageModel || "black-forest-labs/FLUX.1-schnell"
+        : "gemini-2.5-flash-image";
+
+    if (!targetKey) {
+      throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
+    }
+
     return await context.imageGeneration.generateImage(
-      apiKey,
+      targetKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview",
+      targetModel,
+      {
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl,
+      },
     );
   }
 

@@ -47,4 +47,23 @@ describe("OracleContextManager", () => {
     expect(context.vaultId).toBe("v1");
     expect(context.tier).toBe("advanced");
   });
+
+  it("should expose active theme id for art direction resolution", () => {
+    mockStore.themeStore.activeTheme = { id: "gothic_horror" };
+
+    const context = manager.getExecutionContext();
+
+    expect(context.uiStore.activeThemeId).toBe("gothic_horror");
+  });
+
+  it("should preserve AI gating flags in the draw execution context", () => {
+    mockStore.discoveryPolicyStore.aiDisabled = true;
+    mockStore.sessionModeStore.isDemoMode = true;
+
+    const context = manager.getExecutionContext();
+
+    expect(context.uiStore.aiDisabled).toBe(true);
+    expect(context.uiStore.isDemoMode).toBe(true);
+    expect(context.isDemoMode).toBe(true);
+  });
 });

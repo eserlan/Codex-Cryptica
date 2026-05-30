@@ -70,7 +70,7 @@ export interface FrontPageControllerDeps {
     resolveImageUrl: (imagePath: string) => Promise<string | undefined>;
   };
   themeStore: {
-    activeTheme: { name: string; description: string };
+    activeTheme: { id?: string; name: string; description: string };
   };
 }
 
@@ -127,6 +127,7 @@ export class FrontPageController {
     const { worldStore, themeStore, vault } = this.deps;
 
     const themeName = themeStore.activeTheme.name;
+    const themeId = themeStore.activeTheme.id;
     const themeDescription = themeStore.activeTheme.description.trim();
     const briefingText =
       resolveBriefingSource(
@@ -142,6 +143,7 @@ export class FrontPageController {
       themeDescription,
       briefingText,
       retrievedWorldContext,
+      themeId,
     );
 
     try {

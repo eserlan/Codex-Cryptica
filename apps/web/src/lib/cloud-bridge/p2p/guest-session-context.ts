@@ -1,4 +1,4 @@
-import { guestRoster } from "../../stores/guest";
+import { guestStore } from "../../stores/guest.svelte";
 import type { PeerFactory } from "./peer-factory";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { GuestChatHandler } from "./handlers/guest-chat-handler";
@@ -12,6 +12,7 @@ import { GuestPresenceHandler } from "./handlers/guest-presence-handler";
 import { GuestSessionHandler } from "./handlers/guest-session-handler";
 import { GuestVaultHandler } from "./handlers/guest-vault-handler";
 import { GuestVttHandler } from "./handlers/guest-vtt-handler";
+import { GuestSoundBiteHandler } from "./handlers/guest-sound-bite-handler";
 import { MapAssetUrlCache } from "./handlers/map-asset-url-cache";
 import type { P2PClientTransport } from "./transport/client-transport";
 
@@ -30,6 +31,7 @@ export function buildGuestDispatcher(): P2PDispatcher<GuestHandlerContext> {
   d.register(new GuestVttHandler());
   d.register(new GuestChatHandler());
   d.register(new GuestPresenceHandler());
+  d.register(new GuestSoundBiteHandler());
   return d;
 }
 
@@ -40,22 +42,24 @@ export async function buildGuestContext(args: {
   callbacks: GuestSessionCallbacks;
   session: GuestSessionState;
 }): Promise<GuestHandlerContext> {
-  const [v, u, n, ms, m, t] = await Promise.all([
+  const [v, u, n, ms, m, t, ui] = await Promise.all([
     import("../../stores/vault.svelte"),
     import("../../stores/ui/session-mode.svelte"),
     import("../../stores/ui/notification.svelte"),
     import("../../stores/map-session.svelte"),
     import("../../stores/map.svelte"),
     import("../../stores/theme.svelte"),
+    import("../../stores/ui/modal-ui.svelte"),
   ]);
   return {
     vault: v.vault,
     sessionModeStore: u.sessionModeStore,
     notificationStore: n.notificationStore,
+    modalUIStore: ui.modalUIStore,
     mapSession: ms.mapSession,
     mapStore: m.mapStore,
     themeStore: t.themeStore,
-    guestRoster,
+    guestStore,
     transport: args.transport,
     assetCache: args.assetCache,
     callbacks: args.callbacks,

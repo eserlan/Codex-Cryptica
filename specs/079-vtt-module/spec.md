@@ -2,7 +2,7 @@
 
 **Feature Branch**: `079-vtt-light`
 **Created**: 2026-04-05
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "light weight vtt functionality"
 **Issue**: [#550](https://github.com/eserlan/Codex-Cryptica/issues/550)
 

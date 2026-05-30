@@ -154,6 +154,10 @@ export interface OracleExecutionContext {
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;
   modelName: string;
+  imageProvider?: "gemini" | "custom";
+  customImageBaseUrl?: string;
+  customImageApiKey?: string;
+  customImageModel?: string;
   isDemoMode?: boolean;
   vault: any;
   uiStore: any;
