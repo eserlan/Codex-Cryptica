@@ -50,11 +50,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/125-entity-auto-link/plan.md).
+shell commands, and other important information, read the [current plan](./specs/127-context-aware-entity-generator/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (127-context-aware-entity-generator)
+- OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts) (127-context-aware-entity-generator)
 
 - TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + `chronology-engine`, `schema`, Svelte 5, Floating UI, IndexedDB `idb`, existing Tailwind 4 theme tokens (116-scroll-wheel-date-picker)
 - Browser-local vault settings in IndexedDB via `apps/web/src/lib/stores/calendar.svelte.ts`; entity temporal metadata in local vault data (116-scroll-wheel-date-picker)
