@@ -102,10 +102,10 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     const prompt = `${EXTRACTION_PROMPT}${contextStr}\n\nInput Text:\n${text}`;
 
-    // Attempt models in order of strength/preference, aligned with app configuration
+    // Attempt models in order of preference/strength, aligned with app default
     const models = [
+      "gemini-3.1-flash-lite", // Lite Tier (Free & Default)
       "gemini-3-flash-preview", // Advanced Tier
-      "gemini-flash-lite-latest", // Lite Tier
     ];
 
     for (const modelName of models) {

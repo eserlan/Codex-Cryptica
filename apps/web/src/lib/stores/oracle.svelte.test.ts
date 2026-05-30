@@ -111,7 +111,7 @@ vi.mock("../services/ai", () => ({
     distillVisualPrompt: vi.fn().mockResolvedValue("visual prompt"),
   },
   TIER_MODES: {
-    lite: "gemini-flash-lite-latest",
+    lite: "gemini-3.1-flash-lite",
     advanced: "gemini-3-flash-preview",
   },
 }));

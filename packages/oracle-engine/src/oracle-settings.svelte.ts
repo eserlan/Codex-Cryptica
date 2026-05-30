@@ -40,7 +40,7 @@ export class OracleSettingsService {
   apiKey = $state<string | null>(null);
 
   /** Model tier: "lite" or "advanced" */
-  tier = $state<"lite" | "advanced">("advanced");
+  tier = $state<"lite" | "advanced">("lite");
 
   /** Loading state for async operations */
   isLoading = $state(false);
@@ -107,7 +107,7 @@ export class OracleSettingsService {
     this.apiKey = setting?.value ?? null;
 
     const tierSetting = await db.appSettings.get("ai_tier");
-    this.tier = tierSetting?.value ?? "advanced";
+    this.tier = tierSetting?.value ?? "lite";
 
     const providerSetting = await db.appSettings.get("image_provider");
     this.imageProvider = providerSetting?.value ?? "cloudflare";
@@ -309,7 +309,7 @@ export class OracleSettingsService {
   get modelName() {
     return this.tier === "advanced"
       ? "gemini-3-flash-preview"
-      : "gemini-2.0-flash-lite";
+      : "gemini-3.1-flash-lite";
   }
 
   /**
