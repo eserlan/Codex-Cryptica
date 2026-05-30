@@ -2,6 +2,7 @@
   import type { Entity } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
 
   let {
@@ -18,6 +19,14 @@
     regenerationService.pendingDraft?.entityId === entity.id
       ? regenerationService.pendingDraft
       : null,
+  );
+
+  // Entity auto-link: build flat index of titles + aliases for mention detection.
+  const entityIndex = $derived<EntityIndexEntry[]>(
+    Object.values(vault.entities).flatMap((e) => [
+      { text: e.title.toLowerCase(), id: e.id },
+      ...e.aliases.map((a) => ({ text: a.toLowerCase(), id: e.id })),
+    ]),
   );
 </script>
 
@@ -52,6 +61,11 @@
               ? draft.lore
               : entity.lore || "No detailed lore available."}
             editable={false}
+            {entityIndex}
+            currentEntityId={entity.id}
+            onEntityClick={(id) => {
+              vault.selectedEntityId = id;
+            }}
           />
         </div>
       {/if}

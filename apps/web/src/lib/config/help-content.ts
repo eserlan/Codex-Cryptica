@@ -391,6 +391,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.",
     icon: "icon-[lucide--folder-tree]",
   },
+  "entity-auto-link": {
+    id: "entity-auto-link",
+    title: "Entity Links in Content",
+    content:
+      "When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.",
+    icon: "icon-[lucide--link]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

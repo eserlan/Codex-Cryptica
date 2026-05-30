@@ -3,6 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
+  import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
@@ -85,8 +86,6 @@
     });
   });
 
-
-
   let allConnections = $derived.by(() => {
     if (!entity) return [];
 
@@ -156,6 +155,15 @@
     return result;
   });
 
+  // Entity auto-link: build flat index of titles + aliases for mention detection.
+  // vault.entities is available to both host and guest sessions (FR-011).
+  const entityIndex = $derived<EntityIndexEntry[]>(
+    Object.values(vault.entities).flatMap((e) => [
+      { text: e.title.toLowerCase(), id: e.id },
+      ...e.aliases.map((a) => ({ text: a.toLowerCase(), id: e.id })),
+    ]),
+  );
+
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const draft = $derived(
     regenerationService.pendingDraft?.entityId === entity.id
@@ -181,7 +189,6 @@
         />
       </div>
     </div>
-
   {/if}
 
   <!-- Chronicle -->
@@ -216,6 +223,11 @@
             editable={isEditing && !draft}
             onUpdate={(val) => {
               if (isEditing) editContent = val;
+            }}
+            entityIndex={isEditing ? [] : entityIndex}
+            currentEntityId={entity.id}
+            onEntityClick={(id) => {
+              vault.selectedEntityId = id;
             }}
           />
         {/if}
