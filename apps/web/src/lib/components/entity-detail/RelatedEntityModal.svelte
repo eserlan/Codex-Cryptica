@@ -7,7 +7,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
-  import { isAIEnabled } from "$lib/services/ai/capability-guard";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import type { ConnectedEntityPromptContext } from "schema";
 
   let {
@@ -115,8 +115,7 @@
       : selectedRelationship,
   );
 
-  const hasApiKey = $derived(!!oracle.settingsManager.apiKey);
-  const aiEnabled = $derived(isAIEnabled());
+  const aiEnabled = $derived(!discoveryPolicyStore.aiDisabled);
 
   function gatherNeighborsContext(): ConnectedEntityPromptContext[] {
     if (!sourceEntity) return [];
@@ -160,11 +159,15 @@
 
   async function handleGenerate() {
     if (!sourceEntityId || !sourceEntity) return;
-    if (!hasApiKey || !aiEnabled) {
+    if (vault.isGuest) {
       notificationStore.notify(
-        "AI is currently unavailable or API key is not configured.",
+        "Only the host can generate related entities.",
         "error",
       );
+      return;
+    }
+    if (!aiEnabled) {
+      notificationStore.notify("AI features are currently disabled.", "error");
       return;
     }
 
@@ -184,7 +187,7 @@
 
       loadingStatus = "Generating related entity...";
       const result = await textGenerationService.generateRelatedEntity!(
-        oracle.settingsManager.apiKey!,
+        oracle.effectiveApiKey || "",
         oracle.settingsManager.modelName,
         {
           title: sourceEntity.title,
@@ -198,7 +201,7 @@
         neighbors,
         categories.list.map((c) => ({ id: c.id, label: c.label })),
         templateOutline,
-        { isGuest: vault.isGuest },
+        { isGuest: vault.isGuest, aiDisabled: discoveryPolicyStore.aiDisabled },
       );
 
       // Populate draft preview form
@@ -354,17 +357,17 @@
       <!-- CONTENT STAGES -->
       <div class="px-8 py-6 max-h-[70vh] overflow-y-auto">
         {#if stage === "configure"}
-          {#if !hasApiKey || !aiEnabled}
+          {#if !aiEnabled}
             <div
               class="rounded-xl border border-red-500/30 bg-red-950/20 p-6 text-center"
             >
               <span
                 class="icon-[lucide--alert-triangle] text-red-400 h-10 w-10 mx-auto mb-3"
               ></span>
-              <h4 class="font-bold text-red-200">AI Integration Required</h4>
+              <h4 class="font-bold text-red-200">AI Features Disabled</h4>
               <p class="text-xs text-red-300/80 mt-1 max-w-md mx-auto">
-                Please configure a valid Gemini API Key in the Intelligence
-                settings panel to enable automated entity creation.
+                AI features are currently disabled. Please enable them in the
+                settings panel to generate related entities.
               </p>
               <button
                 class="mt-4 rounded-lg bg-red-600/35 border border-red-500/50 hover:bg-red-600/50 px-4 py-2 text-xs font-bold text-white uppercase tracking-wider transition-all"
@@ -373,8 +376,20 @@
                   modalUIStore.openSettings("intelligence");
                 }}
               >
-                Open AI Settings
+                Open Settings
               </button>
+            </div>
+          {:else if vault.isGuest}
+            <div
+              class="rounded-xl border border-theme-border bg-theme-bg/40 p-6 text-center"
+            >
+              <span
+                class="icon-[lucide--lock] text-theme-muted h-10 w-10 mx-auto mb-3"
+              ></span>
+              <h4 class="font-bold text-theme-text">Host Only</h4>
+              <p class="text-xs text-theme-muted mt-1 max-w-md mx-auto">
+                Only the host can generate related entities.
+              </p>
             </div>
           {:else}
             <!-- Config Form -->
@@ -622,7 +637,7 @@
           >
             Cancel
           </button>
-          {#if hasApiKey && aiEnabled}
+          {#if aiEnabled && !vault.isGuest}
             <button
               class="rounded-xl bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)]"
               onclick={handleGenerate}

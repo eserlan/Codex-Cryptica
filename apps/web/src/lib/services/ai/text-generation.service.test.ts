@@ -758,6 +758,38 @@ describe("DefaultTextGenerationService", () => {
       ).rejects.toThrow("AI features are currently disabled.");
     });
 
+    it("should use caller-provided AI enablement state over local fallback", async () => {
+      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(false);
+      mockModel.generateContent.mockResolvedValueOnce({
+        response: {
+          text: () =>
+            JSON.stringify({
+              name: "Generated NPC",
+              type: "NPC",
+              summary: "Summary.",
+              description: "Description.",
+            }),
+        },
+      });
+
+      const result = await service.generateRelatedEntity(
+        "api-key",
+        "model-name",
+        { title: "Source Entity", type: "Location" },
+        "NPC",
+        "ally",
+        "",
+        [],
+        [],
+        "",
+        { aiDisabled: false },
+      );
+
+      expect(result.name).toBe("Generated NPC");
+      expect(capabilityGuard.isAIEnabled).not.toHaveBeenCalled();
+      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValue(true);
+    });
+
     it("should throw an error when JSON parsing fails", async () => {
       mockModel.generateContent.mockResolvedValueOnce({
         response: {

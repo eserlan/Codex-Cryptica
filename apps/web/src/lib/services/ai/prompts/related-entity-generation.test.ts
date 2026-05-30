@@ -61,6 +61,37 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     expect(prompt).toContain("character, location");
   });
 
+  it("instructs generated names to match setting, culture, and theme", () => {
+    const prompt = buildRelatedEntityGenerationPrompt(
+      {
+        title: "House Vael-Tareth",
+        type: "faction",
+        content: "An old ash-coast noble house with moon-salt rites.",
+        lore: "Family names often use Vael, Tareth, and hyphenated coastal honorifics.",
+      },
+      "character",
+      "heir",
+      "",
+      [
+        {
+          title: "Mirelle Vael-Tareth",
+          type: "character",
+          relation: "matriarch",
+          content: "A noble matriarch from the ash coast.",
+        },
+      ],
+      [{ id: "character", label: "Character" }],
+    );
+
+    expect(prompt).toContain(
+      "Name the new entity using the vault's established setting, cultures, factions, languages, themes, and tone.",
+    );
+    expect(prompt).toContain(
+      "For characters especially, infer naming conventions from the source entity and direct graph neighbors",
+    );
+    expect(prompt).toContain("Avoid generic placeholder names");
+  });
+
   it("wraps user content fields in delimiters for security", () => {
     const source = {
       title: "Test",
