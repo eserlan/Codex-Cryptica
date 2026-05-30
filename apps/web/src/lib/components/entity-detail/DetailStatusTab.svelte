@@ -12,6 +12,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
 
   let {
@@ -184,6 +185,18 @@
 </script>
 
 <div class="space-y-4 md:space-y-6">
+  {#if !isEditing && !vault.isGuest}
+    <div class="flex justify-end">
+      <button
+        type="button"
+        onclick={() => modalUIStore.openRelatedEntityDialog(entity.id)}
+        class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
+      >
+        <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+        Generate Related
+      </button>
+    </div>
+  {/if}
   <!-- Temporal Metadata -->
   {#if isEditing}
     <div class="space-y-4">

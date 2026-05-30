@@ -45,6 +45,12 @@ vi.mock("./prompts/entity-reconciliation", () => ({
       `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}`,
   ),
 }));
+vi.mock("./prompts/related-entity-generation", () => ({
+  buildRelatedEntityGenerationPrompt: vi.fn(
+    (source, target, rel, custom, connected, categories, template) =>
+      `related:${source.title}:${target}:${rel}:${custom}:${connected.length}:${categories.length}:${template}`,
+  ),
+}));
 
 describe("DefaultTextGenerationService", () => {
   let service: DefaultTextGenerationService;
@@ -617,6 +623,157 @@ describe("DefaultTextGenerationService", () => {
         expect.stringContaining("--- TARGET: OriginalTarget"),
         expect.stringContaining("--- SOURCE 1: OriginalSource"),
       );
+    });
+
+    it("should successfully generate a related entity from JSON response", async () => {
+      const responsePayload = {
+        name: "Grounded NPC",
+        type: "NPC",
+        summary: "A brief summary.",
+        description: "Lore details.",
+        labels: ["ally", "contact"],
+        plotHook: "Find the key.",
+        relationshipBack: "friendly",
+      };
+
+      mockModel.generateContent.mockResolvedValueOnce({
+        response: {
+          text: () => JSON.stringify(responsePayload),
+        },
+      });
+
+      const result = await service.generateRelatedEntity(
+        "api-key",
+        "model-name",
+        {
+          title: "Source Entity",
+          type: "Location",
+          content: "Chr",
+          lore: "Lr",
+        },
+        "NPC",
+        "ally",
+        "Custom instructions",
+        [
+          {
+            title: "Neighbor",
+            type: "NPC",
+            relation: "enemy",
+            content: "NContent",
+          },
+        ],
+        [{ id: "NPC", label: "Non-Player Character" }],
+        "Outline",
+      );
+
+      expect(result).toEqual({
+        name: "Grounded NPC",
+        type: "NPC",
+        summary: "A brief summary.",
+        description: "Lore details.",
+        labels: ["ally", "contact"],
+        plotHook: "Find the key.",
+        relationshipBack: "friendly",
+      });
+
+      const { buildRelatedEntityGenerationPrompt } =
+        await import("./prompts/related-entity-generation");
+      expect(buildRelatedEntityGenerationPrompt).toHaveBeenCalledWith(
+        {
+          title: "Source Entity",
+          type: "Location",
+          content: "Chr",
+          lore: "Lr",
+        },
+        "NPC",
+        "ally",
+        "Custom instructions",
+        [
+          {
+            title: "Neighbor",
+            type: "NPC",
+            relation: "enemy",
+            content: "NContent",
+          },
+        ],
+        [{ id: "NPC", label: "Non-Player Character" }],
+        "Outline",
+      );
+    });
+
+    it("should respect guest mode options and omit lore details from source entity", async () => {
+      mockModel.generateContent.mockResolvedValueOnce({
+        response: {
+          text: () =>
+            JSON.stringify({
+              name: "Grounded NPC",
+              type: "NPC",
+              summary: "A brief summary.",
+              description: "Lore details.",
+            }),
+        },
+      });
+
+      await service.generateRelatedEntity(
+        "api-key",
+        "model-name",
+        {
+          title: "Source Entity",
+          type: "Location",
+          content: "Chr",
+          lore: "Secret Lore",
+        },
+        "NPC",
+        "ally",
+        "",
+        [],
+        [],
+        "",
+        { isGuest: true },
+      );
+
+      const { buildRelatedEntityGenerationPrompt } =
+        await import("./prompts/related-entity-generation");
+      expect(buildRelatedEntityGenerationPrompt).toHaveBeenCalledWith(
+        { title: "Source Entity", type: "Location", content: "Chr", lore: "" },
+        "NPC",
+        "ally",
+        "",
+        [],
+        [],
+        "",
+      );
+    });
+
+    it("should throw an error when AI is disabled", async () => {
+      vi.mocked(capabilityGuard.isAIEnabled).mockReturnValueOnce(false);
+      await expect(
+        service.generateRelatedEntity(
+          "api-key",
+          "model-name",
+          { title: "Source Entity", type: "Location" },
+          "NPC",
+          "ally",
+        ),
+      ).rejects.toThrow("AI features are currently disabled.");
+    });
+
+    it("should throw an error when JSON parsing fails", async () => {
+      mockModel.generateContent.mockResolvedValueOnce({
+        response: {
+          text: () => "invalid json",
+        },
+      });
+
+      await expect(
+        service.generateRelatedEntity(
+          "api-key",
+          "model-name",
+          { title: "Source Entity", type: "Location" },
+          "NPC",
+          "ally",
+        ),
+      ).rejects.toThrow("Related entity generation failed");
     });
   });
 });

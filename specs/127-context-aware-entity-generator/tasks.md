@@ -11,10 +11,10 @@
 
 **Purpose**: Core prompt building, AI generation logic, and unit testing infrastructure. No UI work can begin until this phase is complete.
 
-- [ ] T001 [P] Implement `buildRelatedEntityGenerationPrompt` in `apps/web/src/lib/services/ai/prompts/related-entity-generation.ts`.
-- [ ] T002 [P] Write prompt unit tests in `apps/web/src/lib/services/ai/prompts/related-entity-generation.test.ts`.
-- [ ] T003 [P] Implement `generateRelatedEntity` in `TextGenerationService` (`apps/web/src/lib/services/ai/text-generation.service.svelte.ts`).
-- [ ] T004 Write service-level unit tests in `apps/web/src/lib/services/ai/text-generation.service.test.ts`.
+- [x] T001 [P] Implement `buildRelatedEntityGenerationPrompt` in `apps/web/src/lib/services/ai/prompts/related-entity-generation.ts`.
+- [x] T002 [P] Write prompt unit tests in `apps/web/src/lib/services/ai/prompts/related-entity-generation.test.ts`.
+- [x] T003 [P] Implement `generateRelatedEntity` in `TextGenerationService` (`apps/web/src/lib/services/ai/text-generation.service.svelte.ts`).
+- [x] T004 Write service-level unit tests in `apps/web/src/lib/services/ai/text-generation.service.test.ts`.
 
 **Checkpoint**: Foundational prompt and service layer complete and fully tested.
 
@@ -24,9 +24,9 @@
 
 **Goal**: Render the "Generate Related" action trigger and display the lightweight configuration modal.
 
-- [ ] T005 [P] Create configuration wizard component `RelatedEntityModal.svelte` (renders Type dropdown, Relationship dropdown + input, Custom instructions input).
-- [ ] T006 [P] Integrate the "Generate Related" action button in `DetailStatusTab.svelte` and `ZenContent.svelte` to launch the modal.
-- [ ] T007 Write unit tests verifying configuration UI options and dynamic relationship loading in `apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts`.
+- [x] T005 [P] Create configuration wizard component `RelatedEntityModal.svelte` (renders Type dropdown, Relationship dropdown + input, Custom instructions input).
+- [x] T006 [P] Integrate the "Generate Related" action button in `DetailStatusTab.svelte` and `ZenContent.svelte` to launch the modal.
+- [x] T007 Write unit tests verifying configuration UI options and dynamic relationship loading in `apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts`.
 
 **Checkpoint**: Configuration UI and modal wizard are fully functional and interactive.
 
@@ -36,10 +36,10 @@
 
 **Goal**: Compile active entity + neighbor context, trigger AI generation, and display the preview.
 
-- [ ] T008 [P] Implement neighbor gathering logic in `RelatedEntityModal` to query direct graph connections (Title, Type, Relationship, and Chronicle content).
-- [ ] T009 [P] Connect the modal "Generate" trigger to the `TextGenerationService` and implement loading/progress UI.
-- [ ] T010 Parse the AI JSON output and bind the generated draft entity to the review stage within the modal.
-- [ ] T011 Write tests for the context compilation and draft parsing integration.
+- [x] T008 [P] Implement neighbor gathering logic in `RelatedEntityModal` to query direct graph connections (Title, Type, Relationship, and Chronicle content).
+- [x] T009 [P] Connect the modal "Generate" trigger to the `TextGenerationService` and implement loading/progress UI.
+- [x] T010 Parse the AI JSON output and bind the generated draft entity to the review stage within the modal.
+- [x] T011 Write tests for the context compilation and draft parsing integration.
 
 **Checkpoint**: AI-grounded draft entity generation and preview works end-to-end.
 
@@ -49,10 +49,10 @@
 
 **Goal**: Allow editing draft fields, saving the entity, regenerating, or cancelling.
 
-- [ ] T012 [P] Bind generated draft fields (name, summary, description, labels, plotHook) to editable form fields on the review screen.
-- [ ] T013 [P] Implement the "Create Entity" save handler (creates new entity and directed connection in the vault).
-- [ ] T014 Implement the "Regenerate" trigger and "Cancel" handler (closing the modal clean).
-- [ ] T015 Write unit tests for draft editing and saving behaviors.
+- [x] T012 [P] Bind generated draft fields (name, summary, description, labels, plotHook) to editable form fields on the review screen.
+- [x] T013 [P] Implement the "Create Entity" save handler (creates new entity and directed connection in the vault).
+- [x] T014 Implement the "Regenerate" trigger and "Cancel" handler (closing the modal clean).
+- [x] T015 Write unit tests for draft editing and saving behaviors.
 
 **Checkpoint**: Generated entities can be successfully customized and persisted to the vault.
 
@@ -62,7 +62,7 @@
 
 **Goal**: Automate directed relationship links from Source → New Entity.
 
-- [ ] T016 Ensure the save handler creates the directed connection edge using `vault.addConnection` and verify in unit tests.
+- [x] T016 Ensure the save handler creates the directed connection edge using `vault.addConnection` and verify in unit tests.
 
 ---
 
@@ -70,7 +70,7 @@
 
 **Goal**: AI-driven dynamic target type and relationship selection.
 
-- [ ] T017 Wire up the "Surprise Me" target option in the dropdown and teach prompt instructions to dynamically pick a fitting category from allowed vault categories.
+- [x] T017 Wire up the "Surprise Me" target option in the dropdown and teach prompt instructions to dynamically pick a fitting category from allowed vault categories.
 
 ---
 
@@ -78,8 +78,8 @@
 
 **Purpose**: Help guidelines, cross-cutting checks, and final testing.
 
-- [ ] T018 Add user-facing help description article about "Generate Related" in `apps/web/src/lib/content/help/generate-related.md` (or equivalent help store).
-- [ ] T019 Run full package build and test suite (`bun run test` + `bun run lint`) to verify 0 regressions.
+- [x] T018 Add user-facing help description article about "Generate Related" in `apps/web/src/lib/content/help/generate-related.md` (or equivalent help store).
+- [x] T019 Run full package build and test suite (`bun run test` + `bun run lint`) to verify 0 regressions.
 
 ---
 

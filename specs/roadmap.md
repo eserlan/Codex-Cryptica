@@ -26,6 +26,12 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.26.3 — The Grounded Context-Aware Entity Creator Update (2026-05-30)
+
+- **Highlights**: Branch campaign settings organically using a new 'Generate Related' action that gathers the active entity and its first-degree graph neighbors to draft grounded entities, with outline templates integration, adaptive relationship suggestions, and automatic directed back-linking in the vault.
+- **Associated Specifications**:
+  - [127-context-aware-entity-generator](./127-context-aware-entity-generator/spec.md) (Grounded context-aware related entity creator, adaptive suggestions, and directed connection back-linking)
+
 ### v0.26.2 — The Vault Save Confidence & Chronology Quality Update (2026-05-26)
 
 - **Highlights**: Silent validation of local directory permission on app startup to prevent intrusive picker prompts, direct UI action to grant permissions, a 3-second transient visual confirmation for folder saves, and a non-blocking 5-second save-drain timeout when switching vaults.

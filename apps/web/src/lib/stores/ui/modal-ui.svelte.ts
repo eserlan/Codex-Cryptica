@@ -55,6 +55,14 @@ export class ModalUIStore {
     entityId: null,
   });
 
+  relatedEntityDialog = $state<{
+    open: boolean;
+    sourceEntityId: string | null;
+  }>({
+    open: false,
+    sourceEntityId: null,
+  });
+
   showVaultSwitcher = $state(false);
   showShare = $state(false);
 
@@ -113,6 +121,14 @@ export class ModalUIStore {
 
   closeSoundBite() {
     this.soundBite = { show: false, entityId: null };
+  }
+
+  openRelatedEntityDialog(sourceEntityId: string) {
+    this.relatedEntityDialog = { open: true, sourceEntityId };
+  }
+
+  closeRelatedEntityDialog() {
+    this.relatedEntityDialog = { open: false, sourceEntityId: null };
   }
 
   openVaultSwitcher() {
@@ -193,6 +209,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v3__";
+const KEY = "__codex_modal_ui_store__v4__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());
