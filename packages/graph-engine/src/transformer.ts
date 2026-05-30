@@ -155,9 +155,12 @@ export class GraphTransformer {
       }
 
       // Create Node
+      const hasPast = entity.labels?.some(
+        (l: string) => l.toLowerCase() === "past",
+      );
       const nodeData: GraphNode["data"] = {
         id: entity.id,
-        label: entity.title,
+        label: hasPast ? `${entity.title}*` : entity.title,
         type: entity.type,
         status: entity.status,
         weight: weights.get(entity.id) ?? 0,

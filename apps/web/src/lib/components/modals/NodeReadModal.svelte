@@ -170,7 +170,9 @@
             <h2
               class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
-              {entity.title}
+              {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                  >*</sup
+                >{/if}
             </h2>
           {:else}
             <h2 class="text-2xl text-red-500 font-mono">Entity Not Found</h2>

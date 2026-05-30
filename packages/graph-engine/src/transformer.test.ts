@@ -229,6 +229,38 @@ describe("GraphTransformer", () => {
     expect(ordinaryNode?.data.isImportant).toBeUndefined();
   });
 
+  it("should append asterisk to the node label if entity has past label case-insensitively", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Dead Hero",
+        labels: ["PAST"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n2",
+        type: "npc",
+        title: "Living Legend",
+        labels: ["active"],
+        connections: [],
+        content: "",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const deadNode = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n1",
+    );
+    const livingNode = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n2",
+    );
+
+    expect(deadNode?.data.label).toBe("Dead Hero*");
+    expect(livingNode?.data.label).toBe("Living Legend");
+  });
+
   it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
     const entities: any[] = [
       {
