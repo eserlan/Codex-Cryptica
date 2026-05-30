@@ -29,9 +29,8 @@ describe("EntityProposalService", () => {
   describe("acceptProposal", () => {
     it("should fall back to default template behavior on AI failure", async () => {
       const mockVault = {
-        createEntity: vi
-          .fn()
-          .mockResolvedValue({ id: "123", title: "Test Entity" }),
+        createEntity: vi.fn().mockResolvedValue("123"),
+        entities: {},
       };
       const mockTemplateService = {
         resolveTemplate: vi.fn().mockResolvedValue("# Template Content"),
@@ -65,16 +64,15 @@ describe("EntityProposalService", () => {
         },
       );
       expect(result).toEqual({
-        entity: { id: "123", title: "Test Entity" },
+        entity: { id: "123", title: "Test Entity", categoryId: "note" },
         categoryInferred: false,
       });
     });
 
     it("should use guessed category if AI succeeds", async () => {
       const mockVault = {
-        createEntity: vi
-          .fn()
-          .mockResolvedValue({ id: "123", title: "Test Entity" }),
+        createEntity: vi.fn().mockResolvedValue("123"),
+        entities: {},
       };
       const mockTemplateService = {
         resolveTemplate: vi.fn().mockResolvedValue("# Character Template"),
@@ -111,7 +109,7 @@ describe("EntityProposalService", () => {
         },
       );
       expect(result).toEqual({
-        entity: { id: "123", title: "Test Entity" },
+        entity: { id: "123", title: "Test Entity", categoryId: "character" },
         categoryInferred: true,
       });
     });
