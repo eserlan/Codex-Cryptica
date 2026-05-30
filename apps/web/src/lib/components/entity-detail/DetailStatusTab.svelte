@@ -161,7 +161,7 @@
   const entityIndex = $derived<EntityIndexEntry[]>(
     Object.values(vault.entities).flatMap((e) => [
       { text: e.title.toLowerCase(), id: e.id },
-      ...e.aliases.map((a) => ({ text: a.toLowerCase(), id: e.id })),
+      ...(e.aliases || []).map((a) => ({ text: a.toLowerCase(), id: e.id })),
     ]),
   );
 
