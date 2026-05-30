@@ -24,6 +24,7 @@ The prompt builder `buildRelatedEntityGenerationPrompt` combines:
 
 1. **Source Entity Context**: Title, type, content (chronicle), and lore (lore).
 2. **Neighbor Context**: Array of directly connected entities with title, type, connection type, and content (chronicle).
-3. **Target Type & Relationship**: The configured output format.
-4. **Active Categories**: List of categories available in the vault.
-5. **Instructions/Constraints**: Instructions on keeping the new entity grounded in the source context, using vault-allowed categories, using "Labels" instead of "Tags", and formatting output strictly as JSON.
+3. **Template Outline**: The template markdown resolved from `entityTemplateService.resolveTemplate(targetType)` for the target category/theme, ensuring the generated lore strictly matches its layout headings.
+4. **Target Type & Relationship**: The configured output format.
+5. **Active Categories**: List of categories available in the vault.
+6. **Instructions/Constraints**: Instructions on keeping the new entity grounded in the source context, using vault-allowed categories, using "Labels" instead of "Tags", formatting output strictly as JSON, and matching the template outline structure.

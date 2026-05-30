@@ -28,6 +28,12 @@ This document details the architectural decisions, AI prompt design, and data fl
 - **Rationale**: Adheres to client-side privacy, client-side processing, and security guidelines. No network requests are made outside of the Gemini API endpoint.
 - **Alternatives considered**: Storing drafts in IndexedDB. Rejected as unnecessary complexity since drafts are transient and meant to be processed immediately or discarded.
 
+### Decision 5: Template System Integration
+
+- **Choice**: The system will call `entityTemplateService.resolveTemplate(targetType)` to fetch the active theme template for the target entity type. This template outline is passed into the prompt, and the AI is instructed to structure its generated `description` (lore) fields using those exact markdown headings.
+- **Rationale**: Reuses the existing robust default and custom templates system, ensuring that generated entities are structured exactly as if they had been created manually by the user, maintaining vault consistency.
+- **Alternatives considered**: Merging AI output into the template dynamically after generation. Rejected because AI-generated text flows much better when it directly fills out a template's section headers during the generation phase.
+
 ## External Dependencies & API
 
 - **Gemini Pro (Gemini 1.5/2.0/3.5)**: Used for generating the structured draft. Output format will be strictly JSON containing `name`, `type`, `summary`, `description`, `labels` (as a string array), and `plotHook`.
