@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Map } from "schema";
+  import type { Map, Entity } from "schema";
 
   let {
     x,
@@ -13,7 +13,7 @@
   }: {
     x: number;
     y: number;
-    entity?: { id: string; title: string } | null;
+    entity?: Entity | null;
     subMap?: Map | null;
     onOpenEntity: (entityId: string) => void;
     onEnterSubmap: (mapId: string) => void;
@@ -39,7 +39,9 @@
         class="px-2.5 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-all uppercase tracking-wider whitespace-nowrap border-r border-theme-border mr-1 hover:bg-theme-primary/10 rounded-md"
         onclick={() => onOpenEntity(entity.id)}
       >
-        {entity.title}
+        {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+            >*</sup
+          >{/if}
       </button>
     {/if}
 

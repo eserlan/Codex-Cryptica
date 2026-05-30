@@ -195,7 +195,9 @@
               : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal break-words overflow-visible w-full md:truncate"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
-            {entity.title}
+            {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                >*</sup
+              >{/if}
           </h2>
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
@@ -226,7 +228,9 @@
                 onclick={handleOpenParent}
                 class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
               >
-                {parentEntity.title}
+                {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                    >*</sup
+                  >{/if}
               </button>
             </div>
           {/if}

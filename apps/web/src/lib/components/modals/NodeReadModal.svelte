@@ -88,6 +88,10 @@
       isOutbound: true,
       displayTitle: vault.entities[c.target]?.title || c.target,
       targetId: c.target,
+      hasPastLabel:
+        vault.entities[c.target]?.labels?.some(
+          (l: string) => l.toLowerCase() === "past",
+        ) ?? false,
     }));
 
     const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
@@ -95,6 +99,10 @@
       isOutbound: false,
       displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
       targetId: item.sourceId,
+      hasPastLabel:
+        vault.entities[item.sourceId]?.labels?.some(
+          (l: string) => l.toLowerCase() === "past",
+        ) ?? false,
     }));
 
     return [...outbound, ...inbound];
@@ -170,7 +178,9 @@
             <h2
               class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
-              {entity.title}
+              {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                  >*</sup
+                >{/if}
             </h2>
           {:else}
             <h2 class="text-2xl text-red-500 font-mono">Entity Not Found</h2>
@@ -276,7 +286,8 @@
                       <div
                         class="text-sm font-bold text-gray-200 group-hover:text-green-400 transition truncate"
                       >
-                        {conn.displayTitle}
+                        {conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
+                          >{/if}
                       </div>
                       <div class="text-xs text-gray-500 truncate">
                         {conn.label || conn.type}
