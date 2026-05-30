@@ -5,7 +5,7 @@
   import type { DateSelection } from "chronology-engine";
   import { calendarEngine, parseDirectDateInput } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import { scale, slide } from "svelte/transition";
 
   let {
@@ -38,7 +38,10 @@
     if (!val || !hasValidYear) {
       if (refVal && "year" in refVal && refVal.year !== undefined) {
         return {
-          precision: ("precision" in refVal && refVal.precision) ? (refVal.precision as any) : "year",
+          precision:
+            "precision" in refVal && refVal.precision
+              ? (refVal.precision as any)
+              : "year",
           year: refVal.year,
           calendarRevision: revision,
           label: val?.label || undefined,
@@ -84,7 +87,9 @@
     };
   }
 
-  let activeSelection = $state<DateSelection>(toDateSelection(value, referenceValue));
+  let activeSelection = $state<DateSelection>(
+    untrack(() => toDateSelection(value, referenceValue)),
+  );
 
   let directDateInput = $state("");
   let directDateError = $state("");
@@ -165,10 +170,10 @@
       // Only process vertical scrolling
       if (Math.abs(e.deltaY) === 0) return;
       e.preventDefault();
-      
+
       wheelAccumulator += e.deltaY;
       const speed = Math.abs(e.deltaY);
-      
+
       let stepSize = 1;
       // High speed thresholds
       if (speed > 300) stepSize = 25;
@@ -177,12 +182,14 @@
 
       // Sensitivity - how much accumulation is required to trigger a tick
       const threshold = speed > 50 ? 20 : 40;
-      
+
       if (Math.abs(wheelAccumulator) >= threshold) {
-        const ticks = Math.sign(wheelAccumulator) * Math.floor(Math.abs(wheelAccumulator) / threshold);
+        const ticks =
+          Math.sign(wheelAccumulator) *
+          Math.floor(Math.abs(wheelAccumulator) / threshold);
         wheelAccumulator -= ticks * threshold;
-        
-        const patch = { year: activeSelection.year + (ticks * stepSize) };
+
+        const patch = { year: activeSelection.year + ticks * stepSize };
         activeSelection = calendarEngine.applyParentChange(
           activeSelection,
           patch,
@@ -191,7 +198,9 @@
       }
     };
 
-    yearContainer.addEventListener("wheel", handleYearWheel, { passive: false });
+    yearContainer.addEventListener("wheel", handleYearWheel, {
+      passive: false,
+    });
     return () => yearContainer.removeEventListener("wheel", handleYearWheel);
   });
 
@@ -570,8 +579,6 @@
         aria-labelledby="manual-tab"
         class="space-y-3"
       >
-
-
         <!-- Precision Toggle -->
         <div
           class="flex bg-theme-bg p-0.5 rounded-md border border-theme-border/30"

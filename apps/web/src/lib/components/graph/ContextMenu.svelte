@@ -15,7 +15,7 @@
 
   let { cy } = $props<{ cy: Core }>();
 
-  const controller = new GraphContextMenuController(cy, {
+  const controller = new GraphContextMenuController(() => cy, {
     graph,
     vault,
     oracle,

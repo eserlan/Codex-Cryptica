@@ -37,12 +37,17 @@ export function extractProposals(
   const boldRegex = /(?:\*\*|__)(.+?)(?:\*\*|__)/g;
 
   const proposals = new Set<string>();
+  const seenLower = new Set<string>();
   let match;
 
   while ((match = boldRegex.exec(textWithoutLinks)) !== null) {
     const term = match[1].trim();
     if (term.length > 0) {
-      proposals.add(term);
+      const lower = term.toLowerCase();
+      if (!seenLower.has(lower)) {
+        seenLower.add(lower);
+        proposals.add(term);
+      }
     }
   }
 
