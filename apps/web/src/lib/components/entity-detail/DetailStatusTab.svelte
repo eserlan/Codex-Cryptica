@@ -112,6 +112,10 @@
           isOutbound: true,
           displayTitle: vault.entities[c.target]?.title || c.target,
           targetId: c.target,
+          hasPastLabel:
+            vault.entities[c.target]?.labels?.some(
+              (l) => l.toLowerCase() === "past",
+            ) ?? false,
         });
       }
     }
@@ -125,6 +129,10 @@
             isOutbound: false,
             displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
             targetId: item.sourceId,
+            hasPastLabel:
+              vault.entities[item.sourceId]?.labels?.some(
+                (l) => l.toLowerCase() === "past",
+              ) ?? false,
           });
         }
       }
@@ -148,6 +156,8 @@
             isOutbound: false,
             isChild: true,
             displayTitle: child.title,
+            hasPastLabel:
+              child.labels?.some((l) => l.toLowerCase() === "past") ?? false,
           });
         }
       }
@@ -409,32 +419,53 @@
                 class="text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
               >
                 {#if conn.isChild}
-                  <span class="text-theme-text">{conn.displayTitle}</span>
+                  <span class="text-theme-text"
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
+                      >{/if}</span
+                  >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >Child</strong
                   >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
-                  <span class="text-theme-secondary">{entity.title}</span>
+                  <span class="text-theme-secondary"
+                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                        >*</sup
+                      >{/if}</span
+                  >
                 {:else if conn.isOutbound}
-                  <span class="text-theme-secondary">{entity.title}</span>
+                  <span class="text-theme-secondary"
+                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                        >*</sup
+                      >{/if}</span
+                  >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
-                  <span class="text-theme-text">{conn.displayTitle}</span>
+                  <span class="text-theme-text"
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
+                      >{/if}</span
+                  >
                 {:else}
-                  <span class="text-theme-text">{conn.displayTitle}</span>
+                  <span class="text-theme-text"
+                    >{conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
+                      >{/if}</span
+                  >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
                   <strong
                     class="text-theme-text group-hover:text-theme-primary transition"
                     >{conn.label || conn.type}</strong
                   >
                   <span class="relation-arrow icon-[lucide--move-right]"></span>
-                  <span class="text-theme-secondary">{entity.title}</span>
+                  <span class="text-theme-secondary"
+                    >{entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                        >*</sup
+                      >{/if}</span
+                  >
                 {/if}
               </button>
 

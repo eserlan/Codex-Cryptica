@@ -73,10 +73,10 @@ ${u(incoming.lore || "")}
 ${relatedSection}
 
 RULES:
-1. Preserve established facts unless the incoming passage clearly supersedes, refines, or explicitly corrects them.
+1. Preserve established facts from the current record except where the incoming passage (which comes from the chat) conflicts, in which case the incoming passage always supersedes and replaces those facts.
 2. If the incoming passage explicitly retracts, deletes, or corrects information from the current record (e.g., "Remove X", "Actually, Y never happened"), you MUST reflect that change by removing or amending the relevant parts of the updated record.
 3. Merge duplicate information into one coherent record.
-4. Resolve contradictions by prioritizing the incoming passage when it represents a deliberate correction or retcon. Otherwise, resolve conservatively.
+4. Resolve contradictions by prioritizing the incoming passage.
 5. Keep the chronicle tight and readable — current status and defining identity, not exhaustive history.
 6. Make the lore richer and more complete when the source material supports it. When an incoming passage contains detail that belongs in lore rather than chronicle, place it there rather than compressing it away.
 7. Markdown usage differs by field:

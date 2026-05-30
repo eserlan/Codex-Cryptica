@@ -13,7 +13,6 @@
 
   import { debugStore } from "$lib/stores/debug.svelte";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
-  import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
   import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
 
   let editingConnectionTarget = $state<string | null>(null);
@@ -831,10 +830,6 @@
 
       {#if entity}
         <div class="px-0">
-          <DetailProposals
-            isEditing={editState.isEditing}
-            entityId={entity.id}
-          />
           <EntityProposals
             content={entity.content || ""}
             isEditing={editState.isEditing}
