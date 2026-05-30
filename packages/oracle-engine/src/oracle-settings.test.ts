@@ -23,7 +23,7 @@ describe("OracleSettingsService", () => {
       const service = new OracleSettingsService();
 
       expect(service.apiKey).toBe(null);
-      expect(service.tier).toBe("advanced");
+      expect(service.tier).toBe("lite");
       expect(service.isLoading).toBe(false);
       expect(service.activeStyleTitle).toBe(null);
       expect(service.imageProvider).toBe("cloudflare");
@@ -57,7 +57,7 @@ describe("OracleSettingsService", () => {
       await service.init(mockDb as any);
 
       expect(service.apiKey).toBe(null);
-      expect(service.tier).toBe("advanced");
+      expect(service.tier).toBe("lite");
       expect(service.imageProvider).toBe("cloudflare");
     });
 
@@ -174,11 +174,11 @@ describe("OracleSettingsService", () => {
       expect(service.modelName).toBe("gemini-3-flash-preview");
     });
 
-    it("should return gemini-2.0-flash-lite for lite tier", () => {
+    it("should return gemini-3.1-flash-lite for lite tier", () => {
       const service = new OracleSettingsService();
       service.tier = "lite";
 
-      expect(service.modelName).toBe("gemini-2.0-flash-lite");
+      expect(service.modelName).toBe("gemini-3.1-flash-lite");
     });
   });
 });

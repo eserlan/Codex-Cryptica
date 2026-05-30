@@ -24,7 +24,7 @@ vi.mock("../services/ai/context-retrieval.service", () => ({
 vi.mock("./oracle.svelte", () => ({
   oracle: {
     effectiveApiKey: "mocked-api-key",
-    modelName: "gemini-3-flash-preview",
+    modelName: "gemini-3.1-flash-lite",
   },
 }));
 

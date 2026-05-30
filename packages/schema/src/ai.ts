@@ -1,7 +1,7 @@
 import type { Entity } from "./entity";
 
 export const TIER_MODES = {
-  lite: "gemini-flash-lite-latest",
+  lite: "gemini-3.1-flash-lite",
   advanced: "gemini-3-flash-preview",
 };
 

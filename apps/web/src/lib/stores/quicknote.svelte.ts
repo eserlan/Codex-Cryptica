@@ -271,7 +271,7 @@ export class QuickNoteStore {
 
     try {
       const apiKey = oracle.effectiveApiKey || "";
-      const modelName = oracle.modelName || "gemini-3-flash-preview";
+      const modelName = oracle.modelName || "gemini-3.1-flash-lite";
 
       // 1. Retrieve semantic context based on note content to feed into LLM
       let context = "";
