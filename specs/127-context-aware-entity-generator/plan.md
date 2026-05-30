@@ -1,105 +1,69 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Context-Aware Entity Generator
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Branch**: `127-context-aware-entity-generator` | **Date**: 2026-05-30 | **Spec**: [/specs/127-context-aware-entity-generator/spec.md](file:///home/espen/proj/remotecodexarcana/specs/127-context-aware-entity-generator/spec.md)
+**Input**: Feature specification from `/specs/127-context-aware-entity-generator/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Add a **Generate Related** action to entity views (sidebar detail view and Zen mode content/detail area). This action opens a configuration modal where users choose target entity type and relationship. The backend AI compiler uses the active entity and its first-degree graph neighbors (including their chronicles) to generate a grounded, context-aware draft entity. Users can review, edit, regenerate, or save the draft, which automatically creates the new entity in the vault and links it back to the source entity with a directed edge.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 6.0.3  
+**Primary Dependencies**: Svelte 5 Runes, SvelteKit, `@google/generative-ai`  
+**Storage**: OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts)  
+**Testing**: Vitest for service/prompt unit tests, Svelte Testing Library for component tests  
+**Target Platform**: Browser (Client-side offline-first architecture)  
+**Performance Goals**: Prompt compilation under 50ms, modal opening under 100ms  
+**Constraints**: Zero-leak of custom API keys, must respect AI-disabled setting, strictly client-side
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-[Gates determined based on constitution file]
+1. **Library-First**: The prompt construction and AI generation logic resides inside standard service architectures. No monolithic logic bloat.
+2. **TDD**: Corresponding unit tests MUST be written for the prompt builder (`related-entity-generation.test.ts`) and the text-generation service method (`text-generation.service.test.ts`).
+3. **Labels Over Tags**: Strict convergence on "Labels" for all suggested categories/tags. No user-facing mention of tags.
+4. **Privacy**: Executed fully client-side using local state for drafts and direct vault API operations.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+specs/127-context-aware-entity-generator/
+├── plan.md              # This file
+├── research.md          # Technical decisions and rationale
+├── data-model.md        # Transient request/draft structures
+├── quickstart.md        # Code snippets and integration guidelines
+├── contracts/
+│   └── generation.md    # AI prompt & JSON response schema contract
+└── tasks.md             # Task breakdown and checklist
 ```
 
-### Source Code (repository root)
-
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+### Source Code Paths
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
+apps/web/src/
+├── lib/
 │   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+│   │   ├── entity-detail/
+│   │   │   ├── DetailStatusTab.svelte          # Add "Generate Related" action here
+│   │   │   └── RelatedEntityModal.svelte       # New configuration/review modal
+│   │   └── zen/
+│   │       └── ZenContent.svelte               # Add "Generate Related" action here
+│   ├── services/
+│   │   └── ai/
+│   │       ├── prompts/
+│   │       │   ├── related-entity-generation.ts      # Prompt template builder
+│   │       │   └── related-entity-generation.test.ts # Prompt unit tests
+│   │       └── text-generation.service.svelte.ts     # Add generation orchestration
+│   └── stores/
+│       └── vault.svelte.ts                     # vault.createEntity and addConnection APIs
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Fully integrated with existing `apps/web/src/lib/services/ai/` structures and standard entity detail UI components.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
-| -------------------------- | ------------------ | ------------------------------------ |
-| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
+No constitution violations detected. Complexity remains low.
