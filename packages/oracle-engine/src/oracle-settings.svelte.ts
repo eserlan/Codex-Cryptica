@@ -49,12 +49,16 @@ export class OracleSettingsService {
   activeStyleTitle = $state<string | null>(null);
 
   /** Image Provider Setting */
-  imageProvider = $state<"gemini" | "custom">("gemini");
+  imageProvider = $state<"gemini" | "cloudflare" | "custom">("cloudflare");
   customImageBaseUrl = $state<string>(
     "https://api.together.xyz/v1/images/generations",
   );
   customImageApiKey = $state<string>("");
   customImageModel = $state<string>("black-forest-labs/FLUX.1-schnell");
+
+  cloudflareAccountId = $state<string>("");
+  cloudflareApiToken = $state<string>("");
+  cloudflareModel = $state<string>("@cf/black-forest-labs/flux-1-schnell");
 
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
@@ -76,10 +80,13 @@ export class OracleSettingsService {
           this.apiKey = data.apiKey;
           this.tier = data.tier || "advanced";
           this.activeStyleTitle = data.activeStyleTitle || null;
-          this.imageProvider = data.imageProvider || "gemini";
+          this.imageProvider = data.imageProvider || "cloudflare";
           this.customImageBaseUrl = data.customImageBaseUrl || "";
           this.customImageApiKey = data.customImageApiKey || "";
           this.customImageModel = data.customImageModel || "";
+          this.cloudflareAccountId = data.cloudflareAccountId || "";
+          this.cloudflareApiToken = data.cloudflareApiToken || "";
+          this.cloudflareModel = data.cloudflareModel || "";
         } else if (type === "REQUEST_STATE") {
           this.broadcast();
         }
@@ -103,7 +110,7 @@ export class OracleSettingsService {
     this.tier = tierSetting?.value ?? "advanced";
 
     const providerSetting = await db.appSettings.get("image_provider");
-    this.imageProvider = providerSetting?.value ?? "gemini";
+    this.imageProvider = providerSetting?.value ?? "cloudflare";
     const baseUrlSetting = await db.appSettings.get("custom_image_base_url");
     this.customImageBaseUrl =
       baseUrlSetting?.value ?? "https://api.together.xyz/v1/images/generations";
@@ -112,6 +119,16 @@ export class OracleSettingsService {
     const modelSetting = await db.appSettings.get("custom_image_model");
     this.customImageModel =
       modelSetting?.value ?? "black-forest-labs/FLUX.1-schnell";
+
+    const cfAccountIdSetting = await db.appSettings.get(
+      "cloudflare_account_id",
+    );
+    this.cloudflareAccountId = cfAccountIdSetting?.value ?? "";
+    const cfApiTokenSetting = await db.appSettings.get("cloudflare_api_token");
+    this.cloudflareApiToken = cfApiTokenSetting?.value ?? "";
+    const cfModelSetting = await db.appSettings.get("cloudflare_model");
+    this.cloudflareModel =
+      cfModelSetting?.value ?? "@cf/black-forest-labs/flux-1-schnell";
 
     this.broadcast();
   }
@@ -131,6 +148,9 @@ export class OracleSettingsService {
         customImageBaseUrl: this.customImageBaseUrl,
         customImageApiKey: this.customImageApiKey,
         customImageModel: this.customImageModel,
+        cloudflareAccountId: this.cloudflareAccountId,
+        cloudflareApiToken: this.cloudflareApiToken,
+        cloudflareModel: this.cloudflareModel,
       },
     });
   }
@@ -156,10 +176,13 @@ export class OracleSettingsService {
    * Sets the custom image provider settings.
    */
   async setCustomImageSettings(settings: {
-    provider?: "gemini" | "custom";
+    provider?: "gemini" | "cloudflare" | "custom";
     baseUrl?: string;
     apiKey?: string;
     model?: string;
+    cloudflareAccountId?: string;
+    cloudflareApiToken?: string;
+    cloudflareModel?: string;
   }) {
     if (this.db) {
       if (settings.provider !== undefined)
@@ -186,12 +209,36 @@ export class OracleSettingsService {
           value: settings.model,
           updatedAt: Date.now(),
         });
+      if (settings.cloudflareAccountId !== undefined)
+        await this.db.appSettings.put({
+          key: "cloudflare_account_id",
+          value: settings.cloudflareAccountId,
+          updatedAt: Date.now(),
+        });
+      if (settings.cloudflareApiToken !== undefined)
+        await this.db.appSettings.put({
+          key: "cloudflare_api_token",
+          value: settings.cloudflareApiToken,
+          updatedAt: Date.now(),
+        });
+      if (settings.cloudflareModel !== undefined)
+        await this.db.appSettings.put({
+          key: "cloudflare_model",
+          value: settings.cloudflareModel,
+          updatedAt: Date.now(),
+        });
     }
     if (settings.provider !== undefined) this.imageProvider = settings.provider;
     if (settings.baseUrl !== undefined)
       this.customImageBaseUrl = settings.baseUrl;
     if (settings.apiKey !== undefined) this.customImageApiKey = settings.apiKey;
     if (settings.model !== undefined) this.customImageModel = settings.model;
+    if (settings.cloudflareAccountId !== undefined)
+      this.cloudflareAccountId = settings.cloudflareAccountId;
+    if (settings.cloudflareApiToken !== undefined)
+      this.cloudflareApiToken = settings.cloudflareApiToken;
+    if (settings.cloudflareModel !== undefined)
+      this.cloudflareModel = settings.cloudflareModel;
     this.broadcast();
   }
 
@@ -303,6 +350,9 @@ export class OracleSettingsService {
       customImageBaseUrl: this.customImageBaseUrl,
       customImageApiKey: this.customImageApiKey,
       customImageModel: this.customImageModel,
+      cloudflareAccountId: this.cloudflareAccountId,
+      cloudflareApiToken: this.cloudflareApiToken,
+      cloudflareModel: this.cloudflareModel,
     };
   }
 
@@ -323,6 +373,9 @@ export class OracleSettingsService {
       baseUrl: updates.customImageBaseUrl,
       apiKey: updates.customImageApiKey,
       model: updates.customImageModel,
+      cloudflareAccountId: updates.cloudflareAccountId,
+      cloudflareApiToken: updates.cloudflareApiToken,
+      cloudflareModel: updates.cloudflareModel,
     });
   }
 }

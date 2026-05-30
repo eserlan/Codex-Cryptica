@@ -26,7 +26,7 @@ describe("OracleSettingsService", () => {
       expect(service.tier).toBe("advanced");
       expect(service.isLoading).toBe(false);
       expect(service.activeStyleTitle).toBe(null);
-      expect(service.imageProvider).toBe("gemini");
+      expect(service.imageProvider).toBe("cloudflare");
     });
 
     it("should accept optional db in constructor", () => {
@@ -58,7 +58,7 @@ describe("OracleSettingsService", () => {
 
       expect(service.apiKey).toBe(null);
       expect(service.tier).toBe("advanced");
-      expect(service.imageProvider).toBe("gemini");
+      expect(service.imageProvider).toBe("cloudflare");
     });
 
     it("should preserve gemini as image provider when no API key is set", async () => {

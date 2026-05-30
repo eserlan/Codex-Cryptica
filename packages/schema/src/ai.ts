@@ -125,8 +125,9 @@ export interface TextGenerationService {
 }
 
 export interface ImageGenerationOptions {
-  provider?: "gemini" | "custom";
+  provider?: "gemini" | "cloudflare" | "custom";
   baseUrl?: string;
+  cloudflareAccountId?: string;
 }
 
 export interface ImageGenerationService {

@@ -312,10 +312,31 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
-    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
-    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
-    
-    if (!targetKey) {
+    const isCustom = context.imageProvider === "custom";
+    const isCloudflare = context.imageProvider === "cloudflare";
+
+    let targetKey = apiKey;
+    if (isCustom && context.customImageApiKey) {
+      targetKey = context.customImageApiKey;
+    } else if (isCloudflare) {
+      targetKey = context.cloudflareApiToken || apiKey;
+    }
+
+    let targetModel = "gemini-2.5-flash-image";
+    if (isCustom) {
+      targetModel =
+        context.customImageModel || "black-forest-labs/FLUX.1-schnell";
+    } else if (isCloudflare) {
+      targetModel =
+        context.cloudflareModel || "@cf/black-forest-labs/flux-1-schnell";
+    }
+
+    const needsKey =
+      (isCustom && !targetKey) ||
+      (isCloudflare && context.cloudflareAccountId && !targetKey) ||
+      (!isCustom && !isCloudflare && !targetKey);
+
+    if (needsKey) {
       throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
     }
 
@@ -325,8 +346,9 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       targetModel,
       {
         provider: context.imageProvider,
-        baseUrl: context.customImageBaseUrl
-      }
+        baseUrl: context.customImageBaseUrl,
+        cloudflareAccountId: context.cloudflareAccountId,
+      },
     );
   }
 
@@ -361,10 +383,31 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
-    const targetKey = context.imageProvider === "custom" && context.customImageApiKey ? context.customImageApiKey : apiKey;
-    const targetModel = context.imageProvider === "custom" ? (context.customImageModel || "black-forest-labs/FLUX.1-schnell") : "gemini-2.5-flash-image";
-    
-    if (!targetKey) {
+    const isCustom = context.imageProvider === "custom";
+    const isCloudflare = context.imageProvider === "cloudflare";
+
+    let targetKey = apiKey;
+    if (isCustom && context.customImageApiKey) {
+      targetKey = context.customImageApiKey;
+    } else if (isCloudflare) {
+      targetKey = context.cloudflareApiToken || apiKey;
+    }
+
+    let targetModel = "gemini-2.5-flash-image";
+    if (isCustom) {
+      targetModel =
+        context.customImageModel || "black-forest-labs/FLUX.1-schnell";
+    } else if (isCloudflare) {
+      targetModel =
+        context.cloudflareModel || "@cf/black-forest-labs/flux-1-schnell";
+    }
+
+    const needsKey =
+      (isCustom && !targetKey) ||
+      (isCloudflare && context.cloudflareAccountId && !targetKey) ||
+      (!isCustom && !isCloudflare && !targetKey);
+
+    if (needsKey) {
       throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
     }
 
@@ -374,8 +417,9 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       targetModel,
       {
         provider: context.imageProvider,
-        baseUrl: context.customImageBaseUrl
-      }
+        baseUrl: context.customImageBaseUrl,
+        cloudflareAccountId: context.cloudflareAccountId,
+      },
     );
   }
 

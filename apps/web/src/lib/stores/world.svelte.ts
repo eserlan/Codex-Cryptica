@@ -18,13 +18,40 @@ const worldService = new WorldServiceImplementation({
   imageGenerator: {
     generateImage: (apiKey: string, prompt: string, modelName: string) => {
       const isCustom = oracle.settings.imageProvider === "custom";
-      const targetKey = isCustom && oracle.settings.customImageApiKey ? oracle.settings.customImageApiKey : apiKey;
-      const targetModel = isCustom ? (oracle.settings.customImageModel || "black-forest-labs/FLUX.1-schnell") : modelName;
-      return imageGenerationService.generateImage(targetKey, prompt, targetModel, {
-        provider: oracle.settings.imageProvider as "gemini" | "custom",
-        baseUrl: oracle.settings.customImageBaseUrl
-      });
-    }
+      const isCloudflare = oracle.settings.imageProvider === "cloudflare";
+
+      let targetKey = apiKey;
+      if (isCustom && oracle.settings.customImageApiKey) {
+        targetKey = oracle.settings.customImageApiKey;
+      } else if (isCloudflare) {
+        targetKey = oracle.settings.cloudflareApiToken || apiKey;
+      }
+
+      let targetModel = modelName;
+      if (isCustom) {
+        targetModel =
+          oracle.settings.customImageModel ||
+          "black-forest-labs/FLUX.1-schnell";
+      } else if (isCloudflare) {
+        targetModel =
+          oracle.settings.cloudflareModel ||
+          "@cf/black-forest-labs/flux-1-schnell";
+      }
+
+      return imageGenerationService.generateImage(
+        targetKey,
+        prompt,
+        targetModel,
+        {
+          provider: oracle.settings.imageProvider as
+            | "gemini"
+            | "cloudflare"
+            | "custom",
+          baseUrl: oracle.settings.customImageBaseUrl,
+          cloudflareAccountId: oracle.settings.cloudflareAccountId,
+        },
+      );
+    },
   },
   assetManager: {
     saveImageToVault: async (blob, entityId, originalName) => {

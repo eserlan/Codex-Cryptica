@@ -14,6 +14,7 @@ interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
   ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
+  AI?: any;
 }
 
 // Allowed origins for CORS
@@ -53,6 +54,146 @@ export default {
         status: 403,
         headers: getCorsHeaders(request.headers, env),
       });
+    }
+
+    const url = new URL(request.url);
+    if (url.pathname === "/v1/images/generations") {
+      const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
+      const limitResult = await checkRateLimit(ip);
+      if (!limitResult.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: {
+              message:
+                "Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
+              code: "RATE_LIMIT_EXCEEDED",
+            },
+          }),
+          {
+            status: 429,
+            headers: {
+              ...getCorsHeaders(request.headers, env),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+
+      try {
+        const body = (await request.json()) as any;
+        const prompt = body.prompt;
+        const targetModel =
+          body.model || "@cf/black-forest-labs/flux-1-schnell";
+
+        if (!prompt) {
+          return new Response(
+            JSON.stringify({ error: { message: "Prompt is required" } }),
+            {
+              status: 400,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+              },
+            },
+          );
+        }
+
+        if (!env.AI) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message: "Workers AI binding is not configured on the proxy",
+              },
+            }),
+            {
+              status: 500,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+              },
+            },
+          );
+        }
+
+        console.log(
+          `[Oracle Proxy] Generating image using Workers AI model: ${targetModel}`,
+        );
+        // Run model through binding. For image models it returns binary.
+        const output = await env.AI.run(targetModel, { prompt });
+
+        let buffer: ArrayBuffer;
+        if (output instanceof ArrayBuffer) {
+          buffer = output;
+        } else if (output instanceof Uint8Array) {
+          buffer = output.buffer;
+        } else if (
+          typeof output === "object" &&
+          output !== null &&
+          output.image
+        ) {
+          // If the model wrapper returned a base64 or custom format directly
+          const b64 =
+            typeof output.image === "string"
+              ? output.image
+              : arrayBufferToBase64(output.image);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              result: { image: b64 },
+            }),
+            {
+              status: 200,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+              },
+            },
+          );
+        } else {
+          throw new Error("Invalid output format returned from Workers AI");
+        }
+
+        const b64 = arrayBufferToBase64(buffer);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            result: {
+              image: b64,
+            },
+          }),
+          {
+            status: 200,
+            headers: {
+              ...getCorsHeaders(request.headers, env),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      } catch (error) {
+        console.error(
+          "[Oracle Proxy] Cloudflare Workers AI image error:",
+          error,
+        );
+        return new Response(
+          JSON.stringify({
+            error: {
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Image generation failed",
+              code: "IMAGE_GEN_FAILED",
+            },
+          }),
+          {
+            status: 500,
+            headers: {
+              ...getCorsHeaders(request.headers, env),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
     }
 
     try {
@@ -349,4 +490,58 @@ function isLoopbackOrigin(origin: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Simple rate limiting using the Cache API.
+ * Operates per Cloudflare edge location (colo) without DB dependency.
+ */
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean }> {
+  try {
+    const cacheKey = new Request(`https://limit.local/ip-${ip}`);
+    const cache = caches.default;
+    const cachedResponse = await cache.match(cacheKey);
+
+    let count = 0;
+    if (cachedResponse) {
+      const data = (await cachedResponse.json()) as any;
+      count = data.count || 0;
+    }
+
+    const limit = 20; // 20 images per day per user/IP per edge location
+    if (count >= limit) {
+      return { allowed: false };
+    }
+
+    count++;
+    const nextResponse = new Response(JSON.stringify({ count }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "max-age=86400", // Cache for 24 hours
+      },
+    });
+    await cache.put(cacheKey, nextResponse);
+
+    return { allowed: true };
+  } catch (err) {
+    console.error("[Oracle Proxy] Rate limiter error, default to allow:", err);
+    return { allowed: true };
+  }
+}
+
+/**
+ * Safely convert ArrayBuffer to Base64 avoiding stack overflows.
+ */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const len = bytes.byteLength;
+  const chunk = 8192;
+  for (let i = 0; i < len; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, Math.min(i + chunk, len)) as any,
+    );
+  }
+  return btoa(binary);
 }

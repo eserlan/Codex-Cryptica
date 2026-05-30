@@ -232,7 +232,18 @@
         >Image Generation Provider</span
       >
 
-      <div class="flex gap-4 mb-4">
+      <div class="flex flex-wrap gap-4 mb-4">
+        <label class="flex items-center gap-2 text-sm text-theme-text">
+          <input
+            type="radio"
+            name="img_provider"
+            value="cloudflare"
+            checked={oracle.settings.imageProvider === "cloudflare"}
+            onchange={() =>
+              oracle.updateSettings({ imageProvider: "cloudflare" })}
+          />
+          Cloudflare Workers AI
+        </label>
         <label
           class="flex items-center gap-2 text-sm text-theme-text"
           class:opacity-50={!oracle.apiKey}
@@ -264,6 +275,68 @@
           Custom (OpenAI-Compatible)
         </label>
       </div>
+
+      {#if oracle.settings.imageProvider === "cloudflare"}
+        <div
+          class="space-y-4 p-4 bg-theme-bg/50 border border-theme-border rounded"
+        >
+          <p class="text-xs text-theme-muted leading-relaxed">
+            Leave Account ID and API Token blank to use the free shared system
+            proxy (subject to daily limits).
+          </p>
+          <div>
+            <label
+              class="block text-xs uppercase font-bold text-theme-text/80 mb-1"
+              for="cfAccountId">Account ID</label
+            >
+            <input
+              id="cfAccountId"
+              type="text"
+              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm"
+              placeholder="e.g. 1234567890abcdef1234567890abcdef"
+              value={oracle.settings.cloudflareAccountId}
+              onchange={(e) =>
+                oracle.updateSettings({
+                  cloudflareAccountId: e.currentTarget.value,
+                })}
+            />
+          </div>
+          <div>
+            <label
+              class="block text-xs uppercase font-bold text-theme-text/80 mb-1"
+              for="cfApiToken">API Token</label
+            >
+            <input
+              id="cfApiToken"
+              type="password"
+              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm"
+              placeholder="Cloudflare API token with Workers AI permission"
+              value={oracle.settings.cloudflareApiToken}
+              onchange={(e) =>
+                oracle.updateSettings({
+                  cloudflareApiToken: e.currentTarget.value,
+                })}
+            />
+          </div>
+          <div>
+            <label
+              class="block text-xs uppercase font-bold text-theme-text/80 mb-1"
+              for="cfModelName">Model Name</label
+            >
+            <input
+              id="cfModelName"
+              type="text"
+              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm"
+              placeholder="@cf/black-forest-labs/flux-1-schnell"
+              value={oracle.settings.cloudflareModel}
+              onchange={(e) =>
+                oracle.updateSettings({
+                  cloudflareModel: e.currentTarget.value,
+                })}
+            />
+          </div>
+        </div>
+      {/if}
 
       {#if oracle.settings.imageProvider === "custom"}
         <div
