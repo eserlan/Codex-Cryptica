@@ -92,4 +92,27 @@ describe("buildEntityReconciliationPrompt", () => {
     );
     expect(prompt).toContain('"categoryId": "one allowed category id"');
   });
+
+  it("asserts that incoming passage supersedes the current record", () => {
+    const prompt = buildEntityReconciliationPrompt(
+      {
+        id: "glass-key",
+        title: "The Glass Key",
+        type: "note",
+        content: "Old chronicle",
+        lore: "Old lore",
+      } as any,
+      {
+        chronicle: "New chronicle",
+        lore: "New lore",
+      },
+    );
+
+    expect(prompt).toContain(
+      "except where the incoming passage (which comes from the chat) conflicts, in which case the incoming passage always supersedes and replaces those facts.",
+    );
+    expect(prompt).toContain(
+      "Resolve contradictions by prioritizing the incoming passage.",
+    );
+  });
 });
