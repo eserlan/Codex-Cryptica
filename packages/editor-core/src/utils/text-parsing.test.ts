@@ -30,9 +30,16 @@ describe("extractProposals", () => {
   });
 
   it("should return unique proposals", () => {
-    const markdown = "Here is **duplicate** and again **duplicate**.";
+    const markdown = "The **King** and the **King** went to the **King**.";
     const result = extractProposals(markdown);
-    expect(result).toEqual(["duplicate"]);
+    expect(result).toEqual(["King"]);
+  });
+
+  it("should filter out terms that are already linked elsewhere in the document", () => {
+    const markdown =
+      "The [King](entity:1) met the **King**. The **Queen** was there too.";
+    const result = extractProposals(markdown);
+    expect(result).toEqual(["Queen"]);
   });
 
   it("should handle empty markdown gracefully", () => {

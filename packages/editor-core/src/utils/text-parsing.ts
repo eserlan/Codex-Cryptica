@@ -14,10 +14,24 @@ export function extractProposals(
 ): string[] {
   if (!markdown) return [];
 
+  // Find all text that is already used as a link label: [text](url)
+  const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+  let linkMatch;
+  const linkedTerms = new Set<string>();
+  while ((linkMatch = linkRegex.exec(markdown)) !== null) {
+    const term = linkMatch[1]
+      .replace(/\*\*|__/g, "")
+      .trim()
+      .toLowerCase();
+    if (term.length > 0) {
+      linkedTerms.add(term);
+    }
+  }
+
   // Remove all markdown links [text](url) from the content
   // This ensures we don't extract bold text from inside a link (e.g. [**text**](url))
   // or a link that is bolded (e.g. **[text](url)** will become just **** which won't match our bold extraction).
-  const textWithoutLinks = markdown.replace(/\[([^\]]+)\]\([^)]+\)/g, "");
+  const textWithoutLinks = markdown.replace(linkRegex, "");
 
   // Match bold patterns: **text** or __text__
   const boldRegex = /(?:\*\*|__)(.+?)(?:\*\*|__)/g;
@@ -32,10 +46,11 @@ export function extractProposals(
     }
   }
 
-  // Filter out existing entities (case insensitive match)
-  const existingLower = new Set(
-    Array.from(existingEntityTitles).map((t) => t.toLowerCase()),
-  );
+  // Filter out existing entities and any terms that are already linked in the document (case insensitive match)
+  const existingLower = new Set([
+    ...Array.from(existingEntityTitles).map((t) => t.toLowerCase()),
+    ...Array.from(linkedTerms),
+  ]);
 
   return Array.from(proposals).filter(
     (term) => !existingLower.has(term.toLowerCase()),
