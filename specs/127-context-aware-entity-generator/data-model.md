@@ -50,5 +50,5 @@ export interface DraftRelatedEntity {
 
 When the user clicks "Create Entity" in the review screen:
 
-1. **New Entity Creation**: Create the entity using `vault.createEntity({ title: draft.name, type: draft.type, content: draft.summary, lore: draft.description, labels: draft.labels })`.
-2. **Graph Connection**: Create a directed edge using `vault.addConnection(sourceEntityId, newEntityId, draft.relationshipBack)`.
+1. **New Entity Creation**: Create the entity using `vault.createEntity(draft.type, draft.name, { content: draft.summary, lore: draft.description, labels: draft.labels, plot_hook: draft.plotHook })`.
+2. **Graph Connection**: Create a directed edge using `vault.addConnection(sourceEntityId, newEntityId, "related_to", draft.relationshipBack)`.

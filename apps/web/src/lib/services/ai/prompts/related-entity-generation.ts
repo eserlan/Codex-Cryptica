@@ -1,11 +1,5 @@
 import { u } from "./user-content";
-
-export interface ConnectedEntityPromptContext {
-  title: string;
-  type: string;
-  relation: string;
-  content: string;
-}
+import type { ConnectedEntityPromptContext } from "schema";
 
 export function buildRelatedEntityGenerationPrompt(
   sourceEntity: {
@@ -34,16 +28,17 @@ export function buildRelatedEntityGenerationPrompt(
     connectedEntities.length > 0
       ? `\nDIRECT GRAPH NEIGHBORS OF ${sourceEntity.title}:\n` +
         connectedEntities
-          .map(
-            (c) =>
+          .map((c) =>
+            u(
               `- ${c.title} (${c.type}) [Relation: ${c.relation}]: ${c.content}`,
+            ),
           )
           .join("\n") +
         "\n"
       : "";
 
   const templateRule = templateOutline.trim()
-    ? `IMPORTANT: You must structure the "description" field using the following markdown outline template headings and structure:\n${templateOutline}\n`
+    ? `IMPORTANT: You must structure the "description" field using the following markdown outline template headings and structure:\n${u(templateOutline)}\n`
     : "";
 
   return `You are a Master Archivist and Lore Synthesizer. Your task is to generate a new, grounded, context-aware entity based on a source entity and its surrounding world context.
@@ -59,15 +54,14 @@ ALLOWED CATEGORIES IN VAULT:
 
 GENERATION INSTRUCTIONS:
 1. ${targetTypeRule}
-2. The relationship/link from the Source Entity ("${sourceEntity.title}") to this new entity is: "${relationship}". Ground the generation around this relationship.
+2. The relationship/link from the Source Entity ("${sourceEntity.title}") to this new entity is: "${u(relationship)}". Ground the generation around this relationship.
 3. Keep the generation context-aware. Ground the new entity in the existing lore of "${sourceEntity.title}" and its direct graph neighbors, but invent creative details to make it an inspiring addition.
 4. ${templateRule}
-5. Custom instructions from the user to incorporate: "${customInstructions}"
+5. Custom instructions from the user to incorporate: "${u(customInstructions)}"
 6. Normative constraint: You must use the term "Labels" for all metadata categorization. Do NOT suggest "tags" or mention "tags" anywhere. Return suggested metadata attributes under the "labels" property.
 
 RESPONSE FORMAT:
-Return JSON only. Do not wrap in markdown blocks other than a raw JSON block.
-Response MUST match this JSON structure:
+Return JSON only with this shape:
 {
   "name": "Name of the new entity",
   "type": "The selected type (must be one of the allowed categories: [${allowedCategoriesStr}])",

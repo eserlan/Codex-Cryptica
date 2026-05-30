@@ -24,7 +24,7 @@ This document details the architectural decisions, AI prompt design, and data fl
 
 ### Decision 4: Draft Entity Persistence & Security
 
-- **Choice**: The generated draft is transient (stored in local UI state of the modal component). Once accepted, the new entity is created in the vault via `vault.createEntity()`, and the connection is created via `vault.addConnection(sourceId, targetId, relationship)`.
+- **Choice**: The generated draft is transient (stored in local UI state of the modal component). Once accepted, the new entity is created in the vault via `vault.createEntity()`, and the connection is created via `vault.addConnection(sourceId, targetId, "related_to", relationship)`.
 - **Rationale**: Adheres to client-side privacy, client-side processing, and security guidelines. No network requests are made outside of the Gemini API endpoint.
 - **Alternatives considered**: Storing drafts in IndexedDB. Rejected as unnecessary complexity since drafts are transient and meant to be processed immediately or discarded.
 

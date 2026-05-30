@@ -733,7 +733,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       const summary = String(parsed.summary || "").trim();
       const description = String(parsed.description || "").trim();
       const labels = Array.isArray(parsed.labels)
-        ? parsed.labels.map((l: any) => String(l).trim())
+        ? parsed.labels.map((l: any) => String(l).trim()).filter(Boolean)
         : [];
       const plotHook = parsed.plotHook
         ? String(parsed.plotHook).trim()

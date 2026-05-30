@@ -65,22 +65,48 @@ describe("buildRelatedEntityGenerationPrompt", () => {
     const source = {
       title: "Test",
       type: "character",
-      content: INJECTION,
-      lore: INJECTION,
+      content: INJECTION + " content",
+      lore: INJECTION + " lore",
     };
+    const connectedEntities = [
+      {
+        title: "Friend",
+        type: "character",
+        relation: "friend",
+        content: INJECTION + " neighbor",
+      },
+    ];
     const prompt = buildRelatedEntityGenerationPrompt(
       source,
       "character",
-      "rival",
-      "",
+      INJECTION + " relationship",
+      INJECTION + " custom",
+      connectedEntities,
       [],
+      INJECTION + " template",
     );
 
     const blocks =
       prompt.match(/<USER_CONTENT>[\s\S]*?<\/USER_CONTENT>/g) ?? [];
-    expect(blocks.length).toBeGreaterThanOrEqual(2);
-    for (const block of blocks) {
-      expect(block).toContain(INJECTION);
-    }
+    // We expect: content, lore, neighbor, template, relationship, custom
+    expect(blocks.length).toBeGreaterThanOrEqual(6);
+    expect(prompt).toContain(
+      `<USER_CONTENT>\n${INJECTION} content\n</USER_CONTENT>`,
+    );
+    expect(prompt).toContain(
+      `<USER_CONTENT>\n${INJECTION} lore\n</USER_CONTENT>`,
+    );
+    expect(prompt).toContain(
+      `<USER_CONTENT>\n- Friend (character) [Relation: friend]: ${INJECTION} neighbor\n</USER_CONTENT>`,
+    );
+    expect(prompt).toContain(
+      `<USER_CONTENT>\n${INJECTION} template\n</USER_CONTENT>`,
+    );
+    expect(prompt).toContain(
+      `<USER_CONTENT>\n${INJECTION} relationship\n</USER_CONTENT>`,
+    );
+    expect(prompt).toContain(
+      `<USER_CONTENT>\n${INJECTION} custom\n</USER_CONTENT>`,
+    );
   });
 });

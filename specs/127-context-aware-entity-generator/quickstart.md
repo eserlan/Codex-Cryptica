@@ -10,18 +10,36 @@ This guide provides examples of how the new context-aware entity generation meth
 async generateRelatedEntity(
   apiKey: string,
   modelName: string,
-  sourceEntity: Entity,
+  sourceEntity: {
+    title: string;
+    type: string;
+    content?: string;
+    lore?: string;
+  },
   targetType: string,
   relationship: string,
-  customInstructions: string = "",
-  connectedEntities: ConnectedEntityContext[] = []
-): Promise<DraftRelatedEntity> {
+  customInstructions?: string,
+  connectedEntities?: ConnectedEntityPromptContext[],
+  categories?: { id: string; label?: string }[],
+  templateOutline?: string,
+  options?: { isGuest?: boolean },
+): Promise<{
+  name: string;
+  type: string;
+  summary: string;
+  description: string;
+  labels?: string[];
+  plotHook?: string;
+  relationshipBack?: string;
+}> {
   const prompt = buildRelatedEntityGenerationPrompt(
     sourceEntity,
     targetType,
     relationship,
     customInstructions,
-    connectedEntities
+    connectedEntities,
+    categories,
+    templateOutline,
   );
 
   const model = await this.aiClientManager.getModel(apiKey, modelName);
@@ -40,7 +58,7 @@ async generateRelatedEntity(
     description: parsed.description || "",
     labels: parsed.labels || [],
     plotHook: parsed.plotHook,
-    relationshipBack: relationship || parsed.relationshipBack || "related_to"
+    relationshipBack: parsed.relationshipBack || relationship
   };
 }
 ```

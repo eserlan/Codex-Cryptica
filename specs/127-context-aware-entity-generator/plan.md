@@ -1,6 +1,6 @@
 # Implementation Plan: Context-Aware Entity Generator
 
-**Branch**: `127-context-aware-entity-generator` | **Date**: 2026-05-30 | **Spec**: [/specs/127-context-aware-entity-generator/spec.md](file:///home/espen/proj/remotecodexarcana/specs/127-context-aware-entity-generator/spec.md)
+**Branch**: `127-context-aware-entity-generator` | **Date**: 2026-05-30 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/127-context-aware-entity-generator/spec.md`
 
 ## Summary

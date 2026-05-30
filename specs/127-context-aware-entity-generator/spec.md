@@ -69,7 +69,7 @@ As a user saving a newly generated entity, I want it to be automatically connect
 
 **Why this priority**: Enhances the workflow efficiency by automating the relationship linkage.
 
-**Independent Test**: Generate a related entity with the relationship "rival", save it, and verify that a bi-directional or directed connection is created between the source entity and the new entity.
+**Independent Test**: Generate a related entity with the relationship "rival", save it, and verify that a directed connection (Source → New Entity) is created.
 
 **Acceptance Scenarios**:
 
