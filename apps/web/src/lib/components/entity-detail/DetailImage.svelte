@@ -149,6 +149,13 @@
       }
     }
   }
+
+  const canGenerateImage = $derived.by(() => {
+    const provider = oracle.settings?.imageProvider || "cloudflare";
+    if (provider === "cloudflare") return true;
+    if (provider === "custom") return !!oracle.settings?.customImageApiKey;
+    return !!oracle.apiKey;
+  });
 </script>
 
 <div
@@ -210,9 +217,14 @@
         class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30 disabled:cursor-wait"
       >
         {#if !isImageLoaded}
-          <div class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2">
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
+          >
             <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
-            <span class="text-[9px] font-mono uppercase tracking-wider opacity-40">Resolving Neural Visual...</span>
+            <span
+              class="text-[9px] font-mono uppercase tracking-wider opacity-40"
+              >Resolving Neural Visual...</span
+            >
           </div>
         {/if}
         <img
@@ -220,9 +232,15 @@
           alt={entity.title}
           loading="lazy"
           decoding="async"
-          onload={() => { isImageLoaded = true; }}
-          onerror={() => { isImageLoaded = true; }}
-          class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90 group-hover:opacity-100 scale-100' : 'opacity-0 scale-95'}"
+          onload={() => {
+            isImageLoaded = true;
+          }}
+          onerror={() => {
+            isImageLoaded = true;
+          }}
+          class="w-full h-full object-contain transition-all duration-300 mx-auto {isImageLoaded
+            ? 'opacity-90 group-hover:opacity-100 scale-100'
+            : 'opacity-0 scale-95'}"
         />
         <div
           class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
@@ -256,7 +274,7 @@
     </div>
   {:else}
     <div class="px-4 md:px-6">
-      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (oracle.apiKey || !entity.artDirection)}
+      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (canGenerateImage || !entity.artDirection)}
         <div
           class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
         >
@@ -274,7 +292,9 @@
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={isVisualizing}
               class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
-              aria-label={oracle.apiKey ? `Draw visualization for ${entity.title}` : `Generate image prompt for ${entity.title}`}
+              aria-label={canGenerateImage
+                ? `Generate image for ${entity.title}`
+                : `Generate image prompt for ${entity.title}`}
               aria-busy={isVisualizing}
             >
               {#if isVisualizing}
@@ -289,7 +309,7 @@
                   {#if oracle.activeStyleTitle}
                     STYLE: {oracle.activeStyleTitle.toUpperCase()}
                   {:else}
-                    {oracle.apiKey ? 'VISUALIZING...' : 'GENERATING...'}
+                    {canGenerateImage ? "VISUALIZING..." : "GENERATING..."}
                   {/if}
                 </span>
               {:else}
@@ -302,7 +322,9 @@
                 ></span>
                 <span
                   class="text-[8px] md:text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
-                  >{oracle.apiKey ? 'DRAW VISUAL' : 'GENERATE PROMPT'}</span
+                  >{canGenerateImage
+                    ? "GENERATE IMAGE"
+                    : "GENERATE PROMPT"}</span
                 >
               {/if}
             </button>
@@ -321,9 +343,11 @@
                 aria-live="polite"
               >
                 {#if oracle.activeStyleTitle}
-                  {oracle.apiKey ? `Visualizing in ${oracle.activeStyleTitle}` : `Generating prompt in ${oracle.activeStyleTitle}`}
+                  {canGenerateImage
+                    ? `Visualizing in ${oracle.activeStyleTitle}`
+                    : `Generating prompt in ${oracle.activeStyleTitle}`}
                 {:else}
-                  {oracle.apiKey ? 'Building Visual' : 'Generating Prompt'}
+                  {canGenerateImage ? "Building Visual" : "Generating Prompt"}
                 {/if}
               </div>
             </div>
@@ -334,20 +358,37 @@
           type="button"
           onclick={async () => {
             await navigator.clipboard.writeText(artDirectionPrompt);
-            notificationStore.notify("Copied image prompt to clipboard", "success");
+            notificationStore.notify(
+              "Copied image prompt to clipboard",
+              "success",
+            );
           }}
           class="mb-4 w-full aspect-[16/10] max-h-48 md:max-h-80 rounded border border-theme-border overflow-hidden relative flex flex-col shadow-inner bg-theme-bg/30 group text-left cursor-pointer hover:border-theme-primary transition focus:outline-none focus:border-theme-primary"
         >
-          <div class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100">
+          <div
+            class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100"
+          >
             <span class="icon-[lucide--pen-tool] w-4 h-4"></span>
-            <span class="text-[8px] font-header uppercase tracking-widest font-bold">Image Prompt</span>
+            <span
+              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              >Image Prompt</span
+            >
           </div>
-          <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 text-theme-primary select-none pointer-events-none transition-opacity group-hover:opacity-100 group-focus:opacity-100">
+          <div
+            class="absolute top-2 right-2 flex items-center gap-1 opacity-0 text-theme-primary select-none pointer-events-none transition-opacity group-hover:opacity-100 group-focus:opacity-100"
+          >
             <span class="icon-[lucide--copy] w-3 h-3"></span>
-            <span class="text-[8px] font-header uppercase tracking-widest font-bold">Click to Copy</span>
+            <span
+              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              >Click to Copy</span
+            >
           </div>
-          <div class="flex-1 overflow-y-auto custom-scrollbar p-6 pt-8 flex items-center justify-center h-full w-full">
-            <p class="text-sm md:text-base text-theme-muted/80 italic font-serif text-center leading-relaxed">
+          <div
+            class="flex-1 overflow-y-auto custom-scrollbar p-6 pt-8 flex items-center justify-center h-full w-full"
+          >
+            <p
+              class="text-sm md:text-base text-theme-muted/80 italic font-serif text-center leading-relaxed"
+            >
               {artDirectionPrompt}
             </p>
           </div>
