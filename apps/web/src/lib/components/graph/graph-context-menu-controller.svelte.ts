@@ -20,7 +20,7 @@ export interface GraphContextMenuDependencies {
 }
 
 export class GraphContextMenuController {
-  cy: Core;
+  getCy: () => Core;
   private deps: GraphContextMenuDependencies;
 
   contextMenuOpen = $state(false);
@@ -44,8 +44,8 @@ export class GraphContextMenuController {
   categoryPickerAnchor = $state<HTMLButtonElement>();
   imagePickerAnchor = $state<HTMLButtonElement>();
 
-  constructor(cy: Core, deps: GraphContextMenuDependencies) {
-    this.cy = cy;
+  constructor(getCy: () => Core, deps: GraphContextMenuDependencies) {
+    this.getCy = getCy;
     this.deps = deps;
   }
 
@@ -76,7 +76,7 @@ export class GraphContextMenuController {
       this.targetId = node.id();
       this.position = evt.renderedPosition || { x: 0, y: 0 };
 
-      const selection = this.cy.$("node:selected");
+      const selection = this.getCy().$("node:selected");
       if (node.selected()) {
         this.selectedNodes = selection.map((n: NodeSingular) => n.id());
       } else {
@@ -94,13 +94,13 @@ export class GraphContextMenuController {
       this.imagePickerOpen = false;
     };
 
-    this.cy.on("cxttap", "node", openHandler);
-    this.cy.on("tap", closeHandler);
+    this.getCy().on("cxttap", "node", openHandler);
+    this.getCy().on("tap", closeHandler);
 
     return () => {
       this.clearPickerTimeout();
-      this.cy.off("cxttap", "node", openHandler);
-      this.cy.off("tap", closeHandler);
+      this.getCy().off("cxttap", "node", openHandler);
+      this.getCy().off("tap", closeHandler);
     };
   };
 

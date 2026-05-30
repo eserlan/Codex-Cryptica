@@ -34,7 +34,7 @@
   );
   const canvasId = $derived(canvas?.id);
 
-  const logic = createCanvasLogic(engine);
+  const logic = createCanvasLogic(() => engine);
 
   useCanvasEvents({
     onQuickSpawn: (id, pos, screenPos) =>
