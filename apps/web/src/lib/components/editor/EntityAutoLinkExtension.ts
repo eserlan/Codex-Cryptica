@@ -158,11 +158,15 @@ function buildDecorations(
   if (sorted.length === 0) return DecorationSet.empty;
 
   const decos: Decoration[] = [];
+  // First-occurrence-only: each entity ID is linked once per render.
+  const seen = new Set<string>();
 
   doc.descendants((node, pos) => {
     if (!node.isText || !node.text) return;
     const matches = detectEntityMentions(node.text, sorted, currentEntityId);
     for (const m of matches) {
+      if (seen.has(m.entityId)) continue;
+      seen.add(m.entityId);
       decos.push(
         Decoration.inline(pos + m.start, pos + m.end, {
           class: "entity-auto-link text-theme-primary underline cursor-pointer",

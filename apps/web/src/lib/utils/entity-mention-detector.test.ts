@@ -253,4 +253,58 @@ describe("detectEntityMentions", () => {
     const matches = detectEntityMentions("Nothing to see here.", sorted, "");
     expect(matches).toHaveLength(0);
   });
+
+  // Shared-prefix disambiguation (e.g. "Red Lanterns Gang" vs "Red Lanterns District")
+
+  it("shared-prefix entities: longer title wins when the full longer name appears in text", () => {
+    const entities: EntityIndexEntry[] = [
+      { text: "red lanterns district", id: "district-1" },
+      { text: "red lanterns gang", id: "gang-1" },
+    ];
+    const s = sortEntityIndex(entities);
+
+    // Text contains the full "Red Lanterns district" — should match entity district-1
+    const matches = detectEntityMentions(
+      "escorted her to the Red Lanterns district.",
+      s,
+      "",
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0].entityId).toBe("district-1");
+    expect(matches[0].matchedText).toBe("Red Lanterns district");
+  });
+
+  it("shared-prefix entities: shorter title matches when text contains only the shorter name", () => {
+    const entities: EntityIndexEntry[] = [
+      { text: "red lanterns district", id: "district-1" },
+      { text: "red lanterns gang", id: "gang-1" },
+    ];
+    const s = sortEntityIndex(entities);
+
+    // Text contains "Red Lanterns gang" — should match gang-1, not district-1
+    const matches = detectEntityMentions(
+      "the Red Lanterns gang ambushed them.",
+      s,
+      "",
+    );
+    expect(matches).toHaveLength(1);
+    expect(matches[0].entityId).toBe("gang-1");
+    expect(matches[0].matchedText).toBe("Red Lanterns gang");
+  });
+
+  it("shared-prefix entities: bare shared prefix matches neither specific entity (no partial match)", () => {
+    const entities: EntityIndexEntry[] = [
+      { text: "red lanterns district", id: "district-1" },
+      { text: "red lanterns gang", id: "gang-1" },
+    ];
+    const s = sortEntityIndex(entities);
+
+    // "Red Lanterns" alone — neither entity title matches exactly
+    const matches = detectEntityMentions(
+      "the Red Lanterns were present.",
+      s,
+      "",
+    );
+    expect(matches).toHaveLength(0);
+  });
 });

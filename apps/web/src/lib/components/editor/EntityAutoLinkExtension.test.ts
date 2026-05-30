@@ -99,7 +99,7 @@ describe("EntityAutoLinkExtension — read mode", () => {
     expect(spans.length).toBe(2);
   });
 
-  it("decorates all occurrences (not just first)", () => {
+  it("decorates only the first occurrence of each entity (first-occurrence-only)", () => {
     const options: EntityAutoLinkOptions = {
       entityIndex: ENTITIES,
       currentEntityId: "",
@@ -108,10 +108,32 @@ describe("EntityAutoLinkExtension — read mode", () => {
     const editor = createTestEditor(
       options,
       false,
-      "<p>Aldric the Sage and Aldric the Sage appeared.</p>",
+      "<p>Aldric the Sage met Aldric the Sage again.</p>",
+    );
+    const spans = getDecoratedSpans(editor);
+    // Only one decoration even though the name appears twice
+    expect(spans.length).toBe(1);
+    expect(spans[0].getAttribute("data-entity-id")).toBe("aldric-1");
+  });
+
+  it("decorates first occurrence of each distinct entity independently", () => {
+    const options: EntityAutoLinkOptions = {
+      entityIndex: ENTITIES,
+      currentEntityId: "",
+      onEntityClick: vi.fn(),
+    };
+    // Two different entities — each gets exactly one decoration
+    const editor = createTestEditor(
+      options,
+      false,
+      "<p>Aldric the Sage and Crimson Enclave met Aldric the Sage again at Crimson Enclave.</p>",
     );
     const spans = getDecoratedSpans(editor);
     expect(spans.length).toBe(2);
+    const ids = Array.from(spans)
+      .map((s) => s.getAttribute("data-entity-id"))
+      .sort();
+    expect(ids).toEqual(["aldric-1", "crimson-3"].sort());
   });
 
   it("produces no decorations when entity index is empty", () => {
