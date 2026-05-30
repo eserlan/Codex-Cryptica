@@ -678,7 +678,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     connectedEntities: ConnectedEntityPromptContext[] = [],
     categories: { id: string; label?: string }[] = [],
     templateOutline = "",
-    options?: { isGuest?: boolean },
+    options?: { isGuest?: boolean; aiDisabled?: boolean },
   ): Promise<{
     name: string;
     type: string;
@@ -688,7 +688,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     plotHook?: string;
     relationshipBack?: string;
   }> {
-    if (!isAIEnabled()) {
+    if (options?.aiDisabled ?? !isAIEnabled()) {
       throw new Error("AI features are currently disabled.");
     }
 

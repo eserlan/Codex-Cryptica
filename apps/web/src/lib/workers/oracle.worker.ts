@@ -193,7 +193,7 @@ class OracleWorker {
     connectedEntities: any[] = [],
     categories: any[] = [],
     templateOutline = "",
-    options?: { isGuest?: boolean },
+    options?: { isGuest?: boolean; aiDisabled?: boolean },
   ): Promise<any> {
     return this.textGeneration.generateRelatedEntity(
       apiKey,

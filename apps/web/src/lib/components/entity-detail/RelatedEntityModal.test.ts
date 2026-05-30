@@ -7,6 +7,22 @@ import { vault } from "$lib/stores/vault.svelte";
 import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
+const mockDiscoveryPolicyStore = vi.hoisted(() => ({
+  aiDisabled: false,
+}));
+
+const mockOracle = vi.hoisted(() => ({
+  effectiveApiKey: "test-api-key",
+  settingsManager: {
+    apiKey: "test-api-key",
+    modelName: "test-model-name",
+  },
+  ui: {
+    isOpen: false,
+    activeSettingsTab: "",
+  },
+}));
+
 vi.mock("$app/paths", () => ({
   base: "",
 }));
@@ -41,22 +57,17 @@ vi.mock("$lib/stores/categories.svelte", () => ({
 }));
 
 vi.mock("$lib/stores/oracle.svelte", () => ({
-  oracle: {
-    settingsManager: {
-      apiKey: "test-api-key",
-      modelName: "test-model-name",
-    },
-    ui: {
-      isOpen: false,
-      activeSettingsTab: "",
-    },
-  },
+  oracle: mockOracle,
 }));
 
 vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {
     notify: vi.fn(),
   },
+}));
+
+vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+  discoveryPolicyStore: mockDiscoveryPolicyStore,
 }));
 
 vi.mock("$lib/services/ai/text-generation.service.svelte", () => ({
@@ -86,6 +97,10 @@ vi.mock("$lib/services/ai/capability-guard", () => ({
 describe("RelatedEntityModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDiscoveryPolicyStore.aiDisabled = false;
+    mockOracle.effectiveApiKey = "test-api-key";
+    mockOracle.settingsManager.apiKey = "test-api-key";
+    (vault as any).isGuest = false;
 
     // Polyfill Element.prototype.animate for jsdom / Svelte transitions
     if (typeof window !== "undefined") {
@@ -137,6 +152,18 @@ describe("RelatedEntityModal", () => {
     await fireEvent.click(generateBtn);
 
     expect(textGenerationService.generateRelatedEntity).toHaveBeenCalled();
+    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+      "test-api-key",
+      expect.any(String),
+      expect.any(Object),
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      expect.any(Array),
+      expect.any(Array),
+      expect.any(String),
+      expect.objectContaining({ aiDisabled: false }),
+    );
 
     await waitFor(() => {
       const nameInput = screen.getByLabelText(
@@ -164,6 +191,61 @@ describe("RelatedEntityModal", () => {
       ) as HTMLInputElement;
       expect(relationBackInput.value).toBe("rival");
     });
+  });
+
+  it("does not call generation and shows settings prompt when AI is disabled", async () => {
+    mockDiscoveryPolicyStore.aiDisabled = true;
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    expect(screen.getByText("AI Features Disabled")).toBeDefined();
+    expect(screen.queryByText("Generate")).toBeNull();
+    expect(textGenerationService.generateRelatedEntity).not.toHaveBeenCalled();
+  });
+
+  it("does not show generation controls for guest sessions", async () => {
+    (vault as any).isGuest = true;
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    expect(screen.getByText("Host Only")).toBeDefined();
+    expect(screen.queryByText("Generate")).toBeNull();
+    expect(textGenerationService.generateRelatedEntity).not.toHaveBeenCalled();
+  });
+
+  it("allows generation when AI is enabled without a custom API key", async () => {
+    mockOracle.effectiveApiKey = "";
+    mockOracle.settingsManager.apiKey = "";
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    const generateBtn = screen.getByText("Generate");
+    await fireEvent.click(generateBtn);
+
+    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+      "",
+      expect.any(String),
+      expect.any(Object),
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      expect.any(Array),
+      expect.any(Array),
+      expect.any(String),
+      expect.objectContaining({ aiDisabled: false }),
+    );
   });
 
   it("saves the new entity and connects back on click Create Entity", async () => {

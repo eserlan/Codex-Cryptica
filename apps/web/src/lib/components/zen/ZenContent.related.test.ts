@@ -3,6 +3,7 @@ import { render, fireEvent, screen } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import ZenContent from "./ZenContent.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -58,6 +59,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
 describe("ZenContent Related Entity Generation Trigger", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (vault as any).isGuest = false;
   });
 
   it("renders 'Generate Related' button and triggers dialog when clicked", async () => {
@@ -81,5 +83,24 @@ describe("ZenContent Related Entity Generation Trigger", () => {
     expect(modalUIStore.openRelatedEntityDialog).toHaveBeenCalledWith(
       "entity-1",
     );
+  });
+
+  it("hides 'Generate Related' for guest sessions", async () => {
+    (vault as any).isGuest = true;
+    const mockEntity = {
+      id: "entity-1",
+      title: "Zen Source",
+      type: "character",
+      connections: [],
+    };
+
+    render(ZenContent, {
+      entity: mockEntity as any,
+      editState: { isEditing: false } as any,
+      scrollContainer: undefined,
+    });
+
+    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
   });
 });

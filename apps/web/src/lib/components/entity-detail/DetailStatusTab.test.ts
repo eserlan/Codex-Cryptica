@@ -304,4 +304,21 @@ describe("DetailStatusTab", () => {
       "entity-1",
     );
   });
+
+  it("hides the 'Generate Related' button for guest sessions", async () => {
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    (vault as any).isGuest = true;
+
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
+  });
 });
