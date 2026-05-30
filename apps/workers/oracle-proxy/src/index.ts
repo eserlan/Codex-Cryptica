@@ -129,26 +129,37 @@ export default {
         } else if (
           typeof output === "object" &&
           output !== null &&
-          output.image
+          "image" in output
         ) {
-          // If the model wrapper returned a base64 or custom format directly
-          const b64 =
-            typeof output.image === "string"
-              ? output.image
-              : arrayBufferToBase64(output.image);
-          return new Response(
-            JSON.stringify({
-              success: true,
-              result: { image: b64 },
-            }),
-            {
-              status: 200,
-              headers: {
-                ...getCorsHeaders(request.headers, env),
-                "Content-Type": "application/json",
+          const img = (output as any).image;
+          if (typeof img === "string") {
+            // base64 format returned directly
+            return new Response(
+              JSON.stringify({
+                success: true,
+                result: { image: img },
+              }),
+              {
+                status: 200,
+                headers: {
+                  ...getCorsHeaders(request.headers, env),
+                  "Content-Type": "application/json",
+                },
               },
-            },
-          );
+            );
+          } else {
+            // If the inner image field is a stream or binary, convert it
+            const res = new Response(img);
+            buffer = await res.arrayBuffer();
+          }
+        } else if (
+          output &&
+          (output instanceof ReadableStream ||
+            typeof (output as any).getReader === "function" ||
+            typeof (output as any).arrayBuffer === "function")
+        ) {
+          const res = new Response(output as any);
+          buffer = await res.arrayBuffer();
         } else {
           throw new Error("Invalid output format returned from Workers AI");
         }
