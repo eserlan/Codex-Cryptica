@@ -6,6 +6,7 @@ import {
   type RelatedEntityContext,
   type TextGenerationService,
   type ChatHistoryMessage,
+  type ConnectedEntityPromptContext,
 } from "schema";
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
@@ -20,6 +21,7 @@ import {
   buildCreationLoreSynthesisPrompt,
   buildStructuredDraftingPrompt,
 } from "./prompts/entity-creation";
+import { buildRelatedEntityGenerationPrompt } from "./prompts/related-entity-generation";
 import { isAIEnabled } from "./capability-guard";
 
 function safeSnapshot<T>(obj: T): T {
@@ -658,6 +660,105 @@ export class DefaultTextGenerationService implements TextGenerationService {
       console.error("Gemini API Error:", err);
       const classified = classifyApiError(err);
       throw new Error(classified.message, { cause: err });
+    }
+  }
+
+  async generateRelatedEntity(
+    apiKey: string,
+    modelName: string,
+    sourceEntity: {
+      title: string;
+      type: string;
+      content?: string;
+      lore?: string;
+    },
+    targetType: string,
+    relationship: string,
+    customInstructions = "",
+    connectedEntities: ConnectedEntityPromptContext[] = [],
+    categories: { id: string; label?: string }[] = [],
+    templateOutline = "",
+    options?: { isGuest?: boolean; aiDisabled?: boolean },
+  ): Promise<{
+    name: string;
+    type: string;
+    summary: string;
+    description: string;
+    labels?: string[];
+    plotHook?: string;
+    relationshipBack?: string;
+  }> {
+    if (options?.aiDisabled ?? !isAIEnabled()) {
+      throw new Error("AI features are currently disabled.");
+    }
+
+    const cleanSource = sourceEntity
+      ? safeSnapshot(sourceEntity)
+      : sourceEntity;
+    const cleanConnected = connectedEntities
+      ? safeSnapshot(connectedEntities)
+      : [];
+    const cleanCategories = categories ? safeSnapshot(categories) : [];
+
+    // Enforce guest data restriction: exclude lore if in guest mode
+    const sanitizedSource = options?.isGuest
+      ? { ...cleanSource, lore: "" }
+      : cleanSource;
+
+    const prompt = buildRelatedEntityGenerationPrompt(
+      sanitizedSource,
+      targetType,
+      relationship,
+      customInstructions,
+      cleanConnected,
+      cleanCategories,
+      templateOutline,
+    );
+
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
+
+    try {
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Missing JSON payload from AI response");
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      const name =
+        String(parsed.name || "").trim() || `New Related ${targetType}`;
+      const resolvedType = String(parsed.type || targetType).trim();
+      const summary = String(parsed.summary || "").trim();
+      const description = String(parsed.description || "").trim();
+      const labels = Array.isArray(parsed.labels)
+        ? parsed.labels.map((l: any) => String(l).trim()).filter(Boolean)
+        : [];
+      const plotHook = parsed.plotHook
+        ? String(parsed.plotHook).trim()
+        : undefined;
+      const relationshipBack = parsed.relationshipBack
+        ? String(parsed.relationshipBack).trim()
+        : relationship;
+
+      return {
+        name,
+        type: resolvedType,
+        summary,
+        description,
+        labels,
+        plotHook,
+        relationshipBack,
+      };
+    } catch (err: any) {
+      console.error(
+        "[TextGenerationService] Related entity generation failed:",
+        err,
+      );
+      throw new Error(`Related entity generation failed: ${err.message}`, {
+        cause: err,
+      });
     }
   }
 }

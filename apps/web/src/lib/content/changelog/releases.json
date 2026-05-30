@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.26.3",
+    "title": "The Grounded Context-Aware Entity Creator Update",
+    "date": "2026-05-30",
+    "type": "patch",
+    "highlights": [
+      "Context-Aware Related Entity Creator: Branch your setting organically using a new 'Generate Related' action that gathers the active entity and its first-degree graph neighbors to draft grounded entities.",
+      "Outline Template Injection: Integrates your vault's active theme templates to pre-structure the generated entity's markdown outline headings.",
+      "Adaptive Relationship Suggestions: The configuration dialog dynamically suggests relationships tailored to the source and target entity types (e.g. character to item suggests 'signature item').",
+      "Directed Connections: Persisting the drafted entity automatically registers a directed relationship link (Source → New Entity) in the campaign vault graph."
+    ]
+  },
+  {
     "version": "0.26.2",
     "title": "The Vault Save Confidence & Chronology Quality Update",
     "date": "2026-05-26",

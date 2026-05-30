@@ -156,6 +156,18 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.relatedEntityDialog.open}
+      {#await loadModal(() => import("$lib/components/entity-detail/RelatedEntityModal.svelte"), "RelatedEntityModal") then RelatedEntityModal}
+        {#if RelatedEntityModal}
+          <RelatedEntityModal
+            isOpen={modalUIStore.relatedEntityDialog.open}
+            sourceEntityId={modalUIStore.relatedEntityDialog.sourceEntityId}
+            onClose={() => modalUIStore.closeRelatedEntityDialog()}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     {#if modalUIStore.showVaultSwitcher}
       {#await loadModal(() => import("$lib/components/vaults/VaultSwitcherModal.svelte"), "VaultSwitcherModal") then VaultSwitcherModal}
         {#if VaultSwitcherModal}

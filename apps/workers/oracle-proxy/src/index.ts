@@ -230,7 +230,7 @@ export default {
       }
 
       // 1. Determine Model
-      const targetModel = body.model || "gemini-3-flash-preview";
+      const targetModel = body.model || "gemini-3.1-flash-lite";
 
       // 2. Map and clean up configuration for Google REST API (which expects snake_case)
       const rawConfig = {

@@ -158,6 +158,27 @@ Use these filters when choosing what to build next:
 - Reuse the existing markdown serializer rather than introducing a parallel format.
 - Add a recovery mode UI (read-only browse + selective restore) before exposing destructive import.
 
+### 7. Context-Aware Entity Generation (Implemented)
+
+**Goal**: Enable users to quickly AI-generate a new entity based on the current entity and its nearby first-degree graph neighbors.
+
+**User value**:
+
+- Branch campaign settings organically and grounded in existing lore.
+- Save time formatting markdown descriptions by pre-structuring layout headings with vault theme templates.
+- Seamless directed relationship connections (Source → New Entity) created automatically.
+
+**Suggested scope**:
+
+- Gather first-degree connected neighbors (Title, Type, relationship, content) for prompt grounding.
+- Provide a guided configuration modal for Target Type selection (with "Surprise Me" fallback), adaptive relationship suggestions, and custom prompt guidelines.
+- Allow editing drafted fields in a review screen before deliberate persist.
+
+**Engineering notes**:
+
+- Excluded GM-facing lore context from compiled prompt context during shared guest sessions.
+- Tested prompt compilation, JSON serialization schemas, and validation logic.
+
 ## Recommended Code Improvement Backlog
 
 ### A. Event And Store Boundaries (Implemented)

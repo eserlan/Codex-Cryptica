@@ -44,6 +44,12 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: {
+    openRelatedEntityDialog: vi.fn(),
+  },
+}));
+
 // Mock sub-components to simplify testing
 vi.mock("$lib/components/MarkdownEditor.svelte", () => ({
   default: vi.fn(),
@@ -277,5 +283,42 @@ describe("DetailStatusTab", () => {
       "related_to",
       undefined,
     );
+  });
+
+  it("renders 'Generate Related' button and triggers modal open when clicked", async () => {
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    const generateBtn = screen.getByText("Generate Related");
+    expect(generateBtn).toBeDefined();
+
+    await fireEvent.click(generateBtn);
+    expect(modalUIStore.openRelatedEntityDialog).toHaveBeenCalledWith(
+      "entity-1",
+    );
+  });
+
+  it("hides the 'Generate Related' button for guest sessions", async () => {
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    (vault as any).isGuest = true;
+
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
   });
 });

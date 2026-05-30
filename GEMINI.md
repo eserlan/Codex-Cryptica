@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-05-30
 
 ## Active Technologies
 
+- TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (127-context-aware-entity-generator)
+- OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts) (127-context-aware-entity-generator)
+
 - TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, `@google/generative-ai` (for category inference and template filling), `zod` (126-propose-entities)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine` (123-entity-templates)
@@ -195,11 +198,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 127-context-aware-entity-generator: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
+
 - 126-propose-entities: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, `@google/generative-ai` (for category inference and template filling), `zod`
 
 - 123-entity-templates: Added TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine`
-
-- 944-data-integrity-boundaries: Added TypeScript 6.0.3, Svelte 5 Runes + `zod` (validation), `idb` (IndexedDB wrapper)
 
 <!-- MANUAL ADDITIONS START -->
 

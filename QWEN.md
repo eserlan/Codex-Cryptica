@@ -276,6 +276,8 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 - Existing browser persistence: `localStorage`, IndexedDB settings, and per-vault OPFS config. Add app-appearance preference as global browser preference; keep world theme per vault. (113-neutral-world-theming)
 - TypeScript 6.x, Svelte 5, Bun 1.3.x package workflow + SvelteKit, workspace `schema`, existing Oracle/image generation services, existing vault/entity/category stores, Vitest, Playwright (115-default-art-prompts)
 - No new settings storage. Shipped defaults live in code/shared package definitions. User-authored art direction remains ordinary vault content using existing entity/note persistence. (115-default-art-prompts)
+- TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (127-context-aware-entity-generator)
+- OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts) (127-context-aware-entity-generator)
 
 - TypeScript (as project standard) + Svelte 5 (UI), existing `map.svelte.ts` (base map), existing P2P host-service/client-adapter (sync) (079-vtt-light)
 - In-memory session state; optional vault persistence via OPFS for encounter snapshots (079-vtt-light)

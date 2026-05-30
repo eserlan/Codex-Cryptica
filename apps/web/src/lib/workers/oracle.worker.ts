@@ -178,6 +178,37 @@ class OracleWorker {
     }
   }
 
+  async generateRelatedEntity(
+    apiKey: string,
+    modelName: string,
+    sourceEntity: {
+      title: string;
+      type: string;
+      content?: string;
+      lore?: string;
+    },
+    targetType: string,
+    relationship: string,
+    customInstructions = "",
+    connectedEntities: any[] = [],
+    categories: any[] = [],
+    templateOutline = "",
+    options?: { isGuest?: boolean; aiDisabled?: boolean },
+  ): Promise<any> {
+    return this.textGeneration.generateRelatedEntity(
+      apiKey,
+      modelName,
+      sourceEntity,
+      targetType,
+      relationship,
+      customInstructions,
+      connectedEntities,
+      categories,
+      templateOutline,
+      options,
+    );
+  }
+
   async generateStructuredEntity(
     apiKey: string,
     query: string,

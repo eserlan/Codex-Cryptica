@@ -1,7 +1,7 @@
 import type { Entity } from "./entity";
 
 export const TIER_MODES = {
-  lite: "gemini-flash-lite-latest",
+  lite: "gemini-3.1-flash-lite",
   advanced: "gemini-3-flash-preview",
 };
 
@@ -122,6 +122,38 @@ export interface TextGenerationService {
     onUpdate: (partial: string) => void,
     categories?: string[],
   ): Promise<void>;
+  generateRelatedEntity?(
+    apiKey: string,
+    modelName: string,
+    sourceEntity: {
+      title: string;
+      type: string;
+      content?: string;
+      lore?: string;
+    },
+    targetType: string,
+    relationship: string,
+    customInstructions?: string,
+    connectedEntities?: ConnectedEntityPromptContext[],
+    categories?: { id: string; label?: string }[],
+    templateOutline?: string,
+    options?: { isGuest?: boolean },
+  ): Promise<{
+    name: string;
+    type: string;
+    summary: string;
+    description: string;
+    labels?: string[];
+    plotHook?: string;
+    relationshipBack?: string;
+  }>;
+}
+
+export interface ConnectedEntityPromptContext {
+  title: string;
+  type: string;
+  relation: string;
+  content: string;
 }
 
 export interface ImageGenerationOptions {
