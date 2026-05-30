@@ -275,5 +275,85 @@ describe("DefaultImageGenerationService", () => {
         }),
       ).rejects.toThrow("Generation failed. Please try again.");
     });
+
+    it("should generate an image via direct Cloudflare Workers AI when account ID and token are provided", async () => {
+      const mockImageData = "Y2xvdWRmbGFyZS1pbWFnZQ=="; // "cloudflare-image" in base64
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            result: { image: mockImageData },
+          }),
+      });
+
+      const blob = await service.generateImage(
+        "cf-token",
+        "prompt",
+        "@cf/black-forest-labs/flux-1-schnell",
+        {
+          provider: "cloudflare",
+          cloudflareAccountId: "cf-account-id",
+        },
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://api.cloudflare.com/client/v4/accounts/cf-account-id/ai/run/@cf/black-forest-labs/flux-1-schnell",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer cf-token",
+          }),
+        }),
+      );
+      expect(blob).toBeInstanceOf(Blob);
+      expect(await blob.text()).toBe("cloudflare-image");
+    });
+
+    it("should generate an image via proxy Cloudflare Workers AI when account ID is not provided", async () => {
+      const mockImageData = "cHJveHktY2xvdWRmbGFyZS1pbWFnZQ=="; // "proxy-cloudflare-image" in base64
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            result: { image: mockImageData },
+          }),
+      });
+
+      const blob = await service.generateImage(
+        "",
+        "prompt",
+        "@cf/black-forest-labs/flux-1-schnell",
+        {
+          provider: "cloudflare",
+        },
+      );
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/v1/images/generations",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            model: "@cf/black-forest-labs/flux-1-schnell",
+            prompt: "prompt",
+          }),
+        }),
+      );
+      expect(blob).toBeInstanceOf(Blob);
+      expect(await blob.text()).toBe("proxy-cloudflare-image");
+    });
+
+    it("should fail fast when Cloudflare account ID is provided but API token is missing", async () => {
+      await expect(
+        service.generateImage("", "prompt", "model", {
+          provider: "cloudflare",
+          cloudflareAccountId: "cf-account-id",
+        }),
+      ).rejects.toThrow(
+        "A Cloudflare API token is required when a custom Cloudflare Account ID is configured.",
+      );
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
   });
 });

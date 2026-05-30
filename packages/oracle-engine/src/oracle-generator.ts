@@ -312,16 +312,30 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
-    const targetKey =
-      context.imageProvider === "custom" && context.customImageApiKey
-        ? context.customImageApiKey
-        : apiKey;
-    const targetModel =
-      context.imageProvider === "custom"
-        ? context.customImageModel || "black-forest-labs/FLUX.1-schnell"
-        : "gemini-2.5-flash-image";
+    const isCustom = context.imageProvider === "custom";
+    const isCloudflare = context.imageProvider === "cloudflare";
 
-    if (!targetKey) {
+    let targetKey = apiKey;
+    if (isCustom && context.customImageApiKey) {
+      targetKey = context.customImageApiKey;
+    } else if (isCloudflare) {
+      targetKey = "";
+    }
+
+    let targetModel = "gemini-2.5-flash-image";
+    if (isCustom) {
+      targetModel =
+        context.customImageModel || "black-forest-labs/FLUX.1-schnell";
+    } else if (isCloudflare) {
+      targetModel =
+        context.cloudflareModel ||
+        "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+    }
+
+    const needsKey =
+      (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
+
+    if (needsKey) {
       throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
     }
 
@@ -367,16 +381,30 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.isDemoMode,
     );
 
-    const targetKey =
-      context.imageProvider === "custom" && context.customImageApiKey
-        ? context.customImageApiKey
-        : apiKey;
-    const targetModel =
-      context.imageProvider === "custom"
-        ? context.customImageModel || "black-forest-labs/FLUX.1-schnell"
-        : "gemini-2.5-flash-image";
+    const isCustom = context.imageProvider === "custom";
+    const isCloudflare = context.imageProvider === "cloudflare";
 
-    if (!targetKey) {
+    let targetKey = apiKey;
+    if (isCustom && context.customImageApiKey) {
+      targetKey = context.customImageApiKey;
+    } else if (isCloudflare) {
+      targetKey = "";
+    }
+
+    let targetModel = "gemini-2.5-flash-image";
+    if (isCustom) {
+      targetModel =
+        context.customImageModel || "black-forest-labs/FLUX.1-schnell";
+    } else if (isCloudflare) {
+      targetModel =
+        context.cloudflareModel ||
+        "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+    }
+
+    const needsKey =
+      (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
+
+    if (needsKey) {
       throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
     }
 

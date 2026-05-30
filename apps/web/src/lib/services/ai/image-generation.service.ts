@@ -73,13 +73,102 @@ export class DefaultImageGenerationService implements ImageGenerationService {
         "A custom image provider API key is required for image generation.",
       );
     }
+    if (provider === "cloudflare" && options?.cloudflareAccountId && !apiKey) {
+      throw new Error(
+        "A Cloudflare API token is required when a custom Cloudflare Account ID is configured.",
+      );
+    }
 
     // Fetch the raw API response, classifying network/quota/offline errors.
     // processImageResponse is called outside this block so its specific
     // messages (no image data, text returned) propagate without being replaced.
     let rawData: any;
     try {
-      if (provider === "custom") {
+      if (provider === "cloudflare") {
+        const cfAccountId = options?.cloudflareAccountId;
+        const cfApiToken = apiKey;
+
+        if (cfAccountId && cfApiToken) {
+          console.log(
+            `[ImageGenerationService] Generating image via direct Cloudflare Workers AI: ${modelName}`,
+          );
+          const url = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelName}`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${cfApiToken}`,
+            },
+            body: JSON.stringify({
+              prompt: prompt,
+            }),
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            const message = err.errors?.[0]?.message || response.statusText;
+            throw new Error(
+              `Cloudflare Workers AI Error (${modelName}): ${message}`,
+            );
+          }
+
+          const json = await response.json();
+          const b64 = json.result?.image;
+          if (!b64) {
+            throw new Error("No image data found in Cloudflare response");
+          }
+          rawData = {
+            candidates: [
+              {
+                content: {
+                  parts: [{ inlineData: { data: b64, mimeType: "image/png" } }],
+                },
+              },
+            ],
+          };
+        } else {
+          console.log(
+            `[ImageGenerationService] Generating image via proxy using Cloudflare Workers AI: ${modelName}`,
+          );
+          const proxyUrl =
+            "https://oracle-proxy.espen-erlandsen.workers.dev/v1/images/generations";
+          const response = await fetch(proxyUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: modelName,
+              prompt: prompt,
+            }),
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            const message = err.error?.message || response.statusText;
+            throw new Error(
+              `Proxy Cloudflare Image Generation Error (${modelName}): ${message}`,
+            );
+          }
+
+          const json = await response.json();
+          const b64 = json.result?.image;
+          if (!b64) {
+            throw new Error(
+              "No image data returned from proxy Cloudflare Workers AI",
+            );
+          }
+          rawData = {
+            candidates: [
+              {
+                content: {
+                  parts: [{ inlineData: { data: b64, mimeType: "image/png" } }],
+                },
+              },
+            ],
+          };
+        }
+      } else if (provider === "custom") {
         console.log(
           `[ImageGenerationService] Generating image via custom provider: ${modelName}`,
         );

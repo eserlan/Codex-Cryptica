@@ -149,6 +149,13 @@
       }
     }
   }
+
+  const canGenerateImage = $derived.by(() => {
+    const provider = oracle.settings?.imageProvider || "cloudflare";
+    if (provider === "cloudflare") return true;
+    if (provider === "custom") return !!oracle.settings?.customImageApiKey;
+    return !!oracle.apiKey;
+  });
 </script>
 
 <div
@@ -267,7 +274,7 @@
     </div>
   {:else}
     <div class="px-4 md:px-6">
-      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (oracle.apiKey || !entity.artDirection)}
+      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (canGenerateImage || !entity.artDirection)}
         <div
           class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
         >
@@ -285,8 +292,8 @@
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={isVisualizing}
               class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
-              aria-label={oracle.apiKey
-                ? `Draw visualization for ${entity.title}`
+              aria-label={canGenerateImage
+                ? `Generate image for ${entity.title}`
                 : `Generate image prompt for ${entity.title}`}
               aria-busy={isVisualizing}
             >
@@ -302,7 +309,7 @@
                   {#if oracle.activeStyleTitle}
                     STYLE: {oracle.activeStyleTitle.toUpperCase()}
                   {:else}
-                    {oracle.apiKey ? "VISUALIZING..." : "GENERATING..."}
+                    {canGenerateImage ? "VISUALIZING..." : "GENERATING..."}
                   {/if}
                 </span>
               {:else}
@@ -315,7 +322,9 @@
                 ></span>
                 <span
                   class="text-[8px] md:text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
-                  >{oracle.apiKey ? "DRAW VISUAL" : "GENERATE PROMPT"}</span
+                  >{canGenerateImage
+                    ? "GENERATE IMAGE"
+                    : "GENERATE PROMPT"}</span
                 >
               {/if}
             </button>
@@ -334,11 +343,11 @@
                 aria-live="polite"
               >
                 {#if oracle.activeStyleTitle}
-                  {oracle.apiKey
+                  {canGenerateImage
                     ? `Visualizing in ${oracle.activeStyleTitle}`
                     : `Generating prompt in ${oracle.activeStyleTitle}`}
                 {:else}
-                  {oracle.apiKey ? "Building Visual" : "Generating Prompt"}
+                  {canGenerateImage ? "Building Visual" : "Generating Prompt"}
                 {/if}
               </div>
             </div>
