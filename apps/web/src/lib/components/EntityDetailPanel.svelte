@@ -58,13 +58,6 @@
   let isEditing = $state(false);
   let previousEntityId = $state<string | undefined>(undefined);
 
-  $effect(() => {
-    if (entity?.id !== previousEntityId) {
-      isEditing = false;
-      previousEntityId = entity?.id;
-    }
-  });
-
   // Edit State
   let editTitle = $state("");
   let editAliases = $state<string[]>([]);
@@ -75,6 +68,30 @@
   let editDate = $state<Entity["date"]>();
   let editStartDate = $state<Entity["start_date"]>();
   let editEndDate = $state<Entity["end_date"]>();
+
+  let isDirty = $derived(
+    isEditing &&
+      entity != null &&
+      (editTitle !== entity.title ||
+        editContent !== (entity.content ?? "") ||
+        editLore !== (entity.lore ?? "") ||
+        editType !== entity.type ||
+        editImage !== (entity.image ?? "") ||
+        JSON.stringify(editAliases) !== JSON.stringify(entity.aliases ?? []) ||
+        JSON.stringify(editDate) !== JSON.stringify(entity.date ?? null) ||
+        JSON.stringify(editStartDate) !== JSON.stringify(entity.start_date ?? null) ||
+        JSON.stringify(editEndDate) !== JSON.stringify(entity.end_date ?? null)),
+  );
+
+  $effect(() => {
+    if (entity?.id !== previousEntityId) {
+      if (isEditing && isDirty) {
+        notificationStore.notify("Unsaved changes were discarded.", "info");
+      }
+      isEditing = false;
+      previousEntityId = entity?.id;
+    }
+  });
 
   let activeTab = $state<EntityDetailTab>("status");
   let isSaving = $state(false);
@@ -119,8 +136,32 @@
     isEditing = true;
   };
 
-  const cancelEditing = () => {
+  const cancelEditing = async () => {
+    if (isDirty) {
+      const confirmed = await notificationStore.confirm({
+        title: "Discard changes?",
+        message: "You have unsaved edits. Discard them and revert to the saved version?",
+        confirmLabel: "Discard changes",
+        cancelLabel: "Keep editing",
+        isDangerous: false,
+      });
+      if (!confirmed) return;
+    }
     isEditing = false;
+  };
+
+  const guardedClose = async () => {
+    if (isDirty) {
+      const confirmed = await notificationStore.confirm({
+        title: "Discard changes?",
+        message: "You have unsaved edits. Close the panel and discard them?",
+        confirmLabel: "Discard and close",
+        cancelLabel: "Keep editing",
+        isDangerous: false,
+      });
+      if (!confirmed) return;
+    }
+    onClose();
   };
 
   const saveChanges = async () => {
@@ -271,7 +312,7 @@
         {isEditing}
         bind:editTitle
         bind:editAliases
-        {onClose}
+        onClose={guardedClose}
       />
 
       <div
@@ -392,6 +433,7 @@
       <DetailFooter
         {isEditing}
         {isSaving}
+        {isDirty}
         onCancel={cancelEditing}
         onSave={saveChanges}
         onDelete={handleDelete}

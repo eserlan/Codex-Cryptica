@@ -5,6 +5,7 @@
   let {
     isEditing,
     isSaving = false,
+    isDirty = false,
     onCancel,
     onSave,
     onDelete,
@@ -12,6 +13,7 @@
   } = $props<{
     isEditing: boolean;
     isSaving?: boolean;
+    isDirty?: boolean;
     onCancel: () => void;
     onSave: () => void;
     onDelete: () => void;
@@ -24,7 +26,12 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   {#if isEditing}
-    <div class="flex gap-2 w-full justify-end">
+    <div class="flex gap-2 w-full justify-end items-center">
+      {#if isDirty}
+        <span class="text-[9px] text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto">
+          • Unsaved changes
+        </span>
+      {/if}
       <button
         onclick={onCancel}
         class="text-theme-muted hover:text-theme-text text-xs font-bold px-4 py-2 rounded tracking-widest transition disabled:opacity-50"
