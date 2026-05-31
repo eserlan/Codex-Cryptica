@@ -294,7 +294,7 @@ export class SearchIndexPipeline {
         lastSeenId = records[records.length - 1].entityId;
 
         // Stagger batches to let the main thread and IndexedDB breathe.
-        await this.delay(500);
+        await this.yieldToIdle();
       }
 
       this.debug.log(
@@ -364,5 +364,18 @@ export class SearchIndexPipeline {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => this.timers.setTimeout(resolve, ms));
+  }
+
+  private yieldToIdle(): Promise<void> {
+    if (typeof globalThis.requestIdleCallback === "function") {
+      return new Promise((resolve) => {
+        globalThis.requestIdleCallback(() => resolve());
+      });
+    }
+    const scheduler = (globalThis as any).scheduler;
+    if (scheduler && typeof scheduler.postTask === "function") {
+      return scheduler.postTask(() => {}, { priority: "background" });
+    }
+    return new Promise((resolve) => this.timers.setTimeout(resolve, 0));
   }
 }
