@@ -16,6 +16,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let showHint = $state(false);
@@ -248,9 +249,7 @@
               `Failed to convert demo to ${themeStore.jargon.vault}`,
               error,
             );
-            window.alert(
-              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
-            );
+            notificationStore.notify(`Failed to save ${themeStore.jargon.vault}. Please try again.`, "error");
           }
         }}
         class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"

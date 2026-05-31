@@ -94,9 +94,7 @@
               `Failed to convert demo to ${themeStore.jargon.vault}:`,
               error,
             );
-            window.alert(
-              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
-            );
+            notificationStore.notify(`Failed to save ${themeStore.jargon.vault}. Please try again.`, "error");
           }
         }}
         class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-xs rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)]"
