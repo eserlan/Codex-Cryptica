@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Trash2, Type } from "lucide-svelte";
   import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { vault } from "$lib/stores/vault.svelte";
 
@@ -78,7 +77,7 @@
           onClose();
         }}
       >
-        <Type class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--type] w-3.5 h-3.5"></span>
         Edit Label
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
@@ -158,7 +157,7 @@
           onClose();
         }}
       >
-        <Trash2 class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
         Delete
       </button>
     {/if}
