@@ -295,11 +295,19 @@
         {@render treeNode(node, 0)}
       {:else}
         <div data-testid="no-entities-found">
-          <EmptyState
-            icon="icon-[lucide--ghost]"
-            headline="No entities yet"
-            body="Create your first entity to start building your vault."
-          />
+          {#if vault.allEntities.length === 0}
+            <EmptyState
+              icon="icon-[lucide--ghost]"
+              headline="No entities yet"
+              body="Create your first entity to start building your vault."
+            />
+          {:else}
+            <EmptyState
+              icon="icon-[lucide--search-x]"
+              headline="No entities found"
+              body="Try adjusting your search or filters."
+            />
+          {/if}
         </div>
       {/each}
     {:else if viewMode === "label" && groupedEntities?.type === "label"}

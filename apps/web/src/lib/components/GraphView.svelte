@@ -388,7 +388,9 @@
       : null,
   );
   let hasNoEntities = $derived(
-    vault.isInitialized && vault.allEntities.length === 0,
+    vault.isInitialized &&
+      vault.status !== "loading" &&
+      vault.allEntities.length === 0,
   );
 </script>
 

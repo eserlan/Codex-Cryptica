@@ -17,7 +17,7 @@
 <div
   class="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center"
 >
-  <span class="{icon} h-8 w-8 text-theme-muted/40"></span>
+  <span class="{icon} h-8 w-8 text-theme-muted/40" aria-hidden="true"></span>
   <p
     class="text-[10px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
   >
