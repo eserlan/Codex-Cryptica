@@ -49,8 +49,8 @@ export interface EntityContentRecord {
 export interface SearchIndexRecord {
   /** Vault identifier. Primary key. */
   vaultId: string;
-  /** Serialized FlexSearch index data. */
-  data: Record<string, any>;
+  /** Serialized FlexSearch index data. Supports Blob (for compression/binary I/O), Uint8Array, or legacy JSON Record. */
+  data: Blob | Uint8Array | Record<string, any>;
   /** Last update timestamp. */
   updatedAt: number;
 }

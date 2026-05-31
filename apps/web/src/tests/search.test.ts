@@ -200,21 +200,51 @@ describe("SearchService", () => {
   it("should save a populated index to IndexedDB", async () => {
     const { entityDb } = await import("$lib/utils/entity-db");
 
-    mockApi.exportIndex.mockResolvedValueOnce({
+    const expectedData = {
       _docIds: ["1"],
       segment1: "data",
-    });
+    };
+    mockApi.exportIndex.mockResolvedValueOnce(expectedData);
     const putSpy = vi
       .spyOn(entityDb.searchIndex, "put")
       .mockResolvedValueOnce(undefined as any);
 
     await service.saveIndex("test-vault");
 
-    expect(putSpy).toHaveBeenCalledWith({
-      vaultId: "test-vault",
-      data: { _docIds: ["1"], segment1: "data" },
-      updatedAt: expect.any(Number),
-    });
+    expect(putSpy).toHaveBeenCalledTimes(1);
+    const putArg = putSpy.mock.calls[0][0];
+    expect(putArg.vaultId).toBe("test-vault");
+    expect(putArg.updatedAt).toEqual(expect.any(Number));
+
+    const savedData = putArg.data;
+    if (savedData instanceof Blob) {
+      let text: string;
+      if (typeof DecompressionStream !== "undefined") {
+        const rawStream =
+          typeof savedData.stream === "function"
+            ? savedData.stream()
+            : new ReadableStream({
+                async start(controller) {
+                  try {
+                    const arrayBuffer = await savedData.arrayBuffer();
+                    controller.enqueue(new Uint8Array(arrayBuffer));
+                  } catch (err) {
+                    controller.error(err);
+                  }
+                  controller.close();
+                },
+              });
+        const stream = rawStream.pipeThrough(
+          new DecompressionStream("deflate-raw"),
+        );
+        text = await new Response(stream).text();
+      } else {
+        text = await savedData.text();
+      }
+      expect(JSON.parse(text)).toEqual(expectedData);
+    } else {
+      expect(savedData).toEqual(expectedData);
+    }
   });
 
   it("should bridge logs from worker to debugStore", async () => {
@@ -416,29 +446,31 @@ describe("SearchService", () => {
       }));
 
       let contentCallCount = 0;
-      vi.spyOn(entityDb.entityContent, "where").mockImplementation((indexName?: any) => {
-        if (indexName === "vaultId") {
+      vi.spyOn(entityDb.entityContent, "where").mockImplementation(
+        (indexName?: any) => {
+          if (indexName === "vaultId") {
+            return {
+              equals: vi.fn().mockReturnValue({
+                count: vi.fn().mockResolvedValue(120),
+              }),
+            } as any;
+          }
           return {
-            equals: vi.fn().mockReturnValue({
-              count: vi.fn().mockResolvedValue(120),
+            between: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockReturnThis(),
+            toArray: vi.fn().mockImplementation(() => {
+              if (contentCallCount === 0) {
+                contentCallCount++;
+                return Promise.resolve(mockRecords.slice(0, 100));
+              } else if (contentCallCount === 1) {
+                contentCallCount++;
+                return Promise.resolve(mockRecords.slice(100));
+              }
+              return Promise.resolve([]);
             }),
           } as any;
-        }
-        return {
-          between: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockReturnThis(),
-          toArray: vi.fn().mockImplementation(() => {
-            if (contentCallCount === 0) {
-              contentCallCount++;
-              return Promise.resolve(mockRecords.slice(0, 100));
-            } else if (contentCallCount === 1) {
-              contentCallCount++;
-              return Promise.resolve(mockRecords.slice(100));
-            }
-            return Promise.resolve([]);
-          }),
-        } as any;
-      });
+        },
+      );
 
       vi.spyOn(entityDb.graphEntities, "where").mockReturnValue({
         equals: vi.fn().mockReturnValue({
