@@ -22,7 +22,9 @@ try {
 
 let usePolling = false;
 try {
-  usePolling = readFileSync("/proc/version", "utf8").toLowerCase().includes("microsoft");
+  usePolling = readFileSync("/proc/version", "utf8")
+    .toLowerCase()
+    .includes("microsoft");
 } catch {
   // Ignore
 }
@@ -79,6 +81,22 @@ export default defineConfig({
     chunkSizeWarningLimit: 900,
     minify: "esbuild",
     target: "es2020",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes("@tiptap/") ||
+            id.includes("svelte-tiptap") ||
+            id.includes("tiptap-markdown")
+          )
+            return "chunk-editor";
+          if (id.includes("cytoscape")) return "chunk-graph";
+          if (id.includes("peerjs") || id.includes("peerjs/"))
+            return "chunk-p2p";
+          if (id.includes("pdfjs-dist")) return "chunk-pdf";
+        },
+      },
+    },
   },
   test: {
     include: ["src/**/*.{test,spec}.{js,ts}"],
