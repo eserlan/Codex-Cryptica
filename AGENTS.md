@@ -28,6 +28,8 @@ This file is the Codex-facing instruction layer for this repository.
 
 ## Repository Rules
 
+- **Style Guide Adherence**: ALWAYS read and adhere to [docs/STYLE_GUIDE.md](file:///home/espen/proj/remotecodexarcana/docs/STYLE_GUIDE.md). All UI components MUST use Svelte 5 Runes, Tailwind 4 semantic tokens (e.g., `text-theme-primary`), and follow the documented DI (Dependency Injection) and transition/animation patterns.
+- **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - Follow the constitution's library-first, TDD, privacy, DI, and documentation principles.
 - Do not commit implementation changes without tests for the affected behavior.
 - When adding or updating tests for changed behavior, cover both the expected success path and at least one meaningful negative, cancellation, or failure path.
