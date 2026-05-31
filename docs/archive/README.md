@@ -12,7 +12,5 @@ For active guides and the core developer reference, see the parent [docs/](..) f
   - [CLOUDFLARE_MIGRATION_TASKS.md](file:///home/espen/proj/remotecodexarcana/docs/archive/CLOUDFLARE_MIGRATION_TASKS.md): Checklist of migration tasks.
   - [CLOUDFLARE_TRANSITION.md](file:///home/espen/proj/remotecodexarcana/docs/archive/CLOUDFLARE_TRANSITION.md): Transition strategy and notes.
 - **Historical Analysis / Refactoring Plans**:
-  - [GOD_FILES_ANALYSIS.md](file:///home/espen/proj/remotecodexarcana/docs/archive/GOD_FILES_ANALYSIS.md): Store decomposition and component refactoring plan.
-  - [GRAPH_GOD_FILES_ANALYSIS.md](file:///home/espen/proj/remotecodexarcana/docs/archive/GRAPH_GOD_FILES_ANALYSIS.md): Graph render and Cytoscape coordinator refactoring plan.
   - [UI_STORE_ANALYSIS.md](file:///home/espen/proj/remotecodexarcana/docs/archive/UI_STORE_ANALYSIS.md): Analysis of Svelte stores prior to UI store refactoring.
   - [code_assessment.md](file:///home/espen/proj/remotecodexarcana/docs/archive/code_assessment.md): General codebase evaluation from earlier phases.
