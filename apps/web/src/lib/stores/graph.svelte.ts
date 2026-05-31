@@ -12,6 +12,7 @@ export class GraphStore {
   private explorerUIStore: typeof explorerUIStore;
   private sessionModeStore: typeof sessionModeStore;
   private connectionModeStore: typeof connectionModeStore;
+  private _initPromise: Promise<void> | null = null;
 
   private get vault() {
     return this._vault ?? defaultVault;
@@ -114,6 +115,15 @@ export class GraphStore {
   }
 
   async init() {
+    if (this._initPromise) {
+      return this._initPromise;
+    }
+
+    this._initPromise = this.loadPersistedState();
+    return this._initPromise;
+  }
+
+  private async loadPersistedState() {
     const db = await getDB();
     const savedEras = await db.getAll("world_eras");
     if (savedEras) {

@@ -11,13 +11,7 @@
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { timelineStore } from "$lib/stores/timeline.svelte";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
@@ -37,7 +31,6 @@
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
-  import VTTSharedImageLightbox from "$lib/components/vtt/VTTSharedImageLightbox.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
 
   // Logic & Hooks
@@ -67,6 +60,8 @@
   let globalListenersCleanup: (() => void) | null = null;
   let crossTabBroadcaster: InstanceType<typeof CrossTabBroadcaster> | null =
     null;
+  let mapSession = $state<any>(null);
+  let VTTSharedImageLightbox = $state<any>(null);
 
   // Derived
   const isPopup = $derived(
@@ -78,7 +73,7 @@
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
   const isVttFullscreen = $derived(
-    page.url.pathname.startsWith(`${base}/map`) && mapSession.vttEnabled,
+    page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
   );
 
   if (browser) {
@@ -96,7 +91,23 @@
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
     if (browser && !globalListenersCleanup) {
-      globalListenersCleanup = initializeGlobalListeners(calendarStore);
+      globalListenersCleanup = initializeGlobalListeners();
+    }
+  });
+
+  $effect(() => {
+    if (!browser) return;
+
+    if (
+      page.url.pathname.startsWith(`${base}/map`) ||
+      sessionModeStore.isGuestMode
+    ) {
+      import("$lib/stores/map-session.svelte").then((m) => {
+        mapSession = m.mapSession;
+      });
+      import("$lib/components/vtt/VTTSharedImageLightbox.svelte").then((m) => {
+        VTTSharedImageLightbox = m.default;
+      });
     }
   });
 
@@ -112,12 +123,8 @@
       if (!isLandingPage || !shouldShowLanding || isTesting || isPopup) {
         hasBooted = bootSystem({
           categories,
-          timeline: timelineStore,
-          graph,
-          calendar: calendarStore,
           vault,
           sessionModeStore,
-          oracle,
         });
       }
     }
@@ -127,7 +134,6 @@
     (async () => {
       helpStore.init();
       await themeStore.init();
-      oracle.init();
       void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant
@@ -141,14 +147,12 @@
       }
 
       console.log("[Layout] Calling setupWindowGlobals");
+      const featureGlobals = await loadFeatureWindowGlobals();
+
       setupWindowGlobals({
         searchStore,
         vault,
         vaultRegistry,
-        canvasRegistry,
-        graph,
-        oracle,
-        calendarStore,
         helpStore,
         categories,
         onboardingStore,
@@ -161,9 +165,29 @@
         explorerUIStore,
         isEntityVisible,
         eventBus: appEventBus,
+        ...featureGlobals,
       });
     })();
   });
+
+  async function loadFeatureWindowGlobals() {
+    const isSpecialEnv =
+      import.meta.env.DEV ||
+      (typeof window !== "undefined" && (window as any).__E2E__) ||
+      import.meta.env.VITE_STAGING === "true";
+
+    if (!isSpecialEnv) return {};
+
+    const [{ canvasRegistry }, { graph }, { oracle }, { calendarStore }] =
+      await Promise.all([
+        import("$lib/stores/canvas-registry.svelte"),
+        import("$lib/stores/graph.svelte"),
+        import("$lib/stores/oracle.svelte"),
+        import("$lib/stores/calendar.svelte"),
+      ]);
+
+    return { canvasRegistry, graph, oracle, calendarStore };
+  }
 
   // Help Hash Navigation
   $effect(() => {
@@ -409,7 +433,7 @@
   {/if}
 
   <GuestSessionBootstrap />
-  {#if sessionModeStore.isGuestMode}
+  {#if sessionModeStore.isGuestMode && mapSession && VTTSharedImageLightbox}
     <VTTSharedImageLightbox
       imageState={mapSession.sharedTokenImage}
       onClose={() => mapSession.clearSharedTokenImage()}

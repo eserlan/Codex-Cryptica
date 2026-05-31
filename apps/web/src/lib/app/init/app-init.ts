@@ -12,18 +12,11 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
  */
 export function bootSystem(stores: {
   categories: any;
-  timeline: any;
-  graph: any;
-  calendar: any;
   vault: any;
   sessionModeStore: any;
-  oracle?: any;
 }): boolean {
-  debugStore.log("System booting: Initializing heavy stores...");
+  debugStore.log("System booting: Initializing core stores...");
   stores.categories.init();
-  stores.timeline.init();
-  stores.graph.init();
-  stores.calendar.init();
 
   // Initialize staging state
   stores.sessionModeStore.isStaging = IS_STAGING;
@@ -32,12 +25,6 @@ export function bootSystem(stores: {
     console.error("Vault initialization failed", error);
   });
 
-  // Initialize Oracle Settings Service with Dexie (if oracle store provided)
-  if (stores.oracle) {
-    // Oracle initialization is handled by OracleStore.init()
-    // This is just a placeholder for future oracle initialization needs
-  }
-
   return true;
 }
 
@@ -45,7 +32,7 @@ export function bootSystem(stores: {
  * Sets up global error and rejection handlers.
  * Returns a cleanup function.
  */
-export function initializeGlobalListeners(calendarStore: any) {
+export function initializeGlobalListeners(_calendarStore?: any) {
   if (!browser) return () => {};
 
   // Initialize Oracle action listeners
@@ -109,7 +96,8 @@ export function initializeGlobalListeners(calendarStore: any) {
     );
   };
 
-  const handleVaultSwitched = () => {
+  const handleVaultSwitched = async () => {
+    const { calendarStore } = await import("$lib/stores/calendar.svelte");
     calendarStore.init();
   };
 
@@ -132,10 +120,10 @@ export function setupWindowGlobals(context: {
   searchStore: any;
   vault: any;
   vaultRegistry: any;
-  canvasRegistry: any;
-  graph: any;
-  oracle: any;
-  calendarStore: any;
+  canvasRegistry?: any;
+  graph?: any;
+  oracle?: any;
+  calendarStore?: any;
   helpStore: any;
   categories: any;
   onboardingStore?: any;

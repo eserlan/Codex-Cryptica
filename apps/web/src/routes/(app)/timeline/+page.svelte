@@ -1,9 +1,16 @@
 <script lang="ts">
   import { timelineStore } from "$lib/stores/timeline.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
   import VerticalTimeline from "$lib/components/timeline/VerticalTimeline.svelte";
   import HorizontalTimeline from "$lib/components/timeline/HorizontalTimeline.svelte";
   import TimelineLayoutToggle from "$lib/components/timeline/TimelineLayoutToggle.svelte";
   import TimelineFilterBar from "$lib/components/timeline/TimelineFilterBar.svelte";
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    void graph.init();
+    void timelineStore.init();
+  });
 </script>
 
 <svelte:head>

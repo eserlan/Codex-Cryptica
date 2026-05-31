@@ -126,6 +126,7 @@
   };
 
   onMount(() => {
+    void graph.init();
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
