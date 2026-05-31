@@ -1,6 +1,6 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { Eye, EyeOff, Sparkles, ExternalLink } from "lucide-svelte";
+
   import { fade } from "svelte/transition";
 
   let inputKey = $state("");
@@ -29,7 +29,7 @@
     <div
       class="w-12 h-12 rounded-xl bg-theme-primary/10 flex items-center justify-center text-theme-primary shrink-0"
     >
-      <Sparkles class="w-6 h-6 animate-pulse" />
+      <span class="icon-[lucide--sparkles] w-6 h-6 animate-pulse"></span>
     </div>
     <div class="space-y-1">
       <h3
@@ -61,9 +61,9 @@
           aria-label="{showKey ? 'Hide' : 'Show'} API Key"
         >
           {#if showKey}
-            <EyeOff class="w-4 h-4" />
+            <span class="icon-[lucide--eye-off] w-4 h-4"></span>
           {:else}
-            <Eye class="w-4 h-4" />
+            <span class="icon-[lucide--eye] w-4 h-4"></span>
           {/if}
         </button>
       </div>
@@ -77,9 +77,9 @@
         class="text-xs text-theme-secondary hover:text-theme-primary flex items-center gap-1.5 transition-colors group font-header tracking-wide uppercase"
       >
         <span>Get free key from Google AI Studio</span>
-        <ExternalLink
-          class="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
-        />
+        <span
+          class="icon-[lucide--external-link] w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+        ></span>
       </a>
 
       <button
