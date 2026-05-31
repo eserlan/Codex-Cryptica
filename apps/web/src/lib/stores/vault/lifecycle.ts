@@ -245,21 +245,22 @@ export class VaultLifecycleManager {
 
       const services = this.deps.getServices();
       if (services?.search) {
+        // We dynamically import buildSearchKeywords to mirror SearchService.mapToSearchEntry exactly
+        const { buildSearchKeywords, buildSearchAliases } = await import(
+          "$lib/services/search-entry-fields"
+        );
+
         // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
         for (const id in entities) {
           const entity = entities[id];
 
-          // Canonical keyword construction mirroring SearchService.mapToSearchEntry
-          const keywords = [
-            ...(entity.labels || []),
-            entity.lore || "",
-            ...Object.values(entity.metadata || {}).flat(),
-          ].join(" ");
+          const keywords = buildSearchKeywords(entity as any);
+          const aliases = buildSearchAliases(entity as any);
 
           await services.search.index({
             id: entity.id,
             title: entity.title,
-            aliases: (entity.aliases || []).join(" "),
+            aliases,
             content: entity.content || "",
             type: entity.type,
             path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
