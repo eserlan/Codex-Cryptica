@@ -37,7 +37,8 @@ We follow the **Red-Green-Refactor** cycle for all core logic.
 
 ### Component Composition
 
-- **Decoupled Stores**: Favor injecting store instances through props or context (DI) for easier unit testing.
+- **Decoupled Stores & Dependency Injection**: Favor injecting store and service instances through props or context (DI) for easier unit testing. Always use constructor-based DI with sensible defaults for all services and stores. Export both the service class and a default singleton instance to avoid tight coupling.
+- **Decomposed Store Architecture**: Identify the correct domain-specific reactive manager (e.g., within `apps/web/src/lib/stores/oracle/` like `chat`, `ui`, or `reconciliation`) instead of adding functionality directly to a monolithic facade.
 - **Svelte 5 Runes**:
   - **$state**: Use for local component-only state.
   - **$derived**: Use for reactive computations. Avoid initializing `$state` directly from props.
@@ -49,6 +50,7 @@ We follow the **Red-Green-Refactor** cycle for all core logic.
 - All theme configuration must reside in `app.css` within the `@theme` block.
 - Use `@apply` in Svelte component `<style>` blocks only when necessary to clean up repeated complex utility sets.
 - Reference theme variables directly in classes whenever possible (e.g., `text-theme-primary`).
+- **Scoped Styles in Svelte Components**: When writing component `<style>` blocks that use Tailwind utility classes or directives (like `@apply`), import the theme configuration using `@reference` (e.g., `@reference "../../../app.css";`) at the top of the style block. Ignore standard CSS linter warnings for these specific v4 at-rules.
 
 ## Theming
 
@@ -337,6 +339,31 @@ To ensure CI passes and maintain clean code, always prefix unused variables or p
 const _handleUnusedEvent = (e) => {
   console.log("Action triggered");
 };
+```
+
+### Avoid initializing `$state` directly from props
+
+Do not initialize `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear (e.g. tracking local draft changes) to prevent compiler warnings.
+
+```svelte
+<!-- WRONG: Causes out-of-sync state and warnings -->
+<script>
+  let { title } = $props();
+  let localTitle = $state(title);
+</script>
+
+<!-- CORRECT: Using $derived for synchronized values -->
+<script>
+  let { title } = $props();
+  let uppercaseTitle = $derived(title.toUpperCase());
+</script>
+
+<!-- CORRECT: Clear local draft/edit copy intent -->
+<script>
+  let { title, onSave } = $props();
+  // initialized once as local scratchpad state for editing
+  let draftTitle = $state(title);
+</script>
 ```
 
 ## Animation and Transition Standards
