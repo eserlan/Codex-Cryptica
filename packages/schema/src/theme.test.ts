@@ -12,6 +12,7 @@ import {
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
+  LANCER_LIGHT,
   StylingTemplateSchema,
 } from "./theme";
 
@@ -58,6 +59,7 @@ describe("Theme Schema & Definitions", () => {
       fallout: { light: FALLOUT_LIGHT, dark: THEMES.fallout },
       starwars: { light: STARWARS_LIGHT, dark: THEMES.starwars },
       startrek: { light: STARTREK_LIGHT, dark: THEMES.startrek },
+      lancer: { light: LANCER_LIGHT, dark: THEMES.lancer },
     };
 
     for (const [key, pair] of Object.entries(counterparts)) {

@@ -216,6 +216,14 @@ const startrek: ArtDirectionTemplate = {
     "{subject}. Clean 1990s sci-fi production illustration style, smooth surfaces and primary-coded technology (red, blue, gold), even practical lighting, optimistic palette, no grime, engineered rather than salvaged.",
 };
 
+const lancer: ArtDirectionTemplate = {
+  id: "theme.lancer",
+  label: "Lancer Default",
+  source: "theme-default",
+  template:
+    "{subject}. Military concept art style, industrial mech and hardware design with worn panel texture and hazard markings, palette of Union blue, gunmetal grey, and safety orange, compact tactical schematic aesthetic, frontier mud-and-lasers world-building, functional over decorative.",
+};
+
 export const THEME_ART_DIRECTION_DEFAULTS: Record<
   string,
   ArtDirectionTemplate
@@ -321,6 +329,12 @@ export const THEME_ART_DIRECTION_DEFAULTS: Record<
     label: "Star Trek Default",
     source: "theme-default",
     template: startrek.template,
+  },
+  lancer: {
+    id: "theme.lancer",
+    label: "Lancer Default",
+    source: "theme-default",
+    template: lancer.template,
   },
 };
 
