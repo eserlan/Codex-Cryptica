@@ -80,6 +80,11 @@ For detailed specifications and usage examples of core components, refer to the 
 - **[Inputs](design/components/input.md)**: Text inputs, textareas, and checkboxes with theme-agnostic guidance plus notes on applying the active theme.
 - **[Modals and Dialogs](design/components/dialog.md)**: Centralized modal system patterns with theme-agnostic guidance plus notes on applying the active theme.
 
+For the full token reference, see:
+
+- **[Colors](design/tokens/colors.md)**: Semantic color token table (`--color-theme-*`), feedback tokens, and domain-specific variants.
+- **[Typography and Spacing](design/tokens/typography.md)**: Font tokens (`--font-header`, `--font-body`), type scale, and layout constants.
+
 ## Living Examples
 
 These snippets represent the most common UI building blocks used across the application.
@@ -121,6 +126,174 @@ These snippets represent the most common UI building blocks used across the appl
     placeholder="Search the codex..."
   />
 </div>
+```
+
+### Label Badge
+
+A compact inline badge used to tag entities. The optional remove button uses `e.stopPropagation()` to prevent the click from bubbling to a parent card or link.
+
+```svelte
+<div
+  class="inline-flex items-center gap-1 px-2 py-0.5 bg-theme-accent/10 border border-theme-accent/30 rounded text-[10px] font-bold text-theme-accent uppercase font-header tracking-wider whitespace-nowrap group"
+>
+  <span>{label}</span>
+  {#if removable}
+    <button
+      onclick={(e) => {
+        e.stopPropagation();
+        onRemove();
+      }}
+      class="hover:text-theme-primary transition-colors flex items-center justify-center -mr-1 p-0.5"
+      aria-label="Remove label {label}"
+    >
+      <span class="icon-[heroicons--x-mark] w-3 h-3"></span>
+    </button>
+  {/if}
+</div>
+```
+
+### Icon Action Button
+
+Small icon-only toolbar buttons. Use Iconify utility classes and always provide an `aria-label` and `title`.
+
+```svelte
+<button
+  type="button"
+  onclick={handleAction}
+  class="flex items-center justify-center p-1 transition text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+  aria-label="Enter Zen Mode"
+  title="Zen Mode (Full Screen)"
+>
+  <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+</button>
+```
+
+### Tab Bar
+
+Accessible tab navigation using ARIA roles and keyboard arrow-key support. The active tab is distinguished by a bottom border; inactive tabs use a hover state.
+
+```svelte
+<div
+  role="tablist"
+  aria-label="Entity detail sections"
+  class="flex gap-x-6 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+  onkeydown={handleTabKeydown}
+>
+  {#each tabs as tab}
+    <button
+      id="tab-{tab}"
+      type="button"
+      role="tab"
+      aria-selected={activeTab === tab}
+      aria-controls="panel-{tab}"
+      tabindex={activeTab === tab ? 0 : -1}
+      class={activeTab === tab
+        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : "hover:text-theme-text transition"}
+      onclick={() => (activeTab = tab)}
+    >
+      {tab.toUpperCase()}
+    </button>
+  {/each}
+</div>
+```
+
+### Empty State
+
+Used when a list or panel has no content. Keep the message brief, muted, and uppercase.
+
+```svelte
+{#if items.length === 0}
+  <div
+    class="text-theme-muted text-[10px] text-center py-8 italic uppercase tracking-widest opacity-50"
+  >
+    No entries yet
+  </div>
+{/if}
+```
+
+### World Entity Card
+
+Used on the front page to display recently modified entities. Single-click opens in the graph; double-click opens Zen Mode. Supports optional thumbnail images with a fallback icon placeholder.
+
+```svelte
+<article
+  class="group relative overflow-hidden rounded-2xl border border-theme-border/80 bg-theme-surface text-theme-text shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:border-theme-primary/55 hover:shadow-[0_18px_48px_rgba(0,0,0,0.24)]"
+>
+  <!-- Optional image layer -->
+  {#if imageUrl}
+    <div
+      class="absolute inset-0 bg-cover bg-center opacity-100"
+      style="background-image: url('{imageUrl}')"
+    ></div>
+    <div
+      class="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(2,6,23,0.68))]"
+    ></div>
+  {:else}
+    <!-- Placeholder with category icon -->
+    <div
+      class="absolute inset-x-0 top-[12%] h-[58%] flex items-center justify-center"
+    >
+      <div
+        class="flex h-28 w-28 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-primary/10 text-theme-primary/75 backdrop-blur-sm"
+      >
+        <span class="{categoryIconClass} h-14 w-14"></span>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Invisible full-surface click target -->
+  <button
+    type="button"
+    class="absolute inset-0 z-30 cursor-pointer focus:outline-none"
+    aria-label="Open {title} in the graph"
+    onclick={handleCardClick}
+    ondblclick={handleCardDoubleClick}
+  >
+    <span class="sr-only">Open {title} in the graph</span>
+  </button>
+
+  <!-- Card content -->
+  <div class="relative z-20 flex min-h-[17rem] flex-col justify-between">
+    <div class="p-3">
+      <header
+        class="flex items-center justify-between gap-3 rounded-2xl border border-theme-primary/15 bg-theme-bg/75 backdrop-blur-md px-3 py-2"
+      >
+        <h3
+          class="font-header text-sm uppercase tracking-[0.14em] text-theme-text truncate"
+        >
+          {title}
+        </h3>
+        <span class="text-[10px] text-theme-muted whitespace-nowrap"
+          >{relativeTime}</span
+        >
+      </header>
+    </div>
+
+    <div class="p-3">
+      <div
+        class="rounded-xl border border-theme-border/50 bg-theme-surface/75 backdrop-blur-md p-3"
+      >
+        <p
+          class="text-sm leading-relaxed min-h-[4.5rem] text-theme-text/95 line-clamp-4"
+        >
+          {excerpt}
+        </p>
+        {#if labels.length > 0}
+          <div class="mt-4 flex flex-wrap gap-2">
+            {#each labels as label}
+              <span
+                class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-theme-secondary"
+              >
+                {label}
+              </span>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    </div>
+  </div>
+</article>
 ```
 
 ## State Management Best Practices ($state, $derived)
