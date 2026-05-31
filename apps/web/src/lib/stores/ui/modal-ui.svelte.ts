@@ -207,6 +207,8 @@ export class ModalUIStore {
     return (
       this.showSettings ||
       this.showZenMode ||
+      this.showDiceModal ||
+      this.showCanvasSelector ||
       this.mergeDialog.open ||
       this.bulkLabelDialog.open ||
       this.relatedEntityDialog.open ||

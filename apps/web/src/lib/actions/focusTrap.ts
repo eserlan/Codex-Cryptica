@@ -10,9 +10,17 @@ export function focusTrap(node: HTMLElement) {
   const triggerEl = document.activeElement as HTMLElement | null;
 
   const focusable = () =>
-    [...node.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-      (el) => !el.closest("[inert]") && el.offsetParent !== null,
-    );
+    [...node.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => {
+      if (el.closest("[inert]")) return false;
+      // offsetParent is null for display:none but also for position:fixed — use
+      // getComputedStyle for the latter so fixed-position children aren't skipped.
+      if (el.offsetParent === null) {
+        const style = window.getComputedStyle(el);
+        if (style.position !== "fixed" && style.position !== "sticky")
+          return false;
+      }
+      return true;
+    });
 
   // Auto-focus first focusable element
   const first = focusable()[0];
