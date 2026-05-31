@@ -10,6 +10,8 @@
  * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
  */
 
+import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+
 interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
@@ -82,8 +84,7 @@ export default {
       try {
         const body = (await request.json()) as any;
         const prompt = body.prompt;
-        const targetModel =
-          body.model || "@cf/black-forest-labs/flux-1-schnell";
+        const targetModel = body.model || DEFAULT_CF_IMAGE_MODEL;
 
         if (!prompt) {
           return new Response(

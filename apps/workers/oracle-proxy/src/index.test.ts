@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { isOriginAllowed } from "./index";
+import { beforeEach, describe, it, expect, vi } from "vitest";
+import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+import worker, { isOriginAllowed } from "./index";
 
 describe("Oracle Proxy Worker CORS", () => {
   const emptyEnv = { GEMINI_API_KEY: "test-key" };
@@ -90,5 +91,68 @@ describe("Oracle Proxy Worker CORS", () => {
     ).toBeFalsy();
     expect(isOriginAllowed("http://192.168.0.15:4173", emptyEnv)).toBeFalsy();
     expect(isOriginAllowed("file://localhost", emptyEnv)).toBeFalsy();
+  });
+});
+
+describe("Oracle Proxy Worker image generation", () => {
+  beforeEach(() => {
+    (globalThis as any).caches = {
+      default: {
+        match: vi.fn(async () => undefined),
+        put: vi.fn(async () => undefined),
+      },
+    };
+  });
+
+  const request = (body: Record<string, unknown>) =>
+    new Request(
+      "https://oracle-proxy.espen-erlandsen.workers.dev/v1/images/generations",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://codex-cryptica.com",
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+  it("uses the shared Cloudflare image model when no model is provided", async () => {
+    const ai = {
+      run: vi.fn(async () => ({ image: "base64-image" })),
+    };
+
+    const response = await worker.fetch(
+      request({ prompt: "castle at sunset" }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      result: { image: "base64-image" },
+    });
+    expect(ai.run).toHaveBeenCalledWith(DEFAULT_CF_IMAGE_MODEL, {
+      prompt: "castle at sunset",
+    });
+  });
+
+  it("uses the requested Cloudflare image model when one is provided", async () => {
+    const ai = {
+      run: vi.fn(async () => ({ image: "base64-image" })),
+    };
+    const model = "@cf/example/custom-image-model";
+
+    const response = await worker.fetch(
+      request({ prompt: "castle at sunset", model }),
+      { GEMINI_API_KEY: "test-key", AI: ai },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(ai.run).toHaveBeenCalledWith(model, {
+      prompt: "castle at sunset",
+    });
   });
 });

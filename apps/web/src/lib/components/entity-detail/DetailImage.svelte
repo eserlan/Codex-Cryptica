@@ -123,7 +123,10 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save Oracle image:", err);
-        notificationStore.notify("Failed to archive image from Oracle. Check the console for details.", "error");
+        notificationStore.notify(
+          "Failed to archive image from Oracle. Check the console for details.",
+          "error",
+        );
       }
       return;
     }
@@ -145,7 +148,10 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save external file:", err);
-        notificationStore.notify("Failed to save image. Check the console for details.", "error");
+        notificationStore.notify(
+          "Failed to save image. Check the console for details.",
+          "error",
+        );
       }
     }
   }
@@ -274,7 +280,7 @@
     </div>
   {:else}
     <div class="px-4 md:px-6">
-      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (canGenerateImage || !entity.artDirection)}
+      {#if !discoveryPolicyStore.aiDisabled && !vault.isGuest}
         <div
           class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
         >

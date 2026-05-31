@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { OracleSettingsService } from "./oracle-settings.svelte";
+import {
+  DEFAULT_CF_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_BASE_URL,
+  DEFAULT_CUSTOM_IMAGE_MODEL,
+  OracleSettingsService,
+} from "./index";
 
 // Mock EntityDb
 class MockEntityDb {
@@ -27,6 +32,9 @@ describe("OracleSettingsService", () => {
       expect(service.isLoading).toBe(false);
       expect(service.activeStyleTitle).toBe(null);
       expect(service.imageProvider).toBe("cloudflare");
+      expect(service.customImageBaseUrl).toBe(DEFAULT_CUSTOM_IMAGE_BASE_URL);
+      expect(service.customImageModel).toBe(DEFAULT_CUSTOM_IMAGE_MODEL);
+      expect(service.cloudflareModel).toBe(DEFAULT_CF_IMAGE_MODEL);
     });
 
     it("should accept optional db in constructor", () => {
@@ -59,6 +67,9 @@ describe("OracleSettingsService", () => {
       expect(service.apiKey).toBe(null);
       expect(service.tier).toBe("lite");
       expect(service.imageProvider).toBe("cloudflare");
+      expect(service.customImageBaseUrl).toBe(DEFAULT_CUSTOM_IMAGE_BASE_URL);
+      expect(service.customImageModel).toBe(DEFAULT_CUSTOM_IMAGE_MODEL);
+      expect(service.cloudflareModel).toBe(DEFAULT_CF_IMAGE_MODEL);
     });
 
     it("should preserve gemini as image provider when no API key is set", async () => {

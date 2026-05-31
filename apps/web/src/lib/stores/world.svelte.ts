@@ -10,6 +10,7 @@ import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { imageGenerationService } from "$lib/services/ai/image-generation.service";
 import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 
 const WORLD_IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -33,9 +34,7 @@ const worldService = new WorldServiceImplementation({
           oracle.settings.customImageModel ||
           "black-forest-labs/FLUX.1-schnell";
       } else if (isCloudflare) {
-        targetModel =
-          oracle.settings.cloudflareModel ||
-          "@cf/black-forest-labs/flux-1-schnell";
+        targetModel = oracle.settings.cloudflareModel || DEFAULT_CF_IMAGE_MODEL;
       }
 
       return imageGenerationService.generateImage(
