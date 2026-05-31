@@ -77,7 +77,10 @@
         editLore !== (entity.lore ?? "") ||
         editType !== entity.type ||
         editImage !== (entity.image ?? "") ||
-        JSON.stringify(editAliases) !== JSON.stringify(entity.aliases ?? [])),
+        JSON.stringify(editAliases) !== JSON.stringify(entity.aliases ?? []) ||
+        JSON.stringify(editDate) !== JSON.stringify(entity.date ?? null) ||
+        JSON.stringify(editStartDate) !== JSON.stringify(entity.start_date ?? null) ||
+        JSON.stringify(editEndDate) !== JSON.stringify(entity.end_date ?? null)),
   );
 
   $effect(() => {
@@ -148,7 +151,7 @@
   };
 
   const guardedClose = async () => {
-    if (isEditing && isDirty) {
+    if (isDirty) {
       const confirmed = await notificationStore.confirm({
         title: "Discard changes?",
         message: "You have unsaved edits. Close the panel and discard them?",
