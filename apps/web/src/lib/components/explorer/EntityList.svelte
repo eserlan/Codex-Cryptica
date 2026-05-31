@@ -10,6 +10,7 @@
   import EntityListItem from "./EntityListItem.svelte";
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let {
     onSelect,
@@ -293,8 +294,20 @@
       {#each entityTree as node (node.entity.id)}
         {@render treeNode(node, 0)}
       {:else}
-        <div class="text-center py-10 px-4" data-testid="no-entities-found">
-          <p class="text-xs text-theme-muted">No entities found</p>
+        <div data-testid="no-entities-found">
+          {#if vault.allEntities.length === 0}
+            <EmptyState
+              icon="icon-[lucide--ghost]"
+              headline="No entities yet"
+              body="Create your first entity to start building your vault."
+            />
+          {:else}
+            <EmptyState
+              icon="icon-[lucide--search-x]"
+              headline="No entities found"
+              body="Try adjusting your search or filters."
+            />
+          {/if}
         </div>
       {/each}
     {:else if viewMode === "label" && groupedEntities?.type === "label"}
@@ -389,8 +402,12 @@
         {/each}
       {/if}
       {#if filteredEntities.length === 0}
-        <div class="text-center py-10 px-4" data-testid="no-entities-found">
-          <p class="text-xs text-theme-muted">No entities found</p>
+        <div data-testid="no-entities-found">
+          <EmptyState
+            icon="icon-[lucide--search-x]"
+            headline="No entities found"
+            body="Try adjusting your search or filters."
+          />
         </div>
       {/if}
     {/if}

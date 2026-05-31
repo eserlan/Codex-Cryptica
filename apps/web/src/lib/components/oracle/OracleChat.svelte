@@ -7,6 +7,7 @@
   import { tick } from "svelte";
   import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -251,76 +252,14 @@
   >
     {#if oracle.messages.length === 0}
       <div
-        class="h-full flex flex-col items-center justify-center text-center p-8 space-y-6"
+        class="h-full flex items-center justify-center"
+        data-testid="oracle-empty-state"
       >
-        <div class="relative">
-          <div
-            class="absolute inset-0 bg-theme-primary/10 blur-xl rounded-full animate-pulse"
-          ></div>
-          <span
-            class="icon-[heroicons--sparkles] w-12 h-12 text-theme-primary relative z-10 opacity-50"
-          ></span>
-        </div>
-
-        <div class="space-y-2">
-          <h4
-            class="text-theme-text font-bold uppercase font-header tracking-[0.2em] text-[10px]"
-          >
-            The Archives are Open
-          </h4>
-          <p
-            class="text-xs text-theme-muted leading-relaxed font-body hidden sm:block"
-          >
-            Greetings, Seeker. I am the Oracle, the keeper of your recorded
-            lore. Ask of the robber, the mayor, or the shadows beyond the
-            village... I shall consult the echoes of your vault.
-          </p>
-          <p
-            class="text-[10px] text-theme-muted leading-relaxed font-body sm:hidden"
-          >
-            Consult the echoes of your vault.
-          </p>
-        </div>
-
-        <div class="pt-4 space-y-2">
-          <p
-            class="text-[9px] text-theme-muted uppercase tracking-widest animate-bounce"
-          >
-            Awaiting your query...
-          </p>
-          <div class="flex items-center justify-center gap-3 pt-3">
-            <!-- Tier Badge -->
-            <div class="flex flex-col items-center gap-1">
-              <span
-                class="text-[9px] text-theme-muted uppercase tracking-widest font-bold font-header"
-                >Model Tier</span
-              >
-              <span
-                class="text-xs px-2 py-0.5 rounded border font-bold uppercase font-header tracking-wider shadow-sm
-                                {oracle.tier === 'lite'
-                  ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                  : 'border-theme-accent/50 bg-theme-accent/10 text-theme-accent shadow-theme-accent/20'}"
-              >
-                {oracle.tier}
-              </span>
-            </div>
-
-            {#if !oracle.apiKey}
-              <div class="w-px h-6 bg-theme-border mx-1"></div>
-              <div class="flex flex-col items-center gap-1">
-                <span
-                  class="text-[9px] text-theme-muted uppercase tracking-widest font-bold font-header"
-                  >Access</span
-                >
-                <span
-                  class="text-xs px-2 py-0.5 rounded border border-theme-primary/30 bg-theme-primary/10 text-theme-primary uppercase tracking-wider font-bold font-header"
-                >
-                  SHARED
-                </span>
-              </div>
-            {/if}
-          </div>
-        </div>
+        <EmptyState
+          icon="icon-[heroicons--sparkles]"
+          headline="The Archives are Open"
+          body="Greetings, Seeker. Ask of any entity in your vault and I shall consult the echoes of your lore."
+        />
       </div>
     {/if}
 
