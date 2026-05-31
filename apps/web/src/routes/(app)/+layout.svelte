@@ -69,6 +69,13 @@
       page.url.pathname === `${base}/help` ||
       page.url.pathname === `${base}/import`,
   );
+  const anyModalOpen = $derived(
+    modalUIStore.isAnyModalOpen ||
+      searchStore.isOpen ||
+      notificationStore.confirmationDialog.open ||
+      onboardingStore.showChangelog ||
+      isMobileMenuOpen,
+  );
   const isZenPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
@@ -401,29 +408,33 @@
 <div
   class="h-[var(--app-viewport-height)] bg-chrome-bg text-chrome-text flex flex-col font-body app-layout"
 >
-  <NotificationToast />
+  <!-- Background content — inert when any modal is open so keyboard/AT cannot reach it -->
+  <div class="contents" inert={anyModalOpen || undefined} aria-hidden={anyModalOpen || undefined}>
+    <NotificationToast />
 
-  {#if !isPopup && !isVttFullscreen && !isZenPopout}
-    <AppHeader bind:isMobileMenuOpen bind:headerEl />
-  {/if}
-
-  <div
-    class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
-  >
     {#if !isPopup && !isVttFullscreen && !isZenPopout}
-      <ActivityBar />
-      <SidebarPanelHost />
+      <AppHeader bind:isMobileMenuOpen bind:headerEl />
     {/if}
 
-    <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
-      {@render children()}
-    </main>
+    <div
+      class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
+    >
+      {#if !isPopup && !isVttFullscreen && !isZenPopout}
+        <ActivityBar />
+        <SidebarPanelHost />
+      {/if}
+
+      <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
+        {@render children()}
+      </main>
+    </div>
+
+    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      <AppFooter />
+    {/if}
   </div>
 
-  {#if !isPopup && !isVttFullscreen && !isZenPopout}
-    <AppFooter />
-  {/if}
-
+  <!-- Modals rendered outside the inert wrapper -->
   {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}

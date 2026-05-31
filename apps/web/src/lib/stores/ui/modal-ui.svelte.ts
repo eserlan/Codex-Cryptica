@@ -202,6 +202,20 @@ export class ModalUIStore {
   closeReadMode() {
     this.closeZenMode();
   }
+
+  get isAnyModalOpen() {
+    return (
+      this.showSettings ||
+      this.showZenMode ||
+      this.mergeDialog.open ||
+      this.bulkLabelDialog.open ||
+      this.relatedEntityDialog.open ||
+      this.showVaultSwitcher ||
+      this.showShare ||
+      this.lightbox.show ||
+      this.soundBite.show
+    );
+  }
 }
 
 // The version suffix must be bumped whenever the shape of ModalUIStore changes
