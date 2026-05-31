@@ -217,7 +217,8 @@
     min-height: var(--app-viewport-height);
   }
 
-  html.skip-landing .marketing-layer {
+  html.skip-landing .marketing-layer,
+  html.dismissed-landing .marketing-layer {
     display: none !important;
   }
 
