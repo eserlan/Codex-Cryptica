@@ -145,7 +145,7 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save external file:", err);
-        notificationStore.notify("Failed to save image. Please try a JPEG, PNG, or WebP file.", "error");
+        notificationStore.notify("Failed to save image. Check the console for details.", "error");
       }
     }
   }
