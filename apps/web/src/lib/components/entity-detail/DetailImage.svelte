@@ -274,7 +274,7 @@
     </div>
   {:else}
     <div class="px-4 md:px-6">
-      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (canGenerateImage || !entity.artDirection)}
+      {#if !discoveryPolicyStore.aiDisabled && !vault.isGuest && canGenerateImage}
         <div
           class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
         >

@@ -35,7 +35,7 @@ const worldService = new WorldServiceImplementation({
       } else if (isCloudflare) {
         targetModel =
           oracle.settings.cloudflareModel ||
-          "@cf/black-forest-labs/flux-1-schnell";
+          "@cf/stabilityai/stable-diffusion-xl-base-1.0";
       }
 
       return imageGenerationService.generateImage(

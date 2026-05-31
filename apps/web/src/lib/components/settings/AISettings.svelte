@@ -327,7 +327,7 @@
               id="cfModelName"
               type="text"
               class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm"
-              placeholder="@cf/black-forest-labs/flux-1-schnell"
+              placeholder="@cf/stabilityai/stable-diffusion-xl-base-1.0"
               value={oracle.settings.cloudflareModel}
               onchange={(e) =>
                 oracle.updateSettings({

@@ -428,7 +428,7 @@
         </div>
       </button>
     {:else}
-      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (oracle.apiKey || !entity?.artDirection)}
+      {#if !discoveryPolicyStore.aiDisabled && !vault.isGuest}
         <div
           class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
         >
@@ -510,7 +510,7 @@
       {/if}
     {/if}
 
-    {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
+    {#if !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
       <div class="flex flex-row md:flex-col gap-2 mt-2 md:mt-4 w-full px-0">
         <button
           onclick={() => oracle.drawEntity(entity.id)}

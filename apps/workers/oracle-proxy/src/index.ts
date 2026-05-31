@@ -83,7 +83,7 @@ export default {
         const body = (await request.json()) as any;
         const prompt = body.prompt;
         const targetModel =
-          body.model || "@cf/black-forest-labs/flux-1-schnell";
+          body.model || "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 
         if (!prompt) {
           return new Response(

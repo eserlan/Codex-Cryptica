@@ -58,7 +58,7 @@ export class OracleSettingsService {
 
   cloudflareAccountId = $state<string>("");
   cloudflareApiToken = $state<string>("");
-  cloudflareModel = $state<string>("@cf/black-forest-labs/flux-1-schnell");
+  cloudflareModel = $state<string>("@cf/stabilityai/stable-diffusion-xl-base-1.0");
 
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
@@ -128,7 +128,7 @@ export class OracleSettingsService {
     this.cloudflareApiToken = cfApiTokenSetting?.value ?? "";
     const cfModelSetting = await db.appSettings.get("cloudflare_model");
     this.cloudflareModel =
-      cfModelSetting?.value ?? "@cf/black-forest-labs/flux-1-schnell";
+      cfModelSetting?.value ?? "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 
     this.broadcast();
   }
