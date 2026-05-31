@@ -310,4 +310,60 @@ describe("SearchService progressive indexing", () => {
       }),
     );
   });
+
+  it("uses requestIdleCallback to schedule yielding during background indexing", async () => {
+    const originalRequestIdleCallback = globalThis.requestIdleCallback;
+    const idleSpy = vi.fn((cb: any) => cb());
+    globalThis.requestIdleCallback = idleSpy as any;
+
+    try {
+      const api = createApi();
+      const metadata = [{ id: "one", title: "One" }];
+
+      const db = createDb({ graphEntities: metadata });
+      let callCount = 0;
+      db.entityContent.where = vi.fn((field) => {
+        if (field === "vaultId") {
+          return {
+            equals: vi.fn(() => ({
+              count: vi.fn().mockResolvedValue(100),
+            })),
+          } as any;
+        }
+        return {
+          between: vi.fn(() => ({
+            limit: vi.fn(() => ({
+              toArray: vi.fn().mockImplementation(async () => {
+                callCount++;
+                if (callCount === 1) {
+                  return Array.from({ length: 100 }, (_, i) => ({
+                    entityId: `entity-${i}`,
+                    vaultId: "vault-1",
+                    content: "dummy",
+                    lore: "dummy",
+                  }));
+                }
+                return [];
+              }),
+            })),
+          })),
+        } as any;
+      });
+
+      const { service, handler } = createHarness({ api, db });
+
+      await handler()(vaultEvent(VAULT_EVENTS.VAULT_OPENING, "vault-1"));
+      await handler()(
+        vaultEvent(VAULT_EVENTS.CACHE_LOADED, "vault-1", {
+          entities: metadata,
+        }),
+      );
+
+      await (service as any).indexContentInBackground("vault-1");
+
+      expect(idleSpy).toHaveBeenCalled();
+    } finally {
+      globalThis.requestIdleCallback = originalRequestIdleCallback;
+    }
+  });
 });
