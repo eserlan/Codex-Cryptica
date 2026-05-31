@@ -22,6 +22,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
+  import { createHoverContentLoader } from "./graph/hover-content-loader";
 
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
@@ -40,6 +41,9 @@
   );
 
   let resizeObserver: ResizeObserver | undefined;
+  const hoverContentLoader = createHoverContentLoader((entityId) =>
+    vault.loadEntityContent(entityId),
+  );
 
   // Sync prop -> controller
   $effect(() => {
@@ -74,8 +78,7 @@
   );
 
   $effect(() => {
-    if (controller.hoveredEntityId)
-      vault.loadEntityContent(controller.hoveredEntityId);
+    hoverContentLoader.schedule(controller.hoveredEntityId);
   });
 
   const handleKeyDown = async (e: KeyboardEvent) => {
@@ -139,6 +142,7 @@
   });
 
   onDestroy(() => {
+    hoverContentLoader.cancel();
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
