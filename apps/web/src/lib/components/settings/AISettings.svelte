@@ -4,6 +4,7 @@
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 
   onMount(() => {
     oracle.init();
@@ -327,7 +328,7 @@
               id="cfModelName"
               type="text"
               class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm"
-              placeholder="@cf/stabilityai/stable-diffusion-xl-base-1.0"
+              placeholder={DEFAULT_CF_IMAGE_MODEL}
               value={oracle.settings.cloudflareModel}
               onchange={(e) =>
                 oracle.updateSettings({

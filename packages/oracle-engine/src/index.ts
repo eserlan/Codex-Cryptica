@@ -9,3 +9,4 @@ export * from "./undo-redo.svelte";
 export * from "./drafting-engine";
 export * from "./reconciliation-context";
 export * from "./sound-bite-generator";
+export * from "./image-defaults";
