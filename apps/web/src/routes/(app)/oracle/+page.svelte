@@ -2,6 +2,7 @@
   import OracleChat from "$lib/components/oracle/OracleChat.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   onMount(() => {
     oracle.init();
@@ -55,7 +56,7 @@
 
   <OracleChat
     onOpenSettings={() => {
-      alert("Please update settings in the main Codex Cryptica window.");
+      notificationStore.notify("To update Oracle settings, open the Settings panel in the main Codex Cryptica window.", "error");
     }}
   />
 </div>

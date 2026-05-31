@@ -123,7 +123,7 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save Oracle image:", err);
-        alert("Failed to archive image from Oracle.");
+        notificationStore.notify("Failed to archive image from Oracle. Check the console for details.", "error");
       }
       return;
     }
@@ -145,7 +145,7 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save external file:", err);
-        alert("Failed to save external image.");
+        notificationStore.notify("Failed to save image. Check the console for details.", "error");
       }
     }
   }
