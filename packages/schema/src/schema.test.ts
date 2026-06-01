@@ -4,6 +4,8 @@ import {
   CategorySchema,
   DateSelectionSchema,
   DEFAULT_ICON,
+  GuestChatConfigSchema,
+  GuestChatTranscriptSchema,
 } from "./entity";
 
 describe("Entity Schema Validation", () => {
@@ -289,6 +291,60 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
         expect(result.error.issues[0].message).toBe(
           "anchorId is required when precision is 'anchor'",
         );
+      }
+    });
+  });
+
+  describe("Guest Chat Schemas", () => {
+    it("should validate a correct GuestChatConfig", () => {
+      const config = {
+        isEnabled: true,
+        contextScope: "hybrid",
+        extraInstructions: "Speak softly",
+        isHostReviewable: true,
+        keepMemory: true,
+      };
+      const result = GuestChatConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should validate a correct GuestChatTranscript", () => {
+      const transcript = {
+        id: "guest1_char1",
+        guestId: "guest1",
+        guestName: "Player 1",
+        characterId: "char1",
+        characterTitle: "Mira",
+        messages: [
+          { id: "msg1", role: "user", content: "Hello", timestamp: 12345 },
+          {
+            id: "msg2",
+            role: "assistant",
+            content: "Welcome!",
+            timestamp: 12346,
+          },
+        ],
+        lastUpdated: 12346,
+      };
+      const result = GuestChatTranscriptSchema.safeParse(transcript);
+      expect(result.success).toBe(true);
+    });
+
+    it("should validate an entity with GuestChatConfig", () => {
+      const entity = {
+        id: "char-1",
+        type: "character",
+        title: "Mira the Innkeeper",
+        guestChatConfig: {
+          isEnabled: true,
+          contextScope: "public",
+        },
+      };
+      const result = EntitySchema.safeParse(entity);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.guestChatConfig?.isEnabled).toBe(true);
+        expect(result.data.guestChatConfig?.contextScope).toBe("public");
       }
     });
   });
