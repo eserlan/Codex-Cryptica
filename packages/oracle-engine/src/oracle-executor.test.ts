@@ -23,7 +23,6 @@ describe("OracleActionExecutor - Detailed", () => {
       generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateMessageVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateVisualizationFromPrompt: vi.fn().mockResolvedValue(new Blob([])),
-      generateRegenerationResponse: vi.fn().mockResolvedValue(undefined),
       generateCreationResponse: vi
         .fn()
         .mockResolvedValue({ primaryEntityId: "e1", sourceIds: [] }),
@@ -83,7 +82,7 @@ describe("OracleActionExecutor - Detailed", () => {
         generatePlotAnalysis: vi.fn(),
         expandQuery: vi.fn(),
         generateResponse: vi.fn(),
-        reconcileEntityUpdate: vi.fn(),
+        reviseEntityUpdate: vi.fn(),
       },
       imageGeneration: {
         generateImage: vi.fn(),
@@ -326,21 +325,33 @@ describe("OracleActionExecutor - Detailed", () => {
     });
   });
 
-  describe("executeRegenerate", () => {
-    it("should regenerate an explicit entity id", async () => {
+  describe("executeRevise", () => {
+    it("should revise an explicit entity id", async () => {
       mockContext.vault.entities = {
-        e1: { id: "e1", title: "Hero" },
+        e1: { id: "e1", title: "Hero", connections: [] },
       };
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
+        content: "Revised chronicle",
+        lore: "Revised lore",
+      });
 
-      await executor.execute(
-        { type: "regenerate", entityId: "e1" },
-        mockContext,
-      );
+      await executor.execute({ type: "revise", entityId: "e1" }, mockContext);
 
-      expect(mockGenerator.generateRegenerationResponse).toHaveBeenCalledWith(
-        "e1",
-        mockContext,
-        expect.any(Function),
+      expect(
+        mockContext.textGeneration.reviseEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        expect.objectContaining({ id: "e1" }),
+        { chronicle: "", lore: "" },
+        expect.any(Array),
+        [],
+        {
+          source: "revise",
+          instructions: undefined,
+          priority: "instructions-first",
+          isGuest: false,
+        },
       );
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -354,24 +365,39 @@ describe("OracleActionExecutor - Detailed", () => {
     it("should fall back to the selected entity id", async () => {
       mockContext.vault.selectedEntityId = "e2";
       mockContext.vault.entities = {
-        e2: { id: "e2", title: "Mage" },
+        e2: { id: "e2", title: "Mage", connections: [] },
       };
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
+        content: "Mage chronicle",
+        lore: "Mage lore",
+      });
 
-      await executor.execute({ type: "regenerate" }, mockContext);
+      await executor.execute({ type: "revise" }, mockContext);
 
-      expect(mockGenerator.generateRegenerationResponse).toHaveBeenCalledWith(
-        "e2",
-        mockContext,
-        expect.any(Function),
+      expect(
+        mockContext.textGeneration.reviseEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        expect.objectContaining({ id: "e2" }),
+        { chronicle: "", lore: "" },
+        expect.any(Array),
+        [],
+        expect.objectContaining({
+          source: "revise",
+          priority: "instructions-first",
+        }),
       );
     });
 
     it("should show a system message when no entity is selected", async () => {
       mockContext.vault.selectedEntityId = null;
 
-      await executor.execute({ type: "regenerate" }, mockContext);
+      await executor.execute({ type: "revise" }, mockContext);
 
-      expect(mockGenerator.generateRegenerationResponse).not.toHaveBeenCalled();
+      expect(
+        mockContext.textGeneration.reviseEntityUpdate,
+      ).not.toHaveBeenCalled();
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           role: "system",
@@ -692,7 +718,7 @@ describe("OracleActionExecutor - Detailed", () => {
       expect(assistantMessage.entityId).toBe("e_redhand");
     });
 
-    it("should reconcile existing entity updates during auto-archive", async () => {
+    it("should revise existing entity updates during auto-archive", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.vault.entities = {
         e1: {
@@ -715,9 +741,9 @@ describe("OracleActionExecutor - Detailed", () => {
           confidence: 0.95,
         },
       ]);
-      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
-        content: "Reconciled chronicle",
-        lore: "Reconciled lore",
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
+        content: "Revised chronicle",
+        lore: "Revised lore",
       });
       mockGenerator.generateChatResponse.mockResolvedValue({
         primaryEntityId: "e1",
@@ -730,7 +756,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(
-        mockContext.textGeneration.reconcileEntityUpdate,
+        mockContext.textGeneration.reviseEntityUpdate,
       ).toHaveBeenCalledWith(
         "fake-key",
         "gemini-2.0-pro",
@@ -743,8 +769,8 @@ describe("OracleActionExecutor - Detailed", () => {
         [],
       );
       expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
-        content: "Reconciled chronicle",
-        lore: "Reconciled lore",
+        content: "Revised chronicle",
+        lore: "Revised lore",
         type: "location",
       });
       expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
@@ -753,7 +779,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
     });
 
-    it("should use the reconciled category after new entity content is prepared", async () => {
+    it("should use the revised category after new entity content is prepared", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.categories = [
         { id: "note", label: "Note" },
@@ -770,7 +796,7 @@ describe("OracleActionExecutor - Detailed", () => {
           confidence: 0.92,
         },
       ]);
-      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
         content: "The Glass Key is a crystalline archive key.",
         lore: "It opens sealed memory vaults.",
         categoryId: "item",
@@ -786,7 +812,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(
-        mockContext.textGeneration.reconcileEntityUpdate,
+        mockContext.textGeneration.reviseEntityUpdate,
       ).toHaveBeenCalledWith(
         "fake-key",
         "gemini-2.0-pro",
@@ -814,7 +840,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
     });
 
-    it("should update an existing entity category from the reconciled record", async () => {
+    it("should update an existing entity category from the revised record", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.categories = [
         { id: "character", label: "Character" },
@@ -841,7 +867,7 @@ describe("OracleActionExecutor - Detailed", () => {
           confidence: 0.95,
         },
       ]);
-      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
         content: "The Red Hand is a militant organization.",
         lore: "It recruits across the borderlands.",
         categoryId: "faction",
@@ -857,7 +883,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(
-        mockContext.textGeneration.reconcileEntityUpdate,
+        mockContext.textGeneration.reviseEntityUpdate,
       ).toHaveBeenCalledWith(
         "fake-key",
         "gemini-2.0-pro",

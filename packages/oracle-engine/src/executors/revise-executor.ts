@@ -7,8 +7,9 @@ import type {
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import type { OracleGenerator } from "../oracle-generator";
+import { buildRelatedEntityContext } from "../revision-context";
 
-export class RegenerateExecutor
+export class ReviseExecutor
   extends BaseExecutor
   implements OracleCommandExecutor
 {
@@ -28,7 +29,7 @@ export class RegenerateExecutor
         id: crypto.randomUUID(),
         role: "system",
         content:
-          "Regeneration is already in progress. Please wait for it to finish.",
+          "Revision is already in progress. Please wait for it to finish.",
       });
       return;
     }
@@ -45,7 +46,7 @@ export class RegenerateExecutor
           const entityId = intent.entityId || context.vault.selectedEntityId;
           if (!entityId) {
             throw new Error(
-              "Please select an entity in the graph or sidebar to regenerate its content.",
+              "Please select an entity in the graph or sidebar to revise its content.",
             );
           }
 
@@ -53,7 +54,7 @@ export class RegenerateExecutor
           if (!entity) throw new Error("Entity not found in vault.");
 
           if (context.vault.isGuest)
-            throw new Error("Guest users cannot regenerate content.");
+            throw new Error("Guest users cannot revise content.");
 
           const assistantMsg: ChatMessage = {
             id: crypto.randomUUID(),
@@ -73,14 +74,42 @@ export class RegenerateExecutor
             onPartialResponse?.(partial);
           };
 
-          const generator = this.generator || context.generator;
-          if (!generator)
-            throw new Error("Generator not available in context.");
+          if (!context.textGeneration?.reviseEntityUpdate) {
+            throw new Error("Entity revision is not available in context.");
+          }
 
-          await generator.generateRegenerationResponse(
-            entityId,
-            context,
-            handlePartial,
+          const relatedContext = buildRelatedEntityContext({
+            entity,
+            incoming: { chronicle: "", lore: "" },
+            vault: context.vault,
+            getConsolidatedContext: (related) =>
+              context.contextRetrieval?.getConsolidatedContext?.(related) ||
+              related.content ||
+              "",
+          });
+          const categories = (context.categories || []).map(
+            (category: any) => ({
+              id: category.id,
+              label: category.label,
+              description: category.description,
+            }),
+          );
+          const revised = await context.textGeneration.reviseEntityUpdate(
+            context.effectiveApiKey || "",
+            context.modelName,
+            entity,
+            { chronicle: "", lore: "" },
+            relatedContext,
+            categories,
+            {
+              source: "revise",
+              instructions: intent.instructions,
+              priority: "instructions-first",
+              isGuest: context.vault.isGuest,
+            },
+          );
+          handlePartial(
+            `**Chronicle:** ${revised.content}\n\n**Lore:** ${revised.lore}`,
           );
 
           // Final update to set the proposals/metadata
@@ -100,7 +129,7 @@ export class RegenerateExecutor
             payload: { intent },
           });
         } catch (err: any) {
-          const error = err.message || "Regeneration failed";
+          const error = err.message || "Revision failed";
           await context.chatHistory.addMessage({
             id: crypto.randomUUID(),
             role: "system",

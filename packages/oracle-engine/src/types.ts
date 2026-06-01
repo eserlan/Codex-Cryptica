@@ -59,7 +59,7 @@ export type OracleIntentType =
   | "plot"
   | "chat"
   | "roll"
-  | "regenerate"
+  | "revise"
   | "wizard"
   | "help"
   | "clear"
@@ -85,16 +85,17 @@ export interface OracleIntent {
   targetName?: string;
   label?: string;
   message?: string;
+  instructions?: string;
 }
 
 /**
- * AI Regeneration draft state
+ * AI revision draft state
  */
-export interface RegenerationDraft {
+export interface RevisionDraft {
   entityId: string;
   /** Optional ID of the ChatMessage that triggered this draft proposal */
   messageId?: string;
-  source?: "regenerate" | "oracle-chat" | "merge";
+  source?: "revise" | "oracle-chat" | "merge";
   chronicle: string;
   lore: string;
   merge?: {

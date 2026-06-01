@@ -10,7 +10,7 @@
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
@@ -178,8 +178,8 @@
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const draft = $derived(
-    regenerationService.pendingDraft?.entityId === entity.id
-      ? regenerationService.pendingDraft
+    revisionService.pendingDraft?.entityId === entity.id
+      ? revisionService.pendingDraft
       : null,
   );
 </script>

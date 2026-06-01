@@ -71,7 +71,7 @@
   let lastCoverImage = "";
   let isWorldReady = $state(false);
   let lastLoadedRecentLimit = DEFAULT_RECENT_LIMIT;
-  let isGeneratingBriefing = $state(false);
+  let isRevisingBriefing = $state(false);
 
   $effect(() => {
     if (!activeVaultId || typeof window === "undefined") return;
@@ -149,17 +149,17 @@
     // Check confirmation FIRST (before expensive context building)
     if (hasBriefing) {
       const confirmed = await notificationStore.confirm({
-        title: "Regenerate Briefing",
+        title: "Revise Briefing",
         message:
           "This will replace your current world briefing with a new one generated from your notes. Continue?",
-        confirmLabel: "Regenerate",
+        confirmLabel: "Revise",
         cancelLabel: "Keep Existing",
       });
       if (!confirmed) return;
     }
 
     // Build context and generate
-    isGeneratingBriefing = true;
+    isRevisingBriefing = true;
     try {
       let contextResult: Awaited<
         ReturnType<typeof controller.buildRetrievedWorldContext>
@@ -186,7 +186,7 @@
         isEditingBriefing = false;
       }
     } finally {
-      isGeneratingBriefing = false;
+      isRevisingBriefing = false;
     }
   };
 
@@ -438,7 +438,7 @@
           {isDraftDirty}
           {hasBriefing}
           isSaving={worldStore.isSaving}
-          isGenerating={isGeneratingBriefing}
+          isRevising={isRevisingBriefing}
           onSave={handleSaveDescription}
           onCancel={cancelEditingBriefing}
           onGenerate={handleGenerateBriefing}

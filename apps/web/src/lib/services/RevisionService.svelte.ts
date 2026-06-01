@@ -4,66 +4,87 @@ import {
   nodeMergeService,
   type IMergedContentProposal,
 } from "$lib/services/node-merge.service.svelte";
-import {
-  OracleCommandParser,
-  type RegenerationDraft,
-} from "@codex/oracle-engine";
+import { type RevisionDraft } from "@codex/oracle-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-export class RegenerationService {
-  pendingDraft = $state<RegenerationDraft | null>(null);
-  isGenerating = $state(false);
+export type RevisionRequest = {
+  entityId: string;
+  instructions?: string;
+};
+
+export class RevisionService {
+  pendingDraft = $state<RevisionDraft | null>(null);
+  isRevising = $state(false);
   error = $state<string | null>(null);
 
-  async regenerate(entityId: string): Promise<boolean> {
-    if (this.isGenerating) return false;
+  async revise(
+    requestOrEntityId: RevisionRequest | string,
+    legacyInstructions?: string,
+  ): Promise<boolean> {
+    if (this.isRevising) return false;
 
-    this.isGenerating = true;
+    const request = this.normalizeRevisionRequest(
+      requestOrEntityId,
+      legacyInstructions,
+    );
+
+    this.isRevising = true;
     this.error = null;
     this.pendingDraft = null;
 
     try {
-      let fullText = "";
-      await oracle.regenerate(entityId, (partial) => {
-        fullText = partial;
+      if (vault.isGuest) {
+        throw new Error("Guest users cannot revise content.");
+      }
+
+      const revised = await oracle.reviseEntity({
+        source: "revise",
+        entityId: request.entityId,
+        instructions: request.instructions,
+        priority: "instructions-first",
       });
 
-      const parsed = OracleCommandParser.parseRegenerationResponse(fullText);
-
-      if (!parsed.chronicle && !parsed.lore) {
+      if (!revised.content && !revised.lore) {
         throw new Error("AI failed to produce a valid description.");
       }
 
-      // Reconcile the AI output with existing content to preserve/merge details
-      let updates: { content?: string; lore?: string } = {};
-      try {
-        updates = await oracle.reconcileSmartApply(entityId, {
-          chronicle: parsed.chronicle,
-          lore: parsed.lore,
-        });
-      } catch (e) {
-        console.error(
-          "[RegenerationService] Reconciliation failed, falling back to raw output",
-          e,
-        );
-      }
-
-      const entity = vault.entities[entityId] as any;
-      this.pendingDraft = {
-        entityId,
-        source: "regenerate",
-        chronicle: updates.content ?? parsed.chronicle ?? entity?.content ?? "",
-        lore: updates.lore ?? parsed.lore ?? entity?.lore ?? "",
-        timestamp: Date.now(),
-      };
+      this.pendingDraft = this.buildRevisionDraft(request.entityId, revised);
       return true;
     } catch (err: any) {
       this.error = err.message;
-      console.error("[RegenerationService] Failed to regenerate:", err);
+      console.error("[RevisionService] Failed to revise:", err);
       return false;
     } finally {
-      this.isGenerating = false;
+      this.isRevising = false;
     }
+  }
+
+  private normalizeRevisionRequest(
+    requestOrEntityId: RevisionRequest | string,
+    legacyInstructions?: string,
+  ): RevisionRequest {
+    if (typeof requestOrEntityId === "string") {
+      return {
+        entityId: requestOrEntityId,
+        instructions: legacyInstructions,
+      };
+    }
+
+    return requestOrEntityId;
+  }
+
+  private buildRevisionDraft(
+    entityId: string,
+    revised: { content?: string; lore?: string },
+  ): RevisionDraft {
+    const entity = vault.entities[entityId] as any;
+    return {
+      entityId,
+      source: "revise",
+      chronicle: revised.content ?? entity?.content ?? "",
+      lore: revised.lore ?? entity?.lore ?? "",
+      timestamp: Date.now(),
+    };
   }
 
   proposeMergeDraft(
@@ -129,5 +150,5 @@ export class RegenerationService {
   }
 }
 
-export const regenerationService = new RegenerationService();
-export default regenerationService;
+export const revisionService = new RevisionService();
+export default revisionService;

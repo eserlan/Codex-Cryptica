@@ -4,7 +4,7 @@ import { appEventBus as defaultAppEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
 import { clipboardService as defaultClipboardService } from "$lib/services/ClipboardService";
 import { parserService as defaultParserService } from "$lib/services/parser";
-import { regenerationService as defaultRegenerationService } from "$lib/services/RegenerationService.svelte";
+import { revisionService as defaultRevisionService } from "$lib/services/RevisionService.svelte";
 import { graph as defaultGraph } from "$lib/stores/graph.svelte";
 import {
   oracle as defaultOracle,
@@ -23,7 +23,7 @@ import { ChatMessageActions } from "./chat-message.actions";
 type OracleLike = typeof defaultOracle;
 type VaultLike = typeof defaultVault;
 type GraphLike = typeof defaultGraph;
-type RegenerationServiceLike = typeof defaultRegenerationService;
+type RevisionServiceLike = typeof defaultRevisionService;
 type DiscoveryProposal = NonNullable<ChatMessage["proposals"]>[number];
 
 interface ClipboardServiceLike {
@@ -71,7 +71,7 @@ export interface ChatMessageControllerDeps {
   clipboardService?: ClipboardServiceLike;
   domPurify?: DomPurifyLike;
   appEventBus?: typeof defaultAppEventBus;
-  regenerationService?: RegenerationServiceLike;
+  revisionService?: RevisionServiceLike;
   browser?: boolean;
   actions?: ChatMessageActionsLike;
 }
@@ -94,7 +94,7 @@ export class ChatMessageController {
   private readonly clipboardService: ClipboardServiceLike;
   private readonly domPurify: DomPurifyLike;
   private readonly appEventBus: typeof defaultAppEventBus;
-  private readonly regenerationService: RegenerationServiceLike;
+  private readonly revisionService: RevisionServiceLike;
   private readonly browser: boolean;
   private readonly actions: ChatMessageActionsLike;
 
@@ -106,8 +106,7 @@ export class ChatMessageController {
     this.clipboardService = deps.clipboardService ?? defaultClipboardService;
     this.domPurify = deps.domPurify ?? DOMPurify;
     this.appEventBus = deps.appEventBus ?? defaultAppEventBus;
-    this.regenerationService =
-      deps.regenerationService ?? defaultRegenerationService;
+    this.revisionService = deps.revisionService ?? defaultRevisionService;
     this.browser = deps.browser ?? defaultBrowser;
     this.actions =
       deps.actions ??
@@ -115,7 +114,7 @@ export class ChatMessageController {
         oracle: this.oracle,
         vault: this.vault,
         graph,
-        regenerationService: this.regenerationService,
+        revisionService: this.revisionService,
       });
   }
 
@@ -178,11 +177,7 @@ export class ChatMessageController {
     message: Pick<ChatMessage, "content">,
     isLastAction: boolean,
   ) {
-    if (
-      this.isSaved &&
-      !this.regenerationService.pendingDraft &&
-      message.content
-    ) {
+    if (this.isSaved && !this.revisionService.pendingDraft && message.content) {
       if (!isLastAction) {
         this.isSaved = false;
       }

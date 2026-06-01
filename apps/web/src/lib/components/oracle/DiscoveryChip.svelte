@@ -28,10 +28,10 @@
       if (proposal.entityId) {
         const existing = vault.entities[proposal.entityId];
         if (existing) {
-          const reconciled = await oracle.reconcileDiscoveryProposal(proposal);
+          const revised = await oracle.reviseDiscoveryProposal(proposal);
           await vault.updateEntity(proposal.entityId, {
-            content: reconciled.content,
-            lore: reconciled.lore,
+            content: revised.content,
+            lore: revised.lore,
           });
           const connectionCount =
             await oracle.handleDiscoveryConnectionsForEntity(proposal.entityId);
@@ -41,18 +41,18 @@
           );
         }
       } else {
-        // New Entity — reconcile draft through AI to structure chronicle/lore properly
-        const reconciled = await oracle.reconcileNewEntityDraft(
+        // New Entity — revise draft through AI to structure chronicle/lore properly
+        const revised = await oracle.reviseNewEntityDraft(
           proposal.title,
           proposal.type,
           proposal.draft,
         );
         const entityId = await vault.createEntity(
-          (reconciled.categoryId || proposal.type) as any,
+          (revised.categoryId || proposal.type) as any,
           proposal.title,
           {
-            content: reconciled.content,
-            lore: reconciled.lore,
+            content: revised.content,
+            lore: revised.lore,
           },
         );
         const connectionCount =

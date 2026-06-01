@@ -121,4 +121,30 @@ describe("ModalUIStore", () => {
     expect(store.lightbox.originRect).toBeNull();
     expect(store.lightbox.imagePath).toBe("");
   });
+
+  it("handles revision dialog", () => {
+    const store = new ModalUIStore();
+    expect(store.revisionDialog).toEqual({
+      open: false,
+      entityId: null,
+      instructions: "",
+    });
+    expect(store.isAnyModalOpen).toBe(false);
+
+    store.openRevisionDialog("e1");
+    expect(store.revisionDialog).toEqual({
+      open: true,
+      entityId: "e1",
+      instructions: "",
+    });
+    expect(store.isAnyModalOpen).toBe(true);
+
+    store.closeRevisionDialog();
+    expect(store.revisionDialog).toEqual({
+      open: false,
+      entityId: null,
+      instructions: "",
+    });
+    expect(store.isAnyModalOpen).toBe(false);
+  });
 });

@@ -39,10 +39,10 @@ vi.mock("./prompts/entity-creation", () => ({
 vi.mock("./prompts/context-distillation", () => ({
   buildContextDistillationPrompt: vi.fn((context) => `distill:${context}`),
 }));
-vi.mock("./prompts/entity-reconciliation", () => ({
-  buildEntityReconciliationPrompt: vi.fn(
-    (entity, incoming, _related, categories) =>
-      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}`,
+vi.mock("./prompts/entity-revision", () => ({
+  buildEntityRevisionPrompt: vi.fn(
+    (entity, incoming, _related, categories, options) =>
+      `revise:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}:${options?.instructions || ""}:${options?.priority || ""}`,
   ),
 }));
 vi.mock("./prompts/related-entity-generation", () => ({
@@ -280,8 +280,8 @@ describe("DefaultTextGenerationService", () => {
     });
   });
 
-  describe("reconcileEntityUpdate", () => {
-    it("should reconcile an existing entity into updated content and lore", async () => {
+  describe("reviseEntityUpdate", () => {
+    it("should revise an existing entity into updated content and lore", async () => {
       mockModel.generateContent.mockResolvedValue({
         response: {
           text: vi
@@ -292,7 +292,7 @@ describe("DefaultTextGenerationService", () => {
         },
       });
 
-      const result = await service.reconcileEntityUpdate!(
+      const result = await service.reviseEntityUpdate!(
         "key",
         "model",
         {
@@ -320,25 +320,25 @@ describe("DefaultTextGenerationService", () => {
         lore: "Updated lore",
       });
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        "reconcile:Thay:New chronicle:New lore:",
+        "revise:Thay:New chronicle:New lore:::",
       );
     });
 
-    it("should throw when reconciliation fails", async () => {
+    it("should throw when revision fails", async () => {
       mockModel.generateContent.mockRejectedValue(new Error("Network fail"));
 
       await expect(
-        service.reconcileEntityUpdate!(
+        service.reviseEntityUpdate!(
           "key",
           "model",
           { title: "Thay", type: "location", content: "", lore: "" },
           { chronicle: "New chronicle", lore: "New lore" },
           [],
         ),
-      ).rejects.toThrow("Entity reconciliation failed: Network fail");
+      ).rejects.toThrow("Entity revision failed: Network fail");
     });
 
-    it("should return a valid category from the reconciliation response", async () => {
+    it("should return a valid category from the revision response", async () => {
       mockModel.generateContent.mockResolvedValue({
         response: {
           text: vi
@@ -349,7 +349,7 @@ describe("DefaultTextGenerationService", () => {
         },
       });
 
-      const result = await service.reconcileEntityUpdate!(
+      const result = await service.reviseEntityUpdate!(
         "key",
         "model",
         {
@@ -375,11 +375,49 @@ describe("DefaultTextGenerationService", () => {
         categoryId: "item",
       });
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        "reconcile:The Glass Key:A crystalline archive key.:It opens sealed memory vaults.:note,item",
+        "revise:The Glass Key:A crystalline archive key.:It opens sealed memory vaults.:note,item::",
       );
     });
 
-    it("should ignore reconciliation categories outside the allowed list", async () => {
+    it("should pass revision instructions into the revision prompt", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Corrected chronicle","lore":"Corrected lore"}',
+            ),
+        },
+      });
+
+      await service.reviseEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "The Glass Key",
+          type: "note",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+        {
+          chronicle: "",
+          lore: "",
+        },
+        [],
+        [],
+        {
+          source: "revise",
+          instructions: "Make it a living crystal.",
+          priority: "instructions-first",
+        },
+      );
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "revise:The Glass Key::::Make it a living crystal.:instructions-first",
+      );
+    });
+
+    it("should ignore revision categories outside the allowed list", async () => {
       mockModel.generateContent.mockResolvedValue({
         response: {
           text: vi
@@ -390,7 +428,7 @@ describe("DefaultTextGenerationService", () => {
         },
       });
 
-      const result = await service.reconcileEntityUpdate!(
+      const result = await service.reviseEntityUpdate!(
         "key",
         "model",
         {
@@ -566,14 +604,14 @@ describe("DefaultTextGenerationService", () => {
       mockModel.generateContent.mockRejectedValue(new Error("Direct throw"));
 
       await expect(
-        service.reconcileEntityUpdate!(
+        service.reviseEntityUpdate!(
           "key",
           "model",
           { title: "T", type: "npc", content: "", lore: "" },
           { chronicle: "", lore: "" },
           [],
         ),
-      ).rejects.toThrow("Entity reconciliation failed: Direct throw");
+      ).rejects.toThrow("Entity revision failed: Direct throw");
     });
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRelatedEntityContext } from "./reconciliation-context";
+import { buildRelatedEntityContext } from "./revision-context";
 
 describe("buildRelatedEntityContext", () => {
   it("prioritizes connected entities mentioned in the incoming text", () => {

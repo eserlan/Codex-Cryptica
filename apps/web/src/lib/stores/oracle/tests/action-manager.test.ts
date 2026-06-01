@@ -36,6 +36,10 @@ describe("OracleActionManager", () => {
       notificationStore: {
         notify: vi.fn(),
       },
+      reviseEntity: vi.fn().mockResolvedValue({
+        content: "Revised chronicle",
+        lore: "Revised lore",
+      }),
       chatHistoryService: { messages: [{ id: "message-1", content: "Draw" }] },
     };
     modalUIStore.closeImagePromptReview();
@@ -239,7 +243,7 @@ describe("OracleActionManager", () => {
     expect(mockStore.ui.visualizingMessageId).toBeNull();
   });
 
-  it("should regenerate an entity prompt without opening the review modal", async () => {
+  it("should revise an entity prompt without opening the review modal", async () => {
     const context = { uiStore: { activeThemeId: "fantasy" } };
     mockStore.getExecutionContext.mockReturnValue(context);
     mockExecutor.prepareEntityPrompt.mockResolvedValue({

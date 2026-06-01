@@ -81,6 +81,16 @@ export class ModalUIStore {
     prompt: "",
   });
 
+  revisionDialog = $state<{
+    open: boolean;
+    entityId: string | null;
+    instructions: string;
+  }>({
+    open: false,
+    entityId: null,
+    instructions: "",
+  });
+
   // Derived properties for backwards compatibility
   get readModeNodeId() {
     return this.zenModeEntityId;
@@ -180,6 +190,22 @@ export class ModalUIStore {
     };
   }
 
+  openRevisionDialog(entityId: string) {
+    this.revisionDialog = {
+      open: true,
+      entityId,
+      instructions: "",
+    };
+  }
+
+  closeRevisionDialog() {
+    this.revisionDialog = {
+      open: false,
+      entityId: null,
+      instructions: "",
+    };
+  }
+
   openCanvasSelection(pendingEntities: string[]) {
     this.pendingCanvasEntities = pendingEntities;
     this.showCanvasSelector = true;
@@ -249,7 +275,8 @@ export class ModalUIStore {
       this.showShare ||
       this.imagePromptReview.open ||
       this.lightbox.show ||
-      this.soundBite.show
+      this.soundBite.show ||
+      this.revisionDialog.open
     );
   }
 }
@@ -259,6 +286,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v5__";
+const KEY = "__codex_modal_ui_store__v6__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

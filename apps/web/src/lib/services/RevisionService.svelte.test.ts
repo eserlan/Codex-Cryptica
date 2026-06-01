@@ -2,18 +2,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../stores/oracle.svelte", () => ({
   oracle: {
-    regenerate: vi.fn(),
-    reconcileSmartApply: vi.fn().mockImplementation((_id, incoming) =>
+    reviseSmartApply: vi.fn().mockImplementation((_id, incoming) =>
       Promise.resolve({
         content: incoming.chronicle,
         lore: incoming.lore,
       }),
     ),
+    reviseEntity: vi.fn(),
   },
 }));
 
 vi.mock("../stores/vault.svelte", () => ({
   vault: {
+    isGuest: false,
     entities: {} as any,
     updateEntity: vi.fn().mockResolvedValue(undefined),
   },
@@ -25,66 +26,70 @@ vi.mock("$lib/services/node-merge.service.svelte", () => ({
   },
 }));
 
-vi.mock("@codex/oracle-engine", () => ({
-  OracleCommandParser: {
-    parseRegenerationResponse: vi.fn(),
-  },
-}));
-
 import { oracle } from "../stores/oracle.svelte";
 import { vault } from "../stores/vault.svelte";
-import { OracleCommandParser } from "@codex/oracle-engine";
 import { nodeMergeService } from "$lib/services/node-merge.service.svelte";
-import { regenerationService } from "./RegenerationService.svelte";
+import { revisionService } from "./RevisionService.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-describe("RegenerationService", () => {
+describe("RevisionService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    regenerationService.pendingDraft = null;
-    regenerationService.error = null;
-    regenerationService.isGenerating = false;
+    revisionService.pendingDraft = null;
+    revisionService.error = null;
+    revisionService.isRevising = false;
     (vault.entities as any) = {};
+    (vault as any).isGuest = false;
     notificationStore.notify = vi.fn();
   });
 
-  it("returns true and stores a draft when regeneration succeeds", async () => {
-    vi.mocked(oracle.regenerate).mockImplementation(
-      async (_entityId, onPartial) => {
-        onPartial?.(
-          "**Chronicle:** Hero returns.\n\n**Lore:** The hero returns.",
-        );
-      },
-    );
-    vi.mocked(OracleCommandParser.parseRegenerationResponse).mockReturnValue({
-      chronicle: "Hero returns.",
+  it("returns true and stores a draft when revision succeeds", async () => {
+    vi.mocked(oracle.reviseEntity).mockResolvedValue({
+      content: "Hero returns.",
       lore: "The hero returns.",
     });
 
-    const result = await regenerationService.regenerate("e1");
+    const result = await revisionService.revise("e1");
 
     expect(result).toBe(true);
-    expect(regenerationService.pendingDraft).toEqual(
+    expect(revisionService.pendingDraft).toEqual(
       expect.objectContaining({
         entityId: "e1",
         chronicle: "Hero returns.",
         lore: "The hero returns.",
       }),
     );
-    expect(regenerationService.error).toBeNull();
-    expect(regenerationService.isGenerating).toBe(false);
-    expect(oracle.regenerate).toHaveBeenCalledWith("e1", expect.any(Function));
+    expect(revisionService.error).toBeNull();
+    expect(revisionService.isRevising).toBe(false);
+    expect(oracle.reviseEntity).toHaveBeenCalledWith({
+      source: "revise",
+      entityId: "e1",
+      instructions: undefined,
+      priority: "instructions-first",
+    });
+    expect(oracle.reviseSmartApply).not.toHaveBeenCalled();
   });
 
-  it("returns false and stores an error when regeneration fails", async () => {
-    vi.mocked(oracle.regenerate).mockRejectedValue(new Error("boom"));
+  it("returns false and stores an error for guest revision", async () => {
+    (vault as any).isGuest = true;
 
-    const result = await regenerationService.regenerate("e1");
+    const result = await revisionService.revise("e1");
 
     expect(result).toBe(false);
-    expect(regenerationService.pendingDraft).toBeNull();
-    expect(regenerationService.error).toBe("boom");
-    expect(regenerationService.isGenerating).toBe(false);
+    expect(revisionService.pendingDraft).toBeNull();
+    expect(revisionService.error).toBe("Guest users cannot revise content.");
+    expect(oracle.reviseEntity).not.toHaveBeenCalled();
+  });
+
+  it("returns false and stores an error when revision fails", async () => {
+    vi.mocked(oracle.reviseEntity).mockRejectedValue(new Error("boom"));
+
+    const result = await revisionService.revise("e1");
+
+    expect(result).toBe(false);
+    expect(revisionService.pendingDraft).toBeNull();
+    expect(revisionService.error).toBe("boom");
+    expect(revisionService.isRevising).toBe(false);
     expect(notificationStore.notify).not.toHaveBeenCalled();
     expect(vault.updateEntity).not.toHaveBeenCalled();
   });
@@ -105,7 +110,7 @@ describe("RegenerationService", () => {
       outgoingConnections: [],
     };
 
-    regenerationService.proposeMergeDraft(
+    revisionService.proposeMergeDraft(
       proposal as any,
       ["target", "source"],
       "message-1",
@@ -113,7 +118,7 @@ describe("RegenerationService", () => {
 
     expect(vault.updateEntity).not.toHaveBeenCalled();
     expect(nodeMergeService.executeMerge).not.toHaveBeenCalled();
-    expect(regenerationService.pendingDraft).toEqual(
+    expect(revisionService.pendingDraft).toEqual(
       expect.objectContaining({
         entityId: "target",
         messageId: "message-1",
@@ -123,7 +128,7 @@ describe("RegenerationService", () => {
       }),
     );
 
-    await regenerationService.acceptDraft();
+    await revisionService.acceptDraft();
 
     expect(nodeMergeService.executeMerge).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -135,7 +140,7 @@ describe("RegenerationService", () => {
       ["target", "source"],
     );
     expect(vault.updateEntity).not.toHaveBeenCalled();
-    expect(regenerationService.pendingDraft).toBeNull();
+    expect(revisionService.pendingDraft).toBeNull();
     expect(notificationStore.notify).toHaveBeenCalledWith(
       "Merge saved successfully.",
       "success",

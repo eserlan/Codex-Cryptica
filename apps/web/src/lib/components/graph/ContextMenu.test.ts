@@ -26,9 +26,9 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/RegenerationService.svelte", () => ({
-  regenerationService: {
-    regenerate: vi.fn(),
+vi.mock("$lib/services/RevisionService.svelte", () => ({
+  revisionService: {
+    revise: vi.fn(),
   },
 }));
 
@@ -52,6 +52,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     openBulkLabelDialog: vi.fn(),
     openCanvasSelection: vi.fn(),
     openLightbox: vi.fn(),
+    openRevisionDialog: vi.fn(),
   },
 }));
 

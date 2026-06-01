@@ -9,23 +9,23 @@
   const target = $derived(dialog.target);
   let editedPrompt = $state("");
   let error = $state("");
-  let isRegeneratingPrompt = $state(false);
+  let isRevisingPrompt = $state(false);
 
   $effect(() => {
     if (dialog.open) {
       editedPrompt = dialog.prompt;
       error = "";
-      isRegeneratingPrompt = false;
+      isRevisingPrompt = false;
     }
   });
 
-  const isGenerating = $derived.by(() => {
+  const isRevising = $derived.by(() => {
     if (!target) return false;
     return target.kind === "entity"
       ? oracle.isVisualizingEntity(target.id)
       : oracle.isVisualizingMessage(target.id);
   });
-  const isBusy = $derived(isGenerating || isRegeneratingPrompt);
+  const isBusy = $derived(isRevising || isRevisingPrompt);
 
   const handleCancel = () => {
     if (isBusy) return;
@@ -63,7 +63,7 @@
   const regeneratePrompt = async () => {
     if (!target || isBusy) return;
 
-    isRegeneratingPrompt = true;
+    isRevisingPrompt = true;
     error = "";
     try {
       const prompt =
@@ -73,13 +73,12 @@
       if (prompt?.trim()) {
         editedPrompt = prompt.trim();
       } else {
-        error = "Could not regenerate a prompt.";
+        error = "Could not revise a prompt.";
       }
     } catch (err) {
-      error =
-        err instanceof Error ? err.message : "Could not regenerate a prompt.";
+      error = err instanceof Error ? err.message : "Could not revise a prompt.";
     } finally {
-      isRegeneratingPrompt = false;
+      isRevisingPrompt = false;
     }
   };
 
@@ -187,18 +186,18 @@
             type="button"
             onclick={regeneratePrompt}
             disabled={isBusy}
-            aria-busy={isRegeneratingPrompt}
+            aria-busy={isRevisingPrompt}
             class="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-theme-border bg-theme-surface px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-muted transition hover:border-theme-primary hover:text-theme-primary disabled:cursor-wait disabled:opacity-50"
           >
-            {#if isRegeneratingPrompt}
+            {#if isRevisingPrompt}
               <span
                 class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
                 aria-hidden="true"
               ></span>
-              Regenerating
+              Revising
             {:else}
               <span class="icon-[lucide--refresh-cw] h-4 w-4"></span>
-              Regenerate Prompt
+              Revise Prompt
             {/if}
           </button>
           <button
@@ -212,10 +211,10 @@
           <button
             type="submit"
             disabled={isBusy}
-            aria-busy={isGenerating}
+            aria-busy={isRevising}
             class="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-theme-primary bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-bg transition hover:bg-theme-secondary disabled:cursor-wait disabled:opacity-60"
           >
-            {#if isGenerating}
+            {#if isRevising}
               <span
                 class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
                 aria-hidden="true"

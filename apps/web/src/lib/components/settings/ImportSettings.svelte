@@ -91,7 +91,7 @@
 
     const signal = connectionModeStore.abortSignal;
 
-    // Build known entities map for reconciliation
+    // Build known entities map for revision
     const knownEntities: Record<string, string> = {};
     Object.values(vault.entities).forEach((e) => {
       knownEntities[e.title] = e.id;
@@ -411,7 +411,10 @@
     } catch (err) {
       console.error("Batch import failed:", err);
 
-      notificationStore.notify("Import failed — entities could not be saved. Check the console for details.", "error");
+      notificationStore.notify(
+        "Import failed — entities could not be saved. Check the console for details.",
+        "error",
+      );
 
       step = "review";
 

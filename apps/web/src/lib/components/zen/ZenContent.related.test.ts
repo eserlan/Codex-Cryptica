@@ -33,8 +33,8 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/RegenerationService.svelte", () => ({
-  regenerationService: {
+vi.mock("$lib/services/RevisionService.svelte", () => ({
+  revisionService: {
     pendingDraft: null,
   },
 }));

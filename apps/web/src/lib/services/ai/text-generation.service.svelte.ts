@@ -16,7 +16,7 @@ import {
   buildPlotGenerationPrompt,
 } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
-import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
+import { buildEntityRevisionPrompt } from "./prompts/entity-revision";
 import {
   buildCreationLoreSynthesisPrompt,
   buildStructuredDraftingPrompt,
@@ -193,7 +193,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
   private getConsolidatedContext(
     entity: any,
-    options?: { isGuest?: boolean },
+    options?: {
+      isGuest?: boolean;
+      source?: string;
+      instructions?: string;
+      priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+    },
   ): string {
     const parts = [];
     if (!options?.isGuest && entity.lore?.trim())
@@ -349,7 +354,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     }
   }
 
-  async reconcileEntityUpdate(
+  async reviseEntityUpdate(
     apiKey: string,
     modelName: string,
     entity: any,
@@ -359,12 +364,32 @@ export class DefaultTextGenerationService implements TextGenerationService {
     },
     relatedEntities: RelatedEntityContext[] = [],
     categories: { id: string; label?: string; description?: string }[] = [],
-    options?: { isGuest?: boolean },
+    options?: {
+      isGuest?: boolean;
+      source?: string;
+      instructions?: string;
+      priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+    },
   ): Promise<{
     content: string;
     lore: string;
     categoryId?: string;
   }> {
+    console.log("[ReconPipeline] Starting revision step...");
+    console.log("[ReconPipeline] Existing Entity State:", {
+      id: entity?.id,
+      title: entity?.title,
+      type: entity?.type,
+      contentLength: entity?.content?.length ?? 0,
+      loreLength: entity?.lore?.length ?? 0,
+    });
+    console.log("[ReconPipeline] Incoming Update:", {
+      chronicleLength: incoming?.chronicle?.length ?? 0,
+      loreLength: incoming?.lore?.length ?? 0,
+      hasInstructions: Boolean(options?.instructions?.trim()),
+      source: options?.source,
+    });
+
     const cleanEntity = entity ? safeSnapshot(entity) : entity;
     const cleanIncoming = incoming ? safeSnapshot(incoming) : incoming;
     const cleanRelatedEntities = relatedEntities
@@ -383,16 +408,32 @@ export class DefaultTextGenerationService implements TextGenerationService {
       ? { ...cleanEntity, lore: "" }
       : cleanEntity;
 
-    const prompt = buildEntityReconciliationPrompt(
+    const prompt = buildEntityRevisionPrompt(
       sanitizedEntity,
       cleanIncoming,
       cleanRelatedEntities,
       cleanCategories,
+      {
+        source: options?.source,
+        instructions: options?.instructions,
+        priority: options?.priority,
+      },
+    );
+
+    console.log(
+      "[ReconPipeline] Constructed LLM prompt of length:",
+      prompt.length,
     );
 
     try {
       const result = await model.generateContent(prompt);
       const text = result.response.text();
+      if (import.meta.env.DEV) {
+        console.log("[ReconPipeline] Raw LLM response metadata:", {
+          textLength: text.length,
+        });
+      }
+
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("Missing JSON payload");
@@ -403,9 +444,17 @@ export class DefaultTextGenerationService implements TextGenerationService {
         lore: string;
         categoryId: string;
       }>;
+      if (import.meta.env.DEV) {
+        console.log("[ReconPipeline] Parsed JSON metadata:", {
+          contentLength: parsed.content?.length ?? 0,
+          loreLength: parsed.lore?.length ?? 0,
+          hasCategoryId: Boolean(parsed.categoryId?.toString().trim()),
+        });
+      }
+
       const categoryId = String(parsed.categoryId || "").trim();
 
-      const reconciled: {
+      const revised: {
         content: string;
         lore: string;
         categoryId?: string;
@@ -419,15 +468,19 @@ export class DefaultTextGenerationService implements TextGenerationService {
           parsed.lore?.trim() || cleanIncoming.lore || cleanEntity.lore || "",
       };
       if (allowedCategoryIds.has(categoryId)) {
-        reconciled.categoryId = categoryId;
+        revised.categoryId = categoryId;
       }
-      return reconciled;
+
+      console.log("[ReconPipeline] Revision complete. Final Output:", {
+        contentLength: revised.content.length,
+        loreLength: revised.lore.length,
+        categoryId: revised.categoryId,
+      });
+
+      return revised;
     } catch (err: any) {
-      console.error(
-        "[TextGenerationService] Entity reconciliation failed:",
-        err,
-      );
-      throw new Error(`Entity reconciliation failed: ${err.message}`, {
+      console.error("[ReconPipeline] Revision pipeline failed:", err);
+      throw new Error(`Entity revision failed: ${err.message}`, {
         cause: err,
       });
     }

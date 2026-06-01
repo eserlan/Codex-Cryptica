@@ -15,8 +15,8 @@ vi.mock("$lib/services/ClipboardService", () => ({
 vi.mock("$lib/services/parser", () => ({
   parserService: { parse: vi.fn() },
 }));
-vi.mock("$lib/services/RegenerationService.svelte", () => ({
-  regenerationService: { pendingDraft: null },
+vi.mock("$lib/services/RevisionService.svelte", () => ({
+  revisionService: { pendingDraft: null },
 }));
 vi.mock("$lib/stores/graph.svelte", () => ({
   graph: {},
@@ -38,7 +38,7 @@ describe("ChatMessageController", () => {
   let clipboardService: any;
   let domPurify: any;
   let appEventBus: any;
-  let regenerationService: any;
+  let revisionService: any;
   let actions: any;
 
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe("ChatMessageController", () => {
     appEventBus = {
       subscribe: vi.fn().mockReturnValue(vi.fn()),
     };
-    regenerationService = {
+    revisionService = {
       pendingDraft: null,
     };
     actions = {
@@ -96,7 +96,7 @@ describe("ChatMessageController", () => {
       clipboardService,
       domPurify,
       appEventBus,
-      regenerationService,
+      revisionService,
       browser: true,
       actions,
     });
