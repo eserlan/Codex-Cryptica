@@ -338,7 +338,7 @@ export const THEME_ART_DIRECTION_DEFAULTS: Record<
   },
 };
 
-const FACTION_THEME_TEMPLATES: Record<string, string> = {
+export const FACTION_THEME_TEMPLATES: Record<string, string> = {
   fantasy:
     "{subject}, a faction shown in a defining moment — taking tribute, blessing soldiers before battle, marching under heraldic banners, or guarding a sacred site — members in distinctive armour, livery, tabards, or vestments, heraldic symbols and battle standards prominent, composition that reveals their power, ideology, and social role",
   scifi:
