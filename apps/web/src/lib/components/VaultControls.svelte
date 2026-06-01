@@ -17,6 +17,7 @@
   }>();
 
   let showForm = $state(false);
+  let showNoVaultMenu = $state(false);
   let newTitle = $state("");
   let newType = $state<string>("character");
   let isCreating = $state(false);
@@ -167,28 +168,30 @@
       </div>
     {/if}
 
-    <button
-      class="flex items-center gap-2 rounded transition-colors group {isVertical
-        ? 'justify-center w-full py-3 min-h-[44px]'
-        : 'px-3 py-2 hover:bg-chrome-bg/50'}"
-      onclick={() => modalUIStore.openVaultSwitcher()}
-      title="Switch Vault"
-      data-testid="open-vault-button"
-      aria-haspopup="dialog"
-      aria-expanded={modalUIStore.showVaultSwitcher}
-    >
-      <span
-        class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
-      ></span>
-      <span
-        class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans"
+    {#if vault.isInitialized}
+      <button
+        class="flex items-center gap-2 rounded transition-colors group {isVertical
+          ? 'justify-center w-full py-3 min-h-[44px]'
+          : 'px-3 py-2 hover:bg-chrome-bg/50'}"
+        onclick={() => modalUIStore.openVaultSwitcher()}
+        title="Switch Vault"
+        data-testid="open-vault-button"
+        aria-haspopup="dialog"
+        aria-expanded={modalUIStore.showVaultSwitcher}
       >
-        {themeStore.jargon.vault}: {vault.vaultName}
-      </span>
-      <span
-        class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
-      ></span>
-    </button>
+        <span
+          class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
+        ></span>
+        <span
+          class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans"
+        >
+          {themeStore.jargon.vault}: {vault.vaultName}
+        </span>
+        <span
+          class="icon-[lucide--chevron-down] w-3 h-3 text-chrome-muted/50 group-hover:text-chrome-accent"
+        ></span>
+      </button>
+    {/if}
 
     <div
       class="text-[10px] md:text-xs text-chrome-muted tracking-wider uppercase {isVertical
@@ -235,10 +238,85 @@
             .resolveJargon("entity", vault.allEntities.length)
             .toUpperCase()}</span
         >
-      {:else}
-        <span class="text-chrome-muted"
-          >NO {themeStore.jargon.vault.toUpperCase()}</span
+      {:else if vault.isInitialized}
+        <span class="text-chrome-muted font-sans" data-testid="entity-count"
+          >0 {themeStore.resolveJargon("entity", 0).toUpperCase()}</span
         >
+      {:else}
+        <div class="relative inline-block normal-case">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 rounded border border-chrome-border px-2 py-1 text-chrome-muted hover:text-chrome-text hover:border-chrome-accent transition-colors font-sans tracking-wider"
+            onclick={() => (showNoVaultMenu = !showNoVaultMenu)}
+            data-testid="no-vault-menu-button"
+            aria-haspopup="menu"
+            aria-expanded={showNoVaultMenu}
+          >
+            <span>No {themeStore.jargon.vault} Open</span>
+            <span
+              class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showNoVaultMenu
+                ? 'rotate-180'
+                : ''}"
+            ></span>
+          </button>
+
+          {#if showNoVaultMenu}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+            <div
+              class="fixed inset-0 z-[80]"
+              onclick={() => (showNoVaultMenu = false)}
+            ></div>
+            <div
+              class="absolute right-0 mt-2 w-56 z-[81] rounded-lg border border-chrome-border bg-chrome-surface shadow-xl py-1 text-left {isVertical
+                ? 'left-0 right-auto'
+                : ''}"
+              role="menu"
+              data-testid="no-vault-menu"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
+                onclick={() => {
+                  showNoVaultMenu = false;
+                  demoService.startDemo("fantasy");
+                }}
+                data-testid="no-vault-demo"
+              >
+                <span class="icon-[lucide--sparkles] w-3.5 h-3.5 shrink-0"
+                ></span>
+                Explore Demo {themeStore.jargon.vault}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
+                onclick={() => {
+                  showNoVaultMenu = false;
+                  modalUIStore.openVaultSwitcher("create");
+                }}
+                data-testid="no-vault-create"
+              >
+                <span class="icon-[lucide--plus] w-3.5 h-3.5 shrink-0"></span>
+                Create New {themeStore.jargon.vault}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
+                onclick={() => {
+                  showNoVaultMenu = false;
+                  modalUIStore.openVaultSwitcher("open");
+                }}
+                data-testid="no-vault-open"
+              >
+                <span class="icon-[lucide--folder-open] w-3.5 h-3.5 shrink-0"
+                ></span>
+                Open Existing {themeStore.jargon.vault}
+              </button>
+            </div>
+          {/if}
+        </div>
       {/if}
     </div>
 

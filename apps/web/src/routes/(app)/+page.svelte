@@ -238,45 +238,175 @@
       >
         <header class="mb-16 text-center">
           <div
-            class="inline-flex items-center gap-2 px-4 py-1.5 mb-6 border border-theme-primary/30 bg-theme-primary/5 rounded-full text-[10px] font-mono text-theme-primary uppercase tracking-[0.2em]"
+            class="inline-flex items-center gap-2.5 px-4 py-2 mb-6 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.12em]"
           >
-            <span class="w-2 h-2 rounded-full bg-theme-primary/50 animate-pulse"
+            <span class="w-2 h-2 rounded-full bg-theme-primary/60 animate-pulse"
             ></span>
-            System Online
+            Your vault stays local • Optional AI • No account required
           </div>
           <h2
-            class="text-5xl md:text-8xl font-bold text-theme-text font-header tracking-tight mb-6 leading-tight"
+            class="text-4xl md:text-7xl font-bold text-theme-text font-header tracking-tight mb-6 leading-tight"
           >
             Build Your World. <br />
             <span class="text-theme-primary/90">Map Your Lore.</span>
           </h2>
           <p
-            class="text-xl md:text-2xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-12 font-body font-light"
+            class="text-lg md:text-2xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-12 font-body font-light"
           >
-            Codex Cryptica is a private campaign manager for lore keepers who
-            value total privacy, speed, and visual organization.
+            Turn scattered campaign notes into a private, connected visual vault
+            for characters, factions, locations, secrets, and timelines.
           </p>
 
-          <div
-            class="flex flex-col md:flex-row items-center justify-center gap-6"
-          >
-            <button
-              onclick={() => {
-                onboardingStore.dismissLandingPage();
-              }}
-              class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
-            >
-              Enter the Codex
-            </button>
+          <div class="flex flex-col items-center justify-center">
             <button
               onclick={() => demoService.startDemo("fantasy")}
-              class="px-12 py-5 border border-theme-primary/50 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95"
+              class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
+              data-testid="welcome-demo-button"
             >
-              Try Demo
+              Explore Demo Vault
             </button>
+            <p class="mt-3 text-sm text-theme-muted/90 font-body">
+              No setup required. Opens a prebuilt sample world instantly.
+            </p>
+
+            <div
+              class="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3"
+            >
+              <button
+                onclick={() => {
+                  onboardingStore.dismissLandingPage();
+                  modalUIStore.openVaultSwitcher("create");
+                }}
+                class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                data-testid="welcome-create-button"
+              >
+                Create New Vault
+              </button>
+              <button
+                onclick={() => {
+                  onboardingStore.dismissLandingPage();
+                  modalUIStore.openVaultSwitcher("open");
+                }}
+                class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                data-testid="welcome-open-button"
+              >
+                Open Existing Vault
+              </button>
+            </div>
           </div>
 
-          <div class="mt-8 flex flex-col items-center gap-4">
+          <!-- Product preview: connected graph + entity sidebar -->
+          <div
+            class="mt-14 mx-auto max-w-3xl rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden"
+            aria-hidden="true"
+          >
+            <div
+              class="flex items-center gap-1.5 px-3 py-2 border-b border-theme-border bg-theme-bg/60"
+            >
+              <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/40"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/25"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/15"></span>
+              <span
+                class="ml-2 text-[9px] font-mono text-theme-muted uppercase tracking-[0.2em]"
+                >Living Lore Graph</span
+              >
+            </div>
+            <div class="flex h-56 md:h-64">
+              <!-- Graph canvas -->
+              <div class="relative flex-1">
+                <svg
+                  viewBox="0 0 400 260"
+                  class="absolute inset-0 w-full h-full"
+                  preserveAspectRatio="xMidYMid meet"
+                >
+                  <g
+                    stroke="var(--color-accent-primary)"
+                    stroke-opacity="0.35"
+                    stroke-width="1.5"
+                  >
+                    <line x1="200" y1="130" x2="110" y2="70" />
+                    <line x1="200" y1="130" x2="300" y2="80" />
+                    <line x1="200" y1="130" x2="120" y2="190" />
+                    <line x1="200" y1="130" x2="290" y2="195" />
+                    <line x1="110" y1="70" x2="300" y2="80" />
+                    <line x1="120" y1="190" x2="290" y2="195" />
+                  </g>
+                  <g fill="var(--color-accent-primary)">
+                    <circle cx="200" cy="130" r="14" fill-opacity="0.9" />
+                    <circle cx="110" cy="70" r="9" fill-opacity="0.55" />
+                    <circle cx="300" cy="80" r="9" fill-opacity="0.55" />
+                    <circle cx="120" cy="190" r="9" fill-opacity="0.55" />
+                    <circle cx="290" cy="195" r="9" fill-opacity="0.55" />
+                  </g>
+                  <g
+                    font-family="var(--font-body, sans-serif)"
+                    font-size="9"
+                    text-anchor="middle"
+                  >
+                    <text
+                      x="200"
+                      y="158"
+                      fill="var(--color-text, #fff)"
+                      fill-opacity="0.85"
+                      font-weight="600">Captain Veyra</text
+                    >
+                    <text
+                      x="110"
+                      y="56"
+                      fill="var(--color-text-muted, #aaa)"
+                      fill-opacity="0.7">Glass Rebellion</text
+                    >
+                    <text
+                      x="300"
+                      y="66"
+                      fill="var(--color-text-muted, #aaa)"
+                      fill-opacity="0.7">Sunken Archive</text
+                    >
+                    <text
+                      x="120"
+                      y="212"
+                      fill="var(--color-text-muted, #aaa)"
+                      fill-opacity="0.7">Crown Secret</text
+                    >
+                    <text
+                      x="290"
+                      y="217"
+                      fill="var(--color-text-muted, #aaa)"
+                      fill-opacity="0.7">Blackspire Compact</text
+                    >
+                  </g>
+                </svg>
+              </div>
+              <!-- Entity sidebar -->
+              <div
+                class="w-40 md:w-48 shrink-0 border-l border-theme-border bg-theme-bg/50 p-3 text-left"
+              >
+                <div
+                  class="w-10 h-10 rounded-lg bg-theme-primary/15 mb-2 flex items-center justify-center"
+                >
+                  <span
+                    class="icon-[lucide--user-round] w-5 h-5 text-theme-primary/70"
+                  ></span>
+                </div>
+                <div class="text-xs font-bold text-theme-text leading-tight">
+                  Captain Veyra
+                </div>
+                <div
+                  class="text-[9px] font-mono text-theme-muted uppercase tracking-[0.15em] mb-4"
+                >
+                  Character
+                </div>
+                <div class="space-y-1.5">
+                  <div class="h-1.5 w-full rounded bg-theme-muted/20"></div>
+                  <div class="h-1.5 w-5/6 rounded bg-theme-muted/20"></div>
+                  <div class="h-1.5 w-full rounded bg-theme-muted/20"></div>
+                  <div class="h-1.5 w-2/3 rounded bg-theme-muted/20"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-10 flex flex-col items-center gap-4">
             <a
               href="{base}/features"
               class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
@@ -313,73 +443,6 @@
             </div>
           </div>
         </header>
-
-        <section id="features" class="grid md:grid-cols-3 gap-8 mb-12">
-          <!-- Feature 1: Privacy -->
-          <div
-            class="p-8 bg-theme-surface border border-theme-border rounded-xl hover:border-theme-primary/50 hover:shadow-lg hover:shadow-theme-primary/5 transition-all group"
-          >
-            <div
-              class="w-14 h-14 mb-6 rounded-2xl bg-theme-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-            >
-              <span
-                class="icon-[lucide--shield-check] text-theme-primary w-7 h-7"
-              ></span>
-            </div>
-            <h3
-              class="text-xl font-bold text-theme-text mb-3 uppercase font-header tracking-wide"
-            >
-              Total Privacy
-            </h3>
-            <p class="text-theme-muted leading-relaxed font-body">
-              Your {themeStore.resolveJargon("entity", 2).toLowerCase()} never leave
-              your device. We use local storage for maximum security. No cloud accounts
-              required.
-            </p>
-          </div>
-
-          <!-- Feature 2: AI -->
-          <div
-            class="p-8 bg-theme-surface border border-theme-border rounded-xl hover:border-theme-primary/50 hover:shadow-lg hover:shadow-theme-primary/5 transition-all group"
-          >
-            <div
-              class="w-14 h-14 mb-6 rounded-2xl bg-theme-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-            >
-              <span class="icon-[lucide--brain] text-theme-primary w-7 h-7"
-              ></span>
-            </div>
-            <h3
-              class="text-xl font-bold text-theme-text mb-3 uppercase font-header tracking-wide"
-            >
-              AI Oracle
-            </h3>
-            <p class="text-theme-muted leading-relaxed font-body">
-              Discover hidden connections and generate immersive descriptions
-              while maintaining your world's unique voice.
-            </p>
-          </div>
-
-          <!-- Feature 3: Visual Links -->
-          <div
-            class="p-8 bg-theme-surface border border-theme-border rounded-xl hover:border-theme-primary/50 hover:shadow-lg hover:shadow-theme-primary/5 transition-all group"
-          >
-            <div
-              class="w-14 h-14 mb-6 rounded-2xl bg-theme-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-            >
-              <span class="icon-[lucide--share-2] text-theme-primary w-7 h-7"
-              ></span>
-            </div>
-            <h3
-              class="text-xl font-bold text-theme-text mb-3 uppercase font-header tracking-wide"
-            >
-              Visual Graph
-            </h3>
-            <p class="text-theme-muted leading-relaxed font-body mb-4">
-              Navigate your lore through a dynamic, interactive map. See exactly
-              how characters, locations, and events intertwine.
-            </p>
-          </div>
-        </section>
 
         <section class="text-center mb-12">
           <h3

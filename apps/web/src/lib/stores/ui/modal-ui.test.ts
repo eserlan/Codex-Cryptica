@@ -85,6 +85,27 @@ describe("ModalUIStore", () => {
     expect(store.pendingCanvasEntities).toEqual([]);
   });
 
+  it("handles vault switcher with create/open intent", () => {
+    const store = new ModalUIStore();
+    expect(store.showVaultSwitcher).toBe(false);
+    expect(store.vaultSwitcherIntent).toBeNull();
+
+    store.openVaultSwitcher("create");
+    expect(store.showVaultSwitcher).toBe(true);
+    expect(store.vaultSwitcherIntent).toBe("create");
+
+    store.closeVaultSwitcher();
+    expect(store.showVaultSwitcher).toBe(false);
+    expect(store.vaultSwitcherIntent).toBeNull();
+
+    store.openVaultSwitcher("open");
+    expect(store.vaultSwitcherIntent).toBe("open");
+
+    // No-argument call defaults to a null intent (plain switcher)
+    store.openVaultSwitcher();
+    expect(store.vaultSwitcherIntent).toBeNull();
+  });
+
   it("handles lightbox", () => {
     const store = new ModalUIStore();
     const rect = { x: 10, y: 20, width: 100, height: 100 };

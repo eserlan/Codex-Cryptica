@@ -4,11 +4,21 @@
   import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
   let isLoading = $state(false);
   let showCreate = $state(false);
+
+  // Honor the intent the switcher was opened with (e.g. from the welcome screen
+  // "Create New Vault" action), then consume it so it doesn't re-fire.
+  $effect(() => {
+    if (modalUIStore.vaultSwitcherIntent === "create") {
+      showCreate = true;
+      modalUIStore.vaultSwitcherIntent = null;
+    }
+  });
   let newVaultName = $state("");
   let editingId = $state<string | null>(null);
   let editName = $state("");
