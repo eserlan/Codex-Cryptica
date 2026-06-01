@@ -30,7 +30,7 @@
     ),
   );
 
-  function toggleTypeFilter(type: string, event: MouseEvent) {
+  function toggleTypeFilter(type: string) {
     if (type === "all") {
       typeFilters = new Set();
       explorerUIStore.clearLabelFilters();
@@ -41,23 +41,13 @@
       return;
     }
 
-    const isMulti = event.ctrlKey || event.metaKey;
-
-    if (isMulti) {
-      const newFilters = new Set(typeFilters);
-      if (newFilters.has(type)) {
-        newFilters.delete(type);
-      } else {
-        newFilters.add(type);
-      }
-      typeFilters = newFilters;
+    const newFilters = new Set(typeFilters);
+    if (newFilters.has(type)) {
+      newFilters.delete(type);
     } else {
-      if (typeFilters.has(type)) {
-        typeFilters = new Set();
-      } else {
-        typeFilters = new Set([type]);
-      }
+      newFilters.add(type);
     }
+    typeFilters = newFilters;
   }
 
   function getIconToggleClasses(active: boolean) {
@@ -80,7 +70,7 @@
 >
   <button
     type="button"
-    onclick={(e) => toggleTypeFilter("all", e)}
+    onclick={() => toggleTypeFilter("all")}
     title="Show all categories"
     aria-label="Show all categories"
     aria-pressed={typeFilters.size === 0}
@@ -96,7 +86,7 @@
     {#if count > 0 || typeFilters.has(cat.id)}
       <button
         type="button"
-        onclick={(e) => toggleTypeFilter(cat.id, e)}
+        onclick={() => toggleTypeFilter(cat.id)}
         title={cat.label}
         aria-label={`Filter by ${cat.label}`}
         aria-pressed={typeFilters.has(cat.id)}
