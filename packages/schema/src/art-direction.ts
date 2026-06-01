@@ -67,7 +67,7 @@ export const CATEGORY_ART_DIRECTION_DEFAULTS: Record<
     label: "Character Default",
     source: "category-default",
     template:
-      "{subject}, full character concept art with readable silhouette, expressive pose, distinctive clothing, equipment, and clear face and body language.",
+      "{subject}, full-body character concept art with a clean readable silhouette, sharp focus on the full figure, clear face, visible hands, balanced anatomy, expressive stance, and body language that communicates role, status, temperament, and current intent. Give the figure distinctive clothing layers or signature attire, personal equipment, hand-held props or environmental contact points where useful, wearable technology or accessories where appropriate, and concrete material details such as seams, fasteners, surface finish, weathering, repairs, stains, and crafted ornament. Emphasize asymmetry, practical wear, facial expression, hand gesture, and how the surrounding environment or presentation lighting frames the character without overpowering them. Avoid name repetition, generic armor, vague heroic phrasing, stiff poses, and unreadable effects.",
   },
   creature: {
     id: "category.creature",
@@ -88,14 +88,14 @@ export const CATEGORY_ART_DIRECTION_DEFAULTS: Record<
     label: "Item Default",
     source: "category-default",
     template:
-      "{subject}, detailed prop design on a simple presentation background, emphasizing materials, craftsmanship, wear, symbols, and readable silhouette.",
+      "{subject}, close-up detailed prop concept art on a plain unobtrusive presentation background, with a readable silhouette, clear scale cues, visible construction logic, functional seams, fasteners, contact points, and worn surfaces. Emphasize tactile material craftsmanship, age, repairs, inscriptions or symbols, use-specific details, and the physical consequences of repeated handling. Use sharp focus and concrete visual details; avoid floating UI effects, vague magic glow, and generic treasure styling.",
   },
   faction: {
     id: "category.faction",
     label: "Faction Default",
     source: "category-default",
     template:
-      "{subject}, illustration of the faction caught in a defining moment — taking tribute, guarding a stronghold, performing a ritual, raiding a convoy, or preaching to a crowd — members shown in their distinctive colours, armour, regalia, or uniforms, faction symbols and banners visible, setting and activity that reveals their social role and emotional character, cinematic composition, dramatic lighting, richly detailed costumes and environmental storytelling.",
+      "{subject}, wide-angle eye-level faction concept art of the faction caught in a defining moment, with a cohesive group composition, clear visual anchor, clear hierarchy, readable insignia or subtle heraldry, synchronized movement, disciplined formation, mirrored functional arrangement, or controlled patrol halt, and distinct uniform language, regalia, restricted faction palette, banners, tools, weapons, or symbols. Show how the faction expresses authority, ideology, resources, social role, emotional character, and internal roles through posture, role-specific equipment, specialist visual cues, equipment readiness, faces or masks where appropriate, material quality, repeated motifs, environmental control, and background landscape or ambient color that stays secondary to the faction identity. Emphasize recognizable faction identity, grounded proportions, sharp focus on the group, tactile material contrast, cohesive silhouette, controlled palette hierarchy, readable faction marks on practical gear or regalia, natural or crafted material weight, rhythmic group spacing, organized visual rhythm, and environmental storytelling; avoid random crowds, generic soldiers, oversized logos, superhero posing, excessive holograms, neon clutter, ornate generic armor, modern gear unless setting-appropriate, and unreadable background clutter.",
   },
   event: {
     id: "category.event",
@@ -141,7 +141,7 @@ const cyberpunk: ArtDirectionTemplate = {
   label: "Cyberpunk Default",
   source: "theme-default",
   template:
-    "{subject}. Digital concept art style, wet streets, dense signage, layered technology, hard shadows, high-contrast neon palette with hot pink and electric blue accents.",
+    "{subject}. Cyberpunk digital concept art style, dense signage, layered technology, hard shadows, high-contrast neon palette with hot pink and electric blue accents, urban surfaces and environmental texture that suit the scene.",
 };
 
 const modern: ArtDirectionTemplate = {
@@ -438,7 +438,7 @@ export function resolveArtDirection(
           id: `category.faction.${themeId}`,
           label: `Faction ${themeId} Default`,
           source: "category-default" as ArtDirectionSource,
-          template: FACTION_THEME_TEMPLATES[themeId],
+          template: `${CATEGORY_ART_DIRECTION_DEFAULTS.faction.template} ${FACTION_THEME_TEMPLATES[themeId]}`,
         }
       : undefined;
   const categoryTemplate = factionThemeTemplate

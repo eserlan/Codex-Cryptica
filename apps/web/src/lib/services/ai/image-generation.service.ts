@@ -93,15 +93,16 @@ export class DefaultImageGenerationService implements ImageGenerationService {
             `[ImageGenerationService] Generating image via direct Cloudflare Workers AI: ${modelName}`,
           );
           const url = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelName}`;
+          const form = new FormData();
+          form.append("prompt", prompt);
+          form.append("width", "1024");
+          form.append("height", "1024");
           const response = await fetch(url, {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Bearer ${cfApiToken}`,
             },
-            body: JSON.stringify({
-              prompt: prompt,
-            }),
+            body: form,
           });
 
           if (!response.ok) {
@@ -272,7 +273,11 @@ export class DefaultImageGenerationService implements ImageGenerationService {
 
     // Find the part containing image data
     const imagePart = parts.find((p: any) => p.inlineData);
-    const base64Data = imagePart?.inlineData?.data;
+    const directImageData =
+      typeof data?.result?.image === "string" ? data.result.image : undefined;
+    const base64Data = this.cleanBase64ImageData(
+      imagePart?.inlineData?.data || directImageData,
+    );
 
     if (!base64Data) {
       // Fallback for text-only responses or errors
@@ -296,12 +301,29 @@ export class DefaultImageGenerationService implements ImageGenerationService {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const mimeType = imagePart.inlineData.mimeType || "image/png";
+      const mimeType =
+        imagePart?.inlineData?.mimeType ||
+        this.inferMimeTypeFromBase64(base64Data) ||
+        "image/png";
       return new Blob([bytes], { type: mimeType });
     } catch (e) {
       console.error("[ImageGenerationService] Failed to decode base64:", e);
       throw new Error("Failed to process image data from AI", { cause: e });
     }
+  }
+
+  private cleanBase64ImageData(value?: string): string | undefined {
+    if (!value) return undefined;
+    const trimmed = value.trim();
+    const dataUrlMatch = trimmed.match(/^data:([^;]+);base64,([\s\S]+)$/i);
+    return (dataUrlMatch?.[2] || trimmed).replace(/\s+/g, "");
+  }
+
+  private inferMimeTypeFromBase64(value: string): string | undefined {
+    if (value.startsWith("iVBORw0KGgo")) return "image/png";
+    if (value.startsWith("/9j/")) return "image/jpeg";
+    if (value.startsWith("UklGR")) return "image/webp";
+    return undefined;
   }
 }
 

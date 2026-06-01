@@ -186,6 +186,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.imagePromptReview.open}
+      {#await loadModal(() => import("./ImagePromptReviewModal.svelte"), "ImagePromptReviewModal") then ImagePromptReviewModal}
+        {#if ImagePromptReviewModal}
+          <ImagePromptReviewModal />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}

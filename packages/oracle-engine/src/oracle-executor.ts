@@ -101,30 +101,57 @@ export class OracleActionExecutor {
    * Public API for direct entity visualization.
    */
   async drawEntity(entityId: string, context: OracleExecutionContext) {
-    try {
-      await this.visualizationExecutor.drawEntity(entityId, context);
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Image generation failed: ${err.message}`,
-      });
-    }
+    await this.visualizationExecutor.drawEntity(entityId, context);
+  }
+
+  async prepareEntityPrompt(
+    entityId: string,
+    context: OracleExecutionContext,
+    options: { ignoreSavedArtDirection?: boolean } = {},
+  ) {
+    return this.visualizationExecutor.prepareEntityPrompt(
+      entityId,
+      context,
+      options,
+    );
+  }
+
+  async generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    context: OracleExecutionContext,
+  ) {
+    await this.visualizationExecutor.generateEntityFromPrompt(
+      entityId,
+      prompt,
+      context,
+    );
   }
 
   /**
    * Public API for direct message visualization.
    */
   async drawMessage(messageId: string, context: OracleExecutionContext) {
-    try {
-      await this.visualizationExecutor.drawMessage(messageId, context);
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Image generation failed: ${err.message}`,
-      });
-    }
+    await this.visualizationExecutor.drawMessage(messageId, context);
+  }
+
+  async prepareMessagePrompt(
+    messageId: string,
+    context: OracleExecutionContext,
+  ) {
+    return this.visualizationExecutor.prepareMessagePrompt(messageId, context);
+  }
+
+  async generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    context: OracleExecutionContext,
+  ) {
+    await this.visualizationExecutor.generateMessageFromPrompt(
+      messageId,
+      prompt,
+      context,
+    );
   }
 
   /**

@@ -24,6 +24,13 @@ describe("visual-distillation prompts", () => {
       expect(result).toContain("cat");
       expect(result).toContain("CanonSummary");
       expect(result).toContain("Visual Prompt Architect");
+      expect(result).toContain(
+        "Preserve all explicit theme, genre, medium, palette, lighting, and material directives",
+      );
+      expect(result).toContain("Keep named genre/style anchors verbatim");
+      expect(result).toContain(
+        "carry the theme information into the final prompt",
+      );
     });
   });
 

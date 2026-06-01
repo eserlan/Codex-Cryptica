@@ -234,6 +234,10 @@ describe("OracleStore", () => {
       }),
       drawEntity: vi.fn(),
       drawMessage: vi.fn(),
+      prepareEntityPrompt: vi.fn().mockResolvedValue({ prompt: "prompt" }),
+      prepareMessagePrompt: vi.fn().mockResolvedValue({ prompt: "prompt" }),
+      generateEntityFromPrompt: vi.fn(),
+      generateMessageFromPrompt: vi.fn(),
     };
 
     const mockDiceHistory = {
@@ -322,9 +326,15 @@ describe("OracleStore", () => {
 
   describe("Domain Operations", () => {
     it("should handle drawEntity", async () => {
-      mockExecutor.drawEntity = vi.fn().mockResolvedValue(undefined);
+      mockVault.entities["entity-1"] = {
+        id: "entity-1",
+        title: "Entity One",
+      } as any;
+      mockExecutor.prepareEntityPrompt = vi
+        .fn()
+        .mockResolvedValue({ prompt: "prompt" });
       await oracle.drawEntity("entity-1");
-      expect(mockExecutor.drawEntity).toHaveBeenCalledWith(
+      expect(mockExecutor.prepareEntityPrompt).toHaveBeenCalledWith(
         "entity-1",
         expect.any(Object),
       );
@@ -332,10 +342,14 @@ describe("OracleStore", () => {
 
     it("should track visualizing state for an entity draw", async () => {
       let resolveDraw!: () => void;
-      mockExecutor.drawEntity = vi.fn(
+      mockVault.entities["entity-1"] = {
+        id: "entity-1",
+        title: "Entity One",
+      } as any;
+      mockExecutor.prepareEntityPrompt = vi.fn(
         () =>
-          new Promise<void>((resolve) => {
-            resolveDraw = resolve;
+          new Promise<{ prompt: string }>((resolve) => {
+            resolveDraw = () => resolve({ prompt: "prompt" });
           }),
       );
 
@@ -352,9 +366,11 @@ describe("OracleStore", () => {
     });
 
     it("should handle drawMessage", async () => {
-      mockExecutor.drawMessage = vi.fn().mockResolvedValue(undefined);
+      mockExecutor.prepareMessagePrompt = vi
+        .fn()
+        .mockResolvedValue({ prompt: "prompt" });
       await oracle.drawMessage("msg-1");
-      expect(mockExecutor.drawMessage).toHaveBeenCalledWith(
+      expect(mockExecutor.prepareMessagePrompt).toHaveBeenCalledWith(
         "msg-1",
         expect.any(Object),
       );
