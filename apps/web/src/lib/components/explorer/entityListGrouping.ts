@@ -1,6 +1,6 @@
 import type { Entity } from "schema";
 
-export type ExplorerViewMode = "list" | "label";
+export type ExplorerViewMode = "list" | "label" | "category";
 
 export type LabelGroupedEntities = {
   type: "label";
@@ -9,11 +9,44 @@ export type LabelGroupedEntities = {
   unlabeled: Entity[];
 };
 
+export type CategoryGroupedEntities = {
+  type: "category";
+  groups: Map<string, Entity[]>;
+  sortedKeys: string[];
+};
+
+export type ExplorerGroupedEntities =
+  | LabelGroupedEntities
+  | CategoryGroupedEntities;
+
 export function groupEntitiesForExplorer(
   entities: Entity[],
   viewMode: ExplorerViewMode,
-): LabelGroupedEntities | null {
+): ExplorerGroupedEntities | null {
   if (viewMode === "list") return null;
+
+  if (viewMode === "category") {
+    const groups = new Map<string, Entity[]>();
+
+    for (const entity of entities) {
+      let categoryGroup = groups.get(entity.type);
+      if (!categoryGroup) {
+        categoryGroup = [];
+        groups.set(entity.type, categoryGroup);
+      }
+      categoryGroup.push(entity);
+    }
+
+    const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    return {
+      type: "category",
+      groups,
+      sortedKeys,
+    };
+  }
 
   const groups = new Map<string, Entity[]>();
   const unlabeled: Entity[] = [];

@@ -49,7 +49,7 @@ const mockVault = vi.hoisted(() => {
       {
         id: "parent-1",
         title: "Parent Entity",
-        type: "npc",
+        type: "location",
         tags: [],
         labels: [],
         connections: [],
@@ -59,7 +59,7 @@ const mockVault = vi.hoisted(() => {
       {
         id: "child-1",
         title: "Child Entity",
-        type: "npc",
+        type: "location",
         tags: [],
         labels: [],
         connections: [],
@@ -87,8 +87,14 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 
 vi.mock("$lib/stores/categories.svelte", () => ({
   categories: {
-    list: [{ id: "npc", label: "NPC", icon: "user", color: "#fff" }],
-    getCategory: () => ({ icon: "user" }),
+    list: [
+      { id: "npc", label: "NPC", icon: "user", color: "#fff" },
+      { id: "location", label: "Locations", icon: "map-pin", color: "#fff" },
+    ],
+    getCategory: (id: string) =>
+      id === "location"
+        ? { label: "Locations", icon: "map-pin" }
+        : { label: "NPC", icon: "user" },
   },
 }));
 
@@ -100,8 +106,10 @@ describe("EntityList", () => {
   beforeEach(() => {
     explorerUIStore.explorerViewMode = "list";
     explorerUIStore.clearLabelFilters();
+    explorerUIStore.explorerCollapsedCategoryGroups = {};
     explorerUIStore.explorerCollapsedLabelGroups = {};
     explorerUIStore.explorerCollapsedEntityIds = {};
+    window.localStorage.removeItem("codex_explorer_collapsed_category_groups");
     window.localStorage.removeItem("codex_explorer_collapsed_label_groups");
     window.localStorage.removeItem("codex_explorer_collapsed_entity_ids");
     sessionModeStore.isGuestMode = false;
@@ -149,6 +157,59 @@ describe("EntityList", () => {
     expect(
       explorerUIStore.getCollapsedLabelGroups("vault-1").has("Quest"),
     ).toBe(false);
+  });
+
+  it("shows and hides entities within a category group", async () => {
+    explorerUIStore.setExplorerViewMode("category");
+
+    render(EntityList);
+
+    expect(screen.getByText("Ava")).not.toBeNull();
+    expect(screen.getByText("Parent Entity")).not.toBeNull();
+
+    const locationToggle = screen
+      .getAllByRole("button")
+      .find(
+        (button) =>
+          button.getAttribute("aria-expanded") === "true" &&
+          button.textContent?.includes("Locations") &&
+          button.textContent?.includes("2"),
+      );
+
+    expect(locationToggle).not.toBeUndefined();
+
+    await fireEvent.click(locationToggle!);
+
+    expect(screen.queryByText("Parent Entity")).toBeNull();
+    expect(screen.queryByText("Child Entity")).toBeNull();
+    expect(screen.getByText("Ava")).not.toBeNull();
+    expect(
+      explorerUIStore.getCollapsedCategoryGroups("vault-1").has("location"),
+    ).toBe(true);
+  });
+
+  it("renders category grouping as a plain list when one category filter is active", async () => {
+    explorerUIStore.setExplorerViewMode("category");
+
+    render(EntityList);
+
+    const npcFilterButton = screen.getByLabelText("Filter by NPC");
+    await fireEvent.click(npcFilterButton);
+    await tick();
+
+    expect(
+      (screen.getByLabelText("Group by Category") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen.getByLabelText("List View").getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen.getByLabelText("Group by Category").getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(screen.queryByRole("button", { expanded: true })).toBeNull();
+    expect(screen.getByText("Ava")).not.toBeNull();
+    expect(screen.queryByText("Parent Entity")).toBeNull();
   });
 
   it("clears the search query when the clear button is clicked", async () => {
