@@ -428,7 +428,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
     try {
       const result = await model.generateContent(prompt);
       const text = result.response.text();
-      console.log("[ReconPipeline] Raw LLM Response:", text);
+      if (import.meta.env.DEV) {
+        console.log("[ReconPipeline] Raw LLM response metadata:", {
+          textLength: text.length,
+        });
+      }
 
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
@@ -440,7 +444,13 @@ export class DefaultTextGenerationService implements TextGenerationService {
         lore: string;
         categoryId: string;
       }>;
-      console.log("[ReconPipeline] Parsed JSON Response:", parsed);
+      if (import.meta.env.DEV) {
+        console.log("[ReconPipeline] Parsed JSON metadata:", {
+          contentLength: parsed.content?.length ?? 0,
+          loreLength: parsed.lore?.length ?? 0,
+          hasCategoryId: Boolean(String(parsed.categoryId || "").trim()),
+        });
+      }
 
       const categoryId = String(parsed.categoryId || "").trim();
 

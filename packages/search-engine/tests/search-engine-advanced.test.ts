@@ -328,6 +328,36 @@ describe("SearchEngine – importIndex", () => {
     expect(engine.docCount).toBe(0);
     expect(await engine.search("anything")).toEqual([]);
   });
+
+  it("skips segmented payload when _docIds segment is null", async () => {
+    const engine = new SearchEngine();
+    await engine.clear();
+
+    await engine.importIndex({
+      isSegmented: true,
+      keyCount: 2,
+      segments: {
+        _docIds: null,
+        cfg: "flexsearch-config-data",
+      },
+    });
+
+    expect(engine.docCount).toBe(0);
+    expect(await engine.search("anything")).toEqual([]);
+  });
+
+  it("skips monolithic encoded payload when data is null", async () => {
+    const engine = new SearchEngine();
+    await engine.clear();
+
+    await engine.importIndex({
+      isEncoded: true,
+      data: null,
+    });
+
+    expect(engine.docCount).toBe(0);
+    expect(await engine.search("anything")).toEqual([]);
+  });
 });
 
 // ─── Concurrent task queue safety ─────────────────────────────────────────────

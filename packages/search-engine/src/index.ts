@@ -462,7 +462,7 @@ export class SearchEngine {
                 if (Array.isArray(buffer)) {
                   buffer = new Uint8Array(buffer);
                 } else {
-                  const values = Object.values(buffer);
+                  const values = Object.values(buffer ?? {});
                   buffer = new Uint8Array(values as number[]);
                 }
               }
@@ -518,7 +518,7 @@ export class SearchEngine {
               if (Array.isArray(buffer)) {
                 buffer = new Uint8Array(buffer);
               } else {
-                const values = Object.values(buffer);
+                const values = Object.values(buffer ?? {});
                 buffer = new Uint8Array(values as number[]);
               }
             }
