@@ -256,6 +256,10 @@ export class VaultStore {
       getEntities: () => this.entities,
       setDemoVaultName: (n) => (this.demoVaultName = n),
       setInitialized: (v) => (this.isInitialized = v),
+      rebuildEntityIndexes: () => {
+        this.entityStore.initializeInboundConnections();
+        this.entityStore.rebuildIndexes();
+      },
       getServices: () => this.services,
       setSelectedEntityId: (id) => (this.selectedEntityId = id),
       vaultRegistry,

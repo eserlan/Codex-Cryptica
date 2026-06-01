@@ -50,6 +50,32 @@
       : "px-2 py-1.5 justify-center gap-3",
   );
 
+  // Actions for the "No Vault Open" dropdown (demo / create / open).
+  const runNoVaultAction = (action: () => void) => {
+    showNoVaultMenu = false;
+    action();
+  };
+  const noVaultMenuItems = $derived([
+    {
+      icon: "icon-[lucide--sparkles]",
+      label: `Explore Demo ${themeStore.jargon.vault}`,
+      testid: "no-vault-demo",
+      action: () => demoService.startDemo("fantasy"),
+    },
+    {
+      icon: "icon-[lucide--plus]",
+      label: `Create New ${themeStore.jargon.vault}`,
+      testid: "no-vault-create",
+      action: () => modalUIStore.openVaultSwitcher("create"),
+    },
+    {
+      icon: "icon-[lucide--folder-open]",
+      label: `Open Existing ${themeStore.jargon.vault}`,
+      testid: "no-vault-open",
+      action: () => modalUIStore.openVaultSwitcher("open"),
+    },
+  ]);
+
   $effect(() => {
     if (showForm && categories.list.length > 0) {
       const currentIsValid = categories.list.some((c) => c.id === newType);
@@ -273,47 +299,18 @@
               role="menu"
               data-testid="no-vault-menu"
             >
-              <button
-                type="button"
-                role="menuitem"
-                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
-                onclick={() => {
-                  showNoVaultMenu = false;
-                  demoService.startDemo("fantasy");
-                }}
-                data-testid="no-vault-demo"
-              >
-                <span class="icon-[lucide--sparkles] w-3.5 h-3.5 shrink-0"
-                ></span>
-                Explore Demo {themeStore.jargon.vault}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
-                onclick={() => {
-                  showNoVaultMenu = false;
-                  modalUIStore.openVaultSwitcher("create");
-                }}
-                data-testid="no-vault-create"
-              >
-                <span class="icon-[lucide--plus] w-3.5 h-3.5 shrink-0"></span>
-                Create New {themeStore.jargon.vault}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
-                onclick={() => {
-                  showNoVaultMenu = false;
-                  modalUIStore.openVaultSwitcher("open");
-                }}
-                data-testid="no-vault-open"
-              >
-                <span class="icon-[lucide--folder-open] w-3.5 h-3.5 shrink-0"
-                ></span>
-                Open Existing {themeStore.jargon.vault}
-              </button>
+              {#each noVaultMenuItems as item}
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent transition-colors"
+                  onclick={() => runNoVaultAction(item.action)}
+                  data-testid={item.testid}
+                >
+                  <span class="{item.icon} w-3.5 h-3.5 shrink-0"></span>
+                  {item.label}
+                </button>
+              {/each}
             </div>
           {/if}
         </div>
