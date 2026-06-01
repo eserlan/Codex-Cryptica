@@ -30,7 +30,7 @@
     ),
   );
 
-  function toggleTypeFilter(type: string, _event: MouseEvent) {
+  function toggleTypeFilter(type: string) {
     if (type === "all") {
       typeFilters = new Set();
       explorerUIStore.clearLabelFilters();
@@ -70,7 +70,7 @@
 >
   <button
     type="button"
-    onclick={(e) => toggleTypeFilter("all", e)}
+    onclick={() => toggleTypeFilter("all")}
     title="Show all categories"
     aria-label="Show all categories"
     aria-pressed={typeFilters.size === 0}
@@ -86,7 +86,7 @@
     {#if count > 0 || typeFilters.has(cat.id)}
       <button
         type="button"
-        onclick={(e) => toggleTypeFilter(cat.id, e)}
+        onclick={() => toggleTypeFilter(cat.id)}
         title={cat.label}
         aria-label={`Filter by ${cat.label}`}
         aria-pressed={typeFilters.has(cat.id)}
