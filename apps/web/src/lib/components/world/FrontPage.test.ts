@@ -343,7 +343,7 @@ describe("FrontPage", () => {
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
-        "Theme Style: Moonfall. Digital concept art style",
+        "Theme Style: Moonfall. Cyberpunk digital concept art style",
       ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
