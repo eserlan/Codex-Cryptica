@@ -448,7 +448,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
         console.log("[ReconPipeline] Parsed JSON metadata:", {
           contentLength: parsed.content?.length ?? 0,
           loreLength: parsed.lore?.length ?? 0,
-          hasCategoryId: Boolean(String(parsed.categoryId || "").trim()),
+          hasCategoryId: Boolean(parsed.categoryId?.toString().trim()),
         });
       }
 
