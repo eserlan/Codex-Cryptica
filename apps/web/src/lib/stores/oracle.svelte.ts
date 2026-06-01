@@ -387,6 +387,22 @@ export class OracleStore implements IOracleStore {
     await this.actions.drawMessage(messageId);
   }
 
+  async generateEntityFromPrompt(entityId: string, prompt: string) {
+    await this.actions.generateEntityFromPrompt(entityId, prompt);
+  }
+
+  async generateMessageFromPrompt(messageId: string, prompt: string) {
+    await this.actions.generateMessageFromPrompt(messageId, prompt);
+  }
+
+  async regenerateEntityPrompt(entityId: string): Promise<string | null> {
+    return this.actions.regenerateEntityPrompt(entityId);
+  }
+
+  async regenerateMessagePrompt(messageId: string): Promise<string | null> {
+    return this.actions.regenerateMessagePrompt(messageId);
+  }
+
   isVisualizingEntity(entityId: string | null | undefined) {
     return this.ui.isVisualizingEntity(entityId);
   }

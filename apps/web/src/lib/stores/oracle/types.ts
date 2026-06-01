@@ -93,6 +93,10 @@ export interface IOracleStore {
   ): Promise<void>;
   drawEntity(entityId: string): Promise<void>;
   drawMessage(messageId: string): Promise<void>;
+  generateEntityFromPrompt(entityId: string, prompt: string): Promise<void>;
+  generateMessageFromPrompt(messageId: string, prompt: string): Promise<void>;
+  regenerateEntityPrompt(entityId: string): Promise<string | null>;
+  regenerateMessagePrompt(messageId: string): Promise<string | null>;
   isVisualizingEntity(entityId: string | null | undefined): boolean;
   isVisualizingMessage(messageId: string | null | undefined): boolean;
   clearMessages(): Promise<void>;

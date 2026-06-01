@@ -72,11 +72,150 @@ describe("art direction resolver", () => {
       themeId: "scifi",
     });
 
-    expect(result.prompt).toContain("Mara, full character concept art");
+    expect(result.prompt).toContain("Mara, full-body character concept art");
     expect(result.prompt).toContain("Mara. Digital concept art style");
     expect(result.prompt).toContain(
       "Mara, illustrated worldbuilding reference",
     );
+  });
+
+  it("keeps character defaults concrete without overriding themed or vault art styles", () => {
+    const result = resolveArtDirection({
+      subject: "Tymora",
+      surface: "entity",
+      categoryId: "character",
+      themeId: "fantasy",
+    });
+
+    expect(result.prompt).toContain("clear face");
+    expect(result.prompt).toContain("visible hands");
+    expect(result.prompt).toContain("sharp focus on the full figure");
+    expect(result.prompt).toContain("body language");
+    expect(result.prompt).toContain("signature attire");
+    expect(result.prompt).toContain(
+      "hand-held props or environmental contact points",
+    );
+    expect(result.prompt).toContain("wearable technology or accessories");
+    expect(result.prompt).toContain("surface finish");
+    expect(result.prompt).toContain("weathering");
+    expect(result.prompt).toContain("asymmetry");
+    expect(result.prompt).toContain(
+      "presentation lighting frames the character",
+    );
+    expect(result.prompt).toContain("Oil painting style");
+    expect(result.prompt).toContain("warm earth palette");
+    expect(result.prompt).toContain(
+      "Tymora, illustrated worldbuilding reference",
+    );
+  });
+
+  it("keeps cyberpunk characters material-specific and environment-aware", () => {
+    const result = resolveArtDirection({
+      subject: "Architect-Class Figure",
+      surface: "entity",
+      categoryId: "character",
+      themeId: "cyberpunk",
+    });
+
+    expect(result.prompt).toContain("role, status, temperament");
+    expect(result.prompt).toContain("wearable technology or accessories");
+    expect(result.prompt).toContain("seams, fasteners, surface finish");
+    expect(result.prompt).toContain("practical wear");
+    expect(result.prompt).toContain("hand gesture");
+    expect(result.prompt).toContain("surrounding environment");
+    expect(result.prompt).toContain("urban surfaces and environmental texture");
+    expect(result.prompt).toContain("high-contrast neon palette");
+  });
+
+  it("keeps item defaults tactile and specific without overriding themed art styles", () => {
+    const result = resolveArtDirection({
+      subject: "Synapse-Bridge",
+      surface: "entity",
+      categoryId: "item",
+      themeId: "cyberpunk",
+    });
+
+    expect(result.prompt).toContain("close-up detailed prop concept art");
+    expect(result.prompt).toContain("clear scale cues");
+    expect(result.prompt).toContain("functional seams");
+    expect(result.prompt).toContain("contact points");
+    expect(result.prompt).toContain("worn surfaces");
+    expect(result.prompt).toContain(
+      "physical consequences of repeated handling",
+    );
+    expect(result.prompt).toContain("urban surfaces and environmental texture");
+    expect(result.prompt).toContain(
+      "Synapse-Bridge, illustrated worldbuilding reference",
+    );
+  });
+
+  it("keeps faction defaults identity-focused without overriding themed art styles", () => {
+    const result = resolveArtDirection({
+      subject: "Arasaka Security Detachment",
+      surface: "entity",
+      categoryId: "faction",
+      themeId: "cyberpunk",
+    });
+
+    expect(result.prompt).toContain("wide-angle eye-level faction concept art");
+    expect(result.prompt).toContain("cohesive group composition");
+    expect(result.prompt).toContain("clear visual anchor");
+    expect(result.prompt).toContain("clear hierarchy");
+    expect(result.prompt).toContain("readable insignia or subtle heraldry");
+    expect(result.prompt).toContain("controlled patrol halt");
+    expect(result.prompt).toContain("mirrored functional arrangement");
+    expect(result.prompt).toContain("distinct uniform language");
+    expect(result.prompt).toContain("restricted faction palette");
+    expect(result.prompt).toContain("role-specific equipment");
+    expect(result.prompt).toContain("specialist visual cues");
+    expect(result.prompt).toContain("equipment readiness");
+    expect(result.prompt).toContain("faces or masks where appropriate");
+    expect(result.prompt).toContain("authority, ideology, resources");
+    expect(result.prompt).toContain(
+      "background landscape or ambient color that stays secondary",
+    );
+    expect(result.prompt).toContain("recognizable faction identity");
+    expect(result.prompt).toContain("tactile material contrast");
+    expect(result.prompt).toContain("cohesive silhouette");
+    expect(result.prompt).toContain("controlled palette hierarchy");
+    expect(result.prompt).toContain(
+      "readable faction marks on practical gear or regalia",
+    );
+    expect(result.prompt).toContain("natural or crafted material weight");
+    expect(result.prompt).toContain("rhythmic group spacing");
+    expect(result.prompt).toContain("neon clutter");
+    expect(result.prompt).toContain("modern gear unless setting-appropriate");
+    expect(result.prompt).toContain("ornate generic armor");
+    expect(result.prompt).toContain("Cyberpunk digital concept art style");
+    expect(result.prompt).toContain("urban surfaces and environmental texture");
+    expect(result.prompt).toContain(
+      "Arasaka Security Detachment, illustrated worldbuilding reference",
+    );
+  });
+
+  it("keeps fantasy faction defaults grounded and material-focused", () => {
+    const result = resolveArtDirection({
+      subject: "Stormber Patrol Unit",
+      surface: "entity",
+      categoryId: "faction",
+      themeId: "fantasy",
+    });
+
+    expect(result.prompt).toContain("subtle heraldry");
+    expect(result.prompt).toContain("clear visual anchor");
+    expect(result.prompt).toContain("mirrored functional arrangement");
+    expect(result.prompt).toContain("restricted faction palette");
+    expect(result.prompt).toContain("repeated motifs");
+    expect(result.prompt).toContain("background landscape");
+    expect(result.prompt).toContain("natural or crafted material weight");
+    expect(result.prompt).toContain("rhythmic group spacing");
+    expect(result.prompt).toContain(
+      "readable faction marks on practical gear or regalia",
+    );
+    expect(result.prompt).toContain("ornate generic armor");
+    expect(result.prompt).toContain("modern gear unless setting-appropriate");
+    expect(result.prompt).toContain("Oil painting style");
+    expect(result.prompt).toContain("handcrafted materials");
   });
 
   it("inserts the subject when the template has no placeholder", () => {
@@ -215,7 +354,10 @@ describe("art direction resolver", () => {
     const testCases: Array<{ themeId: string; expectedSubstring: string }> = [
       { themeId: "fantasy", expectedSubstring: "Oil painting style" },
       { themeId: "scifi", expectedSubstring: "Digital concept art style" },
-      { themeId: "cyberpunk", expectedSubstring: "wet streets" },
+      {
+        themeId: "cyberpunk",
+        expectedSubstring: "Cyberpunk digital concept art style",
+      },
       { themeId: "modern", expectedSubstring: "Photographic" },
       {
         themeId: "apocalyptic",

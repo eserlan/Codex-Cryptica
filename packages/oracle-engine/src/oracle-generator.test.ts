@@ -112,7 +112,7 @@ describe("OracleGenerator", () => {
         mockContext.imageGeneration.distillVisualPrompt,
       ).toHaveBeenCalledWith(
         "key",
-        expect.stringContaining("full character concept art"),
+        expect.stringContaining("full-body character concept art"),
         "ctx",
         "model",
         false,
@@ -136,6 +136,40 @@ describe("OracleGenerator", () => {
       ).toHaveBeenCalledWith(
         "key",
         expect.stringContaining("Almos. ink wash portrait"),
+        "ctx",
+        "model",
+        false,
+      );
+    });
+
+    it("should ignore saved entity art direction when requested", async () => {
+      mockContext.vault.entities.e1 = {
+        id: "e1",
+        title: "Almos",
+        type: "character",
+        labels: [],
+        artDirection: "old saved prompt",
+      };
+      mockContext.uiStore.activeThemeId = "cyberpunk";
+
+      await generator.prepareEntityVisualizationPrompt("e1", mockContext, {
+        ignoreSavedArtDirection: true,
+      });
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("Cyberpunk digital concept art style"),
+        "ctx",
+        "model",
+        false,
+      );
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).not.toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("old saved prompt"),
         "ctx",
         "model",
         false,
@@ -189,7 +223,9 @@ describe("OracleGenerator", () => {
         mockContext.imageGeneration.distillVisualPrompt,
       ).toHaveBeenCalledWith(
         "key",
-        expect.stringContaining("Draw the moon gate. flat ink and gold leaf icon"),
+        expect.stringContaining(
+          "Draw the moon gate. flat ink and gold leaf icon",
+        ),
         "ctx",
         "model",
         false,
@@ -206,7 +242,7 @@ describe("OracleGenerator", () => {
         mockContext.imageGeneration.distillVisualPrompt,
       ).toHaveBeenCalledWith(
         "key",
-        expect.stringContaining("Almos, full character concept art"),
+        expect.stringContaining("Almos, full-body character concept art"),
         "ctx",
         "model",
         false,

@@ -119,8 +119,22 @@ export default {
         console.log(
           `[Oracle Proxy] Generating image using Workers AI model: ${targetModel}`,
         );
-        // Run model through binding. For image models it returns binary.
-        const output = await env.AI.run(targetModel, { prompt });
+        const form = new FormData();
+        form.append("prompt", prompt);
+        form.append("width", String(body.width || 1024));
+        form.append("height", String(body.height || 1024));
+
+        const formResponse = new Response(form);
+        const formBody = formResponse.body || form;
+        const formContentType =
+          formResponse.headers.get("content-type") || "multipart/form-data";
+
+        const output = await env.AI.run(targetModel, {
+          multipart: {
+            body: formBody,
+            contentType: formContentType,
+          },
+        });
 
         let buffer: ArrayBuffer;
         if (output instanceof ArrayBuffer) {

@@ -65,7 +65,7 @@ describe("DefaultImageGenerationService", () => {
 
     it("should preserve a resolved art direction query when context is missing", async () => {
       const resolvedPrompt =
-        "Almos, full character concept art with readable silhouette";
+        "Almos, full-body character concept art with readable silhouette";
 
       const result = await service.distillVisualPrompt(
         "key",
@@ -304,8 +304,13 @@ describe("DefaultImageGenerationService", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer cf-token",
           }),
+          body: expect.any(FormData),
         }),
       );
+      const body = (global.fetch as any).mock.calls[0][1].body as FormData;
+      expect(body.get("prompt")).toBe("prompt");
+      expect(body.get("width")).toBe("1024");
+      expect(body.get("height")).toBe("1024");
       expect(blob).toBeInstanceOf(Blob);
       expect(await blob.text()).toBe("cloudflare-image");
     });
@@ -342,6 +347,60 @@ describe("DefaultImageGenerationService", () => {
       );
       expect(blob).toBeInstanceOf(Blob);
       expect(await blob.text()).toBe("proxy-cloudflare-image");
+    });
+
+    it("should preserve proxy Cloudflare daily image limit guidance", async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: false,
+        statusText: "Too Many Requests",
+        json: () =>
+          Promise.resolve({
+            error: {
+              message:
+                "Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
+              code: "RATE_LIMIT_EXCEEDED",
+            },
+          }),
+      });
+
+      await expect(
+        service.generateImage(
+          "",
+          "prompt",
+          "@cf/black-forest-labs/flux-2-klein-4b",
+          {
+            provider: "cloudflare",
+          },
+        ),
+      ).rejects.toThrow(
+        "Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
+      );
+    });
+
+    it("should process a raw Cloudflare Workers AI image payload", async () => {
+      const mockImageData = "ZGVidWctaW1hZ2U="; // "debug-image" in base64
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            result: {
+              image: `data:image/png;base64,\n${mockImageData}\n`,
+            },
+          }),
+      });
+
+      const blob = await service.generateImage(
+        "",
+        "prompt",
+        "@cf/black-forest-labs/flux-2-klein-4b",
+        {
+          provider: "cloudflare",
+        },
+      );
+
+      expect(blob.type).toBe("image/png");
+      expect(await blob.text()).toBe("debug-image");
     });
 
     it("should fail fast when Cloudflare account ID is provided but API token is missing", async () => {

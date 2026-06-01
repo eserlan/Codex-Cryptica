@@ -133,9 +133,15 @@ describe("Oracle Proxy Worker image generation", () => {
       success: true,
       result: { image: "base64-image" },
     });
-    expect(ai.run).toHaveBeenCalledWith(DEFAULT_CF_IMAGE_MODEL, {
-      prompt: "castle at sunset",
-    });
+    expect(ai.run).toHaveBeenCalledWith(
+      DEFAULT_CF_IMAGE_MODEL,
+      expect.objectContaining({
+        multipart: expect.objectContaining({
+          body: expect.any(Object),
+          contentType: expect.stringContaining("multipart/form-data"),
+        }),
+      }),
+    );
   });
 
   it("uses the requested Cloudflare image model when one is provided", async () => {
@@ -151,8 +157,14 @@ describe("Oracle Proxy Worker image generation", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(ai.run).toHaveBeenCalledWith(model, {
-      prompt: "castle at sunset",
-    });
+    expect(ai.run).toHaveBeenCalledWith(
+      model,
+      expect.objectContaining({
+        multipart: expect.objectContaining({
+          body: expect.any(Object),
+          contentType: expect.stringContaining("multipart/form-data"),
+        }),
+      }),
+    );
   });
 });

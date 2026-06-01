@@ -22,6 +22,7 @@ describe("OracleActionExecutor - Detailed", () => {
         .mockResolvedValue({ primaryEntityId: "e1", sourceIds: ["e1"] }),
       generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateMessageVisualization: vi.fn().mockResolvedValue(new Blob([])),
+      generateVisualizationFromPrompt: vi.fn().mockResolvedValue(new Blob([])),
       generateRegenerationResponse: vi.fn().mockResolvedValue(undefined),
       generateCreationResponse: vi
         .fn()
@@ -1063,6 +1064,38 @@ describe("OracleActionExecutor - Detailed", () => {
       mockContext.chatHistory.messages = [{ id: "m1", content: "c" }];
       await executor.drawMessage("m1", mockContext);
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
+    });
+
+    it("should let direct entity image failures bubble to UI callers", async () => {
+      mockContext.vault.entities = { e1: { title: "T" } };
+      mockGenerator.generateEntityVisualization.mockRejectedValue(
+        new Error("Daily image generation limit exceeded."),
+      );
+
+      await expect(executor.drawEntity("e1", mockContext)).rejects.toThrow(
+        "Daily image generation limit exceeded.",
+      );
+      expect(mockContext.chatHistory.addMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining("Image generation failed"),
+        }),
+      );
+    });
+
+    it("should let approved prompt image failures bubble to UI callers", async () => {
+      mockContext.vault.entities = { e1: { title: "T" } };
+      mockGenerator.generateVisualizationFromPrompt.mockRejectedValue(
+        new Error("Daily image generation limit exceeded."),
+      );
+
+      await expect(
+        executor.generateEntityFromPrompt("e1", "prompt", mockContext),
+      ).rejects.toThrow("Daily image generation limit exceeded.");
+      expect(mockContext.chatHistory.addMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining("Image generation failed"),
+        }),
+      );
     });
   });
 

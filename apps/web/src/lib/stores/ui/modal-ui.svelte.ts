@@ -6,6 +6,10 @@ export type SettingsTab =
   | "about"
   | "help";
 
+export type ImagePromptReviewTarget =
+  | { kind: "entity"; id: string; title: string }
+  | { kind: "message"; id: string; title: string; entityId?: string };
+
 export class ModalUIStore {
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
@@ -65,6 +69,16 @@ export class ModalUIStore {
 
   showVaultSwitcher = $state(false);
   showShare = $state(false);
+
+  imagePromptReview = $state<{
+    open: boolean;
+    target: ImagePromptReviewTarget | null;
+    prompt: string;
+  }>({
+    open: false,
+    target: null,
+    prompt: "",
+  });
 
   // Derived properties for backwards compatibility
   get readModeNodeId() {
@@ -147,6 +161,22 @@ export class ModalUIStore {
     this.showShare = false;
   }
 
+  openImagePromptReview(target: ImagePromptReviewTarget, prompt: string) {
+    this.imagePromptReview = {
+      open: true,
+      target,
+      prompt,
+    };
+  }
+
+  closeImagePromptReview() {
+    this.imagePromptReview = {
+      open: false,
+      target: null,
+      prompt: "",
+    };
+  }
+
   openCanvasSelection(pendingEntities: string[]) {
     this.pendingCanvasEntities = pendingEntities;
     this.showCanvasSelector = true;
@@ -214,6 +244,7 @@ export class ModalUIStore {
       this.relatedEntityDialog.open ||
       this.showVaultSwitcher ||
       this.showShare ||
+      this.imagePromptReview.open ||
       this.lightbox.show ||
       this.soundBite.show
     );
@@ -225,6 +256,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v4__";
+const KEY = "__codex_modal_ui_store__v5__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

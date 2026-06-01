@@ -26,6 +26,20 @@ describe("classifyApiError", () => {
     expect(result.type).toBe("rate-limit");
   });
 
+  it("preserves explicit proxy daily image limit guidance", () => {
+    vi.stubGlobal("navigator", { onLine: true });
+    const result = classifyApiError(
+      new Error(
+        "Proxy Cloudflare Image Generation Error (@cf/model): Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
+      ),
+    );
+
+    expect(result.type).toBe("rate-limit");
+    expect(result.message).toBe(
+      "Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
+    );
+  });
+
   it("returns quota for RESOURCE_EXHAUSTED errors", () => {
     vi.stubGlobal("navigator", { onLine: true });
     const result = classifyApiError(

@@ -52,6 +52,9 @@ ORIGINAL REQUEST:
 ${u(userQuery)}
 
 GUIDELINES:
+- Preserve all explicit theme, genre, medium, palette, lighting, and material directives from the original request in the final prompt. Treat theme/default-art-style language as required art direction, not optional flavor.
+- Keep named genre/style anchors verbatim when present, such as "Cyberpunk", "gothic horror", "oil painting", "photographic", "noir", or "pulp adventure", unless they directly conflict with stronger vault canon.
+- If the original request includes a composed category + theme + global art direction, carry the theme information into the final prompt even while reducing repetition.
 - Prioritize concrete, visual details (e.g., specific clothing materials, physical features, worn gear, posture, and facial expressions) over abstract character names or name repetition.
 - Emphasize distinctive setting identity and preserve cultural specificity.
 - Ground the mood in environmental storytelling, lighting, and architecture.

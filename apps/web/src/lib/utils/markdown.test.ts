@@ -180,6 +180,8 @@ describe("markdown.ts utility", () => {
         content:
           "# Eldrin Shadoweaver\nAn ancient shadow mage who dwells in the keeping of shadows.",
         lore: "He was born before the first moon fell.",
+        artDirection:
+          "Full-body character concept art with sharp focus and weathered robes.",
         image: "images/eldrin.png",
         thumbnail: "images/eldrin_thumb.png",
         date: {
@@ -234,6 +236,7 @@ describe("markdown.ts utility", () => {
       expect(parsedResult.metadata.aliases).toEqual(fullEntity.aliases);
       expect(parsedResult.metadata.connections).toEqual(fullEntity.connections);
       expect(parsedResult.metadata.lore).toBe(fullEntity.lore);
+      expect(parsedResult.metadata.artDirection).toBe(fullEntity.artDirection);
       expect(parsedResult.metadata.image).toBe(fullEntity.image);
       expect(parsedResult.metadata.thumbnail).toBe(fullEntity.thumbnail);
       expect(parsedResult.metadata.date).toEqual(fullEntity.date);
