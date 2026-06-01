@@ -112,6 +112,9 @@ export class VisualizationExecutor
     context: OracleExecutionContext,
     options: { ignoreSavedArtDirection?: boolean } = {},
   ) {
+    const entity = context.vault.entities[entityId];
+    if (!entity) return null;
+
     const generator = this.generator || context.generator;
     if (!generator) throw new Error("Generator not available in context.");
 

@@ -95,7 +95,7 @@ export const CATEGORY_ART_DIRECTION_DEFAULTS: Record<
     label: "Faction Default",
     source: "category-default",
     template:
-      "{subject}, wide-angle eye-level faction concept art with a cohesive group composition, clear visual anchor, clear hierarchy, readable insignia or subtle heraldry, synchronized movement, disciplined formation, mirrored functional arrangement, or controlled patrol halt, and distinct uniform language, regalia, restricted faction palette, banners, tools, weapons, or symbols. Show how the faction expresses authority, ideology, resources, and internal roles through posture, role-specific equipment, specialist visual cues, equipment readiness, faces or masks where appropriate, material quality, repeated motifs, environmental control, and background landscape or ambient color that stays secondary to the faction identity. Emphasize recognizable faction identity, grounded proportions, sharp focus on the group, tactile material contrast, cohesive silhouette, controlled palette hierarchy, readable faction marks on practical gear or regalia, natural or crafted material weight, rhythmic group spacing, and organized visual rhythm; avoid random crowds, generic soldiers, oversized logos, superhero posing, excessive holograms, neon clutter, ornate generic armor, modern gear unless setting-appropriate, and unreadable background clutter.",
+      "{subject}, wide-angle eye-level faction concept art of the faction caught in a defining moment, with a cohesive group composition, clear visual anchor, clear hierarchy, readable insignia or subtle heraldry, synchronized movement, disciplined formation, mirrored functional arrangement, or controlled patrol halt, and distinct uniform language, regalia, restricted faction palette, banners, tools, weapons, or symbols. Show how the faction expresses authority, ideology, resources, social role, emotional character, and internal roles through posture, role-specific equipment, specialist visual cues, equipment readiness, faces or masks where appropriate, material quality, repeated motifs, environmental control, and background landscape or ambient color that stays secondary to the faction identity. Emphasize recognizable faction identity, grounded proportions, sharp focus on the group, tactile material contrast, cohesive silhouette, controlled palette hierarchy, readable faction marks on practical gear or regalia, natural or crafted material weight, rhythmic group spacing, organized visual rhythm, and environmental storytelling; avoid random crowds, generic soldiers, oversized logos, superhero posing, excessive holograms, neon clutter, ornate generic armor, modern gear unless setting-appropriate, and unreadable background clutter.",
   },
   event: {
     id: "category.event",
@@ -216,6 +216,14 @@ const startrek: ArtDirectionTemplate = {
     "{subject}. Clean 1990s sci-fi production illustration style, smooth surfaces and primary-coded technology (red, blue, gold), even practical lighting, optimistic palette, no grime, engineered rather than salvaged.",
 };
 
+const lancer: ArtDirectionTemplate = {
+  id: "theme.lancer",
+  label: "Lancer Default",
+  source: "theme-default",
+  template:
+    "{subject}. Military concept art style, industrial mech and hardware design with worn panel texture and hazard markings, palette of Union blue, gunmetal grey, and safety orange, compact tactical schematic aesthetic, frontier mud-and-lasers world-building, functional over decorative.",
+};
+
 export const THEME_ART_DIRECTION_DEFAULTS: Record<
   string,
   ArtDirectionTemplate
@@ -322,6 +330,35 @@ export const THEME_ART_DIRECTION_DEFAULTS: Record<
     source: "theme-default",
     template: startrek.template,
   },
+  lancer: {
+    id: "theme.lancer",
+    label: "Lancer Default",
+    source: "theme-default",
+    template: lancer.template,
+  },
+};
+
+export const FACTION_THEME_TEMPLATES: Record<string, string> = {
+  fantasy:
+    "{subject}, a faction shown in a defining moment — taking tribute, blessing soldiers before battle, marching under heraldic banners, or guarding a sacred site — members in distinctive armour, livery, tabards, or vestments, heraldic symbols and battle standards prominent, composition that reveals their power, ideology, and social role",
+  scifi:
+    "{subject}, a faction shown in a defining moment — inspecting contested cargo, patrolling a station perimeter, broadcasting a manifesto, or claiming a new installation — members in uniform with faction insignia and ship markings, environment communicating their territory and ideology, composition that reveals their reach and methods",
+  cyberpunk:
+    "{subject}, a faction shown in a defining moment — controlling a block, shaking down rivals, broadcasting propaganda, or jacking into secured systems — members with faction implants, gang tags, and neon colours, urban environment showing their grip on the city, composition that reveals their ruthlessness and style",
+  apocalyptic:
+    "{subject}, a faction shown in a defining moment — guarding a water source, raiding a supply convoy, distributing salvage to followers, or holding a fortified ruin — members in scavenged armour painted with faction markings, wasteland environment, composition that reveals their survival strategy and authority",
+  horror:
+    "{subject}, a faction shown in a defining moment — conducting a ritual, hunting prey in shadow, inducting a new member, or convening in secret — members in cult regalia, ceremonial dress, or aristocratic decay, faction symbols and sacred objects prominent, composition that reveals their agenda and what they are willing to do",
+  fallout:
+    "{subject}, a faction shown in a defining moment — issuing rations, enforcing doctrine in a settlement, scavenging pre-war technology, or holding a vault checkpoint — members in faction jumpsuits, power armour, or scavenged gear with painted insignia, retro-futurist wasteland environment, composition that reveals their ideology and claim to order",
+  starwars:
+    "{subject}, a faction shown in a defining moment — assembling forces, accepting a surrender, guarding a sacred site, or conducting a diplomatic exchange — members in faction uniforms, armour, or robes with clear allegiance markings, capital ships or iconic architecture establishing scale, composition that conveys their place in the galactic order",
+  startrek:
+    "{subject}, a faction shown in a defining moment — negotiating a treaty, conducting a joint survey, commanding a vessel during crisis, or establishing first contact — members with clear rank and division markings, starship or station environment, composition that reveals their values, methods, and place in the interstellar community",
+  lancer:
+    "{subject}, a faction shown in a defining moment — deploying mechs for a theatre operation, issuing mission orders, holding contested ground, or processing field intelligence — members in tactical uniform or mech pilot suits with faction insignia, military hardware and operational banners visible, composition that reveals their command structure and combat doctrine",
+  modern:
+    "{subject}, a faction shown in a defining moment — holding a press conference, coordinating a field operation, making an arrest, or rallying supporters — members in contemporary uniform, suit, or civilian dress with faction identifiers, real-world institutional setting, composition that reveals their social function and source of power",
 };
 
 const CATEGORY_ALIASES: Record<string, string> = {
@@ -395,9 +432,20 @@ export function resolveArtDirection(
   let source: ArtDirectionSource = "global-default";
   let templateId: string | undefined = GLOBAL_ART_DIRECTION_DEFAULT.id;
 
-  const categoryTemplate = categoryId
-    ? CATEGORY_ART_DIRECTION_DEFAULTS[categoryId]
-    : undefined;
+  const factionThemeTemplate =
+    categoryId === "faction" && themeId && FACTION_THEME_TEMPLATES[themeId]
+      ? {
+          id: `category.faction.${themeId}`,
+          label: `Faction ${themeId} Default`,
+          source: "category-default" as ArtDirectionSource,
+          template: `${CATEGORY_ART_DIRECTION_DEFAULTS.faction.template} ${FACTION_THEME_TEMPLATES[themeId]}`,
+        }
+      : undefined;
+  const categoryTemplate = factionThemeTemplate
+    ? factionThemeTemplate
+    : categoryId
+      ? CATEGORY_ART_DIRECTION_DEFAULTS[categoryId]
+      : undefined;
   const themeTemplate = themeId
     ? THEME_ART_DIRECTION_DEFAULTS[themeId]
     : undefined;

@@ -108,7 +108,11 @@ describe("VisualizationExecutor", () => {
       generateEntityVisualization: vi.fn(),
     };
     const executor = new VisualizationExecutor(generator as any);
-    const context = {} as any;
+    const context = {
+      vault: {
+        entities: { e1: { id: "e1", title: "Target" } },
+      },
+    } as any;
 
     const result = await executor.prepareEntityPrompt("e1", context);
 
@@ -119,6 +123,23 @@ describe("VisualizationExecutor", () => {
       {},
     );
     expect(generator.generateEntityVisualization).not.toHaveBeenCalled();
+  });
+
+  it("should skip entity prompt preparation when the entity is missing", async () => {
+    const generator = {
+      prepareEntityVisualizationPrompt: vi.fn(),
+    };
+    const executor = new VisualizationExecutor(generator as any);
+    const context = {
+      vault: {
+        entities: {},
+      },
+    } as any;
+
+    const result = await executor.prepareEntityPrompt("missing", context);
+
+    expect(result).toBeNull();
+    expect(generator.prepareEntityVisualizationPrompt).not.toHaveBeenCalled();
   });
 
   it("should generate an entity image from an approved prompt", async () => {

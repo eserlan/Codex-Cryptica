@@ -52,8 +52,12 @@
   };
 
   const copyPrompt = async () => {
-    await navigator.clipboard.writeText(editedPrompt);
-    notificationStore.notify("Copied image prompt", "success");
+    try {
+      await navigator.clipboard.writeText(editedPrompt);
+      notificationStore.notify("Copied image prompt", "success");
+    } catch {
+      notificationStore.notify("Could not copy image prompt.", "error");
+    }
   };
 
   const regeneratePrompt = async () => {
@@ -187,7 +191,10 @@
             class="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-theme-border bg-theme-surface px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-muted transition hover:border-theme-primary hover:text-theme-primary disabled:cursor-wait disabled:opacity-50"
           >
             {#if isRegeneratingPrompt}
-              <span class="icon-[lucide--loader-2] h-4 w-4 animate-spin"></span>
+              <span
+                class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
+                aria-hidden="true"
+              ></span>
               Regenerating
             {:else}
               <span class="icon-[lucide--refresh-cw] h-4 w-4"></span>
@@ -209,7 +216,10 @@
             class="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-theme-primary bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-bg transition hover:bg-theme-secondary disabled:cursor-wait disabled:opacity-60"
           >
             {#if isGenerating}
-              <span class="icon-[lucide--loader-2] h-4 w-4 animate-spin"></span>
+              <span
+                class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
+                aria-hidden="true"
+              ></span>
               Generating
             {:else}
               <span class="icon-[lucide--image-plus] h-4 w-4"></span>

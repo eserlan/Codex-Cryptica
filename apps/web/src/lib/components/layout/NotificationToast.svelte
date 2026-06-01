@@ -57,7 +57,7 @@
       title="Dismiss"
       onclick={() => notificationStore.clearNotification()}
     >
-      <span class="icon-[lucide--x] h-4 w-4"></span>
+      <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
     </button>
   </div>
 {/if}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CATEGORY_ART_DIRECTION_DEFAULTS,
+  FACTION_THEME_TEMPLATES,
   GLOBAL_ART_DIRECTION_DEFAULT,
   THEME_ART_DIRECTION_DEFAULTS,
   resolveArtDirection,
@@ -343,11 +344,39 @@ describe("art direction resolver", () => {
       GLOBAL_ART_DIRECTION_DEFAULT.template,
       ...Object.values(CATEGORY_ART_DIRECTION_DEFAULTS).map((t) => t.template),
       ...Object.values(THEME_ART_DIRECTION_DEFAULTS).map((t) => t.template),
+      ...Object.values(FACTION_THEME_TEMPLATES),
     ].join("\n");
 
     expect(shippedText).not.toMatch(
       /\b(in the style of|by artgerm|by greg rutkowski|by loish|by sakimichan|by beeple)\b/i,
     );
+  });
+
+  it("uses a theme-specific faction template when category is faction and theme has an entry", () => {
+    const result = resolveArtDirection({
+      subject: "The Iron Covenant",
+      surface: "entity",
+      categoryId: "faction",
+      themeId: "fantasy",
+    });
+
+    expect(result.source).toBe("category-default");
+    expect(result.templateId).toBe("category.faction.fantasy");
+    expect(result.prompt).toContain("heraldic banners");
+    expect(result.prompt).toContain("Oil painting style");
+  });
+
+  it("falls back to generic faction template when theme has no faction entry", () => {
+    const result = resolveArtDirection({
+      subject: "The Iron Covenant",
+      surface: "entity",
+      categoryId: "faction",
+      themeId: "workspace",
+    });
+
+    expect(result.source).toBe("category-default");
+    expect(result.templateId).toBe("category.faction");
+    expect(result.prompt).toContain("defining moment");
   });
 
   it("resolves each canonical theme id and alias correctly and includes expected text", () => {

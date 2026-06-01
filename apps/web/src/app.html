@@ -12,8 +12,9 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<!-- First-paint fonts: workspace default theme only (Inter + Fraunces) -->
+	<!-- display=optional: skip the font swap if not in cache, eliminating FOUT-driven CLS on the landing heading -->
 	<link rel="preload" as="style"
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=optional"
 		onload="this.onload=null;this.rel='stylesheet'" />
 	<!-- Theme fonts: deferred until idle so they never block FCP/LCP -->
 	<script>
@@ -33,7 +34,7 @@
 	</script>
 	<noscript>
 		<link rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap" />
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&display=optional" />
 	</noscript>
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
@@ -42,8 +43,14 @@
 	<script>
 		// Prevent FOUC for Skip Welcome and Theme
 		try {
-			if (localStorage.getItem("codex_skip_landing") === "true" || new URLSearchParams(window.location.search).has("demo")) {
+			var params = new URLSearchParams(window.location.search);
+			if (localStorage.getItem("codex_skip_landing") === "true" || params.has("demo")) {
 				document.documentElement.classList.add("skip-landing");
+			}
+			// Returning users who dismissed the landing: hide it before first paint
+			// to prevent the SSR-rendered marketing layer from flashing on hydration.
+			if (localStorage.getItem("codex_dismissed_landing") === "true") {
+				document.documentElement.classList.add("dismissed-landing");
 			}
 			let appearance = localStorage.getItem("codex-cryptica-app-appearance") || "system";
 			if (appearance !== "neutral-light" && appearance !== "neutral-dark" && appearance !== "system") {
