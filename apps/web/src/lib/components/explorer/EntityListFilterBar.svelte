@@ -30,7 +30,7 @@
     ),
   );
 
-  function toggleTypeFilter(type: string, event: MouseEvent) {
+  function toggleTypeFilter(type: string, _event: MouseEvent) {
     if (type === "all") {
       typeFilters = new Set();
       explorerUIStore.clearLabelFilters();
@@ -41,23 +41,13 @@
       return;
     }
 
-    const isMulti = event.ctrlKey || event.metaKey;
-
-    if (isMulti) {
-      const newFilters = new Set(typeFilters);
-      if (newFilters.has(type)) {
-        newFilters.delete(type);
-      } else {
-        newFilters.add(type);
-      }
-      typeFilters = newFilters;
+    const newFilters = new Set(typeFilters);
+    if (newFilters.has(type)) {
+      newFilters.delete(type);
     } else {
-      if (typeFilters.has(type)) {
-        typeFilters = new Set();
-      } else {
-        typeFilters = new Set([type]);
-      }
+      newFilters.add(type);
     }
+    typeFilters = newFilters;
   }
 
   function getIconToggleClasses(active: boolean) {

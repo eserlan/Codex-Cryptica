@@ -352,4 +352,33 @@ describe("EntityList", () => {
       .closest("[data-testid='entity-list-item']");
     expect(parentRow?.getAttribute("draggable")).toBe("false");
   });
+
+  it("toggles multiple category filters sequentially to show OR filtered entities", async () => {
+    render(EntityList);
+
+    const npcButton = screen.getByLabelText("Filter by NPC");
+    const locationsButton = screen.getByLabelText("Filter by Locations");
+
+    // Initially, both npc and location entities are visible
+    expect(screen.queryByText("Ava")).not.toBeNull();
+    expect(screen.queryByText("Parent Entity")).not.toBeNull();
+
+    // Click NPC button -> filters to only NPC
+    await fireEvent.click(npcButton);
+    await tick();
+    expect(screen.queryByText("Ava")).not.toBeNull();
+    expect(screen.queryByText("Parent Entity")).toBeNull();
+
+    // Click Locations button -> toggles Locations ON as well (OR filtering: NPC or Location)
+    await fireEvent.click(locationsButton);
+    await tick();
+    expect(screen.queryByText("Ava")).not.toBeNull();
+    expect(screen.queryByText("Parent Entity")).not.toBeNull();
+
+    // Click NPC button again -> toggles NPC OFF (only Locations remains)
+    await fireEvent.click(npcButton);
+    await tick();
+    expect(screen.queryByText("Ava")).toBeNull();
+    expect(screen.queryByText("Parent Entity")).not.toBeNull();
+  });
 });
