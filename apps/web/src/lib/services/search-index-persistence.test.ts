@@ -133,6 +133,57 @@ describe("SearchIndexPersistence", () => {
       expect(JSON.parse(text)).toEqual(mockIndexData);
     });
 
+    it("should convert ArrayBuffer segments to strings before compression/saving", async () => {
+      const encoder = new TextEncoder();
+      const mockIndexData = {
+        isSegmented: true,
+        keyCount: 2,
+        segments: {
+          cfg: encoder.encode("flexsearch-config-data").buffer,
+          _docIds: encoder.encode('["doc-1","doc-2"]').buffer,
+        },
+      };
+      mockApi.exportIndex.mockResolvedValue(mockIndexData);
+
+      await persistence.saveIndex("vault-1");
+
+      expect(mockApi.exportIndex).toHaveBeenCalledTimes(1);
+      expect(mockDb.searchIndex.put).toHaveBeenCalledTimes(1);
+
+      const putArg = mockDb.searchIndex.put.mock.calls[0][0];
+      expect(putArg.data).toBeInstanceOf(Blob);
+
+      const blob = putArg.data as Blob;
+      let text: string;
+      if (typeof DecompressionStream !== "undefined") {
+        const rawStream =
+          typeof blob.stream === "function"
+            ? blob.stream()
+            : new ReadableStream({
+                async start(controller) {
+                  try {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    controller.enqueue(new Uint8Array(arrayBuffer));
+                  } catch (err) {
+                    controller.error(err);
+                  }
+                  controller.close();
+                },
+              });
+        const stream = rawStream.pipeThrough(
+          new DecompressionStream("deflate-raw"),
+        );
+        text = await new Response(stream).text();
+      } else {
+        text = await blob.text();
+      }
+
+      const parsed = JSON.parse(text);
+      expect(parsed.isSegmented).toBe(true);
+      expect(parsed.segments.cfg).toBe("flexsearch-config-data");
+      expect(parsed.segments._docIds).toBe('["doc-1","doc-2"]');
+    });
+
     it("should fall back to raw JSON object if compression fails", async () => {
       // Mock global CompressionStream to throw
       const originalCS = globalThis.CompressionStream;
@@ -211,6 +262,31 @@ describe("SearchIndexPersistence", () => {
 
       expect(result).toBe(true);
       expect(mockApi.importIndex).toHaveBeenCalledWith(mockIndexData);
+    });
+
+    it("should ignore corrupt segmented records with empty document IDs", async () => {
+      const mockIndexData = {
+        isSegmented: true,
+        keyCount: 2,
+        segments: {
+          _docIds: "",
+          cfg: "flexsearch-config-data",
+        },
+      };
+
+      mockDb.searchIndex.get.mockResolvedValue({
+        vaultId: "vault-1",
+        data: mockIndexData,
+        updatedAt: Date.now(),
+      });
+
+      const result = await persistence.loadIndex("vault-1");
+
+      expect(result).toBe(false);
+      expect(mockApi.importIndex).not.toHaveBeenCalled();
+      expect(mockDebug.warn).toHaveBeenCalledWith(
+        expect.stringContaining("missing document IDs"),
+      );
     });
   });
 });

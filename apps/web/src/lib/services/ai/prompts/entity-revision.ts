@@ -1,7 +1,7 @@
 import type { Entity, RelatedEntityContext } from "schema";
 import { u } from "./user-content";
 
-export function buildEntityReconciliationPrompt(
+export function buildEntityRevisionPrompt(
   entity: Entity,
   incoming: {
     chronicle: string;
@@ -9,6 +9,11 @@ export function buildEntityReconciliationPrompt(
   },
   relatedEntities: RelatedEntityContext[] = [],
   categories: { id: string; label?: string; description?: string }[] = [],
+  options: {
+    source?: string;
+    instructions?: string;
+    priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+  } = {},
 ): string {
   const relatedSection =
     relatedEntities.length > 0
@@ -36,10 +41,25 @@ export function buildEntityReconciliationPrompt(
       : "";
   const categoryRule =
     categories.length > 0
-      ? `15. Also choose the single best categoryId from ALLOWED CATEGORIES based on the final reconciled chronicle and lore. Prefer the final record over the earlier type guess.`
+      ? `15. Also choose the single best categoryId from ALLOWED CATEGORIES based on the final revised chronicle and lore. Prefer the final record over the earlier type guess.`
       : `15. Keep the entity's existing type unchanged.`;
   const categoryJsonField =
     categories.length > 0 ? ',\n  "categoryId": "one allowed category id"' : "";
+  const instructionSection = options.instructions?.trim()
+    ? `\nUSER INSTRUCTIONS / CORRECTIONS (HIGHEST PRIORITY):\n${u(options.instructions.trim())}\n`
+    : "";
+  const sourceLine = options.source
+    ? `\nREVISION SOURCE: ${options.source}`
+    : "";
+  const priority =
+    options.priority ||
+    (options.instructions?.trim() ? "instructions-first" : "incoming-first");
+  const priorityRule =
+    priority === "instructions-first"
+      ? "User instructions/corrections are the highest-priority input. Incoming passage comes next. Existing record is preserved unless corrected or superseded."
+      : priority === "preserve-existing"
+        ? "Preserve the existing record unless incoming material or user instructions clearly improve, correct, or extend it."
+        : "Incoming passage is the highest-priority content input unless user instructions explicitly correct it. Existing record is preserved unless superseded.";
 
   return `You are a meticulous lore archivist updating an existing worldbuilding record.
 
@@ -48,9 +68,10 @@ FIELD DEFINITIONS:
 - LORE (lore): The rich reference layer — backstory, motivations, relationships, tactics, secrets, contradictions, open questions. This is where details live. Structured markdown (headings, bullets) is appropriate when it helps.
 
 TASK:
-Reconcile the current record with the new oracle passage and return a clean updated record.
+Revise the current record using the available input and return a clean updated record.
 ${entity.title} is the PRIMARY SUBJECT of this record. Everything in the output must be written from, and remain focused on, ${entity.title}'s perspective, identity, history, and role.
 You have full authority to move or redistribute content between chronicle and lore to best fit their definitions above — including when the incoming passage contains a mix of summary and detail.
+${sourceLine}
 
 ENTITY:
 - Title: ${entity.title}
@@ -70,13 +91,14 @@ ${u(incoming.chronicle || "")}
 
 --- INCOMING LORE CANDIDATE ---
 ${u(incoming.lore || "")}
+${instructionSection}
 ${relatedSection}
 
 RULES:
-1. Preserve established facts from the current record except where the incoming passage (which comes from the chat) conflicts, in which case the incoming passage always supersedes and replaces those facts.
-2. If the incoming passage explicitly retracts, deletes, or corrects information from the current record (e.g., "Remove X", "Actually, Y never happened"), you MUST reflect that change by removing or amending the relevant parts of the updated record.
+1. Priority: ${priorityRule}
+2. If the incoming passage or user instructions explicitly retract, delete, or correct information from the current record (e.g., "Remove X", "Actually, Y never happened"), you MUST reflect that change by removing or amending the relevant parts of the updated record.
 3. Merge duplicate information into one coherent record.
-4. Resolve contradictions by prioritizing the incoming passage.
+4. Resolve contradictions according to the priority rule.
 5. Keep the chronicle tight and readable — current status and defining identity, not exhaustive history.
 6. Make the lore richer and more complete when the source material supports it. When an incoming passage contains detail that belongs in lore rather than chronicle, place it there rather than compressing it away.
 7. Markdown usage differs by field:

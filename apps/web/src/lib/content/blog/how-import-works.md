@@ -46,7 +46,7 @@ The importer accepts the most common formats natively, including direct clipboar
 | **`.txt`**  | All text content, preserving paragraphs.                                  |
 | **`.docx`** | Full text with formatting and embedded images.                            |
 | **`.pdf`**  | Text layer and embedded raster images.                                    |
-| **`.json`** | Structured exports from other tools for intelligent reconciliation.       |
+| **`.json`** | Structured exports from other tools for intelligent revision.             |
 | **Pasted**  | Raw text from your clipboard, converted from HTML for immediate analysis. |
 
 Every format is handled by a specialized parser that hunts for both text and embedded images. Pictures from your PDF or Word files are saved to your archive automatically, ready for character portraits and maps.
@@ -60,7 +60,7 @@ Once the text is extracted, the **Oracle Analyzer** reads your lore with the eye
 - **Entity Identification**: It classifies subjects into `Character`, `Location`, `Item`, `Faction`, or `Lore`.
 - **Synthesis**: It drafts one-sentence chronicles and expanded lore notes based on your text.
 - **Relationship Discovery**: It detects links — like a character serving a specific faction — and materializes them as edges on your graph.
-- **Archive Reconciliation**: It checks your existing archive to see if you already have a node for a discovered entity, offering to **merge** instead of duplicate.
+- **Archive Revision**: It checks your existing archive to see if you already have a node for a discovered entity, offering to **merge** instead of duplicate.
 
 ![Importer Processing Interface](https://assets.codexcryptica.com/images/blog/how-import-works/import-processing.png)
 

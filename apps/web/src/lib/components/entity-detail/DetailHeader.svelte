@@ -6,7 +6,7 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
-  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
+  import SidepanelRevisionButton from "$lib/components/entity/SidepanelRevisionButton.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -101,7 +101,7 @@
 
 {#snippet headerActions()}
   {#if !isEditing}
-    <SidepanelRegenButton entityId={entity.id} />
+    <SidepanelRevisionButton entityId={entity.id} />
     {#if isGraphView}
       <button
         type="button"

@@ -92,9 +92,9 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/services/RegenerationService.svelte", () => ({
-  regenerationService: {
-    isGenerating: false,
+vi.mock("$lib/services/RevisionService.svelte", () => ({
+  revisionService: {
+    isRevising: false,
   },
 }));
 

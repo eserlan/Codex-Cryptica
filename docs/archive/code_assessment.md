@@ -69,7 +69,7 @@ A major architectural victory in Codex-Cryptica is the decomposition of historic
    - `context-manager.svelte.ts`: RAG context extraction and document chunking.
    - `action-manager.svelte.ts`: Triggering vault updates and entity modifications.
    - `settings-manager.svelte.ts`: Local setting overrides and API keys.
-   - `reconciliation-manager.svelte.ts`: Merging AI-suggested content with existing vault entities.
+   - `revision-manager.svelte.ts`: Revising AI-suggested content with existing vault entities.
 2. **`ui.svelte.ts`**: Replaced entirely by modular stores under `apps/web/src/lib/stores/ui/` (e.g., `connection-mode.svelte.ts`, `layout-ui.svelte.ts`, `notification.svelte.ts`).
 3. **P2P Services**: Historically represented by large host/guest stores, the network layers are split into transport layers (`P2PClientTransport`), dispatchers (`p2p-dispatcher`), and domain-specific message handlers (Spec 098/100).
 

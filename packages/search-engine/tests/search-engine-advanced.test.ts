@@ -311,6 +311,23 @@ describe("SearchEngine – importIndex", () => {
     await target.importIndex(exported);
     expect(target.docCount).toBe(2);
   });
+
+  it("skips corrupt segmented payloads with empty _docIds", async () => {
+    const engine = new SearchEngine();
+    await engine.clear();
+
+    await engine.importIndex({
+      isSegmented: true,
+      keyCount: 2,
+      segments: {
+        _docIds: "",
+        cfg: "flexsearch-config-data",
+      },
+    });
+
+    expect(engine.docCount).toBe(0);
+    expect(await engine.search("anything")).toEqual([]);
+  });
 });
 
 // ─── Concurrent task queue safety ─────────────────────────────────────────────

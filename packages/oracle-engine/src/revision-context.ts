@@ -5,7 +5,7 @@ export interface RelatedEntityContext {
   summary: string;
 }
 
-interface BuildReconciliationContextOptions {
+interface BuildRevisionContextOptions {
   entity: {
     id: string;
     title: string;
@@ -55,7 +55,7 @@ function summarizeContext(value: string, maxChars: number): string {
 }
 
 export function buildRelatedEntityContext(
-  options: BuildReconciliationContextOptions,
+  options: BuildRevisionContextOptions,
 ): RelatedEntityContext[] {
   const {
     entity,

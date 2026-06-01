@@ -7,7 +7,7 @@ import { ConnectExecutor } from "./executors/connect-executor";
 import { MergeExecutor } from "./executors/merge-executor";
 import { PlotExecutor } from "./executors/plot-executor";
 import { VisualizationExecutor } from "./executors/visualization-executor";
-import { RegenerateExecutor } from "./executors/regenerate-executor";
+import { ReviseExecutor } from "./executors/revise-executor";
 import { ChatExecutor } from "./executors/chat-executor";
 import type { OracleIntent, OracleExecutionContext } from "./types";
 
@@ -28,7 +28,7 @@ export class OracleActionExecutor {
   private mergeExecutor = new MergeExecutor();
   private plotExecutor: PlotExecutor;
   private visualizationExecutor: VisualizationExecutor;
-  private regenerateExecutor: RegenerateExecutor;
+  private reviseExecutor: ReviseExecutor;
   private chatExecutor: ChatExecutor;
 
   constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
@@ -38,7 +38,7 @@ export class OracleActionExecutor {
     // Inject dependencies into handlers
     this.plotExecutor = new PlotExecutor(this.generator);
     this.visualizationExecutor = new VisualizationExecutor(this.generator);
-    this.regenerateExecutor = new RegenerateExecutor(this.generator);
+    this.reviseExecutor = new ReviseExecutor(this.generator);
     this.chatExecutor = new ChatExecutor(this.generator, this.draftingEngine);
   }
 
@@ -55,12 +55,8 @@ export class OracleActionExecutor {
       case "clear":
         await this.metaExecutor.execute(intent, context);
         break;
-      case "regenerate":
-        await this.regenerateExecutor.execute(
-          intent,
-          context,
-          onPartialResponse,
-        );
+      case "revise":
+        await this.reviseExecutor.execute(intent, context, onPartialResponse);
         break;
       case "roll":
         await this.diceExecutor.execute(intent, context);
@@ -155,16 +151,16 @@ export class OracleActionExecutor {
   }
 
   /**
-   * Public API for direct entity regeneration.
+   * Public API for direct entity revision.
    */
-  async regenerateEntity(
+  async reviseEntity(
     entityId: string,
     context: OracleExecutionContext,
     onPartialResponse?: (partial: string) => void,
   ) {
     try {
-      await this.regenerateExecutor.execute(
-        { type: "regenerate", entityId },
+      await this.reviseExecutor.execute(
+        { type: "revise", entityId },
         context,
         onPartialResponse,
       );
@@ -173,7 +169,7 @@ export class OracleActionExecutor {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
-        content: `❌ Regeneration failed: ${err.message}`,
+        content: `❌ Revision failed: ${err.message}`,
       });
     }
   }

@@ -5,7 +5,7 @@
   } from "$lib/services/node-merge.service.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
@@ -84,7 +84,7 @@
         // Frontmatter assumed merged in proposal
       };
 
-      regenerationService.proposeMergeDraft(finalProposal, sourceNodeIds);
+      revisionService.proposeMergeDraft(finalProposal, sourceNodeIds);
       onSuccess();
       onClose();
     } catch (e: any) {

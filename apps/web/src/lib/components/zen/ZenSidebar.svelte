@@ -5,9 +5,10 @@
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { isEntityVisible, resolveArtDirection, type Entity } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
@@ -121,7 +122,10 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[ZenSidebar] Failed to save Oracle image:", err);
-        notificationStore.notify("Failed to archive image from Oracle. Check the console for details.", "error");
+        notificationStore.notify(
+          "Failed to archive image from Oracle. Check the console for details.",
+          "error",
+        );
       }
       return;
     }
@@ -143,7 +147,10 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[ZenSidebar] Failed to save external file:", err);
-        notificationStore.notify("Failed to save image. Check the console for details.", "error");
+        notificationStore.notify(
+          "Failed to save image. Check the console for details.",
+          "error",
+        );
       }
     }
   }
@@ -442,7 +449,7 @@
             >
           </div>
 
-          {#if isVisualizing || regenerationService.isGenerating}
+          {#if isVisualizing || revisionService.isRevising}
             <div
               class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 border border-theme-primary/20"
             >
@@ -553,10 +560,10 @@
 
         <button
           type="button"
-          onclick={() => regenerationService.regenerate(entity.id)}
+          onclick={() => modalUIStore.openRevisionDialog(entity.id)}
           class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
-          aria-label="Regenerate Chronicle and Lore"
-          title="Regenerate Chronicle and Lore"
+          aria-label="Revise Chronicle and Lore"
+          title="Revise Chronicle and Lore"
         >
           <span
             class="icon-[lucide--sparkles] w-3 h-3 md:w-4 md:h-4 text-theme-primary"

@@ -194,6 +194,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.revisionDialog.open}
+      {#await loadModal(() => import("./RevisionInstructionModal.svelte"), "RevisionInstructionModal") then RevisionInstructionModal}
+        {#if RevisionInstructionModal}
+          <RevisionInstructionModal />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}

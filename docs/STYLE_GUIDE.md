@@ -38,7 +38,7 @@ We follow the **Red-Green-Refactor** cycle for all core logic.
 ### Component Composition
 
 - **Decoupled Stores & Dependency Injection**: Favor injecting store and service instances through props or context (DI) for easier unit testing. Always use constructor-based DI with sensible defaults for all services and stores. Export both the service class and a default singleton instance to avoid tight coupling.
-- **Decomposed Store Architecture**: Identify the correct domain-specific reactive manager (e.g., within `apps/web/src/lib/stores/oracle/` like `chat`, `ui`, or `reconciliation`) instead of adding functionality directly to a monolithic facade.
+- **Decomposed Store Architecture**: Identify the correct domain-specific reactive manager (e.g., within `apps/web/src/lib/stores/oracle/` like `chat`, `ui`, or `revision`) instead of adding functionality directly to a monolithic facade.
 - **Svelte 5 Runes**:
   - **$state**: Use for local component-only state.
   - **$derived**: Use for reactive computations. Avoid initializing `$state` directly from props.

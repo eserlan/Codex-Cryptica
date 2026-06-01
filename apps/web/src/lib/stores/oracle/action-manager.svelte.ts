@@ -31,14 +31,6 @@ export class OracleActionManager {
     await this.store.undoRedo.redo();
   }
 
-  async regenerate(entityId: string, onPartial?: (partial: string) => void) {
-    await this.store.executor.execute(
-      { type: "regenerate", entityId },
-      this.store.getExecutionContext(),
-      onPartial,
-    );
-  }
-
   async drawEntity(entityId: string) {
     if (this.store.ui.visualizingEntityId === entityId) return;
 

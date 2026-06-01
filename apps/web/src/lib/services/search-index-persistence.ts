@@ -6,6 +6,58 @@ import type { SearchProgressCoordinator } from "./search-progress-coordinator";
 
 type PersistenceApi = Pick<SearchEngine, "exportIndex" | "importIndex">;
 
+function decodePersistedSegment(value: unknown): string {
+  if (typeof value === "string") return value;
+
+  if (
+    value &&
+    typeof value === "object" &&
+    (value instanceof ArrayBuffer ||
+      ArrayBuffer.isView(value) ||
+      value.constructor?.name === "ArrayBuffer" ||
+      value.constructor?.name === "Uint8Array" ||
+      "byteLength" in value)
+  ) {
+    return new TextDecoder().decode(value as ArrayBuffer | ArrayBufferView);
+  }
+
+  if (Array.isArray(value)) {
+    return new TextDecoder().decode(new Uint8Array(value));
+  }
+
+  if (value && typeof value === "object") {
+    return new TextDecoder().decode(
+      new Uint8Array(Object.values(value) as number[]),
+    );
+  }
+
+  return "";
+}
+
+function validateSegmentedIndexData(data: any): string | null {
+  if (!data?.isSegmented) return null;
+  if (!data.segments || typeof data.segments !== "object") {
+    return "segmented payload is missing segments";
+  }
+
+  const docIdsSegment = data.segments._docIds;
+  const docIdsJson = decodePersistedSegment(docIdsSegment).trim();
+  if (!docIdsJson) {
+    return "segmented payload is missing document IDs";
+  }
+
+  try {
+    const docIds = JSON.parse(docIdsJson);
+    if (!Array.isArray(docIds)) {
+      return "segmented payload document IDs are not an array";
+    }
+  } catch {
+    return "segmented payload document IDs are invalid JSON";
+  }
+
+  return null;
+}
+
 export interface SearchIndexPersistenceDeps {
   db?: typeof entityDb;
   debug?: typeof debugStore;
@@ -85,6 +137,14 @@ export class SearchIndexPersistence {
             const text = new TextDecoder().decode(indexData);
             indexData = JSON.parse(text);
           }
+        }
+
+        const invalidReason = validateSegmentedIndexData(indexData);
+        if (invalidReason) {
+          this.debug.warn(
+            `[SearchIndexPersistence] Ignoring stored index for ${vaultId}: ${invalidReason}.`,
+          );
+          return false;
         }
 
         const runId = this.coordinator.createRunId(vaultId);
@@ -170,10 +230,38 @@ export class SearchIndexPersistence {
         Object.keys(rawData || {}).length;
 
       if (rawData && keyCount > 1) {
-        let persistedData: Blob | Record<string, any> = rawData;
+        let persistedData: any = rawData;
+
+        // Convert ArrayBuffer segments to strings so that rawData is JSON-serializable
+        if (rawData && rawData.isSegmented && rawData.segments) {
+          const decoder = new TextDecoder();
+          const serializableSegments: Record<string, any> = {};
+          for (const [k, v] of Object.entries(rawData.segments)) {
+            const isBinary =
+              v &&
+              typeof v === "object" &&
+              (v instanceof ArrayBuffer ||
+                ArrayBuffer.isView(v) ||
+                v.constructor?.name === "ArrayBuffer" ||
+                v.constructor?.name === "Uint8Array" ||
+                "byteLength" in v);
+            if (isBinary) {
+              serializableSegments[k] = decoder.decode(v as any);
+            } else if (typeof v === "string") {
+              serializableSegments[k] = v;
+            } else {
+              serializableSegments[k] = v;
+            }
+          }
+          persistedData = {
+            ...rawData,
+            segments: serializableSegments,
+          };
+        }
+
         if (typeof CompressionStream !== "undefined") {
           try {
-            const jsonString = JSON.stringify(rawData);
+            const jsonString = JSON.stringify(persistedData);
             const rawStream =
               typeof Blob.prototype.stream === "function"
                 ? new Blob([jsonString]).stream()
