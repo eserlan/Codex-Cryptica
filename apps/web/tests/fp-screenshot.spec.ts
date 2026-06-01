@@ -7,11 +7,13 @@ test("screenshot front page", async ({ page }) => {
   await page.goto("http://localhost:5174");
   await page.waitForLoadState("networkidle");
 
-  const enterBtn = page.getByText("Enter the Codex");
-  if (await enterBtn.isVisible()) {
-    await enterBtn.click();
-    await page.waitForTimeout(2000);
-  }
+  await page
+    .evaluate(() => {
+      const uiStore = (window as any).uiStore;
+      if (uiStore) uiStore.dismissedLandingPage = true;
+    })
+    .catch(() => {});
+  await page.waitForTimeout(2000);
 
   await page.screenshot({ path: "/tmp/ss-app.png" });
 

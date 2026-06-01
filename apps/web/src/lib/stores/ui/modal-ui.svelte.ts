@@ -68,6 +68,7 @@ export class ModalUIStore {
   });
 
   showVaultSwitcher = $state(false);
+  vaultSwitcherIntent = $state<"create" | "open" | null>(null);
   showShare = $state(false);
 
   imagePromptReview = $state<{
@@ -145,12 +146,14 @@ export class ModalUIStore {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
   }
 
-  openVaultSwitcher() {
+  openVaultSwitcher(intent: "create" | "open" | null = null) {
+    this.vaultSwitcherIntent = intent;
     this.showVaultSwitcher = true;
   }
 
   closeVaultSwitcher() {
     this.showVaultSwitcher = false;
+    this.vaultSwitcherIntent = null;
   }
 
   openShare() {

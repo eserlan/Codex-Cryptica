@@ -10,6 +10,8 @@
     id: string;
     icon: string;
     label: string;
+    /** Optional richer hover tooltip; falls back to `label` when unset. */
+    title?: string;
     href?: string;
     action?: () => void;
   }
@@ -41,6 +43,8 @@
         id: "oracle",
         icon: "icon-[lucide--sparkles]",
         label: "Lore Oracle",
+        title:
+          "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
         action: () => layoutUIStore.toggleSidebarTool("oracle"),
       },
       {
@@ -128,7 +132,7 @@
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={tool.label}
-      title={tool.label}
+      title={tool.title ?? tool.label}
       data-testid={`activity-bar-${tool.id}`}
     >
       <span

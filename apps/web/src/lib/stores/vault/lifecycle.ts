@@ -18,6 +18,8 @@ export interface VaultLifecycleDependencies {
   getEntities: () => Record<string, LocalEntity>;
   setDemoVaultName: (name: string | null) => void;
   setInitialized: (val: boolean) => void;
+  /** Rebuild the reactive entity indexes (allEntities, inbound connections). */
+  rebuildEntityIndexes: () => void;
   getServices: () => any;
   setSelectedEntityId: (id: string | null) => void;
   vaultRegistry: any;
@@ -241,6 +243,15 @@ export class VaultLifecycleManager {
 
       this.deps.repository.entities = entities;
       this.deps.setInitialized(true);
+
+      // Rebuild the reactive entity indexes (allEntities, inbound connections)
+      // directly — without this the graph stays empty even though the
+      // repository holds the demo entities. We deliberately do NOT emit
+      // CACHE_LOADED here: that event is consumed by the search pipeline as a
+      // disk-cache restore, which would double-index the entities (alongside
+      // the loop below) and could restore a stale index keyed on the active
+      // vault id. Search indexing for the demo is handled by the loop below.
+      this.deps.rebuildEntityIndexes();
 
       const services = this.deps.getServices();
       if (services?.search) {
