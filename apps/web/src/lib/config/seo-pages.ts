@@ -40,12 +40,12 @@ export const solutions: Record<string, SEOPageData> = {
     slug: "campaign-manager",
     title: "Best Free RPG Campaign Manager | Codex Cryptica",
     description:
-      "Manage your TTRPG campaigns with Codex Cryptica's local-first campaign manager. Secure, fast, and feature-rich lore database.",
+      "Manage your TTRPG campaigns with Codex Cryptica's secure, zero-lag, local-first campaign manager. Keep your notes private and fully offline.",
     h1: "The Ultimate Local-First RPG Campaign Manager",
     subheading:
       "Keep your campaign lore organized, connected, and completely private.",
     introText:
-      "Codex Cryptica is a modern RPG campaign management tool designed for GMs who value privacy, speed, and deep worldbuilding relationships. Unlike server-hosted managers, your campaign data remains on your local machine, allowing you to access it offline with zero lag.",
+      "Codex Cryptica is a modern RPG campaign management tool designed for GMs who value privacy, speed, and deep worldbuilding relationships. Unlike server-hosted managers, your campaign data remains on your local machine, delivering instant, zero-lag note loading during live sessions, even fully offline.",
     ctaText: "Start Managing Campaigns",
     keywords: [
       "rpg campaign manager",
@@ -77,12 +77,12 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Is my campaign data safe?",
         answer:
-          "Yes. Codex Cryptica uses local-first storage, meaning your campaign files are stored on your device and are never uploaded to a remote server without your permission.",
+          "Yes. Codex Cryptica stores all campaign files directly on your own device. Your notes are never uploaded to a remote server, giving you complete privacy and instant loading speeds.",
       },
       {
         question: "Can I use it offline?",
         answer:
-          "Absolutely. Because all data is stored locally in your browser's Origin Private File System, the entire editor and graph engine run without an active internet connection.",
+          "Absolutely. Because all data is stored on your local device, the entire campaign manager, editor, and interactive graph run perfectly without an internet connection.",
       },
     ],
     relatedLinks: [
