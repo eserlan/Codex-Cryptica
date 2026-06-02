@@ -73,11 +73,13 @@ export async function GET() {
   }));
 
   // Generator pages
-  const generatorRoutes = ["npc", "settlement", "magic-item"].map((slug) => ({
-    path: `/generators/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
+  const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
+    (slug) => ({
+      path: `/generators/${slug}`,
+      changefreq: "monthly",
+      priority: "0.8",
+    }),
+  );
 
   const allStatic = [
     ...staticRoutes,

@@ -134,9 +134,29 @@ ${generatedData.lore}`;
 <svelte:head>
   <title>{pageTitle}</title>
   <meta name="description" content={metaDescription} />
+  <meta name="robots" content="index, follow" />
   {#if canonicalPath}
     <link rel="canonical" href="https://codexcryptica.com{canonicalPath}" />
   {/if}
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Codex Cryptica" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={metaDescription} />
+  {#if canonicalPath}
+    <meta
+      property="og:url"
+      content="https://codexcryptica.com{canonicalPath}"
+    />
+  {/if}
+  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
+  <meta property="og:image:width" content="1024" />
+  <meta property="og:image:height" content="1024" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={metaDescription} />
+  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
   {#if faqJsonLd}
     {@html `<script type="application/ld+json">${faqJsonLd}</` + "script>"}
