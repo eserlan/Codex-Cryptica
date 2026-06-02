@@ -13,6 +13,8 @@
 
 - **Q**: AI Integration on Public Generator Pages: Should the public generator landing pages allow users to toggle an AI Mode by providing their own Gemini API key, or should they be strictly powered by client-side random/deterministic generators?
 - **A**: The generator pages should run using Codex Cryptica's default shared system proxy (`oracle-proxy.espen-erlandsen.workers.dev`) under the hood to generate high-quality AI results for public visitors immediately without requiring them to supply an API key.
+- **Q**: Modern LLM / AI Search Engine Optimization (GEO): How should we optimize the landing page system for modern LLMs and search engines (like SearchGPT, Perplexity)?
+- **A**: We will link to the `llms.txt` file in all marketing routes, and structure comparison pages using standard semantic HTML `<table>` elements so AI search crawlers can parse feature matrices directly.
 
 ---
 
@@ -88,6 +90,8 @@ As a search engine crawler, I want to retrieve an up-to-date sitemap listing all
 - **FR-005**: Generators MUST support exporting/saving the entity via `localStorage` payload transfer to `/` for instant onboarding.
 - **FR-006**: The app shell MUST intercept `__codex_pending_import` from `localStorage` on mount, initialize a vault if none exists, write the markdown file, and select the newly created entity.
 - **FR-007**: A dynamic `/sitemap.xml` route MUST gather all public URLs and compile them into XML format during SvelteKit build.
+- **FR-008**: Comparison tables on the comparison routes MUST use standard, semantic HTML `<table>` elements to ensure AI search bots (e.g. SearchGPT, Perplexity) can parse them cleanly.
+- **FR-009**: All marketing templates MUST include a `<link rel="help" href="/llms.txt">` header link tag referencing the project's LLM-friendly documentation.
 
 ### Key Entities
 

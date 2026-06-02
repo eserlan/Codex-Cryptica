@@ -42,8 +42,10 @@
 - [ ] T009 [P] [US1] Implement SvelteKit load and entry parameters for solutions in `apps/web/src/routes/(marketing)/solutions/[slug]/+page.ts`
 - [ ] T010 [US1] Create the solutions Svelte page `apps/web/src/routes/(marketing)/solutions/[slug]/+page.svelte` using the layout wrapper
 - [ ] T011 [P] [US1] Implement SvelteKit load and entry parameters for comparisons in `apps/web/src/routes/(marketing)/vs/[slug]/+page.ts`
-- [ ] T012 [US1] Create the comparison Svelte page `apps/web/src/routes/(marketing)/vs/[slug]/+page.svelte` using the comparison card layouts
+- [ ] T012 [US1] Create the comparison Svelte page `apps/web/src/routes/(marketing)/vs/[slug]/+page.svelte` using standard, semantic HTML `<table>` layouts for feature matrices
 - [ ] T013 [US1] Write unit tests verifying SEO page loaders and metadata extraction in `apps/web/src/routes/(marketing)/solutions/[slug]/solutions.test.ts`
+- [ ] T029 [P] [US1] Inject `<link rel="help" href="/llms.txt">` into the head layout of all pre-rendered marketing templates
+- [ ] T030 [P] [US1] Update `apps/web/static/llms.txt` to include index paths to new solutions and generator routes
 
 **Checkpoint**: User Story 1 is fully functional and statically crawlable.
 
