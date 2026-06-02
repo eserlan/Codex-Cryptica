@@ -212,8 +212,8 @@ ${generatedData.lore}`;
   <div
     class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-10"
   >
-    <!-- Parameters Column -->
-    <div class="lg:col-span-4 space-y-6">
+    <!-- Parameters Column: order-2 on mobile so output appears first -->
+    <div class="lg:col-span-4 space-y-6 order-2 lg:order-1">
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
@@ -311,8 +311,8 @@ ${generatedData.lore}`;
       </div>
     </div>
 
-    <!-- Output Card Column -->
-    <div class="lg:col-span-8 flex flex-col">
+    <!-- Output Card Column: order-1 on mobile so it renders above the form -->
+    <div class="lg:col-span-8 flex flex-col order-1 lg:order-2">
       <div
         class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
