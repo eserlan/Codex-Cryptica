@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-06-02
 
 ## Active Technologies
 
+- TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine` (129-seo-landing-pages)
+- `localStorage` (transient transfer), OPFS & IndexedDB (via vault stores) (129-seo-landing-pages)
+
 - TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod (128-guest-character-chat)
 - OPFS (Host vault file storage) and IndexedDB (Guest client-side chat persistence) (128-guest-character-chat)
 
@@ -201,11 +204,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
+
+- 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
+
 - 128-guest-character-chat: Added TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod
-
-- 127-context-aware-entity-generator: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
-
-- 126-propose-entities: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, `@google/generative-ai` (for category inference and template filling), `zod`
 
 <!-- MANUAL ADDITIONS START -->
 

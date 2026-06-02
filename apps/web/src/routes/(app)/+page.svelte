@@ -11,8 +11,9 @@
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { focusEntity } from "$lib/stores/ui/navigation";
   import { DEFAULT_CATEGORIES } from "schema";
+  import { focusEntity } from "$lib/stores/ui/navigation";
+  import { seoImportService } from "$lib/services/seo/import-handler";
 
   // Entity-type colors for the welcome graph preview, sourced from the same
   // canonical palette the real graph uses so the teaser matches the product.
@@ -165,6 +166,14 @@
   const isGuestMode = $derived(!!shareId);
 
   onMount(() => {
+    // Check for pending import from generator onboarding funnel
+    void seoImportService.checkAndHandlePendingImport().then((importedId) => {
+      if (importedId) {
+        onboardingStore.dismissLandingPage();
+        onboardingStore.dismissWorldPage();
+      }
+    });
+
     // Eagerly prefetch the heavy components in the background a second after boot
     // to eliminate the 10-15s dev-mode lag when clicking an entity for the first time.
     setTimeout(() => {

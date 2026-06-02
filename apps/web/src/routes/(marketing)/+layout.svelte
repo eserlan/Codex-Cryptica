@@ -1,5 +1,6 @@
 <script lang="ts">
   import "../../app.css";
+  import { base } from "$app/paths";
   import { SCHEMA_ORG } from "$lib/config";
   let { children } = $props();
 
@@ -10,6 +11,7 @@
 </script>
 
 <svelte:head>
+  <link rel="help" href="{base}/llms.txt" />
   {@html jsonLdScript}
 </svelte:head>
 

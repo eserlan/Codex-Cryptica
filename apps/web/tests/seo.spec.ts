@@ -99,4 +99,63 @@ test.describe("SEO and Prerendering", () => {
     expect(robotsText).toContain("Allow: /llms.txt");
     expect(robotsText).toContain("Allow: /llms-full.txt");
   });
+
+  test.describe("SEO Landing Pages and Generator Funnel", () => {
+    test("solutions and comparison pages prerender correctly", async ({
+      request,
+    }) => {
+      // Test Solutions page prerendering
+      const response = await request.get("/solutions/campaign-manager");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("Best Free RPG Campaign Manager");
+      expect(html).toContain("The Ultimate Local-First RPG Campaign Manager");
+
+      // Test Comparisons page prerendering
+      const compResponse = await request.get("/vs/obsidian");
+      expect(compResponse.ok()).toBe(true);
+      const compHtml = await compResponse.text();
+      expect(compHtml).toContain("Codex Cryptica vs Obsidian");
+      expect(compHtml).toContain("Feature Matrix: Codex vs Obsidian");
+      expect(compHtml).toContain("table");
+    });
+
+    test("generator page and import conversion funnel flow", async ({
+      page,
+    }) => {
+      // 1. Navigate to generator
+      await page.goto("/generators/npc");
+      await expect(page.locator("#generator-title")).toContainText(
+        "NPC Generator",
+      );
+
+      // 2. Select AI Mode checkbox to off (so it runs fallback instantly and deterministically offline-friendly in tests)
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) {
+        await aiToggle.uncheck();
+      }
+
+      // 3. Trigger generate
+      await page.click("#generate-button");
+
+      // 4. Wait for generated element to show up
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      await expect(page.locator("h2")).not.toContainText("No Draft Generated"); // Check that a title is populated
+
+      const generatedName = await page.locator("h2").textContent();
+      expect(generatedName).toBeTruthy();
+
+      // 5. Click Save to Codex
+      await page.click("#save-to-codex-btn");
+
+      // 6. Verify redirection to workspace app root
+      await expect(page).toHaveURL(/\/$/);
+
+      // 7. Verify the new vault is active and the entity is loaded/selected
+      // Since it's local-first OPFS or fallback, wait for the imported entity detail panel to open or show up in sidebar
+      await expect(
+        page.locator("h3").filter({ hasText: generatedName!.trim() }).first(),
+      ).toBeVisible();
+    });
+  });
 });
