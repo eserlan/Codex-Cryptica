@@ -22,13 +22,21 @@
   <div
     class="max-w-2xl bg-theme-surface/50 border border-theme-border p-12 rounded-2xl shadow-xl"
   >
-    <span class="icon-[lucide--dices] text-theme-primary w-12 h-12 mb-6"></span>
+    <div
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 mx-auto"
+    >
+      <span class="w-1.5 h-1.5 rounded-full bg-theme-primary animate-pulse"
+      ></span>
+      Standalone Suite Coming Soon
+    </div>
     <h1 class="text-4xl font-bold font-header mb-4">
       DnD <span class="text-theme-primary">NPC Generator</span>
     </h1>
     <p class="text-theme-muted mb-8 leading-relaxed">
-      Create unique fantasy NPCs with motivations, appearance details, and
-      secrets. Directly export and save them into your active campaign notes.
+      Interactive name generators, settlement builders, and AI-powered NPC
+      creators are currently in development for this standalone page. In the
+      meantime, you can use the fully functional built-in generator templates
+      and the AI Lore Oracle directly inside the campaign workspace.
     </p>
     <div class="flex flex-wrap justify-center gap-4">
       <a

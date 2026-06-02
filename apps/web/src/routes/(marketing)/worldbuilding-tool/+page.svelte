@@ -19,13 +19,20 @@
   <div
     class="max-w-2xl bg-theme-surface/50 border border-theme-border p-12 rounded-2xl shadow-xl"
   >
-    <span class="icon-[lucide--globe] text-theme-primary w-12 h-12 mb-6"></span>
+    <div
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 mx-auto"
+    >
+      <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
+      Feature Available in Workspace
+    </div>
     <h1 class="text-4xl font-bold font-header mb-4">
       Free <span class="text-theme-primary">Worldbuilding Tool</span> & Lore Database
     </h1>
     <p class="text-theme-muted mb-8 leading-relaxed">
-      Codex Cryptica keeps your campaign worlds private, linked, and fast. Map
-      timelines, entities, and connections on a local canvas database.
+      Our comprehensive worldbuilding features—including interactive canvas
+      networks, chronological timelines, local-first OPFS storage, and
+      bidirectional wiki-style backlinks—are fully integrated and ready to use
+      in the app workspace.
     </p>
     <div class="flex flex-wrap justify-center gap-4">
       <a

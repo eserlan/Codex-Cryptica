@@ -206,9 +206,9 @@ TypeScript: Follow standard conventions
 
 - 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
 
-- 128-guest-character-chat: Added TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod
+- 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
 
-- 127-context-aware-entity-generator: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
+- 128-guest-character-chat: Added TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod
 
 <!-- MANUAL ADDITIONS START -->
 

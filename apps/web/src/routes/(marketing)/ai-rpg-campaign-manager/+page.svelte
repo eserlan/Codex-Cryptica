@@ -22,14 +22,20 @@
   <div
     class="max-w-2xl bg-theme-surface/50 border border-theme-border p-12 rounded-2xl shadow-xl"
   >
-    <span class="icon-[lucide--sparkles] text-theme-primary w-12 h-12 mb-6"
-    ></span>
+    <div
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 mx-auto"
+    >
+      <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
+      Feature Available in Workspace
+    </div>
     <h1 class="text-4xl font-bold font-header mb-4">
       AI RPG <span class="text-theme-primary">Campaign Manager</span> & GM Assistant
     </h1>
     <p class="text-theme-muted mb-8 leading-relaxed">
-      Write campaign lore natively with the local-first Lore Oracle. Prompt,
-      synthesize, and create structured character and quest records.
+      Our AI Lore Oracle assistant—capable of parsing draft summaries,
+      auto-inferring lore relations, co-authoring campaign notes, and generating
+      character art using local Gemini models—is fully integrated and ready to
+      use in the app workspace.
     </p>
     <div class="flex flex-wrap justify-center gap-4">
       <a
