@@ -24,7 +24,7 @@
     introText?: string;
     relatedLinks?: { href: string; label: string }[];
     faqs?: { question: string; answer: string }[];
-    generate: () => Promise<GeneratorOutput>;
+    generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
   } = $props();
 
@@ -32,6 +32,7 @@
   let generatedData = $state<GeneratorOutput | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
+  let useAI = $state(true);
 
   const faqJsonLd = $derived(
     faqs.length > 0
@@ -54,7 +55,7 @@
     isGenerating = true;
     errorMessage = null;
     try {
-      generatedData = await generate();
+      generatedData = await generate({ useAI });
     } catch (err: any) {
       errorMessage = "Failed to generate: " + (err.message || err);
     } finally {
@@ -217,12 +218,32 @@ ${generatedData.lore}`;
 
         <form
           class="space-y-4"
+          action={canonicalPath ? `${base}${canonicalPath}` : undefined}
+          method={canonicalPath ? "GET" : undefined}
           onsubmit={(event) => {
             event.preventDefault();
             void handleGenerate();
           }}
         >
           {@render formFields()}
+
+          <div class="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="ai-toggle"
+              bind:checked={useAI}
+              class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none"
+            />
+            <label
+              for="ai-toggle"
+              class="text-[10px] font-bold uppercase tracking-wider text-theme-muted cursor-pointer flex items-center gap-1"
+            >
+              <span
+                class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
+              ></span>
+              AI Lore Co-Author Mode
+            </label>
+          </div>
 
           <button
             type="submit"
