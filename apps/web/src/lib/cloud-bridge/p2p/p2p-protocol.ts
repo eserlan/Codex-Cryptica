@@ -49,6 +49,10 @@ export type P2PMessage =
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
   | { type: "SOUND_BITE_PLAY"; entityId: string }
+  | {
+      type: "GUEST_CHAT_TRANSCRIPT_SYNC";
+      payload: import("schema").GuestChatTranscript;
+    }
   | VTTMessage;
 
 export function isValidP2PMessage(

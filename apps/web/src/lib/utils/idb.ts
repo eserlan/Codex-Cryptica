@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
 import type { SyncEntry, OpfsStateEntry } from "@codex/sync-engine";
+import type { GuestChatTranscript } from "schema";
 
 export interface VaultRecord {
   id: string;
@@ -110,11 +111,18 @@ interface CodexDB extends DBSchema {
       "by-context": string;
     };
   };
+  guest_chat_transcripts: {
+    key: string;
+    value: GuestChatTranscript;
+    indexes: {
+      "by-character": string;
+    };
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 17 to support directional sync metadata.
-export const DB_VERSION = 17;
+// DB_VERSION was bumped to 18 to support guest chat transcripts.
+export const DB_VERSION = 18;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>> | null = null;
 
@@ -195,6 +203,13 @@ export function getDB() {
         if (!db.objectStoreNames.contains("dice_history")) {
           const store = db.createObjectStore("dice_history", { keyPath: "id" });
           store.createIndex("by-context", "context");
+        }
+
+        if (!db.objectStoreNames.contains("guest_chat_transcripts")) {
+          const store = db.createObjectStore("guest_chat_transcripts", {
+            keyPath: "id",
+          });
+          store.createIndex("by-character", "characterId");
         }
       },
       blocked() {

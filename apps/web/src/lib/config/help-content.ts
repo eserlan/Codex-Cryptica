@@ -398,6 +398,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.",
     icon: "icon-[lucide--link]",
   },
+  "guest-character-chat": {
+    id: "guest-character-chat",
+    title: "Guest Character Chat",
+    content:
+      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.",
+    icon: "icon-[lucide--messages-square]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

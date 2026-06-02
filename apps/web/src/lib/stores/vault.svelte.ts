@@ -5,7 +5,11 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
-import type { Entity } from "schema";
+import type { Entity, GuestChatTranscript } from "schema";
+import {
+  saveTranscriptToDisk,
+  loadTranscriptsForCharacterFromDisk,
+} from "./vault/io";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
@@ -501,6 +505,22 @@ export class VaultStore {
   }
   persistToIndexedDB(vaultId: string) {
     return this.lifecycleManager.persistToIndexedDB(vaultId);
+  }
+
+  async saveTranscript(transcript: GuestChatTranscript) {
+    if (this.isGuest) return;
+    if (!this.activeVaultId) return;
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return;
+    await saveTranscriptToDisk(vaultHandle, this.activeVaultId, transcript);
+  }
+
+  async loadTranscriptsForCharacter(
+    characterId: string,
+  ): Promise<GuestChatTranscript[]> {
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return [];
+    return await loadTranscriptsForCharacterFromDisk(vaultHandle, characterId);
   }
 
   async setDefaultVisibility(v: "visible" | "hidden") {

@@ -74,6 +74,23 @@
       });
     }
 
+    if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
+      list.push({
+        id: "guest-chat",
+        icon: "icon-[lucide--messages-square]",
+        label: "Guest Character Chat",
+        title: "Guest Chat — speak with enabled characters in-character.",
+        action: () => {
+          if (layoutUIStore.mainViewMode === "guest-chat") {
+            layoutUIStore.mainViewMode = "visualization";
+          } else {
+            layoutUIStore.mainViewMode = "guest-chat";
+            layoutUIStore.leftSidebarOpen = false;
+          }
+        },
+      });
+    }
+
     return list;
   });
 
@@ -125,7 +142,10 @@
 
   <!-- Sidecar Tools -->
   {#each tools as tool}
-    {@const active = layoutUIStore.activeSidebarTool === tool.id}
+    {@const active =
+      tool.id === "guest-chat"
+        ? layoutUIStore.mainViewMode === "guest-chat"
+        : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active

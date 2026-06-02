@@ -32,6 +32,8 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     removeConnection: vi.fn(),
     addConnection: vi.fn().mockResolvedValue(true),
     updateEntity: vi.fn().mockResolvedValue(true),
+    loadTranscriptsForCharacter: vi.fn().mockResolvedValue([]),
+    saveTranscript: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -320,5 +322,79 @@ describe("DetailStatusTab", () => {
 
     expect(screen.queryByText("Generate Related")).toBeNull();
     expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
+  });
+
+  const mockCharacterEntity = {
+    id: "char-1",
+    title: "Character 1",
+    type: "character",
+    content: "He is a blacksmith.",
+    lore: "Secretly related to the king.",
+    connections: [],
+    tags: [],
+    guestChatConfig: {
+      isEnabled: true,
+      contextScope: "hybrid",
+      extraInstructions: "Speaks with a lisp.",
+      isHostReviewable: true,
+      keepMemory: true,
+    },
+  } as any;
+
+  it("does not render Guest Character Chat for non-character entities", () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: undefined,
+    });
+    expect(screen.queryByText("Guest Character Chat")).toBeNull();
+  });
+
+  it("renders Guest Character Chat read-only config for character entities when not editing", () => {
+    render(DetailStatusTab, {
+      entity: mockCharacterEntity,
+      isEditing: false,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: undefined,
+    });
+    expect(screen.getByText("Guest Character Chat")).toBeDefined();
+    expect(screen.getByText(/hybrid lore/i)).toBeDefined();
+    expect(screen.getByText('"Speaks with a lisp."')).toBeDefined();
+  });
+
+  it("renders Guest Character Chat edit panel when editing a character entity", async () => {
+    const mockConfig = {
+      isEnabled: true,
+      contextScope: "hybrid" as const,
+      extraInstructions: "Speaks with a lisp.",
+      isHostReviewable: true,
+      keepMemory: true,
+    };
+    render(DetailStatusTab, {
+      entity: mockCharacterEntity,
+      isEditing: true,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: mockConfig,
+    });
+
+    expect(screen.getByText("Guest Character Chat")).toBeDefined();
+    const checkbox = screen.getByLabelText(
+      "Enable Guest Character Chat",
+    ) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+
+    // Toggle check
+    await fireEvent.click(checkbox);
+    expect(mockConfig.isEnabled).toBe(false);
   });
 });

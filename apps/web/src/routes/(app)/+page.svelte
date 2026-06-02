@@ -107,6 +107,11 @@
         .then((m) => (EmbeddedEntityView = m?.default))
         .catch((err) => logChunkError("EmbeddedEntityView", err));
     }
+    if (!GuestChatPanel) {
+      import("../../lib/components/guest/GuestChatPanel.svelte")
+        .then((m) => (GuestChatPanel = m?.default))
+        .catch((err) => logChunkError("GuestChatPanel", err));
+    }
   }
 
   // Dynamic imports for heavy components
@@ -114,6 +119,7 @@
   let FrontPage = $state<any>(null);
   let EntityDetailPanel = $state<any>(null);
   let EmbeddedEntityView = $state<any>(null);
+  let GuestChatPanel = $state<any>(null);
 
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
@@ -175,7 +181,11 @@
 
     if (
       (isSkippingLanding || isVaultReady) &&
-      (!GraphView || !FrontPage || !EntityDetailPanel || !EmbeddedEntityView)
+      (!GraphView ||
+        !FrontPage ||
+        !EntityDetailPanel ||
+        !EmbeddedEntityView ||
+        !GuestChatPanel)
     ) {
       loadHeavyComponents();
     }
@@ -198,6 +208,10 @@
   <div class="flex-1 relative overflow-hidden">
     {#if layoutUIStore.mainViewMode === "focus" && layoutUIStore.focusedEntityId && EmbeddedEntityView}
       <EmbeddedEntityView entityId={layoutUIStore.focusedEntityId} />
+    {:else if layoutUIStore.mainViewMode === "guest-chat" && GuestChatPanel}
+      <div class="absolute inset-0 p-4 md:p-6 bg-chrome-bg">
+        <GuestChatPanel />
+      </div>
     {:else if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
       {#key vault.activeVaultId}
         <GraphView bind:selectedId={vault.selectedEntityId} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entity } from "schema";
+  import type { Entity, GuestChatConfig } from "schema";
   import { fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { vault } from "$lib/stores/vault.svelte";
@@ -68,6 +68,7 @@
   let editDate = $state<Entity["date"]>();
   let editStartDate = $state<Entity["start_date"]>();
   let editEndDate = $state<Entity["end_date"]>();
+  let editGuestChatConfig = $state<GuestChatConfig | undefined>(undefined);
 
   let isDirty = $derived(
     isEditing &&
@@ -79,8 +80,19 @@
         editImage !== (entity.image ?? "") ||
         JSON.stringify(editAliases) !== JSON.stringify(entity.aliases ?? []) ||
         JSON.stringify(editDate) !== JSON.stringify(entity.date ?? null) ||
-        JSON.stringify(editStartDate) !== JSON.stringify(entity.start_date ?? null) ||
-        JSON.stringify(editEndDate) !== JSON.stringify(entity.end_date ?? null)),
+        JSON.stringify(editStartDate) !==
+          JSON.stringify(entity.start_date ?? null) ||
+        JSON.stringify(editEndDate) !==
+          JSON.stringify(entity.end_date ?? null) ||
+        JSON.stringify(editGuestChatConfig) !==
+          JSON.stringify(
+            entity.guestChatConfig ?? {
+              isEnabled: false,
+              contextScope: "public",
+              isHostReviewable: true,
+              keepMemory: true,
+            },
+          )),
   );
 
   $effect(() => {
@@ -133,6 +145,14 @@
     editDate = entity.date;
     editStartDate = entity.start_date;
     editEndDate = entity.end_date;
+    editGuestChatConfig = entity.guestChatConfig
+      ? { ...entity.guestChatConfig }
+      : {
+          isEnabled: false,
+          contextScope: "public",
+          isHostReviewable: true,
+          keepMemory: true,
+        };
     isEditing = true;
   };
 
@@ -140,7 +160,8 @@
     if (isDirty) {
       const confirmed = await notificationStore.confirm({
         title: "Discard changes?",
-        message: "You have unsaved edits. Discard them and revert to the saved version?",
+        message:
+          "You have unsaved edits. Discard them and revert to the saved version?",
         confirmLabel: "Discard changes",
         cancelLabel: "Keep editing",
         isDangerous: false,
@@ -178,6 +199,9 @@
         start_date: $state.snapshot(editStartDate),
         end_date: $state.snapshot(editEndDate),
         type: editType,
+        guestChatConfig: editGuestChatConfig
+          ? $state.snapshot(editGuestChatConfig)
+          : undefined,
       });
       isEditing = false;
     } catch (err) {
@@ -397,6 +421,7 @@
                     bind:editContent
                     bind:editStartDate
                     bind:editEndDate
+                    bind:editGuestChatConfig
                   />
                 {/if}
               </div>

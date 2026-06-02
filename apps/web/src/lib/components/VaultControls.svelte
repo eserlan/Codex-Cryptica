@@ -11,6 +11,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { proposerStore } from "$lib/stores/proposer.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -23,6 +24,18 @@
   let isCreating = $state(false);
   let createError = $state<string | null>(null);
   let useTemplate = $state(true);
+  let draftContent = $state("");
+
+  $effect(() => {
+    const draft = proposerStore.draftEntity;
+    if (draft) {
+      newTitle = draft.title || "";
+      newType = draft.type || "rumor";
+      draftContent = draft.content || "";
+      showForm = true;
+      proposerStore.clearDraftEntity();
+    }
+  });
 
   // Logic
   let isVertical = $derived(orientation === "vertical");
@@ -104,12 +117,27 @@
         );
         resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
+
+      if (draftContent) {
+        if (resolvedContent) {
+          resolvedContent = draftContent + "\n\n" + resolvedContent;
+        } else {
+          resolvedContent = draftContent;
+        }
+        if (resolvedLore) {
+          resolvedLore = draftContent + "\n\n" + resolvedLore;
+        } else {
+          resolvedLore = draftContent;
+        }
+      }
+
       const id = await vault.createEntity(newType, newTitle, {
         content: resolvedContent,
         lore: resolvedLore,
       });
       vault.selectedEntityId = id;
       newTitle = "";
+      draftContent = "";
       showForm = false;
     } catch (err: unknown) {
       console.error(err);
@@ -344,7 +372,12 @@
             : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
           onclick={() => {
             showForm = !showForm;
-            if (showForm) createError = null;
+            if (showForm) {
+              createError = null;
+            } else {
+              draftContent = "";
+              newTitle = "";
+            }
           }}
           data-testid="new-entity-button"
           aria-expanded={showForm}

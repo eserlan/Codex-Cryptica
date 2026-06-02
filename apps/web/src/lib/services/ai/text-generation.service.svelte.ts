@@ -618,11 +618,14 @@ export class DefaultTextGenerationService implements TextGenerationService {
       requestId?: string;
       vaultId?: string;
       existingEntities?: any[];
+      systemInstructionOverride?: string;
     },
   ): Promise<void> {
     const cleanHistory = history ? safeSnapshot(history) : history;
 
-    const systemInstruction = buildSystemInstruction(demoMode, categories);
+    const systemInstruction =
+      _options?.systemInstructionOverride ||
+      buildSystemInstruction(demoMode, categories);
     const model = await this.aiClientManager.getModel(
       apiKey,
       modelName,

@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-30
+Auto-generated from all feature plans. Last updated: 2026-06-02
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod (128-guest-character-chat)
+- OPFS (Host vault file storage) and IndexedDB (Guest client-side chat persistence) (128-guest-character-chat)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (127-context-aware-entity-generator)
 - OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts) (127-context-aware-entity-generator)
@@ -198,11 +201,11 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 128-guest-character-chat: Added TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod
+
 - 127-context-aware-entity-generator: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
 
 - 126-propose-entities: Added TypeScript 6.0.3, Svelte 5 Runes + SvelteKit, `@google/generative-ai` (for category inference and template filling), `zod`
-
-- 123-entity-templates: Added TypeScript 6.0.3 + Svelte 5 Runes, `@codex/vault-engine`
 
 <!-- MANUAL ADDITIONS START -->
 

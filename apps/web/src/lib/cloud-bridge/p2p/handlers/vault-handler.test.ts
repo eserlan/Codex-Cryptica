@@ -65,4 +65,24 @@ describe("VaultHandler", () => {
       "Player 1",
     );
   });
+
+  it("should handle GUEST_CHAT_TRANSCRIPT_SYNC", async () => {
+    mockContext.vault.saveTranscript = vi.fn();
+    const payload = {
+      id: "g1_c1",
+      guestId: "g1",
+      guestName: "Guest",
+      characterId: "c1",
+      characterTitle: "NPC",
+      messages: [{ id: "m1", role: "user", content: "hello", timestamp: 123 }],
+      lastUpdated: 456,
+    };
+    const msg = {
+      type: "GUEST_CHAT_TRANSCRIPT_SYNC",
+      payload,
+    } as any;
+    await handler.handle(msg, mockConn, mockContext);
+
+    expect(mockContext.vault.saveTranscript).toHaveBeenCalledWith(payload);
+  });
 });
