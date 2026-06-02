@@ -351,7 +351,7 @@ describe("VaultLifecycleManager", () => {
         e1: {
           id: "e1",
           title: "Demo",
-          tags: ["tag1", "tag2"],
+          labels: ["tag1", "tag2"],
           lore: "test lore",
           metadata: {
             field1: "val1",

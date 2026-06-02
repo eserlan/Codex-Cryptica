@@ -252,12 +252,11 @@ export class VaultLifecycleManager {
           // Canonical keyword construction mirroring SearchService.mapToSearchEntry
           const keywordParts: string[] = [];
           if (entity.labels) keywordParts.push(...entity.labels);
-          if ((entity as any).tags) keywordParts.push(...(entity as any).tags);
           if (entity.lore) keywordParts.push(entity.lore);
           if (entity.metadata) {
             for (const mKey in entity.metadata) {
               if (Object.prototype.hasOwnProperty.call(entity.metadata, mKey)) {
-                const val = entity.metadata[mKey];
+                const val = (entity.metadata as any)[mKey];
                 if (Array.isArray(val)) {
                   keywordParts.push(...val.map(String));
                 } else if (val !== undefined && val !== null) {
