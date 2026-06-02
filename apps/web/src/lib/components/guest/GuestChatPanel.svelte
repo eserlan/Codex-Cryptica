@@ -96,6 +96,7 @@
     <nav class="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
       {#each enabledCharacters as char}
         <button
+          type="button"
           onclick={() => selectCharacter(char.id, char.title)}
           class="w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 cursor-pointer
             {guestChatStore.activeCharacterId === char.id
@@ -139,6 +140,7 @@
       >
         <div class="flex items-center gap-3">
           <button
+            type="button"
             onclick={() => {
               guestChatStore.activeCharacterId = null;
             }}
@@ -158,6 +160,7 @@
         </div>
 
         <button
+          type="button"
           onclick={() => {
             if (
               confirm(
@@ -201,6 +204,7 @@
             <div class="grid grid-cols-1 gap-2 text-left">
               {#each starterPrompts as prompt}
                 <button
+                  type="button"
                   onclick={() => sendMessage(prompt)}
                   class="w-full p-3 text-xs text-theme-muted hover:text-theme-text bg-theme-surface/30 hover:bg-theme-primary/10 border border-theme-border/50 hover:border-theme-primary/30 rounded-xl transition cursor-pointer text-left flex items-center justify-between"
                 >
@@ -238,6 +242,7 @@
             class="flex-1 bg-theme-bg/60 border border-theme-border rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-1 focus:ring-theme-primary resize-none text-theme-text custom-scrollbar"
           ></textarea>
           <button
+            type="button"
             onclick={() => sendMessage(messageInput)}
             disabled={!messageInput.trim() || guestChatStore.isGenerating}
             class="px-4 bg-theme-primary text-theme-bg hover:bg-theme-secondary font-bold uppercase tracking-widest text-[10px] rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
