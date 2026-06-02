@@ -7,6 +7,8 @@
     scope = $bindable(questConfig.scopes[0]),
     locationType = $bindable(questConfig.locationTypes[0]),
     threat = $bindable(questConfig.threats[0]),
+    twist = $bindable(questConfig.twists[0]),
+    reward = $bindable(questConfig.rewards[0]),
     campaignContext = $bindable(""),
   }: {
     genre: string;
@@ -14,6 +16,8 @@
     scope: string;
     locationType: string;
     threat: string;
+    twist: string;
+    reward: string;
     campaignContext: string;
   } = $props();
 
@@ -73,6 +77,24 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
+  <label for="twist-select" class={labelClass}>Twist</label>
+  <select id="twist-select" bind:value={twist} class={selectClass}>
+    {#each questConfig.twists as t (t)}
+      <option value={t}>{t}</option>
+    {/each}
+  </select>
+</div>
+
+<div class="flex flex-col gap-1.5">
+  <label for="reward-select" class={labelClass}>Reward</label>
+  <select id="reward-select" bind:value={reward} class={selectClass}>
+    {#each questConfig.rewards as r (r)}
+      <option value={r}>{r}</option>
+    {/each}
+  </select>
+</div>
+
+<div class="flex flex-col gap-1.5">
   <label for="quest-campaign-context" class={labelClass}
     >Optional Campaign Context</label
   >
@@ -81,9 +103,9 @@
     name="campaign_context"
     bind:value={campaignContext}
     maxlength="240"
-    rows="4"
+    rows="3"
     aria-describedby="quest-campaign-context-help"
-    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+    class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
   <p
     id="quest-campaign-context-help"

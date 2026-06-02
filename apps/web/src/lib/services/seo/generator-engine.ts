@@ -937,6 +937,8 @@ ${history}`;
       scope?: string;
       locationType?: string;
       threat?: string;
+      twist?: string;
+      reward?: string;
       campaignContext?: string;
       useAI?: boolean;
     } = {},
@@ -960,6 +962,14 @@ ${history}`;
       questConfig.threats[
         Math.floor(Math.random() * questConfig.threats.length)
       ];
+    const twist =
+      options.twist ||
+      questConfig.twists[Math.floor(Math.random() * questConfig.twists.length)];
+    const reward =
+      options.reward ||
+      questConfig.rewards[
+        Math.floor(Math.random() * questConfig.rewards.length)
+      ];
     const campaignContext = options.campaignContext?.trim();
     const questName = `${this.generateName()}'s ${["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"][Math.floor(Math.random() * 6)]}`;
 
@@ -972,6 +982,8 @@ Options:
 - Scope: ${scope}
 - Location Type: ${locationType}
 - Main Threat: ${threat}
+- Twist: ${twist}
+- Reward: ${reward}
 ${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
 
 You must return a valid JSON object matching the following structure exactly:
@@ -1019,12 +1031,6 @@ Return only the JSON object. Do not include markdown code block formatting like 
     const complication =
       questConfig.complications[
         Math.floor(Math.random() * questConfig.complications.length)
-      ];
-    const twist =
-      questConfig.twists[Math.floor(Math.random() * questConfig.twists.length)];
-    const reward =
-      questConfig.rewards[
-        Math.floor(Math.random() * questConfig.rewards.length)
       ];
     const npcName = this.generateName();
     const locationName = `The ${this.generateName()} ${locationType}`;

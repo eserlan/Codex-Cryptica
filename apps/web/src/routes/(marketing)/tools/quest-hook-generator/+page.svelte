@@ -11,6 +11,8 @@
   let scope = $state(questConfig.scopes[0]);
   let locationType = $state(questConfig.locationTypes[0]);
   let threat = $state(questConfig.threats[0]);
+  let twist = $state(questConfig.twists[0]);
+  let reward = $state(questConfig.rewards[0]);
   let campaignContext = $state("");
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -20,13 +22,15 @@
       scope,
       locationType,
       threat,
+      twist,
+      reward,
       campaignContext,
       useAI,
     });
   }
 
   const relatedLinks = [
-    { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
+    { href: "/solutions/ai-gm-assistant", label: "AI GM assistant" },
     { href: "/free-rpg-campaign-manager", label: "Free RPG campaign manager" },
     { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
   ];
@@ -73,6 +77,8 @@
       bind:scope
       bind:locationType
       bind:threat
+      bind:twist
+      bind:reward
       bind:campaignContext
     />
   {/snippet}
