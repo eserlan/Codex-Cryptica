@@ -106,6 +106,66 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateFaction", () => {
+    it("should generate faction details locally when useAI is false", async () => {
+      const res = await engine.generateFaction({
+        type: "Merchant Guild",
+        scope: "Single city",
+        alignment: "Pragmatic and profit-driven",
+        campaignContext: "a canal city split by old guild rivalries",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      expect(res.content).toContain("merchant guild");
+      expect(res.content).toContain("Campaign Fit");
+      expect(res.content).toContain(
+        "a canal city split by old guild rivalries",
+      );
+      expect(res.lore).toContain("Single city");
+      expect(res.lore).toContain("Internal Conflict");
+      expect(res.lore).toContain("Adventure Hook");
+      expect(res.labels).toContain("faction-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include faction campaign context in the AI prompt", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Argent Loom",
+                content: "AI Generated Faction",
+                lore: "AI Generated Agenda",
+                labels: ["rpg-faction", "faction-generator"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateFaction({
+        type: "Secret Society",
+        scope: "Kingdom-wide network",
+        alignment: "Idealistic but compromised",
+        campaignContext: "a kingdom recovering from a succession war",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a kingdom recovering from a succession war"),
+      );
+      expect(res.type).toBe("faction");
+      expect(res.title).toBe("The Argent Loom");
+      expect(res.content).toBe("AI Generated Faction");
+      expect(res.lore).toBe("AI Generated Agenda");
+      expect(res.labels).toContain("faction-generator");
+    });
+  });
+
   describe("generateSettlement", () => {
     it("should generate settlement details locally when useAI is false", async () => {
       const res = await engine.generateSettlement({

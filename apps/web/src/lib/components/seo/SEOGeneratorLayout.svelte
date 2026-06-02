@@ -7,6 +7,7 @@
     npcConfig,
     settlementConfig,
     magicItemConfig,
+    factionConfig,
   } from "$lib/services/seo/generator-engine";
 
   let {
@@ -20,7 +21,7 @@
     relatedLinks = [],
     faqs = [],
   }: {
-    slug: "npc" | "settlement" | "magic-item";
+    slug: "npc" | "settlement" | "magic-item" | "faction";
     canonicalPath?: string;
     pageTitle?: string;
     metaDescription?: string;
@@ -43,6 +44,11 @@
   let magicItemType = $state(magicItemConfig.types[0]);
   let magicItemRarity = $state(magicItemConfig.rarities[1]); // Default to Uncommon
 
+  let factionType = $state(factionConfig.types[0]);
+  let factionScope = $state(factionConfig.scopes[1]);
+  let factionAlignment = $state(factionConfig.alignments[0]);
+  let factionCampaignContext = $state("");
+
   // Generator UI state
   let isGenerating = $state(false);
   let generatedData = $state<GeneratorOutput | null>(null);
@@ -53,7 +59,7 @@
   let copied = $state(false);
   const resolvedTitle = $derived(
     pageTitle ||
-      `Free RPG ${slug === "npc" ? "NPC" : slug === "settlement" ? "Settlement" : "Magic Item"} Generator | Codex Cryptica`,
+      `Free RPG ${slug === "npc" ? "NPC" : slug === "settlement" ? "Settlement" : slug === "magic-item" ? "Magic Item" : "Faction"} Generator | Codex Cryptica`,
   );
   const resolvedDescription = $derived(
     metaDescription ||
@@ -63,7 +69,7 @@
     introTitle ||
       (slug === "npc"
         ? "D&D NPC Generator"
-        : `${slug === "settlement" ? "Settlement" : "Magic Item"} Generator`),
+        : `${slug === "settlement" ? "Settlement" : slug === "magic-item" ? "Magic Item" : "Faction"} Generator`),
   );
   const faqJsonLd = $derived(
     faqs.length > 0
@@ -105,6 +111,14 @@
         generatedData = await generatorEngine.generateMagicItem({
           type: magicItemType,
           rarity: magicItemRarity,
+          useAI,
+        });
+      } else if (slug === "faction") {
+        generatedData = await generatorEngine.generateFaction({
+          type: factionType,
+          scope: factionScope,
+          alignment: factionAlignment,
+          campaignContext: factionCampaignContext,
           useAI,
         });
       }
@@ -390,7 +404,7 @@ ${generatedData.lore}`;
                   {/each}
                 </select>
               </div>
-            {:else}
+            {:else if slug === "magic-item"}
               <div class="flex flex-col gap-1.5">
                 <label
                   for="item-type-select"
@@ -423,6 +437,84 @@ ${generatedData.lore}`;
                     <option value={r}>{r}</option>
                   {/each}
                 </select>
+              </div>
+            {:else}
+              <div class="flex flex-col gap-1.5">
+                <label
+                  for="faction-type-select"
+                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+                  >Faction Type</label
+                >
+                <select
+                  id="faction-type-select"
+                  name="faction_type"
+                  bind:value={factionType}
+                  class="w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60"
+                >
+                  {#each factionConfig.types as type (type)}
+                    <option value={type}>{type}</option>
+                  {/each}
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label
+                  for="faction-scope-select"
+                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+                  >Operating Scope</label
+                >
+                <select
+                  id="faction-scope-select"
+                  name="faction_scope"
+                  bind:value={factionScope}
+                  class="w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60"
+                >
+                  {#each factionConfig.scopes as scope (scope)}
+                    <option value={scope}>{scope}</option>
+                  {/each}
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label
+                  for="faction-alignment-select"
+                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+                  >Moral Posture</label
+                >
+                <select
+                  id="faction-alignment-select"
+                  name="faction_alignment"
+                  bind:value={factionAlignment}
+                  class="w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60"
+                >
+                  {#each factionConfig.alignments as alignment (alignment)}
+                    <option value={alignment}>{alignment}</option>
+                  {/each}
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label
+                  for="faction-campaign-context"
+                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+                  >Optional Campaign Context</label
+                >
+                <textarea
+                  id="faction-campaign-context"
+                  name="campaign_context"
+                  bind:value={factionCampaignContext}
+                  maxlength="240"
+                  rows="4"
+                  aria-describedby="faction-campaign-context-help"
+                  class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+                ></textarea>
+                <p
+                  id="faction-campaign-context-help"
+                  class="text-[10px] text-theme-muted leading-relaxed"
+                >
+                  Add a city, frontier, villain, war, or campaign tension to aim
+                  the faction at your table.
+                </p>
               </div>
             {/if}
           {/if}

@@ -23,6 +23,7 @@ const config = {
         "/worldbuilding-tool",
         "/ai-rpg-campaign-manager",
         "/tools/dnd-npc-generator",
+        "/tools/faction-generator",
         "/solutions/campaign-manager",
         "/solutions/worldbuilding-tool",
         "/solutions/ai-gm-assistant",
