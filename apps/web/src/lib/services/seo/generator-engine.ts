@@ -140,6 +140,22 @@ export const npcConfig = {
     "To exact revenge on the corrupt noble who exiled them.",
     "To locate a legendary magical spellbook hidden in a nearby ruin.",
   ],
+  factions: [
+    "The Ashen Ledger, a quiet network of debt collectors and informants.",
+    "The Lantern Court, a civic order that keeps public peace after sunset.",
+    "The Red Sash Company, sellswords with a habit of choosing winning sides.",
+    "The Argent Loom, an artisan guild that hides coded messages in its work.",
+    "The Chapel of Last Mercy, a temple faction that knows too many confessions.",
+    "The Blackwater Compact, smugglers moving relics beneath legitimate trade.",
+  ],
+  plotHooks: [
+    "They ask the party to recover a sealed letter before it reaches a rival.",
+    "They recognize one character from a prophecy but refuse to explain in public.",
+    "They can open a locked district gate if the party solves their immediate problem.",
+    "They are being followed by someone who disappears whenever challenged.",
+    "They offer a reward for escort, then reveal the destination is forbidden ground.",
+    "They own a clue that reframes a recent villain as someone else's pawn.",
+  ],
 };
 
 // Settlement Generator Table Config
@@ -262,6 +278,7 @@ export class DefaultGeneratorEngine {
       race?: string;
       role?: string;
       alignment?: string;
+      campaignContext?: string;
       useAI?: boolean;
     } = {},
   ): Promise<GeneratorOutput> {
@@ -276,6 +293,7 @@ export class DefaultGeneratorEngine {
       npcConfig.alignments[
         Math.floor(Math.random() * npcConfig.alignments.length)
       ];
+    const campaignContext = options.campaignContext?.trim();
     const name = this.generateName();
 
     if (options.useAI !== false) {
@@ -286,13 +304,14 @@ Options:
 - Race: ${race}
 - Role: ${role}
 - Alignment: ${alignment}
+${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
 
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single string for the NPC's name",
-  "content": "A detailed multi-paragraph biographical backstory (markdown formatted) describing who they are, their appearance, and their daily life.",
-  "lore": "Structured GM details (markdown formatted) detailing their stats, alignment, personality traits, secrets, and motives.",
-  "labels": ["rpg-character", "imported-draft"]
+  "content": "A detailed multi-paragraph biographical backstory (markdown formatted) describing who they are, their appearance, daily life, and how they fit the campaign context if provided.",
+  "lore": "Structured GM details (markdown formatted) with sections for core fields, personality, secret, motivation, faction connection, and plot hook.",
+  "labels": ["rpg-character", "npc-generator", "imported-draft"]
 }
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
@@ -317,7 +336,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
           lore: data.lore || "",
           labels: Array.isArray(data.labels)
             ? data.labels
-            : ["rpg-character", "imported-draft"],
+            : ["rpg-character", "npc-generator", "imported-draft"],
           status: "active",
         };
       } catch (err) {
@@ -334,34 +353,57 @@ Return only the JSON object. Do not include markdown code block formatting like 
       npcConfig.secrets[Math.floor(Math.random() * npcConfig.secrets.length)];
     const motive =
       npcConfig.motives[Math.floor(Math.random() * npcConfig.motives.length)];
+    const faction =
+      npcConfig.factions[Math.floor(Math.random() * npcConfig.factions.length)];
+    const plotHook =
+      npcConfig.plotHooks[
+        Math.floor(Math.random() * npcConfig.plotHooks.length)
+      ];
 
     const content = `### Biography
-${name} is a ${race} ${role} who lives a simple but distinct life. Known by peers to be persistent in their endeavors, they spend their days honing their trade and navigating the complex politics of the local district. 
+${name} is a ${race} ${role} whose public reputation is useful, incomplete, and just suspicious enough to matter. Locals know them as someone who gets results, even when the work requires favors, secrets, or a carefully timed lie.
+
+${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their current problem should pull the party toward the campaign's active locations, factions, or unresolved mysteries.\n` : ""}
 
 ### Appearance
 They carry themselves with a posture reflecting their profession. Their clothes are well-worn, showing the signs of travel and work, but kept with a level of respect.
 
-### Habits
+### Personality
 - ${traits[0]}
-- ${traits[1]}`;
+- ${traits[1]}
+
+### Table Use
+Introduce ${name} when the party needs a social lead, a compromised witness, or a morally complicated ally. They should be helpful immediately, but never free of consequences.`;
 
     const lore = `### GM Reference Information
-- **Race**: ${race}
-- **Role/Class**: ${role}
+- **Name**: ${name}
+- **Species/Ancestry**: ${race}
+- **Role**: ${role}
 - **Alignment**: ${alignment}
+- **Entity Type**: Character
 
-### Core Motivation
-${motive}
+### Personality
+- ${traits[0]}
+- ${traits[1]}
 
 ### Hidden Secret
-${secret}`;
+${secret}
+
+### Motivation
+${motive}
+
+### Faction Connection
+${faction}
+
+### Plot Hook
+${plotHook}`;
 
     return {
       type: "character",
       title: name,
       content,
       lore,
-      labels: ["rpg-character", "imported-draft"],
+      labels: ["rpg-character", "npc-generator", "imported-draft"],
       status: "active",
     };
   }
