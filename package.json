@@ -69,6 +69,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@tiptap/extension-bubble-menu": "^3.23.6"
+    "@tiptap/extension-bubble-menu": "^3.23.6",
+    "idb": "^8.0.3"
   }
 }
