@@ -127,6 +127,7 @@
 
 @layer base {
   :root {
+    color-scheme: light dark;
     --header-height: 65px;
     --app-viewport-height: 100vh;
     --app-content-height: calc(var(--app-viewport-height) - var(--header-height));
@@ -230,6 +231,18 @@
     --chrome-muted: #78716c;
     --chrome-accent: #c8973a;
   }
+
+  /* Per-theme muted/dim overrides — CSS fallback; script inline styles take precedence at runtime */
+  [data-theme="workspace_dark"]   { --color-text-muted: #a8a29e; --color-text-dim: #78716c; }
+  [data-theme="fantasy_dark"]     { --color-text-muted: #a08870; --color-text-dim: #7a6450; }
+  [data-theme="modern_dark"]      { --color-text-muted: #a1a1aa; --color-text-dim: #71717a; }
+  [data-theme="scifi"]            { --color-text-muted: #4ade80; --color-text-dim: #22c55e; }
+  [data-theme="cyberpunk"]        { --color-text-muted: #67e8f9; --color-text-dim: #38bdf8; }
+  [data-theme="apocalyptic"]      { --color-text-muted: #a8a29e; --color-text-dim: #78716c; }
+  [data-theme="horror"]           { --color-text-muted: #9ca3af; --color-text-dim: #6b7280; }
+  [data-theme="fallout"]          { --color-text-muted: #78c900; --color-text-dim: #4ade80; }
+  [data-theme="starwars"]         { --color-text-muted: #94a3b8; --color-text-dim: #64748b; }
+  [data-theme="startrek"]         { --color-text-muted: #d1d5db; --color-text-dim: #9ca3af; }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;

@@ -22,6 +22,13 @@
           icon: "icon-[lucide--flag]",
         },
         {
+          href: "/tools/quest-hook-generator",
+          label: "Quest Hook Generator",
+          summary:
+            "Generate a GM-ready quest hook with a complication, key NPC, twist, and reward.",
+          icon: "icon-[lucide--scroll-text]",
+        },
+        {
           href: "/generators/npc",
           label: "Procedural NPC Generator",
           summary:
