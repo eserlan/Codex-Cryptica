@@ -253,7 +253,10 @@ ${generatedData.lore}`;
         <div
           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
         >
-          <span class="icon-[lucide--wand-sparkles] w-3.5 h-3.5"></span>
+          <span
+            class="icon-[lucide--wand-sparkles] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
           {eyebrow}
         </div>
         <h1
@@ -477,7 +480,10 @@ ${generatedData.lore}`;
                 href="{base}{link.href}"
                 class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
               >
-                <span class="icon-[lucide--arrow-right] w-3.5 h-3.5"></span>
+                <span
+                  class="icon-[lucide--arrow-right] w-3.5 h-3.5"
+                  aria-hidden="true"
+                ></span>
                 {link.label}
               </a>
             {/each}
@@ -590,7 +596,7 @@ ${generatedData.lore}`;
         <h2
           class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary mb-6"
         >
-          D&D NPC Generator FAQ
+          {resolvedIntroTitle} FAQ
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           {#each faqs as faq (faq.question)}

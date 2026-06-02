@@ -104,6 +104,14 @@ test.describe("SEO and Prerendering", () => {
     test("solutions and comparison pages prerender correctly", async ({
       request,
     }) => {
+      const toolsResponse = await request.get("/tools");
+      expect(toolsResponse.ok()).toBe(true);
+      const toolsHtml = await toolsResponse.text();
+      expect(toolsHtml).toContain("RPG Tools, Generators, and Comparisons");
+      expect(toolsHtml).toContain("/tools/dnd-npc-generator");
+      expect(toolsHtml).toContain("/solutions/campaign-manager");
+      expect(toolsHtml).toContain("/vs/world-anvil");
+
       // Test Solutions page prerendering
       const response = await request.get("/solutions/campaign-manager");
       expect(response.ok()).toBe(true);

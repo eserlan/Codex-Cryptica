@@ -18,6 +18,7 @@ const config = {
         "/privacy",
         "/blog",
         "/sitemap.xml",
+        "/tools",
         "/free-rpg-campaign-manager",
         "/worldbuilding-tool",
         "/ai-rpg-campaign-manager",
