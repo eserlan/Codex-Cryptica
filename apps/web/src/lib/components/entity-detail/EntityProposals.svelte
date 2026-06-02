@@ -13,7 +13,7 @@
   const existingTitles = $derived.by(() => {
     // ⚡ Bolt Optimization: Replace Object.values().map() with an imperative loop
     const titles = new Set<string>();
-    const entities = vault.entities || {};
+    const entities = vault.entities;
     for (const key in entities) {
       if (Object.prototype.hasOwnProperty.call(entities, key)) {
         titles.add(entities[key].title);
