@@ -1390,7 +1390,7 @@ ${reward}`;
     const culture = options.culture || nameGeneratorConfig.cultures[0];
     const gender = options.gender || nameGeneratorConfig.genders[0];
     const nameType = options.nameType || nameGeneratorConfig.nameTypes[0];
-    const count = parseInt(options.count || "5", 10);
+    const count = Math.max(1, parseInt(options.count || "5", 10) || 5);
     const context = options.context?.trim();
 
     const entityType: GeneratorOutput["type"] =
@@ -1415,7 +1415,7 @@ ${context ? `- Context: ${context}` : ""}
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "The single best or most evocative name from the list",
-  "content": "A brief lead sentence describing the naming style, followed by a markdown list of all ${count} names. Format each name as '- **Name** — one-sentence flavour note'.",
+  "content": "A brief lead sentence describing the naming style, followed by a markdown list of all ${count} names. Format each name as '- **Name**: one-sentence flavour note'.",
   "lore": "GM notes (markdown formatted) with sections for Culture, Style, and Usage Suggestions covering how to use these names in a campaign.",
   "labels": ["fantasy-name", "name-generator", "imported-draft"]
 }
@@ -1468,7 +1468,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
     }
 
     const primary = generated[0];
-    const nameList = generated.map((n) => `- **${n}**`).join("\n");
+    const nameList = generated.map((n) => `- ${n}`).join("\n");
 
     const content = `${culture} ${nameType.toLowerCase()} names in a ${gender.toLowerCase()} register.
 
