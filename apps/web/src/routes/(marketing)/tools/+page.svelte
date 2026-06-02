@@ -29,6 +29,13 @@
           icon: "icon-[lucide--scroll-text]",
         },
         {
+          href: "/tools/fantasy-name-generator",
+          label: "Fantasy Name Generator",
+          summary:
+            "Generate character, place, faction, and item names across ten cultural styles.",
+          icon: "icon-[lucide--pen-line]",
+        },
+        {
           href: "/generators/npc",
           label: "Procedural NPC Generator",
           summary:
