@@ -24,7 +24,7 @@ This document details the architectural decisions, rationale, and alternatives c
 ## 3. P2P Sync & Guest Transcript Persistence
 
 - **Decision**:
-  - Guests persist chat history locally in IndexedDB (using a new IndexedDB store `guest_chats` or local storage) to survive reloads.
+  - Guests persist chat history locally in IndexedDB (using a new IndexedDB store `guest_chat_transcripts` or local storage) to survive reloads.
   - Guests push transcripts to the Host using a new P2P protocol message type: `GUEST_CHAT_TRANSCRIPT_SYNC`.
   - Hosts receive this message and write the transcript files into the vault storage (e.g. `vault-root/.codex/transcripts/{guestId}_{characterId}.json`) to allow GM review.
 - **Rationale**: Guests do not have direct file write permissions. Syncing via P2P ensures the host receives and registers the conversations in their own local database/file-system securely.
@@ -34,4 +34,4 @@ This document details the architectural decisions, rationale, and alternatives c
 ## 4. UI Layer Integration
 
 - **Decision**: Create a dedicated `GuestChatPanel` component in Svelte 5 and Svelte runes in `apps/web/src/lib/components/guest/GuestChatPanel.svelte`, exposing the curated list of enabled characters and the conversation bubble interface.
-- **Rationale**: Keeps the player-facing experience separated from the GM-facing Oracle chat sidebar, using custom Tailind 4 styled components.
+- **Rationale**: Keeps the player-facing experience separated from the GM-facing Oracle chat sidebar, using custom Tailwind 4 styled components.

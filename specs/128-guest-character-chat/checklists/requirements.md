@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-02
-**Feature**: [spec.md](file:///home/espen/proj/remotecodexarcana/specs/128-guest-character-chat/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

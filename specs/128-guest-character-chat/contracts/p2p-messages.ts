@@ -4,6 +4,7 @@
 export interface GuestChatTranscriptSyncMessage {
   type: "GUEST_CHAT_TRANSCRIPT_SYNC";
   payload: {
+    id: string;
     guestId: string;
     guestName: string;
     characterId: string;

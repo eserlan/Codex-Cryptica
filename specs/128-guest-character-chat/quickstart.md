@@ -62,6 +62,7 @@ CRITICAL RULES:
 When a message is received or completed on the guest side, push the updated transcript to the host:
 
 ```typescript
+import type { GuestChatTranscript } from "schema";
 import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
 
 function syncTranscriptToHost(transcript: GuestChatTranscript) {

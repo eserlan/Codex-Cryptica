@@ -1,7 +1,7 @@
 # Implementation Plan: Guest Character Chat for Invited World Participants
 
-**Branch**: `128-guest-character-chat` | **Date**: 2026-06-02 | **Spec**: [spec.md](file:///home/espen/proj/remotecodexarcana/specs/128-guest-character-chat/spec.md)
-**Input**: Feature specification from `/specs/128-guest-character-chat/spec.md`
+**Branch**: `128-guest-character-chat` | **Date**: 2026-06-02 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `specs/128-guest-character-chat/spec.md`
 
 ## Summary
 
