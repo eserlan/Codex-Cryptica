@@ -85,6 +85,14 @@ export const solutions: Record<string, SEOPageData> = {
           "Absolutely. Because all data is stored locally in your browser's Origin Private File System, the entire editor and graph engine run without an active internet connection.",
       },
     ],
+    relatedLinks: [
+      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
   },
   "worldbuilding-tool": {
     slug: "worldbuilding-tool",
@@ -136,6 +144,11 @@ export const solutions: Record<string, SEOPageData> = {
           "Yes, the chronological timeline engine handles custom calendar definitions, fantasy months, and historical epoch calculations.",
       },
     ],
+    relatedLinks: [
+      { href: "/solutions/campaign-manager", label: "Campaign manager" },
+      { href: "/solutions/rpg-knowledge-graph", label: "RPG knowledge graph" },
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+    ],
   },
   "ai-gm-assistant": {
     slug: "ai-gm-assistant",
@@ -186,6 +199,14 @@ export const solutions: Record<string, SEOPageData> = {
           "Yes, your campaign text is sent directly to the LLM API provider and is never stored on our servers.",
       },
     ],
+    relatedLinks: [
+      { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
+      {
+        href: "/solutions/ai-worldbuilding-tool",
+        label: "AI worldbuilding tool",
+      },
+      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+    ],
   },
   "local-first-rpg": {
     slug: "local-first-rpg",
@@ -233,6 +254,84 @@ export const solutions: Record<string, SEOPageData> = {
         question: "Can I host my campaign online?",
         answer:
           "Yes. Codex supports P2P guest sessions where you can host campaigns directly from your browser to your players.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
+      },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+    ],
+  },
+  "ai-rpg-campaign-manager": {
+    slug: "ai-rpg-campaign-manager",
+    eyebrow: "AI-Powered Campaign Management",
+    title: "AI RPG Campaign Manager | AI-Assisted TTRPG Prep | Codex Cryptica",
+    description:
+      "Manage your TTRPG campaigns with AI assistance. Generate NPCs, factions, and quest hooks, revise session notes, and build your world with a local-first AI co-author.",
+    h1: "AI RPG Campaign Manager",
+    subheading:
+      "Prep sessions faster with an AI co-author that knows your campaign.",
+    introText:
+      "Codex Cryptica combines a local-first campaign wiki with an integrated AI writing layer. Ask the Lore Oracle to draft an NPC for tonight's session, suggest a plot complication, or expand a location stub — all without leaving your notes and all stored privately on your device.",
+    ctaText: "Start Your AI-Assisted Campaign",
+    secondaryCtaText: "Try free generators",
+    secondaryCtaHref: "/tools",
+    keywords: [
+      "ai rpg campaign manager",
+      "ai campaign manager",
+      "ai dungeon master tool",
+      "ai ttrpg campaign helper",
+      "ai dnd campaign manager",
+    ],
+    features: [
+      {
+        title: "Lore Oracle AI",
+        description:
+          "Context-aware AI that reads your existing campaign notes before generating new content, keeping everything consistent.",
+        icon: "icon-[lucide--bot]",
+      },
+      {
+        title: "Local-First Privacy",
+        description:
+          "All notes stay on your device. AI calls go directly to your API key — nothing stored on Codex servers.",
+        icon: "icon-[lucide--shield-check]",
+      },
+      {
+        title: "Instant Vault Import",
+        description:
+          "Generated NPCs, factions, and locations import directly as structured entities in your campaign vault.",
+        icon: "icon-[lucide--database]",
+      },
+    ],
+    relatedLinks: [
+      { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
+      {
+        href: "/solutions/ai-worldbuilding-tool",
+        label: "AI worldbuilding tool",
+      },
+      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+    ],
+    faq: [
+      {
+        question: "Do I need an AI subscription to use this?",
+        answer:
+          "No. You bring your own Gemini or OpenAI API key, or use the shared system proxy for free trials. Codex never charges for AI usage.",
+      },
+      {
+        question: "Can the AI see all my campaign notes?",
+        answer:
+          "Only what you share with it. The Oracle reads selected entities you explicitly include in a prompt — nothing is sent automatically.",
+      },
+      {
+        question: "Does it work offline?",
+        answer:
+          "The campaign wiki and graph work fully offline. AI generation requires an internet connection to reach your API provider.",
       },
     ],
   },
@@ -643,6 +742,13 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
           "No, core features like timelines, connection proposals, character generators, and interactive maps are built natively into Codex.",
       },
     ],
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   "world-anvil": {
     slug: "world-anvil",
@@ -727,6 +833,14 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
           "You can host local P2P session maps directly from your browser, allowing players to join without creating an account or paying.",
       },
     ],
+    relatedLinks: [
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+      { href: "/vs/kanka-alternative", label: "vs Kanka" },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   legendkeeper: {
     slug: "legendkeeper",
@@ -800,6 +914,14 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         question: "Does Codex support mapping?",
         answer:
           "Yes, Codex includes spatial canvas and relationship nodes, with encounter tracking features.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
       },
     ],
   },
