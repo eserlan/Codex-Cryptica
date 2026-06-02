@@ -11,12 +11,13 @@ import {
 } from "../p2p-helpers";
 import { encodeSessionSnapshot } from "../p2p-protocol";
 
-function snapshotEntitiesForTransport(entities: Record<string, any>) {
+function snapshotEntitiesForTransport(entities?: Record<string, any> | null) {
+  const source = entities ?? {};
   try {
-    return structuredClone(entities);
+    return structuredClone(source);
   } catch {
     const snapshot: Record<string, any> = {};
-    for (const [id, entity] of Object.entries(entities || {})) {
+    for (const [id, entity] of Object.entries(source)) {
       snapshot[id] =
         entity && typeof entity === "object" ? { ...entity } : entity;
     }

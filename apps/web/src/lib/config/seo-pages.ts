@@ -93,14 +93,6 @@ export const solutions: Record<string, SEOPageData> = {
         label: "Free RPG campaign manager",
       },
     ],
-    relatedLinks: [
-      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
-      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
-      {
-        href: "/free-rpg-campaign-manager",
-        label: "Free RPG campaign manager",
-      },
-    ],
   },
   "worldbuilding-tool": {
     slug: "worldbuilding-tool",

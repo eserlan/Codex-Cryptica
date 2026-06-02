@@ -19,7 +19,7 @@ describe("VaultHandler", () => {
             visibleToGuests: true,
           },
         },
-        defaultVisibility: false,
+        defaultVisibility: "hidden",
         updateEntity: vi.fn(),
         batchUpdate: vi.fn(),
         deleteEntity: vi.fn(),
