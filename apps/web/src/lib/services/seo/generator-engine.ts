@@ -78,6 +78,310 @@ export const nameTable = {
   ],
 };
 
+// Fantasy Name Generator Config
+export const nameGeneratorConfig = {
+  cultures: [
+    "Generic Fantasy",
+    "High Elf",
+    "Dark Elf",
+    "Dwarven",
+    "Halfling",
+    "Orcish",
+    "Norse / Viking",
+    "Roman / Latin",
+    "Celtic / Gaelic",
+    "Eastern / Asian-inspired",
+  ],
+  genders: ["Any", "Masculine", "Feminine", "Neutral / Ambiguous"],
+  nameTypes: ["Person", "Place", "Faction", "Item"],
+  counts: ["3", "5", "10"],
+  // Culture-specific local fallback tables
+  culturePrefixes: {
+    "Generic Fantasy": [
+      "Ael",
+      "Bran",
+      "Cael",
+      "Dax",
+      "El",
+      "Fael",
+      "Kael",
+      "Lyr",
+      "Morg",
+      "Nal",
+      "Thor",
+      "Vael",
+    ],
+    "High Elf": [
+      "Aer",
+      "Caer",
+      "El",
+      "Gal",
+      "Ith",
+      "Lae",
+      "Mir",
+      "Sil",
+      "Thal",
+      "Var",
+      "Wyn",
+      "Zin",
+    ],
+    "Dark Elf": [
+      "Driz",
+      "Mal",
+      "Nath",
+      "Riz",
+      "Sol",
+      "Szor",
+      "Ul",
+      "Vir",
+      "Xan",
+      "Zaer",
+      "Zin",
+      "Vy",
+    ],
+    Dwarven: [
+      "Bal",
+      "Dur",
+      "Glor",
+      "Grim",
+      "Kat",
+      "Kaz",
+      "Mag",
+      "Nar",
+      "Thor",
+      "Tor",
+      "Ulf",
+      "Vor",
+    ],
+    Halfling: [
+      "Bil",
+      "Cor",
+      "Del",
+      "Fil",
+      "Gob",
+      "Mer",
+      "Pip",
+      "Rose",
+      "Sam",
+      "Tom",
+      "Wil",
+      "Bun",
+    ],
+    Orcish: [
+      "Druk",
+      "Grak",
+      "Grom",
+      "Krag",
+      "Mog",
+      "Nar",
+      "Rok",
+      "Skul",
+      "Thok",
+      "Urg",
+      "Vrak",
+      "Zug",
+    ],
+    "Norse / Viking": [
+      "Arn",
+      "Bjor",
+      "Dag",
+      "Eil",
+      "Gunn",
+      "Hal",
+      "Ing",
+      "Leif",
+      "Rag",
+      "Sigr",
+      "Thor",
+      "Ulf",
+    ],
+    "Roman / Latin": [
+      "Aem",
+      "Aur",
+      "Bru",
+      "Cal",
+      "Cas",
+      "Cor",
+      "Flav",
+      "Jul",
+      "Marc",
+      "Octa",
+      "Sext",
+      "Val",
+    ],
+    "Celtic / Gaelic": [
+      "Aed",
+      "Bran",
+      "Caill",
+      "Conn",
+      "Donn",
+      "Eoch",
+      "Fearg",
+      "Niall",
+      "Ruad",
+      "Taig",
+      "Uar",
+      "Cunn",
+    ],
+    "Eastern / Asian-inspired": [
+      "Akira",
+      "Chen",
+      "Hiro",
+      "Jin",
+      "Kai",
+      "Li",
+      "Ren",
+      "Ryu",
+      "Shen",
+      "Tao",
+      "Wei",
+      "Zhen",
+    ],
+  } as Record<string, string[]>,
+  cultureSuffixes: {
+    "Generic Fantasy": [
+      "dar",
+      "eth",
+      "gorn",
+      "ius",
+      "mar",
+      "morn",
+      "ra",
+      "ric",
+      "thas",
+      "val",
+      "wen",
+      "thor",
+    ],
+    "High Elf": [
+      "ael",
+      "aith",
+      "ara",
+      "ath",
+      "elan",
+      "iath",
+      "ien",
+      "ira",
+      "is",
+      "ith",
+      "on",
+      "rial",
+    ],
+    "Dark Elf": [
+      "ace",
+      "arn",
+      "bra",
+      "dra",
+      "fein",
+      "ica",
+      "inae",
+      "ra",
+      "rix",
+      "ssa",
+      "tra",
+      "vra",
+    ],
+    Dwarven: [
+      "ak",
+      "ald",
+      "ar",
+      "ek",
+      "im",
+      "in",
+      "kin",
+      "nar",
+      "rek",
+      "rim",
+      "rin",
+      "uk",
+    ],
+    Halfling: [
+      "ble",
+      "boro",
+      "buck",
+      "fast",
+      "foot",
+      "fur",
+      "good",
+      "hill",
+      "penny",
+      "seed",
+      "wise",
+      "wool",
+    ],
+    Orcish: [
+      "ash",
+      "dar",
+      "gash",
+      "grak",
+      "gruk",
+      "kul",
+      "lash",
+      "mok",
+      "rak",
+      "skrag",
+      "thak",
+      "ugh",
+    ],
+    "Norse / Viking": [
+      "ald",
+      "bjorn",
+      "dís",
+      "eit",
+      "gar",
+      "helm",
+      "nar",
+      "rún",
+      "stein",
+      "ulf",
+      "vald",
+      "var",
+    ],
+    "Roman / Latin": [
+      "anus",
+      "ella",
+      "ia",
+      "ianus",
+      "illa",
+      "ina",
+      "inus",
+      "io",
+      "ius",
+      "lia",
+      "ona",
+      "us",
+    ],
+    "Celtic / Gaelic": [
+      "ach",
+      "all",
+      "an",
+      "ard",
+      "as",
+      "dha",
+      "ech",
+      "en",
+      "inn",
+      "on",
+      "ua",
+      "ugh",
+    ],
+    "Eastern / Asian-inspired": [
+      "bo",
+      "fa",
+      "ji",
+      "ko",
+      "lan",
+      "lei",
+      "li",
+      "mei",
+      "na",
+      "ro",
+      "shi",
+      "xia",
+    ],
+  } as Record<string, string[]>,
+};
+
 // NPC Generator Table Config
 export const npcConfig = {
   races: [
@@ -1069,6 +1373,121 @@ ${reward}`;
       content,
       lore,
       labels: ["rpg-quest", "quest-generator", "imported-draft"],
+      status: "active",
+    };
+  }
+
+  async generateNames(
+    options: {
+      culture?: string;
+      gender?: string;
+      nameType?: string;
+      count?: string;
+      context?: string;
+      useAI?: boolean;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const culture = options.culture || nameGeneratorConfig.cultures[0];
+    const gender = options.gender || nameGeneratorConfig.genders[0];
+    const nameType = options.nameType || nameGeneratorConfig.nameTypes[0];
+    const count = Math.max(1, parseInt(options.count || "5", 10) || 5);
+    const context = options.context?.trim();
+
+    const entityType: GeneratorOutput["type"] =
+      nameType === "Place"
+        ? "location"
+        : nameType === "Faction"
+          ? "faction"
+          : nameType === "Item"
+            ? "item"
+            : "character";
+
+    if (options.useAI !== false) {
+      try {
+        const prompt = `Generate ${count} fantasy ${nameType.toLowerCase()} names in JSON format.
+Options:
+- Culture / Style: ${culture}
+- Gender / Presentation: ${gender}
+- Name Type: ${nameType}
+- Count: ${count}
+${context ? `- Context: ${context}` : ""}
+
+You must return a valid JSON object matching the following structure exactly:
+{
+  "title": "The single best or most evocative name from the list",
+  "content": "A brief lead sentence describing the naming style, followed by a markdown list of all ${count} names. Format each name as '- **Name**: one-sentence flavour note'.",
+  "lore": "GM notes (markdown formatted) with sections for Culture, Style, and Usage Suggestions covering how to use these names in a campaign.",
+  "labels": ["fantasy-name", "name-generator", "imported-draft"]
+}
+Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-1.5-flash",
+          "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+        );
+        const response = await model.generateContent(prompt);
+        const text = response.response.text().trim();
+        const cleanText = text
+          .replace(/^```json\s*/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const data = JSON.parse(cleanText);
+
+        return {
+          type: entityType,
+          title: data.title || "Fantasy Name",
+          content: data.content || "",
+          lore: data.lore || "",
+          labels: Array.isArray(data.labels)
+            ? data.labels
+            : ["fantasy-name", "name-generator", "imported-draft"],
+          status: "active",
+        };
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+
+    // Local fallback: combine culture-specific prefix + suffix
+    const prefixes =
+      nameGeneratorConfig.culturePrefixes[culture] ||
+      nameGeneratorConfig.culturePrefixes["Generic Fantasy"];
+    const suffixes =
+      nameGeneratorConfig.cultureSuffixes[culture] ||
+      nameGeneratorConfig.cultureSuffixes["Generic Fantasy"];
+
+    const generated: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+      generated.push(prefix.charAt(0).toUpperCase() + prefix.slice(1) + suffix);
+    }
+
+    const primary = generated[0];
+    const nameList = generated.map((n) => `- ${n}`).join("\n");
+
+    const content = `${culture} ${nameType.toLowerCase()} names in a ${gender.toLowerCase()} register.
+
+${nameList}`;
+
+    const lore = `### Generator Settings
+- **Culture**: ${culture}
+- **Gender / Presentation**: ${gender}
+- **Name Type**: ${nameType}
+
+### Usage Suggestions
+Use these names for any ${nameType.toLowerCase()} in a ${culture.toLowerCase()}-influenced setting. Combine or modify them freely — drop a syllable, add a prefix, or append a title or epithet for variation.`;
+
+    return {
+      type: entityType,
+      title: primary,
+      content,
+      lore,
+      labels: ["fantasy-name", "name-generator", "imported-draft"],
       status: "active",
     };
   }

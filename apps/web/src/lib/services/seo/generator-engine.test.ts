@@ -166,6 +166,94 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateNames", () => {
+    it("should generate the correct entity type for each name type", async () => {
+      const cases: Array<[string, string]> = [
+        ["Person", "character"],
+        ["Place", "location"],
+        ["Faction", "faction"],
+        ["Item", "item"],
+      ];
+      for (const [nameType, expected] of cases) {
+        const res = await engine.generateNames({ nameType, useAI: false });
+        expect(res.type).toBe(expected);
+      }
+    });
+
+    it("should generate the requested count of names in local fallback", async () => {
+      const res = await engine.generateNames({ count: "3", useAI: false });
+      const bullets = (res.content.match(/^- /gm) || []).length;
+      expect(bullets).toBe(3);
+      expect(res.title).toBeDefined();
+      expect(res.title!.length).toBeGreaterThan(0);
+    });
+
+    it("should clamp invalid count to a positive integer", async () => {
+      const res = await engine.generateNames({
+        count: "not-a-number",
+        useAI: false,
+      });
+      const bullets = (res.content.match(/^- /gm) || []).length;
+      expect(bullets).toBeGreaterThan(0);
+      expect(res.title).toBeDefined();
+    });
+
+    it("should use culture-specific prefix/suffix tables", async () => {
+      const res = await engine.generateNames({
+        culture: "Dwarven",
+        count: "5",
+        useAI: false,
+      });
+      expect(res.content).toContain("Dwarven");
+      expect(res.labels).toContain("name-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should call clientManager and return AI output when useAI is true", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Sylvara",
+                content: "High Elf names.\n- **Sylvara**: graceful archer",
+                lore: "Culture: High Elf",
+                labels: ["fantasy-name", "name-generator"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateNames({
+        culture: "High Elf",
+        nameType: "Person",
+        count: "3",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(res.type).toBe("character");
+      expect(res.title).toBe("Sylvara");
+      expect(res.content).toContain("Sylvara");
+    });
+
+    it("should fall back to local tables when AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateNames({
+        culture: "Norse / Viking",
+        count: "3",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("character");
+      expect(res.title).toBeDefined();
+      const bullets = (res.content.match(/^- /gm) || []).length;
+      expect(bullets).toBe(3);
+    });
+  });
+
   describe("generateSettlement", () => {
     it("should generate settlement details locally when useAI is false", async () => {
       const res = await engine.generateSettlement({
