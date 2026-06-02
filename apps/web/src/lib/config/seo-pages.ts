@@ -430,8 +430,8 @@ export const solutions: Record<string, SEOPageData> = {
       },
     ],
   },
-  "offline-campaign-manager": {
-    slug: "offline-campaign-manager",
+  "offline-rpg-campaign-manager": {
+    slug: "offline-rpg-campaign-manager",
     eyebrow: "Offline-First Campaign Tool",
     title: "Offline RPG Campaign Manager | No Internet Needed | Codex Cryptica",
     description:
@@ -494,8 +494,8 @@ export const solutions: Record<string, SEOPageData> = {
       },
     ],
   },
-  "local-first-worldbuilding": {
-    slug: "local-first-worldbuilding",
+  "local-first-worldbuilding-tool": {
+    slug: "local-first-worldbuilding-tool",
     eyebrow: "Privacy-First Worldbuilding",
     title:
       "Local-First Worldbuilding Tool | Private & Offline | Codex Cryptica",
@@ -803,8 +803,8 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
   },
-  kanka: {
-    slug: "kanka",
+  "kanka-alternative": {
+    slug: "kanka-alternative",
     competitorName: "Kanka",
     title: "Codex Cryptica vs Kanka: Local vs Cloud Campaign Manager",
     description:
