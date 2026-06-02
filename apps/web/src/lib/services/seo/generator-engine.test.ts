@@ -34,7 +34,24 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toContain("Elf");
       expect(res.content).toContain("Mage");
       expect(res.lore).toContain("Neutral Good");
+      expect(res.lore).toContain("Species/Ancestry");
+      expect(res.lore).toContain("Faction Connection");
+      expect(res.lore).toContain("Plot Hook");
+      expect(res.labels).toContain("npc-generator");
       expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include optional campaign context in local NPC output", async () => {
+      const res = await engine.generateNPC({
+        race: "Human",
+        role: "Guard",
+        alignment: "Lawful Neutral",
+        campaignContext: "a haunted border city under siege",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("Campaign Fit");
+      expect(res.content).toContain("a haunted border city under siege");
     });
 
     it("should call clientManager when useAI is true and succeed", async () => {
@@ -57,11 +74,15 @@ describe("DefaultGeneratorEngine", () => {
         race: "Elf",
         role: "Mage",
         alignment: "Neutral Good",
+        campaignContext: "a ruined elven academy",
         useAI: true,
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
       expect(mockModel.generateContent).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a ruined elven academy"),
+      );
       expect(res.title).toBe("Aelwen The Wise");
       expect(res.content).toBe("AI Generated Bio");
       expect(res.lore).toBe("AI Generated Stats");

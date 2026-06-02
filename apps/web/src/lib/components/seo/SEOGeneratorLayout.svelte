@@ -11,14 +11,31 @@
 
   let {
     slug,
+    canonicalPath,
+    pageTitle,
+    metaDescription,
+    eyebrow = "Free RPG Tool",
+    introTitle,
+    introText,
+    relatedLinks = [],
+    faqs = [],
   }: {
     slug: "npc" | "settlement" | "magic-item";
+    canonicalPath?: string;
+    pageTitle?: string;
+    metaDescription?: string;
+    eyebrow?: string;
+    introTitle?: string;
+    introText?: string;
+    relatedLinks?: { href: string; label: string }[];
+    faqs?: { question: string; answer: string }[];
   } = $props();
 
   // Selected parameters
   let npcRace = $state(npcConfig.races[0]);
   let npcRole = $state(npcConfig.roles[0]);
   let npcAlignment = $state(npcConfig.alignments[0]);
+  let npcCampaignContext = $state("");
 
   let settlementSize = $state(settlementConfig.sizes[2].name); // Default to Town
   let settlementEconomy = $state(settlementConfig.economies[0]);
@@ -34,6 +51,37 @@
 
   // Fallback Copy to Clipboard state
   let copied = $state(false);
+  const resolvedTitle = $derived(
+    pageTitle ||
+      `Free RPG ${slug === "npc" ? "NPC" : slug === "settlement" ? "Settlement" : "Magic Item"} Generator | Codex Cryptica`,
+  );
+  const resolvedDescription = $derived(
+    metaDescription ||
+      "Generate high-quality detailed campaign drafts using our interactive local-first generators.",
+  );
+  const resolvedIntroTitle = $derived(
+    introTitle ||
+      (slug === "npc"
+        ? "D&D NPC Generator"
+        : `${slug === "settlement" ? "Settlement" : "Magic Item"} Generator`),
+  );
+  const faqJsonLd = $derived(
+    faqs.length > 0
+      ? JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.answer,
+            },
+          })),
+        })
+      : "",
+  );
+  const formAction = $derived(canonicalPath || `/generators/${slug}`);
 
   async function handleGenerate() {
     isGenerating = true;
@@ -44,6 +92,7 @@
           race: npcRace,
           role: npcRole,
           alignment: npcAlignment,
+          campaignContext: npcCampaignContext,
           useAI,
         });
       } else if (slug === "settlement") {
@@ -136,18 +185,15 @@ ${generatedData.lore}`;
 </script>
 
 <svelte:head>
-  <title
-    >Free RPG {slug === "npc"
-      ? "NPC"
-      : slug === "settlement"
-        ? "Settlement"
-        : "Magic Item"} Generator | Codex Cryptica</title
-  >
-  <meta
-    name="description"
-    content="Generate high-quality detailed campaign drafts using our interactive local-first generators."
-  />
+  <title>{resolvedTitle}</title>
+  <meta name="description" content={resolvedDescription} />
+  {#if canonicalPath}
+    <link rel="canonical" href="https://codexcryptica.com{canonicalPath}" />
+  {/if}
   <link rel="help" href="{base}/llms.txt" />
+  {#if faqJsonLd}
+    {@html `<script type="application/ld+json">${faqJsonLd}</` + "script>"}
+  {/if}
 </svelte:head>
 
 <div
@@ -204,23 +250,33 @@ ${generatedData.lore}`;
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
+        <div
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
+        >
+          <span class="icon-[lucide--wand-sparkles] w-3.5 h-3.5"></span>
+          {eyebrow}
+        </div>
         <h1
           class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"
           id="generator-title"
         >
-          {#if slug === "npc"}
-            NPC Generator
-          {:else}
-            {slug === "settlement" ? "Settlement" : "Magic Item"} Generator
-          {/if}
+          {resolvedIntroTitle}
         </h1>
         <p class="text-xs text-theme-muted leading-relaxed mb-6">
-          Customize options and instantly generate structured drafts to populate
-          your campaign lore database.
+          {introText ||
+            "Customize options and instantly generate structured drafts to populate your campaign lore database."}
         </p>
 
         <!-- Generation Inputs -->
-        <div class="space-y-4">
+        <form
+          class="space-y-4"
+          action="{base}{formAction}"
+          method="GET"
+          onsubmit={(event) => {
+            event.preventDefault();
+            void handleGenerate();
+          }}
+        >
           {#if slug === "npc"}
             <div class="flex flex-col gap-1.5">
               <label
@@ -271,6 +327,30 @@ ${generatedData.lore}`;
                   <option value={a}>{a}</option>
                 {/each}
               </select>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label
+                for="campaign-context"
+                class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+                >Optional Campaign Context</label
+              >
+              <textarea
+                id="campaign-context"
+                name="campaign_context"
+                bind:value={npcCampaignContext}
+                maxlength="240"
+                rows="4"
+                aria-describedby="campaign-context-help"
+                class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+              ></textarea>
+              <p
+                id="campaign-context-help"
+                class="text-[10px] text-theme-muted leading-relaxed"
+              >
+                Add a city, faction, dungeon, or current campaign problem to aim
+                the NPC at your table.
+              </p>
             </div>
           {:else}
             {#if slug === "settlement"}
@@ -364,8 +444,7 @@ ${generatedData.lore}`;
           </div>
 
           <button
-            type="button"
-            onclick={handleGenerate}
+            type="submit"
             disabled={isGenerating}
             class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             id="generate-button"
@@ -378,13 +457,30 @@ ${generatedData.lore}`;
               ✦ Generate RPG Draft ✦
             {/if}
           </button>
-        </div>
+        </form>
 
         {#if errorMessage}
           <div
             class="mt-4 p-3 border border-red-500/30 bg-red-500/10 rounded-xl text-red-400 text-xs"
           >
             {errorMessage}
+          </div>
+        {/if}
+
+        {#if relatedLinks.length > 0}
+          <div
+            class="mt-5 border-t border-theme-border/60 pt-4 flex flex-col gap-2"
+            aria-label="Related pages"
+          >
+            {#each relatedLinks as link (link.href)}
+              <a
+                href="{base}{link.href}"
+                class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
+              >
+                <span class="icon-[lucide--arrow-right] w-3.5 h-3.5"></span>
+                {link.label}
+              </a>
+            {/each}
           </div>
         {/if}
       </div>
@@ -487,6 +583,34 @@ ${generatedData.lore}`;
       </div>
     </div>
   </div>
+
+  {#if faqs.length > 0}
+    <section class="border-t border-theme-border/60 px-6 py-12">
+      <div class="max-w-4xl mx-auto">
+        <h2
+          class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary mb-6"
+        >
+          D&D NPC Generator FAQ
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {#each faqs as faq (faq.question)}
+            <article
+              class="border border-theme-border/60 bg-theme-surface/30 rounded-xl p-5"
+            >
+              <h3
+                class="font-header font-bold text-sm uppercase tracking-wider mb-2"
+              >
+                {faq.question}
+              </h3>
+              <p class="text-sm text-theme-muted leading-relaxed">
+                {faq.answer}
+              </p>
+            </article>
+          {/each}
+        </div>
+      </div>
+    </section>
+  {/if}
 
   <!-- Marketing Footer -->
   <footer

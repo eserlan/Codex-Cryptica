@@ -122,27 +122,64 @@ test.describe("SEO and Prerendering", () => {
 
     test("generator page and import conversion funnel flow", async ({
       page,
+      request,
     }) => {
-      // 1. Navigate to generator
-      await page.goto("/generators/npc");
-      await expect(page.locator("#generator-title")).toContainText(
-        "NPC Generator",
+      const response = await request.get("/tools/dnd-npc-generator");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("D&amp;D NPC Generator");
+      expect(html).toContain("What does each generated NPC include?");
+      expect(html).toContain("/solutions/ai-gm-assistant");
+      expect(html).toContain("/free-rpg-campaign-manager");
+      const jsonLdScripts = [
+        ...html.matchAll(
+          /<script type="application\/ld\+json">([^<]+)<\/script>/g,
+        ),
+      ].map((match) => JSON.parse(match[1]));
+      const faqSchema = jsonLdScripts.find(
+        (schema) => schema["@type"] === "FAQPage",
       );
+      expect(faqSchema).toBeTruthy();
+      expect(faqSchema["@type"]).toBe("FAQPage");
+      expect(faqSchema.mainEntity).toHaveLength(4);
+      expect(faqSchema.mainEntity[0].name).toBe(
+        "Does the D&D NPC generator require an account?",
+      );
+
+      // 1. Navigate to generator
+      await page.goto("/tools/dnd-npc-generator");
+      await expect(page.locator("#generator-title")).toContainText(
+        "D&D NPC Generator",
+      );
+      await expect(page.getByLabel("Optional Campaign Context")).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: /AI GM assistant/i }),
+      ).toHaveAttribute("href", "/solutions/ai-gm-assistant");
 
       // 2. Select AI Mode checkbox to off (so it runs fallback instantly and deterministically offline-friendly in tests)
       const aiToggle = page.locator("#ai-toggle");
       if (await aiToggle.isChecked()) {
         await aiToggle.uncheck();
       }
+      await page
+        .getByLabel("Optional Campaign Context")
+        .fill("a haunted border city under siege");
 
       // 3. Trigger generate
       await page.click("#generate-button");
 
       // 4. Wait for generated element to show up
       await expect(page.locator("#save-to-codex-btn")).toBeVisible();
-      await expect(page.locator("h2")).not.toContainText("No Draft Generated"); // Check that a title is populated
+      await expect(
+        page.getByRole("heading", { name: "Faction Connection" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Plot Hook" }),
+      ).toBeVisible();
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated"); // Check that a title is populated
 
-      const generatedName = await page.locator("h2").textContent();
+      const generatedName = await generatedTitle.textContent();
       expect(generatedName).toBeTruthy();
 
       // 5. Click Save to Codex
@@ -154,7 +191,7 @@ test.describe("SEO and Prerendering", () => {
       // 7. Verify the new vault is active and the entity is loaded/selected
       // Since it's local-first OPFS or fallback, wait for the imported entity detail panel to open or show up in sidebar
       await expect(
-        page.locator("h3").filter({ hasText: generatedName!.trim() }).first(),
+        page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
       ).toBeVisible();
     });
   });
