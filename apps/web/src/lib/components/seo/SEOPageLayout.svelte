@@ -63,26 +63,41 @@
   const breadcrumb = $derived({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://codexcryptica.com",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: type === "comparison" ? "Comparisons" : "Solutions",
-        item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: data.h1,
-        item: pageUrl,
-      },
-    ],
+    itemListElement: canonicalUrl
+      ? [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://codexcryptica.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: data.h1,
+            item: pageUrl,
+          },
+        ]
+      : [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://codexcryptica.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: type === "comparison" ? "Comparisons" : "Solutions",
+            item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: data.h1,
+            item: pageUrl,
+          },
+        ],
   });
 
   const breadcrumbScript = $derived(

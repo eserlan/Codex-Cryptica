@@ -643,7 +643,7 @@ export const questConfig = {
     "Two factions both claim the prize",
   ],
   rewards: [
-    "Coin plus a local power's favour",
+    "Coin plus a local power's favor",
     "Deed to a useful property",
     "Access to a restricted archive",
     "A magic item from the site",

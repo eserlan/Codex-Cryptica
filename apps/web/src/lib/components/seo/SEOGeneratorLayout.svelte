@@ -212,8 +212,101 @@ ${generatedData.lore}`;
   <div
     class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-10"
   >
-    <!-- Parameters Column: order-2 on mobile so output appears first -->
-    <div class="lg:col-span-4 space-y-6 order-2 lg:order-1">
+    <!-- Output Card Column: rendered first in DOM for correct mobile reading/focus order, positioned on the right on desktop -->
+    <div class="lg:col-span-8 flex flex-col lg:order-2">
+      <div
+        class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
+      >
+        {#if generatedData}
+          <div in:fade={{ duration: 250 }} class="flex flex-col flex-grow">
+            <div
+              class="border-b border-theme-border/60 pb-4 mb-6 flex flex-wrap items-center justify-between gap-4"
+            >
+              <div>
+                <h2
+                  class="font-header font-extrabold text-2xl md:text-3xl tracking-wide uppercase text-theme-primary"
+                >
+                  {generatedData.title}
+                </h2>
+                <div class="flex gap-2 mt-2">
+                  {#each generatedData.labels as label (label)}
+                    <span
+                      class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-mono font-bold text-theme-primary"
+                    >
+                      {label}
+                    </span>
+                  {/each}
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  onclick={handleSaveToCodex}
+                  class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+                  id="save-to-codex-btn"
+                >
+                  Save to Codex
+                </button>
+                <button
+                  type="button"
+                  onclick={handleCopyMarkdown}
+                  class="px-4 py-2 bg-theme-surface border border-theme-border/80 text-theme-text font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:border-theme-primary/60 transition-all flex items-center gap-1.5"
+                  id="copy-markdown-btn"
+                >
+                  <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
+              data-world-theme="workspace"
+            >
+              <div
+                class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"
+              >
+                {@html renderMarkdown(generatedData.content)}
+              </div>
+
+              <div
+                class="md:col-span-5 p-4 border border-theme-border/60 bg-theme-bg/40 rounded-xl space-y-4"
+              >
+                <h4
+                  class="font-header font-bold text-xs uppercase tracking-widest text-theme-primary"
+                >
+                  GM Stats & Info
+                </h4>
+                <div class="text-xs space-y-3 leading-relaxed">
+                  {@html renderMarkdown(generatedData.lore)}
+                </div>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <div
+            in:fade={{ duration: 150 }}
+            class="flex flex-col items-center justify-center flex-grow text-center text-theme-muted max-w-sm mx-auto"
+          >
+            <span
+              class="icon-[lucide--swords] text-theme-muted/30 w-16 h-16 mb-4"
+            ></span>
+            <h3
+              class="font-header font-bold text-sm uppercase tracking-widest mb-2"
+            >
+              No Draft Generated
+            </h3>
+            <p class="text-[11px] leading-relaxed">
+              Use the sidebar generator control panel to customize parameters,
+              then trigger the generation engine to forge details.
+            </p>
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Parameters Column: rendered second in DOM, positioned on the left on desktop -->
+    <div class="lg:col-span-4 space-y-6 lg:order-1">
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
@@ -306,99 +399,6 @@ ${generatedData.lore}`;
                 {link.label}
               </a>
             {/each}
-          </div>
-        {/if}
-      </div>
-    </div>
-
-    <!-- Output Card Column: order-1 on mobile so it renders above the form -->
-    <div class="lg:col-span-8 flex flex-col order-1 lg:order-2">
-      <div
-        class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
-      >
-        {#if generatedData}
-          <div in:fade={{ duration: 250 }} class="flex flex-col flex-grow">
-            <div
-              class="border-b border-theme-border/60 pb-4 mb-6 flex flex-wrap items-center justify-between gap-4"
-            >
-              <div>
-                <h2
-                  class="font-header font-extrabold text-2xl md:text-3xl tracking-wide uppercase text-theme-primary"
-                >
-                  {generatedData.title}
-                </h2>
-                <div class="flex gap-2 mt-2">
-                  {#each generatedData.labels as label (label)}
-                    <span
-                      class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-mono font-bold text-theme-primary"
-                    >
-                      {label}
-                    </span>
-                  {/each}
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  onclick={handleSaveToCodex}
-                  class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
-                  id="save-to-codex-btn"
-                >
-                  Save to Codex
-                </button>
-                <button
-                  type="button"
-                  onclick={handleCopyMarkdown}
-                  class="px-4 py-2 bg-theme-surface border border-theme-border/80 text-theme-text font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:border-theme-primary/60 transition-all flex items-center gap-1.5"
-                  id="copy-markdown-btn"
-                >
-                  <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
-            </div>
-
-            <div
-              class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
-              data-world-theme="workspace"
-            >
-              <div
-                class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"
-              >
-                {@html renderMarkdown(generatedData.content)}
-              </div>
-
-              <div
-                class="md:col-span-5 p-4 border border-theme-border/60 bg-theme-bg/40 rounded-xl space-y-4"
-              >
-                <h4
-                  class="font-header font-bold text-xs uppercase tracking-widest text-theme-primary"
-                >
-                  GM Stats & Info
-                </h4>
-                <div class="text-xs space-y-3 leading-relaxed">
-                  {@html renderMarkdown(generatedData.lore)}
-                </div>
-              </div>
-            </div>
-          </div>
-        {:else}
-          <div
-            in:fade={{ duration: 150 }}
-            class="flex flex-col items-center justify-center flex-grow text-center text-theme-muted max-w-sm mx-auto"
-          >
-            <span
-              class="icon-[lucide--swords] text-theme-muted/30 w-16 h-16 mb-4"
-            ></span>
-            <h3
-              class="font-header font-bold text-sm uppercase tracking-widest mb-2"
-            >
-              No Draft Generated
-            </h3>
-            <p class="text-[11px] leading-relaxed">
-              Use the sidebar generator control panel to customize parameters,
-              then trigger the generation engine to forge details.
-            </p>
           </div>
         {/if}
       </div>
