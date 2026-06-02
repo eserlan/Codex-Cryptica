@@ -1,5 +1,6 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
+import { buildSearchKeywords } from "../../services/search-entry-fields";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
@@ -255,19 +256,17 @@ export class VaultLifecycleManager {
 
       const services = this.deps.getServices();
       if (services?.search) {
-        for (const entity of Object.values(entities)) {
+        // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
+        for (const id in entities) {
+          const entity = entities[id];
+
+          // Canonical keyword construction mirroring SearchService.mapToSearchEntry
+          const keywords = buildSearchKeywords(entity as any);
+
           await services.search.index({
             id: entity.id,
             title: entity.title,
-            content: entity.content,
-            type: entity.type,
-            path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
-            keywords: [
-              ...(entity.labels || []),
-              entity.lore || "",
-              ...Object.values(entity.metadata || {}).flat(),
-            ].join(" "),
-            updatedAt: Date.now(),
+            keywords,
           });
         }
       }
