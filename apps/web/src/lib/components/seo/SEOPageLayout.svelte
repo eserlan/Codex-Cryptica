@@ -63,26 +63,41 @@
   const breadcrumb = $derived({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://codexcryptica.com",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: type === "comparison" ? "Comparisons" : "Solutions",
-        item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: data.h1,
-        item: pageUrl,
-      },
-    ],
+    itemListElement: canonicalUrl
+      ? [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://codexcryptica.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: data.h1,
+            item: pageUrl,
+          },
+        ]
+      : [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://codexcryptica.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: type === "comparison" ? "Comparisons" : "Solutions",
+            item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: data.h1,
+            item: pageUrl,
+          },
+        ],
   });
 
   const breadcrumbScript = $derived(
@@ -172,7 +187,10 @@
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
-      {data.eyebrow ?? "100% Local-First Campaign Wiki"}
+      {data.eyebrow ??
+        (comparisonData
+          ? `Free ${comparisonData.competitorName} Alternative`
+          : "100% Local-First Campaign Wiki")}
     </div>
     <h1
       class="text-4xl md:text-5xl font-extrabold font-header leading-tight mb-4 tracking-wide"
@@ -405,18 +423,21 @@
   >
     <div class="max-w-2xl mx-auto px-6">
       <h2 class="text-2xl font-bold font-header mb-4 uppercase tracking-wider">
-        Ready to Build Your World?
+        {type === "comparison"
+          ? "Try Codex Cryptica Free"
+          : "Ready to Build Your World?"}
       </h2>
       <p class="text-theme-muted text-xs leading-relaxed mb-8">
-        No account. No server database leaks. Just quick, private, local-first
-        worldbuilding.
+        {type === "comparison"
+          ? "No account required. No subscription. All your campaign notes stay on your own device."
+          : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
       <a
         href="{base}/"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all"
         id="footer-cta-btn"
       >
-        Launch Codex Cryptica
+        {type === "comparison" ? "Try Free Now" : "Launch Codex Cryptica"}
       </a>
     </div>
   </section>
