@@ -95,23 +95,13 @@
   <meta name="description" content={data.description} />
   <meta name="keywords" content={data.keywords.join(", ")} />
   <meta name="robots" content="index, follow" />
-  <link
-    rel="canonical"
-    href="https://codexcryptica.com/{type === 'comparison'
-      ? 'vs'
-      : 'solutions'}/{data.slug}"
-  />
+  <link rel="canonical" href={pageUrl} />
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Codex Cryptica" />
   <meta property="og:title" content={data.title} />
   <meta property="og:description" content={data.description} />
-  <meta
-    property="og:url"
-    content="https://codexcryptica.com/{type === 'comparison'
-      ? 'vs'
-      : 'solutions'}/{data.slug}"
-  />
+  <meta property="og:url" content={pageUrl} />
   <meta property="og:image" content="https://codexcryptica.com/logo.png" />
   <meta property="og:image:width" content="1024" />
   <meta property="og:image:height" content="1024" />
