@@ -9,6 +9,7 @@ import { PlotExecutor } from "./executors/plot-executor";
 import { VisualizationExecutor } from "./executors/visualization-executor";
 import { RegenerateExecutor } from "./executors/regenerate-executor";
 import { ChatExecutor } from "./executors/chat-executor";
+import { GuestChatExecutor } from "./executors/guest-chat-executor";
 import type { OracleIntent, OracleExecutionContext } from "./types";
 
 /**
@@ -30,6 +31,7 @@ export class OracleActionExecutor {
   private visualizationExecutor: VisualizationExecutor;
   private regenerateExecutor: RegenerateExecutor;
   private chatExecutor: ChatExecutor;
+  private guestChatExecutor: GuestChatExecutor;
 
   constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
     this.generator = generator ?? new OracleGenerator();
@@ -40,6 +42,7 @@ export class OracleActionExecutor {
     this.visualizationExecutor = new VisualizationExecutor(this.generator);
     this.regenerateExecutor = new RegenerateExecutor(this.generator);
     this.chatExecutor = new ChatExecutor(this.generator, this.draftingEngine);
+    this.guestChatExecutor = new GuestChatExecutor();
   }
 
   /**
@@ -84,6 +87,13 @@ export class OracleActionExecutor {
         break;
       case "chat":
         await this.chatExecutor.execute(intent, context, onPartialResponse);
+        break;
+      case "guest-chat":
+        await this.guestChatExecutor.execute(
+          intent,
+          context,
+          onPartialResponse,
+        );
         break;
       case "error":
         await context.chatHistory.addMessage({

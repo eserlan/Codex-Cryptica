@@ -58,6 +58,7 @@ export type OracleIntentType =
   | "merge-ai"
   | "plot"
   | "chat"
+  | "guest-chat"
   | "roll"
   | "regenerate"
   | "wizard"

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entity } from "schema";
+  import type { Entity, GuestChatConfig } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
@@ -14,6 +14,33 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
+  import { proposerStore } from "$lib/stores/proposer.svelte";
+  import type { GuestChatTranscript } from "schema";
+
+  let transcripts = $state<GuestChatTranscript[]>([]);
+  let isLoadingTranscripts = $state(false);
+
+  $effect(() => {
+    if (
+      !isEditing &&
+      !vault.isGuest &&
+      entity.type === "character" &&
+      entity.guestChatConfig?.isEnabled
+    ) {
+      isLoadingTranscripts = true;
+      vault
+        .loadTranscriptsForCharacter(entity.id)
+        .then((data) => {
+          transcripts = data;
+        })
+        .catch((err) => {
+          console.error("Failed to load transcripts:", err);
+        })
+        .finally(() => {
+          isLoadingTranscripts = false;
+        });
+    }
+  });
 
   let {
     entity,
@@ -22,6 +49,7 @@
     editContent = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
+    editGuestChatConfig = $bindable(),
   } = $props<{
     entity: Entity;
     isEditing: boolean;
@@ -29,6 +57,7 @@
     editContent: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
+    editGuestChatConfig?: GuestChatConfig;
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
@@ -547,6 +576,303 @@
       {/if}
     </ul>
   </div>
+
+  <!-- Guest Character Chat Settings (Host Only, Type must be character) -->
+  {#if !vault.isGuest && (editType === "character" || entity.type === "character")}
+    <div
+      class="border border-theme-border rounded-xl p-4 bg-theme-surface/5 space-y-4"
+    >
+      <div
+        class="flex items-center justify-between border-b border-theme-border pb-2"
+      >
+        <h4
+          class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+        >
+          <span
+            class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+          ></span>
+          Guest Character Chat
+        </h4>
+        {#if !isEditing}
+          <span
+            class="text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider {entity
+              .guestChatConfig?.isEnabled
+              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+              : 'bg-theme-muted/10 text-theme-muted border border-theme-border'}"
+          >
+            {entity.guestChatConfig?.isEnabled ? "Enabled" : "Disabled"}
+          </span>
+        {/if}
+      </div>
+
+      {#if isEditing}
+        <div class="space-y-4 text-sm">
+          <!-- Toggle Availability -->
+          <label class="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!editGuestChatConfig?.isEnabled}
+              onchange={(e) => {
+                if (editGuestChatConfig) {
+                  editGuestChatConfig.isEnabled = e.currentTarget.checked;
+                }
+              }}
+              class="w-4 h-4 accent-theme-primary rounded border-theme-border bg-theme-bg"
+            />
+            <span class="font-bold text-theme-text"
+              >Enable Guest Character Chat</span
+            >
+          </label>
+
+          {#if editGuestChatConfig?.isEnabled}
+            <div
+              class="pl-7 space-y-4 border-l-2 border-theme-border/50 transition-all"
+            >
+              <!-- Context Scope Option -->
+              <div class="space-y-1">
+                <span
+                  class="block text-xs font-bold uppercase tracking-wider text-theme-muted"
+                  >Context & Knowledge Scope</span
+                >
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="contextScope"
+                      value="public"
+                      checked={editGuestChatConfig?.contextScope === "public"}
+                      onchange={() => {
+                        if (editGuestChatConfig)
+                          editGuestChatConfig.contextScope = "public";
+                      }}
+                      class="accent-theme-primary"
+                    />
+                    <span>Public Lore Only</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="contextScope"
+                      value="hybrid"
+                      checked={editGuestChatConfig?.contextScope === "hybrid"}
+                      onchange={() => {
+                        if (editGuestChatConfig)
+                          editGuestChatConfig.contextScope = "hybrid";
+                      }}
+                      class="accent-theme-primary"
+                    />
+                    <span>Public + Private Context</span>
+                  </label>
+                </div>
+                <p class="text-xs text-theme-muted mt-1 leading-normal">
+                  {editGuestChatConfig?.contextScope === "public"
+                    ? "Guests can only query this character using their public description and tags/labels."
+                    : "Allows the AI to guide hints/responses using hidden GM notes, but strictly prohibits repeating them directly."}
+                </p>
+              </div>
+
+              <!-- Extra Prompt/Personality Instructions -->
+              <div class="space-y-1">
+                <label
+                  for="extraInstructions"
+                  class="block text-xs font-bold uppercase tracking-wider text-theme-muted"
+                  >Custom Voice & Personality Rules</label
+                >
+                <textarea
+                  id="extraInstructions"
+                  placeholder="e.g. Speaks in short sentences; is suspicious of newcomers; refers to themselves in the third person..."
+                  value={editGuestChatConfig?.extraInstructions || ""}
+                  oninput={(e) => {
+                    if (editGuestChatConfig) {
+                      editGuestChatConfig.extraInstructions =
+                        e.currentTarget.value || undefined;
+                    }
+                  }}
+                  rows="2"
+                  class="w-full text-xs bg-theme-bg border border-theme-border rounded-lg p-2 focus:ring-1 focus:ring-theme-primary outline-none custom-scrollbar resize-y text-theme-text"
+                ></textarea>
+              </div>
+
+              <!-- Additional Settings -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <label
+                  class="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!editGuestChatConfig?.isHostReviewable}
+                    onchange={(e) => {
+                      if (editGuestChatConfig) {
+                        editGuestChatConfig.isHostReviewable =
+                          e.currentTarget.checked;
+                      }
+                    }}
+                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
+                  />
+                  <span class="text-xs text-theme-text"
+                    >Host can review logs (P2P Sync)</span
+                  >
+                </label>
+
+                <label
+                  class="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!editGuestChatConfig?.keepMemory}
+                    onchange={(e) => {
+                      if (editGuestChatConfig) {
+                        editGuestChatConfig.keepMemory =
+                          e.currentTarget.checked;
+                      }
+                    }}
+                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
+                  />
+                  <span class="text-xs text-theme-text"
+                    >Retain memory between guest visits</span
+                  >
+                </label>
+              </div>
+            </div>
+          {/if}
+        </div>
+      {:else if entity.guestChatConfig?.isEnabled}
+        <!-- Read-only Info for Host -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-theme-muted block">Context Scope:</span>
+            <span class="font-bold text-theme-text capitalize"
+              >{entity.guestChatConfig.contextScope} Lore</span
+            >
+          </div>
+          <div>
+            <span class="text-theme-muted block">Synced Review:</span>
+            <span class="font-bold text-theme-text"
+              >{entity.guestChatConfig.isHostReviewable
+                ? "Active"
+                : "Disabled"}</span
+            >
+          </div>
+          {#if entity.guestChatConfig.extraInstructions}
+            <div class="col-span-2 mt-2">
+              <span class="text-theme-muted block">Personality Rules:</span>
+              <p
+                class="italic text-theme-text bg-theme-bg/30 p-2 rounded-lg border border-theme-border/50"
+              >
+                "{entity.guestChatConfig.extraInstructions}"
+              </p>
+            </div>
+          {/if}
+        </div>
+      {:else}
+        <p class="text-xs text-theme-muted italic">
+          Guest Character Chat is disabled. Invited players cannot see or chat
+          with this character.
+        </p>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Synced Guest Transcripts Review UI (Host Only, character only) -->
+  {#if !isEditing && !vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled}
+    <div
+      class="border border-theme-border rounded-xl p-4 bg-theme-surface/5 space-y-4"
+    >
+      <div
+        class="flex items-center justify-between border-b border-theme-border pb-2"
+      >
+        <h4
+          class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+        >
+          <span class="icon-[lucide--history] w-4 h-4 text-theme-primary"
+          ></span>
+          Guest Conversation Logs
+        </h4>
+        <span class="text-xs text-theme-muted"
+          >{transcripts.length} Session(s)</span
+        >
+      </div>
+
+      {#if isLoadingTranscripts}
+        <div
+          class="flex items-center justify-center py-8 text-theme-muted gap-2 text-xs"
+        >
+          <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
+          Loading transcripts...
+        </div>
+      {:else if transcripts.length === 0}
+        <p class="text-xs text-theme-muted italic py-4">
+          No synced guest transcripts found for this character yet.
+        </p>
+      {:else}
+        <div
+          class="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2"
+        >
+          {#each transcripts as transcript}
+            <div
+              class="border border-theme-border/60 rounded-lg p-3 bg-theme-bg/25 space-y-2"
+            >
+              <div
+                class="flex justify-between items-center text-xs border-b border-theme-border/30 pb-1.5"
+              >
+                <div class="flex items-center gap-1.5">
+                  <span
+                    class="icon-[lucide--user] w-3.5 h-3.5 text-theme-secondary"
+                  ></span>
+                  <span class="font-bold text-theme-text"
+                    >{transcript.guestName}</span
+                  >
+                  <span class="text-[10px] text-theme-muted"
+                    >({transcript.guestId.slice(0, 6)})</span
+                  >
+                </div>
+                <span class="text-[10px] text-theme-muted">
+                  {new Date(transcript.lastUpdated).toLocaleString()}
+                </span>
+              </div>
+
+              <div class="space-y-2.5 pt-1">
+                {#each transcript.messages as msg}
+                  <div class="space-y-1">
+                    <div class="flex justify-between items-center text-[10px]">
+                      <span
+                        class="font-bold uppercase tracking-wider {msg.role ===
+                        'user'
+                          ? 'text-theme-primary'
+                          : 'text-theme-secondary'}"
+                      >
+                        {msg.role === "user"
+                          ? transcript.guestName
+                          : entity.title}
+                      </span>
+                      {#if msg.role === "assistant"}
+                        <button
+                          type="button"
+                          onclick={() =>
+                            proposerStore.promoteToRumor(msg.content)}
+                          class="text-[9px] font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
+                          title="Promote this response to a rumor draft"
+                        >
+                          <span class="icon-[lucide--sparkles] w-3.5 h-3.5"
+                          ></span>
+                          Promote to Rumor
+                        </button>
+                      {/if}
+                    </div>
+                    <p
+                      class="text-xs text-theme-text pl-2 border-l-2 border-theme-primary/30 py-1"
+                    >
+                      {msg.content}
+                    </p>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
 
   <DetailProposals {isEditing} />
   <EntityProposals content={entity.content || ""} {isEditing} />

@@ -15,7 +15,7 @@
 
 **Purpose**: Basic verification of workspace build integrity
 
-- [ ] T001 Verify workspace packages can be built after branch creation
+- [x] T001 Verify workspace packages can be built after branch creation
 
 ---
 
@@ -23,11 +23,11 @@
 
 **Purpose**: Core schema extensions and storage mechanisms required by all user stories
 
-- [ ] T002 Extend `EntitySchema` with `guestChatConfig` object in packages/schema/src/entity.ts
-- [ ] T003 Create `GuestChatConfig` and `GuestChatTranscript` types in packages/schema/src/entity.ts
-- [ ] T004 Add unit test cases for new schemas in packages/schema/src/schema.test.ts
-- [ ] T005 Add `GuestChatTranscriptSyncMessage` message type definition in apps/web/src/lib/cloud-bridge/p2p/p2p-protocol.ts
-- [ ] T006 Initialize guest browser IndexedDB table `guest_chat_transcripts` in apps/web/src/lib/utils/idb.ts
+- [x] T002 Extend `EntitySchema` with `guestChatConfig` object in packages/schema/src/entity.ts
+- [x] T003 Create `GuestChatConfig` and `GuestChatTranscript` types in packages/schema/src/entity.ts
+- [x] T004 Add unit test cases for new schemas in packages/schema/src/schema.test.ts
+- [x] T005 Add `GuestChatTranscriptSyncMessage` message type definition in apps/web/src/lib/cloud-bridge/p2p/p2p-protocol.ts
+- [x] T006 Initialize guest browser IndexedDB table `guest_chat_transcripts` in apps/web/src/lib/utils/idb.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -41,9 +41,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Add `editGuestChatConfig` state and save binding to apps/web/src/lib/components/EntityDetailPanel.svelte
-- [ ] T008 [US1] Implement guest chat edit panel inside apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
-- [ ] T009 [US1] Add unit tests for character guest chat settings binding and saving in apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts
+- [x] T007 [P] [US1] Add `editGuestChatConfig` state and save binding to apps/web/src/lib/components/EntityDetailPanel.svelte
+- [x] T008 [US1] Implement guest chat edit panel inside apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
+- [x] T009 [US1] Add unit tests for character guest chat settings binding and saving in apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts
 
 **Checkpoint**: User Story 1 is fully functional and testable independently.
 
@@ -57,12 +57,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T010 [P] [US2] Implement `GuestChatExecutor` class in packages/oracle-engine/src/executors/guest-chat-executor.ts
-- [ ] T011 [US2] Add guest chat routing to dispatcher in packages/oracle-engine/src/oracle-executor.ts
-- [ ] T012 [P] [US2] Add unit tests for guest chat execution prompts and constraint enforcement in packages/oracle-engine/src/executors/guest-chat-executor.test.ts
-- [ ] T013 [P] [US2] Create reactive `GuestChatStore` using DI in apps/web/src/lib/stores/guest-chat.svelte.ts
-- [ ] T014 [US2] Implement `GuestChatPanel.svelte` and `GuestChatBubble.svelte` components in apps/web/src/lib/components/guest/
-- [ ] T015 [US2] Integrate `GuestChatPanel` into the guest layout shell inside apps/web/src/routes/(app)/+page.svelte
+- [x] T010 [P] [US2] Implement `GuestChatExecutor` class in packages/oracle-engine/src/executors/guest-chat-executor.ts
+- [x] T011 [US2] Add guest chat routing to dispatcher in packages/oracle-engine/src/oracle-executor.ts
+- [x] T012 [P] [US2] Add unit tests for guest chat execution prompts and constraint enforcement in packages/oracle-engine/src/executors/guest-chat-executor.test.ts
+- [x] T013 [P] [US2] Create reactive `GuestChatStore` using DI in apps/web/src/lib/stores/guest-chat.svelte.ts
+- [x] T014 [US2] Implement `GuestChatPanel.svelte` and `GuestChatBubble.svelte` components in apps/web/src/lib/components/guest/
+- [x] T015 [US2] Integrate `GuestChatPanel` into the guest layout shell inside apps/web/src/routes/(app)/+page.svelte
 
 **Checkpoint**: User Stories 1 and 2 are fully functional together.
 
@@ -76,10 +76,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T016 [P] [US3] Implement `GUEST_CHAT_TRANSCRIPT_SYNC` message handler in apps/web/src/lib/cloud-bridge/p2p/handlers/guest-presence-handler.ts
-- [ ] T017 [US3] Add transcript save/write routines in apps/web/src/lib/stores/vault.svelte.ts
-- [ ] T018 [US3] Implement host-side transcripts view UI in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
-- [ ] T019 [US3] Implement "Promote to Rumor" flow pre-filling drafts in apps/web/src/lib/stores/proposer.svelte.ts
+- [x] T016 [P] [US3] Implement `GUEST_CHAT_TRANSCRIPT_SYNC` message handler in apps/web/src/lib/cloud-bridge/p2p/handlers/vault-handler.ts (originally planned in guest-presence-handler.ts)
+- [x] T017 [US3] Add transcript save/write routines in apps/web/src/lib/stores/vault.svelte.ts
+- [x] T018 [US3] Implement host-side transcripts view UI in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
+- [x] T019 [US3] Implement "Promote to Rumor" flow pre-filling drafts in apps/web/src/lib/stores/proposer.svelte.ts
 
 **Checkpoint**: All user stories are independently functional and integrated.
 
@@ -89,9 +89,9 @@
 
 **Purpose**: Final styling, help documentation, linting, and verification.
 
-- [ ] T020 [P] Add user-facing help guides to apps/web/src/lib/config/help-content.ts
-- [ ] T021 Run `bun run test` to verify all new unit tests pass
-- [ ] T022 Run `bun run lint` to verify code compliance
+- [x] T020 [P] Add user-facing help guides to apps/web/src/lib/config/help-content.ts
+- [x] T021 Run `bun run test` to verify all new unit tests pass
+- [x] T022 Run `bun run lint` to verify code compliance
 
 ---
 
