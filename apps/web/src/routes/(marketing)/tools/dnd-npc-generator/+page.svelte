@@ -1,5 +1,25 @@
 <script lang="ts">
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
+  import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
+  import {
+    generatorEngine,
+    npcConfig,
+  } from "$lib/services/seo/generator-engine";
+
+  let race = $state(npcConfig.races[0]);
+  let role = $state(npcConfig.roles[0]);
+  let alignment = $state(npcConfig.alignments[0]);
+  let campaignContext = $state("");
+
+  async function generate({ useAI }: { useAI: boolean }) {
+    return generatorEngine.generateNPC({
+      race,
+      role,
+      alignment,
+      campaignContext,
+      useAI,
+    });
+  }
 
   const relatedLinks = [
     { href: "/solutions/ai-gm-assistant", label: "AI GM assistant" },
@@ -31,7 +51,6 @@
 </script>
 
 <SEOGeneratorLayout
-  slug="npc"
   canonicalPath="/tools/dnd-npc-generator"
   pageTitle="D&D NPC Generator | Free Fantasy RPG Character Tool | Codex Cryptica"
   metaDescription="Generate D&D NPCs with ancestry, role, personality, secret, motivation, faction connection, and plot hook. Copy the draft or save it into your local campaign vault."
@@ -40,4 +59,9 @@
   introText="Create a ready-to-run fantasy NPC with structured GM notes, a secret, faction tie, and plot hook. Works without login, then saves into your local Codex Cryptica campaign vault."
   {relatedLinks}
   {faqs}
-/>
+  {generate}
+>
+  {#snippet formFields()}
+    <NPCFormFields bind:race bind:role bind:alignment bind:campaignContext />
+  {/snippet}
+</SEOGeneratorLayout>

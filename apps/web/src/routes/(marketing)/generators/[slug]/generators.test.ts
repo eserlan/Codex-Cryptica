@@ -24,6 +24,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "npc" },
         { slug: "settlement" },
         { slug: "magic-item" },
+        { slug: "faction" },
       ]);
     });
   });

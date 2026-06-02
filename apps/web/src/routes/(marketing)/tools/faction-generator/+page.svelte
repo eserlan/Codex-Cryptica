@@ -1,5 +1,25 @@
 <script lang="ts">
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
+  import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
+  import {
+    generatorEngine,
+    factionConfig,
+  } from "$lib/services/seo/generator-engine";
+
+  let type = $state(factionConfig.types[0]);
+  let scope = $state(factionConfig.scopes[1]);
+  let alignment = $state(factionConfig.alignments[0]);
+  let campaignContext = $state("");
+
+  async function generate({ useAI }: { useAI: boolean }) {
+    return generatorEngine.generateFaction({
+      type,
+      scope,
+      alignment,
+      campaignContext,
+      useAI,
+    });
+  }
 
   const relatedLinks = [
     { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
@@ -32,7 +52,6 @@
 </script>
 
 <SEOGeneratorLayout
-  slug="faction"
   canonicalPath="/tools/faction-generator"
   pageTitle="Faction Generator | Free Fantasy RPG Organization Tool | Codex Cryptica"
   metaDescription="Generate fantasy RPG factions with goals, internal conflict, rival groups, notable NPCs, and adventure hooks. Copy the draft or save it into your local campaign vault."
@@ -41,4 +60,14 @@
   introText="Create a campaign-ready fantasy faction with a public face, agenda, internal conflict, rival group, notable NPCs, and adventure hook. Works without login, then saves into your local Codex Cryptica campaign vault."
   {relatedLinks}
   {faqs}
-/>
+  {generate}
+>
+  {#snippet formFields()}
+    <FactionFormFields
+      bind:type
+      bind:scope
+      bind:alignment
+      bind:campaignContext
+    />
+  {/snippet}
+</SEOGeneratorLayout>
