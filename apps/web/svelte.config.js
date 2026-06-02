@@ -18,6 +18,10 @@ const config = {
         "/privacy",
         "/blog",
         "/sitemap.xml",
+        "/free-rpg-campaign-manager",
+        "/worldbuilding-tool",
+        "/ai-rpg-campaign-manager",
+        "/tools/dnd-npc-generator",
       ],
       handleUnseenRoutes: "ignore",
       handleHttpError: ({ path, message }) => {
