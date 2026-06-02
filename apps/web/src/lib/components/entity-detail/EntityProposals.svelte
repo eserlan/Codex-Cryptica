@@ -10,9 +10,17 @@
   }>();
 
   // The Set of existing entity titles
-  const existingTitles = $derived(
-    new Set(Object.values(vault.entities || {}).map((e) => e.title)),
-  );
+  const existingTitles = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace Object.values().map() with an imperative loop
+    const titles = new Set<string>();
+    const entities = vault.entities || {};
+    for (const key in entities) {
+      if (Object.prototype.hasOwnProperty.call(entities, key)) {
+        titles.add(entities[key].title);
+      }
+    }
+    return titles;
+  });
 
   // The list of proposed entity titles
   const proposals = $derived(

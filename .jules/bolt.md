@@ -100,3 +100,8 @@
 ## 2026-05-18 - [Performance Insight: Array allocation in map selection loop]
 **Learning:** Replaced the inline array allocation `{#each Object.values(vault.maps) as map (map.id)}` with the pre-cached property `{#each vault.allMaps as map (map.id)}` in Svelte 5.
 **Action:** When a Svelte UI component requires an array representation of a record/map located in a store, pre-calculate the array natively at the store level using `$derived.by(() => Object.values(this.X))` and expose it as a property to prevent redundant array allocations and unnecessary garbage collection overhead on UI updates.
+
+## 2026-05-18 - [Performance Insight: Optimize Object.values().map() in derived blocks]
+
+**Learning:** Creating a Set from `Object.values(obj).map()` inside a Svelte `$derived` block allocates two intermediate arrays (`Object.values()` and `.map()`) on every reactive update. For large records like `vault.entities`, this causes substantial and completely avoidable garbage collection pressure.
+**Action:** Replace `Object.values(obj).map(...)` in `$derived` blocks with an imperative `for...in` loop that directly processes the keys and values without allocating intermediate arrays.
