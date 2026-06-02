@@ -85,6 +85,14 @@ export const solutions: Record<string, SEOPageData> = {
           "Absolutely. Because all data is stored locally in your browser's Origin Private File System, the entire editor and graph engine run without an active internet connection.",
       },
     ],
+    relatedLinks: [
+      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
   },
   "worldbuilding-tool": {
     slug: "worldbuilding-tool",
@@ -136,6 +144,11 @@ export const solutions: Record<string, SEOPageData> = {
           "Yes, the chronological timeline engine handles custom calendar definitions, fantasy months, and historical epoch calculations.",
       },
     ],
+    relatedLinks: [
+      { href: "/solutions/campaign-manager", label: "Campaign manager" },
+      { href: "/solutions/rpg-knowledge-graph", label: "RPG knowledge graph" },
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+    ],
   },
   "ai-gm-assistant": {
     slug: "ai-gm-assistant",
@@ -186,6 +199,14 @@ export const solutions: Record<string, SEOPageData> = {
           "Yes, your campaign text is sent directly to the LLM API provider and is never stored on our servers.",
       },
     ],
+    relatedLinks: [
+      { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
+      {
+        href: "/solutions/ai-worldbuilding-tool",
+        label: "AI worldbuilding tool",
+      },
+      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+    ],
   },
   "local-first-rpg": {
     slug: "local-first-rpg",
@@ -234,6 +255,17 @@ export const solutions: Record<string, SEOPageData> = {
         answer:
           "Yes. Codex supports P2P guest sessions where you can host campaigns directly from your browser to your players.",
       },
+    ],
+    relatedLinks: [
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
+      },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
     ],
   },
   "ai-dm-assistant": {
@@ -643,6 +675,13 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
           "No, core features like timelines, connection proposals, character generators, and interactive maps are built natively into Codex.",
       },
     ],
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   "world-anvil": {
     slug: "world-anvil",
@@ -727,6 +766,14 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
           "You can host local P2P session maps directly from your browser, allowing players to join without creating an account or paying.",
       },
     ],
+    relatedLinks: [
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+      { href: "/vs/kanka-alternative", label: "vs Kanka" },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   legendkeeper: {
     slug: "legendkeeper",
@@ -800,6 +847,14 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         question: "Does Codex support mapping?",
         answer:
           "Yes, Codex includes spatial canvas and relationship nodes, with encounter tracking features.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
       },
     ],
   },

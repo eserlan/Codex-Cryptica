@@ -8,9 +8,12 @@
   let {
     data,
     type = "solution",
+    canonicalUrl,
   }: {
     data: SEOPageData | SEOComparisonPageData;
     type?: "solution" | "comparison";
+    /** Override the computed canonical URL (e.g. for standalone routes outside /solutions). */
+    canonicalUrl?: string;
   } = $props();
 
   // FAQ state
@@ -52,7 +55,9 @@
   );
 
   const pageUrl = $derived(
-    `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}/${data.slug}`,
+    canonicalUrl
+      ? `https://codexcryptica.com${canonicalUrl}`
+      : `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}/${data.slug}`,
   );
 
   const breadcrumb = $derived({
