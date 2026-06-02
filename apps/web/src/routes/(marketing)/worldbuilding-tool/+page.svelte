@@ -8,7 +8,33 @@
     name="description"
     content="Create, link, and organize world maps, history, and factions. Codex Cryptica is a free, local-first worldbuilding tool running 100% in your browser."
   />
+  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://codexcryptica.com/worldbuilding-tool" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Codex Cryptica" />
+  <meta
+    property="og:title"
+    content="Free Worldbuilding Tool & Lore Database | Codex Cryptica"
+  />
+  <meta
+    property="og:description"
+    content="Create, link, and organize world maps, history, and factions. Codex Cryptica is a free, local-first worldbuilding tool running 100% in your browser."
+  />
+  <meta
+    property="og:url"
+    content="https://codexcryptica.com/worldbuilding-tool"
+  />
+  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta
+    name="twitter:title"
+    content="Free Worldbuilding Tool & Lore Database | Codex Cryptica"
+  />
+  <meta
+    name="twitter:description"
+    content="Create, link, and organize world maps, history, and factions. Codex Cryptica is a free, local-first worldbuilding tool running 100% in your browser."
+  />
+  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 

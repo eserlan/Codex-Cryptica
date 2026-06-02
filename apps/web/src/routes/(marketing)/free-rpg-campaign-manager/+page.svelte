@@ -114,10 +114,36 @@
     name="description"
     content="Codex Cryptica is a free, local-first campaign manager and notes app for game masters. Map campaign lore, linked graphs, interactive maps, and timelines privately."
   />
+  <meta name="robots" content="index, follow" />
   <link
     rel="canonical"
     href="https://codexcryptica.com/free-rpg-campaign-manager"
   />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Codex Cryptica" />
+  <meta
+    property="og:title"
+    content="Free RPG Campaign Manager & Lore Vault | Codex Cryptica"
+  />
+  <meta
+    property="og:description"
+    content="Codex Cryptica is a free, local-first campaign manager and notes app for game masters. Map campaign lore, linked graphs, interactive maps, and timelines privately."
+  />
+  <meta
+    property="og:url"
+    content="https://codexcryptica.com/free-rpg-campaign-manager"
+  />
+  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta
+    name="twitter:title"
+    content="Free RPG Campaign Manager & Lore Vault | Codex Cryptica"
+  />
+  <meta
+    name="twitter:description"
+    content="Codex Cryptica is a free, local-first campaign manager and notes app for game masters. Map campaign lore, linked graphs, interactive maps, and timelines privately."
+  />
+  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
   {@html faqSchemaScript}
 </svelte:head>

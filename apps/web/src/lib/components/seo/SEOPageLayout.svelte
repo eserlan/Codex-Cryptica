@@ -51,6 +51,40 @@
       `ipt>`,
   );
 
+  const pageUrl = $derived(
+    `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}/${data.slug}`,
+  );
+
+  const breadcrumb = $derived({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://codexcryptica.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: type === "comparison" ? "Comparisons" : "Solutions",
+        item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: data.h1,
+        item: pageUrl,
+      },
+    ],
+  });
+
+  const breadcrumbScript = $derived(
+    `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</scr` +
+      `ipt>`,
+  );
+
   function toggleFaq(index: number) {
     openFaqIndex = openFaqIndex === index ? null : index;
   }
@@ -60,14 +94,35 @@
   <title>{data.title}</title>
   <meta name="description" content={data.description} />
   <meta name="keywords" content={data.keywords.join(", ")} />
+  <meta name="robots" content="index, follow" />
   <link
     rel="canonical"
     href="https://codexcryptica.com/{type === 'comparison'
       ? 'vs'
       : 'solutions'}/{data.slug}"
   />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Codex Cryptica" />
+  <meta property="og:title" content={data.title} />
+  <meta property="og:description" content={data.description} />
+  <meta
+    property="og:url"
+    content="https://codexcryptica.com/{type === 'comparison'
+      ? 'vs'
+      : 'solutions'}/{data.slug}"
+  />
+  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
+  <meta property="og:image:width" content="1024" />
+  <meta property="og:image:height" content="1024" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={data.title} />
+  <meta name="twitter:description" content={data.description} />
+  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
   {@html jsonLdScript}
+  {@html breadcrumbScript}
 </svelte:head>
 
 <div

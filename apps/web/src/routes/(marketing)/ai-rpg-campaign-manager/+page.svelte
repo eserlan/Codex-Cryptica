@@ -8,10 +8,36 @@
     name="description"
     content="Supercharge your campaign creation. Generate rich NPC backstories, faction secrets, and city layouts using the AI-assisted Lore Oracle."
   />
+  <meta name="robots" content="index, follow" />
   <link
     rel="canonical"
     href="https://codexcryptica.com/ai-rpg-campaign-manager"
   />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Codex Cryptica" />
+  <meta
+    property="og:title"
+    content="AI RPG Campaign Manager & GM Assistant | Codex Cryptica"
+  />
+  <meta
+    property="og:description"
+    content="Supercharge your campaign creation. Generate rich NPC backstories, faction secrets, and city layouts using the AI-assisted Lore Oracle."
+  />
+  <meta
+    property="og:url"
+    content="https://codexcryptica.com/ai-rpg-campaign-manager"
+  />
+  <meta property="og:image" content="https://codexcryptica.com/logo.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta
+    name="twitter:title"
+    content="AI RPG Campaign Manager & GM Assistant | Codex Cryptica"
+  />
+  <meta
+    name="twitter:description"
+    content="Supercharge your campaign creation. Generate rich NPC backstories, faction secrets, and city layouts using the AI-assisted Lore Oracle."
+  />
+  <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
 </svelte:head>
 
