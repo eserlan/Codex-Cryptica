@@ -231,6 +231,59 @@ export const magicItemConfig = {
   ],
 };
 
+// Faction Generator Table Config
+export const factionConfig = {
+  types: [
+    "Merchant Guild",
+    "Secret Society",
+    "Mercenary Company",
+    "Temple Order",
+    "Criminal Syndicate",
+    "Rebel Cell",
+    "Arcane Circle",
+  ],
+  scopes: [
+    "Local district",
+    "Single city",
+    "Border region",
+    "Trade route",
+    "Hidden stronghold",
+    "Kingdom-wide network",
+  ],
+  alignments: [
+    "Publicly lawful, privately ruthless",
+    "Idealistic but compromised",
+    "Pragmatic and profit-driven",
+    "Fanatical and secretive",
+    "Protective of common folk",
+    "Opportunistic and divided",
+  ],
+  goals: [
+    "Control a contested trade route before a rival power does.",
+    "Recover a forbidden relic buried beneath a civic landmark.",
+    "Replace corrupt officials with loyal agents.",
+    "Protect a hidden sanctuary from outside discovery.",
+    "Break an old treaty that limits their expansion.",
+    "Expose a rival faction's crimes without revealing their own.",
+  ],
+  conflicts: [
+    "A splinter leader is selling secrets to an enemy.",
+    "Their public mission conflicts with the methods they use at night.",
+    "A recent victory created debts they cannot repay.",
+    "Their patron has vanished, leaving rival lieutenants in charge.",
+    "A hostage, ledger, or relic could unravel their legitimacy.",
+    "Their members disagree over whether the party is useful or dangerous.",
+  ],
+  hooks: [
+    "They hire the party for a simple delivery that is actually a loyalty test.",
+    "They ask for protection during a meeting with a bitter rival.",
+    "They offer information about a villain in exchange for public help.",
+    "They frame the party to force them into negotiation.",
+    "They need outsiders to enter a place their members are forbidden to visit.",
+    "They ask the party to choose between two bad successors.",
+  ],
+};
+
 export interface GeneratorOutput {
   type:
     | "character"
@@ -404,6 +457,145 @@ ${plotHook}`;
       content,
       lore,
       labels: ["rpg-character", "npc-generator", "imported-draft"],
+      status: "active",
+    };
+  }
+
+  /**
+   * Generates a faction draft.
+   */
+  async generateFaction(
+    options: {
+      type?: string;
+      scope?: string;
+      alignment?: string;
+      campaignContext?: string;
+      useAI?: boolean;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const factionType =
+      options.type ||
+      factionConfig.types[
+        Math.floor(Math.random() * factionConfig.types.length)
+      ];
+    const scope =
+      options.scope ||
+      factionConfig.scopes[
+        Math.floor(Math.random() * factionConfig.scopes.length)
+      ];
+    const alignment =
+      options.alignment ||
+      factionConfig.alignments[
+        Math.floor(Math.random() * factionConfig.alignments.length)
+      ];
+    const campaignContext = options.campaignContext?.trim();
+    const name = `${this.generateName()} Compact`;
+
+    if (options.useAI !== false) {
+      try {
+        const prompt = `Generate a detailed RPG faction in JSON format.
+Options:
+- Name: ${name}
+- Faction Type: ${factionType}
+- Scope: ${scope}
+- Moral Posture: ${alignment}
+${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+
+You must return a valid JSON object matching the following structure exactly:
+{
+  "title": "A single string for the faction name",
+  "content": "A detailed multi-paragraph faction overview (markdown formatted) describing its public face, leadership, resources, and how it fits the campaign context if provided.",
+  "lore": "Structured GM details (markdown formatted) with sections for core fields, agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
+  "labels": ["rpg-faction", "faction-generator", "imported-draft"]
+}
+Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-1.5-flash",
+          "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+        );
+        const response = await model.generateContent(prompt);
+        const text = response.response.text().trim();
+        const cleanText = text
+          .replace(/^```json\s*/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const data = JSON.parse(cleanText);
+
+        return {
+          type: "faction",
+          title: data.title || name,
+          content: data.content || "",
+          lore: data.lore || "",
+          labels: Array.isArray(data.labels)
+            ? data.labels
+            : ["rpg-faction", "faction-generator", "imported-draft"],
+          status: "active",
+        };
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+
+    const goal =
+      factionConfig.goals[
+        Math.floor(Math.random() * factionConfig.goals.length)
+      ];
+    const conflict =
+      factionConfig.conflicts[
+        Math.floor(Math.random() * factionConfig.conflicts.length)
+      ];
+    const hook =
+      factionConfig.hooks[
+        Math.floor(Math.random() * factionConfig.hooks.length)
+      ];
+    const rival = `${this.generateName()} Covenant`;
+    const leader = this.generateName();
+    const agent = this.generateName();
+
+    const content = `### Overview
+${name} is a ${factionType.toLowerCase()} operating across the ${scope.toLowerCase()}. Its members present a controlled public face, but every favor, rumor, and private meeting is part of a larger strategy.
+
+${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their agenda should touch active locations, disputed resources, or unresolved campaign mysteries.\n` : ""}
+
+### Public Face
+Most locals know the faction through useful services, charitable work, guarded trade, or carefully placed rumors. People disagree about whether ${name} is stabilizing the region or quietly taking ownership of it.
+
+### Table Use
+Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival that can negotiate before it strikes.`;
+
+    const lore = `### GM Reference Information
+- **Faction Type**: ${factionType}
+- **Scope**: ${scope}
+- **Moral Posture**: ${alignment}
+- **Entity Type**: Faction
+
+### Agenda
+${goal}
+
+### Internal Conflict
+${conflict}
+
+### Notable NPCs
+- **${leader}**: Public leader who insists every deal has a civic purpose.
+- **${agent}**: Field agent who knows where the faction hides its failures.
+
+### Rival Faction
+${rival} wants the same influence, relic, route, or confession before ${name} can secure it.
+
+### Adventure Hook
+${hook}`;
+
+    return {
+      type: "faction",
+      title: name,
+      content,
+      lore,
+      labels: ["rpg-faction", "faction-generator", "imported-draft"],
       status: "active",
     };
   }

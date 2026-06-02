@@ -15,6 +15,13 @@
           icon: "icon-[lucide--user-round-plus]",
         },
         {
+          href: "/tools/faction-generator",
+          label: "Faction Generator",
+          summary:
+            "Create a fantasy faction with an agenda, internal conflict, rival group, notable NPCs, and adventure hook.",
+          icon: "icon-[lucide--flag]",
+        },
+        {
           href: "/generators/npc",
           label: "Procedural NPC Generator",
           summary:

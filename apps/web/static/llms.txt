@@ -18,6 +18,7 @@
 ## Public Marketing & Interactive Generator Routes
 
 - [Tools Hub](tools): Central directory for public RPG tools, generators, solution pages, and comparison guides.
+- [Faction Generator](tools/faction-generator): Free fantasy RPG faction generator with agendas, rivals, conflicts, and adventure hooks.
 - [Campaign Manager Solution](solutions/campaign-manager): Interactive features for TTRPG campaign running.
 - [Worldbuilding Tool Solution](solutions/worldbuilding-tool): Interactive features for visual wiki and timeline worldbuilding.
 - [AI GM Assistant Solution](solutions/ai-gm-assistant): Cooperative lore drafting features with AI.

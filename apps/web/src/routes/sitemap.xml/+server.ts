@@ -37,6 +37,11 @@ export async function GET() {
       changefreq: "monthly",
       priority: "0.8",
     },
+    {
+      path: "/tools/faction-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
     { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
     { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
     { path: "/terms", changefreq: "yearly", priority: "0.5" },

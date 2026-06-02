@@ -109,6 +109,7 @@ test.describe("SEO and Prerendering", () => {
       const toolsHtml = await toolsResponse.text();
       expect(toolsHtml).toContain("RPG Tools, Generators, and Comparisons");
       expect(toolsHtml).toContain("/tools/dnd-npc-generator");
+      expect(toolsHtml).toContain("/tools/faction-generator");
       expect(toolsHtml).toContain("/solutions/campaign-manager");
       expect(toolsHtml).toContain("/vs/world-anvil");
 
@@ -198,6 +199,74 @@ test.describe("SEO and Prerendering", () => {
 
       // 7. Verify the new vault is active and the entity is loaded/selected
       // Since it's local-first OPFS or fallback, wait for the imported entity detail panel to open or show up in sidebar
+      await expect(
+        page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
+      ).toBeVisible();
+    });
+
+    test("faction generator page and import conversion funnel flow", async ({
+      page,
+      request,
+    }) => {
+      const response = await request.get("/tools/faction-generator");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("Faction Generator");
+      expect(html).toContain("What does the faction generator create?");
+      expect(html).toContain("/tools/dnd-npc-generator");
+      expect(html).toContain("/solutions/worldbuilding-tool");
+      const jsonLdScripts = [
+        ...html.matchAll(
+          /<script type="application\/ld\+json">([^<]+)<\/script>/g,
+        ),
+      ].map((match) => JSON.parse(match[1]));
+      const faqSchema = jsonLdScripts.find(
+        (schema) => schema["@type"] === "FAQPage",
+      );
+      expect(faqSchema).toBeTruthy();
+      expect(faqSchema.mainEntity).toHaveLength(4);
+      expect(faqSchema.mainEntity[0].name).toBe(
+        "What does the faction generator create?",
+      );
+
+      await page.goto("/tools/faction-generator");
+      await expect(page.locator("#generator-title")).toContainText(
+        "Faction Generator",
+      );
+      await expect(page.getByLabel("Faction Type")).toBeVisible();
+      await expect(page.getByLabel("Operating Scope")).toBeVisible();
+      await expect(page.getByLabel("Moral Posture")).toBeVisible();
+      await expect(page.getByLabel("Optional Campaign Context")).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: /Worldbuilding tool/i }),
+      ).toHaveAttribute("href", "/solutions/worldbuilding-tool");
+
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) {
+        await aiToggle.uncheck();
+      }
+      await page.getByLabel("Faction Type").selectOption("Merchant Guild");
+      await page.getByLabel("Operating Scope").selectOption("Single city");
+      await page
+        .getByLabel("Optional Campaign Context")
+        .fill("a canal city split by old guild rivalries");
+
+      await page.click("#generate-button");
+
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Internal Conflict" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Adventure Hook" }),
+      ).toBeVisible();
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated");
+      const generatedName = await generatedTitle.textContent();
+      expect(generatedName).toBeTruthy();
+
+      await page.click("#save-to-codex-btn");
+      await expect(page).toHaveURL(/\/$/);
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
       ).toBeVisible();
