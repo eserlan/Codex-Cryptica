@@ -16,6 +16,13 @@ export interface SEOPageData {
     description: string;
     icon: string;
   }>;
+  /** Hero badge text. Defaults to "100% Local-First Campaign Wiki". */
+  eyebrow?: string;
+  /** Optional second button in the hero. */
+  secondaryCtaText?: string;
+  secondaryCtaHref?: string;
+  /** Links shown in a "Related pages" section above the FAQ. */
+  relatedLinks?: Array<{ href: string; label: string }>;
 }
 
 export interface SEOComparisonPageData extends SEOPageData {
@@ -226,6 +233,327 @@ export const solutions: Record<string, SEOPageData> = {
         question: "Can I host my campaign online?",
         answer:
           "Yes. Codex supports P2P guest sessions where you can host campaigns directly from your browser to your players.",
+      },
+    ],
+  },
+  "ai-dm-assistant": {
+    slug: "ai-dm-assistant",
+    eyebrow: "AI-Assisted Game Mastering",
+    title: "AI DM Assistant | AI Game Master Helper for TTRPG | Codex Cryptica",
+    description:
+      "Use Codex Cryptica's built-in AI DM assistant to draft lore, generate NPCs, revise session notes, and answer campaign questions — all without leaving your vault.",
+    h1: "AI DM Assistant for Tabletop GMs",
+    subheading:
+      "Draft, revise, and expand your campaign lore with a built-in AI co-author.",
+    introText:
+      "Codex Cryptica includes an AI-assisted writing layer called the Lore Oracle. It reads your campaign context, answers questions about your world, helps you draft NPC descriptions and faction goals, and suggests revisions to existing entries — all running locally with your own API key.",
+    ctaText: "Try the Lore Oracle",
+    secondaryCtaText: "See AI generators",
+    secondaryCtaHref: "/tools/dnd-npc-generator",
+    keywords: [
+      "ai dm assistant",
+      "ai game master helper",
+      "ai dungeon master tool",
+      "rpg ai assistant",
+      "ttrpg ai writing tool",
+    ],
+    features: [
+      {
+        title: "Context-Aware Lore Oracle",
+        description:
+          "The AI reads your existing campaign entities and drafts new content that fits your established world.",
+        icon: "icon-[lucide--bot]",
+      },
+      {
+        title: "Inline Revision Suggestions",
+        description:
+          "Select any text in your notes and ask the Oracle to expand, condense, or rewrite it in your campaign's voice.",
+        icon: "icon-[lucide--pencil]",
+      },
+      {
+        title: "Bring Your Own API Key",
+        description:
+          "Connect your Gemini or OpenAI key for full AI generation — no subscription or data sent to Codex servers.",
+        icon: "icon-[lucide--key]",
+      },
+    ],
+    relatedLinks: [
+      { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+      { href: "/tools/quest-hook-generator", label: "Quest hook generator" },
+      { href: "/solutions/ai-gm-assistant", label: "AI GM assistant solution" },
+    ],
+    faq: [
+      {
+        question: "Does the AI DM assistant require a subscription?",
+        answer:
+          "No. You bring your own API key (Gemini or OpenAI). Codex never charges for AI usage — you pay only your API provider's standard rates.",
+      },
+      {
+        question: "Does the AI see my campaign notes?",
+        answer:
+          "Only when you ask it to. The Oracle reads selected entities or passages you explicitly share with it. Nothing is sent automatically.",
+      },
+      {
+        question: "Can it generate NPCs, quests, and factions?",
+        answer:
+          "Yes. The public generators on this site use the same underlying AI layer. When used inside the app it also has access to your existing campaign context.",
+      },
+    ],
+  },
+  "ai-worldbuilding-tool": {
+    slug: "ai-worldbuilding-tool",
+    eyebrow: "AI-Assisted Worldbuilding",
+    title:
+      "AI Worldbuilding Tool | AI-Assisted Lore & World Design | Codex Cryptica",
+    description:
+      "Build richer worlds faster with Codex Cryptica's AI worldbuilding tools. Generate factions, places, histories, and lore drafts that stay consistent with your existing campaign.",
+    h1: "AI-Assisted Worldbuilding Tool",
+    subheading:
+      "Expand your world's depth with AI-generated lore that fits your campaign.",
+    introText:
+      "Codex Cryptica combines a local-first campaign wiki with an AI co-author that understands your world. Ask it to draft a new faction's history, suggest names for a city district, or write a rumour your party might hear — all grounded in the lore you've already written.",
+    ctaText: "Start Building Your World",
+    secondaryCtaText: "Try name generator",
+    secondaryCtaHref: "/tools/fantasy-name-generator",
+    keywords: [
+      "ai worldbuilding tool",
+      "ai worldbuilding",
+      "ai lore generator",
+      "worldbuilding ai assistant",
+      "fantasy world builder ai",
+    ],
+    features: [
+      {
+        title: "Entity-Aware Generation",
+        description:
+          "The AI reads your existing characters, locations, and factions before generating new content, keeping lore consistent.",
+        icon: "icon-[lucide--sparkles]",
+      },
+      {
+        title: "Graph-Connected Wiki",
+        description:
+          "Every generated entry links to related entities in your campaign graph — people, places, and events stay connected.",
+        icon: "icon-[lucide--network]",
+      },
+      {
+        title: "Local-First Privacy",
+        description:
+          "All your worldbuilding notes stay on your device. AI calls are direct to your API key — no data stored on Codex servers.",
+        icon: "icon-[lucide--shield-check]",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/tools/fantasy-name-generator",
+        label: "Fantasy name generator",
+      },
+      { href: "/tools/faction-generator", label: "Faction generator" },
+      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+    ],
+    faq: [
+      {
+        question: "How is this different from ChatGPT for worldbuilding?",
+        answer:
+          "The Lore Oracle has access to your existing campaign entities so it generates content that fits your established lore rather than generic fantasy tropes.",
+      },
+      {
+        question: "Can I use it for non-D&D settings?",
+        answer:
+          "Yes. Codex supports any genre — sci-fi, horror, historical, urban fantasy — and the AI adapts to the tone and terminology of your world.",
+      },
+      {
+        question: "Does it work offline?",
+        answer:
+          "The wiki and graph work fully offline. AI generation requires an internet connection to reach your API provider.",
+      },
+    ],
+  },
+  "rpg-knowledge-graph": {
+    slug: "rpg-knowledge-graph",
+    eyebrow: "Campaign Knowledge Graph",
+    title:
+      "RPG Knowledge Graph | Visual Campaign Map for TTRPGs | Codex Cryptica",
+    description:
+      "Visualise your RPG campaign as an interactive knowledge graph. See how characters, factions, locations, and events connect in Codex Cryptica's built-in graph engine.",
+    h1: "RPG Campaign Knowledge Graph",
+    subheading:
+      "See the full web of relationships in your campaign at a glance.",
+    introText:
+      "Codex Cryptica's graph engine maps every entity in your campaign — characters, factions, locations, events — as nodes connected by relationships. Zoom out to see the big picture, click a node to dive into its lore, and use the graph to spot connections you might have missed during prep.",
+    ctaText: "Explore the Graph",
+    keywords: [
+      "rpg knowledge graph",
+      "campaign knowledge graph",
+      "ttrpg relationship graph",
+      "dnd campaign graph",
+      "worldbuilding graph tool",
+    ],
+    features: [
+      {
+        title: "Interactive Relationship Map",
+        description:
+          "Drag, zoom, and filter a live graph of every entity and connection in your campaign.",
+        icon: "icon-[lucide--git-fork]",
+      },
+      {
+        title: "Automatic Link Detection",
+        description:
+          "Wiki-style [[links]] in your notes automatically appear as edges in the graph — no manual wiring needed.",
+        icon: "icon-[lucide--link]",
+      },
+      {
+        title: "Filter by Entity Type",
+        description:
+          "Focus on characters, factions, or locations independently to untangle complex political webs.",
+        icon: "icon-[lucide--filter]",
+      },
+    ],
+    relatedLinks: [
+      { href: "/solutions/campaign-manager", label: "Campaign manager" },
+      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+    ],
+    faq: [
+      {
+        question: "How big can the graph get?",
+        answer:
+          "The graph engine handles hundreds of entities smoothly. Very large campaigns can use filtering to keep the view manageable.",
+      },
+      {
+        question: "Can I export the graph?",
+        answer:
+          "Yes. You can export a PNG snapshot of the current graph view for use in session notes or sharing with players.",
+      },
+      {
+        question: "Does the graph update automatically?",
+        answer:
+          "Yes. Every time you add a [[link]] in your notes the graph updates in real time — no sync or rebuild needed.",
+      },
+    ],
+  },
+  "offline-rpg-campaign-manager": {
+    slug: "offline-rpg-campaign-manager",
+    eyebrow: "Offline-First Campaign Tool",
+    title: "Offline RPG Campaign Manager | No Internet Needed | Codex Cryptica",
+    description:
+      "Run your TTRPG campaign manager completely offline. Codex Cryptica stores all notes locally in your browser, works without internet, and never requires a server.",
+    h1: "Offline RPG Campaign Manager",
+    subheading:
+      "Prep your sessions anywhere — no internet, no server, no problem.",
+    introText:
+      "Codex Cryptica is built on the browser's Origin Private File System, which means it runs entirely on your device. Open your campaign at the table, on a train, or at a remote cabin. Your notes load instantly and every edit saves locally without a network call.",
+    ctaText: "Open Offline App",
+    keywords: [
+      "offline rpg campaign manager",
+      "offline campaign manager",
+      "dnd campaign manager offline",
+      "ttrpg offline tool",
+      "campaign manager no internet",
+    ],
+    features: [
+      {
+        title: "100% Offline Operation",
+        description:
+          "The full wiki, graph, and timeline work without any internet connection after the first page load.",
+        icon: "icon-[lucide--wifi-off]",
+      },
+      {
+        title: "Instant Local Loading",
+        description:
+          "Notes load from your device's file system in milliseconds — no server round-trip or CDN dependency.",
+        icon: "icon-[lucide--zap]",
+      },
+      {
+        title: "Optional Cloud Sync",
+        description:
+          "When you want a backup, sync your vault to Google Drive or a local folder — on your terms.",
+        icon: "icon-[lucide--cloud]",
+      },
+    ],
+    relatedLinks: [
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+    ],
+    faq: [
+      {
+        question: "Does Codex work without wifi at the game table?",
+        answer:
+          "Yes. Once the app has loaded once, everything works offline. Your notes, graph, and timelines are all stored locally.",
+      },
+      {
+        question: "Will I lose my data if I clear my browser?",
+        answer:
+          "Only if you clear browser storage explicitly. We recommend syncing to a local folder or Google Drive as a backup before clearing.",
+      },
+      {
+        question: "Does it work on mobile?",
+        answer:
+          "Yes. Codex is responsive and works on tablet and mobile browsers, though a larger screen is recommended for map and graph views.",
+      },
+    ],
+  },
+  "local-first-worldbuilding-tool": {
+    slug: "local-first-worldbuilding-tool",
+    eyebrow: "Privacy-First Worldbuilding",
+    title:
+      "Local-First Worldbuilding Tool | Private & Offline | Codex Cryptica",
+    description:
+      "Build your fantasy world with a local-first worldbuilding tool that keeps every note on your device. No cloud uploads, no subscription, no vendor lock-in.",
+    h1: "Local-First Worldbuilding Tool",
+    subheading:
+      "Your world, your files — private, offline, and completely yours.",
+    introText:
+      "Most worldbuilding tools store your creative work on someone else's server. Codex Cryptica takes the opposite approach: everything lives in your browser's local file system, exportable as standard Markdown files you can open in any editor. Your intellectual property stays with you.",
+    ctaText: "Start Your World",
+    keywords: [
+      "local first worldbuilding",
+      "private worldbuilding tool",
+      "offline worldbuilding",
+      "worldbuilding tool no account",
+      "self-hosted worldbuilding",
+    ],
+    features: [
+      {
+        title: "No Account Required",
+        description:
+          "Open the app and start building. Your vault is created locally in seconds with no sign-up form.",
+        icon: "icon-[lucide--user-x]",
+      },
+      {
+        title: "Standard Markdown Files",
+        description:
+          "Every note is a plain Markdown file. Open them in VS Code, Obsidian, or any text editor — no export needed.",
+        icon: "icon-[lucide--file-text]",
+      },
+      {
+        title: "No Vendor Lock-In",
+        description:
+          "Your world exists as files on your machine. Delete the app and your data is still there, untouched.",
+        icon: "icon-[lucide--unlock]",
+      },
+    ],
+    relatedLinks: [
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+    ],
+    faq: [
+      {
+        question: "Is my world truly private?",
+        answer:
+          "Yes. Codex uses the browser's Origin Private File System. Your notes never leave your device unless you explicitly sync or export them.",
+      },
+      {
+        question: "What happens if I change browsers?",
+        answer:
+          "Export your vault as a zip or sync to a local folder. You can reimport it in any browser or open the Markdown files directly.",
+      },
+      {
+        question: "Can I collaborate with my players?",
+        answer:
+          "Yes. You can share selected entries or host a P2P session where invited players view your world in read-only mode.",
       },
     ],
   },
@@ -472,6 +800,96 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         question: "Does Codex support mapping?",
         answer:
           "Yes, Codex includes spatial canvas and relationship nodes, with encounter tracking features.",
+      },
+    ],
+  },
+  "kanka-alternative": {
+    slug: "kanka-alternative",
+    competitorName: "Kanka",
+    title: "Codex Cryptica vs Kanka: Local vs Cloud Campaign Manager",
+    description:
+      "Compare Codex Cryptica and Kanka for TTRPG campaign management. See how a local-first private vault stacks up against Kanka's cloud-hosted shared wiki.",
+    h1: "Codex Cryptica vs Kanka",
+    subheading:
+      "Private local vaults vs cloud-hosted campaign wikis — which fits your table?",
+    introText:
+      "Kanka is a popular cloud-hosted campaign management platform with strong sharing features, but it stores all your world data on remote servers and restricts some features behind paid tiers. Codex Cryptica offers the same rich wiki and relationship graph as a fully local, free, offline-first alternative.",
+    ctaText: "Try Free Local Vault",
+    keywords: [
+      "codex cryptica vs kanka",
+      "kanka alternative",
+      "kanka rpg campaign manager",
+      "free kanka alternative",
+    ],
+    features: [
+      {
+        title: "No Monthly Tier Limits",
+        description:
+          "All Codex features — graph, AI, timelines, maps — are free with no entity count caps or paywalled modules.",
+        icon: "icon-[lucide--circle-dollar-sign]",
+      },
+      {
+        title: "Works Without Internet",
+        description:
+          "Every note, map, and relationship loads from your local device. No server dependency at the game table.",
+        icon: "icon-[lucide--wifi-off]",
+      },
+      {
+        title: "Standard Portable Files",
+        description:
+          "Your campaign is plain Markdown. Move it to any editor, back it up anywhere, or share specific files directly.",
+        icon: "icon-[lucide--file-text]",
+      },
+    ],
+    comparisonTable: [
+      {
+        feature: "Offline Support",
+        competitorHas: "No (Cloud only)",
+        codexHas: "Yes",
+      },
+      {
+        feature: "Local File Storage",
+        competitorHas: "No (Remote database)",
+        codexHas: "Yes (OPFS / Folder Sync)",
+      },
+      {
+        feature: "Free Entity Limit",
+        competitorHas: "Limited on free tier",
+        codexHas: "Unlimited",
+      },
+      {
+        feature: "AI Writing Assistant",
+        competitorHas: "No",
+        codexHas: "Yes (BYO API key)",
+      },
+      {
+        feature: "Interactive Graph",
+        competitorHas: "Limited",
+        codexHas: "Yes (Full relation graph)",
+      },
+      {
+        feature: "Open File Format",
+        competitorHas: "No (Proprietary)",
+        codexHas: "Yes (Standard Markdown)",
+      },
+    ],
+    verdict:
+      "Kanka excels at team-shared cloud wikis, but if you value offline access, data privacy, and no subscription fees, Codex Cryptica delivers a richer local experience with the same wiki depth and no monthly cost.",
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "vs World Anvil" },
+      { href: "/vs/obsidian", label: "vs Obsidian" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+    ],
+    faq: [
+      {
+        question: "Can I import my Kanka campaign into Codex?",
+        answer:
+          "Kanka supports JSON export. You can use the Codex importer or manually convert the JSON to Markdown files and open them as a vault.",
+      },
+      {
+        question: "Does Codex support shared campaigns like Kanka does?",
+        answer:
+          "Yes. Codex supports P2P guest sessions where you share selected pages with invited players without uploading data to a server.",
       },
     ],
   },

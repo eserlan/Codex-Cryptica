@@ -122,7 +122,7 @@
       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
-      100% Local-First Campaign Wiki
+      {data.eyebrow ?? "100% Local-First Campaign Wiki"}
     </div>
     <h1
       class="text-4xl md:text-5xl font-extrabold font-header leading-tight mb-4 tracking-wide"
@@ -140,7 +140,7 @@
     >
       {data.introText}
     </p>
-    <div class="flex justify-center gap-4">
+    <div class="flex flex-wrap justify-center gap-4">
       <a
         href="{base}/"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200"
@@ -148,6 +148,15 @@
       >
         {data.ctaText}
       </a>
+      {#if data.secondaryCtaText}
+        <a
+          href="{base}{data.secondaryCtaHref ?? '/tools'}"
+          class="px-8 py-3.5 border border-theme-primary/60 text-theme-primary font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-primary/10 transition-all duration-200"
+          id="hero-secondary-cta"
+        >
+          {data.secondaryCtaText}
+        </a>
+      {/if}
     </div>
   </section>
 
@@ -265,6 +274,33 @@
           <p class="text-xs leading-relaxed text-theme-muted">
             {comparisonData.verdict}
           </p>
+        </div>
+      </div>
+    </section>
+  {/if}
+
+  <!-- Related Links Section -->
+  {#if data.relatedLinks && data.relatedLinks.length > 0}
+    <section class="border-t border-theme-border/30 py-10">
+      <div class="max-w-4xl mx-auto px-6">
+        <h2
+          class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
+        >
+          Related Pages
+        </h2>
+        <div class="flex flex-wrap justify-center gap-3">
+          {#each data.relatedLinks as link (link.href)}
+            <a
+              href="{base}{link.href}"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors"
+            >
+              <span
+                class="icon-[lucide--arrow-right] w-3 h-3"
+                aria-hidden="true"
+              ></span>
+              {link.label}
+            </a>
+          {/each}
         </div>
       </div>
     </section>
