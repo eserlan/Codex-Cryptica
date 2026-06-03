@@ -34,6 +34,21 @@ export class HostCharChatHandler extends BaseHandler {
     if (message.type !== "GUEST_CHAR_CHAT_REQUEST") return;
 
     const { requestId, characterId, guestUsername, query, history } = message;
+
+    const entity = context.vault.entities?.[characterId];
+    if (
+      !entity ||
+      entity.type !== "character" ||
+      !entity.guestChatConfig?.isEnabled
+    ) {
+      connection.send({
+        type: "GUEST_CHAR_CHAT_DONE",
+        requestId,
+        error: "Character not available for guest chat.",
+      });
+      return;
+    }
+
     const oracle = context.oracle;
 
     if (!oracle) {
@@ -126,7 +141,9 @@ export class HostCharChatHandler extends BaseHandler {
       uiStore: { activeThemeId: context.themeStore?.worldThemeId },
     };
 
+    let didStream = false;
     const onPartial = (partial: string) => {
+      didStream = true;
       connection.send({ type: "GUEST_CHAR_CHAT_CHUNK", requestId, partial });
     };
 
@@ -141,7 +158,18 @@ export class HostCharChatHandler extends BaseHandler {
         executionContext,
         onPartial,
       );
-      connection.send({ type: "GUEST_CHAR_CHAT_DONE", requestId });
+      if (!didStream) {
+        const systemMsg = messages.findLast(
+          (m: any) => m.role === "assistant" || m.role === "system",
+        );
+        connection.send({
+          type: "GUEST_CHAR_CHAT_DONE",
+          requestId,
+          error: systemMsg?.content ?? "No response generated.",
+        });
+      } else {
+        connection.send({ type: "GUEST_CHAR_CHAT_DONE", requestId });
+      }
     } catch (err: any) {
       connection.send({
         type: "GUEST_CHAR_CHAT_DONE",

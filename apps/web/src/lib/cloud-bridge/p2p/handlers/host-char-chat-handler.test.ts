@@ -132,7 +132,11 @@ describe("HostCharChatHandler — successful execution", () => {
   it("sends DONE on successful execution", async () => {
     const h = new HostCharChatHandler();
     const conn = makeConn();
-    const ctx = makeContext(makeOracle());
+    const ctx = makeContext(
+      makeOracle(async (_action, _ctx, onPartial) => {
+        onPartial?.("Hello!");
+      }),
+    );
 
     await h.handle(makeRequest(), conn, ctx);
 
@@ -140,6 +144,22 @@ describe("HostCharChatHandler — successful execution", () => {
       type: "GUEST_CHAR_CHAT_DONE",
       requestId: "req-1",
     });
+  });
+
+  it("sends DONE with error when executor completes without streaming", async () => {
+    const h = new HostCharChatHandler();
+    const conn = makeConn();
+    const ctx = makeContext(makeOracle());
+
+    await h.handle(makeRequest(), conn, ctx);
+
+    expect(conn.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "GUEST_CHAR_CHAT_DONE",
+        requestId: "req-1",
+        error: expect.any(String),
+      }),
+    );
   });
 
   it("streams CHUNK via connection when executor calls onPartial", async () => {
