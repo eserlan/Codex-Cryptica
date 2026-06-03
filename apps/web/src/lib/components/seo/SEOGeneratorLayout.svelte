@@ -15,6 +15,7 @@
     faqs = [],
     generate,
     formFields,
+    worldTheme = "workspace",
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -26,6 +27,7 @@
     faqs?: { question: string; answer: string }[];
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
+    worldTheme?: string;
   } = $props();
 
   let isGenerating = $state(false);
@@ -261,7 +263,7 @@ ${generatedData.lore}`;
 
             <div
               class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
-              data-world-theme="workspace"
+              data-world-theme={worldTheme}
             >
               <div
                 class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"

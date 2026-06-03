@@ -43,6 +43,11 @@ export async function GET() {
       priority: "0.8",
     },
     {
+      path: "/tools/vampire-clan-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
       path: "/tools/quest-hook-generator",
       changefreq: "monthly",
       priority: "0.8",
