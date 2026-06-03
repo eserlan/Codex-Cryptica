@@ -102,11 +102,7 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{js,ts}"],
     environment: "jsdom",
     globals: true,
-    pool: "threads",
-    threads: {
-      maxThreads: 2,
-      minThreads: 1,
-    },
+    pool: "forks",
     setupFiles: ["tests/setup.ts"],
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],
