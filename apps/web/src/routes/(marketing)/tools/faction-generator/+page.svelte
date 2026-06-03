@@ -6,6 +6,7 @@
     factionConfig,
   } from "$lib/services/seo/generator-engine";
 
+  let theme = $state(factionConfig.themes[0]);
   let type = $state(factionConfig.types[0]);
   let scope = $state(factionConfig.scopes[1]);
   let alignment = $state(factionConfig.alignments[0]);
@@ -13,6 +14,7 @@
 
   async function generate({ useAI }: { useAI: boolean }) {
     return generatorEngine.generateFaction({
+      theme,
       type,
       scope,
       alignment,
@@ -60,10 +62,12 @@
   introText="Create a campaign-ready fantasy faction with a public face, agenda, internal conflict, rival group, notable NPCs, and adventure hook. Works without login, then saves into your local Codex Cryptica campaign vault."
   {relatedLinks}
   {faqs}
+  {theme}
   {generate}
 >
   {#snippet formFields()}
     <FactionFormFields
+      bind:theme
       bind:type
       bind:scope
       bind:alignment

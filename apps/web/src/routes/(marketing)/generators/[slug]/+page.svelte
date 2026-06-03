@@ -81,6 +81,7 @@
   });
 
   let faction = $state({
+    theme: factionConfig.themes[0],
     type: factionConfig.types[0],
     scope: factionConfig.scopes[1],
     alignment: factionConfig.alignments[0],
@@ -114,6 +115,7 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  theme={data.slug === "faction" ? faction.theme : undefined}
   {generate}
 >
   {#snippet formFields()}
@@ -178,6 +180,7 @@
       </div>
     {:else if data.slug === "faction"}
       <FactionFormFields
+        bind:theme={faction.theme}
         bind:type={faction.type}
         bind:scope={faction.scope}
         bind:alignment={faction.alignment}

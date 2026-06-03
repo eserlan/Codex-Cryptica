@@ -164,6 +164,49 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toBe("AI Generated Agenda");
       expect(res.labels).toContain("faction-generator");
     });
+
+    it("should include campaign theme in the AI prompt and fallback content", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Cyberdine Corp",
+                content: "AI Cyberpunk Faction",
+                lore: "AI Cyberpunk Agenda",
+                labels: ["rpg-faction", "cyberpunk"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateFaction({
+        type: "Criminal Syndicate",
+        scope: "Single city",
+        alignment: "Pragmatic",
+        theme: "Cyberpunk / Corporate",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("Campaign Theme/Genre: Cyberpunk / Corporate"),
+      );
+      expect(res.title).toBe("Cyberdine Corp");
+
+      // Test local fallback path for theme awareness
+      const fallbackRes = await engine.generateFaction({
+        type: "Criminal Syndicate",
+        scope: "Single city",
+        alignment: "Pragmatic",
+        theme: "Cyberpunk / Corporate",
+        useAI: false,
+      });
+      expect(fallbackRes.content).toContain("cyberpunk / corporate themed");
+      expect(fallbackRes.lore).toContain(
+        "**Campaign Theme**: Cyberpunk / Corporate",
+      );
+    });
   });
 
   describe("generateNames", () => {

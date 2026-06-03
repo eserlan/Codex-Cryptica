@@ -13,6 +13,7 @@
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
     relatedLinks = [],
     faqs = [],
+    theme = "Classic Fantasy",
     generate,
     formFields,
   }: {
@@ -24,6 +25,7 @@
     introText?: string;
     relatedLinks?: { href: string; label: string }[];
     faqs?: { question: string; answer: string }[];
+    theme?: string;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
   } = $props();
@@ -33,6 +35,17 @@
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let useAI = $state(true);
+
+  const themeMap: Record<string, string> = {
+    "Classic Fantasy": "fantasy",
+    "Cyberpunk / Corporate": "cyberpunk",
+    "Vampire / Gothic Noir": "horror",
+    "Sci-Fi / Space Opera": "scifi",
+    "Modern Conspiracy": "modern",
+    "Post-Apocalyptic": "apocalyptic",
+  };
+
+  const activeThemeId = $derived(themeMap[theme] || "workspace");
 
   const faqJsonLd = $derived(
     faqs.length > 0
@@ -86,6 +99,7 @@
         '<div class="flex flex-col mb-1"><span class="font-bold text-theme-muted uppercase tracking-wider text-[9px]">$1</span><span>$2</span></div>',
       )
       .replace(/^- (.*)$/gm, '<li class="list-disc ml-4">$1</li>')
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\n\n/g, "<br/><br/>");
 
   function handleSaveToCodex() {
@@ -261,7 +275,7 @@ ${generatedData.lore}`;
 
             <div
               class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
-              data-world-theme="workspace"
+              data-world-theme={activeThemeId}
             >
               <div
                 class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"

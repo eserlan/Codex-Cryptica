@@ -537,6 +537,14 @@ export const magicItemConfig = {
 
 // Faction Generator Table Config
 export const factionConfig = {
+  themes: [
+    "Classic Fantasy",
+    "Cyberpunk / Corporate",
+    "Vampire / Gothic Noir",
+    "Sci-Fi / Space Opera",
+    "Modern Conspiracy",
+    "Post-Apocalyptic",
+  ],
   types: [
     "Merchant Guild",
     "Secret Society",
@@ -738,7 +746,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -838,9 +846,11 @@ ${plotHook}`;
       scope?: string;
       alignment?: string;
       campaignContext?: string;
+      theme?: string;
       useAI?: boolean;
     } = {},
   ): Promise<GeneratorOutput> {
+    const theme = options.theme || factionConfig.themes[0];
     const factionType =
       options.type ||
       factionConfig.types[
@@ -863,24 +873,26 @@ ${plotHook}`;
       try {
         const prompt = `Generate a detailed RPG faction in JSON format.
 Options:
-- Name: ${name}
+- Campaign Theme/Genre: ${theme}
 - Faction Type: ${factionType}
 - Scope: ${scope}
 - Moral Posture: ${alignment}
 ${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+- Style Guideline: Avoid generic RPG naming clichés and tropes (e.g. do not default to "Gilded Ledger" or similar repetitive names for merchant guilds). Focus on highly original, evocative, and distinctive names and lore.
+- Self-Assessment: Critique your entire generated draft (including name, public face, agenda, conflicts, and NPCs) before finalizing it. Ensure that the name and concept are highly original, and that the entire output is completely internally consistent with no contradictions (e.g. ensuring NPCs described as dead are not active elsewhere, and the faction's goals align logically with its public face, secrets, and activities). If any issues are found, refine and rewrite the draft before returning it.
 
 You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single string for the faction name",
-  "content": "A detailed multi-paragraph faction overview (markdown formatted) describing its public face, leadership, resources, and how it fits the campaign context if provided.",
+  "content": "A detailed multi-paragraph faction overview (markdown formatted) describing its public face, leadership, resources, and how it fits the campaign context and campaign theme if provided.",
   "lore": "Structured GM details (markdown formatted) with sections for core fields, agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
-  "labels": ["rpg-faction", "faction-generator", "imported-draft"]
+  "labels": ["An array of descriptive tags representing the faction's theme, type, and activities (e.g. 'cult', 'underground', 'mercenaries') along with 'rpg-faction', 'faction-generator', and 'imported-draft'"]
 }
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -926,17 +938,18 @@ Return only the JSON object. Do not include markdown code block formatting like 
     const agent = this.generateName();
 
     const content = `### Overview
-${name} is a ${factionType.toLowerCase()} operating across the ${scope.toLowerCase()}. Its members present a controlled public face, but every favor, rumor, and private meeting is part of a larger strategy.
-
+${name} is a ${theme.toLowerCase()} themed ${factionType.toLowerCase()} operating across the ${scope.toLowerCase()}. Its members present a controlled public face, but every favor, rumor, and private meeting is part of a larger strategy.
+ 
 ${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their agenda should touch active locations, disputed resources, or unresolved campaign mysteries.\n` : ""}
-
+ 
 ### Public Face
 Most locals know the faction through useful services, charitable work, guarded trade, or carefully placed rumors. People disagree about whether ${name} is stabilizing the region or quietly taking ownership of it.
-
+ 
 ### Table Use
 Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival that can negotiate before it strikes.`;
 
     const lore = `### GM Reference Information
+- **Campaign Theme**: ${theme}
 - **Faction Type**: ${factionType}
 - **Scope**: ${scope}
 - **Moral Posture**: ${alignment}
@@ -1035,7 +1048,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -1172,7 +1185,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -1301,7 +1314,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -1423,7 +1436,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);

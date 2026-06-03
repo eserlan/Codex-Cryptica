@@ -2,11 +2,13 @@
   import { factionConfig } from "$lib/services/seo/generator-engine";
 
   let {
+    theme = $bindable(factionConfig.themes[0]),
     type = $bindable(factionConfig.types[0]),
     scope = $bindable(factionConfig.scopes[1]),
     alignment = $bindable(factionConfig.alignments[0]),
     campaignContext = $bindable(""),
   }: {
+    theme: string;
     type: string;
     scope: string;
     alignment: string;
@@ -18,6 +20,20 @@
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
 </script>
+
+<div class="flex flex-col gap-1.5">
+  <label for="faction-theme-select" class={labelClass}>Campaign Theme</label>
+  <select
+    id="faction-theme-select"
+    name="faction_theme"
+    bind:value={theme}
+    class={selectClass}
+  >
+    {#each factionConfig.themes as t (t)}
+      <option value={t}>{t}</option>
+    {/each}
+  </select>
+</div>
 
 <div class="flex flex-col gap-1.5">
   <label for="faction-type-select" class={labelClass}>Faction Type</label>
