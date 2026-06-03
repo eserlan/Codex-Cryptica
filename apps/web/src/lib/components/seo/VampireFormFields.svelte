@@ -7,12 +7,14 @@
     feedingHabit = $bindable(vampireConfig.feedingHabits[0]),
     weakness = $bindable(vampireConfig.weaknesses[0]),
     campaignContext = $bindable(""),
+    onSurprise = undefined,
   }: {
     archetype: string;
     bloodline: string;
     feedingHabit: string;
     weakness: string;
     campaignContext: string;
+    onSurprise?: () => void;
   } = $props();
 
   const selectClass =
@@ -22,7 +24,8 @@
 </script>
 
 <div class="flex flex-col gap-1.5">
-  <label for="vampire-archetype-select" class={labelClass}>Clan Archetype</label
+  <label for="vampire-archetype-select" class={labelClass}
+    >Choose their nature</label
   >
   <select
     id="vampire-archetype-select"
@@ -38,7 +41,7 @@
 
 <div class="flex flex-col gap-1.5">
   <label for="vampire-bloodline-select" class={labelClass}
-    >Bloodline / Heritage</label
+    >Choose their bloodline</label
   >
   <select
     id="vampire-bloodline-select"
@@ -53,7 +56,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="vampire-feeding-select" class={labelClass}>Feeding Habit</label>
+  <label for="vampire-feeding-select" class={labelClass}
+    >Choose how they feed</label
+  >
   <select
     id="vampire-feeding-select"
     name="vampire_feeding"
@@ -67,7 +72,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="vampire-weakness-select" class={labelClass}>Clan Weakness</label>
+  <label for="vampire-weakness-select" class={labelClass}
+    >Choose their weakness</label
+  >
   <select
     id="vampire-weakness-select"
     name="vampire_weakness"
@@ -82,7 +89,7 @@
 
 <div class="flex flex-col gap-1.5">
   <label for="vampire-campaign-context" class={labelClass}
-    >Optional Campaign Context</label
+    >Add campaign context</label
   >
   <textarea
     id="vampire-campaign-context"
@@ -95,9 +102,38 @@
   ></textarea>
   <p
     id="vampire-campaign-context-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-[10px] text-theme-text/60 leading-relaxed"
   >
     Add a city, gothic metropolis, investigator guild, or campaign threat to aim
     the clan at your table.
   </p>
+</div>
+
+<div class="pt-2 flex justify-end">
+  <button
+    type="button"
+    onclick={() => {
+      archetype =
+        vampireConfig.archetypes[
+          Math.floor(Math.random() * vampireConfig.archetypes.length)
+        ];
+      bloodline =
+        vampireConfig.bloodlines[
+          Math.floor(Math.random() * vampireConfig.bloodlines.length)
+        ];
+      feedingHabit =
+        vampireConfig.feedingHabits[
+          Math.floor(Math.random() * vampireConfig.feedingHabits.length)
+        ];
+      weakness =
+        vampireConfig.weaknesses[
+          Math.floor(Math.random() * vampireConfig.weaknesses.length)
+        ];
+      if (onSurprise) onSurprise();
+    }}
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+  >
+    <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+    Surprise Me
+  </button>
 </div>

@@ -33,25 +33,31 @@
     {
       question: "What does the vampire clan generator create?",
       answer:
-        "It generates a vampire clan or occult coven with a name, archetype, bloodline heritage, feeding habits, clan weakness, dark agenda, internal conflicts, and adventure hooks.",
+        "It generates a complete vampire clan or occult coven with a name, bloodline heritage, feeding habits, clan weakness, dark agenda, internal conflict, rival faction, notable NPCs, and a table-ready GM hook.",
     },
     {
-      question: "Which vampire systems or RPGs is this compatible with?",
+      question: "Can I use it without an account?",
       answer:
-        "This tool is system-agnostic and works perfectly for Vampire: The Masquerade, D&D, Pathfinder, Gothic Earth, or any customized gothic noir worldbuilding setting.",
+        "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
     },
     {
-      question:
-        "Can I customize the generated clan to fit my current campaign?",
+      question: "Which RPG systems does it work with?",
       answer:
-        "Yes. Add optional campaign context such as a specific gothic metropolis, an investigator faction, or active threats, and the generator will integrate them.",
+        "The generator is system-agnostic. It works for Vampire: The Masquerade, D&D, Pathfinder, Gothic Earth, or any gothic noir worldbuilding campaign.",
     },
     {
-      question: "How does the save function integrate with the app?",
+      question: "Can I aim the clan at my current campaign?",
       answer:
-        "Clicking 'Save to Codex' serializes the generated coven draft into browser localStorage and opens the main app interface, auto-importing it as a new Faction in your vault.",
+        "Yes. Add optional campaign context — a gothic city, investigator guild, rival faction, or active threat — and the generator will fit the clan to your table rather than producing a generic result.",
+    },
+    {
+      question: "How does saving a generated clan work?",
+      answer:
+        "Clicking 'Save to Codex' stores the clan draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
+
+  let triggerGen = $state<(() => void) | undefined>(undefined);
 </script>
 
 <SEOGeneratorLayout
@@ -60,11 +66,14 @@
   metaDescription="Create detailed vampire clans, bloodlines, occult covens, and secret societies. Generate history, feeding habits, weaknesses, and plot hooks for your campaign."
   eyebrow="Vampire Clan Generator"
   introTitle="Vampire Clan Generator"
-  introText="Forge a secret society of the undead. Customize bloodlines, feeding preferences, and weaknesses, then instantly generate details or save the draft into your Codex Cryptica campaign vault."
+  introText="Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault."
   worldTheme="horror"
   {relatedLinks}
   {faqs}
   {generate}
+  registerTrigger={(fn) => {
+    triggerGen = fn;
+  }}
 >
   {#snippet formFields()}
     <VampireFormFields
@@ -73,6 +82,7 @@
       bind:feedingHabit
       bind:weakness
       bind:campaignContext
+      onSurprise={triggerGen}
     />
   {/snippet}
 </SEOGeneratorLayout>
