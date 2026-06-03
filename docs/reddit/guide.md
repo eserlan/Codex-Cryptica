@@ -12,6 +12,10 @@ We do not post marketing copy or corporate hype. Our goal is to connect with oth
 
 Never invent or exaggerate features. All claims, version numbers, performance stats, and implementation details must match verified status in the code, specs, or changelogs. If a feature hasn't shipped or isn't fully working, do not write about it as if it has.
 
+### AI Integration
+
+When posting about tools or generators, clearly state that they utilize AI (such as Gemini) to build rich, contextual lore. Focus on how the AI acts as a creative collaborator to solve prep problems rather than just presenting it as simple local randomizer tables or generic "AI magic".
+
 ---
 
 ## 2. Voice & Tone
