@@ -31,12 +31,14 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(res.type).toBe("character");
       expect(res.title).toBeDefined();
+      expect(res.summary).toBeDefined();
+      expect(res.content).toContain("Who they are");
+      expect(res.content).toContain("What they want");
       expect(res.content).toContain("Elf");
       expect(res.content).toContain("Mage");
       expect(res.lore).toContain("Neutral Good");
-      expect(res.lore).toContain("Species/Ancestry");
+      expect(res.lore).toContain("At a Glance");
       expect(res.lore).toContain("Faction Connection");
-      expect(res.lore).toContain("Plot Hook");
       expect(res.labels).toContain("npc-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -50,7 +52,6 @@ describe("DefaultGeneratorEngine", () => {
         useAI: false,
       });
 
-      expect(res.content).toContain("Campaign Fit");
       expect(res.content).toContain("a haunted border city under siege");
     });
 
