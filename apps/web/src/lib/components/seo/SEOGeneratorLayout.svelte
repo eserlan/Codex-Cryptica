@@ -263,7 +263,7 @@ ${generatedData.lore}`;
 
             <div
               class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
-              data-world-theme={worldTheme}
+              data-theme={worldTheme}
             >
               <div
                 class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"
