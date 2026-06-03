@@ -30,6 +30,9 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain("<urlset");
     expect(xml).toContain("https://codexcryptica.com/tools");
     expect(xml).toContain("https://codexcryptica.com/tools/faction-generator");
+    expect(xml).toContain(
+      "https://codexcryptica.com/tools/vampire-clan-generator",
+    );
     expect(xml).toContain("https://codexcryptica.com/solutions/test-sol");
     expect(xml).toContain("https://codexcryptica.com/vs/test-comp");
     expect(xml).toContain("https://codexcryptica.com/generators/npc");

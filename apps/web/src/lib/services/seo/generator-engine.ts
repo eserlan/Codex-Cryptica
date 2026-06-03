@@ -596,6 +596,72 @@ export const factionConfig = {
   ],
 };
 
+export const vampireConfig = {
+  archetypes: [
+    "Aristocratic Court",
+    "Occult Coven",
+    "Predatory Brood",
+    "Conspiring Syndicate",
+    "Rebel Anarchs",
+  ],
+  bloodlines: [
+    "Sanguine Nobles (Charismatic Mind-Benders)",
+    "Shadow Stalkers (Nightmare Weavers)",
+    "Blood Sorcerers (Occult Ritualists)",
+    "Bestial Ravagers (Feral Predator Shapeshifters)",
+    "Melancholic Artists (Aesthetes of Decay)",
+  ],
+  feedingHabits: [
+    "High-Society Salons (Elite & Consent-based)",
+    "Street Predation (Slums & Forgotten Alleys)",
+    "Blood Trafficking (Black Market & Clinics)",
+    "Occult Sacraments (Ritualistic & Sacrificial)",
+    "Wild Wilderness Hunts (Deep Forests & Ruins)",
+  ],
+  weaknesses: [
+    "Severe Sun Sensitivity (Burns instantly)",
+    "Consecrated Ground Aversion (Cannot cross thresholds)",
+    "Mirror & Reflection Absence (Exposes their nature)",
+    "Decaying Physical Form (Needs fresh blood to look human)",
+    "Silver & Wooden Vulnerability (Prevents regeneration)",
+  ],
+  scopes: [
+    "Single city underbelly",
+    "Hidden castle & border valley",
+    "Trade route shadow network",
+    "Metropolitan high society",
+    "Continental shadow court",
+  ],
+  alignments: [
+    "Strictly lawful, highly predatory",
+    "Pragmatic and power-driven",
+    "Feral, chaotic, and blood-fueled",
+    "Secretive and ritual-obsessed",
+    "Rebellious, seeking freedom from elders",
+  ],
+  goals: [
+    "Infiltrate the city council and blood-bind key mortal leaders.",
+    "Exhume the sarcophagus of their dormant Progenitor.",
+    "Monopolize the local blood bank distribution network.",
+    "Wipe out a rival werewolf pack or vampire hunters' cell.",
+    "Reconstruct a shattered ancient chronicle of blood magic.",
+  ],
+  conflicts: [
+    "The younger brood is planning a rebellion against the ancient elder.",
+    "A feeding gone wrong has drawn the attention of mortal authorities.",
+    "A rogue member has stolen a ledger detailing the clan's human farms.",
+    "The blood supply is tainted by a mystical pathogen.",
+    "An inquisitor has successfully tracked their primary haven.",
+  ],
+  hooks: [
+    "A mysterious patron hires the party to deliver a sealed urn, which is a vampire ashes decoy.",
+    "Locals ask the party to investigate a series of bloodless bodies found in the canal.",
+    "A member of the clan offers to sell a list of high-profile vampire thralls in the city council.",
+    "The clan captures the party and offers freedom in exchange for retrieving a relic from a sunlit temple.",
+    "A dying vampire begs the party to protect their mortal family from their own sire.",
+  ],
+};
+
 export const questConfig = {
   genres: [
     "Classic Fantasy",
@@ -1111,6 +1177,186 @@ ${rival} is pursuing the same influence, relic, or route — and will reach it f
       content,
       lore,
       labels: ["rpg-faction", "faction-generator", "imported-draft"],
+      status: "active",
+    };
+  }
+
+  /**
+   * Generates a vampire clan draft.
+   */
+  async generateVampireClan(
+    options: {
+      archetype?: string;
+      bloodline?: string;
+      feedingHabit?: string;
+      weakness?: string;
+      scope?: string;
+      alignment?: string;
+      campaignContext?: string;
+      useAI?: boolean;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const archetype =
+      options.archetype ||
+      vampireConfig.archetypes[
+        Math.floor(Math.random() * vampireConfig.archetypes.length)
+      ];
+    const bloodline =
+      options.bloodline ||
+      vampireConfig.bloodlines[
+        Math.floor(Math.random() * vampireConfig.bloodlines.length)
+      ];
+    const feedingHabit =
+      options.feedingHabit ||
+      vampireConfig.feedingHabits[
+        Math.floor(Math.random() * vampireConfig.feedingHabits.length)
+      ];
+    const weakness =
+      options.weakness ||
+      vampireConfig.weaknesses[
+        Math.floor(Math.random() * vampireConfig.weaknesses.length)
+      ];
+    const scope =
+      options.scope ||
+      vampireConfig.scopes[
+        Math.floor(Math.random() * vampireConfig.scopes.length)
+      ];
+    const alignment =
+      options.alignment ||
+      vampireConfig.alignments[
+        Math.floor(Math.random() * vampireConfig.alignments.length)
+      ];
+    const campaignContext = options.campaignContext?.trim();
+
+    // Surnames/houses/covenants for vampires
+    const prefixes = ["House ", "The ", "Covenant of ", "Order of ", "Clan "];
+    const roots = [
+      "Dracul",
+      "Karnstein",
+      "Von Carstein",
+      "Orlok",
+      "Bathory",
+      "Tepes",
+      "Morbius",
+      "Sanguis",
+      "Vargo",
+      "Ruthven",
+    ];
+    const name =
+      prefixes[Math.floor(Math.random() * prefixes.length)] +
+      roots[Math.floor(Math.random() * roots.length)];
+
+    if (options.useAI !== false) {
+      try {
+        const prompt = `Generate a detailed RPG vampire clan/faction in JSON format.
+Options:
+- Name: ${name}
+- Clan Archetype: ${archetype}
+- Bloodline: ${bloodline}
+- Feeding Habit: ${feedingHabit}
+- Clan Weakness: ${weakness}
+- Scope of Influence: ${scope}
+- Moral Posture: ${alignment}
+${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+
+You must return a valid JSON object matching the following structure exactly:
+{
+  "title": "A single string for the vampire clan/house name",
+  "content": "A detailed multi-paragraph overview (markdown formatted) describing its history, public facade in mortal society, dark haven, and how it fits the campaign context if provided.",
+  "lore": "Structured GM details (markdown formatted) with sections for core fields, bloodline traits, feeding habits, weakness, dark agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
+  "labels": ["rpg-faction", "vampire-clan", "imported-draft"]
+}
+Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-1.5-flash",
+          "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+        );
+        const response = await model.generateContent(prompt);
+        const text = response.response.text().trim();
+        const cleanText = text
+          .replace(/^```json\s*/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const data = JSON.parse(cleanText);
+
+        return {
+          type: "faction",
+          title: data.title || name,
+          content: data.content || "",
+          lore: data.lore || "",
+          labels: Array.isArray(data.labels)
+            ? data.labels
+            : ["rpg-faction", "vampire-clan", "imported-draft"],
+          status: "active",
+        };
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+
+    const goal =
+      vampireConfig.goals[
+        Math.floor(Math.random() * vampireConfig.goals.length)
+      ];
+    const conflict =
+      vampireConfig.conflicts[
+        Math.floor(Math.random() * vampireConfig.conflicts.length)
+      ];
+    const hook =
+      vampireConfig.hooks[
+        Math.floor(Math.random() * vampireConfig.hooks.length)
+      ];
+    const rival = `${this.generateName()} Inquisition`;
+    const sire = this.generateName();
+    const thrall = this.generateName();
+
+    const content = `### Overview
+${name} is a powerful vampire clan of the ${bloodline.toLowerCase()} lineage, operating as a ${archetype.toLowerCase()} across ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
+
+${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their influence should touch the local halls of power, forgotten catacombs, or ongoing dark mysteries.\n` : ""}
+
+### Public Facade
+To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a highly organized coven of undead hunters.
+
+### Table Use
+Introduce ${name} when the party enters high-society intrigue, investigates occult occurrences, or needs a powerful but dangerous ally who demands blood or secrets as currency.`;
+
+    const lore = `### GM Reference Information
+- **Faction Type**: Vampire Clan (${archetype})
+- **Bloodline**: ${bloodline}
+- **Scope**: ${scope}
+- **Moral Posture**: ${alignment}
+- **Feeding Habit**: ${feedingHabit}
+- **Clan Weakness**: ${weakness}
+- **Entity Type**: Faction
+
+### Dark Agenda
+${goal}
+
+### Internal Conflict
+${conflict}
+
+### Notable NPCs
+- **Sire ${sire}**: The ancient leader of the clan who has survived centuries of inquisitions and power struggles.
+- **Thrall ${thrall}**: A high-ranking mortal puppet who manages the clan's daytime assets and legal matters.
+
+### Rival Faction
+The ${rival} seeks to expose, purge, or take control of the secrets and assets held by ${name}.
+
+### Adventure Hook
+${hook}`;
+
+    return {
+      type: "faction",
+      title: name,
+      content,
+      lore,
+      labels: ["rpg-faction", "vampire-clan", "imported-draft"],
       status: "active",
     };
   }

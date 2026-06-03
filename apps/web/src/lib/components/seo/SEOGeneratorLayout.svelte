@@ -20,6 +20,7 @@
     generate,
     formFields,
     registerTrigger,
+    worldTheme = "workspace",
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -34,6 +35,7 @@
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
     registerTrigger?: (fn: () => void) => void;
+    worldTheme?: string;
   } = $props();
 
   const HIDDEN_TAGS = new Set([
@@ -426,6 +428,7 @@
 
             <div
               class="space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90 flex-grow"
+              data-theme={worldTheme}
             >
               {@html renderMarkdown(generatedData.content || "")}
             </div>
