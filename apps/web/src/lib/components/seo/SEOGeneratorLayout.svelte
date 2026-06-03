@@ -13,10 +13,10 @@
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
     relatedLinks = [],
     faqs = [],
-    theme = "Classic Fantasy",
+    theme = $bindable("Classic Fantasy"),
     generate,
     formFields,
-    triggerGenerate = $bindable(),
+    registerTrigger,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -29,7 +29,7 @@
     theme?: string;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
-    triggerGenerate?: (() => void) | undefined;
+    registerTrigger?: (fn: () => void) => void;
   } = $props();
 
   let isGenerating = $state(false);
@@ -79,8 +79,9 @@
   }
 
   $effect(() => {
-    const _ = triggerGenerate; // reference it to track
-    triggerGenerate = () => void handleGenerate();
+    if (registerTrigger) {
+      registerTrigger(() => void handleGenerate());
+    }
   });
 
   const escapeHtml = (value: string) =>

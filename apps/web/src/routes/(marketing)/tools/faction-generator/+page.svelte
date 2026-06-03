@@ -87,9 +87,11 @@
   introText="Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs. Works instantly without login, then imports to your local campaign database."
   {relatedLinks}
   {faqs}
-  {theme}
+  bind:theme
   {generate}
-  bind:triggerGenerate={triggerGen}
+  registerTrigger={(fn) => {
+    triggerGen = fn;
+  }}
 >
   {#snippet formFields()}
     <FactionFormFields

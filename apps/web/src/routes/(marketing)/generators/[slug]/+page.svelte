@@ -140,9 +140,11 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
-  theme={data.slug === "faction" ? faction.theme : "Classic Fantasy"}
+  bind:theme={faction.theme}
   {generate}
-  bind:triggerGenerate={triggerGen}
+  registerTrigger={(fn) => {
+    triggerGen = fn;
+  }}
 >
   {#snippet formFields()}
     {#if data.slug === "npc"}
