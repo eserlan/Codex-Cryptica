@@ -140,7 +140,7 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
-  theme={data.slug === "faction" ? faction.theme : undefined}
+  theme={data.slug === "faction" ? faction.theme : "Classic Fantasy"}
   {generate}
   bind:triggerGenerate={triggerGen}
 >
