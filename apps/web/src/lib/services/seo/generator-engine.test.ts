@@ -166,6 +166,68 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateVampireClan", () => {
+    it("should generate vampire clan details locally when useAI is false", async () => {
+      const res = await engine.generateVampireClan({
+        archetype: "Aristocratic Court",
+        bloodline: "Sanguine Nobles (Charismatic Mind-Benders)",
+        feedingHabit: "High-Society Salons (Elite & Consent-based)",
+        weakness: "Severe Sun Sensitivity (Burns instantly)",
+        scope: "Single city underbelly",
+        alignment: "Strictly lawful, highly predatory",
+        campaignContext: "a gothic noir metropolis under rain",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      expect(res.content).toContain("vampire clan");
+      expect(res.content).toContain("Campaign Fit");
+      expect(res.content).toContain("a gothic noir metropolis under rain");
+      expect(res.lore).toContain("Vampire Clan (Aristocratic Court)");
+      expect(res.lore).toContain("Sanguine Nobles");
+      expect(res.lore).toContain("Feeding Habit");
+      expect(res.lore).toContain("Clan Weakness");
+      expect(res.lore).toContain("Internal Conflict");
+      expect(res.lore).toContain("Adventure Hook");
+      expect(res.labels).toContain("vampire-clan");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include vampire clan campaign context in the AI prompt", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "House Karnstein",
+                content: "AI Generated Vampire Clan",
+                lore: "AI Generated Weaknesses and Secrets",
+                labels: ["rpg-faction", "vampire-clan"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateVampireClan({
+        archetype: "Occult Coven",
+        campaignContext: "an ancient cathedral ruin",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("an ancient cathedral ruin"),
+      );
+      expect(res.type).toBe("faction");
+      expect(res.title).toBe("House Karnstein");
+      expect(res.content).toBe("AI Generated Vampire Clan");
+      expect(res.lore).toBe("AI Generated Weaknesses and Secrets");
+      expect(res.labels).toContain("vampire-clan");
+    });
+  });
+
   describe("generateNames", () => {
     it("should generate the correct entity type for each name type", async () => {
       const cases: Array<[string, string]> = [
