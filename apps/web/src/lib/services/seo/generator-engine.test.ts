@@ -118,14 +118,15 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(res.type).toBe("faction");
       expect(res.title).toBeDefined();
+      expect(res.summary).toBeDefined();
       expect(res.content).toContain("merchant guild");
-      expect(res.content).toContain("Campaign Fit");
+      expect(res.content).toContain("What they control");
+      expect(res.content).toContain("What they want");
       expect(res.content).toContain(
         "a canal city split by old guild rivalries",
       );
-      expect(res.lore).toContain("Single city");
       expect(res.lore).toContain("Internal Conflict");
-      expect(res.lore).toContain("Adventure Hook");
+      expect(res.lore).toContain("At the Table");
       expect(res.labels).toContain("faction-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -190,7 +191,7 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("Campaign Theme/Genre: Cyberpunk / Corporate"),
+        expect.stringContaining("Theme/Genre: Cyberpunk / Corporate"),
       );
       expect(res.title).toBe("Cyberdine Corp");
 
@@ -202,10 +203,9 @@ describe("DefaultGeneratorEngine", () => {
         theme: "Cyberpunk / Corporate",
         useAI: false,
       });
-      expect(fallbackRes.content).toContain("cyberpunk / corporate themed");
-      expect(fallbackRes.lore).toContain(
-        "**Campaign Theme**: Cyberpunk / Corporate",
-      );
+      expect(fallbackRes.content).toContain("criminal syndicate");
+      expect(fallbackRes.content).toContain("What they control");
+      expect(fallbackRes.lore).toContain("At the Table");
     });
   });
 

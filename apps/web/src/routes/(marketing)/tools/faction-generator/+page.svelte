@@ -56,22 +56,27 @@
     {
       question: "What does the faction generator create?",
       answer:
-        "It creates a fantasy RPG faction with a name, type, operating scope, public face, agenda, internal conflict, rival faction, notable NPCs, and adventure hook.",
+        "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
     },
     {
-      question: "Can I use the faction generator without an account?",
+      question: "Can I use it without an account?",
       answer:
-        "Yes. You can generate and copy faction notes on the public page without logging in, then save the draft into a browser-local Codex Cryptica vault.",
+        "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
     },
     {
       question: "Can I aim the faction at my current campaign?",
       answer:
-        "Yes. Add optional campaign context such as a city, war, villain, frontier, or political tension, and the generated faction will include a campaign fit section.",
+        "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
+    },
+    {
+      question: "How do I change the genre or tone?",
+      answer:
+        "Use the 'Choose a vibe' selector in the left panel. Switching between Classic Fantasy, Cyberpunk, Gothic Noir, Sci-Fi, Modern Conspiracy, and Post-Apocalyptic changes the faction's language, naming, and setting details throughout.",
     },
     {
       question: "How does saving a generated faction work?",
       answer:
-        "The page stores the generated faction draft in browser localStorage and opens the app, where it imports as a Faction entity in your local vault.",
+        "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
 
@@ -84,10 +89,11 @@
   metaDescription="Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault."
   eyebrow="Faction Generator"
   introTitle="RPG Faction Generator"
-  introText="Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs. Works instantly without login, then imports to your local campaign database."
+  introText="Create organisations with agendas, conflicts, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault."
   {relatedLinks}
   {faqs}
   bind:theme
+  isThemeCustomizable={true}
   {generate}
   registerTrigger={(fn) => {
     triggerGen = fn;

@@ -55,7 +55,7 @@ describe("FactionFormFields Theme Swapping", () => {
     expect(screen.getByText("Arcane Circle")).toBeTruthy();
 
     // Select Post-Apocalyptic theme
-    const themeSelect = screen.getByLabelText("Campaign Theme");
+    const themeSelect = screen.getByLabelText("Choose a vibe");
     await fireEvent.change(themeSelect, {
       target: { value: "Post-Apocalyptic" },
     });

@@ -83,7 +83,7 @@
 </script>
 
 <div class="flex flex-col gap-1.5">
-  <label for="faction-theme-select" class={labelClass}>Campaign Theme</label>
+  <label for="faction-theme-select" class={labelClass}>Choose a vibe</label>
   <select
     id="faction-theme-select"
     name="faction_theme"
@@ -97,7 +97,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="faction-type-select" class={labelClass}>Faction Type</label>
+  <label for="faction-type-select" class={labelClass}
+    >Choose what they are</label
+  >
   <select
     id="faction-type-select"
     name="faction_type"
@@ -111,7 +113,8 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="faction-scope-select" class={labelClass}>Operating Scope</label>
+  <label for="faction-scope-select" class={labelClass}>Choose their scale</label
+  >
   <select
     id="faction-scope-select"
     name="faction_scope"
@@ -125,7 +128,9 @@
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="faction-alignment-select" class={labelClass}>Moral Posture</label>
+  <label for="faction-alignment-select" class={labelClass}
+    >Choose their morality</label
+  >
   <select
     id="faction-alignment-select"
     name="faction_alignment"
@@ -140,7 +145,7 @@
 
 <div class="flex flex-col gap-1.5">
   <label for="faction-campaign-context" class={labelClass}
-    >Optional Campaign Context</label
+    >Add campaign context</label
   >
   <textarea
     id="faction-campaign-context"
@@ -153,7 +158,7 @@
   ></textarea>
   <p
     id="faction-campaign-context-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-[10px] text-theme-text/60 leading-relaxed"
   >
     Add a city, frontier, villain, war, or campaign tension to aim the faction
     at your table.

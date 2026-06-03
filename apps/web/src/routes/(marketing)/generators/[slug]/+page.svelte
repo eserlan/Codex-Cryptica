@@ -141,6 +141,7 @@
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
   bind:theme={faction.theme}
+  isThemeCustomizable={data.slug === "faction"}
   {generate}
   registerTrigger={(fn) => {
     triggerGen = fn;

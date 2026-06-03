@@ -670,6 +670,7 @@ export interface GeneratorOutput {
     | "faction"
     | "note";
   title: string;
+  summary?: string;
   content: string;
   lore: string;
   labels: string[];
@@ -837,6 +838,92 @@ ${plotHook}`;
     };
   }
 
+  private pickFrom<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  private factionBase(type: string): string {
+    const map: Record<string, string[]> = {
+      "Merchant Guild": [
+        "A bonded counting house whose ledgers are sealed by city charter",
+        "A licensed exchange hall at the centre of the trade district",
+        "A warehouse compound that no sheriff may enter without a writ",
+      ],
+      "Secret Society": [
+        "A private dining club whose membership list is never committed to paper",
+        "A decommissioned observatory reached through a hidden press in the library stacks",
+        "Rotating safe houses connected by messenger-drop protocols",
+      ],
+      "Mercenary Company": [
+        "A fortified barracks compound outside the city walls",
+        "A charted garrison holding neutral ground between two rival lords",
+        "A licensed inn that doubles as a staging ground for contract work",
+      ],
+      "Temple Order": [
+        "A sanctified compound built above the sealed catacombs",
+        "A pilgrimage waystation that doubles as an intelligence hub",
+        "A charitable hospice whose basement holds restricted archives",
+      ],
+      "Criminal Syndicate": [
+        "A legitimate bathhouse with soundproofed rooms below street level",
+        "A moneylender's office whose public ledgers contain a second set of books",
+        "A district of connected properties linked by sealed passages",
+      ],
+      "Rebel Cell": [
+        "A print-house running two sets of accounts",
+        "A disused chapel in a contested neighbourhood where records are rarely checked",
+        "A network of sympathiser homes linked by a rotating code phrase",
+      ],
+      "Arcane Circle": [
+        "A registered scholar's hall with warded inner chambers",
+        "A cartographer's guild whose maps contain hidden notation systems",
+        "A canal barge anchored in a dock district where manifests go uninspected",
+      ],
+    };
+    return this.pickFrom(map[type] ?? map["Merchant Guild"]);
+  }
+
+  private factionResource(type: string): string {
+    const map: Record<string, string[]> = {
+      "Merchant Guild": [
+        "Exclusive trade licences, bonded debts, and letters of introduction that open every city gate",
+        "Commodity price information days before it reaches the open market",
+        "Certified seals of provenance that determine what goods may legally change hands",
+      ],
+      "Secret Society": [
+        "Compromising knowledge distributed in sealed fragments held by separate members",
+        "A curated register of favours owed by officials, merchants, and clergy",
+        "Access to a network of false identities and safe-passage routes",
+      ],
+      "Mercenary Company": [
+        "Contractual access to trained soldiers who ask no political questions",
+        "Neutral enforcement services hired by every side of every dispute",
+        "An archive of battlefield contracts that constitute decades of political leverage",
+      ],
+      "Temple Order": [
+        "Exclusive rights over burial rites, confessions, and civic oaths",
+        "A pharmaceutical supply chain running through the charitable district",
+        "Institutional immunity protecting their premises from search or seizure",
+      ],
+      "Criminal Syndicate": [
+        "Control over the city's informal credit markets and enforcement ecosystem",
+        "Detailed knowledge of every patrol route, informant, and magistrate's price",
+        "A distribution network for restricted goods running through legitimate storefronts",
+      ],
+      "Rebel Cell": [
+        "A verified printing and distribution network for prohibited materials",
+        "Contacts embedded in the guard, the census office, and the merchant registry",
+        "Secure courier routes that move people, messages, and contraband past checkpoints",
+      ],
+      "Arcane Circle": [
+        "Proprietary ritual techniques licensed to no outside practitioner",
+        "A sealed archive of magical precedents that defines what is legally permitted",
+        "Controlled access to rare components that no other supplier will touch",
+      ],
+    };
+    return this.pickFrom(map[type] ?? map["Merchant Guild"]);
+  }
+
   /**
    * Generates a faction draft.
    */
@@ -869,33 +956,81 @@ ${plotHook}`;
     const campaignContext = options.campaignContext?.trim();
     const name = `${this.generateName()} Compact`;
 
+    const namingStyles = [
+      "Name this faction after a material, substance, or natural phenomenon twisted to their purpose.",
+      "Name this faction after an abstract concept, virtue, or doctrine — not a person or place.",
+      "Use a short stark one-word name or a tight two-word compound (e.g. 'The Writ', 'Iron Accord').",
+      "Base the faction name on a specific local landmark, street, district, or geographic feature.",
+      "Name the faction after their founding secret, hidden method, or signature act.",
+      "Use a name that sounds like a legitimate civic institution but carries a sinister undertone.",
+      "Name the faction after a historical event, failed uprising, or forgotten figure from the setting.",
+      "Give the faction a name derived from an unusual profession, trade, or craft.",
+      "Use an archaic or invented word that evokes the faction's cultural roots.",
+      "Name the faction after a symbol, emblem, or recurring motif associated with their work.",
+    ];
+    const npcNamingStyles = [
+      "Give each NPC a name that sounds distinctly local — not generic fantasy.",
+      "Each NPC name should have an unusual phonetic texture. Avoid Kael, Zara, Theron, and similar overused patterns.",
+      "Give each NPC a short street name or title that hints at their role (e.g. 'The Ledger', 'Pale Maren').",
+      "Use names that suggest a specific cultural or ethnic origin consistent with the setting.",
+      "Each NPC should have a name that is easy to say aloud at a gaming table.",
+    ];
+    const chosenNamingStyle =
+      namingStyles[Math.floor(Math.random() * namingStyles.length)];
+    const chosenNpcStyle =
+      npcNamingStyles[Math.floor(Math.random() * npcNamingStyles.length)];
+    const varianceSeed = Math.floor(Math.random() * 99991) + 10;
+
     if (options.useAI !== false) {
       try {
-        const prompt = `Generate a detailed RPG faction in JSON format.
-Options:
-- Campaign Theme/Genre: ${theme}
+        const themeVoice: Record<string, string> = {
+          "Classic Fantasy":
+            "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+          "Cyberpunk / Corporate":
+            "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
+          "Vampire / Gothic Noir":
+            "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
+          "Sci-Fi / Space Opera":
+            "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
+          "Modern Conspiracy":
+            "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
+          "Post-Apocalyptic":
+            "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+        };
+        const voice = themeVoice[theme] ?? "tabletop RPG";
+
+        const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original faction drafts for that setting in JSON format.
+
+OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
+{
+  "title": "Faction name (follow the naming directive in the user message)",
+  "summary": "One sentence: what this faction is and what makes them interesting (e.g. 'A sanitation cult-technocracy that controls clean water in a poisoned city.').",
+  "content": "Markdown. Use exactly these four section headers in order: '### What they control', '### What they want', '### Why they are dangerous', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At the Table\\n- **Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **Name**: one-line rivalry",
+  "labels": ["2-5 lowercase tags for the faction's theme and activities, plus 'rpg-faction', 'faction-generator', 'imported-draft'"]
+}
+
+QUALITY RULES:
+- Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
+- Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
+- NPC names must feel culturally specific and phonetically varied — avoid Kael, Zara, Theron, and similar overused patterns.
+- Place names (bases, districts, landmarks) must be specific and invented — never use 'the old district', 'the lower city', or other generic geography. Every location should have a proper name.
+- Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), logical alignment between public face and secret agenda. Rewrite if issues found.`;
+
+        const userMessage = `Generate a faction. Variation seed: ${varianceSeed}.
+- Theme/Genre: ${theme}
 - Faction Type: ${factionType}
 - Scope: ${scope}
-- Moral Posture: ${alignment}
-${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
-- Style Guideline: Avoid generic RPG naming clichés and tropes (e.g. do not default to "Gilded Ledger" or similar repetitive names for merchant guilds). Focus on highly original, evocative, and distinctive names and lore.
-- Self-Assessment: Critique your entire generated draft (including name, public face, agenda, conflicts, and NPCs) before finalizing it. Ensure that the name and concept are highly original, and that the entire output is completely internally consistent with no contradictions (e.g. ensuring NPCs described as dead are not active elsewhere, and the faction's goals align logically with its public face, secrets, and activities). If any issues are found, refine and rewrite the draft before returning it.
-
-You must return a valid JSON object matching the following structure exactly:
-{
-  "title": "A single string for the faction name",
-  "content": "A detailed multi-paragraph faction overview (markdown formatted) describing its public face, leadership, resources, and how it fits the campaign context and campaign theme if provided.",
-  "lore": "Structured GM details (markdown formatted) with sections for core fields, agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
-  "labels": ["An array of descriptive tags representing the faction's theme, type, and activities (e.g. 'cult', 'underground', 'mercenaries') along with 'rpg-faction', 'faction-generator', and 'imported-draft'"]
-}
-Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+- Moral Posture: ${alignment}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Faction Naming Directive: ${chosenNamingStyle}
+- NPC Naming Directive: ${chosenNpcStyle}`;
 
         const model = await this.clientManager.getModel(
           "",
           "gemini-3.1-flash-lite",
-          "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+          systemInstruction,
         );
-        const response = await model.generateContent(prompt);
+        const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
         const cleanText = text
           .replace(/^```json\s*/i, "")
@@ -906,6 +1041,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
         return {
           type: "faction",
           title: data.title || name,
+          summary: data.summary || "",
           content: data.content || "",
           lore: data.lore || "",
           labels: Array.isArray(data.labels)
@@ -937,43 +1073,41 @@ Return only the JSON object. Do not include markdown code block formatting like 
     const leader = this.generateName();
     const agent = this.generateName();
 
-    const content = `### Overview
-${name} is a ${theme.toLowerCase()} themed ${factionType.toLowerCase()} operating across the ${scope.toLowerCase()}. Its members present a controlled public face, but every favor, rumor, and private meeting is part of a larger strategy.
- 
-${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their agenda should touch active locations, disputed resources, or unresolved campaign mysteries.\n` : ""}
- 
-### Public Face
-Most locals know the faction through useful services, charitable work, guarded trade, or carefully placed rumors. People disagree about whether ${name} is stabilizing the region or quietly taking ownership of it.
- 
-### Table Use
-Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival that can negotiate before it strikes.`;
+    const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
 
-    const lore = `### GM Reference Information
-- **Campaign Theme**: ${theme}
-- **Faction Type**: ${factionType}
-- **Scope**: ${scope}
-- **Moral Posture**: ${alignment}
-- **Entity Type**: Faction
+    const content = `### What they control
+${name} is a ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. Their reach is felt in every trade deal, guarded rumor, and carefully placed favor.${campaignContext ? ` In ${campaignContext}, they already have fingers in the most contested disputes.` : ""}
 
-### Agenda
-${goal}
+### What they want
+${goal} Every action the faction takes, however charitable it appears, serves this underlying drive.
+
+### Why they are dangerous
+${conflict} Beyond their internal tensions, they will negotiate before striking — but they do not forget.
+
+### How to use them at the table
+Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival who can operate in daylight. They reward players who deal in favors and punish those who make public enemies.`;
+
+    const lore = `### At the Table
+- **Base**: ${this.factionBase(factionType)}
+- **Resource**: ${this.factionResource(factionType)}
+- **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
+- **Secret**: ${conflict}
+- **Immediate hook**: ${hook}
+
+### Notable NPCs
+- **${leader}**: Public face who insists every deal serves the common good.
+- **${agent}**: Field operative who knows where the faction buries its failures.
 
 ### Internal Conflict
 ${conflict}
 
-### Notable NPCs
-- **${leader}**: Public leader who insists every deal has a civic purpose.
-- **${agent}**: Field agent who knows where the faction hides its failures.
-
 ### Rival Faction
-${rival} wants the same influence, relic, route, or confession before ${name} can secure it.
-
-### Adventure Hook
-${hook}`;
+${rival} is pursuing the same influence, relic, or route — and will reach it first if the party does nothing.`;
 
     return {
       type: "faction",
       title: name,
+      summary,
       content,
       lore,
       labels: ["rpg-faction", "faction-generator", "imported-draft"],
