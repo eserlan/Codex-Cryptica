@@ -13,6 +13,7 @@ import { GuestSessionHandler } from "./handlers/guest-session-handler";
 import { GuestVaultHandler } from "./handlers/guest-vault-handler";
 import { GuestVttHandler } from "./handlers/guest-vtt-handler";
 import { GuestSoundBiteHandler } from "./handlers/guest-sound-bite-handler";
+import { GuestCharChatResponseHandler } from "./handlers/guest-char-chat-response-handler";
 import { MapAssetUrlCache } from "./handlers/map-asset-url-cache";
 import type { P2PClientTransport } from "./transport/client-transport";
 
@@ -32,6 +33,7 @@ export function buildGuestDispatcher(): P2PDispatcher<GuestHandlerContext> {
   d.register(new GuestChatHandler());
   d.register(new GuestPresenceHandler());
   d.register(new GuestSoundBiteHandler());
+  d.register(new GuestCharChatResponseHandler());
   return d;
 }
 

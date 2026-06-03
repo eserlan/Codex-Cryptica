@@ -523,6 +523,23 @@ export class VaultStore {
     return await loadTranscriptsForCharacterFromDisk(vaultHandle, characterId);
   }
 
+  async deleteTranscript(guestId: string, characterId: string) {
+    if (this.isGuest) return;
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return;
+    try {
+      const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+        create: true,
+      });
+      const transcriptsDir = await codexDir.getDirectoryHandle("transcripts", {
+        create: true,
+      });
+      await transcriptsDir.removeEntry(`${guestId}_${characterId}.json`);
+    } catch (err) {
+      console.warn("[VaultStore] Failed to delete transcript file:", err);
+    }
+  }
+
   async setDefaultVisibility(v: "visible" | "hidden") {
     this.defaultVisibility = v;
     const db = await getDB();

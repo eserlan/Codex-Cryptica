@@ -195,7 +195,9 @@
             label,
           )
             ? 'bg-theme-primary text-theme-bg border-theme-primary'
-            : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
+            : label === 'chatty'
+              ? 'bg-theme-secondary/15 text-theme-secondary border-transparent hover:border-theme-secondary/50 hover:bg-theme-secondary/25'
+              : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
         >
           {label}
         </button>

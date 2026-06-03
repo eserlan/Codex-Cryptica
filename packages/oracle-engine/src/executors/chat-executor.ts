@@ -324,6 +324,7 @@ export class ChatExecutor
                               },
                               [],
                               this.getAvailableCategories(context),
+                              { themeId: context.uiStore?.activeThemeId },
                             );
                           content = revised.content || p.draft.chronicle;
                           lore = revised.lore || p.draft.lore;
@@ -392,6 +393,7 @@ export class ChatExecutor
                                     ),
                                 }),
                                 this.getAvailableCategories(context),
+                                { themeId: context.uiStore?.activeThemeId },
                               );
 
                             updatedContent = revised.content;

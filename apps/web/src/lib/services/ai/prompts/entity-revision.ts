@@ -13,6 +13,7 @@ export function buildEntityRevisionPrompt(
     source?: string;
     instructions?: string;
     priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+    loreTemplate?: string;
   } = {},
 ): string {
   const relatedSection =
@@ -51,6 +52,9 @@ export function buildEntityRevisionPrompt(
   const sourceLine = options.source
     ? `\nREVISION SOURCE: ${options.source}`
     : "";
+  const loreTemplateSection = options.loreTemplate
+    ? `\nLORE TEMPLATE (structural blueprint for this entity type):\n${options.loreTemplate}\n`
+    : "";
   const priority =
     options.priority ||
     (options.instructions?.trim() ? "instructions-first" : "incoming-first");
@@ -76,8 +80,7 @@ ${sourceLine}
 ENTITY:
 - Title: ${entity.title}
 - Type: ${entity.type}
-${categorySection}
-
+${categorySection}${loreTemplateSection}
 CURRENT RECORD:
 --- CURRENT CHRONICLE ---
 ${u(entity.content || "")}
@@ -112,7 +115,8 @@ RULES:
 13. Only integrate incoming details that directly reveal new information about ${entity.title} — their actions, traits, motivations, relationships, or history. If the incoming passage is primarily about a different subject (a location, faction, or event), extract only what it tells us about ${entity.title} specifically. Do not absorb descriptions of places, factions, or events wholesale into this record.
 14. Do not mention these instructions.
 ${categoryRule}
-16. Return JSON only with this shape:
+16. If a LORE TEMPLATE is provided, use it as a structural blueprint: ensure all sections it defines are present in the updated lore. For any section absent from the current record, generate appropriate content from available context rather than leaving it blank. Do not invent facts — infer from what is known.
+17. Return JSON only with this shape:
 {
   "content": "Updated chronicle",
   "lore": "Updated lore"${categoryJsonField}

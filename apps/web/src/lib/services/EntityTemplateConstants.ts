@@ -10,8 +10,11 @@ A brief overview of who this character is and their place in the world.
 ## Appearance
 Physical features, style of dress, distinctive markers, or mannerisms.
 
-## Personality
-Key behavioral traits, temperaments, and core beliefs.
+## Personality & Voice
+Key behavioral traits, temperaments, core beliefs, speech rhythm, word choice, and in-character behavior rules.
+
+## Knowledge & Expertise
+What domains, skills, and subjects does this character know well? What are the limits of their knowledge — cultural blind spots, restricted access, or topics they are simply ignorant of?
 
 ## Goals
 What do they actively strive to achieve or protect?
@@ -135,8 +138,11 @@ Origin, heritage, species, culture, or noble house.
 ## Appearance & Oaths
 Physical description, armor, and active sacred oaths or geases.
 
-## Personality
-Behavioral traits, alignment, and core guiding beliefs.
+## Personality & Voice
+Behavioral traits, alignment, core guiding beliefs, speech rhythm, word choice, and in-character behavior rules.
+
+## Knowledge & Expertise
+What arcane lore, crafts, or scholarly disciplines does this character know well? What knowledge is beyond their reach — forbidden tomes, lost languages, or skills outside their station?
 
 ## Goals & Quests
 Active quests they are pursuing or magical relics they seek.
@@ -239,8 +245,11 @@ Physical description, armor, standard loadout, and clothing style.
 ## Augmentations & Tech
 Cybernetic implants, neural links, biotech enhancements, or specialized software.
 
-## Personality & Beliefs
-Behavioral profile, psychological file, and philosophical or political alignments.
+## Personality & Voice
+Behavioral profile, psychological file, philosophical or political alignments, speech rhythm, word choice, and in-character behavior rules.
+
+## Knowledge & Expertise
+What technical fields, corporate intelligence, or faction intel does this character have access to? What information is classified, outside their clearance, or simply unknown to them?
 
 ## Goals & Agenda
 Corporate missions, smuggler runs, or personal vendettas.
@@ -331,6 +340,12 @@ Real name vs. active aliases, background, and security clearances.
 ## Psychological File
 Personality, psychological assessments, weaknesses, and stress triggers.
 
+## Personality & Voice
+Conversational habits, speech rhythm, word choice, tells under pressure, and in-character behavior rules.
+
+## Knowledge & Expertise
+What specialized intelligence, field skills, or insider knowledge does this operative have? What is outside their clearance, or areas where they are deliberately kept in the dark?
+
 ## Gear & Assets
 Standard firearms, surveillance gear, secure communication devices, and financial backing.
 
@@ -414,6 +429,12 @@ Smart weapons, customized tactical gear, program suites, and armor.
 ## Net Architecture Exploits
 Known icebreaker protocols, target subnets, or hacking backdoors they use.
 
+## Personality & Voice
+Street mannerisms, speech rhythm, slang, verbal tells, and in-character behavior rules.
+
+## Knowledge & Expertise
+What net architecture, corporate intel, or street knowledge does this character command? What data vaults are above their access tier, or skills they simply lack?
+
 ## Corporate Debts & Secrets
 Corp contracts signed, active blackmail files, or trauma team plans.`,
 
@@ -489,7 +510,13 @@ Survival specialty, mutations, physical scars, and physical condition.
 Main armor pieces, patched weaponry, and valuable trade scraps carried.
 
 ## Trust & Settlement Ties
-Loyalties, reputation with factions, and trustworthiness rating (1-5).`,
+Loyalties, reputation with factions, and trustworthiness rating (1-5).
+
+## Personality & Voice
+Temperament, survival instincts, speech rhythm, wasteland idioms, and in-character behavior rules.
+
+## Knowledge & Expertise
+What survival skills, wasteland geography, or pre-collapse knowledge does this character retain? What has been lost — sealed vaults, erased records, or expertise that died with the old world?`,
 
   faction: `## Summary
 A brief description of this scavenger settlement, raider gang, or doomsday cult.
@@ -561,6 +588,12 @@ Their physical features, how they conceal their monstrous nature, and sensory ha
 
 ## Condition & Humanity
 Their remaining connection to humanity, and their current beast or predation temperaments.
+
+## Personality & Voice
+Temperament, conversational habits, speech rhythm, predatory tells, and in-character behavior rules.
+
+## Knowledge & Expertise
+What occult lore, blood disciplines, or forbidden histories does this character know? What eldritch truths are still beyond them — concealed by elder kindred or sealed in untranslated grimoires?
 
 ## Disciplines & Powers
 Supernatural abilities, blood magic, or physical gifts of the blood.
@@ -645,6 +678,12 @@ Scavenged clothing, radiation scars, Pip-Boy model, and primary scavenged gear.
 ## Perks & Mutations
 Unique survival traits, radiation-induced mutations, or cyberware.
 
+## Personality & Voice
+Temperament, conversational habits, speech rhythm, wasteland idioms, and in-character behavior rules.
+
+## Knowledge & Expertise
+What pre-war knowledge, wasteland survival skills, or faction intelligence does this character possess? What Vault-Tec experiments, classified Enclave data, or technical skills are beyond their reach?
+
 ## Faction Affiliation
 Alignment with the Brotherhood, NCR, Enclave, Raiders, or local settlements.
 
@@ -722,6 +761,12 @@ Lightsaber form, hilt design, kyber crystal, blaster model, and armor type.
 ## Starship & Astromech
 Starship registration, class, and assigned astromech unit.
 
+## Personality & Voice
+Temperament, conversational habits, speech rhythm, galactic slang, and in-character behavior rules.
+
+## Knowledge & Expertise
+What Force lore, galactic history, or underworld intelligence does this character know? What is classified by the Empire or Jedi Order, or simply beyond their experience?
+
 ## Bounty Record & Guild Standing
 Reputation with the Hutt Cartel, Bounty Hunters Guild, or Empire.`,
 
@@ -797,7 +842,13 @@ Species background, special anatomy, and cultural philosophies (e.g., logic).
 Assigned starship, post role, and past mission logs.
 
 ## Technical Specialties
-Specialized scientific systems, warp physics, or linguistic certifications.`,
+Specialized scientific systems, warp physics, or linguistic certifications.
+
+## Personality & Voice
+Temperament, conversational habits, speech rhythm, professional jargon, and in-character behavior rules.
+
+## Knowledge & Expertise
+What scientific disciplines, xenological studies, or Starfleet intelligence does this officer have access to? What is classified above their clearance or lies outside their field specialization?`,
 
   faction: `## Summary
 A brief description of this United Federation fleet, Klingon House, or Romulan cell.
@@ -850,3 +901,31 @@ Language class, warp capabilities, and communication logs.`,
   note: `## Summary
 A brief overview of Captain's Logs, sensor records, or logs.`,
 };
+
+const THEME_TEMPLATE_MAP: Record<string, Record<string, string>> = {
+  fantasy: FANTASY_TEMPLATES,
+  scifi: SCIFI_TEMPLATES,
+  modern: MODERN_TEMPLATES,
+  cyberpunk: CYBERPUNK_TEMPLATES,
+  apocalyptic: APOCALYPTIC_TEMPLATES,
+  horror: HORROR_TEMPLATES,
+  fallout: FALLOUT_TEMPLATES,
+  starwars: STARWARS_TEMPLATES,
+  startrek: STARTREK_TEMPLATES,
+};
+
+/**
+ * Synchronous template resolution by entity type and optional theme ID.
+ * Falls back to GENERIC_TEMPLATES if the theme has no entry for the type.
+ * Safe to call from workers (no browser APIs).
+ */
+export function resolveTemplateSync(type: string, themeId?: string): string {
+  const normalizedType = type.toLowerCase();
+  const baseThemeId = (themeId || "")
+    .toLowerCase()
+    .replace(/_(light|dark)$/, "");
+  const themeTemplates = THEME_TEMPLATE_MAP[baseThemeId];
+  return (
+    themeTemplates?.[normalizedType] ?? GENERIC_TEMPLATES[normalizedType] ?? ""
+  );
+}

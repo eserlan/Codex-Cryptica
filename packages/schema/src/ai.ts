@@ -81,6 +81,7 @@ export interface TextGenerationService {
       requestId?: string;
       vaultId?: string;
       existingEntities?: Entity[];
+      systemInstructionOverride?: string;
     },
   ): Promise<void>;
   generateMergeProposal(
@@ -105,6 +106,7 @@ export interface TextGenerationService {
       source?: string;
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
     },
   ): Promise<{
     content: string;

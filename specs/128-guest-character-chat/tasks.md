@@ -95,6 +95,29 @@
 
 ---
 
+## Phase 7: Post-MVP Refinements (FR-012 – FR-018)
+
+**Purpose**: Features added after the initial MVP ship to improve quality, trust fidelity, and security.
+
+- [x] T023 [US1] Replace custom personality textarea in CCES with a `## Personality & Voice` status indicator and Generate button in `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte` (FR-017)
+- [x] T024 [P] [US1] Auto-sync `## Personality & Voice` lore section to `guestChatConfig.extraInstructions` on every host save in `apps/web/src/lib/components/EntityDetailPanel.svelte` (FR-017)
+- [x] T025 [P] [US2] Add `## Knowledge & Expertise` section to all 10 character templates (generic + all theme variants) in `apps/web/src/lib/services/EntityTemplateConstants.ts` (FR-016)
+- [x] T026 [P] [US2] Add `## Knowledge & Expertise` requirement to AI entity creation prompts in `apps/web/src/lib/services/ai/prompts/entity-creation.ts` (FR-016)
+- [x] T027 [P] [US2] Add `loreTemplate` support to entity revision prompt so revisions preserve all template sections in `apps/web/src/lib/services/ai/prompts/entity-revision.ts` (FR-016)
+- [x] T028 [US2] Implement automatic trust resolution (`resolveTrust`) in `packages/oracle-engine/src/executors/guest-chat-executor.ts` — trusted/neutral/untrusted based on vault relationship data (FR-014)
+- [x] T029 [US2] Infer guest character identity from login username in `GuestChatStore` and `HostCharChatHandler` — matches against character title, aliases, and labels (player name tags) in that order (FR-013)
+- [x] T030 [US2] Route character chat through host via new P2P message types `GUEST_CHAR_CHAT_REQUEST` / `GUEST_CHAR_CHAT_CHUNK` / `GUEST_CHAR_CHAT_DONE` (FR-012)
+  - New handler: `apps/web/src/lib/cloud-bridge/p2p/handlers/host-char-chat-handler.ts`
+  - New handler: `apps/web/src/lib/cloud-bridge/p2p/handlers/guest-char-chat-response-handler.ts`
+  - Registered in `host-service.svelte.ts` and `guest-session-context.ts`
+  - Streaming callback wrapped with `Comlink.proxy` when oracle worker is active (guards `DataCloneError`)
+- [x] T031 [US2] Add unit tests for `HostCharChatHandler` including Comlink.proxy regression guard in `apps/web/src/lib/cloud-bridge/p2p/handlers/host-char-chat-handler.test.ts`
+- [x] T032 [P] [US1] Grant guests edit permissions (including Lore tab) for their own character entity and any entity tagged with their username in `apps/web/src/lib/components/EntityDetailPanel.svelte`, `DetailFooter.svelte`, and `DetailTabs.svelte` (FR-015)
+- [x] T033 [US2] Add `OUTPUT FORMAT — STRICT` dialogue-only constraint to the executor system prompt — placed before role-play content to ensure model compliance (FR-018)
+- [x] T034 [US2] Improve trusted-connection basisText to explicitly override formal/guarded personality with warmth and familiarity (FR-014)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

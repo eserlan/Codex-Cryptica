@@ -2,8 +2,9 @@
   import type { GuestChatMessage } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
 
-  let { message } = $props<{
+  let { message, characterTitle = "Character" } = $props<{
     message: GuestChatMessage;
+    characterTitle?: string;
   }>();
 
   const isUser = $derived(message.role === "user");
@@ -15,7 +16,7 @@
     : 'self-start items-start'}"
 >
   <span class="text-[9px] font-bold uppercase tracking-wider text-theme-muted">
-    {isUser ? "You" : "Character"}
+    {isUser ? "You" : characterTitle}
   </span>
 
   <div

@@ -12,6 +12,7 @@
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
+  import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
@@ -69,6 +70,18 @@
   let editStartDate = $state<Entity["start_date"]>();
   let editEndDate = $state<Entity["end_date"]>();
   let editGuestChatConfig = $state<GuestChatConfig | undefined>(undefined);
+  let isValid = $derived(true);
+
+  const canGuestEdit = $derived.by(() => {
+    if (!vault.isGuest || !entity) return false;
+    const name = sessionModeStore.guestUsername?.trim().toLowerCase();
+    if (!name) return false;
+    return (
+      entity.title?.toLowerCase() === name ||
+      entity.aliases?.some((a: string) => a.toLowerCase() === name) ||
+      entity.labels?.some((l: string) => l.toLowerCase() === name)
+    );
+  });
 
   let isDirty = $derived(
     isEditing &&
@@ -110,7 +123,7 @@
   const { tabIds, panelIds } = createEntityDetailTabIds(tabInstanceId);
 
   $effect(() => {
-    if (vault.isGuest && activeTab === "lore") {
+    if (vault.isGuest && !canGuestEdit && activeTab === "lore") {
       activeTab = "status";
     }
   });
@@ -189,9 +202,22 @@
     if (!entity) return;
     isSaving = true;
     try {
+      // Sync "chatty" label: present when guest chat is enabled, absent otherwise
+      const chatEnabled = !!editGuestChatConfig?.isEnabled;
+      const currentLabels = $state.snapshot(
+        editAliases.length >= 0 ? (entity.labels ?? []) : [],
+      ) as string[];
+      const labelsWithoutChatty = currentLabels.filter(
+        (l: string) => l.toLowerCase() !== "chatty",
+      );
+      const syncedLabels = chatEnabled
+        ? [...labelsWithoutChatty, "chatty"]
+        : labelsWithoutChatty;
+
       await vault.updateEntity(entity.id, {
         title: editTitle,
         aliases: $state.snapshot(editAliases),
+        labels: syncedLabels,
         content: editContent,
         lore: editLore,
         image: editImage,
@@ -200,7 +226,17 @@
         end_date: $state.snapshot(editEndDate),
         type: editType,
         guestChatConfig: editGuestChatConfig
-          ? $state.snapshot(editGuestChatConfig)
+          ? (() => {
+              const snap = $state.snapshot(editGuestChatConfig);
+              // Auto-sync ## Personality & Voice from lore into extraInstructions
+              // so guests receive it via P2P without needing access to private lore.
+              const personalityMatch = editLore?.match(
+                /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n([\s\S]*?)(?=\n##\s+|$)/i,
+              );
+              const syncedPersonality =
+                personalityMatch?.[1]?.trim() || undefined;
+              return { ...snap, extraInstructions: syncedPersonality };
+            })()
           : undefined,
       });
       isEditing = false;
@@ -403,6 +439,7 @@
                 {isEditing}
                 bind:editType
                 idPrefix={tabInstanceId}
+                {canGuestEdit}
               />
             </div>
 
@@ -419,6 +456,7 @@
                     {isEditing}
                     {editType}
                     bind:editContent
+                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
                     bind:editGuestChatConfig
@@ -429,9 +467,10 @@
                 role="tabpanel"
                 id={panelIds.lore}
                 aria-labelledby={tabIds.lore}
-                hidden={activeTab !== "lore" || vault.isGuest}
+                hidden={activeTab !== "lore" ||
+                  (vault.isGuest && !canGuestEdit)}
               >
-                {#if activeTab === "lore" && !vault.isGuest}
+                {#if activeTab === "lore" && (!vault.isGuest || canGuestEdit)}
                   <DetailLoreTab
                     entity={activeEntity}
                     {isEditing}
@@ -450,6 +489,18 @@
                   <DetailMapTab entity={activeEntity} />
                 {/if}
               </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.chats}
+                aria-labelledby={tabIds.chats}
+                hidden={activeTab !== "chats" ||
+                  activeEntity.type !== "character"}
+              >
+                {#if activeTab === "chats" && activeEntity.type === "character"}
+                  <DetailChatsTab entity={activeEntity} />
+                {/if}
+              </div>
             </div>
           </div>
         {/key}
@@ -459,6 +510,8 @@
         {isEditing}
         {isSaving}
         {isDirty}
+        {isValid}
+        {canGuestEdit}
         onCancel={cancelEditing}
         onSave={saveChanges}
         onDelete={handleDelete}

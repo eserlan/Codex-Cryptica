@@ -1,6 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
@@ -283,6 +284,21 @@
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-4 md:p-5 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
   data-testid="zen-sidebar"
 >
+  <!-- Guest Character Chat -->
+  {#if vault.isGuest && entity?.type === "character" && entity?.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
+    <div class="mb-6">
+      <button
+        type="button"
+        onclick={() => guestChatStore.openChat(entity.id, entity.title)}
+        class="w-full text-center py-2.5 bg-theme-primary text-theme-bg font-bold tracking-widest uppercase text-xs rounded-xl hover:bg-theme-secondary transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
+        data-testid="zen-sidebar-guest-chat-button"
+      >
+        <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+        Chat with {entity.title}
+      </button>
+    </div>
+  {/if}
+
   <!-- Labels & Aliases -->
   <div class="mb-4 space-y-4">
     {#if !editState.isEditing}

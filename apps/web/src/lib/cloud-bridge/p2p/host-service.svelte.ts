@@ -15,6 +15,7 @@ import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { VTTHandler } from "./handlers/vtt-handler";
 import { VaultHandler } from "./handlers/vault-handler";
 import { FileHandler } from "./handlers/file-handler";
+import { HostCharChatHandler } from "./handlers/host-char-chat-handler";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { PeerJSTransport } from "./transport/peerjs-transport";
 import {
@@ -82,6 +83,7 @@ export class P2PHostService {
     this.dispatcher.register(new VTTHandler());
     this.dispatcher.register(new VaultHandler());
     this.dispatcher.register(new FileHandler());
+    this.dispatcher.register(new HostCharChatHandler());
   }
 
   private setupTransportListeners() {
@@ -148,6 +150,8 @@ export class P2PHostService {
   }
 
   private getHandlerContext() {
+    // Lazy singleton reference — avoids circular import, resolved at runtime
+    const oracle = (globalThis as any).__codex_oracle_instance__;
     return {
       vault: this.vault,
       sessionModeStore: this.sessionModeStore,
@@ -157,6 +161,7 @@ export class P2PHostService {
       themeStore: this.themeStore,
       guestStore: this.guestStore,
       transport: this.transport,
+      oracle,
     };
   }
 

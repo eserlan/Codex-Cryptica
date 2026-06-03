@@ -17,6 +17,7 @@ import {
 } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import { buildEntityRevisionPrompt } from "./prompts/entity-revision";
+import { resolveTemplateSync } from "../EntityTemplateConstants";
 import {
   buildCreationLoreSynthesisPrompt,
   buildStructuredDraftingPrompt,
@@ -369,6 +370,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       source?: string;
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
     },
   ): Promise<{
     content: string;
@@ -408,6 +410,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
       ? { ...cleanEntity, lore: "" }
       : cleanEntity;
 
+    const loreTemplate = sanitizedEntity?.type
+      ? resolveTemplateSync(sanitizedEntity.type, options?.themeId) || undefined
+      : undefined;
     const prompt = buildEntityRevisionPrompt(
       sanitizedEntity,
       cleanIncoming,
@@ -417,6 +422,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
         source: options?.source,
         instructions: options?.instructions,
         priority: options?.priority,
+        loreTemplate,
       },
     );
 

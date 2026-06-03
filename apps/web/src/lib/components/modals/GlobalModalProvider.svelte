@@ -214,5 +214,12 @@
         {/if}
       {/await}
     {/if}
+
+    <!-- Guest Character Chat Modal -->
+    {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
+      {#if GuestChatModal}
+        <GuestChatModal />
+      {/if}
+    {/await}
   {/if}
 {/if}
