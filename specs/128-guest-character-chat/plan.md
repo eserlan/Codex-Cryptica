@@ -12,6 +12,11 @@ Implement host controls to expose selected Character entities to invited guests 
 3. Local guest-side IndexedDB conversation persistence.
 4. P2P transcript sync from guest to host for GM review.
 5. Svelte 5 player-facing chat UI using Tailwind 4 theme tokens.
+6. **Host-routed chat execution**: chat runs on the host's machine (full lore access) via `GUEST_CHAR_CHAT_REQUEST` / `CHUNK` / `DONE` P2P messages. Local execution is the fallback when no P2P connection is active.
+7. **Automatic trust resolution**: guest character identity inferred from login username; trust level (trusted / neutral / untrusted) derived from vault relationship graph and applied to prompt context.
+8. **Guest edit permissions**: guests can edit their own character entity and any entity tagged with their name, including the Lore tab.
+9. **Knowledge & Expertise templates**: all character templates include a `## Knowledge & Expertise` section; the chat executor uses it to enforce knowledge boundaries.
+10. **Dialogue-only output**: system prompt places an explicit `OUTPUT FORMAT — STRICT` constraint before the role-play persona to prevent action text and narrator prose.
 
 ## Technical Context
 

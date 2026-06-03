@@ -10,7 +10,16 @@ describe("VaultHandler", () => {
     handler = new VaultHandler();
     mockContext = {
       vault: {
-        entities: {},
+        entities: {
+          e1: {
+            id: "e1",
+            title: "Shared NPC",
+            type: "character",
+            content: "Known to the party.",
+            visibleToGuests: true,
+          },
+        },
+        defaultVisibility: "hidden",
         updateEntity: vi.fn(),
         batchUpdate: vi.fn(),
         deleteEntity: vi.fn(),
@@ -21,6 +30,8 @@ describe("VaultHandler", () => {
       mapSession: {
         rebindGuestOwnership: vi.fn(),
         clearGuestOwnership: vi.fn(),
+        mapId: null,
+        vttEnabled: false,
       },
       mapStore: {
         activeMap: null,
@@ -63,6 +74,16 @@ describe("VaultHandler", () => {
     expect(mockContext.mapSession.rebindGuestOwnership).toHaveBeenCalledWith(
       "g1",
       "Player 1",
+    );
+    expect(mockConn.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "GRAPH_SYNC",
+        payload: expect.objectContaining({
+          entities: expect.objectContaining({
+            e1: expect.objectContaining({ title: "Shared NPC" }),
+          }),
+        }),
+      }),
     );
   });
 

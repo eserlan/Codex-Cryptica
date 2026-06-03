@@ -8,6 +8,7 @@ import {
   deriveGuestPresenceStatus,
   buildSharedGraphPayload,
   prepareMapPayload,
+  snapshotForTransport,
 } from "../p2p-helpers";
 import { encodeSessionSnapshot } from "../p2p-protocol";
 
@@ -213,8 +214,7 @@ export class VaultHandler extends BaseHandler {
   ) {
     const { vault, themeStore, mapStore, mapSession } = context;
 
-    // Get a non-reactive snapshot of entities for transport
-    const rawEntities = $state.snapshot(vault.entities);
+    const rawEntities = snapshotForTransport(vault.entities ?? {});
     const graph = buildSharedGraphPayload(
       rawEntities,
       vault.defaultVisibility,

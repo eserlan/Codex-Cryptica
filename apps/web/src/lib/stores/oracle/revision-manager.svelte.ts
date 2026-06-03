@@ -19,6 +19,7 @@ export class OracleRevisionManager {
       source?: string;
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
     } = {},
   ): Promise<{ content: string; lore: string; categoryId?: string }> {
     const s = this.store;
@@ -52,6 +53,7 @@ export class OracleRevisionManager {
         source: options.source,
         instructions: options.instructions,
         priority: options.priority,
+        themeId: $state.snapshot(this.store.themeStore)?.activeTheme?.id,
       },
     );
   }

@@ -97,8 +97,15 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   };
 
   const handleVaultSwitched = async () => {
-    const { calendarStore } = await import("$lib/stores/calendar.svelte");
-    calendarStore.init();
+    try {
+      const { calendarStore } = await import("$lib/stores/calendar.svelte");
+      calendarStore.init();
+    } catch (err) {
+      console.error(
+        "[AppInit] Failed to initialize calendar store on vault switch:",
+        err,
+      );
+    }
   };
 
   window.addEventListener("error", handleGlobalError);

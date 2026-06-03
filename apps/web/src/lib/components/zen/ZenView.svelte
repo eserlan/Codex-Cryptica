@@ -7,6 +7,7 @@
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
+  import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
   import InlinePreviewOverlay from "$lib/components/ui/InlinePreviewOverlay.svelte";
   import { persistZenPopoutPayload } from "$lib/utils/zen-popout";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -54,6 +55,7 @@
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
+  let tabChats = $state<HTMLButtonElement>();
 
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
@@ -165,20 +167,32 @@
     }
   };
 
+  const visibleZenTabs = $derived.by(() => {
+    const list: ("overview" | "map" | "chats")[] = ["overview"];
+    if (!vault.isGuest) {
+      list.push("map");
+    }
+    if (entity?.type === "character") {
+      list.push("chats");
+    }
+    return list;
+  });
+
   const handleTabKeydown = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      const tabs: ("overview" | "map")[] = ["overview", "map"];
-      const currentIndex = tabs.indexOf(activeTab);
+      const tabs = visibleZenTabs;
+      const currentIndex = tabs.indexOf(activeTab as any);
       const nextIndex =
         e.key === "ArrowRight"
           ? (currentIndex + 1) % tabs.length
           : (currentIndex - 1 + tabs.length) % tabs.length;
 
-      modalUIStore.zenModeActiveTab = tabs[nextIndex];
-      const nextTab = modalUIStore.zenModeActiveTab;
+      const nextTab = tabs[nextIndex];
+      modalUIStore.zenModeActiveTab = nextTab;
       if (nextTab === "overview") tabOverview?.focus();
       else if (nextTab === "map") tabMap?.focus();
+      else if (nextTab === "chats") tabChats?.focus();
     }
   };
 
@@ -361,6 +375,24 @@
           MAP
         </button>
       {/if}
+      {#if visibleZenTabs.includes("chats")}
+        <button
+          bind:this={tabChats}
+          role="tab"
+          id="tab-chats"
+          aria-selected={activeTab === "chats"}
+          aria-controls="panel-chats"
+          tabindex={activeTab === "chats" ? 0 : -1}
+          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          'chats'
+            ? 'text-theme-primary border-theme-primary'
+            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          onclick={() => (modalUIStore.zenModeActiveTab = "chats")}
+          onkeydown={handleTabKeydown}
+        >
+          CHATS
+        </button>
+      {/if}
     </div>
 
     <!-- Main Body -->
@@ -411,6 +443,20 @@
             class="max-w-4xl mx-auto h-full min-h-[500px] border border-theme-border rounded bg-theme-surface/50"
           >
             <DetailMapTab {entity} />
+          </div>
+        </div>
+      {:else if activeTab === "chats" && entity?.type === "character"}
+        <div
+          role="tabpanel"
+          id="panel-chats"
+          aria-labelledby="tab-chats"
+          class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+          style="background-image: var(--bg-texture-overlay)"
+        >
+          <div
+            class="max-w-4xl mx-auto h-full p-6 border border-theme-border rounded bg-theme-surface/50"
+          >
+            <DetailChatsTab {entity} />
           </div>
         </div>
       {/if}

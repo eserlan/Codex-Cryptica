@@ -106,6 +106,7 @@ export class ReviseExecutor
               instructions: intent.instructions,
               priority: "instructions-first",
               isGuest: context.vault.isGuest,
+              themeId: context.uiStore?.activeThemeId,
             },
           );
           handlePartial(

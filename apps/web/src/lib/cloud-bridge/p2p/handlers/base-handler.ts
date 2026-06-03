@@ -18,6 +18,7 @@ export interface P2PHandlerContext {
   themeStore: typeof themeStore;
   guestStore: GuestStore;
   transport: any; // P2PTransport
+  oracle?: any; // OracleStore — optional so existing tests don't break
 }
 
 /**

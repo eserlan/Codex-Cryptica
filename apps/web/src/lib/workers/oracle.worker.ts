@@ -69,6 +69,7 @@ class OracleWorker {
       source?: string;
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
     },
   ): Promise<any> {
     return this.textGeneration.reviseEntityUpdate(
@@ -113,6 +114,7 @@ class OracleWorker {
       vaultId?: string;
       requestId?: string;
       existingEntities?: any[];
+      systemInstructionOverride?: string;
     } = {},
   ): Promise<void> {
     const { vaultId, requestId, existingEntities = [] } = options;
@@ -169,6 +171,7 @@ class OracleWorker {
         },
         demoMode,
         categories,
+        options,
       );
     } catch (err: any) {
       this.emit({

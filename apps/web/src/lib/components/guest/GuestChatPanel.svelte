@@ -11,6 +11,7 @@
       (e) =>
         e.type === "character" &&
         e.guestChatConfig?.isEnabled &&
+        !!e.guestChatConfig.extraInstructions?.trim() &&
         isEntityVisible(e, {
           sharedMode: vault.isGuest,
           defaultVisibility: vault.defaultVisibility,
@@ -184,7 +185,10 @@
         class="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 space-y-4 flex flex-col"
       >
         {#each currentTranscript?.messages || [] as msg}
-          <GuestChatBubble message={msg} />
+          <GuestChatBubble
+            message={msg}
+            characterTitle={activeCharacter.title}
+          />
         {/each}
 
         {#if !currentTranscript || currentTranscript.messages.length === 0}

@@ -41,15 +41,13 @@ export class CacheService {
   private _preloadedVaultId: string | null = null;
 
   /**
-   * Bulk-loads graph entity metadata from the `graphEntities` table (which
-   * excludes `content` and `lore` fields stored separately in `entityContent`)
-   * for the given vault into an in-memory map.  Calling this once before
-   * iterating over individual OPFS files reduces N per-file IDB round-trips to
-   * a single table scan, significantly speeding up warm cache loads.
+   * Bulk-loads graph entity metadata and content (but not lore) from Dexie for
+   * the given vault into an in-memory map.  Calling this once before iterating
+   * over individual OPFS files reduces N per-file IDB round-trips to two table
+   * scans, significantly speeding up warm cache loads.
    *
-   * `entityContent` is intentionally excluded from this preload to keep the
-   * startup read lightweight and to preserve the lazy-loading goal for heavy
-   * text fields.
+   * `lore` is intentionally excluded — it can be large and is only needed when
+   * an entity is actively opened for editing.
    *
    * Safe to call even when Dexie is unavailable (e.g. in test environments)
    * — any error is swallowed and the service falls back to per-file lookups.
@@ -60,10 +58,15 @@ export class CacheService {
     try {
       debugStore.log(`[CacheService] Preloading vault: ${vaultId}`);
       const start = performance.now();
-      const graphRecords = await entityDb.graphEntities
-        .where("vaultId")
-        .equals(vaultId)
-        .toArray();
+      const [graphRecords, contentRecords] = await Promise.all([
+        entityDb.graphEntities.where("vaultId").equals(vaultId).toArray(),
+        entityDb.entityContent.where("vaultId").equals(vaultId).toArray(),
+      ]);
+
+      // Build a fast entityId → content lookup so the loop below is O(1) per entity
+      const contentByEntityId = new Map(
+        contentRecords.map((r) => [r.entityId, r.content]),
+      );
 
       const map = new Map<
         string,
@@ -74,9 +77,8 @@ export class CacheService {
         const { vaultId: _vid, lastModified, filePath, ...graphData } = record;
         const entity: LocalEntity = {
           ...graphData,
-          // Content starts as empty — loaded lazily when the entity is opened.
-          content: "",
-          lore: undefined,
+          content: contentByEntityId.get(String(graphData.id)) ?? "",
+          lore: undefined, // lore is large — kept lazy-loaded per entity
           _path: normalizePath(graphData._path, filePath),
         };
         map.set(`${vaultId}:${filePath}`, { lastModified, entity });
@@ -132,9 +134,16 @@ export class CacheService {
         filePath: _fp,
         ...graphData
       } = record;
+
+      // Also load content for this entity (lore stays lazy)
+      const contentRecord = await entityDb.entityContent
+        .where("[vaultId+entityId]")
+        .equals([vaultId, String(graphData.id)])
+        .first();
+
       const entity: LocalEntity = {
         ...graphData,
-        content: "",
+        content: contentRecord?.content ?? "",
         lore: undefined,
         _path: normalizePath(graphData._path, _fp),
       };
@@ -175,7 +184,8 @@ export class CacheService {
       // Since `raw` is a non-reactive deep copy from $state.snapshot(), we can trust its structure.
       const graphRecord = {
         ...graphData,
-        updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+        updatedAt:
+          typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
         status: raw.status || "active",
         vaultId,
         lastModified,
@@ -200,8 +210,8 @@ export class CacheService {
       if (this.preloaded) {
         const graphEntity: LocalEntity = {
           ...graphData,
-          content: "",
-          lore: undefined,
+          content: String(content || ""),
+          lore: undefined, // lore stays lazy
           _path: normalizePath(graphData._path, filePath),
         } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
@@ -244,7 +254,8 @@ export class CacheService {
 
         const graphRecord = {
           ...graphData,
-          updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+          updatedAt:
+            typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
           status: raw.status || "active",
           vaultId,
           lastModified,
@@ -264,8 +275,8 @@ export class CacheService {
           lastModified,
           entity: {
             ...graphData,
-            content: "",
-            lore: undefined,
+            content: String(content || ""),
+            lore: undefined, // lore stays lazy
             _path: normalizePath(graphData._path, filePath),
           } as LocalEntity,
         });

@@ -6,6 +6,8 @@
     isEditing,
     isSaving = false,
     isDirty = false,
+    isValid = true,
+    canGuestEdit = false,
     onCancel,
     onSave,
     onDelete,
@@ -14,6 +16,8 @@
     isEditing: boolean;
     isSaving?: boolean;
     isDirty?: boolean;
+    isValid?: boolean;
+    canGuestEdit?: boolean;
     onCancel: () => void;
     onSave: () => void;
     onDelete: () => void;
@@ -28,7 +32,9 @@
   {#if isEditing}
     <div class="flex gap-2 w-full justify-end items-center">
       {#if isDirty}
-        <span class="text-[9px] text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto">
+        <span
+          class="text-[9px] text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto"
+        >
           • Unsaved changes
         </span>
       {/if}
@@ -45,7 +51,7 @@
         style:background-color="var(--theme-action-bg)"
         style:border-color="var(--theme-selected-border)"
         style:color="var(--theme-action-text)"
-        disabled={isSaving}
+        disabled={isSaving || !isValid}
       >
         {#if isSaving}
           <span class="animate-pulse">SAVING...</span>
@@ -66,6 +72,8 @@
         >
           {themeStore.jargon.delete.toUpperCase()}
         </button>
+      {/if}
+      {#if !vault.isGuest || canGuestEdit}
         <button
           onclick={onStartEdit}
           class="border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary text-xs font-bold px-4 py-2 rounded tracking-widest transition"
