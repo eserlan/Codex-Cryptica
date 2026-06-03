@@ -945,8 +945,69 @@ ${plotHook}`;
         "A cartographer's guild whose maps contain hidden notation systems",
         "A canal barge anchored in a dock district where manifests go uninspected",
       ],
+      // Cyberpunk types
+      "Megacorporation Megagroup": [
+        "A sealed corporate tower whose lower floors are open to the public and upper floors are not on any map",
+        "A campus of linked facilities connected by private transit lines that bypass city checkpoints",
+        "A data-centre compound in a legally ambiguous special economic zone",
+      ],
+      "Corporate Syndicate": [
+        "A registered LLC with rotating directors and no fixed address",
+        "A licensed private security firm that maintains offices in three jurisdictions simultaneously",
+        "A shell company whose registered seat is a post-box in a compliant offshore district",
+      ],
+      "Hacker Collective": [
+        "A distributed mesh of rented server nodes and anonymous relay points",
+        "A legitimate ISP whose routing infrastructure doubles as a covert comms layer",
+        "Rotating physical dead-drops in public infrastructure — lockers, charging stations, transit hubs",
+      ],
+      "Street Gang Alliance": [
+        "A block of contested commercial units enforced by informal tax agreements",
+        "A series of interconnected basement spaces beneath a market district",
+        "A community centre operating with city permits while the basement handles other business",
+      ],
+      // Gothic types
+      "Vampire Coven": [
+        "A sealed private estate whose deed has not changed hands in three centuries",
+        "A licensed sanatorium whose patient records are never released to outside authorities",
+        "A labyrinthine wine cellar beneath a respectable merchant's townhouse",
+      ],
+      "Inquisition Watch": [
+        "A fortified chapter-house adjacent to the civil courthouse",
+        "A mobile tribunal that establishes temporary jurisdiction wherever the investigation leads",
+        "A warded archive annexed to the city's oldest cathedral",
+      ],
+      // Sci-Fi types
+      "Stellar Federation Alliance": [
+        "A neutral space station positioned at a strategically contested transit point",
+        "A diplomatic compound on a contested colony world with extraterritorial status",
+        "A fleet of registered humanitarian vessels that doubles as a mobile command structure",
+      ],
+      // Modern types
+      "Intelligence Agency": [
+        "A nondescript government office building whose basement floors are not on the building plan",
+        "A chain of legitimate consulting firms that share encrypted back-office infrastructure",
+        "An embassy annex operating under diplomatic immunity",
+      ],
+      // Post-apocalyptic types
+      "Scavenger Tribe": [
+        "A fortified salvage yard at the edge of a collapsed industrial zone",
+        "A mobile convoy that claims no fixed territory but controls key supply corridors",
+        "A series of hidden caches spread across a hundred kilometres of dead highway",
+      ],
+      "Wasteland Cult": [
+        "A sealed compound built inside a pre-collapse water treatment facility",
+        "A fortified hilltop site with sightlines across three days of travel in every direction",
+        "A network of underground bunkers connected by service tunnels from before the collapse",
+      ],
     };
-    return this.pickFrom(map[type] ?? map["Merchant Guild"]);
+    return this.pickFrom(
+      map[type] ?? [
+        "A neutral facility whose access is controlled and whose records are not shared",
+        "A licensed premises that provides cover for activities conducted elsewhere",
+        "A distributed network of locations with no single point of failure",
+      ],
+    );
   }
 
   private factionResource(type: string): string {
@@ -986,8 +1047,69 @@ ${plotHook}`;
         "A sealed archive of magical precedents that defines what is legally permitted",
         "Controlled access to rare components that no other supplier will touch",
       ],
+      // Cyberpunk types
+      "Megacorporation Megagroup": [
+        "Patent portfolios, regulatory capture, and the ability to rewrite local law through lobbying",
+        "A private security force larger than the city police and legally permitted to operate with fewer constraints",
+        "Exclusive contracts with critical infrastructure — power, water, data, transit",
+      ],
+      "Corporate Syndicate": [
+        "Shell-company ownership of key residential and commercial properties across the district",
+        "Leveraged debt held against every small business in the target sector",
+        "Proprietary logistics infrastructure that competitors cannot access without their permission",
+      ],
+      "Hacker Collective": [
+        "Zero-day exploits, surveillance backdoors, and access to every networked system in the city",
+        "A distributed archive of intercepted communications from every major institution",
+        "The ability to make anyone's digital identity disappear — or reappear differently",
+      ],
+      "Street Gang Alliance": [
+        "Control of informal economies: protection, distribution, and dispute resolution in three districts",
+        "Detailed knowledge of every surveillance blind spot, patrol schedule, and officer price",
+        "Loyalty networks that extend into city maintenance, transit, and low-level civil service",
+      ],
+      // Gothic types
+      "Vampire Coven": [
+        "Centuries of accumulated wealth, property, and blackmail material on every notable family",
+        "The ability to alter memory, compel testimony, and move unseen through any social tier",
+        "A network of thralls embedded in the city's legal, medical, and religious institutions",
+      ],
+      "Inquisition Watch": [
+        "Legal authority to detain, interrogate, and seize assets without civil court oversight",
+        "An archive of confessions, heresies, and crimes dating back three generations",
+        "Jurisdiction that supersedes local law in matters defined — broadly — as spiritual threat",
+      ],
+      // Sci-Fi types
+      "Stellar Federation Alliance": [
+        "Trade route licensing, customs authority, and the right to impose blockades under federation charter",
+        "A shared military asset pool that member states cannot individually match",
+        "Diplomatic recognition that determines which colonies and stations are treated as sovereign",
+      ],
+      // Modern types
+      "Intelligence Agency": [
+        "Surveillance infrastructure covering communications, financial transactions, and physical movement",
+        "Classified leverage on every significant political, corporate, and criminal actor in the region",
+        "The legal authority to classify, redact, and deny — which is effectively the power to erase events",
+      ],
+      // Post-apocalyptic types
+      "Scavenger Tribe": [
+        "Access to pre-collapse technology caches and the knowledge to operate what others cannot",
+        "Control of the only reliable route through a stretch of dead territory",
+        "A repair and fabrication capability that no other group in the region can match",
+      ],
+      "Wasteland Cult": [
+        "Clean water, food stockpiles, and medical supplies — distributed exclusively to the faithful",
+        "A coherent ideology that provides meaning in a world without institutions",
+        "Armed enforcers who believe completely in what they are protecting",
+      ],
     };
-    return this.pickFrom(map[type] ?? map["Merchant Guild"]);
+    return this.pickFrom(
+      map[type] ?? [
+        "Specialised knowledge or access that no other group in the region controls",
+        "A network of obligations, debts, and dependencies too entangled to cut cleanly",
+        "Control of a single critical resource that everyone else needs to function",
+      ],
+    );
   }
 
   /**

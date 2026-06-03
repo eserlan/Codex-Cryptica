@@ -166,7 +166,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("faction-generator");
     });
 
-    it("should include campaign theme in the AI prompt and fallback content", async () => {
+    it("should include campaign theme in the AI prompt (fallback content is not theme-specific)", async () => {
       const mockModel = {
         generateContent: vi.fn().mockResolvedValue({
           response: {

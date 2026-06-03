@@ -2,6 +2,7 @@
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
@@ -153,7 +154,9 @@
     }
   }
 
-  $effect(() => {
+  // Register once on mount — inline prop functions get a new identity on each
+  // rerender, so a $effect would re-run repeatedly and cause a loop.
+  onMount(() => {
     if (registerTrigger) {
       registerTrigger(() => void handleGenerate());
     }
@@ -199,10 +202,13 @@
     if (!generatedData) return;
 
     try {
+      const content = generatedData.summary
+        ? `*${generatedData.summary}*\n\n${generatedData.content}`
+        : generatedData.content;
       const payload = {
         type: generatedData.type,
         title: generatedData.title,
-        content: generatedData.content,
+        content,
         lore: generatedData.lore,
         labels: generatedData.labels,
         status: generatedData.status,
@@ -346,14 +352,19 @@
         type="button"
         onclick={() => void handleGenerate()}
         disabled={isGenerating}
+        aria-busy={isGenerating}
         class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
         id="strip-generate-btn"
       >
         {#if isGenerating}
-          <span class="icon-[lucide--loader-2] animate-spin w-3.5 h-3.5"></span>
+          <span
+            class="icon-[lucide--loader-2] animate-spin w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
           Forging...
         {:else}
-          <span class="icon-[lucide--dice-5] w-3.5 h-3.5"></span>
+          <span class="icon-[lucide--dice-5] w-3.5 h-3.5" aria-hidden="true"
+          ></span>
           Generate {generatedSingular}
         {/if}
       </button>
@@ -545,14 +556,19 @@
           <button
             type="submit"
             disabled={isGenerating}
+            aria-busy={isGenerating}
             class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             id="generate-button"
           >
             {#if isGenerating}
-              <span class="icon-[lucide--loader-2] animate-spin w-4 h-4"></span>
+              <span
+                class="icon-[lucide--loader-2] animate-spin w-4 h-4"
+                aria-hidden="true"
+              ></span>
               Forging...
             {:else}
-              <span class="icon-[lucide--dice-5] w-4 h-4"></span>
+              <span class="icon-[lucide--dice-5] w-4 h-4" aria-hidden="true"
+              ></span>
               ✦ Generate {generatedSingular} ✦
             {/if}
           </button>
