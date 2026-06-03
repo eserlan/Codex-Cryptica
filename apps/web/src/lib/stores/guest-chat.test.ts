@@ -27,7 +27,7 @@ vi.mock("$lib/cloud-bridge/p2p/guest-service", () => ({
     state: {
       displayName: "Guest User",
     },
-    sendToHost: vi.fn(),
+    sendToHost: vi.fn().mockReturnValue(true),
   },
 }));
 
@@ -120,7 +120,7 @@ describe("GuestChatStore", () => {
     expect(p2pGuestService.sendToHost).not.toHaveBeenCalled();
   });
 
-  it("should append a message when sending and invoke the executor", async () => {
+  it("should append a message when sending and route it via P2P host", async () => {
     await store.startChat("char-1", "Blacksmith Joe");
     await store.sendMessage("char-1", "Hello there!");
 
@@ -128,21 +128,22 @@ describe("GuestChatStore", () => {
     expect(store.transcripts["char-1"].messages[0].content).toBe(
       "Hello there!",
     );
-    expect(oracle.executor.execute).toHaveBeenCalledWith(
+    expect(p2pGuestService.sendToHost).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: "guest-chat",
+        type: "GUEST_CHAR_CHAT_REQUEST",
         query: "Hello there!",
-        entityId: "char-1",
+        characterId: "char-1",
       }),
-      expect.any(Object),
     );
-    expect(p2pGuestService.sendToHost).toHaveBeenCalled();
+    // local executor is not called when routing via P2P host
+    expect(oracle.executor.execute).not.toHaveBeenCalled();
   });
 
   it("should clear transcript successfully", async () => {
     await store.startChat("char-1", "Blacksmith Joe");
     await store.sendMessage("char-1", "Hello there!");
-    expect(store.transcripts["char-1"].messages.length).toBe(1);
+    // user message + assistant placeholder sent via P2P
+    expect(store.transcripts["char-1"].messages.length).toBe(2);
 
     await store.clearTranscript("char-1");
     expect(store.transcripts["char-1"].messages.length).toBe(0);
