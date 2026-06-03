@@ -180,6 +180,7 @@ ${generatedData.lore}`;
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
+  data-world-theme={activeThemeId}
 >
   <!-- Marketing Header -->
   <header
@@ -273,10 +274,7 @@ ${generatedData.lore}`;
               </div>
             </div>
 
-            <div
-              class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
-              data-world-theme={activeThemeId}
-            >
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow">
               <div
                 class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"
               >

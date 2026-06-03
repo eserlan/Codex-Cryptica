@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -86,6 +87,28 @@
     scope: factionConfig.scopes[1],
     alignment: factionConfig.alignments[0],
     campaignContext: "",
+  });
+
+  const reverseThemeMap: Record<string, string> = {
+    fantasy: "Classic Fantasy",
+    fantasy_dark: "Classic Fantasy",
+    cyberpunk: "Cyberpunk / Corporate",
+    cyberpunk_light: "Cyberpunk / Corporate",
+    horror: "Vampire / Gothic Noir",
+    horror_light: "Vampire / Gothic Noir",
+    scifi: "Sci-Fi / Space Opera",
+    scifi_light: "Sci-Fi / Space Opera",
+    modern: "Modern Conspiracy",
+    modern_dark: "Modern Conspiracy",
+    apocalyptic: "Post-Apocalyptic",
+    apocalyptic_light: "Post-Apocalyptic",
+  };
+
+  onMount(() => {
+    const activeTheme = localStorage.getItem("codex-cryptica-active-theme");
+    if (activeTheme && reverseThemeMap[activeTheme]) {
+      faction.theme = reverseThemeMap[activeTheme];
+    }
   });
 
   async function generate({ useAI }: { useAI: boolean }) {
