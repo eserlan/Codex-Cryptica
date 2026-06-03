@@ -55,11 +55,11 @@
 
 <SEOGeneratorLayout
   canonicalPath="/tools/faction-generator"
-  pageTitle="Faction Generator | Free Fantasy RPG Organization Tool | Codex Cryptica"
-  metaDescription="Generate fantasy RPG factions with goals, internal conflict, rival groups, notable NPCs, and adventure hooks. Copy the draft or save it into your local campaign vault."
+  pageTitle="RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica"
+  metaDescription="Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault."
   eyebrow="Faction Generator"
-  introTitle="Faction Generator"
-  introText="Create a campaign-ready fantasy faction with a public face, agenda, internal conflict, rival group, notable NPCs, and adventure hook. Works without login, then saves into your local Codex Cryptica campaign vault."
+  introTitle="RPG Faction Generator"
+  introText="Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs. Works instantly without login, then imports to your local campaign database."
   {relatedLinks}
   {faqs}
   {theme}
