@@ -3,6 +3,7 @@
   import { fly, fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import GuestChatPanel from "../guest/GuestChatPanel.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   const handleClose = () => {
     guestChatStore.showChatModal = false;
@@ -16,6 +17,7 @@
     class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/80 backdrop-blur-md"
     transition:fade={{ duration: 300 }}
     onclick={handleClose}
+    onkeydown={(e) => e.key === "Escape" && handleClose()}
     data-testid="guest-chat-modal"
   >
     <div
@@ -23,7 +25,11 @@
       style:box-shadow="var(--theme-glow)"
       transition:fly={{ y: 50, duration: 400, easing: quintOut }}
       onclick={(e) => e.stopPropagation()}
-      role="presentation"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Guest Character Chat"
+      tabindex="-1"
+      use:focusTrap
     >
       <!-- Close button on desktop -->
       <button

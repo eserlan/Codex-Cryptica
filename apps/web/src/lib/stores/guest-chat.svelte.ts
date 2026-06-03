@@ -174,7 +174,7 @@ export class GuestChatStore {
       (m) => m.id === pending.assistantMsgId,
     );
     if (msg) {
-      msg.content += partial;
+      msg.content = partial;
       transcript.lastUpdated = Date.now();
     }
   }
