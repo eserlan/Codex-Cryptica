@@ -118,14 +118,15 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(res.type).toBe("faction");
       expect(res.title).toBeDefined();
+      expect(res.summary).toBeDefined();
       expect(res.content).toContain("merchant guild");
-      expect(res.content).toContain("Campaign Fit");
+      expect(res.content).toContain("What they control");
+      expect(res.content).toContain("What they want");
       expect(res.content).toContain(
         "a canal city split by old guild rivalries",
       );
-      expect(res.lore).toContain("Single city");
       expect(res.lore).toContain("Internal Conflict");
-      expect(res.lore).toContain("Adventure Hook");
+      expect(res.lore).toContain("At the Table");
       expect(res.labels).toContain("faction-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -163,6 +164,48 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toBe("AI Generated Faction");
       expect(res.lore).toBe("AI Generated Agenda");
       expect(res.labels).toContain("faction-generator");
+    });
+
+    it("should include campaign theme in the AI prompt (fallback content is not theme-specific)", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Cyberdine Corp",
+                content: "AI Cyberpunk Faction",
+                lore: "AI Cyberpunk Agenda",
+                labels: ["rpg-faction", "cyberpunk"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateFaction({
+        type: "Criminal Syndicate",
+        scope: "Single city",
+        alignment: "Pragmatic",
+        theme: "Cyberpunk / Corporate",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("Theme/Genre: Cyberpunk / Corporate"),
+      );
+      expect(res.title).toBe("Cyberdine Corp");
+
+      // Test local fallback path for theme awareness
+      const fallbackRes = await engine.generateFaction({
+        type: "Criminal Syndicate",
+        scope: "Single city",
+        alignment: "Pragmatic",
+        theme: "Cyberpunk / Corporate",
+        useAI: false,
+      });
+      expect(fallbackRes.content).toContain("criminal syndicate");
+      expect(fallbackRes.content).toContain("What they control");
+      expect(fallbackRes.lore).toContain("At the Table");
     });
   });
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -49,13 +50,13 @@
     },
     faction: {
       pageTitle:
-        "Faction Generator | Free Fantasy RPG Organization Tool | Codex Cryptica",
+        "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica",
       metaDescription:
-        "Generate fantasy RPG factions with goals, internal conflict, rival groups, notable NPCs, and adventure hooks. Copy the draft or save it into your local campaign vault.",
-      introTitle: "Faction Generator",
+        "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault.",
+      introTitle: "RPG Faction Generator",
       eyebrow: "Faction Generator",
       introText:
-        "Create a campaign-ready fantasy faction with a public face, agenda, internal conflict, and adventure hook. Works without login.",
+        "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
       canonicalPath: "/generators/faction",
     },
   } as const;
@@ -81,11 +82,36 @@
   });
 
   let faction = $state({
+    theme: factionConfig.themes[0],
     type: factionConfig.types[0],
     scope: factionConfig.scopes[1],
     alignment: factionConfig.alignments[0],
     campaignContext: "",
   });
+
+  const reverseThemeMap: Record<string, string> = {
+    fantasy: "Classic Fantasy",
+    fantasy_dark: "Classic Fantasy",
+    cyberpunk: "Cyberpunk / Corporate",
+    cyberpunk_light: "Cyberpunk / Corporate",
+    horror: "Vampire / Gothic Noir",
+    horror_light: "Vampire / Gothic Noir",
+    scifi: "Sci-Fi / Space Opera",
+    scifi_light: "Sci-Fi / Space Opera",
+    modern: "Modern Conspiracy",
+    modern_dark: "Modern Conspiracy",
+    apocalyptic: "Post-Apocalyptic",
+    apocalyptic_light: "Post-Apocalyptic",
+  };
+
+  onMount(() => {
+    const activeTheme = localStorage.getItem("codex-cryptica-active-theme");
+    if (activeTheme && reverseThemeMap[activeTheme]) {
+      faction.theme = reverseThemeMap[activeTheme];
+    }
+  });
+
+  let triggerGen = $state<(() => void) | undefined>(undefined);
 
   async function generate({ useAI }: { useAI: boolean }) {
     if (data.slug === "npc") {
@@ -114,7 +140,12 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  bind:theme={faction.theme}
+  isThemeCustomizable={data.slug === "faction"}
   {generate}
+  registerTrigger={(fn) => {
+    triggerGen = fn;
+  }}
 >
   {#snippet formFields()}
     {#if data.slug === "npc"}
@@ -178,10 +209,12 @@
       </div>
     {:else if data.slug === "faction"}
       <FactionFormFields
+        bind:theme={faction.theme}
         bind:type={faction.type}
         bind:scope={faction.scope}
         bind:alignment={faction.alignment}
         bind:campaignContext={faction.campaignContext}
+        onSurprise={triggerGen}
       />
     {/if}
   {/snippet}

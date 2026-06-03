@@ -537,6 +537,14 @@ export const magicItemConfig = {
 
 // Faction Generator Table Config
 export const factionConfig = {
+  themes: [
+    "Classic Fantasy",
+    "Cyberpunk / Corporate",
+    "Vampire / Gothic Noir",
+    "Sci-Fi / Space Opera",
+    "Modern Conspiracy",
+    "Post-Apocalyptic",
+  ],
   types: [
     "Merchant Guild",
     "Secret Society",
@@ -728,6 +736,7 @@ export interface GeneratorOutput {
     | "faction"
     | "note";
   title: string;
+  summary?: string;
   content: string;
   lore: string;
   labels: string[];
@@ -804,7 +813,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -895,6 +904,214 @@ ${plotHook}`;
     };
   }
 
+  private pickFrom<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  private factionBase(type: string): string {
+    const map: Record<string, string[]> = {
+      "Merchant Guild": [
+        "A bonded counting house whose ledgers are sealed by city charter",
+        "A licensed exchange hall at the centre of the trade district",
+        "A warehouse compound that no sheriff may enter without a writ",
+      ],
+      "Secret Society": [
+        "A private dining club whose membership list is never committed to paper",
+        "A decommissioned observatory reached through a hidden press in the library stacks",
+        "Rotating safe houses connected by messenger-drop protocols",
+      ],
+      "Mercenary Company": [
+        "A fortified barracks compound outside the city walls",
+        "A charted garrison holding neutral ground between two rival lords",
+        "A licensed inn that doubles as a staging ground for contract work",
+      ],
+      "Temple Order": [
+        "A sanctified compound built above the sealed catacombs",
+        "A pilgrimage waystation that doubles as an intelligence hub",
+        "A charitable hospice whose basement holds restricted archives",
+      ],
+      "Criminal Syndicate": [
+        "A legitimate bathhouse with soundproofed rooms below street level",
+        "A moneylender's office whose public ledgers contain a second set of books",
+        "A district of connected properties linked by sealed passages",
+      ],
+      "Rebel Cell": [
+        "A print-house running two sets of accounts",
+        "A disused chapel in a contested neighbourhood where records are rarely checked",
+        "A network of sympathiser homes linked by a rotating code phrase",
+      ],
+      "Arcane Circle": [
+        "A registered scholar's hall with warded inner chambers",
+        "A cartographer's guild whose maps contain hidden notation systems",
+        "A canal barge anchored in a dock district where manifests go uninspected",
+      ],
+      // Cyberpunk types
+      "Megacorporation Megagroup": [
+        "A sealed corporate tower whose lower floors are open to the public and upper floors are not on any map",
+        "A campus of linked facilities connected by private transit lines that bypass city checkpoints",
+        "A data-centre compound in a legally ambiguous special economic zone",
+      ],
+      "Corporate Syndicate": [
+        "A registered LLC with rotating directors and no fixed address",
+        "A licensed private security firm that maintains offices in three jurisdictions simultaneously",
+        "A shell company whose registered seat is a post-box in a compliant offshore district",
+      ],
+      "Hacker Collective": [
+        "A distributed mesh of rented server nodes and anonymous relay points",
+        "A legitimate ISP whose routing infrastructure doubles as a covert comms layer",
+        "Rotating physical dead-drops in public infrastructure — lockers, charging stations, transit hubs",
+      ],
+      "Street Gang Alliance": [
+        "A block of contested commercial units enforced by informal tax agreements",
+        "A series of interconnected basement spaces beneath a market district",
+        "A community centre operating with city permits while the basement handles other business",
+      ],
+      // Gothic types
+      "Vampire Coven": [
+        "A sealed private estate whose deed has not changed hands in three centuries",
+        "A licensed sanatorium whose patient records are never released to outside authorities",
+        "A labyrinthine wine cellar beneath a respectable merchant's townhouse",
+      ],
+      "Inquisition Watch": [
+        "A fortified chapter-house adjacent to the civil courthouse",
+        "A mobile tribunal that establishes temporary jurisdiction wherever the investigation leads",
+        "A warded archive annexed to the city's oldest cathedral",
+      ],
+      // Sci-Fi types
+      "Stellar Federation Alliance": [
+        "A neutral space station positioned at a strategically contested transit point",
+        "A diplomatic compound on a contested colony world with extraterritorial status",
+        "A fleet of registered humanitarian vessels that doubles as a mobile command structure",
+      ],
+      // Modern types
+      "Intelligence Agency": [
+        "A nondescript government office building whose basement floors are not on the building plan",
+        "A chain of legitimate consulting firms that share encrypted back-office infrastructure",
+        "An embassy annex operating under diplomatic immunity",
+      ],
+      // Post-apocalyptic types
+      "Scavenger Tribe": [
+        "A fortified salvage yard at the edge of a collapsed industrial zone",
+        "A mobile convoy that claims no fixed territory but controls key supply corridors",
+        "A series of hidden caches spread across a hundred kilometres of dead highway",
+      ],
+      "Wasteland Cult": [
+        "A sealed compound built inside a pre-collapse water treatment facility",
+        "A fortified hilltop site with sightlines across three days of travel in every direction",
+        "A network of underground bunkers connected by service tunnels from before the collapse",
+      ],
+    };
+    return this.pickFrom(
+      map[type] ?? [
+        "A neutral facility whose access is controlled and whose records are not shared",
+        "A licensed premises that provides cover for activities conducted elsewhere",
+        "A distributed network of locations with no single point of failure",
+      ],
+    );
+  }
+
+  private factionResource(type: string): string {
+    const map: Record<string, string[]> = {
+      "Merchant Guild": [
+        "Exclusive trade licences, bonded debts, and letters of introduction that open every city gate",
+        "Commodity price information days before it reaches the open market",
+        "Certified seals of provenance that determine what goods may legally change hands",
+      ],
+      "Secret Society": [
+        "Compromising knowledge distributed in sealed fragments held by separate members",
+        "A curated register of favours owed by officials, merchants, and clergy",
+        "Access to a network of false identities and safe-passage routes",
+      ],
+      "Mercenary Company": [
+        "Contractual access to trained soldiers who ask no political questions",
+        "Neutral enforcement services hired by every side of every dispute",
+        "An archive of battlefield contracts that constitute decades of political leverage",
+      ],
+      "Temple Order": [
+        "Exclusive rights over burial rites, confessions, and civic oaths",
+        "A pharmaceutical supply chain running through the charitable district",
+        "Institutional immunity protecting their premises from search or seizure",
+      ],
+      "Criminal Syndicate": [
+        "Control over the city's informal credit markets and enforcement ecosystem",
+        "Detailed knowledge of every patrol route, informant, and magistrate's price",
+        "A distribution network for restricted goods running through legitimate storefronts",
+      ],
+      "Rebel Cell": [
+        "A verified printing and distribution network for prohibited materials",
+        "Contacts embedded in the guard, the census office, and the merchant registry",
+        "Secure courier routes that move people, messages, and contraband past checkpoints",
+      ],
+      "Arcane Circle": [
+        "Proprietary ritual techniques licensed to no outside practitioner",
+        "A sealed archive of magical precedents that defines what is legally permitted",
+        "Controlled access to rare components that no other supplier will touch",
+      ],
+      // Cyberpunk types
+      "Megacorporation Megagroup": [
+        "Patent portfolios, regulatory capture, and the ability to rewrite local law through lobbying",
+        "A private security force larger than the city police and legally permitted to operate with fewer constraints",
+        "Exclusive contracts with critical infrastructure — power, water, data, transit",
+      ],
+      "Corporate Syndicate": [
+        "Shell-company ownership of key residential and commercial properties across the district",
+        "Leveraged debt held against every small business in the target sector",
+        "Proprietary logistics infrastructure that competitors cannot access without their permission",
+      ],
+      "Hacker Collective": [
+        "Zero-day exploits, surveillance backdoors, and access to every networked system in the city",
+        "A distributed archive of intercepted communications from every major institution",
+        "The ability to make anyone's digital identity disappear — or reappear differently",
+      ],
+      "Street Gang Alliance": [
+        "Control of informal economies: protection, distribution, and dispute resolution in three districts",
+        "Detailed knowledge of every surveillance blind spot, patrol schedule, and officer price",
+        "Loyalty networks that extend into city maintenance, transit, and low-level civil service",
+      ],
+      // Gothic types
+      "Vampire Coven": [
+        "Centuries of accumulated wealth, property, and blackmail material on every notable family",
+        "The ability to alter memory, compel testimony, and move unseen through any social tier",
+        "A network of thralls embedded in the city's legal, medical, and religious institutions",
+      ],
+      "Inquisition Watch": [
+        "Legal authority to detain, interrogate, and seize assets without civil court oversight",
+        "An archive of confessions, heresies, and crimes dating back three generations",
+        "Jurisdiction that supersedes local law in matters defined — broadly — as spiritual threat",
+      ],
+      // Sci-Fi types
+      "Stellar Federation Alliance": [
+        "Trade route licensing, customs authority, and the right to impose blockades under federation charter",
+        "A shared military asset pool that member states cannot individually match",
+        "Diplomatic recognition that determines which colonies and stations are treated as sovereign",
+      ],
+      // Modern types
+      "Intelligence Agency": [
+        "Surveillance infrastructure covering communications, financial transactions, and physical movement",
+        "Classified leverage on every significant political, corporate, and criminal actor in the region",
+        "The legal authority to classify, redact, and deny — which is effectively the power to erase events",
+      ],
+      // Post-apocalyptic types
+      "Scavenger Tribe": [
+        "Access to pre-collapse technology caches and the knowledge to operate what others cannot",
+        "Control of the only reliable route through a stretch of dead territory",
+        "A repair and fabrication capability that no other group in the region can match",
+      ],
+      "Wasteland Cult": [
+        "Clean water, food stockpiles, and medical supplies — distributed exclusively to the faithful",
+        "A coherent ideology that provides meaning in a world without institutions",
+        "Armed enforcers who believe completely in what they are protecting",
+      ],
+    };
+    return this.pickFrom(
+      map[type] ?? [
+        "Specialised knowledge or access that no other group in the region controls",
+        "A network of obligations, debts, and dependencies too entangled to cut cleanly",
+        "Control of a single critical resource that everyone else needs to function",
+      ],
+    );
+  }
+
   /**
    * Generates a faction draft.
    */
@@ -904,9 +1121,11 @@ ${plotHook}`;
       scope?: string;
       alignment?: string;
       campaignContext?: string;
+      theme?: string;
       useAI?: boolean;
     } = {},
   ): Promise<GeneratorOutput> {
+    const theme = options.theme || factionConfig.themes[0];
     const factionType =
       options.type ||
       factionConfig.types[
@@ -925,31 +1144,81 @@ ${plotHook}`;
     const campaignContext = options.campaignContext?.trim();
     const name = `${this.generateName()} Compact`;
 
+    const namingStyles = [
+      "Name this faction after a material, substance, or natural phenomenon twisted to their purpose.",
+      "Name this faction after an abstract concept, virtue, or doctrine — not a person or place.",
+      "Use a short stark one-word name or a tight two-word compound (e.g. 'The Writ', 'Iron Accord').",
+      "Base the faction name on a specific local landmark, street, district, or geographic feature.",
+      "Name the faction after their founding secret, hidden method, or signature act.",
+      "Use a name that sounds like a legitimate civic institution but carries a sinister undertone.",
+      "Name the faction after a historical event, failed uprising, or forgotten figure from the setting.",
+      "Give the faction a name derived from an unusual profession, trade, or craft.",
+      "Use an archaic or invented word that evokes the faction's cultural roots.",
+      "Name the faction after a symbol, emblem, or recurring motif associated with their work.",
+    ];
+    const npcNamingStyles = [
+      "Give each NPC a name that sounds distinctly local — not generic fantasy.",
+      "Each NPC name should have an unusual phonetic texture. Avoid Kael, Zara, Theron, and similar overused patterns.",
+      "Give each NPC a short street name or title that hints at their role (e.g. 'The Ledger', 'Pale Maren').",
+      "Use names that suggest a specific cultural or ethnic origin consistent with the setting.",
+      "Each NPC should have a name that is easy to say aloud at a gaming table.",
+    ];
+    const chosenNamingStyle =
+      namingStyles[Math.floor(Math.random() * namingStyles.length)];
+    const chosenNpcStyle =
+      npcNamingStyles[Math.floor(Math.random() * npcNamingStyles.length)];
+    const varianceSeed = Math.floor(Math.random() * 99991) + 10;
+
     if (options.useAI !== false) {
       try {
-        const prompt = `Generate a detailed RPG faction in JSON format.
-Options:
-- Name: ${name}
+        const themeVoice: Record<string, string> = {
+          "Classic Fantasy":
+            "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+          "Cyberpunk / Corporate":
+            "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
+          "Vampire / Gothic Noir":
+            "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
+          "Sci-Fi / Space Opera":
+            "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
+          "Modern Conspiracy":
+            "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
+          "Post-Apocalyptic":
+            "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+        };
+        const voice = themeVoice[theme] ?? "tabletop RPG";
+
+        const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original faction drafts for that setting in JSON format.
+
+OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
+{
+  "title": "Faction name (follow the naming directive in the user message)",
+  "summary": "One sentence: what this faction is and what makes them interesting (e.g. 'A sanitation cult-technocracy that controls clean water in a poisoned city.').",
+  "content": "Markdown. Use exactly these four section headers in order: '### What they control', '### What they want', '### Why they are dangerous', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At the Table\\n- **Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **Name**: one-line rivalry",
+  "labels": ["2-5 lowercase tags for the faction's theme and activities, plus 'rpg-faction', 'faction-generator', 'imported-draft'"]
+}
+
+QUALITY RULES:
+- Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
+- Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
+- NPC names must feel culturally specific and phonetically varied — avoid Kael, Zara, Theron, and similar overused patterns.
+- Place names (bases, districts, landmarks) must be specific and invented — never use 'the old district', 'the lower city', or other generic geography. Every location should have a proper name.
+- Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), logical alignment between public face and secret agenda. Rewrite if issues found.`;
+
+        const userMessage = `Generate a faction. Variation seed: ${varianceSeed}.
+- Theme/Genre: ${theme}
 - Faction Type: ${factionType}
 - Scope: ${scope}
-- Moral Posture: ${alignment}
-${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
-
-You must return a valid JSON object matching the following structure exactly:
-{
-  "title": "A single string for the faction name",
-  "content": "A detailed multi-paragraph faction overview (markdown formatted) describing its public face, leadership, resources, and how it fits the campaign context if provided.",
-  "lore": "Structured GM details (markdown formatted) with sections for core fields, agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
-  "labels": ["rpg-faction", "faction-generator", "imported-draft"]
-}
-Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
+- Moral Posture: ${alignment}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Faction Naming Directive: ${chosenNamingStyle}
+- NPC Naming Directive: ${chosenNpcStyle}`;
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
-          "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
         );
-        const response = await model.generateContent(prompt);
+        const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
         const cleanText = text
           .replace(/^```json\s*/i, "")
@@ -960,6 +1229,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
         return {
           type: "faction",
           title: data.title || name,
+          summary: data.summary || "",
           content: data.content || "",
           lore: data.lore || "",
           labels: Array.isArray(data.labels)
@@ -991,42 +1261,41 @@ Return only the JSON object. Do not include markdown code block formatting like 
     const leader = this.generateName();
     const agent = this.generateName();
 
-    const content = `### Overview
-${name} is a ${factionType.toLowerCase()} operating across the ${scope.toLowerCase()}. Its members present a controlled public face, but every favor, rumor, and private meeting is part of a larger strategy.
+    const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
 
-${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their agenda should touch active locations, disputed resources, or unresolved campaign mysteries.\n` : ""}
+    const content = `### What they control
+${name} is a ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. Their reach is felt in every trade deal, guarded rumor, and carefully placed favor.${campaignContext ? ` In ${campaignContext}, they already have fingers in the most contested disputes.` : ""}
 
-### Public Face
-Most locals know the faction through useful services, charitable work, guarded trade, or carefully placed rumors. People disagree about whether ${name} is stabilizing the region or quietly taking ownership of it.
+### What they want
+${goal} Every action the faction takes, however charitable it appears, serves this underlying drive.
 
-### Table Use
-Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival that can negotiate before it strikes.`;
+### Why they are dangerous
+${conflict} Beyond their internal tensions, they will negotiate before striking — but they do not forget.
 
-    const lore = `### GM Reference Information
-- **Faction Type**: ${factionType}
-- **Scope**: ${scope}
-- **Moral Posture**: ${alignment}
-- **Entity Type**: Faction
+### How to use them at the table
+Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival who can operate in daylight. They reward players who deal in favors and punish those who make public enemies.`;
 
-### Agenda
-${goal}
+    const lore = `### At the Table
+- **Base**: ${this.factionBase(factionType)}
+- **Resource**: ${this.factionResource(factionType)}
+- **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
+- **Secret**: ${conflict}
+- **Immediate hook**: ${hook}
+
+### Notable NPCs
+- **${leader}**: Public face who insists every deal serves the common good.
+- **${agent}**: Field operative who knows where the faction buries its failures.
 
 ### Internal Conflict
 ${conflict}
 
-### Notable NPCs
-- **${leader}**: Public leader who insists every deal has a civic purpose.
-- **${agent}**: Field agent who knows where the faction hides its failures.
-
 ### Rival Faction
-${rival} wants the same influence, relic, route, or confession before ${name} can secure it.
-
-### Adventure Hook
-${hook}`;
+${rival} is pursuing the same influence, relic, or route — and will reach it first if the party does nothing.`;
 
     return {
       type: "faction",
       title: name,
+      summary,
       content,
       lore,
       labels: ["rpg-faction", "faction-generator", "imported-draft"],
@@ -1281,7 +1550,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -1418,7 +1687,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -1547,7 +1816,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);
@@ -1669,7 +1938,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
         const model = await this.clientManager.getModel(
           "",
-          "gemini-1.5-flash",
+          "gemini-3.1-flash-lite",
           "You are an assistant that generates detailed RPG campaign elements in JSON format.",
         );
         const response = await model.generateContent(prompt);

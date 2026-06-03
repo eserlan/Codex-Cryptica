@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import {
@@ -6,6 +7,29 @@
     factionConfig,
   } from "$lib/services/seo/generator-engine";
 
+  let theme = $state(factionConfig.themes[0]);
+
+  const reverseThemeMap: Record<string, string> = {
+    fantasy: "Classic Fantasy",
+    fantasy_dark: "Classic Fantasy",
+    cyberpunk: "Cyberpunk / Corporate",
+    cyberpunk_light: "Cyberpunk / Corporate",
+    horror: "Vampire / Gothic Noir",
+    horror_light: "Vampire / Gothic Noir",
+    scifi: "Sci-Fi / Space Opera",
+    scifi_light: "Sci-Fi / Space Opera",
+    modern: "Modern Conspiracy",
+    modern_dark: "Modern Conspiracy",
+    apocalyptic: "Post-Apocalyptic",
+    apocalyptic_light: "Post-Apocalyptic",
+  };
+
+  onMount(() => {
+    const activeTheme = localStorage.getItem("codex-cryptica-active-theme");
+    if (activeTheme && reverseThemeMap[activeTheme]) {
+      theme = reverseThemeMap[activeTheme];
+    }
+  });
   let type = $state(factionConfig.types[0]);
   let scope = $state(factionConfig.scopes[1]);
   let alignment = $state(factionConfig.alignments[0]);
@@ -13,6 +37,7 @@
 
   async function generate({ useAI }: { useAI: boolean }) {
     return generatorEngine.generateFaction({
+      theme,
       type,
       scope,
       alignment,
@@ -31,43 +56,57 @@
     {
       question: "What does the faction generator create?",
       answer:
-        "It creates a fantasy RPG faction with a name, type, operating scope, public face, agenda, internal conflict, rival faction, notable NPCs, and adventure hook.",
+        "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
     },
     {
-      question: "Can I use the faction generator without an account?",
+      question: "Can I use it without an account?",
       answer:
-        "Yes. You can generate and copy faction notes on the public page without logging in, then save the draft into a browser-local Codex Cryptica vault.",
+        "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
     },
     {
       question: "Can I aim the faction at my current campaign?",
       answer:
-        "Yes. Add optional campaign context such as a city, war, villain, frontier, or political tension, and the generated faction will include a campaign fit section.",
+        "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
+    },
+    {
+      question: "How do I change the genre or tone?",
+      answer:
+        "Use the 'Choose a vibe' selector in the left panel. Switching between Classic Fantasy, Cyberpunk, Gothic Noir, Sci-Fi, Modern Conspiracy, and Post-Apocalyptic changes the faction's language, naming, and setting details throughout.",
     },
     {
       question: "How does saving a generated faction work?",
       answer:
-        "The page stores the generated faction draft in browser localStorage and opens the app, where it imports as a Faction entity in your local vault.",
+        "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
+
+  let triggerGen = $state<(() => void) | undefined>(undefined);
 </script>
 
 <SEOGeneratorLayout
   canonicalPath="/tools/faction-generator"
-  pageTitle="Faction Generator | Free Fantasy RPG Organization Tool | Codex Cryptica"
-  metaDescription="Generate fantasy RPG factions with goals, internal conflict, rival groups, notable NPCs, and adventure hooks. Copy the draft or save it into your local campaign vault."
+  pageTitle="RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica"
+  metaDescription="Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault."
   eyebrow="Faction Generator"
-  introTitle="Faction Generator"
-  introText="Create a campaign-ready fantasy faction with a public face, agenda, internal conflict, rival group, notable NPCs, and adventure hook. Works without login, then saves into your local Codex Cryptica campaign vault."
+  introTitle="RPG Faction Generator"
+  introText="Create organisations with agendas, conflicts, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault."
   {relatedLinks}
   {faqs}
+  bind:theme
+  isThemeCustomizable={true}
   {generate}
+  registerTrigger={(fn) => {
+    triggerGen = fn;
+  }}
 >
   {#snippet formFields()}
     <FactionFormFields
+      bind:theme
       bind:type
       bind:scope
       bind:alignment
       bind:campaignContext
+      onSurprise={triggerGen}
     />
   {/snippet}
 </SEOGeneratorLayout>

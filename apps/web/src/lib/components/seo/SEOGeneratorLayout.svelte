@@ -2,7 +2,10 @@
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { browser } from "$app/environment";
 
   let {
     canonicalPath,
@@ -13,8 +16,11 @@
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
     relatedLinks = [],
     faqs = [],
+    theme = $bindable("Classic Fantasy"),
+    isThemeCustomizable = false,
     generate,
     formFields,
+    registerTrigger,
     worldTheme = "workspace",
   }: {
     canonicalPath?: string;
@@ -25,16 +31,98 @@
     introText?: string;
     relatedLinks?: { href: string; label: string }[];
     faqs?: { question: string; answer: string }[];
+    theme?: string;
+    isThemeCustomizable?: boolean;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
+    registerTrigger?: (fn: () => void) => void;
     worldTheme?: string;
   } = $props();
 
+  const HIDDEN_TAGS = new Set([
+    "imported-draft",
+    "faction-generator",
+    "rpg-faction",
+    "rpg-npc",
+    "npc-generator",
+    "rpg-settlement",
+    "settlement-generator",
+    "rpg-item",
+    "item-generator",
+    "rpg-quest",
+    "quest-generator",
+    "rpg-names",
+    "name-generator",
+  ]);
+
   let isGenerating = $state(false);
   let generatedData = $state<GeneratorOutput | null>(null);
+  let isExampleDraft = $state(true);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let useAI = $state(true);
+  let showSaveModal = $state(false);
+
+  const themeMap: Record<string, string> = {
+    "Classic Fantasy": "fantasy",
+    "Cyberpunk / Corporate": "cyberpunk",
+    "Vampire / Gothic Noir": "horror",
+    "Sci-Fi / Space Opera": "scifi",
+    "Modern Conspiracy": "modern",
+    "Post-Apocalyptic": "apocalyptic",
+  };
+
+  const activeThemeId = $derived(themeMap[theme] || "workspace");
+
+  const generatedNoun = $derived(
+    eyebrow.toLowerCase().includes("name")
+      ? "fantasy names"
+      : eyebrow.toLowerCase().includes("npc")
+        ? "D&D NPCs"
+        : eyebrow.toLowerCase().includes("faction")
+          ? "RPG factions"
+          : eyebrow.toLowerCase().includes("quest")
+            ? "quest hooks"
+            : eyebrow.toLowerCase().includes("settlement")
+              ? "settlements"
+              : eyebrow.toLowerCase().includes("item")
+                ? "magic items"
+                : "RPG elements",
+  );
+
+  const generatedSingular = $derived(
+    eyebrow.replace(/\s*Generator\s*/i, "").trim() || "Draft",
+  );
+
+  $effect(() => {
+    if (browser && isThemeCustomizable && activeThemeId) {
+      if (themeStore.worldThemeId !== activeThemeId) {
+        void themeStore.setTheme(activeThemeId);
+      }
+    }
+  });
+
+  $effect(() => {
+    if (browser && !generatedData) {
+      void handleGenerateOnMount();
+    }
+  });
+
+  async function handleGenerateOnMount() {
+    isGenerating = true;
+    errorMessage = null;
+    try {
+      generatedData = await generate({ useAI: false });
+    } catch (err: any) {
+      console.warn("Failed to generate initial draft:", err);
+    } finally {
+      isGenerating = false;
+    }
+  }
+
+  function confirmSaveRedirect() {
+    window.location.href = `${base}/`;
+  }
 
   const faqJsonLd = $derived(
     faqs.length > 0
@@ -54,6 +142,7 @@
   );
 
   async function handleGenerate() {
+    isExampleDraft = false;
     isGenerating = true;
     errorMessage = null;
     try {
@@ -65,6 +154,14 @@
     }
   }
 
+  // Register once on mount — inline prop functions get a new identity on each
+  // rerender, so a $effect would re-run repeatedly and cause a loop.
+  onMount(() => {
+    if (registerTrigger) {
+      registerTrigger(() => void handleGenerate());
+    }
+  });
+
   const escapeHtml = (value: string) =>
     value
       .replace(/&/g, "&amp;")
@@ -73,38 +170,52 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
 
+  const LABEL_VALUE_HTML =
+    '<div class="flex flex-col mb-1"><span class="font-bold text-theme-muted uppercase tracking-wider text-[9px]">$1</span><span>$2</span></div>';
+
   const renderMarkdown = (value: string) =>
     escapeHtml(value)
       .replace(
-        /^### (.*)$/gm,
+        /^#{3} (.*)$/gm,
         '<h3 class="font-header font-bold text-base mt-4 mb-2 text-theme-primary">$1</h3>',
       )
       .replace(
-        /^## (.*)$/gm,
+        /^#{2} (.*)$/gm,
         '<h2 class="font-header font-bold text-lg mt-6 mb-3 border-b border-theme-border/40 pb-1">$1</h2>',
       )
-      .replace(
-        /^- \*\*(.*?)\*\*: (.*)$/gm,
-        '<div class="flex flex-col mb-1"><span class="font-bold text-theme-muted uppercase tracking-wider text-[9px]">$1</span><span>$2</span></div>',
-      )
-      .replace(/^- (.*)$/gm, '<li class="list-disc ml-4">$1</li>')
+      // bold-key variant: "- **Key**: value" or "* **Key**: value"
+      .replace(/^[*-] \*\*(.*?)\*\*: (.*)$/gm, LABEL_VALUE_HTML)
+      // plain-key variant: "* Key: value" or "- Key: value" (key ≤ 60 chars, no colon in key)
+      .replace(/^[*-] ([A-Za-z][^:\n]{0,58}): (.+)$/gm, LABEL_VALUE_HTML)
+      // remaining bullets
+      .replace(/^[*-] (.*)$/gm, '<li class="list-disc ml-4">$1</li>')
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\n\n/g, "<br/><br/>");
+
+  const renderLore = (value: string) =>
+    renderMarkdown(value).replace(
+      /class="flex flex-col mb-1"/g,
+      'class="flex flex-col mb-5"',
+    );
 
   function handleSaveToCodex() {
     if (!generatedData) return;
 
     try {
+      const content = generatedData.summary
+        ? `*${generatedData.summary}*\n\n${generatedData.content}`
+        : generatedData.content;
       const payload = {
         type: generatedData.type,
         title: generatedData.title,
-        content: generatedData.content,
+        content,
         lore: generatedData.lore,
         labels: generatedData.labels,
         status: generatedData.status,
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
-      window.location.href = `${base}/`;
+      showSaveModal = true;
     } catch {
       errorMessage =
         "Storage access is blocked. Please copy the Markdown below instead.";
@@ -114,12 +225,18 @@
   async function handleCopyMarkdown() {
     if (!generatedData) return;
 
-    const markdownText = `# ${generatedData.title}
-Labels: ${generatedData.labels.join(", ")}
-
-${generatedData.content}
-
-${generatedData.lore}`;
+    const markdownText = [
+      `# ${generatedData.title}`,
+      generatedData.summary ? `*${generatedData.summary}*` : "",
+      `Labels: ${generatedData.labels.join(", ")}`,
+      "",
+      generatedData.content,
+      "",
+      generatedData.lore,
+    ]
+      .filter((line) => line !== undefined)
+      .join("\n")
+      .trim();
 
     try {
       await navigator.clipboard.writeText(markdownText);
@@ -168,6 +285,7 @@ ${generatedData.lore}`;
 <div
   class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg flex flex-col"
   style:background-image="var(--bg-texture-overlay)"
+  data-world-theme={activeThemeId}
 >
   <!-- Marketing Header -->
   <header
@@ -205,84 +323,125 @@ ${generatedData.lore}`;
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
-          Open App
+          Open Codex
         </a>
       </div>
     </div>
   </header>
 
+  <!-- Compact Explainer / CTA Strip -->
   <div
-    class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-10"
+    class="w-full border-b border-theme-border/30 bg-theme-surface/10 py-5 px-6"
   >
-    <!-- Output Card Column: rendered first in DOM for correct mobile reading/focus order, positioned on the right on desktop -->
-    <div class="lg:col-span-8 flex flex-col lg:order-2">
+    <div
+      class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    >
+      <div>
+        <p
+          class="text-xs font-bold text-theme-primary uppercase tracking-widest font-header"
+        >
+          Generate campaign-ready {generatedNoun} in seconds.
+        </p>
+        <p
+          class="text-[10px] text-theme-text/85 tracking-wider uppercase font-header mt-1"
+        >
+          No account required. Results save directly to your local Codex vault.
+        </p>
+      </div>
+      <button
+        type="button"
+        onclick={() => void handleGenerate()}
+        disabled={isGenerating}
+        aria-busy={isGenerating}
+        class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+        id="strip-generate-btn"
+      >
+        {#if isGenerating}
+          <span
+            class="icon-[lucide--loader-2] animate-spin w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Forging...
+        {:else}
+          <span class="icon-[lucide--dice-5] w-3.5 h-3.5" aria-hidden="true"
+          ></span>
+          Generate {generatedSingular}
+        {/if}
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
+  >
+    <!-- Output Card Column: controls first on mobile, middle column on desktop -->
+    <div class="lg:col-span-6 flex flex-col order-2 lg:order-2">
       <div
         class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
         {#if generatedData}
           <div in:fade={{ duration: 250 }} class="flex flex-col flex-grow">
-            <div
-              class="border-b border-theme-border/60 pb-4 mb-6 flex flex-wrap items-center justify-between gap-4"
-            >
-              <div>
+            <div class="border-b border-theme-border/60 pb-4 mb-6">
+              <div class="flex items-start gap-3 flex-wrap">
                 <h2
                   class="font-header font-extrabold text-2xl md:text-3xl tracking-wide uppercase text-theme-primary"
                 >
                   {generatedData.title}
                 </h2>
-                <div class="flex gap-2 mt-2">
-                  {#each generatedData.labels as label (label)}
+                {#if isExampleDraft}
+                  <span
+                    class="mt-1.5 px-2 py-0.5 rounded-full border border-theme-border/70 text-theme-text/60 text-[9px] font-mono uppercase tracking-wider flex-shrink-0"
+                  >
+                    Example
+                  </span>
+                {/if}
+              </div>
+              {#if generatedData.summary}
+                <p
+                  class="text-xs text-theme-text/65 leading-relaxed mt-2 italic"
+                >
+                  {generatedData.summary}
+                </p>
+              {/if}
+              <div
+                class="flex flex-wrap items-center justify-between gap-2 mt-3"
+              >
+                <div class="flex flex-wrap gap-1.5">
+                  {#each (generatedData.labels ?? []).filter((l) => !HIDDEN_TAGS.has(l)) as label (label)}
                     <span
-                      class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-mono font-bold text-theme-primary"
+                      class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2 py-0.5 text-[8px] uppercase tracking-wider font-mono font-bold text-theme-text/55"
                     >
                       {label}
                     </span>
                   {/each}
                 </div>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  onclick={handleSaveToCodex}
-                  class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
-                  id="save-to-codex-btn"
-                >
-                  Save to Codex
-                </button>
-                <button
-                  type="button"
-                  onclick={handleCopyMarkdown}
-                  class="px-4 py-2 bg-theme-surface border border-theme-border/80 text-theme-text font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:border-theme-primary/60 transition-all flex items-center gap-1.5"
-                  id="copy-markdown-btn"
-                >
-                  <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
-                  {copied ? "Copied!" : "Copy"}
-                </button>
+                <div class="flex gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onclick={handleSaveToCodex}
+                    class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+                    id="save-to-codex-btn"
+                  >
+                    Save to Codex
+                  </button>
+                  <button
+                    type="button"
+                    onclick={handleCopyMarkdown}
+                    class="px-4 py-2 bg-theme-surface border border-theme-border/80 text-theme-text font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:border-theme-primary/60 transition-all flex items-center gap-1.5"
+                    id="copy-markdown-btn"
+                  >
+                    <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
               </div>
             </div>
 
             <div
-              class="grid grid-cols-1 md:grid-cols-12 gap-8 flex-grow"
+              class="space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90 flex-grow"
               data-theme={worldTheme}
             >
-              <div
-                class="md:col-span-7 space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90"
-              >
-                {@html renderMarkdown(generatedData.content)}
-              </div>
-
-              <div
-                class="md:col-span-5 p-4 border border-theme-border/60 bg-theme-bg/40 rounded-xl space-y-4"
-              >
-                <h4
-                  class="font-header font-bold text-xs uppercase tracking-widest text-theme-primary"
-                >
-                  GM Stats & Info
-                </h4>
-                <div class="text-xs space-y-3 leading-relaxed">
-                  {@html renderMarkdown(generatedData.lore)}
-                </div>
-              </div>
+              {@html renderMarkdown(generatedData.content || "")}
             </div>
           </div>
         {:else}
@@ -307,8 +466,36 @@ ${generatedData.lore}`;
       </div>
     </div>
 
-    <!-- Parameters Column: rendered second in DOM, positioned on the left on desktop -->
-    <div class="lg:col-span-4 space-y-6 lg:order-1">
+    <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
+    <div class="lg:col-span-3 order-3 lg:order-3">
+      <div
+        class="p-5 bg-theme-surface/20 border border-theme-border/40 rounded-2xl shadow-sm sticky top-24"
+      >
+        {#if generatedData}
+          <div
+            in:fade={{ duration: 250 }}
+            class="text-xs leading-relaxed text-theme-text/80"
+          >
+            {@html renderLore(generatedData.lore || "")}
+          </div>
+        {:else}
+          <div
+            class="flex flex-col items-center text-center text-theme-muted/40 py-8"
+          >
+            <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
+            <p class="text-[10px] uppercase tracking-widest font-header">
+              At the Table
+            </p>
+            <p class="text-[10px] mt-2 leading-relaxed">
+              GM utility details appear here after generation.
+            </p>
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Parameters Column: rendered last in DOM, positioned on the left on desktop -->
+    <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
@@ -327,8 +514,14 @@ ${generatedData.lore}`;
         >
           {introTitle}
         </h1>
-        <p class="text-xs text-theme-muted leading-relaxed mb-6">
+        <p class="text-xs text-theme-text/70 leading-relaxed mb-4">
           {introText}
+        </p>
+        <p
+          class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-4 flex items-center gap-1.5"
+        >
+          <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
+          Set your inputs — your draft updates to the right
         </p>
 
         <form
@@ -363,15 +556,20 @@ ${generatedData.lore}`;
           <button
             type="submit"
             disabled={isGenerating}
+            aria-busy={isGenerating}
             class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             id="generate-button"
           >
             {#if isGenerating}
-              <span class="icon-[lucide--loader-2] animate-spin w-4 h-4"></span>
-              Forging Lore...
+              <span
+                class="icon-[lucide--loader-2] animate-spin w-4 h-4"
+                aria-hidden="true"
+              ></span>
+              Forging...
             {:else}
-              <span class="icon-[lucide--dice-5] w-4 h-4"></span>
-              ✦ Generate RPG Draft ✦
+              <span class="icon-[lucide--dice-5] w-4 h-4" aria-hidden="true"
+              ></span>
+              ✦ Generate {generatedSingular} ✦
             {/if}
           </button>
         </form>
@@ -384,25 +582,7 @@ ${generatedData.lore}`;
           </div>
         {/if}
 
-        {#if relatedLinks.length > 0}
-          <div
-            class="mt-5 border-t border-theme-border/60 pt-4 flex flex-col gap-2"
-            aria-label="Related pages"
-          >
-            {#each relatedLinks as link (link.href)}
-              <a
-                href="{base}{link.href}"
-                class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
-              >
-                <span
-                  class="icon-[lucide--arrow-right] w-3.5 h-3.5"
-                  aria-hidden="true"
-                ></span>
-                {link.label}
-              </a>
-            {/each}
-          </div>
-        {/if}
+        <!-- Related links moved to bottom discover section -->
       </div>
     </div>
   </div>
@@ -433,6 +613,85 @@ ${generatedData.lore}`;
         </div>
       </div>
     </section>
+  {/if}
+
+  {#if relatedLinks.length > 0}
+    <section
+      class="border-t border-theme-border/40 px-6 py-12 text-center bg-theme-surface/5"
+    >
+      <div class="max-w-4xl mx-auto">
+        <h2
+          class="font-header font-bold text-xs uppercase tracking-widest text-theme-muted mb-6"
+        >
+          More RPG Worldbuilding Tools
+        </h2>
+        <div class="flex flex-wrap justify-center gap-3">
+          {#each relatedLinks as link (link.href)}
+            <a
+              href="{base}{link.href}"
+              class="px-4 py-2 bg-theme-surface/30 border border-theme-border/40 hover:border-theme-primary/60 text-xs font-bold uppercase tracking-wider text-theme-text rounded-full shadow-sm hover:bg-theme-surface/50 transition-all flex items-center gap-1.5"
+            >
+              <span>{link.label}</span>
+              <span
+                class="icon-[lucide--arrow-right] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+            </a>
+          {/each}
+        </div>
+      </div>
+    </section>
+  {/if}
+
+  <!-- Save to Codex Transition Modal -->
+  {#if showSaveModal}
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+      transition:fade={{ duration: 150 }}
+    >
+      <div
+        class="bg-theme-surface border border-theme-border max-w-md w-full p-6 rounded-2xl shadow-xl flex flex-col gap-4 text-center animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div
+          class="mx-auto w-12 h-12 rounded-full bg-theme-primary/10 border border-theme-primary/30 flex items-center justify-center text-theme-primary mb-2"
+        >
+          <span class="icon-[lucide--check-circle-2] w-6 h-6"></span>
+        </div>
+
+        <h3
+          class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary"
+        >
+          Saved to your local Codex vault.
+        </h3>
+
+        <p class="text-xs text-theme-text/70 leading-relaxed">
+          Open Codex to link this faction to NPCs, locations, maps, and campaign
+          notes. Your vault lives in the browser — no account, no sync, no
+          cloud.
+        </p>
+
+        <div class="flex flex-col gap-2 mt-4">
+          <button
+            type="button"
+            onclick={confirmSaveRedirect}
+            class="w-full py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2"
+          >
+            <span class="icon-[lucide--external-link] w-4 h-4"></span>
+            Open Codex
+          </button>
+
+          <button
+            type="button"
+            onclick={() => {
+              showSaveModal = false;
+            }}
+            class="w-full py-3 bg-theme-surface/50 border border-theme-border/60 text-theme-text font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-surface transition-all"
+          >
+            Back to Generator
+          </button>
+        </div>
+      </div>
+    </div>
   {/if}
 
   <!-- Marketing Footer -->
