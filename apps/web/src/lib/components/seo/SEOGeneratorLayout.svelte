@@ -16,6 +16,7 @@
     theme = "Classic Fantasy",
     generate,
     formFields,
+    triggerGenerate = $bindable(),
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -28,6 +29,7 @@
     theme?: string;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet;
+    triggerGenerate?: (() => void) | undefined;
   } = $props();
 
   let isGenerating = $state(false);
@@ -75,6 +77,11 @@
       isGenerating = false;
     }
   }
+
+  $effect(() => {
+    const _ = triggerGenerate; // reference it to track
+    triggerGenerate = () => void handleGenerate();
+  });
 
   const escapeHtml = (value: string) =>
     value

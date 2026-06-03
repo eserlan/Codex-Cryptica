@@ -7,18 +7,79 @@
     scope = $bindable(factionConfig.scopes[1]),
     alignment = $bindable(factionConfig.alignments[0]),
     campaignContext = $bindable(""),
+    onSurprise = undefined,
   }: {
     theme: string;
     type: string;
     scope: string;
     alignment: string;
     campaignContext: string;
+    onSurprise?: () => void;
   } = $props();
 
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
+
+  const thematicTypes: Record<string, string[]> = {
+    "Classic Fantasy": [
+      "Temple Order",
+      "Arcane Circle",
+      "Merchant Guild",
+      "Secret Society",
+      "Mercenary Company",
+      "Criminal Syndicate",
+      "Rebel Cell",
+    ],
+    "Cyberpunk / Corporate": [
+      "Megacorporation Megagroup",
+      "Corporate Syndicate",
+      "Rebel Cell",
+      "Hacker Collective",
+      "Street Gang Alliance",
+      "Secret Society",
+      "Mercenary Company",
+    ],
+    "Vampire / Gothic Noir": [
+      "Vampire Coven",
+      "Arcane Circle",
+      "Temple Order",
+      "Inquisition Watch",
+      "Secret Society",
+      "Criminal Syndicate",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Megacorporation Megagroup",
+      "Stellar Federation Alliance",
+      "Rebel Cell",
+      "Mercenary Company",
+      "Merchant Guild",
+      "Secret Society",
+    ],
+    "Modern Conspiracy": [
+      "Secret Society",
+      "Intelligence Agency",
+      "Criminal Syndicate",
+      "Corporate Syndicate",
+      "Hacker Collective",
+    ],
+    "Post-Apocalyptic": [
+      "Scavenger Tribe",
+      "Rebel Cell",
+      "Wasteland Cult",
+      "Mercenary Company",
+      "Street Gang Alliance",
+    ],
+  };
+
+  const availableTypes = $derived(thematicTypes[theme] || factionConfig.types);
+
+  $effect(() => {
+    if (theme && !availableTypes.includes(type)) {
+      type = availableTypes[0] || factionConfig.types[0];
+    }
+  });
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -43,7 +104,7 @@
     bind:value={type}
     class={selectClass}
   >
-    {#each factionConfig.types as t (t)}
+    {#each availableTypes as t (t)}
       <option value={t}>{t}</option>
     {/each}
   </select>
@@ -97,4 +158,29 @@
     Add a city, frontier, villain, war, or campaign tension to aim the faction
     at your table.
   </p>
+</div>
+
+<div class="pt-2 flex justify-end">
+  <button
+    type="button"
+    onclick={() => {
+      const types = thematicTypes[theme] || factionConfig.types;
+      type = types[Math.floor(Math.random() * types.length)];
+      scope =
+        factionConfig.scopes[
+          Math.floor(Math.random() * factionConfig.scopes.length)
+        ];
+      alignment =
+        factionConfig.alignments[
+          Math.floor(Math.random() * factionConfig.alignments.length)
+        ];
+      if (onSurprise) {
+        onSurprise();
+      }
+    }}
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+  >
+    <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+    Surprise Me
+  </button>
 </div>

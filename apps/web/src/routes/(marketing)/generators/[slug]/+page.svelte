@@ -111,6 +111,8 @@
     }
   });
 
+  let triggerGen = $state<(() => void) | undefined>(undefined);
+
   async function generate({ useAI }: { useAI: boolean }) {
     if (data.slug === "npc") {
       return generatorEngine.generateNPC({ ...npc, useAI });
@@ -140,6 +142,7 @@
   canonicalPath={meta.canonicalPath}
   theme={data.slug === "faction" ? faction.theme : undefined}
   {generate}
+  bind:triggerGenerate={triggerGen}
 >
   {#snippet formFields()}
     {#if data.slug === "npc"}
@@ -208,6 +211,7 @@
         bind:scope={faction.scope}
         bind:alignment={faction.alignment}
         bind:campaignContext={faction.campaignContext}
+        onSurprise={triggerGen}
       />
     {/if}
   {/snippet}

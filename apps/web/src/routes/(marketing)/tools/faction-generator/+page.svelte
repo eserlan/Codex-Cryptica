@@ -74,6 +74,8 @@
         "The page stores the generated faction draft in browser localStorage and opens the app, where it imports as a Faction entity in your local vault.",
     },
   ];
+
+  let triggerGen = $state<(() => void) | undefined>(undefined);
 </script>
 
 <SEOGeneratorLayout
@@ -87,6 +89,7 @@
   {faqs}
   {theme}
   {generate}
+  bind:triggerGenerate={triggerGen}
 >
   {#snippet formFields()}
     <FactionFormFields
@@ -95,6 +98,7 @@
       bind:scope
       bind:alignment
       bind:campaignContext
+      onSurprise={triggerGen}
     />
   {/snippet}
 </SEOGeneratorLayout>
