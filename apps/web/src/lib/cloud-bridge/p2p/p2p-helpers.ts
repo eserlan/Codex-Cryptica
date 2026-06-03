@@ -165,7 +165,7 @@ export async function prepareMapPayload(
   return payload;
 }
 
-function snapshotForTransport<T>(value: T): T {
+export function snapshotForTransport<T>(value: T): T {
   try {
     return structuredClone(value);
   } catch {

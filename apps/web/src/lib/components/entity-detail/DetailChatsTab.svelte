@@ -20,6 +20,7 @@
   // Guest Chat State
   let messageInput = $state("");
   let chatContainer = $state<HTMLElement | null>(null);
+  let isSending = $state(false);
 
   // Load Host transcripts
   const loadHostTranscripts = async () => {
@@ -54,11 +55,17 @@
   }
 
   async function handleSendGuestMessage() {
-    if (!messageInput.trim() || guestChatStore.isGenerating) return;
-    const msg = messageInput;
-    messageInput = "";
-    await guestChatStore.sendMessage(entity.id, msg);
-    await scrollToBottom();
+    if (!messageInput.trim() || guestChatStore.isGenerating || isSending)
+      return;
+    isSending = true;
+    try {
+      const msg = messageInput;
+      messageInput = "";
+      await guestChatStore.sendMessage(entity.id, msg);
+      await scrollToBottom();
+    } finally {
+      isSending = false;
+    }
   }
 
   async function handleGuestKeydown(e: KeyboardEvent) {
@@ -468,7 +475,9 @@
           <button
             type="button"
             onclick={handleSendGuestMessage}
-            disabled={!messageInput.trim() || guestChatStore.isGenerating}
+            disabled={!messageInput.trim() ||
+              guestChatStore.isGenerating ||
+              isSending}
             class="p-2.5 bg-theme-primary hover:bg-theme-secondary disabled:bg-theme-surface disabled:text-theme-muted disabled:border-theme-border text-theme-bg rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
             aria-label="Send Message"
           >

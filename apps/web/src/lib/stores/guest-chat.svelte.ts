@@ -146,7 +146,7 @@ export class GuestChatStore {
       .filter((m) => m.id !== assistantMsgId)
       .map((m) => ({ id: m.id, role: m.role, content: m.content }));
 
-    p2pGuestService.sendToHost({
+    const sent = p2pGuestService.sendToHost({
       type: "GUEST_CHAR_CHAT_REQUEST",
       requestId,
       characterId,
@@ -154,6 +154,15 @@ export class GuestChatStore {
       query,
       history,
     });
+
+    if (!sent) {
+      transcript.messages.pop();
+      this.pendingRequests.delete(requestId);
+      this.isGenerating = false;
+      console.error(
+        "[GuestChatStore] P2P connection lost; message not delivered",
+      );
+    }
   }
 
   handleChatChunk(requestId: string, partial: string) {
@@ -165,7 +174,7 @@ export class GuestChatStore {
       (m) => m.id === pending.assistantMsgId,
     );
     if (msg) {
-      msg.content = partial;
+      msg.content += partial;
       transcript.lastUpdated = Date.now();
     }
   }

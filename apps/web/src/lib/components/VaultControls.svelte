@@ -224,6 +224,7 @@
 
     {#if vault.isInitialized}
       <button
+        type="button"
         class="flex items-center gap-2 rounded transition-colors group {isVertical
           ? 'justify-center w-full py-3 min-h-[44px]'
           : 'px-3 py-2 hover:bg-chrome-bg/50'}"
@@ -237,7 +238,7 @@
           class="icon-[lucide--database] w-3.5 h-3.5 text-chrome-muted group-hover:text-chrome-accent"
         ></span>
         <span
-          class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans"
+          class="font-bold text-xs tracking-wider text-chrome-text group-hover:text-chrome-accent max-w-[240px] truncate font-sans min-w-0"
         >
           {themeStore.jargon.vault}: {vault.vaultName}
         </span>

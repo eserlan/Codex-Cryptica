@@ -8,22 +8,9 @@ import {
   deriveGuestPresenceStatus,
   buildSharedGraphPayload,
   prepareMapPayload,
+  snapshotForTransport,
 } from "../p2p-helpers";
 import { encodeSessionSnapshot } from "../p2p-protocol";
-
-function snapshotEntitiesForTransport(entities?: Record<string, any> | null) {
-  const source = entities ?? {};
-  try {
-    return structuredClone(source);
-  } catch {
-    const snapshot: Record<string, any> = {};
-    for (const [id, entity] of Object.entries(source)) {
-      snapshot[id] =
-        entity && typeof entity === "object" ? { ...entity } : entity;
-    }
-    return snapshot;
-  }
-}
 
 export class VaultHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
@@ -227,7 +214,7 @@ export class VaultHandler extends BaseHandler {
   ) {
     const { vault, themeStore, mapStore, mapSession } = context;
 
-    const rawEntities = snapshotEntitiesForTransport(vault.entities);
+    const rawEntities = snapshotForTransport(vault.entities ?? {});
     const graph = buildSharedGraphPayload(
       rawEntities,
       vault.defaultVisibility,

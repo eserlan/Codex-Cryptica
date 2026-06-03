@@ -204,9 +204,7 @@
     try {
       // Sync "chatty" label: present when guest chat is enabled, absent otherwise
       const chatEnabled = !!editGuestChatConfig?.isEnabled;
-      const currentLabels = $state.snapshot(
-        editAliases.length >= 0 ? (entity.labels ?? []) : [],
-      ) as string[];
+      const currentLabels = $state.snapshot(entity.labels ?? []) as string[];
       const labelsWithoutChatty = currentLabels.filter(
         (l: string) => l.toLowerCase() !== "chatty",
       );
