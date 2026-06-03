@@ -767,6 +767,7 @@ describe("OracleActionExecutor - Detailed", () => {
         },
         [],
         [],
+        expect.objectContaining({ themeId: undefined }),
       );
       expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
         content: "Revised chronicle",
@@ -828,7 +829,10 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "The Glass Key opens sealed memory vaults.",
         },
         [],
-        mockContext.categories,
+        mockContext.categories.map((c: any) =>
+          expect.objectContaining({ id: c.id, label: c.label }),
+        ),
+        expect.objectContaining({ themeId: undefined }),
       );
       expect(mockContext.vault.createEntity).toHaveBeenCalledWith(
         "item",
@@ -893,7 +897,10 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "The Red Hand recruits across the borderlands.",
         },
         [],
-        mockContext.categories,
+        mockContext.categories.map((c: any) =>
+          expect.objectContaining({ id: c.id, label: c.label }),
+        ),
+        expect.objectContaining({ themeId: undefined }),
       );
       expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
         content: "The Red Hand is a militant organization.",

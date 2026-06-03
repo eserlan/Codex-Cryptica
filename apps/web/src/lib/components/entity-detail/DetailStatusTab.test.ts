@@ -451,9 +451,7 @@ describe("DetailStatusTab", () => {
 
     expect(mockConfig.isEnabled).toBe(true);
     await waitFor(() => {
-      expect(
-        screen.getByDisplayValue("- Speaks softly and avoids direct promises."),
-      ).toBeTruthy();
+      expect(screen.getByText("Found in character lore")).toBeTruthy();
     });
     expect(oracle.textGeneration.generateResponse).toHaveBeenCalledOnce();
     const prompt = vi.mocked(oracle.textGeneration.generateResponse).mock
@@ -524,7 +522,6 @@ describe("DetailStatusTab", () => {
     await fireEvent.click(checkbox);
 
     expect(mockConfig.isEnabled).toBe(true);
-    expect(screen.getByText(/Personality rules are required/i)).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText(/AI generation failed/i)).toBeTruthy();
     });

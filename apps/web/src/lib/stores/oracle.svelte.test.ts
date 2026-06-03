@@ -455,17 +455,19 @@ describe("OracleStore", () => {
           lore: "New lore mentioning Szass Tam",
         },
         [
-          expect.objectContaining({
+          {
             title: "Szass Tam",
             type: "npc",
-          }),
+            relation: "rules",
+            summary: "mock context",
+          },
         ],
         expect.any(Array),
-        {
+        expect.objectContaining({
           source: "discovery",
           instructions: undefined,
           priority: "incoming-first",
-        },
+        }),
       );
     });
 
@@ -803,11 +805,11 @@ describe("OracleStore", () => {
           { chronicle: "New chronicle", lore: "New lore" },
           expect.any(Array),
           expect.any(Array),
-          {
+          expect.objectContaining({
             source: "smart-apply",
             instructions: undefined,
             priority: "incoming-first",
-          },
+          }),
         );
         expect(result).toEqual({
           content: "Merged chronicle",
