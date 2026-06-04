@@ -395,7 +395,9 @@
                 {/if}
               </div>
               {#if generatedData.summary}
-                <p class="text-base text-theme-text/80 leading-relaxed mt-2">
+                <p
+                  class="text-base text-theme-text/80 leading-relaxed mt-2 italic"
+                >
                   {generatedData.summary}
                 </p>
               {/if}
