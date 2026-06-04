@@ -76,17 +76,19 @@
   const generatedNoun = $derived(
     eyebrow.toLowerCase().includes("name")
       ? "fantasy names"
-      : eyebrow.toLowerCase().includes("npc")
-        ? "D&D NPCs"
-        : eyebrow.toLowerCase().includes("faction")
-          ? "RPG factions"
-          : eyebrow.toLowerCase().includes("quest")
-            ? "quest hooks"
-            : eyebrow.toLowerCase().includes("settlement")
-              ? "settlements"
-              : eyebrow.toLowerCase().includes("item")
-                ? "magic items"
-                : "RPG elements",
+      : eyebrow.toLowerCase().includes("rpg npc")
+        ? "RPG NPCs"
+        : eyebrow.toLowerCase().includes("npc")
+          ? "D&D NPCs"
+          : eyebrow.toLowerCase().includes("faction")
+            ? "RPG factions"
+            : eyebrow.toLowerCase().includes("quest")
+              ? "quest hooks"
+              : eyebrow.toLowerCase().includes("settlement")
+                ? "settlements"
+                : eyebrow.toLowerCase().includes("item")
+                  ? "magic items"
+                  : "RPG elements",
   );
 
   const generatedSingular = $derived(

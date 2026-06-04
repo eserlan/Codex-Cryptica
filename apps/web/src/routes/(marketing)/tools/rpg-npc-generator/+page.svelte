@@ -6,6 +6,7 @@
     generatorEngine,
     factionConfig,
     npcThemeConfig,
+    themeIdToLabel,
   } from "$lib/services/seo/generator-engine";
 
   let theme = $state(factionConfig.themes[0]);
@@ -16,32 +17,17 @@
   );
   let campaignContext = $state("");
 
-  const reverseThemeMap: Record<string, string> = {
-    fantasy: "Classic Fantasy",
-    fantasy_dark: "Classic Fantasy",
-    cyberpunk: "Cyberpunk / Corporate",
-    cyberpunk_light: "Cyberpunk / Corporate",
-    horror: "Vampire / Gothic Noir",
-    horror_light: "Vampire / Gothic Noir",
-    scifi: "Sci-Fi / Space Opera",
-    scifi_light: "Sci-Fi / Space Opera",
-    modern: "Modern Conspiracy",
-    modern_dark: "Modern Conspiracy",
-    apocalyptic: "Post-Apocalyptic",
-    apocalyptic_light: "Post-Apocalyptic",
-  };
-
   onMount(() => {
-    const activeTheme = localStorage.getItem("codex-cryptica-active-theme");
-    if (activeTheme && reverseThemeMap[activeTheme]) {
-      theme = reverseThemeMap[activeTheme];
+    const stored = localStorage.getItem("codex-cryptica-active-theme");
+    if (stored && themeIdToLabel[stored]) {
+      theme = themeIdToLabel[stored];
     }
   });
 
   async function generate({ useAI }: { useAI: boolean }) {
     return generatorEngine.generateNPC({
       theme,
-      race: ancestry,
+      ancestry,
       role,
       alignment,
       campaignContext,

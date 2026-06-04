@@ -596,6 +596,21 @@ export const factionConfig = {
   ],
 };
 
+export const themeIdToLabel: Record<string, string> = {
+  fantasy: "Classic Fantasy",
+  fantasy_dark: "Classic Fantasy",
+  cyberpunk: "Cyberpunk / Corporate",
+  cyberpunk_light: "Cyberpunk / Corporate",
+  horror: "Vampire / Gothic Noir",
+  horror_light: "Vampire / Gothic Noir",
+  scifi: "Sci-Fi / Space Opera",
+  scifi_light: "Sci-Fi / Space Opera",
+  modern: "Modern Conspiracy",
+  modern_dark: "Modern Conspiracy",
+  apocalyptic: "Post-Apocalyptic",
+  apocalyptic_light: "Post-Apocalyptic",
+};
+
 export const npcThemeConfig = {
   ancestries: {
     "Classic Fantasy": [
@@ -1111,6 +1126,7 @@ export class DefaultGeneratorEngine {
   async generateNPC(
     options: {
       race?: string;
+      ancestry?: string;
       role?: string;
       alignment?: string;
       campaignContext?: string;
@@ -1120,6 +1136,7 @@ export class DefaultGeneratorEngine {
   ): Promise<GeneratorOutput> {
     const theme = options.theme;
     const race =
+      options.ancestry ||
       options.race ||
       npcConfig.races[Math.floor(Math.random() * npcConfig.races.length)];
     const role =
@@ -1214,7 +1231,7 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
           title: data.title || name,
           summary:
             data.summary ||
-            `A ${alignment.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
+            `A ${moralityLabel.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
           content: data.content || "",
           lore: data.lore || "",
           labels: Array.isArray(data.labels)

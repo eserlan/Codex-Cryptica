@@ -48,8 +48,8 @@
 
   $effect(() => {
     const ids = availableMoralities.map((m) => m.id);
-    if (ids.length && !ids.includes(alignment)) {
-      alignment = ids[0];
+    if (!ids.includes(alignment)) {
+      alignment = ids[0] ?? "";
     }
   });
 </script>
@@ -140,14 +140,16 @@
   <button
     type="button"
     onclick={() => {
-      const ancestries = npcThemeConfig.ancestries[theme] ?? npcConfig.races;
-      const roles = npcThemeConfig.roles[theme] ?? npcConfig.roles;
-      ancestry = ancestries[Math.floor(Math.random() * ancestries.length)];
-      role = roles[Math.floor(Math.random() * roles.length)];
-      const moralities = npcThemeConfig.moralities[theme] ?? [];
-      if (moralities.length) {
+      ancestry =
+        availableAncestries[
+          Math.floor(Math.random() * availableAncestries.length)
+        ];
+      role = availableRoles[Math.floor(Math.random() * availableRoles.length)];
+      if (availableMoralities.length) {
         alignment =
-          moralities[Math.floor(Math.random() * moralities.length)].id;
+          availableMoralities[
+            Math.floor(Math.random() * availableMoralities.length)
+          ].id;
       }
       if (onSurprise) onSurprise();
     }}

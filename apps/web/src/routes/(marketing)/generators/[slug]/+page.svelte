@@ -9,6 +9,7 @@
     settlementConfig,
     magicItemConfig,
     factionConfig,
+    themeIdToLabel,
   } from "$lib/services/seo/generator-engine";
 
   let { data } = $props();
@@ -90,21 +91,6 @@
     campaignContext: "",
   });
 
-  const reverseThemeMap: Record<string, string> = {
-    fantasy: "Classic Fantasy",
-    fantasy_dark: "Classic Fantasy",
-    cyberpunk: "Cyberpunk / Corporate",
-    cyberpunk_light: "Cyberpunk / Corporate",
-    horror: "Vampire / Gothic Noir",
-    horror_light: "Vampire / Gothic Noir",
-    scifi: "Sci-Fi / Space Opera",
-    scifi_light: "Sci-Fi / Space Opera",
-    modern: "Modern Conspiracy",
-    modern_dark: "Modern Conspiracy",
-    apocalyptic: "Post-Apocalyptic",
-    apocalyptic_light: "Post-Apocalyptic",
-  };
-
   // Unified theme binding target — synced to the active generator's state
   let activeTheme = $state(factionConfig.themes[0]);
 
@@ -115,14 +101,14 @@
 
   onMount(() => {
     const stored = localStorage.getItem("codex-cryptica-active-theme");
-    if (stored && reverseThemeMap[stored]) {
-      activeTheme = reverseThemeMap[stored];
+    if (stored && themeIdToLabel[stored]) {
+      activeTheme = themeIdToLabel[stored];
     }
   });
 
   async function generate({ useAI }: { useAI: boolean }) {
     if (data.slug === "npc") {
-      return generatorEngine.generateNPC({ ...npc, race: npc.ancestry, useAI });
+      return generatorEngine.generateNPC({ ...npc, useAI });
     } else if (data.slug === "settlement") {
       return generatorEngine.generateSettlement({ ...settlement, useAI });
     } else if (data.slug === "magic-item") {
@@ -215,7 +201,7 @@
       </div>
     {:else if data.slug === "faction"}
       <FactionFormFields
-        bind:theme={faction.theme}
+        bind:theme={activeTheme}
         bind:type={faction.type}
         bind:scope={faction.scope}
         bind:alignment={faction.alignment}
