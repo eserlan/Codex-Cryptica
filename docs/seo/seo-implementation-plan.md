@@ -40,6 +40,7 @@ graph TD
     P3 --> P4[Phase 4: Import & Migration Hubs]
     P4 --> P5[Phase 5: Privacy Use Cases]
     P5 --> P6[Phase 6: Structured Data & Rich Schema Maturity]
+    P6 --> P7[Phase 7: Advanced SEO Expansion & Funnel Scaling]
 ```
 
 ### Phase 1: Routing Consolidation & Bug Fixes
@@ -85,3 +86,14 @@ graph TD
   - Add explicit `SoftwareApplication` and `Offers` schema definitions to the landing pages, declaring multi-platform local-first capabilities.
 - [ ] **Task 6.3: Dynamic Generator Result Schemas**
   - Map reactive NPC/Location generator results to `Person` / `Place` schema.org JSON-LD blocks in `SEOGeneratorLayout` for SERP dynamic indexing.
+
+### Phase 7: Advanced SEO Expansion & Funnel Scaling
+
+- [ ] **Task 7.1: Alternatives Route Mapping & Redirection**
+  - Implement `/alternatives/[slug]` routes or redirect aliases mapping to `/vs/[slug]` head-to-head pages to capture alternative-centric searches.
+- [ ] **Task 7.2: Interactive Visual Micro-Demos**
+  - Integrate a read-only Cytoscape campaign graph visualization or zoomable interactive map preview on `/features/local-first-rpg-campaign-manager` to improve conversion and lower bounce rate.
+- [ ] **Task 7.3: Quest & Item Generators (Session Hub Integration)**
+  - Expand random generators to support `/generators/quest` and `/generators/item` models and integrate their outputs dynamically into the multi-entity session serialization layer.
+- [ ] **Task 7.4: Zero-Data-Leakage Copywriting**
+  - Add highly targeted, persuasive marketing copy on the `/features/ai-gm-assistant` page contrasting local-first processing with privacy-invasive cloud SaaS scrapers.
