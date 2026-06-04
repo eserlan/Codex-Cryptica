@@ -844,7 +844,9 @@ QUALITY RULES:
         return {
           type: "character",
           title: data.title || name,
-          summary: data.summary || "",
+          summary:
+            data.summary ||
+            `A ${alignment.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
           content: data.content || "",
           lore: data.lore || "",
           labels: Array.isArray(data.labels)
