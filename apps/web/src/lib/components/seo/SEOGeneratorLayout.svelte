@@ -472,7 +472,7 @@
         {#if generatedData}
           <div
             in:fade={{ duration: 250 }}
-            class="text-xs leading-relaxed text-theme-text/80"
+            class="text-sm leading-relaxed text-theme-text/80"
           >
             {@html renderLore(generatedData.lore || "")}
           </div>
@@ -484,7 +484,7 @@
             <p class="text-[10px] uppercase tracking-widest font-header">
               At the Table
             </p>
-            <p class="text-[10px] mt-2 leading-relaxed">
+            <p class="text-sm mt-2 leading-relaxed">
               GM utility details appear here after generation.
             </p>
           </div>
@@ -512,7 +512,7 @@
         >
           {introTitle}
         </h1>
-        <p class="text-xs text-theme-text/70 leading-relaxed mb-4">
+        <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
         </p>
         <p
@@ -662,7 +662,7 @@
           Saved to your local Codex vault.
         </h3>
 
-        <p class="text-xs text-theme-text/70 leading-relaxed">
+        <p class="text-sm text-theme-text/70 leading-relaxed">
           Open Codex to link this faction to NPCs, locations, maps, and campaign
           notes. Your vault lives in the browser — no account, no sync, no
           cloud.
