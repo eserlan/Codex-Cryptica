@@ -30,12 +30,14 @@
   class="fixed z-[1000] bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[140px]"
   style="left: {x}px; top: {y}px;"
   transition:fade={{ duration: 100 }}
-  role="presentation"
+  role="menu"
+  aria-label="Map context menu"
   onmousedown={(e) => e.stopPropagation()}
 >
   {#if tokenId}
     <button
       class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+      role="menuitem"
       onclick={() => {
         mapSession.pingToken(tokenId);
         onClose();
@@ -51,6 +53,7 @@
       <div class="h-px bg-theme-border my-1 mx-2"></div>
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
         onclick={() => {
           if (_ctxToken?.entityId) {
             modalUIStore.openZenMode(_ctxToken.entityId);
@@ -76,6 +79,7 @@
         <!-- Hide Selected -->
         <button
           class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+          role="menuitem"
           onclick={() => {
             for (const id of mapSession.selectedTokens) {
               mapSession.toggleTokenVisibility(id);
@@ -90,6 +94,7 @@
         <!-- Remove Selected -->
         <button
           class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-red-400"
+          role="menuitem"
           onclick={() => {
             for (const id of mapSession.selectedTokens) {
               mapSession.removeToken(id);
@@ -104,6 +109,7 @@
         <!-- Select All Visible -->
         <button
           class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+          role="menuitem"
           onclick={() => {
             const allIds = Object.keys(mapSession.tokens);
             mapSession.setMultiSelection(allIds);
@@ -124,6 +130,7 @@
     {#if mapStore.isGMMode && !sessionModeStore.isGuestMode}
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
         onclick={() => {
           mapSession.cloneToken(tokenId);
           onClose();
@@ -136,6 +143,7 @@
       <!-- Show/Hide Token -->
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
         onclick={() => {
           mapSession.toggleTokenVisibility(tokenId);
           onClose();
@@ -154,6 +162,7 @@
 
       <button
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-red-400"
+        role="menuitem"
         onclick={() => {
           mapSession.removeToken(tokenId);
           onClose();
@@ -178,6 +187,7 @@
       >
         <button
           class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+          role="menuitem"
           aria-haspopup="menu"
           aria-expanded={showResizeSubmenu}
           onclick={(e) => {
@@ -258,6 +268,7 @@
       >
         <button
           class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+          role="menuitem"
           aria-haspopup="menu"
           aria-expanded={showStatusSubmenu}
           onclick={(e) => {
@@ -333,6 +344,7 @@
   {:else}
     <button
       class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+      role="menuitem"
       onclick={() => {
         mapSession.ping(imgX, imgY);
         onClose();
