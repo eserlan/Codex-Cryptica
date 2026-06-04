@@ -40,13 +40,15 @@ function findHtmlFiles(dir, results = []) {
 // SvelteKit generates relative CSS hrefs for pages in subdirectories
 // (e.g. "../_app/immutable/assets/app.css"). Critters resolves paths
 // against `publicPath`, so it can't follow relative `../` hrefs.
-// Normalise them to absolute paths before processing, then restore.
+// Normalise them to absolute paths — the output stays absolute, which
+// is fine since the site deploys at root `/`.
 function makeHrefsAbsolute(html, fileDir) {
   return html.replace(
     /(<link\b[^>]+\bhref=")([^"]+\.css)("[^>]*>)/g,
     (match, pre, href, post) => {
       if (href.startsWith("/") || href.startsWith("http")) return match;
-      const abs = "/" + relative(buildDir, resolve(fileDir, href));
+      // Use forward slashes explicitly to handle Windows path separators.
+      const abs = "/" + relative(buildDir, resolve(fileDir, href)).replace(/\\/g, "/");
       return `${pre}${abs}${post}`;
     }
   );
@@ -77,7 +79,7 @@ for (const file of htmlFiles) {
     ok++;
   } catch (err) {
     console.warn(
-      `[critters] Warning: skipped ${relative(buildDir, file)}: ${err.message}`
+      `[critters] Warning: skipped ${relative(buildDir, file)}: ${err instanceof Error ? err.message : String(err)}`
     );
     skipped++;
   }
