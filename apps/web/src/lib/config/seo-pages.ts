@@ -1053,6 +1053,43 @@ export const featuresConfig: Record<string, SEOPageData> = {
       },
     ],
   },
+  "ai-gm-assistant": {
+    slug: "ai-gm-assistant",
+    title: "Local-First AI GM Assistant & Lore Co-Author | Codex Cryptica",
+    description: "Co-author campaign notes and generate fantasy details using Codex Cryptica's local-first AI Lore Oracle. Zero data leakage, full creative privacy.",
+    h1: "AI GM Assistant & Lore Oracle",
+    subheading: "Co-author lore, design NPCs, and outline plots with absolute privacy.",
+    introText: "Supercharge your worldbuilding using Codex Cryptica's integrated Lore Oracle. Generate consistent NPC details, settlement layouts, or plot hooks directly inside your workspace using secure, private AI models that respect your campaign context.",
+    ctaText: "Try AI Assistant Features",
+    keywords: ["ai gm assistant", "rpg ai assistant", "dnd dungeon master assistant", "lore co-author"],
+    features: [
+      {
+        title: "Context-Aware Generation",
+        description: "The Lore Oracle reads your active folder structure and notes to generate relevant and cohesive additions.",
+        icon: "icon-[lucide--sparkles]"
+      },
+      {
+        title: "Category Templates",
+        description: "Instantly convert raw AI chat outputs into structured entity files (characters, factions, items) with one click.",
+        icon: "icon-[lucide--clipboard-list]"
+      },
+      {
+        title: "Absolute Privacy",
+        description: "Your prompts are sent directly to the LLM API provider and are never stored on third-party servers. Your raw data stays local.",
+        icon: "icon-[lucide--lock]"
+      }
+    ],
+    faq: [
+      {
+        question: "Do I need a paid AI subscription?",
+        answer: "No. Codex Cryptica provides a shared system proxy for immediate free AI assistance, and allows you to supply your own Gemini API key for unlimited usage."
+      },
+      {
+        question: "Is my campaign prompt context secure?",
+        answer: "Yes, your campaign text is sent directly to the LLM API provider and is never stored on our servers."
+      }
+    ]
+  }
 };
 
 export interface SEOImportPageData extends SEOPageData {
