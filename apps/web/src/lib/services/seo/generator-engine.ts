@@ -1178,7 +1178,7 @@ QUALITY RULES:
 - Every NPC must feel like a completely different person — avoid repeating names, archetypes, or backstory structures.
 - Avoid overused NPC name patterns. Do NOT use: Kael, Theron, Zara, Aldric, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
 - The secret should be genuinely surprising and table-usable, not a generic "dark past."
-- Place names must be specific and invented — no "the old district" or "the lower city."
+- Place names must be specific and invented — no "the old district", "the lower city", "Oakhaven", "Millbrook", "Riverdale", or similar generic compound settlement names.
 - Before finalising, silently check: is this name original and not on the forbidden list? Is the secret actually interesting? Rewrite if yes.`;
 
         const moralityAnchor = theme
@@ -1584,7 +1584,7 @@ QUALITY RULES:
 - Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
 - Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
 - NPC names must feel culturally specific and phonetically varied — do NOT use Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
-- Place names (bases, districts, landmarks) must be specific and invented — never use 'the old district', 'the lower city', or other generic geography. Every location should have a proper name.
+- Place names (bases, districts, landmarks) must be specific and invented — never use 'the old district', 'the lower city', 'Oakhaven', 'Millbrook', 'Riverdale', or similar generic compound settlement names. Every location should have a proper, distinctive name.
 - Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), logical alignment between public face and secret agenda. Rewrite if issues found.`;
 
         const userMessage = `Generate a faction. Variation seed: ${varianceSeed}.
@@ -1890,13 +1890,13 @@ ${hook}`;
 
     // Generate Name using location styling
     const prefixes = [
-      "Oakhaven",
+      "Cinderwall",
       "Stonebridge",
-      "Riverbend",
-      "Ironkeep",
-      "Shadowfen",
-      "Sunvale",
-      "Windycrest",
+      "Coppergate",
+      "Ashveil",
+      "Saltmarsh",
+      "Redthorn",
+      "Greywarden",
       "Deepwell",
     ];
     const suffixes = [
