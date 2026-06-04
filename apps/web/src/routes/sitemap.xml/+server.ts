@@ -1,4 +1,4 @@
-import { solutions, comparisons } from "$lib/config/seo-pages";
+import { solutions, comparisons, featuresConfig, importsConfig } from "$lib/config/seo-pages";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 export const prerender = true;
@@ -32,16 +32,7 @@ export async function GET() {
       changefreq: "monthly",
       priority: "0.8",
     },
-    {
-      path: "/tools/dnd-npc-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    {
-      path: "/tools/faction-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
+
     {
       path: "/tools/vampire-clan-generator",
       changefreq: "monthly",
@@ -77,6 +68,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Feature pages
+  const featureRoutes = Object.keys(featuresConfig).map((slug) => ({
+    path: `/features/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   // Generator pages
   const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
     (slug) => ({
@@ -86,11 +84,20 @@ export async function GET() {
     }),
   );
 
+  // Import pages
+  const importRoutes = Object.keys(importsConfig).map((slug) => ({
+    path: `/import/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
     ...comparisonRoutes,
+    ...featureRoutes,
     ...generatorRoutes,
+    ...importRoutes,
   ];
 
   const staticUrls = allStatic

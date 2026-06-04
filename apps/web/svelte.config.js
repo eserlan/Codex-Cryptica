@@ -46,9 +46,16 @@ const config = {
       ],
       handleUnseenRoutes: "ignore",
       handleHttpError: ({ path, message }) => {
-        // llms.txt is a static file served at the domain root; ignore 404s
-        // that arise during prerendering of optional static entries.
-        if (path.endsWith("/llms.txt")) return;
+        // Ignore static assets/metadata files that return 404 during local crawling
+        if (
+          path.endsWith("/llms.txt") ||
+          path.endsWith("/favicon.png") ||
+          path.endsWith("/logo.png") ||
+          path.endsWith("/manifest.webmanifest") ||
+          path.includes("/images/")
+        ) {
+          return;
+        }
         throw new Error(message);
       },
     },

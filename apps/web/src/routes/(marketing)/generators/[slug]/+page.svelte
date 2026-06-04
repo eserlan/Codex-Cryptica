@@ -62,7 +62,7 @@
     },
   } as const;
 
-  const meta = slugMeta[data.slug];
+  const meta = $derived(slugMeta[data.slug]);
 
   // State grouped per generator type (#6)
   let npc = $state({

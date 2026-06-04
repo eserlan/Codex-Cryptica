@@ -147,4 +147,86 @@ describe("SeoImportService", () => {
     expect(res).toBeNull();
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
   });
+
+  it("should successfully import multiple drafts from an array", async () => {
+    const drafts = [
+      {
+        type: "character",
+        title: "Barek Steeleye",
+        content: "GM Hook: Barek is looking for a map.",
+        labels: ["custom-char"],
+      },
+      {
+        type: "faction",
+        title: "The Iron Guild",
+        content: "GM Hook: The guild opposes the crown.",
+        labels: ["custom-fac"],
+      },
+    ];
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+
+    const res = await service.checkAndHandlePendingImport();
+
+    expect(res).toBe("e1"); // mock createEntity resolves to e1
+    expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(2);
+    expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
+      1,
+      "character",
+      "Barek Steeleye",
+      expect.objectContaining({
+        content: "GM Hook: Barek is looking for a map.",
+      }),
+    );
+    expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
+      2,
+      "faction",
+      "The Iron Guild",
+      expect.objectContaining({
+        content: "GM Hook: The guild opposes the crown.",
+      }),
+    );
+    expect(localStorage.getItem("__codex_pending_import")).toBeNull();
+  });
+
+  it("should strip UTM query parameters if utm_source is present in search", async () => {
+    const replaceState = vi.fn();
+    vi.stubGlobal("window", {
+      location: {
+        pathname: "/test-path",
+        search: "?utm_source=generator-faction&utm_medium=save-to-vault",
+        hash: "#test-hash",
+      },
+      history: {
+        replaceState,
+      },
+    });
+    vi.stubGlobal("document", {
+      title: "Test Page",
+    });
+
+    const res = await service.checkAndHandlePendingImport();
+    expect(res).toBeNull();
+    expect(replaceState).toHaveBeenCalledWith(
+      {},
+      "Test Page",
+      "/test-path#test-hash",
+    );
+  });
+
+  it("should not strip query parameters if utm_source is not present", async () => {
+    const replaceState = vi.fn();
+    vi.stubGlobal("window", {
+      location: {
+        pathname: "/test-path",
+        search: "?other_param=123",
+        hash: "#test-hash",
+      },
+      history: {
+        replaceState,
+      },
+    });
+
+    await service.checkAndHandlePendingImport();
+    expect(replaceState).not.toHaveBeenCalled();
+  });
 });
