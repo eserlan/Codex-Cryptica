@@ -11,6 +11,9 @@ vi.mock("$lib/config/seo-pages", () => ({
   featuresConfig: {
     "test-feat": { slug: "test-feat" },
   },
+  importsConfig: {
+    "test-import": { slug: "test-import" },
+  },
 }));
 
 vi.mock("$lib/content/blog-content", () => ({
@@ -39,6 +42,7 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain("https://codexcryptica.com/solutions/test-sol");
     expect(xml).toContain("https://codexcryptica.com/vs/test-comp");
     expect(xml).toContain("https://codexcryptica.com/features/test-feat");
+    expect(xml).toContain("https://codexcryptica.com/import/test-import");
     expect(xml).toContain("https://codexcryptica.com/generators/npc");
     expect(xml).toContain("https://codexcryptica.com/blog/test-blog-post");
   });
