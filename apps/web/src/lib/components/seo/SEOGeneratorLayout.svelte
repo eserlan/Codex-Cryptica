@@ -143,6 +143,42 @@
       : "",
   );
 
+  const resultJsonLd = $derived(
+    generatedData
+      ? generatedData.type === "character"
+        ? JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: generatedData.title,
+            description:
+              generatedData.summary ||
+              generatedData.content?.slice(0, 150) ||
+              "",
+            jobTitle: "Fictional Character",
+          })
+        : generatedData.type === "location"
+          ? JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Place",
+              name: generatedData.title,
+              description:
+                generatedData.summary ||
+                generatedData.content?.slice(0, 150) ||
+                "",
+            })
+          : JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "CreativeWork",
+              name: generatedData.title,
+              description:
+                generatedData.summary ||
+                generatedData.content?.slice(0, 150) ||
+                "",
+              genre: "Fantasy / RPG Campaign Lore",
+            })
+      : null,
+  );
+
   async function handleGenerate() {
     isExampleDraft = false;
     isGenerating = true;
@@ -359,6 +395,9 @@
   <link rel="help" href="{base}/llms.txt" />
   {#if faqJsonLd}
     {@html `<script type="application/ld+json">${faqJsonLd}</` + "script>"}
+  {/if}
+  {#if resultJsonLd}
+    {@html `<script type="application/ld+json">${resultJsonLd}</` + "script>"}
   {/if}
 </svelte:head>
 

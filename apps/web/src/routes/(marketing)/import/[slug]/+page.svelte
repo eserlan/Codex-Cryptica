@@ -305,16 +305,60 @@
         "Failed to store import data. Please check localStorage permissions.";
     }
   }
+
+  const pageUrl = $derived(`https://codexcryptica.com/import/${pageData.slug}`);
+
+  // FAQ Schema
+  const faqSchema = $derived(
+    pageData.faq && pageData.faq.length > 0
+      ? JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: pageData.faq.map((f: any) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: f.answer,
+            },
+          })),
+        })
+      : null,
+  );
+
+  // Breadcrumb Schema
+  const breadcrumbSchema = $derived(
+    JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://codexcryptica.com",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: pageData.h1,
+          item: pageUrl,
+        },
+      ],
+    }),
+  );
 </script>
 
 <svelte:head>
   <title>{pageData.title}</title>
   <meta name="description" content={pageData.description} />
+  <meta name="keywords" content={pageData.keywords?.join(", ")} />
   <meta name="robots" content="index, follow" />
-  <link
-    rel="canonical"
-    href="https://codexcryptica.com/import/{pageData.slug}"
-  />
+  <link rel="canonical" href={pageUrl} />
+  {#if faqSchema}
+    {@html `<script type="application/ld+json">${faqSchema}</` + "script>"}
+  {/if}
+  {@html `<script type="application/ld+json">${breadcrumbSchema}</` + "script>"}
 </svelte:head>
 
 <div
