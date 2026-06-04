@@ -51,7 +51,7 @@ graph TD
 
 ### Phase 2: Dynamic Feature Pages
 
-- [ ] **Task 2.1: Implement `/features/[slug]` Dynamic Routes**
+- [x] **Task 2.1: Implement `/features/[slug]` Dynamic Routes**
   - Create dedicated feature landing pages for `/features/local-first-rpg-campaign-manager` and `/features/private-offline-worldbuilding-tool`.
   - Highlight key differentiators: data sovereignty, offline performance, and local file storage.
 

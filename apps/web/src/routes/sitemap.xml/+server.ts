@@ -1,4 +1,4 @@
-import { solutions, comparisons } from "$lib/config/seo-pages";
+import { solutions, comparisons, featuresConfig } from "$lib/config/seo-pages";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 export const prerender = true;
@@ -68,6 +68,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Feature pages
+  const featureRoutes = Object.keys(featuresConfig).map((slug) => ({
+    path: `/features/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   // Generator pages
   const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
     (slug) => ({
@@ -81,6 +88,7 @@ export async function GET() {
     ...staticRoutes,
     ...solutionRoutes,
     ...comparisonRoutes,
+    ...featureRoutes,
     ...generatorRoutes,
   ];
 
