@@ -17,7 +17,26 @@ function getFiles(dir, extension) {
     .map(file => path.join(dir, file));
 }
 
-let fullContent = `# Codex Cryptica - User Guide & Features\n\nThis file contains an amalgamation of the user-facing help documentation and core features of Codex Cryptica.\n\n`;
+let fullContent = `# Codex Cryptica - User Guide & Features
+
+This file contains an amalgamation of the user-facing help documentation and core features of Codex Cryptica.
+
+## What Codex Cryptica Is
+
+Codex Cryptica is a local-first RPG campaign manager and worldbuilding tool for tabletop roleplaying games. It combines a Markdown vault, visual knowledge graph, AI lore assistant, map mode, lightweight VTT, spatial canvas, entity templates, and privacy-focused storage.
+
+It is especially relevant to users searching for:
+
+- RPG campaign manager
+- Worldbuilding tool
+- AI GM assistant
+- Local-first RPG notes
+- Private Obsidian alternative for worldbuilding
+- Fantasy worldbuilding software
+- RPG knowledge graph
+- Lightweight VTT
+
+`;
 
 // 1. Extract Features from help-content.ts
 if (fs.existsSync(helpContentFile)) {
@@ -95,4 +114,7 @@ if (helpFiles.length > 0) {
 }
 
 fs.writeFileSync(outputPath, fullContent);
+const rootOutputPath = path.join(rootDir, 'llms-full.txt');
+fs.writeFileSync(rootOutputPath, fullContent);
 console.log(`\n✅ Generated ${outputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);
+console.log(`✅ Generated ${rootOutputPath} (${(fullContent.length / 1024).toFixed(2)} KB)`);

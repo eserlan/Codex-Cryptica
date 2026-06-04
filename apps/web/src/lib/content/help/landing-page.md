@@ -26,4 +26,4 @@ The landing page highlights several key "Protocols" that define the application:
 
 ## Performance & SEO
 
-The landing page is optimized for near-instant load times (LCP < 1.2s) and provides crawlable metadata for search engines, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
+The landing page is optimised for fast load times and crawlable metadata, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
