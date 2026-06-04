@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { safeJsonLd } from "$lib/utils/json-ld";
   import type {
     SEOPageData,
     SEOComparisonPageData,
@@ -49,8 +50,7 @@
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const jsonLdString = $derived(JSON.stringify(jsonLd));
+  const jsonLdString = $derived(safeJsonLd(jsonLd));
 
   const pageUrl = $derived(
     canonicalUrl
@@ -98,8 +98,7 @@
         ],
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const breadcrumbString = $derived(JSON.stringify(breadcrumb));
+  const breadcrumbString = $derived(safeJsonLd(breadcrumb));
 
   function toggleFaq(index: number) {
     openFaqIndex = openFaqIndex === index ? null : index;
@@ -127,12 +126,14 @@
   <meta name="twitter:description" content={data.description} />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
-  <script type="application/ld+json">
-{jsonLdString}
-  </script>
-  <script type="application/ld+json">
-{breadcrumbString}
-  </script>
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${jsonLdString}</scr` +
+    `ipt>`}
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${breadcrumbString}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div

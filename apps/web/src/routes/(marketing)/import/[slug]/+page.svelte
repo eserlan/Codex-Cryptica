@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
+  import { safeJsonLd } from "$lib/utils/json-ld";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -312,7 +313,7 @@
 
   const faqSchema = $derived(
     pageData.faq && pageData.faq.length > 0
-      ? JSON.stringify({
+      ? safeJsonLd({
           "@context": "https://schema.org",
           "@type": "FAQPage",
           mainEntity: pageData.faq.map((f) => ({
@@ -328,9 +329,8 @@
   );
 
   // Breadcrumb Schema
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const breadcrumbSchema = $derived(
-    JSON.stringify({
+    safeJsonLd({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -358,13 +358,13 @@
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href={pageUrl} />
   {#if faqSchema}
-    <script type="application/ld+json">
-{faqSchema}
-    </script>
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` + `ipt type="application/ld+json">${faqSchema}</scr` + `ipt>`}
   {/if}
-  <script type="application/ld+json">
-{breadcrumbSchema}
-  </script>
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${breadcrumbSchema}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div

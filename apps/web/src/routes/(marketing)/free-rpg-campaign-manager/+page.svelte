@@ -2,6 +2,7 @@
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
   import { fly } from "svelte/transition";
+  import { safeJsonLd } from "$lib/utils/json-ld";
 
   async function startDemo(theme: string) {
     if (browser) {
@@ -50,8 +51,7 @@
     ],
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const faqSchemaString = $derived(JSON.stringify(faqSchema));
+  const faqSchemaString = $derived(safeJsonLd(faqSchema));
 
   const capabilities = [
     {
@@ -143,9 +143,10 @@
   />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
-  <script type="application/ld+json">
-{faqSchemaString}
-  </script>
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${faqSchemaString}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div

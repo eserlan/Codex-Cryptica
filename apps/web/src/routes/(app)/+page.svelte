@@ -8,6 +8,7 @@
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
+  import { safeJsonLd } from "$lib/utils/json-ld";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -63,8 +64,7 @@
     "starwars",
     "startrek",
   ];
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const schemaOrgString = $derived(JSON.stringify(SCHEMA_ORG));
+  const schemaOrgString = $derived(safeJsonLd(SCHEMA_ORG));
 
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
@@ -203,9 +203,10 @@
 
 <svelte:head>
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
-    <script type="application/ld+json">
-{schemaOrgString}
-    </script>
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` +
+      `ipt type="application/ld+json">${schemaOrgString}</scr` +
+      `ipt>`}
   {/if}
 </svelte:head>
 
