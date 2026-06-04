@@ -2,7 +2,7 @@
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { tick } from "svelte";
+  import { tick, onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
@@ -195,6 +195,107 @@
       'class="flex flex-col mb-5"',
     );
 
+  interface SessionDraft {
+    type: string;
+    title: string;
+    content: string;
+    lore?: string;
+    labels: string[];
+    status: string;
+  }
+
+  let sessionDrafts = $state<SessionDraft[]>([]);
+
+  onMount(() => {
+    if (typeof sessionStorage !== "undefined") {
+      const stored = sessionStorage.getItem("__codex_session_drafts");
+      if (stored) {
+        try {
+          sessionDrafts = JSON.parse(stored);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  });
+
+  function saveSessionDrafts(newDrafts: SessionDraft[]) {
+    sessionDrafts = newDrafts;
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(
+        "__codex_session_drafts",
+        JSON.stringify(newDrafts),
+      );
+    }
+  }
+
+  function addToSessionHub() {
+    if (!generatedData) return;
+    const content = generatedData.summary
+      ? `*${generatedData.summary}*\n\n${generatedData.content}`
+      : generatedData.content;
+    const newDraft: SessionDraft = {
+      type: generatedData.type,
+      title: generatedData.title,
+      content,
+      lore: generatedData.lore,
+      labels: generatedData.labels,
+      status: generatedData.status,
+    };
+
+    const exists = sessionDrafts.some(
+      (d) => d.title.toLowerCase() === newDraft.title.toLowerCase(),
+    );
+    if (!exists) {
+      saveSessionDrafts([...sessionDrafts, newDraft]);
+      logMicroConversion("add_to_hub", generatedData.type);
+    }
+  }
+
+  function removeFromSessionHub(title: string) {
+    saveSessionDrafts(sessionDrafts.filter((d) => d.title !== title));
+  }
+
+  function clearSessionHub() {
+    saveSessionDrafts([]);
+  }
+
+  function handleSaveAllToCodex() {
+    if (sessionDrafts.length === 0) return;
+    try {
+      localStorage.setItem(
+        "__codex_pending_import",
+        JSON.stringify(sessionDrafts),
+      );
+      showSaveModal = true;
+      logMacroConversion("save_all", sessionDrafts.length);
+    } catch {
+      errorMessage = "Storage access is blocked. Please copy drafts manually.";
+    }
+  }
+
+  function logMicroConversion(action: string, type: string) {
+    console.log(`[Metric] Micro-conversion triggered: ${action} for ${type}`);
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "micro_conversion", {
+        event_category: "engagement",
+        event_label: `${action}_${type}`,
+      });
+    }
+  }
+
+  function logMacroConversion(action: string, count: number) {
+    console.log(
+      `[Metric] Macro-conversion triggered: ${action} with ${count} entities`,
+    );
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "macro_conversion", {
+        event_category: "onboarding",
+        event_label: `${action}_count_${count}`,
+      });
+    }
+  }
+
   function handleSaveToCodex() {
     if (!generatedData) return;
 
@@ -213,6 +314,7 @@
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
       showSaveModal = true;
+      logMacroConversion("save_single", 1);
     } catch {
       errorMessage =
         "Storage access is blocked. Please copy the Markdown below instead.";
@@ -415,7 +517,7 @@
                     </span>
                   {/each}
                 </div>
-                <div class="flex gap-2 flex-shrink-0">
+                <div class="flex gap-2 flex-wrap items-center flex-shrink-0">
                   <button
                     type="button"
                     onclick={handleSaveToCodex}
@@ -423,6 +525,15 @@
                     id="save-to-codex-btn"
                   >
                     Save to Codex
+                  </button>
+                  <button
+                    type="button"
+                    onclick={addToSessionHub}
+                    class="px-4 py-2 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
+                    id="add-to-hub-btn"
+                  >
+                    <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+                    Link to Hub
                   </button>
                   <button
                     type="button"
@@ -490,6 +601,86 @@
               GM utility details appear here after generation.
             </p>
           </div>
+        {/if}
+      </div>
+
+      <!-- Session Hub Widget -->
+      <div
+        class="p-5 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm mt-6 flex flex-col gap-3 sticky top-[28rem]"
+      >
+        <div
+          class="flex items-center justify-between border-b border-theme-border/60 pb-2"
+        >
+          <h3
+            class="font-header font-bold text-xs uppercase tracking-wider text-theme-primary"
+          >
+            Session Hub
+          </h3>
+          {#if sessionDrafts.length > 0}
+            <button
+              type="button"
+              onclick={clearSessionHub}
+              class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300"
+            >
+              Clear
+            </button>
+          {/if}
+        </div>
+        {#if sessionDrafts.length === 0}
+          <p class="text-[10px] text-theme-muted leading-relaxed">
+            Generate drafts and click "Link to Hub" to build a connected
+            campaign vault before exporting.
+          </p>
+        {:else}
+          <ul class="space-y-2 max-h-[200px] overflow-y-auto">
+            {#each sessionDrafts as draft (draft.title)}
+              <li
+                class="flex items-center justify-between gap-2 p-2 bg-theme-surface/45 border border-theme-border/30 rounded-lg text-xs"
+              >
+                <span
+                  class="truncate font-medium text-theme-text/90 flex items-center gap-1.5"
+                >
+                  {#if draft.type === "character"}
+                    <span
+                      class="icon-[lucide--user] w-3.5 h-3.5 text-theme-primary"
+                    ></span>
+                  {:else if draft.type === "faction"}
+                    <span
+                      class="icon-[lucide--flag] w-3.5 h-3.5 text-theme-primary"
+                    ></span>
+                  {:else if draft.type === "settlement" || draft.type === "location"}
+                    <span
+                      class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+                    ></span>
+                  {:else if draft.type === "item"}
+                    <span
+                      class="icon-[lucide--sparkles] w-3.5 h-3.5 text-theme-primary"
+                    ></span>
+                  {:else}
+                    <span
+                      class="icon-[lucide--file-text] w-3.5 h-3.5 text-theme-primary"
+                    ></span>
+                  {/if}
+                  {draft.title}
+                </span>
+                <button
+                  type="button"
+                  onclick={() => removeFromSessionHub(draft.title)}
+                  class="text-theme-muted hover:text-rose-400 transition-colors flex-shrink-0"
+                  aria-label="Remove draft"
+                >
+                  <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+          <button
+            type="button"
+            onclick={handleSaveAllToCodex}
+            class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-1"
+          >
+            Save Hub to Codex ({sessionDrafts.length})
+          </button>
         {/if}
       </div>
     </div>

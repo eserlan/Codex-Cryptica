@@ -44,10 +44,20 @@ export class SeoImportService {
     try {
       // Parse & Validate
       const rawData = JSON.parse(payload);
-      const draft = ImportDraftSchema.parse(rawData);
+
+      let drafts: ImportDraft[] = [];
+      if (Array.isArray(rawData)) {
+        drafts = z.array(ImportDraftSchema).parse(rawData);
+      } else {
+        drafts = [ImportDraftSchema.parse(rawData)];
+      }
 
       // Clean up localStorage immediately to prevent double-import on reload
       localStorage.removeItem("__codex_pending_import");
+
+      if (drafts.length === 0) {
+        return null;
+      }
 
       // Ensure a vault is active
       if (!this.vaultStore.isInitialized) {
@@ -67,42 +77,50 @@ export class SeoImportService {
         }
       }
 
-      // Check for duplicate entity title and append suffix if necessary
-      let title = draft.title;
-      let counter = 1;
-      const entities = this.vaultStore.entities;
-      const titleLower = title.toLowerCase();
+      let lastImportedId: string | null = null;
 
-      // Check if duplicate title exists in active vault
-      const isDuplicate = Object.values(entities).some(
-        (e) => e.title.toLowerCase() === titleLower,
-      );
+      for (const draft of drafts) {
+        // Check for duplicate entity title and append suffix if necessary
+        let title = draft.title;
+        let counter = 1;
+        const entities = this.vaultStore.entities;
+        const titleLower = title.toLowerCase();
 
-      if (isDuplicate) {
-        let uniqueTitle = title;
-        while (
-          Object.values(this.vaultStore.entities).some(
-            (e) => e.title.toLowerCase() === uniqueTitle.toLowerCase(),
-          )
-        ) {
-          uniqueTitle = `${title} (Imported${counter > 1 ? ` ${counter}` : ""})`;
-          counter++;
+        // Check if duplicate title exists in active vault
+        const isDuplicate = Object.values(entities).some(
+          (e) => e.title.toLowerCase() === titleLower,
+        );
+
+        if (isDuplicate) {
+          let uniqueTitle = title;
+          while (
+            Object.values(this.vaultStore.entities).some(
+              (e) => e.title.toLowerCase() === uniqueTitle.toLowerCase(),
+            )
+          ) {
+            uniqueTitle = `${title} (Imported${counter > 1 ? ` ${counter}` : ""})`;
+            counter++;
+          }
+          title = uniqueTitle;
         }
-        title = uniqueTitle;
+
+        // Import entity to the vault
+        const entityId = await this.vaultStore.createEntity(draft.type, title, {
+          content: draft.content,
+          lore: draft.lore || "",
+          labels: draft.labels,
+          status: draft.status,
+        });
+
+        lastImportedId = entityId;
       }
 
-      // Import entity to the vault
-      const entityId = await this.vaultStore.createEntity(draft.type, title, {
-        content: draft.content,
-        lore: draft.lore || "",
-        labels: draft.labels,
-        status: draft.status,
-      });
+      // Select the last imported entity
+      if (lastImportedId) {
+        this.vaultStore.selectedEntityId = lastImportedId;
+      }
 
-      // Select the imported entity
-      this.vaultStore.selectedEntityId = entityId;
-
-      return entityId;
+      return lastImportedId;
     } catch (err) {
       console.error("Failed to parse and import pending SEO draft:", err);
       // Clean up localStorage anyway to avoid stuck alert/loop

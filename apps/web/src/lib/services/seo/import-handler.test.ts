@@ -147,4 +147,44 @@ describe("SeoImportService", () => {
     expect(res).toBeNull();
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
   });
+
+  it("should successfully import multiple drafts from an array", async () => {
+    const drafts = [
+      {
+        type: "character",
+        title: "Barek Steeleye",
+        content: "GM Hook: Barek is looking for a map.",
+        labels: ["custom-char"],
+      },
+      {
+        type: "faction",
+        title: "The Iron Guild",
+        content: "GM Hook: The guild opposes the crown.",
+        labels: ["custom-fac"],
+      },
+    ];
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+
+    const res = await service.checkAndHandlePendingImport();
+
+    expect(res).toBe("e1"); // mock createEntity resolves to e1
+    expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(2);
+    expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
+      1,
+      "character",
+      "Barek Steeleye",
+      expect.objectContaining({
+        content: "GM Hook: Barek is looking for a map.",
+      }),
+    );
+    expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
+      2,
+      "faction",
+      "The Iron Guild",
+      expect.objectContaining({
+        content: "GM Hook: The guild opposes the crown.",
+      }),
+    );
+    expect(localStorage.getItem("__codex_pending_import")).toBeNull();
+  });
 });

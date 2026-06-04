@@ -57,11 +57,11 @@ graph TD
 
 ### Phase 3: Generator Funnel Enhancement
 
-- [ ] **Task 3.1: Inter-Entity Linking System**
+- [x] **Task 3.1: Inter-Entity Linking System**
   - Implement relationships within generator layouts allowing users to dynamically bind NPCs to Factions or Locations in a temporary local session state.
-- [ ] **Task 3.2: Unified Onboarding Export Flow**
+- [x] **Task 3.2: Unified Onboarding Export Flow**
   - Update the "Save to Vault" CTA to package linked entities in `localStorage` before redirection.
-- [ ] **Task 3.3: Micro-Conversion Tracking**
+- [x] **Task 3.3: Micro-Conversion Tracking**
   - Log micro-customizations (editing name, trait rerolls) alongside macro downloads.
 
 ### Phase 4: Import & Migration Hubs
