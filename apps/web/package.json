@@ -61,6 +61,7 @@
     "markdown-it-task-lists": "^2.1.1",
     "marked": "^18.0.4",
     "marked-gfm-heading-id": "^4.1.4",
+
     "peerjs": "^1.5.5",
     "schema": "workspace:*",
     "svelte-tiptap": "^3.0.1",
