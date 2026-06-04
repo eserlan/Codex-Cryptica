@@ -6,13 +6,14 @@
     generatorEngine,
     factionConfig,
     npcThemeConfig,
-    npcConfig,
   } from "$lib/services/seo/generator-engine";
 
   let theme = $state(factionConfig.themes[0]);
   let ancestry = $state(npcThemeConfig.ancestries[factionConfig.themes[0]][0]);
   let role = $state(npcThemeConfig.roles[factionConfig.themes[0]][0]);
-  let alignment = $state(npcConfig.alignments[0]);
+  let alignment = $state(
+    npcThemeConfig.moralities[factionConfig.themes[0]][0].id,
+  );
   let campaignContext = $state("");
 
   const reverseThemeMap: Record<string, string> = {

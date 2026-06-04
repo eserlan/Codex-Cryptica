@@ -700,6 +700,239 @@ export const npcThemeConfig = {
       "Mechanic",
     ],
   } as Record<string, string[]>,
+  moralities: {
+    "Classic Fantasy": [
+      {
+        id: "chivalric_code",
+        label: "Chivalric Code",
+        aiPromptDirective:
+          "Write this NPC with an unshakeable sense of honor, classical righteousness, and duty. Their vocabulary is formal, respectful, and rejects deceitful or underhanded methods.",
+      },
+      {
+        id: "common_good",
+        label: "Common Good",
+        aiPromptDirective:
+          "This NPC is driven entirely by empathy and the immediate welfare of the community. They are casual, caring, and willing to quietly break unjust rules to protect others.",
+      },
+      {
+        id: "enlightened_balance",
+        label: "Enlightened Balance",
+        aiPromptDirective:
+          "Write this NPC as an objective, emotionally level philosopher who prioritizes cosmic or natural balance. Avoid emotional outbursts or blind loyalty to any faction.",
+      },
+      {
+        id: "mercenary_instinct",
+        label: "Mercenary Instinct",
+        aiPromptDirective:
+          "This NPC is intensely pragmatic, apolitical, and motivated by coins, safety, or trade. Their dialogue should be transactional, street-smart, and grounded in cold reality.",
+      },
+      {
+        id: "zealous_crusade",
+        label: "Zealous Crusade",
+        aiPromptDirective:
+          "Write this character with intense, uncompromising conviction toward a specific dogma, deity, or ideal. Their speech is passionate, direct, and completely intolerant of compromise.",
+      },
+      {
+        id: "power_absolute",
+        label: "Power at All Costs",
+        aiPromptDirective:
+          "This character is entirely self-serving, ambitious, and ruthless. Their behavior can range from highly charismatic manipulation to terrifying authority, always prioritizing personal leverage.",
+      },
+    ],
+    "Cyberpunk / Corporate": [
+      {
+        id: "corporate_loyalist",
+        label: "Corporate Loyalist",
+        aiPromptDirective:
+          "Incorporate corporate buzzwords and clinical, risk-managed PR language. This character prioritizes systemic order, corporate policy, and lines of credit over human empathy.",
+      },
+      {
+        id: "street_pragmatist",
+        label: "Street Pragmatist",
+        aiPromptDirective:
+          "Use sharp, weary, and highly transactional street slang. This character has no illusions about saving the world; their focus is purely short-term survival and protecting their immediate crew.",
+      },
+      {
+        id: "ideological_radical",
+        label: "Ideological Radical",
+        aiPromptDirective:
+          "Write this character with raw, anti-establishment energy. They use rebellious, anti-corp rhetoric and are actively willing to burn down systems, entirely indifferent to collateral damage.",
+      },
+      {
+        id: "cold_professional",
+        label: "Cold Professional",
+        aiPromptDirective:
+          "Dialogue must be minimal, precise, and devoid of personal bias. The character views tasks purely as mechanical execution — nothing is personal, everything is just business.",
+      },
+      {
+        id: "burned_out_cynic",
+        label: "Burned-Out Cynic",
+        aiPromptDirective:
+          "Infuse the dialogue with deep nihilism, dry sarcasm, and exhaustion. The character has seen it all fall apart and operates on a baseline expectation of systemic failure.",
+      },
+      {
+        id: "predatory_opportunist",
+        label: "Predatory Opportunist",
+        aiPromptDirective:
+          "Make this character predatory, slippery, and untrustworthy. They use smooth talk to mask aggressive self-interest and are always scanning the room for an exploit or an escape route.",
+      },
+    ],
+    "Vampire / Gothic Noir": [
+      {
+        id: "strict_ascetic",
+        label: "Strict Ascetic",
+        aiPromptDirective:
+          "Write this character with a strained, hyper-controlled demeanor. They use precise, polite, and antiquated language as a psychological armor to contain an inner, volatile darkness.",
+      },
+      {
+        id: "haunted_sympathizer",
+        label: "Haunted Sympathizer",
+        aiPromptDirective:
+          "Dialogue should convey deep guilt, hesitation, and vulnerability. The character is deeply ashamed of their actions or status and is desperately looking for small ways to do good without getting caught.",
+      },
+      {
+        id: "cold_monster",
+        label: "Cold Monster",
+        aiPromptDirective:
+          "Write this character with a chilling, detached elegance. They lack basic human empathy, treating people like simple livestock or resources, completely free of guilt or malice.",
+      },
+      {
+        id: "obsessive_zealot",
+        label: "Obsessive Zealot",
+        aiPromptDirective:
+          "Infuse the character's descriptions with an eerie, manic focus. Their dialogue should repeatedly orient toward their singular, consuming fixation, overriding all other social cues.",
+      },
+      {
+        id: "decadent_hedonist",
+        label: "Decadent Hedonist",
+        aiPromptDirective:
+          "Dialogue is theatrical, cynical, and dripping with sensory indulgence. The character uses casual amusement and hedonism to aggressively deflect from their inner decay or emptiness.",
+      },
+      {
+        id: "pragmatic_survivor",
+        label: "Pragmatic Survivor",
+        aiPromptDirective:
+          "Write this NPC as highly defensive, paranoid, and survival-driven. Their speech is guarded, they avoid making definitive promises, and they prioritize exit strategies over loyalty.",
+      },
+    ],
+    "Sci-Fi / Space Opera": [
+      {
+        id: "system_loyalist",
+        label: "System Loyalist",
+        aiPromptDirective:
+          "This character speaks with the confidence of an institutionalist. They emphasize law, civilization, hierarchy, and data-driven stability, viewing rebels or independents as dangerous chaos.",
+      },
+      {
+        id: "frontier_independent",
+        label: "Frontier Independent",
+        aiPromptDirective:
+          "Use rugged, informal, and fiercely independent dialogue. The character values self-reliance, localized trust, and personal freedom above centralized planetary laws.",
+      },
+      {
+        id: "zealous_visionary",
+        label: "Zealous Visionary",
+        aiPromptDirective:
+          "Focus the character on the future, technology, or a grand cosmic mission. They view current human suffering or ethical concerns as insignificant speed bumps on the road to evolution.",
+      },
+      {
+        id: "principled_pacifist",
+        label: "Principled Pacifist",
+        aiPromptDirective:
+          "Dialogue must be calm, deeply humanistic, and actively seek compromise. The character maintains absolute ethical boundaries against violence, regardless of how harsh the setting is.",
+      },
+      {
+        id: "opportunistic_trader",
+        label: "Opportunistic Trader",
+        aiPromptDirective:
+          "Write this character with a highly commercial, speculative, and conversational tone. They treat every interaction as an open negotiation, constantly weighing cost-benefit ratios.",
+      },
+      {
+        id: "subversive_rebel",
+        label: "Subversive Rebel",
+        aiPromptDirective:
+          "The character operates with the secrecy and intensity of an active insurgent. Their language is revolutionary, defiant, and actively seeks to disrupt or dismantle structural authority.",
+      },
+    ],
+    "Modern Conspiracy": [
+      {
+        id: "institutionalist",
+        label: "Institutionalist",
+        aiPromptDirective:
+          "Use highly clinical, dry, and compartmentalized intelligence jargon. The character prioritizes official protocol, institutional security, and the chain of command above all else.",
+      },
+      {
+        id: "noble_transgressor",
+        label: "Noble Transgressor",
+        aiPromptDirective:
+          "Write this character as a quiet, hyper-focused operative who knowingly breaks laws to achieve a greater moral good. Their dialogue is guarded but deeply principled.",
+      },
+      {
+        id: "fanatical_believer",
+        label: "Fanatical Believer",
+        aiPromptDirective:
+          "The character's speech must carry the weight of dangerous, total certainty. They view all of human society as an illusion and treat people as mere assets or collateral to be spent for the Truth.",
+      },
+      {
+        id: "unprincipled_asset",
+        label: "Unprincipled Asset",
+        aiPromptDirective:
+          "Dialogue should be highly transactional, street-smart, and amoral. The character has zero ideological loyalty, viewing their skills and information purely as commodities to sell to the highest bidder.",
+      },
+      {
+        id: "haunted_insider",
+        label: "Haunted Insider",
+        aiPromptDirective:
+          "Infuse the character's tone with intense paranoia, panic, and deep ethical distress. They are physically and mentally exhausted from keeping terrible secrets and expect betrayal at any second.",
+      },
+      {
+        id: "machiavellian_player",
+        label: "Machiavellian Player",
+        aiPromptDirective:
+          "Write this character with a charming, highly collected, and disarming social facade. Beneath this exterior, their dialogue and actions are driven entirely by cold, calculated personal advancement.",
+      },
+    ],
+    "Post-Apocalyptic": [
+      {
+        id: "collectivist",
+        label: "Collectivist",
+        aiPromptDirective:
+          "This character speaks with a rugged, collective 'we' mentality. They prioritize the survival, defense, and material resources of their specific settlement over individual rights or outsiders.",
+      },
+      {
+        id: "tribal_xenophobe",
+        label: "Tribal Xenophobe",
+        aiPromptDirective:
+          "Write this character with intense suspicion, hostility, and localized, insular language. They view anyone outside their immediate clan as a lethal threat or an untrustworthy parasite.",
+      },
+      {
+        id: "pure_scavenger",
+        label: "Pure Scavenger",
+        aiPromptDirective:
+          "Dialogue is short, practical, and heavily focused on material scrap, ammo, and survival utilities. The character avoids any long-term commitments or alliances, relying entirely on themselves.",
+      },
+      {
+        id: "wasteland_zealot",
+        label: "Wasteland Zealot",
+        aiPromptDirective:
+          "Write this character with a strange, stylized fanaticism. They use bizarre vocabulary rooted in post-apocalyptic myths or cult beliefs, viewing the ruins of the world through a terrifying religious lens.",
+      },
+      {
+        id: "despotic_ruler",
+        label: "Despotic Ruler",
+        aiPromptDirective:
+          "The character's tone is authoritative, heavy, and threatening. They enforce their will through raw intimidation, justifying their cruelty as the only practical way to hold back total wasteland anarchy.",
+      },
+      {
+        id: "utopian_builder",
+        label: "Utopian Builder",
+        aiPromptDirective:
+          "Write this character with a resilient, hopeful, and idealistic tone. Despite the harsh wasteland environment, they emphasize laws, education, historical recovery, and long-term societal rebuilding.",
+      },
+    ],
+  } as Record<
+    string,
+    { id: string; label: string; aiPromptDirective: string }[]
+  >,
 };
 
 export const vampireConfig = {
@@ -948,11 +1181,19 @@ QUALITY RULES:
 - Place names must be specific and invented — no "the old district" or "the lower city."
 - Before finalising, silently check: is this name original? Is the secret actually interesting? Is there a contradiction? Rewrite if yes.`;
 
+        const moralityAnchor = theme
+          ? npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
+          : undefined;
+        const behavioralDirective =
+          moralityAnchor?.aiPromptDirective ?? alignment;
+        const moralityLabel = moralityAnchor?.label ?? alignment;
+
         const userMessage = `Generate an NPC. Variation seed: ${varianceSeed}.
 ${theme ? `- Genre/Theme: ${theme}` : ""}
 - Ancestry/Race: ${race}
 - Role: ${role}
-- Alignment: ${alignment}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Moral Stance: ${moralityLabel}
+- Behavioral Directive: ${behavioralDirective}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
 - Naming Directive: ${chosenNamingStyle}`;
 
         const model = await this.clientManager.getModel(
@@ -1002,7 +1243,11 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
         Math.floor(Math.random() * npcConfig.plotHooks.length)
       ];
 
-    const summary = `A ${alignment.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`;
+    const fallbackMoralityLabel = theme
+      ? (npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
+          ?.label ?? alignment)
+      : alignment;
+    const summary = `A ${fallbackMoralityLabel.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`;
 
     const content = `### Who they are
 ${name} is a ${race} ${role} whose public reputation is useful, incomplete, and just suspicious enough to matter. Locals know them as someone who gets results, even when the work requires favors, secrets, or a carefully timed lie.${campaignContext ? ` In ${campaignContext}, they are already entangled in the edges of the main conflict.` : ""}
@@ -1019,7 +1264,7 @@ Introduce ${name} when the party needs a social lead, a compromised witness, or 
     const lore = `### At a Glance
 - **Ancestry**: ${race}
 - **Role**: ${role}
-- **Alignment**: ${alignment}
+- **Moral Stance**: ${fallbackMoralityLabel}
 - **Secret**: ${secret}
 - **Immediate Hook**: ${plotHook}
 

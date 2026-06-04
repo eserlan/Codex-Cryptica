@@ -9,7 +9,7 @@
     theme = $bindable(factionConfig.themes[0]),
     ancestry = $bindable(""),
     role = $bindable(""),
-    alignment = $bindable(npcConfig.alignments[0]),
+    alignment = $bindable(""),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
@@ -32,6 +32,7 @@
   const availableRoles = $derived(
     npcThemeConfig.roles[theme] ?? npcConfig.roles,
   );
+  const availableMoralities = $derived(npcThemeConfig.moralities[theme] ?? []);
 
   $effect(() => {
     if (!availableAncestries.includes(ancestry)) {
@@ -42,6 +43,13 @@
   $effect(() => {
     if (!availableRoles.includes(role)) {
       role = availableRoles[0];
+    }
+  });
+
+  $effect(() => {
+    const ids = availableMoralities.map((m) => m.id);
+    if (ids.length && !ids.includes(alignment)) {
+      alignment = ids[0];
     }
   });
 </script>
@@ -92,7 +100,7 @@
 
 <div class="flex flex-col gap-1.5">
   <label for="rpgnpc-alignment-select" class={labelClass}
-    >Choose their morality</label
+    >Choose their moral stance</label
   >
   <select
     id="rpgnpc-alignment-select"
@@ -100,8 +108,8 @@
     bind:value={alignment}
     class={selectClass}
   >
-    {#each npcConfig.alignments as a (a)}
-      <option value={a}>{a}</option>
+    {#each availableMoralities as m (m.id)}
+      <option value={m.id}>{m.label}</option>
     {/each}
   </select>
 </div>
@@ -136,10 +144,11 @@
       const roles = npcThemeConfig.roles[theme] ?? npcConfig.roles;
       ancestry = ancestries[Math.floor(Math.random() * ancestries.length)];
       role = roles[Math.floor(Math.random() * roles.length)];
-      alignment =
-        npcConfig.alignments[
-          Math.floor(Math.random() * npcConfig.alignments.length)
-        ];
+      const moralities = npcThemeConfig.moralities[theme] ?? [];
+      if (moralities.length) {
+        alignment =
+          moralities[Math.floor(Math.random() * moralities.length)].id;
+      }
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"

@@ -5,7 +5,6 @@
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import {
     generatorEngine,
-    npcConfig,
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
@@ -69,7 +68,7 @@
     theme: factionConfig.themes[0],
     ancestry: npcThemeConfig.ancestries[factionConfig.themes[0]][0],
     role: npcThemeConfig.roles[factionConfig.themes[0]][0],
-    alignment: npcConfig.alignments[0],
+    alignment: npcThemeConfig.moralities[factionConfig.themes[0]][0].id,
     campaignContext: "",
   });
 
