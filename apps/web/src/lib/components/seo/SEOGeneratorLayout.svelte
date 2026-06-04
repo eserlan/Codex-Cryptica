@@ -394,10 +394,14 @@
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
   {#if faqJsonLd}
-    {@html `<script type="application/ld+json">${faqJsonLd}</` + "script>"}
+    <script type="application/ld+json">
+{faqJsonLd}
+    </script>
   {/if}
   {#if resultJsonLd}
-    {@html `<script type="application/ld+json">${resultJsonLd}</` + "script>"}
+    <script type="application/ld+json">
+{resultJsonLd}
+    </script>
   {/if}
 </svelte:head>
 

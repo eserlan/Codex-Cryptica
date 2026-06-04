@@ -314,7 +314,7 @@
       ? JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          mainEntity: pageData.faq.map((f: any) => ({
+          mainEntity: pageData.faq.map((f) => ({
             "@type": "Question",
             name: f.question,
             acceptedAnswer: {
@@ -347,6 +347,10 @@
       ],
     }),
   );
+
+  // Mark reactive variables as used to satisfy eslint no-unused-vars
+  void faqSchema;
+  void breadcrumbSchema;
 </script>
 
 <svelte:head>
@@ -356,9 +360,13 @@
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href={pageUrl} />
   {#if faqSchema}
-    {@html `<script type="application/ld+json">${faqSchema}</` + "script>"}
+    <script type="application/ld+json">
+{faqSchema}
+    </script>
   {/if}
-  {@html `<script type="application/ld+json">${breadcrumbSchema}</` + "script>"}
+  <script type="application/ld+json">
+{breadcrumbSchema}
+  </script>
 </svelte:head>
 
 <div

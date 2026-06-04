@@ -49,10 +49,7 @@
     },
   });
 
-  const jsonLdScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(jsonLd)}</scr` +
-      `ipt>`,
-  );
+  const jsonLdString = $derived(JSON.stringify(jsonLd));
 
   const pageUrl = $derived(
     canonicalUrl
@@ -100,14 +97,15 @@
         ],
   });
 
-  const breadcrumbScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</scr` +
-      `ipt>`,
-  );
+  const breadcrumbString = $derived(JSON.stringify(breadcrumb));
 
   function toggleFaq(index: number) {
     openFaqIndex = openFaqIndex === index ? null : index;
   }
+
+  // Mark reactive variables as used to satisfy eslint no-unused-vars
+  void jsonLdString;
+  void breadcrumbString;
 </script>
 
 <svelte:head>
@@ -131,8 +129,12 @@
   <meta name="twitter:description" content={data.description} />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
-  {@html jsonLdScript}
-  {@html breadcrumbScript}
+  <script type="application/ld+json">
+{jsonLdString}
+  </script>
+  <script type="application/ld+json">
+{breadcrumbString}
+  </script>
 </svelte:head>
 
 <div

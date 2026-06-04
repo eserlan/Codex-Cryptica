@@ -42,7 +42,7 @@ export const SCHEMA_ORG = {
       ],
       storageRequirements: "Origin Private File System (OPFS)",
       softwareVersion: VERSION,
-      isAccessibleForFree: "True",
+      isAccessibleForFree: true,
       offers: {
         "@type": "Offer",
         price: "0",
