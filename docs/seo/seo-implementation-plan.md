@@ -66,12 +66,12 @@ graph TD
 
 ### Phase 4: Import & Migration Hubs
 
-- [ ] **Task 4.1: Target Import Routes**
+- [x] **Task 4.1: Target Import Routes**
   - Build out landing pages for `/import/obsidian-vault`, `/import/world-anvil-export`, `/import/kanka-json`, and `/import/legendkeeper-json`.
-- [ ] **Task 4.2: Direct Drag-and-Drop Parser UI**
+- [x] **Task 4.2: Direct Drag-and-Drop Parser UI**
   - Implement client-side parsers to extract entity trees from vault markdown files or JSON exports, previewing them dynamically before inviting users to download Codex.
 
 ### Phase 5: Privacy Use Cases
 
-- [ ] **Task 5.1: AI GM Assistant Privacy Page**
+- [x] **Task 5.1: AI GM Assistant Privacy Page**
   - Launch `/features/ai-gm-assistant` explaining the local-first zero-data-leakage architecture.

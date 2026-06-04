@@ -18,7 +18,6 @@
   });
 
   let errorMessage = $state<string | null>(null);
-  let importSuccess = $state(false);
 
   // Drag over handler
   function handleDragOver(e: DragEvent) {
@@ -100,7 +99,7 @@
               }
             }
             if (key === "tags" || key === "labels") {
-              const tags = val.replace(/[\[\]]/g, "").split(",").map(t => t.trim()).filter(Boolean);
+              const tags = val.replaceAll("[", "").replaceAll("]", "").split(",").map(t => t.trim()).filter(Boolean);
               labels.push(...tags);
             }
           }
@@ -193,7 +192,6 @@
     // Check for directories
     const items = Array.from(e.dataTransfer.items);
     if (items.some((item) => item.webkitGetAsEntry()?.isDirectory)) {
-      const files: File[] = [];
       const entryPromises = items.map((item) => {
         const entry = item.webkitGetAsEntry();
         return entry ? traverseEntry(entry) : Promise.resolve([]);
@@ -208,7 +206,6 @@
   // Helper to recursively fetch files from entries
   async function traverseEntry(entry: any): Promise<File[]> {
     return new Promise((resolve) => {
-      const files: File[] = [];
       if (entry.isFile) {
         entry.file((file: File) => resolve([file]));
       } else if (entry.isDirectory) {
@@ -216,7 +213,7 @@
         const read = () => {
           reader.readEntries(async (entries: any[]) => {
             if (entries.length === 0) {
-              resolve(files);
+              resolve([]);
             } else {
               const promises = entries.map((e) => traverseEntry(e));
               const res = await Promise.all(promises);
