@@ -1,6 +1,6 @@
 # SEO Actionable Items & Step-by-Step Implementation Plan
 
-Based on the [Grundig Research Rapport](file:///home/espen/proj/Codex-Arcana/docs/seo/grundig-research-rapport.md) and the [Strategic SEO and Product Growth Report](file:///home/espen/proj/Codex-Arcana/docs/seo/seo-deep-research.md), this document extracts key actionable items and lays out a 5-phase execution plan.
+Based on the [Grundig Research Rapport](./grundig-research-rapport.md) and the [Strategic SEO and Product Growth Report](./seo-deep-research.md), this document extracts key actionable items and lays out a 5-phase execution plan.
 
 ---
 

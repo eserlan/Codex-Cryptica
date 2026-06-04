@@ -7,7 +7,7 @@ export const prerender = true;
 export const load: PageLoad = ({ params }) => {
   const data = featuresConfig[params.slug];
   if (!data) {
-    error(404, "Feature page not found");
+    throw error(404, "Feature page not found");
   }
   return {
     feature: data,

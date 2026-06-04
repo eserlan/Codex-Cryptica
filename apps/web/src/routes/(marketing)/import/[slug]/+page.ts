@@ -7,7 +7,7 @@ export const prerender = true;
 export const load: PageLoad = ({ params }) => {
   const data = importsConfig[params.slug];
   if (!data) {
-    error(404, "Importer not found");
+    throw error(404, "Importer not found");
   }
   return {
     importPage: data,

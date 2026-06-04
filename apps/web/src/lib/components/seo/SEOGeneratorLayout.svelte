@@ -212,7 +212,10 @@
       const stored = sessionStorage.getItem("__codex_session_drafts");
       if (stored) {
         try {
-          sessionDrafts = JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            sessionDrafts = parsed;
+          }
         } catch {
           // ignore
         }

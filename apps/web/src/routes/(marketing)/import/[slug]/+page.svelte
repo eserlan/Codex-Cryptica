@@ -253,9 +253,9 @@
 
     // Check for directories
     const items = Array.from(e.dataTransfer.items);
-    if (items.some((item) => item.webkitGetAsEntry()?.isDirectory)) {
+    if (items.some((item) => item.webkitGetAsEntry?.()?.isDirectory)) {
       const entryPromises = items.map((item) => {
-        const entry = item.webkitGetAsEntry();
+        const entry = item.webkitGetAsEntry?.();
         return entry ? traverseEntry(entry) : Promise.resolve([]);
       });
       const results = await Promise.all(entryPromises);
