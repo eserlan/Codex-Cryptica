@@ -36,10 +36,10 @@
               icon: "icon-[lucide--user-round-plus]",
             },
             {
-              href: "/generators/npc",
-              label: "Procedural NPC Generator",
+              href: "/tools/rpg-npc-generator",
+              label: "RPG NPC Generator",
               summary:
-                "Use the reusable generator interface for local NPC drafts and save-to-Codex imports.",
+                "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
               icon: "icon-[lucide--users]",
             },
           ],

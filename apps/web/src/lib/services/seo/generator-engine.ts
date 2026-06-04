@@ -596,6 +596,112 @@ export const factionConfig = {
   ],
 };
 
+export const npcThemeConfig = {
+  ancestries: {
+    "Classic Fantasy": [
+      "Human",
+      "Elf",
+      "Dwarf",
+      "Halfling",
+      "Tiefling",
+      "Half-Orc",
+      "Gnome",
+      "Dragonborn",
+    ],
+    "Cyberpunk / Corporate": [
+      "Human",
+      "Street-Modified Human",
+      "Corporate Clone",
+      "Synthetic Android",
+      "Uplifted Organism",
+    ],
+    "Vampire / Gothic Noir": [
+      "Human",
+      "Dhampir",
+      "Revenant",
+      "Changed Mortal",
+      "Witchblood",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Human",
+      "Android",
+      "Colony-Born",
+      "Alien Citizen",
+      "Augmented Pilot",
+    ],
+    "Modern Conspiracy": [
+      "Human",
+      "Off-Grid Survivor",
+      "Enhanced Operative",
+      "Whistleblower",
+    ],
+    "Post-Apocalyptic": [
+      "Survivor Human",
+      "Mutant",
+      "Scavenger-Born",
+      "Vault Dweller",
+      "Wasteland Nomad",
+    ],
+  } as Record<string, string[]>,
+  roles: {
+    "Classic Fantasy": [
+      "Mage",
+      "Warrior",
+      "Rogue",
+      "Priest",
+      "Merchant",
+      "Noble",
+      "Scholar",
+      "Guard",
+    ],
+    "Cyberpunk / Corporate": [
+      "Netrunner",
+      "Street Fixer",
+      "Corporate Agent",
+      "Street Samurai",
+      "Techie",
+      "Gang Lieutenant",
+      "Medtech",
+      "Journalist",
+    ],
+    "Vampire / Gothic Noir": [
+      "Vampire Hunter",
+      "Occultist",
+      "Corrupt Noble",
+      "Private Detective",
+      "Fallen Clergy",
+      "Criminal Enforcer",
+      "Asylum Keeper",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Starship Pilot",
+      "Engineer",
+      "Colonial Marine",
+      "Diplomat",
+      "Free Trader",
+      "Scientist",
+      "AI Liaison",
+    ],
+    "Modern Conspiracy": [
+      "Intelligence Agent",
+      "Investigative Journalist",
+      "Fixer",
+      "Activist",
+      "Corporate Operative",
+      "Private Investigator",
+    ],
+    "Post-Apocalyptic": [
+      "Scavenger",
+      "Wasteland Warlord",
+      "Medic",
+      "Trader",
+      "Cult Enforcer",
+      "Scout",
+      "Mechanic",
+    ],
+  } as Record<string, string[]>,
+};
+
 export const vampireConfig = {
   archetypes: [
     "Aristocratic Court",
@@ -775,9 +881,11 @@ export class DefaultGeneratorEngine {
       role?: string;
       alignment?: string;
       campaignContext?: string;
+      theme?: string;
       useAI?: boolean;
     } = {},
   ): Promise<GeneratorOutput> {
+    const theme = options.theme;
     const race =
       options.race ||
       npcConfig.races[Math.floor(Math.random() * npcConfig.races.length)];
@@ -804,7 +912,25 @@ export class DefaultGeneratorEngine {
 
     if (options.useAI !== false) {
       try {
-        const systemInstruction = `You are an expert RPG campaign writer. You generate detailed, original NPC drafts for tabletop RPG campaigns in JSON format.
+        const npcThemeVoice: Record<string, string> = {
+          "Classic Fantasy":
+            "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+          "Cyberpunk / Corporate":
+            "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
+          "Vampire / Gothic Noir":
+            "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
+          "Sci-Fi / Space Opera":
+            "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
+          "Modern Conspiracy":
+            "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
+          "Post-Apocalyptic":
+            "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+        };
+        const voice = theme
+          ? (npcThemeVoice[theme] ?? "tabletop RPG")
+          : "tabletop RPG";
+
+        const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original NPC drafts for that setting in JSON format.
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
@@ -823,6 +949,7 @@ QUALITY RULES:
 - Before finalising, silently check: is this name original? Is the secret actually interesting? Is there a contradiction? Rewrite if yes.`;
 
         const userMessage = `Generate an NPC. Variation seed: ${varianceSeed}.
+${theme ? `- Genre/Theme: ${theme}` : ""}
 - Ancestry/Race: ${race}
 - Role: ${role}
 - Alignment: ${alignment}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
