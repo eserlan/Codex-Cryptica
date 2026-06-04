@@ -61,6 +61,7 @@
   let copied = $state(false);
   let useAI = $state(true);
   let showSaveModal = $state(false);
+  let redirectUrl = $state(`${base}/`);
 
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
@@ -122,7 +123,7 @@
   }
 
   function confirmSaveRedirect() {
-    window.location.href = `${base}/`;
+    window.location.href = redirectUrl;
   }
 
   const faqJsonLd = $derived(
@@ -248,7 +249,6 @@
     );
     if (!exists) {
       saveSessionDrafts([...sessionDrafts, newDraft]);
-      logMicroConversion("add_to_hub", generatedData.type);
     }
   }
 
@@ -267,32 +267,10 @@
         "__codex_pending_import",
         JSON.stringify(sessionDrafts),
       );
+      redirectUrl = `${base}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
-      logMacroConversion("save_all", sessionDrafts.length);
     } catch {
       errorMessage = "Storage access is blocked. Please copy drafts manually.";
-    }
-  }
-
-  function logMicroConversion(action: string, type: string) {
-    console.log(`[Metric] Micro-conversion triggered: ${action} for ${type}`);
-    if (typeof window !== "undefined" && (window as any).cf) {
-      (window as any).cf("event", {
-        name: "micro_conversion",
-        value: `${action}_${type}`,
-      });
-    }
-  }
-
-  function logMacroConversion(action: string, count: number) {
-    console.log(
-      `[Metric] Macro-conversion triggered: ${action} with ${count} entities`,
-    );
-    if (typeof window !== "undefined" && (window as any).cf) {
-      (window as any).cf("event", {
-        name: "macro_conversion",
-        value: `${action}_count_${count}`,
-      });
     }
   }
 
@@ -313,8 +291,8 @@
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
+      redirectUrl = `${base}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;
-      logMacroConversion("save_single", 1);
     } catch {
       errorMessage =
         "Storage access is blocked. Please copy the Markdown below instead.";

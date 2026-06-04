@@ -8,6 +8,9 @@ vi.mock("$lib/config/seo-pages", () => ({
   comparisons: {
     "test-comp": { slug: "test-comp" },
   },
+  featuresConfig: {
+    "test-feat": { slug: "test-feat" },
+  },
 }));
 
 vi.mock("$lib/content/blog-content", () => ({
@@ -29,12 +32,13 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain("<urlset");
     expect(xml).toContain("https://codexcryptica.com/tools");
-    expect(xml).toContain("https://codexcryptica.com/tools/faction-generator");
+    expect(xml).toContain("https://codexcryptica.com/generators/faction");
     expect(xml).toContain(
       "https://codexcryptica.com/tools/vampire-clan-generator",
     );
     expect(xml).toContain("https://codexcryptica.com/solutions/test-sol");
     expect(xml).toContain("https://codexcryptica.com/vs/test-comp");
+    expect(xml).toContain("https://codexcryptica.com/features/test-feat");
     expect(xml).toContain("https://codexcryptica.com/generators/npc");
     expect(xml).toContain("https://codexcryptica.com/blog/test-blog-post");
   });

@@ -36,6 +36,12 @@ export class SeoImportService {
       return null;
     }
 
+    // Clean up UTM query parameters from the address bar if present
+    if (window.history && window.location.search.includes("utm_source")) {
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+
     const payload = localStorage.getItem("__codex_pending_import");
     if (!payload) {
       return null;
