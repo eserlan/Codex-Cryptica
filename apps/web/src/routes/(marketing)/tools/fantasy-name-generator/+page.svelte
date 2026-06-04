@@ -64,7 +64,7 @@
   {faqs}
   {generate}
 >
-  {#snippet formFields()}
+  {#snippet formFields(_trigger)}
     <NameFormFields
       bind:culture
       bind:gender

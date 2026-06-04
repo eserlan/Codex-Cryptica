@@ -111,8 +111,6 @@
     }
   });
 
-  let triggerGen = $state<(() => void) | undefined>(undefined);
-
   async function generate({ useAI }: { useAI: boolean }) {
     if (data.slug === "npc") {
       return generatorEngine.generateNPC({ ...npc, useAI });
@@ -143,17 +141,15 @@
   bind:theme={faction.theme}
   isThemeCustomizable={data.slug === "faction"}
   {generate}
-  registerTrigger={(fn) => {
-    triggerGen = fn;
-  }}
 >
-  {#snippet formFields()}
+  {#snippet formFields(trigger)}
     {#if data.slug === "npc"}
       <NPCFormFields
         bind:race={npc.race}
         bind:role={npc.role}
         bind:alignment={npc.alignment}
         bind:campaignContext={npc.campaignContext}
+        onSurprise={trigger}
       />
     {:else if data.slug === "settlement"}
       <div class="flex flex-col gap-1.5">
@@ -214,7 +210,7 @@
         bind:scope={faction.scope}
         bind:alignment={faction.alignment}
         bind:campaignContext={faction.campaignContext}
-        onSurprise={triggerGen}
+        onSurprise={trigger}
       />
     {/if}
   {/snippet}

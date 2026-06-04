@@ -56,8 +56,6 @@
         "Clicking 'Save to Codex' stores the clan draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
-
-  let triggerGen = $state<(() => void) | undefined>(undefined);
 </script>
 
 <SEOGeneratorLayout
@@ -71,18 +69,15 @@
   {relatedLinks}
   {faqs}
   {generate}
-  registerTrigger={(fn) => {
-    triggerGen = fn;
-  }}
 >
-  {#snippet formFields()}
+  {#snippet formFields(trigger)}
     <VampireFormFields
       bind:archetype
       bind:bloodline
       bind:feedingHabit
       bind:weakness
       bind:campaignContext
-      onSurprise={triggerGen}
+      onSurprise={trigger}
     />
   {/snippet}
 </SEOGeneratorLayout>

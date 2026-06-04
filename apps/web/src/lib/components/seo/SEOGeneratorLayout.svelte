@@ -2,7 +2,7 @@
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { onMount } from "svelte";
+  import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
@@ -20,7 +20,6 @@
     isThemeCustomizable = false,
     generate,
     formFields,
-    registerTrigger,
     worldTheme = "workspace",
   }: {
     canonicalPath?: string;
@@ -34,8 +33,7 @@
     theme?: string;
     isThemeCustomizable?: boolean;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
-    formFields: Snippet;
-    registerTrigger?: (fn: () => void) => void;
+    formFields: Snippet<[() => void]>;
     worldTheme?: string;
   } = $props();
 
@@ -58,6 +56,7 @@
   let isGenerating = $state(false);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(true);
+  let outputCard = $state<HTMLElement | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let useAI = $state(true);
@@ -147,20 +146,16 @@
     errorMessage = null;
     try {
       generatedData = await generate({ useAI });
+      if (browser && window.innerWidth < 1024 && outputCard) {
+        await tick();
+        outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     } catch (err: any) {
       errorMessage = "Failed to generate: " + (err.message || err);
     } finally {
       isGenerating = false;
     }
   }
-
-  // Register once on mount — inline prop functions get a new identity on each
-  // rerender, so a $effect would re-run repeatedly and cause a loop.
-  onMount(() => {
-    if (registerTrigger) {
-      registerTrigger(() => void handleGenerate());
-    }
-  });
 
   const escapeHtml = (value: string) =>
     value
@@ -375,7 +370,10 @@
     class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
     <!-- Output Card Column: controls first on mobile, middle column on desktop -->
-    <div class="lg:col-span-6 flex flex-col order-2 lg:order-2">
+    <div
+      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
+      bind:this={outputCard}
+    >
       <div
         class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
@@ -398,7 +396,7 @@
               </div>
               {#if generatedData.summary}
                 <p
-                  class="text-xs text-theme-text/65 leading-relaxed mt-2 italic"
+                  class="text-base text-theme-text/80 leading-relaxed mt-2 italic"
                 >
                   {generatedData.summary}
                 </p>
@@ -438,7 +436,7 @@
             </div>
 
             <div
-              class="space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90 flex-grow"
+              class="space-y-4 text-sm leading-relaxed text-theme-text/90 flex-grow"
               data-theme={worldTheme}
             >
               {@html renderMarkdown(generatedData.content || "")}
@@ -474,7 +472,7 @@
         {#if generatedData}
           <div
             in:fade={{ duration: 250 }}
-            class="text-xs leading-relaxed text-theme-text/80"
+            class="text-sm leading-relaxed text-theme-text/80"
           >
             {@html renderLore(generatedData.lore || "")}
           </div>
@@ -486,7 +484,7 @@
             <p class="text-[10px] uppercase tracking-widest font-header">
               At the Table
             </p>
-            <p class="text-[10px] mt-2 leading-relaxed">
+            <p class="text-sm mt-2 leading-relaxed">
               GM utility details appear here after generation.
             </p>
           </div>
@@ -514,7 +512,7 @@
         >
           {introTitle}
         </h1>
-        <p class="text-xs text-theme-text/70 leading-relaxed mb-4">
+        <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
         </p>
         <p
@@ -533,7 +531,7 @@
             void handleGenerate();
           }}
         >
-          {@render formFields()}
+          {@render formFields(() => void handleGenerate())}
 
           <div class="flex items-center gap-2 pt-2">
             <input
@@ -664,7 +662,7 @@
           Saved to your local Codex vault.
         </h3>
 
-        <p class="text-xs text-theme-text/70 leading-relaxed">
+        <p class="text-sm text-theme-text/70 leading-relaxed">
           Open Codex to link this faction to NPCs, locations, maps, and campaign
           notes. Your vault lives in the browser — no account, no sync, no
           cloud.
