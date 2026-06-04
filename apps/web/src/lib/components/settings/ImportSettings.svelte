@@ -24,7 +24,6 @@
   import type { DiscoveredEntity } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
   import { slide, fade } from "svelte/transition";
-  import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
   import { aiClientManager } from "$lib/services/ai/client-manager";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -65,7 +64,7 @@
     new TextParser(),
     new DocxParser(),
     new JsonParser(),
-    new PdfParser(pdfWorker),
+    new PdfParser(),
   ];
 
   let markdownFrontmatterValidator: MarkdownFrontmatterValidator | null = null;

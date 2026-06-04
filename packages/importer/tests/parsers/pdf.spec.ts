@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { PdfParser } from "../../src/parsers/pdf";
-import * as pdfjs from "pdfjs-dist";
+import { PdfParser, PDFJS_CDN } from "../../src/parsers/pdf";
 
-vi.mock("pdfjs-dist", () => ({
-  getDocument: vi.fn(),
+const mockGetDocument = vi.fn();
+
+vi.mock(PDFJS_CDN, () => ({
+  getDocument: mockGetDocument,
   GlobalWorkerOptions: {
     workerSrc: "",
   },
-  version: "mock-version",
 }));
 
 describe("PdfParser", () => {
@@ -32,7 +32,7 @@ describe("PdfParser", () => {
       getPage: vi.fn().mockResolvedValue(mockPage),
     };
 
-    (pdfjs.getDocument as any).mockReturnValue({
+    mockGetDocument.mockReturnValue({
       promise: Promise.resolve(mockPdf),
     });
 
