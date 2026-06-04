@@ -3,14 +3,27 @@ import type { EntryGenerator, PageLoad } from "./$types";
 
 export const prerender = true;
 
-const validSlugs = new Set(["npc", "settlement", "magic-item", "faction"]);
+const validSlugs = new Set([
+  "npc",
+  "settlement",
+  "magic-item",
+  "faction",
+  "quest",
+  "item",
+]);
 
 export const load: PageLoad = ({ params }) => {
   if (!validSlugs.has(params.slug)) {
     error(404, "Generator not found");
   }
   return {
-    slug: params.slug as "npc" | "settlement" | "magic-item" | "faction",
+    slug: params.slug as
+      | "npc"
+      | "settlement"
+      | "magic-item"
+      | "faction"
+      | "quest"
+      | "item",
   };
 };
 
@@ -20,5 +33,7 @@ export const entries: EntryGenerator = () => {
     { slug: "settlement" },
     { slug: "magic-item" },
     { slug: "faction" },
+    { slug: "quest" },
+    { slug: "item" },
   ];
 };

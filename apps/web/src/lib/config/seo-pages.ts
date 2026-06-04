@@ -1062,7 +1062,7 @@ export const featuresConfig: Record<string, SEOPageData> = {
     subheading:
       "Co-author lore, design NPCs, and outline plots with absolute privacy.",
     introText:
-      "Supercharge your worldbuilding using Codex Cryptica's integrated Lore Oracle. Generate consistent NPC details, settlement layouts, or plot hooks directly inside your workspace using secure, private AI models that respect your campaign context.",
+      "Supercharge your worldbuilding using Codex Cryptica's integrated local-first Lore Oracle. Unlike cloud-based TTRPG campaign managers that scrape your creative writing to train proprietary AI models, Codex Cryptica operates on a zero-data-leakage architecture. Your notes, worldbuilding details, and campaign secrets are processed directly using secure API keys on your own terms. We never harvest, log, or sell your intellectual property to cloud scrapers.",
     ctaText: "Try AI Assistant Features",
     keywords: [
       "ai gm assistant",
@@ -1084,13 +1084,18 @@ export const featuresConfig: Record<string, SEOPageData> = {
         icon: "icon-[lucide--clipboard-list]",
       },
       {
-        title: "Absolute Privacy",
+        title: "Zero-Scrape Guarantee",
         description:
-          "Your prompts are sent directly to the LLM API provider and are never stored on third-party servers. Your raw data stays local.",
+          "Your campaign text is processed client-side. We do not store, log, or harvest your creative notes to train external models. Your intellectual property stays strictly local.",
         icon: "icon-[lucide--lock]",
       },
     ],
     faq: [
+      {
+        question: "How does Codex protect my world from cloud AI scrapers?",
+        answer:
+          "Traditional online wikis store your campaign notes in cloud databases where they are vulnerable to automated scraping and model training. Codex Cryptica stores everything locally in your browser's sandboxed filesystem. When you use the Lore Oracle, calls are made directly to the AI provider via your own API key under strict zero-retention developer policies — your creative output is never scraped or logged by us.",
+      },
       {
         question: "Do I need a paid AI subscription?",
         answer:

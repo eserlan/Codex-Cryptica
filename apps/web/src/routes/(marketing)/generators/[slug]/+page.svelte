@@ -3,12 +3,14 @@
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
+  import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import {
     generatorEngine,
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
     factionConfig,
+    questConfig,
     themeIdToLabel,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
@@ -61,6 +63,28 @@
         "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
       canonicalPath: "/generators/faction",
     },
+    quest: {
+      pageTitle:
+        "RPG Quest Hook Generator | Free Fantasy & Cyberpunk Adventure Tool | Codex Cryptica",
+      metaDescription:
+        "Generate detailed RPG quest hooks with complications, twists, rewards, and key NPCs. Perfect for fantasy, cyberpunk, or sci-fi tabletop campaigns.",
+      introTitle: "RPG Quest Generator",
+      eyebrow: "Quest Hook Generator",
+      introText:
+        "Create campaign-ready adventure seeds and quest hooks. Set the genre, tone, threat, and twist, then import into your local vault.",
+      canonicalPath: "/generators/quest",
+    },
+    item: {
+      pageTitle:
+        "RPG Loot & Magic Item Generator | Free Fantasy Equipment Tool | Codex Cryptica",
+      metaDescription:
+        "Generate custom RPG loot, magic items, weapons, and relics. Features customizable rarities, properties, and lore backstories.",
+      introTitle: "RPG Item Generator",
+      eyebrow: "Item Generator",
+      introText:
+        "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
+      canonicalPath: "/generators/item",
+    },
   } as const;
 
   const meta = $derived(slugMeta[data.slug]);
@@ -92,12 +116,23 @@
     campaignContext: "",
   });
 
+  let quest = $state({
+    genre: questConfig.genres[0],
+    tone: questConfig.tones[0],
+    scope: questConfig.scopes[0],
+    locationType: questConfig.locationTypes[0],
+    threat: questConfig.threats[0],
+    twist: questConfig.twists[0],
+    reward: questConfig.rewards[0],
+    campaignContext: "",
+  });
+
   // Unified theme binding target — synced to the active generator's state
   let activeTheme = $state(factionConfig.themes[0]);
 
   $effect(() => {
     if (data.slug === "npc") npc.theme = activeTheme;
-    else faction.theme = activeTheme;
+    else if (data.slug === "faction") faction.theme = activeTheme;
   });
 
   onMount(() => {
@@ -112,10 +147,12 @@
       return generatorEngine.generateNPC({ ...npc, useAI });
     } else if (data.slug === "settlement") {
       return generatorEngine.generateSettlement({ ...settlement, useAI });
-    } else if (data.slug === "magic-item") {
+    } else if (data.slug === "magic-item" || data.slug === "item") {
       return generatorEngine.generateMagicItem({ ...magicItem, useAI });
     } else if (data.slug === "faction") {
       return generatorEngine.generateFaction({ ...faction, useAI });
+    } else if (data.slug === "quest") {
+      return generatorEngine.generateQuestHook({ ...quest, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -221,7 +258,7 @@
           {/each}
         </select>
       </div>
-    {:else if data.slug === "magic-item"}
+    {:else if data.slug === "magic-item" || data.slug === "item"}
       <div class="flex flex-col gap-1.5">
         <label for="item-type-select" class={labelClass}>Item Type</label>
         <select
@@ -255,6 +292,17 @@
         bind:alignment={faction.alignment}
         bind:campaignContext={faction.campaignContext}
         onSurprise={trigger}
+      />
+    {:else if data.slug === "quest"}
+      <QuestFormFields
+        bind:genre={quest.genre}
+        bind:tone={quest.tone}
+        bind:scope={quest.scope}
+        bind:locationType={quest.locationType}
+        bind:threat={quest.threat}
+        bind:twist={quest.twist}
+        bind:reward={quest.reward}
+        bind:campaignContext={quest.campaignContext}
       />
     {/if}
   {/snippet}
