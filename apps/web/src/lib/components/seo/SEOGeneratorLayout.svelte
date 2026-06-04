@@ -2,7 +2,6 @@
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
@@ -20,7 +19,6 @@
     isThemeCustomizable = false,
     generate,
     formFields,
-    registerTrigger,
     worldTheme = "workspace",
   }: {
     canonicalPath?: string;
@@ -34,8 +32,7 @@
     theme?: string;
     isThemeCustomizable?: boolean;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
-    formFields: Snippet;
-    registerTrigger?: (fn: () => void) => void;
+    formFields: Snippet<[() => void]>;
     worldTheme?: string;
   } = $props();
 
@@ -153,14 +150,6 @@
       isGenerating = false;
     }
   }
-
-  // Register once on mount — inline prop functions get a new identity on each
-  // rerender, so a $effect would re-run repeatedly and cause a loop.
-  onMount(() => {
-    if (registerTrigger) {
-      registerTrigger(() => void handleGenerate());
-    }
-  });
 
   const escapeHtml = (value: string) =>
     value
@@ -533,7 +522,7 @@
             void handleGenerate();
           }}
         >
-          {@render formFields()}
+          {@render formFields(() => void handleGenerate())}
 
           <div class="flex items-center gap-2 pt-2">
             <input

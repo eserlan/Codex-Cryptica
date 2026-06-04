@@ -54,8 +54,6 @@
         "Clicking 'Save to Codex' stores the NPC draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Character entity, ready to link to factions, locations, and campaign notes.",
     },
   ];
-
-  let triggerGen = $state<(() => void) | undefined>(undefined);
 </script>
 
 <SEOGeneratorLayout
@@ -69,17 +67,14 @@
   {relatedLinks}
   {faqs}
   {generate}
-  registerTrigger={(fn) => {
-    triggerGen = fn;
-  }}
 >
-  {#snippet formFields()}
+  {#snippet formFields(trigger)}
     <NPCFormFields
       bind:race
       bind:role
       bind:alignment
       bind:campaignContext
-      onSurprise={triggerGen}
+      onSurprise={trigger}
     />
   {/snippet}
 </SEOGeneratorLayout>

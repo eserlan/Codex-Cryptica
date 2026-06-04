@@ -79,8 +79,6 @@
         "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
-
-  let triggerGen = $state<(() => void) | undefined>(undefined);
 </script>
 
 <SEOGeneratorLayout
@@ -95,18 +93,15 @@
   bind:theme
   isThemeCustomizable={true}
   {generate}
-  registerTrigger={(fn) => {
-    triggerGen = fn;
-  }}
 >
-  {#snippet formFields()}
+  {#snippet formFields(trigger)}
     <FactionFormFields
       bind:theme
       bind:type
       bind:scope
       bind:alignment
       bind:campaignContext
-      onSurprise={triggerGen}
+      onSurprise={trigger}
     />
   {/snippet}
 </SEOGeneratorLayout>

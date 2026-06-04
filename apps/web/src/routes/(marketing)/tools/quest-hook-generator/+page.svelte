@@ -70,7 +70,7 @@
   {faqs}
   {generate}
 >
-  {#snippet formFields()}
+  {#snippet formFields(_trigger)}
     <QuestFormFields
       bind:genre
       bind:tone
