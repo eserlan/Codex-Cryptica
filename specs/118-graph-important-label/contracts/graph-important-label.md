@@ -12,13 +12,13 @@ When the graph context menu is opened on an editable entity node:
 
 ### Feedback Outcomes
 
-| Condition | Expected feedback |
-| --- | --- |
-| One entity changed | Marked as "important". |
-| Multiple entities changed | Marked N nodes as "important". |
-| One target already important | Already marked as "important". |
+| Condition                              | Expected feedback                                 |
+| -------------------------------------- | ------------------------------------------------- |
+| One entity changed                     | Marked as "important".                            |
+| Multiple entities changed              | Marked N nodes as "important".                    |
+| One target already important           | Already marked as "important".                    |
 | All selected targets already important | Selected nodes are already marked as "important". |
-| Mutation failure | Failed to mark important: [reason] |
+| Mutation failure                       | Failed to mark important: [reason]                |
 
 ## Graph Engine Contract
 

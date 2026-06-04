@@ -34,6 +34,9 @@ export class VTTMeasurementManager {
   lastPing = $state<PingState | null>(null);
   pings = $state<Record<string, PingState>>({});
 
+  // ⚡ Bolt Optimization: Cache Object.values for pings to avoid re-allocation in reactive blocks
+  allPings = $derived.by(() => Object.values(this.pings));
+
   private pingTimeouts = new Map<string, number>();
 
   constructor(private deps: VTTMeasurementManagerDependencies) {}

@@ -101,5 +101,7 @@ if (
   (import.meta.env.DEV || (window as any).__E2E__)
 ) {
   (window as any).categories = categories;
-  debugStore.log("[CategoryStore] Module loaded, categories attached to window");
+  debugStore.log(
+    "[CategoryStore] Module loaded, categories attached to window",
+  );
 }

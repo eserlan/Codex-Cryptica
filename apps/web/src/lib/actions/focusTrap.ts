@@ -40,12 +40,18 @@ export function focusTrap(node: HTMLElement) {
     const lastEl = items[items.length - 1];
 
     if (e.shiftKey) {
-      if (document.activeElement === firstEl || document.activeElement === node) {
+      if (
+        document.activeElement === firstEl ||
+        document.activeElement === node
+      ) {
         e.preventDefault();
         lastEl.focus();
       }
     } else {
-      if (document.activeElement === lastEl || document.activeElement === node) {
+      if (
+        document.activeElement === lastEl ||
+        document.activeElement === node
+      ) {
         e.preventDefault();
         firstEl.focus();
       }

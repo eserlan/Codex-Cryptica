@@ -45,6 +45,7 @@
     {:else}
       <select
         class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        aria-label="Select Map"
         value={mapStore.activeMapId}
         onchange={(e) =>
           handleActiveMapSelection({

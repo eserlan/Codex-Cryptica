@@ -10,13 +10,7 @@ type ArtDirectionSource =
   | "theme-default"
   | "global-default";
 
-type DrawSurface =
-  | "command"
-  | "entity"
-  | "zen"
-  | "graph"
-  | "cover"
-  | "chat";
+type DrawSurface = "command" | "entity" | "zen" | "graph" | "cover" | "chat";
 
 interface DrawRequestContext {
   subject: string;

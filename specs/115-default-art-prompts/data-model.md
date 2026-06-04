@@ -4,12 +4,12 @@
 
 Prompt template that guides image style or composition.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | Stable id for shipped defaults, such as `category.character` or `theme.fantasy`. |
-| `label` | `string` | Human-readable name for diagnostics/help. |
-| `template` | `string` | Prompt text. May include `{subject}`. |
-| `source` | `ArtDirectionSource` | Where this template came from. |
+| Field      | Type                 | Description                                                                      |
+| ---------- | -------------------- | -------------------------------------------------------------------------------- |
+| `id`       | `string`             | Stable id for shipped defaults, such as `category.character` or `theme.fantasy`. |
+| `label`    | `string`             | Human-readable name for diagnostics/help.                                        |
+| `template` | `string`             | Prompt text. May include `{subject}`.                                            |
+| `source`   | `ArtDirectionSource` | Where this template came from.                                                   |
 
 ### Validation Rules
 
@@ -36,17 +36,17 @@ global-default
 
 Input to the resolver.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `subject` | `string` | User-facing subject to draw. |
-| `entityId` | `string?` | Optional entity id when the draw request maps to a known entity. |
-| `entityTitle` | `string?` | Entity title when available. |
-| `categoryId` | `string?` | Stable category id from entity metadata or command parsing. |
-| `categoryLabel` | `string?` | Display category label when available. |
-| `themeId` | `string?` | Active world theme id. |
-| `surface` | `"entity" \| "zen" \| "graph" \| "chat" \| "cover" \| "command"` | Entry point or surface requesting the image. |
-| `entityArtDirection` | `string?` | Entity-specific art direction when already available in context. |
-| `userAuthoredArtDirection` | `string?` | Relevant note/entity content selected by existing context mechanisms. |
+| Field                      | Type                                                             | Description                                                           |
+| -------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `subject`                  | `string`                                                         | User-facing subject to draw.                                          |
+| `entityId`                 | `string?`                                                        | Optional entity id when the draw request maps to a known entity.      |
+| `entityTitle`              | `string?`                                                        | Entity title when available.                                          |
+| `categoryId`               | `string?`                                                        | Stable category id from entity metadata or command parsing.           |
+| `categoryLabel`            | `string?`                                                        | Display category label when available.                                |
+| `themeId`                  | `string?`                                                        | Active world theme id.                                                |
+| `surface`                  | `"entity" \| "zen" \| "graph" \| "chat" \| "cover" \| "command"` | Entry point or surface requesting the image.                          |
+| `entityArtDirection`       | `string?`                                                        | Entity-specific art direction when already available in context.      |
+| `userAuthoredArtDirection` | `string?`                                                        | Relevant note/entity content selected by existing context mechanisms. |
 
 ### Validation Rules
 
@@ -59,14 +59,14 @@ Input to the resolver.
 
 Output from the resolver.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `prompt` | `string` | Final prompt passed to image generation. |
-| `source` | `ArtDirectionSource` | Fallback level used. |
-| `templateId` | `string?` | Shipped/default template id when applicable. |
-| `subject` | `string` | Subject used for insertion. |
-| `categoryId` | `string?` | Category context used, if any. |
-| `themeId` | `string?` | Theme context used, if any. |
+| Field        | Type                 | Description                                  |
+| ------------ | -------------------- | -------------------------------------------- |
+| `prompt`     | `string`             | Final prompt passed to image generation.     |
+| `source`     | `ArtDirectionSource` | Fallback level used.                         |
+| `templateId` | `string?`            | Shipped/default template id when applicable. |
+| `subject`    | `string`             | Subject used for insertion.                  |
+| `categoryId` | `string?`            | Category context used, if any.               |
+| `themeId`    | `string?`            | Theme context used, if any.                  |
 
 ### Validation Rules
 
@@ -78,10 +78,10 @@ Output from the resolver.
 
 Shipped default for category composition.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `categoryId` | `string` | Stable category-like id, such as `character`, `location`, or `item`. |
-| `template` | `ArtDirectionTemplate` | Composition-focused default. |
+| Field        | Type                   | Description                                                          |
+| ------------ | ---------------------- | -------------------------------------------------------------------- |
+| `categoryId` | `string`               | Stable category-like id, such as `character`, `location`, or `item`. |
+| `template`   | `ArtDirectionTemplate` | Composition-focused default.                                         |
 
 ### Validation Rules
 
@@ -93,10 +93,10 @@ Shipped default for category composition.
 
 Shipped default for world/theme mood.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `themeId` | `string` | Theme id such as `fantasy`, `scifi`, `cyberpunk`, or `modern`. |
-| `template` | `ArtDirectionTemplate` | Mood/style-focused default. |
+| Field      | Type                   | Description                                                    |
+| ---------- | ---------------------- | -------------------------------------------------------------- |
+| `themeId`  | `string`               | Theme id such as `fantasy`, `scifi`, `cyberpunk`, or `modern`. |
+| `template` | `ArtDirectionTemplate` | Mood/style-focused default.                                    |
 
 ### Validation Rules
 
@@ -117,11 +117,11 @@ Final fallback used when no more specific art direction exists.
 
 Existing image generation entry points that must provide `DrawRequestContext`:
 
-| Surface | Context expectation |
-| --- | --- |
-| `/draw` command | Subject, command category hint, matched entity metadata if resolved. |
-| Entity sidebar | Entity id, title, category, active theme. |
-| Zen mode | Active entity id, title, category, active theme. |
-| Graph context menu | Selected node entity id, title, category, active theme. |
-| Front page cover | World/vault subject, cover surface, active theme. |
-| Oracle chat draw | Message subject plus entity/category context where available. |
+| Surface            | Context expectation                                                  |
+| ------------------ | -------------------------------------------------------------------- |
+| `/draw` command    | Subject, command category hint, matched entity metadata if resolved. |
+| Entity sidebar     | Entity id, title, category, active theme.                            |
+| Zen mode           | Active entity id, title, category, active theme.                     |
+| Graph context menu | Selected node entity id, title, category, active theme.              |
+| Front page cover   | World/vault subject, cover surface, active theme.                    |
+| Oracle chat draw   | Message subject plus entity/category context where available.        |

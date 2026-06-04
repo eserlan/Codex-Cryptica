@@ -74,15 +74,16 @@ export class VaultLifecycleManager {
       if (!handle) throw new Error("No vault handle available");
 
       const entities = this.deps.getEntities();
-      for (const entity of Object.values(entities)) {
+      let count = 0;
+      // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
+      for (const id in entities) {
+        const entity = entities[id];
         await this.deps.repository.saveToDisk(handle, vaultId, entity, false);
         await this.deps.ensureAssetPersisted(entity.id, handle);
+        count++;
       }
 
-      await this.deps.vaultRegistry.updateEntityCount(
-        vaultId,
-        Object.keys(entities).length,
-      );
+      await this.deps.vaultRegistry.updateEntityCount(vaultId, count);
 
       this.deps.syncStore.setStatus("idle");
     } catch (err: any) {

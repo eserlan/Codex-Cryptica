@@ -21,10 +21,10 @@ const entityProposalService = getContext("entityProposalService");
 
 // User clicks on "Crimson Guard" proposal
 async function onAccept(title: string) {
-    const { entity: newEntity } = await entityProposalService.acceptProposal(
-      title,
-      currentEntity.content,
-    );
+  const { entity: newEntity } = await entityProposalService.acceptProposal(
+    title,
+    currentEntity.content,
+  );
   // Navigate to newEntity or update UI
 }
 ```

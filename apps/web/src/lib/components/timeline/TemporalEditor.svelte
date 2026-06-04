@@ -6,7 +6,11 @@
   import { slide } from "svelte/transition";
   import TemporalPicker from "./TemporalPicker.svelte";
 
-  let { value = $bindable(), label = "Chronological Date", referenceValue } = $props<{
+  let {
+    value = $bindable(),
+    label = "Chronological Date",
+    referenceValue,
+  } = $props<{
     value?: TemporalMetadata | DateSelection;
     label?: string;
     referenceValue?: TemporalMetadata | DateSelection;

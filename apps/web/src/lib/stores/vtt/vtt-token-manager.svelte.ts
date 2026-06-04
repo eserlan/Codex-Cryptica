@@ -516,24 +516,22 @@ export class VTTTokenManager {
 
   rebindGuestOwnership(peerId: string, guestName: string) {
     let changed = false;
-    const nextTokens = Object.fromEntries(
-      Object.entries(this.tokens).map(([tokenId, token]) => {
-        if (
-          token.ownerGuestName === guestName &&
-          token.ownerPeerId !== peerId
-        ) {
-          changed = true;
-          return [
-            tokenId,
-            {
-              ...token,
-              ownerPeerId: peerId,
-            },
-          ];
-        }
-        return [tokenId, token];
-      }),
-    );
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
+    const nextTokens: Record<string, Token> = {};
+
+    for (const tokenId in this.tokens) {
+      if (!Object.hasOwn(this.tokens, tokenId)) continue;
+      const token = this.tokens[tokenId];
+      if (token.ownerGuestName === guestName && token.ownerPeerId !== peerId) {
+        changed = true;
+        nextTokens[tokenId] = {
+          ...token,
+          ownerPeerId: peerId,
+        };
+      } else {
+        nextTokens[tokenId] = token;
+      }
+    }
 
     if (!changed) return false;
     this.tokens = nextTokens;
@@ -543,21 +541,22 @@ export class VTTTokenManager {
 
   clearGuestOwnership(peerId: string) {
     let changed = false;
-    const nextTokens = Object.fromEntries(
-      Object.entries(this.tokens).map(([tokenId, token]) => {
-        if (token.ownerPeerId === peerId) {
-          changed = true;
-          return [
-            tokenId,
-            {
-              ...token,
-              ownerPeerId: null,
-            },
-          ];
-        }
-        return [tokenId, token];
-      }),
-    );
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
+    const nextTokens: Record<string, Token> = {};
+
+    for (const tokenId in this.tokens) {
+      if (!Object.hasOwn(this.tokens, tokenId)) continue;
+      const token = this.tokens[tokenId];
+      if (token.ownerPeerId === peerId) {
+        changed = true;
+        nextTokens[tokenId] = {
+          ...token,
+          ownerPeerId: null,
+        };
+      } else {
+        nextTokens[tokenId] = token;
+      }
+    }
 
     if (!changed) return false;
     this.tokens = nextTokens;

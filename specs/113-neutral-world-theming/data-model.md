@@ -4,12 +4,12 @@
 
 Represents the global workspace appearance for app chrome.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `id` | `"neutral-light" \| "neutral-dark" \| "system"` | Stored app appearance choice. |
-| `resolvedMode` | `"light" \| "dark"` | Runtime mode after resolving `system`. Not persisted as the user's choice. |
-| `name` | `string` | User-facing label, for example "Light", "Dark", or "System". |
-| `tokens` | `AppAppearanceTokens` | Neutral color and typography values for chrome. |
+| Field          | Type                                            | Description                                                                |
+| -------------- | ----------------------------------------------- | -------------------------------------------------------------------------- |
+| `id`           | `"neutral-light" \| "neutral-dark" \| "system"` | Stored app appearance choice.                                              |
+| `resolvedMode` | `"light" \| "dark"`                             | Runtime mode after resolving `system`. Not persisted as the user's choice. |
+| `name`         | `string`                                        | User-facing label, for example "Light", "Dark", or "System".               |
+| `tokens`       | `AppAppearanceTokens`                           | Neutral color and typography values for chrome.                            |
 
 ### Validation Rules
 
@@ -21,28 +21,28 @@ Represents the global workspace appearance for app chrome.
 
 Neutral token set for app chrome.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `background` | `string` | App document/chrome background. |
-| `surface` | `string` | Header, sidebars, modal shells, search, and settings surfaces. |
-| `text` | `string` | Primary chrome text. |
-| `mutedText` | `string` | Secondary chrome text. |
-| `border` | `string` | Low-emphasis chrome dividers. |
-| `accent` | `string` | Restrained product accent, not genre-specific. |
-| `fontHeader` | `string` | Neutral heading/display family. |
-| `fontBody` | `string` | Neutral body/control family. |
-| `borderRadius` | `string` | Chrome edge treatment. |
+| Field          | Type     | Description                                                    |
+| -------------- | -------- | -------------------------------------------------------------- |
+| `background`   | `string` | App document/chrome background.                                |
+| `surface`      | `string` | Header, sidebars, modal shells, search, and settings surfaces. |
+| `text`         | `string` | Primary chrome text.                                           |
+| `mutedText`    | `string` | Secondary chrome text.                                         |
+| `border`       | `string` | Low-emphasis chrome dividers.                                  |
+| `accent`       | `string` | Restrained product accent, not genre-specific.                 |
+| `fontHeader`   | `string` | Neutral heading/display family.                                |
+| `fontBody`     | `string` | Neutral body/control family.                                   |
+| `borderRadius` | `string` | Chrome edge treatment.                                         |
 
 ## WorldTheme
 
 Existing `StylingTemplate` concept, scoped to world/canvas surfaces.
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | Theme id such as `workspace`, `fantasy`, `scifi`, `modern`, or `horror`. |
-| `tokens` | `ThemeTokens` | World/canvas colors, typography, texture, and state tokens. |
-| `graph` | `GraphStyleConfig` | Graph node and edge style configuration. |
-| `jargon` | `JargonMap?` | Genre vocabulary merged with defaults for world-level labels. |
+| Field    | Type               | Description                                                              |
+| -------- | ------------------ | ------------------------------------------------------------------------ |
+| `id`     | `string`           | Theme id such as `workspace`, `fantasy`, `scifi`, `modern`, or `horror`. |
+| `tokens` | `ThemeTokens`      | World/canvas colors, typography, texture, and state tokens.              |
+| `graph`  | `GraphStyleConfig` | Graph node and edge style configuration.                                 |
+| `jargon` | `JargonMap?`       | Genre vocabulary merged with defaults for world-level labels.            |
 
 ### Validation Rules
 
@@ -64,11 +64,11 @@ The default world theme for worlds without saved theme data is a new dedicated t
 
 Persisted app/world preference state.
 
-| Field | Scope | Storage | Description |
-| --- | --- | --- | --- |
-| `appAppearanceId` | Global browser | `localStorage` or settings storage | Neutral app appearance selection. |
-| `worldThemeId` | Per vault | Existing IndexedDB/OPFS theme config | Selected world theme for the active vault. |
-| `previewWorldThemeId` | Runtime only | Not persisted | Temporary hover/preview world theme. |
+| Field                 | Scope          | Storage                              | Description                                |
+| --------------------- | -------------- | ------------------------------------ | ------------------------------------------ |
+| `appAppearanceId`     | Global browser | `localStorage` or settings storage   | Neutral app appearance selection.          |
+| `worldThemeId`        | Per vault      | Existing IndexedDB/OPFS theme config | Selected world theme for the active vault. |
+| `previewWorldThemeId` | Runtime only   | Not persisted                        | Temporary hover/preview world theme.       |
 
 ### State Transitions
 
@@ -83,11 +83,11 @@ Preview world theme -> select/save -> persist as world theme
 
 Defines the role of fonts across the three-layer model.
 
-| Layer | Owner | Rules |
-| --- | --- | --- |
-| App chrome | App appearance | Neutral, readable, stable across world themes. |
-| World mood surfaces | World theme | May use genre heading/display voice for world headers, hero surfaces, graph labels, and accents. |
-| Authored content | User content surface | Must remain comfortable for long-form reading and not be forced into decorative display styling. |
+| Layer               | Owner                | Rules                                                                                            |
+| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| App chrome          | App appearance       | Neutral, readable, stable across world themes.                                                   |
+| World mood surfaces | World theme          | May use genre heading/display voice for world headers, hero surfaces, graph labels, and accents. |
+| Authored content    | User content surface | Must remain comfortable for long-form reading and not be forced into decorative display styling. |
 
 ## AppChromeSurface
 

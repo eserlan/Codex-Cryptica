@@ -55,13 +55,13 @@
 
 {#if quickNoteStore.isOpen}
   <!-- Overlay Backdrop (click to close) -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-[2px] transition-all"
+  <button
+    type="button"
+    aria-label="Close scratchpad"
+    class="fixed inset-0 w-full h-full z-[100] bg-slate-950/40 backdrop-blur-[2px] transition-all cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-inset"
     onclick={() => quickNoteStore.close()}
     transition:fade={{ duration: 150 }}
-  ></div>
+  ></button>
 
   <!-- Main Floating Scratchpad Card -->
   <div

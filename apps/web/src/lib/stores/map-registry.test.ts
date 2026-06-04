@@ -233,4 +233,39 @@ describe("MapRegistryStore", () => {
       expect(saveMapsToDisk).toHaveBeenCalled();
     });
   });
+
+  describe("allMaps", () => {
+    it("should reflect current maps values after assignments and deletions", () => {
+      expect(mapRegistry.allMaps).toEqual([]);
+
+      const mockMap1 = { id: "m1", name: "Map 1" } as any;
+      const mockMap2 = { id: "m2", name: "Map 2" } as any;
+
+      mapRegistry.maps = { m1: mockMap1, m2: mockMap2 };
+      expect(mapRegistry.allMaps).toEqual([mockMap1, mockMap2]);
+
+      const newMaps = { ...mapRegistry.maps };
+      delete newMaps.m1;
+      mapRegistry.maps = newMaps;
+      expect(mapRegistry.allMaps).toEqual([mockMap2]);
+    });
+
+    it("should not re-allocate the derived array when unrelated state like status changes", () => {
+      const mockMap = { id: "m1", name: "Map 1" } as any;
+      mapRegistry.maps = { m1: mockMap };
+
+      const firstArray = mapRegistry.allMaps;
+
+      // Change unrelated status
+      (mapRegistry as any).status = "loading";
+
+      const secondArray = mapRegistry.allMaps;
+      expect(firstArray).toBe(secondArray);
+    });
+
+    it("should return an empty array and handle negative/empty state cleanly", () => {
+      mapRegistry.maps = {};
+      expect(mapRegistry.allMaps).toEqual([]);
+    });
+  });
 });

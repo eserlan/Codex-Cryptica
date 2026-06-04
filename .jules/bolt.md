@@ -77,3 +77,33 @@
 
 **Learning:** Using `.filter(...).length` in Svelte `$derived` blocks on large arrays (like `vault.allEntities`) allocates a completely unnecessary intermediate array in memory, creating excess garbage collection pressure on every reactivity tick. While a verbose imperative loop is extremely efficient, a declarative `.reduce((count, item) => count + (condition ? 1 : 0), 0)` is slightly slower than a `for` loop but completely avoids array allocation and is far more readable.
 **Action:** Use `.reduce()` instead of `.filter(...).length` when counting matching items in reactive blocks to eliminate intermediate array memory allocation without sacrificing code readability.
+
+## 2026-05-08 - Early Exit Loops in `$derived`
+
+**Learning:** Chaining `.filter().slice()` in Svelte `$derived` blocks, especially for autocomplete features iterating over `vault.allEntities`, forces an O(N) intermediate array allocation on every keystroke.
+**Action:** Always replace `.filter(...).slice(0, limit)` with an imperative loop and an early exit (`if (result.length >= limit) break;`) for bounded search results to eliminate redundant processing and GC overhead.
+
+## 2026-05-18 - [Performance Insight: Array allocation in iteration over Object]
+
+**Learning:** Replaced `Object.values()` when iterating over the large `entities` record in `VaultLifecycleManager` with an imperative loop over keys (`for (const id in entities) { const entity = entities[id]; ... }`). Also replaced `...Object.values(entity.metadata || {}).flat()` with direct array push logic. This prevents creation of large intermediate arrays, reducing garbage collection pauses in hot paths like vault persistence and data loading.
+**Action:** When iterating over a large object or assembling a large sequence of items, prefer an imperative iteration (`for...in`) over `Object.values()`, and direct array insertions over spread operators and `.flat()`, to eliminate intermediate allocations and garbage collection overhead.
+
+## 2026-05-18 - [Performance Insight: Avoid array returning reduce]
+
+**Learning:** Using `.reduce((acc, item) => { acc.push(item); return acc; }, [])` creates a closure and adds overhead compared to simply pushing to an array in an imperative `for...of` loop. In hot paths like context retrieval which occurs frequently, this can cause unnecessary GC overhead.
+**Action:** Replace `.reduce()` that initializes and returns an array with an imperative `for...of` loop and a standard array `push`.
+
+## 2026-05-18 - [Performance Insight: Array allocation in iteration over Object values in reactive blocks]
+
+**Learning:** Svelte 5 `$derived` blocks evaluating `Object.values(obj)` inline can allocate a new array on every evaluation causing unnecessary garbage collection. While it can be solved with an imperative loop for iteration, if an array is explicitly needed by the UI, caching it natively in the store (`allX = $derived.by(() => Object.values(this.X))`) prevents the dependency from repeatedly evaluating in Svelte `MapView`.
+**Action:** When working with objects representing collections in the Store that are iterated across multiple components, pre-calculate an `allX` property in the Store via `$derived.by()` and use that property in the UI, avoiding `Object.values()` allocation within UI `$derived` blocks.
+
+## 2026-05-18 - [Performance Insight: Array allocation in map selection loop]
+
+**Learning:** Replaced the inline array allocation `{#each Object.values(vault.maps) as map (map.id)}` with the pre-cached property `{#each vault.allMaps as map (map.id)}` in Svelte 5.
+**Action:** When a Svelte UI component requires an array representation of a record/map located in a store, pre-calculate the array natively at the store level using `$derived.by(() => Object.values(this.X))` and expose it as a property to prevent redundant array allocations and unnecessary garbage collection overhead on UI updates.
+
+## 2026-05-18 - [Performance Insight: Array allocation in object transformation]
+
+**Learning:** Svelte `Object.fromEntries(Object.entries(obj).map(...))` allocates multiple intermediate arrays for extracting entries, transforming them, and then reassembling the object. For store methods operating on many keys, this introduces significant garbage collection pressure and CPU overhead on every invocation.
+**Action:** Replace `Object.fromEntries(Object.entries(obj).map(...))` with an imperative `for...in` loop constructing a new record natively when transforming or filtering object properties in Svelte stores.

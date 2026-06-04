@@ -53,6 +53,7 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(res.content).toContain("a haunted border city under siege");
+      expect(res.content).toContain("### Who they are");
     });
 
     it("should call clientManager when useAI is true and succeed", async () => {
