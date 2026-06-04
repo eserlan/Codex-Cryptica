@@ -517,4 +517,50 @@ describe("Map Engine Renderer", () => {
     expect(mockCtx.createPattern).not.toHaveBeenCalled();
     expect(mockCtx.fillRect).not.toHaveBeenCalled();
   });
+
+  it("caches measureText results to reduce GC pressure and CPU cycles", () => {
+    const mockImage = { width: 500, height: 400 } as HTMLImageElement;
+    const renderOpts = {
+      canvas: mockCanvas,
+      image: mockImage,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      tokens: [
+        {
+          id: "token-1",
+          x: 10,
+          y: 10,
+          width: 32,
+          height: 32,
+          rotation: 0,
+          color: "#f59e0b",
+          label: "SameLabel",
+          visible: true,
+        },
+        {
+          id: "token-2",
+          x: 50,
+          y: 50,
+          width: 32,
+          height: 32,
+          rotation: 0,
+          color: "#f59e0b",
+          label: "SameLabel",
+          visible: true,
+        },
+      ],
+    };
+
+    renderMap(renderOpts);
+    // Two tokens with the same label and font: should only call measureText once
+    expect(mockCtx.measureText).toHaveBeenCalledTimes(1);
+    expect(mockCtx.measureText).toHaveBeenCalledWith("SameLabel");
+
+    // Second render cycle should use cache and not increment calls
+    renderMap(renderOpts);
+    expect(mockCtx.measureText).toHaveBeenCalledTimes(1);
+  });
 });

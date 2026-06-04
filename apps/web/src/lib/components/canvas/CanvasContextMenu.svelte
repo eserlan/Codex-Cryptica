@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Trash2, Type } from "lucide-svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     x,
@@ -10,7 +9,7 @@
     targetType = "node",
     onDelete,
     onRename,
-    onRegenerate,
+    onRevise,
     onCreateEntity,
     onClose,
   } = $props<{
@@ -20,19 +19,19 @@
     targetType?: "node" | "edge" | "pane";
     onDelete: () => void;
     onRename?: () => void;
-    onRegenerate?: () => void;
+    onRevise?: () => void;
     onCreateEntity?: (type: string) => void;
     onClose: () => void;
   }>();
 
-  const handleRegenerate = async () => {
+  const handleRevise = async () => {
     if (targetType !== "node") return;
 
     if (targetId) {
-      await regenerationService.regenerate(targetId);
+      modalUIStore.openRevisionDialog(targetId);
       onClose();
-    } else if (onRegenerate) {
-      onRegenerate();
+    } else if (onRevise) {
+      onRevise();
       onClose();
     }
   };
@@ -78,7 +77,7 @@
           onClose();
         }}
       >
-        <Type class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--type] w-3.5 h-3.5"></span>
         Edit Label
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
@@ -137,14 +136,14 @@
       </button>
     {/if}
 
-    {#if targetType === "node" && (targetId || onRegenerate)}
+    {#if targetType === "node" && (targetId || onRevise)}
       <button
         role="menuitem"
         class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-        onclick={handleRegenerate}
+        onclick={handleRevise}
       >
         <span class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"></span>
-        Regenerate Content
+        Revise Content
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
@@ -158,7 +157,7 @@
           onClose();
         }}
       >
-        <Trash2 class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
         Delete
       </button>
     {/if}

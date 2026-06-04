@@ -20,7 +20,7 @@
   } from "./chat-message.helpers";
   import { ChatMessageController } from "./chat-message-controller.svelte";
   import { sanitizeId } from "$lib/utils/markdown";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
@@ -28,7 +28,7 @@
     oracle,
     vault,
     graph,
-    regenerationService,
+    revisionService,
   });
 
   let targetEntity = $derived(
@@ -498,7 +498,7 @@
               role="status"
               aria-live="polite"
             >
-              {#if regenerationService.pendingDraft?.messageId === message.id}
+              {#if revisionService.pendingDraft?.messageId === message.id}
                 <span
                   class="text-[10px] text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >

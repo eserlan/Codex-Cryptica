@@ -19,8 +19,8 @@ const { mockVault, mockOracle, mockFocusEntity } = vi.hoisted(() => ({
     createEntity: vi.fn().mockResolvedValue("new-id"),
   },
   mockOracle: {
-    reconcileDiscoveryProposal: vi.fn(),
-    reconcileNewEntityDraft: vi
+    reviseDiscoveryProposal: vi.fn(),
+    reviseNewEntityDraft: vi
       .fn()
       .mockResolvedValue({ content: "new content", lore: "new lore" }),
     proposeConnectionsForEntity: vi.fn().mockResolvedValue(0),
@@ -59,7 +59,7 @@ describe("DiscoveryChip", () => {
 
   it("shows a spinner while committing a Gemini-backed update", async () => {
     let resolvePromise!: (value: { content: string; lore: string }) => void;
-    mockOracle.reconcileDiscoveryProposal.mockReturnValue(
+    mockOracle.reviseDiscoveryProposal.mockReturnValue(
       new Promise((resolve) => {
         resolvePromise = resolve;
       }),
@@ -117,7 +117,7 @@ describe("DiscoveryChip", () => {
   });
 
   it("seeds connection proposals after updating an existing entity", async () => {
-    mockOracle.reconcileDiscoveryProposal.mockResolvedValue({
+    mockOracle.reviseDiscoveryProposal.mockResolvedValue({
       content: "updated chronicle",
       lore: "updated lore",
     });
@@ -179,7 +179,7 @@ describe("DiscoveryChip", () => {
   });
 
   it("overrides the initial type guess with the AI-refined categoryId when provided", async () => {
-    mockOracle.reconcileNewEntityDraft.mockResolvedValue({
+    mockOracle.reviseNewEntityDraft.mockResolvedValue({
       content: "refined content",
       lore: "refined lore",
       categoryId: "location", // Refined from 'npc'

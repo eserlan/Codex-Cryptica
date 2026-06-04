@@ -19,6 +19,7 @@ export interface GraphNode {
     labels?: string[];
     isImportant?: boolean;
     isPast?: boolean;
+    isChatEnabled?: boolean;
     date?: TemporalMetadata;
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
@@ -176,6 +177,8 @@ export class GraphTransformer {
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      if ((entity as any).guestChatConfig?.isEnabled)
+        nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
 
       const coords = entity.metadata?.coordinates;

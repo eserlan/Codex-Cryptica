@@ -463,4 +463,20 @@ describe("proposerStore", () => {
     await proposerStore.analyzeEntityById("s");
     expect(loadSpy).toHaveBeenLastCalledWith();
   });
+
+  it("manages draft entity promoting to rumor", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+    expect(proposerStore.draftEntity).toBeNull();
+
+    proposerStore.promoteToRumor("This is a rumor content");
+    expect(proposerStore.draftEntity).toEqual({
+      title: "New Rumor",
+      content: "This is a rumor content",
+      type: "rumor",
+    });
+
+    proposerStore.clearDraftEntity();
+    expect(proposerStore.draftEntity).toBeNull();
+  });
 });

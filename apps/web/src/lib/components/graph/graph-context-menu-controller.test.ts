@@ -27,7 +27,7 @@ describe("GraphContextMenuController", () => {
         resolveImageUrl: vi.fn(),
       },
       oracle: { drawEntity: vi.fn() },
-      regenerationService: { regenerate: vi.fn() },
+      revisionService: { revise: vi.fn() },
       canvasRegistry: {
         addEntities: vi.fn(),
         createCanvas: vi.fn(),
@@ -38,6 +38,7 @@ describe("GraphContextMenuController", () => {
         openBulkLabelDialog: vi.fn(),
         openCanvasSelection: vi.fn(),
         openLightbox: vi.fn(),
+        openRevisionDialog: vi.fn(),
       },
       connectionModeStore: { startSelectionConnection: vi.fn() },
       notificationStore: {

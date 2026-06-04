@@ -28,6 +28,7 @@
   import { aiClientManager } from "$lib/services/ai/client-manager";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   type MarkdownFrontmatterValidator =
     typeof import("@codex/vault-engine").validateMarkdownFrontmatter;
@@ -90,7 +91,7 @@
 
     const signal = connectionModeStore.abortSignal;
 
-    // Build known entities map for reconciliation
+    // Build known entities map for revision
     const knownEntities: Record<string, string> = {};
     Object.values(vault.entities).forEach((e) => {
       knownEntities[e.title] = e.id;
@@ -410,7 +411,10 @@
     } catch (err) {
       console.error("Batch import failed:", err);
 
-      alert("Failed to save imported entities. Check console for details.");
+      notificationStore.notify(
+        "Import failed — entities could not be saved. Check the console for details.",
+        "error",
+      );
 
       step = "review";
 

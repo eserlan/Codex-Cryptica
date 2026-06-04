@@ -1,7 +1,7 @@
 import type { graph as graphStoreType } from "$lib/stores/graph.svelte";
 import type { vault as vaultStoreType } from "$lib/stores/vault.svelte";
 import type { oracle as oracleStoreType } from "$lib/stores/oracle.svelte";
-import type { regenerationService as regenerationServiceType } from "$lib/services/RegenerationService.svelte";
+import type { revisionService as revisionServiceType } from "$lib/services/RevisionService.svelte";
 import type { canvasRegistry as canvasRegistryType } from "$lib/stores/canvas-registry.svelte";
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
 import type { connectionModeStore as connectionModeStoreType } from "$lib/stores/ui/connection-mode.svelte";
@@ -12,7 +12,7 @@ export interface GraphContextMenuDependencies {
   graph: typeof graphStoreType;
   vault: typeof vaultStoreType;
   oracle: typeof oracleStoreType;
-  regenerationService: typeof regenerationServiceType;
+  revisionService: typeof revisionServiceType;
   canvasRegistry: typeof canvasRegistryType;
   modalUIStore: typeof modalUIStoreType;
   connectionModeStore: typeof connectionModeStoreType;
@@ -346,7 +346,7 @@ export class GraphContextMenuController {
     }
   };
 
-  handleRegenerateContent = async () => {
+  handleReviseContent = async () => {
     const nodesToUpdate = $state.snapshot(this.selectedNodes);
     if (nodesToUpdate.length !== 1) return;
 
@@ -355,23 +355,7 @@ export class GraphContextMenuController {
     this.categoryPickerOpen = false;
     this.imagePickerOpen = false;
 
-    try {
-      const ok = await this.deps.regenerationService.regenerate(
-        nodesToUpdate[0],
-      );
-      if (!ok) {
-        this.deps.notificationStore.notify(
-          `Failed to regenerate content: ${this.deps.regenerationService.error ?? "Unknown error"}`,
-          "error",
-        );
-      }
-    } catch (err: any) {
-      console.error("Failed to regenerate content", err);
-      this.deps.notificationStore.notify(
-        `Failed to regenerate content: ${err.message}`,
-        "error",
-      );
-    }
+    this.deps.modalUIStore.openRevisionDialog(nodesToUpdate[0]);
   };
 
   handleViewImage = async () => {

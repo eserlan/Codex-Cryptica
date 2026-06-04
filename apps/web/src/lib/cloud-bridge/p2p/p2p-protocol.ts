@@ -49,6 +49,20 @@ export type P2PMessage =
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
   | { type: "SOUND_BITE_PLAY"; entityId: string }
+  | {
+      type: "GUEST_CHAT_TRANSCRIPT_SYNC";
+      payload: import("schema").GuestChatTranscript;
+    }
+  | {
+      type: "GUEST_CHAR_CHAT_REQUEST";
+      requestId: string;
+      characterId: string;
+      guestUsername: string;
+      query: string;
+      history: { id: string; role: string; content: string }[];
+    }
+  | { type: "GUEST_CHAR_CHAT_CHUNK"; requestId: string; partial: string }
+  | { type: "GUEST_CHAR_CHAT_DONE"; requestId: string; error?: string }
   | VTTMessage;
 
 export function isValidP2PMessage(

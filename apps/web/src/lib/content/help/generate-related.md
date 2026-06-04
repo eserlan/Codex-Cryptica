@@ -22,5 +22,5 @@ The **Generate Related** feature allows you to quickly expand your campaign sett
 Once the draft is generated, you will see a preview screen displaying all generated properties. You can edit the entity name, summary, description, and labels to refine the output before committing.
 
 - The system uses the term **Labels** for metadata categories (rather than tags).
-- You can also regenerate the draft with adjusted guidelines or cancel without making any changes.
+- You can also revise the draft with adjusted guidelines or cancel without making any changes.
 - Clicking **Create Entity** commits the new record to your vault and automatically creates a directed relationship connection from the source entity to your new creation.

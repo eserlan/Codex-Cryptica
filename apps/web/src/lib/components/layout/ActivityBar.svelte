@@ -10,6 +10,8 @@
     id: string;
     icon: string;
     label: string;
+    /** Optional richer hover tooltip; falls back to `label` when unset. */
+    title?: string;
     href?: string;
     action?: () => void;
   }
@@ -41,6 +43,8 @@
         id: "oracle",
         icon: "icon-[lucide--sparkles]",
         label: "Lore Oracle",
+        title:
+          "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
         action: () => layoutUIStore.toggleSidebarTool("oracle"),
       },
       {
@@ -67,6 +71,23 @@
         icon: "icon-[lucide--shield-check]",
         label: "AI Assessment",
         action: () => layoutUIStore.toggleSidebarTool("ai-assessment"),
+      });
+    }
+
+    if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
+      list.push({
+        id: "guest-chat",
+        icon: "icon-[lucide--messages-square]",
+        label: "Guest Character Chat",
+        title: "Guest Chat — speak with enabled characters in-character.",
+        action: () => {
+          if (layoutUIStore.mainViewMode === "guest-chat") {
+            layoutUIStore.mainViewMode = "visualization";
+          } else {
+            layoutUIStore.mainViewMode = "guest-chat";
+            layoutUIStore.leftSidebarOpen = false;
+          }
+        },
       });
     }
 
@@ -121,14 +142,17 @@
 
   <!-- Sidecar Tools -->
   {#each tools as tool}
-    {@const active = layoutUIStore.activeSidebarTool === tool.id}
+    {@const active =
+      tool.id === "guest-chat"
+        ? layoutUIStore.mainViewMode === "guest-chat"
+        : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={tool.label}
-      title={tool.label}
+      title={tool.title ?? tool.label}
       data-testid={`activity-bar-${tool.id}`}
     >
       <span

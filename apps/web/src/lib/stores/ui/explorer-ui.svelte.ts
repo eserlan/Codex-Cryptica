@@ -5,11 +5,14 @@ import {
 } from "./persistence";
 
 type ExplorerCollapsedLabelGroups = Record<string, string[]>;
+type ExplorerCollapsedCategoryGroups = Record<string, string[]>;
+type ExplorerViewMode = "list" | "label" | "category";
 
 export class ExplorerUIStore {
   private persistence: UIPersistence;
 
-  explorerViewMode = $state<"list" | "label">("list");
+  explorerViewMode = $state<ExplorerViewMode>("list");
+  explorerCollapsedCategoryGroups = $state<ExplorerCollapsedCategoryGroups>({});
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
   explorerCollapsedEntityIds = $state<Record<string, string[]>>({});
   labelFilters = $state<Set<string>>(new Set());
@@ -25,54 +28,34 @@ export class ExplorerUIStore {
       (v) => v,
       "list",
     );
-    if (explorerMode === "list" || explorerMode === "label") {
+    if (
+      explorerMode === "list" ||
+      explorerMode === "label" ||
+      explorerMode === "category"
+    ) {
       this.explorerViewMode = explorerMode;
     }
 
+    this.explorerCollapsedCategoryGroups = this.persistence.read(
+      UI_STORAGE_KEYS.EXPLORER_COLLAPSED_CATEGORY_GROUPS,
+      (v) => this.parseStringArrayMap(v, "Invalid collapsed category groups"),
+      {},
+    );
+
     this.explorerCollapsedLabelGroups = this.persistence.read(
       UI_STORAGE_KEYS.EXPLORER_COLLAPSED_LABEL_GROUPS,
-      (v) => {
-        const parsed = JSON.parse(v);
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          !Array.isArray(parsed) &&
-          Object.values(parsed).every(
-            (value) =>
-              Array.isArray(value) &&
-              value.every((item) => typeof item === "string"),
-          )
-        ) {
-          return parsed as ExplorerCollapsedLabelGroups;
-        }
-        throw new Error("Invalid collapsed label groups");
-      },
+      (v) => this.parseStringArrayMap(v, "Invalid collapsed label groups"),
       {},
     );
 
     this.explorerCollapsedEntityIds = this.persistence.read(
       UI_STORAGE_KEYS.EXPLORER_COLLAPSED_ENTITY_IDS,
-      (v) => {
-        const parsed = JSON.parse(v);
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          !Array.isArray(parsed) &&
-          Object.values(parsed).every(
-            (value) =>
-              Array.isArray(value) &&
-              value.every((item) => typeof item === "string"),
-          )
-        ) {
-          return parsed as Record<string, string[]>;
-        }
-        throw new Error("Invalid collapsed entity IDs");
-      },
+      (v) => this.parseStringArrayMap(v, "Invalid collapsed entity IDs"),
       {},
     );
   }
 
-  setExplorerViewMode(mode: "list" | "label") {
+  setExplorerViewMode(mode: ExplorerViewMode) {
     this.explorerViewMode = mode;
     this.persistence.write(UI_STORAGE_KEYS.EXPLORER_VIEW_MODE, mode, String);
   }
@@ -105,13 +88,42 @@ export class ExplorerUIStore {
     this.labelFilters = new Set();
   }
 
+  getCollapsedCategoryGroups(vaultId: string | null): Set<string> {
+    const scope = this.getExplorerGroupScope(vaultId);
+    return new Set(this.explorerCollapsedCategoryGroups[scope] ?? []);
+  }
+
+  toggleExplorerCategoryGroup(vaultId: string | null, categoryId: string) {
+    const scope = this.getExplorerGroupScope(vaultId);
+    const nextCategories = new Set(
+      this.explorerCollapsedCategoryGroups[scope] ?? [],
+    );
+
+    if (nextCategories.has(categoryId)) {
+      nextCategories.delete(categoryId);
+    } else {
+      nextCategories.add(categoryId);
+    }
+
+    const nextState = this.withUpdatedGroup(
+      this.explorerCollapsedCategoryGroups,
+      scope,
+      nextCategories,
+    );
+    this.explorerCollapsedCategoryGroups = nextState;
+    this.persistence.write(
+      UI_STORAGE_KEYS.EXPLORER_COLLAPSED_CATEGORY_GROUPS,
+      nextState,
+    );
+  }
+
   getCollapsedLabelGroups(vaultId: string | null): Set<string> {
-    const scope = this.getExplorerLabelGroupScope(vaultId);
+    const scope = this.getExplorerGroupScope(vaultId);
     return new Set(this.explorerCollapsedLabelGroups[scope] ?? []);
   }
 
   toggleExplorerLabelGroup(vaultId: string | null, label: string) {
-    const scope = this.getExplorerLabelGroupScope(vaultId);
+    const scope = this.getExplorerGroupScope(vaultId);
     const nextLabels = new Set(this.explorerCollapsedLabelGroups[scope] ?? []);
 
     if (nextLabels.has(label)) {
@@ -120,15 +132,11 @@ export class ExplorerUIStore {
       nextLabels.add(label);
     }
 
-    const nextState = { ...this.explorerCollapsedLabelGroups };
-    if (nextLabels.size === 0) {
-      delete nextState[scope];
-    } else {
-      nextState[scope] = Array.from(nextLabels).sort((a, b) =>
-        a.localeCompare(b),
-      );
-    }
-
+    const nextState = this.withUpdatedGroup(
+      this.explorerCollapsedLabelGroups,
+      scope,
+      nextLabels,
+    );
     this.explorerCollapsedLabelGroups = nextState;
     this.persistence.write(
       UI_STORAGE_KEYS.EXPLORER_COLLAPSED_LABEL_GROUPS,
@@ -137,12 +145,12 @@ export class ExplorerUIStore {
   }
 
   getCollapsedEntities(vaultId: string | null): Set<string> {
-    const scope = this.getExplorerLabelGroupScope(vaultId);
+    const scope = this.getExplorerGroupScope(vaultId);
     return new Set(this.explorerCollapsedEntityIds[scope] ?? []);
   }
 
   toggleExplorerEntityCollapse(vaultId: string | null, entityId: string) {
-    const scope = this.getExplorerLabelGroupScope(vaultId);
+    const scope = this.getExplorerGroupScope(vaultId);
     const nextEntities = new Set(this.explorerCollapsedEntityIds[scope] ?? []);
 
     if (nextEntities.has(entityId)) {
@@ -151,15 +159,11 @@ export class ExplorerUIStore {
       nextEntities.add(entityId);
     }
 
-    const nextState = { ...this.explorerCollapsedEntityIds };
-    if (nextEntities.size === 0) {
-      delete nextState[scope];
-    } else {
-      nextState[scope] = Array.from(nextEntities).sort((a, b) =>
-        a.localeCompare(b),
-      );
-    }
-
+    const nextState = this.withUpdatedGroup(
+      this.explorerCollapsedEntityIds,
+      scope,
+      nextEntities,
+    );
     this.explorerCollapsedEntityIds = nextState;
     this.persistence.write(
       UI_STORAGE_KEYS.EXPLORER_COLLAPSED_ENTITY_IDS,
@@ -167,7 +171,38 @@ export class ExplorerUIStore {
     );
   }
 
-  private getExplorerLabelGroupScope(vaultId: string | null) {
+  private parseStringArrayMap(raw: string, errorMessage: string) {
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      Object.values(parsed).every(
+        (value) =>
+          Array.isArray(value) &&
+          value.every((item) => typeof item === "string"),
+      )
+    ) {
+      return parsed as Record<string, string[]>;
+    }
+    throw new Error(errorMessage);
+  }
+
+  private withUpdatedGroup(
+    current: Record<string, string[]>,
+    scope: string,
+    entries: Set<string>,
+  ) {
+    const nextState = { ...current };
+    if (entries.size === 0) {
+      delete nextState[scope];
+    } else {
+      nextState[scope] = Array.from(entries).sort((a, b) => a.localeCompare(b));
+    }
+    return nextState;
+  }
+
+  private getExplorerGroupScope(vaultId: string | null) {
     return vaultId ?? "__default__";
   }
 }

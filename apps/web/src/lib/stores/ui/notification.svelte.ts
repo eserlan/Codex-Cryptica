@@ -38,8 +38,12 @@ export class NotificationStore {
       this.notificationTimeoutId = setTimeout(() => {
         this.notification = null;
         this.notificationTimeoutId = null;
-      }, 5000) as unknown as number;
+      }, this.getDisplayDuration(type)) as unknown as number;
     }
+  }
+
+  private getDisplayDuration(type: "success" | "info" | "error"): number {
+    return type === "error" ? 12000 : 5000;
   }
 
   clearNotification() {

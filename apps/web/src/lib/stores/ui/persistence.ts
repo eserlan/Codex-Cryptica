@@ -11,6 +11,8 @@ export const UI_STORAGE_KEYS = {
   CONNECTION_DISCOVERY_MODE: "codex_connection_discovery_mode",
   DISMISSED_LANDING: "codex_dismissed_landing",
   ENTITY_DISCOVERY_MODE: "codex_entity_discovery_mode",
+  EXPLORER_COLLAPSED_CATEGORY_GROUPS:
+    "codex_explorer_collapsed_category_groups",
   EXPLORER_COLLAPSED_LABEL_GROUPS: "codex_explorer_collapsed_label_groups",
   EXPLORER_COLLAPSED_ENTITY_IDS: "codex_explorer_collapsed_entity_ids",
   EXPLORER_VIEW_MODE: "codex_explorer_view_mode",

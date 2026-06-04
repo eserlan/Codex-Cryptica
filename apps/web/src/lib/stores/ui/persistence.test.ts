@@ -11,6 +11,7 @@ describe("UIPersistence", () => {
       "codex_connection_discovery_mode",
       "codex_dismissed_landing",
       "codex_entity_discovery_mode",
+      "codex_explorer_collapsed_category_groups",
       "codex_explorer_collapsed_entity_ids",
       "codex_explorer_collapsed_label_groups",
       "codex_explorer_view_mode",

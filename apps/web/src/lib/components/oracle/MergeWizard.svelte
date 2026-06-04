@@ -8,7 +8,7 @@
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
 
@@ -82,7 +82,7 @@
       const beforeTarget = entitiesSnapshot[tId];
       const beforeSource = entitiesSnapshot[sId];
 
-      regenerationService.proposeMergeDraft(proposal, [sId, tId], message.id);
+      revisionService.proposeMergeDraft(proposal, [sId, tId], message.id);
 
       step = "DONE";
       message.content = `Prepared a merge draft for **${beforeSource.title}** into **${beforeTarget.title}**. Review it in the entity panel before saving.`;

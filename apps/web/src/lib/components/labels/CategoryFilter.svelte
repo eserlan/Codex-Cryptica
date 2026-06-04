@@ -1,7 +1,6 @@
 <script lang="ts">
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
-  import { LayoutGrid, Filter } from "lucide-svelte";
 
   let {
     activeCategories,
@@ -32,7 +31,7 @@
       : 'text-theme-muted hover:text-theme-text'}"
     data-testid="category-filter-toggle"
   >
-    <Filter class="w-3.5 h-3.5" />
+    <span class="icon-[lucide--filter] w-3.5 h-3.5"></span>
     <span
       class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary text-theme-bg text-[8px] font-bold flex items-center justify-center leading-none transition-all {expanded ||
       activeCategories.size === 0
@@ -57,7 +56,7 @@
         : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
       data-testid="category-filter-all"
     >
-      <LayoutGrid class="w-3.5 h-3.5" />
+      <span class="icon-[lucide--layout-grid] w-3.5 h-3.5"></span>
     </button>
 
     <!-- Per-category icon buttons -->

@@ -106,11 +106,13 @@ test.describe("Blog", () => {
   test("should navigate to blog via footer link", async ({ page }) => {
     await page.goto("/");
 
-    // Check if landing page is visible and enter if so
-    const enterButton = page.getByRole("button", { name: "Enter the Codex" });
-    if (await enterButton.isVisible()) {
-      await enterButton.click();
-    }
+    // Dismiss the first-run landing overlay if present so the footer is reachable.
+    await page
+      .evaluate(() => {
+        const uiStore = (window as any).uiStore;
+        if (uiStore) uiStore.dismissedLandingPage = true;
+      })
+      .catch(() => {});
 
     const footerBlogLink = page
       .locator("footer")

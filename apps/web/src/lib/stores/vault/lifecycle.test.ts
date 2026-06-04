@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { VaultLifecycleManager } from "./lifecycle";
 import { getDB } from "../../utils/idb";
+import { vaultEventBus } from "./events.svelte";
 
 // Mock dependencies
 const { mockThemeStore, mockOracle } = vi.hoisted(() => {
@@ -128,6 +129,7 @@ describe("VaultLifecycleManager", () => {
       getEntities: vi.fn().mockReturnValue({}),
       setDemoVaultName: vi.fn(),
       setInitialized: vi.fn(),
+      rebuildEntityIndexes: vi.fn(),
       getServices: vi.fn().mockReturnValue({}),
       setSelectedEntityId: vi.fn(),
       vaultRegistry: {
@@ -371,6 +373,26 @@ describe("VaultLifecycleManager", () => {
       expect(call.keywords).toContain("sub1");
       expect(call.keywords).toContain("sub2");
       expect(call.keywords).toContain("false");
+    });
+
+    it("rebuilds reactive entity indexes so the graph populates", async () => {
+      const entities = { e1: { id: "e1", title: "Demo" } };
+
+      await manager.loadDemoData("Demo", entities as any);
+
+      expect(deps.rebuildEntityIndexes).toHaveBeenCalled();
+    });
+
+    it("does NOT emit CACHE_LOADED (avoids search double-index / stale restore)", async () => {
+      const entities = { e1: { id: "e1", title: "Demo" } };
+      const emitSpy = vi.spyOn(vaultEventBus, "emit");
+
+      await manager.loadDemoData("Demo", entities as any);
+
+      expect(emitSpy).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "CACHE_LOADED" }),
+      );
+      emitSpy.mockRestore();
     });
   });
 

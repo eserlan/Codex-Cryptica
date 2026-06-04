@@ -10,7 +10,7 @@ import type {
 
 /**
  * OracleWorker handles heavy-lifting AI and logic tasks off the main thread.
- * This includes streaming chat responses, entity discovery, and reconciliation.
+ * This includes streaming chat responses, entity discovery, and revision.
  */
 class OracleWorker {
   private textGeneration: DefaultTextGenerationService;
@@ -57,16 +57,22 @@ class OracleWorker {
     );
   }
 
-  async reconcileEntityUpdate(
+  async reviseEntityUpdate(
     apiKey: string,
     modelName: string,
     entity: any,
     incoming: { chronicle: string; lore: string },
     relatedEntities: any[] = [],
     categories: any[] = [],
-    options?: { isGuest?: boolean },
+    options?: {
+      isGuest?: boolean;
+      source?: string;
+      instructions?: string;
+      priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
+    },
   ): Promise<any> {
-    return this.textGeneration.reconcileEntityUpdate(
+    return this.textGeneration.reviseEntityUpdate(
       apiKey,
       modelName,
       entity,
@@ -108,6 +114,7 @@ class OracleWorker {
       vaultId?: string;
       requestId?: string;
       existingEntities?: any[];
+      systemInstructionOverride?: string;
     } = {},
   ): Promise<void> {
     const { vaultId, requestId, existingEntities = [] } = options;
@@ -164,6 +171,7 @@ class OracleWorker {
         },
         demoMode,
         categories,
+        options,
       );
     } catch (err: any) {
       this.emit({

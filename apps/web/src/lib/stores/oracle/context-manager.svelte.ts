@@ -154,8 +154,8 @@ export class OracleContextManager {
               );
             }
           : undefined,
-        reconcileEntityUpdate: wrap(
-          s.textGeneration.reconcileEntityUpdate?.bind(s.textGeneration),
+        reviseEntityUpdate: wrap(
+          s.textGeneration.reviseEntityUpdate?.bind(s.textGeneration),
         ),
         generatePlotAnalysis: (
           apiKey: string,

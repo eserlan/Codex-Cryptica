@@ -3,6 +3,7 @@
 
 <head>
 	<meta charset="utf-8" />
+	<meta name="color-scheme" content="light dark" />
 	<meta
 		name="viewport"
 		content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -11,12 +12,31 @@
 	<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-			<link rel="preload" as="style"
-			href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Inter:wght@300;400;700&family=Orbitron:wght@400;700&family=Spectral:ital,wght@0,400;0,700;1,400&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap"
-			onload="this.onload=null;this.rel='stylesheet'" />
-		<noscript>
-			<link rel="stylesheet"
-				href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Inter:wght@300;400;700&family=Orbitron:wght@400;700&family=Spectral:ital,wght@0,400;0,700;1,400&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" />	</noscript>
+	<!-- First-paint fonts: workspace default theme only (Inter + Fraunces) -->
+	<!-- display=optional: skip the font swap if not in cache, eliminating FOUT-driven CLS on the landing heading -->
+	<link rel="preload" as="style"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=optional"
+		onload="this.onload=null;this.rel='stylesheet'" />
+	<!-- Theme fonts: deferred until idle so they never block FCP/LCP -->
+	<script>
+		(function () {
+			function loadThemeFonts() {
+				var l = document.createElement('link');
+				l.rel = 'stylesheet';
+				l.href = 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap';
+				document.head.appendChild(l);
+			}
+			if ('requestIdleCallback' in window) {
+				requestIdleCallback(loadThemeFonts);
+			} else {
+				window.addEventListener('load', loadThemeFonts);
+			}
+		})();
+	</script>
+	<noscript>
+		<link rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&display=optional" />
+	</noscript>
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 	<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
@@ -24,8 +44,14 @@
 	<script>
 		// Prevent FOUC for Skip Welcome and Theme
 		try {
-			if (localStorage.getItem("codex_skip_landing") === "true" || new URLSearchParams(window.location.search).has("demo")) {
+			var params = new URLSearchParams(window.location.search);
+			if (localStorage.getItem("codex_skip_landing") === "true" || params.has("demo")) {
 				document.documentElement.classList.add("skip-landing");
+			}
+			// Returning users who dismissed the landing: hide it before first paint
+			// to prevent the SSR-rendered marketing layer from flashing on hydration.
+			if (localStorage.getItem("codex_dismissed_landing") === "true") {
+				document.documentElement.classList.add("dismissed-landing");
 			}
 			let appearance = localStorage.getItem("codex-cryptica-app-appearance") || "system";
 			if (appearance !== "neutral-light" && appearance !== "neutral-dark" && appearance !== "system") {
@@ -63,26 +89,26 @@
 			}
 
 			const themes = {
-				workspace: { bg: "#fafaf9", surface: "#ffffff", text: "#1c1917", primary: "#57534e", secondary: "#78716c", border: "rgba(231, 229, 228, 1)" },
-				workspace_dark: { bg: "#1c1917", surface: "#292524", text: "#f5f5f4", primary: "#d6d3d1", secondary: "#a8a29e", border: "rgba(68, 64, 60, 1)" },
-				fantasy: { bg: "#fdf6e3", surface: "#f0ddb8", text: "#2a2018", primary: "#5e3018", secondary: "#423830", border: "rgba(94, 48, 24, 0.52)", texture: "parchment.svg" },
-				fantasy_dark: { bg: "#1c1410", surface: "#2a1e16", text: "#e8ddc4", primary: "#d4a85a", secondary: "#8b6532", border: "rgba(212, 168, 90, 0.32)", texture: "leather.svg" },
-				modern: { bg: "#f8fafc", surface: "#ffffff", text: "#0f172a", primary: "#2563eb", secondary: "#1d4ed8", border: "rgba(203, 213, 225, 1)" },
-				modern_dark: { bg: "#09090b", surface: "#18181b", text: "#f4f4f5", primary: "#60a5fa", secondary: "#93c5fd", border: "rgba(96, 165, 250, 0.3)" },
-				scifi: { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80", secondary: "#86efac", border: "rgba(22, 163, 74, 0.5)" },
-				scifi_light: { bg: "#f0f4ec", surface: "#ffffff", text: "#14532d", primary: "#15803d", secondary: "#166534", border: "rgba(21, 128, 61, 0.3)" },
-				cyberpunk: { bg: "#020617", surface: "#0f172a", text: "#22d3ee", primary: "#f472b6", secondary: "#f9a8d4", border: "rgba(244, 114, 182, 0.6)" },
-				cyberpunk_light: { bg: "#fdf2f8", surface: "#ffffff", text: "#155e75", primary: "#be185d", secondary: "#9d174d", border: "rgba(190, 24, 93, 0.35)" },
-				apocalyptic: { bg: "#1c1917", surface: "#292524", text: "#ececec", primary: "#f97316", secondary: "#fdba74", border: "rgba(120, 113, 108, 0.5)", texture: "rust.svg" },
-				apocalyptic_light: { bg: "#f0e9d6", surface: "#e8dfc6", text: "#292524", primary: "#9a3412", secondary: "#7c2d12", border: "rgba(154, 52, 18, 0.3)", texture: "rust.svg" },
-				horror: { bg: "#050505", surface: "#121212", text: "#f3f4f6", primary: "#dc2626", secondary: "#f87171", border: "rgba(220, 38, 38, 0.3)", texture: "blood.svg" },
-				horror_light: { bg: "#f1eee5", surface: "#fafaf6", text: "#1c1917", primary: "#7f1d1d", secondary: "#450a0a", border: "rgba(127, 29, 29, 0.25)", texture: "blood.svg" },
-				fallout: { bg: "#0a0a08", surface: "#111109", text: "#a8ff78", primary: "#39ff14", secondary: "#86efac", border: "rgba(57, 255, 20, 0.4)", texture: "crt.svg" },
-				fallout_light: { bg: "#f8f3e1", surface: "#ffffff", text: "#292524", primary: "#1e40af", secondary: "#1e3a8a", border: "rgba(30, 64, 175, 0.3)" },
-				starwars: { bg: "#000000", surface: "#0F172A", text: "#E2E8F0", primary: "#FFE81F", secondary: "#cbd5e1", border: "rgba(74, 144, 226, 0.5)" },
-				starwars_light: { bg: "#f5f0e3", surface: "#fbf6e8", text: "#292524", primary: "#1e3a8a", secondary: "#1d4ed8", border: "rgba(30, 58, 138, 0.3)" },
-				startrek: { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#fbcfe8", border: "rgba(255, 153, 0, 0.4)" },
-				startrek_light: { bg: "#f1f4f6", surface: "#ffffff", text: "#1e293b", primary: "#c2410c", secondary: "#ea580c", border: "rgba(194, 65, 12, 0.3)" }
+				workspace:       { bg: "#fafaf9", surface: "#ffffff", text: "#1c1917", primary: "#57534e", secondary: "#78716c", border: "rgba(231, 229, 228, 1)",        muted: "#78716c", dim: "#a8a29e" },
+				workspace_dark:  { bg: "#1c1917", surface: "#292524", text: "#f5f5f4", primary: "#d6d3d1", secondary: "#a8a29e", border: "rgba(68, 64, 60, 1)",           muted: "#a8a29e", dim: "#78716c" },
+				fantasy:         { bg: "#fdf6e3", surface: "#f0ddb8", text: "#2a2018", primary: "#5e3018", secondary: "#423830", border: "rgba(94, 48, 24, 0.52)",  texture: "parchment.svg", muted: "#6b4c2a", dim: "#8b6532" },
+				fantasy_dark:    { bg: "#1c1410", surface: "#2a1e16", text: "#e8ddc4", primary: "#d4a85a", secondary: "#8b6532", border: "rgba(212, 168, 90, 0.32)", texture: "leather.svg",   muted: "#a08870", dim: "#7a6450" },
+				modern:          { bg: "#f8fafc", surface: "#ffffff", text: "#0f172a", primary: "#2563eb", secondary: "#1d4ed8", border: "rgba(203, 213, 225, 1)",        muted: "#475569", dim: "#64748b" },
+				modern_dark:     { bg: "#09090b", surface: "#18181b", text: "#f4f4f5", primary: "#60a5fa", secondary: "#93c5fd", border: "rgba(96, 165, 250, 0.3)",       muted: "#a1a1aa", dim: "#71717a" },
+				scifi:           { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80", secondary: "#86efac", border: "rgba(22, 163, 74, 0.5)",        muted: "#4ade80", dim: "#22c55e" },
+				scifi_light:     { bg: "#f0f4ec", surface: "#ffffff", text: "#14532d", primary: "#15803d", secondary: "#166534", border: "rgba(21, 128, 61, 0.3)",        muted: "#166534", dim: "#15803d" },
+				cyberpunk:       { bg: "#020617", surface: "#0f172a", text: "#22d3ee", primary: "#f472b6", secondary: "#f9a8d4", border: "rgba(244, 114, 182, 0.6)",      muted: "#67e8f9", dim: "#38bdf8" },
+				cyberpunk_light: { bg: "#fdf2f8", surface: "#ffffff", text: "#155e75", primary: "#be185d", secondary: "#9d174d", border: "rgba(190, 24, 93, 0.35)",       muted: "#9d174d", dim: "#be185d" },
+				apocalyptic:     { bg: "#1c1917", surface: "#292524", text: "#ececec", primary: "#f97316", secondary: "#fdba74", border: "rgba(120, 113, 108, 0.5)", texture: "rust.svg",   muted: "#a8a29e", dim: "#78716c" },
+				apocalyptic_light:{ bg: "#f0e9d6", surface: "#e8dfc6", text: "#292524", primary: "#9a3412", secondary: "#7c2d12", border: "rgba(154, 52, 18, 0.3)",  texture: "rust.svg",   muted: "#7c2d12", dim: "#9a3412" },
+				horror:          { bg: "#050505", surface: "#121212", text: "#f3f4f6", primary: "#dc2626", secondary: "#f87171", border: "rgba(220, 38, 38, 0.3)",   texture: "blood.svg",  muted: "#9ca3af", dim: "#6b7280" },
+				horror_light:    { bg: "#f1eee5", surface: "#fafaf6", text: "#1c1917", primary: "#7f1d1d", secondary: "#450a0a", border: "rgba(127, 29, 29, 0.25)",  texture: "blood.svg",  muted: "#7f1d1d", dim: "#991b1b" },
+				fallout:         { bg: "#0a0a08", surface: "#111109", text: "#a8ff78", primary: "#39ff14", secondary: "#86efac", border: "rgba(57, 255, 20, 0.4)",   texture: "crt.svg",    muted: "#78c900", dim: "#4ade80" },
+				fallout_light:   { bg: "#f8f3e1", surface: "#ffffff", text: "#292524", primary: "#1e40af", secondary: "#1e3a8a", border: "rgba(30, 64, 175, 0.3)",        muted: "#1e3a8a", dim: "#1e40af" },
+				starwars:        { bg: "#000000", surface: "#0F172A", text: "#E2E8F0", primary: "#FFE81F", secondary: "#cbd5e1", border: "rgba(74, 144, 226, 0.5)",        muted: "#94a3b8", dim: "#64748b" },
+				starwars_light:  { bg: "#f5f0e3", surface: "#fbf6e8", text: "#292524", primary: "#1e3a8a", secondary: "#1d4ed8", border: "rgba(30, 58, 138, 0.3)",         muted: "#3b4c6b", dim: "#475569" },
+				startrek:        { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#fbcfe8", border: "rgba(255, 153, 0, 0.4)",          muted: "#d1d5db", dim: "#9ca3af" },
+				startrek_light:  { bg: "#f1f4f6", surface: "#ffffff", text: "#1e293b", primary: "#c2410c", secondary: "#ea580c", border: "rgba(194, 65, 12, 0.3)",          muted: "#7c3d17", dim: "#c2410c" }
 			};
 
 			if (theme && themes[theme]) {
@@ -96,6 +122,8 @@
 				root.style.setProperty("--color-accent-dim", t.secondary);
 				root.style.setProperty("--color-accent-dark", t.secondary);
 				root.style.setProperty("--color-border-primary", t.border);
+				if (t.muted) root.style.setProperty("--color-text-muted", t.muted);
+				if (t.dim)   root.style.setProperty("--color-text-dim", t.dim);
 				root.style.backgroundColor = t.bg;
 				root.style.color = t.text;
 				if (t.texture) {

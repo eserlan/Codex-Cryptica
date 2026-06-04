@@ -15,6 +15,10 @@
 
   const labelFilters = $derived(explorerUIStore.labelFilters);
   const viewMode = $derived(explorerUIStore.explorerViewMode);
+  const categoryGroupingDisabled = $derived(typeFilters.size === 1);
+  const effectiveViewMode = $derived(
+    viewMode === "category" && categoryGroupingDisabled ? "list" : viewMode,
+  );
 
   const allowedTypeSet = $derived.by(() =>
     allowedTypes ? new Set(allowedTypes) : null,
@@ -26,7 +30,7 @@
     ),
   );
 
-  function toggleTypeFilter(type: string, event: MouseEvent) {
+  function toggleTypeFilter(type: string) {
     if (type === "all") {
       typeFilters = new Set();
       explorerUIStore.clearLabelFilters();
@@ -37,29 +41,27 @@
       return;
     }
 
-    const isMulti = event.ctrlKey || event.metaKey;
-
-    if (isMulti) {
-      const newFilters = new Set(typeFilters);
-      if (newFilters.has(type)) {
-        newFilters.delete(type);
-      } else {
-        newFilters.add(type);
-      }
-      typeFilters = newFilters;
+    const newFilters = new Set(typeFilters);
+    if (newFilters.has(type)) {
+      newFilters.delete(type);
     } else {
-      if (typeFilters.has(type)) {
-        typeFilters = new Set();
-      } else {
-        typeFilters = new Set([type]);
-      }
+      newFilters.add(type);
     }
+    typeFilters = newFilters;
   }
 
   function getIconToggleClasses(active: boolean) {
     return active
       ? "rounded-lg border border-theme-primary bg-theme-primary text-theme-bg shadow-sm transition-all hover:border-theme-secondary hover:bg-theme-secondary"
       : "rounded-lg border border-theme-border bg-theme-bg/50 text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text";
+  }
+
+  function getCategoryGroupToggleClasses(active: boolean, disabled: boolean) {
+    if (disabled) {
+      return "rounded-lg border border-theme-border/50 bg-theme-bg/30 text-theme-muted/40 cursor-not-allowed";
+    }
+
+    return getIconToggleClasses(active);
   }
 </script>
 
@@ -68,7 +70,7 @@
 >
   <button
     type="button"
-    onclick={(e) => toggleTypeFilter("all", e)}
+    onclick={() => toggleTypeFilter("all")}
     title="Show all categories"
     aria-label="Show all categories"
     aria-pressed={typeFilters.size === 0}
@@ -84,7 +86,7 @@
     {#if count > 0 || typeFilters.has(cat.id)}
       <button
         type="button"
-        onclick={(e) => toggleTypeFilter(cat.id, e)}
+        onclick={() => toggleTypeFilter(cat.id)}
         title={cat.label}
         aria-label={`Filter by ${cat.label}`}
         aria-pressed={typeFilters.has(cat.id)}
@@ -114,9 +116,9 @@
     onclick={() => explorerUIStore.setExplorerViewMode("list")}
     title="List View"
     aria-label="List View"
-    aria-pressed={viewMode === "list"}
+    aria-pressed={effectiveViewMode === "list"}
     class="flex items-center justify-center p-1.5 {getIconToggleClasses(
-      viewMode === 'list',
+      effectiveViewMode === 'list',
     )}"
   >
     <span class="icon-[lucide--list] w-3.5 h-3.5"></span>
@@ -127,12 +129,29 @@
     onclick={() => explorerUIStore.setExplorerViewMode("label")}
     title="Group by Label"
     aria-label="Group by Label"
-    aria-pressed={viewMode === "label"}
+    aria-pressed={effectiveViewMode === "label"}
     class="flex items-center justify-center p-1.5 {getIconToggleClasses(
-      viewMode === 'label',
+      effectiveViewMode === 'label',
     )}"
   >
     <span class="icon-[lucide--tag] w-3.5 h-3.5"></span>
+  </button>
+
+  <button
+    type="button"
+    onclick={() => explorerUIStore.setExplorerViewMode("category")}
+    title={categoryGroupingDisabled
+      ? "Clear the category filter to group by category"
+      : "Group by Category"}
+    aria-label="Group by Category"
+    aria-pressed={effectiveViewMode === "category"}
+    disabled={categoryGroupingDisabled}
+    class="flex items-center justify-center p-1.5 {getCategoryGroupToggleClasses(
+      effectiveViewMode === 'category',
+      categoryGroupingDisabled,
+    )}"
+  >
+    <span class="icon-[lucide--folder-tree] w-3.5 h-3.5"></span>
   </button>
 </div>
 
@@ -140,7 +159,7 @@
   <div
     class="mt-3 flex flex-wrap gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
   >
-    {#each Array.from(labelFilters).sort() as label}
+    {#each Array.from(labelFilters).sort() as label (label)}
       <div
         class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
       >

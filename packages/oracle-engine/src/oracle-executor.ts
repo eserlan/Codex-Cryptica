@@ -7,8 +7,9 @@ import { ConnectExecutor } from "./executors/connect-executor";
 import { MergeExecutor } from "./executors/merge-executor";
 import { PlotExecutor } from "./executors/plot-executor";
 import { VisualizationExecutor } from "./executors/visualization-executor";
-import { RegenerateExecutor } from "./executors/regenerate-executor";
+import { ReviseExecutor } from "./executors/revise-executor";
 import { ChatExecutor } from "./executors/chat-executor";
+import { GuestChatExecutor } from "./executors/guest-chat-executor";
 import type { OracleIntent, OracleExecutionContext } from "./types";
 
 /**
@@ -28,8 +29,9 @@ export class OracleActionExecutor {
   private mergeExecutor = new MergeExecutor();
   private plotExecutor: PlotExecutor;
   private visualizationExecutor: VisualizationExecutor;
-  private regenerateExecutor: RegenerateExecutor;
+  private reviseExecutor: ReviseExecutor;
   private chatExecutor: ChatExecutor;
+  private guestChatExecutor: GuestChatExecutor;
 
   constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
     this.generator = generator ?? new OracleGenerator();
@@ -38,8 +40,9 @@ export class OracleActionExecutor {
     // Inject dependencies into handlers
     this.plotExecutor = new PlotExecutor(this.generator);
     this.visualizationExecutor = new VisualizationExecutor(this.generator);
-    this.regenerateExecutor = new RegenerateExecutor(this.generator);
+    this.reviseExecutor = new ReviseExecutor(this.generator);
     this.chatExecutor = new ChatExecutor(this.generator, this.draftingEngine);
+    this.guestChatExecutor = new GuestChatExecutor();
   }
 
   /**
@@ -55,12 +58,8 @@ export class OracleActionExecutor {
       case "clear":
         await this.metaExecutor.execute(intent, context);
         break;
-      case "regenerate":
-        await this.regenerateExecutor.execute(
-          intent,
-          context,
-          onPartialResponse,
-        );
+      case "revise":
+        await this.reviseExecutor.execute(intent, context, onPartialResponse);
         break;
       case "roll":
         await this.diceExecutor.execute(intent, context);
@@ -85,6 +84,13 @@ export class OracleActionExecutor {
       case "chat":
         await this.chatExecutor.execute(intent, context, onPartialResponse);
         break;
+      case "guest-chat":
+        await this.guestChatExecutor.execute(
+          intent,
+          context,
+          onPartialResponse,
+        );
+        break;
       case "error":
         await context.chatHistory.addMessage({
           id: crypto.randomUUID(),
@@ -101,43 +107,70 @@ export class OracleActionExecutor {
    * Public API for direct entity visualization.
    */
   async drawEntity(entityId: string, context: OracleExecutionContext) {
-    try {
-      await this.visualizationExecutor.drawEntity(entityId, context);
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Image generation failed: ${err.message}`,
-      });
-    }
+    await this.visualizationExecutor.drawEntity(entityId, context);
+  }
+
+  async prepareEntityPrompt(
+    entityId: string,
+    context: OracleExecutionContext,
+    options: { ignoreSavedArtDirection?: boolean } = {},
+  ) {
+    return this.visualizationExecutor.prepareEntityPrompt(
+      entityId,
+      context,
+      options,
+    );
+  }
+
+  async generateEntityFromPrompt(
+    entityId: string,
+    prompt: string,
+    context: OracleExecutionContext,
+  ) {
+    await this.visualizationExecutor.generateEntityFromPrompt(
+      entityId,
+      prompt,
+      context,
+    );
   }
 
   /**
    * Public API for direct message visualization.
    */
   async drawMessage(messageId: string, context: OracleExecutionContext) {
-    try {
-      await this.visualizationExecutor.drawMessage(messageId, context);
-    } catch (err: any) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `❌ Image generation failed: ${err.message}`,
-      });
-    }
+    await this.visualizationExecutor.drawMessage(messageId, context);
+  }
+
+  async prepareMessagePrompt(
+    messageId: string,
+    context: OracleExecutionContext,
+  ) {
+    return this.visualizationExecutor.prepareMessagePrompt(messageId, context);
+  }
+
+  async generateMessageFromPrompt(
+    messageId: string,
+    prompt: string,
+    context: OracleExecutionContext,
+  ) {
+    await this.visualizationExecutor.generateMessageFromPrompt(
+      messageId,
+      prompt,
+      context,
+    );
   }
 
   /**
-   * Public API for direct entity regeneration.
+   * Public API for direct entity revision.
    */
-  async regenerateEntity(
+  async reviseEntity(
     entityId: string,
     context: OracleExecutionContext,
     onPartialResponse?: (partial: string) => void,
   ) {
     try {
-      await this.regenerateExecutor.execute(
-        { type: "regenerate", entityId },
+      await this.reviseExecutor.execute(
+        { type: "revise", entityId },
         context,
         onPartialResponse,
       );
@@ -146,7 +179,7 @@ export class OracleActionExecutor {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
-        content: `❌ Regeneration failed: ${err.message}`,
+        content: `❌ Revision failed: ${err.message}`,
       });
     }
   }

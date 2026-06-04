@@ -22,6 +22,8 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
+  import { createHoverContentLoader } from "./graph/hover-content-loader";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
@@ -40,6 +42,9 @@
   );
 
   let resizeObserver: ResizeObserver | undefined;
+  const hoverContentLoader = createHoverContentLoader((entityId) =>
+    vault.loadEntityContent(entityId),
+  );
 
   // Sync prop -> controller
   $effect(() => {
@@ -74,8 +79,7 @@
   );
 
   $effect(() => {
-    if (controller.hoveredEntityId)
-      vault.loadEntityContent(controller.hoveredEntityId);
+    hoverContentLoader.schedule(controller.hoveredEntityId);
   });
 
   const handleKeyDown = async (e: KeyboardEvent) => {
@@ -126,6 +130,7 @@
   };
 
   onMount(() => {
+    void graph.init();
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
@@ -138,6 +143,7 @@
   });
 
   onDestroy(() => {
+    hoverContentLoader.cancel();
     if (resizeObserver) {
       resizeObserver.disconnect();
     }
@@ -381,6 +387,11 @@
       ? vault.entities[controller.hoveredEntityId]
       : null,
   );
+  let hasNoEntities = $derived(
+    vault.isInitialized &&
+      vault.status !== "loading" &&
+      vault.allEntities.length === 0,
+  );
 </script>
 
 <div
@@ -424,6 +435,19 @@
     <ContextMenu cy={controller.cy} />
     <SelectionConnector cy={controller.cy} />
   {/if}
+  {#if hasNoEntities}
+    <div
+      class="absolute inset-0 flex items-center justify-center pointer-events-none"
+      data-testid="graph-empty-state"
+    >
+      <EmptyState
+        icon="icon-[lucide--network]"
+        headline="Your graph is empty"
+        body="Add entities in the explorer to see them appear here."
+      />
+    </div>
+  {/if}
+
   <FeatureHint hintId="graph-controls" />
   {#if controller.selectedCount === 2}
     <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">

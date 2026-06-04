@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   const dialog = $derived(notificationStore.confirmationDialog);
 
@@ -39,6 +40,7 @@
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
       tabindex="-1"
+      use:focusTrap
       class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface shadow-2xl"
       transition:scale={{ duration: 250, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}

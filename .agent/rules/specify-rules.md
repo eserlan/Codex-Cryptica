@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-30
+Auto-generated from all feature plans. Last updated: 2026-06-02
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine` (129-seo-landing-pages)
+- `localStorage` (transient transfer), OPFS & IndexedDB (via vault stores) (129-seo-landing-pages)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (127-context-aware-entity-generator)
 - OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts) (127-context-aware-entity-generator)
@@ -31,6 +34,8 @@ bun run lint
 TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventions
 
 ## Recent Changes
+
+- 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
 
 - 127-context-aware-entity-generator: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai`
 

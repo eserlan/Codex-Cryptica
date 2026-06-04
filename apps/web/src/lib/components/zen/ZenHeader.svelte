@@ -2,6 +2,7 @@
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import {
@@ -217,6 +218,17 @@
                 ? 'icon-[lucide--volume-2]'
                 : 'icon-[lucide--mic]'} w-4 h-4"
             ></span>
+          </button>
+        {/if}
+        {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
+          <button
+            onclick={() => guestChatStore.openChat(entity.id, entity.title)}
+            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title="Chat with character"
+            aria-label="Chat with character"
+            data-testid="zen-guest-chat-button"
+          >
+            <span class="icon-[lucide--messages-square] w-4 h-4"></span>
           </button>
         {/if}
         <button

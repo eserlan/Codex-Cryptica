@@ -86,9 +86,42 @@ interface CanvasCache {
     color: string;
     opacity: number;
   };
+  textMeasurementCache?: Map<string, { width: number }>;
 }
 
 const canvasCaches = new WeakMap<HTMLCanvasElement, CanvasCache>();
+
+const TAU = Math.PI * 2;
+
+// Reusable scratch points to minimize GC pressure during animation frames
+const scratchCenter = { x: 0, y: 0 };
+const scratchPinPos = { x: 0, y: 0 };
+const scratchTokenPt = { x: 0, y: 0 };
+const scratchTokenTopLeft = { x: 0, y: 0 };
+const scratchTokenBottomRight = { x: 0, y: 0 };
+const scratchTokenCenter = { x: 0, y: 0 };
+const scratchStart = { x: 0, y: 0 };
+const scratchEnd = { x: 0, y: 0 };
+const originPt = { x: 0, y: 0 };
+
+function measureTextCached(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  font: string,
+  cache: CanvasCache,
+): { width: number } {
+  if (!cache.textMeasurementCache) {
+    cache.textMeasurementCache = new Map();
+  }
+  const key = `${font}:${text}`;
+  let result = cache.textMeasurementCache.get(key);
+  if (!result) {
+    const metrics = ctx.measureText(text);
+    result = { width: metrics.width };
+    cache.textMeasurementCache.set(key, result);
+  }
+  return result;
+}
 
 function drawRoundedRectPath(
   ctx: CanvasRenderingContext2D,
@@ -139,7 +172,12 @@ export function renderMap(options: RenderOptions) {
 
   if (!image) return;
 
-  const center = imageToViewport({ x: 0, y: 0 }, transform, canvasSize);
+  const center = imageToViewport(
+    originPt,
+    transform,
+    canvasSize,
+    scratchCenter,
+  );
 
   // 1. Draw background image
   ctx.save();
@@ -161,7 +199,12 @@ export function renderMap(options: RenderOptions) {
 
   // 4. Draw pins
   for (const pin of pins) {
-    const pos = imageToViewport(pin.coordinates, transform, canvasSize);
+    const pos = imageToViewport(
+      pin.coordinates,
+      transform,
+      canvasSize,
+      scratchPinPos,
+    );
 
     // Frustum culling: skip pins outside the viewport (with padding)
     if (
@@ -174,7 +217,7 @@ export function renderMap(options: RenderOptions) {
     }
 
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, 8, 0, TAU);
     ctx.fillStyle = pin.visuals.color || "#4ade80"; // Fallback to theme-primary
     ctx.fill();
     ctx.strokeStyle = "white";
@@ -186,15 +229,21 @@ export function renderMap(options: RenderOptions) {
   for (const token of tokens) {
     if (token.visible === false) continue;
 
+    scratchTokenPt.x = token.x;
+    scratchTokenPt.y = token.y;
     const topLeft = imageToViewport(
-      { x: token.x, y: token.y },
+      scratchTokenPt,
       transform,
       canvasSize,
+      scratchTokenTopLeft,
     );
+    scratchTokenPt.x = token.x + token.width;
+    scratchTokenPt.y = token.y + token.height;
     const bottomRight = imageToViewport(
-      { x: token.x + token.width, y: token.y + token.height },
+      scratchTokenPt,
       transform,
       canvasSize,
+      scratchTokenBottomRight,
     );
 
     const minX = Math.min(topLeft.x, bottomRight.x);
@@ -211,10 +260,9 @@ export function renderMap(options: RenderOptions) {
       continue;
     }
 
-    const center = {
-      x: minX + width / 2,
-      y: minY + height / 2,
-    };
+    const center = scratchTokenCenter;
+    center.x = minX + width / 2;
+    center.y = minY + height / 2;
     const diameter = Math.max(1, Math.min(width, height));
     const radius = diameter / 2;
 
@@ -223,7 +271,7 @@ export function renderMap(options: RenderOptions) {
     ctx.rotate((token.rotation * Math.PI) / 180);
 
     ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.arc(0, 0, radius, 0, TAU);
     ctx.closePath();
     ctx.clip();
 
@@ -249,44 +297,42 @@ export function renderMap(options: RenderOptions) {
 
     ctx.restore();
 
-    // Border and shadow OUTSIDE the token
+    // Border and shadow OUTSIDE the token (grouped to minimise save/restore thrash)
     if (token.active || token.selected) {
       const accent = token.active
         ? options.accentColor || "#d97706"
         : "#3b82f6";
       const borderWidth = token.active ? 8 : 5;
 
-      // Outer drop shadow (outside only)
       ctx.save();
+
+      // Outer drop shadow (outside only)
       ctx.beginPath();
-      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, Math.PI * 2);
+      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, TAU);
       ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       ctx.lineWidth = borderWidth + 4;
       ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
       ctx.shadowBlur = token.active ? 20 : 12;
       ctx.stroke();
-      ctx.restore();
 
       // Main thick border
-      ctx.save();
       ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.arc(center.x, center.y, radius, 0, TAU);
       ctx.strokeStyle = accent;
       ctx.lineWidth = borderWidth;
       ctx.shadowColor = accent;
       ctx.shadowBlur = token.active ? 16 : 10;
       ctx.stroke();
-      ctx.restore();
 
       // Thin bright highlight on top
-      ctx.save();
       ctx.beginPath();
-      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.arc(center.x, center.y, radius, 0, TAU);
       ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
       ctx.lineWidth = 2;
       ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
       ctx.shadowBlur = 4;
       ctx.stroke();
+
       ctx.restore();
     }
 
@@ -297,7 +343,7 @@ export function renderMap(options: RenderOptions) {
       ctx.translate(center.x, center.y);
       ctx.rotate((token.rotation * Math.PI) / 180);
       ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.arc(0, 0, radius, 0, TAU);
       ctx.closePath();
       ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.fill();
@@ -333,7 +379,7 @@ export function renderMap(options: RenderOptions) {
         const barY = iconY - padding;
         const barRadius = barHeight / 2;
 
-        // Shared pill background
+        // Shared pill background & status icons (grouped to minimise save/restore thrash)
         ctx.save();
         drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barRadius);
         ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
@@ -341,7 +387,9 @@ export function renderMap(options: RenderOptions) {
         ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
         ctx.lineWidth = 1;
         ctx.stroke();
-        ctx.restore();
+
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
 
         for (let i = 0; i < otherStatuses.length; i++) {
           const statusId = otherStatuses[i];
@@ -349,9 +397,9 @@ export function renderMap(options: RenderOptions) {
           const cy = iconY + iconSize / 2;
           const s = iconSize / 2;
 
-          ctx.save();
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
+          // Reset shadows from previous iteration
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
 
           switch (statusId) {
             case "stunned": {
@@ -402,10 +450,10 @@ export function renderMap(options: RenderOptions) {
               // Eyes
               ctx.fillStyle = "#22c55e";
               ctx.beginPath();
-              ctx.arc(cx - s * 0.12, cy - s * 0.2, 1.2, 0, Math.PI * 2);
+              ctx.arc(cx - s * 0.12, cy - s * 0.2, 1.2, 0, TAU);
               ctx.fill();
               ctx.beginPath();
-              ctx.arc(cx + s * 0.12, cy - s * 0.2, 1.2, 0, Math.PI * 2);
+              ctx.arc(cx + s * 0.12, cy - s * 0.2, 1.2, 0, TAU);
               ctx.fill();
               break;
             }
@@ -423,7 +471,7 @@ export function renderMap(options: RenderOptions) {
               ctx.stroke();
               // Iris
               ctx.beginPath();
-              ctx.arc(cx, cy, s * 0.25, 0, Math.PI * 2);
+              ctx.arc(cx, cy, s * 0.25, 0, TAU);
               ctx.stroke();
               // Slash
               ctx.beginPath();
@@ -433,19 +481,20 @@ export function renderMap(options: RenderOptions) {
               break;
             }
           }
-          ctx.restore();
         }
+        ctx.restore();
       }
     }
 
     if (token.label) {
       ctx.save();
-      ctx.font = "12px ui-sans-serif, system-ui, sans-serif";
+      const font = "12px ui-sans-serif, system-ui, sans-serif";
+      ctx.font = font;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       const labelX = center.x;
       const labelY = center.y + height / 2 + 6;
-      const metrics = ctx.measureText(token.label);
+      const metrics = measureTextCached(ctx, token.label, font, cache);
       const paddingX = 8;
       const boxWidth = metrics.width + paddingX * 2;
       const boxHeight = 18;
@@ -490,13 +539,9 @@ export function renderMap(options: RenderOptions) {
         image.width,
         image.height,
       );
-      fogCtx.restore();
 
       // 3. Punch holes where map is revealed (white = revealed in mask)
       fogCtx.globalCompositeOperation = "destination-out";
-      fogCtx.save();
-      fogCtx.translate(center.x, center.y);
-      fogCtx.scale(transform.zoom, transform.zoom);
       fogCtx.drawImage(
         maskCanvas,
         -image.width / 2,
@@ -515,8 +560,18 @@ export function renderMap(options: RenderOptions) {
 
   // 7. Draw measurement overlay
   if (measurement?.active && measurement.start && measurement.end) {
-    const start = imageToViewport(measurement.start, transform, canvasSize);
-    const end = imageToViewport(measurement.end, transform, canvasSize);
+    const start = imageToViewport(
+      measurement.start,
+      transform,
+      canvasSize,
+      scratchStart,
+    );
+    const end = imageToViewport(
+      measurement.end,
+      transform,
+      canvasSize,
+      scratchEnd,
+    );
     const color = measurement.color || "#22c55e";
 
     ctx.save();
@@ -547,15 +602,16 @@ export function renderMap(options: RenderOptions) {
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
+    ctx.arc(start.x, start.y, 4, 0, TAU);
     ctx.fill();
 
     const midX = (start.x + end.x) / 2;
     const midY = (start.y + end.y) / 2;
     const label = measurement.label || "";
     if (label) {
-      ctx.font = "bold 12px ui-sans-serif, system-ui, sans-serif";
-      const metrics = ctx.measureText(label);
+      const font = "bold 12px ui-sans-serif, system-ui, sans-serif";
+      ctx.font = font;
+      const metrics = measureTextCached(ctx, label, font, cache);
       const paddingX = 12;
       const paddingY = 6;
       const boxWidth = metrics.width + paddingX * 2;

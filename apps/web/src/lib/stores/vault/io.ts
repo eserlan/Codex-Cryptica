@@ -9,7 +9,7 @@ import { debugStore } from "../debug.svelte";
 import { stringifyEntity } from "../../utils/markdown";
 import type { LocalEntity } from "./types";
 
-import type { Map } from "schema";
+import type { Map, GuestChatTranscript } from "schema";
 
 // Clock skew tolerance for comparing timestamps across different filesystems
 const SKEW_MS = 2000;
@@ -259,4 +259,57 @@ export async function saveEntityToDisk(
   const path = entity._path || [`${entity.id}.md`];
   const content = stringifyEntity(entity);
   await writeOpfsFile(path, content, vaultHandle, activeVaultId);
+}
+
+export async function saveTranscriptToDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  activeVaultId: string,
+  transcript: GuestChatTranscript,
+) {
+  if (!vaultHandle) return;
+  const content = JSON.stringify(transcript, null, 2);
+  await writeOpfsFile(
+    [
+      ".codex",
+      "transcripts",
+      `${transcript.guestId}_${transcript.characterId}.json`,
+    ],
+    content,
+    vaultHandle,
+    activeVaultId,
+  );
+}
+
+export async function loadTranscriptsForCharacterFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  characterId: string,
+): Promise<GuestChatTranscript[]> {
+  if (!vaultHandle) return [];
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const transcriptsDir = await codexDir.getDirectoryHandle("transcripts", {
+      create: true,
+    });
+
+    const transcripts: GuestChatTranscript[] = [];
+    for await (const [name, handle] of transcriptsDir.entries()) {
+      if (handle.kind === "file" && name.endsWith(`_${characterId}.json`)) {
+        try {
+          const file = await (handle as FileSystemFileHandle).getFile();
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          transcripts.push(parsed);
+        } catch (itemErr) {
+          console.error(`[VaultIO] Failed to load transcript ${name}`, itemErr);
+        }
+      }
+    }
+    transcripts.sort((a, b) => b.lastUpdated - a.lastUpdated);
+    return transcripts;
+  } catch (err) {
+    console.warn("[VaultIO] Failed to load transcripts", err);
+    return [];
+  }
 }

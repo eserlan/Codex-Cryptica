@@ -77,6 +77,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
 **AI Powered:**
 - \`/draw [subject]\`: Visualize an entity or scene.
+- \`/revise\`: Revise the selected entity's Chronicle and Lore.
 - \`/create [description]\`: Automatically create a new entity from a text description.
 - \`/plot [entity name]\`: Analyse story tensions around an entity (rivals, risks, secrets). E.g. \`/plot threats around Count Dukoo\`.
 - \`/connect oracle\`: Start the guided connection wizard.

@@ -1,4 +1,4 @@
-export const entityDetailTabs = ["status", "lore", "map"] as const;
+export const entityDetailTabs = ["status", "lore", "map", "chats"] as const;
 
 export type EntityDetailTab = (typeof entityDetailTabs)[number];
 
