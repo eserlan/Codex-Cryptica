@@ -155,7 +155,7 @@
   {#snippet formFields(trigger)}
     {#if data.slug === "npc"}
       <RPGNPCFormFields
-        bind:theme={npc.theme}
+        bind:theme={activeTheme}
         bind:ancestry={npc.ancestry}
         bind:role={npc.role}
         bind:alignment={npc.alignment}
