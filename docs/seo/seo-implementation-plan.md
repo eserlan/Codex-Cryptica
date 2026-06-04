@@ -80,12 +80,14 @@ graph TD
 
 ### Phase 6: Structured Data & Rich Schema Maturity
 
-- [ ] **Task 6.1: Import & Feature Pages Schema Coverage**
+- [x] **Task 6.1: Import & Feature Pages Schema Coverage**
   - Generate and inject `BreadcrumbList` and `FAQPage` JSON-LD schemas on `/import/[slug]` and `/features/[slug]` routes.
-- [ ] **Task 6.2: Core Product & SoftwareApplication Schema**
+- [x] **Task 6.2: Core Product & SoftwareApplication Schema**
   - Add explicit `SoftwareApplication` and `Offers` schema definitions to the landing pages, declaring multi-platform local-first capabilities.
-- [ ] **Task 6.3: Dynamic Generator Result Schemas**
+- [x] **Task 6.3: Dynamic Generator Result Schemas**
   - Map reactive NPC/Location generator results to `Person` / `Place` schema.org JSON-LD blocks in `SEOGeneratorLayout` for SERP dynamic indexing.
+- [x] **Task 6.4: Fix JSON-LD injection (all routes)**
+  - Replaced broken literal `<script>{...}</script>` pattern (Svelte never interpolates inside raw script elements) with `{@html safeJsonLd()}` across all 6 affected files. Added `src/lib/utils/json-ld.ts` shared helper with `<`-escaping to prevent `</script>` breakout. Verified via raw SSR HTML on marketing routes.
 
 ### Phase 7: Advanced SEO Expansion & Funnel Scaling
 
