@@ -36,7 +36,7 @@
   >
     {#if entity}
       <button
-        class="px-2.5 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-all uppercase tracking-wider whitespace-nowrap border-r border-theme-border mr-1 hover:bg-theme-primary/10 rounded-md"
+        class="px-2.5 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-all uppercase tracking-wider whitespace-nowrap border-r border-theme-border mr-1 hover:bg-theme-primary/10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
         onclick={() => onOpenEntity(entity.id)}
       >
         {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
@@ -47,7 +47,7 @@
 
     {#if subMap}
       <button
-        class="p-1.5 text-theme-primary hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10 group/map mx-0.5"
+        class="p-1.5 text-theme-primary hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10 group/map mx-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
         onclick={() => onEnterSubmap(subMap.id)}
         title="Enter Sub-map"
         aria-label="Enter Sub-map"
@@ -60,14 +60,14 @@
 
     <div class="flex items-center gap-0.5 ml-auto">
       <button
-        class="p-1.5 text-theme-muted hover:text-red-500 transition-all rounded-md hover:bg-red-500/10"
+        class="p-1.5 text-theme-muted hover:text-red-500 transition-all rounded-md hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
         onclick={onDelete}
         aria-label="Delete pin"
       >
         <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
       </button>
       <button
-        class="p-1.5 text-theme-muted hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10"
+        class="p-1.5 text-theme-muted hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
         onclick={onClose}
         aria-label="Close pin details"
       >
