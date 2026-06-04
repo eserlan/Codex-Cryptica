@@ -251,7 +251,7 @@ export class VaultLifecycleManager {
 
           // Canonical keyword construction mirroring SearchService.mapToSearchEntry
           const keywords = [
-            ...(entity.labels || []),
+            ...(entity.labels || entity.tags || []),
             entity.lore || "",
             ...Object.values(entity.metadata || {}).flat(),
           ].join(" ");
