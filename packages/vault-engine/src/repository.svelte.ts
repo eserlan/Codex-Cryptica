@@ -1,5 +1,6 @@
 import { KeyedTaskQueue } from "./queue";
 import type { LocalEntity, FileEntry } from "./types";
+import { EntitySchema } from "schema";
 
 export interface IFileIOAdapter {
   walkDirectory(dir: FileSystemDirectoryHandle): Promise<FileEntry[]>;
@@ -19,6 +20,14 @@ export interface IFileIOAdapter {
     lastModified: number,
     entity: LocalEntity,
   ): Promise<void>;
+  setCachedEntitiesBulk?(
+    vaultId: string,
+    entries: Array<{
+      path: string;
+      lastModified: number;
+      entity: LocalEntity;
+    }>,
+  ): Promise<void>;
   parseMarkdown(text: string, filePath: string[]): LocalEntity | null;
   isNotFoundError(err: any): boolean;
 }
@@ -28,12 +37,20 @@ const SKEW_MS = 500;
 export class VaultRepository {
   entities = $state<Record<string, LocalEntity>>({});
   saveQueue = new KeyedTaskQueue();
+  private _pendingSaveCount = $state(0);
   private _currentLoadId = 0;
 
   constructor(private ioAdapter: IFileIOAdapter) {}
 
   get pendingSaveCount() {
-    return this.saveQueue.totalPendingCount;
+    return this._pendingSaveCount;
+  }
+
+  enqueueSave<T>(key: string, task: () => Promise<T>): Promise<T> {
+    this._pendingSaveCount++;
+    return this.saveQueue.enqueue(key, task).finally(() => {
+      this._pendingSaveCount--;
+    });
   }
 
   async loadFiles(
@@ -57,7 +74,23 @@ export class VaultRepository {
     const total = mdFiles.length;
     const newEntities: Record<string, LocalEntity> = {};
 
-    const processFile = async (fileEntry: FileEntry) => {
+    const processFile = async (
+      fileEntry: FileEntry,
+    ): Promise<
+      | {
+          entity: LocalEntity;
+          isHit: true;
+          filePath: string;
+          lastModified: number;
+        }
+      | {
+          entity: LocalEntity;
+          isHit: false;
+          filePath: string;
+          lastModified: number;
+        }
+      | null
+    > => {
       const filePath = fileEntry.path.join("/");
       const file = await fileEntry.handle.getFile();
       const lastModified = Math.floor(file.lastModified);
@@ -68,21 +101,32 @@ export class VaultRepository {
       );
 
       if (cached && Math.abs(cached.lastModified - lastModified) <= SKEW_MS) {
-        const entity: LocalEntity = { ...cached.entity, _path: fileEntry.path };
-        return { entity, isHit: true };
+        const parsed = EntitySchema.safeParse(cached.entity);
+        if (parsed.success) {
+          const entity: LocalEntity = { ...parsed.data, _path: fileEntry.path };
+          return { entity, isHit: true, lastModified, filePath };
+        } else {
+          console.warn(
+            `[VaultRepository] Quarantined corrupted cached entity at ${filePath}`,
+            parsed.error,
+          );
+          // Fall through to re-parse from disk
+        }
       }
 
       const text = await this.ioAdapter.readFileAsText(fileEntry);
       const entity = this.ioAdapter.parseMarkdown(text, fileEntry.path);
 
       if (entity) {
-        await this.ioAdapter.setCachedEntity(
-          activeVaultId,
-          filePath,
-          lastModified,
-          entity,
-        );
-        return { entity, isHit: false };
+        if (!this.ioAdapter.setCachedEntitiesBulk) {
+          await this.ioAdapter.setCachedEntity(
+            activeVaultId,
+            filePath,
+            lastModified,
+            entity,
+          );
+        }
+        return { entity, isHit: false, filePath, lastModified };
       }
 
       return null;
@@ -99,6 +143,11 @@ export class VaultRepository {
 
       const updatedEntities: Record<string, LocalEntity> = {};
       const newOrChanged: Record<string, LocalEntity> = {};
+      const cacheEntriesToWrite: Array<{
+        path: string;
+        lastModified: number;
+        entity: LocalEntity;
+      }> = [];
 
       for (const res of chunkResults) {
         if (res) {
@@ -106,7 +155,28 @@ export class VaultRepository {
           updatedEntities[res.entity.id] = res.entity;
           if (!res.isHit) {
             newOrChanged[res.entity.id] = res.entity;
+            if (this.ioAdapter.setCachedEntitiesBulk) {
+              cacheEntriesToWrite.push({
+                path: res.filePath,
+                lastModified: res.lastModified,
+                entity: res.entity,
+              });
+            }
           }
+        }
+      }
+
+      if (
+        cacheEntriesToWrite.length > 0 &&
+        this.ioAdapter.setCachedEntitiesBulk
+      ) {
+        try {
+          await this.ioAdapter.setCachedEntitiesBulk(
+            activeVaultId,
+            cacheEntriesToWrite,
+          );
+        } catch (e) {
+          console.warn("Failed to cache parsed entities in bulk", e);
         }
       }
 
@@ -203,15 +273,13 @@ export class VaultRepository {
   ): Promise<void> {
     onStatusChange("saving");
 
-    return this.saveQueue
-      .enqueue(entity.id, async () => {
-        await this.saveToDisk(vaultHandle, activeVaultId, entity, isGuest);
-        onStatusChange("idle");
-      })
-      .catch((err) => {
-        console.error("Save failed for", entity.title, err);
-        onStatusChange("error");
-      });
+    return this.enqueueSave(entity.id, async () => {
+      await this.saveToDisk(vaultHandle, activeVaultId, entity, isGuest);
+      onStatusChange("idle");
+    }).catch((err) => {
+      console.error("Save failed for", entity.title, err);
+      onStatusChange("error");
+    });
   }
 
   async waitForAllSaves(timeoutMs = 8000): Promise<void> {

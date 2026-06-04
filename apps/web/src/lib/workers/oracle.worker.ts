@@ -1,16 +1,16 @@
 /// <reference lib="webworker" />
 import * as Comlink from "comlink";
 import { aiClientManager } from "../services/ai/client-manager";
-import { DefaultTextGenerationService } from "../services/ai/text-generation.service";
-import { draftingEngine } from "@codex/oracle-engine";
+import { DefaultTextGenerationService } from "../services/ai/text-generation.service.svelte";
+import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
 import type {
   OracleWorkerEvent,
   DiscoveryProposal,
-} from "@codex/oracle-engine";
+} from "../../../../../packages/oracle-engine/src/types";
 
 /**
  * OracleWorker handles heavy-lifting AI and logic tasks off the main thread.
- * This includes streaming chat responses, entity discovery, and reconciliation.
+ * This includes streaming chat responses, entity discovery, and revision.
  */
 class OracleWorker {
   private textGeneration: DefaultTextGenerationService;
@@ -57,16 +57,22 @@ class OracleWorker {
     );
   }
 
-  async reconcileEntityUpdate(
+  async reviseEntityUpdate(
     apiKey: string,
     modelName: string,
     entity: any,
     incoming: { chronicle: string; lore: string },
     relatedEntities: any[] = [],
     categories: any[] = [],
-    options?: { isGuest?: boolean },
+    options?: {
+      isGuest?: boolean;
+      source?: string;
+      instructions?: string;
+      priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
+    },
   ): Promise<any> {
-    return this.textGeneration.reconcileEntityUpdate(
+    return this.textGeneration.reviseEntityUpdate(
       apiKey,
       modelName,
       entity,
@@ -108,6 +114,7 @@ class OracleWorker {
       vaultId?: string;
       requestId?: string;
       existingEntities?: any[];
+      systemInstructionOverride?: string;
     } = {},
   ): Promise<void> {
     const { vaultId, requestId, existingEntities = [] } = options;
@@ -164,6 +171,7 @@ class OracleWorker {
         },
         demoMode,
         categories,
+        options,
       );
     } catch (err: any) {
       this.emit({
@@ -176,6 +184,37 @@ class OracleWorker {
     } finally {
       this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
     }
+  }
+
+  async generateRelatedEntity(
+    apiKey: string,
+    modelName: string,
+    sourceEntity: {
+      title: string;
+      type: string;
+      content?: string;
+      lore?: string;
+    },
+    targetType: string,
+    relationship: string,
+    customInstructions = "",
+    connectedEntities: any[] = [],
+    categories: any[] = [],
+    templateOutline = "",
+    options?: { isGuest?: boolean; aiDisabled?: boolean },
+  ): Promise<any> {
+    return this.textGeneration.generateRelatedEntity(
+      apiKey,
+      modelName,
+      sourceEntity,
+      targetType,
+      relationship,
+      customInstructions,
+      connectedEntities,
+      categories,
+      templateOutline,
+      options,
+    );
   }
 
   async generateStructuredEntity(

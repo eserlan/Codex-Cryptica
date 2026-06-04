@@ -3,8 +3,6 @@
 **Input**: Design documents from `/specs/074-staging-indicator/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, quickstart.md
 
-**Status**: COMPLETED
-
 ## Format: `[ID] [P?] [Story] Description`
 
 ## Phase 1: Setup (Shared Infrastructure)

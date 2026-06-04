@@ -33,16 +33,16 @@
 
     previousActiveElement = document.activeElement as HTMLElement;
 
-    const timeout = window.setTimeout(() => {
+    const frame = requestAnimationFrame(() => {
       if (closeButton) {
         closeButton.focus();
       } else {
         dialogElement?.focus();
       }
-    }, 0);
+    });
 
     return () => {
-      window.clearTimeout(timeout);
+      cancelAnimationFrame(frame);
       previousActiveElement?.focus();
       previousActiveElement = null;
     };

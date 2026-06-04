@@ -2,7 +2,7 @@
 
 **Feature Branch**: `074-staging-indicator`  
 **Created**: 2026-03-20  
-**Status**: Final  
+**Status**: Implemented
 **Input**: User description: "a way to know we're in staging https://github.com/eserlan/Codex-Cryptica/issues/455"
 
 ## User Scenarios & Testing _(mandatory)_

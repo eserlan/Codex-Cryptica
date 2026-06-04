@@ -305,13 +305,10 @@ export class SyncCoordinator {
           mode: "readwrite",
         });
         if (permission !== "granted") {
-          const newPermission = await localHandle.requestPermission({
-            mode: "readwrite",
-          });
-          if (newPermission !== "granted") localHandle = null;
+          localHandle = null;
         }
       } catch (err: any) {
-        console.warn("[SyncCoordinator] Permission request failed:", err);
+        console.warn("[SyncCoordinator] Permission query failed:", err);
         localHandle = null;
       }
     }
@@ -319,7 +316,7 @@ export class SyncCoordinator {
     if (!localHandle) {
       try {
         this.notifier.alert(
-          "Please select a local folder to sync this vault with. This is required to grant permission or reconnect a lost link.",
+          "Please select a local folder to link this vault with. This is required to establish or reconnect a lost folder link.",
         );
         localHandle = await this.ioAdapter.showDirectoryPicker();
         await this.ioAdapter.setLocalHandle(activeVaultId, localHandle);

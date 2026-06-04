@@ -31,7 +31,7 @@ describe("EntityList Grouping Logic", () => {
     {
       id: "e3",
       title: "C",
-      type: "npc",
+      type: "location",
       status: "active",
       tags: [],
       labels: [],
@@ -70,5 +70,20 @@ describe("EntityList Grouping Logic", () => {
 
   it("should not group anything in list mode", () => {
     expect(groupEntitiesForExplorer(mockEntities, "list")).toBeNull();
+  });
+
+  it("should group by category while preserving all matching entities", () => {
+    const result = groupEntitiesForExplorer(mockEntities, "category");
+
+    expect(result?.type).toBe("category");
+    expect(result?.sortedKeys).toEqual(["location", "npc"]);
+    expect(result?.groups.get("npc")?.map((entity) => entity.id)).toEqual([
+      "e1",
+      "e2",
+      "e4",
+    ]);
+    expect(result?.groups.get("location")?.map((entity) => entity.id)).toEqual([
+      "e3",
+    ]);
   });
 });

@@ -4,11 +4,11 @@
   import {
     nodeMergeService,
     type IMergedContentProposal,
-  } from "$lib/services/node-merge.service";
+  } from "$lib/services/node-merge.service.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
 
@@ -28,6 +28,7 @@
   let strategy = $state<"concat" | "ai">("concat");
 
   const handleNext = async () => {
+    if (isProposing) return;
     error = null;
     if (step === "SELECT_SOURCE") {
       if (!sourceId) {
@@ -71,6 +72,7 @@
 
   const handleMerge = async () => {
     if (!proposal || !sourceId || !targetId) return;
+    if (step === "MERGING") return;
 
     step = "MERGING";
     try {
@@ -80,7 +82,7 @@
       const beforeTarget = entitiesSnapshot[tId];
       const beforeSource = entitiesSnapshot[sId];
 
-      regenerationService.proposeMergeDraft(proposal, [sId, tId], message.id);
+      revisionService.proposeMergeDraft(proposal, [sId, tId], message.id);
 
       step = "DONE";
       message.content = `Prepared a merge draft for **${beforeSource.title}** into **${beforeTarget.title}**. Review it in the entity panel before saving.`;
@@ -114,6 +116,7 @@
         bind:value={sourceName}
         bind:selectedId={sourceId}
         placeholder={`Type source ${themeStore.jargon.entity.toLowerCase()} name...`}
+        ariaLabel={`Source ${themeStore.jargon.entity.toLowerCase()} to absorb`}
       />
     </div>
   {:else if step === "SELECT_TARGET"}
@@ -136,6 +139,7 @@
         bind:value={targetName}
         bind:selectedId={targetId}
         placeholder="Type target entity name..."
+        ariaLabel={`Target ${themeStore.jargon.entity.toLowerCase()} to merge into`}
       />
     </div>
   {:else if step === "REVIEW"}

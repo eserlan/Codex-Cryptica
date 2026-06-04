@@ -51,7 +51,7 @@
 
   // Synchronize store back to onClose if it's closed manually
   $effect(() => {
-    if (!modalUIStore.lightbox.show && imageState) {
+    if (!modalUIStore.lightbox.show && imageState && resolvedImageUrl) {
       onClose();
     }
   });

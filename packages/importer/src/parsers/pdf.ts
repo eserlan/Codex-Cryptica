@@ -1,16 +1,14 @@
 import type { FileParser, ParseResult } from "../types";
 
-// Ensure worker is set up (though in browser env this might need CDN or local build)
-// For Node/Test env we might skip this or polyfill.
-// pdfjs.GlobalWorkerOptions.workerSrc = '...';
+const PDFJS_VERSION = "5.7.284";
+export const PDFJS_CDN = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.min.mjs`;
+export const PDFJS_WORKER_CDN = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
 
 export class PdfParser implements FileParser {
   private workerSrc: string;
 
   constructor(workerSrc?: string) {
-    // Default to a local path that the app should provide.
-    // If not provided, we expect it to be set globally or via this property.
-    this.workerSrc = workerSrc || "";
+    this.workerSrc = workerSrc || PDFJS_WORKER_CDN;
   }
 
   accepts(file: File): boolean {
@@ -18,15 +16,10 @@ export class PdfParser implements FileParser {
   }
 
   async parse(file: File): Promise<ParseResult> {
-    const pdfjs = await import("pdfjs-dist");
+    const pdfjs = await import(/* @vite-ignore */ PDFJS_CDN);
 
     if (typeof window !== "undefined") {
-      if (this.workerSrc) {
-        pdfjs.GlobalWorkerOptions.workerSrc = this.workerSrc;
-      } else if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-        // Fallback to a standard local path if nothing is set
-        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-      }
+      pdfjs.GlobalWorkerOptions.workerSrc = this.workerSrc;
     }
 
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -44,19 +37,15 @@ export class PdfParser implements FileParser {
       numPages: pdf.numPages,
     };
 
-    // Sequential page extraction to maintain order
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-
-      const pageText = textContent.items.map((item: any) => item.str).join(" ");
-
-      text += pageText + "\n\n";
+      text += textContent.items.map((item: any) => item.str).join(" ") + "\n\n";
     }
 
     return {
       text: text.trim(),
-      assets: [], // PDF image extraction is complex, skipped for MVP as per plan/research (text layer only)
+      assets: [],
       metadata,
     };
   }

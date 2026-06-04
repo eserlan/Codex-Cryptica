@@ -2,7 +2,7 @@
 
 **Feature Branch**: `070-graph-view-refactor`  
 **Created**: 2026-03-12  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "refactor @apps/web/src/lib/components/GraphView.svelte look at docs/refactoring/GRAPH_VIEW_REFACTOR.md"
 
 ## User Scenarios & Testing _(mandatory)_

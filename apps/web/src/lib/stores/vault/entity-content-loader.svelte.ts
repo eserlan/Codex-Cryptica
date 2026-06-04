@@ -1,8 +1,9 @@
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
+import type { LocalEntity } from "./types";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { readFileAsText } from "../../utils/opfs";
-import { parseMarkdown } from "../../utils/markdown";
+import { parseMarkdown, sanitizeId } from "../../utils/markdown";
 import { VaultRepository } from "@codex/vault-engine";
 
 export interface ContentLoaderDependencies {
@@ -99,12 +100,24 @@ export class EntityContentLoader {
             return;
           }
 
-          const { content: freshContent } = parseMarkdown(text);
+          const { content: freshContent, metadata: freshMetadata } =
+            parseMarkdown(text);
+          const mergedMetadata: any = { ...(freshMetadata || {}) };
+          delete mergedMetadata.id;
+          if (mergedMetadata.parent) {
+            mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
+          }
+          for (const key of Object.keys(mergedMetadata)) {
+            if (mergedMetadata[key] === undefined) {
+              delete mergedMetadata[key];
+            }
+          }
           this.deps.repository.entities[id] = {
             ...currentEntity,
+            ...mergedMetadata,
             content: freshContent || currentEntity.content || "",
             lore: "",
-          };
+          } as LocalEntity;
           this._contentLoadedIds.add(id);
           this._contentVerifiedIds.add(id);
         } catch (err) {
@@ -164,7 +177,7 @@ export class EntityContentLoader {
                 const text = await readFileAsText(localHandle, path);
                 if (text) {
                   const { metadata, content } = parseMarkdown(text);
-                  result = { content, lore: metadata.lore || "" };
+                  result = { content, lore: metadata.lore || "", metadata };
                 }
               }
             } catch (err) {
@@ -183,11 +196,24 @@ export class EntityContentLoader {
             const finalLore = result.lore || entityToUpdate.lore || "";
             const path = entityToUpdate._path || [`${id}.md`];
 
+            // Normalize and merge metadata
+            const mergedMetadata: any = { ...(result.metadata || {}) };
+            delete mergedMetadata.id;
+            if (mergedMetadata.parent) {
+              mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
+            }
+            for (const key of Object.keys(mergedMetadata)) {
+              if (mergedMetadata[key] === undefined) {
+                delete mergedMetadata[key];
+              }
+            }
+
             const updatedEntity = {
               ...entityToUpdate,
+              ...mergedMetadata,
               content: finalContent,
               lore: finalLore,
-            };
+            } as LocalEntity;
 
             this.deps.repository.entities[id] = updatedEntity;
             this._contentLoadedIds.add(id);
@@ -197,10 +223,18 @@ export class EntityContentLoader {
               `[EntityContentLoader] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
             );
 
+            // If content/lore changed, or if there are metadata keys on disk that weren't cached in memory
+            const metadataRestored = Object.keys(result.metadata || {}).some(
+              (key) =>
+                !(key in entityToUpdate) ||
+                (entityToUpdate as any)[key] === undefined,
+            );
+
             const isStale =
               finalContent !== (cached?.content ?? null) ||
-              finalLore !== (cached?.lore ?? null);
-            const hasContent = finalContent || finalLore;
+              finalLore !== (cached?.lore ?? null) ||
+              metadataRestored;
+            const hasContent = finalContent || finalLore || metadataRestored;
 
             if (isStale && (cached !== null || hasContent)) {
               cacheService.set(
@@ -231,7 +265,7 @@ export class EntityContentLoader {
 
   private async _readFromOpfs(
     id: string,
-  ): Promise<{ content: string; lore: string } | null> {
+  ): Promise<{ content: string; lore: string; metadata?: any } | null> {
     const entity = this.entities[id];
     if (!entity) return null;
     const path = entity._path || [`${id}.md`];
@@ -240,7 +274,7 @@ export class EntityContentLoader {
     const text = await readFileAsText(vaultDir, path).catch(() => null);
     if (!text) return null;
     const { metadata, content } = parseMarkdown(text);
-    return { content, lore: metadata.lore || "" };
+    return { content, lore: metadata.lore || "", metadata };
   }
 
   async internalLoadContent(id: string): Promise<void> {
@@ -249,8 +283,20 @@ export class EntityContentLoader {
     try {
       const result = await this._readFromOpfs(id);
       if (result) {
+        const mergedMetadata = { ...(result.metadata || {}) };
+        delete mergedMetadata.id;
+        if (mergedMetadata.parent) {
+          mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
+        }
+        for (const key of Object.keys(mergedMetadata)) {
+          if (mergedMetadata[key] === undefined) {
+            delete mergedMetadata[key];
+          }
+        }
+
         this.deps.repository.entities[id] = {
           ...currentEntity,
+          ...mergedMetadata,
           content: result.content,
           lore: result.lore,
         };

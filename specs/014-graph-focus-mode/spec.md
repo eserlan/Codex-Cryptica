@@ -2,7 +2,7 @@
 
 **Feature Branch**: `014-graph-focus-mode`  
 **Created**: 2026-01-29  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "highlight (ie opaque the others) selected node and its connections (incl nodes)"
 
 ## User Scenarios & Testing

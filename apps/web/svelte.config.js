@@ -18,12 +18,44 @@ const config = {
         "/privacy",
         "/blog",
         "/sitemap.xml",
+        "/tools",
+        "/free-rpg-campaign-manager",
+        "/worldbuilding-tool",
+        "/ai-rpg-campaign-manager",
+        "/tools/dnd-npc-generator",
+        "/tools/faction-generator",
+        "/tools/quest-hook-generator",
+        "/tools/fantasy-name-generator",
+        "/solutions/campaign-manager",
+        "/solutions/worldbuilding-tool",
+        "/solutions/ai-gm-assistant",
+        "/solutions/local-first-rpg",
+        "/solutions/ai-dm-assistant",
+        "/solutions/ai-worldbuilding-tool",
+        "/solutions/rpg-knowledge-graph",
+        "/solutions/offline-rpg-campaign-manager",
+        "/solutions/local-first-worldbuilding-tool",
+        "/vs/obsidian",
+        "/vs/world-anvil",
+        "/vs/legendkeeper",
+        "/vs/kanka-alternative",
+        "/generators/npc",
+        "/generators/settlement",
+        "/generators/magic-item",
+        "/generators/faction",
       ],
       handleUnseenRoutes: "ignore",
       handleHttpError: ({ path, message }) => {
-        // llms.txt is a static file served at the domain root; ignore 404s
-        // that arise during prerendering of optional static entries.
-        if (path.endsWith("/llms.txt")) return;
+        // Ignore static assets/metadata files that return 404 during local crawling
+        if (
+          path.endsWith("/llms.txt") ||
+          path.endsWith("/favicon.png") ||
+          path.endsWith("/logo.png") ||
+          path.endsWith("/manifest.webmanifest") ||
+          path.includes("/images/")
+        ) {
+          return;
+        }
         throw new Error(message);
       },
     },

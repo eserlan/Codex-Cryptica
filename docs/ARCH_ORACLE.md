@@ -14,19 +14,21 @@ apps/web/src/lib/stores/
     ├── context-manager.ts
     ├── action-manager.svelte.ts
     ├── settings-manager.svelte.ts
-    └── reconciliation-manager.svelte.ts
+    └── revision-manager.svelte.ts
 ```
 
 ## 2. Manager Roles
 
-| Manager            | Responsibility      | Key Methods/States                              |
-| ------------------ | ------------------- | ----------------------------------------------- |
-| **UI**             | Visibility & status | `isOpen`, `isThinking`, `toggle()`, `open()`    |
-| **Chat**           | History & Messaging | `messages`, `sendMessage()`, `clearMessages()`  |
-| **Context**        | AI Context Assembly | `getExecutionContext()`                         |
-| **Actions**        | AI Operations       | `undo()`, `drawEntity()`, `regenerate()`        |
-| **Settings**       | API Keys & Models   | `apiKey`, `modelName`, `updateSettings()`       |
-| **Reconciliation** | Draft Merging       | `reconcileSmartApply()`, `reconcileDiscovery()` |
+| Manager      | Responsibility      | Key Methods/States                                |
+| ------------ | ------------------- | ------------------------------------------------- |
+| **UI**       | Visibility & status | `isOpen`, `isThinking`, `toggle()`, `open()`      |
+| **Chat**     | History & Messaging | `messages`, `sendMessage()`, `clearMessages()`    |
+| **Context**  | AI Context Assembly | `getExecutionContext()`                           |
+| **Actions**  | AI Operations       | `undo()`, `drawEntity()`, `revise()`              |
+| **Settings** | API Keys & Models   | `apiKey`, `modelName`, `updateSettings()`         |
+| **Revision** | Draft Merging       | `reviseSmartApply()`, `reviseDiscoveryProposal()` |
+
+For the full entity revision flow, see [Architectural Guide: Entity Revision Pipeline](./ARCH_ENTITY_REVISION_PIPELINE.md).
 
 ## 3. Communication Pattern
 

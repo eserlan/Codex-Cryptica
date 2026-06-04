@@ -2,7 +2,7 @@
 
 **Feature Branch**: `065-move-oracle-sidebar`  
 **Created**: 2026-03-04  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "move oracle to left sidebar https://github.com/eserlan/Codex-Cryptica/issues/352"
 
 ## User Scenarios & Testing _(mandatory)_

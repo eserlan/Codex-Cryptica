@@ -49,8 +49,8 @@ export interface EntityContentRecord {
 export interface SearchIndexRecord {
   /** Vault identifier. Primary key. */
   vaultId: string;
-  /** Serialized FlexSearch index data. */
-  data: Record<string, any>;
+  /** Serialized FlexSearch index data. Supports Blob (for compression/binary I/O), Uint8Array, or legacy JSON Record. */
+  data: Blob | Uint8Array | Record<string, any>;
   /** Last update timestamp. */
   updatedAt: number;
 }
@@ -87,6 +87,23 @@ export interface AppSettingRecord {
 }
 
 /**
+ * Row stored in the `quickNotes` Dexie table.
+ * Represents lightweight unformatted fleeting thoughts captured via the scratchpad.
+ */
+export interface QuickNoteRecord {
+  /** Auto-incrementing primary key. */
+  id?: number;
+  /** Vault this note belongs to. */
+  vaultId: string;
+  /** Raw unformatted text/markdown. */
+  content: string;
+  /** Status of the note: active, elevated, or archived. */
+  status: "active" | "elevated" | "archived";
+  /** Unix timestamp of creation. */
+  createdAt: number;
+}
+
+/**
  * Dexie database used as the primary graph entity store.
  *
  * The database is intentionally separate from the legacy `CodexCryptica`
@@ -99,6 +116,7 @@ export interface AppSettingRecord {
  *  3 — added appSettings table for global configuration (AI keys, tiers).
  *  4 — added vaultMetadata table and graphEntity indexes for front page lookups.
  *  5 — added compound lastModified and label indexes for front page queries.
+ *  6 — added quickNotes table for transient fast scratchpad persistence.
  */
 export class EntityDb extends Dexie {
   graphEntities!: Table<GraphEntityRecord>;
@@ -106,6 +124,7 @@ export class EntityDb extends Dexie {
   searchIndex!: Table<SearchIndexRecord>;
   appSettings!: Table<AppSettingRecord>;
   vaultMetadata!: Table<VaultMetadataRecord>;
+  quickNotes!: Table<QuickNoteRecord>;
 
   constructor() {
     super("CodexEntityDb");
@@ -146,6 +165,16 @@ export class EntityDb extends Dexie {
       searchIndex: "vaultId",
       appSettings: "key",
       vaultMetadata: "id, lastModified",
+    });
+
+    this.version(6).stores({
+      graphEntities:
+        "[vaultId+id], vaultId, [vaultId+filePath], [vaultId+lastModified], lastModified, *tags, *labels",
+      entityContent: "[vaultId+entityId], vaultId",
+      searchIndex: "vaultId",
+      appSettings: "key",
+      vaultMetadata: "id, lastModified",
+      quickNotes: "++id, vaultId, status, createdAt",
     });
   }
 }

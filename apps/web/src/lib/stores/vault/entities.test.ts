@@ -11,6 +11,7 @@ import {
   bulkAddLabel,
   bulkRemoveLabel,
   batchCreateEntities,
+  detectCycle,
 } from "./entities";
 import type { LocalEntity, BatchCreateInput } from "./types";
 
@@ -48,6 +49,59 @@ describe("Vault Entities Operations", () => {
       const entity2 = createEntity("My NPC", "npc", {}, entities);
       expect(entity2.id).toBe("my-npc-2");
     });
+
+    it("should automatically add 'past' label when end_date has a valid year", () => {
+      const entity = createEntity(
+        "Historical Event",
+        "event",
+        {
+          labels: [],
+          end_date: { year: 2026, month: 5, day: 23 } as any,
+        },
+        {},
+      );
+      expect(entity.labels).toContain("past");
+    });
+
+    it("should not add 'past' label when end_date is missing or invalid", () => {
+      const entity1 = createEntity("Active Event", "event", { labels: [] }, {});
+      expect(entity1.labels).not.toContain("past");
+
+      const entity2 = createEntity(
+        "Invalid Event",
+        "event",
+        {
+          labels: [],
+          end_date: { year: undefined } as any,
+        },
+        {},
+      );
+      expect(entity2.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label if already present", () => {
+      const entity = createEntity(
+        "Old Event",
+        "event",
+        {
+          labels: ["past"],
+          end_date: { year: 2000 } as any,
+        },
+        {},
+      );
+      expect(entity.labels).toEqual(["past"]);
+    });
+
+    it("should preserve parent field if present", () => {
+      const entities = {};
+      const entity = createEntity(
+        "Child",
+        "npc",
+        { parent: "parent-id" },
+        entities,
+      );
+      expect(entity.parent).toBe("parent-id");
+    });
   });
 
   describe("updateEntity", () => {
@@ -67,6 +121,53 @@ describe("Vault Entities Operations", () => {
     it("should return null if entity not found", () => {
       const { updated } = updateEntity({}, "missing", { title: "X" });
       expect(updated).toBeNull();
+    });
+
+    it("should add 'past' label when updating to add a valid end_date", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        labels: [],
+        connections: [],
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        end_date: { year: 1999 } as any,
+      });
+      expect(updated!.labels).toContain("past");
+    });
+
+    it("should remove 'past' label when updating to remove end_date", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        labels: ["past"],
+        end_date: { year: 1999 } as any,
+        connections: [],
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        end_date: undefined,
+      });
+      expect(updated!.labels).not.toContain("past");
+    });
+
+    it("should not duplicate 'past' label when updating end_date details if already present", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        labels: ["past"],
+        end_date: { year: 1999 } as any,
+        connections: [],
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        end_date: { year: 2000 } as any,
+      });
+      expect(updated!.labels).toEqual(["past"]);
     });
   });
 
@@ -118,6 +219,86 @@ describe("Vault Entities Operations", () => {
 
       expect(newEntities["e2"].connections).toHaveLength(0);
       expect(modifiedIds).toContain("e2");
+    });
+
+    it("should promote child entities to root level when parent is deleted", async () => {
+      const parent = {
+        id: "p1",
+        title: "Parent",
+        status: "active",
+        connections: [],
+      } as any;
+      const child = {
+        id: "c1",
+        title: "Child",
+        status: "active",
+        parent: "p1",
+        connections: [],
+      } as any;
+      const entities = { p1: parent, c1: child };
+
+      const { entities: newEntities, modifiedIds } = await deleteEntity(
+        mockVaultDir,
+        entities,
+        "p1",
+      );
+
+      expect(newEntities["c1"].parent).toBeUndefined();
+      expect(modifiedIds).toContain("c1");
+    });
+
+    it("should surgically cleanup connections and parents when inboundConnections and childrenIds are provided", async () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        connections: [],
+      } as any;
+      const e2 = {
+        id: "e2",
+        title: "E2",
+        status: "active",
+        connections: [{ target: "e1", type: "enemy" }],
+      } as any;
+      const child = {
+        id: "c1",
+        title: "Child",
+        status: "active",
+        parent: "e1",
+        connections: [],
+      } as any;
+      const unrelated = {
+        id: "unrelated",
+        title: "Unrelated",
+        status: "active",
+        connections: [{ target: "other", type: "friend" }],
+      } as any;
+      const entities = { e1, e2, c1: child, unrelated };
+
+      const mockInbound = {
+        e1: [
+          {
+            sourceId: "e2",
+            connection: { target: "e1", type: "enemy" } as any,
+          },
+        ],
+      };
+      const mockChildren = ["c1"];
+
+      const { entities: newEntities, modifiedIds } = await deleteEntity(
+        mockVaultDir,
+        entities,
+        "e1",
+        mockInbound,
+        mockChildren,
+      );
+
+      expect(newEntities["e2"].connections).toHaveLength(0);
+      expect(newEntities["c1"].parent).toBeUndefined();
+      expect(newEntities["unrelated"].connections).toHaveLength(1); // untouched
+      expect(modifiedIds).toContain("e2");
+      expect(modifiedIds).toContain("c1");
+      expect(modifiedIds).not.toContain("unrelated");
     });
 
     it("should handle asset deletion errors and missing handles", async () => {
@@ -281,13 +462,12 @@ describe("Vault Entities Operations", () => {
           title: "Hero 1",
           type: "character",
           status: "active",
-          tags: [],
           labels: [],
           aliases: [],
           connections: [],
           content: "Content 1",
           updatedAt: 100,
-        } as LocalEntity,
+        } as unknown as LocalEntity,
       ];
 
       const { entities, created } = batchCreateEntities(
@@ -324,6 +504,40 @@ describe("Vault Entities Operations", () => {
       expect(createdEntity.title).toBe("The Misty Mountains");
       expect(entities[createdEntity.id]).toBeDefined();
       expect(entities[createdEntity.id].content).toBe("Very cold.");
+    });
+  });
+
+  describe("detectCycle", () => {
+    it("should return true if parent is the same as the entity itself", () => {
+      const entities = {};
+      expect(detectCycle("A", "A", entities)).toBe(true);
+    });
+
+    it("should return true if the potential parent is already a descendant of the entity", () => {
+      // A -> B. Making B the parent of A creates a cycle: B -> A -> B
+      const B = { id: "B", parent: "A" } as any;
+      const entities = { B };
+      expect(detectCycle("A", "B", entities)).toBe(true);
+    });
+
+    it("should return true for deeper cycles", () => {
+      // A -> C -> B. Making B the parent of A creates a cycle: B -> A -> C -> B
+      const C = { id: "C", parent: "A" } as any;
+      const B = { id: "B", parent: "C" } as any;
+      const entities = { B, C };
+      expect(detectCycle("A", "B", entities)).toBe(true);
+    });
+
+    it("should return false for valid parent chains", () => {
+      // A -> B -> C (valid)
+      const C = { id: "C" } as any;
+      const B = { id: "B", parent: "C" } as any;
+      const entities = { B, C };
+      expect(detectCycle("A", "B", entities)).toBe(false);
+    });
+
+    it("should return false if potential parent is undefined", () => {
+      expect(detectCycle("A", undefined, {})).toBe(false);
     });
   });
 });

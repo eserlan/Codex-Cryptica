@@ -1,4 +1,9 @@
 import type { ConnectionMode } from "./types";
+import {
+  DEFAULT_CF_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_BASE_URL,
+} from "./image-defaults";
 
 /**
  * Minimal interface for app settings persistence.
@@ -40,13 +45,23 @@ export class OracleSettingsService {
   apiKey = $state<string | null>(null);
 
   /** Model tier: "lite" or "advanced" */
-  tier = $state<"lite" | "advanced">("advanced");
+  tier = $state<"lite" | "advanced">("lite");
 
   /** Loading state for async operations */
   isLoading = $state(false);
 
   /** Currently active style title (for AI art generation) */
   activeStyleTitle = $state<string | null>(null);
+
+  /** Image Provider Setting */
+  imageProvider = $state<"gemini" | "cloudflare" | "custom">("cloudflare");
+  customImageBaseUrl = $state<string>(DEFAULT_CUSTOM_IMAGE_BASE_URL);
+  customImageApiKey = $state<string>("");
+  customImageModel = $state<string>(DEFAULT_CUSTOM_IMAGE_MODEL);
+
+  cloudflareAccountId = $state<string>("");
+  cloudflareApiToken = $state<string>("");
+  cloudflareModel = $state<string>(DEFAULT_CF_IMAGE_MODEL);
 
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
@@ -68,6 +83,13 @@ export class OracleSettingsService {
           this.apiKey = data.apiKey;
           this.tier = data.tier || "advanced";
           this.activeStyleTitle = data.activeStyleTitle || null;
+          this.imageProvider = data.imageProvider || "cloudflare";
+          this.customImageBaseUrl = data.customImageBaseUrl || "";
+          this.customImageApiKey = data.customImageApiKey || "";
+          this.customImageModel = data.customImageModel || "";
+          this.cloudflareAccountId = data.cloudflareAccountId || "";
+          this.cloudflareApiToken = data.cloudflareApiToken || "";
+          this.cloudflareModel = data.cloudflareModel || "";
         } else if (type === "REQUEST_STATE") {
           this.broadcast();
         }
@@ -88,7 +110,27 @@ export class OracleSettingsService {
     this.apiKey = setting?.value ?? null;
 
     const tierSetting = await db.appSettings.get("ai_tier");
-    this.tier = tierSetting?.value ?? "advanced";
+    this.tier = tierSetting?.value ?? "lite";
+
+    const providerSetting = await db.appSettings.get("image_provider");
+    this.imageProvider = providerSetting?.value ?? "cloudflare";
+    const baseUrlSetting = await db.appSettings.get("custom_image_base_url");
+    this.customImageBaseUrl =
+      baseUrlSetting?.value ?? DEFAULT_CUSTOM_IMAGE_BASE_URL;
+    const apiKeySetting = await db.appSettings.get("custom_image_api_key");
+    this.customImageApiKey = apiKeySetting?.value ?? "";
+    const modelSetting = await db.appSettings.get("custom_image_model");
+    this.customImageModel = modelSetting?.value ?? DEFAULT_CUSTOM_IMAGE_MODEL;
+
+    const cfAccountIdSetting = await db.appSettings.get(
+      "cloudflare_account_id",
+    );
+    this.cloudflareAccountId = cfAccountIdSetting?.value ?? "";
+    const cfApiTokenSetting = await db.appSettings.get("cloudflare_api_token");
+    this.cloudflareApiToken = cfApiTokenSetting?.value ?? "";
+    const cfModelSetting = await db.appSettings.get("cloudflare_model");
+    this.cloudflareModel = cfModelSetting?.value ?? DEFAULT_CF_IMAGE_MODEL;
+
     this.broadcast();
   }
 
@@ -103,6 +145,13 @@ export class OracleSettingsService {
         apiKey: this.apiKey,
         tier: this.tier,
         activeStyleTitle: this.activeStyleTitle,
+        imageProvider: this.imageProvider,
+        customImageBaseUrl: this.customImageBaseUrl,
+        customImageApiKey: this.customImageApiKey,
+        customImageModel: this.customImageModel,
+        cloudflareAccountId: this.cloudflareAccountId,
+        cloudflareApiToken: this.cloudflareApiToken,
+        cloudflareModel: this.cloudflareModel,
       },
     });
   }
@@ -121,6 +170,76 @@ export class OracleSettingsService {
       });
     }
     this.tier = tier;
+    this.broadcast();
+  }
+
+  /**
+   * Sets the custom image provider settings.
+   */
+  async setCustomImageSettings(settings: {
+    provider?: "gemini" | "cloudflare" | "custom";
+    baseUrl?: string;
+    apiKey?: string;
+    model?: string;
+    cloudflareAccountId?: string;
+    cloudflareApiToken?: string;
+    cloudflareModel?: string;
+  }) {
+    if (this.db) {
+      if (settings.provider !== undefined)
+        await this.db.appSettings.put({
+          key: "image_provider",
+          value: settings.provider,
+          updatedAt: Date.now(),
+        });
+      if (settings.baseUrl !== undefined)
+        await this.db.appSettings.put({
+          key: "custom_image_base_url",
+          value: settings.baseUrl,
+          updatedAt: Date.now(),
+        });
+      if (settings.apiKey !== undefined)
+        await this.db.appSettings.put({
+          key: "custom_image_api_key",
+          value: settings.apiKey,
+          updatedAt: Date.now(),
+        });
+      if (settings.model !== undefined)
+        await this.db.appSettings.put({
+          key: "custom_image_model",
+          value: settings.model,
+          updatedAt: Date.now(),
+        });
+      if (settings.cloudflareAccountId !== undefined)
+        await this.db.appSettings.put({
+          key: "cloudflare_account_id",
+          value: settings.cloudflareAccountId,
+          updatedAt: Date.now(),
+        });
+      if (settings.cloudflareApiToken !== undefined)
+        await this.db.appSettings.put({
+          key: "cloudflare_api_token",
+          value: settings.cloudflareApiToken,
+          updatedAt: Date.now(),
+        });
+      if (settings.cloudflareModel !== undefined)
+        await this.db.appSettings.put({
+          key: "cloudflare_model",
+          value: settings.cloudflareModel,
+          updatedAt: Date.now(),
+        });
+    }
+    if (settings.provider !== undefined) this.imageProvider = settings.provider;
+    if (settings.baseUrl !== undefined)
+      this.customImageBaseUrl = settings.baseUrl;
+    if (settings.apiKey !== undefined) this.customImageApiKey = settings.apiKey;
+    if (settings.model !== undefined) this.customImageModel = settings.model;
+    if (settings.cloudflareAccountId !== undefined)
+      this.cloudflareAccountId = settings.cloudflareAccountId;
+    if (settings.cloudflareApiToken !== undefined)
+      this.cloudflareApiToken = settings.cloudflareApiToken;
+    if (settings.cloudflareModel !== undefined)
+      this.cloudflareModel = settings.cloudflareModel;
     this.broadcast();
   }
 
@@ -191,7 +310,7 @@ export class OracleSettingsService {
   get modelName() {
     return this.tier === "advanced"
       ? "gemini-3-flash-preview"
-      : "gemini-2.0-flash-lite";
+      : "gemini-3.1-flash-lite";
   }
 
   /**
@@ -228,6 +347,13 @@ export class OracleSettingsService {
       modelName: this.modelName,
       activeStyleTitle: this.activeStyleTitle,
       connectionMode: this.connectionMode,
+      imageProvider: this.imageProvider,
+      customImageBaseUrl: this.customImageBaseUrl,
+      customImageApiKey: this.customImageApiKey,
+      customImageModel: this.customImageModel,
+      cloudflareAccountId: this.cloudflareAccountId,
+      cloudflareApiToken: this.cloudflareApiToken,
+      cloudflareModel: this.cloudflareModel,
     };
   }
 
@@ -242,5 +368,15 @@ export class OracleSettingsService {
     if (updates.tier) await this.setTier(updates.tier);
     if (updates.activeStyleTitle !== undefined)
       this.setStyle(updates.activeStyleTitle);
+
+    await this.setCustomImageSettings({
+      provider: updates.imageProvider,
+      baseUrl: updates.customImageBaseUrl,
+      apiKey: updates.customImageApiKey,
+      model: updates.customImageModel,
+      cloudflareAccountId: updates.cloudflareAccountId,
+      cloudflareApiToken: updates.cloudflareApiToken,
+      cloudflareModel: updates.cloudflareModel,
+    });
   }
 }

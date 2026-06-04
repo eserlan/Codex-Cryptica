@@ -1,7 +1,6 @@
 # Implementation Plan - GitHub Pages Deployment
 
 **Feature**: GitHub Pages Deployment (`005-gh-pages-deploy`)
-**Status**: Planned
 
 ## Technical Context
 

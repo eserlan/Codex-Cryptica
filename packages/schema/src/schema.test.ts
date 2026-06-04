@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { EntitySchema, CategorySchema, DEFAULT_ICON } from "./entity";
+import {
+  EntitySchema,
+  CategorySchema,
+  DateSelectionSchema,
+  DEFAULT_ICON,
+  GuestChatConfigSchema,
+  GuestChatTranscriptSchema,
+} from "./entity";
 
 describe("Entity Schema Validation", () => {
   it("should validate a correct entity", () => {
@@ -170,5 +177,175 @@ describe("Category Schema Validation", () => {
 
     const result = CategorySchema.safeParse(emptyLabel);
     expect(result.success).toBe(false);
+  });
+});
+
+describe("TemporalMetadataSchema Compatibility Validation", () => {
+  it("should validate a legacy temporal metadata date", () => {
+    const legacyDate = {
+      year: 1240,
+      month: 5,
+      day: 12,
+      label: "Legacy Date",
+    };
+    const result = EntitySchema.shape.date.parse(legacyDate);
+    expect(result.year).toBe(1240);
+    expect(result.month).toBe(5);
+    expect(result.day).toBe(12);
+    expect(result.label).toBe("Legacy Date");
+  });
+
+  it("should validate a new DateSelection shape", () => {
+    const newDateSelection = {
+      precision: "day",
+      year: 2026,
+      unitId: "m1",
+      day: 5,
+      calendarRevision: 2,
+      label: "My Selection",
+    };
+    const result = EntitySchema.shape.date.parse(newDateSelection);
+    expect(result.precision).toBe("day");
+    expect(result.year).toBe(2026);
+    expect(result.unitId).toBe("m1");
+    expect(result.day).toBe(5);
+    expect(result.calendarRevision).toBe(2);
+    expect(result.label).toBe("My Selection");
+  });
+
+  it("should validate an anchor DateSelection shape", () => {
+    const anchorSelection = {
+      precision: "anchor",
+      year: 2026,
+      anchorId: "anc1",
+      calendarRevision: 2,
+    };
+    const result = EntitySchema.shape.date.parse(anchorSelection);
+    expect(result.precision).toBe("anchor");
+    expect(result.year).toBe(2026);
+    expect(result.anchorId).toBe("anc1");
+    expect(result.calendarRevision).toBe(2);
+  });
+
+  describe("DateSelectionSchema superRefine validations (negative paths)", () => {
+    it("should reject precision 'unit' without unitId", () => {
+      const invalid = {
+        precision: "unit",
+        year: 2026,
+        calendarRevision: 2,
+      };
+      const result = DateSelectionSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "unitId is required when precision is 'unit'",
+        );
+      }
+    });
+
+    it("should reject precision 'day' without unitId", () => {
+      const invalid = {
+        precision: "day",
+        year: 2026,
+        day: 5,
+        calendarRevision: 2,
+      };
+      const result = DateSelectionSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (e) => e.message === "unitId is required when precision is 'day'",
+          ),
+        ).toBe(true);
+      }
+    });
+
+    it("should reject precision 'day' without day", () => {
+      const invalid = {
+        precision: "day",
+        year: 2026,
+        unitId: "m1",
+        calendarRevision: 2,
+      };
+      const result = DateSelectionSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (e) => e.message === "day is required when precision is 'day'",
+          ),
+        ).toBe(true);
+      }
+    });
+
+    it("should reject precision 'anchor' without anchorId", () => {
+      const invalid = {
+        precision: "anchor",
+        year: 2026,
+        calendarRevision: 2,
+      };
+      const result = DateSelectionSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "anchorId is required when precision is 'anchor'",
+        );
+      }
+    });
+  });
+
+  describe("Guest Chat Schemas", () => {
+    it("should validate a correct GuestChatConfig", () => {
+      const config = {
+        isEnabled: true,
+        contextScope: "hybrid",
+        extraInstructions: "Speak softly",
+        isHostReviewable: true,
+        keepMemory: true,
+      };
+      const result = GuestChatConfigSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should validate a correct GuestChatTranscript", () => {
+      const transcript = {
+        id: "guest1_char1",
+        guestId: "guest1",
+        guestName: "Player 1",
+        characterId: "char1",
+        characterTitle: "Mira",
+        messages: [
+          { id: "msg1", role: "user", content: "Hello", timestamp: 12345 },
+          {
+            id: "msg2",
+            role: "assistant",
+            content: "Welcome!",
+            timestamp: 12346,
+          },
+        ],
+        lastUpdated: 12346,
+      };
+      const result = GuestChatTranscriptSchema.safeParse(transcript);
+      expect(result.success).toBe(true);
+    });
+
+    it("should validate an entity with GuestChatConfig", () => {
+      const entity = {
+        id: "char-1",
+        type: "character",
+        title: "Mira the Innkeeper",
+        guestChatConfig: {
+          isEnabled: true,
+          contextScope: "public",
+        },
+      };
+      const result = EntitySchema.safeParse(entity);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.guestChatConfig?.isEnabled).toBe(true);
+        expect(result.data.guestChatConfig?.contextScope).toBe("public");
+      }
+    });
   });
 });

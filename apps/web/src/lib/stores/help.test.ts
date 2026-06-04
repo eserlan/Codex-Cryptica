@@ -18,9 +18,9 @@ import { HELP_ARTICLES } from "$lib/config/help-content";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("HelpStore", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.mocked(localStorage.getItem).mockReturnValue(null);
-    helpStore.init();
+    await helpStore.init();
     helpStore.reset();
   });
 
@@ -82,7 +82,7 @@ describe("HelpStore", () => {
     expect(helpStore.hasSeen("initial-onboarding")).toBe(true);
   });
 
-  it("should handle persistence and initialization from localStorage", () => {
+  it("should handle persistence and initialization from localStorage", async () => {
     const savedState = JSON.stringify({
       completedTours: ["test-tour"],
       dismissedHints: ["test-hint"],
@@ -90,7 +90,7 @@ describe("HelpStore", () => {
     });
     vi.mocked(localStorage.getItem).mockReturnValue(savedState);
 
-    helpStore.init();
+    await helpStore.init();
     expect(helpStore.hasSeen("test-tour")).toBe(true);
     expect(helpStore.isHintDismissed("test-hint")).toBe(true);
   });
@@ -133,8 +133,8 @@ describe("HelpStore", () => {
     expect(localStorage.setItem).toHaveBeenCalled();
   });
 
-  it("should force rebuild index", () => {
-    helpStore.buildIndex(true);
+  it("should force rebuild index", async () => {
+    await helpStore.buildIndex(true);
     // Verify no crash, internal count updated
     expect((helpStore as any).indexedCount).toBe(HELP_ARTICLES.length);
   });

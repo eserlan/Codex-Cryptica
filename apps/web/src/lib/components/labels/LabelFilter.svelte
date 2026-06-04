@@ -110,6 +110,7 @@
       <div class="p-2 space-y-1 overflow-y-auto custom-scrollbar flex-1">
         {#each filteredLabels as label}
           <button
+            type="button"
             onclick={() => onToggle(label)}
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-[10px] font-mono uppercase tracking-wider transition-colors {activeLabels.has(
               label,
@@ -129,7 +130,11 @@
                 ></span>
               {/if}
             </span>
-            <span class="truncate">{label}</span>
+            <span class="truncate flex-1 min-w-0">{label}</span>
+            <span
+              class="text-[9px] text-theme-muted/80 font-mono font-bold shrink-0"
+              >({vault.labelCounts[label] ?? 0})</span
+            >
           </button>
         {:else}
           <div

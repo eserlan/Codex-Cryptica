@@ -2,7 +2,7 @@
 
 **Feature Branch**: `094-app-event-bus`  
 **Created**: 2026-04-27  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Implement a generalized AppEventBus as proposed in docs/ARCHITECTURE_EVENTS.md to unify VaultEventBus, BroadcastChannel, and custom DOM events."
 
 > Follow-up architecture note: `docs/ARCH_DISTRIBUTED_EVENTS.md` proposes replacing the current centralized `AppEvent` union with a distributed module-augmentation registry. This spec describes the current AppEventBus feature and must stay compatible with that migration path.

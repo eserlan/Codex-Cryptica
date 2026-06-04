@@ -1,7 +1,7 @@
 import type { Entity } from "./entity";
 
 export const TIER_MODES = {
-  lite: "gemini-flash-lite-latest",
+  lite: "gemini-3.1-flash-lite",
   advanced: "gemini-3-flash-preview",
 };
 
@@ -15,6 +15,8 @@ export interface VaultMinimal {
   isGuest: boolean;
   activeVaultId?: string;
   loadEntityContent?: (id: string) => Promise<void>;
+  titleAliasIndex?: Map<string, string>;
+  allTitlesString?: string;
 }
 
 export interface ChatHistoryMessage {
@@ -79,6 +81,7 @@ export interface TextGenerationService {
       requestId?: string;
       vaultId?: string;
       existingEntities?: Entity[];
+      systemInstructionOverride?: string;
     },
   ): Promise<void>;
   generateMergeProposal(
@@ -88,7 +91,7 @@ export interface TextGenerationService {
     sources: Entity[],
     options?: { isGuest?: boolean },
   ): Promise<{ body: string; lore?: string }>;
-  reconcileEntityUpdate?(
+  reviseEntityUpdate?(
     apiKey: string,
     modelName: string,
     entity: Entity,
@@ -98,7 +101,13 @@ export interface TextGenerationService {
     },
     relatedEntities?: RelatedEntityContext[],
     categories?: { id: string; label?: string; description?: string }[],
-    options?: { isGuest?: boolean },
+    options?: {
+      isGuest?: boolean;
+      source?: string;
+      instructions?: string;
+      priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
+    },
   ): Promise<{
     content: string;
     lore: string;
@@ -120,6 +129,44 @@ export interface TextGenerationService {
     onUpdate: (partial: string) => void,
     categories?: string[],
   ): Promise<void>;
+  generateRelatedEntity?(
+    apiKey: string,
+    modelName: string,
+    sourceEntity: {
+      title: string;
+      type: string;
+      content?: string;
+      lore?: string;
+    },
+    targetType: string,
+    relationship: string,
+    customInstructions?: string,
+    connectedEntities?: ConnectedEntityPromptContext[],
+    categories?: { id: string; label?: string }[],
+    templateOutline?: string,
+    options?: { isGuest?: boolean },
+  ): Promise<{
+    name: string;
+    type: string;
+    summary: string;
+    description: string;
+    labels?: string[];
+    plotHook?: string;
+    relationshipBack?: string;
+  }>;
+}
+
+export interface ConnectedEntityPromptContext {
+  title: string;
+  type: string;
+  relation: string;
+  content: string;
+}
+
+export interface ImageGenerationOptions {
+  provider?: "gemini" | "cloudflare" | "custom";
+  baseUrl?: string;
+  cloudflareAccountId?: string;
 }
 
 export interface ImageGenerationService {
@@ -127,6 +174,7 @@ export interface ImageGenerationService {
     apiKey: string,
     prompt: string,
     modelName: string,
+    options?: ImageGenerationOptions,
   ): Promise<Blob>;
   distillVisualPrompt(
     apiKey: string,
@@ -135,4 +183,63 @@ export interface ImageGenerationService {
     modelName: string,
     demoMode?: boolean,
   ): Promise<string>;
+}
+
+// ─── Sound Bite ───────────────────────────────────────────────────────────────
+
+export type SoundBiteVoiceMode = "entity" | "scholar";
+
+export interface VaultEntitySummary {
+  title: string;
+  type: string;
+  summary: string;
+}
+
+/**
+ * Voice characteristics used for TTS synthesis.
+ * Shared between oracle-engine (generation) and the persisted SoundBite entity field.
+ */
+export interface VoiceProfile {
+  gender: "male" | "female" | "neutral";
+  ageRange: "child" | "young-adult" | "middle-aged" | "elder";
+  /** e.g. "Hungarian", "Queen's English", null/undefined if unspecified */
+  accent?: string | null;
+  /** e.g. "gruff", "serene", "commanding", "scholarly" */
+  tone: string;
+}
+
+export interface SoundBiteRequest {
+  entity: Entity;
+  voiceMode: SoundBiteVoiceMode;
+  /** Condensed list of other vault entities for scholar lookup */
+  vaultEntitySummaries: VaultEntitySummary[];
+  /**
+   * When provided, reuse this voice profile for TTS instead of the one the
+   * LLM infers — preserves speaker timbre across same-mode regenerations.
+   * Only applied when the saved bite's voiceMode matches the current mode.
+   */
+  voiceProfile?: VoiceProfile;
+}
+
+export interface ScholarAttribution {
+  name: string;
+  title: string;
+}
+
+export interface SoundBiteResult {
+  transcript: string;
+  audioBlob: Blob | null; // null if TTS unavailable/failed
+  voiceMode: SoundBiteVoiceMode;
+  scholarAttribution?: ScholarAttribution;
+  /** The voice profile used for TTS — save this to preserve voice consistency on regeneration */
+  voiceProfile: VoiceProfile;
+}
+
+export interface SoundBiteGenerationService {
+  generateSoundBite(
+    apiKey: string,
+    modelName: string,
+    request: SoundBiteRequest,
+    options?: { isGuest?: boolean; isDemoMode?: boolean },
+  ): Promise<SoundBiteResult>;
 }

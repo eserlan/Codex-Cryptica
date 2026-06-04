@@ -118,7 +118,7 @@ describe("SyncCoordinator", () => {
       expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
     });
 
-    it("should request permission if not granted", async () => {
+    it("should not request permission automatically and fallback to directory picker if permission not granted", async () => {
       const mockLocal = {
         values: () => ({ next: vi.fn().mockResolvedValue({}) }),
         queryPermission: vi.fn().mockResolvedValue("prompt"),
@@ -136,7 +136,8 @@ describe("SyncCoordinator", () => {
         vi.fn(),
       );
 
-      expect(mockLocal.requestPermission).toHaveBeenCalled();
+      expect(mockLocal.requestPermission).not.toHaveBeenCalled();
+      expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
     });
 
     it("should handle save queue timeout", async () => {
@@ -261,6 +262,39 @@ describe("SyncCoordinator", () => {
       );
 
       expect(mockEngine.sync).not.toHaveBeenCalled();
+    });
+
+    it("should handle AbortError thrown during sync and revert status to idle", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      const abortError = new Error("aborted");
+      abortError.name = "AbortError";
+      mockEngine.sync.mockRejectedValue(abortError);
+
+      const onStateChange = vi.fn();
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        "pull",
+        {},
+        vi.fn().mockResolvedValue(undefined),
+        onStateChange,
+        vi.fn(),
+      );
+
+      expect(onStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "loading", syncType: "local" }),
+      );
+      expect(onStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "idle", syncType: null }),
+      );
+      expect(onStateChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({ status: "error" }),
+      );
     });
   });
 });

@@ -88,6 +88,10 @@
       isOutbound: true,
       displayTitle: vault.entities[c.target]?.title || c.target,
       targetId: c.target,
+      hasPastLabel:
+        vault.entities[c.target]?.labels?.some(
+          (l: string) => l.toLowerCase() === "past",
+        ) ?? false,
     }));
 
     const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
@@ -95,6 +99,10 @@
       isOutbound: false,
       displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
       targetId: item.sourceId,
+      hasPastLabel:
+        vault.entities[item.sourceId]?.labels?.some(
+          (l: string) => l.toLowerCase() === "past",
+        ) ?? false,
     }));
 
     return [...outbound, ...inbound];
@@ -170,7 +178,9 @@
             <h2
               class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
-              {entity.title}
+              {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                  >*</sup
+                >{/if}
             </h2>
           {:else}
             <h2 class="text-2xl text-red-500 font-mono">Entity Not Found</h2>
@@ -209,13 +219,13 @@
       <!-- Body -->
       <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
         {#if entity}
-          <!-- Metadata / Tags -->
-          {#if entity.tags && entity.tags.length > 0}
+          <!-- Metadata / Labels -->
+          {#if entity.labels && entity.labels.length > 0}
             <div class="flex flex-wrap gap-2 mb-6">
-              {#each entity.tags as tag}
+              {#each entity.labels as label}
                 <span
                   class="text-[10px] font-mono px-2 py-1 bg-green-900/20 text-green-400 border border-green-900/30 rounded"
-                  >#{tag}</span
+                  >#{label}</span
                 >
               {/each}
             </div>
@@ -276,7 +286,8 @@
                       <div
                         class="text-sm font-bold text-gray-200 group-hover:text-green-400 transition truncate"
                       >
-                        {conn.displayTitle}
+                        {conn.displayTitle}{#if conn.hasPastLabel}<sup>*</sup
+                          >{/if}
                       </div>
                       <div class="text-xs text-gray-500 truncate">
                         {conn.label || conn.type}

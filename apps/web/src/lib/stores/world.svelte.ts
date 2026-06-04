@@ -9,13 +9,49 @@ import { entityDb } from "$lib/utils/entity-db";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { imageGenerationService } from "$lib/services/ai/image-generation.service";
-import { textGenerationService } from "$lib/services/ai/text-generation.service";
+import { textGenerationService } from "$lib/services/ai/text-generation.service.svelte";
+import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 
-const WORLD_IMAGE_MODEL = "gemini-3.1-flash-image-preview";
+const WORLD_IMAGE_MODEL = "gemini-2.5-flash-image";
 
 const worldService = new WorldServiceImplementation({
   db: entityDb,
-  imageGenerator: imageGenerationService,
+  imageGenerator: {
+    generateImage: (apiKey: string, prompt: string, modelName: string) => {
+      const isCustom = oracle.settings.imageProvider === "custom";
+      const isCloudflare = oracle.settings.imageProvider === "cloudflare";
+
+      let targetKey = apiKey;
+      if (isCustom && oracle.settings.customImageApiKey) {
+        targetKey = oracle.settings.customImageApiKey;
+      } else if (isCloudflare) {
+        targetKey = oracle.settings.cloudflareApiToken || apiKey;
+      }
+
+      let targetModel = modelName;
+      if (isCustom) {
+        targetModel =
+          oracle.settings.customImageModel ||
+          "black-forest-labs/FLUX.1-schnell";
+      } else if (isCloudflare) {
+        targetModel = oracle.settings.cloudflareModel || DEFAULT_CF_IMAGE_MODEL;
+      }
+
+      return imageGenerationService.generateImage(
+        targetKey,
+        prompt,
+        targetModel,
+        {
+          provider: oracle.settings.imageProvider as
+            | "gemini"
+            | "cloudflare"
+            | "custom",
+          baseUrl: oracle.settings.customImageBaseUrl,
+          cloudflareAccountId: oracle.settings.cloudflareAccountId,
+        },
+      );
+    },
+  },
   assetManager: {
     saveImageToVault: async (blob, entityId, originalName) => {
       return vault.saveImageToVault(blob, entityId, originalName);

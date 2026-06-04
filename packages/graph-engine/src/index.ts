@@ -57,7 +57,8 @@ export const initGraph = async (options: GraphOptions) => {
         selector: "node",
         style: {
           "background-color": "#666",
-          label: "data(label)", // Updated to use label
+          label: (node: any) =>
+            node.data("isPast") ? `${node.data("label")}*` : node.data("label"),
         },
       },
       {
@@ -77,9 +78,15 @@ export const initGraph = async (options: GraphOptions) => {
     // Rendering Optimizations
     hideLabelsOnViewport: true,
     textureOnViewport: true,
-    pixelRatio: "auto",
-    wheelSensitivity: 5.0,
+    // Cap DPR at 1.5 — on 2× retina "auto" rasterises at 4× pixel area,
+    // which dominates GPU cost for large graphs. 1.5 is imperceptible to
+    // users while halving rasterisation work on HiDPI displays.
+    pixelRatio:
+      typeof window !== "undefined"
+        ? Math.min(window.devicePixelRatio || 1, 1.5)
+        : 1,
     minZoom: Math.max(0.01, 0.3 - nodeCount * 0.0005),
     maxZoom: 9.0,
+    wheelSensitivity: 1.0,
   });
 };

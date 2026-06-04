@@ -14,10 +14,10 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { appEventBus } from "@codex/events";
-  import { VAULT_EVENTS } from "@codex/vault-engine";
+  import { vaultEventBus } from "$lib/stores/vault/events.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { untrack } from "svelte";
 
   const shareId = $derived(
     building ? null : page.url.searchParams.get("shareId"),
@@ -53,24 +53,15 @@
     // Explicitly set a vault ID and emit lifecycle events so services (like search/RAG) initialize correctly
     vaultRegistry.activeVaultId = `guest-${shareId}`;
 
-    appEventBus.emit({
-      type: VAULT_EVENTS.VAULT_OPENING,
-      domain: "vault",
-      payload: {},
-      metadata: {
-        vaultId: vault.activeVaultId ?? undefined,
-        timestamp: Date.now(),
-      },
+    vaultEventBus.emit({
+      type: "VAULT_OPENING",
+      vaultId: vaultRegistry.activeVaultId!,
     });
 
-    appEventBus.emit({
-      type: VAULT_EVENTS.CACHE_LOADED,
-      domain: "vault",
-      payload: { entities: parsedEntities },
-      metadata: {
-        vaultId: vault.activeVaultId ?? undefined,
-        timestamp: Date.now(),
-      },
+    vaultEventBus.emit({
+      type: "CACHE_LOADED",
+      vaultId: vaultRegistry.activeVaultId!,
+      entities: vault.repository.entities,
     });
 
     sessionModeStore.sharedMode = true;
@@ -126,75 +117,67 @@
     }
 
     const peerId = shareId.substring(4);
-    sessionModeStore.isGuestMode = true;
-    vault.status = "loading";
-    vault.selectedEntityId = null;
 
-    p2pGuestService
-      .connectToHost(
-        peerId,
-        (graph) => {
-          syncGuestGraphPayload(graph);
-        },
-        (updatedEntity) => {
-          const oldEntity = vault.repository.entities[updatedEntity.id];
-          const newEntity = mergeGuestEntityUpdate(oldEntity, updatedEntity);
-          vault.repository.entities[updatedEntity.id] = newEntity;
+    untrack(() => {
+      sessionModeStore.isGuestMode = true;
+      vault.status = "loading";
+      vault.selectedEntityId = null;
 
-          appEventBus.emit({
-            type: VAULT_EVENTS.ENTITY_UPDATED,
-            domain: "vault",
-            payload: {
-              id: newEntity.id,
+      p2pGuestService
+        .connectToHost(
+          peerId,
+          (graph) => {
+            syncGuestGraphPayload(graph);
+          },
+          (updatedEntity) => {
+            const oldEntity = vault.repository.entities[updatedEntity.id];
+            const newEntity = mergeGuestEntityUpdate(oldEntity, updatedEntity);
+            vault.repository.entities[updatedEntity.id] = newEntity;
+
+            vaultEventBus.emit({
+              type: "ENTITY_UPDATED",
+              vaultId: vault.activeVaultId!,
               entity: newEntity,
               patch: updatedEntity,
-            },
-            metadata: {
-              vaultId: vault.activeVaultId ?? undefined,
-              timestamp: Date.now(),
-            },
-          });
-        },
-        (deletedId) => {
-          delete vault.repository.entities[deletedId];
+            });
+          },
+          (deletedId) => {
+            delete vault.repository.entities[deletedId];
 
-          appEventBus.emit({
-            type: VAULT_EVENTS.ENTITY_DELETED,
-            domain: "vault",
-            payload: { entityId: deletedId },
-            metadata: {
-              vaultId: vault.activeVaultId ?? undefined,
-              timestamp: Date.now(),
-            },
-          });
-        },
-        (batchUpdates) => {
-          vault.batchUpdate(batchUpdates);
-        },
-        (themeId) => {
-          themeStore.previewTheme(themeId);
-        },
-        sessionModeStore.guestUsername ?? undefined,
-        (reason, displayName) => {
-          if (reason === "duplicate-display-name") {
-            joinRejectionMessage = `Display name "${displayName}" is already in use. Choose a different name.`;
-          } else {
-            joinRejectionMessage = `Join request was rejected: ${reason}`;
-          }
-        },
-      )
-      .then(() => {
-        isConnectedToHost = true;
-        return navigateToGuestView();
-      })
-      .catch((err) => {
-        console.error("[Guest Mode] Failed to connect to host:", err);
-        vault.selectedEntityId = null;
-        sessionModeStore.guestUsername = null;
-        sessionModeStore.isGuestMode = false;
-        vault.status = "error";
-        vault.errorMessage = "Failed to connect to shared campaign.";
-      });
+            vaultEventBus.emit({
+              type: "ENTITY_DELETED",
+              vaultId: vault.activeVaultId!,
+              entityId: deletedId,
+            });
+          },
+          (batchUpdates) => {
+            vault.batchUpdate(batchUpdates);
+          },
+          (themeId) => {
+            themeStore.previewTheme(themeId);
+          },
+          sessionModeStore.guestUsername ?? undefined,
+          (reason, displayName) => {
+            if (reason === "duplicate-display-name") {
+              joinRejectionMessage = `Display name "${displayName}" is already in use. Choose a different name.`;
+            } else {
+              joinRejectionMessage = `Join request was rejected: ${reason}`;
+            }
+          },
+        )
+        .then(() => {
+          isConnectedToHost = true;
+          return navigateToGuestView();
+        })
+        .catch((err) => {
+          console.error("[Guest Mode] Failed to connect to host:", err);
+          vault.selectedEntityId = null;
+          sessionModeStore.guestUsername = null;
+          sessionModeStore.isGuestMode = false;
+          vault.status = "error";
+          vault.errorMessage = "Failed to connect to shared campaign.";
+        });
+    });
   });
 
   $effect(() => {
@@ -215,10 +198,12 @@
         entities: vault.entities,
       });
 
-    p2pGuestService.updateGuestStatus({
-      status,
-      currentEntityId,
-      currentEntityTitle,
+    untrack(() => {
+      p2pGuestService.updateGuestStatus({
+        status,
+        currentEntityId,
+        currentEntityTitle,
+      });
     });
   });
 </script>

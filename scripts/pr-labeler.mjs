@@ -90,6 +90,7 @@ function filesLabel(files) {
         path.endsWith("/package.json") ||
         path.endsWith("/package-lock.json") ||
         path.includes("pnpm-lock.yaml") ||
+        path.includes("bun.lock") ||
         path.includes("npm-shrinkwrap.json"),
     )
   ) {

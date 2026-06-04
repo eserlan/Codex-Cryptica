@@ -2,7 +2,7 @@
 
 **Feature Branch**: `032-central-node-orbit`
 **Created**: 2026-02-02
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "lets have the ability to set a node the central node,and let every other node revolve around it"
 
 ## User Scenarios & Testing

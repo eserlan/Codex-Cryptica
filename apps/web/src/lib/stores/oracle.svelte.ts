@@ -1,8 +1,8 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
-import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
+import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service.svelte";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
-import { searchService as defaultSearchService } from "../services/search";
+import { searchService as defaultSearchService } from "../services/search.svelte";
 import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
@@ -31,13 +31,17 @@ import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
-import { type IOracleStore } from "./oracle/types";
+import {
+  type EntityRevisionRequest,
+  type EntityRevisionResult,
+  type IOracleStore,
+} from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
 import { OracleChatManager } from "./oracle/chat-manager.svelte";
 import { OracleContextManager } from "./oracle/context-manager.svelte";
 import { OracleActionManager } from "./oracle/action-manager.svelte";
 import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
-import { OracleReconciliationManager } from "./oracle/reconciliation-manager.svelte";
+import { OracleRevisionManager } from "./oracle/revision-manager.svelte";
 
 export type { ChatMessage, UndoableAction };
 
@@ -48,7 +52,7 @@ export class OracleStore implements IOracleStore {
   context: OracleContextManager;
   actions: OracleActionManager;
   settingsManager: OracleSettingsManager;
-  reconciliation: OracleReconciliationManager;
+  revision: OracleRevisionManager;
 
   // Reactive UI state
   get isOpen() {
@@ -196,7 +200,7 @@ export class OracleStore implements IOracleStore {
       context?: OracleContextManager;
       actions?: OracleActionManager;
       settingsManager?: OracleSettingsManager;
-      reconciliation?: OracleReconciliationManager;
+      revision?: OracleRevisionManager;
     } = {},
   ) {
     this._vault = deps.vault;
@@ -229,8 +233,7 @@ export class OracleStore implements IOracleStore {
     this.actions = deps.actions ?? new OracleActionManager(this);
     this.settingsManager =
       deps.settingsManager ?? new OracleSettingsManager(this);
-    this.reconciliation =
-      deps.reconciliation ?? new OracleReconciliationManager(this);
+    this.revision = deps.revision ?? new OracleRevisionManager(this);
 
     // Initialize Event Bus for Hybrid Communication
     if (
@@ -375,16 +378,28 @@ export class OracleStore implements IOracleStore {
     await this.chat.ask(content);
   }
 
-  async regenerate(entityId: string, onPartial?: (partial: string) => void) {
-    await this.actions.regenerate(entityId, onPartial);
-  }
-
   async drawEntity(entityId: string) {
     await this.actions.drawEntity(entityId);
   }
 
   async drawMessage(messageId: string) {
     await this.actions.drawMessage(messageId);
+  }
+
+  async generateEntityFromPrompt(entityId: string, prompt: string) {
+    await this.actions.generateEntityFromPrompt(entityId, prompt);
+  }
+
+  async generateMessageFromPrompt(messageId: string, prompt: string) {
+    await this.actions.generateMessageFromPrompt(messageId, prompt);
+  }
+
+  async regenerateEntityPrompt(entityId: string): Promise<string | null> {
+    return this.actions.regenerateEntityPrompt(entityId);
+  }
+
+  async regenerateMessagePrompt(messageId: string): Promise<string | null> {
+    return this.actions.regenerateMessagePrompt(messageId);
   }
 
   isVisualizingEntity(entityId: string | null | undefined) {
@@ -403,37 +418,43 @@ export class OracleStore implements IOracleStore {
     await this.chat.removeMessage(id);
   }
 
-  async reconcileSmartApply(
+  async reviseEntity(
+    request: EntityRevisionRequest,
+  ): Promise<EntityRevisionResult> {
+    return this.revision.reviseEntity(request);
+  }
+
+  async reviseSmartApply(
     entityId: string,
     incoming: { chronicle?: string; lore?: string },
   ): Promise<{ content?: string; lore?: string; categoryId?: string }> {
-    return this.reconciliation.reconcileSmartApply(entityId, incoming);
+    return this.revision.reviseSmartApply(entityId, incoming);
   }
 
-  async reconcileDiscoveryProposal(proposal: DiscoveryProposal) {
-    return this.reconciliation.reconcileDiscoveryProposal(proposal);
+  async reviseDiscoveryProposal(proposal: DiscoveryProposal) {
+    return this.revision.reviseDiscoveryProposal(proposal);
   }
 
-  async reconcileNewEntityDraft(
+  async reviseNewEntityDraft(
     title: string,
     type: string,
     draft: { chronicle: string; lore: string },
   ): Promise<{ content: string; lore: string; categoryId?: string }> {
-    return this.reconciliation.reconcileNewEntityDraft(title, type, draft);
+    return this.revision.reviseNewEntityDraft(title, type, draft);
   }
 
   async proposeConnectionsForEntity(
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },
   ) {
-    return this.reconciliation.proposeConnectionsForEntity(entityId, options);
+    return this.revision.proposeConnectionsForEntity(entityId, options);
   }
 
   async handleDiscoveryConnectionsForEntity(
     entityId: string,
     analysisText?: string,
   ) {
-    return this.reconciliation.handleDiscoveryConnectionsForEntity(
+    return this.revision.handleDiscoveryConnectionsForEntity(
       entityId,
       analysisText,
     );

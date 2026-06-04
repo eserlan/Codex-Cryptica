@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import DetailStatusTab from "./DetailStatusTab.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -14,6 +14,12 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     entities: {
       "target-1": { id: "target-1", title: "Target 1" },
       "source-1": { id: "source-1", title: "Source 1" },
+      "parent-entity": { id: "parent-entity", title: "Parent Entity" },
+      "child-entity": {
+        id: "child-entity",
+        title: "Child Entity",
+        parent: "entity-1",
+      },
     },
     inboundConnections: {
       "entity-1": [
@@ -24,6 +30,10 @@ vi.mock("$lib/stores/vault.svelte", () => ({
       ],
     },
     removeConnection: vi.fn(),
+    addConnection: vi.fn().mockResolvedValue(true),
+    updateEntity: vi.fn().mockResolvedValue(true),
+    loadTranscriptsForCharacter: vi.fn().mockResolvedValue([]),
+    saveTranscript: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -34,6 +44,36 @@ vi.mock("$lib/stores/theme.svelte", () => ({
       connections_header: "Connections",
     },
   },
+}));
+
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: {
+    openRelatedEntityDialog: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/oracle.svelte", () => ({
+  oracle: {
+    effectiveApiKey: "test-key",
+    modelName: "test-model",
+    textGeneration: {
+      generateResponse: vi.fn(
+        async (_apiKey, _prompt, _history, _context, _model, onPartial) => {
+          onPartial("- Speaks softly and avoids direct promises.");
+        },
+      ),
+    },
+  },
+}));
+
+vi.mock("$lib/cloud-bridge/oracle-bridge", () => ({
+  oracleBridge: {
+    isReady: false,
+  },
+}));
+
+vi.mock("comlink", () => ({
+  proxy: vi.fn((fn) => fn),
 }));
 
 // Mock sub-components to simplify testing
@@ -49,6 +89,13 @@ vi.mock("$lib/components/connections/ConnectionEditor.svelte", () => ({
 vi.mock("./proposals/DetailProposals.svelte", () => ({
   default: vi.fn(),
 }));
+
+vi.mock("$lib/components/ui/Autocomplete.svelte", async () => {
+  const mod = await import("./MockAutocomplete.svelte");
+  return {
+    default: mod.default,
+  };
+});
 
 describe("DetailStatusTab", () => {
   const mockEntity = {
@@ -71,7 +118,7 @@ describe("DetailStatusTab", () => {
       entity: mockEntity,
       isEditing: false,
       editType: "npc",
-      editContent: "",
+      editContent: "## Summary\nHe is a blacksmith.",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -80,7 +127,7 @@ describe("DetailStatusTab", () => {
     expect(screen.getByText("Source 1")).toBeTruthy();
 
     const deleteButtons = screen.getAllByLabelText("Delete connection");
-    expect(deleteButtons).toHaveLength(2);
+    expect(deleteButtons).toHaveLength(3);
   });
 
   it("calls vault.removeConnection when deleting an outbound connection", async () => {
@@ -138,5 +185,345 @@ describe("DetailStatusTab", () => {
     });
 
     expect(screen.queryByLabelText("Delete connection")).toBeNull();
+  });
+
+  it("renders child connection successfully but not parent in connection list", () => {
+    const testEntity = {
+      ...mockEntity,
+      parent: "parent-entity",
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.queryByText("Parent Entity")).toBeNull();
+    expect(screen.getByText("Child Entity")).toBeTruthy();
+    expect(screen.queryByText("Parent")).toBeNull();
+    expect(screen.getByText("Child")).toBeTruthy();
+  });
+
+  it("toggles inline connection form and can cancel or connect", async () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    // Toggle form on
+    const addBtn = screen.getByLabelText("Add new connection");
+    await fireEvent.click(addBtn);
+
+    // Verify form fields
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^cancel$/i })).toBeTruthy();
+
+    // Fill in target using our MockAutocomplete
+    const autocompleteInput = screen.getByTestId("mock-autocomplete");
+    await fireEvent.input(autocompleteInput, { target: { value: "Target 1" } });
+
+    // Fill custom label
+    const customLabelInput = screen.getByPlaceholderText(
+      "e.g. Ally, Rivalling, Secret",
+    );
+    await fireEvent.input(customLabelInput, {
+      target: { value: "Special Friend" },
+    });
+
+    // Submit
+    const connectBtn = screen.getByRole("button", { name: /^connect$/i });
+    await fireEvent.click(connectBtn);
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "target-1",
+      "related_to",
+      "Special Friend",
+    );
+  });
+
+  it("does not render duplicate child connections if already connected directly", () => {
+    const testEntity = {
+      ...mockEntity,
+      connections: [
+        { target: "child-entity", type: "friendly", label: "Friend of" },
+      ],
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.getByText("Child Entity")).toBeTruthy();
+    expect(screen.queryByText("Child")).toBeNull();
+  });
+
+  it("clicks establish custom connection button on child row to pre-populate form and connect", async () => {
+    const testEntity = {
+      ...mockEntity,
+    };
+
+    render(DetailStatusTab, {
+      entity: testEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    const establishButtons = screen.getAllByLabelText(
+      "Establish custom connection",
+    );
+    expect(establishButtons.length).toBeGreaterThan(0);
+
+    await fireEvent.click(establishButtons[0]);
+
+    // Verify the connection form is open and has target pre-filled
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeTruthy();
+    const autocompleteInput = screen.getByTestId(
+      "mock-autocomplete",
+    ) as HTMLInputElement;
+    expect(autocompleteInput.value).toBe("Child Entity");
+
+    // Submit and assert that vault.addConnection was called with pre-populated child entity ID
+    const connectBtn = screen.getByRole("button", { name: /^connect$/i });
+    await fireEvent.click(connectBtn);
+
+    expect(vault.addConnection).toHaveBeenCalledWith(
+      "entity-1",
+      "child-entity",
+      "related_to",
+      undefined,
+    );
+  });
+
+  it("renders 'Generate Related' button and triggers modal open when clicked", async () => {
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    const generateBtn = screen.getByText("Generate Related");
+    expect(generateBtn).toBeDefined();
+
+    await fireEvent.click(generateBtn);
+    expect(modalUIStore.openRelatedEntityDialog).toHaveBeenCalledWith(
+      "entity-1",
+    );
+  });
+
+  it("hides the 'Generate Related' button for guest sessions", async () => {
+    const { modalUIStore } = await import("$lib/stores/ui/modal-ui.svelte");
+    (vault as any).isGuest = true;
+
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
+  });
+
+  const mockCharacterEntity = {
+    id: "char-1",
+    title: "Character 1",
+    type: "character",
+    content: "He is a blacksmith.",
+    lore: "Secretly related to the king.",
+    connections: [],
+    tags: [],
+    guestChatConfig: {
+      isEnabled: true,
+      contextScope: "hybrid",
+      extraInstructions: "Speaks with a lisp.",
+      isHostReviewable: true,
+      keepMemory: true,
+    },
+  } as any;
+
+  it("does not render Guest Character Chat for non-character entities", () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: undefined,
+    });
+    expect(screen.queryByText("Guest Character Chat")).toBeNull();
+  });
+
+  it("renders Guest Character Chat read-only config for character entities when not editing", () => {
+    render(DetailStatusTab, {
+      entity: mockCharacterEntity,
+      isEditing: false,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: undefined,
+    });
+    expect(screen.getByText("Guest Character Chat")).toBeDefined();
+    expect(screen.getByText(/hybrid lore/i)).toBeDefined();
+    expect(screen.queryByText("Personality Rules:")).toBeNull();
+    expect(screen.queryByText("Speaks with a lisp.")).toBeNull();
+  });
+
+  it("renders Guest Character Chat edit panel when editing a character entity", async () => {
+    const mockConfig = {
+      isEnabled: true,
+      contextScope: "hybrid" as const,
+      extraInstructions: "Speaks with a lisp.",
+      isHostReviewable: true,
+      keepMemory: true,
+    };
+    render(DetailStatusTab, {
+      entity: mockCharacterEntity,
+      isEditing: true,
+      editType: "character",
+      editContent: "",
+      editLore: "## Secrets\nSecretly related to the king.",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: mockConfig,
+    });
+
+    expect(screen.getByText("Guest Character Chat")).toBeDefined();
+    const checkbox = screen.getByLabelText(
+      "Enable Guest Character Chat",
+    ) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+
+    // Toggle check
+    await fireEvent.click(checkbox);
+    expect(mockConfig.isEnabled).toBe(false);
+  });
+
+  it("AI-generates personality rules when chat is enabled without them", async () => {
+    const { oracle } = await import("$lib/stores/oracle.svelte");
+    const mockConfig = {
+      isEnabled: false,
+      contextScope: "public" as const,
+      extraInstructions: "",
+      isHostReviewable: true,
+      keepMemory: true,
+    };
+
+    render(DetailStatusTab, {
+      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
+      isEditing: true,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: mockConfig,
+    });
+
+    const checkbox = screen.getByLabelText(
+      "Enable Guest Character Chat",
+    ) as HTMLInputElement;
+    await fireEvent.click(checkbox);
+
+    expect(mockConfig.isEnabled).toBe(true);
+    await waitFor(() => {
+      expect(screen.getByText("Found in character lore")).toBeTruthy();
+    });
+    expect(oracle.textGeneration.generateResponse).toHaveBeenCalledOnce();
+    const prompt = vi.mocked(oracle.textGeneration.generateResponse).mock
+      .calls[0][1] as string;
+    expect(prompt).toContain("Create only personality and voice notes");
+    expect(prompt).toContain("Do not write a full character profile");
+  });
+
+  it("proxies personality generation callbacks through the Oracle worker", async () => {
+    const { oracleBridge } = await import("$lib/cloud-bridge/oracle-bridge");
+    const Comlink = await import("comlink");
+    (oracleBridge as any).isReady = true;
+    const mockConfig = {
+      isEnabled: false,
+      contextScope: "public" as const,
+      extraInstructions: "",
+      isHostReviewable: true,
+      keepMemory: true,
+    };
+
+    render(DetailStatusTab, {
+      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
+      isEditing: true,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: mockConfig,
+    });
+
+    const checkbox = screen.getByLabelText(
+      "Enable Guest Character Chat",
+    ) as HTMLInputElement;
+    await fireEvent.click(checkbox);
+
+    await waitFor(() => {
+      expect(Comlink.proxy).toHaveBeenCalled();
+    });
+    (oracleBridge as any).isReady = false;
+  });
+
+  it("keeps prompting for manual personality rules when AI generation fails", async () => {
+    const { oracle } = await import("$lib/stores/oracle.svelte");
+    vi.mocked(oracle.textGeneration.generateResponse).mockRejectedValueOnce(
+      new Error("AI unavailable"),
+    );
+    const mockConfig = {
+      isEnabled: false,
+      contextScope: "public" as const,
+      extraInstructions: "",
+      isHostReviewable: true,
+      keepMemory: true,
+    };
+
+    render(DetailStatusTab, {
+      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
+      isEditing: true,
+      editType: "character",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+      editGuestChatConfig: mockConfig,
+    });
+
+    const checkbox = screen.getByLabelText(
+      "Enable Guest Character Chat",
+    ) as HTMLInputElement;
+    await fireEvent.click(checkbox);
+
+    expect(mockConfig.isEnabled).toBe(true);
+    await waitFor(() => {
+      expect(screen.getByText(/AI generation failed/i)).toBeTruthy();
+    });
   });
 });

@@ -28,4 +28,26 @@ describe("Map Engine Math", () => {
     const vpPoint = imageToViewport(imgPoint, complexTransform, canvasSize);
     expect(vpPoint).toEqual({ x: 520, y: 370 });
   });
+
+  it("should reuse the target object when supplied", () => {
+    const target = { x: 0, y: 0 };
+    const result = imageToViewport(
+      { x: 10, y: 20 },
+      transform,
+      canvasSize,
+      target,
+    );
+    expect(result).toBe(target); // reference equality
+    expect(target).toEqual({ x: 410, y: 320 });
+
+    const result2 = viewportToImage(
+      { x: 410, y: 320 },
+      transform,
+      canvasSize,
+      target,
+    );
+    expect(result2).toBe(target);
+    expect(target.x).toBeCloseTo(10);
+    expect(target.y).toBeCloseTo(20);
+  });
 });

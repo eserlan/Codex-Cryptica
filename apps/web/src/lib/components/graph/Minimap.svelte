@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Core } from "cytoscape";
-  import { onMount, onDestroy } from "svelte";
+
   import { isTransparent } from "$lib/utils/color";
 
   interface Props {
@@ -296,7 +296,7 @@
     requestRedraw();
   };
 
-  onMount(() => {
+  $effect(() => {
     ctx = canvas.getContext("2d");
 
     // Listeners
@@ -308,16 +308,16 @@
 
     // Initial sync
     handleGraphUpdate();
-  });
 
-  onDestroy(() => {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
-    }
-    if (cy) {
-      cy.off("add remove position data layoutstop", handleGraphUpdate);
-      cy.off("pan zoom resize", handleViewportUpdate);
-    }
+    return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (cy) {
+        cy.off("add remove position data layoutstop", handleGraphUpdate);
+        cy.off("pan zoom resize", handleViewportUpdate);
+      }
+    };
   });
 </script>
 

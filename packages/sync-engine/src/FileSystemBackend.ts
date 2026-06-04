@@ -1,7 +1,11 @@
 import { type ISyncBackend, type FileMetadata } from "./types";
 
 export class FileSystemBackend implements ISyncBackend {
-  constructor(private handle: FileSystemDirectoryHandle) {}
+  constructor(
+    private handle: FileSystemDirectoryHandle,
+    private readonly wait = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms)),
+  ) {}
 
   async scan(_vaultId: string): Promise<{ files: FileMetadata[] }> {
     const results: FileMetadata[] = [];
@@ -124,7 +128,7 @@ export class FileSystemBackend implements ISyncBackend {
             `[FileSystemBackend] Refreshing root and retrying ${path}... (${retries - 1} left)`,
           );
           retries--;
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          await this.wait(delay);
           delay *= 2;
           continue;
         }

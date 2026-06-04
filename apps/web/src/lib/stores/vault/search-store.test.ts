@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import { SearchStore } from "./search-store.svelte";
 import type { LocalEntity } from "./types";
 
@@ -37,8 +37,7 @@ describe("SearchStore", () => {
       lore: "Lore",
       type: "character",
       status: "active",
-      tags: ["tag-a", "tag-b"],
-      labels: [],
+      labels: ["tag-a", "tag-b"],
       aliases: ["The Hero", "Champion"],
       connections: [],
       metadata: { region: ["north"], rarity: ["rare"] },
@@ -71,7 +70,6 @@ describe("SearchStore", () => {
       lore: "",
       type: "location",
       status: "draft",
-      tags: [],
       labels: [],
       aliases: [],
       connections: [],
@@ -103,7 +101,6 @@ describe("SearchStore", () => {
       lore: "",
       type: "character",
       status: "active",
-      tags: [],
       labels: [],
       aliases: [],
       connections: [],

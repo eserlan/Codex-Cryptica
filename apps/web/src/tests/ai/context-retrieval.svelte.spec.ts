@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../lib/services/search", () => ({
+vi.mock("../../lib/services/search.svelte", () => ({
   searchService: {
     search: vi.fn().mockResolvedValue([]),
   },

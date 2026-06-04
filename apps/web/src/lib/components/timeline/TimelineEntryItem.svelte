@@ -9,7 +9,8 @@
   const formatDate = (date: TimelineEntry["date"]) => {
     if (date.label) return date.label;
     const parts = [date.year];
-    if (date.month) parts.push(date.month);
+    const month = "month" in date ? (date as any).month : undefined;
+    if (month) parts.push(month);
     if (date.day) parts.push(date.day);
     return parts.join("/");
   };

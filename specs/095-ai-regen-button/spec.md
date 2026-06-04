@@ -2,7 +2,7 @@
 
 **Feature Branch**: `095-ai-regen-button`  
 **Created**: 2026-04-28  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "It would be nifty if we have a button on an entity (both in detail view in sidepanel, and in zenmode) that would regen the desc of the entity, using known info about it, and produce a brief (player focused/facing) chronicle/content entry and a longer gm / host lore entry"
 
 ## Clarifications

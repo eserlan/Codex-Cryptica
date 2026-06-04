@@ -1,7 +1,6 @@
 # Tasks: Auto-generate Content from Oracle Chat
 
 **Feature Branch**: `087-gen-oracle-content`
-**Status**: In Progress
 **Plan**: [/workspaces/Codex-Cryptica/specs/087-gen-oracle-content/plan.md]
 
 ## Phase 0: Foundation & Schema [P]

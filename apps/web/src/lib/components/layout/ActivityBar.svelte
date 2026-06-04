@@ -1,14 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import {
-    Sparkles,
-    Database,
-    Network,
-    Compass,
-    Layout,
-    ShieldCheck,
-  } from "lucide-svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -16,8 +8,10 @@
 
   interface NavItem {
     id: string;
-    icon: any;
+    icon: string;
     label: string;
+    /** Optional richer hover tooltip; falls back to `label` when unset. */
+    title?: string;
     href?: string;
     action?: () => void;
   }
@@ -25,19 +19,19 @@
   const views: NavItem[] = [
     {
       id: "graph",
-      icon: Network,
+      icon: "icon-[lucide--network]",
       label: "Knowledge Graph",
       href: `${base}/`,
     },
     {
       id: "map",
-      icon: Compass,
+      icon: "icon-[lucide--compass]",
       label: "World Map",
       href: `${base}/map`,
     },
     {
       id: "canvas",
-      icon: Layout,
+      icon: "icon-[lucide--layout]",
       label: "Spatial Canvas",
       href: `${base}/canvas`,
     },
@@ -47,15 +41,23 @@
     const list: NavItem[] = [
       {
         id: "oracle",
-        icon: Sparkles,
+        icon: "icon-[lucide--sparkles]",
         label: "Lore Oracle",
+        title:
+          "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
         action: () => layoutUIStore.toggleSidebarTool("oracle"),
       },
       {
         id: "explorer",
-        icon: Database,
+        icon: "icon-[lucide--database]",
         label: "Entity Explorer",
         action: () => layoutUIStore.toggleSidebarTool("explorer"),
+      },
+      {
+        id: "quicknote",
+        icon: "icon-[lucide--zap]",
+        label: "QuickNote Scratchpad",
+        action: () => quickNoteStore.toggle(),
       },
     ];
 
@@ -66,9 +68,26 @@
     ) {
       list.push({
         id: "ai-assessment",
-        icon: ShieldCheck,
+        icon: "icon-[lucide--shield-check]",
         label: "AI Assessment",
         action: () => layoutUIStore.toggleSidebarTool("ai-assessment"),
+      });
+    }
+
+    if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
+      list.push({
+        id: "guest-chat",
+        icon: "icon-[lucide--messages-square]",
+        label: "Guest Character Chat",
+        title: "Guest Chat — speak with enabled characters in-character.",
+        action: () => {
+          if (layoutUIStore.mainViewMode === "guest-chat") {
+            layoutUIStore.mainViewMode = "visualization";
+          } else {
+            layoutUIStore.mainViewMode = "guest-chat";
+            layoutUIStore.leftSidebarOpen = false;
+          }
+        },
       });
     }
 
@@ -80,50 +99,37 @@
     if (item.id === "graph") return page.url.pathname === `${base}/`;
     return page.url.pathname.startsWith(item.href);
   };
-
-  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 </script>
 
 <nav
-  class="bg-theme-surface border-theme-border flex shrink-0 z-[80]
+  class="bg-chrome-surface border-chrome-border flex shrink-0 z-[80]
     flex-row md:flex-col items-center justify-center md:justify-start py-2 md:py-4 gap-2 md:gap-4
     w-full md:w-14 h-14 md:h-full border-t md:border-t-0 md:border-r"
   aria-label="Activity Bar"
   data-testid="activity-bar"
-  style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Main Views -->
   {#each views as view}
-    {@const Icon = view.icon}
     {@const active = isViewActive(view)}
     <a
       href={view.href}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
-        ? isFantasyTheme
-          ? 'text-[color:var(--theme-focus)] border-[color:var(--theme-focus-border)] shadow-none'
-          : 'bg-theme-primary/10 text-theme-primary border-theme-primary/30 shadow-sm'
-        : isFantasyTheme
-          ? 'text-[color:var(--theme-icon-default)] border-transparent hover:text-[color:var(--theme-title-ink)]'
-          : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
-      style:background-color={active && isFantasyTheme
-        ? "var(--theme-focus-bg)"
-        : undefined}
+        ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
+        : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={view.label}
       title={view.label}
       data-testid={`activity-bar-${view.id}`}
     >
-      <Icon
-        class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
-      />
+      <span
+        class="{view.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
+        aria-hidden="true"
+      ></span>
 
       {#if active}
         <div
           class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
                  bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
-                 bg-theme-primary rounded-t-full md:rounded-r-full md:rounded-t-none"
-          style:background-color={isFantasyTheme
-            ? "var(--theme-focus)"
-            : undefined}
+                 bg-chrome-accent rounded-t-full md:rounded-r-full md:rounded-t-none"
         ></div>
       {/if}
     </a>
@@ -131,41 +137,42 @@
 
   <!-- Separator -->
   <div
-    class="w-px h-6 bg-theme-border md:w-8 md:h-px my-1 md:my-2 opacity-50"
+    class="w-px h-6 bg-chrome-border md:w-8 md:h-px my-1 md:my-2 opacity-50"
   ></div>
 
   <!-- Sidecar Tools -->
   {#each tools as tool}
-    {@const Icon = tool.icon}
-    {@const active = layoutUIStore.activeSidebarTool === tool.id}
+    {@const active =
+      tool.id === "guest-chat"
+        ? layoutUIStore.mainViewMode === "guest-chat"
+        : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
-        ? isFantasyTheme
-          ? 'text-[color:var(--theme-focus)] border-[color:var(--theme-focus-border)] shadow-none'
-          : 'bg-theme-primary/10 text-theme-primary border-theme-primary/30 shadow-sm'
-        : isFantasyTheme
-          ? 'text-[color:var(--theme-icon-default)] border-transparent hover:text-[color:var(--theme-title-ink)]'
-          : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
-      style:background-color={active && isFantasyTheme
-        ? "var(--theme-focus-bg)"
-        : undefined}
+        ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
+        : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={tool.label}
-      title={tool.label}
+      title={tool.title ?? tool.label}
       data-testid={`activity-bar-${tool.id}`}
     >
-      <Icon
-        class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
-      />
+      <span
+        class="{tool.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
+        aria-hidden="true"
+      ></span>
+
+      {#if tool.id === "quicknote" && quickNoteStore.count > 0}
+        <span
+          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-chrome-bg bg-chrome-accent shadow-md"
+        >
+          {quickNoteStore.count}
+        </span>
+      {/if}
 
       {#if active}
         <div
           class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
                  bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
-                 bg-theme-primary rounded-t-full md:rounded-r-full md:rounded-t-none"
-          style:background-color={isFantasyTheme
-            ? "var(--theme-focus)"
-            : undefined}
+                 bg-chrome-accent rounded-t-full md:rounded-r-full md:rounded-t-none"
         ></div>
       {/if}
     </button>

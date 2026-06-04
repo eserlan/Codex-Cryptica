@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { OracleSettingsService } from "./oracle-settings.svelte";
+import {
+  DEFAULT_CF_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_BASE_URL,
+  DEFAULT_CUSTOM_IMAGE_MODEL,
+  OracleSettingsService,
+} from "./index";
 
 // Mock EntityDb
 class MockEntityDb {
@@ -23,9 +28,13 @@ describe("OracleSettingsService", () => {
       const service = new OracleSettingsService();
 
       expect(service.apiKey).toBe(null);
-      expect(service.tier).toBe("advanced");
+      expect(service.tier).toBe("lite");
       expect(service.isLoading).toBe(false);
       expect(service.activeStyleTitle).toBe(null);
+      expect(service.imageProvider).toBe("cloudflare");
+      expect(service.customImageBaseUrl).toBe(DEFAULT_CUSTOM_IMAGE_BASE_URL);
+      expect(service.customImageModel).toBe(DEFAULT_CUSTOM_IMAGE_MODEL);
+      expect(service.cloudflareModel).toBe(DEFAULT_CF_IMAGE_MODEL);
     });
 
     it("should accept optional db in constructor", () => {
@@ -56,7 +65,26 @@ describe("OracleSettingsService", () => {
       await service.init(mockDb as any);
 
       expect(service.apiKey).toBe(null);
-      expect(service.tier).toBe("advanced");
+      expect(service.tier).toBe("lite");
+      expect(service.imageProvider).toBe("cloudflare");
+      expect(service.customImageBaseUrl).toBe(DEFAULT_CUSTOM_IMAGE_BASE_URL);
+      expect(service.customImageModel).toBe(DEFAULT_CUSTOM_IMAGE_MODEL);
+      expect(service.cloudflareModel).toBe(DEFAULT_CF_IMAGE_MODEL);
+    });
+
+    it("should preserve gemini as image provider when no API key is set", async () => {
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce({ value: "gemini" });
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+
+      expect(service.apiKey).toBe(null);
+      expect(service.imageProvider).toBe("gemini");
     });
   });
 
@@ -157,11 +185,11 @@ describe("OracleSettingsService", () => {
       expect(service.modelName).toBe("gemini-3-flash-preview");
     });
 
-    it("should return gemini-2.0-flash-lite for lite tier", () => {
+    it("should return gemini-3.1-flash-lite for lite tier", () => {
       const service = new OracleSettingsService();
       service.tier = "lite";
 
-      expect(service.modelName).toBe("gemini-2.0-flash-lite");
+      expect(service.modelName).toBe("gemini-3.1-flash-lite");
     });
   });
 });

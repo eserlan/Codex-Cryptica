@@ -1,5 +1,6 @@
 import type { IStorageAdapter, SerializedGraph } from "../types";
 import { createPeer, type PeerFactory } from "./peer-factory";
+import { debugStore } from "../../stores/debug.svelte";
 
 export class P2PClientAdapter implements IStorageAdapter {
   private hostId: string;
@@ -34,7 +35,7 @@ export class P2PClientAdapter implements IStorageAdapter {
       this.peer = this.peerFactory(undefined, { debug: 1 });
 
       this.peer.on("open", () => {
-        console.log("[P2P Client] Connected to signaling server.");
+        debugStore.log("[P2P Client] Connected to signaling server.");
         this.connectToHost(resolve, reject);
       });
 
@@ -46,13 +47,13 @@ export class P2PClientAdapter implements IStorageAdapter {
   }
 
   private connectToHost(resolve: () => void, _reject: (e: any) => void) {
-    console.log("[P2P Client] Connecting to host:", this.hostId);
+    debugStore.log("[P2P Client] Connecting to host:", this.hostId);
     const conn = this.peer.connect(this.hostId, { reliable: true });
     this.conn = conn;
 
     conn.on("open", () => {
       if (this.conn !== conn) return;
-      console.log("[P2P Client] Connection established!");
+      debugStore.log("[P2P Client] Connection established!");
       resolve();
     });
 
@@ -81,10 +82,10 @@ export class P2PClientAdapter implements IStorageAdapter {
 
   private handleMessage(data: any) {
     if (data.type === "GRAPH_SYNC") {
-      console.log("[P2P Client] Received Graph Sync");
+      debugStore.log("[P2P Client] Received Graph Sync");
       this.graphResolver(data.payload);
     } else if (data.type === "ENTITY_UPDATE") {
-      console.log("[P2P Client] Received Realtime Update");
+      debugStore.log("[P2P Client] Received Realtime Update");
       // vault.ingestRemoteUpdate(data.payload);
     } else if (data.type === "FILE_RESPONSE") {
       const requestId = data.requestId;
@@ -136,7 +137,7 @@ export class P2PClientAdapter implements IStorageAdapter {
   }
 
   async loadGraph(): Promise<SerializedGraph | null> {
-    console.log("[P2P Client] Waiting for graph...");
+    debugStore.log("[P2P Client] Waiting for graph...");
     return this.graphPromise;
   }
 
@@ -187,7 +188,7 @@ export class P2PClientAdapter implements IStorageAdapter {
   }
 
   async dispose(): Promise<void> {
-    console.log("[P2P Client] Disposing adapter...");
+    debugStore.log("[P2P Client] Disposing adapter...");
     try {
       if (this.conn) {
         this.conn.close();

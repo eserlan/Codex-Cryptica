@@ -19,7 +19,7 @@ import {
   resolveSpawnPosition,
 } from "./canvas-workspace-helpers";
 
-export function createCanvasLogic(engine: CanvasStore) {
+export function createCanvasLogic(getEngine: () => CanvasStore) {
   const svelteFlow = useSvelteFlow();
   const screenToFlowPosition = $derived(svelteFlow?.screenToFlowPosition);
 
@@ -93,7 +93,7 @@ export function createCanvasLogic(engine: CanvasStore) {
       return;
     }
 
-    const exportData = engine.export();
+    const exportData = getEngine().export();
     const existing = untrack(() => vault.canvases[currentCanvasId] || {});
     const canvas = canvasRegistry.allCanvases.find(
       (c) => c.id === currentCanvasId,
@@ -147,7 +147,7 @@ export function createCanvasLogic(engine: CanvasStore) {
         y: contextMenu.y,
       });
 
-      const newNodeId = engine.addNode(id, position);
+      const newNodeId = getEngine().addNode(id, position);
       nodes = [...nodes, createFlowEntityNode(id, position, newNodeId)];
       saveCanvas();
     } catch (err) {
@@ -192,7 +192,7 @@ export function createCanvasLogic(engine: CanvasStore) {
         },
       });
 
-    const newNodeId = engine.addNode(entityId, position);
+    const newNodeId = getEngine().addNode(entityId, position);
     vault.loadEntityContent(entityId);
     nodes = [...nodes, createFlowEntityNode(entityId, position, newNodeId)];
     saveCanvas();
@@ -214,7 +214,7 @@ export function createCanvasLogic(engine: CanvasStore) {
             y: window.innerHeight / 2 + index * 30,
           });
 
-      const newNodeId = engine.addNode(entityId, position);
+      const newNodeId = getEngine().addNode(entityId, position);
       vault.loadEntityContent(entityId);
 
       newNodesList.push({
@@ -284,7 +284,7 @@ export function createCanvasLogic(engine: CanvasStore) {
 
     // Sync edges
     const currentEdges = edges;
-    engine.edges = currentEdges.map((e: Edge) => ({
+    getEngine().edges = currentEdges.map((e: Edge) => ({
       id: e.id || `edge-${crypto.randomUUID()}`,
       source: e.source,
       target: e.target,
@@ -297,7 +297,7 @@ export function createCanvasLogic(engine: CanvasStore) {
 
     // Sync nodes
     const currentNodes = nodes;
-    engine.nodes = currentNodes.map((n: Node) => ({
+    getEngine().nodes = currentNodes.map((n: Node) => ({
       id: n.id,
       type: n.type as "entity",
       position: n.position,

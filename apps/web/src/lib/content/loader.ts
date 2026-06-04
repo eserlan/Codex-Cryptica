@@ -8,7 +8,7 @@ import {
 export interface HelpArticle {
   id: string;
   title: string;
-  tags: string[];
+  labels: string[];
   content: string;
   rank?: number;
   hidden?: boolean;
@@ -42,7 +42,7 @@ export function parseHelpArticle(
     return {
       id: metadata.id,
       title: metadata.title || "Untitled",
-      tags: metadata.tags || [],
+      labels: metadata.labels || metadata.tags || [],
       rank: metadata.rank,
       hidden: metadata.hidden === true,
       content: content ? content.trim() : "",

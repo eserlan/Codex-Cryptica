@@ -5,6 +5,7 @@ import type {
   SessionSnapshotPayload,
   VTTMessage,
 } from "../../../types/vtt";
+import { debugStore } from "../../stores/debug.svelte";
 
 const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 
@@ -47,6 +48,21 @@ export type P2PMessage =
   | { type: "ENTITY_BATCH_UPDATE"; payload: Record<string, any> }
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
+  | { type: "SOUND_BITE_PLAY"; entityId: string }
+  | {
+      type: "GUEST_CHAT_TRANSCRIPT_SYNC";
+      payload: import("schema").GuestChatTranscript;
+    }
+  | {
+      type: "GUEST_CHAR_CHAT_REQUEST";
+      requestId: string;
+      characterId: string;
+      guestUsername: string;
+      query: string;
+      history: { id: string; role: string; content: string }[];
+    }
+  | { type: "GUEST_CHAR_CHAT_CHUNK"; requestId: string; partial: string }
+  | { type: "GUEST_CHAR_CHAT_DONE"; requestId: string; error?: string }
   | VTTMessage;
 
 export function isValidP2PMessage(
@@ -78,7 +94,7 @@ export async function encodeSessionSnapshot(
     source.pipeThrough(new CompressionStream("gzip")),
   ).arrayBuffer();
   const ratio = ((1 - data.byteLength / json.length) * 100).toFixed(1);
-  console.log(
+  debugStore.log(
     `[P2P] SESSION_SNAPSHOT_GZIP: ${json.length} → ${data.byteLength} bytes (${ratio}% smaller)`,
   );
   return { type: "SESSION_SNAPSHOT_GZIP", data };

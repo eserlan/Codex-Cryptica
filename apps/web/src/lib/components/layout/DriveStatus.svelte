@@ -21,12 +21,12 @@
   });
 
   const getStatusColor = () => {
-    if (!isOnline) return "text-theme-muted grayscale";
+    if (!isOnline) return "text-chrome-muted grayscale";
     if (driveStore.status === "syncing")
-      return "text-theme-primary animate-pulse";
+      return "text-chrome-accent animate-pulse";
     if (driveStore.status === "error") return "text-red-500";
     if (driveStore.status === "connected") return "text-green-500";
-    return "text-theme-muted";
+    return "text-chrome-muted";
   };
 
   const getStatusLabel = () => {
@@ -42,7 +42,7 @@
 {#if !sessionModeStore.isDemoMode && !sessionModeStore.isGuestMode}
   <button
     onclick={() => modalUIStore.toggleSettings("vault")}
-    class="flex items-center justify-center p-1.5 rounded-md hover:bg-theme-primary/10 transition-all group relative"
+    class="flex items-center justify-center p-1.5 rounded-md hover:bg-chrome-accent/10 transition-all group relative"
     title={getStatusLabel()}
     aria-label="Google Drive Sync Status"
   >
@@ -52,7 +52,7 @@
 
     {#if driveStore.status === "syncing"}
       <span
-        class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-theme-primary rounded-full animate-ping"
+        class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-chrome-accent rounded-full animate-ping"
       ></span>
     {/if}
 

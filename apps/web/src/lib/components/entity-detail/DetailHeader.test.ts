@@ -22,6 +22,12 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     selectedEntityId: "entity-1",
     addLabel: vi.fn(),
     removeLabel: vi.fn(),
+    entities: {
+      "parent-id": {
+        id: "parent-id",
+        title: "Mock Parent Entity",
+      },
+    },
   },
 }));
 
@@ -54,7 +60,7 @@ vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
 vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/entity/SidepanelRegenButton.svelte", () => ({
+vi.mock("$lib/components/entity/SidepanelRevisionButton.svelte", () => ({
   default: vi.fn(),
 }));
 
@@ -135,5 +141,27 @@ describe("DetailHeader Duplicate Key Reproduction", () => {
         onClose: () => {},
       });
     }).not.toThrow();
+  });
+
+  it("renders parent indicator when entity has a parent", () => {
+    const mockEntity = {
+      id: "entity-1",
+      title: "Child Entity",
+      parent: "parent-id",
+      aliases: [],
+      labels: [],
+    } as any;
+
+    const { getByTestId, getByText } = render(DetailHeader, {
+      entity: mockEntity,
+      isEditing: false,
+      editTitle: "",
+      editAliases: [],
+      onClose: () => {},
+    });
+
+    const indicator = getByTestId("sidebar-parent-indicator");
+    expect(indicator).toBeTruthy();
+    expect(getByText("Mock Parent Entity")).toBeTruthy();
   });
 });

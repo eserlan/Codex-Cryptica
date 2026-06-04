@@ -9,7 +9,7 @@ export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
 export const MAX_SIDEBAR_VW = 40;
 
 export type SidebarTool = "oracle" | "explorer" | "ai-assessment" | "none";
-export type MainViewMode = "visualization" | "focus";
+export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
 type MediaQueryListLike = {
   matches: boolean;
@@ -49,16 +49,35 @@ export class LayoutUIStore {
   private rightSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
 
-  leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<SidebarTool>("none");
+  #leftSidebarOpen = $state(false);
+  #activeSidebarTool = $state<SidebarTool>("none");
+
+  get leftSidebarOpen() {
+    return this.#leftSidebarOpen;
+  }
+  set leftSidebarOpen(value: boolean) {
+    this.#leftSidebarOpen = value;
+    this.persistence.write(UI_STORAGE_KEYS.LEFT_SIDEBAR_OPEN, value, String);
+  }
+
+  get activeSidebarTool() {
+    return this.#activeSidebarTool;
+  }
+  set activeSidebarTool(value: SidebarTool) {
+    this.#activeSidebarTool = value;
+    this.persistence.write(UI_STORAGE_KEYS.ACTIVE_SIDEBAR_TOOL, value, String);
+  }
+
   leftSidebarWidth = $state(280);
   rightSidebarWidth = $state(380);
   mainViewMode = $state<MainViewMode>("visualization");
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
   vttSidebarCollapsed = $state(false);
+  vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
   findNodeCounter = $state(0);
+  lastSelectedNodePosition = $state<{ x: number; y: number } | null>(null);
 
   constructor(
     private persistence: UIPersistence = new DefaultPersistence(),
@@ -112,6 +131,10 @@ export class LayoutUIStore {
     );
   }
 
+  toggleVttChatSidebar(collapsed: boolean) {
+    this.vttChatSidebarCollapsed = collapsed;
+  }
+
   toggleVttEntityList(collapsed: boolean) {
     this.vttEntityListCollapsed = collapsed;
     this.persistence.write(
@@ -123,6 +146,10 @@ export class LayoutUIStore {
 
   findInGraph() {
     this.findNodeCounter++;
+  }
+
+  setLastSelectedNodePosition(pos: { x: number; y: number } | null) {
+    this.lastSelectedNodePosition = pos;
   }
 
   private loadPersistedState() {
@@ -151,6 +178,17 @@ export class LayoutUIStore {
         Math.min(right, maxWidth),
       );
     }
+
+    this.#leftSidebarOpen = this.persistence.read(
+      UI_STORAGE_KEYS.LEFT_SIDEBAR_OPEN,
+      (raw) => raw === "true",
+      false,
+    );
+    this.#activeSidebarTool = this.persistence.read(
+      UI_STORAGE_KEYS.ACTIVE_SIDEBAR_TOOL,
+      (raw) => raw as SidebarTool,
+      "none",
+    );
 
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,

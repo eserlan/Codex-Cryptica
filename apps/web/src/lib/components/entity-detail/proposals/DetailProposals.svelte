@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { Proposal } from "@codex/proposer";
@@ -10,6 +11,9 @@
     entityId?: string;
   }>();
   let showHistory = $state(false);
+  let isAutoProposeSuppressed = $state(false);
+  let lastEvaluatedEntityId = $state<string | null>(null);
+  let hasAutoProposedForEntity = $state<string | null>(null);
   const activeEntityId = $derived(entityId ?? vault.selectedEntityId);
   const activeProposals = $derived(
     proposerStore.getActiveProposalsForEntity(activeEntityId),
@@ -18,23 +22,50 @@
     proposerStore.getActiveHistoryForEntity(activeEntityId),
   );
 
+  // Re-evaluate suppression and load proposals on each entity navigation.
+  // Suppression is recomputed fresh per navigation; proposals load is gated to once per entity.
+  async function loadAndEvaluate(id: string) {
+    const outbound = untrack(
+      () => vault.entities[id]?.connections?.length ?? 0,
+    );
+    const inbound = untrack(() => vault.inboundConnections[id]?.length ?? 0);
+    isAutoProposeSuppressed = outbound + inbound > 4;
+
+    if (id === lastEvaluatedEntityId) return;
+    lastEvaluatedEntityId = id;
+    await proposerStore.loadProposals(id, !entityId);
+  }
+
+  $effect(() => {
+    if (activeEntityId) {
+      void loadAndEvaluate(activeEntityId);
+    }
+  });
+
   $effect(() => {
     if (discoveryPolicyStore.aiDisabled) return;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    // Trigger analysis when viewing an entity
+
+    // Trigger analysis once per entity navigation; hasAutoProposedForEntity prevents
+    // repeated scheduling when reactive deps (isLoadingProposals, etc.) toggle later.
     if (
       activeEntityId &&
       vault.status === "idle" &&
       !isEditing &&
-      !vault.isGuest
+      !vault.isGuest &&
+      !isAutoProposeSuppressed &&
+      hasAutoProposedForEntity !== activeEntityId
     ) {
       const entityToAnalyze = activeEntityId;
-      // We could add a debounce here or let the store handle it.
-      // The store checks isAnalyzing, so it won't double-trigger.
-      // But we might want to wait a bit after load.
       timeoutId = setTimeout(() => {
         void proposerStore.analyzeEntityById(entityToAnalyze, !entityId);
-      }, 1000);
+        // Mark as proposed only if analysis actually started (beginAnalysis is synchronous).
+        // If the store early-returned (no vault, aiDisabled, etc.), the flag stays unset
+        // so the next navigation can retry.
+        if (proposerStore.isEntityAnalyzing(entityToAnalyze)) {
+          hasAutoProposedForEntity = entityToAnalyze;
+        }
+      }, 5000);
     }
 
     return () => {
@@ -53,7 +84,7 @@
   };
 </script>
 
-{#if !discoveryPolicyStore.aiDisabled && !vault.isGuest && (activeProposals.length > 0 || activeHistory.length > 0)}
+{#if !discoveryPolicyStore.aiDisabled && !vault.isGuest && (activeProposals.length > 0 || activeHistory.length > 0 || isAutoProposeSuppressed)}
   <div
     class="mt-8 border-t border-theme-border pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
   >
@@ -89,7 +120,7 @@
                   <span
                     class="text-xs text-theme-muted px-1.5 py-0.5 rounded bg-theme-bg border border-theme-border"
                   >
-                    {proposal.type}
+                    {proposal.label || proposal.type}
                   </span>
                   {#if proposal.confidence > 0.8}
                     <span
@@ -141,6 +172,39 @@
             </div>
           </div>
         {/each}
+      </div>
+    {/if}
+
+    {#if isAutoProposeSuppressed || activeProposals.length > 4}
+      <div class="pb-6">
+        <button
+          type="button"
+          onclick={() =>
+            proposerStore.analyzeEntityById(
+              activeEntityId,
+              !entityId,
+              undefined,
+              true,
+            )}
+          disabled={proposerStore.isEntityAnalyzing(activeEntityId)}
+          aria-busy={proposerStore.isEntityAnalyzing(activeEntityId)}
+          class="w-full flex items-center justify-center gap-2 py-2 px-4 bg-theme-bg/50 hover:bg-theme-bg border border-theme-border hover:border-theme-primary/50 text-theme-secondary hover:text-theme-primary rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-theme-primary"
+          aria-label="Look for connection proposals manually"
+        >
+          {#if proposerStore.isEntityAnalyzing(activeEntityId)}
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
+            <span>Looking for Proposals...</span>
+          {:else}
+            <span
+              class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <span>Look for Connection Proposals</span>
+          {/if}
+        </button>
       </div>
     {/if}
 

@@ -45,8 +45,27 @@ describe("NotificationStore", () => {
     vi.advanceTimersByTime(2500);
     expect(store.notification).not.toBeNull(); // Should not clear yet
 
+    vi.advanceTimersByTime(7000);
+    expect(store.notification).not.toBeNull(); // Error notifications stay visible longer
+
     vi.advanceTimersByTime(2500);
-    expect(store.notification).toBeNull(); // Clears after 5000 total from second notify
+    expect(store.notification).toBeNull(); // Clears after 12000 total from second notify
+  });
+
+  it("keeps error notifications visible longer", () => {
+    const store = new NotificationStore();
+
+    store.notify("Error", "error");
+
+    vi.advanceTimersByTime(5000);
+    expect(store.notification).toEqual({
+      message: "Error",
+      type: "error",
+      persistent: false,
+    });
+
+    vi.advanceTimersByTime(7000);
+    expect(store.notification).toBeNull();
   });
 
   it("handles persistent notifications", () => {

@@ -1,3 +1,5 @@
+import { u } from "./user-content";
+
 export function buildVisualCanonResolutionPrompt(
   query: string,
   context: string,
@@ -5,10 +7,10 @@ export function buildVisualCanonResolutionPrompt(
   return `You are the Visual Canon Interpreter for the Lore Oracle. Your task is to resolve established artistic direction and visual motifs from the vault before any image is generated.
 
 VAULT CONTEXT:
-${context}
+${u(context)}
 
 USER REQUEST:
-${query}
+${u(query)}
 
 Search the vault context for established:
 - art direction
@@ -47,15 +49,17 @@ VISUAL CANON SUMMARY:
 ${canonSummary}
 
 ORIGINAL REQUEST:
-${userQuery}
+${u(userQuery)}
 
 GUIDELINES:
-- Emphasize distinctive setting identity.
-- Preserve cultural specificity.
-- Prioritize concrete visual details (materials, silhouettes, symbols).
-- Ground the mood in environmental storytelling and architecture.
-- Avoid generic fantasy phrasing (e.g., "epic", "cinematic").
-- Avoid vague filler and contradictory aesthetics.
+- Preserve all explicit theme, genre, medium, palette, lighting, and material directives from the original request in the final prompt. Treat theme/default-art-style language as required art direction, not optional flavor.
+- Keep named genre/style anchors verbatim when present, such as "Cyberpunk", "gothic horror", "oil painting", "photographic", "noir", or "pulp adventure", unless they directly conflict with stronger vault canon.
+- If the original request includes a composed category + theme + global art direction, carry the theme information into the final prompt even while reducing repetition.
+- Prioritize concrete, visual details (e.g., specific clothing materials, physical features, worn gear, posture, and facial expressions) over abstract character names or name repetition.
+- Emphasize distinctive setting identity and preserve cultural specificity.
+- Ground the mood in environmental storytelling, lighting, and architecture.
+- Avoid generic fantasy phrasing (e.g., "epic", "cinematic", "visual concept art").
+- Avoid vague fillers, and provide enough concrete material/form details to paint a clear visual picture.
 
 Generate only the final, concrete visual prompt.`;
 }

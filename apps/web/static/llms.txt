@@ -1,16 +1,43 @@
 # Codex Cryptica
 
-> A private, local-first campaign manager for lore keepers who value total privacy, speed, and visual organization. Built with Svelte 5 and Google Gemini.
+> A private, local-first campaign manager for lore keepers who value privacy, speed, visual organisation, and AI-assisted worldbuilding.
 
-## Features
+## Core Product
 
-- **Knowledge Graph**: Visualize and navigate your world's knowledge through an interactive graph.
-- **AI Oracle**: Use Google Gemini to discover hidden connections and generate immersive descriptions.
-- **Total Privacy**: Your data never leaves your device. We use browser-native storage (OPFS) for maximum security.
-- **Local-First**: Works offline and syncs directly between your devices without centralized servers.
+- [Codex Cryptica](https://codexcryptica.com/): Local-first RPG campaign manager and worldbuilding workspace.
+- [Full User Guide & Features](https://codexcryptica.com/llms-full.txt): Complete AI-readable feature and help documentation.
+
+## Key Features
+
+- Knowledge Graph: Visualise entities and relationships.
+- AI Oracle: Context-aware lore assistant powered by Google Gemini.
+- Local-First Storage: Vault data is stored in the browser using OPFS.
+- Map & VTT Mode: Use maps, pins, fog of war, tokens, initiative, and tactical play.
+- Spatial Canvas: Build conspiracy boards, quest flows, faction webs, and relationship maps.
+
+## Privacy & AI Policy
+
+Codex Cryptica is local-first: vault data is stored locally by default and does not require a cloud account. AI features are optional. When AI features are used, only the selected or retrieved context needed for that request is sent to the configured AI provider.
+
+## Public Marketing & Interactive Generator Routes
+
+- [Tools Hub](https://codexcryptica.com/tools): Central directory for public RPG tools, generators, solution pages, and comparison guides.
+- [Faction Generator](https://codexcryptica.com/tools/faction-generator): Free fantasy RPG faction generator with agendas, rivals, conflicts, and adventure hooks.
+- [Campaign Manager Solution](https://codexcryptica.com/solutions/campaign-manager): Interactive features for TTRPG campaign running.
+- [Worldbuilding Tool Solution](https://codexcryptica.com/solutions/worldbuilding-tool): Interactive features for visual wiki and timeline worldbuilding.
+- [AI GM Assistant Solution](https://codexcryptica.com/solutions/ai-gm-assistant): Cooperative lore drafting features with AI.
+- [Local-First RPG Solution](https://codexcryptica.com/solutions/local-first-rpg): Technical local-first storage capabilities.
+- [Procedural NPC Generator](https://codexcryptica.com/generators/npc): Client-side name, trait, motive, and backstory generator.
+- [Procedural Settlement Generator](https://codexcryptica.com/generators/settlement): Client-side settlement size, economy, and factions builder.
+- [Procedural Magic Item Generator](https://codexcryptica.com/generators/magic-item): Client-side magic item types, properties, and histories generator.
+
+## Comparisons
+
+- [Codex Cryptica vs Obsidian](https://codexcryptica.com/vs/obsidian): For worldbuilders who want graph-native lore, entity structure, maps, and AI assistance instead of a general-purpose notes app.
+- [Codex Cryptica vs World Anvil](https://codexcryptica.com/vs/world-anvil): For users who prefer local-first storage and private campaign management.
+- [Codex Cryptica vs LegendKeeper](https://codexcryptica.com/vs/legendkeeper): For users comparing visual worldbuilding, maps, AI assistance, and vault control.
 
 ## Technical Documentation
 
-- [Full User Guide & Features](llms-full.txt): Amalgamation of all user-facing help documentation and core project features.
 - [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.
 - [Local-First Persistence (ADR 001)](https://github.com/eserlan/Codex-Cryptica/blob/main/docs/adr/001-fs-handle-storage.md): Deep dive into our unique browser-native storage strategy.

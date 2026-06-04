@@ -24,7 +24,7 @@ Some content here.`;
 
       expect(article.id).toBe("test-article");
       expect(article.title).toBe("Test Article");
-      expect(article.tags).toEqual(["tag1", "tag2"]);
+      expect(article.labels).toEqual(["tag1", "tag2"]);
       expect(article.rank).toBe(10);
       expect(article.content).toContain("# Content Header");
       expect(article.content).toContain("Some content here.");

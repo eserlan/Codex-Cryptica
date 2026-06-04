@@ -10,6 +10,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   const _isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
@@ -166,8 +167,9 @@
                 `Failed to convert demo to ${themeStore.jargon.vault}`,
                 error,
               );
-              window.alert(
+              notificationStore.notify(
                 `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+                "error",
               );
             }
           }}

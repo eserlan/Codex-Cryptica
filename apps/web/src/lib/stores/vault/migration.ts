@@ -4,6 +4,10 @@ import {
   writeOpfsFile,
   getOpfsRoot,
 } from "../../utils/opfs";
+import {
+  migrationStore,
+  runMigration as runSafeMigration,
+} from "@codex/vault-engine";
 
 export { getOpfsRoot };
 import {
@@ -13,6 +17,8 @@ import {
 } from "../../utils/idb";
 import { debugStore } from "../debug.svelte";
 import { walkDirectory } from "../../utils/fs";
+
+const LEGACY_OPFS_MIGRATION_VERSION = 1;
 
 export async function migrateStructure(opfsRoot: FileSystemDirectoryHandle) {
   if (!opfsRoot) return;
@@ -122,58 +128,70 @@ export async function runMigration(
   debugStore.log("Starting migration from File System Access API to OPFS...");
 
   try {
-    try {
-      const permission = await legacyHandle.queryPermission({
-        mode: "read",
-      });
-      if (permission !== "granted" && !silent) {
-        await legacyHandle.requestPermission({ mode: "read" });
-      }
-    } catch (permErr) {
-      debugStore.warn(
-        "Failed to query/request permission, attempting re-resolve.",
-        permErr,
-      );
-    }
-
-    const files = await walkDirectory(legacyHandle);
-    debugStore.log(`Migration: Found ${files.length} files to copy.`);
-
-    for (const fileEntry of files) {
-      try {
-        debugStore.log(`Migrating file: /${fileEntry.path.join("/")}`);
-        const content = await fileEntry.handle.getFile().then((f) => f.text());
-        await writeOpfsFile(fileEntry.path, content, opfsRoot);
-      } catch (fileErr: any) {
-        debugStore.error(
-          `Failed to migrate file /${fileEntry.path.join("/")}: ${fileErr.name} - ${fileErr.message}`,
-        );
-        throw fileErr;
-      }
-    }
-
-    // Migrate images directory
-    try {
-      const imagesDir = await legacyHandle.getDirectoryHandle("images");
-      const opfsImagesDir = await opfsRoot.getDirectoryHandle("images", {
-        create: true,
-      });
-      for await (const handle of imagesDir.values()) {
-        if (handle.kind === "file") {
-          const file = await (handle as FileSystemFileHandle).getFile();
-          await writeOpfsFile([file.name], file, opfsImagesDir);
+    await runSafeMigration(
+      opfsRoot,
+      migrationStore,
+      LEGACY_OPFS_MIGRATION_VERSION,
+      async () => {
+        try {
+          const permission = await legacyHandle.queryPermission({
+            mode: "read",
+          });
+          if (permission !== "granted" && !silent) {
+            await legacyHandle.requestPermission({ mode: "read" });
+          }
+        } catch (permErr) {
+          debugStore.warn(
+            "Failed to query/request permission, attempting re-resolve.",
+            permErr,
+          );
         }
-      }
-    } catch (e) {
-      debugStore.warn("No images directory to migrate or migration failed.", e);
-    }
 
-    const db = await getDB();
-    await db.put("settings", true, "opfsMigrationComplete");
-    await clearPersistedHandle();
+        const files = await walkDirectory(legacyHandle);
+        debugStore.log(`Migration: Found ${files.length} files to copy.`);
 
-    debugStore.log("Migration complete. Loading files from OPFS.");
-    await onComplete();
+        for (const fileEntry of files) {
+          try {
+            debugStore.log(`Migrating file: /${fileEntry.path.join("/")}`);
+            const content = await fileEntry.handle
+              .getFile()
+              .then((f) => f.text());
+            await writeOpfsFile(fileEntry.path, content, opfsRoot);
+          } catch (fileErr: any) {
+            debugStore.error(
+              `Failed to migrate file /${fileEntry.path.join("/")}: ${fileErr.name} - ${fileErr.message}`,
+            );
+            throw fileErr;
+          }
+        }
+
+        // Migrate images directory
+        try {
+          const imagesDir = await legacyHandle.getDirectoryHandle("images");
+          const opfsImagesDir = await opfsRoot.getDirectoryHandle("images", {
+            create: true,
+          });
+          for await (const handle of imagesDir.values()) {
+            if (handle.kind === "file") {
+              const file = await (handle as FileSystemFileHandle).getFile();
+              await writeOpfsFile([file.name], file, opfsImagesDir);
+            }
+          }
+        } catch (e) {
+          debugStore.warn(
+            "No images directory to migrate or migration failed.",
+            e,
+          );
+        }
+
+        const db = await getDB();
+        await db.put("settings", true, "opfsMigrationComplete");
+        await clearPersistedHandle();
+
+        debugStore.log("Migration complete. Loading files from OPFS.");
+        await onComplete();
+      },
+    );
   } catch (err: any) {
     console.error("Migration failed", err);
     const errorName = err?.name || "Error";
@@ -182,10 +200,19 @@ export async function runMigration(
       `Migration to OPFS failed! [${errorName}] ${errorMessage}`,
     );
 
-    if (!silent) {
+    if (
+      !silent ||
+      errorMessage.startsWith(
+        "Migration aborted: Pre-migration snapshot failed.",
+      )
+    ) {
       updateStatus(
         "error",
-        `Failed to migrate your old vault: ${errorMessage}`,
+        errorMessage.startsWith(
+          "Migration aborted: Pre-migration snapshot failed.",
+        )
+          ? "A migration snapshot could not be created. Clear storage space and try again."
+          : `Failed to migrate your old vault: ${errorMessage}`,
       );
     }
   }

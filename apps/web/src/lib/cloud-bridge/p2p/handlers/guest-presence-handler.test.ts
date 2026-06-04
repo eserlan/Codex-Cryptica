@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { writable, get } from "svelte/store";
+
 import { GuestPresenceHandler } from "./guest-presence-handler";
 import type { GuestSessionState } from "./guest-handler-context";
 
@@ -19,7 +19,7 @@ describe("GuestPresenceHandler", () => {
       disconnect: vi.fn(),
     };
     ctx = {
-      guestRoster: writable<Record<string, any>>({}),
+      guestStore: { guestRoster: {} as Record<string, any> },
       session,
       transport,
       sessionModeStore: { guestUsername: "Old", isGuestMode: false },
@@ -55,7 +55,7 @@ describe("GuestPresenceHandler", () => {
     );
 
     expect(session.joinAccepted).toBe(true);
-    const roster = get(ctx.guestRoster) as Record<
+    const roster = ctx.guestStore.guestRoster as Record<
       string,
       { displayName: string }
     >;

@@ -8,7 +8,7 @@
     isDraftDirty,
     hasBriefing,
     isSaving = false,
-    isGenerating = false,
+    isRevising = false,
     onSave,
     onCancel,
     onGenerate,
@@ -20,7 +20,7 @@
     isDraftDirty: boolean;
     hasBriefing: boolean;
     isSaving?: boolean;
-    isGenerating?: boolean;
+    isRevising?: boolean;
     onSave: () => Promise<void>;
     onCancel: () => void;
     onGenerate: () => Promise<void>;
@@ -125,12 +125,12 @@
           <button
             class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
             onclick={onGenerate}
-            disabled={isSaving || isGenerating}
+            disabled={isSaving || isRevising}
             title="Generate briefing"
             aria-label="Generate briefing"
-            aria-busy={isGenerating}
+            aria-busy={isRevising}
           >
-            {#if isGenerating}
+            {#if isRevising}
               <span
                 class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
                 aria-hidden="true"

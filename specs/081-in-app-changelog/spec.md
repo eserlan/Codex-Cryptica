@@ -2,8 +2,8 @@
 
 **Feature Branch**: `feat/changelog-page`  
 **Created**: 2026-04-14  
+**Status**: Implemented
 **Updated**: 2026-04-16 (Extended for Dedicated Page)  
-**Status**: In Progress  
 **Input**: User description: "in app change log so users will see the most recent features" (GitHub Issue #607) & "Changelog page" (GitHub Issue #637)
 
 ## User Scenarios & Testing _(mandatory)_

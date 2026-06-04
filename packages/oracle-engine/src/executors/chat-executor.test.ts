@@ -1,10 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ChatExecutor } from "./chat-executor";
+
+const originalNavigator = globalThis.navigator;
+const originalURL = globalThis.URL;
 
 describe("ChatExecutor", () => {
   beforeEach(() => {
-    vi.stubGlobal("navigator", { onLine: true });
-    vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "url") });
+    (globalThis as any).navigator = { onLine: true } as any;
+    (globalThis as any).URL = {
+      createObjectURL: vi.fn(() => "url"),
+      revokeObjectURL: originalURL?.revokeObjectURL,
+    } as any;
+  });
+
+  afterEach(() => {
+    (globalThis as any).navigator = originalNavigator;
+    (globalThis as any).URL = originalURL;
   });
 
   it("should handle simple chat queries", async () => {
@@ -79,7 +90,7 @@ describe("ChatExecutor", () => {
   });
 
   it("should handle offline mode", async () => {
-    vi.stubGlobal("navigator", { onLine: false });
+    (globalThis as any).navigator = { onLine: false } as any;
     const executor = new ChatExecutor();
     const addMessage = vi.fn();
 

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `093-directional-vault-sync`  
 **Created**: 2026-04-25  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "refine save and load to file operations according to @/home/espen/proj/Codex-Arcana/docs/proposals/096-directional-vault-sync.md"
 
 ## Clarifications

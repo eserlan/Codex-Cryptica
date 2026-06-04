@@ -38,9 +38,25 @@
     );
     onSave();
   };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.repeat || e.isComposing) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSave();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      onCancel();
+    }
+  };
 </script>
 
-<div class="p-3 bg-theme-bg border border-theme-primary rounded-md space-y-3">
+<div
+  data-shortcuts="ignore"
+  class="p-3 bg-theme-bg border border-theme-primary rounded-md space-y-3"
+>
   <div>
     <label
       for="relationship-type"
@@ -50,6 +66,7 @@
     <select
       id="relationship-type"
       bind:value={type}
+      onkeydown={handleKeyDown}
       class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1 text-sm focus:outline-none focus:border-theme-primary"
     >
       {#each options as opt}
@@ -68,6 +85,7 @@
       id="custom-label"
       type="text"
       bind:value={label}
+      onkeydown={handleKeyDown}
       placeholder="e.g. Brother, Rival, Employer"
       class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1 text-sm focus:outline-none focus:border-theme-primary"
     />

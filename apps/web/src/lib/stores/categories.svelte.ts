@@ -1,5 +1,6 @@
 import { DEFAULT_CATEGORIES, type Category } from "schema";
 import { getDB } from "../utils/idb";
+import { debugStore } from "./debug.svelte";
 
 export interface ICategoryStorage {
   load(): Promise<Category[] | undefined>;
@@ -100,5 +101,7 @@ if (
   (import.meta.env.DEV || (window as any).__E2E__)
 ) {
   (window as any).categories = categories;
-  console.log("[CategoryStore] Module loaded, categories attached to window");
+  debugStore.log(
+    "[CategoryStore] Module loaded, categories attached to window",
+  );
 }

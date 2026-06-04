@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import DOMPurify from "dompurify";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
   import { parseOracleResponse } from "editor-core";
@@ -8,8 +6,6 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { graph } from "$lib/stores/graph.svelte";
-  import { parserService } from "$lib/services/parser";
-  import { clipboardService } from "$lib/services/ClipboardService";
   import ImageMessage from "./ImageMessage.svelte";
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
@@ -19,23 +15,20 @@
     canOverrideTarget,
     getTargetEntityId,
     isLoreMessage,
-    renderMessageHtml,
     shouldShowActions,
     shouldShowCreateAction,
   } from "./chat-message.helpers";
-  import { ChatMessageActions } from "./chat-message.actions";
+  import { ChatMessageController } from "./chat-message-controller.svelte";
   import { sanitizeId } from "$lib/utils/markdown";
-  import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
-  import { appEventBus } from "@codex/events";
-  import { ORACLE_EVENTS } from "@codex/oracle-engine";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
-  const chatMessageActions = new ChatMessageActions({
+  const controller = new ChatMessageController({
     oracle,
     vault,
     graph,
+    revisionService,
   });
 
   let targetEntity = $derived(
@@ -50,41 +43,15 @@
     canOverrideTarget(targetEntity?.id ?? null, activeEntity?.id ?? null),
   );
 
-  let isSaved = $state(false);
-  let activeAction = $state<"apply" | "create" | "chronicle" | "lore" | null>(
-    null,
-  );
-  let isCopied = $state(false);
-  let showDiscoveryChips = $state(false);
-  let isSelectingEntity = $state(false);
-  let selectedEntityId = $state<string | null>(null);
-  let htmlCache = $state("");
-  let lastParsedContent = "";
-
   onMount(() => {
-    return appEventBus.subscribe(ORACLE_EVENTS.UNDO_PERFORMED, (event) => {
-      if (
-        event.type === ORACLE_EVENTS.UNDO_PERFORMED &&
-        event.payload.messageId === message.id
-      ) {
-        isSaved = false;
-      }
-    });
+    controller.subscribeToUndo(message);
+    return () => {
+      controller.destroy();
+    };
   });
 
   $effect(() => {
-    if (selectedEntityId) {
-      const id = selectedEntityId;
-      isSelectingEntity = false;
-      selectedEntityId = null;
-      (async () => {
-        try {
-          await oracle.updateMessageEntity(message.id, id);
-        } catch {
-          // silent — toast would be noisy for a link action
-        }
-      })();
-    }
+    controller.consumeSelectedEntity(message);
   });
 
   let isLastAction = $derived(
@@ -97,147 +64,50 @@
     detectedId ? !!vault.entities[detectedId] : false,
   );
   let showCreate = $derived(
-    shouldShowCreateAction(parsed, alreadyExists, isSaved),
+    shouldShowCreateAction(parsed, alreadyExists, controller.isSaved),
   );
   let isLore = $derived(isLoreMessage(message, oracle.messages));
   let showActions = $derived(
     shouldShowActions(message, parsed, oracle.isLoading),
   );
-  let visibleProposals = $derived.by(() => {
-    const raw = (message.proposals ?? []).filter(isVisibleDiscoveryProposal);
-    // Deduplicate to prevent each_key_duplicate crashes
-    const seen = new Set<string>();
-    const deduped = raw.filter((p) => {
-      const key = `${p.entityId ?? "new"}:${p.title}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    // Guests only see chips for entities that already exist in the vault
-    if (vault.isGuest) {
-      return deduped.filter((p) => p.entityId && vault.entities[p.entityId]);
-    }
-    return deduped;
+  let visibleProposals = $derived(controller.getVisibleProposals(message));
+
+  $effect(() => {
+    controller.resetSavedWhenDraftCleared(message, isLastAction);
   });
 
   $effect(() => {
-    if (isSaved && !regenerationService.pendingDraft && message.content) {
-      // If we were in saved/proposed state and the global draft is cleared,
-      // and we still have content, reset isSaved so buttons reappear.
-      // But only if we don't have an undo action (which means it was a permanent save).
-      if (!isLastAction) {
-        isSaved = false;
-      }
-    }
+    controller.renderContent(message);
   });
-
-  $effect(() => {
-    if (message.content && message.content !== lastParsedContent) {
-      const currentContent = message.content;
-      renderMessageHtml(currentContent, parserService, browser, DOMPurify)
-        .then((html) => {
-          if (currentContent !== message.content) return;
-          htmlCache = html;
-          lastParsedContent = currentContent;
-        })
-        .catch((err) => {
-          console.error("[ChatMessage] Parsing failed:", err);
-          htmlCache = `<p class="text-red-400">Failed to render chronicle.</p>`;
-        });
-    }
-  });
-
-  async function copyToClipboard() {
-    if (!message.content) return;
-
-    try {
-      let contentToCopy = htmlCache;
-      if (!contentToCopy) {
-        contentToCopy = await renderMessageHtml(
-          message.content,
-          parserService,
-          browser,
-          DOMPurify,
-        );
-      }
-
-      const success = await clipboardService.copyHtmlAndText(
-        contentToCopy,
-        message.content,
-      );
-
-      if (success) {
-        isCopied = true;
-        setTimeout(() => (isCopied = false), 2000);
-      }
-    } catch (err) {
-      console.error("[ChatMessage] Clipboard copy failed:", err);
-    }
-  }
 
   const applySmart = async () => {
-    activeAction = "apply";
-    try {
-      await chatMessageActions.applySmart({
-        message,
-        parsed,
-        activeEntityId: activeEntity?.id ?? null,
-        setSaved: (saved) => {
-          isSaved = saved;
-        },
-      });
-    } finally {
-      activeAction = null;
-    }
+    await controller.applySmart({
+      message,
+      parsed,
+      activeEntityId: activeEntity?.id ?? null,
+    });
   };
 
   const createAsNode = async () => {
-    activeAction = "create";
-    try {
-      await chatMessageActions.createAsNode({
-        message,
-        parsed,
-        setSaved: (saved) => {
-          isSaved = saved;
-        },
-      });
-    } finally {
-      activeAction = null;
-    }
+    await controller.createAsNode({ message, parsed });
   };
 
   const copyToChronicle = async () => {
-    activeAction = "chronicle";
-    try {
-      await chatMessageActions.copyToChronicle({
-        message,
-        activeEntityId: activeEntity?.id ?? null,
-        setSaved: (saved) => {
-          isSaved = saved;
-        },
-      });
-    } finally {
-      activeAction = null;
-    }
+    await controller.copyToChronicle({
+      message,
+      activeEntityId: activeEntity?.id ?? null,
+    });
   };
 
   const copyToLore = async () => {
-    activeAction = "lore";
-    try {
-      await chatMessageActions.copyToLore({
-        message,
-        activeEntityId: activeEntity?.id ?? null,
-        setSaved: (saved) => {
-          isSaved = saved;
-        },
-      });
-    } finally {
-      activeAction = null;
-    }
+    await controller.copyToLore({
+      message,
+      activeEntityId: activeEntity?.id ?? null,
+    });
   };
 
   const handleUndo = async () => {
-    await chatMessageActions.undo();
+    await controller.undo();
   };
 </script>
 
@@ -277,8 +147,8 @@
               ? 'mt-4 border-t border-theme-border/30 pt-2'
               : ''}"
           >
-            {#if htmlCache}
-              {@html htmlCache}
+            {#if controller.htmlCache}
+              {@html controller.htmlCache}
             {:else}
               <div class="space-y-2 animate-pulse py-1">
                 <div class="bg-theme-border/20 h-3 w-full rounded"></div>
@@ -297,8 +167,10 @@
             <button
               type="button"
               class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/20 bg-theme-primary/5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary/80 font-header transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
-              onclick={() => (showDiscoveryChips = !showDiscoveryChips)}
-              aria-expanded={showDiscoveryChips}
+              onclick={() =>
+                (controller.showDiscoveryChips =
+                  !controller.showDiscoveryChips)}
+              aria-expanded={controller.showDiscoveryChips}
               aria-controls={`found-lore-${message.id}`}
             >
               <span class="icon-[lucide--sparkles] w-3 h-3"></span>
@@ -310,12 +182,12 @@
               <span
                 class={[
                   "icon-[lucide--chevron-down] w-3 h-3 transition-transform",
-                  showDiscoveryChips ? "rotate-180" : "",
+                  controller.showDiscoveryChips ? "rotate-180" : "",
                 ]}
               ></span>
             </button>
 
-            {#if showDiscoveryChips}
+            {#if controller.showDiscoveryChips}
               <div
                 id={`found-lore-${message.id}`}
                 class="mt-2 flex flex-wrap gap-2 items-center"
@@ -338,13 +210,13 @@
           class="absolute bottom-1 right-2 opacity-0 group-hover/msg:opacity-100 group-focus-within/msg:opacity-100 focus-within:opacity-100 transition-opacity"
         >
           <button
-            onclick={copyToClipboard}
+            onclick={() => controller.copyToClipboard(message)}
             class="p-1 rounded bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary transition-all flex items-center gap-1.5"
             title="Copy rich text to clipboard"
             aria-label="Copy rich text to clipboard"
             type="button"
           >
-            {#if isCopied}
+            {#if controller.isCopied}
               <span
                 class="text-[9px] font-bold tracking-tighter uppercase font-header"
                 >Copied!</span
@@ -357,20 +229,20 @@
         </div>
 
         {#if showActions && !vault.isGuest && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
-          {#if !isSaved}
+          {#if !controller.isSaved}
             <div
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"
               transition:fade
             >
-              {#if isSelectingEntity}
+              {#if controller.isSelectingEntity}
                 <div class="w-full mb-2" transition:fade>
                   <Autocomplete
-                    bind:selectedId={selectedEntityId}
+                    bind:selectedId={controller.selectedEntityId}
                     placeholder="Search for an entity..."
                     ariaLabel="Search for an entity"
                   />
                   <button
-                    onclick={() => (isSelectingEntity = false)}
+                    onclick={() => (controller.isSelectingEntity = false)}
                     class="mt-1 text-[9px] text-theme-muted hover:text-theme-primary font-bold uppercase tracking-widest font-header"
                   >
                     Cancel
@@ -414,11 +286,11 @@
               {#if showCreate}
                 <button
                   onclick={createAsNode}
-                  disabled={activeAction !== null}
-                  aria-busy={activeAction === "create"}
+                  disabled={controller.activeAction !== null}
+                  aria-busy={controller.activeAction === "create"}
                   class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black group relative disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {#if activeAction === "create"}
+                  {#if controller.activeAction === "create"}
                     <span
                       class="icon-[lucide--loader-2] w-3.5 h-3.5 shrink-0 animate-spin"
                       aria-hidden="true"
@@ -429,7 +301,7 @@
                     ></span>
                   {/if}
                   <span class="truncate font-header"
-                    >{activeAction === "create"
+                    >{controller.activeAction === "create"
                       ? "CREATING..."
                       : `CREATE AS ${parsed.type?.toUpperCase() || "NEW NODE"}: ${parsed.title?.toUpperCase()}`}</span
                   >
@@ -453,7 +325,9 @@
                 class="flex items-center rounded text-[10px] font-bold tracking-widest bg-theme-surface border border-theme-border text-theme-muted group/link relative"
               >
                 <button
-                  onclick={() => (isSelectingEntity = !isSelectingEntity)}
+                  onclick={() =>
+                    (controller.isSelectingEntity =
+                      !controller.isSelectingEntity)}
                   class="flex items-center gap-1.5 px-2 py-1 transition-all hover:bg-theme-primary hover:text-black hover:border-theme-primary"
                   title={message.entityId
                     ? `Linked to ${vault.entities[message.entityId]?.title || "Entity"}`
@@ -516,12 +390,12 @@
                 {#if parsed.wasSplit}
                   <button
                     onclick={applySmart}
-                    disabled={activeAction !== null}
-                    aria-busy={activeAction === "apply"}
+                    disabled={controller.activeAction !== null}
+                    aria-busy={controller.activeAction === "apply"}
                     class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[280px] group relative disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    {#if activeAction === "apply"}
+                    {#if controller.activeAction === "apply"}
                       <span
                         class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
                         aria-hidden="true"
@@ -531,7 +405,7 @@
                       ></span>
                     {/if}
                     <span class="truncate font-header"
-                      >{activeAction === "apply"
+                      >{controller.activeAction === "apply"
                         ? "APPLYING..."
                         : "SMART APPLY TO"}
                       {(
@@ -566,12 +440,12 @@
                 {:else if !isLore}
                   <button
                     onclick={copyToChronicle}
-                    disabled={activeAction !== null}
-                    aria-busy={activeAction === "chronicle"}
+                    disabled={controller.activeAction !== null}
+                    aria-busy={controller.activeAction === "chronicle"}
                     class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    {#if activeAction === "chronicle"}
+                    {#if controller.activeAction === "chronicle"}
                       <span
                         class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
                         aria-hidden="true"
@@ -581,7 +455,7 @@
                       ></span>
                     {/if}
                     <span class="truncate font-header"
-                      >{activeAction === "chronicle"
+                      >{controller.activeAction === "chronicle"
                         ? "COPYING..."
                         : "COPY TO CHRONICLE"} ({(
                         targetEntity || activeEntity!
@@ -591,12 +465,12 @@
                 {:else}
                   <button
                     onclick={copyToLore}
-                    disabled={activeAction !== null}
-                    aria-busy={activeAction === "lore"}
+                    disabled={controller.activeAction !== null}
+                    aria-busy={controller.activeAction === "lore"}
                     class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black max-w-[250px] disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
-                    {#if activeAction === "lore"}
+                    {#if controller.activeAction === "lore"}
                       <span
                         class="icon-[lucide--loader-2] w-3 h-3 shrink-0 animate-spin"
                         aria-hidden="true"
@@ -606,7 +480,9 @@
                       ></span>
                     {/if}
                     <span class="truncate font-header"
-                      >{activeAction === "lore" ? "COPYING..." : "COPY TO LORE"} ({(
+                      >{controller.activeAction === "lore"
+                        ? "COPYING..."
+                        : "COPY TO LORE"} ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span
                     >
@@ -622,7 +498,7 @@
               role="status"
               aria-live="polite"
             >
-              {#if regenerationService.pendingDraft?.messageId === message.id}
+              {#if revisionService.pendingDraft?.messageId === message.id}
                 <span
                   class="text-[10px] text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >

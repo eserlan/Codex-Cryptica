@@ -1,7 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
-  import { Database, X } from "lucide-svelte";
+
   import {
     dispatchSearchEntityFocus,
     DEFAULT_SEARCH_ENTITY_ZOOM,
@@ -24,7 +24,15 @@
     }
   }
 
-  function handleFindInGraph(entity: Entity) {
+  function handleFindInGraph(entity: Entity, event?: MouseEvent) {
+    if (event) {
+      layoutUIStore.setLastSelectedNodePosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    } else {
+      layoutUIStore.setLastSelectedNodePosition(null);
+    }
     dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = entity.id;
     layoutUIStore.findInGraph();
@@ -85,7 +93,7 @@
         style:border-color="var(--theme-selected-border)"
         style:color="var(--theme-icon-active)"
       >
-        <Database class="w-4 h-4" />
+        <span class="icon-[lucide--database] w-4 h-4"></span>
       </div>
       <div>
         <div
@@ -106,7 +114,7 @@
       style:color="var(--theme-icon-default)"
       aria-label="Close Explorer"
     >
-      <X class="w-4 h-4" />
+      <span class="icon-[lucide--x] w-4 h-4"></span>
     </button>
   </div>
 

@@ -1,4 +1,4 @@
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 import * as vaultEntities from "./entities";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
@@ -23,17 +23,65 @@ export interface MutationDependencies {
   getServices: () => IVaultServices | null;
   onEntityDelete?: (entityId: string) => void;
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
+  onEntitiesUpdated?: (
+    oldEntities: Record<string, LocalEntity>,
+    newEntities: Record<string, LocalEntity>,
+  ) => void;
+  onConnectionAdded?: (
+    sourceId: string,
+    targetId: string,
+    connection: any,
+  ) => void;
+  onConnectionRemoved?: (
+    sourceId: string,
+    targetId: string,
+    connectionType: string,
+  ) => void;
+  onConnectionUpdated?: (
+    sourceId: string,
+    targetId: string,
+    oldType: string,
+    connection: any,
+  ) => void;
+  getInboundConnections?: () => Record<
+    string,
+    { sourceId: string; connection: any }[]
+  >;
+  getParentToChildren?: () => Record<string, string[]>;
 }
 
 export class EntityMutationService {
-  constructor(private deps: MutationDependencies) {}
+  constructor(public deps: MutationDependencies) {}
+
+  registerStoreCallbacks(
+    callbacks: Partial<
+      Pick<
+        MutationDependencies,
+        | "onEntityDelete"
+        | "onBatchUpdate"
+        | "onEntitiesUpdated"
+        | "onConnectionAdded"
+        | "onConnectionRemoved"
+        | "onConnectionUpdated"
+        | "getInboundConnections"
+        | "getParentToChildren"
+      >
+    >,
+  ) {
+    this.deps = {
+      ...this.deps,
+      ...callbacks,
+    };
+  }
 
   get entities() {
     return this.deps.repository.entities;
   }
 
   set entities(val: Record<string, LocalEntity>) {
+    const oldVal = this.deps.repository.entities;
     this.deps.repository.entities = val;
+    this.deps.onEntitiesUpdated?.(oldVal, val);
   }
 
   async createEntity(
@@ -99,7 +147,7 @@ export class EntityMutationService {
       updates.content !== undefined ||
       updates.lore !== undefined ||
       updates.title !== undefined ||
-      updates.tags !== undefined
+      updates.labels !== undefined
     ) {
       this.deps.loader.markContentLoaded(id);
     }
@@ -170,7 +218,7 @@ export class EntityMutationService {
         patch.content !== undefined ||
         patch.lore !== undefined ||
         patch.title !== undefined ||
-        patch.tags !== undefined
+        patch.labels !== undefined
       ) {
         this.deps.loader.markContentLoaded(id);
       }
@@ -211,7 +259,7 @@ export class EntityMutationService {
     }
 
     const lockKey = id;
-    return this.deps.repository.saveQueue.enqueue(lockKey, async () => {
+    return this.deps.repository.enqueueSave(lockKey, async () => {
       const vaultHandle = await this.deps.getActiveVaultHandle();
       const localHandle = await this.deps.getActiveFolderHandle();
       const activeVaultId = this.deps.activeVaultId();
@@ -220,8 +268,20 @@ export class EntityMutationService {
         const entity = this.entities[id];
         const path = entity?._path || [`${id}.md`];
 
+        const inboundConns = this.deps.getInboundConnections?.();
+        const parentToChildren = this.deps.getParentToChildren?.();
+        const childrenIds = parentToChildren
+          ? parentToChildren[id] || []
+          : undefined;
+
         const { entities, deletedEntity, modifiedIds } =
-          await vaultEntities.deleteEntity(vaultHandle, this.entities, id);
+          await vaultEntities.deleteEntity(
+            vaultHandle,
+            this.entities,
+            id,
+            inboundConns,
+            childrenIds,
+          );
 
         if (deletedEntity) {
           this.entities = entities;
@@ -304,13 +364,12 @@ export class EntityMutationService {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
 
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
+      const newConn = updatedSource.connections.find(
+        (c) => c.target === targetId && c.type === type,
+      );
+      if (newConn && this.deps.onConnectionAdded) {
+        this.deps.onConnectionAdded(sourceId, targetId, newConn);
+      }
       return true;
     }
     return false;
@@ -335,13 +394,12 @@ export class EntityMutationService {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
 
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
-
+      const updatedConn = updatedSource.connections.find(
+        (c) => c.target === targetId && c.type === newType,
+      );
+      if (updatedConn && this.deps.onConnectionUpdated) {
+        this.deps.onConnectionUpdated(sourceId, targetId, oldType, updatedConn);
+      }
       return true;
     }
     return false;
@@ -362,13 +420,12 @@ export class EntityMutationService {
       this.entities = entities;
       await this.deps.persistence.scheduleSave(updatedSource);
 
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: updatedSource,
-        patch: { connections: updatedSource.connections },
-      });
+      if (this.deps.onConnectionRemoved) {
+        this.deps.onConnectionRemoved(sourceId, targetId, type);
+      }
 
+      // CONNECTION_REMOVED carries the full semantic; ENTITY_UPDATED with a
+      // connections-only patch was redundant and triggered unnecessary fan-out.
       vaultEventBus.emit({
         type: "CONNECTION_REMOVED",
         vaultId: this.deps.activeVaultId() || "unknown",
@@ -376,7 +433,6 @@ export class EntityMutationService {
         targetId,
         connectionType: type,
       });
-
       return true;
     }
     return false;
@@ -435,13 +491,15 @@ export class EntityMutationService {
     if (modifiedIds.length > 0) {
       this.entities = entities;
       const changed: LocalEntity[] = [];
+      const savePromises: Promise<void>[] = [];
       for (const id of modifiedIds) {
         const entity = entities[id];
         if (entity) {
-          await this.deps.persistence.scheduleSave(entity);
+          savePromises.push(this.deps.persistence.scheduleSave(entity));
           changed.push(entity);
         }
       }
+      await Promise.all(savePromises);
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
@@ -460,13 +518,15 @@ export class EntityMutationService {
     if (modifiedIds.length > 0) {
       this.entities = entities;
       const changed: LocalEntity[] = [];
+      const savePromises: Promise<void>[] = [];
       for (const id of modifiedIds) {
         const entity = entities[id];
         if (entity) {
-          await this.deps.persistence.scheduleSave(entity);
+          savePromises.push(this.deps.persistence.scheduleSave(entity));
           changed.push(entity);
         }
       }
+      await Promise.all(savePromises);
       vaultEventBus.emit({
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",

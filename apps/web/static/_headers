@@ -1,0 +1,5 @@
+# Cache-Control headers for LLM discovery files
+/llms.txt
+  Cache-Control: public, max-age=3600, must-revalidate
+/llms-full.txt
+  Cache-Control: public, max-age=3600, must-revalidate

@@ -12,7 +12,22 @@ export interface PersistenceDependencies {
   getSpecificVaultHandle: (
     vaultId: string,
   ) => Promise<FileSystemDirectoryHandle | undefined>;
-  setStatus: (status: "idle" | "loading" | "saving" | "error") => void;
+  setStatus: (
+    status:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) => void;
+  status?: () =>
+    | "idle"
+    | "loading"
+    | "saving"
+    | "saved"
+    | "needs-permission"
+    | "error";
   setErrorMessage: (msg: string | null) => void;
   onEntityUpdate?: (entity: LocalEntity) => void;
   // loader delegation
@@ -26,6 +41,8 @@ const SAVE_DEBOUNCE_MS = 400;
 export class EntityPersistenceService {
   private _saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _saveResolvers = new Map<string, Array<() => void>>();
+  /** Vault ID captured at scheduleSave time, keyed by entity ID. */
+  private _saveVaultIds = new Map<string, string>();
 
   constructor(private deps: PersistenceDependencies) {}
 
@@ -41,11 +58,19 @@ export class EntityPersistenceService {
     if (!vaultIdAtStart) return Promise.resolve();
     if (sessionModeStore.isDemoMode) return Promise.resolve();
 
+    if (this.deps.status && this.deps.status() === "saved") {
+      this.deps.setStatus("idle");
+    }
+
     const id = entity.id;
 
     // Debounce: cancel any pending timer for this entity and restart it.
     const existing = this._saveTimers.get(id);
     if (existing) clearTimeout(existing);
+
+    // Store the vault ID so flushPendingSaves uses the original context, not
+    // whatever vault happens to be active at flush time.
+    this._saveVaultIds.set(id, vaultIdAtStart);
 
     return new Promise<void>((resolve) => {
       const resolvers = this._saveResolvers.get(id) ?? [];
@@ -57,30 +82,42 @@ export class EntityPersistenceService {
         setTimeout(() => {
           this._saveTimers.delete(id);
           this._saveResolvers.delete(id);
-          this.deps.repository.saveQueue
-            .enqueue(id, () => this._persistEntity(id, vaultIdAtStart))
-            .then(() => resolvers.forEach((r) => r()))
-            .catch(() => resolvers.forEach((r) => r()));
+          this._saveVaultIds.delete(id);
+          this.deps.repository
+            .enqueueSave(id, () => this._persistEntity(id, vaultIdAtStart))
+            .catch(() => {})
+            .finally(() => resolvers.forEach((r) => r()));
         }, SAVE_DEBOUNCE_MS),
       );
     });
   }
 
-  async flushPendingSaves(): Promise<void> {
+  async flushPendingSaves(timeoutMs?: number): Promise<void> {
+    const promises: Promise<void>[] = [];
     for (const [id, timer] of this._saveTimers) {
       clearTimeout(timer);
       this._saveTimers.delete(id);
       const resolvers = this._saveResolvers.get(id) ?? [];
       this._saveResolvers.delete(id);
-      const vaultId = this.deps.activeVaultId();
+      // Use the vault ID captured when the save was scheduled, not the vault
+      // that happens to be active at flush time — the two can differ during
+      // rapid vault switches.
+      const vaultId = this._saveVaultIds.get(id);
+      this._saveVaultIds.delete(id);
       if (vaultId) {
-        await this.deps.repository.saveQueue.enqueue(id, () =>
-          this._persistEntity(id, vaultId),
-        );
+        const p = this.deps.repository
+          .enqueueSave(id, () => this._persistEntity(id, vaultId))
+          .catch(() => {})
+          .finally(() => {
+            resolvers.forEach((r) => r());
+          });
+        promises.push(p);
+      } else {
+        resolvers.forEach((r) => r());
       }
-      resolvers.forEach((r) => r());
     }
-    await this.deps.repository.waitForAllSaves();
+    await Promise.all(promises);
+    await this.deps.repository.waitForAllSaves(timeoutMs);
   }
 
   private async _persistEntity(

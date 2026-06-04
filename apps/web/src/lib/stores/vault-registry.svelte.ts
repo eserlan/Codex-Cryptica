@@ -115,6 +115,14 @@ class VaultRegistryStore {
     await this.listVaults();
   }
 
+  async clearActiveVault(): Promise<void> {
+    this.activeVaultId = null;
+    this.vaultName = "Local Vault";
+    const db = await getDB();
+    await db.delete("settings", "activeVaultId");
+    await this.listVaults();
+  }
+
   async updateEntityCount(id: string, count: number): Promise<void> {
     const db = await getDB();
     const vaultRecord = await db.get("vaults", id);

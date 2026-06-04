@@ -99,4 +99,177 @@ test.describe("SEO and Prerendering", () => {
     expect(robotsText).toContain("Allow: /llms.txt");
     expect(robotsText).toContain("Allow: /llms-full.txt");
   });
+
+  test.describe("SEO Landing Pages and Generator Funnel", () => {
+    test("solutions and comparison pages prerender correctly", async ({
+      request,
+    }) => {
+      const toolsResponse = await request.get("/tools");
+      expect(toolsResponse.ok()).toBe(true);
+      const toolsHtml = await toolsResponse.text();
+      expect(toolsHtml).toContain("RPG Tools, Generators, and Comparisons");
+      expect(toolsHtml).toContain("/tools/dnd-npc-generator");
+      expect(toolsHtml).toContain("/tools/faction-generator");
+      expect(toolsHtml).toContain("/solutions/campaign-manager");
+      expect(toolsHtml).toContain("/vs/world-anvil");
+
+      // Test Solutions page prerendering
+      const response = await request.get("/solutions/campaign-manager");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("Best Free RPG Campaign Manager");
+      expect(html).toContain("The Ultimate Local-First RPG Campaign Manager");
+
+      // Test Comparisons page prerendering
+      const compResponse = await request.get("/vs/obsidian");
+      expect(compResponse.ok()).toBe(true);
+      const compHtml = await compResponse.text();
+      expect(compHtml).toContain("Codex Cryptica vs Obsidian");
+      expect(compHtml).toContain("Feature Matrix: Codex vs Obsidian");
+      expect(compHtml).toContain("table");
+    });
+
+    test("generator page and import conversion funnel flow", async ({
+      page,
+      request,
+    }) => {
+      const response = await request.get("/tools/dnd-npc-generator");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("D&amp;D NPC Generator");
+      expect(html).toContain("What does each generated NPC include?");
+      expect(html).toContain("/solutions/ai-gm-assistant");
+      expect(html).toContain("/free-rpg-campaign-manager");
+      const jsonLdScripts = [
+        ...html.matchAll(
+          /<script type="application\/ld\+json">([^<]+)<\/script>/g,
+        ),
+      ].map((match) => JSON.parse(match[1]));
+      const faqSchema = jsonLdScripts.find(
+        (schema) => schema["@type"] === "FAQPage",
+      );
+      expect(faqSchema).toBeTruthy();
+      expect(faqSchema["@type"]).toBe("FAQPage");
+      expect(faqSchema.mainEntity).toHaveLength(4);
+      expect(faqSchema.mainEntity[0].name).toBe(
+        "Does the D&D NPC generator require an account?",
+      );
+
+      // 1. Navigate to generator
+      await page.goto("/tools/dnd-npc-generator");
+      await expect(page.locator("#generator-title")).toContainText(
+        "D&D NPC Generator",
+      );
+      await expect(page.getByLabel("Optional Campaign Context")).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: /AI GM assistant/i }),
+      ).toHaveAttribute("href", "/solutions/ai-gm-assistant");
+
+      // 2. Select AI Mode checkbox to off (so it runs fallback instantly and deterministically offline-friendly in tests)
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) {
+        await aiToggle.uncheck();
+      }
+      await page
+        .getByLabel("Optional Campaign Context")
+        .fill("a haunted border city under siege");
+
+      // 3. Trigger generate
+      await page.click("#generate-button");
+
+      // 4. Wait for generated element to show up
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Faction Connection" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Plot Hook" }),
+      ).toBeVisible();
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated"); // Check that a title is populated
+
+      const generatedName = await generatedTitle.textContent();
+      expect(generatedName).toBeTruthy();
+
+      // 5. Click Save to Codex
+      await page.click("#save-to-codex-btn");
+
+      // 6. Verify redirection to workspace app root
+      await expect(page).toHaveURL(/\/$/);
+
+      // 7. Verify the new vault is active and the entity is loaded/selected
+      // Since it's local-first OPFS or fallback, wait for the imported entity detail panel to open or show up in sidebar
+      await expect(
+        page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
+      ).toBeVisible();
+    });
+
+    test("faction generator page and import conversion funnel flow", async ({
+      page,
+      request,
+    }) => {
+      const response = await request.get("/tools/faction-generator");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("Faction Generator");
+      expect(html).toContain("What does the faction generator create?");
+      expect(html).toContain("/tools/dnd-npc-generator");
+      expect(html).toContain("/solutions/worldbuilding-tool");
+      const jsonLdScripts = [
+        ...html.matchAll(
+          /<script type="application\/ld\+json">([^<]+)<\/script>/g,
+        ),
+      ].map((match) => JSON.parse(match[1]));
+      const faqSchema = jsonLdScripts.find(
+        (schema) => schema["@type"] === "FAQPage",
+      );
+      expect(faqSchema).toBeTruthy();
+      expect(faqSchema.mainEntity).toHaveLength(4);
+      expect(faqSchema.mainEntity[0].name).toBe(
+        "What does the faction generator create?",
+      );
+
+      await page.goto("/tools/faction-generator");
+      await expect(page.locator("#generator-title")).toContainText(
+        "Faction Generator",
+      );
+      await expect(page.getByLabel("Faction Type")).toBeVisible();
+      await expect(page.getByLabel("Operating Scope")).toBeVisible();
+      await expect(page.getByLabel("Moral Posture")).toBeVisible();
+      await expect(page.getByLabel("Optional Campaign Context")).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: /Worldbuilding tool/i }),
+      ).toHaveAttribute("href", "/solutions/worldbuilding-tool");
+
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) {
+        await aiToggle.uncheck();
+      }
+      await page.getByLabel("Faction Type").selectOption("Merchant Guild");
+      await page.getByLabel("Operating Scope").selectOption("Single city");
+      await page
+        .getByLabel("Optional Campaign Context")
+        .fill("a canal city split by old guild rivalries");
+
+      await page.click("#generate-button");
+
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Internal Conflict" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Adventure Hook" }),
+      ).toBeVisible();
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated");
+      const generatedName = await generatedTitle.textContent();
+      expect(generatedName).toBeTruthy();
+
+      await page.click("#save-to-codex-btn");
+      await expect(page).toHaveURL(/\/$/);
+      await expect(
+        page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
+      ).toBeVisible();
+    });
+  });
 });
