@@ -299,7 +299,9 @@
                 : undefined}
             aria-label="Search notes"
             data-testid="search-modal-input"
-            aria-activedescendant={showAutocomplete && suggestions.length > 0 && autocompleteActiveIndex >= 0
+            aria-activedescendant={showAutocomplete &&
+            suggestions.length > 0 &&
+            autocompleteActiveIndex >= 0
               ? `search-autocomplete-option-${autocompleteActiveIndex}`
               : searchStore.results.length > 0
                 ? `search-result-${searchStore.selectedIndex}`
@@ -325,7 +327,8 @@
                     ? 'bg-chrome-accent/10 text-chrome-accent'
                     : ''}"
                 >
-                  <span class="text-chrome-accent/60">{autocompletePrefix}</span>
+                  <span class="text-chrome-accent/60">{autocompletePrefix}</span
+                  >
                   <span>{label}</span>
                 </button>
               {/each}

@@ -285,13 +285,17 @@ describe("VaultLifecycleManager", () => {
   });
 
   describe("persistToIndexedDB", () => {
-    it("should save all entities to disk", async () => {
-      const entities = { e1: { id: "e1" } };
+    it("should save all entities to disk and update entity count", async () => {
+      const entities = { e1: { id: "e1" }, e2: { id: "e2" } };
       deps.getEntities.mockReturnValue(entities);
 
       await manager.persistToIndexedDB("v1");
 
-      expect(deps.repository.saveToDisk).toHaveBeenCalled();
+      expect(deps.repository.saveToDisk).toHaveBeenCalledTimes(2);
+      expect(deps.vaultRegistry.updateEntityCount).toHaveBeenCalledWith(
+        "v1",
+        2,
+      );
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("saving");
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
     });
@@ -337,6 +341,38 @@ describe("VaultLifecycleManager", () => {
       expect(deps.ensureServicesInitialized).toHaveBeenCalled();
       expect(deps.repository.entities).toEqual(entities);
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
+    });
+
+    it("should construct keywords correctly (mirrors SearchService)", async () => {
+      const searchIndexSpy = vi.fn().mockResolvedValue(undefined);
+      deps.getServices.mockReturnValue({
+        search: { index: searchIndexSpy },
+      });
+
+      const entities = {
+        e1: {
+          id: "e1",
+          title: "Demo",
+          tags: ["tag1", "tag2"],
+          lore: "test lore",
+          metadata: {
+            field1: "val1",
+            field2: ["sub1", "sub2"],
+            field3: false,
+          },
+        },
+      };
+
+      await manager.loadDemoData("Demo", entities as any);
+
+      const call = searchIndexSpy.mock.calls[0][0];
+      expect(call.keywords).toContain("tag1");
+      expect(call.keywords).toContain("tag2");
+      expect(call.keywords).toContain("test lore");
+      expect(call.keywords).toContain("val1");
+      expect(call.keywords).toContain("sub1");
+      expect(call.keywords).toContain("sub2");
+      expect(call.keywords).toContain("false");
     });
 
     it("rebuilds reactive entity indexes so the graph populates", async () => {

@@ -110,7 +110,8 @@
       label,
     };
   });
-  const vttPings = $derived.by(() => Object.values(mapSession.pings));
+  // ⚡ Bolt Optimization: Replace inline Object.values().find() with pre-cached property
+  const vttPings = $derived(mapSession.allPings);
   const remoteMeasurement = $derived.by(() => {
     const rm = mapSession.activeMeasurement;
     if (!rm || !rm.start || !rm.end) return null;

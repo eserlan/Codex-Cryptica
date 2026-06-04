@@ -56,7 +56,10 @@
 
   <OracleChat
     onOpenSettings={() => {
-      notificationStore.notify("To update Oracle settings, open the Settings panel in the main Codex Cryptica window.", "error");
+      notificationStore.notify(
+        "To update Oracle settings, open the Settings panel in the main Codex Cryptica window.",
+        "error",
+      );
     }}
   />
 </div>

@@ -55,9 +55,7 @@ export class SearchService {
     this.workerFactory =
       dependencies.workerFactory ??
       (() =>
-        import("../workers/search.worker?worker").then(
-          (m) => new m.default(),
-        ));
+        import("../workers/search.worker?worker").then((m) => new m.default()));
     this.api = dependencies.api ?? null;
     this.debug = dependencies.debug ?? debugStore;
     const timers = dependencies.timers ?? globalThis;

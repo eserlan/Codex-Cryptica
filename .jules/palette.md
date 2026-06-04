@@ -17,3 +17,8 @@
 
 **Learning:** Icon-only buttons often miss `focus-visible:ring-2` or similar keyboard focus classes in Tailwind which makes them harder to locate for keyboard users.
 **Action:** When working on Svelte components or reviewing existing ones, ensure that `focus-visible` classes are populated to provide clear focus indicators for keyboard navigation.
+
+## 2026-06-04 - Floating Dialog Backdrop Accessibility
+
+**Learning:** Found an `a11y_click_events_have_key_events` and `a11y_no_static_element_interactions` warning on a `div` used as a floating dialog backdrop in `QuickNoteScratchpad.svelte`. This pattern makes it difficult for keyboard users to interact with or understand the backdrop's function (closing the dialog).
+**Action:** When implementing floating dialogs or modals with clickable background overlays, use a semantic `<button type="button">` with `aria-label="Close [Modal Name]"`, `w-full h-full`, and proper keyboard focus classes (like `focus-visible:ring-2 focus:outline-none focus-visible:ring-inset`) instead of ignoring the accessibility warnings on a `div`. Ensure this backdrop `<button>` is a sibling of the main modal `div` container, as HTML specs forbid nesting a modal block inside a button.

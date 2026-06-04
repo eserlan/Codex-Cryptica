@@ -1,6 +1,9 @@
 import { ServiceRegistry } from "./service-registry";
 import type { LocalEntity } from "./types";
-import { buildSearchAliases, buildSearchKeywords } from "../../services/search-entry-fields";
+import {
+  buildSearchAliases,
+  buildSearchKeywords,
+} from "../../services/search-entry-fields";
 
 export class SearchStore {
   constructor(private _serviceRegistry: ServiceRegistry) {

@@ -59,11 +59,18 @@
 
 <div class="flex flex-col gap-3 w-full max-w-sm">
   {#if message.imageUrl}
-    <div class="aspect-square w-full rounded-lg border border-theme-border shadow-lg overflow-hidden relative group bg-theme-bg/30">
+    <div
+      class="aspect-square w-full rounded-lg border border-theme-border shadow-lg overflow-hidden relative group bg-theme-bg/30"
+    >
       {#if !isImageLoaded}
-        <div class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2">
+        <div
+          class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
+        >
           <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
-          <span class="text-[10px] font-mono uppercase tracking-wider opacity-40">Resolving Neural Visual...</span>
+          <span
+            class="text-[10px] font-mono uppercase tracking-wider opacity-40"
+            >Resolving Neural Visual...</span
+          >
         </div>
       {/if}
       <!-- Image Preview -->
@@ -74,9 +81,15 @@
         alt={message.content}
         loading="lazy"
         decoding="async"
-        onload={() => { isImageLoaded = true; }}
-        onerror={() => { isImageLoaded = true; }}
-        class="w-full h-full object-contain cursor-zoom-in group-hover:scale-105 transition-all duration-300 mx-auto {isImageLoaded ? 'opacity-90' : 'opacity-0'}"
+        onload={() => {
+          isImageLoaded = true;
+        }}
+        onerror={() => {
+          isImageLoaded = true;
+        }}
+        class="w-full h-full object-contain cursor-zoom-in group-hover:scale-105 transition-all duration-300 mx-auto {isImageLoaded
+          ? 'opacity-90'
+          : 'opacity-0'}"
         draggable="true"
         ondragstart={handleDragStart}
         onclick={(e) => {

@@ -409,7 +409,11 @@
   class="h-[var(--app-viewport-height)] bg-chrome-bg text-chrome-text flex flex-col font-body app-layout"
 >
   <!-- Background content — inert when any modal is open so keyboard/AT cannot reach it -->
-  <div class="contents" inert={anyModalOpen || undefined} aria-hidden={anyModalOpen || undefined}>
+  <div
+    class="contents"
+    inert={anyModalOpen || undefined}
+    aria-hidden={anyModalOpen || undefined}
+  >
     <NotificationToast />
 
     {#if !isPopup && !isVttFullscreen && !isZenPopout}

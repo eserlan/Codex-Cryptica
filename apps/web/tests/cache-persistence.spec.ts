@@ -72,7 +72,15 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
     };
 
     const writeResult = await page.evaluate(
-      async ({ p, e, modulePath }: { p: string; e: any; modulePath: string }) => {
+      async ({
+        p,
+        e,
+        modulePath,
+      }: {
+        p: string;
+        e: any;
+        modulePath: string;
+      }) => {
         try {
           const { cacheService } = await import(modulePath);
           await cacheService.set(p, Date.now(), e);
@@ -101,7 +109,11 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
             error: null,
           };
         } catch (err: any) {
-          return { title: null, labels: null, error: err?.message ?? String(err) };
+          return {
+            title: null,
+            labels: null,
+            error: err?.message ?? String(err),
+          };
         }
       },
       { p: path, modulePath: CACHE_SERVICE_PATH },
@@ -112,7 +124,9 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
     expect(readResult.labels).toContain("important");
   });
 
-  test("CacheService.bulkSet() writes survive a page reload", async ({ page }) => {
+  test("CacheService.bulkSet() writes survive a page reload", async ({
+    page,
+  }) => {
     const ts = Date.now();
     const vaultId = `e2e-bulk-vault-${ts}`;
 
@@ -136,7 +150,13 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
     }));
 
     const writeResult = await page.evaluate(
-      async ({ ents, modulePath }: { ents: typeof entries; modulePath: string }) => {
+      async ({
+        ents,
+        modulePath,
+      }: {
+        ents: typeof entries;
+        modulePath: string;
+      }) => {
         try {
           const { cacheService } = await import(modulePath);
           await cacheService.bulkSet(ents as any);
@@ -155,7 +175,13 @@ test.describe("CacheService persistence (set + bulkSet)", () => {
     await waitForVaultIdle(page);
 
     const readResult = await page.evaluate(
-      async ({ paths, modulePath }: { paths: string[]; modulePath: string }) => {
+      async ({
+        paths,
+        modulePath,
+      }: {
+        paths: string[];
+        modulePath: string;
+      }) => {
         try {
           const { cacheService } = await import(modulePath);
           const titles: (string | null)[] = [];

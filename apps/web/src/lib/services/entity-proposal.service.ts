@@ -88,7 +88,11 @@ ${sourceContext.slice(0, 3000)}`;
       discoverySource: "Proposed from text",
     });
 
-    const entity = this.deps.vault.entities[entityId] || { id: entityId, title, categoryId };
+    const entity = this.deps.vault.entities[entityId] || {
+      id: entityId,
+      title,
+      categoryId,
+    };
     return { entity, categoryInferred };
   }
 }

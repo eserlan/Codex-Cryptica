@@ -249,7 +249,10 @@
               `Failed to convert demo to ${themeStore.jargon.vault}`,
               error,
             );
-            notificationStore.notify(`Failed to save ${themeStore.jargon.vault}. Please try again.`, "error");
+            notificationStore.notify(
+              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              "error",
+            );
           }
         }}
         class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"

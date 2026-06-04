@@ -129,6 +129,9 @@ export class VaultStore {
   get maps() {
     return mapRegistry.maps;
   }
+  get allMaps() {
+    return mapRegistry.allMaps;
+  }
   get canvases() {
     return canvasRegistry.canvases;
   }
