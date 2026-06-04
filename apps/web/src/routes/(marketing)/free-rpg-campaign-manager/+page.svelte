@@ -50,10 +50,8 @@
     ],
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const faqSchemaString = $derived(JSON.stringify(faqSchema));
-
-  // Mark reactive variable as used to satisfy eslint no-unused-vars
-  void faqSchemaString;
 
   const capabilities = [
     {

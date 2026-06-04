@@ -309,6 +309,7 @@
   const pageUrl = $derived(`https://codexcryptica.com/import/${pageData.slug}`);
 
   // FAQ Schema
+
   const faqSchema = $derived(
     pageData.faq && pageData.faq.length > 0
       ? JSON.stringify({
@@ -327,6 +328,7 @@
   );
 
   // Breadcrumb Schema
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const breadcrumbSchema = $derived(
     JSON.stringify({
       "@context": "https://schema.org",
@@ -347,10 +349,6 @@
       ],
     }),
   );
-
-  // Mark reactive variables as used to satisfy eslint no-unused-vars
-  void faqSchema;
-  void breadcrumbSchema;
 </script>
 
 <svelte:head>

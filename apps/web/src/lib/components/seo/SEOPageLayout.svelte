@@ -49,6 +49,7 @@
     },
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const jsonLdString = $derived(JSON.stringify(jsonLd));
 
   const pageUrl = $derived(
@@ -97,15 +98,12 @@
         ],
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const breadcrumbString = $derived(JSON.stringify(breadcrumb));
 
   function toggleFaq(index: number) {
     openFaqIndex = openFaqIndex === index ? null : index;
   }
-
-  // Mark reactive variables as used to satisfy eslint no-unused-vars
-  void jsonLdString;
-  void breadcrumbString;
 </script>
 
 <svelte:head>

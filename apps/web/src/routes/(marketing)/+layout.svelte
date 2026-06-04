@@ -4,10 +4,8 @@
   import { SCHEMA_ORG } from "$lib/config";
   let { children } = $props();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const schemaOrgString = $derived(JSON.stringify(SCHEMA_ORG));
-
-  // Mark reactive variable as used to satisfy eslint no-unused-vars
-  void schemaOrgString;
 </script>
 
 <svelte:head>

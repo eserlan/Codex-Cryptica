@@ -63,8 +63,8 @@
     "starwars",
     "startrek",
   ];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const schemaOrgString = $derived(JSON.stringify(SCHEMA_ORG));
-  void schemaOrgString;
 
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
