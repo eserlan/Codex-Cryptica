@@ -10,6 +10,7 @@
     magicItemConfig,
     factionConfig,
     themeIdToLabel,
+    type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
 
   let { data } = $props();
@@ -120,6 +121,52 @@
     }
   }
 
+  const slugDrafts: Record<string, GeneratorOutput> = {
+    npc: {
+      type: "character",
+      title: "Zephyrus Gray",
+      summary: "A mysterious rogue with a dark past.",
+      content:
+        "### Description\nZephyrus wears a hooded leather cloak and speaks in low whispers. He operates in the shadow of the docks.\n\n### Secret\nHe carries a silver key that opens a vault he refuses to talk about.",
+      lore: "",
+      labels: ["rpg-npc", "Rogue", "Mysterious"],
+      status: "draft",
+    },
+    settlement: {
+      type: "location",
+      title: "Oakhaven",
+      summary: "A quiet timber outpost nestled in the Great Forest.",
+      content:
+        "### Geography\nSurrounded by ancient oaks and swift-running creeks.\n\n### Economy\nLumber, rare forest herbs, and hunting trade.",
+      lore: "",
+      labels: ["rpg-settlement", "Outpost", "Forest"],
+      status: "draft",
+    },
+    "magic-item": {
+      type: "item",
+      title: "Frostbite Blade",
+      summary: "A longsword etched with cold runes.",
+      content:
+        "### Properties\nDeals additional cold damage on a critical strike and glows with a faint blue light in the presence of undead.\n\n### Lore\nForged in the northern wastes by the frost smiths of old.",
+      lore: "",
+      labels: ["rpg-item", "Sword", "Runes"],
+      status: "draft",
+    },
+    faction: {
+      type: "faction",
+      title: "The Iron Syndicate",
+      summary:
+        "A powerful merchants' guild that controls the city's trade routes.",
+      content:
+        "### Operations\nThey maintain a private army to secure their investments and lobby local lords.\n\n### Secret agenda\nThey seek to overthrow the local duke to install a puppet senate.",
+      lore: "",
+      labels: ["rpg-faction", "Guild", "Mercantile"],
+      status: "draft",
+    },
+  };
+
+  const initialDraft = $derived(slugDrafts[data.slug]);
+
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
@@ -136,6 +183,7 @@
   bind:theme={activeTheme}
   isThemeCustomizable={data.slug === "faction" || data.slug === "npc"}
   {generate}
+  {initialDraft}
 >
   {#snippet formFields(trigger)}
     {#if data.slug === "npc"}

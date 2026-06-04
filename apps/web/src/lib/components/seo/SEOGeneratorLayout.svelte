@@ -22,6 +22,7 @@
     generate,
     formFields,
     worldTheme = "workspace",
+    initialDraft = null,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -36,6 +37,7 @@
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
     worldTheme?: string;
+    initialDraft?: GeneratorOutput | null;
   } = $props();
 
   const HIDDEN_TAGS = new Set([
@@ -55,8 +57,14 @@
   ]);
 
   let isGenerating = $state(false);
-  let generatedData = $state<GeneratorOutput | null>(null);
+  let generatedData = $state<GeneratorOutput | null>(initialDraft);
   let isExampleDraft = $state(true);
+
+  $effect(() => {
+    generatedData = initialDraft;
+    isExampleDraft = true;
+  });
+
   let outputCard = $state<HTMLElement | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
