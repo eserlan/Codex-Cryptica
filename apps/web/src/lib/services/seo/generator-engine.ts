@@ -1170,7 +1170,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
   "title": "NPC name (follow the naming directive in the user message)",
   "summary": "One sentence: who this NPC is and what makes them interesting (e.g. 'A disgraced noble archivist who sells secrets to fund a private obsession.').",
   "content": "Markdown. Use exactly these four section headers in order: '### Who they are', '### What they want', '### Why they are useful', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Alignment**: moral posture\\n- **Secret**: hidden truth that would change everything\\n- **Immediate Hook**: one-sentence GM hook\\n### Personality\\n- two distinct personality traits as bullet points\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Moral Stance**: behavioral anchor\\n- **Secret**: hidden truth that would change everything\\n- **Immediate Hook**: one-sentence GM hook\\n### Personality\\n- two distinct personality traits as bullet points\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
   "labels": ["2-4 lowercase tags describing their role and traits, plus 'rpg-character', 'npc-generator', 'imported-draft'"]
 }
 
@@ -1179,7 +1179,7 @@ QUALITY RULES:
 - Avoid overused NPC name patterns. Do NOT use: Kael, Theron, Zara, Aldric, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
 - The secret should be genuinely surprising and table-usable, not a generic "dark past."
 - Place names must be specific and invented — no "the old district", "the lower city", "Oakhaven", "Millbrook", "Riverdale", or similar generic compound settlement names.
-- Before finalising, silently check: is this name original and not on the forbidden list? Is the secret actually interesting? Rewrite if yes.`;
+- Before finalising, silently check for: name not on the forbidden list; secret is genuinely surprising and not contradicted by the stated role or faction connection; all four content sections are internally consistent (what they want should explain why they are useful; their secret should reframe who they are). Rewrite any section where a contradiction exists.`;
 
         const moralityAnchor = theme
           ? npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
