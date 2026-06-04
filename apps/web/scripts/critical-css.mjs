@@ -6,8 +6,8 @@
  * <link rel="stylesheet"> to load asynchronously — eliminating the
  * render-blocking penalty.
  *
- * Only run on prerendered marketing/static pages, not the SPA shell
- * (index.html / 404.html).
+ * Runs on all prerendered pages. 404.html is skipped since it is a
+ * post-build copy of the already-processed index.html.
  */
 
 import Critters from "critters";
