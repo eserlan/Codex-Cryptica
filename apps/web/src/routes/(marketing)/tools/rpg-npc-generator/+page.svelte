@@ -10,8 +10,8 @@
   } from "$lib/services/seo/generator-engine";
 
   let theme = $state(factionConfig.themes[0]);
-  let ancestry = $state(npcThemeConfig.ancestries[theme][0]);
-  let role = $state(npcThemeConfig.roles[theme][0]);
+  let ancestry = $state(npcThemeConfig.ancestries[factionConfig.themes[0]][0]);
+  let role = $state(npcThemeConfig.roles[factionConfig.themes[0]][0]);
   let alignment = $state(npcConfig.alignments[0]);
   let campaignContext = $state("");
 

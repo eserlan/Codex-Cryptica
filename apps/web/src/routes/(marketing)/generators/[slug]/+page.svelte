@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
-  import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
+  import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
+    npcThemeConfig,
     settlementConfig,
     magicItemConfig,
     factionConfig,
@@ -17,13 +18,13 @@
   const slugMeta = {
     npc: {
       pageTitle:
-        "D&D NPC Generator | Free Fantasy RPG Character Tool | Codex Cryptica",
+        "RPG NPC Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Characters | Codex Cryptica",
       metaDescription:
-        "Generate D&D NPCs with ancestry, role, personality, secret, motivation, faction connection, and plot hook. Copy the draft or save it into your local campaign vault.",
-      introTitle: "D&D NPC Generator",
-      eyebrow: "D&D NPC Generator",
+        "Generate NPCs across any genre — fantasy, cyberpunk, gothic horror, sci-fi, modern conspiracy, and post-apocalyptic. Each NPC has a secret, faction tie, and table-ready hook.",
+      introTitle: "RPG NPC Generator",
+      eyebrow: "RPG NPC Generator",
       introText:
-        "Create a ready-to-run fantasy NPC with structured GM notes, a secret, faction tie, and plot hook. Works without login.",
+        "Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.",
       canonicalPath: "/generators/npc",
     },
     settlement: {
@@ -65,8 +66,9 @@
 
   // State grouped per generator type (#6)
   let npc = $state({
-    race: npcConfig.races[0],
-    role: npcConfig.roles[0],
+    theme: factionConfig.themes[0],
+    ancestry: npcThemeConfig.ancestries[factionConfig.themes[0]][0],
+    role: npcThemeConfig.roles[factionConfig.themes[0]][0],
     alignment: npcConfig.alignments[0],
     campaignContext: "",
   });
@@ -104,16 +106,24 @@
     apocalyptic_light: "Post-Apocalyptic",
   };
 
+  // Unified theme binding target — synced to the active generator's state
+  let activeTheme = $state(factionConfig.themes[0]);
+
+  $effect(() => {
+    if (data.slug === "npc") npc.theme = activeTheme;
+    else faction.theme = activeTheme;
+  });
+
   onMount(() => {
-    const activeTheme = localStorage.getItem("codex-cryptica-active-theme");
-    if (activeTheme && reverseThemeMap[activeTheme]) {
-      faction.theme = reverseThemeMap[activeTheme];
+    const stored = localStorage.getItem("codex-cryptica-active-theme");
+    if (stored && reverseThemeMap[stored]) {
+      activeTheme = reverseThemeMap[stored];
     }
   });
 
   async function generate({ useAI }: { useAI: boolean }) {
     if (data.slug === "npc") {
-      return generatorEngine.generateNPC({ ...npc, useAI });
+      return generatorEngine.generateNPC({ ...npc, race: npc.ancestry, useAI });
     } else if (data.slug === "settlement") {
       return generatorEngine.generateSettlement({ ...settlement, useAI });
     } else if (data.slug === "magic-item") {
@@ -138,14 +148,15 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
-  bind:theme={faction.theme}
-  isThemeCustomizable={data.slug === "faction"}
+  bind:theme={activeTheme}
+  isThemeCustomizable={data.slug === "faction" || data.slug === "npc"}
   {generate}
 >
   {#snippet formFields(trigger)}
     {#if data.slug === "npc"}
-      <NPCFormFields
-        bind:race={npc.race}
+      <RPGNPCFormFields
+        bind:theme={npc.theme}
+        bind:ancestry={npc.ancestry}
         bind:role={npc.role}
         bind:alignment={npc.alignment}
         bind:campaignContext={npc.campaignContext}

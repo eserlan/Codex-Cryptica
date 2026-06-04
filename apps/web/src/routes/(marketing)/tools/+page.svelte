@@ -42,6 +42,13 @@
                 "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
               icon: "icon-[lucide--users]",
             },
+            {
+              href: "/generators/npc",
+              label: "Procedural NPC Generator",
+              summary:
+                "Genre-agnostic NPC generator — same six-theme engine via the reusable generator interface.",
+              icon: "icon-[lucide--user-round-plus]",
+            },
           ],
         },
         {
