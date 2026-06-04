@@ -2,6 +2,7 @@
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
@@ -55,6 +56,7 @@
   let isGenerating = $state(false);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(true);
+  let outputCard = $state<HTMLElement | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
   let useAI = $state(true);
@@ -144,6 +146,10 @@
     errorMessage = null;
     try {
       generatedData = await generate({ useAI });
+      if (browser && window.innerWidth < 1024 && outputCard) {
+        await tick();
+        outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     } catch (err: any) {
       errorMessage = "Failed to generate: " + (err.message || err);
     } finally {
@@ -364,7 +370,10 @@
     class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8"
   >
     <!-- Output Card Column: controls first on mobile, middle column on desktop -->
-    <div class="lg:col-span-6 flex flex-col order-2 lg:order-2">
+    <div
+      class="lg:col-span-6 flex flex-col order-2 lg:order-2"
+      bind:this={outputCard}
+    >
       <div
         class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
