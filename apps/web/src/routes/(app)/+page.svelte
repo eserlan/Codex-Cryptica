@@ -63,8 +63,8 @@
     "starwars",
     "startrek",
   ];
-  const schemaOrg = SCHEMA_ORG;
-  void schemaOrg;
+  const schemaOrgString = $derived(JSON.stringify(SCHEMA_ORG));
+  void schemaOrgString;
 
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
@@ -204,7 +204,7 @@
 <svelte:head>
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <script type="application/ld+json">
-      {JSON.stringify(schemaOrg)}
+      {schemaOrgString}
     </script>
   {/if}
 </svelte:head>
