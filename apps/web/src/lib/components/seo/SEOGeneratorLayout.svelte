@@ -6,6 +6,7 @@
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
+  import { safeJsonLd } from "$lib/utils/json-ld";
 
   let {
     canonicalPath,
@@ -128,7 +129,7 @@
 
   const faqJsonLd = $derived(
     faqs.length > 0
-      ? JSON.stringify({
+      ? safeJsonLd({
           "@context": "https://schema.org",
           "@type": "FAQPage",
           mainEntity: faqs.map((faq) => ({
@@ -141,6 +142,42 @@
           })),
         })
       : "",
+  );
+
+  const resultJsonLd = $derived(
+    generatedData
+      ? generatedData.type === "character"
+        ? safeJsonLd({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: generatedData.title,
+            description:
+              generatedData.summary ||
+              generatedData.content?.slice(0, 150) ||
+              "",
+            jobTitle: "Fictional Character",
+          })
+        : generatedData.type === "location"
+          ? safeJsonLd({
+              "@context": "https://schema.org",
+              "@type": "Place",
+              name: generatedData.title,
+              description:
+                generatedData.summary ||
+                generatedData.content?.slice(0, 150) ||
+                "",
+            })
+          : safeJsonLd({
+              "@context": "https://schema.org",
+              "@type": "CreativeWork",
+              name: generatedData.title,
+              description:
+                generatedData.summary ||
+                generatedData.content?.slice(0, 150) ||
+                "",
+              genre: "Fantasy / RPG Campaign Lore",
+            })
+      : null,
   );
 
   async function handleGenerate() {
@@ -358,7 +395,14 @@
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
   {#if faqJsonLd}
-    {@html `<script type="application/ld+json">${faqJsonLd}</` + "script>"}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` + `ipt type="application/ld+json">${faqJsonLd}</scr` + `ipt>`}
+  {/if}
+  {#if resultJsonLd}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` +
+      `ipt type="application/ld+json">${resultJsonLd}</scr` +
+      `ipt>`}
   {/if}
 </svelte:head>
 

@@ -24,30 +24,51 @@ export const IS_STAGING =
 
 export const SCHEMA_ORG = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: APP_NAME,
-  applicationCategory: "Tabletop RPG Utility",
-  operatingSystem: "Web, Local-First",
-  featureList: [
-    "AI Lore Oracle",
-    "Interactive Knowledge Graphs",
-    "Tactical Map Mode",
-    "Spatial Canvas & Flowcharts",
-    "Era-based Timelines",
-    "Local-First Privacy",
-    "Google Drive Syncing",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://codexcryptica.com/#software",
+      name: APP_NAME,
+      applicationCategory: "Tabletop RPG Utility",
+      operatingSystem: "Web, Local-First, macOS, Windows, Linux",
+      featureList: [
+        "AI Lore Oracle",
+        "Interactive Knowledge Graphs",
+        "Tactical Map Mode",
+        "Spatial Canvas & Flowcharts",
+        "Era-based Timelines",
+        "Local-First Privacy",
+        "Google Drive Syncing",
+      ],
+      storageRequirements: "Origin Private File System (OPFS)",
+      softwareVersion: VERSION,
+      isAccessibleForFree: true,
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      author: {
+        "@type": "Organization",
+        "@id": "https://codexcryptica.com/#organization",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://codexcryptica.com/#organization",
+      name: "Codex Cryptica",
+      url: "https://codexcryptica.com",
+      logo: "https://codexcryptica.com/logo.png",
+      sameAs: ["https://github.com/eserlan/Codex-Cryptica"],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://codexcryptica.com/#website",
+      url: "https://codexcryptica.com",
+      name: "Codex Cryptica",
+      publisher: {
+        "@id": "https://codexcryptica.com/#organization",
+      },
+    },
   ],
-  storageRequirements: "Origin Private File System (OPFS)",
-  softwareVersion: VERSION,
-  isAccessibleForFree: "True",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
-  author: {
-    "@type": "Organization",
-    name: "Eserlan",
-    url: "https://github.com/eserlan",
-  },
 };

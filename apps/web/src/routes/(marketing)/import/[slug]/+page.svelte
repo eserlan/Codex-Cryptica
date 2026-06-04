@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
+  import { safeJsonLd } from "$lib/utils/json-ld";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -305,16 +306,65 @@
         "Failed to store import data. Please check localStorage permissions.";
     }
   }
+
+  const pageUrl = $derived(`https://codexcryptica.com/import/${pageData.slug}`);
+
+  // FAQ Schema
+
+  const faqSchema = $derived(
+    pageData.faq && pageData.faq.length > 0
+      ? safeJsonLd({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: pageData.faq.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: f.answer,
+            },
+          })),
+        })
+      : null,
+  );
+
+  // Breadcrumb Schema
+  const breadcrumbSchema = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://codexcryptica.com",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: pageData.h1,
+          item: pageUrl,
+        },
+      ],
+    }),
+  );
 </script>
 
 <svelte:head>
   <title>{pageData.title}</title>
   <meta name="description" content={pageData.description} />
+  <meta name="keywords" content={pageData.keywords?.join(", ")} />
   <meta name="robots" content="index, follow" />
-  <link
-    rel="canonical"
-    href="https://codexcryptica.com/import/{pageData.slug}"
-  />
+  <link rel="canonical" href={pageUrl} />
+  {#if faqSchema}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` + `ipt type="application/ld+json">${faqSchema}</scr` + `ipt>`}
+  {/if}
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${breadcrumbSchema}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div
