@@ -63,41 +63,60 @@
   const breadcrumb = $derived({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: canonicalUrl
-      ? [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: "https://codexcryptica.com",
-          },
-          {
+    itemListElement: (() => {
+      const items = [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://codexcryptica.com",
+        },
+      ];
+
+      if (canonicalUrl) {
+        const parts = canonicalUrl.split("/").filter(Boolean);
+        if (parts.length > 1) {
+          let currentPath = "";
+          parts.forEach((part, index) => {
+            currentPath += `/${part}`;
+            const isLast = index === parts.length - 1;
+            const name = isLast
+              ? data.h1
+              : (part.charAt(0).toUpperCase() + part.slice(1)).replace(
+                  /-/g,
+                  " ",
+                );
+            items.push({
+              "@type": "ListItem",
+              position: index + 2,
+              name,
+              item: `https://codexcryptica.com${currentPath}`,
+            });
+          });
+        } else {
+          items.push({
             "@type": "ListItem",
             position: 2,
             name: data.h1,
             item: pageUrl,
-          },
-        ]
-      : [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: "https://codexcryptica.com",
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: type === "comparison" ? "Comparisons" : "Solutions",
-            item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
-          },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: data.h1,
-            item: pageUrl,
-          },
-        ],
+          });
+        }
+      } else {
+        items.push({
+          "@type": "ListItem",
+          position: 2,
+          name: type === "comparison" ? "Comparisons" : "Solutions",
+          item: `https://codexcryptica.com/${type === "comparison" ? "vs" : "solutions"}`,
+        });
+        items.push({
+          "@type": "ListItem",
+          position: 3,
+          name: data.h1,
+          item: pageUrl,
+        });
+      }
+      return items;
+    })(),
   });
 
   const breadcrumbScript = $derived(

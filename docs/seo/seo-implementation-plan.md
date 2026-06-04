@@ -80,11 +80,11 @@ graph TD
 
 ### Phase 6: Structured Data & Rich Schema Maturity
 
-- [ ] **Task 6.1: Import & Feature Pages Schema Coverage**
+- [x] **Task 6.1: Import & Feature Pages Schema Coverage**
   - Generate and inject `BreadcrumbList` and `FAQPage` JSON-LD schemas on `/import/[slug]` and `/features/[slug]` routes.
-- [ ] **Task 6.2: Core Product & SoftwareApplication Schema**
+- [x] **Task 6.2: Core Product & SoftwareApplication Schema**
   - Add explicit `SoftwareApplication` and `Offers` schema definitions to the landing pages, declaring multi-platform local-first capabilities.
-- [ ] **Task 6.3: Dynamic Generator Result Schemas**
+- [x] **Task 6.3: Dynamic Generator Result Schemas**
   - Map reactive NPC/Location generator results to `Person` / `Place` schema.org JSON-LD blocks in `SEOGeneratorLayout` for SERP dynamic indexing.
 
 ### Phase 7: Advanced SEO Expansion & Funnel Scaling

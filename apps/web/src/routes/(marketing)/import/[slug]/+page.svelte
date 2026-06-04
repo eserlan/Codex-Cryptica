@@ -305,6 +305,67 @@
         "Failed to store import data. Please check localStorage permissions.";
     }
   }
+
+  // Generate JSON-LD Structured Data
+  const jsonLd = $derived({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Codex Cryptica",
+    applicationCategory: "GameApplication",
+    operatingSystem: "Web, Windows, macOS, Linux",
+    description: pageData.description,
+    offers: {
+      "@type": "Offer",
+      price: "0.00",
+      priceCurrency: "USD",
+    },
+    mainEntity: {
+      "@type": "FAQPage",
+      mainEntity: pageData.faq.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.answer,
+        },
+      })),
+    },
+  });
+
+  const jsonLdScript = $derived(
+    `<script type="application/ld+json">${JSON.stringify(jsonLd)}</scr` +
+      `ipt>`,
+  );
+
+  const breadcrumb = $derived({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://codexcryptica.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Import",
+        item: "https://codexcryptica.com/import",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: pageData.h1,
+        item: `https://codexcryptica.com/import/${pageData.slug}`,
+      },
+    ],
+  });
+
+  const breadcrumbScript = $derived(
+    `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</scr` +
+      `ipt>`,
+  );
 </script>
 
 <svelte:head>
@@ -315,6 +376,8 @@
     rel="canonical"
     href="https://codexcryptica.com/import/{pageData.slug}"
   />
+  {@html jsonLdScript}
+  {@html breadcrumbScript}
 </svelte:head>
 
 <div
