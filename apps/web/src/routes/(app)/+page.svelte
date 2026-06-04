@@ -204,7 +204,7 @@
 <svelte:head>
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <script type="application/ld+json">
-      {schemaOrgString}
+{schemaOrgString}
     </script>
   {/if}
 </svelte:head>
