@@ -276,10 +276,10 @@
 
   function logMicroConversion(action: string, type: string) {
     console.log(`[Metric] Micro-conversion triggered: ${action} for ${type}`);
-    if (typeof window !== "undefined" && (window as any).gtag) {
-      (window as any).gtag("event", "micro_conversion", {
-        event_category: "engagement",
-        event_label: `${action}_${type}`,
+    if (typeof window !== "undefined" && (window as any).cf) {
+      (window as any).cf("event", {
+        name: "micro_conversion",
+        value: `${action}_${type}`,
       });
     }
   }
@@ -288,10 +288,10 @@
     console.log(
       `[Metric] Macro-conversion triggered: ${action} with ${count} entities`,
     );
-    if (typeof window !== "undefined" && (window as any).gtag) {
-      (window as any).gtag("event", "macro_conversion", {
-        event_category: "onboarding",
-        event_label: `${action}_count_${count}`,
+    if (typeof window !== "undefined" && (window as any).cf) {
+      (window as any).cf("event", {
+        name: "macro_conversion",
+        value: `${action}_count_${count}`,
       });
     }
   }
