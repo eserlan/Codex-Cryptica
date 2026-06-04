@@ -18,8 +18,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const buildDir = resolve(__dirname, "../build");
 
-// SPA shell — skip, no meaningful prerendered content
-const SKIP = new Set(["index.html", "404.html"]);
+// 404.html is a post-processed copy of index.html (see build script) — skip it
+// to avoid double-processing. index.html IS prerendered and benefits from critters.
+const SKIP = new Set(["404.html"]);
 
 function findHtmlFiles(dir, results = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
