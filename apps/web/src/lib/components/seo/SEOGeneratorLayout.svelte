@@ -152,6 +152,63 @@
       : "",
   );
 
+  const softwareApplicationJsonLd = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: "Codex Cryptica",
+      applicationCategory: "GameApplication",
+      operatingSystem: "Web",
+      url: canonicalPath
+        ? `https://codexcryptica.com${canonicalPath}`
+        : "https://codexcryptica.com/tools",
+      description: metaDescription,
+      mainEntity:
+        faqs.length > 0
+          ? {
+              "@type": "FAQPage",
+              mainEntity: faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: faq.answer,
+                },
+              })),
+            }
+          : undefined,
+    }),
+  );
+
+  const breadcrumbJsonLd = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://codexcryptica.com",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Generators",
+          item: "https://codexcryptica.com/tools",
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: introTitle,
+          item: canonicalPath
+            ? `https://codexcryptica.com${canonicalPath}`
+            : "https://codexcryptica.com/tools",
+        },
+      ],
+    }),
+  );
+
   const resultJsonLd = $derived(
     generatedData
       ? generatedData.type === "character"
@@ -402,6 +459,14 @@
   <meta name="twitter:description" content={metaDescription} />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${softwareApplicationJsonLd}</scr` +
+    `ipt>`}
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
+    `ipt>`}
   {#if faqJsonLd}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html `<scr` + `ipt type="application/ld+json">${faqJsonLd}</scr` + `ipt>`}
