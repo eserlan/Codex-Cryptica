@@ -1,4 +1,4 @@
-import { solutions, comparisons, featuresConfig } from "$lib/config/seo-pages";
+import { solutions, comparisons, featuresConfig, importsConfig } from "$lib/config/seo-pages";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 export const prerender = true;
@@ -84,12 +84,20 @@ export async function GET() {
     }),
   );
 
+  // Import pages
+  const importRoutes = Object.keys(importsConfig).map((slug) => ({
+    path: `/import/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   const allStatic = [
     ...staticRoutes,
     ...solutionRoutes,
     ...comparisonRoutes,
     ...featureRoutes,
     ...generatorRoutes,
+    ...importRoutes,
   ];
 
   const staticUrls = allStatic
