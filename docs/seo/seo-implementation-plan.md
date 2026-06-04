@@ -39,6 +39,7 @@ graph TD
     P2 --> P3[Phase 3: Generator Funnel Enhancement]
     P3 --> P4[Phase 4: Import & Migration Hubs]
     P4 --> P5[Phase 5: Privacy Use Cases]
+    P5 --> P6[Phase 6: Structured Data & Rich Schema Maturity]
 ```
 
 ### Phase 1: Routing Consolidation & Bug Fixes
@@ -75,3 +76,12 @@ graph TD
 
 - [x] **Task 5.1: AI GM Assistant Privacy Page**
   - Launch `/features/ai-gm-assistant` explaining the local-first zero-data-leakage architecture.
+
+### Phase 6: Structured Data & Rich Schema Maturity
+
+- [ ] **Task 6.1: Import & Feature Pages Schema Coverage**
+  - Generate and inject `BreadcrumbList` and `FAQPage` JSON-LD schemas on `/import/[slug]` and `/features/[slug]` routes.
+- [ ] **Task 6.2: Core Product & SoftwareApplication Schema**
+  - Add explicit `SoftwareApplication` and `Offers` schema definitions to the landing pages, declaring multi-platform local-first capabilities.
+- [ ] **Task 6.3: Dynamic Generator Result Schemas**
+  - Map reactive NPC/Location generator results to `Person` / `Place` schema.org JSON-LD blocks in `SEOGeneratorLayout` for SERP dynamic indexing.
