@@ -479,6 +479,10 @@
           class="hover:text-theme-primary transition-colors">Privacy</a
         >
         <a
+          href="{base}/tools"
+          class="hover:text-theme-primary transition-colors">Tools</a
+        >
+        <a
           href="{base}/sitemap.xml"
           class="hover:text-theme-primary transition-colors">Sitemap</a
         >
