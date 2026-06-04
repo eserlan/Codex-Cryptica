@@ -371,7 +371,7 @@
   >
     <!-- Output Card Column: controls first on mobile, middle column on desktop -->
     <div
-      class="lg:col-span-6 flex flex-col order-2 lg:order-2"
+      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
       <div
@@ -436,7 +436,7 @@
             </div>
 
             <div
-              class="space-y-4 text-xs md:text-sm leading-relaxed text-theme-text/90 flex-grow"
+              class="space-y-4 text-sm leading-relaxed text-theme-text/90 flex-grow"
               data-theme={worldTheme}
             >
               {@html renderMarkdown(generatedData.content || "")}
