@@ -1,5 +1,9 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
 import { resolveArtDirection } from "schema";
+import {
+  DEFAULT_CF_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_MODEL,
+} from "./image-defaults";
 
 interface VisualEntityLike {
   id?: string;
@@ -12,10 +16,15 @@ interface VisualEntityLike {
   artDirection?: string;
 }
 
+export interface PreparedVisualizationPrompt {
+  prompt: string;
+}
+
 export class OracleGenerator {
   private buildEntityVisualQuery(
     entity: VisualEntityLike,
     context?: OracleExecutionContext,
+    options: { ignoreSavedArtDirection?: boolean } = {},
   ): string {
     const artDirection = resolveArtDirection({
       subject: entity.title,
@@ -25,7 +34,9 @@ export class OracleGenerator {
       categoryLabel: entity.type,
       themeId: context?.uiStore?.activeThemeId,
       surface: "entity",
-      entityArtDirection: this.extractEntityArtDirection(entity),
+      entityArtDirection: options.ignoreSavedArtDirection
+        ? undefined
+        : this.extractEntityArtDirection(entity),
     });
 
     return this.appendVisualLabels(artDirection.prompt, entity.labels);
@@ -292,8 +303,19 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     entityId: string,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const apiKey = context.effectiveApiKey || "";
+    const { prompt } = await this.prepareEntityVisualizationPrompt(
+      entityId,
+      context,
+    );
+    return this.generateVisualizationFromPrompt(prompt, context);
+  }
 
+  async prepareEntityVisualizationPrompt(
+    entityId: string,
+    context: OracleExecutionContext,
+    options: { ignoreSavedArtDirection?: boolean } = {},
+  ): Promise<PreparedVisualizationPrompt> {
+    const apiKey = context.effectiveApiKey || "";
     const entity = context.vault.entities[entityId];
     const { content: aiContext } =
       await context.contextRetrieval.retrieveContext(
@@ -304,50 +326,15 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         true,
       );
 
-    const visualPrompt = await context.imageGeneration.distillVisualPrompt(
-      apiKey,
-      this.buildEntityVisualQuery(entity, context),
-      aiContext,
-      context.modelName,
-      context.isDemoMode,
-    );
-
-    const isCustom = context.imageProvider === "custom";
-    const isCloudflare = context.imageProvider === "cloudflare";
-
-    let targetKey = apiKey;
-    if (isCustom && context.customImageApiKey) {
-      targetKey = context.customImageApiKey;
-    } else if (isCloudflare) {
-      targetKey = "";
-    }
-
-    let targetModel = "gemini-2.5-flash-image";
-    if (isCustom) {
-      targetModel =
-        context.customImageModel || "black-forest-labs/FLUX.1-schnell";
-    } else if (isCloudflare) {
-      targetModel =
-        context.cloudflareModel ||
-        "@cf/stabilityai/stable-diffusion-xl-base-1.0";
-    }
-
-    const needsKey =
-      (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
-
-    if (needsKey) {
-      throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
-    }
-
-    return await context.imageGeneration.generateImage(
-      targetKey,
-      visualPrompt,
-      targetModel,
-      {
-        provider: context.imageProvider,
-        baseUrl: context.customImageBaseUrl,
-      },
-    );
+    return {
+      prompt: await context.imageGeneration.distillVisualPrompt(
+        apiKey,
+        this.buildEntityVisualQuery(entity, context, options),
+        aiContext,
+        context.modelName,
+        context.isDemoMode,
+      ),
+    };
   }
 
   /**
@@ -357,8 +344,18 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     message: ChatMessage,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const apiKey = context.effectiveApiKey || "";
+    const { prompt } = await this.prepareMessageVisualizationPrompt(
+      message,
+      context,
+    );
+    return this.generateVisualizationFromPrompt(prompt, context);
+  }
 
+  async prepareMessageVisualizationPrompt(
+    message: ChatMessage,
+    context: OracleExecutionContext,
+  ): Promise<PreparedVisualizationPrompt> {
+    const apiKey = context.effectiveApiKey || "";
     const entity = message.entityId
       ? context.vault.entities[message.entityId]
       : null;
@@ -373,14 +370,22 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         true,
       );
 
-    const visualPrompt = await context.imageGeneration.distillVisualPrompt(
-      apiKey,
-      this.buildMessageVisualQuery(message, entity, context),
-      aiContext,
-      context.modelName,
-      context.isDemoMode,
-    );
+    return {
+      prompt: await context.imageGeneration.distillVisualPrompt(
+        apiKey,
+        this.buildMessageVisualQuery(message, entity, context),
+        aiContext,
+        context.modelName,
+        context.isDemoMode,
+      ),
+    };
+  }
 
+  async generateVisualizationFromPrompt(
+    prompt: string,
+    context: OracleExecutionContext,
+  ): Promise<Blob> {
+    const apiKey = context.effectiveApiKey || "";
     const isCustom = context.imageProvider === "custom";
     const isCloudflare = context.imageProvider === "cloudflare";
 
@@ -393,157 +398,27 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
 
     let targetModel = "gemini-2.5-flash-image";
     if (isCustom) {
-      targetModel =
-        context.customImageModel || "black-forest-labs/FLUX.1-schnell";
+      targetModel = context.customImageModel || DEFAULT_CUSTOM_IMAGE_MODEL;
     } else if (isCloudflare) {
-      targetModel =
-        context.cloudflareModel ||
-        "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+      targetModel = context.cloudflareModel || DEFAULT_CF_IMAGE_MODEL;
     }
 
     const needsKey =
       (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
 
     if (needsKey) {
-      throw new Error(`MISSING_KEY_PROMPT|${visualPrompt}`);
+      throw new Error(`MISSING_KEY_PROMPT|${prompt}`);
     }
 
     return await context.imageGeneration.generateImage(
       targetKey,
-      visualPrompt,
+      prompt,
       targetModel,
       {
         provider: context.imageProvider,
         baseUrl: context.customImageBaseUrl,
       },
     );
-  }
-
-  /**
-   * Orchestrates the construction of context and the generation of an AI regeneration response.
-   */
-  async generateRegenerationResponse(
-    entityId: string,
-    context: OracleExecutionContext,
-    onPartial: (partial: string) => void,
-  ): Promise<void> {
-    const entity = context.vault.entities[entityId];
-    if (!entity) throw new Error(`Entity ${entityId} not found.`);
-
-    const apiKey = context.effectiveApiKey || "";
-    const connectionContext = await this.buildSlimConnectionContext(
-      entity,
-      entityId,
-      context.vault,
-    );
-    const prompt = this.buildRegenerationPrompt(entity, context);
-
-    const categoryList = Array.from(
-      new Set(
-        (context.categories || [])
-          .map((c: any) => String(c?.id || "").trim())
-          .filter(Boolean),
-      ),
-    );
-
-    await context.textGeneration.generateResponse(
-      apiKey,
-      prompt,
-      [],
-      connectionContext,
-      context.modelName,
-      onPartial,
-      context.isDemoMode,
-      categoryList,
-      {
-        requestId: crypto.randomUUID(),
-        vaultId: context.vaultId,
-        existingEntities: Object.values(context.vault.entities || {}),
-      },
-    );
-  }
-
-  private async buildSlimConnectionContext(
-    entity: any,
-    entityId: string,
-    vault: any,
-  ): Promise<string> {
-    const outboundIds = (entity.connections || []).map((c: any) => c.target);
-    const inboundIds = (vault.inboundConnections?.[entityId] || []).map(
-      (i: any) => i.sourceId,
-    );
-    const allIds = [...new Set([...outboundIds, ...inboundIds])];
-
-    if (vault.loadEntityContent && allIds.length > 0) {
-      await Promise.all(
-        allIds.map((id: string) => vault.loadEntityContent(id)),
-      );
-    }
-
-    const parts: string[] = [];
-
-    for (const conn of entity.connections || []) {
-      const target = vault.entities[conn.target];
-      if (!target) continue;
-      parts.push(this.formatSlimEntity(target, conn.label || conn.type, "→"));
-    }
-
-    for (const item of vault.inboundConnections?.[entityId] || []) {
-      const source = vault.entities[item.sourceId];
-      if (!source) continue;
-      parts.push(
-        this.formatSlimEntity(
-          source,
-          item.connection.label || item.connection.type,
-          "←",
-        ),
-      );
-    }
-
-    return parts.join("\n\n");
-  }
-
-  private formatSlimEntity(
-    entity: any,
-    relationLabel: string,
-    direction: "→" | "←",
-  ): string {
-    const lines = [
-      `--- ${entity.title} (${entity.type}) [${direction} ${relationLabel}] ---`,
-    ];
-    if (entity.content?.trim()) lines.push(entity.content.trim());
-    if (entity.aliases?.length)
-      lines.push(`Aliases: ${entity.aliases.join(", ")}`);
-    if (entity.tags?.length) lines.push(`Tags: ${entity.tags.join(", ")}`);
-    return lines.join("\n");
-  }
-
-  private buildRegenerationPrompt(
-    entity: any,
-    context: OracleExecutionContext,
-  ): string {
-    const theme =
-      context.uiStore.activeThemeId ||
-      context.uiStore.activeTheme?.id ||
-      "default";
-    const aliasLine = entity.aliases?.length
-      ? `\nAliases: ${entity.aliases.join(", ")}`
-      : "";
-    const tagsLine = entity.tags?.length
-      ? `\nTags: ${entity.tags.join(", ")}`
-      : "";
-
-    return `Generate content for: **${entity.title}** (${entity.type})${aliasLine}${tagsLine}
-
-EXISTING CONTENT TO PRESERVE AND EXPAND:
-Chronicle: ${entity.content || "None"}
-Lore: ${entity.lore || "None"}
-
-THEME: ${theme}
-
-Output ONLY these two fields:
-**Chronicle:** [Polished 1-3 sentence player-facing summary]
-**Lore:** [Detailed GM-facing notes, may use markdown headings and lists]`;
   }
 
   private getSentTitles(messages: ChatMessage[]): Set<string> {

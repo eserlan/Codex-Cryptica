@@ -10,6 +10,7 @@
   import EntityListItem from "./EntityListItem.svelte";
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
+  import EmptyState from "$lib/components/ui/EmptyState.svelte";
 
   let {
     onSelect,
@@ -41,6 +42,12 @@
   const activeVaultId = $derived(vault.activeVaultId);
   const labelFilters = $derived(explorerUIStore.labelFilters);
   const viewMode = $derived(explorerUIStore.explorerViewMode);
+  const effectiveViewMode = $derived(
+    viewMode === "category" && typeFilters.size === 1 ? "list" : viewMode,
+  );
+  const collapsedCategoryGroups = $derived(
+    explorerUIStore.getCollapsedCategoryGroups(activeVaultId),
+  );
   const collapsedLabelGroups = $derived(
     explorerUIStore.getCollapsedLabelGroups(activeVaultId),
   );
@@ -63,7 +70,7 @@
   );
 
   const groupedEntities = $derived(
-    groupEntitiesForExplorer(filteredEntities, viewMode),
+    groupEntitiesForExplorer(filteredEntities, effectiveViewMode),
   );
 
   const collapsedEntities = $derived(
@@ -111,6 +118,10 @@
     } finally {
       isCreatingChild = false;
     }
+  }
+
+  function getCategoryLabel(categoryId: string) {
+    return categories.getCategory(categoryId)?.label ?? categoryId;
   }
 </script>
 
@@ -208,7 +219,7 @@
                 aria-label="New entity category"
                 disabled={isCreatingChild}
               >
-                {#each categories.list as cat}
+                {#each categories.list as cat (cat.id)}
                   <option value={cat.id}>{cat.label}</option>
                 {/each}
               </select>
@@ -266,7 +277,39 @@
       </div>
     {/snippet}
 
-    {#if viewMode === "list"}
+    {#snippet groupedEntityItem(entity: Entity, _keySuffix: string)}
+      <EntityListItem
+        {entity}
+        {isDragging}
+        isDragSource={entity.id === draggedEntityId}
+        draggable={!!onDragStart}
+        {onSelect}
+        onDragStart={onDragStart
+          ? (e, entityId) => {
+              draggedEntityId = entityId;
+              requestAnimationFrame(() => {
+                if (draggedEntityId === entityId) {
+                  isDragging = true;
+                }
+              });
+              onDragStart?.(e, entityId);
+            }
+          : undefined}
+        onDragEnd={onDragStart
+          ? () => {
+              isDragging = false;
+              draggedEntityId = null;
+              onDragEnd?.();
+            }
+          : undefined}
+        {onOpenZen}
+        {onFindInGraph}
+        {onApproveDraft}
+        {onRejectDraft}
+      />
+    {/snippet}
+
+    {#if effectiveViewMode === "list"}
       {#if isDragging}
         <div
           class="border-2 border-dashed border-theme-border rounded-xl p-3 text-center text-xs text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-all mb-2"
@@ -293,12 +336,24 @@
       {#each entityTree as node (node.entity.id)}
         {@render treeNode(node, 0)}
       {:else}
-        <div class="text-center py-10 px-4" data-testid="no-entities-found">
-          <p class="text-xs text-theme-muted">No entities found</p>
+        <div data-testid="no-entities-found">
+          {#if vault.allEntities.length === 0}
+            <EmptyState
+              icon="icon-[lucide--ghost]"
+              headline="No entities yet"
+              body="Create your first entity to start building your vault."
+            />
+          {:else}
+            <EmptyState
+              icon="icon-[lucide--search-x]"
+              headline="No entities found"
+              body="Try adjusting your search or filters."
+            />
+          {/if}
         </div>
       {/each}
-    {:else if viewMode === "label" && groupedEntities?.type === "label"}
-      {#each groupedEntities.sortedKeys as label}
+    {:else if effectiveViewMode === "label" && groupedEntities?.type === "label"}
+      {#each groupedEntities.sortedKeys as label (label)}
         {@const labelEntities = groupedEntities.groups.get(label) ?? []}
         {@const isCollapsed = collapsedLabelGroups.has(label)}
         <button
@@ -389,8 +444,53 @@
         {/each}
       {/if}
       {#if filteredEntities.length === 0}
-        <div class="text-center py-10 px-4" data-testid="no-entities-found">
-          <p class="text-xs text-theme-muted">No entities found</p>
+        <div data-testid="no-entities-found">
+          <EmptyState
+            icon="icon-[lucide--search-x]"
+            headline="No entities found"
+            body="Try adjusting your search or filters."
+          />
+        </div>
+      {/if}
+    {:else if effectiveViewMode === "category" && groupedEntities?.type === "category"}
+      {#each groupedEntities.sortedKeys as categoryId (categoryId)}
+        {@const categoryEntities = groupedEntities.groups.get(categoryId) ?? []}
+        {@const isCollapsed = collapsedCategoryGroups.has(categoryId)}
+        <button
+          type="button"
+          onclick={() =>
+            explorerUIStore.toggleExplorerCategoryGroup(
+              activeVaultId,
+              categoryId,
+            )}
+          aria-expanded={!isCollapsed}
+          class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+        >
+          <span class="flex items-center gap-1.5">
+            {#if isCollapsed}
+              <span class="icon-[lucide--chevron-right] h-3 w-3"></span>
+            {:else}
+              <span class="icon-[lucide--chevron-down] h-3 w-3"></span>
+            {/if}
+            <span>{getCategoryLabel(categoryId)}</span>
+          </span>
+          <span class="text-[9px] text-theme-muted/80"
+            >{categoryEntities.length}</span
+          >
+        </button>
+        {#if !isCollapsed}
+          {#each categoryEntities as entity (`${entity.id}:${categoryId}`)}
+            {@render groupedEntityItem(entity, categoryId)}
+          {/each}
+        {/if}
+      {/each}
+      {#if filteredEntities.length === 0}
+        <div data-testid="no-entities-found">
+          <EmptyState
+            icon="icon-[lucide--search-x]"
+            headline="No entities found"
+            body="Try adjusting your search or filters."
+          />
         </div>
       {/if}
     {/if}

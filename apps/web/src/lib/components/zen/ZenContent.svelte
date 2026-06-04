@@ -4,7 +4,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import { isEntityVisible, type Entity } from "schema";
@@ -223,8 +223,8 @@
   };
 
   const draft = $derived(
-    entity && regenerationService.pendingDraft?.entityId === entity.id
-      ? regenerationService.pendingDraft
+    entity && revisionService.pendingDraft?.entityId === entity.id
+      ? revisionService.pendingDraft
       : null,
   );
 

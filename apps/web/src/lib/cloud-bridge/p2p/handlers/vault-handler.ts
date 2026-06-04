@@ -8,12 +8,18 @@ import {
   deriveGuestPresenceStatus,
   buildSharedGraphPayload,
   prepareMapPayload,
+  snapshotForTransport,
 } from "../p2p-helpers";
 import { encodeSessionSnapshot } from "../p2p-protocol";
 
 export class VaultHandler extends BaseHandler {
   canHandle(message: P2PMessage): boolean {
-    return ["GUEST_JOIN", "GUEST_LEAVE", "GUEST_STATUS"].includes(message.type);
+    return [
+      "GUEST_JOIN",
+      "GUEST_LEAVE",
+      "GUEST_STATUS",
+      "GUEST_CHAT_TRANSCRIPT_SYNC",
+    ].includes(message.type);
   }
 
   async handle(
@@ -31,6 +37,18 @@ export class VaultHandler extends BaseHandler {
       case "GUEST_STATUS":
         await this.handleGuestStatus(connection.peer, message.payload, context);
         break;
+      case "GUEST_CHAT_TRANSCRIPT_SYNC":
+        await this.handleTranscriptSync(message.payload, context);
+        break;
+    }
+  }
+
+  private async handleTranscriptSync(payload: any, context: P2PHandlerContext) {
+    if (!payload || typeof payload !== "object") return;
+    try {
+      await context.vault.saveTranscript(payload);
+    } catch (err) {
+      console.error("[VaultHandler] Failed to save guest transcript:", err);
     }
   }
 
@@ -196,8 +214,7 @@ export class VaultHandler extends BaseHandler {
   ) {
     const { vault, themeStore, mapStore, mapSession } = context;
 
-    // Get a non-reactive snapshot of entities for transport
-    const rawEntities = $state.snapshot(vault.entities);
+    const rawEntities = snapshotForTransport(vault.entities ?? {});
     const graph = buildSharedGraphPayload(
       rawEntities,
       vault.defaultVisibility,

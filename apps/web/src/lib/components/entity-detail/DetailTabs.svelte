@@ -19,21 +19,28 @@
     isEditing,
     editType = $bindable(),
     idPrefix,
+    canGuestEdit = false,
   } = $props<{
     entity: Entity;
     activeTab: EntityDetailTab;
     isEditing: boolean;
     editType: string;
     idPrefix: string;
+    canGuestEdit?: boolean;
   }>();
 
   let tabIds = $derived.by(() => createEntityDetailTabIds(idPrefix).tabIds);
   let panelIds = $derived.by(() => createEntityDetailTabIds(idPrefix).panelIds);
-  let visibleTabs = $derived.by(() =>
-    vault.isGuest
-      ? entityDetailTabs.filter((tab) => tab !== "lore")
-      : entityDetailTabs,
-  );
+  let visibleTabs = $derived.by(() => {
+    let tabs: EntityDetailTab[] =
+      vault.isGuest && !canGuestEdit
+        ? entityDetailTabs.filter((tab) => tab !== "lore")
+        : [...entityDetailTabs];
+    if (entity.type !== "character") {
+      tabs = tabs.filter((tab) => tab !== "chats");
+    }
+    return tabs;
+  });
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 
   const formatDate = (date: Entity["date"]) => {
@@ -152,7 +159,7 @@
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
-    {#if !vault.isGuest}
+    {#if !vault.isGuest || canGuestEdit}
       <button
         id={tabIds.lore}
         type="button"
@@ -203,5 +210,31 @@
         : undefined}
       onclick={() => (activeTab = "map")}>MAP</button
     >
+
+    {#if visibleTabs.includes("chats")}
+      <button
+        id={tabIds.chats}
+        type="button"
+        role="tab"
+        aria-selected={activeTab === "chats"}
+        aria-controls={panelIds.chats}
+        tabindex={activeTab === "chats" ? 0 : -1}
+        data-testid="tab-chats"
+        class={activeTab === "chats"
+          ? isFantasyTheme
+            ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+            : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+          : isFantasyTheme
+            ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+            : "hover:text-theme-text transition"}
+        style:border-color={activeTab === "chats" && isFantasyTheme
+          ? "var(--theme-focus-border)"
+          : undefined}
+        style:background-color={activeTab === "chats" && isFantasyTheme
+          ? "var(--theme-focus-bg)"
+          : undefined}
+        onclick={() => (activeTab = "chats")}>CHATS</button
+      >
+    {/if}
   </div>
 </div>

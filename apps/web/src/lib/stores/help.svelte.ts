@@ -7,7 +7,6 @@ import {
   ONBOARDING_TOUR,
   HELP_ARTICLES,
 } from "$lib/config/help-content";
-import FlexSearch from "flexsearch";
 import { searchStore as defaultSearchStore } from "./search.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -92,7 +91,7 @@ export class HelpStore {
     // Init handled explicitly in layout
   }
 
-  init() {
+  async init() {
     if (!browser) return;
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -117,7 +116,7 @@ export class HelpStore {
       }
     }
 
-    this.buildIndex();
+    await this.buildIndex();
     this.isInitialized = true;
   }
 
@@ -136,11 +135,11 @@ export class HelpStore {
    * Rebuilds the search index.
    * Useful during development if articles change without a full reload.
    */
-  buildIndex(force = false) {
+  async buildIndex(force = false) {
     if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
       return;
 
-    // Initialize FlexSearch
+    const FlexSearch = (await import("flexsearch")).default;
     this.index = new FlexSearch.Document({
       document: {
         id: "id",

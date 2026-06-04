@@ -3,7 +3,7 @@
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
 
   let {
     entity,
@@ -16,8 +16,8 @@
   }>();
 
   const draft = $derived(
-    regenerationService.pendingDraft?.entityId === entity.id
-      ? regenerationService.pendingDraft
+    revisionService.pendingDraft?.entityId === entity.id
+      ? revisionService.pendingDraft
       : null,
   );
 

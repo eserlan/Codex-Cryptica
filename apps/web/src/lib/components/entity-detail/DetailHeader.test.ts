@@ -60,7 +60,7 @@ vi.mock("$lib/components/labels/LabelInput.svelte", () => ({
 vi.mock("$lib/components/labels/AliasInput.svelte", () => ({
   default: vi.fn(),
 }));
-vi.mock("$lib/components/entity/SidepanelRegenButton.svelte", () => ({
+vi.mock("$lib/components/entity/SidepanelRevisionButton.svelte", () => ({
   default: vi.fn(),
 }));
 

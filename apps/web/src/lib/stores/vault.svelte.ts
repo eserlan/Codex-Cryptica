@@ -5,7 +5,11 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
-import type { Entity } from "schema";
+import type { Entity, GuestChatTranscript } from "schema";
+import {
+  saveTranscriptToDisk,
+  loadTranscriptsForCharacterFromDisk,
+} from "./vault/io";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
@@ -259,6 +263,10 @@ export class VaultStore {
       getEntities: () => this.entities,
       setDemoVaultName: (n) => (this.demoVaultName = n),
       setInitialized: (v) => (this.isInitialized = v),
+      rebuildEntityIndexes: () => {
+        this.entityStore.initializeInboundConnections();
+        this.entityStore.rebuildIndexes();
+      },
       getServices: () => this.services,
       setSelectedEntityId: (id) => (this.selectedEntityId = id),
       vaultRegistry,
@@ -500,6 +508,39 @@ export class VaultStore {
   }
   persistToIndexedDB(vaultId: string) {
     return this.lifecycleManager.persistToIndexedDB(vaultId);
+  }
+
+  async saveTranscript(transcript: GuestChatTranscript) {
+    if (this.isGuest) return;
+    if (!this.activeVaultId) return;
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return;
+    await saveTranscriptToDisk(vaultHandle, this.activeVaultId, transcript);
+  }
+
+  async loadTranscriptsForCharacter(
+    characterId: string,
+  ): Promise<GuestChatTranscript[]> {
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return [];
+    return await loadTranscriptsForCharacterFromDisk(vaultHandle, characterId);
+  }
+
+  async deleteTranscript(guestId: string, characterId: string) {
+    if (this.isGuest) return;
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return;
+    try {
+      const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+        create: true,
+      });
+      const transcriptsDir = await codexDir.getDirectoryHandle("transcripts", {
+        create: true,
+      });
+      await transcriptsDir.removeEntry(`${guestId}_${characterId}.json`);
+    } catch (err) {
+      console.warn("[VaultStore] Failed to delete transcript file:", err);
+    }
   }
 
   async setDefaultVisibility(v: "visible" | "hidden") {

@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { isEntityVisible } from "schema";
   import { fade } from "svelte/transition";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
-  import SidepanelRegenButton from "$lib/components/entity/SidepanelRegenButton.svelte";
+  import SidepanelRevisionButton from "$lib/components/entity/SidepanelRevisionButton.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -101,7 +102,7 @@
 
 {#snippet headerActions()}
   {#if !isEditing}
-    <SidepanelRegenButton entityId={entity.id} />
+    <SidepanelRevisionButton entityId={entity.id} />
     {#if isGraphView}
       <button
         type="button"
@@ -138,6 +139,18 @@
             ? 'icon-[lucide--volume-2]'
             : 'icon-[lucide--mic]'} w-5 h-5"
         ></span>
+      </button>
+    {/if}
+    {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
+      <button
+        type="button"
+        onclick={() => guestChatStore.openChat(entity.id, entity.title)}
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        aria-label="Chat with character"
+        title="Chat with character"
+        data-testid="guest-chat-button"
+      >
+        <span class="icon-[lucide--messages-square] w-5 h-5"></span>
       </button>
     {/if}
     <button

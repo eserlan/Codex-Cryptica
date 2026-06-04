@@ -2,7 +2,7 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
@@ -19,7 +19,7 @@
     graph,
     vault,
     oracle,
-    regenerationService,
+    revisionService,
     canvasRegistry,
     modalUIStore,
     connectionModeStore,
@@ -274,10 +274,10 @@
         <button
           role="menuitem"
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
-          onclick={controller.handleRegenerateContent}
+          onclick={controller.handleReviseContent}
         >
           <span class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"></span>
-          Regenerate Content
+          Revise Content
         </button>
       {/if}
     </div>

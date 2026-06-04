@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "prebuild": "node ../../scripts/generate-llms-full.mjs && node ../../scripts/generate-sitemap.mjs",
+    "prebuild": "node ../../scripts/generate-llms-full.mjs && bun ../../scripts/generate-sitemap.mjs",
     "build": "vite build && cp build/index.html build/404.html && touch build/.nojekyll && node scripts/check-compiled-runes.js",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
@@ -65,7 +65,8 @@
     "peerjs": "^1.5.5",
     "schema": "workspace:*",
     "svelte-tiptap": "^3.0.1",
-    "tiptap-markdown": "^0.9.0"
+    "tiptap-markdown": "^0.9.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@iconify-json/carbon": "^1.2.22",

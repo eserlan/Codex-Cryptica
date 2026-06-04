@@ -21,7 +21,7 @@ export class OracleSettingsManager {
   }
 
   get modelName() {
-    return this.settings?.modelName || "gemini-1.5-flash";
+    return this.settings?.modelName || "gemini-3.1-flash-lite";
   }
 
   get isLoading() {

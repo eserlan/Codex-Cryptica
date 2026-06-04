@@ -65,6 +65,49 @@ describe("ExplorerUIStore", () => {
     expect(Array.from(store.getCollapsedLabelGroups("v1"))).toEqual([]);
   });
 
+  it("handles collapsed category groups independently from labels", () => {
+    const mockStorage = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    const persistence = new UIPersistence({ storage: mockStorage });
+    const store = new ExplorerUIStore(persistence);
+
+    store.toggleExplorerCategoryGroup("v1", "npc");
+    store.toggleExplorerLabelGroup("v1", "npc");
+
+    expect(Array.from(store.getCollapsedCategoryGroups("v1"))).toEqual(["npc"]);
+    expect(Array.from(store.getCollapsedLabelGroups("v1"))).toEqual(["npc"]);
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_explorer_collapsed_category_groups",
+      expect.stringContaining("npc"),
+    );
+
+    store.toggleExplorerCategoryGroup("v1", "npc");
+
+    expect(Array.from(store.getCollapsedCategoryGroups("v1"))).toEqual([]);
+    expect(Array.from(store.getCollapsedLabelGroups("v1"))).toEqual(["npc"]);
+  });
+
+  it("persists category view mode", () => {
+    const mockStorage = {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    const persistence = new UIPersistence({ storage: mockStorage });
+    const store = new ExplorerUIStore(persistence);
+
+    store.setExplorerViewMode("category");
+
+    expect(store.explorerViewMode).toBe("category");
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_explorer_view_mode",
+      "category",
+    );
+  });
+
   it("handles collapsed entity states", () => {
     const mockStorage = {
       getItem: vi.fn().mockReturnValue(null),

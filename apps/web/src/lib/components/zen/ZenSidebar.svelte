@@ -1,13 +1,15 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { isEntityVisible, resolveArtDirection, type Entity } from "schema";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
@@ -121,7 +123,10 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[ZenSidebar] Failed to save Oracle image:", err);
-        alert("Failed to archive image from Oracle.");
+        notificationStore.notify(
+          "Failed to archive image from Oracle. Check the console for details.",
+          "error",
+        );
       }
       return;
     }
@@ -143,7 +148,10 @@
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
         debugStore.error("[ZenSidebar] Failed to save external file:", err);
-        alert("Failed to save external image.");
+        notificationStore.notify(
+          "Failed to save image. Check the console for details.",
+          "error",
+        );
       }
     }
   }
@@ -276,6 +284,21 @@
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-4 md:p-5 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
   data-testid="zen-sidebar"
 >
+  <!-- Guest Character Chat -->
+  {#if vault.isGuest && entity?.type === "character" && entity?.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
+    <div class="mb-6">
+      <button
+        type="button"
+        onclick={() => guestChatStore.openChat(entity.id, entity.title)}
+        class="w-full text-center py-2.5 bg-theme-primary text-theme-bg font-bold tracking-widest uppercase text-xs rounded-xl hover:bg-theme-secondary transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
+        data-testid="zen-sidebar-guest-chat-button"
+      >
+        <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+        Chat with {entity.title}
+      </button>
+    </div>
+  {/if}
+
   <!-- Labels & Aliases -->
   <div class="mb-4 space-y-4">
     {#if !editState.isEditing}
@@ -428,7 +451,7 @@
         </div>
       </button>
     {:else}
-      {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && !vault.isGuest && (oracle.apiKey || !entity?.artDirection)}
+      {#if !discoveryPolicyStore.aiDisabled && !vault.isGuest}
         <div
           class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
         >
@@ -442,7 +465,7 @@
             >
           </div>
 
-          {#if isVisualizing || regenerationService.isGenerating}
+          {#if isVisualizing || revisionService.isRevising}
             <div
               class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 border border-theme-primary/20"
             >
@@ -510,7 +533,7 @@
       {/if}
     {/if}
 
-    {#if oracle.tier === "advanced" && !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
+    {#if !discoveryPolicyStore.aiDisabled && entity && !editState.isEditing && !vault.isGuest}
       <div class="flex flex-row md:flex-col gap-2 mt-2 md:mt-4 w-full px-0">
         <button
           onclick={() => oracle.drawEntity(entity.id)}
@@ -553,10 +576,10 @@
 
         <button
           type="button"
-          onclick={() => regenerationService.regenerate(entity.id)}
+          onclick={() => modalUIStore.openRevisionDialog(entity.id)}
           class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
-          aria-label="Regenerate Chronicle and Lore"
-          title="Regenerate Chronicle and Lore"
+          aria-label="Revise Chronicle and Lore"
+          title="Revise Chronicle and Lore"
         >
           <span
             class="icon-[lucide--sparkles] w-3 h-3 md:w-4 md:h-4 text-theme-primary"

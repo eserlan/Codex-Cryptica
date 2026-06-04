@@ -11,6 +11,20 @@ export const getGraphStyles = (
 ) => {
   const baseStyle = getBaseStyle(theme, categories, showImages);
 
+  const chatIndicatorStyles = [
+    {
+      // Character nodes with guest chat enabled get a secondary-coloured ring
+      // so hosts can see at a glance which NPCs are "talkable" by guests.
+      selector: "node[type = 'character'][?isChatEnabled]",
+      style: {
+        "underlay-color": theme.tokens.secondary || "#6366f1",
+        "underlay-padding": 5,
+        "underlay-opacity": 0.35,
+        "underlay-shape": "ellipse",
+      },
+    },
+  ];
+
   const filteringStyles = [
     {
       selector: ".filtered-out",
@@ -90,5 +104,11 @@ export const getGraphStyles = (
     },
   ];
 
-  return [...baseStyle, ...filteringStyles, ...labelOverrides, ...lodStyles];
+  return [
+    ...baseStyle,
+    ...chatIndicatorStyles,
+    ...filteringStyles,
+    ...labelOverrides,
+    ...lodStyles,
+  ];
 };

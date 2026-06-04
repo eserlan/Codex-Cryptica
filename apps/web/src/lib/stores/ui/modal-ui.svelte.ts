@@ -6,6 +6,10 @@ export type SettingsTab =
   | "about"
   | "help";
 
+export type ImagePromptReviewTarget =
+  | { kind: "entity"; id: string; title: string }
+  | { kind: "message"; id: string; title: string; entityId?: string };
+
 export class ModalUIStore {
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
@@ -16,7 +20,7 @@ export class ModalUIStore {
 
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
-  zenModeActiveTab = $state<"overview" | "map">("overview");
+  zenModeActiveTab = $state<"overview" | "map" | "chats">("overview");
 
   mergeDialog = $state<{
     open: boolean;
@@ -64,7 +68,28 @@ export class ModalUIStore {
   });
 
   showVaultSwitcher = $state(false);
+  vaultSwitcherIntent = $state<"create" | "open" | null>(null);
   showShare = $state(false);
+
+  imagePromptReview = $state<{
+    open: boolean;
+    target: ImagePromptReviewTarget | null;
+    prompt: string;
+  }>({
+    open: false,
+    target: null,
+    prompt: "",
+  });
+
+  revisionDialog = $state<{
+    open: boolean;
+    entityId: string | null;
+    instructions: string;
+  }>({
+    open: false,
+    entityId: null,
+    instructions: "",
+  });
 
   // Derived properties for backwards compatibility
   get readModeNodeId() {
@@ -131,12 +156,14 @@ export class ModalUIStore {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
   }
 
-  openVaultSwitcher() {
+  openVaultSwitcher(intent: "create" | "open" | null = null) {
+    this.vaultSwitcherIntent = intent;
     this.showVaultSwitcher = true;
   }
 
   closeVaultSwitcher() {
     this.showVaultSwitcher = false;
+    this.vaultSwitcherIntent = null;
   }
 
   openShare() {
@@ -145,6 +172,38 @@ export class ModalUIStore {
 
   closeShare() {
     this.showShare = false;
+  }
+
+  openImagePromptReview(target: ImagePromptReviewTarget, prompt: string) {
+    this.imagePromptReview = {
+      open: true,
+      target,
+      prompt,
+    };
+  }
+
+  closeImagePromptReview() {
+    this.imagePromptReview = {
+      open: false,
+      target: null,
+      prompt: "",
+    };
+  }
+
+  openRevisionDialog(entityId: string) {
+    this.revisionDialog = {
+      open: true,
+      entityId,
+      instructions: "",
+    };
+  }
+
+  closeRevisionDialog() {
+    this.revisionDialog = {
+      open: false,
+      entityId: null,
+      instructions: "",
+    };
   }
 
   openCanvasSelection(pendingEntities: string[]) {
@@ -179,7 +238,10 @@ export class ModalUIStore {
     }
   }
 
-  openZenMode(entityId: string, tab: "overview" | "map" = "overview") {
+  openZenMode(
+    entityId: string,
+    tab: "overview" | "map" | "chats" = "overview",
+  ) {
     this.zenModeEntityId = entityId;
     this.zenModeActiveTab = tab;
     this.showZenMode = true;
@@ -202,6 +264,24 @@ export class ModalUIStore {
   closeReadMode() {
     this.closeZenMode();
   }
+
+  get isAnyModalOpen() {
+    return (
+      this.showSettings ||
+      this.showZenMode ||
+      this.showDiceModal ||
+      this.showCanvasSelector ||
+      this.mergeDialog.open ||
+      this.bulkLabelDialog.open ||
+      this.relatedEntityDialog.open ||
+      this.showVaultSwitcher ||
+      this.showShare ||
+      this.imagePromptReview.open ||
+      this.lightbox.show ||
+      this.soundBite.show ||
+      this.revisionDialog.open
+    );
+  }
 }
 
 // The version suffix must be bumped whenever the shape of ModalUIStore changes
@@ -209,6 +289,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v4__";
+const KEY = "__codex_modal_ui_store__v6__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

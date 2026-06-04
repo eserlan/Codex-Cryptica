@@ -106,6 +106,36 @@ export const SoundBiteSchema = z.object({
 
 export type SoundBite = z.infer<typeof SoundBiteSchema>;
 
+export const GuestChatConfigSchema = z.object({
+  isEnabled: z.boolean().default(false),
+  contextScope: z.enum(["public", "hybrid"]).default("public"),
+  extraInstructions: z.string().optional(),
+  isHostReviewable: z.boolean().default(true),
+  keepMemory: z.boolean().default(true),
+});
+
+export type GuestChatConfig = z.infer<typeof GuestChatConfigSchema>;
+
+export const GuestChatMessageSchema = z.object({
+  id: z.string(),
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+  timestamp: z.number(),
+});
+
+export const GuestChatTranscriptSchema = z.object({
+  id: z.string(),
+  guestId: z.string(),
+  guestName: z.string(),
+  characterId: z.string(),
+  characterTitle: z.string(),
+  messages: z.array(GuestChatMessageSchema),
+  lastUpdated: z.number(),
+});
+
+export type GuestChatMessage = z.infer<typeof GuestChatMessageSchema>;
+export type GuestChatTranscript = z.infer<typeof GuestChatTranscriptSchema>;
+
 export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
@@ -137,6 +167,7 @@ export const EntitySchema = z.object({
   _path: z.union([z.string(), z.array(z.string())]).optional(),
   parent: z.string().optional(),
   soundBite: SoundBiteSchema.optional(),
+  guestChatConfig: GuestChatConfigSchema.optional(),
   visibility: z.enum(["visible", "hidden"]).optional(),
 });
 

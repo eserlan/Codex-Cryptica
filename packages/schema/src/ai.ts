@@ -81,6 +81,7 @@ export interface TextGenerationService {
       requestId?: string;
       vaultId?: string;
       existingEntities?: Entity[];
+      systemInstructionOverride?: string;
     },
   ): Promise<void>;
   generateMergeProposal(
@@ -90,7 +91,7 @@ export interface TextGenerationService {
     sources: Entity[],
     options?: { isGuest?: boolean },
   ): Promise<{ body: string; lore?: string }>;
-  reconcileEntityUpdate?(
+  reviseEntityUpdate?(
     apiKey: string,
     modelName: string,
     entity: Entity,
@@ -100,7 +101,13 @@ export interface TextGenerationService {
     },
     relatedEntities?: RelatedEntityContext[],
     categories?: { id: string; label?: string; description?: string }[],
-    options?: { isGuest?: boolean },
+    options?: {
+      isGuest?: boolean;
+      source?: string;
+      instructions?: string;
+      priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+      themeId?: string;
+    },
   ): Promise<{
     content: string;
     lore: string;

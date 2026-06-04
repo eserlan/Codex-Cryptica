@@ -444,9 +444,43 @@ export class SearchEngine {
           let processed = 0;
 
           for (const [k, value] of Object.entries(data.segments)) {
-            const buffer = value as ArrayBuffer;
-            const str = decoder.decode(buffer);
-            parsedData[k] = k === "_docIds" ? JSON.parse(str) : str;
+            let buffer: any = value;
+            let str: string;
+            if (typeof buffer === "string") {
+              str = buffer;
+            } else {
+              const isBinary =
+                buffer &&
+                typeof buffer === "object" &&
+                (buffer instanceof ArrayBuffer ||
+                  ArrayBuffer.isView(buffer) ||
+                  buffer.constructor?.name === "ArrayBuffer" ||
+                  buffer.constructor?.name === "Uint8Array" ||
+                  "byteLength" in buffer);
+
+              if (!isBinary) {
+                if (Array.isArray(buffer)) {
+                  buffer = new Uint8Array(buffer);
+                } else {
+                  const values = Object.values(buffer ?? {});
+                  buffer = new Uint8Array(values as number[]);
+                }
+              }
+              str = decoder.decode(buffer);
+            }
+            if (k === "_docIds") {
+              const docIdsJson = str.trim();
+              if (!docIdsJson) {
+                this.log(
+                  "warn",
+                  "Segmented index data is missing document IDs; skipping import.",
+                );
+                return;
+              }
+              parsedData[k] = JSON.parse(docIdsJson);
+            } else {
+              parsedData[k] = str;
+            }
             processed++;
 
             // Yield back to event loop every 50 segments during heavy imports
@@ -466,7 +500,30 @@ export class SearchEngine {
       ) {
         // Fallback for previous monolithic encoded format
         try {
-          const decoded = new TextDecoder().decode(data.data);
+          let buffer: any = data.data;
+          let decoded: string;
+          if (typeof buffer === "string") {
+            decoded = buffer;
+          } else {
+            const isBinary =
+              buffer &&
+              typeof buffer === "object" &&
+              (buffer instanceof ArrayBuffer ||
+                ArrayBuffer.isView(buffer) ||
+                buffer.constructor?.name === "ArrayBuffer" ||
+                buffer.constructor?.name === "Uint8Array" ||
+                "byteLength" in buffer);
+
+            if (!isBinary) {
+              if (Array.isArray(buffer)) {
+                buffer = new Uint8Array(buffer);
+              } else {
+                const values = Object.values(buffer ?? {});
+                buffer = new Uint8Array(values as number[]);
+              }
+            }
+            decoded = new TextDecoder().decode(buffer);
+          }
           parsedData = JSON.parse(decoded);
         } catch (e) {
           this.log("error", "Failed to decode imported index data", e);

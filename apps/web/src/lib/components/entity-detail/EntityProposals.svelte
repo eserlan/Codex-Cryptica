@@ -9,10 +9,16 @@
     isEditing?: boolean;
   }>();
 
-  // The Set of existing entity titles
-  const existingTitles = $derived(
-    new Set(Object.values(vault.entities || {}).map((e) => e.title)),
-  );
+  // The Set of existing entity titles — for..in avoids two intermediate array
+  // allocations per reactive evaluation (Object.values + .map)
+  const existingTitles = $derived.by(() => {
+    const titles = new Set<string>();
+    const entities = vault.entities || {};
+    for (const key in entities) {
+      titles.add(entities[key].title);
+    }
+    return titles;
+  });
 
   // The list of proposed entity titles
   const proposals = $derived(

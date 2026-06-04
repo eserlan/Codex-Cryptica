@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { solutions, comparisons } from "../apps/web/src/lib/config/seo-pages.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -23,6 +24,14 @@ const staticRoutes = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/blog", changefreq: "weekly", priority: "0.9" },
   { path: "/features", changefreq: "monthly", priority: "0.8" },
+  { path: "/tools", changefreq: "weekly", priority: "0.9" },
+  { path: "/free-rpg-campaign-manager", changefreq: "monthly", priority: "0.9" },
+  { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
+  { path: "/ai-rpg-campaign-manager", changefreq: "monthly", priority: "0.8" },
+  { path: "/tools/dnd-npc-generator", changefreq: "monthly", priority: "0.8" },
+  { path: "/tools/faction-generator", changefreq: "monthly", priority: "0.8" },
+  { path: "/tools/quest-hook-generator", changefreq: "monthly", priority: "0.8" },
+  { path: "/tools/fantasy-name-generator", changefreq: "monthly", priority: "0.8" },
   { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
   { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
   { path: "/terms", changefreq: "yearly", priority: "0.5" },
@@ -78,10 +87,40 @@ const buildXml = (entries) => {
     )
     .join("\n");
 
+  // Solutions pages
+  const solutionRoutes = Object.keys(solutions).map((slug) => ({
+    path: `/solutions/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Comparison pages
+  const comparisonRoutes = Object.keys(comparisons).map((slug) => ({
+    path: `/vs/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Generator pages
+  const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
+    (slug) => ({
+      path: `/generators/${slug}`,
+      changefreq: "monthly",
+      priority: "0.8",
+    }),
+  );
+
+  const allStatic = [
+    ...staticRoutes,
+    ...solutionRoutes,
+    ...comparisonRoutes,
+    ...generatorRoutes,
+  ];
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticRoutes
+${allStatic
   .map(
     (route) => `  <url>
     <loc>${escapeXml(buildUrl(route.path))}</loc>

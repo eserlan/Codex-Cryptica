@@ -33,6 +33,12 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/stores/calendar.svelte", () => ({
+  calendarStore: {
+    init: vi.fn(),
+  },
+}));
+
 import {
   bootSystem,
   initializeGlobalListeners,
@@ -40,6 +46,7 @@ import {
   registerServiceWorker,
 } from "./app-init";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { calendarStore } from "$lib/stores/calendar.svelte";
 
 describe("app-init", () => {
   let listenersCleanup: (() => void)[] = [];
@@ -55,7 +62,7 @@ describe("app-init", () => {
   });
 
   describe("bootSystem", () => {
-    it("should initialize all passed stores and set isStaging", () => {
+    it("should initialize core stores and set isStaging", () => {
       const mockStores = {
         categories: { init: vi.fn() },
         timeline: { init: vi.fn() },
@@ -69,9 +76,9 @@ describe("app-init", () => {
 
       expect(result).toBe(true);
       expect(mockStores.categories.init).toHaveBeenCalled();
-      expect(mockStores.timeline.init).toHaveBeenCalled();
-      expect(mockStores.graph.init).toHaveBeenCalled();
-      expect(mockStores.calendar.init).toHaveBeenCalled();
+      expect(mockStores.timeline.init).not.toHaveBeenCalled();
+      expect(mockStores.graph.init).not.toHaveBeenCalled();
+      expect(mockStores.calendar.init).not.toHaveBeenCalled();
       expect(mockStores.vault.init).toHaveBeenCalled();
       expect(mockStores.sessionModeStore.isStaging).toBe(true);
     });
@@ -194,14 +201,17 @@ describe("app-init", () => {
       );
     });
 
-    it("should handle vault-switched event", () => {
+    it("should lazy-load calendar handling for vault-switched event", async () => {
       const mockCalendarStore = { init: vi.fn() };
       const cleanup = initializeGlobalListeners(mockCalendarStore);
       listenersCleanup.push(cleanup);
 
       window.dispatchEvent(new CustomEvent("vault-switched"));
+      await vi.waitFor(() => {
+        expect(calendarStore.init).toHaveBeenCalled();
+      });
 
-      expect(mockCalendarStore.init).toHaveBeenCalled();
+      expect(mockCalendarStore.init).not.toHaveBeenCalled();
     });
 
     it("should remove event listeners on cleanup", () => {

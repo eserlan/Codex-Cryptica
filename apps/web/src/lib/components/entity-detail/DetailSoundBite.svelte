@@ -44,7 +44,7 @@
   const isGuest = $derived(vault.isGuest);
   const saved = $derived(soundBiteService.savedSoundBite);
   const result = $derived(soundBiteService.result);
-  const isGenerating = $derived(soundBiteService.isGenerating);
+  const isRevising = $derived(soundBiteService.isRevising);
   const error = $derived(soundBiteService.error);
   const hasGuests = $derived(
     p2pHost.isHosting && p2pHost.connections.length > 0,
@@ -269,7 +269,7 @@
         {/if}
 
         <!-- Loading state -->
-      {:else if isGenerating}
+      {:else if isRevising}
         <div class="flex items-center gap-2 text-sm text-theme-muted">
           <span
             class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-accent"
@@ -326,9 +326,9 @@
               <button
                 class="px-2.5 py-1 text-xs rounded bg-theme-accent text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-1"
                 onclick={handleSynthesize}
-                disabled={!editableTranscript.trim() || isGenerating}
+                disabled={!editableTranscript.trim() || isRevising}
               >
-                {#if isGenerating}
+                {#if isRevising}
                   <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
                   ></span>
                 {/if}
@@ -379,22 +379,22 @@
             class="flex items-center gap-2 mt-3 pt-3 border-t border-theme-border"
           >
             {#if !isEditingText}
-              <!-- Regenerate -->
+              <!-- Revise -->
               <button
                 class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
                 onclick={handleGenerate}
-                disabled={isGenerating}
-                title="Regenerate sound bite"
+                disabled={isRevising}
+                title="Revise sound bite"
               >
                 <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
-                Regenerate
+                Revise
               </button>
 
               <!-- Edit Text -->
               <button
                 class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
                 onclick={startEditing}
-                disabled={isGenerating}
+                disabled={isRevising}
                 title="Edit transcript text"
               >
                 <span class="icon-[lucide--edit] w-3 h-3"></span>
@@ -485,9 +485,9 @@
                 <button
                   class="px-2.5 py-1 text-xs rounded bg-theme-accent text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-1"
                   onclick={handleSynthesize}
-                  disabled={!editableTranscript.trim() || isGenerating}
+                  disabled={!editableTranscript.trim() || isRevising}
                 >
-                  {#if isGenerating}
+                  {#if isRevising}
                     <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
                     ></span>
                   {/if}
@@ -533,7 +533,7 @@
               <button
                 class="flex items-center gap-2 px-4 py-1.5 rounded bg-theme-accent text-white text-xs font-medium hover:opacity-90 transition-opacity"
                 onclick={handleGenerate}
-                disabled={isGenerating}
+                disabled={isRevising}
               >
                 <span class="icon-[lucide--mic] w-3.5 h-3.5"></span>
                 Generate Sound Bite
@@ -541,7 +541,7 @@
               <button
                 class="flex items-center gap-2 px-4 py-1.5 rounded border border-theme-border text-theme-muted hover:text-theme-text text-xs font-medium transition-colors"
                 onclick={startEditing}
-                disabled={isGenerating}
+                disabled={isRevising}
               >
                 <span class="icon-[lucide--edit-3] w-3.5 h-3.5"></span>
                 Write Custom Text

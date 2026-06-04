@@ -5,7 +5,7 @@ import {
   type ChatMessage,
 } from "$lib/stores/oracle.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
-import { regenerationService as defaultRegenerationService } from "$lib/services/RegenerationService.svelte";
+import { revisionService as defaultRevisionService } from "$lib/services/RevisionService.svelte";
 import { sanitizeId } from "$lib/utils/markdown";
 import type { ParsedChatMessage } from "./chat-message.helpers";
 
@@ -29,13 +29,13 @@ type ConnectionLike = {
 type VaultLike = typeof defaultVault;
 type OracleLike = typeof defaultOracle;
 type GraphLike = typeof defaultGraph;
-type RegenerationServiceLike = typeof defaultRegenerationService;
+type RevisionServiceLike = typeof defaultRevisionService;
 
 export interface ChatMessageActionsDeps {
   oracle?: OracleLike;
   vault?: VaultLike;
   graph?: GraphLike;
-  regenerationService?: RegenerationServiceLike;
+  revisionService?: RevisionServiceLike;
 }
 
 export interface SavedStateCallbacks {
@@ -46,14 +46,13 @@ export class ChatMessageActions {
   private oracle: OracleLike;
   private vault: VaultLike;
   private graph: GraphLike;
-  private regenerationService: RegenerationServiceLike;
+  private revisionService: RevisionServiceLike;
 
   constructor(deps: ChatMessageActionsDeps = {}) {
     this.oracle = deps.oracle ?? defaultOracle;
     this.vault = deps.vault ?? defaultVault;
     this.graph = deps.graph ?? defaultGraph;
-    this.regenerationService =
-      deps.regenerationService ?? defaultRegenerationService;
+    this.revisionService = deps.revisionService ?? defaultRevisionService;
   }
 
   private finalTargetId(
@@ -132,13 +131,10 @@ export class ChatMessageActions {
       return;
     }
 
-    const updates = await this.oracle.reconcileSmartApply(
-      finalTargetId,
-      incoming,
-    );
+    const updates = await this.oracle.reviseSmartApply(finalTargetId, incoming);
 
     debugStore.log(
-      "[Oracle] Smart Apply reconciled updates:",
+      "[Oracle] Smart Apply revised updates:",
       // Log a summary only — `updates` may contain full content/lore strings
       // which would hold large references in debugStore's ring buffer.
       Object.fromEntries(
@@ -150,7 +146,7 @@ export class ChatMessageActions {
     );
 
     // Instead of immediate update with undo, use the draft flow for a unified experience
-    this.regenerationService.pendingDraft = {
+    this.revisionService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
       source: "oracle-chat",
@@ -230,12 +226,12 @@ export class ChatMessageActions {
     );
     if (!finalTargetId || !params.message.content) return;
 
-    const updates = await this.oracle.reconcileSmartApply(finalTargetId, {
+    const updates = await this.oracle.reviseSmartApply(finalTargetId, {
       chronicle: params.message.content,
     });
 
     const entity = this.vault.entities[finalTargetId] as EntityLike | undefined;
-    this.regenerationService.pendingDraft = {
+    this.revisionService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
       source: "oracle-chat",
@@ -259,12 +255,12 @@ export class ChatMessageActions {
     );
     if (!finalTargetId || !params.message.content) return;
 
-    const updates = await this.oracle.reconcileSmartApply(finalTargetId, {
+    const updates = await this.oracle.reviseSmartApply(finalTargetId, {
       lore: params.message.content,
     });
 
     const entity = this.vault.entities[finalTargetId] as EntityLike | undefined;
-    this.regenerationService.pendingDraft = {
+    this.revisionService.pendingDraft = {
       entityId: finalTargetId,
       messageId: params.message.id,
       source: "oracle-chat",

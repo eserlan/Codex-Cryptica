@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { slide } from "svelte/transition";
 
-  const draft = $derived(regenerationService.pendingDraft);
+  const draft = $derived(revisionService.pendingDraft);
 </script>
 
 {#if draft}
@@ -27,14 +27,14 @@
     <div class="flex items-center gap-2">
       <button
         type="button"
-        onclick={() => regenerationService.discardDraft()}
+        onclick={() => revisionService.discardDraft()}
         class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
       >
         Discard
       </button>
       <button
         type="button"
-        onclick={() => regenerationService.acceptDraft()}
+        onclick={() => revisionService.acceptDraft()}
         class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-theme-primary text-theme-surface hover:bg-theme-primary/80 transition-all rounded shadow-sm focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg focus-visible:outline-none"
       >
         Apply Changes

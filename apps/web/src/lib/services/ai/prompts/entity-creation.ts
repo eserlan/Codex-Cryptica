@@ -53,6 +53,8 @@ GUIDELINES:
 - Prioritize the details from the Canonical Synthesis Summary.
 - Ensure the Name and Type are accurate to the user's intent.
 - Use markdown in the Lore section for section headings, bold names, and bullet lists.
+- For character, npc, or person records, the Lore section MUST include a "## Personality & Voice" heading with concise markdown bullets covering temperament, conversational habits, speech rhythm, word choice, and in-character behavior rules.
+- For character, npc, or person records, the Lore section MUST also include a "## Knowledge & Expertise" heading listing the specific domains, skills, and information this character plausibly knows, and their explicit knowledge limits or blind spots.
 - Preserve specific developments, relationships, and historical context.
 - Output ONLY the structured fields.`;
 }

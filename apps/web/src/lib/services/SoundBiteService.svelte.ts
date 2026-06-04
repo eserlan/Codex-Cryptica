@@ -5,7 +5,7 @@
  * with the DetailSoundBite UI component.
  *
  * Responsibilities:
- *  - Manage transient generation state (isGenerating, result, error)
+ *  - Manage transient generation state (isRevising, result, error)
  *  - Write audio WAV file to OPFS vault (audio/{id}_soundbite.wav)
  *  - Persist / delete the saved sound bite via vault.updateEntity
  */
@@ -40,7 +40,7 @@ import type { TextGenerationService } from "schema";
 // ─── State ────────────────────────────────────────────────────────────────────
 
 class SoundBiteServiceClass {
-  isGenerating = $state(false);
+  isRevising = $state(false);
   result = $state<SoundBiteResult | null>(null);
   error = $state<string | null>(null);
   savedSoundBite = $state<SoundBite | null>(null);
@@ -61,9 +61,9 @@ class SoundBiteServiceClass {
     voiceMode: SoundBiteVoiceMode,
     vaultEntitySummaries: VaultEntitySummary[],
   ): Promise<void> {
-    if (this.isGenerating) return;
+    if (this.isRevising) return;
 
-    this.isGenerating = true;
+    this.isRevising = true;
     this.result = null;
     this.error = null;
 
@@ -84,8 +84,8 @@ class SoundBiteServiceClass {
 
       // Reuse the saved voice profile for TTS only when the voice mode matches
       // the current generation. This preserves speaker timbre across same-mode
-      // regenerations while preventing a scholar's voice (e.g. female) from
-      // bleeding into an entity-mode regeneration for a male character.
+      // revisions while preventing a scholar's voice (e.g. female) from
+      // bleeding into an entity-mode revision for a male character.
       const savedMode = this.savedSoundBite?.voiceMode;
       const savedProfile =
         savedMode === voiceMode
@@ -119,7 +119,7 @@ class SoundBiteServiceClass {
           "Something went wrong generating the sound bite. Please try again.";
       }
     } finally {
-      this.isGenerating = false;
+      this.isRevising = false;
     }
   }
 
@@ -129,9 +129,9 @@ class SoundBiteServiceClass {
     text: string,
     voiceMode: SoundBiteVoiceMode,
   ): Promise<void> {
-    if (this.isGenerating) return;
+    if (this.isRevising) return;
 
-    this.isGenerating = true;
+    this.isRevising = true;
     this.result = null;
     this.error = null;
 
@@ -183,7 +183,7 @@ class SoundBiteServiceClass {
       debugStore.error("[SoundBiteService] synthesizeCustomText error", err);
       this.error = err.message ?? "Failed to synthesize custom text.";
     } finally {
-      this.isGenerating = false;
+      this.isRevising = false;
     }
   }
 
@@ -269,7 +269,7 @@ class SoundBiteServiceClass {
 
   /** Reset transient state (used when switching entities) */
   reset(): void {
-    this.isGenerating = false;
+    this.isRevising = false;
     this.result = null;
     this.error = null;
     this.savedSoundBite = null;
