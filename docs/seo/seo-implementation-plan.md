@@ -43,9 +43,9 @@ graph TD
 
 ### Phase 1: Routing Consolidation & Bug Fixes
 
-- [ ] **Task 1.1: Fix Svelte 5 Reactive Metadata**
+- [x] **Task 1.1: Fix Svelte 5 Reactive Metadata**
   - Refactor page-meta variables in dynamic `/generators/[slug]` and `/solutions/[slug]` routes to use Svelte 5 `$derived()` runes.
-- [ ] **Task 1.2: Consolidate Duplicate Routes**
+- [x] **Task 1.2: Consolidate Duplicate Routes**
   - Set up clean 301 redirects (client-side layout or server response) mapping `/tools/*` to `/generators/*`.
   - Ensure sitemap generator points strictly to canonical `/generators/*` and `/vs/*` endpoints.
 

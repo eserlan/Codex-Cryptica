@@ -32,16 +32,7 @@ export async function GET() {
       changefreq: "monthly",
       priority: "0.8",
     },
-    {
-      path: "/tools/dnd-npc-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    {
-      path: "/tools/faction-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
+
     {
       path: "/tools/vampire-clan-generator",
       changefreq: "monthly",
