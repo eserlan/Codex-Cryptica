@@ -1,6 +1,7 @@
 <script lang="ts">
   import { base } from "$app/paths";
   import { fade } from "svelte/transition";
+  import { safeJsonLd } from "$lib/utils/json-ld";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -306,78 +307,64 @@
     }
   }
 
-  // Generate JSON-LD Structured Data
-  const jsonLd = $derived({
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Codex Cryptica",
-    applicationCategory: "GameApplication",
-    operatingSystem: "Web, Windows, macOS, Linux",
-    description: pageData.description,
-    offers: {
-      "@type": "Offer",
-      price: "0.00",
-      priceCurrency: "USD",
-    },
-    mainEntity: {
-      "@type": "FAQPage",
-      mainEntity: pageData.faq.map((f) => ({
-        "@type": "Question",
-        name: f.question,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: f.answer,
-        },
-      })),
-    },
-  });
+  const pageUrl = $derived(`https://codexcryptica.com/import/${pageData.slug}`);
 
-  const jsonLdScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(jsonLd)}</scr` +
-      `ipt>`,
+  // FAQ Schema
+
+  const faqSchema = $derived(
+    pageData.faq && pageData.faq.length > 0
+      ? safeJsonLd({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: pageData.faq.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: f.answer,
+            },
+          })),
+        })
+      : null,
   );
 
-  const breadcrumb = $derived({
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://codexcryptica.com",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Import",
-        item: "https://codexcryptica.com/import",
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: pageData.h1,
-        item: `https://codexcryptica.com/import/${pageData.slug}`,
-      },
-    ],
-  });
-
-  const breadcrumbScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</scr` +
-      `ipt>`,
+  // Breadcrumb Schema
+  const breadcrumbSchema = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: "https://codexcryptica.com",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: pageData.h1,
+          item: pageUrl,
+        },
+      ],
+    }),
   );
 </script>
 
 <svelte:head>
   <title>{pageData.title}</title>
   <meta name="description" content={pageData.description} />
+  <meta name="keywords" content={pageData.keywords?.join(", ")} />
   <meta name="robots" content="index, follow" />
-  <link
-    rel="canonical"
-    href="https://codexcryptica.com/import/{pageData.slug}"
-  />
-  {@html jsonLdScript}
-  {@html breadcrumbScript}
+  <link rel="canonical" href={pageUrl} />
+  {#if faqSchema}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` + `ipt type="application/ld+json">${faqSchema}</scr` + `ipt>`}
+  {/if}
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${breadcrumbSchema}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div

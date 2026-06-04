@@ -254,6 +254,45 @@
         },
       ],
     },
+    {
+      title: "Migration & Importer Hubs",
+      description:
+        "Migrate your campaign notes, wikis, and databases from other worldbuilding tools into local Codex Cryptica vaults.",
+      groups: [
+        {
+          links: [
+            {
+              href: "/import/obsidian-vault",
+              label: "Obsidian Vault Importer",
+              summary:
+                "Import your Obsidian campaign vault. Convert Markdown files, wiki-links, and YAML frontmatter into Codex.",
+              icon: "icon-[lucide--folder-down]",
+            },
+            {
+              href: "/import/world-anvil-export",
+              label: "World Anvil Importer",
+              summary:
+                "Extract your campaign lore from World Anvil backup JSON exports and preview them offline.",
+              icon: "icon-[lucide--download-cloud]",
+            },
+            {
+              href: "/import/kanka-json",
+              label: "Kanka Importer",
+              summary:
+                "Upload your Kanka campaign JSON export to import characters, locations, factions, and items.",
+              icon: "icon-[lucide--download]",
+            },
+            {
+              href: "/import/legendkeeper-json",
+              label: "LegendKeeper Importer",
+              summary:
+                "Convert your LegendKeeper JSON project backups into offline campaign notes.",
+              icon: "icon-[lucide--file-archive]",
+            },
+          ],
+        },
+      ],
+    },
   ];
 </script>
 

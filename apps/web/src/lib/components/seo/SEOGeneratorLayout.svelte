@@ -6,6 +6,7 @@
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
+  import { safeJsonLd } from "$lib/utils/json-ld";
 
   let {
     canonicalPath,
@@ -126,118 +127,57 @@
     window.location.href = redirectUrl;
   }
 
-  const softwareAppJsonLd = $derived({
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Codex Cryptica",
-    applicationCategory: "GameApplication",
-    operatingSystem: "Web, Windows, macOS, Linux",
-    description: metaDescription,
-    offers: {
-      "@type": "Offer",
-      price: "0.00",
-      priceCurrency: "USD",
-    },
-    ...(faqs.length > 0
-      ? {
-          mainEntity: {
-            "@type": "FAQPage",
-            mainEntity: faqs.map((faq) => ({
-              "@type": "Question",
-              name: faq.question,
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: faq.answer,
-              },
-            })),
-          },
-        }
-      : {}),
-  });
-
-  const softwareAppJsonLdScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(softwareAppJsonLd)}</scr` +
-      `ipt>`,
-  );
-
-  const breadcrumb = $derived(
-    canonicalPath
-      ? (() => {
-          const parts = canonicalPath.split("/").filter(Boolean);
-          const items = [
-            {
-              "@type": "ListItem",
-              position: 1,
-              name: "Home",
-              item: "https://codexcryptica.com",
+  const faqJsonLd = $derived(
+    faqs.length > 0
+      ? safeJsonLd({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.answer,
             },
-          ];
-
-          let currentPath = "";
-          parts.forEach((part, index) => {
-            currentPath += `/${part}`;
-            const isLast = index === parts.length - 1;
-            const name = isLast
-              ? pageTitle.split("|")[0].trim()
-              : (part.charAt(0).toUpperCase() + part.slice(1)).replace(
-                  /-/g,
-                  " ",
-                );
-            items.push({
-              "@type": "ListItem",
-              position: index + 2,
-              name,
-              item: `https://codexcryptica.com${currentPath}`,
-            });
-          });
-
-          return {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: items,
-          };
-        })()
-      : null,
-  );
-
-  const breadcrumbScript = $derived(
-    breadcrumb
-      ? `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</scr` +
-          `ipt>`
+          })),
+        })
       : "",
   );
 
-  const generatorResultJsonLd = $derived(
+  const resultJsonLd = $derived(
     generatedData
-      ? (() => {
-          if (generatedData.type === "character") {
-            return {
-              "@context": "https://schema.org",
-              "@type": "Person",
-              name: generatedData.title,
-              description:
-                generatedData.summary || generatedData.content.slice(0, 200),
-              knowsAbout: generatedData.labels,
-            };
-          } else if (generatedData.type === "location") {
-            return {
+      ? generatedData.type === "character"
+        ? safeJsonLd({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: generatedData.title,
+            description:
+              generatedData.summary ||
+              generatedData.content?.slice(0, 150) ||
+              "",
+            jobTitle: "Fictional Character",
+          })
+        : generatedData.type === "location"
+          ? safeJsonLd({
               "@context": "https://schema.org",
               "@type": "Place",
               name: generatedData.title,
               description:
-                generatedData.summary || generatedData.content.slice(0, 200),
-            };
-          }
-          return null;
-        })()
+                generatedData.summary ||
+                generatedData.content?.slice(0, 150) ||
+                "",
+            })
+          : safeJsonLd({
+              "@context": "https://schema.org",
+              "@type": "CreativeWork",
+              name: generatedData.title,
+              description:
+                generatedData.summary ||
+                generatedData.content?.slice(0, 150) ||
+                "",
+              genre: "Fantasy / RPG Campaign Lore",
+            })
       : null,
-  );
-
-  const generatorResultJsonLdScript = $derived(
-    generatorResultJsonLd
-      ? `<script type="application/ld+json">${JSON.stringify(generatorResultJsonLd)}</scr` +
-          `ipt>`
-      : "",
   );
 
   async function handleGenerate() {
@@ -454,12 +394,15 @@
   <meta name="twitter:description" content={metaDescription} />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
-  {@html softwareAppJsonLdScript}
-  {#if breadcrumbScript}
-    {@html breadcrumbScript}
+  {#if faqJsonLd}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` + `ipt type="application/ld+json">${faqJsonLd}</scr` + `ipt>`}
   {/if}
-  {#if generatorResultJsonLdScript}
-    {@html generatorResultJsonLdScript}
+  {#if resultJsonLd}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html `<scr` +
+      `ipt type="application/ld+json">${resultJsonLd}</scr` +
+      `ipt>`}
   {/if}
 </svelte:head>
 
