@@ -50,10 +50,10 @@
     ],
   };
 
-  const faqSchemaScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(faqSchema)}</scr` +
-      `ipt>`,
-  );
+  const faqSchemaString = $derived(JSON.stringify(faqSchema));
+
+  // Mark reactive variable as used to satisfy eslint no-unused-vars
+  void faqSchemaString;
 
   const capabilities = [
     {
@@ -145,7 +145,9 @@
   />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
   <link rel="help" href="{base}/llms.txt" />
-  {@html faqSchemaScript}
+  <script type="application/ld+json">
+{faqSchemaString}
+  </script>
 </svelte:head>
 
 <div
