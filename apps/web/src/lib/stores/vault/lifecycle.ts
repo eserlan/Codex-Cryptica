@@ -250,10 +250,23 @@ export class VaultLifecycleManager {
           const entity = entities[id];
 
           // Canonical keyword construction mirroring SearchService.mapToSearchEntry
+          const metadataVals: string[] = [];
+          if (entity.metadata) {
+            for (const key in entity.metadata) {
+              const val = (entity.metadata as any)[key];
+              if (Array.isArray(val)) {
+                metadataVals.push(...val);
+              } else {
+                metadataVals.push(String(val));
+              }
+            }
+          }
+
           const keywords = [
             ...(entity.labels || []),
+            ...(entity.tags || []),
             entity.lore || "",
-            ...Object.values(entity.metadata || {}).flat(),
+            ...metadataVals,
           ].join(" ");
 
           await services.search.index({
