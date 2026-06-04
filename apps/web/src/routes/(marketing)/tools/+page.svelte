@@ -204,6 +204,52 @@
                 "Compare offline-friendly browser storage with closed cloud wiki workflows.",
               icon: "icon-[lucide--git-compare]",
             },
+            {
+              href: "/vs/kanka-alternative",
+              label: "Codex Cryptica vs Kanka",
+              summary:
+                "Compare private local-first vaults with cloud-hosted shared wikis and paywalls.",
+              icon: "icon-[lucide--castle]",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      title: "Migration & Imports",
+      description:
+        "Client-side drag-and-drop parsers to preview and import campaign vaults from other services.",
+      groups: [
+        {
+          links: [
+            {
+              href: "/import/obsidian-vault",
+              label: "Obsidian Vault Importer",
+              summary:
+                "Seamlessly convert your Obsidian markdown campaign files into Codex Cryptica format.",
+              icon: "icon-[lucide--folder-open]",
+            },
+            {
+              href: "/import/world-anvil-export",
+              label: "World Anvil JSON Importer",
+              summary:
+                "Extract articles, clean HTML formatting, and preview your campaign wiki offline from JSON backups.",
+              icon: "icon-[lucide--file-json]",
+            },
+            {
+              href: "/import/kanka-json",
+              label: "Kanka JSON Importer",
+              summary:
+                "Convert Kanka campaign JSON exports into standard, local-first offline markdown files.",
+              icon: "icon-[lucide--refresh-cw]",
+            },
+            {
+              href: "/import/legendkeeper-json",
+              label: "LegendKeeper JSON Importer",
+              summary:
+                "Extract LegendKeeper visual maps and slate blocks into clean, parent-child markdown folders.",
+              icon: "icon-[lucide--folder-tree]",
+            },
           ],
         },
       ],
