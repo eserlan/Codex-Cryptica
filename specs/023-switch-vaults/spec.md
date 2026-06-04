@@ -2,7 +2,7 @@
 
 **Feature Branch**: `023-switch-vaults`  
 **Created**: 2026-01-30  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "the ability to detach a vault, so i can mount a different (in case of multiple campaigns)"
 
 ## User Scenarios & Testing _(mandatory)_

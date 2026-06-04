@@ -1,6 +1,7 @@
 import { vault as defaultVault } from "../../stores/vault.svelte";
+import { debugStore } from "../../stores/debug.svelte";
 import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
-import { guestRoster as defaultGuestRoster } from "../../stores/guest";
+import { guestStore as defaultGuestStore } from "../../stores/guest.svelte";
 import { mapStore as defaultMapStore } from "../../stores/map.svelte";
 import { sessionModeStore as defaultSessionModeStore } from "../../stores/ui/session-mode.svelte";
 import { notificationStore as defaultNotificationStore } from "../../stores/ui/notification.svelte";
@@ -10,36 +11,51 @@ import type {
   P2PTransport,
   P2PConnection,
 } from "./transport/transport-interface";
-import { PeerJSTransport } from "./transport/peerjs-transport";
 import { P2PDispatcher } from "./dispatcher/p2p-dispatcher";
 import { VTTHandler } from "./handlers/vtt-handler";
 import { VaultHandler } from "./handlers/vault-handler";
 import { FileHandler } from "./handlers/file-handler";
+import { HostCharChatHandler } from "./handlers/host-char-chat-handler";
 import { createPeer, type PeerFactory } from "./peer-factory";
+import { PeerJSTransport } from "./transport/peerjs-transport";
+import {
+  PeerJSConnectionManager,
+  type ConnectionState,
+} from "./connection-manager.svelte";
 
 type HostDeps = {
   vault?: typeof defaultVault;
   themeStore?: typeof defaultThemeStore;
-  guestRoster?: typeof defaultGuestRoster;
+  guestStore?: typeof defaultGuestStore;
   mapStore?: typeof defaultMapStore;
   sessionModeStore?: typeof defaultSessionModeStore;
   notificationStore?: typeof defaultNotificationStore;
   peerFactory?: PeerFactory;
   transport?: P2PTransport;
   dispatcher?: P2PDispatcher;
+  connectionManager?: PeerJSConnectionManager;
 };
 
 export class P2PHostService {
+  private readonly connectionManager: PeerJSConnectionManager;
   private transport: P2PTransport;
   private dispatcher: P2PDispatcher;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   connections = $state<P2PConnection[]>([]);
-  private _isHosting = false;
+  _isHosting = $state(false);
+
+  state = $state<ConnectionState>({
+    status: "idle",
+    latencyMs: -1,
+    peerId: null,
+    remotePeerId: null,
+    retryCount: 0,
+  });
 
   private readonly vault: typeof defaultVault;
   private readonly themeStore: typeof defaultThemeStore;
-  private readonly guestRoster: typeof defaultGuestRoster;
+  private readonly guestStore: typeof defaultGuestStore;
   private readonly mapStore: typeof defaultMapStore;
   private readonly sessionModeStore: typeof defaultSessionModeStore;
   private readonly notificationStore: typeof defaultNotificationStore;
@@ -47,11 +63,14 @@ export class P2PHostService {
   constructor(deps: HostDeps = {}) {
     this.vault = deps.vault ?? defaultVault;
     this.themeStore = deps.themeStore ?? defaultThemeStore;
-    this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
+    this.guestStore = deps.guestStore ?? defaultGuestStore;
     this.mapStore = deps.mapStore ?? defaultMapStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
 
+    this.connectionManager =
+      deps.connectionManager ??
+      new PeerJSConnectionManager(deps.peerFactory ?? createPeer);
     this.transport =
       deps.transport ?? new PeerJSTransport(deps.peerFactory ?? createPeer);
     this.dispatcher = deps.dispatcher ?? new P2PDispatcher();
@@ -64,36 +83,75 @@ export class P2PHostService {
     this.dispatcher.register(new VTTHandler());
     this.dispatcher.register(new VaultHandler());
     this.dispatcher.register(new FileHandler());
+    this.dispatcher.register(new HostCharChatHandler());
   }
 
   private setupTransportListeners() {
     this.transport.on("connection", (conn: P2PConnection) => {
-      console.log("[P2P Host] New guest connected:", conn.peer);
+      debugStore.log("[P2P Host] New guest connected:", conn.peer);
       this.connections.push(conn);
     });
 
     this.transport.on("data", async ({ conn, data }) => {
-      await this.dispatcher.dispatch(data, conn, this.getHandlerContext());
+      if (data && typeof data === "object") {
+        if (data.type === "handshake") {
+          debugStore.log("[P2P Host] Received handshake from:", conn.peer);
+          const ack = {
+            type: "handshake_ack",
+            senderId: this.transport.id || "",
+            timestamp: Date.now(),
+            payload: null,
+          };
+          conn.send(ack);
+          return;
+        }
+        if (data.type === "ping") {
+          const pong = {
+            type: "pong",
+            senderId: this.transport.id || "",
+            timestamp: (data as any).timestamp || Date.now(),
+            payload: null,
+          };
+          conn.send(pong);
+          return;
+        }
+      }
+      // Unwrap PeerJSMessage envelope if present (e.g. from connection manager)
+      let messageToDispatch = data;
+      if (
+        data &&
+        typeof data === "object" &&
+        "senderId" in data &&
+        "payload" in data
+      ) {
+        messageToDispatch = (data as any).payload;
+      }
+      await this.dispatcher.dispatch(
+        messageToDispatch,
+        conn,
+        this.getHandlerContext(),
+      );
     });
 
-    this.transport.on("error", (err) =>
-      console.error("[P2P Host] Transport error:", err),
-    );
+    this.transport.on("error", (err) => {
+      console.error("[P2P Host] Transport error:", err);
+      this.state.status = "failed";
+    });
 
     this.transport.on("close", (peerId) => {
       if (peerId) {
         this.connections = this.connections.filter((c) => c.peer !== peerId);
         // Restore cleanup on disconnect
         mapSession.clearGuestOwnership(peerId);
-        this.guestRoster.update((current: any) => {
-          const { [peerId]: _, ...rest } = current;
-          return rest;
-        });
+        const { [peerId]: _, ...rest } = this.guestStore.guestRoster;
+        this.guestStore.guestRoster = rest;
       }
     });
   }
 
   private getHandlerContext() {
+    // Lazy singleton reference — avoids circular import, resolved at runtime
+    const oracle = (globalThis as any).__codex_oracle_instance__;
     return {
       vault: this.vault,
       sessionModeStore: this.sessionModeStore,
@@ -101,8 +159,9 @@ export class P2PHostService {
       mapSession: mapSession,
       mapStore: this.mapStore,
       themeStore: this.themeStore,
-      guestRoster: this.guestRoster,
+      guestStore: this.guestStore,
       transport: this.transport,
+      oracle,
     };
   }
 
@@ -122,10 +181,13 @@ export class P2PHostService {
     const peerId = crypto.randomUUID();
     onPeerId?.(peerId);
 
+    this.state.status = "connecting";
     const id = await this.transport.start(peerId);
-    console.log("[P2P Host] Hosting started. ID:", id);
+    debugStore.log("[P2P Host] Hosting started. ID:", id);
 
     this._isHosting = true;
+    this.state.status = "connected";
+    this.state.peerId = id;
     mapSession.setBroadcaster((message) => this.broadcastVttMessage(message));
     mapSession.myPeerId = id;
 
@@ -141,7 +203,7 @@ export class P2PHostService {
     this.vault.onBatchUpdate = (updates) => this.broadcastBatchUpdate(updates);
     this.themeStore.onThemeUpdate = (themeId) =>
       this.broadcastThemeUpdate(themeId);
-    this.guestRoster.set({});
+    this.guestStore.guestRoster = {};
   }
 
   private startHeartbeat() {
@@ -243,6 +305,13 @@ export class P2PHostService {
     this.transport.broadcast({ type: "THEME_UPDATE", payload: themeId });
   }
 
+  public broadcastSoundBitePlay(entityId: string) {
+    this.transport.broadcast({
+      type: "SOUND_BITE_PLAY",
+      entityId,
+    });
+  }
+
   stopHosting() {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
@@ -252,11 +321,13 @@ export class P2PHostService {
     this.vault.onEntityDelete = undefined;
     this.vault.onBatchUpdate = undefined;
     this.themeStore.onThemeUpdate = undefined;
-    this.guestRoster.set({});
+    this.guestStore.guestRoster = {};
     mapSession.setBroadcaster(null);
     mapSession.myPeerId = null;
     this.transport.stop();
     this._isHosting = false;
+    this.state.status = "disconnected";
+    this.state.peerId = null;
     this.connections = [];
   }
 }

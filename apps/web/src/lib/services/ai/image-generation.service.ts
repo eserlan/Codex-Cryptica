@@ -1,11 +1,12 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
-import type { ImageGenerationService } from "schema";
+import type { ImageGenerationService, ImageGenerationOptions } from "schema";
 import {
   buildVisualCanonResolutionPrompt,
   buildVisualPromptGenerationPrompt,
 } from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 import { GEMINI_API_BASE_URL } from "../../config/oracle-constants";
+import { classifyApiError } from "./api-error-classifier";
 
 export class DefaultImageGenerationService implements ImageGenerationService {
   constructor(private aiClientManager = defaultAiClientManager) {}
@@ -63,79 +64,204 @@ export class DefaultImageGenerationService implements ImageGenerationService {
     apiKey: string,
     prompt: string,
     modelName: string,
+    options?: ImageGenerationOptions,
   ): Promise<Blob> {
     assertAIEnabled();
-
-    // If no API key, use proxy path via client manager
-    if (!apiKey) {
-      console.log(
-        `[ImageGenerationService] Generating image via proxy: ${modelName}`,
+    const provider = options?.provider || "gemini";
+    if (provider === "custom" && !apiKey) {
+      throw new Error(
+        "A custom image provider API key is required for image generation.",
       );
-      const model = await this.aiClientManager.getModel("", modelName);
-
-      const response = await (model as any).generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_modalities: ["IMAGE"],
-        },
-      });
-
-      // Use the raw response for consistent parsing
-      return this.processImageResponse(response.rawResponse || response);
+    }
+    if (provider === "cloudflare" && options?.cloudflareAccountId && !apiKey) {
+      throw new Error(
+        "A Cloudflare API token is required when a custom Cloudflare Account ID is configured.",
+      );
     }
 
+    // Fetch the raw API response, classifying network/quota/offline errors.
+    // processImageResponse is called outside this block so its specific
+    // messages (no image data, text returned) propagate without being replaced.
+    let rawData: any;
     try {
-      console.log(
-        `[ImageGenerationService] Generating image directly with model: ${modelName}`,
-      );
-      const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
+      if (provider === "cloudflare") {
+        const cfAccountId = options?.cloudflareAccountId;
+        const cfApiToken = apiKey;
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
+        if (cfAccountId && cfApiToken) {
+          console.log(
+            `[ImageGenerationService] Generating image via direct Cloudflare Workers AI: ${modelName}`,
+          );
+          const url = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelName}`;
+          const form = new FormData();
+          form.append("prompt", prompt);
+          form.append("width", "1024");
+          form.append("height", "1024");
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${cfApiToken}`,
+            },
+            body: form,
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            const message = err.errors?.[0]?.message || response.statusText;
+            throw new Error(
+              `Cloudflare Workers AI Error (${modelName}): ${message}`,
+            );
+          }
+
+          const json = await response.json();
+          const b64 = json.result?.image;
+          if (!b64) {
+            throw new Error("No image data found in Cloudflare response");
+          }
+          rawData = {
+            candidates: [
+              {
+                content: {
+                  parts: [{ inlineData: { data: b64, mimeType: "image/png" } }],
                 },
-              ],
+              },
+            ],
+          };
+        } else {
+          console.log(
+            `[ImageGenerationService] Generating image via proxy using Cloudflare Workers AI: ${modelName}`,
+          );
+          const proxyUrl =
+            "https://oracle-proxy.espen-erlandsen.workers.dev/v1/images/generations";
+          const response = await fetch(proxyUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: modelName,
+              prompt: prompt,
+            }),
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            const message = err.error?.message || response.statusText;
+            throw new Error(
+              `Proxy Cloudflare Image Generation Error (${modelName}): ${message}`,
+            );
+          }
+
+          const json = await response.json();
+          const b64 = json.result?.image;
+          if (!b64) {
+            throw new Error(
+              "No image data returned from proxy Cloudflare Workers AI",
+            );
+          }
+          rawData = {
+            candidates: [
+              {
+                content: {
+                  parts: [{ inlineData: { data: b64, mimeType: "image/png" } }],
+                },
+              },
+            ],
+          };
+        }
+      } else if (provider === "custom") {
+        console.log(
+          `[ImageGenerationService] Generating image via custom provider: ${modelName}`,
+        );
+        const customBaseUrl =
+          options?.baseUrl || "https://api.together.xyz/v1/images/generations";
+        const response = await fetch(customBaseUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: modelName,
+            prompt: prompt,
+            response_format: "b64_json",
+            n: 1,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          const message = err.error?.message || response.statusText;
+          throw new Error(
+            `Custom Image Generation Error (${modelName}): ${message}`,
+          );
+        }
+
+        const json = await response.json();
+        const b64 = json.data?.[0]?.b64_json;
+        if (!b64) {
+          throw new Error("No b64_json found in custom provider response");
+        }
+        // Mock the gemini response structure so processImageResponse works:
+        rawData = {
+          candidates: [
+            {
+              content: {
+                parts: [{ inlineData: { data: b64, mimeType: "image/png" } }],
+              },
             },
           ],
+        };
+      } else if (!apiKey) {
+        console.log(
+          `[ImageGenerationService] Generating image via proxy: ${modelName}`,
+        );
+        const model = await this.aiClientManager.getModel("", modelName);
+        const response = await (model as any).generateContent({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
             response_modalities: ["IMAGE"],
           },
-        }),
-      });
+        });
+        rawData = response.rawResponse || response;
+      } else {
+        console.log(
+          `[ImageGenerationService] Generating image directly with model: ${modelName}`,
+        );
+        const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { response_modalities: ["IMAGE"] },
+          }),
+        });
 
-      if (!response.ok) {
-        const err = await response.json();
-        const message = err.error?.message || response.statusText;
-
-        if (
-          message.toLowerCase().includes("safety") ||
-          message.toLowerCase().includes("block")
-        ) {
-          throw new Error(
-            "The Oracle cannot visualize this request due to safety policies.",
-          );
+        if (!response.ok) {
+          const err = await response.json();
+          const message = err.error?.message || response.statusText;
+          throw new Error(`Image Generation Error (${modelName}): ${message}`);
         }
-        throw new Error(`Image Generation Error (${modelName}): ${message}`);
+        rawData = await response.json();
       }
-
-      const data = await response.json();
-      return this.processImageResponse(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const classified = classifyApiError(err);
       console.error(
         `[ImageGenerationService] Image generation failed:`,
-        err.message,
+        classified.message,
       );
-      throw err;
+      const message =
+        classified.type === "safety"
+          ? "The Oracle cannot visualize this request due to safety policies."
+          : classified.message;
+      throw new Error(message, { cause: err });
     }
+
+    return this.processImageResponse(rawData);
   }
 
   private processImageResponse(data: any): Blob {
@@ -147,7 +273,11 @@ export class DefaultImageGenerationService implements ImageGenerationService {
 
     // Find the part containing image data
     const imagePart = parts.find((p: any) => p.inlineData);
-    const base64Data = imagePart?.inlineData?.data;
+    const directImageData =
+      typeof data?.result?.image === "string" ? data.result.image : undefined;
+    const base64Data = this.cleanBase64ImageData(
+      imagePart?.inlineData?.data || directImageData,
+    );
 
     if (!base64Data) {
       // Fallback for text-only responses or errors
@@ -171,12 +301,29 @@ export class DefaultImageGenerationService implements ImageGenerationService {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const mimeType = imagePart.inlineData.mimeType || "image/png";
+      const mimeType =
+        imagePart?.inlineData?.mimeType ||
+        this.inferMimeTypeFromBase64(base64Data) ||
+        "image/png";
       return new Blob([bytes], { type: mimeType });
     } catch (e) {
       console.error("[ImageGenerationService] Failed to decode base64:", e);
       throw new Error("Failed to process image data from AI", { cause: e });
     }
+  }
+
+  private cleanBase64ImageData(value?: string): string | undefined {
+    if (!value) return undefined;
+    const trimmed = value.trim();
+    const dataUrlMatch = trimmed.match(/^data:([^;]+);base64,([\s\S]+)$/i);
+    return (dataUrlMatch?.[2] || trimmed).replace(/\s+/g, "");
+  }
+
+  private inferMimeTypeFromBase64(value: string): string | undefined {
+    if (value.startsWith("iVBORw0KGgo")) return "image/png";
+    if (value.startsWith("/9j/")) return "image/jpeg";
+    if (value.startsWith("UklGR")) return "image/webp";
+    return undefined;
   }
 }
 

@@ -44,8 +44,17 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
       handlers.onViewportChange(null);
     }
 
-    // ⚡ LOD (Level of Detail) Optimization
+    // ⚡ LOD (Level of Detail) & Wheel Sensitivity Optimization
     const zoom = cy.zoom();
+
+    // Dynamic wheel sensitivity scaling:
+    // Zoomed out (e.g. 0.2) -> Higher sensitivity (up to 3.0) to stay responsive.
+    // Zoomed in (e.g. 5.0) -> Lower sensitivity (down to 0.15) for precision.
+    const dynamicSensitivity = Math.max(0.15, Math.min(3.0, 1.0 / zoom));
+    if (typeof (cy as any).options === "function") {
+      (cy as any).options({ wheelSensitivity: dynamicSensitivity });
+    }
+
     let currentLod: typeof lastLod = "high";
     if (zoom < 0.2) currentLod = "low";
     else if (zoom < 0.5) currentLod = "medium";

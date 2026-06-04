@@ -1,4 +1,4 @@
-import { entityDb } from "../utils/entity-db";
+import { entityDb, type GraphEntityRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 import { debugStore } from "../stores/debug.svelte";
 
@@ -14,6 +14,14 @@ function parseKey(key: string): { vaultId: string; filePath: string } {
     vaultId: key.substring(0, idx),
     filePath: key.substring(idx + 1),
   };
+}
+
+function normalizePath(
+  path: string | string[] | undefined,
+  filePath: string,
+): string[] {
+  const raw = path || filePath.split("/");
+  return typeof raw === "string" ? raw.split("/") : raw;
 }
 
 export class CacheService {
@@ -33,15 +41,13 @@ export class CacheService {
   private _preloadedVaultId: string | null = null;
 
   /**
-   * Bulk-loads graph entity metadata from the `graphEntities` table (which
-   * excludes `content` and `lore` fields stored separately in `entityContent`)
-   * for the given vault into an in-memory map.  Calling this once before
-   * iterating over individual OPFS files reduces N per-file IDB round-trips to
-   * a single table scan, significantly speeding up warm cache loads.
+   * Bulk-loads graph entity metadata and content (but not lore) from Dexie for
+   * the given vault into an in-memory map.  Calling this once before iterating
+   * over individual OPFS files reduces N per-file IDB round-trips to two table
+   * scans, significantly speeding up warm cache loads.
    *
-   * `entityContent` is intentionally excluded from this preload to keep the
-   * startup read lightweight and to preserve the lazy-loading goal for heavy
-   * text fields.
+   * `lore` is intentionally excluded — it can be large and is only needed when
+   * an entity is actively opened for editing.
    *
    * Safe to call even when Dexie is unavailable (e.g. in test environments)
    * — any error is swallowed and the service falls back to per-file lookups.
@@ -52,10 +58,15 @@ export class CacheService {
     try {
       debugStore.log(`[CacheService] Preloading vault: ${vaultId}`);
       const start = performance.now();
-      const graphRecords = await entityDb.graphEntities
-        .where("vaultId")
-        .equals(vaultId)
-        .toArray();
+      const [graphRecords, contentRecords] = await Promise.all([
+        entityDb.graphEntities.where("vaultId").equals(vaultId).toArray(),
+        entityDb.entityContent.where("vaultId").equals(vaultId).toArray(),
+      ]);
+
+      // Build a fast entityId → content lookup so the loop below is O(1) per entity
+      const contentByEntityId = new Map(
+        contentRecords.map((r) => [r.entityId, r.content]),
+      );
 
       const map = new Map<
         string,
@@ -66,9 +77,9 @@ export class CacheService {
         const { vaultId: _vid, lastModified, filePath, ...graphData } = record;
         const entity: LocalEntity = {
           ...graphData,
-          // Content starts as empty — loaded lazily when the entity is opened.
-          content: "",
-          lore: undefined,
+          content: contentByEntityId.get(String(graphData.id)) ?? "",
+          lore: undefined, // lore is large — kept lazy-loaded per entity
+          _path: normalizePath(graphData._path, filePath),
         };
         map.set(`${vaultId}:${filePath}`, { lastModified, entity });
       }
@@ -123,10 +134,18 @@ export class CacheService {
         filePath: _fp,
         ...graphData
       } = record;
+
+      // Also load content for this entity (lore stays lazy)
+      const contentRecord = await entityDb.entityContent
+        .where("[vaultId+entityId]")
+        .equals([vaultId, String(graphData.id)])
+        .first();
+
       const entity: LocalEntity = {
         ...graphData,
-        content: "",
+        content: contentRecord?.content ?? "",
         lore: undefined,
+        _path: normalizePath(graphData._path, _fp),
       };
       return { lastModified, entity };
     } catch (err) {
@@ -152,38 +171,26 @@ export class CacheService {
     entity: LocalEntity,
   ): Promise<void> {
     try {
-      // Svelte 5: Ensure we have a non-reactive, serializable clone.
-      // We use JSON.parse/stringify as the absolute filter to strip any
-      // Proxies, Symbols, or non-serializable garbage that Dexie/IndexedDB might reject.
-      const raw = JSON.parse(JSON.stringify($state.snapshot(entity)));
+      // $state.snapshot() returns a deep non-reactive POJO — Proxies and
+      // Symbols are already stripped, so a second JSON round-trip is redundant.
+      const raw = $state.snapshot(entity) as Record<string, any>;
 
       const { vaultId, filePath } = parseKey(path);
 
       // Separate heavy text from graph metadata
       const { content, lore, ...graphData } = raw;
 
-      // We manually construct the record to be absolutely sure no hidden
-      // non-serializable fields (like Proxies or nested arrays with issues)
-      // are passed to Dexie.
+      // Explicitly shape the Dexie record to match the GraphEntityRecord schema.
+      // Since `raw` is a non-reactive deep copy from $state.snapshot(), we can trust its structure.
       const graphRecord = {
-        id: String(raw.id),
-        type: String(raw.type),
-        title: String(raw.title),
-        tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
-        labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
-        aliases: Array.isArray(raw.aliases) ? [...raw.aliases] : [],
-        connections: Array.isArray(raw.connections) ? raw.connections : [],
-        image: raw.image ? String(raw.image) : undefined,
-        thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
-        metadata: raw.metadata ?? {},
+        ...graphData,
         updatedAt:
           typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
         status: raw.status || "active",
-        _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
-        vaultId: String(vaultId),
-        lastModified: Number(lastModified),
-        filePath: String(filePath),
-      };
+        vaultId,
+        lastModified,
+        filePath,
+      } as unknown as GraphEntityRecord;
 
       await entityDb.transaction(
         "rw",
@@ -203,8 +210,9 @@ export class CacheService {
       if (this.preloaded) {
         const graphEntity: LocalEntity = {
           ...graphData,
-          content: "",
-          lore: undefined,
+          content: String(content || ""),
+          lore: undefined, // lore stays lazy
+          _path: normalizePath(graphData._path, filePath),
         } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
       }
@@ -214,6 +222,88 @@ export class CacheService {
         err,
       );
       // Non-fatal — the OPFS file is the source of truth.
+    }
+  }
+
+  /**
+   * Bulk persists multiple graph entities and their content to Dexie and updates
+   * the in-memory preload cache in a single transaction.
+   */
+  async bulkSet(
+    entries: Array<{
+      path: string;
+      lastModified: number;
+      entity: LocalEntity;
+    }>,
+  ): Promise<void> {
+    if (entries.length === 0) return;
+    try {
+      const graphRecords: GraphEntityRecord[] = [];
+      const contentRecords: any[] = [];
+      const preloadUpdates: Array<{
+        path: string;
+        lastModified: number;
+        entity: LocalEntity;
+      }> = [];
+
+      for (const entry of entries) {
+        const { path, lastModified, entity } = entry;
+        const raw = $state.snapshot(entity) as Record<string, any>;
+        const { vaultId, filePath } = parseKey(path);
+        const { content, lore, ...graphData } = raw;
+
+        const graphRecord = {
+          ...graphData,
+          updatedAt:
+            typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+          status: raw.status || "active",
+          vaultId,
+          lastModified,
+          filePath,
+        } as unknown as GraphEntityRecord;
+
+        graphRecords.push(graphRecord);
+        contentRecords.push({
+          entityId: String(raw.id),
+          vaultId: String(vaultId),
+          content: String(content || ""),
+          lore: String(lore || ""),
+        });
+
+        preloadUpdates.push({
+          path,
+          lastModified,
+          entity: {
+            ...graphData,
+            content: String(content || ""),
+            lore: undefined, // lore stays lazy
+            _path: normalizePath(graphData._path, filePath),
+          } as LocalEntity,
+        });
+      }
+
+      await entityDb.transaction(
+        "rw",
+        [entityDb.graphEntities, entityDb.entityContent],
+        async () => {
+          await entityDb.graphEntities.bulkPut(graphRecords);
+          await entityDb.entityContent.bulkPut(contentRecords);
+        },
+      );
+
+      if (this.preloaded) {
+        for (const update of preloadUpdates) {
+          this.preloaded.set(update.path, {
+            lastModified: update.lastModified,
+            entity: update.entity,
+          });
+        }
+      }
+    } catch (err) {
+      debugStore.error(
+        `[CacheService] Failed bulk save of ${entries.length} entities to Dexie:`,
+        err,
+      );
     }
   }
 

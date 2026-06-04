@@ -1,5 +1,3 @@
-import { writable } from "svelte/store";
-
 export interface LogEntry {
   timestamp: number;
   level: "info" | "warn" | "error";
@@ -7,23 +5,41 @@ export interface LogEntry {
   data?: unknown;
 }
 
-function createDebugStore() {
-  const { subscribe, update } = writable<LogEntry[]>([]);
+export class DebugStore {
+  logs = $state<LogEntry[]>([]);
 
-  const addLog = (level: LogEntry["level"], message: string, data?: any) => {
-    update((logs) => {
-      const newLog = { timestamp: Date.now(), level, message, data };
-      return [newLog, ...logs].slice(0, 500); // Keep last 500 logs
-    });
-  };
+  log(msg: string, data?: any) {
+    this.addLog("info", msg, data);
+  }
 
-  return {
-    subscribe,
-    log: (msg: string, data?: any) => addLog("info", msg, data),
-    warn: (msg: string, data?: any) => addLog("warn", msg, data),
-    error: (msg: string, data?: any) => addLog("error", msg, data),
-    clear: () => update(() => []),
-  };
+  warn(msg: string, data?: any) {
+    this.addLog("warn", msg, data);
+  }
+
+  error(msg: string, data?: any) {
+    this.addLog("error", msg, data);
+  }
+
+  clear() {
+    this.logs = [];
+  }
+
+  private addLog(level: LogEntry["level"], message: string, data?: any) {
+    const newLog = { timestamp: Date.now(), level, message, data };
+    this.logs = [newLog, ...this.logs].slice(0, 500);
+    if (
+      import.meta.env.DEV ||
+      (typeof window !== "undefined" && (window as any).__E2E__)
+    ) {
+      const method =
+        level === "error" ? "error" : level === "warn" ? "warn" : "log";
+      if (data) {
+        console[method](`[DebugStore] ${message}`, data);
+      } else {
+        console[method](`[DebugStore] ${message}`);
+      }
+    }
+  }
 }
 
-export const debugStore = createDebugStore();
+export const debugStore = new DebugStore();

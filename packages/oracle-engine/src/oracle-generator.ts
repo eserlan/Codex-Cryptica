@@ -1,21 +1,125 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
+import { resolveArtDirection } from "schema";
+import {
+  DEFAULT_CF_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_MODEL,
+} from "./image-defaults";
+
+interface VisualEntityLike {
+  id?: string;
+  title: string;
+  type?: string;
+  categoryId?: string;
+  labels?: string[];
+  content?: string;
+  lore?: string;
+  artDirection?: string;
+}
+
+export interface PreparedVisualizationPrompt {
+  prompt: string;
+}
 
 export class OracleGenerator {
-  private buildEntityVisualQuery(entity: {
-    title: string;
-    labels?: string[];
-  }): string {
-    const labels = (entity.labels || []).filter(Boolean);
-    if (labels.length === 0) {
-      return `A visualization of ${entity.title}`;
+  private buildEntityVisualQuery(
+    entity: VisualEntityLike,
+    context?: OracleExecutionContext,
+    options: { ignoreSavedArtDirection?: boolean } = {},
+  ): string {
+    const artDirection = resolveArtDirection({
+      subject: entity.title,
+      entityId: entity.id,
+      entityTitle: entity.title,
+      categoryId: entity.categoryId || entity.type,
+      categoryLabel: entity.type,
+      themeId: context?.uiStore?.activeThemeId,
+      surface: "entity",
+      entityArtDirection: options.ignoreSavedArtDirection
+        ? undefined
+        : this.extractEntityArtDirection(entity),
+    });
+
+    return this.appendVisualLabels(artDirection.prompt, entity.labels);
+  }
+
+  private buildMessageVisualQuery(
+    message: ChatMessage,
+    entity: VisualEntityLike | null,
+    context: OracleExecutionContext,
+  ): string {
+    if (entity) {
+      return this.buildEntityVisualQuery(entity, context);
     }
 
-    return `A visualization of ${entity.title}
+    const commandSubject = this.extractDrawCommandSubject(message.content);
+    const artDirection = resolveArtDirection({
+      subject: commandSubject.subject,
+      surface: "chat",
+      categoryId: commandSubject.categoryId,
+      categoryIdIsHint: Boolean(commandSubject.categoryId),
+      themeId: context.uiStore?.activeThemeId,
+      userAuthoredArtDirection: this.extractArtDirectionFromText(
+        message.content,
+      ),
+    });
+
+    return artDirection.prompt;
+  }
+
+  private appendVisualLabels(basePrompt: string, labels?: string[]): string {
+    const cleanLabels = (labels || []).filter(Boolean);
+    if (cleanLabels.length === 0) return basePrompt;
+
+    return `${basePrompt}
 
 HIGH-PRIORITY VISUAL LABELS:
-${labels.map((label) => `- ${label}`).join("\n")}
+${cleanLabels.map((label) => `- ${label}`).join("\n")}
 
 Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
+  }
+
+  private extractEntityArtDirection(entity: VisualEntityLike) {
+    return (
+      entity.artDirection ||
+      this.extractArtDirectionFromText(entity.content) ||
+      this.extractArtDirectionFromText(entity.lore)
+    );
+  }
+
+  private extractArtDirectionFromText(text?: string) {
+    if (!text) return undefined;
+    const match = text.match(
+      /(?:^|\n)#{1,4}\s*(?:art direction|default art style|visual direction)\s*\n+([\s\S]*?)(?=\n#{1,4}\s|\n---|\s*$)/i,
+    );
+    return match?.[1]?.trim();
+  }
+
+  private extractMessageSubject(content: string) {
+    const firstLine = content
+      .split("\n")
+      .map((line) => line.trim())
+      .find(Boolean);
+    return (firstLine || content).slice(0, 180);
+  }
+
+  private extractDrawCommandSubject(content: string): {
+    subject: string;
+    categoryId?: string;
+  } {
+    const firstLine = this.extractMessageSubject(content);
+    const match = firstLine.match(/^\/(?:draw|image)\s+(.+)$/i);
+    if (!match) return { subject: firstLine };
+
+    const rawSubject = match[1].trim();
+    const categoryMatch = rawSubject.match(
+      /^(character|npc|creature|location|place|item|object|faction|event|note|concept|world|cover)\s+(.+)$/i,
+    );
+    if (!categoryMatch) return { subject: rawSubject };
+
+    return {
+      categoryId: categoryMatch[1].toLowerCase(),
+      subject: categoryMatch[2].trim(),
+    };
   }
 
   /**
@@ -199,8 +303,19 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     entityId: string,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const apiKey = context.effectiveApiKey || "";
+    const { prompt } = await this.prepareEntityVisualizationPrompt(
+      entityId,
+      context,
+    );
+    return this.generateVisualizationFromPrompt(prompt, context);
+  }
 
+  async prepareEntityVisualizationPrompt(
+    entityId: string,
+    context: OracleExecutionContext,
+    options: { ignoreSavedArtDirection?: boolean } = {},
+  ): Promise<PreparedVisualizationPrompt> {
+    const apiKey = context.effectiveApiKey || "";
     const entity = context.vault.entities[entityId];
     const { content: aiContext } =
       await context.contextRetrieval.retrieveContext(
@@ -211,19 +326,15 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         true,
       );
 
-    const visualPrompt = await context.imageGeneration.distillVisualPrompt(
-      apiKey,
-      this.buildEntityVisualQuery(entity),
-      aiContext,
-      context.modelName,
-      context.isDemoMode,
-    );
-
-    return await context.imageGeneration.generateImage(
-      apiKey,
-      visualPrompt,
-      "gemini-3.1-flash-image-preview",
-    );
+    return {
+      prompt: await context.imageGeneration.distillVisualPrompt(
+        apiKey,
+        this.buildEntityVisualQuery(entity, context, options),
+        aiContext,
+        context.modelName,
+        context.isDemoMode,
+      ),
+    };
   }
 
   /**
@@ -233,8 +344,18 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     message: ChatMessage,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const apiKey = context.effectiveApiKey || "";
+    const { prompt } = await this.prepareMessageVisualizationPrompt(
+      message,
+      context,
+    );
+    return this.generateVisualizationFromPrompt(prompt, context);
+  }
 
+  async prepareMessageVisualizationPrompt(
+    message: ChatMessage,
+    context: OracleExecutionContext,
+  ): Promise<PreparedVisualizationPrompt> {
+    const apiKey = context.effectiveApiKey || "";
     const entity = message.entityId
       ? context.vault.entities[message.entityId]
       : null;
@@ -249,146 +370,55 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         true,
       );
 
-    const visualPrompt = await context.imageGeneration.distillVisualPrompt(
-      apiKey,
-      entity ? this.buildEntityVisualQuery(entity) : message.content,
-      aiContext,
-      context.modelName,
-      context.isDemoMode,
-    );
+    return {
+      prompt: await context.imageGeneration.distillVisualPrompt(
+        apiKey,
+        this.buildMessageVisualQuery(message, entity, context),
+        aiContext,
+        context.modelName,
+        context.isDemoMode,
+      ),
+    };
+  }
+
+  async generateVisualizationFromPrompt(
+    prompt: string,
+    context: OracleExecutionContext,
+  ): Promise<Blob> {
+    const apiKey = context.effectiveApiKey || "";
+    const isCustom = context.imageProvider === "custom";
+    const isCloudflare = context.imageProvider === "cloudflare";
+
+    let targetKey = apiKey;
+    if (isCustom && context.customImageApiKey) {
+      targetKey = context.customImageApiKey;
+    } else if (isCloudflare) {
+      targetKey = "";
+    }
+
+    let targetModel = "gemini-2.5-flash-image";
+    if (isCustom) {
+      targetModel = context.customImageModel || DEFAULT_CUSTOM_IMAGE_MODEL;
+    } else if (isCloudflare) {
+      targetModel = context.cloudflareModel || DEFAULT_CF_IMAGE_MODEL;
+    }
+
+    const needsKey =
+      (isCustom && !targetKey) || (!isCustom && !isCloudflare && !targetKey);
+
+    if (needsKey) {
+      throw new Error(`MISSING_KEY_PROMPT|${prompt}`);
+    }
 
     return await context.imageGeneration.generateImage(
-      apiKey,
-      visualPrompt,
-      "gemini-3.1-flash-image-preview",
-    );
-  }
-
-  /**
-   * Orchestrates the construction of context and the generation of an AI regeneration response.
-   */
-  async generateRegenerationResponse(
-    entityId: string,
-    context: OracleExecutionContext,
-    onPartial: (partial: string) => void,
-  ): Promise<void> {
-    const entity = context.vault.entities[entityId];
-    if (!entity) throw new Error(`Entity ${entityId} not found.`);
-
-    const apiKey = context.effectiveApiKey || "";
-    const connectionContext = await this.buildSlimConnectionContext(
-      entity,
-      entityId,
-      context.vault,
-    );
-    const prompt = this.buildRegenerationPrompt(entity, context);
-
-    const categoryList = Array.from(
-      new Set(
-        (context.categories || [])
-          .map((c: any) => String(c?.id || "").trim())
-          .filter(Boolean),
-      ),
-    );
-
-    await context.textGeneration.generateResponse(
-      apiKey,
+      targetKey,
       prompt,
-      [],
-      connectionContext,
-      context.modelName,
-      onPartial,
-      context.isDemoMode,
-      categoryList,
+      targetModel,
       {
-        requestId: crypto.randomUUID(),
-        vaultId: context.vaultId,
-        existingEntities: Object.values(context.vault.entities || {}),
+        provider: context.imageProvider,
+        baseUrl: context.customImageBaseUrl,
       },
     );
-  }
-
-  private async buildSlimConnectionContext(
-    entity: any,
-    entityId: string,
-    vault: any,
-  ): Promise<string> {
-    const outboundIds = (entity.connections || []).map((c: any) => c.target);
-    const inboundIds = (vault.inboundConnections?.[entityId] || []).map(
-      (i: any) => i.sourceId,
-    );
-    const allIds = [...new Set([...outboundIds, ...inboundIds])];
-
-    if (vault.loadEntityContent && allIds.length > 0) {
-      await Promise.all(
-        allIds.map((id: string) => vault.loadEntityContent(id)),
-      );
-    }
-
-    const parts: string[] = [];
-
-    for (const conn of entity.connections || []) {
-      const target = vault.entities[conn.target];
-      if (!target) continue;
-      parts.push(this.formatSlimEntity(target, conn.label || conn.type, "→"));
-    }
-
-    for (const item of vault.inboundConnections?.[entityId] || []) {
-      const source = vault.entities[item.sourceId];
-      if (!source) continue;
-      parts.push(
-        this.formatSlimEntity(
-          source,
-          item.connection.label || item.connection.type,
-          "←",
-        ),
-      );
-    }
-
-    return parts.join("\n\n");
-  }
-
-  private formatSlimEntity(
-    entity: any,
-    relationLabel: string,
-    direction: "→" | "←",
-  ): string {
-    const lines = [
-      `--- ${entity.title} (${entity.type}) [${direction} ${relationLabel}] ---`,
-    ];
-    if (entity.content?.trim()) lines.push(entity.content.trim());
-    if (entity.aliases?.length)
-      lines.push(`Aliases: ${entity.aliases.join(", ")}`);
-    if (entity.tags?.length) lines.push(`Tags: ${entity.tags.join(", ")}`);
-    return lines.join("\n");
-  }
-
-  private buildRegenerationPrompt(
-    entity: any,
-    context: OracleExecutionContext,
-  ): string {
-    const theme =
-      context.uiStore.activeThemeId ||
-      context.uiStore.activeTheme?.id ||
-      "default";
-    const aliasLine = entity.aliases?.length
-      ? `\nAliases: ${entity.aliases.join(", ")}`
-      : "";
-    const tagsLine = entity.tags?.length
-      ? `\nTags: ${entity.tags.join(", ")}`
-      : "";
-
-    return `Generate content for: **${entity.title}** (${entity.type})${aliasLine}${tagsLine}
-
-EXISTING CONTENT TO PRESERVE AND EXPAND:
-Chronicle: ${entity.content || "None"}
-Lore: ${entity.lore || "None"}
-
-THEME: ${theme}
-
-Output ONLY these two fields:
-**Chronicle:** [Polished 1-3 sentence player-facing summary]
-**Lore:** [Detailed GM-facing notes, may use markdown headings and lists]`;
   }
 
   private getSentTitles(messages: ChatMessage[]): Set<string> {

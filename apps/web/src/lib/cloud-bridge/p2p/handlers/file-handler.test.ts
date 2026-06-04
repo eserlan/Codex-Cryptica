@@ -112,4 +112,39 @@ describe("FileHandler", () => {
       }),
     );
   });
+
+  it("should handle GET_FILE for subdirectories (e.g. audio/test.wav)", async () => {
+    const mockFileHandle = {
+      getFile: vi.fn().mockResolvedValue({
+        size: 2048,
+        type: "audio/wav",
+        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(2048)),
+      }),
+    };
+    const mockAudioDirHandle = {
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+    };
+    const mockVaultHandle = {
+      getDirectoryHandle: vi.fn().mockResolvedValue(mockAudioDirHandle),
+    };
+    mockContext.vault.getActiveVaultHandle.mockResolvedValue(mockVaultHandle);
+
+    const msg = {
+      type: "GET_FILE",
+      path: "audio/test.wav",
+      requestId: "reqSub",
+    } as any;
+    await handler.handle(msg, mockConn, mockContext);
+
+    expect(mockVaultHandle.getDirectoryHandle).toHaveBeenCalledWith("audio");
+    expect(mockAudioDirHandle.getFileHandle).toHaveBeenCalledWith("test.wav");
+    expect(mockConn.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "FILE_RESPONSE",
+        requestId: "reqSub",
+        found: true,
+        mime: "audio/wav",
+      }),
+    );
+  });
 });

@@ -6,8 +6,10 @@
 
   let {
     collapsed = $bindable(false),
+    setCollapsed,
   }: {
     collapsed?: boolean;
+    setCollapsed?: (collapsed: boolean) => void;
   } = $props();
 
   const canClearChat = $derived(
@@ -30,6 +32,11 @@
     }
     mapSession.clearChatMessages();
   };
+
+  function updateCollapsed(nextCollapsed: boolean) {
+    collapsed = nextCollapsed;
+    setCollapsed?.(nextCollapsed);
+  }
 </script>
 
 <aside
@@ -46,7 +53,7 @@
     >
       <button
         class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-        onclick={() => (collapsed = false)}
+        onclick={() => updateCollapsed(false)}
         aria-label="Expand VTT Chat Sidebar"
         aria-expanded="false"
         type="button"
@@ -108,7 +115,7 @@
 
           <button
             class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-            onclick={() => (collapsed = true)}
+            onclick={() => updateCollapsed(true)}
             aria-label="Collapse VTT Chat Sidebar"
             aria-expanded="true"
             type="button"

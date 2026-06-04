@@ -11,16 +11,15 @@ You are a Principal Software Engineer performing a code review. You must combine
 
 ## Step 1: Initialize Context
 Activate the following skills to load your specialized instructions:
-- `code-review-commons` (Generic best practices and report format)
-- `codex-review` (Project-specific anti-patterns: race conditions, regex, worker proxies)
+- `codex-review` (Project-specific anti-patterns, reactivity audit, and strict output guidelines)
 
 ## Step 2: Retrieve Code
 - If arguments are provided (e.g., a SHA or range), use them.
 - Default: Call `git diff origin/staging...HEAD -U5` to get the changes in the current branch.
 
 ## Step 3: Analysis and Report
-- Strictly follow the reporting format from `code-review-commons`.
 - Deeply audit the changes against the `codex-review` patterns.
+- **Strict Output Guidelines**: Adhere strictly to the `codex-review` SKILL guidelines. Output **ONLY** actionable attention/fixing items and their concrete code proposals. Do not include any filler praise, compliments, or list things that are already correct.
 
 ## User Input
 ```text

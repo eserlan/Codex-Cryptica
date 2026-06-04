@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { execSync } from "node:child_process";
 import { svelteTesting } from "@testing-library/svelte/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(
@@ -19,8 +20,38 @@ try {
   console.warn("Could not get git hash for versioning", e);
 }
 
+let usePolling = false;
+try {
+  usePolling = readFileSync("/proc/version", "utf8")
+    .toLowerCase()
+    .includes("microsoft");
+} catch {
+  // Ignore
+}
+if (process.env.VITE_USE_POLLING === "true") {
+  usePolling = true;
+}
+
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit() as any, svelteTesting()],
+  plugins: [
+    tailwindcss(),
+    sveltekit() as any,
+    svelteTesting(),
+    visualizer({
+      emitFile: true,
+      filename: "bundle-report.html",
+      template: "treemap",
+      gzipSize: true,
+      brotliSize: true,
+    }),
+    visualizer({
+      emitFile: true,
+      filename: "bundle-stats.json",
+      template: "raw-data",
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ],
   resolve: {
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
@@ -47,16 +78,32 @@ export default defineConfig({
     format: "es",
   },
   build: {
+    chunkSizeWarningLimit: 900,
     minify: "esbuild",
     target: "es2020",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes("@tiptap/") ||
+            id.includes("svelte-tiptap") ||
+            id.includes("tiptap-markdown")
+          )
+            return "chunk-editor";
+          if (id.includes("cytoscape")) return "chunk-graph";
+          if (id.includes("peerjs") || id.includes("peerjs/"))
+            return "chunk-p2p";
+          if (id.includes("pdfjs-dist")) return "chunk-pdf";
+        },
+      },
+    },
   },
   test: {
     include: ["src/**/*.{test,spec}.{js,ts}"],
     environment: "jsdom",
     globals: true,
-    pool: "threads",
+    pool: "forks",
     setupFiles: ["tests/setup.ts"],
-    // @ts-expect-error environmentMatchGlobs is valid at runtime in vitest 4.x but missing from the bundled types
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],
       ["src/lib/config/**", "node"],
@@ -125,7 +172,7 @@ export default defineConfig({
         "**/*.md",
       ],
     },
-  },
+  } as any,
   ssr: {
     noExternal: [
       "graph-engine",
@@ -149,7 +196,7 @@ export default defineConfig({
       host: "localhost",
     },
     watch: {
-      usePolling: true,
+      usePolling,
     },
     fs: {
       // Allow serving files from the workspace root and all packages

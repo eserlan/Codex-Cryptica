@@ -11,14 +11,9 @@
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { timelineStore } from "$lib/stores/timeline.svelte";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { mapSession } from "$lib/stores/map-session.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "$lib/services/demo";
   import { initGDriveSync } from "$lib/services/gdrive-sync";
@@ -36,6 +31,7 @@
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
+  import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
 
   // Logic & Hooks
   import {
@@ -64,6 +60,8 @@
   let globalListenersCleanup: (() => void) | null = null;
   let crossTabBroadcaster: InstanceType<typeof CrossTabBroadcaster> | null =
     null;
+  let mapSession = $state<any>(null);
+  let VTTSharedImageLightbox = $state<any>(null);
 
   // Derived
   const isPopup = $derived(
@@ -71,16 +69,23 @@
       page.url.pathname === `${base}/help` ||
       page.url.pathname === `${base}/import`,
   );
+  const anyModalOpen = $derived(
+    modalUIStore.isAnyModalOpen ||
+      searchStore.isOpen ||
+      notificationStore.confirmationDialog.open ||
+      onboardingStore.showChangelog ||
+      isMobileMenuOpen,
+  );
   const isZenPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
   const isVttFullscreen = $derived(
-    page.url.pathname.startsWith(`${base}/map`) && mapSession.vttEnabled,
+    page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
   );
 
   if (browser) {
     const requestedTheme = page.url.searchParams.get("theme");
-    if (requestedTheme && THEMES[requestedTheme]) {
+    if (requestedTheme && requestedTheme in THEMES) {
       themeStore.currentThemeId = requestedTheme;
     }
   }
@@ -93,7 +98,23 @@
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
     if (browser && !globalListenersCleanup) {
-      globalListenersCleanup = initializeGlobalListeners(calendarStore);
+      globalListenersCleanup = initializeGlobalListeners();
+    }
+  });
+
+  $effect(() => {
+    if (!browser) return;
+
+    if (
+      page.url.pathname.startsWith(`${base}/map`) ||
+      sessionModeStore.isGuestMode
+    ) {
+      import("$lib/stores/map-session.svelte").then((m) => {
+        mapSession = m.mapSession;
+      });
+      import("$lib/components/vtt/VTTSharedImageLightbox.svelte").then((m) => {
+        VTTSharedImageLightbox = m.default;
+      });
     }
   });
 
@@ -109,12 +130,8 @@
       if (!isLandingPage || !shouldShowLanding || isTesting || isPopup) {
         hasBooted = bootSystem({
           categories,
-          timeline: timelineStore,
-          graph,
-          calendar: calendarStore,
           vault,
           sessionModeStore,
-          oracle,
         });
       }
     }
@@ -124,7 +141,6 @@
     (async () => {
       helpStore.init();
       await themeStore.init();
-      oracle.init();
       void initGDriveSync();
 
       // Preload heavy route chunks so first navigation is instant
@@ -138,14 +154,12 @@
       }
 
       console.log("[Layout] Calling setupWindowGlobals");
+      const featureGlobals = await loadFeatureWindowGlobals();
+
       setupWindowGlobals({
         searchStore,
         vault,
         vaultRegistry,
-        canvasRegistry,
-        graph,
-        oracle,
-        calendarStore,
         helpStore,
         categories,
         onboardingStore,
@@ -158,9 +172,29 @@
         explorerUIStore,
         isEntityVisible,
         eventBus: appEventBus,
+        ...featureGlobals,
       });
     })();
   });
+
+  async function loadFeatureWindowGlobals() {
+    const isSpecialEnv =
+      import.meta.env.DEV ||
+      (typeof window !== "undefined" && (window as any).__E2E__) ||
+      import.meta.env.VITE_STAGING === "true";
+
+    if (!isSpecialEnv) return {};
+
+    const [{ canvasRegistry }, { graph }, { oracle }, { calendarStore }] =
+      await Promise.all([
+        import("$lib/stores/canvas-registry.svelte"),
+        import("$lib/stores/graph.svelte"),
+        import("$lib/stores/oracle.svelte"),
+        import("$lib/stores/calendar.svelte"),
+      ]);
+
+    return { canvasRegistry, graph, oracle, calendarStore };
+  }
 
   // Help Hash Navigation
   $effect(() => {
@@ -202,7 +236,8 @@
 
     if (headerEl) {
       const updateHeight = () => {
-        const height = headerEl!.getBoundingClientRect().height;
+        if (!headerEl) return;
+        const height = headerEl.getBoundingClientRect().height;
         document.documentElement.style.setProperty(
           "--header-height",
           `${height}px`,
@@ -278,44 +313,147 @@
     }
   });
 
+  let lastRestoredVaultId = $state<string | null>(null);
+
+  // Restore state once when vault is initialized and matches the active vault
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    if (
+      browser &&
+      vault.isInitialized &&
+      activeVaultId &&
+      activeVaultId !== lastRestoredVaultId
+    ) {
+      lastRestoredVaultId = activeVaultId;
+      const key = `codex_vault_state_${activeVaultId}`;
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const state = JSON.parse(raw);
+
+          // Restore selectedEntityId (if it still exists in the loaded vault's entities)
+          if (
+            state.selectedEntityId &&
+            vault.entities[state.selectedEntityId]
+          ) {
+            vault.selectedEntityId = state.selectedEntityId;
+          } else {
+            vault.selectedEntityId = null;
+          }
+
+          // Restore Zen Mode state
+          if (state.zenModeEntityId && vault.entities[state.zenModeEntityId]) {
+            modalUIStore.zenModeEntityId = state.zenModeEntityId;
+            modalUIStore.showZenMode = !!state.showZenMode;
+            modalUIStore.zenModeActiveTab =
+              state.zenModeActiveTab || "overview";
+          } else {
+            modalUIStore.closeZenMode();
+          }
+        } else {
+          vault.selectedEntityId = null;
+          modalUIStore.closeZenMode();
+        }
+      } catch (e) {
+        console.warn(
+          `[StateSync] Failed to restore state for vault ${activeVaultId}:`,
+          e,
+        );
+      }
+    }
+  });
+
+  // Track changes to selectedEntityId or Zen Mode and PERSIST them
+  $effect(() => {
+    const activeVaultId = vault.activeVaultId;
+    if (
+      browser &&
+      vault.isInitialized &&
+      activeVaultId &&
+      activeVaultId === lastRestoredVaultId
+    ) {
+      const selectedEntityId = vault.selectedEntityId;
+      const showZenMode = modalUIStore.showZenMode;
+      const zenModeEntityId = modalUIStore.zenModeEntityId;
+      const zenModeActiveTab = modalUIStore.zenModeActiveTab;
+
+      const key = `codex_vault_state_${activeVaultId}`;
+      try {
+        const state = {
+          selectedEntityId,
+          showZenMode,
+          zenModeEntityId,
+          zenModeActiveTab,
+        };
+        localStorage.setItem(key, JSON.stringify(state));
+      } catch (e) {
+        console.warn(
+          `[StateSync] Failed to persist state for vault ${activeVaultId}:`,
+          e,
+        );
+      }
+    }
+  });
+
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,
     modalUIStore,
+    quickNoteStore,
   });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="h-[100dvh] bg-theme-bg flex flex-col font-body app-layout">
-  <NotificationToast />
-
-  {#if !isPopup && !isVttFullscreen && !isZenPopout}
-    <AppHeader bind:isMobileMenuOpen bind:headerEl />
-  {/if}
-
+<div
+  class="h-[var(--app-viewport-height)] bg-chrome-bg text-chrome-text flex flex-col font-body app-layout"
+>
+  <!-- Background content — inert when any modal is open so keyboard/AT cannot reach it -->
   <div
-    class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
+    class="contents"
+    inert={anyModalOpen || undefined}
+    aria-hidden={anyModalOpen || undefined}
   >
+    <NotificationToast />
+
     {#if !isPopup && !isVttFullscreen && !isZenPopout}
-      <ActivityBar />
-      <SidebarPanelHost />
+      <AppHeader bind:isMobileMenuOpen bind:headerEl />
     {/if}
 
-    <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
-      {@render children()}
-    </main>
+    <div
+      class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
+    >
+      {#if !isPopup && !isVttFullscreen && !isZenPopout}
+        <ActivityBar />
+        <SidebarPanelHost />
+      {/if}
+
+      <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
+        {@render children()}
+      </main>
+    </div>
+
+    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+      <AppFooter />
+    {/if}
   </div>
 
-  {#if !isPopup && !isVttFullscreen && !isZenPopout}
-    <AppFooter />
-  {/if}
-
+  <!-- Modals rendered outside the inert wrapper -->
   {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
 
+  {#if !isPopup}
+    <QuickNoteScratchpad />
+  {/if}
+
   <GuestSessionBootstrap />
+  {#if sessionModeStore.isGuestMode && mapSession && VTTSharedImageLightbox}
+    <VTTSharedImageLightbox
+      imageState={mapSession.sharedTokenImage}
+      onClose={() => mapSession.clearSharedTokenImage()}
+    />
+  {/if}
 </div>
 
 <FatalErrorOverlay />

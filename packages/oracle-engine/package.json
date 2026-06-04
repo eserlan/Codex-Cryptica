@@ -6,23 +6,25 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
     "@codex/events": "workspace:*",
+    "@codex/proposer": "workspace:*",
     "dice-engine": "workspace:*",
-    "idb": "^8.0.3"
+    "idb": "^8.0.3",
+    "schema": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@testing-library/svelte": "^5.3.1",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.7",
     "jsdom": "^29.1.1",
-    "svelte": "^5.55.4",
+    "svelte": "^5.55.9",
     "typescript": "^6.0.3",
-    "vite": "^8.0.13",
-    "vitest": "^4.1.6"
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   }
 }

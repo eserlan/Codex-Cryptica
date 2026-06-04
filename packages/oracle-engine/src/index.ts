@@ -7,4 +7,6 @@ export * from "./oracle-settings.svelte";
 export * from "./chat-history.svelte";
 export * from "./undo-redo.svelte";
 export * from "./drafting-engine";
-export * from "./reconciliation-context";
+export * from "./revision-context";
+export * from "./sound-bite-generator";
+export * from "./image-defaults";

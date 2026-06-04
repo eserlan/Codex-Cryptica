@@ -8,6 +8,7 @@ import {
   parseMarkdown,
   stringifyEntity,
   deriveIdFromPath,
+  sanitizeId,
 } from "../../utils/markdown";
 import { cacheService } from "../../services/cache.svelte";
 import type { IFileIOAdapter } from "@codex/vault-engine/src/repository.svelte";
@@ -47,24 +48,67 @@ export const fileIOAdapter: IFileIOAdapter = {
   setCachedEntity: async (vaultId, path, lastModified, entity) => {
     await cacheService.set(`${vaultId}:${path}`, lastModified, entity);
   },
+  setCachedEntitiesBulk: async (vaultId, entries) => {
+    const formatted = entries.map((e) => ({
+      path: `${vaultId}:${e.path}`,
+      lastModified: e.lastModified,
+      entity: e.entity,
+    }));
+    await cacheService.bulkSet(formatted);
+  },
   parseMarkdown: (text, path) => {
     const parsed = parseMarkdown(text);
-    const id = parsed.metadata.id || deriveIdFromPath(path);
+    const rawId = parsed.metadata.id || deriveIdFromPath(path);
+    const id = sanitizeId(rawId);
     const connections = parsed.metadata.connections || [];
-    return {
+
+    let parent = parsed.metadata.parent
+      ? sanitizeId(parsed.metadata.parent)
+      : undefined;
+
+    // Derive parent from subdirectories if not explicitly defined in frontmatter
+    if (!parent && path && path.length > 1) {
+      for (let i = path.length - 2; i >= 0; i--) {
+        const dirId = sanitizeId(path[i]);
+        if (dirId !== id) {
+          parent = dirId;
+          break;
+        }
+      }
+    }
+
+    const entity = {
       ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
-      title: parsed.metadata.title || id!,
+      title:
+        parsed.metadata.title ||
+        (path && path.length > 0
+          ? path[path.length - 1].replace(/\.(md|markdown)$/i, "")
+          : rawId),
       status: parsed.metadata.status || "active",
       tags: parsed.metadata.tags || [],
-      labels: parsed.metadata.labels || [],
+      labels: parsed.metadata.labels || parsed.metadata.tags || [],
       aliases: parsed.metadata.aliases || [],
       connections,
       content: parsed.content,
       lore: parsed.metadata.lore || "",
+      parent,
       _path: path,
     };
+
+    const hasEndDate =
+      entity.end_date &&
+      typeof entity.end_date.year === "number" &&
+      Number.isFinite(entity.end_date.year);
+    const hasPastLabel = entity.labels.includes("past");
+    if (hasEndDate && !hasPastLabel) {
+      entity.labels = [...entity.labels, "past"];
+    } else if (!hasEndDate && hasPastLabel) {
+      entity.labels = entity.labels.filter((l) => l !== "past");
+    }
+
+    return entity;
   },
   isNotFoundError: (err) => isNotFoundError(err),
 };

@@ -1,7 +1,6 @@
 # Research: Central Node Orbit Layout
 
 **Feature**: `032-central-node-orbit`
-**Status**: Research Complete
 
 ## 1. Layout Strategy
 

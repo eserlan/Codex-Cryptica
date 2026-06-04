@@ -41,13 +41,11 @@
 
 {#if layoutUIStore.leftSidebarOpen}
   <aside
-    class="w-full md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0
+    class="w-full md:h-full bg-chrome-surface border-chrome-border flex flex-col z-[85] shadow-xl relative shrink-0
            max-md:fixed max-md:inset-0 md:border-r md:bottom-0"
     style:width={layoutUIStore.isMobile
       ? "100%"
       : `${layoutUIStore.leftSidebarWidth}px`}
-    style:background-color="var(--theme-panel-fill)"
-    style:background-image="var(--bg-texture-overlay)"
     data-testid="sidebar-panel-host"
   >
     {#if !layoutUIStore.isMobile}
@@ -69,7 +67,7 @@
     {:else}
       <div class="flex-1 flex items-center justify-center p-8 text-center">
         <div
-          class="animate-pulse text-theme-muted font-mono text-[10px] uppercase tracking-widest"
+          class="animate-pulse text-chrome-muted font-mono text-[10px] uppercase tracking-widest"
         >
           Initializing System...
         </div>

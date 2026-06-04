@@ -1,3 +1,5 @@
+import { u } from "./user-content";
+
 export function buildCreationLoreSynthesisPrompt(
   query: string,
   vaultContext: string,
@@ -5,10 +7,10 @@ export function buildCreationLoreSynthesisPrompt(
   return `You are a Master Archivist and Lore Synthesizer. A new entity is being added to the world, and you must resolve how it fits into the existing canonical continuity.
 
 VAULT CONTEXT (The established world):
-${vaultContext}
+${u(vaultContext)}
 
 USER REQUEST (The new entity):
-${query}
+${u(query)}
 
 TASK:
 Identify established lore, connections, factions, geography, or historical events from the vault that are relevant to this new entity. 
@@ -38,7 +40,7 @@ CANONICAL SYNTHESIS SUMMARY:
 ${synthesisSummary}
 
 USER REQUEST:
-${userQuery}
+${u(userQuery)}
 
 DRAFTING REQUIREMENTS:
 Use this exact format:
@@ -51,6 +53,8 @@ GUIDELINES:
 - Prioritize the details from the Canonical Synthesis Summary.
 - Ensure the Name and Type are accurate to the user's intent.
 - Use markdown in the Lore section for section headings, bold names, and bullet lists.
+- For character, npc, or person records, the Lore section MUST include a "## Personality & Voice" heading with concise markdown bullets covering temperament, conversational habits, speech rhythm, word choice, and in-character behavior rules.
+- For character, npc, or person records, the Lore section MUST also include a "## Knowledge & Expertise" heading listing the specific domains, skills, and information this character plausibly knows, and their explicit knowledge limits or blind spots.
 - Preserve specific developments, relationships, and historical context.
 - Output ONLY the structured fields.`;
 }

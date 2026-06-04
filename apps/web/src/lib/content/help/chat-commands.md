@@ -11,7 +11,8 @@ The Lore Oracle supports several interactive commands to help you manage your wo
 
 ### Available Commands
 
-- `/draw [subject]`: Triggers the AI to generate a visual representation of the subject.
+- `/draw [subject]`: Triggers the AI to generate a visual representation of the subject. Category words such as `character`, `location`, or `item` can guide composition when no matching entity category is available.
+- `/revise`: Revise the selected entity's Chronicle and Lore.
 - `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
 - `/connect`: The primary tool for building relationships.
 - `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
@@ -57,3 +58,7 @@ If you are unsure how two entities should be related or how they should be combi
 
 - `/connect oracle`: Analyzes lore to propose thematic relationship types.
 - `/merge oracle`: Opens the step-by-step consolidation wizard with content preview.
+
+## Art Direction
+
+Image generation uses Art Direction from your world before falling back to shipped Category Defaults, Default Art Style from the active theme, and the global Codex Cryptica default. To customize it, add normal notes or entity sections titled `Art Direction`, `Default Art Style`, or `Visual Direction`; no separate settings form is required.

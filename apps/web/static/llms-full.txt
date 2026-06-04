@@ -19,6 +19,9 @@ Use the briefing field to edit the world blurb directly. If it is empty, the Gen
 ### Load and Save Folders
 Use the linked folder as an external copy of your world. Save writes your internal archive to the folder for backups or editing in tools like Obsidian. Load pulls folder changes back into the app when you want to bring them in.
 
+### Search Indexing
+Search builds quietly in the background when a large vault opens. Early results may be incomplete while indexing is still running. If indexing fails, use Retry indexing to rebuild the local search index for the current vault.
+
 ### Save to Folder
 The 'SAVE TO FOLDER' button writes your internal work to the linked folder. It only enables when you have unsaved changes, keeping the folder copy current.
 
@@ -47,7 +50,7 @@ Keep secrets hidden. Hide items from your map so players don't see them during a
 Change your world. Click the folder name at the top to switch to a different story.
 
 ### Pick Dates
-Pick years quickly without typing. Click the grid to zoom into specific decades and years.
+Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.
 
 ### Smart Importing
 Safe file loading. If a file import stops, just pick the file again to finish where you left off.
@@ -56,7 +59,7 @@ Safe file loading. If a file import stops, just pick the file again to finish wh
 Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes—from Ancient Parchment to Sci-Fi Terminal—to perfectly match the genre of your story.
 
 ### Instant Visualization
-For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.
+For Advanced Tier users: Instantly generate visuals for your lore. Look for the DRAW button on Oracle responses, entity panels, Zen mode, and graph nodes. The AI uses Art Direction from normal notes or entities, then Category Defaults and the active Default Art Style.
 
 ### Demo Mode
 Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.
@@ -103,8 +106,23 @@ Dynamically resize the left and right sidebars to suit your workspace needs. Hov
 ### Reviewing Drafts
 Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.
 
-### AI Description Regeneration
+### AI Description Revision
 Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
+
+### P2P Connection Manager
+Seamlessly establish peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.
+
+### QuickNote Fast Scratchpad
+Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle the glassmorphic fast scratchpad. Jot down thoughts, auto-save drafts, and use the 'Elevate' button to let the AI structure your raw notes into complete Character, Location, or Item draft entities.
+
+### Nested Entities
+Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.
+
+### Entity Links in Content
+When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.
+
+### Guest Character Chat
+Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.
 
 
 ## Help Documentation
@@ -296,7 +314,8 @@ The Lore Oracle supports several interactive commands to help you manage your wo
 
 ### Available Commands
 
-- `/draw [subject]`: Triggers the AI to generate a visual representation of the subject.
+- `/draw [subject]`: Triggers the AI to generate a visual representation of the subject. Category words such as `character`, `location`, or `item` can guide composition when no matching entity category is available.
+- `/revise`: Revise the selected entity's Chronicle and Lore.
 - `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
 - `/connect`: The primary tool for building relationships.
 - `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
@@ -342,6 +361,32 @@ If you are unsure how two entities should be related or how they should be combi
 
 - `/connect oracle`: Analyzes lore to propose thematic relationship types.
 - `/merge oracle`: Opens the step-by-step consolidation wizard with content preview.
+
+## Art Direction
+
+Image generation uses Art Direction from your world before falling back to shipped Category Defaults, Default Art Style from the active theme, and the global Codex Cryptica default. To customize it, add normal notes or entity sections titled `Art Direction`, `Default Art Style`, or `Visual Direction`; no separate settings form is required.
+
+---
+
+### GENERATING RELATED ENTITIES
+
+The **Generate Related** feature allows you to quickly expand your campaign setting by generating new entities grounded in your existing lore. Instead of generating ideas in a vacuum, this feature compiles context from the current entity and its direct first-degree neighbors in your connection graph.
+
+### How to Use
+
+1. Navigate to any entity page in either standard or **Zen Mode**.
+2. Click the **Generate Related** button at the top-right of the connections section.
+3. In the configuration modal, specify the target type (e.g., Character, Faction, Location) or select **Surprise Me** to let the AI dynamically pick a fitting category from your allowed vault categories.
+4. Choose or define a custom relationship label (e.g., `arch-nemesis`, `signature item`) and provide optional custom instructions.
+5. Click **Generate** to prompt the AI model.
+
+### Review, Edit, and persist
+
+Once the draft is generated, you will see a preview screen displaying all generated properties. You can edit the entity name, summary, description, and labels to refine the output before committing.
+
+- The system uses the term **Labels** for metadata categories (rather than tags).
+- You can also revise the draft with adjusted guidelines or cancel without making any changes.
+- Clicking **Create Entity** commits the new record to your vault and automatically creates a directed relationship connection from the source entity to your new creation.
 
 ---
 
@@ -431,27 +476,28 @@ Codex Cryptica allows you to define the very structure of time for your campaign
 
 ## The Date Picker
 
-When editing an entity's temporal data (Date, Start Date, or End Date), you will use the tactile **Date Picker**.
+When editing an entity's temporal data (Date, Start Date, or End Date), you will use the dynamic **Scroll-Wheel Date Picker**.
 
-### Tactile Year Selection
+### Center-Aligned Scroll Wheels
 
-The year picker uses a grid-based navigation system designed for fast, non-keyboard entry across vast timelines:
+The date picker uses a smooth, vertical, center-aligned scroll wheel interface designed for both desktop mouse-wheel and mobile touch interactions:
 
-1. **Drill Down**: Click a Century to see its Decades, then click a Decade to select a specific Year.
-2. **Zoom Out**: Click the header (e.g., "1200 - 1211") to jump back up to the Decade or Century view.
-3. **Navigate**: Use the left/right arrows to slide the current grid forward or backward in time.
+1. **Center Snapping**: Wheels automatically snap center-aligned options into place. A highlight lens guides your visual focus.
+2. **Synchronized Preview**: Below the wheels, a live, full-text preview renders the exact formatted date so you are always clear on your selection, even when dealing with truncated long names.
+3. **Direct Jump Override**: Need to select a year far in the past or future? Simply click the keyboard icon in any column to directly type a numeric override.
 
-### Era-Centric Snapping
-
-If you have defined **Eras** in your Vault Settings, you can use the "Eras" tab to instantly snap the picker to the beginning of a historical period. This is the fastest way to navigate across millennia.
-
-### Precision Levels
+### Precision Levels & Intercalary Anchors
 
 The picker allows you to choose your granularity using the toggle at the top:
 
 - **Year**: For broad historical events.
-- **Month**: For seasonal occurrences.
+- **Month/Unit**: For seasonal occurrences.
 - **Day**: For specific, high-precision moments.
+- **Anchor**: For special intercalary days (e.g., Midyear festivals) that sit outside standard months.
+
+### Conflict Auto-Repair
+
+If you change your campaign calendar structure after saving dates, opening the picker automatically triggers an **inline repair warning**. You can view the discrepancy and click **Confirm Repair** to cleanly align the date to the new calendar constraints without silent, accidental data loss.
 
 ## Campaign Calendars
 
@@ -465,6 +511,36 @@ In the **Vault Settings**, you can fully customize your world's calendar:
 ## Linear Time Mapping
 
 Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly on the **World Timeline**.
+
+---
+
+### QUICKNOTES & FAST SCRATCHPAD
+
+The **QuickNote Scratchpad** is designed to let you write down sudden brainstorms or game session observations immediately, without needing to navigate away from your active view or create formal wiki entries first.
+
+### Key Features
+
+- **Global Hotkey Toggle**: Press `Ctrl+I` (or `Cmd+I` on macOS) from anywhere in the app to slide open the glassmorphic QuickNote overlay.
+- **Debounced Auto-Save**: Just start typing. Every keystroke is saved locally to your device's IndexedDB with under 150ms activation latency.
+- **Floating Action Bubble (FAB)**: A glowing, interactive bubble sits in the bottom-right corner of your screen when active notes are present, pulsing to remind you of pending drafts.
+- **glowing Counter Badges**: High-visibility orange badges on the leftmost Activity Bar `[⚡]` and compact draft pills in the Campaign Header count your active QuickNotes.
+
+### Visual Brainstorming Integration
+
+Your active, un-elevated QuickNotes aren't just hidden away in the scratchpad—they are seamlessly integrated into your visual tools:
+
+- **Interactive Graph Nodes**: QuickNotes appear directly on your Cytoscape Knowledge Graph as **golden-amber dotted clickable nodes**.
+- **Interactive Click & Double-Tap**: Clicking or double-tapping a QuickNote node on the graph canvas instantly opens the scratchpad focused on that note, avoiding any default mode interruptions.
+- **Unified Global Search**: Your QuickNotes are searched alongside your wiki entities. Typing a keyword into the global search bar will instantly return matching notes, which open directly in the scratchpad editor when clicked.
+
+### AI Entity Elevation
+
+When you're ready to turn a fleeting draft into a formal wiki article, let the Lore Oracle do the heavy lifting:
+
+1. Click **Elevate** (or the magic wand icon) in the QuickNote editor.
+2. The AI reads your raw draft, retrieves semantic context from your vault, and structures the note into a rich draft entity (determining `Name`, `Type`, `Chronicle`, and `Lore`).
+3. The newly generated draft is loaded into your sidebar review panel, complete with a `discoverySource` back-link referencing your original QuickNote.
+4. When you click **Verify/Approve** on the Svelte sidebar draft banner, the original QuickNote is automatically archived, keeping your scratchpad perfectly clean.
 
 ---
 
@@ -543,7 +619,7 @@ Your selected theme is saved to your local browser storage and will be automatic
 
 ---
 
-### OFFLINE SUPPORT & SYNCHRONIZATION
+### OFFLINE SUPPORT & LOCAL FOLDERS
 
 Codex Cryptica is designed as a **local-first** application. This means your data always lives on your device first, ensuring you can continue building your world even without an internet connection.
 
@@ -555,7 +631,7 @@ By default, all your campaign data is stored in the **Origin Private File System
 - **Speed:** Reading and writing thousands of chronicles is near-instant.
 - **Persistence:** Your work is saved automatically as you type.
 
-## Synchronization with Local Folders
+## Saving & Loading with Local Folders
 
 You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
 
@@ -563,15 +639,14 @@ You can mirror your internal archives with any folder on your computer. This ena
 2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
 3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.
 
-### How to set up Cloud Sync (via OS)
+### How to set up Cloud Mirroring (via OS)
 
-To sync your world across multiple devices using Google Drive or other providers:
+To access your world across multiple devices using Google Drive or other providers:
 
 1.  Install the official client for your provider (e.g., [Google Drive for Desktop](https://www.google.com/drive/download/)).
-2.  In Codex Cryptica, go to **Settings > Vault**.
-3.  Under **Synchronization**, click **Sync to Folder**.
-4.  Select a folder within your local Google Drive/Cloud directory.
-5.  Codex will now mirror your files to that folder, and your OS will handle the background upload to the cloud.
+2.  In Codex Cryptica, click **SAVE TO FOLDER** in the bottom-left sidebar (or the Save icon in the Vault Selector).
+3.  If no folder is linked yet, you will be prompted to select a directory. Choose a folder within your local Google Drive/Cloud directory.
+4.  Codex will now write all changes to that folder, and your OS will handle the background upload to the cloud.
 
 ## Managing Multiple Devices
 
@@ -580,7 +655,7 @@ When you open Codex on a new device:
 1.  Create a new vault or open the **Vault Selector**.
 2.  Click **Open Folder**.
 3.  Select the cloud-synced folder you set up on your first device.
-4.  Codex will import your world and keep it in sync with the cloud mirror.
+4.  Codex will load your world and keep it updated with the cloud mirror.
 
 ---
 
@@ -590,7 +665,7 @@ Codex Cryptica can back up your vault to your personal Google Drive and restore 
 
 ## Connect Your Vault
 
-1. Open **Settings → Cloud Sync**.
+1. Open Settings, choose the **Vault** tab, and scroll to the **Cloud Sync** section.
 2. Click **Connect Google Drive** and sign in when Google prompts you.
 3. Codex creates a `CodexCryptica/` folder on your Drive (if it doesn't exist) and a subfolder named after your vault inside it. The folder ID is saved locally so future syncs know where to go.
 
@@ -606,7 +681,7 @@ Once connected you'll see two buttons:
 
 If you have vaults already stored in your `CodexCryptica/` Drive folder (from another device), you can load them without setting them up from scratch:
 
-1. In **Settings → Cloud Sync**, click **Browse Drive**.
+1. In the **Vault** settings tab under **Cloud Sync**, click **Browse Drive**.
 2. Codex lists every vault subfolder it finds under `CodexCryptica/`.
 3. Click **Load** next to any vault. Codex creates a local vault (or finds the existing one), then pulls only the files that are newer than what you have locally.
 
@@ -615,7 +690,7 @@ If you have vaults already stored in your `CodexCryptica/` Drive folder (from an
 If your GM has shared their Drive vault folder with you, you can connect to it directly:
 
 1. Ask your GM to share the Drive folder and copy the share link (it looks like `https://drive.google.com/drive/folders/…`).
-2. In **Settings → Cloud Sync**, paste the link into the **Join a Shared Vault** field and click **Join**.
+2. In the **Vault** settings tab under **Cloud Sync**, paste the link into the **Join a Shared Vault** field and click **Join**.
 3. Google will ask you to grant read access to the shared folder. Once approved, Codex imports the vault locally and you can pull updates any time with **Load from Drive**.
 
 > [!NOTE]
@@ -652,6 +727,44 @@ Your story starts here...
 
 - **Metadata**: You can add your own fields to the header (like `age: 45`). The AI Oracle will see these and use them for extra context.
 - **Syncing**: Because these are just files, you can use any cloud service (Dropbox, OneDrive, etc.) to keep them synced across devices.
+
+---
+
+### DEFAULT ENTITY TEMPLATES
+
+Codex Cryptica provides pre-formatted structure outlines called **Default Entity Templates** to eliminate the friction of starting with an empty note. Whenever you create a new **Character**, **Faction**, **Location**, **Item**, **Event**, **Creature**, or **Note**, a tailored markdown layout is instantly pre-populated for you.
+
+## System Default Templates
+
+Out of the box, the following types come with high-fidelity structures:
+
+- **Character**: Includes sections for Summary, Appearance, Personality, Goals, Relationships, and Secrets.
+- **Faction**: Includes sections for Leadership, Resources, Methods, Allies and Enemies, and Internal Tensions.
+- **Location**: Includes sections for Geography, Districts, Points of Interest, and Local Factions.
+- **Item**: Includes sections for Origin, Appearance, Abilities, and Lore.
+- **Event**: Includes sections for Date/Chronology, Key Participants, Sequence of Events, and Aftermath.
+- **Creature**: Includes sections for Ecology, Combat/Abilities, Behavior, and Lore.
+- **Note**: A clean generic canvas for general-purpose world-building.
+
+## Toggling Templates On or Off
+
+If you prefer to start with a completely empty editor page for a new note:
+
+1. Click **New Entity** in the top navigation or sidebar.
+2. Uncheck the option **"Start from default format"** located below the Title input field.
+3. Click **Add** — your newly created document will be entirely blank.
+
+## Vault-Level Override Templates
+
+For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high fantasy), you can fully override our system defaults with your own custom markdown files:
+
+1. In your linked local folder, create a directory path named `.cc/templates/` (or `.codex/templates/`).
+2. Add a markdown file named after the entity type in lowercase (e.g., `character.md`, `faction.md`, `location.md`). Casing of the file itself does not matter.
+3. Open the file and write your custom markdown structure (e.g. `## Cyberware` or `## Magical Lineage`).
+4. Any new entities of that type created henceforth will immediately use your custom structure.
+
+> [!TIP]
+> If you want to _always_ start completely blank for a specific type without untoggling the checkbox, create an empty file at `.cc/templates/{type}.md`. The system respects empty override files as valid, giving you a blank canvas.
 
 ---
 

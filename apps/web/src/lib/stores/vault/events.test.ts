@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { VaultEventBus } from "./events";
+import { VaultEventBus } from "./events.svelte";
 
 describe("VaultEventBus", () => {
   beforeEach(() => {

@@ -43,12 +43,15 @@ vi.mock("graph-engine", () => ({
   },
 }));
 
-// Mock schema
-vi.mock("schema", () => ({
-  isEntityVisible: vi.fn().mockReturnValue(true),
-}));
+vi.mock("schema", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("schema")>();
+  return {
+    ...actual,
+    isEntityVisible: vi.fn().mockReturnValue(true),
+  };
+});
 
-import { graph, GraphStore } from "./graph.svelte";
+import { graph } from "./graph.svelte";
 import { vault } from "./vault.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible } from "schema";
@@ -71,6 +74,7 @@ describe("GraphStore", () => {
     graph.eras = [];
     graph.centralNodeId = null;
     graph.labelFilterMode = "OR"; // Reset this explicitly
+    (graph as any)._initPromise = null;
 
     // Reset mocks
     (vault as any).allEntities = [];
@@ -160,6 +164,22 @@ describe("GraphStore", () => {
     expect(graph.recentLabels).toEqual(["old"]);
     expect(graph.labelFilterMode).toBe("AND");
     expect(graph.eras).toEqual([{ id: "era1", name: "Era 1" }]);
+  });
+
+  it("should only initialize persisted graph state once", async () => {
+    const db = await getDB();
+    const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+    const getSpy = vi.spyOn(db, "get").mockResolvedValue(undefined);
+    const getAllSpy = vi.spyOn(db, "getAll").mockResolvedValue([]);
+
+    await graph.init();
+    await graph.init();
+
+    expect(getAllSpy).toHaveBeenCalledTimes(1);
+    expect(getSpy).toHaveBeenCalledTimes(5);
+    expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
+
+    addEventListenerSpy.mockRestore();
   });
 
   it("should add recent labels and persist them", async () => {
@@ -281,27 +301,6 @@ describe("GraphStore", () => {
     graph.toggleOrbit();
     expect(graph.orbitMode).toBe(false);
     expect(graph.centralNodeId).toBe(null);
-  });
-
-  it("should log visibility check for guests", () => {
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const testVault = {
-      ...vault,
-      isGuest: true,
-      allEntities: [{ id: "1" } as any],
-    };
-    const testGraph = new GraphStore(
-      testVault as any,
-      explorerUIStore,
-      sessionModeStore,
-    );
-
-    // Trigger elements derivation
-    const _ = testGraph.elements;
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[GraphStore] Visibility Check:"),
-      expect.anything(),
-    );
   });
 
   it("should handle IDB errors gracefully in toggle methods", async () => {

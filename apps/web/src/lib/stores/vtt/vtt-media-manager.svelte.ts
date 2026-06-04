@@ -4,6 +4,7 @@ import type {
   Token,
 } from "../../../types/vtt";
 import type { VaultStore } from "../vault.svelte";
+import { debugStore } from "../debug.svelte";
 
 export interface VTTMediaDependencies {
   emit: (message: VTTMessage) => void;
@@ -56,7 +57,7 @@ export class VTTMediaManager {
       return false;
     }
 
-    console.log("[MapSession] showTokenImageToPlayers", {
+    debugStore.log("[MapSession] showTokenImageToPlayers", {
       tokenId,
       title: token.name,
       imagePath,
@@ -67,6 +68,26 @@ export class VTTMediaManager {
     this.deps.emit({
       type: "SHOW_TOKEN_IMAGE",
       title: token.name,
+      imagePath,
+    });
+
+    return true;
+  }
+
+  showImageToPlayers(title: string, imagePath: string) {
+    if (!imagePath) {
+      console.warn("[MapSession] showImageToPlayers missing imagePath");
+      return false;
+    }
+
+    debugStore.log("[MapSession] showImageToPlayers", {
+      title,
+      imagePath,
+    });
+
+    this.deps.emit({
+      type: "SHOW_TOKEN_IMAGE",
+      title,
       imagePath,
     });
 

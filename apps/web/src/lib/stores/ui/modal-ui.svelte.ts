@@ -6,6 +6,10 @@ export type SettingsTab =
   | "about"
   | "help";
 
+export type ImagePromptReviewTarget =
+  | { kind: "entity"; id: string; title: string }
+  | { kind: "message"; id: string; title: string; entityId?: string };
+
 export class ModalUIStore {
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
@@ -16,7 +20,7 @@ export class ModalUIStore {
 
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
-  zenModeActiveTab = $state<"overview" | "inventory" | "map">("overview");
+  zenModeActiveTab = $state<"overview" | "map" | "chats">("overview");
 
   mergeDialog = $state<{
     open: boolean;
@@ -38,9 +42,53 @@ export class ModalUIStore {
     show: boolean;
     imageUrl: string;
     title?: string;
+    originRect?: { x: number; y: number; width: number; height: number } | null;
+    imagePath?: string;
   }>({
     show: false,
     imageUrl: "",
+    originRect: null,
+    imagePath: "",
+  });
+
+  soundBite = $state<{
+    show: boolean;
+    entityId: string | null;
+  }>({
+    show: false,
+    entityId: null,
+  });
+
+  relatedEntityDialog = $state<{
+    open: boolean;
+    sourceEntityId: string | null;
+  }>({
+    open: false,
+    sourceEntityId: null,
+  });
+
+  showVaultSwitcher = $state(false);
+  vaultSwitcherIntent = $state<"create" | "open" | null>(null);
+  showShare = $state(false);
+
+  imagePromptReview = $state<{
+    open: boolean;
+    target: ImagePromptReviewTarget | null;
+    prompt: string;
+  }>({
+    open: false,
+    target: null,
+    prompt: "",
+  });
+
+  revisionDialog = $state<{
+    open: boolean;
+    entityId: string | null;
+    instructions: string;
+  }>({
+    open: false,
+    entityId: null,
+    instructions: "",
   });
 
   // Derived properties for backwards compatibility
@@ -71,16 +119,91 @@ export class ModalUIStore {
     this.bulkLabelDialog = { open: false, entityIds: [] };
   }
 
-  openLightbox(imageUrl: string, title?: string) {
+  openLightbox(
+    imageUrl: string,
+    title?: string,
+    originRect?: { x: number; y: number; width: number; height: number } | null,
+    imagePath?: string,
+  ) {
     this.lightbox = {
       show: true,
       imageUrl,
       title,
+      originRect: originRect ?? null,
+      imagePath: imagePath ?? "",
     };
   }
 
   closeLightbox() {
     this.lightbox.show = false;
+    this.lightbox.originRect = null;
+    this.lightbox.imagePath = "";
+  }
+
+  openSoundBite(entityId: string) {
+    this.soundBite = { show: true, entityId };
+  }
+
+  closeSoundBite() {
+    this.soundBite = { show: false, entityId: null };
+  }
+
+  openRelatedEntityDialog(sourceEntityId: string) {
+    this.relatedEntityDialog = { open: true, sourceEntityId };
+  }
+
+  closeRelatedEntityDialog() {
+    this.relatedEntityDialog = { open: false, sourceEntityId: null };
+  }
+
+  openVaultSwitcher(intent: "create" | "open" | null = null) {
+    this.vaultSwitcherIntent = intent;
+    this.showVaultSwitcher = true;
+  }
+
+  closeVaultSwitcher() {
+    this.showVaultSwitcher = false;
+    this.vaultSwitcherIntent = null;
+  }
+
+  openShare() {
+    this.showShare = true;
+  }
+
+  closeShare() {
+    this.showShare = false;
+  }
+
+  openImagePromptReview(target: ImagePromptReviewTarget, prompt: string) {
+    this.imagePromptReview = {
+      open: true,
+      target,
+      prompt,
+    };
+  }
+
+  closeImagePromptReview() {
+    this.imagePromptReview = {
+      open: false,
+      target: null,
+      prompt: "",
+    };
+  }
+
+  openRevisionDialog(entityId: string) {
+    this.revisionDialog = {
+      open: true,
+      entityId,
+      instructions: "",
+    };
+  }
+
+  closeRevisionDialog() {
+    this.revisionDialog = {
+      open: false,
+      entityId: null,
+      instructions: "",
+    };
   }
 
   openCanvasSelection(pendingEntities: string[]) {
@@ -117,7 +240,7 @@ export class ModalUIStore {
 
   openZenMode(
     entityId: string,
-    tab: "overview" | "inventory" | "map" = "overview",
+    tab: "overview" | "map" | "chats" = "overview",
   ) {
     this.zenModeEntityId = entityId;
     this.zenModeActiveTab = tab;
@@ -141,8 +264,31 @@ export class ModalUIStore {
   closeReadMode() {
     this.closeZenMode();
   }
+
+  get isAnyModalOpen() {
+    return (
+      this.showSettings ||
+      this.showZenMode ||
+      this.showDiceModal ||
+      this.showCanvasSelector ||
+      this.mergeDialog.open ||
+      this.bulkLabelDialog.open ||
+      this.relatedEntityDialog.open ||
+      this.showVaultSwitcher ||
+      this.showShare ||
+      this.imagePromptReview.open ||
+      this.lightbox.show ||
+      this.soundBite.show ||
+      this.revisionDialog.open
+    );
+  }
 }
 
-const KEY = "__codex_modal_ui_store__";
+// The version suffix must be bumped whenever the shape of ModalUIStore changes
+// (new $state fields added/removed). This ensures Vite HMR never serves a
+// cached instance that predates the current class definition — which would
+// cause new properties to be undefined and their reactive assignments to be
+// silently dropped.
+const KEY = "__codex_modal_ui_store__v6__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

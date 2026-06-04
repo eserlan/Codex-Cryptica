@@ -111,8 +111,8 @@ get_highest_from_specs() {
 get_highest_from_branches() {
     local highest=0
     
-    # Get all branches (local and remote)
-    branches=$(git branch -a 2>/dev/null || echo "")
+    # Get all branches (local only)
+    branches=$(git branch 2>/dev/null || echo "")
     
     if [ -n "$branches" ]; then
         while IFS= read -r branch; do

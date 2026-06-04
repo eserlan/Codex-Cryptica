@@ -81,3 +81,31 @@
     ></div>
   </div>
 {/if}
+
+{#each mapStore.pins as pin (pin.id)}
+  {@const pos = mapStore.project(pin.coordinates)}
+  {#if pos.x >= -100 && pos.x <= mapStore.canvasSize.width + 100 && pos.y >= -100 && pos.y <= mapStore.canvasSize.height + 100}
+    {@const entity =
+      pin.entityId && vault.entities ? vault.entities[pin.entityId] : null}
+    {@const labelText = entity ? entity.title : "Unlinked Pin"}
+    <div
+      class="absolute pointer-events-none -translate-x-1/2 -translate-y-[34px] z-30 transition-all duration-300 ease-out"
+      style:left={`${pos.x}px`}
+      style:top={`${pos.y}px`}
+      class:opacity-100={mapStore.showLabels &&
+        pin.id !== interactions.selectedPinId}
+      class:opacity-0={!mapStore.showLabels ||
+        pin.id === interactions.selectedPinId}
+      class:scale-95={!mapStore.showLabels ||
+        pin.id === interactions.selectedPinId}
+      aria-hidden={!mapStore.showLabels ||
+        pin.id === interactions.selectedPinId}
+    >
+      <div
+        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
+      >
+        {labelText}
+      </div>
+    </div>
+  {/if}
+{/each}

@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+[ -d "$HOME/.bun/bin" ] && export PATH="$HOME/.bun/bin:$PATH"
 
 skip_pattern='^(apps/web/src/lib/content/blog/|scripts/publish-blog-content\.mjs$|\.github/workflows/deploy-blog-content\.yml$|docs/BLOG_DEPLOYMENT\.md$|docs/CI_DEPLOYMENT\.md$)'
 blog_only=true
@@ -30,4 +31,4 @@ if [ "$blog_only" = "true" ]; then
 	exit 0
 fi
 
-pnpm run lint && pnpm run test:affected
+bun run lint:affected && bun run test:affected

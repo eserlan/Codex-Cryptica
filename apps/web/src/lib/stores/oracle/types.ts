@@ -19,6 +19,25 @@ export type OracleUiSnapshot = {
   activeThemeId?: string;
 };
 
+export type EntityRevisionRequest = {
+  source: "revise" | "smart-apply" | "discovery" | "auto-archive";
+  entityId?: string;
+  title?: string;
+  type?: string;
+  incoming?: {
+    chronicle?: string;
+    lore?: string;
+  };
+  instructions?: string;
+  priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+};
+
+export type EntityRevisionResult = {
+  content: string;
+  lore: string;
+  categoryId?: string;
+};
+
 export interface IOracleStore {
   // Reactive UI state
   isOpen: boolean;
@@ -72,7 +91,7 @@ export interface IOracleStore {
   readonly context: any;
   readonly actions: any;
   readonly settingsManager: any;
-  readonly reconciliation: any;
+  readonly revision: any;
 
   // Lifecycle
   init(): Promise<void>;
@@ -87,12 +106,12 @@ export interface IOracleStore {
   redo(): Promise<void>;
   sendMessage(content: string): Promise<void>;
   ask(content: string): Promise<void>;
-  regenerate(
-    entityId: string,
-    onPartial?: (partial: string) => void,
-  ): Promise<void>;
   drawEntity(entityId: string): Promise<void>;
   drawMessage(messageId: string): Promise<void>;
+  generateEntityFromPrompt(entityId: string, prompt: string): Promise<void>;
+  generateMessageFromPrompt(messageId: string, prompt: string): Promise<void>;
+  regenerateEntityPrompt(entityId: string): Promise<string | null>;
+  regenerateMessagePrompt(messageId: string): Promise<string | null>;
   isVisualizingEntity(entityId: string | null | undefined): boolean;
   isVisualizingMessage(messageId: string | null | undefined): boolean;
   clearMessages(): Promise<void>;
@@ -111,15 +130,16 @@ export interface IOracleStore {
   setKey(key: string): Promise<void>;
   clearKey(): Promise<void>;
 
-  // Reconciliation
-  reconcileSmartApply(
+  // Revision
+  reviseEntity(request: EntityRevisionRequest): Promise<EntityRevisionResult>;
+  reviseSmartApply(
     entityId: string,
     incoming: { chronicle?: string; lore?: string },
   ): Promise<{ content?: string; lore?: string; categoryId?: string }>;
-  reconcileDiscoveryProposal(
+  reviseDiscoveryProposal(
     proposal: DiscoveryProposal,
   ): Promise<{ content: string; lore: string }>;
-  reconcileNewEntityDraft(
+  reviseNewEntityDraft(
     title: string,
     type: string,
     draft: { chronicle: string; lore: string },

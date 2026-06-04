@@ -10,10 +10,13 @@
  * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
  */
 
+import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+
 interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
   ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
+  AI?: any;
 }
 
 // Allowed origins for CORS
@@ -55,6 +58,170 @@ export default {
       });
     }
 
+    const url = new URL(request.url);
+    if (url.pathname === "/v1/images/generations") {
+      const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
+      const limitResult = await checkRateLimit(ip);
+      if (!limitResult.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: {
+              message:
+                "Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
+              code: "RATE_LIMIT_EXCEEDED",
+            },
+          }),
+          {
+            status: 429,
+            headers: {
+              ...getCorsHeaders(request.headers, env),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+
+      try {
+        const body = (await request.json()) as any;
+        const prompt = body.prompt;
+        const targetModel = body.model || DEFAULT_CF_IMAGE_MODEL;
+
+        if (!prompt) {
+          return new Response(
+            JSON.stringify({ error: { message: "Prompt is required" } }),
+            {
+              status: 400,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+              },
+            },
+          );
+        }
+
+        if (!env.AI) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                message: "Workers AI binding is not configured on the proxy",
+              },
+            }),
+            {
+              status: 500,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+              },
+            },
+          );
+        }
+
+        console.log(
+          `[Oracle Proxy] Generating image using Workers AI model: ${targetModel}`,
+        );
+        const form = new FormData();
+        form.append("prompt", prompt);
+        form.append("width", String(body.width || 1024));
+        form.append("height", String(body.height || 1024));
+
+        const formResponse = new Response(form);
+        const formBody = formResponse.body || form;
+        const formContentType =
+          formResponse.headers.get("content-type") || "multipart/form-data";
+
+        const output = await env.AI.run(targetModel, {
+          multipart: {
+            body: formBody,
+            contentType: formContentType,
+          },
+        });
+
+        let buffer: ArrayBuffer;
+        if (output instanceof ArrayBuffer) {
+          buffer = output;
+        } else if (output instanceof Uint8Array) {
+          buffer = output.buffer;
+        } else if (
+          typeof output === "object" &&
+          output !== null &&
+          "image" in output
+        ) {
+          const img = (output as any).image;
+          if (typeof img === "string") {
+            // base64 format returned directly
+            return new Response(
+              JSON.stringify({
+                success: true,
+                result: { image: img },
+              }),
+              {
+                status: 200,
+                headers: {
+                  ...getCorsHeaders(request.headers, env),
+                  "Content-Type": "application/json",
+                },
+              },
+            );
+          } else {
+            // If the inner image field is a stream or binary, convert it
+            const res = new Response(img);
+            buffer = await res.arrayBuffer();
+          }
+        } else if (
+          output &&
+          (output instanceof ReadableStream ||
+            typeof (output as any).getReader === "function" ||
+            typeof (output as any).arrayBuffer === "function")
+        ) {
+          const res = new Response(output as any);
+          buffer = await res.arrayBuffer();
+        } else {
+          throw new Error("Invalid output format returned from Workers AI");
+        }
+
+        const b64 = arrayBufferToBase64(buffer);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            result: {
+              image: b64,
+            },
+          }),
+          {
+            status: 200,
+            headers: {
+              ...getCorsHeaders(request.headers, env),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      } catch (error) {
+        console.error(
+          "[Oracle Proxy] Cloudflare Workers AI image error:",
+          error,
+        );
+        return new Response(
+          JSON.stringify({
+            error: {
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Image generation failed",
+              code: "IMAGE_GEN_FAILED",
+            },
+          }),
+          {
+            status: 500,
+            headers: {
+              ...getCorsHeaders(request.headers, env),
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+    }
+
     try {
       // Parse the incoming request body
       const body = (await request.json()) as any;
@@ -78,7 +245,7 @@ export default {
       }
 
       // 1. Determine Model
-      const targetModel = body.model || "gemini-3-flash-preview";
+      const targetModel = body.model || "gemini-3.1-flash-lite";
 
       // 2. Map and clean up configuration for Google REST API (which expects snake_case)
       const rawConfig = {
@@ -112,6 +279,32 @@ export default {
       for (const [inputKey, snakeKey] of Object.entries(mapping)) {
         if (rawConfig[inputKey] !== undefined) {
           generation_config[snakeKey] = rawConfig[inputKey];
+        }
+      }
+
+      // Map speechConfig → speech_config (required for TTS voice selection)
+      // The Google REST API uses deeply-nested snake_case names that differ from
+      // the camelCase SDK, so we have to translate each level explicitly.
+      // Only written to generation_config when a valid voice_name is present —
+      // sending an empty speech_config object causes a 400 from Google.
+      const rawSpeechConfig = rawConfig.speechConfig ?? rawConfig.speech_config;
+      if (rawSpeechConfig) {
+        const rawVoiceConfig =
+          rawSpeechConfig.voiceConfig ?? rawSpeechConfig.voice_config;
+        if (rawVoiceConfig) {
+          const rawPrebuilt =
+            rawVoiceConfig.prebuiltVoiceConfig ??
+            rawVoiceConfig.prebuilt_voice_config;
+          const voiceName = rawPrebuilt?.voiceName ?? rawPrebuilt?.voice_name;
+          if (voiceName) {
+            // Only assign when we have a concrete voice name — an empty or
+            // absent name would cause a 400 INVALID_ARGUMENT from Google.
+            generation_config.speech_config = {
+              voice_config: {
+                prebuilt_voice_config: { voice_name: voiceName },
+              },
+            };
+          }
         }
       }
 
@@ -160,18 +353,18 @@ export default {
         responseData = responseText ? JSON.parse(responseText) : {};
       } catch {
         console.error(
-          "[Oracle Proxy] Failed to parse Gemini response:",
-          responseText,
+          "[Oracle Proxy] Non-JSON from Gemini. Status:",
+          geminiResponse.status,
         );
         return new Response(
           JSON.stringify({
             error: {
-              message: "Proxy error: Received invalid JSON from Gemini API",
-              details: responseText,
+              message: "Proxy error: Received invalid response from upstream",
+              code: "UPSTREAM_PARSE_ERROR",
             },
           }),
           {
-            status: 502, // Bad Gateway
+            status: 502,
             headers: {
               ...getCorsHeaders(request.headers, env),
               "Content-Type": "application/json",
@@ -189,12 +382,15 @@ export default {
         },
       });
     } catch (error) {
-      console.error("[Oracle Proxy] Error:", error);
+      console.error(
+        "[Oracle Proxy] Internal error:",
+        error instanceof Error ? error.message : "unknown",
+      );
       return new Response(
         JSON.stringify({
           error: {
             message: "Proxy error: Failed to forward request to Gemini API",
-            details: error instanceof Error ? error.message : "Unknown error",
+            code: "PROXY_INTERNAL_ERROR",
           },
         }),
         {
@@ -320,4 +516,58 @@ function isLoopbackOrigin(origin: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Simple rate limiting using the Cache API.
+ * Operates per Cloudflare edge location (colo) without DB dependency.
+ */
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean }> {
+  try {
+    const cacheKey = new Request(`https://limit.local/ip-${ip}`);
+    const cache = caches.default;
+    const cachedResponse = await cache.match(cacheKey);
+
+    let count = 0;
+    if (cachedResponse) {
+      const data = (await cachedResponse.json()) as any;
+      count = data.count || 0;
+    }
+
+    const limit = 20; // 20 images per day per user/IP per edge location
+    if (count >= limit) {
+      return { allowed: false };
+    }
+
+    count++;
+    const nextResponse = new Response(JSON.stringify({ count }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "max-age=86400", // Cache for 24 hours
+      },
+    });
+    await cache.put(cacheKey, nextResponse);
+
+    return { allowed: true };
+  } catch (err) {
+    console.error("[Oracle Proxy] Rate limiter error, default to allow:", err);
+    return { allowed: true };
+  }
+}
+
+/**
+ * Safely convert ArrayBuffer to Base64 avoiding stack overflows.
+ */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const len = bytes.byteLength;
+  const chunk = 8192;
+  for (let i = 0; i < len; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, Math.min(i + chunk, len)) as any,
+    );
+  }
+  return btoa(binary);
 }

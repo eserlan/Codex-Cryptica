@@ -4,15 +4,14 @@
 
 ### Prerequisites
 
-- Node.js 24+
-- pnpm >= 10.5.0 (Required)
+- [Bun](https://bun.sh) >= 1.3.0
 
 ### Installation
 
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   pnpm install
+   bun install
    ```
 
 ### Running the App
@@ -20,9 +19,7 @@
 Start the development server:
 
 ```bash
-pnpm run dev
-# or
-turbo run dev
+bun run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to view the application.
@@ -40,7 +37,7 @@ This project uses **Husky** and **lint-staged** to ensure code quality before ev
 
 - **Commit Messages**: We use [gitmoji](https://gitmoji.dev/) for consistent and descriptive commit messages. Every commit message must start with a gitmoji (either the emoji character or the `:code:`).
   - Example: `:sparkles: Add new feature` or `✨ Add new feature`
-  - You can use the `gitmoji-cli` to help you choose the right emoji: `pnpm exec gitmoji -c`
+  - You can use the `gitmoji-cli` to help you choose the right emoji: `bunx gitmoji -c`
 - **Pull Request Labels**: Pull requests are labeled automatically from the PR title and changed files. Use the same gitmoji-style prefixes you use in commit messages, and see [docs/PR_LABELING.md](docs/PR_LABELING.md) for the label mapping.
 - **Pre-commit Hooks**: When you run `git commit`, Husky runs `lint-staged`, which executes `eslint --fix` and `prettier --write` on the modified files.
 - **Commit-msg Hooks**: A hook validates that your commit message follows the gitmoji convention using `commitlint`.
@@ -65,13 +62,13 @@ Testing is managed by [Vitest](https://vitest.dev/). You can run tests for the e
 
 ```bash
 # Run all unit tests
-pnpm test
+bun run test
 
 # Run tests with coverage reports
-pnpm run test:coverage
+bun run test:coverage
 
 # Run E2E tests (Playwright)
-pnpm run test:e2e
+bun run test:e2e
 ```
 
 Coverage reports are generated in the `coverage/` directory of each package and the `apps/web/` directory. An HTML report is also available for visual inspection.
@@ -80,8 +77,7 @@ Coverage reports are generated in the `coverage/` directory of each package and 
 
 - **Framework**: [SvelteKit](https://kit.svelte.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Build System**: [Turborepo](https://turbo.build/repo)
-- **Runtime**: Node.js
+- **Package manager / runtime**: [Bun](https://bun.sh)
 - **State Management**: Svelte Stores (Frontend)
 - **Local-first database**: Native File System Access API with OPFS
 - **Graph Visualization**: [Cytoscape.js](https://js.cytoscape.org/)

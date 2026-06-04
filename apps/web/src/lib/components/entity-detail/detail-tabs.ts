@@ -1,4 +1,4 @@
-export const entityDetailTabs = ["status", "lore", "inventory", "map"] as const;
+export const entityDetailTabs = ["status", "lore", "map", "chats"] as const;
 
 export type EntityDetailTab = (typeof entityDetailTabs)[number];
 
@@ -48,4 +48,39 @@ export function getNextEntityDetailTabInList(
   const nextIndex = (safeIndex + direction + tabs.length) % tabs.length;
 
   return tabs[nextIndex];
+}
+
+export function getTemporalLabel(
+  type: string,
+  field: "date" | "start" | "end",
+): string {
+  const t = type.toLowerCase();
+  if (field === "date") return "Occurrence";
+  if (field === "start") {
+    if (["npc", "creature", "character", "monster"].some((x) => t.includes(x)))
+      return "Born";
+    if (
+      ["faction", "location", "city", "organization", "guild"].some((x) =>
+        t.includes(x),
+      )
+    )
+      return "Founded";
+    if (["item", "artifact", "object", "weapon"].some((x) => t.includes(x)))
+      return "Created";
+    return "Started";
+  }
+  if (field === "end") {
+    if (["npc", "creature", "character", "monster"].some((x) => t.includes(x)))
+      return "Died";
+    if (
+      ["faction", "location", "city", "organization", "guild"].some((x) =>
+        t.includes(x),
+      )
+    )
+      return "Dissolved";
+    if (["item", "artifact", "object", "weapon"].some((x) => t.includes(x)))
+      return "Destroyed";
+    return "Ended";
+  }
+  return "Date";
 }

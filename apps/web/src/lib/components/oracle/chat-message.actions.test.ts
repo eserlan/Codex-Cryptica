@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatMessageActions } from "./chat-message.actions";
 
-const { regenerationServiceMock } = vi.hoisted(() => ({
-  regenerationServiceMock: { pendingDraft: null as any },
+const { revisionServiceMock } = vi.hoisted(() => ({
+  revisionServiceMock: { pendingDraft: null as any },
 }));
 
-vi.mock("$lib/services/RegenerationService.svelte", () => ({
-  regenerationService: regenerationServiceMock,
-  default: regenerationServiceMock,
+vi.mock("$lib/services/RevisionService.svelte", () => ({
+  revisionService: revisionServiceMock,
+  default: revisionServiceMock,
 }));
 
 describe("ChatMessageActions", () => {
@@ -18,7 +18,7 @@ describe("ChatMessageActions", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    regenerationServiceMock.pendingDraft = null;
+    revisionServiceMock.pendingDraft = null;
     vault = {
       entities: {
         target: {
@@ -39,7 +39,7 @@ describe("ChatMessageActions", () => {
       pushUndoAction: vi.fn(),
       updateMessageEntity: vi.fn(),
       undo: vi.fn().mockResolvedValue(undefined),
-      reconcileSmartApply: vi.fn().mockResolvedValue({
+      reviseSmartApply: vi.fn().mockResolvedValue({
         content: "new chronicle",
         lore: "new lore",
       }),
@@ -72,7 +72,7 @@ describe("ChatMessageActions", () => {
     });
 
     expect(vault.updateEntity).not.toHaveBeenCalled();
-    expect(regenerationServiceMock.pendingDraft).toEqual(
+    expect(revisionServiceMock.pendingDraft).toEqual(
       expect.objectContaining({
         entityId: "target",
         messageId: "message-1",
@@ -125,10 +125,10 @@ describe("ChatMessageActions", () => {
     expect(oracle.pushUndoAction).toHaveBeenCalled();
   });
 
-  it("proposes a chronicle update draft with reconciliation and preserves existing lore", async () => {
+  it("proposes a chronicle update draft with revision and preserves existing lore", async () => {
     const setSaved = vi.fn();
-    oracle.reconcileSmartApply.mockResolvedValue({
-      content: "fresh chronicle reconciled",
+    oracle.reviseSmartApply.mockResolvedValue({
+      content: "fresh chronicle revised",
     });
 
     await actions.copyToChronicle({
@@ -140,24 +140,24 @@ describe("ChatMessageActions", () => {
       setSaved,
     });
 
-    expect(oracle.reconcileSmartApply).toHaveBeenCalledWith("target", {
+    expect(oracle.reviseSmartApply).toHaveBeenCalledWith("target", {
       chronicle: "fresh chronicle",
     });
-    expect(regenerationServiceMock.pendingDraft).toEqual(
+    expect(revisionServiceMock.pendingDraft).toEqual(
       expect.objectContaining({
         entityId: "target",
         messageId: "message-3",
-        chronicle: "fresh chronicle reconciled",
+        chronicle: "fresh chronicle revised",
         lore: "old lore", // Preserved from vault.entities.target
       }),
     );
     expect(setSaved).toHaveBeenCalledWith(true);
   });
 
-  it("proposes a lore update draft with reconciliation and preserves existing chronicle", async () => {
+  it("proposes a lore update draft with revision and preserves existing chronicle", async () => {
     const setSaved = vi.fn();
-    oracle.reconcileSmartApply.mockResolvedValue({
-      lore: "fresh lore reconciled",
+    oracle.reviseSmartApply.mockResolvedValue({
+      lore: "fresh lore revised",
     });
 
     await actions.copyToLore({
@@ -169,15 +169,15 @@ describe("ChatMessageActions", () => {
       setSaved,
     });
 
-    expect(oracle.reconcileSmartApply).toHaveBeenCalledWith("target", {
+    expect(oracle.reviseSmartApply).toHaveBeenCalledWith("target", {
       lore: "fresh lore",
     });
-    expect(regenerationServiceMock.pendingDraft).toEqual(
+    expect(revisionServiceMock.pendingDraft).toEqual(
       expect.objectContaining({
         entityId: "target",
         messageId: "message-4",
         chronicle: "old chronicle", // Preserved from vault.entities.target
-        lore: "fresh lore reconciled",
+        lore: "fresh lore revised",
       }),
     );
     expect(setSaved).toHaveBeenCalledWith(true);

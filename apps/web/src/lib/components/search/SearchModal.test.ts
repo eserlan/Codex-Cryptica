@@ -13,7 +13,19 @@ const { mockSearchStore, mockVault, mockCategories } = vi.hoisted(() => ({
     setSelectedIndex: vi.fn(),
     selectCurrent: vi.fn(),
     close: vi.fn(),
-  },
+    retryIndexing: vi.fn(),
+    indexProgress: {
+      status: "idle",
+      vaultId: null,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
+    },
+  } as any,
   mockVault: {
     selectedEntityId: null as string | null,
   },
@@ -68,6 +80,18 @@ describe("SearchModal", () => {
     mockSearchStore.setSelectedIndex.mockReset();
     mockSearchStore.selectCurrent.mockReset();
     mockSearchStore.close.mockReset();
+    mockSearchStore.retryIndexing.mockReset();
+    mockSearchStore.indexProgress = {
+      status: "idle",
+      vaultId: null,
+      runId: null,
+      indexedCount: 0,
+      totalCount: null,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is idle.",
+      error: null,
+    };
     layoutUIStore.leftSidebarOpen = false;
     mockVault.selectedEntityId = null;
   });
@@ -105,5 +129,43 @@ describe("SearchModal", () => {
     expect(modal.className).toContain("md:left-0");
     expect(modal.className).toContain("md:right-0");
     expect(modal.className).toContain("justify-center");
+  });
+
+  it("shows partial indexing progress counts", () => {
+    mockSearchStore.indexProgress = {
+      status: "partial",
+      vaultId: "vault-1",
+      runId: "run-1",
+      indexedCount: 42,
+      totalCount: 100,
+      isPartial: true,
+      canRetry: false,
+      message: "Search is still indexing.",
+      error: null,
+    };
+
+    render(SearchModal);
+
+    const progress = screen.getByTestId("search-index-progress");
+    expect(progress.textContent).toContain("Search is still indexing.");
+    expect(progress.textContent).toContain("42/100");
+  });
+
+  it("shows retry action when indexing failed", () => {
+    mockSearchStore.indexProgress = {
+      status: "failed",
+      vaultId: "vault-1",
+      runId: "run-1",
+      indexedCount: 20,
+      totalCount: 100,
+      isPartial: true,
+      canRetry: true,
+      message: "Search may be incomplete. Retry indexing.",
+      error: "worker failed",
+    };
+
+    render(SearchModal);
+
+    expect(screen.getByRole("button", { name: "Retry indexing" })).toBeTruthy();
   });
 });

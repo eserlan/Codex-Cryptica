@@ -3,8 +3,8 @@
   import { fade } from "svelte/transition";
 
   let isOpen = $state(false);
-  // Auto-subscribed value
-  let logs = $derived($debugStore);
+  // Use direct signal access
+  let logs = $derived(debugStore.logs);
 
   const copyLogsToClipboard = () => {
     const logText = logs

@@ -23,12 +23,13 @@ describe("entity detail tab ids", () => {
 
   it("wraps keyboard navigation across the tab list", () => {
     expect(getNextEntityDetailTab("status", "ArrowRight")).toBe("lore");
-    expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("inventory");
-    expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("status");
-    expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("map");
-    expect(getNextEntityDetailTab("inventory", "ArrowLeft")).toBe("lore");
-    expect(getNextEntityDetailTab("inventory", "Home")).toBe("status");
-    expect(getNextEntityDetailTab("status", "End")).toBe("map");
+    expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("map");
+    expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("chats");
+    expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("status");
+    expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("chats");
+    expect(getNextEntityDetailTab("chats", "ArrowLeft")).toBe("map");
+    expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");
+    expect(getNextEntityDetailTab("status", "End")).toBe("chats");
   });
 
   it("skips hidden tabs when navigating a guest-visible subset", () => {
@@ -36,12 +37,18 @@ describe("entity detail tab ids", () => {
 
     expect(
       getNextEntityDetailTabInList(visibleTabs, "status", "ArrowRight"),
-    ).toBe("inventory");
+    ).toBe("map");
+    expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowRight")).toBe(
+      "chats",
+    );
     expect(
-      getNextEntityDetailTabInList(visibleTabs, "inventory", "ArrowLeft"),
+      getNextEntityDetailTabInList(visibleTabs, "chats", "ArrowRight"),
     ).toBe("status");
+    expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowLeft")).toBe(
+      "status",
+    );
     expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
-      "map",
+      "chats",
     );
   });
 });

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `034-fog-of-war`  
 **Created**: 2026-02-03  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "in shared worlds, only show what is revealed. (control by a tag?)" (GitHub Issue #73)
 
 ## User Scenarios & Testing

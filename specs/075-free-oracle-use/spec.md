@@ -2,7 +2,7 @@
 
 **Feature Branch**: `075-free-oracle-use`  
 **Created**: 2026-03-20  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "free use of the oracle (not only a trial, free for now) https://github.com/eserlan/Codex-Cryptica/issues/479"
 
 ## User Scenarios & Testing _(mandatory)_

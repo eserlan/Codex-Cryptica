@@ -155,12 +155,20 @@ export class DefaultAIClientManager {
           }),
         }));
 
+        const requestSysInst =
+          raw?.systemInstruction ?? raw?.system_instruction;
+        const finalSysInst =
+          systemInstruction ??
+          (typeof requestSysInst === "string"
+            ? requestSysInst
+            : requestSysInst?.parts?.[0]?.text);
+
         try {
           const body = {
             model: modelName,
             contents,
-            system_instruction: systemInstruction
-              ? { parts: [{ text: systemInstruction }] }
+            system_instruction: finalSysInst
+              ? { parts: [{ text: finalSysInst }] }
               : undefined,
             generationConfig,
           };

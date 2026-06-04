@@ -8,6 +8,27 @@ import { deleteOpfsEntry } from "../../utils/opfs";
  * Metadata updates and other modifications are tracked via updatedAt.
  */
 
+function applyAutoLabels(entity: LocalEntity): LocalEntity {
+  const hasEndDate =
+    entity.end_date &&
+    typeof entity.end_date.year === "number" &&
+    Number.isFinite(entity.end_date.year);
+  const labels = entity.labels ? [...entity.labels] : [];
+  const hasPastLabel = labels.includes("past");
+
+  if (hasEndDate && !hasPastLabel) {
+    labels.push("past");
+  } else if (!hasEndDate && hasPastLabel) {
+    const index = labels.indexOf("past");
+    if (index !== -1) {
+      labels.splice(index, 1);
+    }
+  }
+
+  entity.labels = labels;
+  return entity;
+}
+
 export function createEntity(
   title: string,
   type: Entity["type"] = "note",
@@ -26,7 +47,7 @@ export function createEntity(
     }
   }
 
-  return {
+  const entity = {
     id,
     type,
     title,
@@ -39,6 +60,12 @@ export function createEntity(
     updatedAt: Date.now(),
     ...initialData,
   } as LocalEntity;
+
+  if (entity.parent) {
+    entity.parent = sanitizeId(entity.parent);
+  }
+
+  return applyAutoLabels(entity);
 }
 
 export function updateEntity(
@@ -49,11 +76,18 @@ export function updateEntity(
   const entity = entities[id];
   if (!entity) return { entities, updated: null };
 
-  const updated = {
+  let updated = {
     ...entity,
     ...updates,
     updatedAt: Date.now(),
   } as LocalEntity;
+
+  if (updated.parent) {
+    updated.parent = sanitizeId(updated.parent);
+  }
+
+  updated = applyAutoLabels(updated);
+
   return {
     entities: { ...entities, [id]: updated },
     updated,
@@ -64,6 +98,8 @@ export async function deleteEntity(
   vaultDir: FileSystemDirectoryHandle,
   entities: Record<string, LocalEntity>,
   id: string,
+  inboundConnections?: Record<string, { sourceId: string; connection: any }[]>,
+  childrenIds?: string[],
 ): Promise<{
   entities: Record<string, LocalEntity>;
   deletedEntity: LocalEntity | null;
@@ -100,17 +136,50 @@ export async function deleteEntity(
   delete newEntities[id];
 
   // 4. Cleanup connections FROM other nodes TO this node
-  // Since inboundConnections is now derived, we just need to ensure
-  // any entity that linked to this one is updated.
+  // Since inboundConnections is now derived or state-managed, we can surgically target only affected entities.
   const modifiedIds: string[] = [];
-  for (const sourceId in newEntities) {
+  let targetIdsToCleanup: Set<string>;
+
+  if (inboundConnections) {
+    const incomingSourceIds =
+      inboundConnections[id]?.map((c) => c.sourceId) || [];
+
+    let childIds = childrenIds;
+    if (!childIds) {
+      childIds = [];
+      for (const entityId in newEntities) {
+        if (newEntities[entityId].parent === id) {
+          childIds.push(entityId);
+        }
+      }
+    }
+
+    targetIdsToCleanup = new Set([...incomingSourceIds, ...childIds]);
+  } else {
+    targetIdsToCleanup = new Set(Object.keys(newEntities));
+  }
+
+  for (const sourceId of targetIdsToCleanup) {
     const sourceEntity = newEntities[sourceId];
+    if (!sourceEntity) continue;
+    let isModified = false;
+    const updatedEntity = { ...sourceEntity };
+
     const hasConnection = sourceEntity.connections.some((c) => c.target === id);
     if (hasConnection) {
-      newEntities[sourceId] = {
-        ...sourceEntity,
-        connections: sourceEntity.connections.filter((c) => c.target !== id),
-      };
+      updatedEntity.connections = sourceEntity.connections.filter(
+        (c) => c.target !== id,
+      );
+      isModified = true;
+    }
+
+    if (sourceEntity.parent === id) {
+      updatedEntity.parent = undefined;
+      isModified = true;
+    }
+
+    if (isModified) {
+      newEntities[sourceId] = updatedEntity;
       modifiedIds.push(sourceId);
     }
   }
@@ -347,4 +416,32 @@ export function batchCreateEntities(
   }
 
   return { entities: newEntities, created };
+}
+
+export function detectCycle(
+  entityId: string,
+  potentialParentId: string | undefined,
+  entities: Record<string, LocalEntity>,
+): boolean {
+  if (!potentialParentId) return false;
+  if (entityId === potentialParentId) return true;
+
+  let currentId: string | undefined = potentialParentId;
+  const visited = new Set<string>();
+
+  while (currentId) {
+    if (visited.has(currentId)) {
+      return true;
+    }
+    visited.add(currentId);
+
+    if (currentId === entityId) {
+      return true;
+    }
+
+    const currentEntity: LocalEntity | undefined = entities[currentId];
+    currentId = currentEntity?.parent;
+  }
+
+  return false;
 }

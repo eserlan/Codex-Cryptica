@@ -1,9 +1,10 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
+import { buildSearchKeywords } from "../../services/search-entry-fields";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
-import { vaultEventBus } from "./events";
+import { vaultEventBus } from "./events.svelte";
 
 export interface VaultLifecycleDependencies {
   syncStore: SyncStore;
@@ -18,6 +19,8 @@ export interface VaultLifecycleDependencies {
   getEntities: () => Record<string, LocalEntity>;
   setDemoVaultName: (name: string | null) => void;
   setInitialized: (val: boolean) => void;
+  /** Rebuild the reactive entity indexes (allEntities, inbound connections). */
+  rebuildEntityIndexes: () => void;
   getServices: () => any;
   setSelectedEntityId: (id: string | null) => void;
   vaultRegistry: any;
@@ -109,11 +112,14 @@ export class VaultLifecycleManager {
       this.deps.canvasRegistry.clear();
       this.deps.setSelectedEntityId(null);
 
-      const nextVault = this.deps.vaultRegistry.availableVaults[0];
+      const nextVault = this.deps.vaultRegistry.availableVaults.find(
+        (v: any) => v.id !== id,
+      );
       if (nextVault) {
         await this.switchVault(nextVault.id);
       } else {
         // No other vaults remain; clear active state.
+        await this.deps.vaultRegistry.clearActiveVault();
         this.deps.setInitialized(false);
         this.deps.syncStore.setStatus("idle");
       }
@@ -164,39 +170,58 @@ export class VaultLifecycleManager {
   }
 
   async switchVault(id: string) {
-    this.switchLock = this.switchLock.then(async () => {
-      if (this.deps.activeVaultId() === id) return;
+    this.switchLock = this.switchLock
+      .catch(() => {}) // Recover from any previous switch failure
+      .then(async () => {
+        if (this.deps.activeVaultId() === id) return;
 
-      this.deps.syncStore.setStatus("loading");
+        this.deps.syncStore.setStatus("loading");
 
-      // Flush debounced saves and drain the queue before clearing state
-      await this.deps.flushPendingSaves();
+        // Flush debounced saves and drain the queue before clearing state
+        try {
+          await Promise.race([
+            this.deps.flushPendingSaves(),
+            new Promise((_, reject) =>
+              setTimeout(
+                () =>
+                  reject(
+                    new Error("Save drain timed out or failed during switch"),
+                  ),
+                5000,
+              ),
+            ),
+          ]);
+        } catch (err: any) {
+          console.warn(`[VaultStore] ${err.message || err}`);
+        }
 
-      // HARD CLEAR: Wipe all traces of the previous vault
-      this.deps.repository.clear();
-      this.deps.assetStore.clear();
-      this.deps.mapRegistry.maps = {};
-      this.deps.canvasRegistry.clear();
-      this.deps.setSelectedEntityId(null);
-      this.deps.syncStore.setHasConflictFiles(false);
+        // HARD CLEAR: Wipe all traces of the previous vault
+        this.deps.repository.clear();
+        this.deps.assetStore.clear();
+        this.deps.mapRegistry.maps = {};
+        this.deps.canvasRegistry.clear();
+        this.deps.setSelectedEntityId(null);
+        this.deps.syncStore.setHasConflictFiles(false);
 
-      // Invalidate cache preloads to ensure no leakage from previous vault
-      cacheService.invalidatePreload();
+        // Invalidate cache preloads to ensure no leakage from previous vault
+        cacheService.invalidatePreload();
 
-      await this.deps.vaultRegistry.setActiveVault(id);
-      this.deps.clearStorageCache();
+        await this.deps.vaultRegistry.setActiveVault(id);
+        this.deps.clearStorageCache();
 
-      // Load Oracle chat history for the new vault
-      const { oracle } = await import("../oracle.svelte");
-      await oracle.loadForVault(id);
+        // Load Oracle chat history for the new vault
+        const { oracle } = await import("../oracle.svelte");
+        await oracle.loadForVault(id);
 
-      await this.deps.themeStore.loadForVault(id);
-      await this.deps.loadFiles();
-      this.deps.setInitialized(true);
-      this.deps.syncStore.setStatus("idle");
+        await this.deps.themeStore.loadForVault(id);
+        await this.deps.loadFiles();
+        this.deps.setInitialized(true);
+        if (this.deps.syncStore.status === "loading") {
+          this.deps.syncStore.setStatus("idle");
+        }
 
-      vaultEventBus.emit({ type: "VAULT_SWITCHED", vaultId: id });
-    });
+        vaultEventBus.emit({ type: "VAULT_SWITCHED", vaultId: id });
+      });
 
     return this.switchLock;
   }
@@ -221,6 +246,15 @@ export class VaultLifecycleManager {
       this.deps.repository.entities = entities;
       this.deps.setInitialized(true);
 
+      // Rebuild the reactive entity indexes (allEntities, inbound connections)
+      // directly — without this the graph stays empty even though the
+      // repository holds the demo entities. We deliberately do NOT emit
+      // CACHE_LOADED here: that event is consumed by the search pipeline as a
+      // disk-cache restore, which would double-index the entities (alongside
+      // the loop below) and could restore a stale index keyed on the active
+      // vault id. Search indexing for the demo is handled by the loop below.
+      this.deps.rebuildEntityIndexes();
+
       const services = this.deps.getServices();
       if (services?.search) {
         // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
@@ -228,21 +262,12 @@ export class VaultLifecycleManager {
           const entity = entities[id];
 
           // Canonical keyword construction mirroring SearchService.mapToSearchEntry
-          const keywords = [
-            ...(entity.tags || []),
-            entity.lore || "",
-            ...Object.values(entity.metadata || {}).flat(),
-          ].join(" ");
+          const keywords = buildSearchKeywords(entity as any);
 
           await services.search.index({
             id: entity.id,
             title: entity.title,
-            aliases: (entity.aliases || []).join(" "),
-            content: entity.content || "",
-            type: entity.type,
-            path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
             keywords,
-            updatedAt: Date.now(),
           });
         }
       }

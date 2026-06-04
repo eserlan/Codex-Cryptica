@@ -21,7 +21,7 @@ scripts/blog-screenshots/
 
 ```bash
 cd apps/web
-pnpm run test:e2e -- --grep "Blog Screenshots" --timeout=120000
+bun run test:e2e -- --grep "Blog Screenshots" --timeout=120000
 ```
 
 Screenshots are saved to `blogPics/<blog-name>/` at the project root.
@@ -160,7 +160,7 @@ Recommended approach: Use automated screenshots for deterministic commands (`/ro
 Increase the timeout:
 
 ```bash
-pnpm run test:e2e -- --grep "Blog Screenshots" --timeout=180000
+bun run test:e2e -- --grep "Blog Screenshots" --timeout=180000
 ```
 
 ### Element Not Found

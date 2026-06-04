@@ -5,7 +5,11 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
-import type { Entity } from "schema";
+import type { Entity, GuestChatTranscript } from "schema";
+import {
+  saveTranscriptToDisk,
+  loadTranscriptsForCharacterFromDisk,
+} from "./vault/io";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
@@ -66,10 +70,24 @@ export class VaultStore {
   get allEntities() {
     return this.entityStore.allEntities;
   }
+  get titleAndAliasIndex() {
+    return this.entityStore.titleAndAliasIndex;
+  }
+  get allTitlesString() {
+    return this.entityStore.allEntities.map((e) => e.title).join(", ");
+  }
   get status() {
     return this.syncStore.status;
   }
-  set status(value: "idle" | "loading" | "saving" | "error") {
+  set status(
+    value:
+      | "idle"
+      | "loading"
+      | "saving"
+      | "saved"
+      | "needs-permission"
+      | "error",
+  ) {
     this.syncStore.setStatus(value);
   }
   get errorMessage() {
@@ -104,6 +122,9 @@ export class VaultStore {
   }
   get labelIndex() {
     return this.entityStore.labelIndex;
+  }
+  get labelCounts() {
+    return this.entityStore.labelCounts;
   }
   get maps() {
     return mapRegistry.maps;
@@ -179,6 +200,8 @@ export class VaultStore {
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
+      flushPendingSaves: (timeoutMs) =>
+        this.entityStore?.flushPendingSaves(timeoutMs),
     });
 
     const persistence = new EntityPersistenceService({
@@ -187,6 +210,7 @@ export class VaultStore {
       isGuest: () => this.isGuest,
       getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
       setStatus: (s) => this.syncStore.setStatus(s),
+      status: () => this.syncStore.status,
       setErrorMessage: (m) => this.syncStore.setErrorMessage(m),
       onEntityUpdate: (entity) => this.onEntityUpdate?.(entity),
       isContentLoaded: (id) => loader.isContentLoaded(id),
@@ -239,6 +263,10 @@ export class VaultStore {
       getEntities: () => this.entities,
       setDemoVaultName: (n) => (this.demoVaultName = n),
       setInitialized: (v) => (this.isInitialized = v),
+      rebuildEntityIndexes: () => {
+        this.entityStore.initializeInboundConnections();
+        this.entityStore.rebuildIndexes();
+      },
       getServices: () => this.services,
       setSelectedEntityId: (id) => (this.selectedEntityId = id),
       vaultRegistry,
@@ -482,6 +510,39 @@ export class VaultStore {
     return this.lifecycleManager.persistToIndexedDB(vaultId);
   }
 
+  async saveTranscript(transcript: GuestChatTranscript) {
+    if (this.isGuest) return;
+    if (!this.activeVaultId) return;
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return;
+    await saveTranscriptToDisk(vaultHandle, this.activeVaultId, transcript);
+  }
+
+  async loadTranscriptsForCharacter(
+    characterId: string,
+  ): Promise<GuestChatTranscript[]> {
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return [];
+    return await loadTranscriptsForCharacterFromDisk(vaultHandle, characterId);
+  }
+
+  async deleteTranscript(guestId: string, characterId: string) {
+    if (this.isGuest) return;
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (!vaultHandle) return;
+    try {
+      const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+        create: true,
+      });
+      const transcriptsDir = await codexDir.getDirectoryHandle("transcripts", {
+        create: true,
+      });
+      await transcriptsDir.removeEntry(`${guestId}_${characterId}.json`);
+    } catch (err) {
+      console.warn("[VaultStore] Failed to delete transcript file:", err);
+    }
+  }
+
   async setDefaultVisibility(v: "visible" | "hidden") {
     this.defaultVisibility = v;
     const db = await getDB();
@@ -499,5 +560,5 @@ if (
   (import.meta.env.DEV || (window as any).__E2E__)
 ) {
   (window as any).vault = vault;
-  console.log("[VaultStore] Module loaded, vault attached to window");
+  debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

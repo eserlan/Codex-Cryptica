@@ -19,7 +19,7 @@ export function rebuildInboundMap(
   // For large vaults (1000+ nodes), this is still extremely fast (< 5ms).
   for (const id in entities) {
     const entity = entities[id];
-    for (const conn of entity.connections) {
+    for (const conn of entity.connections ?? []) {
       const targetId = conn.target;
       if (!targetId) continue;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { Search, Plus, Trash2, Edit2, Layout, X, Check } from "lucide-svelte";
+
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import { fade, scale, slide } from "svelte/transition";
@@ -137,7 +137,8 @@
           <h2
             class="text-lg font-bold text-theme-text font-header uppercase tracking-widest flex items-center gap-2"
           >
-            <Layout class="w-5 h-5 text-theme-primary" />
+            <span class="icon-[lucide--layout] w-5 h-5 text-theme-primary"
+            ></span>
             Canvas Registry
           </h2>
           <p
@@ -151,7 +152,7 @@
           class="p-2 rounded-lg hover:bg-theme-bg text-theme-muted hover:text-theme-text transition-colors"
           aria-label="Close modal"
         >
-          <X class="w-5 h-5" />
+          <span class="icon-[lucide--x] w-5 h-5"></span>
         </button>
       </div>
 
@@ -161,9 +162,9 @@
       >
         <div class="flex gap-2">
           <div class="relative flex-1">
-            <Search
-              class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-muted"
-            />
+            <span
+              class="icon-[lucide--search] absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-muted"
+            ></span>
             <input
               type="text"
               bind:value={searchQuery}
@@ -177,7 +178,7 @@
             disabled={isCreating}
             class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg font-bold text-xs uppercase font-header tracking-widest hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2"
           >
-            <Plus class="w-4 h-4" />
+            <span class="icon-[lucide--plus] w-4 h-4"></span>
             Create New
           </button>
         </div>
@@ -190,7 +191,8 @@
             <div
               class="w-8 h-8 rounded-lg bg-theme-primary/20 flex items-center justify-center shrink-0"
             >
-              <Plus class="w-4 h-4 text-theme-primary" />
+              <span class="icon-[lucide--plus] w-4 h-4 text-theme-primary"
+              ></span>
             </div>
             <input
               id="new-canvas-input"
@@ -205,14 +207,14 @@
               class="p-2 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
               title="Confirm Creation"
             >
-              <Check class="w-4 h-4" />
+              <span class="icon-[lucide--check] w-4 h-4"></span>
             </button>
             <button
               onclick={() => (isCreating = false)}
               class="p-2 text-theme-muted hover:text-theme-text"
               title="Cancel"
             >
-              <X class="w-4 h-4" />
+              <span class="icon-[lucide--x] w-4 h-4"></span>
             </button>
           </div>
         {/if}
@@ -265,11 +267,12 @@
             <div
               class="w-10 h-10 rounded-lg bg-theme-bg flex items-center justify-center shrink-0 border border-theme-border group-hover:border-theme-primary/30 transition-colors"
             >
-              <Layout
-                class="w-5 h-5 {activeCanvasId === canvas.slug
+              <span
+                class="icon-[lucide--layout] w-5 h-5 {activeCanvasId ===
+                canvas.slug
                   ? 'text-theme-primary'
                   : 'text-theme-muted'}"
-              />
+              ></span>
             </div>
 
             <div class="flex-1 min-w-0">
@@ -295,7 +298,7 @@
                     onclick={() => canvas.id && confirmRename(canvas.id)}
                     class="p-1.5 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
                   >
-                    <Check class="w-3 h-3" />
+                    <span class="icon-[lucide--check] w-3 h-3"></span>
                   </button>
                 </div>
               {:else}
@@ -331,7 +334,7 @@
                   title="Rename Workspace"
                   aria-label={`Rename ${canvas.name || "Canvas"}`}
                 >
-                  <Edit2 class="w-4 h-4" />
+                  <span class="icon-[lucide--edit-2] w-4 h-4"></span>
                 </button>
                 <button
                   onclick={(e) => canvas.id && deleteCanvas(canvas.id, e)}
@@ -339,7 +342,7 @@
                   title="Delete Workspace"
                   aria-label={`Delete ${canvas.name || "Canvas"}`}
                 >
-                  <Trash2 class="w-4 h-4" />
+                  <span class="icon-[lucide--trash-2] w-4 h-4"></span>
                 </button>
               {/if}
             </div>
@@ -349,7 +352,7 @@
             <div
               class="w-16 h-16 rounded-full bg-theme-surface border border-theme-border flex items-center justify-center mx-auto mb-4 text-theme-muted opacity-20"
             >
-              <Layout class="w-8 h-8" />
+              <span class="icon-[lucide--layout] w-8 h-8"></span>
             </div>
             <p
               class="text-sm text-theme-muted font-mono uppercase tracking-widest"

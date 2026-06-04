@@ -1,12 +1,12 @@
 import { browser } from "$app/environment";
 import { base } from "$app/paths";
 import { VERSION } from "$lib/config";
+import { debugStore } from "$lib/stores/debug.svelte";
 import {
   type GuideStep,
   ONBOARDING_TOUR,
   HELP_ARTICLES,
 } from "$lib/config/help-content";
-import FlexSearch from "flexsearch";
 import { searchStore as defaultSearchStore } from "./search.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -19,7 +19,7 @@ interface HelpStoreState {
   dismissedHints: string[];
 }
 
-const SEARCH_FIELDS = ["title", "tags", "content"];
+const SEARCH_FIELDS = ["title", "labels", "content"];
 
 export class HelpStore {
   // Walkthrough State
@@ -91,7 +91,7 @@ export class HelpStore {
     // Init handled explicitly in layout
   }
 
-  init() {
+  async init() {
     if (!browser) return;
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -103,7 +103,7 @@ export class HelpStore {
 
           // Version Tracking
           if (loaded.lastSeenVersion !== VERSION) {
-            console.log(
+            debugStore.log(
               `[HelpStore] Version updated: ${loaded.lastSeenVersion} -> ${VERSION}`,
             );
             this.state.lastSeenVersion = VERSION;
@@ -116,7 +116,7 @@ export class HelpStore {
       }
     }
 
-    this.buildIndex();
+    await this.buildIndex();
     this.isInitialized = true;
   }
 
@@ -135,11 +135,11 @@ export class HelpStore {
    * Rebuilds the search index.
    * Useful during development if articles change without a full reload.
    */
-  buildIndex(force = false) {
+  async buildIndex(force = false) {
     if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
       return;
 
-    // Initialize FlexSearch
+    const FlexSearch = (await import("flexsearch")).default;
     this.index = new FlexSearch.Document({
       document: {
         id: "id",

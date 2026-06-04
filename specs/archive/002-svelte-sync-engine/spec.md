@@ -2,7 +2,7 @@
 
 # SPEC-002: Svelte-Native Sync Engine (The "Pulse")
 
-**Status**: Superseded by 093-directional-vault-sync
+**Status**: Implemented
 
 ## 1. The Goal
 

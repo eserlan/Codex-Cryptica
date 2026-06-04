@@ -1,6 +1,7 @@
 import { appEventBus } from "@codex/events";
 import { ORACLE_EVENTS } from "@codex/oracle-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { debugStore } from "$lib/stores/debug.svelte";
 
 /**
  * Initializes global event listeners for Oracle actions.
@@ -26,7 +27,7 @@ export function initOracleEventListeners(): () => void {
   unsubs.push(
     appEventBus.subscribe(ORACLE_EVENTS.COMMAND_COMPLETED, (event) => {
       const { intent } = event.payload;
-      console.log(`[Oracle] Command completed: ${intent.type}`);
+      debugStore.log(`[Oracle] Command completed: ${intent.type}`);
     }),
   );
 
@@ -42,7 +43,7 @@ export function initOracleEventListeners(): () => void {
   unsubs.push(
     appEventBus.subscribe(ORACLE_EVENTS.ENTITY_DISCOVERED, (event) => {
       const { proposal } = event.payload;
-      console.log(`[Oracle] Entity discovered: ${proposal.title}`);
+      debugStore.log(`[Oracle] Entity discovered: ${proposal.title}`);
     }),
   );
 

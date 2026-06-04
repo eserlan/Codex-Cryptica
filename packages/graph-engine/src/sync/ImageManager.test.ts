@@ -1,6 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GraphImageManager } from "./ImageManager";
 
+async function waitFor(assertion: () => void, options = { timeout: 1000 }) {
+  const start = Date.now();
+  while (true) {
+    try {
+      assertion();
+      return;
+    } catch (e) {
+      if (Date.now() - start > options.timeout) {
+        throw e;
+      }
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
+}
+
 describe("GraphImageManager", () => {
   let mockCy: any;
   let mockNode: any;
@@ -42,12 +57,9 @@ describe("GraphImageManager", () => {
     });
 
     // Wait for the async processing in ImageManager
-    await vi.waitFor(
-      () => {
-        expect(mockStyle.update).toHaveBeenCalled();
-      },
-      { timeout: 1000 },
-    );
+    await waitFor(() => {
+      expect(mockStyle.update).toHaveBeenCalled();
+    });
 
     expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url");
   });
@@ -66,9 +78,7 @@ describe("GraphImageManager", () => {
 
     manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
 
-    await vi.waitFor(() => expect(mockStyle.update).toHaveBeenCalled(), {
-      timeout: 1000,
-    });
+    await waitFor(() => expect(mockStyle.update).toHaveBeenCalled());
 
     // Setup node for being "resolved" for the clear step
     mockNode.data.mockImplementation((key: string) => {
@@ -91,15 +101,9 @@ describe("GraphImageManager", () => {
 
     manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
 
-    await vi.waitFor(
-      () => {
-        expect(resolveImageUrl).toHaveBeenCalledTimes(2);
-        expect(mockNode.data).toHaveBeenCalledWith(
-          "resolvedImage",
-          "blob:url2",
-        );
-      },
-      { timeout: 1000 },
-    );
+    await waitFor(() => {
+      expect(resolveImageUrl).toHaveBeenCalledTimes(2);
+      expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
+    });
   });
 });

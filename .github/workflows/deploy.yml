@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main, staging]
+    branches: [staging]
     paths-ignore:
       - "apps/web/src/lib/content/blog/**"
       - "scripts/publish-blog-content.mjs"
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: "cloudflare-pages"
+  group: "cloudflare-pages-${{ github.ref }}"
   cancel-in-progress: true
 
 permissions:
@@ -24,7 +24,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
+  type-check:
+    name: Type Check
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -34,37 +35,67 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10.5.0
-          run_install: false
+          bun-version: latest
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
+      - name: Setup Bun cache
         uses: actions/cache@v5
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
-      - name: Lint and Test
-        run: |
-          pnpm run lint
-          pnpm run test:coverage
+      - name: Type Check
+        run: bun run lint:types
+
+  lint-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Test
+        run: bun run test:coverage
 
       - name: Upload Coverage Reports
         uses: actions/upload-artifact@v7
@@ -76,6 +107,39 @@ jobs:
             packages/*/coverage/
           retention-days: 7
 
+  build:
+    name: Build
+    needs: [type-check, lint-test]
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
       - name: Build Application
         env:
           VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
@@ -84,7 +148,31 @@ jobs:
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-        run: pnpm run build --filter=web
+        run: bun run build
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+          path: coverage-download/
+
+      - name: Copy coverage into build output
+        run: |
+          if [ -d "coverage-download/apps/web/coverage" ]; then
+            cp -r coverage-download/apps/web/coverage apps/web/build/coverage
+          else
+            echo "::warning::Web coverage directory not found — skipping"
+          fi
+
+      - name: Copy bundle report into build output
+        run: |
+          REPORT=$(find apps/web/.svelte-kit/output -name "bundle-report.html" | head -n 1)
+          if [ -z "$REPORT" ]; then
+            echo "::error::bundle-report.html not found in Vite build output — visualizer may not have run"
+            exit 1
+          fi
+          mkdir -p apps/web/build
+          cp "$REPORT" apps/web/build/bundle-report.html
 
       - name: Upload intermediate artifact
         uses: actions/upload-artifact@v7
@@ -103,10 +191,36 @@ jobs:
           include-hidden-files: true
           retention-days: 30
 
+      - name: Upload Bundle Report
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-report
+          path: |
+            apps/web/.svelte-kit/output/**/bundle-report.html
+            apps/web/.svelte-kit/output/**/bundle-stats.json
+          include-hidden-files: true
+          retention-days: 30
+
+      - name: Summarize Bundle Size
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Bundle size"
+            echo
+            echo "| Metric | Size |"
+            echo "| --- | ---: |"
+            echo "| Build directory | $(du -sh apps/web/build | cut -f1) |"
+            echo "| JavaScript assets | $(find apps/web/build -type f -name '*.js' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
+            echo "| CSS assets | $(find apps/web/build -type f -name '*.css' -print0 | du -ch --files0-from=- | tail -n 1 | cut -f1) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     environment:
       name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
     steps:
@@ -115,32 +229,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10.5.0
-          run_install: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+          bun-version: latest
 
       - name: Download Build
         uses: actions/download-artifact@v8
@@ -148,48 +240,29 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy Production to Cloudflare Pages
-        if: github.ref_name == 'main' && github.event_name == 'push'
-        uses: cloudflare/wrangler-action@v3
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica
-
       - name: Deploy Staging to Cloudflare Pages
         if: github.ref_name == 'staging' && github.event_name == 'push'
-        uses: cloudflare/wrangler-action@v3
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=staging
 
       - name: Deploy Preview to Cloudflare Pages
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
         id: deploy_preview
-        uses: cloudflare/wrangler-action@v3
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
 
       - name: Comment on PR
-        if: github.event_name == 'pull_request' && success()
+        if: github.event_name == 'pull_request' && success() && env.CLOUDFLARE_API_TOKEN != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Construct the preview URL using Cloudflare Pages branch slugging rules:
-          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
           BRANCH="${{ github.head_ref }}"
           CF_BRANCH=$(printf '%s' "$BRANCH" \
             | tr '[:upper:]' '[:lower:]' \
@@ -198,14 +271,10 @@ jobs:
             | sed -E 's/-+$//')
           DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
 
-          COMMENT="🚀 **Preview Deployment Ready!**
+          echo "[Bundle report](${DEPLOYMENT_URL}/bundle-report.html)" >> "$GITHUB_STEP_SUMMARY"
 
-          **URL:** ${DEPLOYMENT_URL}
-          **Branch:** \`${BRANCH}\`
+          COMMENT="$(printf '🚀 **Preview Deployment Ready!**\n\n**URL:** %s\n**Bundle report:** %s/bundle-report.html\n**Coverage:** %s/coverage/\n**Branch:** `%s`\n\n_Changes will be live shortly._' "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$DEPLOYMENT_URL" "$BRANCH")"
 
-          _Changes will be live shortly._"
-
-          # Check if a comment already exists to avoid spamming
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
           if [ -n "$EXISTING_COMMENT_ID" ]; then
@@ -213,14 +282,6 @@ jobs:
           else
             gh api -X POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -f body="$COMMENT"
           fi
-
-      - name: Notify Discord on Production Deploy
-        if: github.ref_name == 'main' && success() && github.event_name == 'push'
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
 
       - name: Notify Discord on Staging Deploy
         if: github.ref_name == 'staging' && success() && github.event_name == 'push'

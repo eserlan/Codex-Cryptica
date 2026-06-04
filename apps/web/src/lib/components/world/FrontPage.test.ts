@@ -110,6 +110,7 @@ if (!HTMLElement.prototype.animate) {
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
     activeTheme: {
+      id: "cyberpunk",
       name: "Neon Night",
       description:
         "Cyberpunk, neon-noir, corporate control, street-level rebellion, hackers, implants, and high-tech urban danger.",
@@ -288,6 +289,7 @@ describe("FrontPage", () => {
     expect(modalUIStore.openLightbox).toHaveBeenCalledWith(
       "resolved://image",
       "World cover",
+      expect.any(Object),
     );
   });
 
@@ -331,6 +333,17 @@ describe("FrontPage", () => {
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
         "Portrait composition, vertical framing, approximately 2:3 aspect ratio.",
+      ),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("Default Art Style: Moonfall"),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("atmospheric world cover art"),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Theme Style: Moonfall. Cyberpunk digital concept art style",
       ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
@@ -703,7 +716,7 @@ describe("FrontPage", () => {
 
     expect(notificationStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Regenerate Briefing",
+        title: "Revise Briefing",
       }),
     );
     expect(mocks.generateBriefing).not.toHaveBeenCalled();
@@ -822,7 +835,7 @@ describe("FrontPage", () => {
 
   it.skip("shows a generating indicator while briefing generation is in progress", async () => {
     // TODO: This test depends on the async flow through the controller's
-    // context-building methods. The indicator appears via isGenerating prop
+    // context-building methods. The indicator appears via isRevising prop
     // but the full promise chain (context build → generateBriefing) may
     // not settle cleanly in the test environment. Revisit once the full
     // FrontPage extraction is finalized.
@@ -1026,7 +1039,7 @@ describe("FrontPage", () => {
     expect(screen.getAllByTestId("entity-card")).toHaveLength(2);
   });
 
-  it("shows confirmation dialog before regenerating an existing briefing", async () => {
+  it("shows confirmation dialog before revising an existing briefing", async () => {
     render(FrontPage);
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
@@ -1036,7 +1049,7 @@ describe("FrontPage", () => {
 
     expect(notificationStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Regenerate Briefing",
+        title: "Revise Briefing",
       }),
     );
     expect(mocks.generateBriefing).not.toHaveBeenCalled();

@@ -1,13 +1,9 @@
 import type { FileParser, ParseResult } from "../types";
+import { isSupportedTextImportExtension } from "../utils/validation";
 
 export class TextParser implements FileParser {
   accepts(file: File): boolean {
-    return (
-      file.type === "text/plain" ||
-      file.type === "text/markdown" ||
-      file.name.endsWith(".txt") ||
-      file.name.endsWith(".md")
-    );
+    return isSupportedTextImportExtension(file.name);
   }
 
   async parse(file: File): Promise<ParseResult> {

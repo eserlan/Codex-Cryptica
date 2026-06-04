@@ -2,6 +2,7 @@
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import {
@@ -12,6 +13,8 @@
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { soundBiteService } from "$lib/services/SoundBiteService.svelte";
 
   let {
     entity,
@@ -68,6 +71,9 @@
       layoutUIStore.findInGraph();
     }, 300);
   };
+  const parentEntity = $derived(
+    entity?.parent ? vault.entities[entity.parent] : null,
+  );
 </script>
 
 <header
@@ -140,6 +146,24 @@
               {/each}
             </div>
           {/if}
+          {#if parentEntity}
+            <div
+              class="flex items-center gap-1.5 text-xs text-theme-muted mt-1.5"
+              data-testid="zen-parent-indicator"
+            >
+              <span
+                class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
+              ></span>
+              <span>Parent:</span>
+              <button
+                type="button"
+                onclick={() => modalUIStore.openZenMode(parentEntity.id)}
+                class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+              >
+                {parentEntity.title}
+              </button>
+            </div>
+          {/if}
         </div>
       {/if}
     </div>
@@ -168,6 +192,43 @@
             data-testid="zen-find-in-graph-button"
           >
             <span class="icon-[lucide--target] w-4 h-4"></span>
+          </button>
+        {/if}
+        {#if entity && (!vault.isGuest || entity.soundBite)}
+          <button
+            onclick={() => {
+              if (!entity) return;
+              // Skip loadFromEntity if the modal is already showing this entity —
+              // calling it again would reset result/error and interrupt active playback.
+              const alreadyOpen =
+                modalUIStore.soundBite?.show &&
+                modalUIStore.soundBite.entityId === entity.id;
+              if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
+              modalUIStore.openSoundBite(entity.id);
+            }}
+            class="px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest {entity.soundBite
+              ? 'border-theme-accent/30 text-theme-accent hover:border-theme-accent/50 hover:text-theme-accent/80'
+              : 'border-theme-border text-theme-secondary hover:text-theme-primary'}"
+            title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
+            aria-label="Sound bite"
+            data-testid="zen-sound-bite-button"
+          >
+            <span
+              class="{entity.soundBite
+                ? 'icon-[lucide--volume-2]'
+                : 'icon-[lucide--mic]'} w-4 h-4"
+            ></span>
+          </button>
+        {/if}
+        {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
+          <button
+            onclick={() => guestChatStore.openChat(entity.id, entity.title)}
+            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            title="Chat with character"
+            aria-label="Chat with character"
+            data-testid="zen-guest-chat-button"
+          >
+            <span class="icon-[lucide--messages-square] w-4 h-4"></span>
           </button>
         {/if}
         <button

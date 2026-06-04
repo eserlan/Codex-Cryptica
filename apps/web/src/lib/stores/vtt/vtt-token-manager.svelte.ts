@@ -463,17 +463,22 @@ export class VTTTokenManager {
 
     const mapStore = this.deps.getMapStore();
     const offset = mapStore.gridSize || 50;
+    // ⚡ Bolt Optimization: Use imperative loop instead of ...allTokens.map to find max zIndex
+    // to avoid intermediate array allocation and spread operator overhead.
+    let maxZ = source.zIndex;
+    for (const token of this.allTokens) {
+      if (token.zIndex > maxZ) {
+        maxZ = token.zIndex;
+      }
+    }
+
     const clone: Token = {
       ...source,
       id: crypto.randomUUID(),
       name: this.getClonedTokenName(source.name),
       x: source.x + offset,
       y: source.y + offset,
-      zIndex:
-        Math.max(
-          ...this.allTokens.map((token) => token.zIndex),
-          source.zIndex,
-        ) + 1,
+      zIndex: maxZ + 1,
     };
 
     this.tokens = {
@@ -511,24 +516,22 @@ export class VTTTokenManager {
 
   rebindGuestOwnership(peerId: string, guestName: string) {
     let changed = false;
-    const nextTokens = Object.fromEntries(
-      Object.entries(this.tokens).map(([tokenId, token]) => {
-        if (
-          token.ownerGuestName === guestName &&
-          token.ownerPeerId !== peerId
-        ) {
-          changed = true;
-          return [
-            tokenId,
-            {
-              ...token,
-              ownerPeerId: peerId,
-            },
-          ];
-        }
-        return [tokenId, token];
-      }),
-    );
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
+    const nextTokens: Record<string, Token> = {};
+
+    for (const tokenId in this.tokens) {
+      if (!Object.hasOwn(this.tokens, tokenId)) continue;
+      const token = this.tokens[tokenId];
+      if (token.ownerGuestName === guestName && token.ownerPeerId !== peerId) {
+        changed = true;
+        nextTokens[tokenId] = {
+          ...token,
+          ownerPeerId: peerId,
+        };
+      } else {
+        nextTokens[tokenId] = token;
+      }
+    }
 
     if (!changed) return false;
     this.tokens = nextTokens;
@@ -538,21 +541,22 @@ export class VTTTokenManager {
 
   clearGuestOwnership(peerId: string) {
     let changed = false;
-    const nextTokens = Object.fromEntries(
-      Object.entries(this.tokens).map(([tokenId, token]) => {
-        if (token.ownerPeerId === peerId) {
-          changed = true;
-          return [
-            tokenId,
-            {
-              ...token,
-              ownerPeerId: null,
-            },
-          ];
-        }
-        return [tokenId, token];
-      }),
-    );
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
+    const nextTokens: Record<string, Token> = {};
+
+    for (const tokenId in this.tokens) {
+      if (!Object.hasOwn(this.tokens, tokenId)) continue;
+      const token = this.tokens[tokenId];
+      if (token.ownerPeerId === peerId) {
+        changed = true;
+        nextTokens[tokenId] = {
+          ...token,
+          ownerPeerId: null,
+        };
+      } else {
+        nextTokens[tokenId] = token;
+      }
+    }
 
     if (!changed) return false;
     this.tokens = nextTokens;

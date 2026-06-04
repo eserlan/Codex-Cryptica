@@ -4,7 +4,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { renderMarkdown } from "$lib/utils/markdown";
-  import { Edit2, Check, X } from "lucide-svelte";
+
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
@@ -57,9 +57,12 @@
       node.style.height = node.scrollHeight + "px";
     };
     node.addEventListener("input", resize);
-    setTimeout(resize, 0);
+    const frame = requestAnimationFrame(resize);
     return {
-      destroy: () => node.removeEventListener("input", resize),
+      destroy: () => {
+        node.removeEventListener("input", resize);
+        cancelAnimationFrame(frame);
+      },
     };
   }
 
@@ -145,6 +148,8 @@
           <img
             src={imageUrl}
             alt={entity?.title}
+            loading="lazy"
+            decoding="async"
             class="w-full h-full object-cover object-[center_20%] transition-transform duration-500 group-hover:scale-105"
           />
         </div>
@@ -166,7 +171,7 @@
               aria-label="Quick edit chronicle"
               type="button"
             >
-              <Edit2 class="w-3 h-3" />
+              <span class="icon-[lucide--edit-2] w-3 h-3"></span>
             </button>
           {/if}
         </div>
@@ -214,7 +219,7 @@
                   aria-label="Cancel"
                   type="button"
                 >
-                  <X class="w-3 h-3" />
+                  <span class="icon-[lucide--x] w-3 h-3"></span>
                 </button>
                 <button
                   class="p-1.5 rounded-full bg-theme-primary border border-theme-primary text-theme-surface hover:brightness-110 hover:scale-105 backdrop-blur-sm shadow-sm transition-all"
@@ -224,20 +229,20 @@
                   aria-label="Save"
                   type="button"
                 >
-                  <Check class="w-3 h-3" />
+                  <span class="icon-[lucide--check] w-3 h-3"></span>
                 </button>
               </div>
             </div>
           {/if}
         </div>
 
-        {#if entity?.tags && entity.tags.length > 0}
+        {#if entity?.labels && entity.labels.length > 0}
           <div class="flex flex-wrap gap-1 mt-3">
-            {#each entity.tags.slice(0, 5) as tag}
+            {#each entity.labels.slice(0, 5) as label}
               <span
                 class="px-1.5 py-0.5 bg-theme-bg border border-theme-border rounded text-[9px] text-theme-muted"
               >
-                {tag}
+                {label}
               </span>
             {/each}
           </div>

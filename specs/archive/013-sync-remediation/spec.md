@@ -2,7 +2,8 @@
 
 **Feature Branch**: `013-sync-remediation`  
 **Created**: 2026-01-29  
-**Status**: Draft  
+**Status**: Superseded
+**Superseded By**: 059-robust-local-sync
 **Input**: User description: "Path-aware binary synchronization remediation"
 
 ## User Scenarios & Testing

@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { OracleActionExecutor } from "./oracle-executor";
 
+const originalNavigator = globalThis.navigator;
+const originalURL = globalThis.URL;
+
 describe("OracleActionExecutor - Detailed", () => {
   let executor: OracleActionExecutor;
   let mockContext: any;
@@ -8,7 +11,7 @@ describe("OracleActionExecutor - Detailed", () => {
   let mockDraftingEngine: any;
 
   beforeEach(() => {
-    vi.stubGlobal("navigator", { onLine: true });
+    (globalThis as any).navigator = { onLine: true } as any;
 
     mockGenerator = {
       identifyPrimaryEntity: vi
@@ -19,7 +22,7 @@ describe("OracleActionExecutor - Detailed", () => {
         .mockResolvedValue({ primaryEntityId: "e1", sourceIds: ["e1"] }),
       generateEntityVisualization: vi.fn().mockResolvedValue(new Blob([])),
       generateMessageVisualization: vi.fn().mockResolvedValue(new Blob([])),
-      generateRegenerationResponse: vi.fn().mockResolvedValue(undefined),
+      generateVisualizationFromPrompt: vi.fn().mockResolvedValue(new Blob([])),
       generateCreationResponse: vi
         .fn()
         .mockResolvedValue({ primaryEntityId: "e1", sourceIds: [] }),
@@ -79,7 +82,7 @@ describe("OracleActionExecutor - Detailed", () => {
         generatePlotAnalysis: vi.fn(),
         expandQuery: vi.fn(),
         generateResponse: vi.fn(),
-        reconcileEntityUpdate: vi.fn(),
+        reviseEntityUpdate: vi.fn(),
       },
       imageGeneration: {
         generateImage: vi.fn(),
@@ -101,7 +104,8 @@ describe("OracleActionExecutor - Detailed", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    (globalThis as any).navigator = originalNavigator;
+    (globalThis as any).URL = originalURL;
   });
 
   describe("executeCreate", () => {
@@ -321,21 +325,33 @@ describe("OracleActionExecutor - Detailed", () => {
     });
   });
 
-  describe("executeRegenerate", () => {
-    it("should regenerate an explicit entity id", async () => {
+  describe("executeRevise", () => {
+    it("should revise an explicit entity id", async () => {
       mockContext.vault.entities = {
-        e1: { id: "e1", title: "Hero" },
+        e1: { id: "e1", title: "Hero", connections: [] },
       };
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
+        content: "Revised chronicle",
+        lore: "Revised lore",
+      });
 
-      await executor.execute(
-        { type: "regenerate", entityId: "e1" },
-        mockContext,
-      );
+      await executor.execute({ type: "revise", entityId: "e1" }, mockContext);
 
-      expect(mockGenerator.generateRegenerationResponse).toHaveBeenCalledWith(
-        "e1",
-        mockContext,
-        expect.any(Function),
+      expect(
+        mockContext.textGeneration.reviseEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        expect.objectContaining({ id: "e1" }),
+        { chronicle: "", lore: "" },
+        expect.any(Array),
+        [],
+        {
+          source: "revise",
+          instructions: undefined,
+          priority: "instructions-first",
+          isGuest: false,
+        },
       );
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -349,24 +365,39 @@ describe("OracleActionExecutor - Detailed", () => {
     it("should fall back to the selected entity id", async () => {
       mockContext.vault.selectedEntityId = "e2";
       mockContext.vault.entities = {
-        e2: { id: "e2", title: "Mage" },
+        e2: { id: "e2", title: "Mage", connections: [] },
       };
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
+        content: "Mage chronicle",
+        lore: "Mage lore",
+      });
 
-      await executor.execute({ type: "regenerate" }, mockContext);
+      await executor.execute({ type: "revise" }, mockContext);
 
-      expect(mockGenerator.generateRegenerationResponse).toHaveBeenCalledWith(
-        "e2",
-        mockContext,
-        expect.any(Function),
+      expect(
+        mockContext.textGeneration.reviseEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "fake-key",
+        "gemini-2.0-pro",
+        expect.objectContaining({ id: "e2" }),
+        { chronicle: "", lore: "" },
+        expect.any(Array),
+        [],
+        expect.objectContaining({
+          source: "revise",
+          priority: "instructions-first",
+        }),
       );
     });
 
     it("should show a system message when no entity is selected", async () => {
       mockContext.vault.selectedEntityId = null;
 
-      await executor.execute({ type: "regenerate" }, mockContext);
+      await executor.execute({ type: "revise" }, mockContext);
 
-      expect(mockGenerator.generateRegenerationResponse).not.toHaveBeenCalled();
+      expect(
+        mockContext.textGeneration.reviseEntityUpdate,
+      ).not.toHaveBeenCalled();
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           role: "system",
@@ -556,7 +587,7 @@ describe("OracleActionExecutor - Detailed", () => {
 
   describe("executeChat", () => {
     it("should handle offline mode", async () => {
-      vi.stubGlobal("navigator", { onLine: false });
+      (globalThis as any).navigator = { onLine: false } as any;
 
       await executor.execute(
         {
@@ -573,7 +604,8 @@ describe("OracleActionExecutor - Detailed", () => {
         }),
       );
 
-      vi.unstubAllGlobals();
+      (globalThis as any).navigator = originalNavigator;
+      (globalThis as any).URL = originalURL;
     });
 
     it("should handle disabled AI intent", async () => {
@@ -590,7 +622,10 @@ describe("OracleActionExecutor - Detailed", () => {
 
     it("should handle image intent", async () => {
       mockContext.effectiveApiKey = "key";
-      vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "blob-url") });
+      (globalThis as any).URL = {
+        createObjectURL: vi.fn(() => "blob-url"),
+        revokeObjectURL: originalURL?.revokeObjectURL,
+      } as any;
 
       await executor.execute(
         { type: "chat", query: "/draw orc", isAIIntent: true },
@@ -598,7 +633,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
-      vi.unstubAllGlobals();
+      (globalThis as any).URL = originalURL;
     });
 
     it("should NOT proactively trigger plot analysis for conversational queries", async () => {
@@ -683,7 +718,7 @@ describe("OracleActionExecutor - Detailed", () => {
       expect(assistantMessage.entityId).toBe("e_redhand");
     });
 
-    it("should reconcile existing entity updates during auto-archive", async () => {
+    it("should revise existing entity updates during auto-archive", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.vault.entities = {
         e1: {
@@ -706,9 +741,9 @@ describe("OracleActionExecutor - Detailed", () => {
           confidence: 0.95,
         },
       ]);
-      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
-        content: "Reconciled chronicle",
-        lore: "Reconciled lore",
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
+        content: "Revised chronicle",
+        lore: "Revised lore",
       });
       mockGenerator.generateChatResponse.mockResolvedValue({
         primaryEntityId: "e1",
@@ -721,7 +756,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(
-        mockContext.textGeneration.reconcileEntityUpdate,
+        mockContext.textGeneration.reviseEntityUpdate,
       ).toHaveBeenCalledWith(
         "fake-key",
         "gemini-2.0-pro",
@@ -732,10 +767,11 @@ describe("OracleActionExecutor - Detailed", () => {
         },
         [],
         [],
+        expect.objectContaining({ themeId: undefined }),
       );
       expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
-        content: "Reconciled chronicle",
-        lore: "Reconciled lore",
+        content: "Revised chronicle",
+        lore: "Revised lore",
         type: "location",
       });
       expect(mockContext.proposeConnectionsForEntity).toHaveBeenCalledWith(
@@ -744,7 +780,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
     });
 
-    it("should use the reconciled category after new entity content is prepared", async () => {
+    it("should use the revised category after new entity content is prepared", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.categories = [
         { id: "note", label: "Note" },
@@ -761,7 +797,7 @@ describe("OracleActionExecutor - Detailed", () => {
           confidence: 0.92,
         },
       ]);
-      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
         content: "The Glass Key is a crystalline archive key.",
         lore: "It opens sealed memory vaults.",
         categoryId: "item",
@@ -777,7 +813,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(
-        mockContext.textGeneration.reconcileEntityUpdate,
+        mockContext.textGeneration.reviseEntityUpdate,
       ).toHaveBeenCalledWith(
         "fake-key",
         "gemini-2.0-pro",
@@ -793,7 +829,10 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "The Glass Key opens sealed memory vaults.",
         },
         [],
-        mockContext.categories,
+        mockContext.categories.map((c: any) =>
+          expect.objectContaining({ id: c.id, label: c.label }),
+        ),
+        expect.objectContaining({ themeId: undefined }),
       );
       expect(mockContext.vault.createEntity).toHaveBeenCalledWith(
         "item",
@@ -805,7 +844,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
     });
 
-    it("should update an existing entity category from the reconciled record", async () => {
+    it("should update an existing entity category from the revised record", async () => {
       mockContext.uiStore.entityDiscoveryMode = "auto-create";
       mockContext.categories = [
         { id: "character", label: "Character" },
@@ -832,7 +871,7 @@ describe("OracleActionExecutor - Detailed", () => {
           confidence: 0.95,
         },
       ]);
-      mockContext.textGeneration.reconcileEntityUpdate.mockResolvedValue({
+      mockContext.textGeneration.reviseEntityUpdate.mockResolvedValue({
         content: "The Red Hand is a militant organization.",
         lore: "It recruits across the borderlands.",
         categoryId: "faction",
@@ -848,7 +887,7 @@ describe("OracleActionExecutor - Detailed", () => {
       );
 
       expect(
-        mockContext.textGeneration.reconcileEntityUpdate,
+        mockContext.textGeneration.reviseEntityUpdate,
       ).toHaveBeenCalledWith(
         "fake-key",
         "gemini-2.0-pro",
@@ -858,7 +897,10 @@ describe("OracleActionExecutor - Detailed", () => {
           lore: "The Red Hand recruits across the borderlands.",
         },
         [],
-        mockContext.categories,
+        mockContext.categories.map((c: any) =>
+          expect.objectContaining({ id: c.id, label: c.label }),
+        ),
+        expect.objectContaining({ themeId: undefined }),
       );
       expect(mockContext.vault.updateEntity).toHaveBeenCalledWith("e1", {
         content: "The Red Hand is a militant organization.",
@@ -1022,7 +1064,14 @@ describe("OracleActionExecutor - Detailed", () => {
 
   describe("drawing", () => {
     beforeEach(() => {
-      vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "url") });
+      (globalThis as any).URL = {
+        createObjectURL: vi.fn(() => "url"),
+        revokeObjectURL: originalURL?.revokeObjectURL,
+      } as any;
+    });
+
+    afterEach(() => {
+      (globalThis as any).URL = originalURL;
     });
 
     it("should draw entity in demo mode", async () => {
@@ -1048,6 +1097,38 @@ describe("OracleActionExecutor - Detailed", () => {
       mockContext.chatHistory.messages = [{ id: "m1", content: "c" }];
       await executor.drawMessage("m1", mockContext);
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
+    });
+
+    it("should let direct entity image failures bubble to UI callers", async () => {
+      mockContext.vault.entities = { e1: { title: "T" } };
+      mockGenerator.generateEntityVisualization.mockRejectedValue(
+        new Error("Daily image generation limit exceeded."),
+      );
+
+      await expect(executor.drawEntity("e1", mockContext)).rejects.toThrow(
+        "Daily image generation limit exceeded.",
+      );
+      expect(mockContext.chatHistory.addMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining("Image generation failed"),
+        }),
+      );
+    });
+
+    it("should let approved prompt image failures bubble to UI callers", async () => {
+      mockContext.vault.entities = { e1: { title: "T" } };
+      mockGenerator.generateVisualizationFromPrompt.mockRejectedValue(
+        new Error("Daily image generation limit exceeded."),
+      );
+
+      await expect(
+        executor.generateEntityFromPrompt("e1", "prompt", mockContext),
+      ).rejects.toThrow("Daily image generation limit exceeded.");
+      expect(mockContext.chatHistory.addMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining("Image generation failed"),
+        }),
+      );
     });
   });
 

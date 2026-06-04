@@ -1,7 +1,6 @@
 # Research: Campaign Sharing Implementation
 
 **Feature**: `021-share-campaigns`
-**Status**: Complete
 
 ## 1. GDrive Public Access via API
 

@@ -1,4 +1,5 @@
 import { createPeer, type PeerFactory } from "../peer-factory";
+import { debugStore } from "../../../stores/debug.svelte";
 import { isValidP2PMessage } from "../p2p-protocol";
 import type {
   ClientTransportEventType,
@@ -53,7 +54,7 @@ export class PeerJsClientTransport implements P2PClientTransport {
     const connectionPromise = new Promise<void>((resolve, reject) => {
       const startConnection = () => {
         if (epoch !== this.activeEpoch) return;
-        console.log(
+        debugStore.log(
           `[P2P Guest Transport] Initiating connection to: ${hostId}`,
         );
         const connection = this.peer.connect(hostId);
@@ -63,7 +64,7 @@ export class PeerJsClientTransport implements P2PClientTransport {
           if (epoch !== this.activeEpoch) return;
           this.isConnecting = false;
           if (timeoutHandle) clearTimeout(timeoutHandle);
-          console.log(`[P2P Guest Transport] Connected to host: ${hostId}`);
+          debugStore.log(`[P2P Guest Transport] Connected to host: ${hostId}`);
           this.emit("open");
           resolve();
         });

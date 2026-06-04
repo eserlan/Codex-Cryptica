@@ -2,7 +2,7 @@
 
 **Feature Branch**: `044-oracle-chat-commands`  
 **Created**: 2026-02-16  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "Implement /connect oracle command for entity connection with entity autocomplete (3+ chars) and AI-powered connection type proposals. Also implement a slash command menu UI to show available commands like /draw, /create, and /connect when '/' is typed in chat."
 
 ## User Scenarios & Testing _(mandatory)_

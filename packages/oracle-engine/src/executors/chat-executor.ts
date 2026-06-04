@@ -8,7 +8,7 @@ import type {
 import { BaseExecutor } from "./base-executor";
 import { ORACLE_EVENTS } from "../events";
 import { OracleCommandParser } from "../oracle-parser";
-import { buildRelatedEntityContext } from "../reconciliation-context";
+import { buildRelatedEntityContext } from "../revision-context";
 import type { OracleGenerator } from "../oracle-generator";
 import type { DraftingEngine } from "../drafting-engine";
 
@@ -302,7 +302,7 @@ export class ChatExecutor
                       let finalType = p.type;
                       if (
                         !context.vault.isGuest &&
-                        context.textGeneration?.reconcileEntityUpdate &&
+                        context.textGeneration?.reviseEntityUpdate &&
                         proposals.length < 5
                       ) {
                         try {
@@ -313,8 +313,8 @@ export class ChatExecutor
                             content: "",
                             lore: "",
                           } as any;
-                          const reconciled =
-                            await context.textGeneration.reconcileEntityUpdate(
+                          const revised =
+                            await context.textGeneration.reviseEntityUpdate(
                               context.effectiveApiKey || "",
                               context.modelName,
                               shell,
@@ -324,13 +324,14 @@ export class ChatExecutor
                               },
                               [],
                               this.getAvailableCategories(context),
+                              { themeId: context.uiStore?.activeThemeId },
                             );
-                          content = reconciled.content || p.draft.chronicle;
-                          lore = reconciled.lore || p.draft.lore;
+                          content = revised.content || p.draft.chronicle;
+                          lore = revised.lore || p.draft.lore;
                           finalType =
                             this.getValidCategoryId(
                               context,
-                              reconciled.categoryId,
+                              revised.categoryId,
                             ) || p.type;
                         } catch {
                           // keep raw draft on failure
@@ -367,11 +368,11 @@ export class ChatExecutor
                         const updatePatch: Record<string, string> = {};
                         if (
                           !context.vault.isGuest &&
-                          context.textGeneration?.reconcileEntityUpdate
+                          context.textGeneration?.reviseEntityUpdate
                         ) {
                           try {
-                            const reconciled =
-                              await context.textGeneration.reconcileEntityUpdate(
+                            const revised =
+                              await context.textGeneration.reviseEntityUpdate(
                                 context.effectiveApiKey || "",
                                 context.modelName,
                                 existing,
@@ -392,14 +393,15 @@ export class ChatExecutor
                                     ),
                                 }),
                                 this.getAvailableCategories(context),
+                                { themeId: context.uiStore?.activeThemeId },
                               );
 
-                            updatedContent = reconciled.content;
-                            updatedLore = reconciled.lore;
+                            updatedContent = revised.content;
+                            updatedLore = revised.lore;
                             finalType =
                               this.getValidCategoryId(
                                 context,
-                                reconciled.categoryId,
+                                revised.categoryId,
                               ) || finalType;
                             updatePatch.content = updatedContent;
                             updatePatch.lore = updatedLore;

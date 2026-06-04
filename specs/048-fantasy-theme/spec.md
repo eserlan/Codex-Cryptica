@@ -2,7 +2,7 @@
 
 **Feature Branch**: `048-fantasy-theme`  
 **Created**: 2026-02-18  
-**Status**: Draft  
+**Status**: Implemented
 **Input**: User description: "fantasy theme first: https://github.com/eserlan/Codex-Cryptica/issues/168"
 
 ## User Scenarios & Testing _(mandatory)_
