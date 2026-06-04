@@ -12,6 +12,7 @@ The Lore Oracle supports several interactive commands to help you manage your wo
 ### Available Commands
 
 - `/draw [subject]`: Triggers the AI to generate a visual representation of the subject. Category words such as `character`, `location`, or `item` can guide composition when no matching entity category is available.
+- `/revise`: Revise the selected entity's Chronicle and Lore.
 - `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
 - `/connect`: The primary tool for building relationships.
 - `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.

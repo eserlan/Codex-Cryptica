@@ -362,6 +362,12 @@ export class P2PGuestService {
     return true;
   }
 
+  sendToHost(message: any): boolean {
+    if (!this.transport.connected) return false;
+    this.transport.send(message);
+    return true;
+  }
+
   get connected() {
     return this.isConnected;
   }

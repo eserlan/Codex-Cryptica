@@ -25,14 +25,16 @@ test.describe("Help Onboarding Walkthrough", () => {
     // Reload to apply the cleared state
     await page.reload();
 
-    // Dismiss landing page if present and wait for state to update
-    const enterButton = page.getByRole("button", { name: "Enter the Codex" });
-    await expect(enterButton).toBeVisible({ timeout: 15000 });
+    // Wait for the welcome screen to render, then dismiss the landing page.
+    await expect(page.getByTestId("welcome-demo-button")).toBeVisible({
+      timeout: 15000,
+    });
 
     await expect(async () => {
-      if (await enterButton.isVisible()) {
-        await enterButton.click({ force: true });
-      }
+      await page.evaluate(() => {
+        const uiStore = (window as any).uiStore;
+        if (uiStore) uiStore.dismissedLandingPage = true;
+      });
       const isDismissed = await page.evaluate(() => {
         const uiStore = (window as any).uiStore;
         return uiStore && !uiStore.isLandingPageVisible;

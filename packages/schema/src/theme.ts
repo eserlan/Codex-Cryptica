@@ -550,6 +550,51 @@ export const THEMES = {
       graph_loading: "Scanning Sector...",
     },
   },
+  lancer: {
+    id: "lancer",
+    name: "Cockpit Terminal",
+    description:
+      "Lancer RPG tactical campaign management: mechs, pilots, factions, and frontier operations viewed from inside the cockpit.",
+    tokens: {
+      primary: "#22d3ee", // Union cyan
+      secondary: "#67b8cc", // Muted cyan
+      background: "#0b0f17", // Near-black navy
+      surface: "#121c28", // Dark blue-grey
+      text: "#c8e6f0", // Pale blue-white
+      border: "rgba(34, 211, 238, 0.22)",
+      accent: "#f97316", // Safety orange
+      fontHeader: "'Share Tech Mono', monospace",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "2px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#1a3a4a",
+    },
+    jargon: {
+      vault: "Operations Database",
+      entity: "Asset",
+      entity_plural: "Assets",
+      save: "Commit",
+      delete: "Decommission",
+      new: "Register",
+      syncing: "Syncing",
+      search: "Scan",
+      lore_header: "Dossier",
+      lore_secrets: "Classified Intel & Redacted Files",
+      chronicle_header: "Mission Brief",
+      connections_header: "Uplinks",
+      tab_status: "Telemetry",
+      tab_lore: "Field Notes",
+      tab_inventory: "Systems & Assets",
+      blog_entry: "Field Report",
+      blog_action: "Read Full Report",
+      graph_loading: "Initialising Tactical Network...",
+    },
+  },
 } as const satisfies Record<string, StylingTemplate>;
 
 export const FANTASY_DARK: StylingTemplate = {
@@ -784,6 +829,33 @@ export const STARTREK_LIGHT: StylingTemplate = {
     edgeColor: "#c2410c",
   },
   jargon: THEMES.startrek.jargon,
+};
+
+export const LANCER_LIGHT: StylingTemplate = {
+  id: "lancer_light",
+  name: "Hangar Briefing",
+  description:
+    "Lancer RPG in a clean hangar/briefing-room light variant — planning, prep, and campaign management.",
+  tokens: {
+    primary: "#1d4ed8", // Deep cobalt / Union blue
+    secondary: "#2563eb", // Medium blue
+    background: "#f1f4f7", // Warm off-white
+    surface: "#ffffff", // Clean white
+    text: "#1e2d42", // Slate navy
+    border: "rgba(29, 78, 216, 0.25)",
+    accent: "#ea580c", // Orange hazard stripe
+    fontHeader: "'Share Tech Mono', monospace",
+    fontBody: "'Inter', sans-serif",
+    borderRadius: "2px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#1d4ed8",
+  },
+  jargon: THEMES.lancer.jargon,
 };
 
 export const DEFAULT_THEME = THEMES.workspace;

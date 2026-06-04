@@ -94,8 +94,9 @@
               `Failed to convert demo to ${themeStore.jargon.vault}:`,
               error,
             );
-            window.alert(
+            notificationStore.notify(
               `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              "error",
             );
           }
         }}

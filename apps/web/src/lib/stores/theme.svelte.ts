@@ -12,6 +12,7 @@ import {
   FALLOUT_LIGHT,
   STARWARS_LIGHT,
   STARTREK_LIGHT,
+  LANCER_LIGHT,
 } from "schema";
 import type {
   StylingTemplate,
@@ -100,6 +101,8 @@ export class ThemeStore {
           return STARWARS_LIGHT;
         case "startrek":
           return STARTREK_LIGHT;
+        case "lancer":
+          return LANCER_LIGHT;
         default:
           return DEFAULT_THEME;
       }

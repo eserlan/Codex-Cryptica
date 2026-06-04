@@ -14,10 +14,12 @@ test.describe("Prominent Import Feature", () => {
     await page.goto("/");
 
     // Ensure we bypass any landing page that still appears
-    const enterBtn = page.getByRole("button", { name: /Enter the Codex/i });
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await enterBtn.click();
-    }
+    await page
+      .evaluate(() => {
+        const uiStore = (window as any).uiStore;
+        if (uiStore) uiStore.dismissedLandingPage = true;
+      })
+      .catch(() => {});
   });
 
   test("should have an Import button in Vault Controls that opens a new window", async ({

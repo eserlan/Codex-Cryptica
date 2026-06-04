@@ -10,6 +10,8 @@
  * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
  */
 
+import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+
 interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
@@ -82,8 +84,7 @@ export default {
       try {
         const body = (await request.json()) as any;
         const prompt = body.prompt;
-        const targetModel =
-          body.model || "@cf/black-forest-labs/flux-1-schnell";
+        const targetModel = body.model || DEFAULT_CF_IMAGE_MODEL;
 
         if (!prompt) {
           return new Response(
@@ -118,8 +119,22 @@ export default {
         console.log(
           `[Oracle Proxy] Generating image using Workers AI model: ${targetModel}`,
         );
-        // Run model through binding. For image models it returns binary.
-        const output = await env.AI.run(targetModel, { prompt });
+        const form = new FormData();
+        form.append("prompt", prompt);
+        form.append("width", String(body.width || 1024));
+        form.append("height", String(body.height || 1024));
+
+        const formResponse = new Response(form);
+        const formBody = formResponse.body || form;
+        const formContentType =
+          formResponse.headers.get("content-type") || "multipart/form-data";
+
+        const output = await env.AI.run(targetModel, {
+          multipart: {
+            body: formBody,
+            contentType: formContentType,
+          },
+        });
 
         let buffer: ArrayBuffer;
         if (output instanceof ArrayBuffer) {

@@ -74,6 +74,7 @@ describe("GraphStore", () => {
     graph.eras = [];
     graph.centralNodeId = null;
     graph.labelFilterMode = "OR"; // Reset this explicitly
+    (graph as any)._initPromise = null;
 
     // Reset mocks
     (vault as any).allEntities = [];
@@ -163,6 +164,22 @@ describe("GraphStore", () => {
     expect(graph.recentLabels).toEqual(["old"]);
     expect(graph.labelFilterMode).toBe("AND");
     expect(graph.eras).toEqual([{ id: "era1", name: "Era 1" }]);
+  });
+
+  it("should only initialize persisted graph state once", async () => {
+    const db = await getDB();
+    const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+    const getSpy = vi.spyOn(db, "get").mockResolvedValue(undefined);
+    const getAllSpy = vi.spyOn(db, "getAll").mockResolvedValue([]);
+
+    await graph.init();
+    await graph.init();
+
+    expect(getAllSpy).toHaveBeenCalledTimes(1);
+    expect(getSpy).toHaveBeenCalledTimes(5);
+    expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
+
+    addEventListenerSpy.mockRestore();
   });
 
   it("should add recent labels and persist them", async () => {

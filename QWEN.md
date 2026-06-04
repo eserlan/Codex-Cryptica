@@ -272,6 +272,9 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
+- TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine` (129-seo-landing-pages)
+- `localStorage` (transient transfer), OPFS & IndexedDB (via vault stores) (129-seo-landing-pages)
+
 - TypeScript 6.x, Svelte 5, Bun 1.3.x package workflow + SvelteKit, Tailwind CSS 4 semantic tokens, Vitest, Playwright, Cytoscape, workspace `schema` and `graph-engine` packages (113-neutral-world-theming)
 - Existing browser persistence: `localStorage`, IndexedDB settings, and per-vault OPFS config. Add app-appearance preference as global browser preference; keep world theme per vault. (113-neutral-world-theming)
 - TypeScript 6.x, Svelte 5, Bun 1.3.x package workflow + SvelteKit, workspace `schema`, existing Oracle/image generation services, existing vault/entity/category stores, Vitest, Playwright (115-default-art-prompts)

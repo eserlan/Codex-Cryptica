@@ -186,6 +186,22 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.imagePromptReview.open}
+      {#await loadModal(() => import("./ImagePromptReviewModal.svelte"), "ImagePromptReviewModal") then ImagePromptReviewModal}
+        {#if ImagePromptReviewModal}
+          <ImagePromptReviewModal />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if modalUIStore.revisionDialog.open}
+      {#await loadModal(() => import("./RevisionInstructionModal.svelte"), "RevisionInstructionModal") then RevisionInstructionModal}
+        {#if RevisionInstructionModal}
+          <RevisionInstructionModal />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
@@ -198,5 +214,12 @@
         {/if}
       {/await}
     {/if}
+
+    <!-- Guest Character Chat Modal -->
+    {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
+      {#if GuestChatModal}
+        <GuestChatModal />
+      {/if}
+    {/await}
   {/if}
 {/if}

@@ -9,7 +9,7 @@ export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
 export const MAX_SIDEBAR_VW = 40;
 
 export type SidebarTool = "oracle" | "explorer" | "ai-assessment" | "none";
-export type MainViewMode = "visualization" | "focus";
+export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
 type MediaQueryListLike = {
   matches: boolean;

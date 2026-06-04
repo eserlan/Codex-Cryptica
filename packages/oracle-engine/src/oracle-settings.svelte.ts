@@ -1,4 +1,9 @@
 import type { ConnectionMode } from "./types";
+import {
+  DEFAULT_CF_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_MODEL,
+  DEFAULT_CUSTOM_IMAGE_BASE_URL,
+} from "./image-defaults";
 
 /**
  * Minimal interface for app settings persistence.
@@ -50,15 +55,13 @@ export class OracleSettingsService {
 
   /** Image Provider Setting */
   imageProvider = $state<"gemini" | "cloudflare" | "custom">("cloudflare");
-  customImageBaseUrl = $state<string>(
-    "https://api.together.xyz/v1/images/generations",
-  );
+  customImageBaseUrl = $state<string>(DEFAULT_CUSTOM_IMAGE_BASE_URL);
   customImageApiKey = $state<string>("");
-  customImageModel = $state<string>("black-forest-labs/FLUX.1-schnell");
+  customImageModel = $state<string>(DEFAULT_CUSTOM_IMAGE_MODEL);
 
   cloudflareAccountId = $state<string>("");
   cloudflareApiToken = $state<string>("");
-  cloudflareModel = $state<string>("@cf/black-forest-labs/flux-1-schnell");
+  cloudflareModel = $state<string>(DEFAULT_CF_IMAGE_MODEL);
 
   private channel: BroadcastChannel | null = null;
   private db: AppSettingsStore | null = null;
@@ -113,12 +116,11 @@ export class OracleSettingsService {
     this.imageProvider = providerSetting?.value ?? "cloudflare";
     const baseUrlSetting = await db.appSettings.get("custom_image_base_url");
     this.customImageBaseUrl =
-      baseUrlSetting?.value ?? "https://api.together.xyz/v1/images/generations";
+      baseUrlSetting?.value ?? DEFAULT_CUSTOM_IMAGE_BASE_URL;
     const apiKeySetting = await db.appSettings.get("custom_image_api_key");
     this.customImageApiKey = apiKeySetting?.value ?? "";
     const modelSetting = await db.appSettings.get("custom_image_model");
-    this.customImageModel =
-      modelSetting?.value ?? "black-forest-labs/FLUX.1-schnell";
+    this.customImageModel = modelSetting?.value ?? DEFAULT_CUSTOM_IMAGE_MODEL;
 
     const cfAccountIdSetting = await db.appSettings.get(
       "cloudflare_account_id",
@@ -127,8 +129,7 @@ export class OracleSettingsService {
     const cfApiTokenSetting = await db.appSettings.get("cloudflare_api_token");
     this.cloudflareApiToken = cfApiTokenSetting?.value ?? "";
     const cfModelSetting = await db.appSettings.get("cloudflare_model");
-    this.cloudflareModel =
-      cfModelSetting?.value ?? "@cf/black-forest-labs/flux-1-schnell";
+    this.cloudflareModel = cfModelSetting?.value ?? DEFAULT_CF_IMAGE_MODEL;
 
     this.broadcast();
   }

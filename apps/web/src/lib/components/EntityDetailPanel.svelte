@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Entity } from "schema";
+  import type { Entity, GuestChatConfig } from "schema";
   import { fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { vault } from "$lib/stores/vault.svelte";
@@ -12,6 +12,7 @@
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
+  import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
@@ -58,13 +59,6 @@
   let isEditing = $state(false);
   let previousEntityId = $state<string | undefined>(undefined);
 
-  $effect(() => {
-    if (entity?.id !== previousEntityId) {
-      isEditing = false;
-      previousEntityId = entity?.id;
-    }
-  });
-
   // Edit State
   let editTitle = $state("");
   let editAliases = $state<string[]>([]);
@@ -75,13 +69,61 @@
   let editDate = $state<Entity["date"]>();
   let editStartDate = $state<Entity["start_date"]>();
   let editEndDate = $state<Entity["end_date"]>();
+  let editGuestChatConfig = $state<GuestChatConfig | undefined>(undefined);
+  let isValid = $derived(true);
+
+  const canGuestEdit = $derived.by(() => {
+    if (!vault.isGuest || !entity) return false;
+    const name = sessionModeStore.guestUsername?.trim().toLowerCase();
+    if (!name) return false;
+    return (
+      entity.title?.toLowerCase() === name ||
+      entity.aliases?.some((a: string) => a.toLowerCase() === name) ||
+      entity.labels?.some((l: string) => l.toLowerCase() === name)
+    );
+  });
+
+  let isDirty = $derived(
+    isEditing &&
+      entity != null &&
+      (editTitle !== entity.title ||
+        editContent !== (entity.content ?? "") ||
+        editLore !== (entity.lore ?? "") ||
+        editType !== entity.type ||
+        editImage !== (entity.image ?? "") ||
+        JSON.stringify(editAliases) !== JSON.stringify(entity.aliases ?? []) ||
+        JSON.stringify(editDate) !== JSON.stringify(entity.date ?? null) ||
+        JSON.stringify(editStartDate) !==
+          JSON.stringify(entity.start_date ?? null) ||
+        JSON.stringify(editEndDate) !==
+          JSON.stringify(entity.end_date ?? null) ||
+        JSON.stringify(editGuestChatConfig) !==
+          JSON.stringify(
+            entity.guestChatConfig ?? {
+              isEnabled: false,
+              contextScope: "public",
+              isHostReviewable: true,
+              keepMemory: true,
+            },
+          )),
+  );
+
+  $effect(() => {
+    if (entity?.id !== previousEntityId) {
+      if (isEditing && isDirty) {
+        notificationStore.notify("Unsaved changes were discarded.", "info");
+      }
+      isEditing = false;
+      previousEntityId = entity?.id;
+    }
+  });
 
   let activeTab = $state<EntityDetailTab>("status");
   let isSaving = $state(false);
   const { tabIds, panelIds } = createEntityDetailTabIds(tabInstanceId);
 
   $effect(() => {
-    if (vault.isGuest && activeTab === "lore") {
+    if (vault.isGuest && !canGuestEdit && activeTab === "lore") {
       activeTab = "status";
     }
   });
@@ -116,20 +158,64 @@
     editDate = entity.date;
     editStartDate = entity.start_date;
     editEndDate = entity.end_date;
+    editGuestChatConfig = entity.guestChatConfig
+      ? { ...entity.guestChatConfig }
+      : {
+          isEnabled: false,
+          contextScope: "public",
+          isHostReviewable: true,
+          keepMemory: true,
+        };
     isEditing = true;
   };
 
-  const cancelEditing = () => {
+  const cancelEditing = async () => {
+    if (isDirty) {
+      const confirmed = await notificationStore.confirm({
+        title: "Discard changes?",
+        message:
+          "You have unsaved edits. Discard them and revert to the saved version?",
+        confirmLabel: "Discard changes",
+        cancelLabel: "Keep editing",
+        isDangerous: false,
+      });
+      if (!confirmed) return;
+    }
     isEditing = false;
+  };
+
+  const guardedClose = async () => {
+    if (isDirty) {
+      const confirmed = await notificationStore.confirm({
+        title: "Discard changes?",
+        message: "You have unsaved edits. Close the panel and discard them?",
+        confirmLabel: "Discard and close",
+        cancelLabel: "Keep editing",
+        isDangerous: false,
+      });
+      if (!confirmed) return;
+    }
+    onClose();
   };
 
   const saveChanges = async () => {
     if (!entity) return;
     isSaving = true;
     try {
+      // Sync "chatty" label: present when guest chat is enabled, absent otherwise
+      const chatEnabled = !!editGuestChatConfig?.isEnabled;
+      const currentLabels = $state.snapshot(entity.labels ?? []) as string[];
+      const labelsWithoutChatty = currentLabels.filter(
+        (l: string) => l.toLowerCase() !== "chatty",
+      );
+      const syncedLabels = chatEnabled
+        ? [...labelsWithoutChatty, "chatty"]
+        : labelsWithoutChatty;
+
       await vault.updateEntity(entity.id, {
         title: editTitle,
         aliases: $state.snapshot(editAliases),
+        labels: syncedLabels,
         content: editContent,
         lore: editLore,
         image: editImage,
@@ -137,6 +223,19 @@
         start_date: $state.snapshot(editStartDate),
         end_date: $state.snapshot(editEndDate),
         type: editType,
+        guestChatConfig: editGuestChatConfig
+          ? (() => {
+              const snap = $state.snapshot(editGuestChatConfig);
+              // Auto-sync ## Personality & Voice from lore into extraInstructions
+              // so guests receive it via P2P without needing access to private lore.
+              const personalityMatch = editLore?.match(
+                /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n([\s\S]*?)(?=\n##\s+|$)/i,
+              );
+              const syncedPersonality =
+                personalityMatch?.[1]?.trim() || undefined;
+              return { ...snap, extraInstructions: syncedPersonality };
+            })()
+          : undefined,
       });
       isEditing = false;
     } catch (err) {
@@ -271,7 +370,7 @@
         {isEditing}
         bind:editTitle
         bind:editAliases
-        {onClose}
+        onClose={guardedClose}
       />
 
       <div
@@ -338,6 +437,7 @@
                 {isEditing}
                 bind:editType
                 idPrefix={tabInstanceId}
+                {canGuestEdit}
               />
             </div>
 
@@ -354,8 +454,10 @@
                     {isEditing}
                     {editType}
                     bind:editContent
+                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
+                    bind:editGuestChatConfig
                   />
                 {/if}
               </div>
@@ -363,9 +465,10 @@
                 role="tabpanel"
                 id={panelIds.lore}
                 aria-labelledby={tabIds.lore}
-                hidden={activeTab !== "lore" || vault.isGuest}
+                hidden={activeTab !== "lore" ||
+                  (vault.isGuest && !canGuestEdit)}
               >
-                {#if activeTab === "lore" && !vault.isGuest}
+                {#if activeTab === "lore" && (!vault.isGuest || canGuestEdit)}
                   <DetailLoreTab
                     entity={activeEntity}
                     {isEditing}
@@ -384,6 +487,18 @@
                   <DetailMapTab entity={activeEntity} />
                 {/if}
               </div>
+
+              <div
+                role="tabpanel"
+                id={panelIds.chats}
+                aria-labelledby={tabIds.chats}
+                hidden={activeTab !== "chats" ||
+                  activeEntity.type !== "character"}
+              >
+                {#if activeTab === "chats" && activeEntity.type === "character"}
+                  <DetailChatsTab entity={activeEntity} />
+                {/if}
+              </div>
             </div>
           </div>
         {/key}
@@ -392,6 +507,9 @@
       <DetailFooter
         {isEditing}
         {isSaving}
+        {isDirty}
+        {isValid}
+        {canGuestEdit}
         onCancel={cancelEditing}
         onSave={saveChanges}
         onDelete={handleDelete}

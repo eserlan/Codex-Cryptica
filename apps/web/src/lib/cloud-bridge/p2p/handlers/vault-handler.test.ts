@@ -10,7 +10,16 @@ describe("VaultHandler", () => {
     handler = new VaultHandler();
     mockContext = {
       vault: {
-        entities: {},
+        entities: {
+          e1: {
+            id: "e1",
+            title: "Shared NPC",
+            type: "character",
+            content: "Known to the party.",
+            visibleToGuests: true,
+          },
+        },
+        defaultVisibility: "hidden",
         updateEntity: vi.fn(),
         batchUpdate: vi.fn(),
         deleteEntity: vi.fn(),
@@ -21,6 +30,8 @@ describe("VaultHandler", () => {
       mapSession: {
         rebindGuestOwnership: vi.fn(),
         clearGuestOwnership: vi.fn(),
+        mapId: null,
+        vttEnabled: false,
       },
       mapStore: {
         activeMap: null,
@@ -64,5 +75,35 @@ describe("VaultHandler", () => {
       "g1",
       "Player 1",
     );
+    expect(mockConn.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "GRAPH_SYNC",
+        payload: expect.objectContaining({
+          entities: expect.objectContaining({
+            e1: expect.objectContaining({ title: "Shared NPC" }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("should handle GUEST_CHAT_TRANSCRIPT_SYNC", async () => {
+    mockContext.vault.saveTranscript = vi.fn();
+    const payload = {
+      id: "g1_c1",
+      guestId: "g1",
+      guestName: "Guest",
+      characterId: "c1",
+      characterTitle: "NPC",
+      messages: [{ id: "m1", role: "user", content: "hello", timestamp: 123 }],
+      lastUpdated: 456,
+    };
+    const msg = {
+      type: "GUEST_CHAT_TRANSCRIPT_SYNC",
+      payload,
+    } as any;
+    await handler.handle(msg, mockConn, mockContext);
+
+    expect(mockContext.vault.saveTranscript).toHaveBeenCalledWith(payload);
   });
 });

@@ -1,0 +1,131 @@
+import { solutions, comparisons } from "$lib/config/seo-pages";
+import { loadLocalBlogArticles } from "$lib/content/blog-content";
+
+export const prerender = true;
+
+const origin = "https://codexcryptica.com";
+
+const escapeXml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+
+export async function GET() {
+  const blogArticles = loadLocalBlogArticles();
+
+  const staticRoutes = [
+    { path: "/", changefreq: "weekly", priority: "1.0" },
+    { path: "/blog", changefreq: "weekly", priority: "0.9" },
+    { path: "/features", changefreq: "monthly", priority: "0.8" },
+    { path: "/tools", changefreq: "weekly", priority: "0.9" },
+    {
+      path: "/free-rpg-campaign-manager",
+      changefreq: "monthly",
+      priority: "0.9",
+    },
+    { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
+    {
+      path: "/ai-rpg-campaign-manager",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/dnd-npc-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/faction-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/vampire-clan-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/quest-hook-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/fantasy-name-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
+    { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
+    { path: "/terms", changefreq: "yearly", priority: "0.5" },
+    { path: "/privacy", changefreq: "yearly", priority: "0.5" },
+  ];
+
+  // Solutions pages
+  const solutionRoutes = Object.keys(solutions).map((slug) => ({
+    path: `/solutions/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Comparison pages
+  const comparisonRoutes = Object.keys(comparisons).map((slug) => ({
+    path: `/vs/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
+  // Generator pages
+  const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
+    (slug) => ({
+      path: `/generators/${slug}`,
+      changefreq: "monthly",
+      priority: "0.8",
+    }),
+  );
+
+  const allStatic = [
+    ...staticRoutes,
+    ...solutionRoutes,
+    ...comparisonRoutes,
+    ...generatorRoutes,
+  ];
+
+  const staticUrls = allStatic
+    .map(
+      (route) => `  <url>
+    <loc>${escapeXml(`${origin}${route.path}`)}</loc>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`,
+    )
+    .join("\n");
+
+  const blogUrls = blogArticles
+    .map(
+      (article) => `  <url>
+    <loc>${escapeXml(`${origin}/blog/${article.slug}`)}</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>${escapeXml(new Date(article.publishedAt).toISOString())}</lastmod>
+  </url>`,
+    )
+    .join("\n");
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${staticUrls}
+${blogUrls}
+</urlset>
+`;
+
+  return new Response(xml, {
+    headers: {
+      "Content-Type": "application/xml",
+      "Cache-Control": "max-age=0, s-maxage=3600",
+    },
+  });
+}

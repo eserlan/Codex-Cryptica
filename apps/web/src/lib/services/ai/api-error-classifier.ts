@@ -18,6 +18,13 @@ export function classifyApiError(err: unknown): ClassifiedError {
     };
   }
   const msg = err instanceof Error ? err.message : String(err);
+  const explicitRateLimitMessage = extractExplicitRateLimitMessage(msg);
+  if (explicitRateLimitMessage) {
+    return {
+      type: "rate-limit",
+      message: explicitRateLimitMessage,
+    };
+  }
   if (/429|rate.?limit/i.test(msg)) {
     return {
       type: "rate-limit",
@@ -37,4 +44,11 @@ export function classifyApiError(err: unknown): ClassifiedError {
     };
   }
   return { type: "unknown", message: "Generation failed. Please try again." };
+}
+
+function extractExplicitRateLimitMessage(message: string): string | null {
+  const dailyLimitMatch = message.match(
+    /(Daily image generation limit exceeded\.[\s\S]*)$/i,
+  );
+  return dailyLimitMatch?.[1]?.trim() || null;
 }

@@ -1,5 +1,6 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
+import { buildSearchKeywords } from "../../services/search-entry-fields";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
@@ -18,6 +19,8 @@ export interface VaultLifecycleDependencies {
   getEntities: () => Record<string, LocalEntity>;
   setDemoVaultName: (name: string | null) => void;
   setInitialized: (val: boolean) => void;
+  /** Rebuild the reactive entity indexes (allEntities, inbound connections). */
+  rebuildEntityIndexes: () => void;
   getServices: () => any;
   setSelectedEntityId: (id: string | null) => void;
   vaultRegistry: any;
@@ -243,6 +246,15 @@ export class VaultLifecycleManager {
       this.deps.repository.entities = entities;
       this.deps.setInitialized(true);
 
+      // Rebuild the reactive entity indexes (allEntities, inbound connections)
+      // directly — without this the graph stays empty even though the
+      // repository holds the demo entities. We deliberately do NOT emit
+      // CACHE_LOADED here: that event is consumed by the search pipeline as a
+      // disk-cache restore, which would double-index the entities (alongside
+      // the loop below) and could restore a stale index keyed on the active
+      // vault id. Search indexing for the demo is handled by the loop below.
+      this.deps.rebuildEntityIndexes();
+
       const services = this.deps.getServices();
       if (services?.search) {
         // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
@@ -250,34 +262,12 @@ export class VaultLifecycleManager {
           const entity = entities[id];
 
           // Canonical keyword construction mirroring SearchService.mapToSearchEntry
-          const metadataVals: string[] = [];
-          if (entity.metadata) {
-            for (const key in entity.metadata) {
-              const val = (entity.metadata as any)[key];
-              if (Array.isArray(val)) {
-                metadataVals.push(...val);
-              } else {
-                metadataVals.push(String(val));
-              }
-            }
-          }
-
-          const keywords = [
-            ...(entity.labels || []),
-            ...(entity.tags || []),
-            entity.lore || "",
-            ...metadataVals,
-          ].join(" ");
+          const keywords = buildSearchKeywords(entity as any);
 
           await services.search.index({
             id: entity.id,
             title: entity.title,
-            aliases: (entity.aliases || []).join(" "),
-            content: entity.content || "",
-            type: entity.type,
-            path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
             keywords,
-            updatedAt: Date.now(),
           });
         }
       }

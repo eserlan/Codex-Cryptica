@@ -72,6 +72,21 @@ class ProposerStore {
   isAnalyzing = $state(false);
   isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
+  draftEntity = $state<{ title: string; content: string; type: string } | null>(
+    null,
+  );
+
+  promoteToRumor(content: string) {
+    this.draftEntity = {
+      title: "New Rumor",
+      content,
+      type: "rumor",
+    };
+  }
+
+  clearDraftEntity() {
+    this.draftEntity = null;
+  }
   analysisErrors = $state<Record<string, string | null>>({});
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId

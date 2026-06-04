@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { Entity } from "schema";
+  import type { Entity, GuestChatConfig } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
@@ -10,25 +11,121 @@
   import DetailProposals from "./proposals/DetailProposals.svelte";
   import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { regenerationService } from "$lib/services/RegenerationService.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
+  import * as Comlink from "comlink";
+
+  let isGeneratingPersonality = $state(false);
+  let personalityError = $state<string | null>(null);
+  const personalitySectionTitle = "Personality & Voice";
+
+  const hasPersonalitySection = $derived.by(() => {
+    const lore = isEditing ? editLore || entity.lore || "" : entity.lore || "";
+    return /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore);
+  });
+
+  function upsertMarkdownSection(
+    content: string | undefined,
+    title: string,
+    sectionMarkdown: string,
+  ): string {
+    const body = (content || "").trimEnd();
+    const section = `## ${title}\n${sectionMarkdown.trim()}`;
+    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const sectionPattern = new RegExp(
+      `(^|\\n)##\\s+${escapedTitle}\\s*\\n[\\s\\S]*?(?=\\n##\\s+|$)`,
+      "i",
+    );
+
+    if (sectionPattern.test(body)) {
+      return body.replace(sectionPattern, `$1${section}`);
+    }
+
+    return body ? `${body}\n\n${section}` : section;
+  }
+
+  async function generatePersonality(): Promise<boolean> {
+    if (isGeneratingPersonality) return false;
+    isGeneratingPersonality = true;
+    personalityError = null;
+    try {
+      if (!oracle.textGeneration.generateResponse) {
+        personalityError =
+          "AI generation is unavailable. Add personality rules manually before saving.";
+        return false;
+      }
+
+      const prompt = `Create only personality and voice notes for "${entity.title}".
+
+Use this character context:
+${editContent || entity.content || "No public character description yet."}
+
+Private GM notes for tone only:
+${editLore || entity.lore || "None"}
+
+Return only markdown for a "${personalitySectionTitle}" section body.
+Use 3-5 concise bullets.
+Cover temperament, conversational habits, speech rhythm, word choice, and at least one in-character behavior rule.
+Do not write a full character profile.
+Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, or unrelated biography.`;
+
+      let generatedText = "";
+      const handlePartial = (partial: string) => {
+        generatedText = partial.trim();
+        editLore = upsertMarkdownSection(
+          editLore || entity.lore || "",
+          personalitySectionTitle,
+          generatedText,
+        );
+      };
+
+      await oracle.textGeneration.generateResponse(
+        oracle.effectiveApiKey || "",
+        prompt,
+        [],
+        "",
+        oracle.modelName || "gemini-3-flash-preview",
+        oracleBridge.isReady ? Comlink.proxy(handlePartial) : handlePartial,
+        false,
+        [],
+        {
+          systemInstructionOverride:
+            "You write only concise markdown personality and voice notes for tabletop RPG characters. Never rewrite the full character.",
+        },
+      );
+      return !!generatedText.trim();
+    } catch (err) {
+      console.error("Failed to generate personality instructions:", err);
+      personalityError =
+        "AI generation failed. Add personality rules manually before saving.";
+      return false;
+    } finally {
+      isGeneratingPersonality = false;
+    }
+  }
 
   let {
     entity,
     isEditing,
     editType,
     editContent = $bindable(),
+    editLore = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
+    editGuestChatConfig = $bindable(),
   } = $props<{
     entity: Entity;
     isEditing: boolean;
     editType: string;
     editContent: string;
+    editLore?: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
+    editGuestChatConfig?: GuestChatConfig;
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
@@ -178,24 +275,38 @@
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const draft = $derived(
-    regenerationService.pendingDraft?.entityId === entity.id
-      ? regenerationService.pendingDraft
+    revisionService.pendingDraft?.entityId === entity.id
+      ? revisionService.pendingDraft
       : null,
   );
 </script>
 
 <div class="space-y-4 md:space-y-6">
-  {#if !isEditing && !vault.isGuest}
-    <div class="flex justify-end">
-      <button
-        type="button"
-        onclick={() => modalUIStore.openRelatedEntityDialog(entity.id)}
-        class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-      >
-        <span class="icon-[lucide--sparkles] w-4 h-4"></span>
-        Generate Related
-      </button>
-    </div>
+  {#if !isEditing}
+    {#if !vault.isGuest}
+      <div class="flex justify-end">
+        <button
+          type="button"
+          onclick={() => modalUIStore.openRelatedEntityDialog(entity.id)}
+          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
+        >
+          <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+          Generate Related
+        </button>
+      </div>
+    {:else if entity.type === "character" && entity.guestChatConfig?.isEnabled && hasPersonalitySection}
+      <div class="flex justify-end">
+        <button
+          type="button"
+          onclick={() => guestChatStore.openChat(entity.id, entity.title)}
+          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
+          data-testid="status-tab-guest-chat-button"
+        >
+          <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+          Chat with {entity.title}
+        </button>
+      </div>
+    {/if}
   {/if}
   <!-- Temporal Metadata -->
   {#if isEditing}
@@ -547,6 +658,229 @@
       {/if}
     </ul>
   </div>
+
+  <!-- Guest Character Chat Settings (Host Only, Type must be character) -->
+  {#if !vault.isGuest && (editType === "character" || entity.type === "character")}
+    <div
+      class="border border-theme-border rounded-xl p-4 bg-theme-surface/5 space-y-4"
+    >
+      <div
+        class="flex items-center justify-between border-b border-theme-border pb-2"
+      >
+        <h4
+          class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
+        >
+          <span
+            class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+          ></span>
+          Guest Character Chat
+        </h4>
+        {#if !isEditing}
+          <span
+            class="text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider {entity
+              .guestChatConfig?.isEnabled
+              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+              : 'bg-theme-muted/10 text-theme-muted border border-theme-border'}"
+          >
+            {entity.guestChatConfig?.isEnabled ? "Enabled" : "Disabled"}
+          </span>
+        {/if}
+      </div>
+
+      {#if isEditing}
+        <div class="space-y-4 text-sm">
+          <!-- Toggle Availability -->
+          <label class="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!!editGuestChatConfig?.isEnabled}
+              onchange={(e) => {
+                if (editGuestChatConfig) {
+                  editGuestChatConfig.isEnabled = e.currentTarget.checked;
+                  editGuestChatConfig = { ...editGuestChatConfig };
+                  if (editGuestChatConfig.isEnabled && !hasPersonalitySection) {
+                    void generatePersonality();
+                  }
+                }
+              }}
+              class="w-4 h-4 accent-theme-primary rounded border-theme-border bg-theme-bg"
+            />
+            <span class="font-bold text-theme-text"
+              >Enable Guest Character Chat</span
+            >
+          </label>
+
+          {#if editGuestChatConfig?.isEnabled}
+            <div
+              class="pl-7 space-y-4 border-l-2 border-theme-border/50 transition-all"
+            >
+              <!-- Context Scope Option -->
+              <div class="space-y-1">
+                <span
+                  class="block text-xs font-bold uppercase tracking-wider text-theme-muted"
+                  >Context & Knowledge Scope</span
+                >
+                <div class="flex gap-4">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="contextScope"
+                      value="public"
+                      checked={editGuestChatConfig?.contextScope === "public"}
+                      onchange={() => {
+                        if (editGuestChatConfig) {
+                          editGuestChatConfig.contextScope = "public";
+                          editGuestChatConfig = { ...editGuestChatConfig };
+                        }
+                      }}
+                      class="accent-theme-primary"
+                    />
+                    <span>Public Lore Only</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="contextScope"
+                      value="hybrid"
+                      checked={editGuestChatConfig?.contextScope === "hybrid"}
+                      onchange={() => {
+                        if (editGuestChatConfig) {
+                          editGuestChatConfig.contextScope = "hybrid";
+                          editGuestChatConfig = { ...editGuestChatConfig };
+                        }
+                      }}
+                      class="accent-theme-primary"
+                    />
+                    <span>Public + Private Context</span>
+                  </label>
+                </div>
+                <p class="text-xs text-theme-muted mt-1 leading-normal">
+                  {editGuestChatConfig?.contextScope === "public"
+                    ? "Guests can only query this character using their public description and tags/labels."
+                    : "Allows the AI to guide hints/responses using hidden GM notes, but strictly prohibits repeating them directly."}
+                </p>
+              </div>
+
+              <!-- Personality & Voice section status -->
+              <div class="flex items-center justify-between text-xs">
+                <span
+                  class="font-bold uppercase tracking-wider text-theme-muted"
+                  >Personality & Voice</span
+                >
+                {#if hasPersonalitySection}
+                  <span
+                    class="flex items-center gap-1 text-emerald-500 font-semibold"
+                  >
+                    <span class="icon-[lucide--check-circle] w-3.5 h-3.5"
+                    ></span>
+                    Found in character lore
+                  </span>
+                {:else}
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="flex items-center gap-1 text-amber-500 font-semibold"
+                    >
+                      <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
+                      ></span>
+                      Missing from lore
+                    </span>
+                    <button
+                      type="button"
+                      onclick={generatePersonality}
+                      disabled={isGeneratingPersonality}
+                      class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+                    >
+                      <span
+                        class={isGeneratingPersonality
+                          ? "icon-[lucide--loader-2] animate-spin w-3 h-3"
+                          : "icon-[lucide--sparkles] w-3 h-3"}
+                      ></span>
+                      {isGeneratingPersonality ? "Generating..." : "Generate"}
+                    </button>
+                  </div>
+                {/if}
+              </div>
+              {#if personalityError}
+                <p
+                  class="text-[10px] text-theme-danger flex items-center gap-1 font-semibold"
+                >
+                  <span class="icon-[lucide--circle-alert] w-3.5 h-3.5"></span>
+                  {personalityError}
+                </p>
+              {/if}
+
+              <!-- Additional Settings -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <label
+                  class="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!editGuestChatConfig?.isHostReviewable}
+                    onchange={(e) => {
+                      if (editGuestChatConfig) {
+                        editGuestChatConfig.isHostReviewable =
+                          e.currentTarget.checked;
+                        editGuestChatConfig = { ...editGuestChatConfig };
+                      }
+                    }}
+                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
+                  />
+                  <span class="text-xs text-theme-text"
+                    >Host can review logs (P2P Sync)</span
+                  >
+                </label>
+
+                <label
+                  class="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!editGuestChatConfig?.keepMemory}
+                    onchange={(e) => {
+                      if (editGuestChatConfig) {
+                        editGuestChatConfig.keepMemory =
+                          e.currentTarget.checked;
+                        editGuestChatConfig = { ...editGuestChatConfig };
+                      }
+                    }}
+                    class="w-3.5 h-3.5 accent-theme-primary rounded border-theme-border bg-theme-bg"
+                  />
+                  <span class="text-xs text-theme-text"
+                    >Retain memory between guest visits</span
+                  >
+                </label>
+              </div>
+            </div>
+          {/if}
+        </div>
+      {:else if entity.guestChatConfig?.isEnabled}
+        <!-- Read-only Info for Host -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-theme-muted block">Context Scope:</span>
+            <span class="font-bold text-theme-text capitalize"
+              >{entity.guestChatConfig.contextScope} Lore</span
+            >
+          </div>
+          <div>
+            <span class="text-theme-muted block">Synced Review:</span>
+            <span class="font-bold text-theme-text"
+              >{entity.guestChatConfig.isHostReviewable
+                ? "Active"
+                : "Disabled"}</span
+            >
+          </div>
+        </div>
+      {:else}
+        <p class="text-xs text-theme-muted italic">
+          Guest Character Chat is disabled. Click the "EDIT" button at the top
+          of this panel to enable it and let invited players chat with this
+          character.
+        </p>
+      {/if}
+    </div>
+  {/if}
 
   <DetailProposals {isEditing} />
   <EntityProposals content={entity.content || ""} {isEditing} />

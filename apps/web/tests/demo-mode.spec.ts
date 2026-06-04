@@ -48,8 +48,8 @@ test.describe("Interactive Demo Mode", () => {
       timeout: 15000,
     });
 
-    // Click Try Demo
-    await page.getByRole("button", { name: "Try Demo" }).click();
+    // Click Explore Demo Vault
+    await page.getByTestId("welcome-demo-button").click();
 
     // Wait for demo mode state
     await page.waitForFunction(

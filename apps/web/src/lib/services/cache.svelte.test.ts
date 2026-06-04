@@ -22,6 +22,7 @@ vi.mock("../utils/entity-db", () => ({
       where: vi.fn().mockReturnThis(),
       equals: vi.fn().mockReturnThis(),
       first: vi.fn().mockResolvedValue(null),
+      toArray: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(0),
     },
     searchIndex: {

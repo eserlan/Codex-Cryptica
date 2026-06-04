@@ -363,9 +363,9 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.",
     icon: "icon-[lucide--clipboard-check]",
   },
-  "ai-regeneration": {
-    id: "ai-regeneration",
-    title: "AI Description Regeneration",
+  "ai-revision": {
+    id: "ai-revision",
+    title: "AI Description Revision",
     content:
       "Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.",
     icon: "icon-[lucide--sparkles]",
@@ -397,6 +397,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode — the editor shows plain text while you are writing.",
     icon: "icon-[lucide--link]",
+  },
+  "guest-character-chat": {
+    id: "guest-character-chat",
+    title: "Guest Character Chat",
+    content:
+      "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.",
+    icon: "icon-[lucide--messages-square]",
   },
 };
 
