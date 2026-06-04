@@ -2,6 +2,21 @@
 
 This file contains an amalgamation of the user-facing help documentation and core features of Codex Cryptica.
 
+## What Codex Cryptica Is
+
+Codex Cryptica is a local-first RPG campaign manager and worldbuilding tool for tabletop roleplaying games. It combines a Markdown vault, visual knowledge graph, AI lore assistant, map mode, lightweight VTT, spatial canvas, entity templates, and privacy-focused storage.
+
+It is especially relevant to users searching for:
+
+- RPG campaign manager
+- Worldbuilding tool
+- AI GM assistant
+- Local-first RPG notes
+- Private Obsidian alternative for worldbuilding
+- Fantasy worldbuilding software
+- RPG knowledge graph
+- Lightweight VTT
+
 ## Core Features
 
 ### AI Oracle
@@ -807,7 +822,7 @@ The landing page highlights several key "Protocols" that define the application:
 
 ## Performance & SEO
 
-The landing page is optimized for near-instant load times (LCP < 1.2s) and provides crawlable metadata for search engines, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
+The landing page is optimised for fast load times and crawlable metadata, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
 
 ---
 
