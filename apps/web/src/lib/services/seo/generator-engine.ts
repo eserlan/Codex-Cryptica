@@ -1135,10 +1135,10 @@ export class DefaultGeneratorEngine {
 
     const npcNamingStyles = [
       "Give the NPC a name that sounds distinctly local to their culture — not generic fantasy.",
-      "Use a name with unusual phonetic texture. Avoid Kael, Zara, Theron, and similar overused patterns.",
-      "Give the NPC a short epithet or title that hints at their reputation (e.g. 'the Ledger', 'Pale Maren').",
+      "Use a name with unusual phonetic texture. Avoid Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, and similar overused patterns.",
+      "Give the NPC a short epithet or title that hints at their reputation — invent an original one, do not reuse common examples.",
       "Use a name that suggests a specific cultural or ethnic origin consistent with their ancestry.",
-      "Choose a name that is easy to say aloud at a gaming table — short, distinct, memorable.",
+      "Choose a name that is easy to say aloud at a gaming table — short, distinct, memorable, and not a common English surname.",
     ];
     const chosenNamingStyle = this.pickFrom(npcNamingStyles);
     const varianceSeed = Math.floor(Math.random() * 99991) + 10;
@@ -1176,10 +1176,10 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 
 QUALITY RULES:
 - Every NPC must feel like a completely different person — avoid repeating names, archetypes, or backstory structures.
-- Avoid generic fantasy naming clichés. No Kael, Theron, Zara, Aldric, or similar overused patterns.
+- Avoid overused NPC name patterns. Do NOT use: Kael, Theron, Zara, Aldric, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
 - The secret should be genuinely surprising and table-usable, not a generic "dark past."
 - Place names must be specific and invented — no "the old district" or "the lower city."
-- Before finalising, silently check: is this name original? Is the secret actually interesting? Is there a contradiction? Rewrite if yes.`;
+- Before finalising, silently check: is this name original and not on the forbidden list? Is the secret actually interesting? Rewrite if yes.`;
 
         const moralityAnchor = theme
           ? npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
@@ -1540,8 +1540,8 @@ ${faction}`;
     ];
     const npcNamingStyles = [
       "Give each NPC a name that sounds distinctly local — not generic fantasy.",
-      "Each NPC name should have an unusual phonetic texture. Avoid Kael, Zara, Theron, and similar overused patterns.",
-      "Give each NPC a short street name or title that hints at their role (e.g. 'The Ledger', 'Pale Maren').",
+      "Each NPC name should have an unusual phonetic texture. Avoid Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, and similar overused patterns.",
+      "Give each NPC a short street name or title that hints at their role — invent an original one, do not reuse common examples.",
       "Use names that suggest a specific cultural or ethnic origin consistent with the setting.",
       "Each NPC should have a name that is easy to say aloud at a gaming table.",
     ];
@@ -1583,7 +1583,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 QUALITY RULES:
 - Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
 - Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
-- NPC names must feel culturally specific and phonetically varied — avoid Kael, Zara, Theron, and similar overused patterns.
+- NPC names must feel culturally specific and phonetically varied — do NOT use Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
 - Place names (bases, districts, landmarks) must be specific and invented — never use 'the old district', 'the lower city', or other generic geography. Every location should have a proper name.
 - Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), logical alignment between public face and secret agenda. Rewrite if issues found.`;
 
