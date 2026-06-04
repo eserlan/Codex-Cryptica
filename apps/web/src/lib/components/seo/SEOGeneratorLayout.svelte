@@ -59,6 +59,12 @@
   let isGenerating = $state(false);
   let generatedData = $state<GeneratorOutput | null>(initialDraft);
   let isExampleDraft = $state(true);
+
+  $effect(() => {
+    generatedData = initialDraft;
+    isExampleDraft = true;
+  });
+
   let outputCard = $state<HTMLElement | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
