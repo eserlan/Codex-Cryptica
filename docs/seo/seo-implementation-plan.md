@@ -11,6 +11,12 @@ Based on the [Grundig Research Rapport](file:///home/espen/proj/Codex-Arcana/doc
 - **Structured Metadata**: Automatic generation of `SoftwareApplication` and `Organization` JSON-LD schemas.
 - **Locale Targeting**: Setup global English as primary (`en-US`), with pre-configured headers and potential `hreflang` maps.
 - **Crawling Architecture**: Dynamic XML sitemap generation including all custom generators, comparison pages, and import routes.
+- **Reactivity Bugfix**: Fix Svelte 5 reactive metadata state bugs where `const meta = slugMeta[data.slug]` fails to update when navigating dynamically between generator types on reused layouts.
+
+### Route Consolidation & Redirects
+
+- **Eliminate Duplications**: Consolidate redundant routes like `/tools/dnd-npc-generator` and `/generators/npc` under a unified `/generators/` hierarchy.
+- **SEO Redirections**: Implement 301 redirects for any historical `/tools/*` and `/alternatives/*` paths to point to the canonical `/generators/*` and `/vs/*` routes to preserve link equity.
 
 ### Interactive Funnels & Onboarding
 
@@ -20,8 +26,8 @@ Based on the [Grundig Research Rapport](file:///home/espen/proj/Codex-Arcana/doc
 
 ### Competitor Confrontation & Migration
 
-- **Targeted VS / Alternative Pages**: Launch `/vs/world-anvil`, `/vs/obsidian`, `/vs/kanka`, `/vs/legendkeeper` landing pages.
-- **Direct Importers as Landing Page Wedge**: High-intent routes `/import/obsidian` and `/import/world-anvil` providing single-click migration tools.
+- **Targeted VS Pages**: Maintain and enhance `/vs/world-anvil`, `/vs/obsidian`, `/vs/kanka`, `/vs/legendkeeper` landing pages.
+- **Direct Importers as Landing Page Wedge**: High-intent routes `/import/obsidian-vault` and `/import/world-anvil-export` providing client-side drag-and-drop parsers to preview imports instantly.
 
 ---
 
@@ -29,55 +35,43 @@ Based on the [Grundig Research Rapport](file:///home/espen/proj/Codex-Arcana/doc
 
 ```mermaid
 graph TD
-    P1[Phase 1: SEO Foundation] --> P2[Phase 2: Funnel Refinement]
-    P2 --> P3[Phase 3: Alternatives & VS Pages]
-    P3 --> P4[Phase 4: Import Integrations]
+    P1[Phase 1: Routing Consolidation & Bug Fixes] --> P2[Phase 2: Dynamic Feature Pages]
+    P2 --> P3[Phase 3: Generator Funnel Enhancement]
+    P3 --> P4[Phase 4: Import & Migration Hubs]
     P4 --> P5[Phase 5: Privacy Use Cases]
 ```
 
-### Phase 1: Technical & SEO Foundation
+### Phase 1: Routing Consolidation & Bug Fixes
 
-- [ ] **Task 1.1: Schema XML & Sitemap Integration**
-  - Create a dynamic `sitemap.xml` route that index-crawls all generated, import, feature, and alternative paths.
-  - Ensure canonical tags are set correctly across all dynamic `/generators/[slug]` routes.
-- [ ] **Task 1.2: Structured Data Injectors**
-  - Implement a reusable SEO component that handles standard JSON-LD injection (e.g., `SoftwareApplication` on home/feature pages, `FAQPage` or comparison schemas on VS pages).
-- [ ] **Task 1.3: Meta & Title Sanitization**
-  - Set strict schema validations for generator meta-descriptions to avoid truncation in Google SERPs.
+- [ ] **Task 1.1: Fix Svelte 5 Reactive Metadata**
+  - Refactor page-meta variables in dynamic `/generators/[slug]` and `/solutions/[slug]` routes to use Svelte 5 `$derived()` runes.
+- [ ] **Task 1.2: Consolidate Duplicate Routes**
+  - Set up clean 301 redirects (client-side layout or server response) mapping `/tools/*` to `/generators/*`.
+  - Ensure sitemap generator points strictly to canonical `/generators/*` and `/vs/*` endpoints.
 
-### Phase 2: High-Converting Public Generators
+### Phase 2: Dynamic Feature Pages
 
-- [ ] **Task 2.1: Inter-Entity Linking System**
-  - Add relationship connections in the generator output UI. For example, when viewing a generated NPC, allow the user to click "Generate Tavern" or "Connect to Faction", keeping them in a unified web-session graph.
-- [ ] **Task 2.2: "Save to Vault" CTA Flow**
-  - Ensure the "Save to Vault" CTA serializes the current generated entity graph into a transient `localStorage` package.
-  - Redirect to account registration/local-vault setup, cleanly unpacking the schema post-initialization.
-- [ ] **Task 2.3: Tracking Dashboard**
-  - Add lightweight event trackers for micro-conversion clicks (clicks on traits, edit actions) and macro downloads.
+- [ ] **Task 2.1: Implement `/features/[slug]` Dynamic Routes**
+  - Create dedicated feature landing pages for `/features/local-first-rpg-campaign-manager` and `/features/private-offline-worldbuilding-tool`.
+  - Highlight key differentiators: data sovereignty, offline performance, and local file storage.
 
-### Phase 3: Alternatives & VS Comparison Pages
+### Phase 3: Generator Funnel Enhancement
 
-- [ ] **Task 3.1: Build `/vs/[slug]` Dynamic Engine**
-  - Create comparing routes highlighting:
-    - World Anvil: Bloat & subscription vs. lightweight local-first.
-    - Obsidian: Setup time/complex plugins vs. out-of-the-box TTRPG setup.
-    - Kanka: Form-based data entry & cloud vs. reactive markdown/local.
-    - LegendKeeper: Browser-offline hybrid & monthly subs vs. desktop-native zero-subs.
-- [ ] **Task 3.2: Comparison UI Matrix Component**
-  - Build a sleek, interactive matrix comparing feature sets, offline storage capabilities, and pricing models.
+- [ ] **Task 3.1: Inter-Entity Linking System**
+  - Implement relationships within generator layouts allowing users to dynamically bind NPCs to Factions or Locations in a temporary local session state.
+- [ ] **Task 3.2: Unified Onboarding Export Flow**
+  - Update the "Save to Vault" CTA to package linked entities in `localStorage` before redirection.
+- [ ] **Task 3.3: Micro-Conversion Tracking**
+  - Log micro-customizations (editing name, trait rerolls) alongside macro downloads.
 
-### Phase 4: Frictionless Import & Migration Hubs
+### Phase 4: Import & Migration Hubs
 
 - [ ] **Task 4.1: Target Import Routes**
-  - Implement `/import/obsidian-vault`, `/import/world-anvil`, `/import/kanka`, and `/import/legendkeeper` landing pages.
+  - Build out landing pages for `/import/obsidian-vault`, `/import/world-anvil-export`, `/import/kanka-json`, and `/import/legendkeeper-json`.
 - [ ] **Task 4.2: Direct Drag-and-Drop Parser UI**
-  - Allow users to drop target export formats (e.g., markdown vault zip, JSON export payload) directly onto the web landing page.
-  - Process client-side parsing, showing them a live preview of the extracted entity tree with a CTA: _"Download Codex Cryptica to save this data into your local vault."_
+  - Implement client-side parsers to extract entity trees from vault markdown files or JSON exports, previewing them dynamically before inviting users to download Codex.
 
-### Phase 5: Privacy & Local-First Use Cases
+### Phase 5: Privacy Use Cases
 
-- [ ] **Task 5.1: Key Value Landing Pages**
-  - Launch `/features/local-first-rpg-campaign-manager` and `/features/private-offline-worldbuilding-tool`.
-  - Incorporate copy focused on data ownership, anti-AI data scraping protection, and offline loading performance.
-- [ ] **Task 5.2: AI GM Assistant Privacy Page**
-  - Build `/features/ai-gm-assistant` explaining the local-first zero-data-leakage architecture.
+- [ ] **Task 5.1: AI GM Assistant Privacy Page**
+  - Launch `/features/ai-gm-assistant` explaining the local-first zero-data-leakage architecture.
