@@ -12,6 +12,7 @@ export interface LayoutOptions {
   timelineMode: boolean;
   timelineAxis: "x" | "y";
   timelineScale: number;
+  yearPositions?: Record<number, number>;
   orbitMode: boolean;
   centralNodeId: string | null;
   stableLayout: boolean;
@@ -367,6 +368,7 @@ export class LayoutManager {
         axis: options.timelineAxis,
         scale: options.timelineScale,
         jitter: 150,
+        yearPositions: options.yearPositions,
       });
 
       const nodesToLayout = this.cy

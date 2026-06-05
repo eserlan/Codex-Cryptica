@@ -21,6 +21,7 @@ export interface ChronologyDrag {
   pressYear: number;
   targetYear: number;
   gestureKind: ChronologyGestureKind;
+  dropPosition?: { x: number; y: number };
 }
 
 export interface ChronologyEditDependencies {
@@ -69,6 +70,7 @@ export class ChronologyEditService {
     originPosition?: { x: number; y: number };
     pressPosition: number | { x: number; y: number };
     context: YearPositionContext;
+    dropPosition?: { x: number; y: number };
   }): boolean {
     const year = this.deps.resolveYear(args.pressPosition, args.context);
     if (year === null) return false;
@@ -86,6 +88,7 @@ export class ChronologyEditService {
       pressYear: year,
       targetYear: year,
       gestureKind: "point",
+      dropPosition: args.dropPosition,
     };
     return true;
   }

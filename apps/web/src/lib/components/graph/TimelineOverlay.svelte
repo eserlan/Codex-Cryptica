@@ -46,9 +46,26 @@
       if (year !== undefined) {
         years.push(year);
       }
+      if (e.temporalAnchors) {
+        const anchorCount = e.temporalAnchors.length;
+        for (let j = 0; j < anchorCount; j++) {
+          const anchor = e.temporalAnchors[j];
+          const aYear =
+            anchor.date?.year ??
+            anchor.start_date?.year ??
+            anchor.end_date?.year;
+          if (aYear !== undefined) {
+            years.push(aYear);
+          }
+        }
+      }
     }
 
-    return getSequentialYearPositions(years, graph.timelineScale);
+    const fallbackYear = new Date().getFullYear();
+    return getSequentialYearPositions(
+      years.length > 0 ? years : [fallbackYear],
+      graph.timelineScale,
+    );
   });
 
   let ticks = $derived(getRulerTicks(yearPositions));
@@ -126,7 +143,7 @@
           {/if}
         {/each}
 
-        <!-- Ruler Ticks -->
+        <!-- Ruler Ticks Gridlines -->
         {#each ticks as tick}
           {#if graph.timelineAxis === "x"}
             <line
@@ -138,15 +155,6 @@
               stroke-opacity={tick.isMajor ? 0.1 : 0.03}
               stroke-dasharray={tick.isMajor ? "" : "5,5"}
             />
-            <text
-              x={tick.pos + 5}
-              y="20"
-              fill="var(--color-theme-accent)"
-              fill-opacity="0.2"
-              class="text-[12px] font-mono font-bold"
-            >
-              {tick.year}
-            </text>
           {:else}
             <line
               x1="-10000"
@@ -157,15 +165,6 @@
               stroke-opacity={tick.isMajor ? 0.1 : 0.03}
               stroke-dasharray={tick.isMajor ? "" : "5,5"}
             />
-            <text
-              x="20"
-              y={tick.pos - 5}
-              fill="var(--color-theme-accent)"
-              fill-opacity="0.2"
-              class="text-[12px] font-mono font-bold"
-            >
-              {tick.year}
-            </text>
           {/if}
         {/each}
 
@@ -206,6 +205,39 @@
           {/each}
         {/if}
       </g>
+
+      <!-- Sticky Screen-Space Ruler Year Labels -->
+      {#each ticks as tick}
+        {#if graph.timelineAxis === "x"}
+          {@const screenX = tick.pos * transform.k + transform.x}
+          {#if screenX >= 0 && screenX <= (cy?.width() ?? window.innerWidth)}
+            <text
+              x={screenX + 6}
+              y="24"
+              fill="var(--color-theme-accent)"
+              fill-opacity="0.85"
+              class="text-[11px] font-mono font-bold select-none tracking-wider pointer-events-none"
+              style="text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5);"
+            >
+              {tick.year}
+            </text>
+          {/if}
+        {:else}
+          {@const screenY = tick.pos * transform.k + transform.y}
+          {#if screenY >= 0 && screenY <= (cy?.height() ?? window.innerHeight)}
+            <text
+              x="16"
+              y={screenY - 4}
+              fill="var(--color-theme-accent)"
+              fill-opacity="0.85"
+              class="text-[11px] font-mono font-bold select-none tracking-wider pointer-events-none"
+              style="text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5);"
+            >
+              {tick.year}
+            </text>
+          {/if}
+        {/if}
+      {/each}
     </svg>
   </div>
 {/if}

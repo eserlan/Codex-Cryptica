@@ -51,6 +51,7 @@
 
   const applyRange = () => {
     graph.timelineRange = { start: filterStart, end: filterEnd };
+    if (onApply) onApply(false, true, "Timeline Range Change");
   };
 </script>
 
@@ -113,7 +114,10 @@
         max="1000"
         step="50"
         bind:value={graph.timelineScale}
-        onchange={onApply}
+        onchange={() => {
+          graph.setTimelineScale(graph.timelineScale);
+          if (onApply) onApply();
+        }}
         aria-label="Timeline Scale"
         class="w-16 sm:w-20 h-1 bg-theme-border rounded-lg appearance-none cursor-pointer accent-timeline-primary focus:outline-none focus:ring-2 focus:ring-theme-primary focus:ring-offset-1 focus:ring-offset-theme-surface"
       />

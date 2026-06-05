@@ -148,7 +148,7 @@ export function getAnchorTimelineLayout(
  */
 export function getTimelineLayout(
   nodes: GraphNode[],
-  options: TimelineLayoutOptions,
+  options: TimelineLayoutOptions & { yearPositions?: Record<number, number> },
 ): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
 
@@ -174,7 +174,8 @@ export function getTimelineLayout(
   }
 
   // 3. Calculate coordinates (Sequential with Gap Compression)
-  const yearPositions = getSequentialYearPositions(years, options.scale);
+  const yearPositions =
+    options.yearPositions || getSequentialYearPositions(years, options.scale);
   const secondaryAxisOffset = 100; // Shift nodes away from ruler area
 
   for (const [yearStr, yearNodes] of Object.entries(groupedByYear)) {

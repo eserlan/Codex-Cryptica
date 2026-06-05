@@ -14,6 +14,7 @@
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
+  import TimelineOverlay from "./graph/TimelineOverlay.svelte";
   import ChronologyDragIndicator from "./graph/ChronologyDragIndicator.svelte";
   import SemanticPlacementPopover from "./graph/SemanticPlacementPopover.svelte";
   import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
@@ -487,17 +488,23 @@
   }
 
   function handleCanvasDrop(event: DragEvent) {
-    if (!graph.chronologyEditMode) return;
+    console.log("[GraphView] drop event received");
+    if (!graph.chronologyEditMode) {
+      console.log("[GraphView] drop ignored: chronologyEditMode is false");
+      return;
+    }
     const entityId =
       event.dataTransfer?.getData("application/x-codex-entity-id") ||
       event.dataTransfer?.getData("application/codex-entity") ||
       event.dataTransfer?.getData("text/plain");
+    console.log("[GraphView] drop entityId resolved:", entityId);
     if (!entityId) return;
     event.preventDefault();
-    controller.beginExplorerChronologyPlacement(entityId, {
+    const result = controller.beginExplorerChronologyPlacement(entityId, {
       x: event.clientX,
       y: event.clientY,
     });
+    console.log("[GraphView] beginExplorerChronologyPlacement result:", result);
   }
 </script>
 
@@ -566,6 +573,7 @@
   {#if controller.cy}
     <ContextMenu cy={controller.cy} />
     <SelectionConnector cy={controller.cy} />
+    <TimelineOverlay cy={controller.cy} />
   {/if}
   {#if hasNoEntities}
     <div

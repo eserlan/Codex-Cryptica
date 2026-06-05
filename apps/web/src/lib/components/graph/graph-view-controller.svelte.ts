@@ -119,6 +119,10 @@ export class GraphViewController {
         this.selectedCount = instance.$("node:selected").length;
       };
       instance.on("select unselect", "node", updateSelectionCount);
+      instance.on("grab", "node", () => {
+        this.hoveredEntityId = null;
+        this.hoverPosition = null;
+      });
       updateSelectionCount();
 
       if (import.meta.env.DEV || (window as any).__E2E__) {
@@ -386,6 +390,7 @@ export class GraphViewController {
         timelineMode: this.deps.graph.timelineMode,
         timelineAxis: this.deps.graph.timelineAxis,
         timelineScale: this.deps.graph.timelineScale,
+        yearPositions: this.getTimelineYearContext().yearPositions,
         orbitMode: this.deps.graph.orbitMode,
         centralNodeId: this.deps.graph.centralNodeId,
         stableLayout: this.deps.graph.stableLayout,
@@ -601,6 +606,9 @@ export class GraphViewController {
   getChronologyPopoverPosition = (): { x: number; y: number } | undefined => {
     const drag = this.chronologyEdit.drag;
     if (!this.cy || !drag) return undefined;
+    if (drag.source === "explorer" && drag.dropPosition) {
+      return drag.dropPosition;
+    }
     const nodeId = drag.anchorId
       ? `${drag.entityId}::${drag.anchorId}`
       : drag.entityId;
@@ -621,14 +629,28 @@ export class GraphViewController {
     entityId: string,
     clientPosition: { x: number; y: number },
   ): boolean => {
+    console.log(
+      "[GraphViewController] beginExplorerChronologyPlacement for:",
+      entityId,
+      clientPosition,
+    );
     if (
       !this.cy ||
       !this.deps.graph.timelineMode ||
       !this.deps.graph.chronologyEditMode
     ) {
+      console.log(
+        "[GraphViewController] placement rejected: cy, timelineMode, or chronologyEditMode is missing/false",
+        {
+          cy: !!this.cy,
+          timelineMode: this.deps.graph.timelineMode,
+          chronologyEditMode: this.deps.graph.chronologyEditMode,
+        },
+      );
       return false;
     }
     const entity = this.getEntityForNode(entityId);
+    console.log("[GraphViewController] entity resolved from node ID:", entity);
     if (!entity) return false;
 
     const container = this.cy.container();
@@ -640,14 +662,23 @@ export class GraphViewController {
       x: (clientPosition.x - rect.left - pan.x) / zoom,
       y: (clientPosition.y - rect.top - pan.y) / zoom,
     };
+    console.log(
+      "[GraphViewController] modelPosition calculated:",
+      modelPosition,
+    );
 
     const began = this.chronologyEdit.beginDrag({
       entity,
       source: "explorer",
       pressPosition: modelPosition,
       context: this.getTimelineYearContext(),
+      dropPosition: clientPosition,
     });
+    console.log("[GraphViewController] beginDrag began:", began);
     if (!began) return false;
-    return this.chronologyEdit.prepareDrop(entity) !== null;
+
+    const dropIntent = this.chronologyEdit.prepareDrop(entity);
+    console.log("[GraphViewController] prepareDrop dropIntent:", dropIntent);
+    return dropIntent !== null;
   };
 }
