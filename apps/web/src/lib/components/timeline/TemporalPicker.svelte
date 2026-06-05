@@ -91,6 +91,10 @@
     untrack(() => toDateSelection(value, referenceValue)),
   );
 
+  $effect(() => {
+    activeSelection = toDateSelection(value, referenceValue);
+  });
+
   let directDateInput = $state("");
   let directDateError = $state("");
   let isDirectDateEditing = $state(false);
