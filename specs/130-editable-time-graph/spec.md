@@ -298,3 +298,23 @@ As a World Builder, in edit-chronology mode I want the option — when I drag an
 - A new calendar/era configuration system beyond what `026-world-timeline` already provides.
 - Bulk/multi-select temporal editing of many entities in one drag (single-entity placement only in this iteration).
 - Dragging **Era** background-region boundaries on the timeline. Eras are calendar _configuration_ (not entity lore); editing their `start_year`/`end_year` by dragging is a possible follow-up, separate from entity chronology editing.
+
+## Future Extensions: Lifespans and Story Chains
+
+These conceptual design outlines govern the next iteration of the time graph, transforming it from a point-based timeline into a view of overlapping durations and causal sequences.
+
+### 1. Lifespans (Entity Durations)
+
+Rather than rendering start and end dates (e.g. birth and death, founding and collapse) as unrelated, disjointed points in space:
+
+- **Visual Span Connectors**: The time graph will render a styled horizontal connector/span edge linking the start handle/node to the end handle/node for any entity with a resolved start and end date. This edge will represent the entity's duration (lifespan, reign, or operation period).
+- **Unified Drag Gestures**: Grabbing and dragging the connecting span line translates the entire entity's timeline footprint (shifting both start and end years synchronously, preserving duration). Dragging individual boundary handles (start/end) stretches or contracts the span.
+- **Theme Integration**: Spans will be styled using Svelte component parameters matching the vault's active theme (e.g., solid calligraphic paths in `fantasy` mode, pulsing digital tracks in `scifi` mode).
+
+### 2. Story Chains (Sequential Event Flow)
+
+To show narrative progression without the clutter of non-temporal connections:
+
+- **Filtered Sequence Edges**: Normal relational connections (e.g. `allied_with`, `member_of`) remain hidden in timeline mode to prevent visual clutter. Only sequential narrative connections (e.g. `precedes`, `leads_to`, `then`) are rendered.
+- **Directional Timeline Flow**: Sequence edges are rendered as clean, directed paths running forward along the temporal axis.
+- **Storyline swimlanes**: Concurrent storylines or questlines can be layered vertically into separate visual lanes (swimlanes), allowing GMs to trace parallel narrative tracks (e.g. different party tracks or concurrent plots) across time.
