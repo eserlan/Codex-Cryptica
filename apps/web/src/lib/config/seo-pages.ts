@@ -735,18 +735,18 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
       {
         feature: "Collaboration and subscribers",
-        competitorHas: "Strong paid features",
+        competitorHas: "Strong, built-in community features",
         codexHas: "Local-first, single-user focused",
       },
       {
-        feature: "Offline compatibility",
-        competitorHas: "No, cloud-based",
-        codexHas: "Yes",
+        feature: "Storage location",
+        competitorHas: "Remote hosted database",
+        codexHas: "Your browser / Local Markdown vault",
       },
       {
-        feature: "Local-first storage",
-        competitorHas: "No",
-        codexHas: "Yes",
+        feature: "Offline compatibility",
+        competitorHas: "No (Cloud-dependent)",
+        codexHas: "Yes (100% offline functional)",
       },
       {
         feature: "Native Markdown files",
@@ -755,18 +755,23 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
       {
         feature: "Full world export",
-        competitorHas: "Paid Guild feature",
-        codexHas: "Local files by default",
+        competitorHas: "Paid feature (ZIP/JSON/HTML)",
+        codexHas: "Local files by default (No lock-in)",
       },
       {
         feature: "Private worlds",
-        competitorHas: "Paid feature",
+        competitorHas: "Paid feature (Guild Tiers)",
         codexHas: "Private by default",
       },
       {
         feature: "AI assistance",
-        competitorHas: "Not core / unclear",
-        codexHas: "Optional Gemini-powered assistance",
+        competitorHas: "Third-party / Platform-dependent",
+        codexHas: "Optional Gemini-powered assistance (BYO Key)",
+      },
+      {
+        feature: "Session performance",
+        competitorHas: "Cloud-dependent performance",
+        codexHas: "Local-first performance",
       },
       {
         feature: "Graph-based lore exploration",
@@ -776,7 +781,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       {
         feature: "Price",
         competitorHas: "Freemium / paid tiers",
-        codexHas: "Free and open source",
+        codexHas: "Free (Source Available)",
       },
     ],
     verdict:
@@ -785,7 +790,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       {
         question: "Is Codex Cryptica completely free?",
         answer:
-          "Yes, Codex is free and open-source. There are no paywalls or storage restrictions on your local campaigns.",
+          "Yes, Codex is free and source-available. There are no paywalls or storage restrictions on your local campaigns.",
       },
       {
         question: "How do players access my Codex campaign?",

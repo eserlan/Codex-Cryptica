@@ -293,16 +293,27 @@
             <h3
               class="font-header font-bold text-lg uppercase tracking-wider mb-2 text-theme-primary"
             >
-              Already have a world in World Anvil?
+              Already have a world in World Anvil? Bring it with you.
             </h3>
-            <p
-              class="text-xs text-theme-muted leading-relaxed mb-6 max-w-lg mx-auto"
+            <div
+              class="text-xs text-theme-muted leading-relaxed mb-6 max-w-lg mx-auto space-y-4"
             >
-              Bring it with you. Codex Cryptica can import structured
-              worldbuilding content from exported files and rebuild your lore as
-              a private local vault. Keep your articles, preserve your world
-              structure, and continue working without starting from scratch.
-            </p>
+              <p>
+                Codex Cryptica can import structured worldbuilding content from
+                exported files and rebuild your lore as a private local vault.
+                Keep your articles, preserve your world structure, and continue
+                working without starting from scratch.
+              </p>
+              <p>
+                <strong>Step 1:</strong> Upload your export. &nbsp;&bull;&nbsp;
+                <strong>Step 2:</strong>
+                Review the detected entities. &nbsp;&bull;&nbsp;
+                <strong>Step 3:</strong> Start exploring your world as a graph.
+              </p>
+              <p class="font-bold text-theme-primary">
+                Your world should not feel trapped.
+              </p>
+            </div>
             <a
               href="{base}/import/world-anvil-export"
               class="inline-flex px-6 py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-md transition-all"
@@ -481,13 +492,24 @@
           ? "No account required. No subscription. All your campaign notes stay on your own device."
           : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
-      <a
-        href="{base}/"
-        class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all"
-        id="footer-cta-btn"
-      >
-        {type === "comparison" ? "Try Free Now" : "Launch Codex Cryptica"}
-      </a>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="{base}/"
+          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all"
+          id="footer-cta-btn"
+        >
+          {type === "comparison" ? "Try Free Now" : "Launch Codex Cryptica"}
+        </a>
+        {#if data.slug === "world-anvil"}
+          <a
+            href="{base}/import/world-anvil-export"
+            class="px-8 py-3.5 border border-theme-primary text-theme-primary font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-primary/10 transition-all duration-200"
+            id="footer-migration-cta"
+          >
+            Migrating from World Anvil? Import your world
+          </a>
+        {/if}
+      </div>
     </div>
   </section>
 
