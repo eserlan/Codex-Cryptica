@@ -29,9 +29,9 @@ pnpm run lint
 3. Pick **Born**, confirm. The popover states it will set the primary date (or a `born` anchor) before saving (FR-005). Verify the value persisted.
 4. Drag a Faction → confirm the popover offers Founded / Dissolved / Active / Schism / Merger (different set) (US2 scenario 2).
 
-## Period range (US3)
+## Range span (US3)
 
-1. Drag a Period's span 50 years later → confirmation shows the shifted range; save updates `start_date` **and** `end_date`.
+1. Drag an entity's range span 50 years later → confirmation shows the shifted range; save updates `start_date` **and** `end_date`.
 2. Drag only the end edge → only `end_date` updates.
 3. Try to drag the end before the start → save is blocked with a reason; metadata unchanged (FR-031).
 

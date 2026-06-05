@@ -100,7 +100,10 @@
   });
 
   const handleKeyDown = async (e: KeyboardEvent) => {
-    if (e.key === "Escape" && chronologyEdit.pendingIntent) {
+    if (
+      e.key === "Escape" &&
+      (chronologyEdit.pendingIntent || chronologyEdit.drag)
+    ) {
       controller.restoreChronologyDragOrigin();
       chronologyEdit.cancel();
       return;

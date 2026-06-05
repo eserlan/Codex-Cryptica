@@ -233,6 +233,8 @@ export class ChronologyEditService {
     try {
       if (this.pendingIntent.createEvent) {
         let createdId: string | null = null;
+        const originalAnchors = entity.temporalAnchors ?? [];
+        let updatedSourceEntity = false;
         try {
           createdId = await this.deps.vault!.createEntity(
             "event",
@@ -241,7 +243,7 @@ export class ChronologyEditService {
           );
           await this.deps.vault!.updateEntity(entity.id, {
             temporalAnchors: [
-              ...(entity.temporalAnchors ?? []),
+              ...originalAnchors,
               {
                 id: `linked-event-${this.deps.now().toString(36)}`,
                 type: this.pendingIntent.createEvent.anchorType,
@@ -250,12 +252,18 @@ export class ChronologyEditService {
               },
             ],
           });
+          updatedSourceEntity = true;
           await this.deps.vault?.addConnection?.(
             entity.id,
             createdId,
             this.pendingIntent.createEvent.connectionType,
           );
         } catch (error) {
+          if (updatedSourceEntity) {
+            await this.deps.vault!.updateEntity(entity.id, {
+              temporalAnchors: originalAnchors,
+            });
+          }
           if (createdId) {
             await this.deps.vault?.deleteEntity?.(createdId);
           }

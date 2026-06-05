@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { buildIntent, detectConflict, getBeginMeaning } from "../src";
+import {
+  buildIntent,
+  detectConflict,
+  getBeginMeaning,
+  validateRange,
+} from "../src";
 
 describe("placement intent", () => {
   it("maps event primary placement to date writes without coordinates", () => {
@@ -89,5 +93,36 @@ describe("placement intent", () => {
       anchorType: "majorAppearance",
       connectionType: "related_to",
     });
+  });
+});
+
+describe("validateRange", () => {
+  it("passes valid ranges and flags basic inverted year ranges", () => {
+    expect(validateRange({ year: 500 }, { year: 600 }).valid).toBe(true);
+    expect(validateRange({ year: 600 }, { year: 500 }).valid).toBe(false);
+  });
+
+  it("flags inverted month ranges within the same year", () => {
+    expect(
+      validateRange({ year: 600, month: 2 }, { year: 600, month: 5 }).valid,
+    ).toBe(true);
+    expect(
+      validateRange({ year: 600, month: 5 }, { year: 600, month: 2 }).valid,
+    ).toBe(false);
+  });
+
+  it("flags inverted day ranges within the same year and month", () => {
+    expect(
+      validateRange(
+        { year: 600, month: 5, day: 10 },
+        { year: 600, month: 5, day: 20 },
+      ).valid,
+    ).toBe(true);
+    expect(
+      validateRange(
+        { year: 600, month: 5, day: 20 },
+        { year: 600, month: 5, day: 10 },
+      ).valid,
+    ).toBe(false);
   });
 });

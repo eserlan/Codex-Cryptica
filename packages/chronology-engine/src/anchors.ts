@@ -31,8 +31,30 @@ export function validateRange(
   start?: TemporalMetadata,
   end?: TemporalMetadata,
 ): { valid: true } | { valid: false; reason: string } {
-  if (start && end && end.year < start.year) {
-    return { valid: false, reason: "End date cannot be before start date." };
+  if (start && end) {
+    if (end.year < start.year) {
+      return { valid: false, reason: "End date cannot be before start date." };
+    }
+    if (end.year === start.year) {
+      const startMonth = start.month ?? 0;
+      const endMonth = end.month ?? 0;
+      if (endMonth < startMonth) {
+        return {
+          valid: false,
+          reason: "End date cannot be before start date.",
+        };
+      }
+      if (endMonth === startMonth) {
+        const startDay = start.day ?? 0;
+        const endDay = end.day ?? 0;
+        if (endDay < startDay) {
+          return {
+            valid: false,
+            reason: "End date cannot be before start date.",
+          };
+        }
+      }
+    }
   }
   return { valid: true };
 }

@@ -10,6 +10,7 @@ export interface TimelineLayoutOptions {
 export interface YearPositionContext {
   yearPositions: Record<number, number>;
   axis?: "x" | "y";
+  sortedEntries?: Array<{ year: number; coord: number }>;
 }
 
 export interface TimelineAnchorProjection {
@@ -73,9 +74,12 @@ export function getYearForPosition(
   position: number | { x: number; y: number },
   context: YearPositionContext,
 ): number | null {
-  const entries = Object.entries(context.yearPositions)
-    .map(([year, coord]) => ({ year: Number(year), coord }))
-    .sort((a, b) => a.coord - b.coord);
+  if (!context.sortedEntries) {
+    context.sortedEntries = Object.entries(context.yearPositions)
+      .map(([year, coord]) => ({ year: Number(year), coord }))
+      .sort((a, b) => a.coord - b.coord);
+  }
+  const entries = context.sortedEntries;
 
   if (entries.length === 0) return null;
 

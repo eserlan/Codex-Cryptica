@@ -6,6 +6,7 @@ import {
   GraphImageManager,
   setupGraphEvents,
   syncGraphElements,
+  type YearPositionContext,
 } from "graph-engine";
 import { isTemporalMetadataEqual } from "$lib/utils/comparison";
 import type { graph as graphStore } from "$lib/stores/graph.svelte";
@@ -71,6 +72,7 @@ export class GraphViewController {
   private lastOrientation: "landscape" | "portrait" | null = null;
 
   private isDestroyed = false;
+  private activeDragContext: YearPositionContext | null = null;
 
   pendingSearchFocus: {
     entityId: string;
@@ -229,18 +231,20 @@ export class GraphViewController {
       const entity = this.getEntityForNode(node.id());
       if (!entity) return;
       const position = node.position();
+      this.activeDragContext = this.getTimelineYearContext();
       this.chronologyEdit.beginDrag({
         entity,
         source: "graph",
         anchorId: node.data("anchorId") ?? undefined,
         originPosition: position,
         pressPosition: position,
-        context: this.getTimelineYearContext(),
+        context: this.activeDragContext,
       });
     });
 
     instance.on("drag", "node", (_event: any) => {
-      if (!this.deps.graph.chronologyEditMode) return;
+      if (!this.deps.graph.chronologyEditMode || !this.activeDragContext)
+        return;
       const node = _event.target;
       const position = node.position();
       const drag = this.chronologyEdit.drag;
@@ -250,7 +254,7 @@ export class GraphViewController {
           : Math.abs(position.x - (drag?.originPosition?.x ?? position.x));
       this.chronologyEdit.updateDrag(
         position,
-        this.getTimelineYearContext(),
+        this.activeDragContext,
         pixelDelta,
       );
     });
@@ -261,6 +265,7 @@ export class GraphViewController {
       const entity = this.getEntityForNode(node.id());
       if (!entity) return;
       this.chronologyEdit.prepareDrop(entity);
+      this.activeDragContext = null;
     });
   }
 

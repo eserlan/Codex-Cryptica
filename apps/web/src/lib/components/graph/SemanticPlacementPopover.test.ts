@@ -223,4 +223,47 @@ describe("SemanticPlacementPopover", () => {
 
     resolveSave?.();
   });
+
+  it("blocks saving and disables Save button when custom anchor label is empty", async () => {
+    const onSave = vi.fn();
+    render(SemanticPlacementPopover, {
+      entity: entity("character"),
+      targetYear: 580,
+      onSave,
+      onCancel: vi.fn(),
+    });
+
+    await fireEvent.click(await screen.findByLabelText("Custom anchor"));
+    const saveButton = screen.getByRole("button", {
+      name: "Save",
+    }) as HTMLButtonElement;
+
+    // Initially customLabel is empty, so it should be disabled
+    expect(saveButton.disabled).toBe(true);
+    expect(
+      screen.getByText("Custom anchor label cannot be empty."),
+    ).toBeTruthy();
+
+    // Fill in the label
+    const customLabelInput = screen.getByLabelText(
+      "Custom label",
+    ) as HTMLInputElement;
+    await fireEvent.input(customLabelInput, {
+      target: { value: "My Custom Anchor" },
+    });
+
+    // Now it should be enabled
+    expect(saveButton.disabled).toBe(false);
+    expect(
+      screen.queryByText("Custom anchor label cannot be empty."),
+    ).toBeNull();
+
+    // Click save
+    await fireEvent.click(saveButton);
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customLabel: "My Custom Anchor",
+      }),
+    );
+  });
 });

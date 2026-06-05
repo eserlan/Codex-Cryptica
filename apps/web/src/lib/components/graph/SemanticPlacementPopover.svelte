@@ -112,6 +112,9 @@
   const rangeState = $derived(
     isSpan ? validateRange(startDate, endDate) : { valid: true as const },
   );
+  const isCustomLabelInvalid = $derived(
+    selectedMeaning?.id === "custom" && customLabel.trim() === "",
+  );
   const linkedStatus = $derived.by(() => {
     if (!existingAnchor?.linkedEntityId) return "";
     if (linkedEntityTitle) return `Linked event: ${linkedEntityTitle}`;
@@ -134,7 +137,13 @@
   });
 
   async function save() {
-    if (isSaving || !selectedMeaning || !rangeState.valid) return;
+    if (
+      isSaving ||
+      !selectedMeaning ||
+      !rangeState.valid ||
+      isCustomLabelInvalid
+    )
+      return;
     isSaving = true;
     try {
       await onSave({
@@ -317,6 +326,13 @@
       {rangeState.reason}
     </p>
   {/if}
+  {#if isCustomLabelInvalid}
+    <p
+      class="mb-3 rounded border border-feedback-error/50 bg-feedback-error/10 p-2 text-xs text-feedback-error"
+    >
+      Custom anchor label cannot be empty.
+    </p>
+  {/if}
 
   <div class="flex justify-end gap-2">
     {#if existingAnchorId && onRemove}
@@ -338,7 +354,7 @@
     <button
       type="button"
       class="rounded bg-theme-primary px-3 py-1.5 text-xs font-bold text-theme-bg disabled:opacity-50"
-      disabled={isSaving || !rangeState.valid}
+      disabled={isSaving || !rangeState.valid || isCustomLabelInvalid}
       aria-busy={isSaving}
       onclick={save}
     >
