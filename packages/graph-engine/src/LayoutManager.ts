@@ -375,6 +375,13 @@ export class LayoutManager {
         .nodes()
         .filter((n) => positions[n.id()] !== undefined);
 
+      this.cy.batch(() => {
+        nodesToLayout.forEach((node) => {
+          node.removeData("isPendingLayout");
+          node.removeClass("pending-layout");
+        });
+      });
+
       nodesToLayout
         .layout({
           name: "preset",
