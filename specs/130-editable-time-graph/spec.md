@@ -150,6 +150,36 @@ As a World Builder, in edit-chronology mode I want the option — when I drag an
 4. **Given** the dragged entity already has a placement, **When** I grab one of its points and choose "Create an event here", **Then** a new event is created **without moving or altering** the existing primary date or existing anchors (the action is purely additive).
 5. **Given** the confirmation is open, **When** I cancel, **Then** no event, anchor, or connection is created and the dragged entity is unchanged.
 
+### User Story 8 - Visual Lifespans (Priority: P2)
+
+As a World Builder, when I view entities with start and end dates on the timeline, I want to see their duration represented as a continuous visual span rather than two disconnected points, and I want to shift the entire span or resize its boundaries by dragging.
+
+**Why this priority**: Connects separate start/end anchors into a single conceptual lifespan, which is key for visual chronology layout of lifespans, reigns, and eras.
+
+**Independent Test**: Create a character with a birth and death year. Verify they render with a connecting horizontal span line in the timeline. Drag the center of the span to shift the entire lifespan, and drag the start or end handles to contract/stretch it, verifying metadata updates correctly on save.
+
+**Acceptance Scenarios**:
+
+1. **Given** a Character with a `start_date` of 580 P.C. and an `end_date` of 630 P.C., **When** Timeline Mode is active, **Then** a horizontal span line is rendered connecting the start and end nodes.
+2. **Given** edit-chronology mode is active, **When** I drag the connecting span line, **Then** both the start and end years shift by the same amount (preserving the 50-year duration), and confirming updates both fields.
+3. **Given** edit-chronology mode is active, **When** I drag only the end node/handle of the lifespan, **Then** only the end date is proposed for update, stretching or shrinking the duration.
+
+---
+
+### User Story 9 - Story Chains (Priority: P2)
+
+As a World Builder, I want to define causal sequences between events (e.g. event A leads to event B) and see them rendered as clean, directional paths in timeline mode, while hiding unrelated relationship lines, so I can trace questlines or historical flows without clutter.
+
+**Why this priority**: Causal sequencing is the logical flow of time in worldbuilding; normal relationships clutter the timeline, but sequence chains organize it.
+
+**Independent Test**: Connect event A to event B with a `precedes` or `leads_to` connection. Toggle timeline mode and verify that only the sequence arrow is drawn running forward along the axis, while standard edges (e.g. `allied_with`) are hidden.
+
+**Acceptance Scenarios**:
+
+1. **Given** two events linked by a sequence connection (`precedes` or `leads_to`), **When** I view them on the timeline, **Then** a directed edge is drawn from the earlier event to the later event.
+2. **Given** two events linked by a non-sequential connection (`allied_with`), **When** I view them on the timeline, **Then** no edge is rendered between them (preventing timeline spaghetti).
+3. **Given** multiple sequence chains, **When** they run concurrently in time, **Then** the timeline layout organizes them into separate vertical swimlanes to prevent overlapping paths.
+
 ---
 
 ### Edge Cases
@@ -166,6 +196,8 @@ As a World Builder, in edit-chronology mode I want the option — when I drag an
 - **Explorer drop with no node to restore**: An entity dragged from the Explorer has no pre-existing timeline node, so a cancelled external placement simply creates nothing (there is no node position to restore); the entity stays off the timeline.
 - **Explorer drop of an entity already on the timeline**: Treated as an update-or-add-anchor placement on the existing entity, never as a new/duplicate node.
 - **Linked-event creation cancelled or failed**: If the user cancels, or entity creation/linking fails partway, the vault MUST be left with no orphaned event, dangling anchor, or stray connection (FR-039).
+- **Lifespan span drag boundary bounds**: If a span translation would shift dates out of allowed calendar limits, the proposed change MUST be validated and rejected.
+- **Story sequence chronological inconsistency**: If a sequence connection is created where event B precedes event A chronologically, the system SHOULD display a chronological mismatch warning.
 
 ## Requirements _(mandatory)_
 
@@ -258,6 +290,13 @@ As a World Builder, in edit-chronology mode I want the option — when I drag an
 - **FR-038**: Creating a linked event MUST be purely **additive** — it MUST NOT move or alter the dragged entity's existing primary date or existing anchors.
 - **FR-039**: Cancelling MUST create no event, anchor, or connection (canon safety); a failure during creation MUST surface an error rather than leave a half-created/half-linked state.
 
+#### Conceptual Lifespans & Story Chains
+
+- **FR-040**: In timeline mode, the system MUST render a styled horizontal connecting span line between the start and end nodes of any entity with a start and end date (lifespan duration).
+- **FR-041**: Dragging the connecting span line in edit-chronology mode MUST translate both the start and end years by the same offset, proposing an update to both dates on drop.
+- **FR-042**: The system MUST hide standard non-temporal edges (e.g. `allied_with`) in timeline mode, and MUST render only sequential narrative edges (e.g. `precedes`, `leads_to`, `then`) as forward-pointing directed edges.
+- **FR-043**: The timeline layout MUST support arranging concurrent sequence chains into distinct vertical swimlanes.
+
 ### Key Entities
 
 - **Temporal Anchor**: A structured record of one chronological meaning for an entity. Attributes: identifier; type/meaning (e.g. born, died, founded, dissolved, majorAppearance, custom); optional point date; optional start date and end date (for spans); optional linked-entity reference; optional note. Dates reuse the schema's existing `TemporalMetadata`/`DateSelection` shape. An entity's _primary_ meaning lives in the legacy `date`/`start_date`/`end_date` fields and is presented as a derived anchor; _additional_ meanings are stored in the entity's `temporalAnchors[]` collection.
@@ -280,6 +319,9 @@ As a World Builder, in edit-chronology mode I want the option — when I drag an
 - **SC-008**: No drag interaction leaves a raw graph coordinate stored as the entity's temporal value (100% of saved placements resolve to structured date/range/anchor metadata).
 - **SC-009**: A user can place a previously-undated entity onto the timeline by dragging it from the Entity Explorer and confirming, in under 15 seconds, with the placement persisting across reload and the entity now appearing in Timeline Mode.
 - **SC-010**: A user can create a linked event by dragging an entity and confirming, producing a dated Event, a linking anchor (`linkedEntityId`), and a connection between the two — in under 20 seconds, all persisting across reload, with the dragged entity's existing placement unchanged.
+- **SC-011**: A user can drag a lifespan span to shift both start and end dates synchronously in under 10 seconds.
+- **SC-012**: 100% of standard relationship edges are hidden in timeline mode, leaving only sequence-flow edges visible.
+- **SC-013**: The timeline layout successfully groups parallel story chains into separate vertical swimlanes to maintain legibility.
 
 ## Assumptions
 
@@ -299,22 +341,11 @@ As a World Builder, in edit-chronology mode I want the option — when I drag an
 - Bulk/multi-select temporal editing of many entities in one drag (single-entity placement only in this iteration).
 - Dragging **Era** background-region boundaries on the timeline. Eras are calendar _configuration_ (not entity lore); editing their `start_year`/`end_year` by dragging is a possible follow-up, separate from entity chronology editing.
 
-## Future Extensions: Lifespans and Story Chains
+## Out of Scope
 
-These conceptual design outlines govern the next iteration of the time graph, transforming it from a point-based timeline into a view of overlapping durations and causal sequences.
-
-### 1. Lifespans (Entity Durations)
-
-Rather than rendering start and end dates (e.g. birth and death, founding and collapse) as unrelated, disjointed points in space:
-
-- **Visual Span Connectors**: The time graph will render a styled horizontal connector/span edge linking the start handle/node to the end handle/node for any entity with a resolved start and end date. This edge will represent the entity's duration (lifespan, reign, or operation period).
-- **Unified Drag Gestures**: Grabbing and dragging the connecting span line translates the entire entity's timeline footprint (shifting both start and end years synchronously, preserving duration). Dragging individual boundary handles (start/end) stretches or contracts the span.
-- **Theme Integration**: Spans will be styled using Svelte component parameters matching the vault's active theme (e.g., solid calligraphic paths in `fantasy` mode, pulsing digital tracks in `scifi` mode).
-
-### 2. Story Chains (Sequential Event Flow)
-
-To show narrative progression without the clutter of non-temporal connections:
-
-- **Filtered Sequence Edges**: Normal relational connections (e.g. `allied_with`, `member_of`) remain hidden in timeline mode to prevent visual clutter. Only sequential narrative connections (e.g. `precedes`, `leads_to`, `then`) are rendered.
-- **Directional Timeline Flow**: Sequence edges are rendered as clean, directed paths running forward along the temporal axis.
-- **Storyline swimlanes**: Concurrent storylines or questlines can be layered vertically into separate visual lanes (swimlanes), allowing GMs to trace parallel narrative tracks (e.g. different party tracks or concurrent plots) across time.
+- AI-assisted date inference or suggestion (explicit non-goal — the feature must work without AI).
+- Storing chronology purely as graph x/y layout coordinates (explicit non-goal).
+- Requiring every entity to have exactly one date (explicit non-goal — entities may have zero or many anchors).
+- A new calendar/era configuration system beyond what `026-world-timeline` already provides.
+- Bulk/multi-select temporal editing of many entities in one drag (single-entity placement only in this iteration).
+- Dragging **Era** background-region boundaries on the timeline. Eras are calendar _configuration_ (not entity lore); editing their `start_year`/`end_year` by dragging is a possible follow-up, separate from entity chronology editing.
