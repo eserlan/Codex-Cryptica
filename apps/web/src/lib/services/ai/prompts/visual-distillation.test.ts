@@ -15,6 +15,12 @@ describe("visual-distillation prompts", () => {
       expect(result).toContain("cat");
       expect(result).toContain("dark world");
       expect(result).toContain("Visual Canon Interpreter");
+      expect(result).toContain("let the name infer an indication");
+      expect(result).toContain("Bashir al-Qadir");
+      expect(result).toContain("Michal Swanson");
+      expect(result).toContain("James Le Foy");
+      expect(result).toContain("Harald blåtann");
+      expect(result).toContain("Francesco Pancho");
     });
   });
 
