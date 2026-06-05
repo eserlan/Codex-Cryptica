@@ -340,6 +340,10 @@ export class SyncStore {
 
       if (this.isStale(vaultIdAtStart, signal)) return;
 
+      // Reload theme from disk/cache now that config files are synced/written
+      const { themeStore } = await import("../theme.svelte");
+      await themeStore.loadForVault(vaultIdAtStart);
+
       await Promise.all([
         this.deps.loadMaps(vaultIdAtStart),
         this.deps.loadCanvases(vaultIdAtStart),

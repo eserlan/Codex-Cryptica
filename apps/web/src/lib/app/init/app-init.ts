@@ -448,7 +448,6 @@ export function registerServiceWorker(deps?: {
               console.log(
                 "[SW] Unregistered active service worker in development mode.",
               );
-              win.location.reload();
             }
           });
         }
