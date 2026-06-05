@@ -354,7 +354,7 @@
                     {#if row.competitorHas}
                       <span
                         class="icon-[lucide--check] text-emerald-500 w-4 h-4"
-                        aria-label="Yes"
+                        role="img" aria-label="Yes"
                       ></span>
                     {:else}
                       <span
