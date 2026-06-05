@@ -266,4 +266,28 @@ describe("SemanticPlacementPopover", () => {
       }),
     );
   });
+
+  it("updates local state dynamically when targetYear prop changes", async () => {
+    const onSave = vi.fn();
+    const { rerender } = render(SemanticPlacementPopover, {
+      entity: entity("character"),
+      targetYear: 580,
+      onSave,
+      onCancel: vi.fn(),
+    });
+
+    await rerender({
+      entity: entity("character"),
+      targetYear: 610,
+      onSave,
+      onCancel: vi.fn(),
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        date: { year: 610 },
+      }),
+    );
+  });
 });

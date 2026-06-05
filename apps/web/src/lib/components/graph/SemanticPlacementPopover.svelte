@@ -213,6 +213,27 @@
     );
     tick().then(updatePosition);
   });
+
+  $effect(() => {
+    const currentYear = targetYear;
+    const currentEntity = entity;
+    const currentAnchorId = existingAnchorId;
+
+    untrack(() => {
+      const isStart = currentAnchorId === "primary-range-start";
+      const isEnd = currentAnchorId === "primary-range-end";
+      const anchor = currentAnchorId
+        ? currentEntity.temporalAnchors?.find((a) => a.id === currentAnchorId)
+        : undefined;
+
+      startDate = (isStart ? currentEntity.start_date : undefined) ??
+        anchor?.date ??
+        anchor?.start_date ?? { year: currentYear };
+
+      endDate = (isEnd ? currentEntity.end_date : undefined) ??
+        anchor?.end_date ?? { year: currentYear };
+    });
+  });
 </script>
 
 <div
