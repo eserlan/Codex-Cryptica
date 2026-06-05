@@ -67,6 +67,7 @@ describe("GraphStore", () => {
     graph.showImages = true;
     graph.stableLayout = true;
     graph.timelineMode = false;
+    graph.chronologyEditMode = false;
     graph.orbitMode = false;
     graph.activeLabels = new Set();
     graph.activeCategories = new Set();
@@ -88,6 +89,7 @@ describe("GraphStore", () => {
     expect(graph.showImages).toBe(true);
     expect(graph.stableLayout).toBe(true);
     expect(graph.timelineMode).toBe(false);
+    expect(graph.chronologyEditMode).toBe(false);
     expect(graph.orbitMode).toBe(false);
     expect(graph.labelFilterMode).toBe("OR");
   });
@@ -242,6 +244,18 @@ describe("GraphStore", () => {
     const initial = graph.fitRequest;
     graph.requestFit();
     expect(graph.fitRequest).toBe(initial + 1);
+  });
+
+  it("should require timeline mode for chronology editing", () => {
+    graph.setChronologyEditMode(true);
+
+    expect(graph.timelineMode).toBe(true);
+    expect(graph.chronologyEditMode).toBe(true);
+
+    graph.setTimelineMode(false);
+
+    expect(graph.timelineMode).toBe(false);
+    expect(graph.chronologyEditMode).toBe(false);
   });
 
   it("should manage eras", async () => {

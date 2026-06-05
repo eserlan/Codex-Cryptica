@@ -26,9 +26,9 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Purpose**: Create stub modules/files so packages compile and parallel TDD can begin.
 
-- [ ] T001 [P] Create `chronology-engine` module stubs `meaning-sets.ts`, `anchors.ts`, `placement.ts` in `packages/chronology-engine/src/` and re-export them from `packages/chronology-engine/src/index.ts`
-- [ ] T002 [P] Create edit-mode UI stubs `ChronologyEditToggle.svelte`, `ChronologyDragIndicator.svelte`, `SemanticPlacementPopover.svelte` in `apps/web/src/lib/components/graph/`
-- [ ] T003 [P] Create `ChronologyEditService` stub with constructor DI (injectable vault/calendar/resolver deps) + default singleton export in `apps/web/src/lib/stores/chronology-edit.svelte.ts`
+- [x] T001 [P] Create `chronology-engine` module stubs `meaning-sets.ts`, `anchors.ts`, `placement.ts` in `packages/chronology-engine/src/` and re-export them from `packages/chronology-engine/src/index.ts`
+- [x] T002 [P] Create edit-mode UI stubs `ChronologyEditToggle.svelte`, `ChronologyDragIndicator.svelte`, `SemanticPlacementPopover.svelte` in `apps/web/src/lib/components/graph/`
+- [x] T003 [P] Create `ChronologyEditService` stub with constructor DI (injectable vault/calendar/resolver deps) + default singleton export in `apps/web/src/lib/stores/chronology-edit.svelte.ts`
 
 ---
 
@@ -40,31 +40,31 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 ### Schema (contract: `contracts/schema.temporal-anchor.md`)
 
-- [ ] T004 [P] Write failing tests for `TemporalAnchorSchema` (at-least-one-date, custom⇒label, range non-inverted, date-shape) and `Entity` back-compat in `packages/schema/src/entity.test.ts`
-- [ ] T005 Implement `TemporalAnchorSchema` + add optional `temporalAnchors` to `EntitySchema` and `TemporalAnchor` type export in `packages/schema/src/entity.ts` (green for T004)
+- [x] T004 [P] Write failing tests for `TemporalAnchorSchema` (at-least-one-date, custom⇒label, range non-inverted, date-shape) and `Entity` back-compat in `packages/schema/src/entity.test.ts`
+- [x] T005 Implement `TemporalAnchorSchema` + add optional `temporalAnchors` to `EntitySchema` and `TemporalAnchor` type export in `packages/schema/src/entity.ts` (green for T004)
 
 ### graph-engine — position↔year + projection (contract: `contracts/graph-engine.anchor-projection.md`)
 
-- [ ] T006 [P] Write failing tests for `getYearForPosition` round-trip/out-of-range and `getAnchorTimelineLayout` per-anchor keys in `packages/graph-engine/tests/timeline-anchor.test.ts`
-- [ ] T007 Implement `getYearForPosition` (inverse of sequential/gap-compressed layout) and `getAnchorTimelineLayout` (keyed `"entityId::anchorId"`) additively in `packages/graph-engine/src/layouts/timeline.ts`
+- [x] T006 [P] Write failing tests for `getYearForPosition` round-trip/out-of-range and `getAnchorTimelineLayout` per-anchor keys in `packages/graph-engine/tests/timeline-anchor.test.ts`
+- [x] T007 Implement `getYearForPosition` (inverse of sequential/gap-compressed layout) and `getAnchorTimelineLayout` (keyed `"entityId::anchorId"`) additively in `packages/graph-engine/src/layouts/timeline.ts`
 
 ### chronology-engine — meanings, anchors, placement (contract: `contracts/chronology-engine.placement.md`)
 
-- [ ] T008 [P] Write failing tests for `MEANING_SETS`/`getMeanings`/`getBeginMeaning`/`getEndMeaning` (per-type sets, begin/end roles per FR-016a, universal custom, fallback) in `packages/chronology-engine/tests/meaning-sets.test.ts`
-- [ ] T009 Implement `MEANING_SETS` + `getMeanings`/`getBeginMeaning`/`getEndMeaning` (begin/end `role`, one `primary` per type) in `packages/chronology-engine/src/meaning-sets.ts`
-- [ ] T010 [P] Write failing tests for `deriveProjectedAnchors`, `validateRange`, `upsertAnchor`, `removeAnchor` (primary projection + per-anchor, no sibling/primary mutation) in `packages/chronology-engine/tests/anchors.test.ts`
-- [ ] T011 Implement `anchors.ts` helpers in `packages/chronology-engine/src/anchors.ts` (depends on T005, T009)
-- [ ] T012 [P] Write failing tests for `buildIntent` (Event primary→`date`; non-primary→anchor; span yields begin+end; never coordinates) and `detectConflict` (calendar-equality) in `packages/chronology-engine/tests/placement.test.ts`
-- [ ] T013 Implement `placement.ts` (`buildIntent`, `PlacementIntent`, `detectConflict`) in `packages/chronology-engine/src/placement.ts` (depends on T009, T011)
+- [x] T008 [P] Write failing tests for `MEANING_SETS`/`getMeanings`/`getBeginMeaning`/`getEndMeaning` (per-type sets, begin/end roles per FR-016a, universal custom, fallback) in `packages/chronology-engine/tests/meaning-sets.test.ts`
+- [x] T009 Implement `MEANING_SETS` + `getMeanings`/`getBeginMeaning`/`getEndMeaning` (begin/end `role`, one `primary` per type) in `packages/chronology-engine/src/meaning-sets.ts`
+- [x] T010 [P] Write failing tests for `deriveProjectedAnchors`, `validateRange`, `upsertAnchor`, `removeAnchor` (primary projection + per-anchor, no sibling/primary mutation) in `packages/chronology-engine/tests/anchors.test.ts`
+- [x] T011 Implement `anchors.ts` helpers in `packages/chronology-engine/src/anchors.ts` (depends on T005, T009)
+- [x] T012 [P] Write failing tests for `buildIntent` (Event primary→`date`; non-primary→anchor; span yields begin+end; never coordinates) and `detectConflict` (calendar-equality) in `packages/chronology-engine/tests/placement.test.ts`
+- [x] T013 Implement `placement.ts` (`buildIntent`, `PlacementIntent`, `detectConflict`) in `packages/chronology-engine/src/placement.ts` (depends on T009, T011)
 
 ### Edit-mode state, service & drag plumbing (apps/web)
 
-- [ ] T014 Add `chronologyEditMode` state (requires `timelineMode`; toggling off clears pending drag) + toggle/guard actions to `apps/web/src/lib/stores/graph.svelte.ts`
-- [ ] T015 [P] Write failing tests for `ChronologyEditService` lifecycle — grab→drag→drop→confirm/cancel, gesture point/span derivation, restore-on-cancel, no-write-on-cancel, save via injected vault, conflict surfacing — in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
-- [ ] T016 Implement `ChronologyEditService` (transient `ChronologyDrag` state, `pressYear`/`targetYear`/`gestureKind`, routes saves through injected `vault.updateEntity`; uses `buildIntent`/`detectConflict`/`getYearForPosition`) in `apps/web/src/lib/stores/chronology-edit.svelte.ts` (depends on T013, T007, T014)
-- [ ] T017 Implement `ChronologyEditToggle.svelte` mode toggle (placed near `TimelineControls`, clear "editing lore" affordance) in `apps/web/src/lib/components/graph/ChronologyEditToggle.svelte`
-- [ ] T018 Implement `ChronologyDragIndicator.svelte` live target-year axis indicator bound to service state, formatting the label via `calendarStore`/`chronology-engine` so it reads in-world notation (e.g. "605 P.C.") not a bare number (FR-010, U2), in `apps/web/src/lib/components/graph/ChronologyDragIndicator.svelte`
-- [ ] T019 Wire Cytoscape `grab`/`drag`/`dragfree` handlers (gated on `chronologyEditMode`) into `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts` to drive `ChronologyEditService`
+- [x] T014 Add `chronologyEditMode` state (requires `timelineMode`; toggling off clears pending drag) + toggle/guard actions to `apps/web/src/lib/stores/graph.svelte.ts`
+- [x] T015 [P] Write failing tests for `ChronologyEditService` lifecycle — grab→drag→drop→confirm/cancel, gesture point/span derivation, restore-on-cancel, no-write-on-cancel, save via injected vault, conflict surfacing — in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T016 Implement `ChronologyEditService` (transient `ChronologyDrag` state, `pressYear`/`targetYear`/`gestureKind`, routes saves through injected `vault.updateEntity`; uses `buildIntent`/`detectConflict`/`getYearForPosition`) in `apps/web/src/lib/stores/chronology-edit.svelte.ts` (depends on T013, T007, T014)
+- [x] T017 Implement `ChronologyEditToggle.svelte` mode toggle (placed near `TimelineControls`, clear "editing lore" affordance) in `apps/web/src/lib/components/graph/ChronologyEditToggle.svelte`
+- [x] T018 Implement `ChronologyDragIndicator.svelte` live target-year axis indicator bound to service state, formatting the label via `calendarStore`/`chronology-engine` so it reads in-world notation (e.g. "605 P.C.") not a bare number (FR-010, U2), in `apps/web/src/lib/components/graph/ChronologyDragIndicator.svelte`
+- [x] T019 Wire Cytoscape `grab`/`drag`/`dragfree` handlers (gated on `chronologyEditMode`) into `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts` to drive `ChronologyEditService`
 
 **Checkpoint**: Foundation ready — pure engines green, edit mode toggles, a gated drag updates the live indicator and resolves an intent (without writing yet).
 
@@ -76,10 +76,10 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Drag an Event in edit mode, observe the live year, confirm the direct prompt, verify `entity.date` changed and survives reload; repeat and cancel to verify no change.
 
-- [ ] T020 [P] [US1] Write failing test: an Event drop yields a primary-`date` intent with a "Set event date to {year}?" summary, and confirm→`vault.updateEntity({date})`, cancel→no write, in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
-- [ ] T021 [US1] Implement the direct-confirmation path (primary `date` write) in `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte` — a compact "Set event date to {year}? Save/Cancel" mode (no full meaning list)
-- [ ] T022 [US1] Wire Event `dragfree` → `buildIntent` (begin/primary `date`) → direct confirm → `vault.updateEntity`; settle node at derived position on save and restore origin on cancel, in `ChronologyEditService` + `graph-view-controller.svelte.ts`
-- [ ] T023 [US1] Add persistence assertion test: saved Event has updated structured `date` and no raw graph coordinate stored (SC-008), in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T020 [P] [US1] Write failing test: an Event drop yields a primary-`date` intent with a "Set event date to {year}?" summary, and confirm→`vault.updateEntity({date})`, cancel→no write, in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T021 [US1] Implement the direct-confirmation path (primary `date` write) in `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte` — a compact "Set event date to {year}? Save/Cancel" mode (no full meaning list)
+- [x] T022 [US1] Wire Event `dragfree` → `buildIntent` (begin/primary `date`) → direct confirm → `vault.updateEntity`; settle node at derived position on save and restore origin on cancel, in `ChronologyEditService` + `graph-view-controller.svelte.ts`
+- [x] T023 [US1] Add persistence assertion test: saved Event has updated structured `date` and no raw graph coordinate stored (SC-008), in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
 
 **Checkpoint**: MVP — Events can be re-dated by direct manipulation, canon-safe.
 
@@ -91,10 +91,10 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Drag a Character → popover shows Born/Died/Active/Reign/Major appearance/Custom; pick Born, save, verify the value persisted; drag a Faction → different (Founded/Dissolved/…) set.
 
-- [ ] T024 [P] [US2] Write failing tests for `SemanticPlacementPopover` rendering type-specific meanings (via `getMeanings`), begin-default selection, and the "field/anchor to be changed" disclosure (FR-005) in `apps/web/src/lib/components/graph/SemanticPlacementPopover.test.ts`
-- [ ] T025 [US2] Implement `SemanticPlacementPopover.svelte`: `@floating-ui/dom`-anchored popover showing entity name + target year, meaning list from `getMeanings(type)` (generic fallback for creature/custom categories), value field reusing `TemporalPicker`, write-target disclosure, a **conflict prompt** when `detectConflict` is true (FR-032), Save/Cancel (depends on T024)
-- [ ] T026 [US2] Route non-Event drops to the popover; on save apply `buildIntent` → `vault.updateEntity` writing the primary field or `upsertAnchor`-produced `temporalAnchors[]`, in `apps/web/src/lib/stores/chronology-edit.svelte.ts` + `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`
-- [ ] T027 [US2] Natural-language copy + keyboard/escape accessibility for the popover (Constitution IX); confirm cancel/escape writes nothing, in `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte`
+- [x] T024 [P] [US2] Write failing tests for `SemanticPlacementPopover` rendering type-specific meanings (via `getMeanings`), begin-default selection, and the "field/anchor to be changed" disclosure (FR-005) in `apps/web/src/lib/components/graph/SemanticPlacementPopover.test.ts`
+- [x] T025 [US2] Implement `SemanticPlacementPopover.svelte`: `@floating-ui/dom`-anchored popover showing entity name + target year, meaning list from `getMeanings(type)` (generic fallback for creature/custom categories), value field reusing `TemporalPicker`, write-target disclosure, a **conflict prompt** when `detectConflict` is true (FR-032), Save/Cancel (depends on T024)
+- [x] T026 [US2] Route non-Event drops to the popover; on save apply `buildIntent` → `vault.updateEntity` writing the primary field or `upsertAnchor`-produced `temporalAnchors[]`, in `apps/web/src/lib/stores/chronology-edit.svelte.ts` + `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`
+- [x] T027 [US2] Natural-language copy + keyboard/escape accessibility for the popover (Constitution IX); confirm cancel/escape writes nothing, in `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte`
 
 **Checkpoint**: All entity types can be placed in time with the right vocabulary, canon-safe.
 
@@ -106,10 +106,10 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Drag a Period span 50 years later → range shifts and both ends update; drag only the end edge → only end updates; attempt an inverted range → blocked with reason.
 
-- [ ] T028 [P] [US3] Write failing tests for span-gesture resolution (press=begin, release=end → begin+end pre-fill) and `validateRange` block in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
-- [ ] T029 [US3] Implement gesture point/span derivation (threshold = swept width resolving to **≥ 1 year** and ≥ ~6px → `gestureKind`, `pressYear`/`targetYear`, begin→end pair via `getBeginMeaning`/`getEndMeaning`) and span pre-fill into the popover, in `apps/web/src/lib/stores/chronology-edit.svelte.ts`
-- [ ] T030 [US3] Implement whole-span move + individual start/end edge-drag handles for **any entity's `start_date`/`end_date` range** (not a "Period" type, which does not exist) in `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`, mapping to `start_date`/`end_date` writes
-- [ ] T031 [US3] Enforce range-inversion rejection in `SemanticPlacementPopover.svelte` using `validateRange` (block save + explain, FR-031)
+- [x] T028 [P] [US3] Write failing tests for span-gesture resolution (press=begin, release=end → begin+end pre-fill) and `validateRange` block in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T029 [US3] Implement gesture point/span derivation (threshold = swept width resolving to **≥ 1 year** and ≥ ~6px → `gestureKind`, `pressYear`/`targetYear`, begin→end pair via `getBeginMeaning`/`getEndMeaning`) and span pre-fill into the popover, in `apps/web/src/lib/stores/chronology-edit.svelte.ts`
+- [x] T030 [US3] Implement whole-span move + individual start/end edge-drag handles for **any entity's `start_date`/`end_date` range** (not a "Period" type, which does not exist) in `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`, mapping to `start_date`/`end_date` writes
+- [x] T031 [US3] Enforce range-inversion rejection in `SemanticPlacementPopover.svelte` using `validateRange` (block save + explain, FR-031)
 
 **Checkpoint**: Spans are first-class — drawable, edge-adjustable, integrity-checked.
 
@@ -121,10 +121,10 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Add born/majorAppearance/disappeared to one Character; verify three persistent points; remove one → others unaffected.
 
-- [ ] T032 [P] [US4] Write failing tests for the update-or-add-new flow and per-anchor independence (`upsertAnchor`/`removeAnchor` via service, no sibling/primary mutation) in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
-- [ ] T033 [US4] Wire `getAnchorTimelineLayout` projected synthetic nodes (`"entityId::anchorId"`) into `LayoutManager`/`graph-view-controller.svelte.ts` for timeline edit mode so each anchor is a grabbable point (FR-009a/FR-028)
-- [ ] T034 [US4] Implement "update this anchor / create new anchor instead" choice in `SemanticPlacementPopover.svelte`; persist via `vault.updateEntity` with `upsertAnchor` (depends on T026)
-- [ ] T035 [US4] Implement per-anchor edit/remove affordance + linked-entity soft reference with broken-link degradation (FR-033) in `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte`
+- [x] T032 [P] [US4] Write failing tests for the update-or-add-new flow and per-anchor independence (`upsertAnchor`/`removeAnchor` via service, no sibling/primary mutation) in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T033 [US4] Wire `getAnchorTimelineLayout` projected synthetic nodes (`"entityId::anchorId"`) into `LayoutManager`/`graph-view-controller.svelte.ts` for timeline edit mode so each anchor is a grabbable point (FR-009a/FR-028)
+- [x] T034 [US4] Implement "update this anchor / create new anchor instead" choice in `SemanticPlacementPopover.svelte`; persist via `vault.updateEntity` with `upsertAnchor` (depends on T026)
+- [x] T035 [US4] Implement per-anchor edit/remove affordance + linked-entity soft reference with broken-link degradation (FR-033) in `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte`
 
 **Checkpoint**: Recurring figures are represented faithfully across history.
 
@@ -136,9 +136,9 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Toggle view/edit; verify view-mode drags never change temporal metadata and the active mode is obvious at a glance.
 
-- [ ] T036 [P] [US5] Write failing tests asserting view-mode drags never mutate temporal metadata and the edit-mode guard blocks writes when off, in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
-- [ ] T037 [US5] Implement clear mode indicators (view vs edit-chronology, plus layout-only if supported) and edit-drag affordance styling per `@docs/STYLE_GUIDE.md` in the graph HUD/toolbar (`GraphHUD.svelte`/`GraphToolbar.svelte`)
-- [ ] T038 [US5] Ensure layout-only node movement is visually distinct from chronology drags and writes no temporal metadata (guard + styling), in `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`
+- [x] T036 [P] [US5] Write failing tests asserting view-mode drags never mutate temporal metadata and the edit-mode guard blocks writes when off, in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T037 [US5] Implement clear mode indicators (view vs edit-chronology, plus layout-only if supported) and edit-drag affordance styling per `@docs/STYLE_GUIDE.md` in the graph HUD/toolbar (`GraphHUD.svelte`/`GraphToolbar.svelte`)
+- [x] T038 [US5] Ensure layout-only node movement is visually distinct from chronology drags and writes no temporal metadata (guard + styling), in `apps/web/src/lib/components/graph/graph-view-controller.svelte.ts`
 
 **Checkpoint**: Accidental canon changes are structurally and visually guarded.
 
@@ -150,10 +150,10 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Drag an undated entity from the Explorer, drop at a year, confirm, verify it now appears in Timeline Mode and persists.
 
-- [ ] T039 [P] [US6] Write failing tests for the canvas drop handler: `clientX/Y`→model position→year resolution, edit-mode gating, invalid-drop cancel, in `apps/web/src/lib/components/graph/graph-view-controller.svelte.test.ts`
-- [ ] T040 [US6] Add `dragover`/`drop` handler on `apps/web/src/lib/components/GraphView.svelte` reading `application/codex-entity` (reusing the existing Explorer drag source), gated on `chronologyEditMode`, converting the drop point to a year via `getYearForPosition`
-- [ ] T041 [US6] Route the Explorer drop into the placement flow as a point/start candidate (FR-011b); support first-time placement of undated entities; for entities already on the timeline use the update-or-add-anchor flow (no duplicate), in `apps/web/src/lib/stores/chronology-edit.svelte.ts`
-- [ ] T042 [US6] Add test that a previously-undated entity appears in Timeline Mode after placement and persists across reload (SC-009), in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T039 [P] [US6] Write failing tests for the canvas drop handler: `clientX/Y`→model position→year resolution, edit-mode gating, invalid-drop cancel, in `apps/web/src/lib/components/graph/graph-view-controller.svelte.test.ts`
+- [x] T040 [US6] Add `dragover`/`drop` handler on `apps/web/src/lib/components/GraphView.svelte` reading `application/codex-entity` (reusing the existing Explorer drag source), gated on `chronologyEditMode`, converting the drop point to a year via `getYearForPosition`
+- [x] T041 [US6] Route the Explorer drop into the placement flow as a point/start candidate (FR-011b); support first-time placement of undated entities; for entities already on the timeline use the update-or-add-anchor flow (no duplicate), in `apps/web/src/lib/stores/chronology-edit.svelte.ts`
+- [x] T042 [US6] Add test that a previously-undated entity appears in Timeline Mode after placement and persists across reload (SC-009), in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
 
 **Checkpoint**: Any entity, dated or not, can be pulled into time by direct manipulation.
 
@@ -165,11 +165,11 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 **Independent Test**: Drag a Character to 621, choose "Create an event here", edit the title, save; verify a new dated Event exists, the Character has an anchor with `linkedEntityId` to it and a connection, and the Character's existing placement is unchanged.
 
-- [ ] T043 [P] [US7] Write failing tests for the `createEvent` intent (`buildIntent` populates `createEvent` payload, leaves source primary/anchors untouched) in `packages/chronology-engine/tests/placement.test.ts`, and for the service create-link-connect-and-rollback flow in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
-- [ ] T044 [US7] Extend `buildIntent`/`PlacementIntent` with the optional `createEvent` payload (title, date, anchorType, connectionType) in `packages/chronology-engine/src/placement.ts`
-- [ ] T045 [US7] Add the "Create an event here" option + editable pre-filled title field (`"{Entity} — {year}"`) and write-disclosure to `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte`
-- [ ] T046 [US7] Implement the event-creation save path in `apps/web/src/lib/stores/chronology-edit.svelte.ts`: `vault.createEntity("event", title, { date })` → `upsertAnchor` with `linkedEntityId` on the source → add `related_to` connection; additive, with rollback on partial failure (FR-039)
-- [ ] T047 [US7] Add test asserting the linked event + anchor `linkedEntityId` + connection all persist and the source entity's existing placement is unchanged (SC-010), in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T043 [P] [US7] Write failing tests for the `createEvent` intent (`buildIntent` populates `createEvent` payload, leaves source primary/anchors untouched) in `packages/chronology-engine/tests/placement.test.ts`, and for the service create-link-connect-and-rollback flow in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
+- [x] T044 [US7] Extend `buildIntent`/`PlacementIntent` with the optional `createEvent` payload (title, date, anchorType, connectionType) in `packages/chronology-engine/src/placement.ts`
+- [x] T045 [US7] Add the "Create an event here" option + editable pre-filled title field (`"{Entity} — {year}"`) and write-disclosure to `apps/web/src/lib/components/graph/SemanticPlacementPopover.svelte`
+- [x] T046 [US7] Implement the event-creation save path in `apps/web/src/lib/stores/chronology-edit.svelte.ts`: `vault.createEntity("event", title, { date })` → `upsertAnchor` with `linkedEntityId` on the source → add `related_to` connection; additive, with rollback on partial failure (FR-039)
+- [x] T047 [US7] Add test asserting the linked event + anchor `linkedEntityId` + connection all persist and the source entity's existing placement is unchanged (SC-010), in `apps/web/src/lib/stores/chronology-edit.svelte.test.ts`
 
 **Checkpoint**: The timeline doubles as a lightweight event-authoring surface.
 
@@ -177,11 +177,11 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T048 [P] Add an "Edit Chronology" help article to `apps/web/src/lib/config/help-content.ts` and a `FeatureHint` for first edit-mode entry (Constitution VII)
-- [ ] T049 [P] STYLE_GUIDE / Tailwind-4 token + Svelte 5 runes compliance pass on all new components (Constitution VI)
-- [ ] T050 Run `quickstart.md` end-to-end and fix any gaps against the acceptance scenarios
-- [ ] T051 Verify ≥70% coverage on new package logic and run `pnpm run lint && pnpm test` green (Constitution VI, X)
-- [ ] T052 [P] Update `spec.md` status and cross-link the plan; confirm auto-Label (`past`) behaviour unchanged for anchor-driven status (Constitution XII)
+- [x] T048 [P] Add an "Edit Chronology" help article to `apps/web/src/lib/config/help-content.ts` and a `FeatureHint` for first edit-mode entry (Constitution VII)
+- [x] T049 [P] STYLE_GUIDE / Tailwind-4 token + Svelte 5 runes compliance pass on all new components (Constitution VI)
+- [x] T050 Run `quickstart.md` end-to-end and fix any gaps against the acceptance scenarios
+- [x] T051 Verify ≥70% coverage on new package logic and run `pnpm run lint && pnpm test` green (Constitution VI, X)
+- [x] T052 [P] Update `spec.md` status and cross-link the plan; confirm auto-Label (`past`) behaviour unchanged for anchor-driven status (Constitution XII)
 
 ---
 

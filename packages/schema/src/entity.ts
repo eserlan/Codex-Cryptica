@@ -57,12 +57,25 @@ export const DateSelectionSchema = z
     }
   });
 
-export const LegacyTemporalMetadataSchema = z.object({
+const LegacyTemporalMetadataBaseSchema = z.object({
   year: z.number(),
   month: z.number().min(1).max(12).optional(),
   day: z.number().min(1).max(31).optional(),
   label: z.string().optional(),
 });
+
+export const LegacyTemporalMetadataSchema =
+  LegacyTemporalMetadataBaseSchema.passthrough()
+    .superRefine((data, ctx) => {
+      if ("precision" in data) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Legacy temporal metadata cannot include precision",
+          path: ["precision"],
+        });
+      }
+    })
+    .transform((data) => LegacyTemporalMetadataBaseSchema.parse(data));
 
 export const TemporalMetadataSchema = z.union([
   DateSelectionSchema,
@@ -70,6 +83,51 @@ export const TemporalMetadataSchema = z.union([
 ]);
 
 export type TemporalMetadata = z.infer<typeof TemporalMetadataSchema>;
+
+export const TemporalAnchorSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.string().min(1),
+    label: z.string().trim().min(1).optional(),
+    date: TemporalMetadataSchema.optional(),
+    start_date: TemporalMetadataSchema.optional(),
+    end_date: TemporalMetadataSchema.optional(),
+    linkedEntityId: z.string().min(1).optional(),
+    note: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.date && !data.start_date && !data.end_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Temporal anchor requires date, start_date, or end_date",
+        path: ["date"],
+      });
+    }
+
+    if (data.type === "custom" && !data.label) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Custom temporal anchors require a label",
+        path: ["label"],
+      });
+    }
+
+    const startYear = data.start_date?.year;
+    const endYear = data.end_date?.year;
+    if (
+      typeof startYear === "number" &&
+      typeof endYear === "number" &&
+      endYear < startYear
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Temporal anchor range cannot end before it starts",
+        path: ["end_date"],
+      });
+    }
+  });
+
+export type TemporalAnchor = z.infer<typeof TemporalAnchorSchema>;
 
 export const EraSchema = z.object({
   id: z.string().min(1),
@@ -153,6 +211,7 @@ export const EntitySchema = z.object({
   date: TemporalMetadataSchema.optional(),
   start_date: TemporalMetadataSchema.optional(),
   end_date: TemporalMetadataSchema.optional(),
+  temporalAnchors: z.array(TemporalAnchorSchema).optional(),
   metadata: z
     .object({
       coordinates: z.object({ x: z.number(), y: z.number() }).optional(),

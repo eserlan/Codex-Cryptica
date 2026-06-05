@@ -178,16 +178,24 @@
   >
     {#if graph.timelineMode}
       <div
-        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
+        class="{graph.chronologyEditMode
+          ? 'bg-feedback-warning/15 border-feedback-warning/50 text-feedback-warning'
+          : 'bg-timeline-dark/40 border-timeline-primary/30 text-timeline-primary'} backdrop-blur border px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] shadow-lg uppercase pointer-events-auto mb-10 md:mb-0"
         transition:fade
       >
-        <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>
+        <span
+          class="{graph.chronologyEditMode
+            ? 'icon-[lucide--move-horizontal]'
+            : 'icon-[lucide--history]'} w-3 h-3 animate-pulse"
+        ></span>
         <span class="hidden md:inline"
-          >Chronological Synchrony Active ({graph.timelineAxis === "x"
-            ? "Horizontal"
-            : "Vertical"})</span
+          >{graph.chronologyEditMode
+            ? "Editing Lore Chronology"
+            : `Chronological Synchrony Active (${graph.timelineAxis === "x" ? "Horizontal" : "Vertical"})`}</span
         >
-        <span class="md:hidden">Timeline Active</span>
+        <span class="md:hidden"
+          >{graph.chronologyEditMode ? "Editing Time" : "Timeline Active"}</span
+        >
       </div>
     {/if}
 

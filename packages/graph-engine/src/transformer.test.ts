@@ -102,6 +102,121 @@ describe("GraphTransformer", () => {
     expect(node?.data.image).toBe("http://example.com/img.png");
   });
 
+  it("should not emit temporal edit handle nodes by default", () => {
+    const entities: Entity[] = [
+      {
+        id: "char-1",
+        type: "character",
+        title: "Avel",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        start_date: { year: 580 },
+        end_date: { year: 640 },
+        temporalAnchors: [
+          {
+            id: "appearance-1",
+            type: "majorAppearance",
+            date: { year: 621 },
+          },
+        ],
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+
+    expect(
+      elements.filter((element) => element.group === "nodes"),
+    ).toHaveLength(1);
+    expect(
+      elements.some(
+        (element) => element.group === "nodes" && element.data.isTemporalAnchor,
+      ),
+    ).toBe(false);
+  });
+
+  it("should emit independently addressable nodes for temporal anchors when requested", () => {
+    const entities: Entity[] = [
+      {
+        id: "char-1",
+        type: "character",
+        title: "Avel",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        date: { year: 580 },
+        temporalAnchors: [
+          {
+            id: "appearance-1",
+            type: "majorAppearance",
+            date: { year: 621 },
+          },
+        ],
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities, undefined, {
+      includeTemporalEditHandles: true,
+    });
+    const anchorNode = elements.find(
+      (element): element is GraphNode =>
+        element.group === "nodes" && element.data.id === "char-1::appearance-1",
+    );
+
+    expect(anchorNode).toBeDefined();
+    expect(anchorNode?.data.entityId).toBe("char-1");
+    expect(anchorNode?.data.anchorId).toBe("appearance-1");
+    expect(anchorNode?.data.isTemporalAnchor).toBe(true);
+    expect(anchorNode?.data.date?.year).toBe(621);
+  });
+
+  it("should emit independently addressable primary range edge handles when requested", () => {
+    const entities: Entity[] = [
+      {
+        id: "war-1",
+        type: "note",
+        title: "The Long War",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        start_date: { year: 500 },
+        end_date: { year: 510 },
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities, undefined, {
+      includeTemporalEditHandles: true,
+    });
+    const startHandle = elements.find(
+      (element): element is GraphNode =>
+        element.group === "nodes" &&
+        element.data.id === "war-1::primary-range-start",
+    );
+    const endHandle = elements.find(
+      (element): element is GraphNode =>
+        element.group === "nodes" &&
+        element.data.id === "war-1::primary-range-end",
+    );
+
+    expect(startHandle?.data).toMatchObject({
+      entityId: "war-1",
+      anchorId: "primary-range-start",
+      anchorType: "rangeStart",
+      isTemporalAnchor: true,
+      date: { year: 500 },
+    });
+    expect(endHandle?.data).toMatchObject({
+      entityId: "war-1",
+      anchorId: "primary-range-end",
+      anchorType: "rangeEnd",
+      isTemporalAnchor: true,
+      date: { year: 510 },
+    });
+  });
+
   it("should use custom label on edges when provided", () => {
     const entities: Entity[] = [
       {

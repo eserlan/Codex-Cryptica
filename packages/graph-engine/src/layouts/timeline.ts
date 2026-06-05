@@ -7,6 +7,17 @@ export interface TimelineLayoutOptions {
   minYear?: number;
 }
 
+export interface YearPositionContext {
+  yearPositions: Record<number, number>;
+  axis?: "x" | "y";
+}
+
+export interface TimelineAnchorProjection {
+  entityId: string;
+  anchorId: string;
+  year: number;
+}
+
 /**
  * Checks whether a node has any timeline-related date metadata.
  *
@@ -56,6 +67,75 @@ export function getSequentialYearPositions(
   }
 
   return yearPositions;
+}
+
+export function getYearForPosition(
+  position: number | { x: number; y: number },
+  context: YearPositionContext,
+): number | null {
+  const entries = Object.entries(context.yearPositions)
+    .map(([year, coord]) => ({ year: Number(year), coord }))
+    .sort((a, b) => a.coord - b.coord);
+
+  if (entries.length === 0) return null;
+
+  const coord =
+    typeof position === "number"
+      ? position
+      : context.axis === "y"
+        ? position.y
+        : position.x;
+
+  if (coord <= entries[0].coord) return entries[0].year;
+  const last = entries[entries.length - 1];
+  if (coord >= last.coord) return last.year;
+
+  for (let index = 1; index < entries.length; index += 1) {
+    const previous = entries[index - 1];
+    const next = entries[index];
+    if (coord <= next.coord) {
+      const ratio = (coord - previous.coord) / (next.coord - previous.coord);
+      return Math.round(previous.year + (next.year - previous.year) * ratio);
+    }
+  }
+
+  return last.year;
+}
+
+export function getAnchorTimelineLayout(
+  anchors: TimelineAnchorProjection[],
+  options: TimelineLayoutOptions,
+): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {};
+  if (anchors.length === 0) return positions;
+
+  const groupedByYear: Record<number, TimelineAnchorProjection[]> = {};
+  const years: number[] = [];
+  for (const anchor of anchors) {
+    years.push(anchor.year);
+    groupedByYear[anchor.year] ??= [];
+    groupedByYear[anchor.year].push(anchor);
+  }
+
+  const yearPositions = getSequentialYearPositions(years, options.scale);
+  const secondaryAxisOffset = 100;
+
+  for (const [yearValue, yearAnchors] of Object.entries(groupedByYear)) {
+    const year = Number(yearValue);
+    const primaryCoord = yearPositions[year] ?? 0;
+    yearAnchors.forEach((anchor, index) => {
+      const jitterCoord =
+        (index - (yearAnchors.length - 1) / 2) * options.jitter;
+      const secondaryCoord = jitterCoord + secondaryAxisOffset;
+      const key = `${anchor.entityId}::${anchor.anchorId}`;
+      positions[key] =
+        options.axis === "x"
+          ? { x: primaryCoord, y: secondaryCoord }
+          : { x: secondaryCoord, y: primaryCoord };
+    });
+  }
+
+  return positions;
 }
 
 /**

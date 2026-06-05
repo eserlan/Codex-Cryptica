@@ -21,6 +21,12 @@ import {
   markSearchEntityFocusHandled,
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
+import {
+  chronologyEdit as defaultChronologyEdit,
+  type ChronologyEditService,
+} from "$lib/stores/chronology-edit.svelte";
+import { getSequentialYearPositions } from "graph-engine";
+import type { Entity } from "schema";
 
 export interface GraphViewDependencies {
   graph: typeof graphStore;
@@ -29,6 +35,7 @@ export interface GraphViewDependencies {
   layoutUIStore: typeof layoutUIStoreType;
   connectionModeStore: typeof connectionModeStoreType;
   modalUIStore: typeof modalUIStoreType;
+  chronologyEdit?: ChronologyEditService;
 }
 
 export class GraphViewController {
@@ -75,6 +82,7 @@ export class GraphViewController {
   private searchFocusListener: ((event: Event) => void) | null = null;
 
   private deps: GraphViewDependencies;
+  private chronologyEdit: ChronologyEditService;
 
   constructor(
     options: { selectedId: string | null },
@@ -82,6 +90,7 @@ export class GraphViewController {
   ) {
     this.selectedId = options.selectedId;
     this.deps = deps;
+    this.chronologyEdit = deps.chronologyEdit ?? defaultChronologyEdit;
   }
 
   init = async (container: HTMLElement, graphStyle: any) => {
@@ -202,10 +211,89 @@ export class GraphViewController {
         "[GraphViewController] Init successful, graphVisible set to true",
       );
       this.setupEventListeners();
+      this.setupChronologyDragHandlers(instance);
     } catch (err) {
       this.deps.debugStore.error("Graph Init Failed", err);
     }
   };
+
+  private setupChronologyDragHandlers(instance: Core) {
+    instance.on("grab", "node", (_event: any) => {
+      if (
+        !this.deps.graph.timelineMode ||
+        !this.deps.graph.chronologyEditMode
+      ) {
+        return;
+      }
+      const node = _event.target;
+      const entity = this.getEntityForNode(node.id());
+      if (!entity) return;
+      const position = node.position();
+      this.chronologyEdit.beginDrag({
+        entity,
+        source: "graph",
+        anchorId: node.data("anchorId") ?? undefined,
+        originPosition: position,
+        pressPosition: position,
+        context: this.getTimelineYearContext(),
+      });
+    });
+
+    instance.on("drag", "node", (_event: any) => {
+      if (!this.deps.graph.chronologyEditMode) return;
+      const node = _event.target;
+      const position = node.position();
+      const drag = this.chronologyEdit.drag;
+      const pixelDelta =
+        this.deps.graph.timelineAxis === "y"
+          ? Math.abs(position.y - (drag?.originPosition?.y ?? position.y))
+          : Math.abs(position.x - (drag?.originPosition?.x ?? position.x));
+      this.chronologyEdit.updateDrag(
+        position,
+        this.getTimelineYearContext(),
+        pixelDelta,
+      );
+    });
+
+    instance.on("dragfree", "node", (_event: any) => {
+      if (!this.deps.graph.chronologyEditMode) return;
+      const node = _event.target;
+      const entity = this.getEntityForNode(node.id());
+      if (!entity) return;
+      this.chronologyEdit.prepareDrop(entity);
+    });
+  }
+
+  private getEntityForNode(nodeId: string): Entity | undefined {
+    const entityId = nodeId.includes("::") ? nodeId.split("::")[0] : nodeId;
+    return (this.deps.vault.entities?.[entityId] ?? undefined) as
+      | Entity
+      | undefined;
+  }
+
+  private getTimelineYearContext() {
+    const years = (this.deps.vault.allEntities as Entity[])
+      .flatMap((entity) => [
+        entity.date?.year,
+        entity.start_date?.year,
+        entity.end_date?.year,
+        ...(entity.temporalAnchors ?? []).flatMap((anchor) => [
+          anchor.date?.year,
+          anchor.start_date?.year,
+          anchor.end_date?.year,
+        ]),
+      ])
+      .filter((year): year is number => typeof year === "number");
+
+    const fallbackYear = new Date().getFullYear();
+    return {
+      yearPositions: getSequentialYearPositions(
+        years.length > 0 ? years : [fallbackYear],
+        this.deps.graph.timelineScale,
+      ),
+      axis: this.deps.graph.timelineAxis,
+    };
+  }
 
   private setupEventListeners = () => {
     window.addEventListener("resize", this.handleResize);
@@ -491,5 +579,70 @@ export class GraphViewController {
     if (this.cy && this.didFinalizeLoad) {
       this.applyCurrentLayout(false, true, "Mode Change Effect");
     }
+  };
+
+  restoreChronologyDragOrigin = () => {
+    const drag = this.chronologyEdit.drag;
+    if (!this.cy || !drag?.originPosition) return;
+    const nodeId = drag.anchorId
+      ? `${drag.entityId}::${drag.anchorId}`
+      : drag.entityId;
+    const node = this.cy.$id(nodeId);
+    if (node.length > 0) {
+      node.position(drag.originPosition);
+    }
+  };
+
+  getChronologyPopoverPosition = (): { x: number; y: number } | undefined => {
+    const drag = this.chronologyEdit.drag;
+    if (!this.cy || !drag) return undefined;
+    const nodeId = drag.anchorId
+      ? `${drag.entityId}::${drag.anchorId}`
+      : drag.entityId;
+    const node = this.cy.$id(nodeId);
+    if (node.length > 0) {
+      const rendered = node.renderedPosition();
+      const rect = this.cy.container()?.getBoundingClientRect();
+      return {
+        x: (rect?.left ?? 0) + rendered.x,
+        y: (rect?.top ?? 0) + rendered.y,
+      };
+    }
+    const rect = this.cy.container()?.getBoundingClientRect();
+    return rect ? { x: rect.left + 24, y: rect.top + 24 } : undefined;
+  };
+
+  beginExplorerChronologyPlacement = (
+    entityId: string,
+    clientPosition: { x: number; y: number },
+  ): boolean => {
+    if (
+      !this.cy ||
+      !this.deps.graph.timelineMode ||
+      !this.deps.graph.chronologyEditMode
+    ) {
+      return false;
+    }
+    const entity = this.getEntityForNode(entityId);
+    if (!entity) return false;
+
+    const container = this.cy.container();
+    if (!container) return false;
+    const rect = container.getBoundingClientRect();
+    const pan = this.cy.pan();
+    const zoom = this.cy.zoom();
+    const modelPosition = {
+      x: (clientPosition.x - rect.left - pan.x) / zoom,
+      y: (clientPosition.y - rect.top - pan.y) / zoom,
+    };
+
+    const began = this.chronologyEdit.beginDrag({
+      entity,
+      source: "explorer",
+      pressPosition: modelPosition,
+      context: this.getTimelineYearContext(),
+    });
+    if (!began) return false;
+    return this.chronologyEdit.prepareDrop(entity) !== null;
   };
 }

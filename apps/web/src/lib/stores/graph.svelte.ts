@@ -64,6 +64,10 @@ export class GraphStore {
     const entityElements = GraphTransformer.entitiesToElements(
       visibleEntities,
       validIds,
+      {
+        includeTemporalEditHandles:
+          this.timelineMode && this.chronologyEditMode,
+      },
     );
 
     return entityElements;
@@ -80,6 +84,7 @@ export class GraphStore {
 
   // Timeline State
   timelineMode = $state(false);
+  chronologyEditMode = $state(false);
   timelineAxis = $state<"x" | "y">("x");
   timelineRange = $state<{ start: number | null; end: number | null }>({
     start: null,
@@ -112,6 +117,24 @@ export class GraphStore {
 
   requestFit() {
     this.fitRequest++;
+  }
+
+  setTimelineMode(enabled: boolean) {
+    this.timelineMode = enabled;
+    if (!enabled) {
+      this.chronologyEditMode = false;
+    }
+  }
+
+  setChronologyEditMode(enabled: boolean) {
+    this.chronologyEditMode = enabled;
+    if (enabled) {
+      this.timelineMode = true;
+    }
+  }
+
+  toggleChronologyEditMode() {
+    this.setChronologyEditMode(!this.chronologyEditMode);
   }
 
   async init() {
@@ -281,7 +304,7 @@ export class GraphStore {
   }
 
   toggleTimeline() {
-    this.timelineMode = !this.timelineMode;
+    this.setTimelineMode(!this.timelineMode);
   }
 
   setTimelineAxis(axis: "x" | "y") {

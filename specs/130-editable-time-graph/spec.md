@@ -2,7 +2,8 @@
 
 **Feature Branch**: `130-editable-time-graph`
 **Created**: 2026-06-04
-**Status**: Draft
+**Status**: Implemented
+**Implementation Plan**: [plan.md](./plan.md)
 **Source**: GitHub issue #1159
 **Input**: User description: "Add an edit mode to the time graph where users can drag entities along the timeline to define or adjust their chronological meaning. Dragging an entity should not only change visual layout — it should create or update structured temporal metadata. The goal is to make the time graph both a visualisation and a chronology editing tool."
 

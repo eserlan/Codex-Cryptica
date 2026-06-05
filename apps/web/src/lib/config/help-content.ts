@@ -391,6 +391,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city). Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors.",
     icon: "icon-[lucide--folder-tree]",
   },
+  "edit-chronology": {
+    id: "edit-chronology",
+    title: "Edit Chronology",
+    content:
+      "Timeline edit mode changes story dates. Drag an entity along the timeline, review what the placement means, then Save or Cancel before anything is written.",
+    icon: "icon-[lucide--calendar-clock]",
+  },
   "entity-auto-link": {
     id: "entity-auto-link",
     title: "Entity Links in Content",

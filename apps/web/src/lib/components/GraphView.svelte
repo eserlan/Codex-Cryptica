@@ -14,6 +14,8 @@
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
+  import ChronologyDragIndicator from "./graph/ChronologyDragIndicator.svelte";
+  import SemanticPlacementPopover from "./graph/SemanticPlacementPopover.svelte";
   import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
   import { DEFAULT_SEARCH_ENTITY_ZOOM } from "./search/search-focus";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -24,6 +26,21 @@
   import { GraphViewController } from "./graph/graph-view-controller.svelte";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { chronologyEdit } from "$lib/stores/chronology-edit.svelte";
+  import type { TemporalMeaning } from "chronology-engine";
+  import type { TemporalMetadata } from "schema";
+
+  type ChronologyPlacementSave = {
+    meaning: TemporalMeaning;
+    date?: TemporalMetadata;
+    start_date?: TemporalMetadata;
+    end_date?: TemporalMetadata;
+    customLabel?: string;
+    existingAnchorId?: string;
+    createNewAnchor?: boolean;
+    createEvent?: boolean;
+    eventTitle?: string;
+  };
 
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
@@ -83,6 +100,12 @@
   });
 
   const handleKeyDown = async (e: KeyboardEvent) => {
+    if (e.key === "Escape" && chronologyEdit.pendingIntent) {
+      controller.restoreChronologyDragOrigin();
+      chronologyEdit.cancel();
+      return;
+    }
+
     const handledDelete = await handleGraphDeleteShortcut(e, {
       cy: controller.cy,
       selectedId: controller.selectedId,
@@ -392,6 +415,77 @@
       vault.status !== "loading" &&
       vault.allEntities.length === 0,
   );
+
+  let pendingPlacementEntity = $derived(
+    chronologyEdit.pendingEntity
+      ? (vault.entities[chronologyEdit.pendingEntity.id] ??
+          chronologyEdit.pendingEntity)
+      : null,
+  );
+  let pendingPlacementAnchor = $derived(
+    pendingPlacementEntity && chronologyEdit.drag?.anchorId
+      ? pendingPlacementEntity.temporalAnchors?.find(
+          (anchor) => anchor.id === chronologyEdit.drag?.anchorId,
+        )
+      : undefined,
+  );
+  let pendingLinkedEntityTitle = $derived(
+    pendingPlacementAnchor?.linkedEntityId
+      ? (vault.entities[pendingPlacementAnchor.linkedEntityId]?.title ?? null)
+      : null,
+  );
+  let chronologyPopoverPosition = $derived(
+    controller.getChronologyPopoverPosition(),
+  );
+
+  async function saveChronologyPlacement(detail: ChronologyPlacementSave) {
+    const entity = pendingPlacementEntity;
+    if (!entity) return;
+    chronologyEdit.buildSemanticIntent({
+      ...detail,
+      entity,
+    });
+    const saved = await chronologyEdit.confirm(entity);
+    if (saved) {
+      await controller.applyCurrentLayout(false, true, "Chronology Edit Save");
+    }
+  }
+
+  function cancelChronologyPlacement() {
+    controller.restoreChronologyDragOrigin();
+    chronologyEdit.cancel();
+  }
+
+  async function removeChronologyAnchor(anchorId: string) {
+    const entity = pendingPlacementEntity;
+    if (!entity) return;
+    const removed = await chronologyEdit.removeAnchor(entity, anchorId);
+    if (removed) {
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Chronology Anchor Remove",
+      );
+    }
+  }
+
+  function handleCanvasDragover(event: DragEvent) {
+    if (!graph.chronologyEditMode) return;
+    if (!event.dataTransfer?.types.includes("application/codex-entity")) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  function handleCanvasDrop(event: DragEvent) {
+    if (!graph.chronologyEditMode) return;
+    const entityId = event.dataTransfer?.getData("application/codex-entity");
+    if (!entityId) return;
+    event.preventDefault();
+    controller.beginExplorerChronologyPlacement(entityId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }
 </script>
 
 <div
@@ -423,13 +517,38 @@
   <div
     bind:this={container}
     data-testid="graph-canvas"
+    role="application"
+    aria-label="Graph canvas"
+    ondragover={handleCanvasDragover}
+    ondrop={handleCanvasDrop}
     class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"
   ></div>
 
   <GraphTooltip {hoveredEntity} hoverPosition={controller.hoverPosition} />
+  <ChronologyDragIndicator
+    service={chronologyEdit}
+    x={controller.hoverPosition?.x ?? 24}
+    y={(controller.hoverPosition?.y ?? 24) + 32}
+  />
   <EdgeEditorModal bind:editingEdge={controller.editingEdge} />
+
+  {#if chronologyEdit.pendingIntent && pendingPlacementEntity && chronologyEdit.drag}
+    <div class="pointer-events-auto">
+      <SemanticPlacementPopover
+        entity={pendingPlacementEntity}
+        targetYear={chronologyEdit.drag.targetYear}
+        existingAnchorId={chronologyEdit.drag.anchorId}
+        anchorPosition={chronologyPopoverPosition}
+        linkedEntityTitle={pendingLinkedEntityTitle}
+        conflict={chronologyEdit.conflict}
+        onSave={saveChronologyPlacement}
+        onRemove={removeChronologyAnchor}
+        onCancel={cancelChronologyPlacement}
+      />
+    </div>
+  {/if}
 
   {#if controller.cy}
     <ContextMenu cy={controller.cy} />
@@ -456,6 +575,9 @@
   {/if}
   {#if connectionModeStore.isConnecting}
     <FeatureHint hintId="connect-mode" />
+  {/if}
+  {#if graph.chronologyEditMode}
+    <FeatureHint hintId="edit-chronology" />
   {/if}
 </div>
 

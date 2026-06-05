@@ -6,6 +6,7 @@
   import { guestStore } from "$lib/stores/guest.svelte";
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
+  import ChronologyEditToggle from "./ChronologyEditToggle.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -98,6 +99,13 @@
       closeMenuIfMobile();
     }}
   />
+  {#if graph.timelineMode && !sessionModeStore.isGuestMode}
+    <ChronologyEditToggle
+      onToggle={() => {
+        closeMenuIfMobile();
+      }}
+    />
+  {/if}
   <div class="h-6 w-px bg-theme-border/30 mx-2 flex-shrink-0"></div>
   <div class="flex gap-1 items-center">
     <button
