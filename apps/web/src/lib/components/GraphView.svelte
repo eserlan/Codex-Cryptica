@@ -474,14 +474,24 @@
 
   function handleCanvasDragover(event: DragEvent) {
     if (!graph.chronologyEditMode) return;
-    if (!event.dataTransfer?.types.includes("application/codex-entity")) return;
+    const types = event.dataTransfer?.types ?? [];
+    if (
+      !types.includes("application/x-codex-entity-id") &&
+      !types.includes("application/codex-entity") &&
+      !types.includes("text/plain")
+    ) {
+      return;
+    }
     event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
+    event.dataTransfer!.dropEffect = "copy";
   }
 
   function handleCanvasDrop(event: DragEvent) {
     if (!graph.chronologyEditMode) return;
-    const entityId = event.dataTransfer?.getData("application/codex-entity");
+    const entityId =
+      event.dataTransfer?.getData("application/x-codex-entity-id") ||
+      event.dataTransfer?.getData("application/codex-entity") ||
+      event.dataTransfer?.getData("text/plain");
     if (!entityId) return;
     event.preventDefault();
     controller.beginExplorerChronologyPlacement(entityId, {
