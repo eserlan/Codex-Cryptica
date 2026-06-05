@@ -283,6 +283,35 @@
   {#if type === "comparison" && comparisonData}
     <section class="border-t border-theme-border/30 py-16">
       <div class="max-w-4xl mx-auto px-6">
+        {#if data.slug === "world-anvil"}
+          <div
+            class="mb-16 p-8 border border-theme-primary/30 bg-theme-primary/5 rounded-3xl text-center max-w-2xl mx-auto"
+          >
+            <span
+              class="icon-[lucide--folder-input] text-theme-primary w-10 h-10 mb-4 block mx-auto"
+            ></span>
+            <h3
+              class="font-header font-bold text-lg uppercase tracking-wider mb-2 text-theme-primary"
+            >
+              Already have a world in World Anvil?
+            </h3>
+            <p
+              class="text-xs text-theme-muted leading-relaxed mb-6 max-w-lg mx-auto"
+            >
+              Bring it with you. Codex Cryptica can import structured
+              worldbuilding content from exported files and rebuild your lore as
+              a private local vault. Keep your articles, preserve your world
+              structure, and continue working without starting from scratch.
+            </p>
+            <a
+              href="{base}/import/world-anvil-export"
+              class="inline-flex px-6 py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-md transition-all"
+            >
+              Import World Anvil Export
+            </a>
+          </div>
+        {/if}
+
         <h2
           class="text-center font-header text-2xl uppercase tracking-widest text-theme-primary mb-10"
         >

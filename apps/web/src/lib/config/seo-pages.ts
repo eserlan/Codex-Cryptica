@@ -688,13 +688,15 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     competitorName: "World Anvil",
     title: "Codex Cryptica vs World Anvil: Private vs Cloud Worldbuilding",
     description:
-      "Compare Codex Cryptica and World Anvil. Discover the differences between local-first privacy and online subscription-based worldbuilding.",
+      "Compare Codex Cryptica and World Anvil. Choose between a hosted collaborative worldbuilding platform and private local-first Markdown vaults.",
     h1: "Codex Cryptica vs World Anvil",
     subheading:
-      "Choose between private local vaults and online cloud worldbuilding.",
+      "Choose hosted worldbuilding and publishing, or private local-first worldbuilding that runs in your browser.",
     introText:
-      "World Anvil is a cloud-based suite for worldbuilding, but it stores all your notes on remote servers and locks advanced features behind monthly paywalls. Codex Cryptica provides a modern local-first alternative that is 100% free, private, and runs entirely in your browser with offline support.",
+      "World Anvil is a powerful cloud-based worldbuilding suite for writers, GMs, and lore-heavy projects. Codex Cryptica takes a different path: your world lives in a local vault, works offline, opens fast, and can be explored as a graph with optional AI assistance.\n\nIf you want a hosted public wiki, reader-facing presentation, and collaboration features, World Anvil may be the better fit.\nIf you want privacy, portability, offline access, and direct control over your files, Codex Cryptica is built for that.",
     ctaText: "Get Free Local Vault",
+    secondaryCtaText: "Import Existing Lore",
+    secondaryCtaHref: "/import/world-anvil-export",
     keywords: [
       "codex cryptica vs world anvil",
       "world anvil alternative",
@@ -702,58 +704,83 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     ],
     features: [
       {
-        title: "100% Client-Side Privacy",
+        title: "Local-First Storage",
         description:
-          "Your campaign notes remain fully private, encrypted by the sandbox, and are never sent to remote databases.",
-        icon: "icon-[lucide--shield-alert]",
+          "Your campaign notes stay in your browser or local vault. Codex does not store your world in a remote hosted database.",
+        icon: "icon-[lucide--lock]",
       },
       {
-        title: "Offline Autonomy",
+        title: "Offline Session Running",
         description:
-          "Work on your campaign at the gaming table, on a plane, or in cabin retreats without requiring internet connection.",
+          "Run sessions at the table, on a plane, or in remote areas. Everything functions 100% offline-ready without latency.",
         icon: "icon-[lucide--wifi-off]",
       },
       {
-        title: "Standard Markdown Files",
+        title: "Graph-Based Exploration",
         description:
-          "Your world wiki is saved as readable files on your computer. No vendor lock-in or database extraction limits.",
-        icon: "icon-[lucide--file-text]",
+          "Understand complex lore relationships visually. Wiki-link connections automatically build an interactive campaign graph.",
+        icon: "icon-[lucide--git-fork]",
       },
     ],
     comparisonTable: [
       {
-        feature: "Offline Compatibility",
-        competitorHas: "No (Cloud only)",
+        feature: "Hosted web publishing",
+        competitorHas: "Yes",
+        codexHas: "No / limited",
+      },
+      {
+        feature: "Public world presentation",
+        competitorHas: "Strong",
+        codexHas: "Basic / not the focus",
+      },
+      {
+        feature: "Collaboration and subscribers",
+        competitorHas: "Strong paid features",
+        codexHas: "Local-first, single-user focused",
+      },
+      {
+        feature: "Offline compatibility",
+        competitorHas: "No, cloud-based",
         codexHas: "Yes",
       },
       {
-        feature: "Data Privacy & Local Storage",
-        competitorHas: "No (Hosted)",
-        codexHas: "Yes",
-      },
-      {
-        feature: "Price",
-        competitorHas: "Paid tier for privacy/large assets",
-        codexHas: "100% Free & Open Source",
-      },
-      {
-        feature: "Page Load Speed",
-        competitorHas: "Slow (Server dependent)",
-        codexHas: "Instant (Zero-lag local)",
-      },
-      {
-        feature: "No-Setup AI Assistance",
-        competitorHas: "No (Behind paywall)",
-        codexHas: "Yes",
-      },
-      {
-        feature: "Markdown & Folder Sync",
+        feature: "Local-first storage",
         competitorHas: "No",
         codexHas: "Yes",
       },
+      {
+        feature: "Native Markdown files",
+        competitorHas: "No",
+        codexHas: "Yes",
+      },
+      {
+        feature: "Full world export",
+        competitorHas: "Paid Guild feature",
+        codexHas: "Local files by default",
+      },
+      {
+        feature: "Private worlds",
+        competitorHas: "Paid feature",
+        codexHas: "Private by default",
+      },
+      {
+        feature: "AI assistance",
+        competitorHas: "Not core / unclear",
+        codexHas: "Optional Gemini-powered assistance",
+      },
+      {
+        feature: "Graph-based lore exploration",
+        competitorHas: "Limited / wiki-link based",
+        codexHas: "Core feature",
+      },
+      {
+        feature: "Price",
+        competitorHas: "Freemium / paid tiers",
+        codexHas: "Free and open source",
+      },
     ],
     verdict:
-      "For creators who want total control over their creative property, fast load times, and offline access, Codex Cryptica is the ideal choice. Choose World Anvil if you prefer hosting collaborative wikis directly on their web servers.",
+      "Choose World Anvil if you want a hosted, collaborative worldbuilding platform with strong publishing, presentation, and community features. Choose Codex Cryptica if you want your campaign world stored locally, available offline, easy to back up, and explorable as a private AI-assisted knowledge graph.",
     faq: [
       {
         question: "Is Codex Cryptica completely free?",
