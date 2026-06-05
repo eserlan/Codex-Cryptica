@@ -101,6 +101,23 @@ apps/web/src/lib/
 
 **Structure Decision**: Web monorepo. Library-First mandates that all temporal semantics, validation, and geometry live in `packages/` (`schema`, `chronology-engine`, `graph-engine`) with full unit/property coverage. `apps/web` only orchestrates: mode state, Cytoscape drag wiring, the popover UI, and routing saves through the existing `vault.updateEntity()`. This mirrors how `026-world-timeline` already split pure layout (`graph-engine/layouts/timeline.ts`) from UI (`TimelineControls.svelte`).
 
+## Future Extensions (Phase 3): Visual Lifespans and Story Chains
+
+Conceptual design modifications to support advanced temporal visualization layout (deferred, not for active implementation):
+
+### Packages
+
+#### `graph-engine`
+
+- **Span Connector Layout**: Extend `getTimelineLayout` and LayoutManager to compute visual connecting span paths/lines between start and end node handles.
+- **Narrative Sequence Filter**: Filter out standard non-chronological edges (e.g. `allied_with`) in timeline mode, leaving only sequential narrative edges (e.g. `precedes`, `leads_to`).
+- **Storyline Swimlanes**: Organize parallel or concurrent sequence chains into layered horizontal swimlanes to keep visual pathways clean.
+
+### Svelte Layer (apps/web)
+
+- **Unified Span Gestures**: Update the graph-view-controller to recognize drags on the connecting span lines (translates the entire range) vs boundary nodes (resizes range).
+- **Theme-specific Spans**: Style connecting span paths according to active vault theme parameters (fantasy calligraphies vs. scifi digital lines).
+
 ## Complexity Tracking
 
 > No Constitution violations — section intentionally empty.

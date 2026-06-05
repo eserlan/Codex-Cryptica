@@ -185,6 +185,19 @@ Web monorepo: libraries in `packages/<pkg>/src/` (+ co-located or `tests/` specs
 
 ---
 
+## Phase 11: Conceptual Lifespans & Story Chains (Deferred / Post-MVP)
+
+**Goal**: Support rendering visual lifespan connections and sequential story chains forward on the timeline.
+
+- [ ] T053 [P] [US8] Write failing tests for connecting span coordinates and layout in packages/graph-engine/tests/timeline.test.ts
+- [ ] T054 [US8] Implement span connector calculations in packages/graph-engine/src/layouts/timeline.ts
+- [ ] T055 [US8] Render connecting span decorators and support span translation vs boundary resize in apps/web/src/lib/components/graph/graph-view-controller.svelte.ts
+- [ ] T056 [P] [US9] Write failing tests for sequence edge filtering and swimlane layout in packages/graph-engine/tests/timeline.test.ts
+- [ ] T057 [US9] Implement sequence edge filtering and swimlane grouping in packages/graph-engine/src/layouts/timeline.ts
+- [ ] T058 [US9] Style narrative sequence edges with arrowheads in apps/web/src/lib/components/graph/graph-view-controller.svelte.ts
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase dependencies
