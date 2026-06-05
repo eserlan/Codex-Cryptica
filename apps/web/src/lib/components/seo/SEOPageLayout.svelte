@@ -382,7 +382,7 @@
                     {:else}
                       <span
                         class="icon-[lucide--x] text-rose-500 w-4 h-4"
-                        aria-label="No"
+                        role="img" aria-label="No"
                       ></span>
                     {/if}
                   {:else}
