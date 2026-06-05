@@ -73,7 +73,7 @@ export class ChronologyEditService {
     const year = this.deps.resolveYear(args.pressPosition, args.context);
     if (year === null) return false;
 
-    this.baseline = structuredClone(args.entity);
+    this.baseline = structuredClone($state.snapshot(args.entity));
     this.pendingEntity = args.entity;
     this.pendingIntent = null;
     this.conflict = false;
@@ -287,7 +287,7 @@ export class ChronologyEditService {
   }
 
   async removeAnchor(entity: Entity, anchorId: string): Promise<boolean> {
-    this.baseline ??= structuredClone(entity);
+    this.baseline ??= structuredClone($state.snapshot(entity));
     const current = this.deps.vault?.entities?.[entity.id] as
       | Entity
       | undefined;
