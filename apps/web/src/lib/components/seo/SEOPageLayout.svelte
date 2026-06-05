@@ -335,7 +335,7 @@
           {#each comparisonData.comparisonTable as row, idx}
             <div
               class="border border-theme-border/60 rounded-xl bg-theme-surface/20 overflow-hidden"
-              id="feat-{idx}"
+              id="feat-mobile-{idx}"
             >
               <div
                 class="px-4 py-2.5 bg-theme-surface/60 border-b border-theme-border/40 font-header font-bold text-xs uppercase tracking-wider"
