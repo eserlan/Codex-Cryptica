@@ -63,6 +63,13 @@
     entity?.parent ? vault.entities[entity.parent] : null,
   );
 
+  // Only treat the sound bite as "active" (stronger accent + play affordance)
+  // when an actual audio file/data is attached - not when only a voice config
+  // or transcript exists without generated audio.
+  const hasSoundFile = $derived(
+    !!(entity?.soundBite?.audioFile || entity?.soundBite?.audioData),
+  );
+
   const handleOpenParent = () => {
     if (parentEntity) {
       vault.selectedEntityId = parentEntity.id;
@@ -127,15 +134,15 @@
           if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
           modalUIStore.openSoundBite(entity.id);
         }}
-        class="transition flex items-center justify-center p-1 {entity.soundBite
+        class="transition flex items-center justify-center p-1 {hasSoundFile
           ? 'text-theme-accent hover:opacity-85'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Sound bite"
-        title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
+        title={hasSoundFile ? "Play sound bite" : "Generate sound bite"}
         data-testid="sound-bite-button"
       >
         <span
-          class="{entity.soundBite
+          class="{hasSoundFile
             ? 'icon-[lucide--volume-2]'
             : 'icon-[lucide--mic]'} w-5 h-5"
         ></span>
@@ -186,9 +193,11 @@
     </div>
   </div>
 
-  <div class="md:flex md:justify-between md:items-center mb-2">
+  <div
+    class="flex flex-wrap items-start md:items-center justify-between gap-x-2 gap-y-3 mb-2"
+  >
     <div
-      class="flex items-start md:items-center gap-3 md:gap-4 md:flex-1 min-w-0 w-full"
+      class="flex items-start md:items-center gap-3 md:gap-4 flex-1 min-w-0 basis-[180px]"
     >
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
@@ -205,7 +214,7 @@
           <h2
             class="{isFantasyTheme
               ? 'text-xl md:text-3xl font-header tracking-wider'
-              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold whitespace-normal break-words overflow-visible w-full md:truncate"
+              : 'text-xl md:text-3xl font-body tracking-wide'} font-bold break-words line-clamp-2 w-full"
             style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
           >
             {entity.title}{#if entity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
@@ -251,9 +260,7 @@
       {/if}
     </div>
 
-    <div
-      class="hidden md:flex items-center gap-1.5 md:gap-2 shrink-0 ml-2 md:ml-4"
-    >
+    <div class="hidden md:flex items-center gap-1.5 md:gap-2 shrink-0 ml-auto">
       {@render headerActions()}
 
       <!-- Desktop-only close button -->
