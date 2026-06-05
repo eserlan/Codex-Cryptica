@@ -204,7 +204,7 @@
   <!-- Hero Section -->
   <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center flex-grow">
     <div
-      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 uppercase tracking-wider"
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-10 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
       {data.eyebrow ??
@@ -218,17 +218,28 @@
     >
       {data.h1}
     </h1>
+    {#if data.tagline}
+      <p
+        class="text-3xl md:text-4xl font-extrabold font-header leading-tight mb-6 tracking-wide"
+      >
+        {#each data.tagline.split("\n") as line}
+          <span class="block">{line}</span>
+        {/each}
+      </p>
+    {/if}
     <p
       class="text-lg md:text-xl text-theme-primary/80 font-header italic mb-8 max-w-2xl mx-auto"
     >
       {data.subheading}
     </p>
-    <p
-      class="text-theme-muted text-sm md:text-base leading-relaxed mb-10 max-w-3xl mx-auto"
-    >
-      {data.introText}
-    </p>
-    <div class="flex flex-wrap justify-center gap-4">
+    {#each data.introText.split("\n\n") as paragraph}
+      <p
+        class="text-theme-text/75 text-sm md:text-base leading-relaxed mb-4 last:mb-10 max-w-3xl mx-auto"
+      >
+        {paragraph}
+      </p>
+    {/each}
+    <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
       <a
         href="{base}/"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200"
@@ -246,6 +257,37 @@
         </a>
       {/if}
     </div>
+
+    {#if comparisonData?.migrationStrip}
+      <div
+        class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 mt-10"
+      >
+        {#each comparisonData.migrationStrip as step, idx}
+          {#if idx > 0}
+            <span
+              class="icon-[lucide--arrow-down] md:hidden text-theme-primary/65 w-4 h-4"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="icon-[lucide--arrow-right] hidden md:block self-center text-theme-primary/65 w-4 h-4"
+              aria-hidden="true"
+            ></span>
+          {/if}
+          <div
+            class="flex flex-row md:flex-col items-center gap-2 md:gap-1.5 px-5 py-3 bg-theme-surface/30 border border-theme-border/40 rounded-xl min-w-[160px] md:min-w-0"
+          >
+            <span
+              class="{step.icon} text-theme-primary w-5 h-5 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="text-xs font-bold uppercase tracking-wider font-header text-theme-text text-center"
+              >{step.label}</span
+            >
+          </div>
+        {/each}
+      </div>
+    {/if}
   </section>
 
   <!-- Features Grid -->
@@ -270,7 +312,7 @@
             >
               {feat.title}
             </h3>
-            <p class="text-theme-muted text-xs leading-relaxed">
+            <p class="text-theme-text/70 text-sm leading-relaxed">
               {feat.description}
             </p>
           </div>
@@ -288,22 +330,88 @@
         >
           Feature Matrix: Codex vs {comparisonData.competitorName}
         </h2>
+        <!-- Mobile: stacked cards -->
+        <div class="md:hidden space-y-3" id="comparison-table">
+          {#each comparisonData.comparisonTable as row, idx}
+            <div
+              class="border border-theme-border/60 rounded-xl bg-theme-surface/20 overflow-hidden"
+              id="feat-{idx}"
+            >
+              <div
+                class="px-4 py-2.5 bg-theme-surface/60 border-b border-theme-border/40 font-header font-bold text-xs uppercase tracking-wider"
+              >
+                {row.feature}
+              </div>
+              <div
+                class="grid grid-cols-2 divide-x divide-theme-border/30 text-xs"
+              >
+                <div class="p-3">
+                  <span
+                    class="block font-header font-bold text-[9px] uppercase tracking-wider text-theme-muted mb-1"
+                    >{comparisonData.competitorName}</span
+                  >
+                  {#if typeof row.competitorHas === "boolean"}
+                    {#if row.competitorHas}
+                      <span
+                        class="icon-[lucide--check] text-emerald-500 w-4 h-4"
+                        aria-label="Yes"
+                      ></span>
+                    {:else}
+                      <span
+                        class="icon-[lucide--x] text-rose-500 w-4 h-4"
+                        aria-label="No"
+                      ></span>
+                    {/if}
+                  {:else}
+                    <span class="text-theme-text/70 leading-snug"
+                      >{row.competitorHas}</span
+                    >
+                  {/if}
+                </div>
+                <div class="p-3">
+                  <span
+                    class="block font-header font-bold text-[9px] uppercase tracking-wider text-theme-primary mb-1"
+                    >Codex Cryptica</span
+                  >
+                  {#if typeof row.codexHas === "boolean"}
+                    {#if row.codexHas}
+                      <span
+                        class="icon-[lucide--check] text-emerald-400 w-4 h-4"
+                        aria-label="Yes"
+                      ></span>
+                    {:else}
+                      <span
+                        class="icon-[lucide--x] text-rose-500 w-4 h-4"
+                        aria-label="No"
+                      ></span>
+                    {/if}
+                  {:else}
+                    <span class="font-semibold text-theme-primary leading-snug"
+                      >{row.codexHas}</span
+                    >
+                  {/if}
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Desktop: table -->
         <div
-          class="overflow-x-auto border border-theme-border/60 rounded-2xl shadow-sm"
+          class="hidden md:block overflow-x-auto border border-theme-border/60 rounded-2xl shadow-sm"
         >
-          <table
-            class="w-full text-left border-collapse bg-theme-surface/20"
-            id="comparison-table"
-          >
+          <table class="w-full text-left border-collapse bg-theme-surface/20">
             <thead>
               <tr
                 class="border-b border-theme-border/60 bg-theme-surface/60 font-header text-xs uppercase tracking-wider"
               >
-                <th class="p-4 font-bold">Feature</th>
-                <th class="p-4 font-bold text-theme-muted"
+                <th class="px-4 py-4 pl-5 font-bold">Feature</th>
+                <th class="px-4 py-4 pl-5 font-bold text-theme-muted"
                   >{comparisonData.competitorName}</th
                 >
-                <th class="p-4 font-bold text-theme-primary">Codex Cryptica</th>
+                <th class="px-4 py-4 pl-5 font-bold text-theme-primary"
+                  >Codex Cryptica</th
+                >
               </tr>
             </thead>
             <tbody class="text-xs">
@@ -352,16 +460,26 @@
           </table>
         </div>
         <div
-          class="mt-8 p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm text-center"
+          class="mt-8 p-8 md:p-10 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm text-center"
         >
           <h3
-            class="font-header font-bold text-sm uppercase tracking-wider text-theme-primary mb-2"
+            class="font-header font-bold text-sm uppercase tracking-wider text-theme-primary mb-4"
           >
             The Verdict
           </h3>
-          <p class="text-xs leading-relaxed text-theme-muted">
-            {comparisonData.verdict}
-          </p>
+          <div class="space-y-3">
+            {#each comparisonData.verdict.split("\n\n") as para, idx}
+              <p
+                class="leading-relaxed text-theme-text/80"
+                class:text-base={idx === 0}
+                class:font-semibold={idx === 0}
+                class:text-sm={idx > 0}
+                class:text-theme-muted={idx > 0}
+              >
+                {para}
+              </p>
+            {/each}
+          </div>
         </div>
       </div>
     </section>
