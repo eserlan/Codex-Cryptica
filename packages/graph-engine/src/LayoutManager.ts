@@ -17,6 +17,7 @@ export interface LayoutOptions {
   centralNodeId: string | null;
   stableLayout: boolean;
   isGuest: boolean;
+  fit?: boolean;
   onLayoutStart?: () => void;
   onLayoutStop?: () => void;
   onLayoutComputed?: (durationMs: number) => void;
@@ -369,6 +370,7 @@ export class LayoutManager {
         scale: options.timelineScale,
         jitter: 150,
         yearPositions: options.yearPositions,
+        zoom: this.cy.zoom(),
       });
 
       const nodesToLayout = this.cy
@@ -389,7 +391,7 @@ export class LayoutManager {
           animate: true,
           animationDuration: 500,
           animationEasing: "ease-out-cubic",
-          fit: true,
+          fit: options.fit !== false,
           padding: 20,
           stop: () => options.onLayoutStop?.(),
         } as any)

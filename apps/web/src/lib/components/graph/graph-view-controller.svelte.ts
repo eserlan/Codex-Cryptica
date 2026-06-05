@@ -6,6 +6,8 @@ import {
   GraphImageManager,
   setupGraphEvents,
   syncGraphElements,
+  TIMELINE_DAY_ZOOM_THRESHOLD,
+  TIMELINE_MONTH_ZOOM_THRESHOLD,
   type YearPositionContext,
 } from "graph-engine";
 import { isTemporalMetadataEqual } from "$lib/utils/comparison";
@@ -26,7 +28,11 @@ import {
   chronologyEdit as defaultChronologyEdit,
   type ChronologyEditService,
 } from "$lib/stores/chronology-edit.svelte";
-import { getSequentialYearPositions } from "graph-engine";
+import {
+  getSequentialYearPositions,
+  getFractionalYear,
+  getQuantizedYear,
+} from "graph-engine";
 import type { Entity } from "schema";
 
 export interface GraphViewDependencies {
@@ -119,6 +125,28 @@ export class GraphViewController {
         this.selectedCount = instance.$("node:selected").length;
       };
       instance.on("select unselect", "node", updateSelectionCount);
+      let lastZoomCategory = "year";
+      instance.on("zoom", () => {
+        if (!this.deps.graph.timelineMode) return;
+        const currentZoom = instance.zoom();
+        const currentCategory =
+          currentZoom < TIMELINE_MONTH_ZOOM_THRESHOLD
+            ? "year"
+            : currentZoom < TIMELINE_DAY_ZOOM_THRESHOLD
+              ? "month"
+              : "day";
+        if (currentCategory !== lastZoomCategory) {
+          lastZoomCategory = currentCategory;
+          this.applyCurrentLayout(
+            false,
+            false,
+            "Zoom Category Change",
+            false,
+            false,
+            false,
+          );
+        }
+      });
       instance.on("grab", "node", () => {
         this.hoveredEntityId = null;
         this.hoverPosition = null;
@@ -235,7 +263,7 @@ export class GraphViewController {
       const entity = this.getEntityForNode(node.id());
       if (!entity) return;
       const position = node.position();
-      this.activeDragContext = this.getTimelineYearContext();
+      this.activeDragContext = this.getTimelineYearContext(instance.zoom());
       this.chronologyEdit.beginDrag({
         entity,
         source: "graph",
@@ -280,19 +308,18 @@ export class GraphViewController {
       | undefined;
   }
 
-  private getTimelineYearContext() {
+  private getTimelineYearContext(zoom: number = 1.0) {
     const years = (this.deps.vault.allEntities as Entity[])
       .flatMap((entity) => [
-        entity.date?.year,
-        entity.start_date?.year,
-        entity.end_date?.year,
+        getFractionalYear(entity.date ?? entity.start_date ?? entity.end_date),
         ...(entity.temporalAnchors ?? []).flatMap((anchor) => [
-          anchor.date?.year,
-          anchor.start_date?.year,
-          anchor.end_date?.year,
+          getFractionalYear(
+            anchor.date ?? anchor.start_date ?? anchor.end_date,
+          ),
         ]),
       ])
-      .filter((year): year is number => typeof year === "number");
+      .filter((year): year is number => typeof year === "number")
+      .map((y) => getQuantizedYear(y, zoom));
 
     const fallbackYear = new Date().getFullYear();
     return {
@@ -382,6 +409,7 @@ export class GraphViewController {
     caller = "unknown",
     randomizeForced = false,
     hasNewNodes = false,
+    fit = true,
   ) => {
     if (!this.layoutManager) return;
 
@@ -390,11 +418,13 @@ export class GraphViewController {
         timelineMode: this.deps.graph.timelineMode,
         timelineAxis: this.deps.graph.timelineAxis,
         timelineScale: this.deps.graph.timelineScale,
-        yearPositions: this.getTimelineYearContext().yearPositions,
+        yearPositions: this.getTimelineYearContext(this.cy?.zoom() ?? 1.0)
+          .yearPositions,
         orbitMode: this.deps.graph.orbitMode,
         centralNodeId: this.deps.graph.centralNodeId,
         stableLayout: this.deps.graph.stableLayout,
         isGuest: this.deps.vault.isGuest,
+        fit,
         onLayoutStart: () => {
           this.isLayoutRunning = true;
         },

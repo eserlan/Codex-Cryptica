@@ -93,6 +93,32 @@ vi.mock("graph-engine", () => {
     syncGraphElements: vi.fn(),
     getSequentialYearPositions: (years: number[], scale: number) =>
       Object.fromEntries(years.map((year, index) => [year, index * scale])),
+    getFractionalYear: (date?: {
+      year: number;
+      month?: number;
+      day?: number;
+    }) => {
+      if (!date) return undefined;
+      let val = date.year;
+      if (date.month !== undefined) {
+        val += (date.month - 1) / 12;
+        if (date.day !== undefined) {
+          val += (date.day - 1) / 365;
+        }
+      }
+      return val;
+    },
+    getQuantizedYear: (val: number, zoom: number = 1.0) => {
+      if (zoom < 3.0) {
+        return Math.floor(val);
+      } else if (zoom < 8.0) {
+        return Math.floor(val * 12) / 12;
+      } else {
+        return Math.floor(val * 365) / 365;
+      }
+    },
+    TIMELINE_MONTH_ZOOM_THRESHOLD: 3.0,
+    TIMELINE_DAY_ZOOM_THRESHOLD: 8.0,
   };
 });
 

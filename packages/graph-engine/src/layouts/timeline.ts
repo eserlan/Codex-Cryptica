@@ -5,6 +5,7 @@ export interface TimelineLayoutOptions {
   scale: number; // base pixels between sequential time steps
   jitter: number; // separation on secondary axis
   minYear?: number;
+  zoom?: number;
 }
 
 export interface YearPositionContext {
@@ -13,10 +14,78 @@ export interface YearPositionContext {
   sortedEntries?: Array<{ year: number; coord: number }>;
 }
 
+export const TIMELINE_MONTH_ZOOM_THRESHOLD = 3.0;
+export const TIMELINE_DAY_ZOOM_THRESHOLD = 8.0;
+
 export interface TimelineAnchorProjection {
   entityId: string;
   anchorId: string;
   year: number;
+}
+
+function parseMonthFromUnitId(unitId?: string): number | undefined {
+  if (!unitId) return undefined;
+  if (!isNaN(Number(unitId))) return Number(unitId);
+  const match = unitId.match(/\d+/);
+  if (match) return Number(match[0]);
+  const lower = unitId.toLowerCase();
+  const months = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+  ];
+  for (let i = 0; i < months.length; i++) {
+    if (lower.startsWith(months[i])) {
+      return i + 1;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Calculates a fractional year value from a date with optional month and day.
+ */
+export function getFractionalYear(date?: {
+  year: number;
+  month?: number;
+  day?: number;
+  unitId?: string;
+}): number | undefined {
+  if (!date) return undefined;
+  let val = date.year;
+  let month = date.month;
+  if (month === undefined && date.unitId !== undefined) {
+    month = parseMonthFromUnitId(date.unitId);
+  }
+  if (month !== undefined) {
+    val += (month - 1) / 12;
+    if (date.day !== undefined) {
+      val += (date.day - 1) / 365;
+    }
+  }
+  return val;
+}
+
+/**
+ * Quantizes a fractional year based on the current zoom level.
+ */
+export function getQuantizedYear(val: number, zoom: number = 1.0): number {
+  if (zoom < TIMELINE_MONTH_ZOOM_THRESHOLD) {
+    return Math.floor(val);
+  } else if (zoom < TIMELINE_DAY_ZOOM_THRESHOLD) {
+    return Math.floor(val * 12) / 12;
+  } else {
+    return Math.floor(val * 365) / 365;
+  }
 }
 
 /**
@@ -106,6 +175,34 @@ export function getYearForPosition(
   return last.year;
 }
 
+export function getPositionForYear(
+  year: number,
+  context: YearPositionContext,
+): number | null {
+  if (!context.sortedEntries) {
+    context.sortedEntries = Object.entries(context.yearPositions)
+      .map(([y, coord]) => ({ year: Number(y), coord }))
+      .sort((a, b) => a.year - b.year);
+  }
+  const entries = context.sortedEntries;
+  if (entries.length === 0) return null;
+
+  if (year <= entries[0].year) return entries[0].coord;
+  const last = entries[entries.length - 1];
+  if (year >= last.year) return last.coord;
+
+  for (let index = 1; index < entries.length; index += 1) {
+    const previous = entries[index - 1];
+    const next = entries[index];
+    if (year <= next.year) {
+      const ratio = (year - previous.year) / (next.year - previous.year);
+      return previous.coord + (next.coord - previous.coord) * ratio;
+    }
+  }
+
+  return last.coord;
+}
+
 export function getAnchorTimelineLayout(
   anchors: TimelineAnchorProjection[],
   options: TimelineLayoutOptions,
@@ -113,23 +210,30 @@ export function getAnchorTimelineLayout(
   const positions: Record<string, { x: number; y: number }> = {};
   if (anchors.length === 0) return positions;
 
-  const groupedByYear: Record<number, TimelineAnchorProjection[]> = {};
+  const zoom = options.zoom ?? 1.0;
   const years: number[] = [];
+  const groupedByFracYear: Record<number, TimelineAnchorProjection[]> = {};
+
   for (const anchor of anchors) {
-    years.push(anchor.year);
-    groupedByYear[anchor.year] ??= [];
-    groupedByYear[anchor.year].push(anchor);
+    const quantizedYear = getQuantizedYear(anchor.year, zoom);
+    years.push(quantizedYear);
+    groupedByFracYear[anchor.year] ??= [];
+    groupedByFracYear[anchor.year].push(anchor);
   }
 
   const yearPositions = getSequentialYearPositions(years, options.scale);
   const secondaryAxisOffset = 100;
 
-  for (const [yearValue, yearAnchors] of Object.entries(groupedByYear)) {
-    const year = Number(yearValue);
-    const primaryCoord = yearPositions[year] ?? 0;
-    yearAnchors.forEach((anchor, index) => {
+  for (const [fracYearStr, groupAnchors] of Object.entries(groupedByFracYear)) {
+    const fracYear = Number(fracYearStr);
+    const quantizedYear = getQuantizedYear(fracYear, zoom);
+    const baseCoord = yearPositions[quantizedYear] ?? 0;
+    const fraction = fracYear - quantizedYear;
+    const primaryCoord = baseCoord + fraction * options.scale;
+
+    groupAnchors.forEach((anchor, index) => {
       const jitterCoord =
-        (index - (yearAnchors.length - 1) / 2) * options.jitter;
+        (index - (groupAnchors.length - 1) / 2) * options.jitter;
       const secondaryCoord = jitterCoord + secondaryAxisOffset;
       const key = `${anchor.entityId}::${anchor.anchorId}`;
       positions[key] =
@@ -144,7 +248,8 @@ export function getAnchorTimelineLayout(
 
 /**
  * Calculates positions for a chronological layout.
- * Nodes with identical years are spread along the secondary axis to prevent occlusion.
+ * Nodes with identical exact dates are stacked on top of each other,
+ * while nodes with different dates are spread out.
  */
 export function getTimelineLayout(
   nodes: GraphNode[],
@@ -158,33 +263,45 @@ export function getTimelineLayout(
   if (datedNodes.length === 0) return {};
 
   const getYear = (n: GraphNode) => {
-    return (
-      n.data.date?.year ?? n.data.start_date?.year ?? n.data.end_date?.year ?? 0
-    );
+    const d = n.data.date ?? n.data.start_date ?? n.data.end_date;
+    return getFractionalYear(d) ?? 0;
   };
 
-  // 2. Group by year to handle concurrent events (jitter)
-  const groupedByYear: Record<number, GraphNode[]> = {};
-  const years: number[] = [];
-  for (const node of datedNodes) {
-    const year = getYear(node);
-    years.push(year);
-    if (!groupedByYear[year]) groupedByYear[year] = [];
-    groupedByYear[year].push(node);
-  }
+  const zoom = options.zoom ?? 1.0;
+
+  // 2. Extract quantized years for the sequential mapping
+  const quantizedYears = datedNodes.map((n) =>
+    getQuantizedYear(getYear(n), zoom),
+  );
 
   // 3. Calculate coordinates (Sequential with Gap Compression)
   const yearPositions =
-    options.yearPositions || getSequentialYearPositions(years, options.scale);
-  const secondaryAxisOffset = 100; // Shift nodes away from ruler area
+    options.yearPositions ||
+    getSequentialYearPositions(quantizedYears, options.scale);
 
-  for (const [yearStr, yearNodes] of Object.entries(groupedByYear)) {
-    const year = Number(yearStr);
-    const primaryCoord = yearPositions[year] ?? 0;
+  // Group by exact fractional year to apply jitter (stacking) only to events with the exact same date
+  const groupedByFracYear: Record<number, GraphNode[]> = {};
+  for (const node of datedNodes) {
+    const fracYear = getYear(node);
+    if (!groupedByFracYear[fracYear]) {
+      groupedByFracYear[fracYear] = [];
+    }
+    groupedByFracYear[fracYear].push(node);
+  }
 
-    yearNodes.forEach((node, index) => {
-      // Offset from center for jitter
-      const jitterCoord = (index - (yearNodes.length - 1) / 2) * options.jitter;
+  const secondaryAxisOffset = 100;
+
+  for (const [fracYearStr, groupNodes] of Object.entries(groupedByFracYear)) {
+    const fracYear = Number(fracYearStr);
+    const quantizedYear = getQuantizedYear(fracYear, zoom);
+    const baseCoord = yearPositions[quantizedYear] ?? 0;
+    const fraction = fracYear - quantizedYear;
+    const primaryCoord = baseCoord + fraction * options.scale;
+
+    groupNodes.forEach((node, index) => {
+      // Offset from center for jitter (stacking concurrent events)
+      const jitterCoord =
+        (index - (groupNodes.length - 1) / 2) * options.jitter;
       const secondaryCoord = jitterCoord + secondaryAxisOffset;
 
       if (options.axis === "x") {

@@ -454,6 +454,7 @@
                     entity={activeEntity}
                     {isEditing}
                     {editType}
+                    bind:editDate
                     bind:editContent
                     bind:editLore
                     bind:editStartDate

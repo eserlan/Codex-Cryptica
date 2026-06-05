@@ -114,6 +114,7 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
     editType,
     editContent = $bindable(),
     editLore = $bindable(),
+    editDate = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
     editGuestChatConfig = $bindable(),
@@ -123,6 +124,7 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
     editType: string;
     editContent: string;
     editLore?: string;
+    editDate?: Entity["date"];
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
     editGuestChatConfig?: GuestChatConfig;
@@ -311,18 +313,22 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
   <!-- Temporal Metadata -->
   {#if isEditing}
     <div class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TemporalEditor
-          bind:value={editStartDate}
-          label={getTemporalLabel(editType, "start")}
-          referenceValue={editEndDate}
-        />
-        <TemporalEditor
-          bind:value={editEndDate}
-          label={getTemporalLabel(editType, "end")}
-          referenceValue={editStartDate}
-        />
-      </div>
+      {#if editDate?.year !== undefined || (!editStartDate && !editEndDate)}
+        <TemporalEditor bind:value={editDate} label="Date" />
+      {:else}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TemporalEditor
+            bind:value={editStartDate}
+            label={getTemporalLabel(editType, "start")}
+            referenceValue={editEndDate}
+          />
+          <TemporalEditor
+            bind:value={editEndDate}
+            label={getTemporalLabel(editType, "end")}
+            referenceValue={editStartDate}
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 

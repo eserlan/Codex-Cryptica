@@ -87,6 +87,6 @@ export const initGraph = async (options: GraphOptions) => {
         : 1,
     minZoom: Math.max(0.01, 0.3 - nodeCount * 0.0005),
     maxZoom: 9.0,
-    wheelSensitivity: 1.0,
+    wheelSensitivity: 0.45,
   });
 };
