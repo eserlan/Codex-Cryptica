@@ -69,4 +69,6 @@ The GM stays the author. The Oracle is a very well-read research assistant who h
 
 ---
 
-_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/app) — no account required._
+The GM's most important tool isn't an algorithm — it's data sovereignty.
+
+Codex Cryptica is a local-first campaign and worldbuilding manager. Your notes stay on your machine. Your lore stays yours. [Try it free](/app) — no account required.
