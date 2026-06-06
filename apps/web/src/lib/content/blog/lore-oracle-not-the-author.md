@@ -47,7 +47,7 @@ Codex Cryptica is built differently. The vault is the source of truth. The Oracl
 
 **It does not override canon.** If you've established that resurrection is impossible in your setting, it won't casually suggest the party raise a dead king.
 
-**It does not silently add facts.** Generated material starts as a draft, not canon. You can accept it, rewrite it, or discard it. Codex Cryptica treats AI contamination as a design problem, not an edge case.
+**It does not silently add facts.** Generated material starts as a draft, not canon. You can accept it, rewrite it, or discard it. Codex Cryptica treats canon contamination as a design problem, not an edge case.
 
 **It does not replace judgement.** The Oracle doesn't know what your players find interesting, what tone you're going for this arc, or what trade-offs you've already made in your setting's design. You do.
 
@@ -67,6 +67,8 @@ The Oracle is designed to distinguish between vault canon and its own suggestion
 
 Codex Cryptica is a local-first campaign and worldbuilding manager. Your vault stays on your machine by default. When you use the Oracle, only the context needed for your request is sent to the configured AI provider — Codex Cryptica does not host your vault or index it publicly.
 
-Your lore stays yours. Your canon stays yours. The Oracle is there to help your world answer back.
+Your lore stays yours. Your canon stays yours. The Oracle is there to help you navigate what you have already built.
 
 [Try it free](/app) — no account required.
+
+_Ready to bring your lore home?_
