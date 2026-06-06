@@ -35,9 +35,9 @@ Codex Cryptica is built differently. The vault is the source of truth. The Oracl
 
 **Cross-referencing your history.** Ask which factions haven't appeared in sessions for months. Ask what was established about a location you're returning to. The Oracle is designed to ground answers in your vault rather than inventing context.
 
-**Flagging gaps and contradictions.** If your notes say a city was destroyed in session 4 and a character references visiting it in session 12, that's worth knowing. Pattern-finding across a large archive is exactly the kind of task that exhausts human attention and costs the Oracle nothing.
+**Flagging gaps and contradictions.** If your notes say a city was destroyed in session 4 and a character references visiting it in session 12, that's worth knowing. Pattern-finding across a large archive is exactly the kind of task that exhausts human attention and suits the Oracle well.
 
-**Surfacing hidden connections.** Ask what connects a minor NPC to the main antagonist, drawing only from what's already in your world. The answer surfaces lore you wrote and forgot, not lore the model fabricated.
+**Surfacing hidden connections.** Ask what connects a minor NPC to the main antagonist, drawing only from what's already in your world. The goal is to surface lore you wrote and forgot, not invent a new answer over the top of it.
 
 **Drafting, not deciding.** Ask the Oracle to propose three possible motivations for an underdeveloped faction. Those proposals are marked as suggestions — draft material that doesn't touch your canon until you accept it. You pick one, discard the rest, or write something better.
 
@@ -65,4 +65,8 @@ The Oracle is designed to distinguish between vault canon and its own suggestion
 
 ---
 
-Codex Cryptica is a local-first campaign and worldbuilding manager. Your vault stays on your machine by default. When you use the Oracle, only the context needed for your request is sent to the configured AI provider — Codex Cryptica does not host your vault or index it publicly. [Try it free](/app) — no account required.
+Codex Cryptica is a local-first campaign and worldbuilding manager. Your vault stays on your machine by default. When you use the Oracle, only the context needed for your request is sent to the configured AI provider — Codex Cryptica does not host your vault or index it publicly.
+
+Your lore stays yours. Your canon stays yours. The Oracle is there to help your world answer back.
+
+[Try it free](/app) — no account required.
