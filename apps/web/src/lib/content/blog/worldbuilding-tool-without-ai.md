@@ -26,70 +26,58 @@ Codex Cryptica does not work that way. If you disable the Lore Oracle entirely, 
 
 Codex Cryptica is built around a local vault — a structured archive of your campaign world. That archive has real functionality regardless of whether AI is involved:
 
-- **Knowledge graph.** Your entities, locations, factions, NPCs, and events connect into an interactive graph. You can see at a glance how your world is linked, find orphaned nodes, and trace relationships across the setting.
+- **Knowledge graph.** Your entities, locations, factions, NPCs, and events connect into an interactive graph. See how your world links together, find orphaned nodes, and trace relationships across the setting.
 - **Entity archive.** Every person, place, faction, or concept gets its own structured entry. Search, filter, and link them however your world requires.
 - **Timeline and session log.** Track what happened, when, and to whom. Prepare for next session by reading what you actually established last time.
-- **Local-first storage.** Your vault lives on your device as plain files. No cloud account required. No subscription controls access. No server goes down and takes your campaign with it.
-- **Offline access.** Prep at the table, on a plane, in a cabin with no signal. Everything works the same.
+- **Local-first storage.** Your vault lives on your device. No cloud account required. No subscription controls access.
+- **Offline access.** Prep at the table, on a plane, or in a cabin with no signal. The core vault remains available.
 
 None of that requires the Lore Oracle. None of it calls out to a model provider. It is just your world, organised.
 
-## Why AI-optional matters
+## What disabling the Oracle removes — and what it doesn't
+
+| With AI off, you lose | You keep |
+|---|---|
+| AI-assisted entity drafting | The archive |
+| Vault-aware Q&A | The knowledge graph |
+| Context-aware prep suggestions | The timeline and session log |
+| | Search and imports |
+| | Local storage and offline access |
+
+**The product is smaller with AI off. It is not broken.**
+
+## Why AI-optional matters for long-running campaigns
 
 Forcing AI into a worldbuilding tool creates a dependency you did not agree to.
 
-If the Oracle is required for basic workflow, then your campaign prep is now contingent on an API key staying valid, a model provider not changing their terms, or a subscription tier continuing to exist. That is a lot of exposure for something as personal as a multi-year campaign.
+If the Oracle were required for basic workflow, your campaign prep would be contingent on an API key staying valid, a model provider not changing their terms, or a subscription tier continuing to exist. That is a lot of exposure for a multi-year campaign.
 
-The stronger position is that AI earns its place by being useful, not by being mandatory. If the Lore Oracle helps you prep faster, great. If you prefer to write everything yourself, the tool should not punish that preference or make itself awkward to use without AI enabled.
+AI earns its place by being useful, not by being mandatory. If the Lore Oracle helps you prep faster, great. If you prefer to write everything yourself, the tool should not punish that or make itself awkward without AI enabled.
 
-## What disabling AI actually looks like
-
-Turning off the Lore Oracle in Codex Cryptica removes:
-
-- AI-assisted entity drafting
-- vault-aware question answering
-- context-aware suggestions during prep
-
-What it does not remove: the archive, the graph, the timeline, the session log, the import tools, the local vault, offline access, or any navigation and search functionality.
-
-The product is smaller with AI off. It is not broken.
-
-## Local-first is the other half of the argument
-
-AI-optional and local-first are connected ideas.
-
-A cloud-dependent worldbuilding tool has a similar problem: your world exists on someone else's infrastructure, behind someone else's pricing decision, accessible only while their servers are up. Local-first is the commitment that your world belongs to you regardless of what happens to the product or company behind it.
-
-Codex Cryptica stores your vault as files on your own device. You can back them up, move them, read them in any text editor, and continue using them long after any particular software version has come and gone.
-
-AI assistance is an optional layer on top of that foundation. It does not replace it. It does not own it.
-
-## The way AI should be introduced into a tool
-
-The correct order is:
+## The correct order: tool first, AI second
 
 1. Build a useful tool that solves a real problem.
 2. Add AI as an optional layer that makes the tool faster or more capable.
 3. Make sure disabling AI still leaves a complete product.
 
-If AI comes first — if the pitch is "AI generates your campaign" and the structured archive is an afterthought — you get a different kind of product. One that is impressive in demos and unreliable in long-running campaigns where consistency, memory, and canon control matter most.
+If AI comes first — if the pitch is "AI generates your campaign" and the structured archive is an afterthought — you get a product that is impressive in demos and unreliable in long-running campaigns where consistency, memory, and canon control matter most.
 
 Codex Cryptica was built starting from step one. The Lore Oracle came later, and it works from the archive you already built. That order matters.
 
 ---
 
-_This article is part of the Codex Cryptica responsible AI series._
+Ready for a worldbuilding tool that still works without AI? Build your vault. Use the Oracle when it helps. Turn it off when it doesn't.
 
-**Responsible AI in Codex Cryptica:**
-
-- [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-- **A Worldbuilding Tool Should Still Work Without AI** _(this article)_
-- Why Worldbuilding AI Should Know Your Lore Before It Speaks _(coming soon)_
-- Drafts Are Not Canon _(coming soon)_
-- Six Ways to Use AI in Campaign Prep Without Losing Your Voice _(coming soon)_
-- AI Slop Happens When the Tool Has No Memory _(coming soon)_
-- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
+[Try it free](/) — no account required.
 
 ---
 
-_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/) — no account required._
+_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
+
+1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
+2. **A Worldbuilding Tool Should Still Work Without AI** _(this article)_
+3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
+4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
+5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
+6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
+7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
