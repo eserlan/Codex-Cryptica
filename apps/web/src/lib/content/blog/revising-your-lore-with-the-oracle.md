@@ -42,9 +42,9 @@ The key is specificity. The more precisely you describe what changed and what to
 
 Good revision prompts usually include three things:
 
-1. What changed
-2. What must stay the same
-3. What tone or perspective the entry should now use
+- What changed
+- What must stay the same
+- What tone or perspective the entry should now use
 
 Vague:
 
@@ -80,7 +80,7 @@ The longer a campaign runs, the more your vault accumulates entries that were ac
 
 Using revision as a regular habit — after major arcs, after session events that change established facts, after player decisions that shift relationships — keeps the archive reflective of the actual current state of your world rather than the state it was in six months ago.
 
-The Oracle handles the mechanical rewrite. You handle the judgment. The vault stays honest.
+The Oracle handles the mechanical rewrite. You handle the judgement. The vault stays honest.
 
 ---
 
