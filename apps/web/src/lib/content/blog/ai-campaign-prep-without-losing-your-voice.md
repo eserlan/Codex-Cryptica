@@ -89,9 +89,6 @@ _This article is part of the Codex Cryptica responsible AI series._
 - [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
 - [Drafts Are Not Canon](/blog/drafts-are-not-canon)
 - **Six Ways to Use AI in Campaign Prep Without Losing Your Voice** _(this article)_
-- AI Slop Happens When the Tool Has No Memory _(coming soon)_
+- [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
 - [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
 
----
-
-_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/) — no account required._

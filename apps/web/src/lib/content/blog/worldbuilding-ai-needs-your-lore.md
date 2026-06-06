@@ -89,11 +89,8 @@ _This article is part of the Codex Cryptica responsible AI series._
 - [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
 - [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
 - **Why Worldbuilding AI Should Know Your Lore Before It Speaks** _(this article)_
-- Drafts Are Not Canon _(coming soon)_
-- Six Ways to Use AI in Campaign Prep Without Losing Your Voice _(coming soon)_
-- AI Slop Happens When the Tool Has No Memory _(coming soon)_
+- [Drafts Are Not Canon](/blog/drafts-are-not-canon)
+- [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
+- [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
 - [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
 
----
-
-_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/) — no account required._
