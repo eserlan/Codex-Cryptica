@@ -28,7 +28,8 @@ You know the notes. Half-sentences. Abbreviations only you understand. A name sc
 
 Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft. You trim it, correct anything the Oracle misread, and file it in the session log.
 
-What you save: thirty minutes of post-session admin. What you keep: the judgment call about which details matter.
+**What you save:** thirty minutes of post-session admin.
+**What you keep:** the judgement call about which details matter.
 
 ## 2. Expand a minor NPC from three lines of notes
 
@@ -36,7 +37,8 @@ You have a throwaway NPC who unexpectedly became interesting. The players spent 
 
 Ask the Oracle to expand him using what is already in your vault — his district, its controlling faction, the recent events that would have shaped someone in his position. The Oracle drafts an entry: background, motivation, potential role. You edit it, cut what does not fit, and accept what does.
 
-What you save: the cold-start problem of building from nothing. What you keep: the final version of who he actually is.
+**What you save:** the cold-start problem of building from nothing.
+**What you keep:** the final version of who he actually is.
 
 ## 3. Generate names that fit your world's conventions
 
@@ -44,7 +46,8 @@ Generic fantasy names are one of the fastest ways to break immersion. If your se
 
 Give the Oracle examples of existing names in your vault and ask for variants. It works from the pattern rather than from a default fantasy name list. You still choose the one that sounds right, but the options are grounded in your world rather than pulled from nowhere.
 
-What you save: the twenty minutes of trying to invent a name that sounds like it belongs. What you keep: the final choice.
+**What you save:** the twenty minutes of trying to invent a name that sounds like it belongs.
+**What you keep:** the final choice.
 
 ## 4. Surface unresolved threads across your session log
 
@@ -52,7 +55,8 @@ Long campaigns accumulate loose ends. A contact who was promised a favour. A rum
 
 Ask the Oracle to scan your session log and surface threads that appear to be unresolved. It cannot tell you which ones matter — that is your call — but it can pull them out of a log that is now forty sessions long and impossible to read end-to-end before every prep.
 
-What you save: the archaeology of reading back through everything. What you keep: the decision about which threads are worth picking up.
+**What you save:** the archaeology of reading back through everything.
+**What you keep:** the decision about which threads are worth picking up.
 
 ## 5. Turn saved entities into art prompts
 
@@ -60,19 +64,25 @@ You want a reference image for a faction's headquarters, a key NPC, or a locatio
 
 Ask the Oracle to draft a prompt using the entity's saved description, its faction ties, its regional context, and any visual details already in the notes. The prompt comes out specific rather than generic because it is drawing from your vault rather than from whatever the model defaults to.
 
-What you save: the translation work of turning notes into a prompt. What you keep: your world's visual logic.
+**What you save:** the translation work of turning notes into a prompt.
+**What you keep:** your world's visual logic.
 
 ## 6. Revise an existing entry with specific corrections
 
 The Oracle is not just for generating from scratch. You can hand it an existing entity entry and tell it what to change.
 
-"This NPC's motivation needs to shift after the events of session 22 — update accordingly." "This faction description is accurate but the tone is wrong — rewrite it harder and more paranoid." "Add a flaw. Keep everything else."
+Examples:
+
+- "This NPC's motivation needs to shift after the events of session 22 — update accordingly."
+- "This faction description is accurate but the tone is wrong — rewrite it harder and more paranoid."
+- "Add a flaw. Keep everything else."
 
 The Oracle revises the entry as a draft. You review what changed, accept the parts that landed, and discard what did not. Your existing lore stays intact until you decide otherwise. You are directing an edit, not handing over authorship.
 
 This is particularly useful when a campaign event changes something established — a character's allegiance shifts, a location is destroyed, a secret is revealed. Rather than rewriting the whole entry yourself, you describe what changed and let the Oracle produce a starting point.
 
-What you save: the friction of rewriting established lore after campaign events. What you keep: control over what changes, what stays, and what becomes canon.
+**What you save:** the friction of rewriting established lore after campaign events.
+**What you keep:** control over what changes, what stays, and what becomes canon.
 
 ---
 
