@@ -36,13 +36,19 @@ None of that requires the Lore Oracle. None of it calls out to a model provider.
 
 ## What disabling the Oracle removes — and what it doesn't
 
-| With AI off, you lose | You keep |
-|---|---|
-| AI-assisted entity drafting | The archive |
-| Vault-aware Q&A | The knowledge graph |
-| Context-aware prep suggestions | The timeline and session log |
-| | Search and imports |
-| | Local storage and offline access |
+With AI off, you lose:
+
+- AI-assisted entity drafting
+- Vault-aware Q&A
+- Context-aware prep suggestions
+
+You keep:
+
+- The archive
+- The knowledge graph
+- The timeline and session log
+- Search and imports
+- Local storage and offline access
 
 **The product is smaller with AI off. It is not broken.**
 
@@ -66,9 +72,11 @@ Codex Cryptica was built starting from step one. The Lore Oracle came later, and
 
 ---
 
-Ready for a worldbuilding tool that still works without AI? Build your vault. Use the Oracle when it helps. Turn it off when it doesn't.
+Ready for a worldbuilding tool that still works without AI?
 
-[Try it free](/) — no account required.
+Build your vault. Use the Oracle when it helps. Turn it off when it doesn't.
+
+[Enter the Codex](/) — no account required.
 
 ---
 
