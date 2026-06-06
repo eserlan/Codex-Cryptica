@@ -90,7 +90,7 @@ _This article is part of the Codex Cryptica responsible AI series._
 - [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
 - **Why Worldbuilding AI Should Know Your Lore Before It Speaks** _(this article)_
 - Drafts Are Not Canon _(coming soon)_
-- Five Ways to Use AI in Campaign Prep Without Losing Your Voice _(coming soon)_
+- Six Ways to Use AI in Campaign Prep Without Losing Your Voice _(coming soon)_
 - AI Slop Happens When the Tool Has No Memory _(coming soon)_
 
 ---

@@ -1,7 +1,7 @@
 ---
 id: ai-campaign-prep-without-losing-your-voice
 slug: ai-campaign-prep-without-losing-your-voice
-title: "Five Ways to Use AI in Campaign Prep Without Losing Your Voice"
+title: "Six Ways to Use AI in Campaign Prep Without Losing Your Voice"
 description: "Practical AI use cases for GMs that save time without replacing creative judgement. Each one works from your existing lore, not from a blank prompt."
 keywords:
   [
@@ -16,13 +16,13 @@ keywords:
 publishedAt: 2026-06-06T18:00:00Z
 ---
 
-# Five Ways to Use AI in Campaign Prep Without Losing Your Voice
+# Six Ways to Use AI in Campaign Prep Without Losing Your Voice
 
 AI is most useful in campaign prep when it handles the work that slows you down without touching the work that defines your world.
 
 The distinction matters. Summarising last session's notes is overhead. Deciding what the villain wants is creative. AI belongs in the first category. The second one stays yours.
 
-Here are five uses that consistently deliver without getting in the way.
+Here are six uses that consistently deliver without getting in the way.
 
 ## 1. Turn messy session notes into a clean recap
 
@@ -64,6 +64,16 @@ Ask the Oracle to draft a prompt using the entity's saved description, its facti
 
 What you save: the translation work of turning notes into a prompt. What you keep: your world's visual logic.
 
+## 6. Revise an existing entry with specific corrections
+
+The Oracle is not just for generating from scratch. You can hand it an existing entity entry and tell it what to change.
+
+"This NPC's motivation needs to shift after the events of session 22 — update accordingly." "This faction description is accurate but the tone is wrong — rewrite it harder and more paranoid." "Add a flaw. Keep everything else."
+
+The Oracle revises the entry as a draft. You review what changed, accept the parts that landed, and discard what did not. Your existing lore stays intact until you decide otherwise. You are directing an edit, not handing over authorship.
+
+This is particularly useful when a campaign event changes something established — a character's allegiance shifts, a location is destroyed, a secret is revealed. Rather than rewriting the whole entry yourself, you describe what changed and let the Oracle produce a starting point.
+
 ---
 
 None of these replace the creative decisions. They reduce the friction around them. The session still needs a plot. The NPC still needs a reason to matter. The names still need to feel right to you. The Oracle handles the overhead. The authorship stays where it belongs.
@@ -78,7 +88,7 @@ _This article is part of the Codex Cryptica responsible AI series._
 - [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
 - [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
 - [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-- **Five Ways to Use AI in Campaign Prep Without Losing Your Voice** _(this article)_
+- **Six Ways to Use AI in Campaign Prep Without Losing Your Voice** _(this article)_
 - AI Slop Happens When the Tool Has No Memory _(coming soon)_
 
 ---
