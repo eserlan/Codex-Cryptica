@@ -1,0 +1,55 @@
+name: Deploy Blog Content
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web/src/lib/content/blog/**'
+      - 'scripts/publish-blog-content.mjs'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Generate blog output
+        run: node scripts/publish-blog-content.mjs --out /tmp/blog-out
+        working-directory: apps/web
+
+      - name: Publish to blog-content branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin blog-content 2>/dev/null || true
+
+          # Check out or create the blog-content branch in a worktree
+          if git ls-remote --exit-code origin blog-content; then
+            git worktree add /tmp/blog-branch blog-content
+          else
+            git worktree add --orphan -b blog-content /tmp/blog-branch
+          fi
+
+          # Sync blog files
+          rm -f /tmp/blog-branch/blog/*.md /tmp/blog-branch/blog/index.json
+          mkdir -p /tmp/blog-branch/blog
+          cp /tmp/blog-out/*.md /tmp/blog-branch/blog/
+          cp /tmp/blog-out/index.json /tmp/blog-branch/blog/
+
+          cd /tmp/blog-branch
+          git add blog/
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git commit --no-verify -m "chore: publish blog content [skip ci]"
+          git push origin blog-content
