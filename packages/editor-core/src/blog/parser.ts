@@ -78,6 +78,13 @@ export function parseBlogArticle(
     const finalPublishedAt =
       publishedAt instanceof Date ? publishedAt.toISOString() : publishedAt;
 
+    const cta =
+      metadata.cta &&
+      typeof metadata.cta.heading === "string" &&
+      typeof metadata.cta.subheading === "string"
+        ? { heading: metadata.cta.heading, subheading: metadata.cta.subheading }
+        : undefined;
+
     return {
       id: String(metadata.id),
       slug: String(metadata.slug),
@@ -86,6 +93,7 @@ export function parseBlogArticle(
       keywords,
       publishedAt: finalPublishedAt,
       content,
+      ...(cta ? { cta } : {}),
     };
   } catch (e) {
     console.error(`Failed to parse frontmatter for ${path}:`, e);

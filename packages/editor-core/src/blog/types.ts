@@ -6,6 +6,7 @@ export interface BlogArticle {
   keywords: string[];
   publishedAt: string;
   content: string; // Raw Markdown
+  cta?: { heading: string; subheading: string };
 }
 
 export interface BlogIndexItem {
