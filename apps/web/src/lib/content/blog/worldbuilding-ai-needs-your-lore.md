@@ -16,8 +16,6 @@ keywords:
 publishedAt: 2026-06-06T14:00:00Z
 ---
 
-# Why Worldbuilding AI Should Know Your Lore Before It Speaks
-
 Ask most AI tools to generate a tavern and you get the same tavern. Creaking floorboards. A grizzled barkeep. Suspicious strangers in the corner. It is competent and forgettable.
 
 The problem is not that the prose is bad. The problem is that the AI has no idea where it is. It does not know what city this tavern is in, who controls it, what happened there last session, or what the players are likely to discover when they walk through the door.
@@ -46,7 +44,7 @@ versus:
 
 The second version does not need the AI to be smarter. It just needs the AI to work from what already exists. The output stays consistent with your world because your world is in the prompt.
 
-The Lore Oracle in Codex Cryptica works this way. When you ask it a question or request a draft, it pulls from your vault — your entities, your factions, your session log, your established relationships. The context is not something you have to manually assemble every time. It is already there because you built it — including every entry about Velundra, the Ashward district, and the Iron Covenant.
+The Lore Oracle in Codex Cryptica works this way. When you ask it a question or request a draft, it pulls from your vault — your entities, your factions, your session log, your established relationships. The context is not something you have to manually assemble every time. It is already there because you built it — including relevant entries about Velundra, the Ashward district, and the Iron Covenant.
 
 ## What the vault provides
 
@@ -56,7 +54,9 @@ Every piece of structured lore you add to Codex Cryptica becomes context the Ora
 - **Relationships.** Explicit links between entities — allies, rivals, locations, histories.
 - **Session log.** What actually happened, in the order it happened.
 - **Timeline.** When events occurred relative to each other and to the current moment.
-- **Custom notes.** Unstructured text, hidden scratchpads, and scratch notes that map out your raw thoughts.
+- **Custom notes.** Unstructured notes, GM-only scratchpads, and rough ideas can provide context when you choose to include them.
+
+Vault-aware does not mean the whole vault is blindly dumped into every request. The Oracle retrieves relevant context for the task, then treats the result as a draft for you to review.
 
 Ask the Oracle to suggest what a minor faction might want from the players, and it can read who that faction is, who leads it, what it has done in past sessions, and what its rivals are doing. The suggestion comes from your world, not from a generic template.
 
