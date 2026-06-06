@@ -15,8 +15,6 @@ keywords:
 publishedAt: 2026-06-06T16:00:00Z
 ---
 
-# Drafts Are Not Canon
-
 The worst thing an AI worldbuilding tool can do is quietly become the author.
 
 It happens gradually. The AI suggests a name. You use it. It suggests a location detail. You leave it in. It invents a faction backstory that sounds plausible. Three sessions later you are running a campaign partially written by a model that has no memory of what it already generated.
@@ -31,12 +29,10 @@ When the Lore Oracle generates something — a character summary, a faction moti
 
 This is the distinction that matters:
 
-| Type                 | What it is                                         |
-| -------------------- | -------------------------------------------------- |
-| **Canon**            | Saved world facts created or accepted by you       |
-| **Draft**            | AI-generated material not yet reviewed or accepted |
-| **Oracle inference** | A suggested interpretation based on existing lore  |
-| **Loose idea**       | Brainstorming material with no claim on the world  |
+- **Canon.** Saved world facts created or accepted by you.
+- **Draft.** AI-generated material not yet reviewed or accepted.
+- **Oracle inference.** A suggested interpretation based on existing lore.
+- **Loose idea.** Brainstorming material with no claim on the world.
 
 A draft can be useful. It can surface something you had not considered, or give you a starting point you improve on. But it does not become real until you make it real.
 
@@ -76,14 +72,12 @@ Codex Cryptica is built around the first model. The Oracle suggests. You decide.
 
 ---
 
-_This article is part of the Codex Cryptica responsible AI series._
+_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
 
-**Responsible AI in Codex Cryptica:**
-
-- [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-- [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-- [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-- **Drafts Are Not Canon** _(this article)_
-- [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-- [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
+1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
+2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
+3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
+4. **Drafts Are Not Canon** _(this article)_
+5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
+6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
+7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
