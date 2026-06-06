@@ -28,7 +28,7 @@ You know the notes. Half-sentences. Abbreviations only you understand. A name sc
 
 Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft. You trim it, correct anything the Oracle misread, and file it in the session log.
 
-What you save: thirty minutes of post-session admin. What you keep: the judgment call about which details matter.
+What you save: thirty minutes of post-session admin. What you keep: the judgement call about which details matter.
 
 ## 2. Expand a minor NPC from three lines of notes
 
@@ -66,7 +66,11 @@ What you save: the translation work of turning notes into a prompt. What you kee
 
 The Oracle is not just for generating from scratch. You can hand it an existing entity entry and tell it what to change.
 
-"This NPC's motivation needs to shift after the events of session 22 — update accordingly." "This faction description is accurate but the tone is wrong — rewrite it harder and more paranoid." "Add a flaw. Keep everything else."
+Examples:
+
+- "This NPC's motivation needs to shift after the events of session 22 — update accordingly."
+- "This faction description is accurate but the tone is wrong — rewrite it harder and more paranoid."
+- "Add a flaw. Keep everything else."
 
 The Oracle revises the entry as a draft. You review what changed, accept the parts that landed, and discard what did not. Your existing lore stays intact until you decide otherwise. You are directing an edit, not handing over authorship.
 
