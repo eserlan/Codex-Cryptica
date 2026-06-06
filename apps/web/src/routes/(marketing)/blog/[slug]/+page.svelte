@@ -69,14 +69,17 @@
     </main>
 
     <footer class="pt-12 border-t border-theme-border">
-      <div class="flex flex-wrap gap-2">
-        {#each article.keywords as keyword}
-          <span
-            class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted uppercase tracking-wider"
-          >
-            #{keyword.replace(/\s+/g, "-").toLowerCase()}
-          </span>
-        {/each}
+      <div>
+        <p class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-3">Topics</p>
+        <div class="flex flex-wrap gap-2">
+          {#each article.keywords.slice(0, 6) as keyword}
+            <span
+              class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted tracking-wider"
+            >
+              {keyword.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            </span>
+          {/each}
+        </div>
       </div>
 
       <div
@@ -86,10 +89,10 @@
           <h3
             class="text-lg font-header font-bold uppercase tracking-widest mb-2"
           >
-            Ready to secure your lore?
+            Ready to bring your lore home?
           </h3>
           <p class="text-sm text-theme-muted">
-            The GM's most important tool is data sovereignty.
+            Local-first. Your vault stays yours.
           </p>
         </div>
         <a
