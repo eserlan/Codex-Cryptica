@@ -1,4 +1,9 @@
-import { solutions, comparisons, featuresConfig, importsConfig } from "$lib/config/seo-pages";
+import {
+  solutions,
+  comparisons,
+  featuresConfig,
+  importsConfig,
+} from "$lib/config/seo-pages";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 export const prerender = true;
