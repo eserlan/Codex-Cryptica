@@ -16,11 +16,9 @@ keywords:
 publishedAt: 2026-06-06T18:00:00Z
 ---
 
-# Six Ways to Use AI in Campaign Prep Without Losing Your Voice
-
 AI is most useful in campaign prep when it handles the work that slows you down without touching the work that defines your world.
 
-The distinction matters. Summarising last session's notes is overhead. Deciding what the villain wants is creative. AI belongs in the first category. The second one stays yours.
+The distinction matters. Summarising last session's notes is overhead. Deciding what the villain wants is creative. AI belongs in the first category. The second stays yours.
 
 Here are six uses that consistently deliver without getting in the way.
 
@@ -28,7 +26,7 @@ Here are six uses that consistently deliver without getting in the way.
 
 You know the notes. Half-sentences. Abbreviations only you understand. A name scrawled in the margin with no context. After a long session the last thing you want to do is rewrite them into something readable.
 
-Give the Lore Oracle your raw notes and ask for a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft. You trim it, correct anything the Oracle misread, and file it in the session log.
+Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft. You trim it, correct anything the Oracle misread, and file it in the session log.
 
 What you save: thirty minutes of post-session admin. What you keep: the judgment call about which details matter.
 
@@ -56,7 +54,7 @@ Ask the Oracle to scan your session log and surface threads that appear to be un
 
 What you save: the archaeology of reading back through everything. What you keep: the decision about which threads are worth picking up.
 
-## 5. Build art prompts from saved entities
+## 5. Turn saved entities into art prompts
 
 You want a reference image for a faction's headquarters, a key NPC, or a location the players are about to reach. The problem with writing art prompts from scratch is that they tend to drift toward generic — you describe what you imagine, but the specific details that make it yours get vague.
 
@@ -74,20 +72,20 @@ The Oracle revises the entry as a draft. You review what changed, accept the par
 
 This is particularly useful when a campaign event changes something established — a character's allegiance shifts, a location is destroyed, a secret is revealed. Rather than rewriting the whole entry yourself, you describe what changed and let the Oracle produce a starting point.
 
+What you save: the friction of rewriting established lore after campaign events. What you keep: control over what changes, what stays, and what becomes canon.
+
 ---
 
 None of these replace the creative decisions. They reduce the friction around them. The session still needs a plot. The NPC still needs a reason to matter. The names still need to feel right to you. The Oracle handles the overhead. The authorship stays where it belongs.
 
 ---
 
-_This article is part of the Codex Cryptica responsible AI series._
+_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
 
-**Responsible AI in Codex Cryptica:**
-
-- [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-- [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-- [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-- [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-- **Six Ways to Use AI in Campaign Prep Without Losing Your Voice** _(this article)_
-- [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
+1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
+2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
+3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
+4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
+5. **Six Ways to Use AI in Campaign Prep Without Losing Your Voice** _(this article)_
+6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
+7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
