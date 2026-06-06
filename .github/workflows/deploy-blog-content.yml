@@ -1,24 +1,41 @@
 name: Deploy Blog Content
 
+# Publishing flow for blog articles authored on the `blog` branch.
+#
+#   1. publish-cdn      → updates the `blog-content` branch (fast path for the in-app viewer)
+#   2. deploy-production → builds the app from `main` (production app-of-record) with the
+#                          blog articles overlaid, prerendering them to real static HTML,
+#                          then deploys straight to Cloudflare Pages.
+#
+# The build intentionally does NOT set VITE_BLOG_CONTENT_BASE_URL, so blog pages are
+# prerendered deterministically from the overlaid local files (no CDN cache races). The
+# output is real static, SEO/LLM-crawlable HTML — no manual merge, no promote-to-prod.
+#
+# Building from `main` keeps stacked staging features out of a blog release.
+
 on:
   push:
     branches: ["blog"]
     paths:
       - "apps/web/src/lib/content/blog/**"
-      - "scripts/publish-blog-content.mjs"
-      - ".github/workflows/deploy-blog-content.yml"
   workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Cloudflare Pages branch (main = PRODUCTION, anything else = a preview deploy)"
+        required: false
+        default: "blog-preview"
 
 concurrency:
-  group: blog-content
+  group: blog-deploy
   cancel-in-progress: true
 
 permissions:
   contents: write
-  actions: write
+  deployments: write
 
 jobs:
-  publish:
+  publish-cdn:
+    name: Publish to CDN branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -47,7 +64,6 @@ jobs:
         run: bun scripts/publish-blog-content.mjs
 
       - name: Commit and Push Blog Branch
-        id: commit_step
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: 0
@@ -58,16 +74,67 @@ jobs:
           git add blog
           if git diff --cached --quiet; then
             echo "No blog content changes to publish."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit --no-verify -m "📝 Update blog content"
           git push --no-verify --force-with-lease origin blog-content
-          echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Trigger Main App Deployment
-        if: steps.commit_step.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  deploy-production:
+    name: Prerender and deploy
+    needs: publish-cdn
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout main (production app-of-record)
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Overlay blog articles from the blog branch
         run: |
-          gh workflow run deploy.yml --ref main
+          git fetch origin blog
+          git checkout origin/blog -- apps/web/src/lib/content/blog/
+          echo "Blog articles overlaid onto main:"
+          ls -1 apps/web/src/lib/content/blog/
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Bun cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Application
+        # VITE_BLOG_CONTENT_BASE_URL is intentionally omitted so blog pages prerender
+        # from the overlaid local files (deterministic — no raw.githubusercontent cache races).
+        env:
+          VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
+          VITE_ROBOTS_DIRECTIVE: "index, follow"
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: bun run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/web/build --project-name=codex-cryptica --branch=${{ github.event_name == 'push' && 'main' || inputs.target_branch }}
