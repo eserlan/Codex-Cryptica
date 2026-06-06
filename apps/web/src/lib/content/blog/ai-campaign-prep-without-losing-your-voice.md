@@ -5,13 +5,12 @@ title: "Six Ways to Use AI in Campaign Prep Without Losing Your Voice"
 description: "Practical AI use cases for GMs that save time without replacing creative judgement. Each one works from your existing lore, not from a blank prompt."
 keywords:
   [
-    "AI campaign prep RPG",
+    "AI campaign prep",
     "AI for game masters",
     "RPG prep AI tools",
     "AI worldbuilding assistant",
     "campaign prep tips",
     "AI session prep",
-    "GM productivity AI",
   ]
 publishedAt: 2026-06-06T18:00:00Z
 ---
