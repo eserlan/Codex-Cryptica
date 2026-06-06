@@ -69,6 +69,6 @@ Codex Cryptica is a local-first campaign and worldbuilding manager. Your vault s
 
 Your lore stays yours. Your canon stays yours. The Oracle is there to help you navigate what you have already built.
 
-[Try it free](/app) — no account required.
+[Try it free](/) — no account required.
 
 _Ready to bring your lore home?_

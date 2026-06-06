@@ -90,4 +90,4 @@ _This article is part of the Codex Cryptica responsible AI series._
 
 ---
 
-_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/app) — no account required._
+_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/) — no account required._
