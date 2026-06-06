@@ -328,6 +328,32 @@
       : null,
   );
 
+  const softwareApplicationSchema = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: "Codex Cryptica",
+      applicationCategory: "GameApplication",
+      operatingSystem: "Web",
+      url: pageUrl,
+      description: pageData.description,
+      mainEntity:
+        pageData.faq && pageData.faq.length > 0
+          ? {
+              "@type": "FAQPage",
+              mainEntity: pageData.faq.map((f) => ({
+                "@type": "Question",
+                name: f.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: f.answer,
+                },
+              })),
+            }
+          : undefined,
+    }),
+  );
+
   // Breadcrumb Schema
   const breadcrumbSchema = $derived(
     safeJsonLd({
@@ -343,6 +369,12 @@
         {
           "@type": "ListItem",
           position: 2,
+          name: "Import",
+          item: "https://codexcryptica.com/import",
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
           name: pageData.h1,
           item: pageUrl,
         },
@@ -361,6 +393,10 @@
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html `<scr` + `ipt type="application/ld+json">${faqSchema}</scr` + `ipt>`}
   {/if}
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${softwareApplicationSchema}</scr` +
+    `ipt>`}
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${breadcrumbSchema}</scr` +
@@ -696,6 +732,10 @@
         <a
           href="{base}/privacy"
           class="hover:text-theme-primary transition-colors">Privacy</a
+        >
+        <a
+          href="{base}/tools"
+          class="hover:text-theme-primary transition-colors">Tools</a
         >
         <a
           href="{base}/sitemap.xml"

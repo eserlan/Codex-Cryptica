@@ -56,6 +56,19 @@
         "Clicking 'Save to Codex' stores the clan draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
     },
   ];
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
+  const initialDraft: GeneratorOutput = {
+    type: "faction",
+    title: "House of Thorn",
+    summary:
+      "An aristocratic lineage of gothic vampires controlling the local banking system.",
+    content:
+      "### Heritage\nAristocratic bloodline with feeding habits centered around the upper-class elite.\n\n### Clan Weakness\nExtremely vulnerable to silver and holy ground, causing severe degradation of power.",
+    lore: "",
+    labels: ["rpg-faction", "Vampire", "Aristocratic"],
+    status: "draft",
+  };
 </script>
 
 <SEOGeneratorLayout
@@ -69,6 +82,7 @@
   {relatedLinks}
   {faqs}
   {generate}
+  {initialDraft}
 >
   {#snippet formFields(trigger)}
     <VampireFormFields
