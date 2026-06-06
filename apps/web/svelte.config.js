@@ -48,6 +48,8 @@ const config = {
       handleHttpError: ({ path, message }) => {
         // Ignore static assets/metadata files that return 404 during local crawling
         if (
+          path === "/app" ||
+          path.startsWith("/app/") ||
           path.endsWith("/llms.txt") ||
           path.endsWith("/favicon.png") ||
           path.endsWith("/logo.png") ||
