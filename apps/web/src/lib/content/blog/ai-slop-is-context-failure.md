@@ -81,4 +81,3 @@ _This article is part of the Codex Cryptica responsible AI series._
 - [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
 - **AI Slop Happens When the Tool Has No Memory** _(this article)_
 - [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
-
