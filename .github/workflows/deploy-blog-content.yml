@@ -20,7 +20,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -64,10 +64,6 @@ jobs:
           git commit --no-verify -m "📝 Update blog content"
           git push --no-verify --force-with-lease origin blog-content
           echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Wait for CDN cache to expire
-        if: steps.commit_step.outputs.changed == 'true'
-        run: sleep 360
 
       - name: Trigger Main App Deployment
         if: steps.commit_step.outputs.changed == 'true'
