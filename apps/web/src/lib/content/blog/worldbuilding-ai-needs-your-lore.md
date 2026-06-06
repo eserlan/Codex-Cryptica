@@ -92,6 +92,7 @@ _This article is part of the Codex Cryptica responsible AI series._
 - Drafts Are Not Canon _(coming soon)_
 - Six Ways to Use AI in Campaign Prep Without Losing Your Voice _(coming soon)_
 - AI Slop Happens When the Tool Has No Memory _(coming soon)_
+- Revising Your Lore with the Oracle _(coming soon)_
 
 ---
 
