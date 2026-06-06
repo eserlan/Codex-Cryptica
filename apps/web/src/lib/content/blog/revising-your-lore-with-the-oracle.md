@@ -16,8 +16,6 @@ keywords:
 publishedAt: 2026-06-06T22:00:00Z
 ---
 
-# Revising Your Lore with the Oracle: AI as Editor, Not Author
-
 Most AI worldbuilding tools are pitched as generators. You describe something, they produce it. The assumption is that you are starting from nothing.
 
 The more useful case — especially in a long-running campaign — is the opposite. You already have the material. Something changed. And you need the entry to reflect that change without rewriting the whole thing yourself.
@@ -41,6 +39,12 @@ In each case, the existing entry is mostly right. Something specific changed. Yo
 ## How to direct a revision
 
 The key is specificity. The more precisely you describe what changed and what to keep, the better the draft.
+
+Good revision prompts usually include three things:
+
+1. What changed
+2. What must stay the same
+3. What tone or perspective the entry should now use
 
 Vague:
 
@@ -66,7 +70,7 @@ Directing a revision is not the same as delegating the entry. You are specifying
 
 After the draft comes back, you are still the one deciding whether the updated tone feels right, whether the new motivation is consistent with everything else you know about this character, and whether the revision creates any unintended inconsistencies elsewhere in the vault.
 
-That judgment does not transfer. The Oracle can rewrite a paragraph. It cannot know whether that paragraph now contradicts something established six sessions ago that you remember and it does not.
+That judgement does not transfer. The Oracle can help check against the vault, but it cannot replace your judgement about tone, intent, and what matters most at the table.
 
 Review is not optional. It is the part where authorship happens.
 
@@ -80,14 +84,12 @@ The Oracle handles the mechanical rewrite. You handle the judgment. The vault st
 
 ---
 
-_This article is part of the Codex Cryptica responsible AI series._
+_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
 
-**Responsible AI in Codex Cryptica:**
-
-- [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-- [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-- [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-- [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-- [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-- [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-- **Revising Your Lore with the Oracle** _(this article)_
+1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
+2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
+3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
+4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
+5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
+6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
+7. **Revising Your Lore with the Oracle** _(this article)_
