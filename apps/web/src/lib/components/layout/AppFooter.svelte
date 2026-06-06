@@ -37,6 +37,11 @@
       >Features</a
     >
     <a
+      href="{base}/tools"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Tools</a
+    >
+    <a
       href="{base}/blog"
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Blog</a

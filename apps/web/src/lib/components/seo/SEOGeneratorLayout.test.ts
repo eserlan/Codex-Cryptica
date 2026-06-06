@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render } from "@testing-library/svelte";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
@@ -108,5 +108,100 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
 
     expect(setThemeSpy).not.toHaveBeenCalled();
+  });
+
+  describe("JSON-LD Schema Generation", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("generates and injects correct SoftwareApplication and BreadcrumbList schemas", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          faqs: [{ question: "FAQ Q1?", answer: "FAQ A1." }],
+        },
+      });
+
+      const scripts = document.querySelectorAll(
+        'script[type="application/ld+json"]',
+      );
+      let softwareAppFound = false;
+      let breadcrumbFound = false;
+
+      scripts.forEach((script) => {
+        try {
+          const json = JSON.parse(script.innerHTML);
+          if (json["@type"] === "SoftwareApplication") {
+            softwareAppFound = true;
+            expect(json.name).toBe("Codex Cryptica");
+            expect(json.mainEntity["@type"]).toBe("FAQPage");
+            expect(json.mainEntity.mainEntity[0].name).toBe("FAQ Q1?");
+          } else if (json["@type"] === "BreadcrumbList") {
+            breadcrumbFound = true;
+            expect(json.itemListElement).toHaveLength(3);
+            expect(json.itemListElement[1].name).toBe("Generators");
+            expect(json.itemListElement[2].name).toBe("RPG NPC Generator");
+          }
+        } catch {
+          // ignore
+        }
+      });
+
+      expect(softwareAppFound).toBe(true);
+      expect(breadcrumbFound).toBe(true);
+    });
+
+    it("generates and injects correct Person/Place schemas when generatedData is set", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "character",
+        title: "Initial Character Name",
+        content: "Initial Character Bio description.",
+        lore: "Some lore details.",
+        labels: ["test-character"],
+        status: "active",
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "RPG NPC Generator | Codex Cryptica",
+          metaDescription: "Generate awesome characters.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          faqs: [],
+        },
+      });
+
+      // Let mount effects run
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const scripts = document.querySelectorAll(
+        'script[type="application/ld+json"]',
+      );
+      let personSchemaFound = false;
+
+      scripts.forEach((script) => {
+        try {
+          const json = JSON.parse(script.innerHTML);
+          if (json["@type"] === "Person") {
+            personSchemaFound = true;
+            expect(json.name).toBe("Initial Character Name");
+            expect(json.description).toBe("Initial Character Bio description.");
+            expect(json.knowsAbout).toEqual(["test-character"]);
+          }
+        } catch {
+          // ignore
+        }
+      });
+
+      expect(personSchemaFound).toBe(true);
+    });
   });
 });

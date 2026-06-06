@@ -51,6 +51,19 @@
         "The page stores the primary generated name in browser localStorage and opens the app, where it imports as a Character, Location, Faction, or Item entity depending on the selected name type.",
     },
   ];
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
+  const initialDraft: GeneratorOutput = {
+    type: "character",
+    title: "Aelthas The Wise",
+    summary:
+      "A legendary High Elf wizard and scholar from the ancient library of Silverspire.",
+    content:
+      "### Scholar of Silverspire\nAelthas has spent centuries cataloging the planar portals and ley lines. He is quiet, calculating, and carries the weight of elven history.",
+    lore: "",
+    labels: ["rpg-names", "High Elf", "Wizard", "Scholar"],
+    status: "draft",
+  };
 </script>
 
 <SEOGeneratorLayout
@@ -63,6 +76,7 @@
   {relatedLinks}
   {faqs}
   {generate}
+  {initialDraft}
 >
   {#snippet formFields(_trigger)}
     <NameFormFields

@@ -57,6 +57,19 @@
         "The page stores the generated draft in browser localStorage and opens the app, where it imports as an Event entry in your local vault.",
     },
   ];
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
+  const initialDraft: GeneratorOutput = {
+    type: "event",
+    title: "The Sunken Relic",
+    summary:
+      "A mysterious tavern owner hires the party to retrieve an ancient sunken amulet from the Whispering Reef before a rival gang finds it.",
+    content:
+      "### Hook\nA mysterious tavern owner hires the party to retrieve an ancient sunken amulet.\n\n### Complication\nA rival gang is also searching for the reef.",
+    lore: "",
+    labels: ["rpg-quest", "Retrieval", "Ocean", "Rivals"],
+    status: "draft",
+  };
 </script>
 
 <SEOGeneratorLayout
@@ -69,6 +82,7 @@
   {relatedLinks}
   {faqs}
   {generate}
+  {initialDraft}
 >
   {#snippet formFields(_trigger)}
     <QuestFormFields
