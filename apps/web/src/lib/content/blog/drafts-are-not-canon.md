@@ -19,7 +19,7 @@ The worst thing an AI worldbuilding tool can do is quietly become the author.
 
 It happens gradually. The AI suggests a name. You use it. It suggests a location detail. You leave it in. It invents a faction backstory that sounds plausible. Three sessions later you are running a campaign partially written by a model that has no memory of what it already generated.
 
-Canon pollution is a real problem. And it is almost always a design failure, not a user error.
+Canon contamination is a real problem. And it is almost always a design failure, not a user error.
 
 ## The difference between a draft and a fact
 
@@ -58,7 +58,7 @@ That review step is not a bug in the workflow. It is the workflow.
 
 In Codex Cryptica, accepting a draft is an explicit action. You read it, decide it belongs in your world, and it becomes part of the vault — linked, tagged, and searchable alongside everything else you have built.
 
-Rejecting a draft removes it. It does not linger in a suggestions sidebar. It does not come back in a different form. The vault contains what you chose, nothing more.
+Rejecting a draft removes it from the workflow. It does not become canon, it does not get saved into the vault, and it is not treated as world context later. The vault contains what you chose to keep.
 
 This keeps the archive clean. When you search your vault, you get your world. Not your world plus a pile of AI-generated maybes that accumulated over thirty sessions.
 
