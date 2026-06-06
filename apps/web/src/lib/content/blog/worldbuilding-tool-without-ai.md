@@ -72,14 +72,6 @@ Codex Cryptica was built starting from step one. The Lore Oracle came later, and
 
 ---
 
-Ready for a worldbuilding tool that still works without AI?
-
-Build your vault. Use the Oracle when it helps. Turn it off when it doesn't.
-
-[Enter the Codex](/) — no account required.
-
----
-
 _Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
 
 1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
