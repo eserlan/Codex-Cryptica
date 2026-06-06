@@ -36,6 +36,9 @@ permissions:
 jobs:
   publish-cdn:
     name: Publish to CDN branch
+    # Only republish the blog-content branch on real pushes to `blog` — never on a
+    # manual workflow_dispatch (which may run from an arbitrary ref / preview test).
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -81,7 +84,9 @@ jobs:
 
   deploy-production:
     name: Prerender and deploy
-    needs: publish-cdn
+    # No dependency on publish-cdn: this job prerenders from the local overlay, not the
+    # CDN, so the two are independent. On push they run in parallel; on workflow_dispatch
+    # (preview) publish-cdn is skipped and this still runs.
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
