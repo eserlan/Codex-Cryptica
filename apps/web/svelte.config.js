@@ -52,7 +52,8 @@ const config = {
           path.endsWith("/favicon.png") ||
           path.endsWith("/logo.png") ||
           path.endsWith("/manifest.webmanifest") ||
-          path.includes("/images/")
+          path.includes("/images/") ||
+          path === "/app"
         ) {
           return;
         }
