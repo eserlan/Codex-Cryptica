@@ -16,8 +16,6 @@ keywords:
 publishedAt: 2026-06-06T20:00:00Z
 ---
 
-# AI Slop Happens When the Tool Has No Memory
-
 You have seen it. The AI-generated tavern with the grizzled barkeep and the suspicious strangers. The faction with the ancient grudge and the shadowy leader. The NPC with a tragic past and a mysterious scar.
 
 It is technically competent. It is completely forgettable. And after a few sessions of it accumulating in your notes, it actively makes your world worse — a pile of plausible-sounding text that belongs to no particular place or time, connected to nothing, accountable to nothing.
@@ -70,14 +68,12 @@ AI worldbuilding without a vault is a slot machine. Sometimes something interest
 
 ---
 
-_This article is part of the Codex Cryptica responsible AI series._
+_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
 
-**Responsible AI in Codex Cryptica:**
-
-- [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-- [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-- [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-- [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-- [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-- **AI Slop Happens When the Tool Has No Memory** _(this article)_
-- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
+1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
+2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
+3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
+4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
+5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
+6. **AI Slop Happens When the Tool Has No Memory** _(this article)_
+7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
