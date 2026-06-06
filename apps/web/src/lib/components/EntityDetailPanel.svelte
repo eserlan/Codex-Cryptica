@@ -92,10 +92,11 @@
         editType !== entity.type ||
         editImage !== (entity.image ?? "") ||
         JSON.stringify(editAliases) !== JSON.stringify(entity.aliases ?? []) ||
-        JSON.stringify(editDate) !== JSON.stringify(entity.date ?? null) ||
-        JSON.stringify(editStartDate) !==
+        JSON.stringify(editDate ?? null) !==
+          JSON.stringify(entity.date ?? null) ||
+        JSON.stringify(editStartDate ?? null) !==
           JSON.stringify(entity.start_date ?? null) ||
-        JSON.stringify(editEndDate) !==
+        JSON.stringify(editEndDate ?? null) !==
           JSON.stringify(entity.end_date ?? null) ||
         JSON.stringify(editGuestChatConfig) !==
           JSON.stringify(
@@ -453,6 +454,7 @@
                     entity={activeEntity}
                     {isEditing}
                     {editType}
+                    bind:editDate
                     bind:editContent
                     bind:editLore
                     bind:editStartDate

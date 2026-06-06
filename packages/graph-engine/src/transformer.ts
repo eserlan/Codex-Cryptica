@@ -24,6 +24,10 @@ export interface GraphNode {
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
     dateLabel?: string;
+    entityId?: string;
+    anchorId?: string;
+    anchorType?: string;
+    isTemporalAnchor?: boolean;
     textureVariant?: number;
   };
   position?: { x: number; y: number };
@@ -42,6 +46,10 @@ export interface GraphEdge {
 }
 
 export type GraphElement = GraphNode | GraphEdge;
+
+export interface GraphTransformOptions {
+  includeTemporalEditHandles?: boolean;
+}
 
 const incrementWeight = (weights: Map<string, number>, id: string) => {
   weights.set(id, (weights.get(id) ?? 0) + 1);
@@ -84,7 +92,10 @@ export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
     validIds?: Set<string>,
+    options: GraphTransformOptions = {},
   ): GraphElement[] {
+    const includeTemporalEditHandles =
+      options.includeTemporalEditHandles === true;
     // Create a Set of valid entity IDs for O(1) lookups
     if (!validIds) {
       // OPTIMIZATION: Use a loop instead of map to avoid array allocation
@@ -191,6 +202,8 @@ export class GraphTransformer {
 
       // Assign a stable-ish random position based on ID if no coords exist.
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
+      const angle = i * GOLDEN_ANGLE;
+      const distance = spiralRadius * Math.sqrt((i + 0.5) / count);
       if (hasValidCoords) {
         elements.push({
           group: "nodes",
@@ -198,8 +211,6 @@ export class GraphTransformer {
           position: coords,
         });
       } else {
-        const angle = i * GOLDEN_ANGLE;
-        const distance = spiralRadius * Math.sqrt((i + 0.5) / count);
         // Mark as pending layout so it stays invisible until placed
         (nodeData as any).isPendingLayout = true;
         elements.push({
@@ -210,6 +221,76 @@ export class GraphTransformer {
             y: Math.sin(angle) * distance,
           },
         });
+      }
+
+      const basePosition = hasValidCoords
+        ? { x: coords.x, y: coords.y }
+        : {
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance,
+          };
+      if (includeTemporalEditHandles && entity.start_date) {
+        elements.push({
+          group: "nodes",
+          data: {
+            ...nodeData,
+            id: `${entity.id}::primary-range-start`,
+            entityId: entity.id,
+            anchorId: "primary-range-start",
+            anchorType: "rangeStart",
+            isTemporalAnchor: true,
+            label: `${entity.title} - start`,
+            date: entity.start_date,
+            start_date: undefined,
+            end_date: undefined,
+            dateLabel: formatDate(entity.start_date),
+          },
+          position: basePosition,
+        });
+      }
+      if (includeTemporalEditHandles && entity.end_date) {
+        elements.push({
+          group: "nodes",
+          data: {
+            ...nodeData,
+            id: `${entity.id}::primary-range-end`,
+            entityId: entity.id,
+            anchorId: "primary-range-end",
+            anchorType: "rangeEnd",
+            isTemporalAnchor: true,
+            label: `${entity.title} - end`,
+            date: entity.end_date,
+            start_date: undefined,
+            end_date: undefined,
+            dateLabel: formatDate(entity.end_date),
+          },
+          position: basePosition,
+        });
+      }
+
+      if (includeTemporalEditHandles) {
+        for (const anchor of entity.temporalAnchors ?? []) {
+          const anchorDateLabel = formatDate(
+            anchor.date || anchor.start_date || anchor.end_date,
+          );
+          elements.push({
+            group: "nodes",
+            data: {
+              ...nodeData,
+              id: `${entity.id}::${anchor.id}`,
+              entityId: entity.id,
+              anchorId: anchor.id,
+              anchorType: anchor.type,
+              isTemporalAnchor: true,
+              label: anchor.label || `${entity.title} - ${anchor.type}`,
+              date: anchor.date,
+              start_date: anchor.start_date,
+              end_date: anchor.end_date,
+              dateLabel: anchorDateLabel,
+            },
+            position: basePosition,
+          });
+        }
       }
 
       // Create Edges

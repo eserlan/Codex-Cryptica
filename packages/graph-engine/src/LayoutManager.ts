@@ -12,10 +12,12 @@ export interface LayoutOptions {
   timelineMode: boolean;
   timelineAxis: "x" | "y";
   timelineScale: number;
+  yearPositions?: Record<number, number>;
   orbitMode: boolean;
   centralNodeId: string | null;
   stableLayout: boolean;
   isGuest: boolean;
+  fit?: boolean;
   onLayoutStart?: () => void;
   onLayoutStop?: () => void;
   onLayoutComputed?: (durationMs: number) => void;
@@ -367,11 +369,20 @@ export class LayoutManager {
         axis: options.timelineAxis,
         scale: options.timelineScale,
         jitter: 150,
+        yearPositions: options.yearPositions,
+        zoom: this.cy.zoom(),
       });
 
       const nodesToLayout = this.cy
         .nodes()
         .filter((n) => positions[n.id()] !== undefined);
+
+      this.cy.batch(() => {
+        nodesToLayout.forEach((node) => {
+          node.removeData("isPendingLayout");
+          node.removeClass("pending-layout");
+        });
+      });
 
       nodesToLayout
         .layout({
@@ -380,7 +391,7 @@ export class LayoutManager {
           animate: true,
           animationDuration: 500,
           animationEasing: "ease-out-cubic",
-          fit: true,
+          fit: options.fit !== false,
           padding: 20,
           stop: () => options.onLayoutStop?.(),
         } as any)

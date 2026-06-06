@@ -67,6 +67,7 @@ describe("GraphStore", () => {
     graph.showImages = true;
     graph.stableLayout = true;
     graph.timelineMode = false;
+    graph.chronologyEditMode = false;
     graph.orbitMode = false;
     graph.activeLabels = new Set();
     graph.activeCategories = new Set();
@@ -88,6 +89,7 @@ describe("GraphStore", () => {
     expect(graph.showImages).toBe(true);
     expect(graph.stableLayout).toBe(true);
     expect(graph.timelineMode).toBe(false);
+    expect(graph.chronologyEditMode).toBe(false);
     expect(graph.orbitMode).toBe(false);
     expect(graph.labelFilterMode).toBe("OR");
   });
@@ -153,6 +155,10 @@ describe("GraphStore", () => {
       if (key === "graphStableLayout") return Promise.resolve(false);
       if (key === "graphRecentLabels") return Promise.resolve(["old"]);
       if (key === "graphLabelFilterMode") return Promise.resolve("AND");
+      if (key === "graphTimelineMode") return Promise.resolve(true);
+      if (key === "graphTimelineAxis") return Promise.resolve("y");
+      if (key === "graphTimelineScale") return Promise.resolve(150);
+      if (key === "graphTimelineRange") return Promise.resolve([100, 1000]);
       return Promise.resolve(undefined);
     });
     vi.spyOn(db, "getAll").mockResolvedValue([{ id: "era1", name: "Era 1" }]);
@@ -163,6 +169,10 @@ describe("GraphStore", () => {
     expect(graph.stableLayout).toBe(false);
     expect(graph.recentLabels).toEqual(["old"]);
     expect(graph.labelFilterMode).toBe("AND");
+    expect(graph.timelineMode).toBe(true);
+    expect(graph.timelineAxis).toBe("y");
+    expect(graph.timelineScale).toBe(150);
+    expect(graph.timelineRange).toEqual([100, 1000]);
     expect(graph.eras).toEqual([{ id: "era1", name: "Era 1" }]);
   });
 
@@ -176,7 +186,7 @@ describe("GraphStore", () => {
     await graph.init();
 
     expect(getAllSpy).toHaveBeenCalledTimes(1);
-    expect(getSpy).toHaveBeenCalledTimes(5);
+    expect(getSpy).toHaveBeenCalledTimes(9);
     expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
 
     addEventListenerSpy.mockRestore();
@@ -242,6 +252,18 @@ describe("GraphStore", () => {
     const initial = graph.fitRequest;
     graph.requestFit();
     expect(graph.fitRequest).toBe(initial + 1);
+  });
+
+  it("should require timeline mode for chronology editing", () => {
+    graph.setChronologyEditMode(true);
+
+    expect(graph.timelineMode).toBe(true);
+    expect(graph.chronologyEditMode).toBe(true);
+
+    graph.setTimelineMode(false);
+
+    expect(graph.timelineMode).toBe(false);
+    expect(graph.chronologyEditMode).toBe(false);
   });
 
   it("should manage eras", async () => {

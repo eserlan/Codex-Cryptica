@@ -6,6 +6,7 @@
   import { guestStore } from "$lib/stores/guest.svelte";
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
+  import ChronologyEditToggle from "./ChronologyEditToggle.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -98,18 +99,25 @@
       closeMenuIfMobile();
     }}
   />
+  {#if graph.timelineMode && !sessionModeStore.isGuestMode}
+    <ChronologyEditToggle
+      onToggle={() => {
+        closeMenuIfMobile();
+      }}
+    />
+  {/if}
   <div class="h-6 w-px bg-theme-border/30 mx-2 flex-shrink-0"></div>
   <div class="flex gap-1 items-center">
     <button
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-      onclick={() => cy?.zoom(cy.zoom() * 1.2)}
+      onclick={() => cy?.zoom(cy.zoom() * 1.1)}
       title="Zoom In"
       aria-label="Zoom In"
       ><span class="icon-[lucide--zoom-in] w-4 h-4"></span></button
     >
     <button
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-      onclick={() => cy?.zoom(cy.zoom() / 1.2)}
+      onclick={() => cy?.zoom(cy.zoom() / 1.1)}
       title="Zoom Out"
       aria-label="Zoom Out"
       ><span class="icon-[lucide--zoom-out] w-4 h-4"></span></button

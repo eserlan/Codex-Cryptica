@@ -24,8 +24,9 @@
 
 {#if hoveredEntity && hoverPosition}
   <div
-    class="fixed z-50 pointer-events-none bg-theme-surface/90 backdrop-blur-md border border-theme-primary/30 p-4 shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-xs overflow-hidden rounded-xl"
-    style="left: {hoverPosition.x + 20}px; top: {hoverPosition.y - 20}px;"
+    class="absolute z-50 pointer-events-none bg-theme-surface/90 backdrop-blur-md border border-theme-primary/30 p-4 shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-xs overflow-hidden rounded-xl"
+    style="left: {hoverPosition.x}px; top: {hoverPosition.y +
+      28}px; transform: translateX(-50%);"
     transition:fly={{ y: 10, duration: 200 }}
   >
     <div class="flex flex-col gap-2">

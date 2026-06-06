@@ -5,6 +5,8 @@
     getRulerTicks,
     getEraRegions,
     getSequentialYearPositions,
+    getFractionalYear,
+    getQuantizedYear,
   } from "graph-engine";
   import type { Core, NodeSingular } from "cytoscape";
   import { onMount } from "svelte";
@@ -42,16 +44,33 @@
 
     for (let i = 0; i < count; i++) {
       const e = allEntities[i];
-      const year = e.date?.year ?? e.start_date?.year ?? e.end_date?.year;
+      const dateObj = e.date ?? e.start_date ?? e.end_date;
+      const year = getFractionalYear(dateObj);
       if (year !== undefined) {
-        years.push(year);
+        years.push(getQuantizedYear(year, transform.k));
+      }
+      if (e.temporalAnchors) {
+        const anchorCount = e.temporalAnchors.length;
+        for (let j = 0; j < anchorCount; j++) {
+          const anchor = e.temporalAnchors[j];
+          const anchorDateObj =
+            anchor.date ?? anchor.start_date ?? anchor.end_date;
+          const aYear = getFractionalYear(anchorDateObj);
+          if (aYear !== undefined) {
+            years.push(getQuantizedYear(aYear, transform.k));
+          }
+        }
       }
     }
 
-    return getSequentialYearPositions(years, graph.timelineScale);
+    const fallbackYear = new Date().getFullYear();
+    return getSequentialYearPositions(
+      years.length > 0 ? years : [fallbackYear],
+      graph.timelineScale,
+    );
   });
 
-  let ticks = $derived(getRulerTicks(yearPositions));
+  let ticks = $derived(getRulerTicks(yearPositions, transform.k));
   let eraRegions = $derived(getEraRegions(graph.eras, yearPositions));
 
   // Extract nodes with dates for label rendering
@@ -126,7 +145,7 @@
           {/if}
         {/each}
 
-        <!-- Ruler Ticks -->
+        <!-- Ruler Ticks Gridlines -->
         {#each ticks as tick}
           {#if graph.timelineAxis === "x"}
             <line
@@ -135,18 +154,21 @@
               x2={tick.pos}
               y2="10000"
               stroke="var(--color-theme-accent)"
-              stroke-opacity={tick.isMajor ? 0.1 : 0.03}
-              stroke-dasharray={tick.isMajor ? "" : "5,5"}
+              stroke-opacity={tick.type === "year"
+                ? tick.isMajor
+                  ? 0.15
+                  : 0.08
+                : tick.type === "month"
+                  ? tick.isMajor
+                    ? 0.08
+                    : 0.04
+                  : 0.02}
+              stroke-dasharray={tick.type === "year" && tick.isMajor
+                ? ""
+                : tick.type === "month"
+                  ? "3,3"
+                  : "1,5"}
             />
-            <text
-              x={tick.pos + 5}
-              y="20"
-              fill="var(--color-theme-accent)"
-              fill-opacity="0.2"
-              class="text-[12px] font-mono font-bold"
-            >
-              {tick.year}
-            </text>
           {:else}
             <line
               x1="-10000"
@@ -154,18 +176,21 @@
               x2="10000"
               y2={tick.pos}
               stroke="var(--color-theme-accent)"
-              stroke-opacity={tick.isMajor ? 0.1 : 0.03}
-              stroke-dasharray={tick.isMajor ? "" : "5,5"}
+              stroke-opacity={tick.type === "year"
+                ? tick.isMajor
+                  ? 0.15
+                  : 0.08
+                : tick.type === "month"
+                  ? tick.isMajor
+                    ? 0.08
+                    : 0.04
+                  : 0.02}
+              stroke-dasharray={tick.type === "year" && tick.isMajor
+                ? ""
+                : tick.type === "month"
+                  ? "3,3"
+                  : "1,5"}
             />
-            <text
-              x="20"
-              y={tick.pos - 5}
-              fill="var(--color-theme-accent)"
-              fill-opacity="0.2"
-              class="text-[12px] font-mono font-bold"
-            >
-              {tick.year}
-            </text>
           {/if}
         {/each}
 
@@ -206,6 +231,73 @@
           {/each}
         {/if}
       </g>
+
+      <!-- Sticky Screen-Space Ruler Year Labels -->
+      {#each ticks as tick}
+        {#if graph.timelineAxis === "x"}
+          {@const screenX = tick.pos * transform.k + transform.x}
+          {#if screenX >= 0 && screenX <= (cy?.width() ?? window.innerWidth)}
+            <text
+              x={screenX + 6}
+              y={tick.type === "year"
+                ? "24"
+                : tick.type === "month"
+                  ? "36"
+                  : "46"}
+              fill="var(--color-theme-accent)"
+              fill-opacity={tick.type === "year"
+                ? tick.isMajor
+                  ? 0.85
+                  : 0.6
+                : tick.type === "month"
+                  ? tick.isMajor
+                    ? 0.7
+                    : 0.5
+                  : 0.35}
+              class="font-mono select-none tracking-wider pointer-events-none {tick.type ===
+              'year'
+                ? 'text-[11px] font-bold'
+                : tick.type === 'month'
+                  ? 'text-[9.5px] font-medium'
+                  : 'text-[8.5px] font-light'}"
+              style="text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5);"
+            >
+              {tick.label}
+            </text>
+          {/if}
+        {:else}
+          {@const screenY = tick.pos * transform.k + transform.y}
+          {#if screenY >= 0 && screenY <= (cy?.height() ?? window.innerHeight)}
+            <text
+              x={tick.type === "year"
+                ? "16"
+                : tick.type === "month"
+                  ? "30"
+                  : "42"}
+              y={screenY - 4}
+              fill="var(--color-theme-accent)"
+              fill-opacity={tick.type === "year"
+                ? tick.isMajor
+                  ? 0.85
+                  : 0.6
+                : tick.type === "month"
+                  ? tick.isMajor
+                    ? 0.7
+                    : 0.5
+                  : 0.35}
+              class="font-mono select-none tracking-wider pointer-events-none {tick.type ===
+              'year'
+                ? 'text-[11px] font-bold'
+                : tick.type === 'month'
+                  ? 'text-[9.5px] font-medium'
+                  : 'text-[8.5px] font-light'}"
+              style="text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5);"
+            >
+              {tick.label}
+            </text>
+          {/if}
+        {/if}
+      {/each}
     </svg>
   </div>
 {/if}

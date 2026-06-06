@@ -4,8 +4,17 @@ import { GraphViewController } from "./graph-view-controller.svelte";
 
 // Mock graph-engine
 vi.mock("graph-engine", () => {
+  const handlers: Array<{
+    event: string;
+    selector: string;
+    callback: (event: any) => void;
+  }> = [];
   const mockCy = {
-    on: vi.fn(),
+    on: vi.fn((event, selector, callback) => {
+      if (typeof selector === "string" && typeof callback === "function") {
+        handlers.push({ event, selector, callback });
+      }
+    }),
     off: vi.fn(),
     destroy: vi.fn(),
     batch: vi.fn((cb) => cb?.()),
@@ -50,6 +59,11 @@ vi.mock("graph-engine", () => {
     }),
     width: vi.fn().mockReturnValue(100),
     height: vi.fn().mockReturnValue(100),
+    container: vi.fn().mockReturnValue({
+      getBoundingClientRect: vi.fn().mockReturnValue({ left: 10, top: 20 }),
+    }),
+    pan: vi.fn().mockReturnValue({ x: 5, y: 6 }),
+    zoom: vi.fn().mockReturnValue(2),
     resize: vi.fn(),
     animate: vi.fn().mockResolvedValue(undefined),
     center: vi.fn(),
@@ -71,13 +85,51 @@ vi.mock("graph-engine", () => {
   }
 
   return {
+    __handlers: handlers,
     initGraph: vi.fn().mockResolvedValue(mockCy),
     LayoutManager: vi.fn().mockImplementation(MockLayoutManager),
     GraphImageManager: vi.fn().mockImplementation(MockGraphImageManager),
     setupGraphEvents: vi.fn().mockReturnValue(vi.fn()),
     syncGraphElements: vi.fn(),
+    getSequentialYearPositions: (years: number[], scale: number) =>
+      Object.fromEntries(years.map((year, index) => [year, index * scale])),
+    getFractionalYear: (date?: {
+      year: number;
+      month?: number;
+      day?: number;
+    }) => {
+      if (!date) return undefined;
+      let val = date.year;
+      if (date.month !== undefined) {
+        val += (date.month - 1) / 12;
+        if (date.day !== undefined) {
+          val += (date.day - 1) / 365;
+        }
+      }
+      return val;
+    },
+    getQuantizedYear: (val: number, zoom: number = 1.0) => {
+      if (zoom < 3.0) {
+        return Math.floor(val);
+      } else if (zoom < 8.0) {
+        return Math.floor(val * 12) / 12;
+      } else {
+        return Math.floor(val * 365) / 365;
+      }
+    },
+    TIMELINE_MONTH_ZOOM_THRESHOLD: 3.0,
+    TIMELINE_DAY_ZOOM_THRESHOLD: 8.0,
   };
 });
+
+vi.mock("$lib/stores/chronology-edit.svelte", () => ({
+  chronologyEdit: {
+    drag: null,
+    beginDrag: vi.fn().mockReturnValue(true),
+    updateDrag: vi.fn(),
+    prepareDrop: vi.fn().mockReturnValue({ writes: {} }),
+  },
+}));
 
 describe("GraphViewController", () => {
   let deps: any;
@@ -88,6 +140,7 @@ describe("GraphViewController", () => {
       graph: {
         elements: [],
         timelineMode: false,
+        chronologyEditMode: false,
         timelineAxis: "x",
         timelineScale: 1,
         orbitMode: false,
@@ -100,6 +153,7 @@ describe("GraphViewController", () => {
         isGuest: false,
         status: "idle",
         allEntities: [],
+        entities: {},
         releaseImageUrl: vi.fn(),
         resolveImageUrl: vi.fn(),
         batchUpdate: vi.fn(),
@@ -184,5 +238,91 @@ describe("GraphViewController", () => {
 
     expect(controller.didFinalizeLoad).toBe(true);
     expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
+  });
+
+  it("gates chronology drags behind timeline edit mode", async () => {
+    const { __handlers } = (await import("graph-engine")) as any;
+    const { chronologyEdit } =
+      await import("$lib/stores/chronology-edit.svelte");
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const grab = (__handlers as any[])
+      .filter((handler) => handler.event === "grab")
+      .at(-1);
+    grab.callback({
+      target: {
+        id: () => "e1",
+        position: () => ({ x: 0, y: 0 }),
+      },
+    });
+
+    expect(chronologyEdit.beginDrag).not.toHaveBeenCalled();
+  });
+
+  it("routes edit-mode node drops into chronology placement", async () => {
+    const { __handlers } = (await import("graph-engine")) as any;
+    const { chronologyEdit } =
+      await import("$lib/stores/chronology-edit.svelte");
+    const entity = {
+      id: "e1",
+      type: "event",
+      title: "Founding",
+      date: { year: 600 },
+    };
+    deps.graph.timelineMode = true;
+    deps.graph.chronologyEditMode = true;
+    deps.graph.timelineScale = 100;
+    deps.vault.allEntities = [entity];
+    deps.vault.entities = { e1: entity };
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    const grab = (__handlers as any[])
+      .filter((handler) => handler.event === "grab")
+      .at(-1);
+    const dragfree = (__handlers as any[])
+      .filter((handler) => handler.event === "dragfree")
+      .at(-1);
+    const node = {
+      id: () => "e1",
+      data: () => undefined,
+      position: () => ({ x: 0, y: 0 }),
+    };
+    grab.callback({ target: node });
+    dragfree.callback({ target: node });
+
+    expect(chronologyEdit.beginDrag).toHaveBeenCalled();
+    expect(chronologyEdit.prepareDrop).toHaveBeenCalledWith(entity);
+  });
+
+  it("routes explorer drops through model-position year resolution when edit mode is active", async () => {
+    const { chronologyEdit } =
+      await import("$lib/stores/chronology-edit.svelte");
+    const entity = {
+      id: "u1",
+      type: "note",
+      title: "Undated",
+    };
+    deps.graph.timelineMode = true;
+    deps.graph.chronologyEditMode = true;
+    deps.graph.timelineScale = 100;
+    deps.vault.allEntities = [{ ...entity, date: { year: 600 } }];
+    deps.vault.entities = { u1: entity };
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    expect(
+      controller.beginExplorerChronologyPlacement("u1", { x: 115, y: 226 }),
+    ).toBe(true);
+
+    expect(chronologyEdit.beginDrag).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity,
+        source: "explorer",
+        pressPosition: { x: 50, y: 100 },
+      }),
+    );
+    expect(chronologyEdit.prepareDrop).toHaveBeenCalledWith(entity);
   });
 });

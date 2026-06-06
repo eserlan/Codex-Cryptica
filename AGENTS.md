@@ -52,7 +52,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/127-context-aware-entity-generator/plan.md).
+shell commands, and other important information, read the [current plan](./specs/130-editable-time-graph/plan.md).
 
 <!-- SPECKIT END -->
 

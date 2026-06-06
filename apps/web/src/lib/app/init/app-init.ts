@@ -435,7 +435,24 @@ export function registerServiceWorker(deps?: {
   const win = deps?.window ?? window;
   const isDev = deps?.isDev ?? import.meta.env.DEV;
 
-  if (!browser || !("serviceWorker" in nav) || isDev) {
+  if (!browser || !("serviceWorker" in nav)) {
+    return;
+  }
+
+  if (isDev) {
+    if (nav.serviceWorker.getRegistrations) {
+      nav.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().then((unregistered) => {
+            if (unregistered) {
+              console.log(
+                "[SW] Unregistered active service worker in development mode.",
+              );
+            }
+          });
+        }
+      });
+    }
     return;
   }
 

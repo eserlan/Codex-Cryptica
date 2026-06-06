@@ -127,10 +127,14 @@ describe("setupGraphEvents", () => {
 
     mockCy.zoom = vi.fn().mockReturnValue(0.2);
     zoomHandler();
-    expect(mockCy.options).toHaveBeenCalledWith({ wheelSensitivity: 3.0 });
+    expect(mockCy.options).toHaveBeenCalledWith({
+      wheelSensitivity: expect.closeTo(0.8),
+    });
 
-    mockCy.zoom = vi.fn().mockReturnValue(2.0);
+    mockCy.zoom = vi.fn().mockReturnValue(9.0);
     zoomHandler();
-    expect(mockCy.options).toHaveBeenCalledWith({ wheelSensitivity: 0.5 });
+    expect(mockCy.options).toHaveBeenCalledWith({
+      wheelSensitivity: expect.closeTo(0.15),
+    });
   });
 });

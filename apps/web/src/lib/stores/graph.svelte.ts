@@ -53,9 +53,23 @@ export class GraphStore {
     const validIds = new Set<string>();
 
     const count = allEntities.length;
+    const isTimeline = this.timelineMode;
+    const rangeStart = this.timelineRange.start;
+    const rangeEnd = this.timelineRange.end;
+
     for (let i = 0; i < count; i++) {
       const entity = allEntities[i];
       if (isEntityVisible(entity, settings)) {
+        if (isTimeline) {
+          const year =
+            entity.date?.year ??
+            entity.start_date?.year ??
+            entity.end_date?.year;
+          if (year !== undefined) {
+            if (rangeStart !== null && year < rangeStart) continue;
+            if (rangeEnd !== null && year > rangeEnd) continue;
+          }
+        }
         visibleEntities.push(entity);
         validIds.add(entity.id);
       }
@@ -64,6 +78,10 @@ export class GraphStore {
     const entityElements = GraphTransformer.entitiesToElements(
       visibleEntities,
       validIds,
+      {
+        includeTemporalEditHandles:
+          this.timelineMode && this.chronologyEditMode,
+      },
     );
 
     return entityElements;
@@ -80,6 +98,7 @@ export class GraphStore {
 
   // Timeline State
   timelineMode = $state(false);
+  chronologyEditMode = $state(false);
   timelineAxis = $state<"x" | "y">("x");
   timelineRange = $state<{ start: number | null; end: number | null }>({
     start: null,
@@ -112,6 +131,34 @@ export class GraphStore {
 
   requestFit() {
     this.fitRequest++;
+  }
+
+  private async persistSetting(key: string, value: any) {
+    try {
+      const db = await getDB();
+      await db.put("settings", $state.snapshot(value), key);
+    } catch (error) {
+      console.error(`[GraphStore] Failed to persist ${key}:`, error);
+    }
+  }
+
+  setTimelineMode(enabled: boolean) {
+    this.timelineMode = enabled;
+    if (!enabled) {
+      this.chronologyEditMode = false;
+    }
+    void this.persistSetting("graphTimelineMode", enabled);
+  }
+
+  setChronologyEditMode(enabled: boolean) {
+    this.chronologyEditMode = enabled;
+    if (enabled) {
+      this.timelineMode = true;
+    }
+  }
+
+  toggleChronologyEditMode() {
+    this.setChronologyEditMode(!this.chronologyEditMode);
   }
 
   async init() {
@@ -156,6 +203,26 @@ export class GraphStore {
     );
     if (savedLabelFilterMode !== undefined) {
       this.labelFilterMode = savedLabelFilterMode;
+    }
+
+    const savedTimelineMode = await db.get("settings", "graphTimelineMode");
+    if (savedTimelineMode !== undefined) {
+      this.timelineMode = savedTimelineMode;
+    }
+
+    const savedTimelineAxis = await db.get("settings", "graphTimelineAxis");
+    if (savedTimelineAxis !== undefined) {
+      this.timelineAxis = savedTimelineAxis;
+    }
+
+    const savedTimelineScale = await db.get("settings", "graphTimelineScale");
+    if (savedTimelineScale !== undefined) {
+      this.timelineScale = savedTimelineScale;
+    }
+
+    const savedTimelineRange = await db.get("settings", "graphTimelineRange");
+    if (savedTimelineRange !== undefined) {
+      this.timelineRange = savedTimelineRange;
     }
 
     if (typeof window !== "undefined") {
@@ -281,11 +348,22 @@ export class GraphStore {
   }
 
   toggleTimeline() {
-    this.timelineMode = !this.timelineMode;
+    this.setTimelineMode(!this.timelineMode);
   }
 
   setTimelineAxis(axis: "x" | "y") {
     this.timelineAxis = axis;
+    void this.persistSetting("graphTimelineAxis", axis);
+  }
+
+  setTimelineScale(scale: number) {
+    this.timelineScale = scale;
+    void this.persistSetting("graphTimelineScale", scale);
+  }
+
+  setTimelineRange(range: { start: number | null; end: number | null }) {
+    this.timelineRange = range;
+    void this.persistSetting("graphTimelineRange", range);
   }
 
   toggleOrbit() {

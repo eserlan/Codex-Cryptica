@@ -47,12 +47,12 @@ describe("initGraph adaptive zoom", () => {
     expect(cy.maxZoom()).toBe(9.0);
   });
 
-  it("should configure wheelSensitivity to 1.0 for smoother scrolling", async () => {
+  it("should configure a restrained wheelSensitivity for smoother scrolling", async () => {
     const cy = await initGraph({
       headless: true,
       elements: [],
     });
 
-    expect((cy as any)._private?.options?.wheelSensitivity).toBe(1.0);
+    expect((cy as any)._private?.options?.wheelSensitivity).toBe(0.45);
   });
 });

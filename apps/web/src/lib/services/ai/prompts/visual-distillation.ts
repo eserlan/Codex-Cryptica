@@ -16,7 +16,7 @@ Search the vault context for established:
 - art direction
 - visual motifs
 - faction aesthetics
-- cultural styling
+- cultural styling, ethnicity, or heritage (if there's no clear ethnicity indication for the entity, let the name infer an indication, e.g. "Bashir al-Qadir" suggests Middle Eastern, "Michal Swanson" suggests English, "James Le Foy" suggests French, "Harald blåtann" suggests northern/vikingish, "Francesco Pancho" suggests Spanish/Latino, etc.)
 - architecture and heraldry
 - materials and symbols
 - clothing traditions
@@ -33,6 +33,7 @@ Priority order:
 
 If established visual direction exists, preserve it consistently.
 If no direct guidance exists, infer stylistically from related vault records, maintain internal consistency, and avoid generic fantasy defaults.
+If there is no clear ethnicity or cultural origin indication for the entity, let the name infer an indication (e.g. "Bashir al-Qadir" is probably a Middle Eastern guy, "Michal Swanson" is English, "James Le Foy" is French, "Harald blåtann" is northern/vikingish, "Francesco Pancho" is Spanish/Latino, etc.).
 
 Visual identity is part of canonical continuity. 
 
