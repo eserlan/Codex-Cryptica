@@ -198,7 +198,7 @@
           ></span>
           <span
             ><strong>Your vault is local-first</strong> — all files are stored directly
-            in your browser's private filesystem.</span
+            in your browser's private filesystem on your device.</span
           >
         </li>
         <li class="flex items-start gap-3">
@@ -262,10 +262,10 @@
       <p class="text-sm text-theme-text/75 leading-relaxed">
         True trust in digital worldbuilding requires full data ownership. Codex
         Cryptica is built around a local-first architecture. Your campaign vault
-        lives in your browser's private filesystem (OPFS), running offline.
-        Codex does not store your campaign vault in a Codex database. When you
-        choose to use AI suggestions, the prompt and selected context are sent
-        to your configured API provider.
+        lives in your browser's private filesystem (OPFS) on your device and can
+        run offline. Codex does not store your campaign vault in a Codex
+        database. When you choose to use AI suggestions, the prompt and selected
+        context are sent to your configured API provider.
       </p>
     </div>
 
