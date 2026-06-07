@@ -27,6 +27,32 @@
         Deep dives into the technology and philosophy behind Codex Cryptica.
         Learn how to secure your lore and master the spatial brain.
       </p>
+
+      <!-- Responsible AI Pillar Link Banner -->
+      <div
+        class="mt-8 p-5 rounded-2xl border border-theme-primary/20 bg-theme-surface/30 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-theme-primary/40 transition-colors"
+      >
+        <div class="space-y-1">
+          <h2
+            class="text-xs font-mono font-bold uppercase tracking-widest text-theme-primary flex items-center gap-2"
+          >
+            <span class="icon-[lucide--shield-alert] h-4 w-4"></span>
+            Responsible AI Positioning
+          </h2>
+          <p class="text-sm text-theme-muted">
+            Read our 7-part devlog series and guidelines on keeping
+            human-centric narrative control at the core of AI worldbuilding
+            tools.
+          </p>
+        </div>
+        <a
+          href="{base}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header uppercase tracking-widest bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
+        >
+          Read the Pillar
+          <span class="icon-[lucide--arrow-right] h-3.5 w-3.5"></span>
+        </a>
+      </div>
     </header>
 
     <div class="grid gap-12 md:gap-20">
