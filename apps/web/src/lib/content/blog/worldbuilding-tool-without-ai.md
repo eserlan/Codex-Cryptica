@@ -36,13 +36,19 @@ None of that requires the Lore Oracle. None of it calls out to a model provider.
 
 ## What disabling the Oracle removes — and what it doesn't
 
-| With AI off, you lose | You keep |
-|---|---|
-| AI-assisted entity drafting | The archive |
-| Vault-aware Q&A | The knowledge graph |
-| Context-aware prep suggestions | The timeline and session log |
-| | Search and imports |
-| | Local storage and offline access |
+With AI off, you lose:
+
+- AI-assisted entity drafting
+- Vault-aware Q&A
+- Context-aware prep suggestions
+
+You keep:
+
+- The archive
+- The knowledge graph
+- The timeline and session log
+- Search and imports
+- Local storage and offline access
 
 **The product is smaller with AI off. It is not broken.**
 
@@ -63,12 +69,6 @@ AI earns its place by being useful, not by being mandatory. If the Lore Oracle h
 If AI comes first — if the pitch is "AI generates your campaign" and the structured archive is an afterthought — you get a product that is impressive in demos and unreliable in long-running campaigns where consistency, memory, and canon control matter most.
 
 Codex Cryptica was built starting from step one. The Lore Oracle came later, and it works from the archive you already built. That order matters.
-
----
-
-Ready for a worldbuilding tool that still works without AI? Build your vault. Use the Oracle when it helps. Turn it off when it doesn't.
-
-[Try it free](/) — no account required.
 
 ---
 

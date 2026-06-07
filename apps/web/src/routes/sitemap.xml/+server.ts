@@ -37,6 +37,11 @@ export async function GET() {
       changefreq: "monthly",
       priority: "0.8",
     },
+    {
+      path: "/responsible-ai-worldbuilding",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
 
     {
       path: "/tools/vampire-clan-generator",

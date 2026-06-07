@@ -16,8 +16,6 @@ keywords:
 publishedAt: 2026-06-06T14:00:00Z
 ---
 
-# Why Worldbuilding AI Should Know Your Lore Before It Speaks
-
 Ask most AI tools to generate a tavern and you get the same tavern. Creaking floorboards. A grizzled barkeep. Suspicious strangers in the corner. It is competent and forgettable.
 
 The problem is not that the prose is bad. The problem is that the AI has no idea where it is. It does not know what city this tavern is in, who controls it, what happened there last session, or what the players are likely to discover when they walk through the door.
@@ -38,17 +36,15 @@ You spend more time filtering and correcting than you would have just writing th
 
 Here is the same request, made two ways.
 
-**Without context:**
-
 > Generate a tavern.
 
-**With context:**
+versus:
 
 > Generate a tavern in the Ashward district of Velundra. The district is under occupation by the Iron Covenant. The players exposed a Covenant informant here last session. The barkeep, Mira, was established as sympathetic to the resistance.
 
 The second version does not need the AI to be smarter. It just needs the AI to work from what already exists. The output stays consistent with your world because your world is in the prompt.
 
-The Lore Oracle in Codex Cryptica works this way. When you ask it a question or request a draft, it pulls from your vault — your entities, your factions, your session log, your established relationships. The context is not something you have to manually assemble every time. It is already there because you built it.
+The Lore Oracle in Codex Cryptica works this way. When you ask it a question or request a draft, it pulls from your vault — your entities, your factions, your session log, your established relationships. The context is not something you have to manually assemble every time. It is already there because you built it — including relevant entries about Velundra, the Ashward district, and the Iron Covenant.
 
 ## What the vault provides
 
@@ -58,7 +54,9 @@ Every piece of structured lore you add to Codex Cryptica becomes context the Ora
 - **Relationships.** Explicit links between entities — allies, rivals, locations, histories.
 - **Session log.** What actually happened, in the order it happened.
 - **Timeline.** When events occurred relative to each other and to the current moment.
-- **Custom notes.** Anything you have written down that does not fit a standard field.
+- **Custom notes.** Unstructured notes, GM-only scratchpads, and rough ideas can provide context when you choose to include them.
+
+Vault-aware does not mean the whole vault is blindly dumped into every request. The Oracle retrieves relevant context for the task, then treats the result as a draft for you to review.
 
 Ask the Oracle to suggest what a minor faction might want from the players, and it can read who that faction is, who leads it, what it has done in past sessions, and what its rivals are doing. The suggestion comes from your world, not from a generic template.
 
@@ -76,24 +74,18 @@ The difference is not intelligence. It is memory.
 
 ## What this does not solve
 
-Context-aware AI is still AI. It still suggests rather than decides. The Oracle can surface a connection you forgot, but it can also surface a connection that does not hold up on closer inspection. Every output is a draft until you review it.
+Context-aware AI is still AI. It still suggests rather than decides. The Oracle can surface a connection you forgot, but it can also surface a connection that does not hold up on closer inspection — because it mapped a thematic link but missed a spatial constraint. Every output is a draft until you review it.
 
 Grounding AI in your lore reduces the noise — fewer suggestions that are obviously wrong, fewer details that contradict established canon. It does not eliminate the need for your judgement. That part stays yours.
 
 ---
 
-_This article is part of the Codex Cryptica responsible AI series._
+_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
 
-**Responsible AI in Codex Cryptica:**
-
-- [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-- [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-- **Why Worldbuilding AI Should Know Your Lore Before It Speaks** _(this article)_
-- Drafts Are Not Canon _(coming soon)_
-- Six Ways to Use AI in Campaign Prep Without Losing Your Voice _(coming soon)_
-- AI Slop Happens When the Tool Has No Memory _(coming soon)_
-- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
-
----
-
-_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/) — no account required._
+1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
+2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
+3. **Why Worldbuilding AI Should Know Your Lore Before It Speaks** _(this article)_
+4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
+5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
+6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
+7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
