@@ -18,7 +18,7 @@
       step: 2,
       title: "AI Must Be Optional",
       summary:
-        "A campaign manager must be completely load-bearing without AI. If you turn the Oracle off, your wiki, chronological timelines, interactive graph, and local storage remain 100% functional.",
+        "A campaign manager must be completely load-bearing without AI. If you turn the Oracle off, your wiki, chronological timelines, interactive graph, and local storage remain fully usable.",
       slug: "worldbuilding-tool-without-ai",
       icon: "icon-[lucide--wifi-off]",
     },
@@ -215,8 +215,8 @@
             class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
           ></span>
           <span
-            ><strong>Context-aware</strong> — the Lore Oracle builds suggestions from
-            your selected campaign details, not hidden training datasets.</span
+            ><strong>Context-aware</strong> — suggestions are grounded in the campaign
+            context you choose to provide.</span
           >
         </li>
         <li class="flex items-start gap-3">
@@ -242,8 +242,8 @@
             class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
           ></span>
           <span
-            ><strong>Library first</strong> — Codex Cryptica is a private campaign
-            manager first, and an AI assistant second.</span
+            ><strong>Campaign manager first</strong> — Codex Cryptica is a private
+            worldbuilding vault first, and an AI assistant second.</span
           >
         </li>
       </ul>
@@ -264,9 +264,8 @@
         Cryptica is built around a local-first architecture. Your campaign vault
         lives in your browser's private filesystem (OPFS), running offline.
         Codex does not store your campaign vault in a Codex database. When you
-        choose to utilize AI suggestions, your prompts are sent directly to your
-        configured API client, ensuring your private notes remain under your
-        domain.
+        choose to use AI suggestions, the prompt and selected context are sent
+        to your configured API provider.
       </p>
     </div>
 
@@ -288,12 +287,12 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
         <div
-          class="p-4 rounded-xl bg-green-500/5 border border-green-500/20 space-y-2"
+          class="p-4 rounded-xl bg-theme-surface/35 border border-theme-border/60 border-t-theme-primary border-t-2 space-y-2"
         >
           <div
-            class="font-bold text-green-400 uppercase tracking-wider flex items-center gap-1.5"
+            class="font-bold text-theme-primary uppercase tracking-wider flex items-center gap-1.5"
           >
-            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+            <span class="w-2 h-2 rounded-full bg-theme-primary"></span>
             Stays Local
           </div>
           <ul class="space-y-1 text-theme-muted">
@@ -304,12 +303,12 @@
           </ul>
         </div>
         <div
-          class="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 space-y-2"
+          class="p-4 rounded-xl bg-theme-surface/35 border border-theme-border/60 border-t-theme-accent border-t-2 space-y-2"
         >
           <div
-            class="font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5"
+            class="font-bold text-theme-accent uppercase tracking-wider flex items-center gap-1.5"
           >
-            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <span class="w-2 h-2 rounded-full bg-theme-accent"></span>
             May Be Sent
           </div>
           <ul class="space-y-1 text-theme-muted">
@@ -320,18 +319,18 @@
           </ul>
         </div>
         <div
-          class="p-4 rounded-xl bg-red-500/5 border border-red-500/20 space-y-2"
+          class="p-4 rounded-xl bg-theme-surface/35 border border-theme-border/60 border-t-theme-danger border-t-2 space-y-2"
         >
           <div
-            class="font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5"
+            class="font-bold text-theme-danger uppercase tracking-wider flex items-center gap-1.5"
           >
-            <span class="w-2 h-2 rounded-full bg-red-400"></span>
-            Never Saved
+            <span class="w-2 h-2 rounded-full bg-theme-danger"></span>
+            Never Saved by Codex
           </div>
           <ul class="space-y-1 text-theme-muted text-[10px]">
             <li>• No hosted campaign database</li>
-            <li>• No permanent chat files on our servers</li>
-            <li>• No cloud logging of your private wiki</li>
+            <li>• No permanent chat files on Codex servers</li>
+            <li>• No cloud logging of your private wiki by Codex</li>
           </ul>
         </div>
       </div>
