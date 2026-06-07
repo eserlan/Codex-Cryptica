@@ -35,11 +35,6 @@
       label: "Suggest",
       description: "Show found records and wait for your approval.",
     },
-    {
-      value: "auto-create",
-      label: "Auto-create",
-      description: "Save discovered records as drafts automatically.",
-    },
   ] as const;
 
   const connectionDiscoveryOptions = [
@@ -52,11 +47,6 @@
       value: "suggest",
       label: "Suggest",
       description: "Queue connection proposals for review.",
-    },
-    {
-      value: "auto-apply",
-      label: "Auto-apply",
-      description: "Create eligible graph links automatically.",
     },
   ] as const;
 </script>
@@ -142,11 +132,10 @@
         id="entity-discovery-label">Entity Discovery</span
       >
       <p class="text-xs text-theme-muted mt-1 mb-3 leading-relaxed">
-        Choose whether Oracle chat should ignore, suggest, or automatically save
-        discovered records.
+        Choose whether Oracle chat should ignore or suggest discovered records.
       </p>
       <div
-        class="grid grid-cols-1 sm:grid-cols-3 gap-2"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-2"
         role="radiogroup"
         aria-labelledby="entity-discovery-label"
       >
@@ -185,7 +174,7 @@
         Choose what happens after the Oracle creates or updates a record.
       </p>
       <div
-        class="grid grid-cols-1 sm:grid-cols-3 gap-2"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-2"
         role="radiogroup"
         aria-labelledby="connection-discovery-label"
       >

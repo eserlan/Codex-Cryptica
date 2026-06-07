@@ -346,7 +346,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "oracle-automation",
     title: "Oracle Automation",
     content:
-      "Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.",
+      "Entity Discovery controls whether Oracle surfaces discovered records as suggestions. Connection Discovery controls whether Oracle surfaces link suggestions after it creates or updates a record.",
     icon: "icon-[lucide--sliders-horizontal]",
   },
   "adjustable-sidebars": {
@@ -360,7 +360,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "draft-review",
     title: "Reviewing Drafts",
     content:
-      "Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.",
+      "Draft entities stay separate from your active lore until you review them. Open the Review tab in Entity Explorer, or use the draft controls in the entity panel, to approve or reject them.",
     icon: "icon-[lucide--clipboard-check]",
   },
   "ai-revision": {

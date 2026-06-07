@@ -15,7 +15,6 @@
 
   import { debugStore } from "$lib/stores/debug.svelte";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
-  import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
 
   let editingConnectionTarget = $state<string | null>(null);
   let isAddingConnection = $state(false);
@@ -850,15 +849,6 @@
           <p class="text-xs text-theme-muted italic">No known connections.</p>
         {/if}
       </div>
-
-      {#if entity}
-        <div class="px-0">
-          <EntityProposals
-            content={entity.content || ""}
-            isEditing={editState.isEditing}
-          />
-        </div>
-      {/if}
     {/if}
 
     {#if editState.isEditing && !vault.isGuest}
