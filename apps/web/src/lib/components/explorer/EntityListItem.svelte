@@ -183,7 +183,7 @@
 
   {#if entity.labels && entity.labels.length > 0}
     <div class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0">
-      {#each entity.labels.slice(0, 2) as label (label)}
+      {#each entity.labels.slice(0, 2) as label, index (`${entity.id}-label-${index}`)}
         <button
           type="button"
           onclick={(e) => {

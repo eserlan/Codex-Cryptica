@@ -137,7 +137,7 @@
                 class="text-[8px] md:text-[10px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
-              {#each entity.aliases as alias (`${entity.id}-${alias}`)}
+              {#each entity.aliases as alias, index (`${entity.id}-alias-${index}`)}
                 <div
                   class="px-1.5 md:px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
                 >
