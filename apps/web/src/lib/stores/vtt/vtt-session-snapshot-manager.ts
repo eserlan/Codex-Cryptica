@@ -72,12 +72,15 @@ export class VTTSessionSnapshotManager {
       name: this.deps.getEncounterName(),
       mapId: this.deps.getMapId() ?? "",
       mode: this.deps.getMode(),
-      tokens: Object.fromEntries(
-        Object.entries(this.deps.getTokens()).map(([id, token]) => [
-          id,
-          { ...token },
-        ]),
-      ),
+      tokens: (() => {
+        // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop over Object.keys() to avoid intermediate array allocations
+        const currentTokens = this.deps.getTokens();
+        const tokens: Record<string, Token> = {};
+        for (const id of Object.keys(currentTokens)) {
+          tokens[id] = { ...currentTokens[id] };
+        }
+        return tokens;
+      })(),
       initiativeOrder: [...this.deps.getInitiativeOrder()],
       initiativeValues: { ...this.deps.getInitiativeValues() },
       round: this.deps.getRound(),
@@ -104,14 +107,13 @@ export class VTTSessionSnapshotManager {
     this.deps.setMode(snapshot.mode);
     this.deps.setEncounterName(snapshot.name ?? this.deps.getEncounterName());
 
-    const tokens = snapshot.tokens
-      ? Object.fromEntries(
-          Object.entries(snapshot.tokens).map(([id, token]) => [
-            id,
-            normalizeToken(token as Token),
-          ]),
-        )
-      : {};
+    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop over Object.keys() to avoid intermediate array allocations
+    const tokens: Record<string, Token> = {};
+    if (snapshot.tokens) {
+      for (const id of Object.keys(snapshot.tokens)) {
+        tokens[id] = normalizeToken(snapshot.tokens[id] as Token);
+      }
+    }
 
     const selection =
       snapshot.selection && tokens[snapshot.selection]
