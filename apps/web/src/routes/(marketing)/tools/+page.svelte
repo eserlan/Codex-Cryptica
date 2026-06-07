@@ -133,6 +133,13 @@
                 "Review the AI-assisted campaign workflow built around local notes and BYO Gemini access.",
               icon: "icon-[lucide--wand-sparkles]",
             },
+            {
+              href: "/responsible-ai-worldbuilding",
+              label: "Responsible AI",
+              summary:
+                "Our guiding principles for ethical, optional, local-first AI assistance in worldbuilding.",
+              icon: "icon-[lucide--shield-alert]",
+            },
           ],
         },
       ],
