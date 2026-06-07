@@ -316,5 +316,5 @@
 </div>
 
 <style>
-  @reference "../../../../app.css";
+  @reference "../../../app.css";
 </style>
