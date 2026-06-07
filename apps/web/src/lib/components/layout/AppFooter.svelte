@@ -46,6 +46,11 @@
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Blog</a
     >
+    <a
+      href="{base}/responsible-ai-worldbuilding"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
+      >Responsible AI</a
+    >
     <button
       onclick={() => modalUIStore.openSettings("help")}
       class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer"
