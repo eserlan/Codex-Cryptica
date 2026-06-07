@@ -78,18 +78,10 @@
   function buildCommitNotice(
     action: "Created" | "Updated",
     title: string,
-    connectionCount: number | void,
+    _connectionCount: number | void,
   ) {
     if (discoveryPolicyStore.connectionDiscoveryMode === "off") {
       return `${action} ${title}`;
-    }
-
-    if (discoveryPolicyStore.connectionDiscoveryMode === "auto-apply") {
-      const count = connectionCount || 0;
-      if (count > 0) {
-        return `${action} ${title} and added ${count} connection${count === 1 ? "" : "s"}`;
-      }
-      return `${action} ${title}; no new connections found`;
     }
 
     return `${action} ${title}; connection suggestions queued`;

@@ -13,13 +13,13 @@ import {
 function isEntityDiscoveryMode(
   value: string | null,
 ): value is EntityDiscoveryMode {
-  return value === "off" || value === "suggest" || value === "auto-create";
+  return value === "off" || value === "suggest";
 }
 
 function isConnectionDiscoveryMode(
   value: string | null,
 ): value is ConnectionDiscoveryMode {
-  return value === "off" || value === "suggest" || value === "auto-apply";
+  return value === "off" || value === "suggest";
 }
 
 export class DiscoveryPolicyStore {
@@ -64,22 +64,23 @@ export class DiscoveryPolicyStore {
     );
     if (isEntityDiscoveryMode(savedEntityMode)) {
       this.entityDiscoveryMode = savedEntityMode;
-      this.autoArchive = savedEntityMode === "auto-create";
+      this.autoArchive = false;
     } else {
       const autoArchive = this.persistence.read(
         UI_STORAGE_KEYS.AUTO_ARCHIVE,
         (v) => v === "true",
         null,
       );
-      if (autoArchive !== null) {
-        this.autoArchive = autoArchive;
-        this.entityDiscoveryMode = this.autoArchive ? "auto-create" : "suggest";
+      if (savedEntityMode === "auto-create" || autoArchive === true) {
+        this.entityDiscoveryMode = "suggest";
         this.persistence.write(
           UI_STORAGE_KEYS.ENTITY_DISCOVERY_MODE,
           this.entityDiscoveryMode,
           String,
         );
       }
+      this.autoArchive = false;
+      this.persistence.write(UI_STORAGE_KEYS.AUTO_ARCHIVE, false, String);
     }
 
     const savedConnectionMode = this.persistence.read(
@@ -89,6 +90,13 @@ export class DiscoveryPolicyStore {
     );
     if (isConnectionDiscoveryMode(savedConnectionMode)) {
       this.connectionDiscoveryMode = savedConnectionMode;
+    } else if (savedConnectionMode === "auto-apply") {
+      this.connectionDiscoveryMode = "suggest";
+      this.persistence.write(
+        UI_STORAGE_KEYS.CONNECTION_DISCOVERY_MODE,
+        this.connectionDiscoveryMode,
+        String,
+      );
     }
   }
 
@@ -105,25 +113,25 @@ export class DiscoveryPolicyStore {
   }
 
   toggleAutoArchive(enabled: boolean) {
-    this.setEntityDiscoveryMode(enabled ? "auto-create" : "suggest");
+    this.setEntityDiscoveryMode(enabled ? "suggest" : "off");
   }
 
   setEntityDiscoveryMode(mode: EntityDiscoveryMode) {
-    this.entityDiscoveryMode = mode;
-    this.autoArchive = mode === "auto-create";
-    this.persistence.write(UI_STORAGE_KEYS.ENTITY_DISCOVERY_MODE, mode, String);
+    this.entityDiscoveryMode = mode === "auto-create" ? "suggest" : mode;
+    this.autoArchive = false;
     this.persistence.write(
-      UI_STORAGE_KEYS.AUTO_ARCHIVE,
-      this.autoArchive,
+      UI_STORAGE_KEYS.ENTITY_DISCOVERY_MODE,
+      this.entityDiscoveryMode,
       String,
     );
+    this.persistence.write(UI_STORAGE_KEYS.AUTO_ARCHIVE, false, String);
   }
 
   setConnectionDiscoveryMode(mode: ConnectionDiscoveryMode) {
-    this.connectionDiscoveryMode = mode;
+    this.connectionDiscoveryMode = mode === "auto-apply" ? "suggest" : mode;
     this.persistence.write(
       UI_STORAGE_KEYS.CONNECTION_DISCOVERY_MODE,
-      mode,
+      this.connectionDiscoveryMode,
       String,
     );
   }

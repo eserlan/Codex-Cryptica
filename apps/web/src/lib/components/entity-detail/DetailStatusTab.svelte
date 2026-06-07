@@ -9,7 +9,6 @@
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import Autocomplete from "$lib/components/ui/Autocomplete.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
-  import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -883,7 +882,6 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
   {/if}
 
   <DetailProposals {isEditing} />
-  <EntityProposals content={entity.content || ""} {isEditing} />
 </div>
 
 <style>

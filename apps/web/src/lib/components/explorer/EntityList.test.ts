@@ -67,6 +67,17 @@ const mockVault = vi.hoisted(() => {
         updatedAt: 0,
         parent: "parent-1",
       },
+      {
+        id: "draft-1",
+        title: "Pending Draft",
+        type: "npc",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        updatedAt: 0,
+        status: "draft",
+      },
     ] as any[],
     entities: {} as Record<string, any>,
     createEntity: vi.fn(),
@@ -380,5 +391,35 @@ describe("EntityList", () => {
     await tick();
     expect(screen.queryByText("Ava")).toBeNull();
     expect(screen.queryByText("Parent Entity")).not.toBeNull();
+  });
+
+  it("hides draft entities in the default list view", () => {
+    render(EntityList);
+
+    expect(screen.queryByText("Pending Draft")).toBeNull();
+  });
+
+  it("shows draft entities in review mode and wires approve and reject actions", async () => {
+    const onApproveDraft = vi.fn();
+    const onRejectDraft = vi.fn();
+
+    render(EntityList, {
+      showDraftsOnly: true,
+      onApproveDraft,
+      onRejectDraft,
+    });
+
+    expect(screen.getByText("Pending Draft")).not.toBeNull();
+    expect(screen.queryByText("Ava")).toBeNull();
+
+    await fireEvent.click(screen.getByLabelText("Approve Pending Draft"));
+    expect(onApproveDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "draft-1" }),
+    );
+
+    await fireEvent.click(screen.getByLabelText("Reject Pending Draft"));
+    expect(onRejectDraft).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "draft-1" }),
+    );
   });
 });

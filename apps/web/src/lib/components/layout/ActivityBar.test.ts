@@ -32,26 +32,15 @@ describe("ActivityBar", () => {
     layoutUIStore.toggleSidebarTool = vi.fn();
   });
 
-  it("shows AI Assessment when enabled", () => {
-    render(ActivityBar);
-    expect(screen.getByTestId("activity-bar-ai-assessment")).toBeDefined();
-  });
-
-  it("hides AI Assessment when AI is disabled", () => {
-    discoveryPolicyStore.aiDisabled = true;
+  it("does not render the AI Assessment shortcut", () => {
     render(ActivityBar);
     expect(screen.queryByTestId("activity-bar-ai-assessment")).toBeNull();
   });
 
-  it("hides AI Assessment when connection discovery is off", () => {
-    discoveryPolicyStore.connectionDiscoveryMode = "off";
+  it("still renders the core sidebar shortcuts", () => {
     render(ActivityBar);
-    expect(screen.queryByTestId("activity-bar-ai-assessment")).toBeNull();
-  });
-
-  it("shows AI Assessment when connection discovery is auto-apply", () => {
-    discoveryPolicyStore.connectionDiscoveryMode = "auto-apply";
-    render(ActivityBar);
-    expect(screen.getByTestId("activity-bar-ai-assessment")).toBeDefined();
+    expect(screen.getByTestId("activity-bar-oracle")).toBeDefined();
+    expect(screen.getByTestId("activity-bar-explorer")).toBeDefined();
+    expect(screen.getByTestId("activity-bar-quicknote")).toBeDefined();
   });
 });
