@@ -61,19 +61,6 @@
       },
     ];
 
-    if (
-      !vault.isGuest &&
-      !discoveryPolicyStore.aiDisabled &&
-      discoveryPolicyStore.connectionDiscoveryMode !== "off"
-    ) {
-      list.push({
-        id: "ai-assessment",
-        icon: "icon-[lucide--shield-check]",
-        label: "AI Assessment",
-        action: () => layoutUIStore.toggleSidebarTool("ai-assessment"),
-      });
-    }
-
     if (vault.isGuest || !discoveryPolicyStore.aiDisabled) {
       list.push({
         id: "guest-chat",

@@ -40,14 +40,12 @@
   }
 
   let explorerTab = $state<"all" | "review">("all");
-  // ⚡ Bolt Optimization: Replace .filter().length with .reduce() to avoid intermediate array allocation
-  let draftCount = $derived(
+  const draftCount = $derived(
     vault.allEntities.reduce(
-      (count, e) => count + (e.status === "draft" ? 1 : 0),
+      (count, entity) => count + (entity.status === "draft" ? 1 : 0),
       0,
     ),
   );
-
   const actioningIds = $state(new Set<string>());
 
   async function handleApproveDraft(entity: Entity) {
@@ -118,28 +116,27 @@
     </button>
   </div>
 
-  <!-- Tabs -->
-  <div class="flex border-b border-theme-border shrink-0 bg-theme-surface/30">
+  <div class="flex shrink-0 border-b border-theme-border bg-theme-surface/30">
     <button
       class="flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all {explorerTab ===
       'all'
-        ? 'text-theme-primary border-b-2 border-theme-primary bg-theme-primary/5'
-        : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
+        ? 'border-b-2 border-theme-primary bg-theme-primary/5 text-theme-primary'
+        : 'text-theme-muted hover:bg-theme-surface/50 hover:text-theme-text'}"
       onclick={() => (explorerTab = "all")}
     >
       All Entities
     </button>
     <button
-      class="flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all relative {explorerTab ===
+      class="relative flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all {explorerTab ===
       'review'
-        ? 'text-theme-primary border-b-2 border-theme-primary bg-theme-primary/5'
-        : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
+        ? 'border-b-2 border-theme-primary bg-theme-primary/5 text-theme-primary'
+        : 'text-theme-muted hover:bg-theme-surface/50 hover:text-theme-text'}"
       onclick={() => (explorerTab = "review")}
     >
       Review
       {#if draftCount > 0}
         <span
-          class="ml-1 px-1.5 py-0.5 rounded-full bg-theme-primary text-theme-bg text-[8px]"
+          class="ml-1 rounded-full bg-theme-primary px-1.5 py-0.5 text-[8px] text-theme-bg"
           >{draftCount}</span
         >
       {/if}
