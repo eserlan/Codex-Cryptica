@@ -27,7 +27,16 @@ vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
 }));
 vi.mock("$lib/stores/ui/navigation", () => ({ focusEntity: vi.fn() }));
 vi.mock("$lib/stores/theme.svelte", () => ({
-  themeStore: { resolveJargon: (k: string) => k },
+  themeStore: {
+    resolveJargon: (k: string) => k,
+    activeTheme: {
+      tokens: {
+        background: "#000000",
+        primary: "#ffffff",
+        surface: "#111111",
+      },
+    },
+  },
 }));
 vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
 vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
@@ -37,6 +46,9 @@ vi.mock("../../lib/components/GraphView.svelte", async () => ({
   default: (await import("./__tests__/GraphViewStub.svelte")).default,
 }));
 vi.mock("../../lib/components/world/FrontPage.svelte", async () => ({
+  default: (await import("./__tests__/FrontPageStub.svelte")).default,
+}));
+vi.mock("$lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("./__tests__/FrontPageStub.svelte")).default,
 }));
 vi.mock("../../lib/components/EntityDetailPanel.svelte", async () => ({
