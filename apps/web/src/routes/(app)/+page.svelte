@@ -312,104 +312,82 @@
         class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-24 md:py-20 flex flex-col min-h-full justify-start md:justify-center items-center"
         style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem)"
       >
-        <div
-          class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-10 md:mb-16 w-full"
-        >
-          <!-- Left Column: Headline and CTAs -->
+        <section class="mb-10 md:mb-16 w-full">
           <div
-            class="lg:col-span-6 flex flex-col text-center lg:text-left items-center lg:items-start"
+            class="mx-auto flex w-full max-w-6xl flex-col items-center text-center"
           >
             <div
-              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-5 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
             >
               <span
                 class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
               ></span>
               Local-first RPG campaign manager • Private by default
             </div>
-            <h1
-              class="text-4xl md:text-6xl lg:text-7xl font-bold text-theme-text font-header tracking-tight mb-4 md:mb-6 leading-tight"
+            <p
+              class="mb-2 text-sm md:text-base font-mono font-semibold uppercase tracking-[0.2em] text-theme-primary/90"
             >
-              Codex Cryptica <br />
-              <span class="text-theme-primary/90">Private RPG Lore Vault</span>
+              Welcome to Codex Cryptica
+            </p>
+            <h1
+              class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
+            >
+              Private RPG Lore Vault
             </h1>
             <p
-              class="text-base sm:text-lg md:text-xl lg:text-2xl text-theme-muted max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-6 md:mb-8 font-body font-light"
+              class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
               A free, local-first campaign manager for GMs: private Markdown
               notes, visual lore graphs, timelines, offline prep, and optional
               AI in one browser workspace.
             </p>
-
-            <div
-              class="mb-6 lg:mb-0 flex flex-col items-center lg:items-start justify-center lg:justify-start w-full"
-            >
-              <button
-                type="button"
-                onclick={() => demoService.startDemo("fantasy")}
-                class="w-full max-w-sm sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
-                data-testid="welcome-demo-button"
-              >
-                Explore Demo Vault
-              </button>
-              <p
-                class="mt-3 text-sm text-theme-muted/90 font-body text-balance text-center lg:text-left"
-              >
-                No setup required. Opens a prebuilt sample world instantly.
-              </p>
-
-              <div
-                class="mt-4 w-full max-w-sm sm:max-w-none flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3"
-              >
-                {#each secondaryActions as action (action.intent)}
-                  <button
-                    type="button"
-                    onclick={() => openVaultFromWelcome(action.intent)}
-                    class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
-                    data-testid={action.testid}
-                  >
-                    {action.label}
-                  </button>
-                {/each}
-              </div>
-            </div>
           </div>
 
-          <!-- Right Column: Interactive Graph Preview -->
-          <div
-            class="lg:col-span-6 flex flex-col items-center justify-center w-full"
+          <section
+            aria-labelledby="living-lore-graph"
+            class="mx-auto flex w-full max-w-6xl flex-col items-center"
           >
-            <!-- Product preview: clickable, typed lore graph + entity panel -->
             <button
               type="button"
               onclick={() => demoService.startDemo("fantasy")}
-              class="group mb-4 w-full max-w-xl lg:max-w-none rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary/70 hover:shadow-theme-primary/20 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
-              aria-label="Explore the demo vault"
+              class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary/70 hover:shadow-theme-primary/20 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
+              aria-labelledby="living-lore-graph"
+              aria-describedby="living-lore-graph-copy living-lore-graph-preview"
               data-testid="welcome-preview-button"
             >
               <div
-                class="flex items-center gap-1.5 px-3 py-2 border-b border-theme-border bg-theme-bg/60"
+                class="flex items-center gap-2 px-4 py-3 border-b border-theme-border bg-theme-bg/60"
               >
-                <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/40"
-                ></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/25"
-                ></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/15"
-                ></span>
+                <div class="min-w-0">
+                  <h2
+                    id="living-lore-graph"
+                    class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-theme-primary"
+                  >
+                    Living Lore Graph
+                  </h2>
+                  <p
+                    id="living-lore-graph-copy"
+                    class="mt-1 text-[11px] text-theme-muted"
+                  >
+                    See how characters, factions, secrets, and places connect.
+                  </p>
+                </div>
                 <span
-                  class="ml-2 text-[9px] font-mono text-theme-muted uppercase tracking-[0.2em]"
-                  >Living Lore Graph</span
+                  class="ml-auto flex shrink-0 items-center gap-1 text-[10px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
                 >
-                <span
-                  class="ml-auto flex items-center gap-1 text-[9px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
-                >
-                  Click to explore
+                  Explore
                   <span
                     class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
                   ></span>
                 </span>
               </div>
-              <div class="flex h-48 sm:h-56 md:h-64">
+              <div id="living-lore-graph-preview" class="sr-only">
+                Interactive lore graph preview showing Captain Veyra connected
+                to factions, secrets, places, and unresolved plot threads.
+              </div>
+              <div
+                class="flex h-[16.5rem] sm:h-[19rem] md:h-[22rem] lg:h-[26rem] xl:h-[28rem]"
+              >
                 <!-- Graph canvas -->
                 <div class="relative flex-1">
                   <svg
@@ -654,14 +632,38 @@
                 </div>
               </div>
             </button>
-            <p
-              class="max-w-md px-4 text-[11px] md:text-xs text-theme-muted/80 font-body leading-relaxed text-balance text-center"
+
+            <div
+              class="flex w-full max-w-5xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
-              Optional AI assist — ask for summaries, plot hooks, and
-              connections when you choose. Your vault works fully without it.
+              <button
+                type="button"
+                onclick={() => demoService.startDemo("fantasy")}
+                class="w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
+                data-testid="welcome-demo-button"
+              >
+                Explore Demo Vault
+              </button>
+              {#each secondaryActions as action (action.intent)}
+                <button
+                  type="button"
+                  onclick={() => openVaultFromWelcome(action.intent)}
+                  class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                  data-testid={action.testid}
+                >
+                  {action.label}
+                </button>
+              {/each}
+            </div>
+            <p
+              class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center"
+            >
+              Opens a prebuilt sample world instantly. No setup required.
+              Optional AI is available when you want it; your vault works fully
+              without it.
             </p>
-          </div>
-        </div>
+          </section>
+        </section>
 
         <!-- Below the Hero: Info boxes -->
         <div
@@ -691,7 +693,7 @@
           <h3
             class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] mb-6"
           >
-            Try it as:
+            Try a themed vault:
           </h3>
           <div class="flex flex-wrap justify-center gap-4">
             {#each demoThemes as theme (theme)}

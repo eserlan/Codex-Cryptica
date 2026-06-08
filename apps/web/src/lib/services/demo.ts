@@ -20,6 +20,7 @@ class DemoService implements IDemoActions {
         modern: { json: "modern", theme: "modern" },
         "space opera": { json: "starwars", theme: "scifi" },
         starfleet: { json: "startrek", theme: "scifi" },
+        "stellar fleet": { json: "startrek", theme: "scifi" },
         "post-nuclear": { json: "fallout", theme: "fallout" },
       };
 

@@ -57,7 +57,12 @@ describe("shared schema.org metadata", () => {
       name: "Codex Cryptica",
       applicationCategory: "GameApplication",
       applicationSubCategory: "RPG campaign manager",
+      operatingSystem: "Web browser",
       isAccessibleForFree: true,
+      image: "https://codexcryptica.com/og-image.png",
+      screenshot: "https://codexcryptica.com/screenshots/living-lore-graph.png",
+      privacyPolicy: "https://codexcryptica.com/privacy",
+      termsOfService: "https://codexcryptica.com/terms",
     });
 
     expect(software?.description).toContain("local-first RPG campaign manager");
@@ -66,13 +71,25 @@ describe("shared schema.org metadata", () => {
     expect(software?.featureList).toEqual(
       expect.arrayContaining([
         "Local-first Markdown vaults",
+        "World Anvil JSON migration import",
         "Offline RPG campaign management",
         "Private browser-local OPFS storage",
         "Spatial canvas and flowcharts",
-        "Optional AI Lore Oracle",
+        "Optional AI Lore Oracle; vault works fully without AI",
       ]),
     );
     expect(software?.keywords).toContain("private worldbuilding tool");
+    expect(software?.keywords).toContain("World Anvil alternative");
+    expect(software?.keywords).toContain("Obsidian RPG alternative");
+    expect(software?.keywords).toContain("Kanka alternative");
+    expect(software?.offers).toMatchObject({
+      "@type": "Offer",
+      price: 0,
+      priceCurrency: "USD",
+    });
+    expect(software?.publisher).toMatchObject({
+      "@id": "https://codexcryptica.com/#organization",
+    });
   });
 
   it("links official public community and project profiles", async () => {
@@ -88,5 +105,16 @@ describe("shared schema.org metadata", () => {
         PATREON_URL,
       ]),
     );
+  });
+
+  it("connects the website entity back to the software entity", async () => {
+    const { SCHEMA_ORG } = await import("./index");
+    const website = SCHEMA_ORG["@graph"].find(
+      (entry) => entry["@id"] === "https://codexcryptica.com/#website",
+    );
+
+    expect(website?.about).toMatchObject({
+      "@id": "https://codexcryptica.com/#software",
+    });
   });
 });
