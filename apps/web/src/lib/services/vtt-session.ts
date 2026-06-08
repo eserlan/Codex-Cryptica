@@ -48,14 +48,14 @@ export function createEncounterSession(
 export function sanitizeEncounterSession(
   session: EncounterSession,
 ): EncounterSession {
-  const tokens: Record<string, Token> = {};
-  for (const id of Object.keys(session.tokens)) {
-    tokens[id] = { ...(session.tokens[id] as Token) };
-  }
-
   return {
     ...session,
-    tokens,
+    tokens: Object.fromEntries(
+      Object.entries(session.tokens).map(([id, token]) => [
+        id,
+        { ...(token as Token) },
+      ]),
+    ),
     initiativeOrder: [...session.initiativeOrder],
     initiativeValues: { ...session.initiativeValues },
     measurement: {
