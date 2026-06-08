@@ -439,7 +439,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref=import-nav"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
@@ -687,6 +687,27 @@
             {/if}
           </ul>
         </div>
+      </section>
+    {/if}
+
+    <!-- Responsible AI Trust Banner -->
+    {#if pageData.aiTrustSection}
+      <section class="border-t border-theme-border/60 mt-16 pt-10 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{base}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
       </section>
     {/if}
 

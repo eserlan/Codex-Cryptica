@@ -68,16 +68,4 @@ AI is most trustworthy when it cannot act without your permission.
 
 Suggestions that require acceptance before they become fact are suggestions you remain in control of. Suggestions that silently enter the archive are a slow erosion of authorship.
 
-Codex Cryptica is built around the first model. The Oracle suggests. You decide.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-4. **Drafts Are Not Canon** _(this article)_
-5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
+Codex Cryptica is built around the first model. [The Oracle suggests](/blog/lore-oracle-not-the-author). You decide.

@@ -2,8 +2,41 @@
   import { base } from "$app/paths";
   import { themeStore } from "$lib/stores/theme.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
+  import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
+  import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
+  import { safeJsonLd } from "$lib/utils/json-ld";
+
   let { data } = $props();
   const article = $derived(data.article);
+  const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
+  const articleContent = $derived(
+    article.content.replace(/^#[^\n]+\n/, "").trimStart(),
+  );
+
+  const jsonLdString = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: article.title,
+      description: article.description,
+      datePublished: article.publishedAt,
+      dateModified: article.publishedAt,
+      url: data.canonicalUrl,
+      mainEntityOfPage: { "@type": "WebPage", "@id": data.canonicalUrl },
+      author: {
+        "@type": "Organization",
+        name: "Codex Cryptica",
+        url: "https://codexcryptica.com",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "Codex Cryptica",
+        url: "https://codexcryptica.com",
+      },
+      articleSection: "Worldbuilding & RPG Tools",
+      keywords: article.keywords.join(", "),
+    }),
+  );
 </script>
 
 <svelte:head>
@@ -17,6 +50,10 @@
   <meta property="og:description" content={article.description} />
   <meta property="og:type" content="article" />
   <meta property="article:published_time" content={article.publishedAt} />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${jsonLdString}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div
@@ -47,7 +84,11 @@
             timeZone: "UTC",
           })}
         </time>
-        <span class="w-8 h-px bg-theme-border"></span>
+        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
+          class="sr-only"
+        >
+          ·
+        </span>
         <span>{themeStore.resolveJargon("blog_entry")}</span>
       </div>
 
@@ -65,18 +106,28 @@
     </header>
 
     <main class="mb-20">
-      <ArticleRenderer content={article.content} />
+      <ArticleRenderer content={articleContent} />
     </main>
+
+    {#if isRASeries}
+      <ResponsibleAISeriesNav currentSlug={article.slug} />
+    {/if}
 
     <footer class="pt-12 border-t border-theme-border">
       <div>
-        <p class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-3">Topics</p>
+        <p
+          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-3"
+        >
+          Topics
+        </p>
         <div class="flex flex-wrap gap-2">
           {#each article.keywords.slice(0, 6) as keyword}
             <span
               class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted tracking-wider"
             >
-              {keyword.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              {keyword
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
             </span>
           {/each}
         </div>
@@ -96,7 +147,7 @@
           </p>
         </div>
         <a
-          href="{base}/"
+          href="{base}/{isRASeries ? '?ref=ra-blog' : ''}"
           class="px-8 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
         >
           Enter the Codex

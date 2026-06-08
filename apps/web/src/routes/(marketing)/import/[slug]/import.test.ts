@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render } from "@testing-library/svelte";
+import { render, screen } from "@testing-library/svelte";
 import { load, entries } from "./+page";
 import Page from "./+page.svelte";
 
@@ -111,6 +111,68 @@ describe("Imports SvelteKit Route", () => {
 
       expect(softwareAppFound).toBe(true);
       expect(breadcrumbFound).toBe(true);
+    });
+  });
+
+  describe("Responsible AI trust banner", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("renders the trust banner when aiTrustSection is true", () => {
+      const mockPageData = {
+        slug: "world-anvil-export",
+        competitorName: "World Anvil",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+        aiTrustSection: true,
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      expect(
+        screen.getByText(/Responsible AI, not replacement authorship/i),
+      ).toBeTruthy();
+      const link = screen.getByRole("link", {
+        name: /responsible ai principles/i,
+      });
+      expect(link.getAttribute("href")).toBe("/responsible-ai-worldbuilding");
+    });
+
+    it("does not render the trust banner when aiTrustSection is absent", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      expect(
+        screen.queryByText(/Responsible AI, not replacement authorship/i),
+      ).toBeNull();
+    });
+
+    it("world-anvil-export config has aiTrustSection enabled", async () => {
+      const { importsConfig } = (await vi.importActual(
+        "$lib/config/seo-pages",
+      )) as typeof import("$lib/config/seo-pages");
+      expect(importsConfig["world-anvil-export"].aiTrustSection).toBe(true);
     });
   });
 });

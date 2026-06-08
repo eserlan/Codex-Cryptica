@@ -27,7 +27,16 @@ vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
 }));
 vi.mock("$lib/stores/ui/navigation", () => ({ focusEntity: vi.fn() }));
 vi.mock("$lib/stores/theme.svelte", () => ({
-  themeStore: { resolveJargon: (k: string) => k },
+  themeStore: {
+    resolveJargon: (k: string) => k,
+    activeTheme: {
+      tokens: {
+        background: "#000000",
+        primary: "#ffffff",
+        surface: "#111111",
+      },
+    },
+  },
 }));
 vi.mock("$lib/services/demo", () => ({ demoService: { startDemo: vi.fn() } }));
 vi.mock("$lib/config", () => ({ SCHEMA_ORG: {} }));
@@ -37,6 +46,9 @@ vi.mock("../../lib/components/GraphView.svelte", async () => ({
   default: (await import("./__tests__/GraphViewStub.svelte")).default,
 }));
 vi.mock("../../lib/components/world/FrontPage.svelte", async () => ({
+  default: (await import("./__tests__/FrontPageStub.svelte")).default,
+}));
+vi.mock("$lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("./__tests__/FrontPageStub.svelte")).default,
 }));
 vi.mock("../../lib/components/EntityDetailPanel.svelte", async () => ({
@@ -61,6 +73,38 @@ describe("root +page.svelte — front page overlay keydown", () => {
     onboardingStore.dismissedWorldPage = false;
     onboardingStore.skipWelcomeScreen = true;
     onboardingStore.dismissedLandingPage = true;
+  });
+
+  it("presents the root landing page as a private local-first RPG vault", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /private rpg lore vault/i,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Welcome to Codex Cryptica")).toBeTruthy();
+    expect(screen.getByText(/local-first campaign manager/i)).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: /living lore graph/i }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /see how characters, factions, secrets, and places connect/i,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        /opens a prebuilt sample world instantly\. no setup required\./i,
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Local-first vault")).toBeTruthy();
+    expect(screen.getByText("Spatial lore graph")).toBeTruthy();
+    expect(screen.getByText("Optional AI")).toBeTruthy();
   });
 
   it("dismisses the overlay when Space is pressed directly on the overlay", async () => {

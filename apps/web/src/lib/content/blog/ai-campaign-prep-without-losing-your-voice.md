@@ -25,7 +25,7 @@ Here are six uses that consistently deliver without getting in the way.
 
 You know the notes. Half-sentences. Abbreviations only you understand. A name scrawled in the margin with no context. After a long session the last thing you want to do is rewrite them into something readable.
 
-Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft. You trim it, correct anything the Oracle misread, and file it in the session log.
+Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft ([Drafts Are Not Canon](/blog/drafts-are-not-canon)). You trim it, correct anything the Oracle misread, and file it in the session log.
 
 **What you save:** thirty minutes of post-session admin.
 **What you keep:** the judgement call about which details matter.
@@ -86,15 +86,3 @@ This is particularly useful when a campaign event changes something established 
 ---
 
 None of these replace the creative decisions. They reduce the friction around them. The session still needs a plot. The NPC still needs a reason to matter. The names still need to feel right to you. The Oracle handles the overhead. The authorship stays where it belongs.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-5. **Six Ways to Use AI in Campaign Prep Without Losing Your Voice** _(this article)_
-6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)

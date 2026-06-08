@@ -56,13 +56,30 @@
 
   const demoThemes = [
     "vampire",
-    "scifi",
+    "sci-fi",
     "cyberpunk",
     "wasteland",
     "modern",
-    "fallout",
-    "starwars",
-    "startrek",
+    "space opera",
+    "starfleet",
+    "post-nuclear",
+  ];
+  const agenticProofPoints = [
+    {
+      icon: "icon-[lucide--hard-drive]",
+      label: "Local-first vault",
+      copy: "Your campaign lives in browser-local storage, not a hosted notes silo.",
+    },
+    {
+      icon: "icon-[lucide--network]",
+      label: "Spatial lore graph",
+      copy: "Connect people, places, factions, secrets, maps, and timelines visually.",
+    },
+    {
+      icon: "icon-[lucide--sparkles]",
+      label: "Optional AI",
+      copy: "Use the Lore Oracle when helpful; the vault works without AI or an account.",
+    },
   ];
   const schemaOrgString = $derived(safeJsonLd(SCHEMA_ORG));
 
@@ -292,336 +309,407 @@
       transition:fade
     >
       <div
-        class="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-24 md:py-20 flex flex-col min-h-full justify-start md:justify-center"
+        class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-24 md:py-20 flex flex-col min-h-full justify-start md:justify-center items-center"
         style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem)"
       >
-        <header class="mb-8 md:mb-14 text-center">
+        <section class="mb-10 md:mb-16 w-full">
           <div
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-5 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
-          >
-            <span
-              class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
-            ></span>
-            Your vault stays local • Optional AI • No account required
-          </div>
-          <h2
-            class="text-4xl md:text-7xl font-bold text-theme-text font-header tracking-tight mb-4 md:mb-6 leading-tight"
-          >
-            Build Your World. <br />
-            <span class="text-theme-primary/90">Map Your Lore.</span>
-          </h2>
-          <p
-            class="text-base sm:text-lg md:text-2xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-6 md:mb-8 font-body font-light"
-          >
-            Turn scattered campaign notes into a private visual vault for
-            characters, factions, locations, secrets, and timelines.
-          </p>
-
-          <!-- Product preview: clickable, typed lore graph + entity panel -->
-          <button
-            type="button"
-            onclick={() => demoService.startDemo("fantasy")}
-            class="group mb-6 md:mb-8 mx-auto block w-full max-w-3xl md:max-w-4xl rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary/70 hover:shadow-theme-primary/20 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
-            aria-label="Explore the demo vault"
-            data-testid="welcome-preview-button"
+            class="mx-auto flex w-full max-w-6xl flex-col items-center text-center"
           >
             <div
-              class="flex items-center gap-1.5 px-3 py-2 border-b border-theme-border bg-theme-bg/60"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
             >
-              <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/40"></span>
-              <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/25"></span>
-              <span class="w-2.5 h-2.5 rounded-full bg-theme-primary/15"></span>
               <span
-                class="ml-2 text-[9px] font-mono text-theme-muted uppercase tracking-[0.2em]"
-                >Living Lore Graph</span
-              >
-              <span
-                class="ml-auto flex items-center gap-1 text-[9px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
-              >
-                Click to explore
-                <span
-                  class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
-                ></span>
-              </span>
+                class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
+              ></span>
+              Local-first RPG campaign manager • Private by default
             </div>
-            <div class="flex h-48 sm:h-56 md:h-64">
-              <!-- Graph canvas -->
-              <div class="relative flex-1">
-                <svg
-                  viewBox="0 0 480 260"
-                  class="absolute inset-0 w-full h-full"
-                  preserveAspectRatio="xMidYMid meet"
-                  aria-hidden="true"
-                >
-                  <!-- peripheral edges (dim) -->
-                  <g stroke="#8a8175" stroke-opacity="0.25" stroke-width="1.2">
-                    <line x1="130" y1="66" x2="358" y2="74" />
-                    <line x1="138" y1="196" x2="350" y2="198" />
-                    <line x1="52" y1="134" x2="130" y2="66" />
-                    <line x1="52" y1="134" x2="138" y2="196" />
-                    <line x1="430" y1="140" x2="358" y2="74" />
-                    <line x1="430" y1="140" x2="350" y2="198" />
-                  </g>
-                  <!-- edges from the selected node (selection accent) -->
-                  <g
-                    stroke={SELECT_ACCENT}
-                    stroke-opacity="0.5"
-                    stroke-width="2"
-                  >
-                    <line x1="240" y1="130" x2="130" y2="66" />
-                    <line x1="240" y1="130" x2="358" y2="74" />
-                    <line x1="240" y1="130" x2="138" y2="196" />
-                    <line x1="240" y1="130" x2="350" y2="198" />
-                  </g>
+            <p
+              class="mb-2 text-sm md:text-base font-mono font-semibold uppercase tracking-[0.2em] text-theme-primary/90"
+            >
+              Welcome to Codex Cryptica
+            </p>
+            <h1
+              class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
+            >
+              Private RPG Lore Vault
+            </h1>
+            <p
+              class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
+            >
+              A free, local-first campaign manager for GMs: private Markdown
+              notes, visual lore graphs, timelines, offline prep, and optional
+              AI in one browser workspace.
+            </p>
+          </div>
 
-                  <!-- hover-only glow boost on the selected node -->
-                  <circle
-                    cx="240"
-                    cy="130"
-                    r="32"
-                    fill={SELECT_ACCENT}
-                    fill-opacity="0.18"
-                    class="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  ></circle>
-                  <!-- selected-node glow halo -->
-                  <circle
-                    cx="240"
-                    cy="130"
-                    r="24"
-                    fill={SELECT_ACCENT}
-                    opacity="0.14"
-                  >
-                    <animate
-                      attributeName="opacity"
-                      values="0.1;0.22;0.1"
-                      dur="3.2s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="r"
-                      values="22;27;22"
-                      dur="3.2s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-
-                  <!-- peripheral nodes, colored by entity type (canonical palette) -->
-                  <circle
-                    cx="52"
-                    cy="134"
-                    r="8"
-                    fill={PREVIEW_COLORS.location}
-                    fill-opacity="0.85"
-                  ></circle>
-                  <circle
-                    cx="430"
-                    cy="140"
-                    r="8"
-                    fill={PREVIEW_COLORS.event}
-                    fill-opacity="0.85"
-                  ></circle>
-                  <circle
-                    cx="130"
-                    cy="66"
-                    r="9"
-                    fill={PREVIEW_COLORS.faction}
-                    fill-opacity="0.85"
-                  ></circle>
-                  <circle
-                    cx="358"
-                    cy="74"
-                    r="9"
-                    fill={PREVIEW_COLORS.location}
-                    fill-opacity="0.85"
-                  ></circle>
-                  <circle
-                    cx="138"
-                    cy="196"
-                    r="9"
-                    fill={PREVIEW_COLORS.event}
-                    fill-opacity="0.85"
-                  ></circle>
-                  <circle
-                    cx="350"
-                    cy="198"
-                    r="9"
-                    fill={PREVIEW_COLORS.faction}
-                    fill-opacity="0.85"
-                  ></circle>
-
-                  <!-- selection bounding box -->
-                  <rect
-                    x="220"
-                    y="110"
-                    width="40"
-                    height="40"
-                    rx="9"
-                    fill="none"
-                    stroke={SELECT_ACCENT}
-                    stroke-opacity="0.55"
-                    stroke-width="1.2"
-                    stroke-dasharray="4 3"
-                  ></rect>
-                  <!-- selected node (character) with brand-accent selection ring -->
-                  <circle
-                    cx="240"
-                    cy="130"
-                    r="13"
-                    fill={PREVIEW_COLORS.character}
-                  ></circle>
-                  <circle
-                    cx="240"
-                    cy="130"
-                    r="13"
-                    fill="none"
-                    stroke={SELECT_ACCENT}
-                    stroke-opacity="0.9"
-                    stroke-width="2"
-                  ></circle>
-
-                  <!-- node labels (color-keyed to type) -->
-                  <g
-                    font-family="var(--font-body, sans-serif)"
-                    text-anchor="middle"
-                  >
-                    <text
-                      x="240"
-                      y="160"
-                      font-size="11"
-                      font-weight="700"
-                      fill="#f6dca0">Captain Veyra</text
-                    >
-                    <text
-                      x="130"
-                      y="51"
-                      font-size="9.5"
-                      font-weight="600"
-                      fill="#d7d2c8"
-                      fill-opacity="0.92">Glass Rebellion</text
-                    >
-                    <text
-                      x="358"
-                      y="59"
-                      font-size="9.5"
-                      font-weight="600"
-                      fill="#d7d2c8"
-                      fill-opacity="0.92">Sunken Archive</text
-                    >
-                    <text
-                      x="138"
-                      y="216"
-                      font-size="9.5"
-                      font-weight="600"
-                      fill="#d7d2c8"
-                      fill-opacity="0.92">Crown Secret</text
-                    >
-                    <text
-                      x="350"
-                      y="218"
-                      font-size="9.5"
-                      font-weight="600"
-                      fill="#d7d2c8"
-                      fill-opacity="0.92">Blackspire Compact</text
-                    >
-                    <text
-                      x="52"
-                      y="155"
-                      font-size="9"
-                      font-weight="600"
-                      fill="#d7d2c8"
-                      fill-opacity="0.85">Ironhold</text
-                    >
-                    <text
-                      x="430"
-                      y="161"
-                      font-size="9"
-                      font-weight="600"
-                      fill="#d7d2c8"
-                      fill-opacity="0.85">The Vow</text
-                    >
-                  </g>
-                </svg>
-              </div>
-              <!-- Entity panel -->
+          <section
+            aria-labelledby="living-lore-graph"
+            class="mx-auto flex w-full max-w-6xl flex-col items-center"
+          >
+            <button
+              type="button"
+              onclick={() => demoService.startDemo("fantasy")}
+              class="group mb-4 w-full max-w-6xl rounded-xl border border-theme-border bg-theme-surface/60 shadow-2xl shadow-theme-primary/5 overflow-hidden text-left transition-all duration-200 hover:border-theme-primary/70 hover:shadow-theme-primary/20 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/60"
+              aria-labelledby="living-lore-graph"
+              aria-describedby="living-lore-graph-copy living-lore-graph-preview"
+              data-testid="welcome-preview-button"
+            >
               <div
-                class="w-32 sm:w-40 md:w-48 shrink-0 border-l border-theme-border bg-theme-bg/50 p-3 text-left"
+                class="flex items-center gap-2 px-4 py-3 border-b border-theme-border bg-theme-bg/60"
               >
-                <div
-                  class="w-10 h-10 rounded-lg mb-2 flex items-center justify-center"
-                  style="background-color: {PREVIEW_COLORS.character}2e"
+                <div class="min-w-0">
+                  <h2
+                    id="living-lore-graph"
+                    class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-theme-primary"
+                  >
+                    Living Lore Graph
+                  </h2>
+                  <p
+                    id="living-lore-graph-copy"
+                    class="mt-1 text-[11px] text-theme-muted"
+                  >
+                    See how characters, factions, secrets, and places connect.
+                  </p>
+                </div>
+                <span
+                  class="ml-auto flex shrink-0 items-center gap-1 text-[10px] font-mono font-semibold text-theme-primary/80 group-hover:text-theme-primary uppercase tracking-[0.15em] transition-colors"
                 >
+                  Explore
                   <span
-                    class="icon-[lucide--user-round] w-5 h-5"
-                    style="color: {PREVIEW_COLORS.character}"
+                    class="icon-[lucide--arrow-right] w-3 h-3 transition-transform group-hover:translate-x-1"
                   ></span>
+                </span>
+              </div>
+              <div id="living-lore-graph-preview" class="sr-only">
+                Interactive lore graph preview showing Captain Veyra connected
+                to factions, secrets, places, and unresolved plot threads.
+              </div>
+              <div
+                class="flex h-[16.5rem] sm:h-[19rem] md:h-[22rem] lg:h-[26rem] xl:h-[28rem]"
+              >
+                <!-- Graph canvas -->
+                <div class="relative flex-1">
+                  <svg
+                    viewBox="0 0 480 260"
+                    class="absolute inset-0 w-full h-full"
+                    preserveAspectRatio="xMidYMid meet"
+                    aria-hidden="true"
+                  >
+                    <!-- peripheral edges (dim) -->
+                    <g
+                      stroke="#8a8175"
+                      stroke-opacity="0.25"
+                      stroke-width="1.2"
+                    >
+                      <line x1="130" y1="66" x2="358" y2="74" />
+                      <line x1="138" y1="196" x2="350" y2="198" />
+                      <line x1="52" y1="134" x2="130" y2="66" />
+                      <line x1="52" y1="134" x2="138" y2="196" />
+                      <line x1="430" y1="140" x2="358" y2="74" />
+                      <line x1="430" y1="140" x2="350" y2="198" />
+                    </g>
+                    <!-- edges from the selected node (selection accent) -->
+                    <g
+                      stroke={SELECT_ACCENT}
+                      stroke-opacity="0.5"
+                      stroke-width="2"
+                    >
+                      <line x1="240" y1="130" x2="130" y2="66" />
+                      <line x1="240" y1="130" x2="358" y2="74" />
+                      <line x1="240" y1="130" x2="138" y2="196" />
+                      <line x1="240" y1="130" x2="350" y2="198" />
+                    </g>
+
+                    <!-- hover-only glow boost on the selected node -->
+                    <circle
+                      cx="240"
+                      cy="130"
+                      r="32"
+                      fill={SELECT_ACCENT}
+                      fill-opacity="0.18"
+                      class="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    ></circle>
+                    <!-- selected-node glow halo -->
+                    <circle
+                      cx="240"
+                      cy="130"
+                      r="24"
+                      fill={SELECT_ACCENT}
+                      opacity="0.14"
+                    >
+                      <animate
+                        attributeName="opacity"
+                        values="0.1;0.22;0.1"
+                        dur="3.2s"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="r"
+                        values="22;27;22"
+                        dur="3.2s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+
+                    <!-- peripheral nodes, colored by entity type (canonical palette) -->
+                    <circle
+                      cx="52"
+                      cy="134"
+                      r="8"
+                      fill={PREVIEW_COLORS.location}
+                      fill-opacity="0.85"
+                    ></circle>
+                    <circle
+                      cx="430"
+                      cy="140"
+                      r="8"
+                      fill={PREVIEW_COLORS.event}
+                      fill-opacity="0.85"
+                    ></circle>
+                    <circle
+                      cx="130"
+                      cy="66"
+                      r="9"
+                      fill={PREVIEW_COLORS.faction}
+                      fill-opacity="0.85"
+                    ></circle>
+                    <circle
+                      cx="358"
+                      cy="74"
+                      r="9"
+                      fill={PREVIEW_COLORS.location}
+                      fill-opacity="0.85"
+                    ></circle>
+                    <circle
+                      cx="138"
+                      cy="196"
+                      r="9"
+                      fill={PREVIEW_COLORS.event}
+                      fill-opacity="0.85"
+                    ></circle>
+                    <circle
+                      cx="350"
+                      cy="198"
+                      r="9"
+                      fill={PREVIEW_COLORS.faction}
+                      fill-opacity="0.85"
+                    ></circle>
+
+                    <!-- selection bounding box -->
+                    <rect
+                      x="220"
+                      y="110"
+                      width="40"
+                      height="40"
+                      rx="9"
+                      fill="none"
+                      stroke={SELECT_ACCENT}
+                      stroke-opacity="0.55"
+                      stroke-width="1.2"
+                      stroke-dasharray="4 3"
+                    ></rect>
+                    <!-- selected node (character) with brand-accent selection ring -->
+                    <circle
+                      cx="240"
+                      cy="130"
+                      r="13"
+                      fill={PREVIEW_COLORS.character}
+                    ></circle>
+                    <circle
+                      cx="240"
+                      cy="130"
+                      r="13"
+                      fill="none"
+                      stroke={SELECT_ACCENT}
+                      stroke-opacity="0.9"
+                      stroke-width="2"
+                    ></circle>
+
+                    <!-- node labels (color-keyed to type) -->
+                    <g
+                      font-family="var(--font-body, sans-serif)"
+                      text-anchor="middle"
+                    >
+                      <text
+                        x="240"
+                        y="160"
+                        font-size="11"
+                        font-weight="700"
+                        fill="#f6dca0">Captain Veyra</text
+                      >
+                      <text
+                        x="130"
+                        y="51"
+                        font-size="9.5"
+                        font-weight="600"
+                        fill="#d7d2c8"
+                        fill-opacity="0.92">Glass Rebellion</text
+                      >
+                      <text
+                        x="358"
+                        y="59"
+                        font-size="9.5"
+                        font-weight="600"
+                        fill="#d7d2c8"
+                        fill-opacity="0.92">Sunken Archive</text
+                      >
+                      <text
+                        x="138"
+                        y="216"
+                        font-size="9.5"
+                        font-weight="600"
+                        fill="#d7d2c8"
+                        fill-opacity="0.92">Crown Secret</text
+                      >
+                      <text
+                        x="350"
+                        y="218"
+                        font-size="9.5"
+                        font-weight="600"
+                        fill="#d7d2c8"
+                        fill-opacity="0.92">Blackspire Compact</text
+                      >
+                      <text
+                        x="52"
+                        y="155"
+                        font-size="9"
+                        font-weight="600"
+                        fill="#d7d2c8"
+                        fill-opacity="0.85">Ironhold</text
+                      >
+                      <text
+                        x="430"
+                        y="161"
+                        font-size="9"
+                        font-weight="600"
+                        fill="#d7d2c8"
+                        fill-opacity="0.85">The Vow</text
+                      >
+                    </g>
+                  </svg>
                 </div>
-                <div class="text-xs font-bold text-theme-text leading-tight">
-                  Captain Veyra
-                </div>
+                <!-- Entity panel -->
                 <div
-                  class="text-[9px] font-mono uppercase tracking-[0.15em] mb-3"
-                  style="color: {PREVIEW_COLORS.character}"
+                  class="w-32 sm:w-40 md:w-48 shrink-0 border-l border-theme-border bg-theme-bg/50 p-3 text-left"
                 >
-                  Character
-                </div>
-                <div
-                  class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug"
-                >
-                  <div class="text-theme-muted">
-                    Faction: <span class="text-theme-text">Red Concordat</span>
+                  <div
+                    class="w-10 h-10 rounded-lg mb-2 flex items-center justify-center"
+                    style="background-color: {PREVIEW_COLORS.character}2e"
+                  >
+                    <span
+                      class="icon-[lucide--user-round] w-5 h-5"
+                      style="color: {PREVIEW_COLORS.character}"
+                    ></span>
                   </div>
-                  <div class="text-theme-muted">
-                    Status: <span class="text-theme-text">Missing</span>
+                  <div class="text-xs font-bold text-theme-text leading-tight">
+                    Captain Veyra
                   </div>
                   <div
-                    class="flex items-center gap-1 text-theme-primary pt-0.5"
+                    class="text-[9px] font-mono uppercase tracking-[0.15em] mb-3"
+                    style="color: {PREVIEW_COLORS.character}"
                   >
-                    <span class="icon-[lucide--eye-off] w-3 h-3 shrink-0"
-                    ></span>
-                    2 unresolved secrets
+                    Character
+                  </div>
+                  <div
+                    class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug"
+                  >
+                    <div class="text-theme-muted">
+                      Faction: <span class="text-theme-text">Red Concordat</span
+                      >
+                    </div>
+                    <div class="text-theme-muted">
+                      Status: <span class="text-theme-text">Missing</span>
+                    </div>
+                    <div
+                      class="flex items-center gap-1 text-theme-primary pt-0.5"
+                    >
+                      <span class="icon-[lucide--eye-off] w-3 h-3 shrink-0"
+                      ></span>
+                      2 unresolved secrets
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </button>
-
-          <div class="flex flex-col items-center justify-center">
-            <button
-              onclick={() => demoService.startDemo("fantasy")}
-              class="w-full max-w-sm sm:w-auto sm:max-w-none px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
-              data-testid="welcome-demo-button"
-            >
-              Explore Demo Vault
             </button>
-            <p
-              class="mt-3 px-4 text-sm text-theme-muted/90 font-body text-balance"
-            >
-              No setup required. Opens a prebuilt sample world instantly.
-            </p>
 
             <div
-              class="mt-6 md:mt-7 w-full max-w-sm sm:max-w-none flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3"
+              class="flex w-full max-w-5xl flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
+              <button
+                type="button"
+                onclick={() => demoService.startDemo("fantasy")}
+                class="w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
+                data-testid="welcome-demo-button"
+              >
+                Explore Demo Vault
+              </button>
               {#each secondaryActions as action (action.intent)}
                 <button
+                  type="button"
                   onclick={() => openVaultFromWelcome(action.intent)}
-                  class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                  class="w-full sm:w-auto px-8 py-4 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
                   data-testid={action.testid}
                 >
                   {action.label}
                 </button>
               {/each}
             </div>
-          </div>
-
-          <div class="mt-8 flex flex-col items-center gap-4">
             <p
-              class="max-w-md px-4 text-[11px] md:text-xs text-theme-muted/80 font-body leading-relaxed text-balance"
+              class="mt-4 max-w-2xl px-4 text-sm text-theme-muted/80 font-body leading-relaxed text-balance text-center"
             >
-              Optional AI assist — ask for summaries, plot hooks, and
-              connections when you choose. Your vault works fully without it.
+              Opens a prebuilt sample world instantly. No setup required.
+              Optional AI is available when you want it; your vault works fully
+              without it.
             </p>
+          </section>
+        </section>
 
+        <!-- Below the Hero: Info boxes -->
+        <div
+          class="mx-auto mb-10 md:mb-14 grid max-w-5xl gap-4 text-left sm:grid-cols-3 w-full"
+          aria-label="Codex Cryptica product highlights"
+        >
+          {#each agenticProofPoints as point (point.label)}
+            <article
+              class="border border-theme-border/70 bg-theme-surface/45 p-4 text-theme-text shadow-sm"
+            >
+              <div
+                class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-primary"
+              >
+                <span class="{point.icon} h-4 w-4 shrink-0" aria-hidden="true"
+                ></span>
+                <h3>{point.label}</h3>
+              </div>
+              <p class="text-sm leading-relaxed text-theme-muted">
+                {point.copy}
+              </p>
+            </article>
+          {/each}
+        </div>
+
+        <!-- Try it as section -->
+        <section class="text-center mb-10 w-full">
+          <h3
+            class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] mb-6"
+          >
+            Try a themed vault:
+          </h3>
+          <div class="flex flex-wrap justify-center gap-4">
+            {#each demoThemes as theme (theme)}
+              <button
+                onclick={() => demoService.startDemo(theme)}
+                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
+              >
+                {theme}
+              </button>
+            {/each}
+          </div>
+        </section>
+
+        <!-- Footer actions & settings -->
+        <footer class="flex flex-col items-center gap-4 w-full">
+          <div class="flex flex-col sm:flex-row items-center gap-4">
             <a
               href="{base}/features"
               class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
@@ -637,45 +725,27 @@
               <span class="icon-[lucide--history] w-3 h-3"></span>
               View Full Changelog
             </a>
-
-            <div
-              class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
-            >
-              <input
-                type="checkbox"
-                id="skip-welcome"
-                checked={onboardingStore.skipWelcomeScreen}
-                onchange={(e) =>
-                  onboardingStore.toggleWelcomeScreen(e.currentTarget.checked)}
-                class="w-4 h-4 accent-theme-primary cursor-pointer"
-              />
-              <label
-                for="skip-welcome"
-                class="text-[10px] font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors select-none"
-              >
-                Hide welcome screen on startup
-              </label>
-            </div>
           </div>
-        </header>
 
-        <section class="text-center mb-12">
-          <h3
-            class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] mb-6"
+          <div
+            class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
           >
-            Try it as:
-          </h3>
-          <div class="flex flex-wrap justify-center gap-4">
-            {#each demoThemes as theme (theme)}
-              <button
-                onclick={() => demoService.startDemo(theme)}
-                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
-              >
-                {theme}
-              </button>
-            {/each}
+            <input
+              type="checkbox"
+              id="skip-welcome"
+              checked={onboardingStore.skipWelcomeScreen}
+              onchange={(e) =>
+                onboardingStore.toggleWelcomeScreen(e.currentTarget.checked)}
+              class="w-4 h-4 accent-theme-primary cursor-pointer"
+            />
+            <label
+              for="skip-welcome"
+              class="text-[10px] font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors select-none"
+            >
+              Hide welcome screen on startup
+            </label>
           </div>
-        </section>
+        </footer>
       </div>
     </div>
   {/if}

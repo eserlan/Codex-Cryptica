@@ -320,7 +320,7 @@
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
       <a
-        href="{base}/"
+        href="{base}/?ref=tools"
         class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
       >
         <span class="icon-[lucide--arrow-left] h-4 w-4"></span>

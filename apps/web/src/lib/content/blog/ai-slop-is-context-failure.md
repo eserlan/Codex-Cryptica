@@ -28,7 +28,7 @@ That is AI slop. And it accumulates.
 
 These two terms often get conflated. They describe different problems.
 
-Context is what you include in a specific request — the lore, the faction details, the session notes you pass alongside the prompt. A well-structured context prompt produces better output. This is covered in the previous article in this series.
+Context is what you include in a specific request — the lore, the faction details, the session notes you pass alongside the prompt. A well-structured context prompt produces better output. This is covered in [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore).
 
 Memory is something larger. It is campaign continuity over time. It is the accumulated fact that session 1 introduced a particular faction, session 12 changed their allegiance, session 30 saw their leader killed, and session 50 is still dealing with the consequences. A tool with no memory treats every request like a fresh start. It has no knowledge of what happened before, no record of what has changed, and no way to avoid contradicting the last fifty sessions of play.
 
@@ -87,15 +87,3 @@ The article title is the thesis: AI slop happens when the tool has no memory.
 Not when the model is bad. Not when the prose is weak. When the tool generates without continuity, without respect for established canon, without any record of what this particular campaign has built over dozens of sessions.
 
 The fix is not a better prompt. It is a tool that treats your world as the source of truth rather than as an optional input. Structure, memory, and accountability to what has already happened.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-6. **AI Slop Happens When the Tool Has No Memory** _(this article)_
-7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)

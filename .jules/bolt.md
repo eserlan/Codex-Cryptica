@@ -107,3 +107,8 @@
 
 **Learning:** Svelte `Object.fromEntries(Object.entries(obj).map(...))` allocates multiple intermediate arrays for extracting entries, transforming them, and then reassembling the object. For store methods operating on many keys, this introduces significant garbage collection pressure and CPU overhead on every invocation.
 **Action:** Replace `Object.fromEntries(Object.entries(obj).map(...))` with an imperative `for...in` loop constructing a new record natively when transforming or filtering object properties in Svelte stores.
+
+## 2026-05-18 - [Performance Insight: Array allocation in object key transformation]
+
+**Learning:** Replacing `Object.fromEntries(Object.entries(obj).map(...))` with a `for...of Object.keys()` loop when cloning or normalizing objects prevents multiple intermediate array allocations (`O(N)` mapping, `O(N)` entries, and the resultant array), removing GC overhead. This is particularly valuable for session sanitization and snapshot functions where object processing runs frequently.
+**Action:** When creating transformed copies of objects (such as `tokens` inside VTT maps), utilize an imperative `for...of Object.keys()` loop to directly build the target record natively instead of chaining functional object methods.

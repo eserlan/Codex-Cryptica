@@ -5,6 +5,69 @@
   let { data }: { data: PageData } = $props();
   const articles = $derived(data.articles);
 
+  const faqSchema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What does responsible AI mean for RPG worldbuilding?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Can AI help with campaign prep without taking over?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How does Codex keep AI drafts out of canon?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Can I use Codex Cryptica without AI?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Completely. The lore library, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What does vault-aware AI mean?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Vault-aware AI means the Oracle is grounded in the selected context from your vault rather than starting from a blank prompt alone. The active entity, linked notes, and any campaign-level context you have selected all shape the response.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What is the difference between context and memory?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Can the Lore Oracle read my whole vault?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "No. The Lore Oracle does not receive your entire vault by default. When you invoke it on an entity, it receives the active prompt, the current entity content and metadata, any linked entities you have included, and any campaign-level notes you have selected for that action. That context is used for a single request. Unselected notes stay local.",
+        },
+      },
+    ],
+  });
+
   const principles = [
     {
       step: 1,
@@ -18,7 +81,7 @@
       step: 2,
       title: "AI Must Be Optional",
       summary:
-        "A campaign manager must be completely load-bearing without AI. If you turn the Oracle off, your wiki, chronological timelines, interactive graph, and local storage remain 100% functional.",
+        "A campaign manager must be completely load-bearing without AI. If you turn the Oracle off, your lore library, chronological timelines, interactive graph, and local storage remain 100% functional.",
       slug: "worldbuilding-tool-without-ai",
       icon: "icon-[lucide--wifi-off]",
     },
@@ -99,6 +162,7 @@
     content="Read the Responsible AI series on worldbuilding. Learn why campaign notes should remain private, why drafts are not canon, and how to use local-first AI without losing your voice."
   />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
+  {@html `<scr` + `ipt type="application/ld+json">${faqSchema}</scr` + `ipt>`}
 </svelte:head>
 
 <div
@@ -137,7 +201,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref=ra-pillar-nav"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
@@ -160,8 +224,7 @@
       class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide uppercase"
       id="hero-h1"
     >
-      Responsible AI for <span
-        class="text-theme-primary bg-gradient-to-r from-theme-primary to-theme-accent bg-clip-text text-transparent"
+      Responsible AI for <span class="text-theme-primary"
         >RPG Worldbuilding</span
       >
     </h1>
@@ -188,8 +251,8 @@
             class="icon-[lucide--check-circle-2] text-theme-primary w-5 h-5 shrink-0 mt-0.5"
           ></span>
           <span
-            ><strong>AI is optional</strong> — your core wiki, timelines, graph, and
-            local vault continue to work without AI.</span
+            ><strong>AI is optional</strong> — your core lore library, timelines,
+            graph, and local vault continue to work without AI.</span
           >
         </li>
         <li class="flex items-start gap-3">
@@ -331,7 +394,7 @@
           <ul class="space-y-1 text-theme-muted text-[10px]">
             <li>• No hosted campaign database</li>
             <li>• No permanent chat files on our servers</li>
-            <li>• No cloud logging of your private wiki</li>
+            <li>• No cloud logging of your private vault</li>
           </ul>
         </div>
       </div>
@@ -400,6 +463,46 @@
     </div>
   </section>
 
+  <!-- FAQ Section -->
+  <section class="border-t border-theme-border/30 py-16">
+    <div class="max-w-3xl mx-auto px-6">
+      <h2
+        class="text-center font-header text-2xl uppercase tracking-[0.2em] text-theme-primary mb-4"
+      >
+        Frequently Asked Questions
+      </h2>
+      <p
+        class="text-center text-sm text-theme-muted mb-12 max-w-xl mx-auto leading-relaxed"
+      >
+        Common questions about responsible AI, vault privacy, and how the Lore
+        Oracle works.
+      </p>
+
+      <div class="space-y-3">
+        {#each [{ q: "What does responsible AI mean for RPG worldbuilding?", a: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database." }, { q: "Can AI help with campaign prep without taking over?", a: `Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="${base}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.` }, { q: "How does Codex keep AI drafts out of canon?", a: `Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="${base}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.` }, { q: "Can I use Codex Cryptica without AI?", a: `Completely. The lore library, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="${base}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.` }, { q: "What does vault-aware AI mean?", a: "Vault-aware AI means the Oracle is grounded in the selected context from your vault rather than starting from a blank prompt alone. The active entity, linked notes, and any campaign-level context you have selected all shape the response." }, { q: "What is the difference between context and memory?", a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.` }, { q: "Can the Lore Oracle read my whole vault?", a: "No. The Lore Oracle does not receive your entire vault by default. When you invoke it on an entity, it receives the active prompt, the current entity content and metadata, any linked entities you have included, and any campaign-level notes you have selected for that action. That context is used for a single request. Unselected notes stay local." }] as faq}
+          <details
+            class="group border border-theme-border/60 rounded-xl bg-theme-surface/30 backdrop-blur-sm overflow-hidden"
+          >
+            <summary
+              class="flex items-center justify-between gap-4 px-6 py-4 cursor-pointer list-none font-header font-bold text-sm text-theme-text hover:text-theme-primary transition-colors select-none"
+            >
+              {faq.q}
+              <span
+                class="icon-[lucide--chevron-down] w-4 h-4 shrink-0 text-theme-muted group-open:rotate-180 transition-transform duration-200"
+                aria-hidden="true"
+              ></span>
+            </summary>
+            <div
+              class="px-6 pb-5 pt-1 text-sm text-theme-text/80 leading-relaxed border-t border-theme-border/30"
+            >
+              {@html faq.a}
+            </div>
+          </details>
+        {/each}
+      </div>
+    </div>
+  </section>
+
   <!-- CTA Panel -->
   <section
     class="border-t border-theme-border/30 bg-gradient-to-b from-theme-bg to-theme-surface/30 py-16 text-center"
@@ -414,7 +517,7 @@
       </p>
       <div class="flex flex-wrap justify-center gap-4">
         <a
-          href="{base}/"
+          href="{base}/?ref=ra-pillar-footer"
           class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >
