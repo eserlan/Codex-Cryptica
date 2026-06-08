@@ -4,12 +4,38 @@
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
   import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
   import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
+  import { safeJsonLd } from "$lib/utils/json-ld";
 
   let { data } = $props();
   const article = $derived(data.article);
   const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
   const articleContent = $derived(
     article.content.replace(/^#[^\n]+\n/, "").trimStart(),
+  );
+
+  const jsonLdString = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: article.title,
+      description: article.description,
+      datePublished: article.publishedAt,
+      dateModified: article.publishedAt,
+      url: data.canonicalUrl,
+      mainEntityOfPage: { "@type": "WebPage", "@id": data.canonicalUrl },
+      author: {
+        "@type": "Organization",
+        name: "Codex Cryptica",
+        url: "https://codexcryptica.com",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "Codex Cryptica",
+        url: "https://codexcryptica.com",
+      },
+      articleSection: "Worldbuilding & RPG Tools",
+      keywords: article.keywords.join(", "),
+    }),
   );
 </script>
 
@@ -24,6 +50,10 @@
   <meta property="og:description" content={article.description} />
   <meta property="og:type" content="article" />
   <meta property="article:published_time" content={article.publishedAt} />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${jsonLdString}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <div
