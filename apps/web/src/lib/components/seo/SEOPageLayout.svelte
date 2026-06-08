@@ -520,7 +520,7 @@
   {#if data.aiTrustSection}
     <section class="border-t border-theme-border/30 py-10">
       <div class="max-w-3xl mx-auto px-6 text-center">
-        <p class="text-xs text-theme-muted leading-relaxed mb-3">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
           Responsible AI, not replacement authorship. The Lore Oracle is
           optional, vault-aware, and draft-based. Your vault remains the source
           of truth.
