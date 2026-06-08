@@ -25,7 +25,7 @@ Here are six uses that consistently deliver without getting in the way.
 
 You know the notes. Half-sentences. Abbreviations only you understand. A name scrawled in the margin with no context. After a long session the last thing you want to do is rewrite them into something readable.
 
-Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft. You trim it, correct anything the Oracle misread, and file it in the session log.
+Ask the Lore Oracle to turn your raw notes into a structured recap. It can produce a clean summary organised by event, NPC interaction, or location — whatever format you use. The result is a draft ([Drafts Are Not Canon](/blog/drafts-are-not-canon)). You trim it, correct anything the Oracle misread, and file it in the session log.
 
 **What you save:** thirty minutes of post-session admin.
 **What you keep:** the judgement call about which details matter.

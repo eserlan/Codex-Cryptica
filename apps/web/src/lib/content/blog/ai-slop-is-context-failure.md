@@ -28,7 +28,7 @@ That is AI slop. And it accumulates.
 
 These two terms often get conflated. They describe different problems.
 
-Context is what you include in a specific request — the lore, the faction details, the session notes you pass alongside the prompt. A well-structured context prompt produces better output. This is covered in the previous article in this series.
+Context is what you include in a specific request — the lore, the faction details, the session notes you pass alongside the prompt. A well-structured context prompt produces better output. This is covered in [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore).
 
 Memory is something larger. It is campaign continuity over time. It is the accumulated fact that session 1 introduced a particular faction, session 12 changed their allegiance, session 30 saw their leader killed, and session 50 is still dealing with the consequences. A tool with no memory treats every request like a fresh start. It has no knowledge of what happened before, no record of what has changed, and no way to avoid contradicting the last fifty sessions of play.
 
