@@ -59,7 +59,7 @@ test.describe("Oracle Undo", () => {
       { timeout: 15000 },
     );
 
-    await expect(page.getByTestId("sidebar-oracle-button")).toBeVisible();
+    await expect(page.getByTestId("activity-bar-oracle")).toBeVisible();
 
     // Set a mock API key to enable Oracle using the app's oracle API
     await page.evaluate(async () => {
@@ -100,7 +100,7 @@ test.describe("Oracle Undo", () => {
     });
 
     // 2. Open Oracle and simulate a message with parsed content
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     await page.evaluate(() => {
       const oracle = (window as any).oracle;
@@ -161,7 +161,7 @@ test.describe("Oracle Undo", () => {
 
   test("can undo a create node action", async ({ page }) => {
     // 1. Open Oracle and simulate a /create message
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     await page.evaluate(() => {
       const oracle = (window as any).oracle;

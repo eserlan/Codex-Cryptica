@@ -26,7 +26,7 @@ test.describe("Oracle UI - Elastic Input", () => {
     page,
   }) => {
     // Open Oracle Window
-    const toggleBtn = page.getByTestId("sidebar-oracle-button");
+    const toggleBtn = page.getByTestId("activity-bar-oracle");
     await expect(toggleBtn).toBeVisible();
     await toggleBtn.click();
 

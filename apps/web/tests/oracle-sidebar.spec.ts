@@ -27,7 +27,7 @@ test.describe("Oracle Sidebar", () => {
     page,
   }) => {
     // 1. Locate reveal button
-    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
+    const sidebarBtn = page.getByTestId("activity-bar-oracle");
     await expect(sidebarBtn).toBeVisible();
 
     // 2. Measure initial workspace width (collapsed)
@@ -68,7 +68,7 @@ test.describe("Oracle Sidebar", () => {
   });
 
   test("should persist oracle state across navigation", async ({ page }) => {
-    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
+    const sidebarBtn = page.getByTestId("activity-bar-oracle");
     const panel = page.getByTestId("oracle-sidebar-panel");
 
     // Open Oracle
@@ -92,7 +92,7 @@ test.describe("Oracle Sidebar", () => {
     // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
+    const sidebarBtn = page.getByTestId("activity-bar-oracle");
     const panel = page.getByTestId("oracle-sidebar-panel");
 
     // Click to open

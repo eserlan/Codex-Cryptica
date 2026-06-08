@@ -14,7 +14,7 @@ test.describe("Oracle Status", () => {
     page,
   }) => {
     // Open Oracle sidebar
-    const oracleToggle = page.getByTestId("sidebar-oracle-button");
+    const oracleToggle = page.getByTestId("activity-bar-oracle");
     await expect(oracleToggle).toBeVisible();
     await oracleToggle.click();
 
@@ -34,7 +34,7 @@ test.describe("Oracle Status", () => {
       await (window as any).oracle.setKey("test-key-12345");
     });
 
-    const oracleToggle = page.getByTestId("sidebar-oracle-button");
+    const oracleToggle = page.getByTestId("activity-bar-oracle");
     if (await oracleToggle.isVisible()) {
       await oracleToggle.click();
     }
@@ -53,7 +53,7 @@ test.describe("Oracle Status", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const oracleToggle = page.getByTestId("sidebar-oracle-button");
+    const oracleToggle = page.getByTestId("activity-bar-oracle");
     if (await oracleToggle.isVisible()) {
       await oracleToggle.click();
     }
