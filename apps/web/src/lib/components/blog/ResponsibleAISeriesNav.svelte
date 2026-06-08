@@ -62,7 +62,7 @@
         {:else}
           <a
             href="{base}/blog/{article.slug}"
-            class="text-sm text-theme-text/70 hover:text-theme-primary transition-colors leading-snug"
+            class="text-sm text-theme-text hover:text-theme-primary transition-colors leading-snug"
           >
             {article.title}
           </a>
