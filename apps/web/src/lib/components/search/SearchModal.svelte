@@ -56,15 +56,11 @@
   const suggestions = $derived.by(() => {
     if (!isLabelAutocompleteActive) return [];
 
-    // ⚡ Bolt Optimization: Replace full array .filter().slice() with early-exit imperative loop
-    // to prevent intermediate array allocation and O(N) processing on every keystroke
-    const maxResults = 10;
     const matches: string[] = [];
-    for (let i = 0; i < uniqueLabels.length; i++) {
-      const label = uniqueLabels[i];
+    for (const label of uniqueLabels) {
       if (label.toLowerCase().includes(autocompleteSearch)) {
         matches.push(label);
-        if (matches.length >= maxResults) break;
+        if (matches.length >= 10) break;
       }
     }
     return matches;
