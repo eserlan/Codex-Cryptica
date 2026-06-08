@@ -25,6 +25,8 @@ export interface SEOPageData {
   secondaryCtaHref?: string;
   /** Links shown in a "Related pages" section above the FAQ. */
   relatedLinks?: Array<{ href: string; label: string }>;
+  /** Show the Responsible AI trust banner before the final CTA. */
+  aiTrustSection?: boolean;
 }
 
 export interface SEOComparisonPageData extends SEOPageData {
@@ -800,6 +802,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         label: "Local-first worldbuilding",
       },
     ],
+    aiTrustSection: true,
   },
   legendkeeper: {
     slug: "legendkeeper",
@@ -1241,6 +1244,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
           "Yes. Since the JSON backup contains all articles, your private lore is fully imported and kept secure on your local drive.",
       },
     ],
+    aiTrustSection: true,
   },
   "kanka-json": {
     slug: "kanka-json",
