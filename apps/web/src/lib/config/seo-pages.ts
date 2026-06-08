@@ -25,7 +25,7 @@ export interface SEOPageData {
   secondaryCtaHref?: string;
   /** Links shown in a "Related pages" section above the FAQ. */
   relatedLinks?: Array<{ href: string; label: string }>;
-  /** Show the Responsible AI trust banner before the final CTA. */
+  /** Show the Responsible AI trust banner before the FAQ section. */
   aiTrustSection?: boolean;
 }
 
