@@ -439,7 +439,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref=import-nav"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >

@@ -201,7 +201,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref=ra-pillar-nav"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
@@ -517,7 +517,7 @@
       </p>
       <div class="flex flex-wrap justify-center gap-4">
         <a
-          href="{base}/"
+          href="{base}/?ref=ra-pillar-footer"
           class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
           id="footer-cta-btn"
         >

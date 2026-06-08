@@ -191,7 +191,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref={type === 'comparison' ? 'vs-nav' : 'solution-nav'}"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
@@ -241,7 +241,7 @@
     {/each}
     <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
       <a
-        href="{base}/"
+        href="{base}/?ref={type === 'comparison' ? 'vs-hero' : 'solution-hero'}"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200"
         id="hero-primary-cta"
       >
@@ -598,7 +598,9 @@
           : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
       <a
-        href="{base}/"
+        href="{base}/?ref={type === 'comparison'
+          ? 'vs-footer'
+          : 'solution-footer'}"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all"
         id="footer-cta-btn"
       >
