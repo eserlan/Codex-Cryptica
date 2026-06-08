@@ -2,7 +2,7 @@ name: Deploy Blog Content
 
 on:
   push:
-    branches: ["main"]
+    branches: ["blog"]
     paths:
       - "apps/web/src/lib/content/blog/**"
       - "scripts/publish-blog-content.mjs"
