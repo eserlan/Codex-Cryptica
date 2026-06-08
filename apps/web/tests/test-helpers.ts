@@ -195,8 +195,10 @@ export async function selectGraphNodesByTitle(page: Page, titles: string[]) {
       const cy = (window as any).cy;
       if (!cy) return false;
 
-      return expectedTitles.every((title: string) =>
-        cy.nodes().some((node: any) => node.data("label") === title),
+      return expectedTitles.every(
+        (title: string) =>
+          cy.nodes().filter((node: any) => node.data("label") === title)
+            .length > 0,
       );
     },
     titles,

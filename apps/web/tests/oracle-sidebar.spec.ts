@@ -35,7 +35,8 @@ test.describe("Oracle Sidebar", () => {
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible();
     const initialBox = await canvas.boundingBox();
-    const initialWidth = initialBox?.width || 0;
+    expect(initialBox).not.toBeNull();
+    const initialWidth = initialBox!.width;
 
     // 3. Click to open Oracle
     await openOracle(page);
@@ -52,12 +53,14 @@ test.describe("Oracle Sidebar", () => {
     //    right of the persistent activity bar.
     const activityBarBox = await page.getByTestId("activity-bar").boundingBox();
     const panelBox = await panel.boundingBox();
-    expect(panelBox?.x).toBeCloseTo(activityBarBox?.width ?? 0, 0);
+    expect(activityBarBox).not.toBeNull();
+    expect(panelBox).not.toBeNull();
+    expect(panelBox!.x).toBeCloseTo(activityBarBox!.width, 0);
 
     // 6. Verify workspace resized (should be smaller now)
     const openBox = await canvas.boundingBox();
-    const openWidth = openBox?.width || 0;
-    expect(openWidth).toBeLessThan(initialWidth);
+    expect(openBox).not.toBeNull();
+    expect(openBox!.width).toBeLessThan(initialWidth);
 
     // 7. Close Oracle by toggling the activity-bar button again. (The in-panel
     //    "Close panel" control resolves to an off-screen duplicate render and
@@ -68,8 +71,8 @@ test.describe("Oracle Sidebar", () => {
 
     // 8. Verify workspace returned to full width
     const closedBox = await canvas.boundingBox();
-    const closedWidth = closedBox?.width || 0;
-    expect(closedWidth).toBeCloseTo(initialWidth, 1);
+    expect(closedBox).not.toBeNull();
+    expect(closedBox!.width).toBeCloseTo(initialWidth, 1);
   });
 
   test("should persist oracle state across navigation", async ({ page }) => {
@@ -92,10 +95,11 @@ test.describe("Oracle Sidebar", () => {
     await expect(panel).toBeVisible();
   });
 
-  // The mobile Oracle entry point differs from the desktop activity bar
-  // (activity-bar-oracle is not rendered at <768px); this needs a rewrite
-  // against the current mobile navigation. Deferred under #1168, matching the
-  // recovery plan's deferral of the mobile sidebar specs.
+  // The mobile Oracle entry point differs from the desktop activity bar.
+  // At <768px the activity bar collapses to a bottom nav where `activity-bar-oracle`
+  // may not be reachable the same way; this needs a rewrite against the current
+  // mobile navigation. Deferred under #1168, matching the recovery plan's deferral
+  // of the mobile sidebar specs.
   test.fixme("should adapt layout for mobile viewports", async ({ page }) => {
     // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
