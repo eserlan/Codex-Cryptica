@@ -3,20 +3,14 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
   import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
-
-  const RA_SERIES_SLUGS = new Set([
-    "lore-oracle-not-the-author",
-    "worldbuilding-tool-without-ai",
-    "worldbuilding-ai-needs-your-lore",
-    "drafts-are-not-canon",
-    "ai-campaign-prep-without-losing-your-voice",
-    "ai-slop-is-context-failure",
-    "revising-your-lore-with-the-oracle",
-  ]);
+  import { RA_SERIES_SLUGS } from "$lib/content/responsible-ai-series";
 
   let { data } = $props();
   const article = $derived(data.article);
   const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
+  const articleContent = $derived(
+    article.content.replace(/^#[^\n]+\n/, "").trimStart(),
+  );
 </script>
 
 <svelte:head>
@@ -60,7 +54,11 @@
             timeZone: "UTC",
           })}
         </time>
-        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
+        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span><span
+          class="sr-only"
+        >
+          ·
+        </span>
         <span>{themeStore.resolveJargon("blog_entry")}</span>
       </div>
 
@@ -78,7 +76,7 @@
     </header>
 
     <main class="mb-20">
-      <ArticleRenderer content={article.content} />
+      <ArticleRenderer content={articleContent} />
     </main>
 
     {#if isRASeries}
