@@ -157,7 +157,7 @@
     <!-- Header Navigation -->
     <nav class="flex justify-between items-center mb-16">
       <a
-        href="{base}/"
+        href="{base}/?ref=landing"
         class="font-mono text-xs uppercase tracking-[0.2em] text-theme-primary hover:opacity-80 transition-opacity flex items-center gap-2"
       >
         <span class="icon-[lucide--shield] w-4 h-4"></span>
@@ -194,7 +194,7 @@
 
       <div class="flex flex-wrap justify-center gap-4">
         <a
-          href="{base}/"
+          href="{base}/?ref=landing"
           class="px-8 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-lg hover:bg-theme-primary/95 transition-all shadow-lg hover:shadow-theme-primary/20 active:scale-95"
         >
           Enter the Codex
@@ -382,7 +382,7 @@
         </p>
         <div class="flex flex-wrap justify-center gap-4">
           <a
-            href="{base}/"
+            href="{base}/?ref=landing"
             class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
           >
             Create Your Vault

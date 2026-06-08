@@ -62,7 +62,7 @@
     </p>
     <div class="flex flex-wrap justify-center gap-4">
       <a
-        href="{base}/"
+        href="{base}/?ref=worldbuilding-tool"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-xs rounded-lg hover:brightness-110 transition-all"
       >
         Enter Workspace
