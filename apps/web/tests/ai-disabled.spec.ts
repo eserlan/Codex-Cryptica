@@ -66,7 +66,7 @@ test.describe("AI Disabled", () => {
     await expect(suggestionsHeader).not.toBeVisible();
 
     // 5. Interact with Oracle and verify network silence
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
     const oracleInput = page.getByTestId("oracle-input");
     await oracleInput.fill("Hello AI");
     await page.keyboard.press("Enter");
@@ -92,7 +92,7 @@ test.describe("AI Disabled", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Oracle
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
     await expect(
       page.locator('[data-testid="oracle-sidebar-panel"]'),
     ).toBeVisible();
@@ -108,7 +108,7 @@ test.describe("AI Disabled", () => {
 
   test("Oracle supports /help command in AI mode", async ({ page }) => {
     // 1. Open Oracle
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
     await expect(
       page.locator('[data-testid="oracle-sidebar-panel"]'),
     ).toBeVisible();

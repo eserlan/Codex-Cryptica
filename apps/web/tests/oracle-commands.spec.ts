@@ -17,7 +17,7 @@ test.describe("Oracle Chat Commands", () => {
     });
 
     // Open Oracle Window
-    const toggleBtn = page.getByTestId("sidebar-oracle-button");
+    const toggleBtn = page.getByTestId("activity-bar-oracle");
     await expect(toggleBtn).toBeVisible();
     await toggleBtn.click();
 

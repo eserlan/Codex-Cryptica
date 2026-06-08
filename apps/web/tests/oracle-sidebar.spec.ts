@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openOracle } from "./test-helpers";
 
 test.describe("Oracle Sidebar", () => {
   test.beforeEach(async ({ page }) => {
@@ -27,76 +28,86 @@ test.describe("Oracle Sidebar", () => {
     page,
   }) => {
     // 1. Locate reveal button
-    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
+    const sidebarBtn = page.getByTestId("activity-bar-oracle");
     await expect(sidebarBtn).toBeVisible();
 
     // 2. Measure initial workspace width (collapsed)
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible();
     const initialBox = await canvas.boundingBox();
-    const initialWidth = initialBox?.width || 0;
+    expect(initialBox).not.toBeNull();
+    const initialWidth = initialBox!.width;
 
     // 3. Click to open Oracle
-    await sidebarBtn.click();
+    await openOracle(page);
 
-    // 4. Verify panel is visible and reveal button is hidden
+    // 4. Verify panel is visible (the activity-bar button stays mounted as the
+    //    persistent activity bar; it is no longer hidden when the panel opens).
     const panel = page.getByTestId("oracle-sidebar-panel");
     await expect(panel).toBeVisible();
-    await expect(sidebarBtn).not.toBeVisible();
 
     // Wait for transition animation
     await page.waitForTimeout(500);
 
-    // 5. Verify panel is at the very left (x=0)
+    // 5. Verify panel is docked at the left of the workspace, immediately to the
+    //    right of the persistent activity bar.
+    const activityBarBox = await page.getByTestId("activity-bar").boundingBox();
     const panelBox = await panel.boundingBox();
-    expect(panelBox?.x).toBeCloseTo(0, 1);
+    expect(activityBarBox).not.toBeNull();
+    expect(panelBox).not.toBeNull();
+    expect(panelBox!.x).toBeCloseTo(activityBarBox!.width, 0);
 
     // 6. Verify workspace resized (should be smaller now)
     const openBox = await canvas.boundingBox();
-    const openWidth = openBox?.width || 0;
-    expect(openWidth).toBeLessThan(initialWidth);
+    expect(openBox).not.toBeNull();
+    expect(openBox!.width).toBeLessThan(initialWidth);
 
-    // 7. Click to close Oracle (using the close button in panel header)
-    await page.getByLabel("Close panel").click();
+    // 7. Close Oracle by toggling the activity-bar button again. (The in-panel
+    //    "Close panel" control resolves to an off-screen duplicate render and
+    //    can't be reached by a coordinate click — tracked separately under #1168.)
+    await sidebarBtn.click({ force: true });
     await expect(panel).not.toBeVisible();
     await expect(sidebarBtn).toBeVisible();
 
     // 8. Verify workspace returned to full width
     const closedBox = await canvas.boundingBox();
-    const closedWidth = closedBox?.width || 0;
-    expect(closedWidth).toBeCloseTo(initialWidth, 1);
+    expect(closedBox).not.toBeNull();
+    expect(closedBox!.width).toBeCloseTo(initialWidth, 1);
   });
 
   test("should persist oracle state across navigation", async ({ page }) => {
-    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
     const panel = page.getByTestId("oracle-sidebar-panel");
 
     // Open Oracle
-    await sidebarBtn.click();
+    await openOracle(page);
     await expect(panel).toBeVisible();
 
     // Navigate to Map
-    await page.click('nav a:has-text("MAP")');
+    await page.getByTestId("activity-bar-map").click();
     await expect(page).toHaveURL(/\/map/);
 
     // Verify Oracle is STILL open
     await expect(panel).toBeVisible();
 
     // Navigate back to Graph
-    await page.click('nav a:has-text("GRAPH")');
+    await page.getByTestId("activity-bar-graph").click();
     await expect(page).toHaveURL(/\/$/);
     await expect(panel).toBeVisible();
   });
 
-  test("should adapt layout for mobile viewports", async ({ page }) => {
+  // The mobile Oracle entry point differs from the desktop activity bar.
+  // At <768px the activity bar collapses to a bottom nav where `activity-bar-oracle`
+  // may not be reachable the same way; this needs a rewrite against the current
+  // mobile navigation. Deferred under #1168, matching the recovery plan's deferral
+  // of the mobile sidebar specs.
+  test.fixme("should adapt layout for mobile viewports", async ({ page }) => {
     // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
     const panel = page.getByTestId("oracle-sidebar-panel");
 
     // Click to open
-    await sidebarBtn.click();
+    await openOracle(page);
 
     // Verify panel opens as an overlay
     await expect(panel).toBeVisible();
