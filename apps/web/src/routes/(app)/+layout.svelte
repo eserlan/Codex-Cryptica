@@ -134,11 +134,9 @@
     // This layout only serves workspace routes — always boot except on landing page
     const isLandingPage = page.url.pathname === `${base}/`;
     const shouldShowLanding = onboardingStore.isLandingPageVisible;
-    const isTesting =
-      typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!isLandingPage || !shouldShowLanding || isTesting || isPopup) {
+      if (!isLandingPage || !shouldShowLanding || isPopup) {
         hasBooted = bootSystem({
           categories,
           vault,
@@ -190,9 +188,7 @@
 
   async function loadFeatureWindowGlobals() {
     const isSpecialEnv =
-      import.meta.env.DEV ||
-      (typeof window !== "undefined" && (window as any).__E2E__) ||
-      import.meta.env.VITE_STAGING === "true";
+      import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
 
     if (!isSpecialEnv) return {};
 
@@ -266,15 +262,11 @@
     if (vault.isInitialized && !onboardingStore.isLandingPageVisible) {
       if (
         !helpStore.hasSeen("initial-onboarding") &&
-        !(window as any).DISABLE_ONBOARDING &&
         !page.url.searchParams.has("demo")
       ) {
-        const isTesting =
-          typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
         if (
           vault.allEntities.length === 0 &&
           !sessionModeStore.isDemoMode &&
-          !isTesting &&
           !onboardingStore.dismissedLandingPage
         ) {
           demoService.startDemo("fantasy");

@@ -5,13 +5,11 @@ test.describe("Selection Connector", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
     await page.goto("/");
@@ -123,13 +121,10 @@ test.describe("Selection Connector", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         localStorage.setItem("codex_last_connection_label", "Old Friend");
       } catch {

@@ -13,8 +13,10 @@ test.describe("Blog Screenshots: How Import Works", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).DISABLE_ERROR_OVERLAY = true;
       (window as any).importQueue = { activeItemChunks: {} };
       localStorage.setItem("codex_skip_landing", "true");

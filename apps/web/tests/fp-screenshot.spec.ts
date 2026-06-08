@@ -2,7 +2,11 @@ import { test } from "@playwright/test";
 
 test("screenshot front page", async ({ page }) => {
   await page.addInitScript(() => {
-    (window as any).DISABLE_ONBOARDING = true;
+    localStorage.setItem("codex_skip_landing", "true");
+    localStorage.setItem(
+      "codex-cryptica-help-state",
+      JSON.stringify({ completedTours: ["initial-onboarding"] }),
+    );
   });
   await page.goto("http://localhost:5174");
   await page.waitForLoadState("networkidle");
