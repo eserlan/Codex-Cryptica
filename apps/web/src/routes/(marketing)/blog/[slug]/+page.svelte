@@ -2,8 +2,21 @@
   import { base } from "$app/paths";
   import { themeStore } from "$lib/stores/theme.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
+  import ResponsibleAISeriesNav from "$lib/components/blog/ResponsibleAISeriesNav.svelte";
+
+  const RA_SERIES_SLUGS = new Set([
+    "lore-oracle-not-the-author",
+    "worldbuilding-tool-without-ai",
+    "worldbuilding-ai-needs-your-lore",
+    "drafts-are-not-canon",
+    "ai-campaign-prep-without-losing-your-voice",
+    "ai-slop-is-context-failure",
+    "revising-your-lore-with-the-oracle",
+  ]);
+
   let { data } = $props();
   const article = $derived(data.article);
+  const isRASeries = $derived(RA_SERIES_SLUGS.has(article.slug));
 </script>
 
 <svelte:head>
@@ -47,7 +60,7 @@
             timeZone: "UTC",
           })}
         </time>
-        <span class="w-8 h-px bg-theme-border"></span>
+        <span aria-hidden="true" class="w-8 h-px bg-theme-border"></span>
         <span>{themeStore.resolveJargon("blog_entry")}</span>
       </div>
 
@@ -68,15 +81,25 @@
       <ArticleRenderer content={article.content} />
     </main>
 
+    {#if isRASeries}
+      <ResponsibleAISeriesNav currentSlug={article.slug} />
+    {/if}
+
     <footer class="pt-12 border-t border-theme-border">
       <div>
-        <p class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-3">Topics</p>
+        <p
+          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-3"
+        >
+          Topics
+        </p>
         <div class="flex flex-wrap gap-2">
           {#each article.keywords.slice(0, 6) as keyword}
             <span
               class="px-3 py-1 bg-theme-surface border border-theme-border rounded-full text-[10px] font-mono text-theme-muted tracking-wider"
             >
-              {keyword.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              {keyword
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
             </span>
           {/each}
         </div>

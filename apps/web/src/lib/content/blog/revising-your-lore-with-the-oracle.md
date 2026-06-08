@@ -83,15 +83,3 @@ Using revision as a regular habit — after major arcs, after session events tha
 Because the vault is local-first, you can experiment freely: radical structural rewrites, tonal shifts, speculative changes to see how they feel — without server latency, data tracking, or cloud storage limits. Nothing leaves your machine until you decide it should.
 
 The Oracle handles the mechanical rewrite. You handle the judgement. The vault stays honest.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-7. **Revising Your Lore with the Oracle** _(this article)_

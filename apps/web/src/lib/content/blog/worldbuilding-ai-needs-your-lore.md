@@ -77,15 +77,3 @@ The difference is not intelligence. It is memory.
 Context-aware AI is still AI. It still suggests rather than decides. The Oracle can surface a connection you forgot, but it can also surface a connection that does not hold up on closer inspection — because it mapped a thematic link but missed a spatial constraint. Every output is a draft until you review it.
 
 Grounding AI in your lore reduces the noise — fewer suggestions that are obviously wrong, fewer details that contradict established canon. It does not eliminate the need for your judgement. That part stays yours.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-3. **Why Worldbuilding AI Should Know Your Lore Before It Speaks** _(this article)_
-4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
