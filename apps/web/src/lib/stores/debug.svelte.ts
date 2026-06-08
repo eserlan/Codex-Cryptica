@@ -27,10 +27,7 @@ export class DebugStore {
   private addLog(level: LogEntry["level"], message: string, data?: any) {
     const newLog = { timestamp: Date.now(), level, message, data };
     this.logs = [newLog, ...this.logs].slice(0, 500);
-    if (
-      import.meta.env.DEV ||
-      (typeof window !== "undefined" && (window as any).__E2E__)
-    ) {
+    if (import.meta.env.DEV) {
       const method =
         level === "error" ? "error" : level === "warn" ? "warn" : "log";
       if (data) {

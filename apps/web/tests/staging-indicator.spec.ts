@@ -2,10 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Staging Indicator", () => {
   test.beforeEach(async ({ page }) => {
-    // Enable E2E access to uiStore
-    await page.addInitScript(() => {
-      (window as any).__E2E__ = true;
-    });
     await page.goto("/");
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
   });

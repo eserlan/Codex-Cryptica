@@ -2,7 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test.describe("MarkdownEditor", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+    });
     await page.goto("/test/markdown-editor");
   });
 

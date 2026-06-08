@@ -3,8 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Oracle Undo", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).__E2E__ = true;
-      (window as any).DISABLE_ONBOARDING = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         localStorage.setItem("codex_skip_landing", "true");
         localStorage.setItem("oracle-hint-seen", "true");

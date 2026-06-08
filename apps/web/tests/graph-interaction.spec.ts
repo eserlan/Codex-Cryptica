@@ -3,8 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Graph Keyboard Interactions", () => {
   test("should toggle connect mode with 'C' key", async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         localStorage.setItem("codex_skip_landing", "true");
       } catch {
@@ -39,8 +42,11 @@ test.describe("Graph Keyboard Interactions", () => {
 
   test("should exit connect mode with 'Escape' key", async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         localStorage.setItem("codex_skip_landing", "true");
       } catch {
