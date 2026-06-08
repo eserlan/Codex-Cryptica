@@ -107,6 +107,3 @@
 
 **Learning:** Svelte `Object.fromEntries(Object.entries(obj).map(...))` allocates multiple intermediate arrays for extracting entries, transforming them, and then reassembling the object. For store methods operating on many keys, this introduces significant garbage collection pressure and CPU overhead on every invocation.
 **Action:** Replace `Object.fromEntries(Object.entries(obj).map(...))` with an imperative `for...in` loop constructing a new record natively when transforming or filtering object properties in Svelte stores.
-## 2026-05-18 - [Performance Insight: Avoid Object.fromEntries(Object.entries())]
-**Learning:** Svelte `Object.fromEntries(Object.entries(obj).map(...))` allocates multiple intermediate arrays for extracting entries, transforming them, and then reassembling the object. For store methods operating on many keys, this introduces significant garbage collection pressure and CPU overhead on every invocation.
-**Action:** Replace `Object.fromEntries(Object.entries(obj).map(...))` with an imperative `for...of` loop over `Object.keys()` constructing a new record natively when transforming or filtering object properties in Svelte stores. Avoid using `for...in` to guarantee safe iteration only over own properties.

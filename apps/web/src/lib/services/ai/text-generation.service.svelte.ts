@@ -795,8 +795,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
       const summary = String(parsed.summary || "").trim();
       const description = String(parsed.description || "").trim();
 
-      // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
-      // to avoid intermediate array allocations and reduce GC pressure.
       const labels: string[] = [];
       if (Array.isArray(parsed.labels)) {
         for (const l of parsed.labels) {

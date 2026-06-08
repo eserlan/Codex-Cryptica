@@ -48,11 +48,8 @@ export function createEncounterSession(
 export function sanitizeEncounterSession(
   session: EncounterSession,
 ): EncounterSession {
-  // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop
-  // to avoid intermediate array allocations and reduce GC pressure.
   const clonedTokens: Record<string, Token> = {};
-  const keys = Object.keys(session.tokens);
-  for (const id of keys) {
+  for (const id of Object.keys(session.tokens)) {
     clonedTokens[id] = { ...session.tokens[id] } as Token;
   }
 
