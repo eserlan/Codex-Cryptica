@@ -9,11 +9,6 @@ test.describe("Timeline Accessibility", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
       (window as any).DISABLE_ERROR_OVERLAY = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
 
       // Mock IDB to prevent errors
       const originalPut = IDBObjectStore.prototype.put;

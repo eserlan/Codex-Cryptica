@@ -9,7 +9,6 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       } catch {
         /* ignore */
       }
-      localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),

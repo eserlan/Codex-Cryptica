@@ -44,11 +44,6 @@ test.describe("Campaign Date Picker E2E", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       (window as any).DISABLE_ERROR_OVERLAY = true;
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",

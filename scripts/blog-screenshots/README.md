@@ -67,12 +67,14 @@ test.describe("Blog Screenshots: <Your Blog Title>", () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Skip onboarding and set up clean state
+    // Skip onboarding and set up clean state via real persisted state
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-test-key";
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
     await page.goto("http://localhost:5173/");
 

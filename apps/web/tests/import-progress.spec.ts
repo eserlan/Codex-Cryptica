@@ -8,11 +8,6 @@ test.describe("Import Progress Management E2E", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       (window as any).DISABLE_ERROR_OVERLAY = true;
       // Mock the API key to allow import to proceed
       (window as any).__SHARED_GEMINI_KEY__ = "test-key-mock";

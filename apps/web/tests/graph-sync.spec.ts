@@ -8,11 +8,6 @@ test.describe("Graph Synchronization Loop", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
     await page.goto("http://localhost:5173/");
     // Wait for auto-init

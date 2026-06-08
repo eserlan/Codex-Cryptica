@@ -8,11 +8,6 @@ test.describe("Entity Explorer Sidebar", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     // Seed a known entity and dismiss front page for testing focus mode

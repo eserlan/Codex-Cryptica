@@ -10,7 +10,6 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       try {
-        localStorage.setItem("codex_skip_landing", "true");
         localStorage.setItem("oracle-hint-seen", "true");
       } catch {
         /* ignore */

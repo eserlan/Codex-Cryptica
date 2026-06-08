@@ -9,11 +9,6 @@ test.describe("Node Merging", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     if (process.env.PWDEBUG || process.env.DEBUG_E2E_LOGS) {
@@ -279,7 +274,6 @@ test.describe("Node Merging", () => {
 
           throw error;
         }
-        localStorage.setItem("codex_skip_landing", "true");
       });
       await page.reload();
       await page.waitForFunction(

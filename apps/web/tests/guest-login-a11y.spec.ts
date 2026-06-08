@@ -8,11 +8,6 @@ test.describe("Guest Login Modal Accessibility", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
 
       // Mock PeerJS connection to trigger the GuestLoginModal
       (window as any).Peer = class MockPeer {

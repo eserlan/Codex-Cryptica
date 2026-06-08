@@ -8,11 +8,6 @@ test.describe("P2P Image Sync", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
 
       // Mock Peer
       (window as any).Peer = class MockPeer {

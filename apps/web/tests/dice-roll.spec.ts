@@ -9,11 +9,6 @@ test.describe("Dice Rolling (Oracle Command)", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
       try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
-      try {
         localStorage.setItem("codex_lite_mode", "true");
       } catch {
         /* ignore */

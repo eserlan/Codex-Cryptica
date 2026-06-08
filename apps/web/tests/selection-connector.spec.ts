@@ -10,11 +10,6 @@ test.describe("Selection Connector", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     await page.goto("/");
@@ -126,16 +121,10 @@ test.describe("Selection Connector", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       try {
         localStorage.setItem("codex_last_connection_label", "Old Friend");
       } catch {

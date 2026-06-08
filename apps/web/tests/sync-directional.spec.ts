@@ -8,11 +8,6 @@ test.describe("Directional Vault Sync UI", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     await page.goto("/");

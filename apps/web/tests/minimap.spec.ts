@@ -9,11 +9,6 @@ test.describe("Minimap Navigation", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       const applyMocks = () => {
         if ((window as any).vault) {
           (window as any).vault.isAuthorized = true;

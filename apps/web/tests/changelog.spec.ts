@@ -13,7 +13,6 @@ test.describe("Changelog System", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
       localStorage.setItem("codex_last_seen_version", "0.16.5");
-      localStorage.setItem("codex_skip_landing", "true");
     });
 
     await page.goto("/");
@@ -39,7 +38,6 @@ test.describe("Changelog System", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
@@ -47,7 +45,6 @@ test.describe("Changelog System", () => {
       // Stored version is 0.17.0, current app is 0.17.37.
       // Because minor is the same, it should NOT pop up.
       localStorage.setItem("codex_last_seen_version", "0.17.0");
-      localStorage.setItem("codex_skip_landing", "true");
     });
 
     await page.goto("/");

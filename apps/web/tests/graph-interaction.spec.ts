@@ -8,11 +8,6 @@ test.describe("Graph Keyboard Interactions", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     await page.goto("/");
@@ -42,16 +37,10 @@ test.describe("Graph Keyboard Interactions", () => {
 
   test("should exit connect mode with 'Escape' key", async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     await page.goto("/");

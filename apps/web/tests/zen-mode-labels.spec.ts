@@ -8,7 +8,6 @@ test.describe("Zen Mode Label Management", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      localStorage.setItem("codex_skip_landing", "true");
     });
 
     await page.goto("/");

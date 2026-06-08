@@ -8,11 +8,6 @@ test.describe("World Timeline - Graph Integration", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
 
       // Mock IDB to prevent errors
       const originalPut = IDBObjectStore.prototype.put;

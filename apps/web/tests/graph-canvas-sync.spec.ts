@@ -9,7 +9,6 @@ test.describe("Cross-View Deletion Sync (Graph to Canvas)", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      localStorage.setItem("codex_skip_landing", "true");
     });
 
     // Start on the graph view

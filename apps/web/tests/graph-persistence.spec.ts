@@ -8,7 +8,6 @@ test.describe("Graph Deletion Persistence", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      localStorage.setItem("codex_skip_landing", "true");
     });
 
     await page.goto("/");

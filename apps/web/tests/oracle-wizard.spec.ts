@@ -8,11 +8,6 @@ test.describe("Oracle Connection Wizard", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("http://localhost:5173/");

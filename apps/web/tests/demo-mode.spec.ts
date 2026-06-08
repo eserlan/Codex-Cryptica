@@ -75,13 +75,7 @@ test.describe("Interactive Demo Mode", () => {
 
   test("should start theme-specific demo via URL", async ({ page }) => {
     // For URL-based demo, we want to bypass landing page
-    await page.addInitScript(() => {
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
-    });
+    await page.addInitScript(() => {});
 
     await page.goto("/?demo=vampire&s=" + Date.now());
     await page.waitForFunction(

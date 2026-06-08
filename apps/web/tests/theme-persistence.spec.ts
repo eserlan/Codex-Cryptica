@@ -8,11 +8,6 @@ test.describe("Campaign-Specific Theme Persistence", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     if (process.env.PW_DEBUG_CONSOLE === "1") {

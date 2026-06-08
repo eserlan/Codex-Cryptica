@@ -9,11 +9,6 @@ test.describe("Better Imports E2E", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
         name: "test-vault",

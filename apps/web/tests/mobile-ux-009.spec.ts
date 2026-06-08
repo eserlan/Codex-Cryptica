@@ -14,11 +14,6 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       const files = [
         {
           name: "TestEntity.md",

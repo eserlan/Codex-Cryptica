@@ -42,11 +42,6 @@ test.describe("Guest Mode (P2P Share)", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
 
       // Mock the PeerJS constructor and its methods
       (window as any).Peer = class MockPeer {

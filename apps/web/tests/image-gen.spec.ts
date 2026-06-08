@@ -8,11 +8,6 @@ test.describe("Oracle Image Generation", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       // Suppress Oracle onboarding overlay
       try {
         localStorage.setItem("codex_oracle_onboarding_dismissed", "true");

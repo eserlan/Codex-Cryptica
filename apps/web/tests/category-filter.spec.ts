@@ -16,7 +16,6 @@ test.describe("Category Filter", () => {
       } catch {
         /* ignore */
       }
-      localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
@@ -79,11 +78,6 @@ test.describe("Category Filter", () => {
     await page.waitForFunction(() => !!(window as any).uiStore);
     await page.evaluate(() => {
       (window as any).uiStore.dismissedLandingPage = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
     await page.reload({ waitUntil: "load" });
     await expect(page.getByTestId("graph-canvas")).toBeVisible({

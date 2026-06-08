@@ -9,7 +9,6 @@ test.describe("Oracle Sidebar", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
       try {
-        localStorage.setItem("codex_skip_landing", "true");
         localStorage.setItem("oracle-hint-seen", "true");
       } catch {
         /* ignore */

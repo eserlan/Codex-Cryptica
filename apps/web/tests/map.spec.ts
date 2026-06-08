@@ -175,21 +175,25 @@ test.describe("Map Mode", () => {
   });
 
   test("should allow deleting a map via Zen Mode", async ({ page }) => {
-    // Navigate to home and ensure vault is initialized
-    await page.goto("/?demo=fantasy");
+    // Use a real (non-demo) vault: map deletion is intentionally disabled in
+    // Demo Mode (mapRegistry.deleteMap early-returns), so seed a real entity.
+    await page.goto("/");
     await page.waitForFunction(
-      () => (window as any).vault?.isInitialized === true,
+      () =>
+        (window as any).vault?.status === "idle" &&
+        typeof (window as any).uiStore?.openZenMode === "function",
       { timeout: 20000 },
     );
 
-    // Select the first available entity and open Zen Mode programmatically directly to the map tab
-    await page.evaluate(() => {
-      const entities = (window as any).vault.entities;
-      const entityId = Object.keys(entities)[0];
-      if (entityId) {
-        (window as any).uiStore.openZenMode(entityId, "map");
-      }
-    });
+    // Create an entity and open Zen Mode directly on its map tab
+    const entityId = await page.evaluate(
+      async () =>
+        await (window as any).vault.createEntity("character", "Map Hero", {}),
+    );
+    await page.evaluate(
+      (id) => (window as any).uiStore.openZenMode(id, "map"),
+      entityId,
+    );
 
     // 1. Confirm that the map is empty initially for this character
     // Check if the modal itself is even there
@@ -212,9 +216,9 @@ test.describe("Map Mode", () => {
     const deleteBtn = page.getByRole("button", { name: "Delete map" });
     await expect(deleteBtn).toBeVisible({ timeout: 20000 });
 
-    // 5. Click delete and handle the confirm dialog
-    page.once("dialog", (dialog) => dialog.accept());
+    // 5. Click delete and confirm via the custom confirmation modal
     await deleteBtn.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
 
     // 6. Verify the map was deleted and the upload button is back
     const uploadLabelFinal = page.locator('label:has-text("Upload Map")');

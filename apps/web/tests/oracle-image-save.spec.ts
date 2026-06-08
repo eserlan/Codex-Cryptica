@@ -9,11 +9,6 @@ test.describe("Oracle Image Save to Entity", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
 
     await page.goto("/");

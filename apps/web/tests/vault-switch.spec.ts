@@ -8,11 +8,6 @@ test.describe("Vault Switching", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
     // Add page error listener
     page.on("pageerror", (err) => console.log(`PAGE ERROR: ${err.message}`));

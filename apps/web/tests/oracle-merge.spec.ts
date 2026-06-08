@@ -13,7 +13,6 @@ test.describe("Oracle Merge Command E2E", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       try {
-        localStorage.setItem("codex_skip_landing", "true");
         localStorage.setItem("oracle-hint-seen", "true");
       } catch {
         /* ignore */

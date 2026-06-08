@@ -10,7 +10,6 @@ test.describe("AI Entity Regeneration", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       try {
-        localStorage.setItem("codex_skip_landing", "true");
         localStorage.setItem("codex_ai_disabled", "false");
       } catch {
         /* ignore */

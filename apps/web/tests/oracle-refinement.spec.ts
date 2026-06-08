@@ -10,11 +10,6 @@ test.describe("Oracle UI Refinement", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
       (window as any).__SHARED_GEMINI_KEY__ = "fake-shared-key";
       // Mock window.showDirectoryPicker
       // @ts-expect-error - Mock browser API
