@@ -354,12 +354,14 @@
                     {#if row.competitorHas}
                       <span
                         class="icon-[lucide--check] text-emerald-500 w-4 h-4"
-                        role="img" aria-label="Yes"
+                        role="img"
+                        aria-label="Yes"
                       ></span>
                     {:else}
                       <span
                         class="icon-[lucide--x] text-rose-500 w-4 h-4"
-                        role="img" aria-label="No"
+                        role="img"
+                        aria-label="No"
                       ></span>
                     {/if}
                   {:else}
@@ -377,12 +379,14 @@
                     {#if row.codexHas}
                       <span
                         class="icon-[lucide--check] text-emerald-400 w-4 h-4"
-                        role="img" aria-label="Yes"
+                        role="img"
+                        aria-label="Yes"
                       ></span>
                     {:else}
                       <span
                         class="icon-[lucide--x] text-rose-500 w-4 h-4"
-                        role="img" aria-label="No"
+                        role="img"
+                        aria-label="No"
                       ></span>
                     {/if}
                   {:else}
@@ -508,6 +512,29 @@
             </a>
           {/each}
         </div>
+      </div>
+    </section>
+  {/if}
+
+  <!-- Responsible AI Trust Banner -->
+  {#if data.aiTrustSection}
+    <section class="border-t border-theme-border/30 py-10">
+      <div class="max-w-3xl mx-auto px-6 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{base}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
       </div>
     </section>
   {/if}

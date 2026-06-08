@@ -690,6 +690,27 @@
       </section>
     {/if}
 
+    <!-- Responsible AI Trust Banner -->
+    {#if pageData.aiTrustSection}
+      <section class="border-t border-theme-border/60 mt-16 pt-10 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{base}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
+      </section>
+    {/if}
+
     <!-- FAQ Section -->
     <section class="border-t border-theme-border/60 mt-16 pt-16">
       <h2
