@@ -11,15 +11,15 @@
     mainEntity: [
       {
         "@type": "Question",
-        name: "What is responsible AI worldbuilding?",
+        name: "What does responsible AI mean for RPG worldbuilding?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your private world data on external servers.",
+          text: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database.",
         },
       },
       {
         "@type": "Question",
-        name: "Can AI help with RPG campaign prep without writing the campaign for me?",
+        name: "Can AI help with campaign prep without taking over?",
         acceptedAnswer: {
           "@type": "Answer",
           text: "Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval.",
@@ -27,7 +27,7 @@
       },
       {
         "@type": "Question",
-        name: "How do I stop AI from changing my campaign canon?",
+        name: "How does Codex keep AI drafts out of canon?",
         acceptedAnswer: {
           "@type": "Answer",
           text: "Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault.",
@@ -35,7 +35,7 @@
       },
       {
         "@type": "Question",
-        name: "Can Codex Cryptica work without AI?",
+        name: "Can I use Codex Cryptica without AI?",
         acceptedAnswer: {
           "@type": "Answer",
           text: "Completely. The wiki, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off.",
@@ -43,26 +43,26 @@
       },
       {
         "@type": "Question",
-        name: "What is vault-aware AI?",
+        name: "What does vault-aware AI mean?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Vault-aware AI means the Oracle reads from the campaign context you have open before composing a response. Your world's specific details shape the output, not generic fantasy training data.",
+          text: "Vault-aware AI means the Oracle is grounded in the selected context from your vault rather than starting from a blank prompt alone. The active entity, linked notes, and any campaign-level context you have selected all shape the response.",
         },
       },
       {
         "@type": "Question",
-        name: "What is the difference between AI context and AI memory?",
+        name: "What is the difference between context and memory?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Context is what you explicitly pass to the AI for a single query. Memory is persistent state across sessions. Codex uses context from your structured vault rather than relying on an opaque memory layer that can drift or hallucinate.",
+          text: "Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate.",
         },
       },
       {
         "@type": "Question",
-        name: "Does the Lore Oracle use my existing lore?",
+        name: "Can the Lore Oracle read my whole vault?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes. When you invoke the Oracle on an entity, it receives the content of that entity, any linked entities you have pulled into context, and campaign-level notes you have selected.",
+          text: "No. The Lore Oracle does not receive your entire vault by default. When you invoke it on an entity, it receives the active prompt, the current entity content and metadata, any linked entities you have included, and any campaign-level notes you have selected for that action. That context is used for a single request. Unselected notes stay local.",
         },
       },
     ],
@@ -480,7 +480,7 @@
       </p>
 
       <div class="space-y-3">
-        {#each [{ q: "What is responsible AI worldbuilding?", a: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your private world data on external servers." }, { q: "Can AI help with RPG campaign prep without writing the campaign for me?", a: 'Yes. Codex Cryptica is designed for exactly this. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="{base}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.' }, { q: "How do I stop AI from changing my campaign canon?", a: 'Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="{base}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.' }, { q: "Can Codex Cryptica work without AI?", a: 'Completely. The wiki, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="{base}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.' }, { q: "What is vault-aware AI?", a: "Vault-aware AI means the Oracle reads from the campaign context you have open — the active entity, linked notes, and selected background lore — before composing a response. It does not generate from a blank prompt or generic fantasy training data. Your world's specific details shape the output." }, { q: "What is the difference between AI context and AI memory?", a: 'Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="{base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.' }, { q: "Does the Lore Oracle use my existing lore?", a: "Yes. When you invoke the Oracle on an entity, it receives the content and metadata of that entity, any linked entities you have pulled into context, and campaign-level notes you have selected. It does not have access to your entire vault at once — only the context window you open for that action." }] as faq}
+        {#each [{ q: "What does responsible AI mean for RPG worldbuilding?", a: "It means keeping narrative control with the author. The AI assists with mechanical tasks — expanding notes, drafting entity descriptions, suggesting plot hooks — but it does not overwrite your canon, run without your permission, or store your campaign vault in a Codex-hosted database." }, { q: "Can AI help with campaign prep without taking over?", a: `Yes. You direct the Lore Oracle to fill templates, revise existing entries, or generate related entity suggestions. Every result lands in a sandbox draft. Nothing enters your saved lore without your explicit approval. Read more in <a href="${base}/blog/ai-campaign-prep-without-losing-your-voice" class="text-theme-primary hover:underline">Six Ways to Use AI in Campaign Prep Without Losing Your Voice</a>.` }, { q: "How does Codex keep AI drafts out of canon?", a: `Codex separates AI drafts from saved files at an architectural level. Generated content lives in a temporary review state. You choose what to accept, edit, or discard. The AI cannot silently write to your vault. See <a href="${base}/blog/drafts-are-not-canon" class="text-theme-primary hover:underline">Drafts Are Not Canon</a> for the full explanation.` }, { q: "Can I use Codex Cryptica without AI?", a: `Completely. The wiki, chronological timeline, interactive lore graph, entity templates, and local vault are all fully functional with AI switched off. AI is a layer on top of a working campaign manager, not a requirement for it. See <a href="${base}/blog/worldbuilding-tool-without-ai" class="text-theme-primary hover:underline">A Worldbuilding Tool Should Still Work Without AI</a>.` }, { q: "What does vault-aware AI mean?", a: "Vault-aware AI means the Oracle is grounded in the selected context from your vault rather than starting from a blank prompt alone. The active entity, linked notes, and any campaign-level context you have selected all shape the response." }, { q: "What is the difference between context and memory?", a: `Context is what you explicitly pass to the AI for a single query: the entity you are editing, the notes you have selected. Memory is persistent state across sessions. Codex uses context from your structured vault — frontmatter, linked entities, timelines — rather than relying on an opaque memory layer that can drift or hallucinate. Read more in <a href="${base}/blog/ai-slop-is-context-failure" class="text-theme-primary hover:underline">AI Slop Happens When the Tool Has No Memory</a>.` }, { q: "Can the Lore Oracle read my whole vault?", a: "No. The Lore Oracle does not receive your entire vault by default. When you invoke it on an entity, it receives the active prompt, the current entity content and metadata, any linked entities you have included, and any campaign-level notes you have selected for that action. That context is used for a single request. Unselected notes stay local." }] as faq}
           <details
             class="group border border-theme-border/60 rounded-xl bg-theme-surface/30 backdrop-blur-sm overflow-hidden"
           >
