@@ -69,15 +69,3 @@ AI earns its place by being useful, not by being mandatory. If the Lore Oracle h
 If AI comes first — if the pitch is "AI generates your campaign" and the structured archive is an afterthought — you get a product that is impressive in demos and unreliable in long-running campaigns where consistency, memory, and canon control matter most.
 
 Codex Cryptica was built starting from step one. The Lore Oracle came later, and it works from the archive you already built. That order matters.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. **A Worldbuilding Tool Should Still Work Without AI** _(this article)_
-3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-6. [AI Slop Happens When the Tool Has No Memory](/blog/ai-slop-is-context-failure)
-7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)

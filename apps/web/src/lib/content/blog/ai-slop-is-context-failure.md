@@ -87,15 +87,3 @@ The article title is the thesis: AI slop happens when the tool has no memory.
 Not when the model is bad. Not when the prose is weak. When the tool generates without continuity, without respect for established canon, without any record of what this particular campaign has built over dozens of sessions.
 
 The fix is not a better prompt. It is a tool that treats your world as the source of truth rather than as an optional input. Structure, memory, and accountability to what has already happened.
-
----
-
-_Part of the [Codex Cryptica responsible AI series](/blog/lore-oracle-not-the-author):_
-
-1. [The Lore Oracle Is Not the Author](/blog/lore-oracle-not-the-author)
-2. [A Worldbuilding Tool Should Still Work Without AI](/blog/worldbuilding-tool-without-ai)
-3. [Why Worldbuilding AI Should Know Your Lore Before It Speaks](/blog/worldbuilding-ai-needs-your-lore)
-4. [Drafts Are Not Canon](/blog/drafts-are-not-canon)
-5. [Six Ways to Use AI in Campaign Prep Without Losing Your Voice](/blog/ai-campaign-prep-without-losing-your-voice)
-6. **AI Slop Happens When the Tool Has No Memory** _(this article)_
-7. [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)
