@@ -55,9 +55,19 @@
 
   const suggestions = $derived.by(() => {
     if (!isLabelAutocompleteActive) return [];
-    return uniqueLabels
-      .filter((label) => label.toLowerCase().includes(autocompleteSearch))
-      .slice(0, 10);
+
+    // ⚡ Bolt Optimization: Replace full array .filter().slice() with early-exit imperative loop
+    // to prevent intermediate array allocation and O(N) processing on every keystroke
+    const maxResults = 10;
+    const matches: string[] = [];
+    for (let i = 0; i < uniqueLabels.length; i++) {
+      const label = uniqueLabels[i];
+      if (label.toLowerCase().includes(autocompleteSearch)) {
+        matches.push(label);
+        if (matches.length >= maxResults) break;
+      }
+    }
+    return matches;
   });
 
   // Reset dismissed state when the word being typed changes
