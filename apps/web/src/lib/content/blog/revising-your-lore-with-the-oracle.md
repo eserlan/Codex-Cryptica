@@ -54,7 +54,7 @@ Good revision prompts usually include three things:
 
 > The players exposed Mira as a resistance informant in session 22. Update her entry to reflect that her cover is blown, her motivation has shifted from survival to active defiance, and she is now operating openly. Keep her voice and her established relationships with the dockworkers' guild.
 
-The Oracle reads the existing entry alongside your instruction and produces a revision as a draft. The original stays intact. You compare, accept the parts that work, edit what does not, and discard anything that missed.
+The Oracle reads the existing entry alongside your instruction and produces a revision as a draft. The original stays intact. You compare, accept the parts that work, edit what does not, and discard anything that missed. The principle that [drafts are not canon](/blog/drafts-are-not-canon) applies here too — nothing replaces the existing entry until you decide it should.
 
 **Quick revision commands:**
 

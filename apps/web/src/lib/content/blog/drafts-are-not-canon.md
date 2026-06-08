@@ -68,7 +68,7 @@ AI is most trustworthy when it cannot act without your permission.
 
 Suggestions that require acceptance before they become fact are suggestions you remain in control of. Suggestions that silently enter the archive are a slow erosion of authorship.
 
-Codex Cryptica is built around the first model. The Oracle suggests. You decide.
+Codex Cryptica is built around the first model. [The Oracle suggests](/blog/lore-oracle-not-the-author). You decide.
 
 ---
 
