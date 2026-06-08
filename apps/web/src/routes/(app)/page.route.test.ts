@@ -63,6 +63,24 @@ describe("root +page.svelte — front page overlay keydown", () => {
     onboardingStore.dismissedLandingPage = true;
   });
 
+  it("presents the root landing page as a private local-first RPG vault", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /codex cryptica private rpg lore vault/i,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(/local-first campaign manager/i)).toBeTruthy();
+    expect(screen.getByText("Local-first vault")).toBeTruthy();
+    expect(screen.getByText("Spatial lore graph")).toBeTruthy();
+    expect(screen.getByText("Optional AI")).toBeTruthy();
+  });
+
   it("dismisses the overlay when Space is pressed directly on the overlay", async () => {
     render(RoutePage);
     const overlay = await waitFor(() =>

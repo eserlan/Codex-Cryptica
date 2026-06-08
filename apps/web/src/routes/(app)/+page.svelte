@@ -64,6 +64,23 @@
     "starwars",
     "startrek",
   ];
+  const agenticProofPoints = [
+    {
+      icon: "icon-[lucide--hard-drive]",
+      label: "Local-first vault",
+      copy: "Your campaign lives in browser-local storage, not a hosted notes silo.",
+    },
+    {
+      icon: "icon-[lucide--network]",
+      label: "Spatial lore graph",
+      copy: "Connect people, places, factions, secrets, maps, and timelines visually.",
+    },
+    {
+      icon: "icon-[lucide--sparkles]",
+      label: "Optional AI",
+      copy: "Use the Lore Oracle when helpful; the vault works without AI or an account.",
+    },
+  ];
   const schemaOrgString = $derived(safeJsonLd(SCHEMA_ORG));
 
   const logChunkError = (name: string, error: any) => {
@@ -302,20 +319,71 @@
             <span
               class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
             ></span>
-            Your vault stays local • Optional AI • No account required
+            Local-first RPG campaign manager • Private by default
           </div>
-          <h2
+          <h1
             class="text-4xl md:text-7xl font-bold text-theme-text font-header tracking-tight mb-4 md:mb-6 leading-tight"
           >
-            Build Your World. <br />
-            <span class="text-theme-primary/90">Map Your Lore.</span>
-          </h2>
+            Codex Cryptica <br />
+            <span class="text-theme-primary/90">Private RPG Lore Vault</span>
+          </h1>
           <p
-            class="text-base sm:text-lg md:text-2xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-6 md:mb-8 font-body font-light"
+            class="text-base sm:text-lg md:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-6 md:mb-8 font-body font-light"
           >
-            Turn scattered campaign notes into a private visual vault for
-            characters, factions, locations, secrets, and timelines.
+            A free, local-first campaign manager for GMs who want private
+            Markdown-backed notes, offline prep, spatial lore maps, timelines,
+            and optional AI in one browser workspace.
           </p>
+
+          <div class="mb-6 md:mb-8 flex flex-col items-center justify-center">
+            <button
+              onclick={() => demoService.startDemo("fantasy")}
+              class="w-full max-w-sm sm:w-auto sm:max-w-none px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
+              data-testid="welcome-demo-button"
+            >
+              Explore Demo Vault
+            </button>
+            <p
+              class="mt-3 px-4 text-sm text-theme-muted/90 font-body text-balance"
+            >
+              No setup required. Opens a prebuilt sample world instantly.
+            </p>
+
+            <div
+              class="mt-4 w-full max-w-sm sm:max-w-none flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3"
+            >
+              {#each secondaryActions as action (action.intent)}
+                <button
+                  onclick={() => openVaultFromWelcome(action.intent)}
+                  class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
+                  data-testid={action.testid}
+                >
+                  {action.label}
+                </button>
+              {/each}
+            </div>
+          </div>
+
+          <div
+            class="mx-auto mb-6 md:mb-8 grid max-w-4xl gap-3 text-left sm:grid-cols-3"
+            aria-label="Codex Cryptica product highlights"
+          >
+            {#each agenticProofPoints as point (point.label)}
+              <article
+                class="border border-theme-border/70 bg-theme-surface/45 p-4 text-theme-text shadow-sm"
+              >
+                <div
+                  class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-primary"
+                >
+                  <span class="{point.icon} h-4 w-4 shrink-0"></span>
+                  <h3>{point.label}</h3>
+                </div>
+                <p class="text-sm leading-relaxed text-theme-muted">
+                  {point.copy}
+                </p>
+              </article>
+            {/each}
+          </div>
 
           <!-- Product preview: clickable, typed lore graph + entity panel -->
           <button
@@ -584,35 +652,6 @@
               </div>
             </div>
           </button>
-
-          <div class="flex flex-col items-center justify-center">
-            <button
-              onclick={() => demoService.startDemo("fantasy")}
-              class="w-full max-w-sm sm:w-auto sm:max-w-none px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
-              data-testid="welcome-demo-button"
-            >
-              Explore Demo Vault
-            </button>
-            <p
-              class="mt-3 px-4 text-sm text-theme-muted/90 font-body text-balance"
-            >
-              No setup required. Opens a prebuilt sample world instantly.
-            </p>
-
-            <div
-              class="mt-6 md:mt-7 w-full max-w-sm sm:max-w-none flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3"
-            >
-              {#each secondaryActions as action (action.intent)}
-                <button
-                  onclick={() => openVaultFromWelcome(action.intent)}
-                  class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
-                  data-testid={action.testid}
-                >
-                  {action.label}
-                </button>
-              {/each}
-            </div>
-          </div>
 
           <div class="mt-8 flex flex-col items-center gap-4">
             <p
