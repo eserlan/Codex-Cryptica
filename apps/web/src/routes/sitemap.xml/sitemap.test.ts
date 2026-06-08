@@ -21,8 +21,27 @@ vi.mock("$lib/content/blog-content", () => ({
     .fn()
     .mockReturnValue([
       { slug: "test-blog-post", publishedAt: "2026-06-01T12:00:00.000Z" },
+      ...[
+        "lore-oracle-not-the-author",
+        "worldbuilding-tool-without-ai",
+        "worldbuilding-ai-needs-your-lore",
+        "drafts-are-not-canon",
+        "ai-campaign-prep-without-losing-your-voice",
+        "ai-slop-is-context-failure",
+        "revising-your-lore-with-the-oracle",
+      ].map((slug) => ({ slug, publishedAt: "2026-06-06T16:00:00.000Z" })),
     ]),
 }));
+
+const RA_SLUGS = [
+  "lore-oracle-not-the-author",
+  "worldbuilding-tool-without-ai",
+  "worldbuilding-ai-needs-your-lore",
+  "drafts-are-not-canon",
+  "ai-campaign-prep-without-losing-your-voice",
+  "ai-slop-is-context-failure",
+  "revising-your-lore-with-the-oracle",
+];
 
 describe("Sitemap.xml API Endpoint", () => {
   it("should return a valid XML response with all routes", async () => {
@@ -45,5 +64,13 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain("https://codexcryptica.com/import/test-import");
     expect(xml).toContain("https://codexcryptica.com/generators/npc");
     expect(xml).toContain("https://codexcryptica.com/blog/test-blog-post");
+    // Responsible AI pillar page
+    expect(xml).toContain(
+      "https://codexcryptica.com/responsible-ai-worldbuilding",
+    );
+    // All seven RA series articles
+    for (const slug of RA_SLUGS) {
+      expect(xml).toContain(`https://codexcryptica.com/blog/${slug}`);
+    }
   });
 });
