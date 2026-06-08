@@ -224,8 +224,7 @@
       class="text-4xl md:text-6xl font-extrabold font-header leading-tight mb-6 tracking-wide uppercase"
       id="hero-h1"
     >
-      Responsible AI for <span
-        class="text-theme-primary bg-gradient-to-r from-theme-primary to-theme-accent bg-clip-text text-transparent"
+      Responsible AI for <span class="text-theme-primary"
         >RPG Worldbuilding</span
       >
     </h1>
