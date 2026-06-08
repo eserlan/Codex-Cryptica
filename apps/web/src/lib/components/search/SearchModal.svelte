@@ -55,9 +55,15 @@
 
   const suggestions = $derived.by(() => {
     if (!isLabelAutocompleteActive) return [];
-    return uniqueLabels
-      .filter((label) => label.toLowerCase().includes(autocompleteSearch))
-      .slice(0, 10);
+
+    const matches: string[] = [];
+    for (const label of uniqueLabels) {
+      if (label.toLowerCase().includes(autocompleteSearch)) {
+        matches.push(label);
+        if (matches.length >= 10) break;
+      }
+    }
+    return matches;
   });
 
   // Reset dismissed state when the word being typed changes
