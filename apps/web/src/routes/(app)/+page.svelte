@@ -337,6 +337,7 @@
 
           <div class="mb-6 md:mb-8 flex flex-col items-center justify-center">
             <button
+              type="button"
               onclick={() => demoService.startDemo("fantasy")}
               class="w-full max-w-sm sm:w-auto sm:max-w-none px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
               data-testid="welcome-demo-button"
@@ -354,6 +355,7 @@
             >
               {#each secondaryActions as action (action.intent)}
                 <button
+                  type="button"
                   onclick={() => openVaultFromWelcome(action.intent)}
                   class="px-8 py-3 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary/60 font-bold uppercase font-header tracking-[0.18em] text-xs rounded-lg transition-all active:scale-95"
                   data-testid={action.testid}
@@ -375,7 +377,8 @@
                 <div
                   class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-primary"
                 >
-                  <span class="{point.icon} h-4 w-4 shrink-0"></span>
+                  <span class="{point.icon} h-4 w-4 shrink-0" aria-hidden="true"
+                  ></span>
                   <h3>{point.label}</h3>
                 </div>
                 <p class="text-sm leading-relaxed text-theme-muted">
