@@ -22,7 +22,7 @@
     <!-- Header -->
     <header class="mb-16 md:mb-24">
       <a
-        href="{base}/"
+        href="{base}/?ref=changelog"
         class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] mb-8 transition-colors"
       >
         <span class="icon-[lucide--arrow-left] w-3 h-3"></span>
@@ -130,7 +130,7 @@
         Cryptica today.
       </p>
       <a
-        href="{base}/"
+        href="{base}/?ref=changelog"
         class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_rgba(var(--color-theme-primary-rgb),0.3)] transition-all active:scale-95"
       >
         Enter Workspace

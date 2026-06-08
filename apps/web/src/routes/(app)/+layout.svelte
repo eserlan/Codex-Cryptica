@@ -89,12 +89,15 @@
       themeStore.currentThemeId = requestedTheme;
     }
 
-    // Strip funnel tracking params after CF has logged them
+    // Strip funnel tracking params — defer so the CF beacon fires first
     const trackingParams = ["ref", "utm_source", "utm_medium", "utm_campaign"];
     if (trackingParams.some((p) => page.url.searchParams.has(p))) {
       const clean = new URL(page.url);
       trackingParams.forEach((p) => clean.searchParams.delete(p));
-      history.replaceState(history.state, "", clean.toString());
+      requestIdleCallback(
+        () => history.replaceState(history.state, "", clean.toString()),
+        { timeout: 3000 },
+      );
     }
   }
 
