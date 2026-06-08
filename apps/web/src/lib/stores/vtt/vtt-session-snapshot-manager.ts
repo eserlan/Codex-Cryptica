@@ -67,20 +67,18 @@ export class VTTSessionSnapshotManager {
   constructor(private deps: VTTSessionSnapshotManagerDependencies) {}
 
   createSnapshot(): EncounterSession {
+    const rawTokens = this.deps.getTokens();
+    const clonedTokens: Record<string, Token> = {};
+    for (const id of Object.keys(rawTokens)) {
+      clonedTokens[id] = { ...rawTokens[id] };
+    }
+
     return {
       id: this.deps.getSessionId() ?? crypto.randomUUID(),
       name: this.deps.getEncounterName(),
       mapId: this.deps.getMapId() ?? "",
       mode: this.deps.getMode(),
-      tokens: (() => {
-        // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop over Object.keys() to avoid intermediate array allocations
-        const currentTokens = this.deps.getTokens();
-        const tokens: Record<string, Token> = {};
-        for (const id of Object.keys(currentTokens)) {
-          tokens[id] = { ...currentTokens[id] };
-        }
-        return tokens;
-      })(),
+      tokens: clonedTokens,
       initiativeOrder: [...this.deps.getInitiativeOrder()],
       initiativeValues: { ...this.deps.getInitiativeValues() },
       round: this.deps.getRound(),
@@ -107,7 +105,6 @@ export class VTTSessionSnapshotManager {
     this.deps.setMode(snapshot.mode);
     this.deps.setEncounterName(snapshot.name ?? this.deps.getEncounterName());
 
-    // ⚡ Bolt Optimization: Replace Object.fromEntries(Object.entries().map()) with imperative loop over Object.keys() to avoid intermediate array allocations
     const tokens: Record<string, Token> = {};
     if (snapshot.tokens) {
       for (const id of Object.keys(snapshot.tokens)) {
