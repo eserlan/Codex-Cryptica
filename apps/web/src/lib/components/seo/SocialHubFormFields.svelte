@@ -127,11 +127,10 @@
   <button
     type="button"
     onclick={() => {
-      genre = pick(socialHubConfig.genres);
-      const newVenueTypes =
+      const currentVenueTypes =
         socialHubConfig.venueTypesByGenre[genre] ??
         socialHubConfig.venueTypesByGenre["Fantasy"];
-      venueType = pick(newVenueTypes);
+      venueType = pick(currentVenueTypes);
       atmosphere = pick(socialHubConfig.atmospheres);
       wealthLevel = pick(socialHubConfig.wealthLevels);
       const newClienteles =

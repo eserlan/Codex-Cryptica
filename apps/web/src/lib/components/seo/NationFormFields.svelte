@@ -120,11 +120,10 @@
   <button
     type="button"
     onclick={() => {
-      genre = pick(nationConfig.genres);
-      const newPolityTypes =
+      const currentPolityTypes =
         nationConfig.polityTypesByGenre[genre] ??
         nationConfig.polityTypesByGenre["Fantasy"];
-      polityType = pick(newPolityTypes);
+      polityType = pick(currentPolityTypes);
       governmentStyle = pick(nationConfig.governmentStyles);
       scale = pick(nationConfig.scales);
       conflictLevel = pick(nationConfig.conflictLevels);
