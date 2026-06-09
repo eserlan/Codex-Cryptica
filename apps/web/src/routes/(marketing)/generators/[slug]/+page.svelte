@@ -4,6 +4,7 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import {
     generatorEngine,
     npcThemeConfig,
@@ -339,90 +340,15 @@
         bind:campaignContext={quest.campaignContext}
       />
     {:else if data.slug === "tavern"}
-      <div class="flex flex-col gap-1.5">
-        <label for="tavern-type-select" class={labelClass}>Tavern Type</label>
-        <select
-          id="tavern-type-select"
-          bind:value={tavern.type}
-          class={selectClass}
-        >
-          {#each tavernConfig.types as t (t)}
-            <option value={t}>{t}</option>
-          {/each}
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label for="tavern-atmosphere-select" class={labelClass}
-          >Atmosphere</label
-        >
-        <select
-          id="tavern-atmosphere-select"
-          bind:value={tavern.atmosphere}
-          class={selectClass}
-        >
-          {#each tavernConfig.atmospheres as a (a)}
-            <option value={a}>{a}</option>
-          {/each}
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label for="tavern-settlement-select" class={labelClass}
-          >Settlement Type</label
-        >
-        <select
-          id="tavern-settlement-select"
-          bind:value={tavern.settlementType}
-          class={selectClass}
-        >
-          {#each tavernConfig.settlementTypes as s (s)}
-            <option value={s}>{s}</option>
-          {/each}
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label for="tavern-wealth-select" class={labelClass}>Wealth Level</label
-        >
-        <select
-          id="tavern-wealth-select"
-          bind:value={tavern.wealthLevel}
-          class={selectClass}
-        >
-          {#each tavernConfig.wealthLevels as w (w)}
-            <option value={w}>{w}</option>
-          {/each}
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label for="tavern-clientele-select" class={labelClass}
-          >Primary Clientele</label
-        >
-        <select
-          id="tavern-clientele-select"
-          bind:value={tavern.clientele}
-          class={selectClass}
-        >
-          {#each tavernConfig.clienteles as c (c)}
-            <option value={c}>{c}</option>
-          {/each}
-        </select>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label for="tavern-context" class={labelClass}
-          >Campaign Context (optional)</label
-        >
-        <textarea
-          id="tavern-context"
-          bind:value={tavern.campaignContext}
-          placeholder="e.g. port city under siege, near the haunted forest…"
-          rows="2"
-          class="{selectClass} resize-none"
-        ></textarea>
-      </div>
+      <TavernFormFields
+        bind:type={tavern.type}
+        bind:atmosphere={tavern.atmosphere}
+        bind:settlementType={tavern.settlementType}
+        bind:wealthLevel={tavern.wealthLevel}
+        bind:clientele={tavern.clientele}
+        bind:campaignContext={tavern.campaignContext}
+        onSurprise={trigger}
+      />
     {/if}
   {/snippet}
 </SEOGeneratorLayout>
