@@ -1,6 +1,7 @@
 import { mapStore as defaultMapStore } from "$lib/stores/map.svelte";
 import { mapSession as defaultMapSession } from "$lib/stores/map-session.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
+import { modalUIStore as defaultModalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { notificationStore as defaultNotificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore as defaultSessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { layoutUIStore as defaultLayoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -51,6 +52,10 @@ type MapPageNotificationStore = {
   notify(message: string, type?: "success" | "info" | "error"): void;
 };
 
+type MapPageModalStore = {
+  openShare(): void;
+};
+
 type MapPageSessionModeStore = {
   isGuestMode: boolean;
 };
@@ -64,6 +69,7 @@ export interface MapPageControllerDependencies {
   mapStore?: MapPageMapStore;
   mapSession?: MapPageSession;
   vault?: MapPageVault;
+  modalUIStore?: MapPageModalStore;
   notificationStore?: MapPageNotificationStore;
   sessionModeStore?: MapPageSessionModeStore;
   layoutUIStore?: MapPageLayoutStore;
@@ -73,6 +79,7 @@ export class MapPageController {
   private mapStore: MapPageMapStore = defaultMapStore;
   private mapSession: MapPageSession = defaultMapSession;
   private vault: MapPageVault = defaultVault;
+  private modalUIStore: MapPageModalStore = defaultModalUIStore;
   private notificationStore: MapPageNotificationStore =
     defaultNotificationStore;
   private sessionModeStore: MapPageSessionModeStore = defaultSessionModeStore;
@@ -81,7 +88,6 @@ export class MapPageController {
 
   isDragging = $state(false);
   showUpload = $state(false);
-  showVttShare = $state(false);
   mapName = $state("");
   files = $state<FileList | null>(null);
 
@@ -103,6 +109,7 @@ export class MapPageController {
     this.mapStore = deps.mapStore ?? defaultMapStore;
     this.mapSession = deps.mapSession ?? defaultMapSession;
     this.vault = deps.vault ?? defaultVault;
+    this.modalUIStore = deps.modalUIStore ?? defaultModalUIStore;
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.layoutUIStore = deps.layoutUIStore ?? defaultLayoutUIStore;
@@ -117,6 +124,10 @@ export class MapPageController {
 
   setVttChatSidebarCollapsed(collapsed: boolean) {
     this.layoutUIStore.toggleVttChatSidebar(collapsed);
+  }
+
+  openShareModal() {
+    this.modalUIStore.openShare();
   }
 
   handleEntityDragStart(event: DragEvent, entityId: string) {
