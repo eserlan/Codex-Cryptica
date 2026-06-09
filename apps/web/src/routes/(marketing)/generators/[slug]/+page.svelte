@@ -240,15 +240,18 @@
   });
 
   onMount(() => {
+    // Genre-driven generators derive their theme from the genre dropdown, not localStorage
+    if (data.slug === "nation") {
+      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
+      return;
+    }
+    if (data.slug === "social-hub") {
+      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+      return;
+    }
     const stored = localStorage.getItem("codex-cryptica-active-theme");
     if (stored && themeIdToLabel[stored]) {
       activeTheme = themeIdToLabel[stored];
-    }
-    // For genre-driven generators the theme follows the genre dropdown, not localStorage
-    if (data.slug === "nation") {
-      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
-    } else if (data.slug === "social-hub") {
-      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
     }
   });
 
@@ -382,7 +385,8 @@
   bind:theme={activeTheme}
   isThemeCustomizable={data.slug === "faction" ||
     data.slug === "npc" ||
-    data.slug === "social-hub"}
+    data.slug === "social-hub" ||
+    data.slug === "nation"}
   {generate}
   {initialDraft}
 >
