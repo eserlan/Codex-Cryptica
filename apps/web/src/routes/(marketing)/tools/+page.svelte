@@ -101,6 +101,13 @@
                 "Generate item concepts with rarity, properties, history, and GM-facing lore.",
               icon: "icon-[lucide--sparkles]",
             },
+            {
+              href: "/generators/tavern",
+              label: "Tavern Generator",
+              summary:
+                "Generate a tavern or inn with owner, patrons, rumours, hidden trouble, and adventure hooks.",
+              icon: "icon-[lucide--beer]",
+            },
           ],
         },
       ],

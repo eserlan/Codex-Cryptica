@@ -1080,6 +1080,61 @@ export const questConfig = {
   ],
 };
 
+export const tavernConfig = {
+  types: [
+    "Roadside Inn",
+    "Dockside Tavern",
+    "Noble Taphouse",
+    "Underground Alehouse",
+    "Desert Caravanserai",
+    "Frontier Waystation",
+    "Thieves' Den",
+    "Temple Guesthouse",
+  ],
+  atmospheres: [
+    "Rowdy and welcoming",
+    "Tense and suspicious",
+    "Quiet and melancholic",
+    "Festive and chaotic",
+    "Cold and professional",
+    "Warm but secretive",
+  ],
+  settlementTypes: [
+    "Capital city",
+    "Market town",
+    "Frontier outpost",
+    "Coastal port",
+    "Remote village",
+    "Crossroads hamlet",
+  ],
+  wealthLevels: [
+    "Destitute (dirt floors, watered ale)",
+    "Poor (cheap but honest)",
+    "Modest (reliable, no frills)",
+    "Comfortable (decent food and beds)",
+    "Prosperous (good wine, private rooms)",
+    "Wealthy (exclusive clientele)",
+  ],
+  clienteles: [
+    "Merchants and traders",
+    "Soldiers and mercenaries",
+    "Criminals and fence-seekers",
+    "Pilgrims and clergy",
+    "Adventurers and wanderers",
+    "Nobles and their retainers",
+    "Dockworkers and sailors",
+    "Mixed locals",
+  ],
+  troubles: [
+    "The owner owes a dangerous debt that is coming due",
+    "A recent murder was quietly buried — the killer may still be inside",
+    "A protected criminal is hiding among the staff",
+    "The cellar connects to something the owner refuses to discuss",
+    "A faction is using the tavern as a dead-drop without the owner's knowledge",
+    "The tavern is being squeezed out by a rival backed by local power",
+  ],
+};
+
 export interface GeneratorOutput {
   type:
     | "character"
@@ -2402,6 +2457,165 @@ Use these names for any ${nameType.toLowerCase()} in a ${culture.toLowerCase()}-
       content,
       lore,
       labels: ["fantasy-name", "name-generator", "imported-draft"],
+      status: "active",
+    };
+  }
+
+  async generateTavern(
+    options: {
+      type?: string;
+      atmosphere?: string;
+      settlementType?: string;
+      wealthLevel?: string;
+      clientele?: string;
+      campaignContext?: string;
+      useAI?: boolean;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const tavernType =
+      options.type ||
+      tavernConfig.types[Math.floor(Math.random() * tavernConfig.types.length)];
+    const atmosphere =
+      options.atmosphere ||
+      tavernConfig.atmospheres[
+        Math.floor(Math.random() * tavernConfig.atmospheres.length)
+      ];
+    const settlementType =
+      options.settlementType ||
+      tavernConfig.settlementTypes[
+        Math.floor(Math.random() * tavernConfig.settlementTypes.length)
+      ];
+    const wealthLevel = options.wealthLevel || tavernConfig.wealthLevels[2];
+    const clientele =
+      options.clientele ||
+      tavernConfig.clienteles[
+        Math.floor(Math.random() * tavernConfig.clienteles.length)
+      ];
+    const campaignContext = options.campaignContext?.trim();
+
+    const namingStyles = [
+      "Name it after an animal and a colour or material (e.g. 'The Copper Boar').",
+      "Name it after an object associated with the owner's past — a weapon, trade tool, or keepsake.",
+      "Use a short ironic phrase that locals find funny (e.g. 'The Honest Scales').",
+      "Name it after a local legend, battle, or geographical feature specific to the setting.",
+      "Use a two-word compound that evokes the atmosphere — one noun, one adjective (e.g. 'The Sullen Lantern').",
+    ];
+    const varianceSeed = Math.floor(Math.random() * 99991) + 10;
+
+    if (options.useAI !== false) {
+      try {
+        const systemInstruction = `You are an expert RPG campaign writer. You generate immediately usable tavern and inn locations for tabletop GMs in JSON format.
+
+OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
+{
+  "title": "The tavern's name (follow the naming directive in the user message)",
+  "summary": "One sentence: the tavern's character and why a GM should use it (e.g. 'A cramped dockside alehouse where smugglers and off-duty guards share the same bad wine.').",
+  "content": "Markdown. Use exactly these four section headers in order: '### The Place', '### The People', '### The Trouble', '### How to use it at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
+  "lore": "Markdown. Use EXACTLY this structure:\\n### At a Glance\\n- **Type**: tavern type\\n- **Atmosphere**: mood and feel\\n- **Owner**: name and one-line description\\n- **Signature Drink or Dish**: specific invented item\\n- **Hidden Problem**: the trouble simmering beneath the surface\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable Patrons\\n- **Name**: one-line description (2-3 patrons)\\n### Rumours\\n- short rumour (2-3 rumours as bullet points)\\n### Entity Seeds\\n- list of 3-4 Codex entity types that naturally emerge from this tavern (e.g. '**Location**: The cellar passage')",
+  "labels": ["2-4 lowercase tags, plus 'rpg-location', 'tavern-generator', 'imported-draft'"]
+}
+
+QUALITY RULES:
+- The owner must have a name, a distinguishing physical detail, and a secret or motive.
+- Each patron should feel like a distinct person with a reason to be there.
+- Rumours should be specific, not generic ('a merchant was poisoned last week' beats 'strange things have been happening').
+- Entity seeds should suggest concrete Codex entries a GM could create.
+- Place names and NPC names must be invented — avoid Oakhaven, Millbrook, Riverdale, and generic monosyllable English surnames.`;
+
+        const userMessage = `Generate a tavern. Variation seed: ${varianceSeed}.
+- Type: ${tavernType}
+- Atmosphere: ${atmosphere}
+- Settlement Type: ${settlementType}
+- Wealth Level: ${wealthLevel}
+- Primary Clientele: ${clientele}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Naming Directive: ${namingStyles[Math.floor(Math.random() * namingStyles.length)]}`;
+
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        const cleanText = text
+          .replace(/^```json\s*/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const data = JSON.parse(cleanText);
+
+        return {
+          type: "location",
+          title: data.title || "The Unnamed Tavern",
+          summary: data.summary || "",
+          content: data.content || "",
+          lore: data.lore || "",
+          labels: Array.isArray(data.labels)
+            ? data.labels
+            : ["rpg-location", "tavern-generator", "imported-draft"],
+          status: "active",
+        };
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+
+    // Local fallback
+    const trouble =
+      tavernConfig.troubles[
+        Math.floor(Math.random() * tavernConfig.troubles.length)
+      ];
+    const ownerName = this.generateName();
+    const patron1 = this.generateName();
+    const patron2 = this.generateName();
+    const tavernName = `The ${this.generateName()} ${["Arms", "Rest", "Tap", "Lodge", "House"][Math.floor(Math.random() * 5)]}`;
+
+    const summary = `A ${atmosphere.toLowerCase()} ${tavernType.toLowerCase()} serving ${clientele.toLowerCase()} in a ${settlementType.toLowerCase()}.`;
+
+    const content = `### The Place
+${tavernName} is a ${tavernType.toLowerCase()} in a ${settlementType.toLowerCase()}, catering to ${clientele.toLowerCase()}. The atmosphere is ${atmosphere.toLowerCase()}, and the wealth level is ${wealthLevel.toLowerCase()}.${campaignContext ? ` In ${campaignContext}, it sits at the edge of the main conflict.` : ""}
+
+### The People
+The owner, ${ownerName}, runs a tight establishment. Regular patrons include ${patron1}, a well-known local face, and ${patron2}, who rarely speaks about where they sleep.
+
+### The Trouble
+${trouble}. The owner is aware of enough to be nervous, but not enough to act.
+
+### How to use it at the table
+Use ${tavernName} as a home base, a rumour hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`;
+
+    const lore = `### At a Glance
+- **Type**: ${tavernType}
+- **Atmosphere**: ${atmosphere}
+- **Owner**: ${ownerName} — competent, guarded, and owed favours by the wrong people
+- **Signature Drink**: House ale brewed in the cellar, served warm
+- **Hidden Problem**: ${trouble}
+- **Immediate Hook**: A regular patron has not shown up for three days — their usual table is still reserved
+
+### Notable Patrons
+- **${patron1}**: A reliable local who knows more than they let on
+- **${patron2}**: A recent arrival who pays in coin that smells of somewhere far away
+
+### Rumours
+- Someone was seen leaving through the back door well after midnight
+- The cellar was recently bricked up — the owner says rats, locals say otherwise
+- A faction has been asking after a specific traveller who may have stayed here recently
+
+### Entity Seeds
+- **Location**: ${tavernName} (this tavern)
+- **Character**: ${ownerName} (owner)
+- **Character**: ${patron1} (regular patron)
+- **Faction**: Whoever is behind the hidden trouble`;
+
+    return {
+      type: "location",
+      title: tavernName,
+      summary,
+      content,
+      lore,
+      labels: ["rpg-location", "tavern-generator", "imported-draft"],
       status: "active",
     };
   }

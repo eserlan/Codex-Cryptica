@@ -11,6 +11,7 @@
     magicItemConfig,
     factionConfig,
     questConfig,
+    tavernConfig,
     themeIdToLabel,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
@@ -85,6 +86,17 @@
         "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
       canonicalPath: "/generators/item",
     },
+    tavern: {
+      pageTitle:
+        "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
+      metaDescription:
+        "Generate a detailed RPG tavern or inn with owner, patrons, rumours, trouble, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "Tavern Generator",
+      eyebrow: "Tavern Generator",
+      introText:
+        "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/tavern",
+    },
   } as const;
 
   const meta = $derived(slugMeta[data.slug]);
@@ -127,6 +139,15 @@
     campaignContext: "",
   });
 
+  let tavern = $state({
+    type: tavernConfig.types[0],
+    atmosphere: tavernConfig.atmospheres[0],
+    settlementType: tavernConfig.settlementTypes[1],
+    wealthLevel: tavernConfig.wealthLevels[2],
+    clientele: tavernConfig.clienteles[4],
+    campaignContext: "",
+  });
+
   // Unified theme binding target — synced to the active generator's state
   let activeTheme = $state(factionConfig.themes[0]);
 
@@ -153,6 +174,8 @@
       return generatorEngine.generateFaction({ ...faction, useAI });
     } else if (data.slug === "quest") {
       return generatorEngine.generateQuestHook({ ...quest, useAI });
+    } else if (data.slug === "tavern") {
+      return generatorEngine.generateTavern({ ...tavern, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -198,6 +221,17 @@
         "### Operations\nThey maintain a private army to secure their investments and lobby local lords.\n\n### Secret agenda\nThey seek to overthrow the local duke to install a puppet senate.",
       lore: "",
       labels: ["rpg-faction", "Guild", "Mercantile"],
+      status: "draft",
+    },
+    tavern: {
+      type: "location",
+      title: "The Copper Boar",
+      summary:
+        "A rowdy crossroads tavern where travellers and locals share rumours and old grudges.",
+      content:
+        "### The Place\nA low-ceilinged roadside inn with smoke-stained rafters and a fire that runs all year. The house ale is cheap and reliable.\n\n### The Trouble\nThe owner owes a debt to someone who has just arrived in town.",
+      lore: "",
+      labels: ["rpg-location", "tavern-generator", "imported-draft"],
       status: "draft",
     },
   };
@@ -304,6 +338,91 @@
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
       />
+    {:else if data.slug === "tavern"}
+      <div class="flex flex-col gap-1.5">
+        <label for="tavern-type-select" class={labelClass}>Tavern Type</label>
+        <select
+          id="tavern-type-select"
+          bind:value={tavern.type}
+          class={selectClass}
+        >
+          {#each tavernConfig.types as t (t)}
+            <option value={t}>{t}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="tavern-atmosphere-select" class={labelClass}
+          >Atmosphere</label
+        >
+        <select
+          id="tavern-atmosphere-select"
+          bind:value={tavern.atmosphere}
+          class={selectClass}
+        >
+          {#each tavernConfig.atmospheres as a (a)}
+            <option value={a}>{a}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="tavern-settlement-select" class={labelClass}
+          >Settlement Type</label
+        >
+        <select
+          id="tavern-settlement-select"
+          bind:value={tavern.settlementType}
+          class={selectClass}
+        >
+          {#each tavernConfig.settlementTypes as s (s)}
+            <option value={s}>{s}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="tavern-wealth-select" class={labelClass}>Wealth Level</label
+        >
+        <select
+          id="tavern-wealth-select"
+          bind:value={tavern.wealthLevel}
+          class={selectClass}
+        >
+          {#each tavernConfig.wealthLevels as w (w)}
+            <option value={w}>{w}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="tavern-clientele-select" class={labelClass}
+          >Primary Clientele</label
+        >
+        <select
+          id="tavern-clientele-select"
+          bind:value={tavern.clientele}
+          class={selectClass}
+        >
+          {#each tavernConfig.clienteles as c (c)}
+            <option value={c}>{c}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="tavern-context" class={labelClass}
+          >Campaign Context (optional)</label
+        >
+        <textarea
+          id="tavern-context"
+          bind:value={tavern.campaignContext}
+          placeholder="e.g. port city under siege, near the haunted forest…"
+          rows="2"
+          class="{selectClass} resize-none"
+        ></textarea>
+      </div>
     {/if}
   {/snippet}
 </SEOGeneratorLayout>

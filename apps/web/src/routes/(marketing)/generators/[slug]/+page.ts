@@ -10,6 +10,7 @@ const validSlugs = new Set([
   "faction",
   "quest",
   "item",
+  "tavern",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -23,7 +24,8 @@ export const load: PageLoad = ({ params }) => {
       | "magic-item"
       | "faction"
       | "quest"
-      | "item",
+      | "item"
+      | "tavern",
   };
 };
 
@@ -35,5 +37,6 @@ export const entries: EntryGenerator = () => {
     { slug: "faction" },
     { slug: "quest" },
     { slug: "item" },
+    { slug: "tavern" },
   ];
 };
