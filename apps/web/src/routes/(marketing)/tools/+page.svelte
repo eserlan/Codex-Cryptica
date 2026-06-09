@@ -105,8 +105,15 @@
               href: "/generators/tavern",
               label: "Tavern Generator",
               summary:
-                "Generate a tavern or inn with owner, patrons, rumours, hidden trouble, and adventure hooks.",
+                "Generate a fantasy tavern or inn with owner, patrons, rumours, hidden trouble, and adventure hooks.",
               icon: "icon-[lucide--beer]",
+            },
+            {
+              href: "/generators/social-hub",
+              label: "Social Hub Generator",
+              summary:
+                "Generate a social gathering venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
+              icon: "icon-[lucide--map-pin]",
             },
           ],
         },

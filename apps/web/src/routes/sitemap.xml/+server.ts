@@ -92,6 +92,7 @@ export async function GET() {
     "magic-item",
     "faction",
     "tavern",
+    "social-hub",
   ].map((slug) => ({
     path: `/generators/${slug}`,
     changefreq: "monthly",

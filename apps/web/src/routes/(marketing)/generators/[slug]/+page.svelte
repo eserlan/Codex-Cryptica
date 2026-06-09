@@ -5,6 +5,7 @@
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
+  import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import {
     generatorEngine,
     npcThemeConfig,
@@ -12,7 +13,7 @@
     magicItemConfig,
     factionConfig,
     questConfig,
-    tavernConfig,
+    socialHubConfig,
     themeIdToLabel,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
@@ -87,6 +88,17 @@
         "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
       canonicalPath: "/generators/item",
     },
+    "social-hub": {
+      pageTitle:
+        "Social Hub Generator | RPG Venue Generator for Any Genre | Codex Cryptica",
+      metaDescription:
+        "Generate a genre-agnostic social gathering location — from cyberpunk noodle bars to western saloons to fantasy inns. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "Social Hub Generator",
+      eyebrow: "Social Hub Generator",
+      introText:
+        "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
+      canonicalPath: "/generators/social-hub",
+    },
     tavern: {
       pageTitle:
         "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
@@ -141,13 +153,34 @@
   });
 
   let tavern = $state({
-    type: tavernConfig.types[0],
-    atmosphere: tavernConfig.atmospheres[0],
-    settlementType: tavernConfig.settlementTypes[1],
-    wealthLevel: tavernConfig.wealthLevels[2],
-    clientele: tavernConfig.clienteles[4],
+    type: socialHubConfig.venueTypesByGenre["Fantasy"][0],
+    atmosphere: socialHubConfig.atmospheres[0],
+    settlementType: socialHubConfig.settlementTypes[1],
+    wealthLevel: socialHubConfig.wealthLevels[2],
+    clientele: socialHubConfig.clientelesByGenre["Fantasy"][4],
     campaignContext: "",
   });
+
+  let socialHub = $state({
+    genre: socialHubConfig.genres[0],
+    venueType: socialHubConfig.venueTypesByGenre[socialHubConfig.genres[0]][0],
+    atmosphere: socialHubConfig.atmospheres[0],
+    wealthLevel: socialHubConfig.wealthLevels[2],
+    clientele: socialHubConfig.clientelesByGenre[socialHubConfig.genres[0]][0],
+    campaignContext: "",
+  });
+
+  const socialHubGenreToTheme: Record<string, string> = {
+    Fantasy: "Classic Fantasy",
+    "Dark Fantasy": "Vampire / Gothic Noir",
+    Pirate: "Classic Fantasy",
+    Cyberpunk: "Cyberpunk / Corporate",
+    "Sci-Fi": "Sci-Fi / Space Opera",
+    Modern: "Modern Conspiracy",
+    Horror: "Vampire / Gothic Noir",
+    "Post-Apocalyptic": "Post-Apocalyptic",
+    Western: "Modern Conspiracy",
+  };
 
   // Unified theme binding target — synced to the active generator's state
   let activeTheme = $state(factionConfig.themes[0]);
@@ -155,6 +188,8 @@
   $effect(() => {
     if (data.slug === "npc") npc.theme = activeTheme;
     else if (data.slug === "faction") faction.theme = activeTheme;
+    else if (data.slug === "social-hub")
+      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
   });
 
   onMount(() => {
@@ -177,6 +212,8 @@
       return generatorEngine.generateQuestHook({ ...quest, useAI });
     } else if (data.slug === "tavern") {
       return generatorEngine.generateTavern({ ...tavern, useAI });
+    } else if (data.slug === "social-hub") {
+      return generatorEngine.generateSocialHub({ ...socialHub, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -224,6 +261,17 @@
       labels: ["rpg-faction", "Guild", "Mercantile"],
       status: "draft",
     },
+    "social-hub": {
+      type: "location",
+      title: "Reyes' Noodle Hole",
+      summary:
+        "A cramped cyberpunk noodle bar where fixers and off-duty security share bad ramen and worse secrets.",
+      content:
+        "### The Place\nA steam-filled counter joint wedged under a transit overpass. Neon flickers, the broth is good, the owner asks nothing.\n\n### The Trouble\nThe owner is sitting on surveillance footage that would get someone very powerful arrested.",
+      lore: "",
+      labels: ["rpg-location", "social-hub-generator", "imported-draft"],
+      status: "draft",
+    },
     tavern: {
       type: "location",
       title: "The Copper Boar",
@@ -253,7 +301,9 @@
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
   bind:theme={activeTheme}
-  isThemeCustomizable={data.slug === "faction" || data.slug === "npc"}
+  isThemeCustomizable={data.slug === "faction" ||
+    data.slug === "npc" ||
+    data.slug === "social-hub"}
   {generate}
   {initialDraft}
 >
@@ -338,6 +388,16 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+      />
+    {:else if data.slug === "social-hub"}
+      <SocialHubFormFields
+        bind:genre={socialHub.genre}
+        bind:venueType={socialHub.venueType}
+        bind:atmosphere={socialHub.atmosphere}
+        bind:wealthLevel={socialHub.wealthLevel}
+        bind:clientele={socialHub.clientele}
+        bind:campaignContext={socialHub.campaignContext}
+        onSurprise={trigger}
       />
     {:else if data.slug === "tavern"}
       <TavernFormFields
