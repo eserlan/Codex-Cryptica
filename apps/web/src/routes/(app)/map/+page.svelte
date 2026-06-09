@@ -4,7 +4,6 @@
   import MapView from "$lib/components/map/MapView.svelte";
   import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
   import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
-  import ShareModal from "$lib/components/ShareModal.svelte";
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
   import MapVTTSidebar from "$lib/components/vtt/MapVTTSidebar.svelte";
   import {
@@ -57,7 +56,7 @@
           onEntityDragStart={(event, entityId) =>
             controller.handleEntityDragStart(event, entityId)}
           onEntityDragEnd={() => controller.handleEntityDragEnd()}
-          onShare={() => (controller.showVttShare = true)}
+          onShare={() => controller.openShareModal()}
         />
       {/if}
 
@@ -68,9 +67,6 @@
       <MapVTTControlsHUD chatSidebarOffset={controller.chatSidebarOffset} />
       <TokenAddDialog />
     </MapView>
-    {#if controller.showVttShare}
-      <ShareModal close={() => (controller.showVttShare = false)} />
-    {/if}
 
     <VTTGridColorMenu />
   {:else if sessionModeStore.isGuestMode}
