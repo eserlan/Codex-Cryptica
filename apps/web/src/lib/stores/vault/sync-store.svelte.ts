@@ -272,14 +272,16 @@ export class SyncStore {
                 }
               },
               () => this.checkForConflicts(),
-              signal,
-              (stats: any) => {
-                if (
-                  this.deps.activeVaultId() === vaultIdAtStart &&
-                  !signal.aborted
-                ) {
-                  this.syncStats = { ...this.syncStats, ...stats };
-                }
+              {
+                signal,
+                onProgress: (stats: any) => {
+                  if (
+                    this.deps.activeVaultId() === vaultIdAtStart &&
+                    !signal.aborted
+                  ) {
+                    this.syncStats = { ...this.syncStats, ...stats };
+                  }
+                },
               },
             );
             if (signal.aborted) return;
@@ -402,8 +404,6 @@ export class SyncStore {
           }
         },
         () => this.checkForConflicts(),
-        undefined,
-        undefined,
         { interactive: true },
       );
 
@@ -482,8 +482,6 @@ export class SyncStore {
           }
         },
         () => this.checkForConflicts(),
-        undefined,
-        undefined,
         { interactive: true },
       );
 

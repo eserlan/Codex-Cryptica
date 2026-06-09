@@ -111,8 +111,6 @@ describe("SyncCoordinator", () => {
         vi.fn(),
         vi.fn(),
         vi.fn(),
-        undefined,
-        undefined,
         { interactive: true },
       );
 
@@ -137,8 +135,6 @@ describe("SyncCoordinator", () => {
         vi.fn(),
         vi.fn(),
         vi.fn(),
-        undefined,
-        undefined,
         { interactive: true },
       );
 

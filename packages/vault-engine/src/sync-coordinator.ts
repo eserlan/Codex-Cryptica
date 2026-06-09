@@ -216,9 +216,11 @@ export class SyncCoordinator {
       failedFiles?: { path: string; error: string }[];
     }) => void,
     checkForConflicts: () => Promise<void>,
-    signal?: AbortSignal,
-    onProgress?: (stats: any) => void,
-    options?: { interactive?: boolean },
+    options?: {
+      signal?: AbortSignal;
+      onProgress?: (stats: any) => void;
+      interactive?: boolean;
+    },
   ) {
     return this.syncWithLocalFolder(
       activeVaultId,
@@ -228,8 +230,6 @@ export class SyncCoordinator {
       waitForSaves,
       onStateChange,
       checkForConflicts,
-      signal,
-      onProgress,
       options,
     );
   }
@@ -246,9 +246,11 @@ export class SyncCoordinator {
       failedFiles?: { path: string; error: string }[];
     }) => void,
     checkForConflicts: () => Promise<void>,
-    signal?: AbortSignal,
-    onProgress?: (stats: any) => void,
-    options?: { interactive?: boolean },
+    options?: {
+      signal?: AbortSignal;
+      onProgress?: (stats: any) => void;
+      interactive?: boolean;
+    },
   ) {
     return this.syncWithLocalFolder(
       activeVaultId,
@@ -258,8 +260,6 @@ export class SyncCoordinator {
       waitForSaves,
       onStateChange,
       checkForConflicts,
-      signal,
-      onProgress,
       options,
     );
   }
@@ -277,10 +277,13 @@ export class SyncCoordinator {
       failedFiles?: { path: string; error: string }[];
     }) => void,
     checkForConflicts: () => Promise<void>,
-    signal?: AbortSignal,
-    onProgress?: (stats: any) => void,
-    options?: { interactive?: boolean },
+    options?: {
+      signal?: AbortSignal;
+      onProgress?: (stats: any) => void;
+      interactive?: boolean;
+    },
   ) {
+    const { signal, onProgress, interactive } = options ?? {};
     if (!opfsHandle) return;
     if (signal?.aborted) return;
 
@@ -322,7 +325,7 @@ export class SyncCoordinator {
       // Browsers only allow the directory picker inside a user gesture, so a
       // background sync must not attempt to prompt — it would throw a raw
       // SecurityError. Surface an actionable message instead.
-      if (!options?.interactive) {
+      if (!interactive) {
         onStateChange({
           status: "error",
           syncType: null,
