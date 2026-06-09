@@ -570,4 +570,177 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("tavern-generator");
     });
   });
+
+  describe("generateKingdom", () => {
+    it("should generate a kingdom using local fallback when useAI is false", async () => {
+      const res = await engine.generateKingdom({
+        polityType: "Kingdom",
+        governmentStyle: "Hereditary dynasty",
+        geography: "Temperate highlands",
+        scale: "Mid-sized nation",
+        conflictLevel: "Simmering tensions",
+        magicLevel: "Common but regulated",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      expect(res.title).not.toMatch(/The .* The /);
+      expect(res.summary).toContain("kingdom");
+      expect(res.content).toContain("### The Realm");
+      expect(res.content).toContain("### Government & Power");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Major Factions");
+      expect(res.lore).toContain("### Rumours & Hooks");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("kingdom-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateKingdom({
+        polityType: "Empire",
+        campaignContext: "a crumbling empire on the edge of civil war",
+        useAI: false,
+      });
+
+      expect(res.content).toContain(
+        "a crumbling empire on the edge of civil war",
+      );
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Kingdom of Vaelthorn",
+                summary: "A mid-sized kingdom held together by old oaths.",
+                content: "### The Realm\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateKingdom({
+        polityType: "Kingdom",
+        campaignContext: "a succession crisis",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a succession crisis"),
+      );
+      expect(res.title).toBe("The Kingdom of Vaelthorn");
+      expect(res.labels).toContain("kingdom-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateKingdom({
+        polityType: "Duchy",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.labels).toContain("kingdom-generator");
+    });
+  });
+
+  describe("generateNation", () => {
+    it("should generate a nation using local fallback when useAI is false", async () => {
+      const res = await engine.generateNation({
+        genre: "Cyberpunk",
+        polityType: "Megacorp-State",
+        governmentStyle: "Corporate board",
+        scale: "Mid-sized nation",
+        conflictLevel: "Simmering tensions",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      expect(res.summary).toContain("megacorp-state");
+      expect(res.content).toContain("### The State");
+      expect(res.content).toContain("### Power Structure");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Power Blocs");
+      expect(res.lore).toContain("### Rumours & Hooks");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("nation-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateNation({
+        genre: "Sci-Fi",
+        polityType: "Interstellar Federation",
+        campaignContext: "a collapsing interstellar federation",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("a collapsing interstellar federation");
+    });
+
+    it("should use genre-appropriate polity types", async () => {
+      const res = await engine.generateNation({
+        genre: "Western",
+        polityType: "Outlaw Republic",
+        useAI: false,
+      });
+
+      expect(res.summary).toContain("outlaw republic");
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Axiom Industrial Authority",
+                summary:
+                  "A cyberpunk megacorp-state controlling three districts.",
+                content: "### The State\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: ["rpg-nation", "nation-generator", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateNation({
+        genre: "Cyberpunk",
+        polityType: "Megacorp-State",
+        campaignContext: "a corp war over water rights",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a corp war over water rights"),
+      );
+      expect(res.title).toBe("Axiom Industrial Authority");
+      expect(res.labels).toContain("nation-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateNation({
+        genre: "Fantasy",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.labels).toContain("nation-generator");
+    });
+  });
 });

@@ -6,6 +6,8 @@
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
+  import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
+  import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
   import {
     generatorEngine,
     npcThemeConfig,
@@ -14,6 +16,8 @@
     factionConfig,
     questConfig,
     socialHubConfig,
+    kingdomConfig,
+    nationConfig,
     themeIdToLabel,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
@@ -99,6 +103,28 @@
         "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
       canonicalPath: "/generators/social-hub",
     },
+    kingdom: {
+      pageTitle:
+        "Kingdom Generator | Free Fantasy Realm & Empire Creator | Codex Cryptica",
+      metaDescription:
+        "Generate a detailed fantasy kingdom or empire with ruler, factions, geography, conflict, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "Kingdom Generator",
+      eyebrow: "Kingdom Generator",
+      introText:
+        "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/kingdom",
+    },
+    nation: {
+      pageTitle:
+        "Nation Generator | RPG Political Entity Creator for Any Genre | Codex Cryptica",
+      metaDescription:
+        "Generate a political entity for any RPG genre — fantasy kingdoms, cyberpunk megacorp-states, sci-fi federations, post-apoc warlord territories. Works without login.",
+      introTitle: "Nation Generator",
+      eyebrow: "Nation Generator",
+      introText:
+        "Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.",
+      canonicalPath: "/generators/nation",
+    },
     tavern: {
       pageTitle:
         "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
@@ -161,6 +187,25 @@
     campaignContext: "",
   });
 
+  let kingdom = $state({
+    polityType: kingdomConfig.polityTypes[0],
+    governmentStyle: kingdomConfig.governmentStyles[0],
+    geography: kingdomConfig.geographies[0],
+    scale: kingdomConfig.scales[2],
+    conflictLevel: kingdomConfig.conflictLevels[0],
+    magicLevel: kingdomConfig.magicLevels[2],
+    campaignContext: "",
+  });
+
+  let nation = $state({
+    genre: nationConfig.genres[0],
+    polityType: nationConfig.polityTypesByGenre[nationConfig.genres[0]][0],
+    governmentStyle: nationConfig.governmentStyles[0],
+    scale: nationConfig.scales[2],
+    conflictLevel: nationConfig.conflictLevels[0],
+    campaignContext: "",
+  });
+
   let socialHub = $state({
     genre: socialHubConfig.genres[0],
     venueType: socialHubConfig.venueTypesByGenre[socialHubConfig.genres[0]][0],
@@ -190,6 +235,8 @@
     else if (data.slug === "faction") faction.theme = activeTheme;
     else if (data.slug === "social-hub")
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+    else if (data.slug === "nation")
+      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
   });
 
   onMount(() => {
@@ -212,6 +259,10 @@
       return generatorEngine.generateQuestHook({ ...quest, useAI });
     } else if (data.slug === "tavern") {
       return generatorEngine.generateTavern({ ...tavern, useAI });
+    } else if (data.slug === "kingdom") {
+      return generatorEngine.generateKingdom({ ...kingdom, useAI });
+    } else if (data.slug === "nation") {
+      return generatorEngine.generateNation({ ...nation, useAI });
     } else if (data.slug === "social-hub") {
       return generatorEngine.generateSocialHub({ ...socialHub, useAI });
     } else {
@@ -261,6 +312,28 @@
       labels: ["rpg-faction", "Guild", "Mercantile"],
       status: "draft",
     },
+    kingdom: {
+      type: "faction",
+      title: "The Kingdom of Vaelthorn",
+      summary:
+        "A mid-sized kingdom held together by old oaths and a ruler who is running out of allies.",
+      content:
+        "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses — three of which are quietly negotiating a change of leadership.",
+      lore: "",
+      labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
+      status: "draft",
+    },
+    nation: {
+      type: "faction",
+      title: "Axiom Industrial Authority",
+      summary:
+        "A cyberpunk megacorp-state that controls three districts and is aggressively expanding into a fourth.",
+      content:
+        "### The State\nAxiom controls food, water, and network access across its territory. Citizens are employees. Dissent is a performance review issue.\n\n### Power Structure\nCEO-Governor Reyes holds executive authority but the board is restless.",
+      lore: "",
+      labels: ["rpg-nation", "nation-generator", "imported-draft"],
+      status: "draft",
+    },
     "social-hub": {
       type: "location",
       title: "Reyes' Noodle Hole",
@@ -303,7 +376,8 @@
   bind:theme={activeTheme}
   isThemeCustomizable={data.slug === "faction" ||
     data.slug === "npc" ||
-    data.slug === "social-hub"}
+    data.slug === "social-hub" ||
+    data.slug === "nation"}
   {generate}
   {initialDraft}
 >
@@ -388,6 +462,27 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+      />
+    {:else if data.slug === "kingdom"}
+      <KingdomFormFields
+        bind:polityType={kingdom.polityType}
+        bind:governmentStyle={kingdom.governmentStyle}
+        bind:geography={kingdom.geography}
+        bind:scale={kingdom.scale}
+        bind:conflictLevel={kingdom.conflictLevel}
+        bind:magicLevel={kingdom.magicLevel}
+        bind:campaignContext={kingdom.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "nation"}
+      <NationFormFields
+        bind:genre={nation.genre}
+        bind:polityType={nation.polityType}
+        bind:governmentStyle={nation.governmentStyle}
+        bind:scale={nation.scale}
+        bind:conflictLevel={nation.conflictLevel}
+        bind:campaignContext={nation.campaignContext}
+        onSurprise={trigger}
       />
     {:else if data.slug === "social-hub"}
       <SocialHubFormFields
