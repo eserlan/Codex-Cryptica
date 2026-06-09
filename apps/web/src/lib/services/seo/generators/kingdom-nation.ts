@@ -463,8 +463,14 @@ QUALITY RULES:
   const leaderName = generateName();
   const bloc1 = `The ${generateName()} ${pickFrom(["Bloc", "Council", "Front", "Syndicate", "Coalition"])}`;
   const bloc2 = `The ${generateName()} ${pickFrom(["Faction", "Assembly", "Circle", "Committee", "Network"])}`;
-  const stateName = buildRealmName(polityType);
-  const capitalName = buildCapitalName();
+  const isFantasyGenre =
+    genre === "Fantasy" || genre === "Dark Fantasy" || genre === "Pirate";
+  const stateName = isFantasyGenre
+    ? buildRealmName(polityType)
+    : `${generateName().split(" ")[0]} ${polityType}`;
+  const capitalName = isFantasyGenre
+    ? buildCapitalName()
+    : generateName().split(" ")[0];
 
   const summary = `A ${conflictLevel.toLowerCase()} ${polityType.toLowerCase()} operating under ${governmentStyle.toLowerCase()}.`;
 

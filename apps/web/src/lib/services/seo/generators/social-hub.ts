@@ -22,7 +22,6 @@ const VENUE_ADJECTIVES = [
   "Leaning",
   "Weathered",
   "Splintered",
-  "Salted",
   "Cracked",
   "Smoked",
   "Bitter",
@@ -339,25 +338,14 @@ QUALITY RULES:
   const patron1 = generateName();
   const patron2 = generateName();
 
-  const suffixMap: Record<string, string[]> = {
-    Fantasy: ["Arms", "Rest", "Tap", "Lodge", "House"],
-    "Dark Fantasy": ["Hollow", "Den", "Haunt", "Cellar", "Pit"],
-    Pirate: ["Cove", "Hole", "Deck", "Anchor", "Port"],
+  const techSuffixes: Record<string, string[]> = {
     Cyberpunk: ["Node", "Den", "Hub", "Spot", "Joint"],
     "Sci-Fi": ["Bay", "Dock", "Zone", "Platform", "Hub"],
-    Modern: ["Bar", "Lounge", "Spot", "Place", "Corner"],
-    Horror: ["Den", "Hollow", "Parlour", "Chamber", "Haunt"],
-    "Post-Apocalyptic": ["Shack", "Hole", "Stop", "Den", "Post"],
-    Western: ["Saloon", "House", "Post", "Room", "Bar"],
   };
-  const suffixes = suffixMap[genre] ?? suffixMap["Fantasy"];
-  const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
-  const adj = pickFrom(VENUE_ADJECTIVES);
-  const noun = pickFrom(VENUE_NOUNS);
-  const venueName =
-    genre === "Cyberpunk" || genre === "Sci-Fi"
-      ? `${ownerName.split(" ")[0]}'s ${suffix}`
-      : `The ${adj} ${noun}`;
+  const isTechGenre = genre === "Cyberpunk" || genre === "Sci-Fi";
+  const venueName = isTechGenre
+    ? `${ownerName.split(" ")[0]}'s ${pickFrom(techSuffixes[genre])}`
+    : `The ${pickFrom(VENUE_ADJECTIVES)} ${pickFrom(VENUE_NOUNS)}`;
 
   const summary = `A ${atmosphere.toLowerCase()} ${venueType.toLowerCase()} serving ${clientele.toLowerCase()}.`;
 
