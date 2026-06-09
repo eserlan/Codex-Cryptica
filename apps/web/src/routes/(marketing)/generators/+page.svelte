@@ -1,0 +1,178 @@
+<script lang="ts">
+  import { base } from "$app/paths";
+
+  const generators = [
+    {
+      group: "Characters",
+      items: [
+        {
+          href: "/generators/npc",
+          label: "NPC Generator",
+          summary:
+            "Create NPCs across six genres with a secret, faction tie, and table-ready hook.",
+          icon: "icon-[lucide--user-round-plus]",
+        },
+      ],
+    },
+    {
+      group: "Factions & Organizations",
+      items: [
+        {
+          href: "/generators/faction",
+          label: "Faction Generator",
+          summary:
+            "Build guilds, megacorps, vampire clans, and rebel cells with agendas, conflicts, and NPCs.",
+          icon: "icon-[lucide--flag]",
+        },
+      ],
+    },
+    {
+      group: "Locations",
+      items: [
+        {
+          href: "/generators/settlement",
+          label: "Settlement Generator",
+          summary:
+            "Draft towns and villages with economy, government, notable locations, and factions.",
+          icon: "icon-[lucide--landmark]",
+        },
+        {
+          href: "/generators/tavern",
+          label: "Tavern Generator",
+          summary:
+            "Generate a fantasy tavern or inn with owner, patrons, rumours, and a hidden problem.",
+          icon: "icon-[lucide--beer]",
+        },
+        {
+          href: "/generators/social-hub",
+          label: "Social Hub Generator",
+          summary:
+            "Generate a social venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas.",
+          icon: "icon-[lucide--map-pin]",
+        },
+      ],
+    },
+    {
+      group: "Nations & Realms",
+      items: [
+        {
+          href: "/generators/kingdom",
+          label: "Kingdom Generator",
+          summary:
+            "Generate a fantasy kingdom with ruler, factions, geography, conflict level, and adventure hooks.",
+          icon: "icon-[lucide--crown]",
+        },
+        {
+          href: "/generators/nation",
+          label: "Nation Generator",
+          summary:
+            "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations.",
+          icon: "icon-[lucide--globe]",
+        },
+      ],
+    },
+    {
+      group: "Adventures",
+      items: [
+        {
+          href: "/generators/quest",
+          label: "Quest Hook Generator",
+          summary:
+            "Create a GM-ready adventure seed with a complication, key NPC, twist, and reward.",
+          icon: "icon-[lucide--scroll-text]",
+        },
+      ],
+    },
+    {
+      group: "Items & Names",
+      items: [
+        {
+          href: "/generators/magic-item",
+          label: "Magic Item Generator",
+          summary:
+            "Generate items with rarity, properties, history, and GM-facing lore.",
+          icon: "icon-[lucide--sparkles]",
+        },
+      ],
+    },
+  ];
+</script>
+
+<svelte:head>
+  <title
+    >RPG Generators | NPC, Faction, Kingdom, Tavern & More | Codex Cryptica</title
+  >
+  <meta
+    name="description"
+    content="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
+  />
+  <link rel="canonical" href="https://codexcryptica.com/generators" />
+</svelte:head>
+
+<main
+  class="min-h-screen bg-theme-bg text-theme-text font-body selection:bg-theme-primary selection:text-theme-bg"
+  style:background-image="var(--bg-texture-overlay)"
+>
+  <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
+    <div class="max-w-6xl mx-auto">
+      <a
+        href="{base}/?ref=generators"
+        class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
+      >
+        <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
+        Codex Cryptica
+      </a>
+      <div class="max-w-3xl">
+        <p
+          class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
+        >
+          Generator Hub
+        </p>
+        <h1
+          class="font-header text-4xl md:text-5xl font-extrabold tracking-wide uppercase mb-5"
+        >
+          RPG Generators
+        </h1>
+        <p class="text-base md:text-lg text-theme-muted leading-relaxed">
+          Free, table-ready generators for tabletop GMs. No login required —
+          generate a draft, copy it, or save it into your local Codex Cryptica
+          campaign vault.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-12">
+    {#each generators as section (section.group)}
+      <section aria-labelledby={`${section.group}-heading`}>
+        <h2
+          id={`${section.group}-heading`}
+          class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+        >
+          {section.group}
+        </h2>
+        <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {#each section.items as gen (gen.href)}
+            <li>
+              <a
+                href="{base}{gen.href}"
+                class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
+              >
+                <span class="{gen.icon} h-5 w-5 text-theme-primary mb-4 block"
+                ></span>
+                <span
+                  class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+                >
+                  {gen.label}
+                </span>
+                <span class="block text-sm text-theme-muted leading-relaxed">
+                  {gen.summary}
+                </span>
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </section>
+    {/each}
+  </div>
+</main>
