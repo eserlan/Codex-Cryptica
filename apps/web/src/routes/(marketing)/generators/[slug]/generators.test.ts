@@ -27,6 +27,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "faction" },
         { slug: "quest" },
         { slug: "item" },
+        { slug: "tavern" },
       ]);
     });
   });
