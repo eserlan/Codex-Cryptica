@@ -84,6 +84,11 @@
     maxlength="240"
     rows="3"
     placeholder="e.g. &quot;Assyrian&quot;, &quot;a reclusive mage&quot;, &quot;harsh and guttural&quot;"
+    aria-describedby="name-context-help"
     class="w-full min-h-20 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
   ></textarea>
+  <p id="name-context-help" class="sr-only">
+    Steer the results with a description, a real-world linguistic flavour such
+    as Assyrian or Old Norse, or a vibe such as harsh and guttural.
+  </p>
 </div>

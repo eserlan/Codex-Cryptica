@@ -303,25 +303,25 @@
   let sessionDrafts = $state<SessionDraft[]>([]);
 
   onMount(() => {
-    if (typeof sessionStorage !== "undefined") {
+    try {
       const stored = sessionStorage.getItem(SESSION_DRAFTS_KEY);
       if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            sessionDrafts = parsed;
-          }
-        } catch {
-          // ignore
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          sessionDrafts = parsed;
         }
       }
+    } catch {
+      // sessionStorage may be blocked (privacy mode) or hold invalid JSON
     }
   });
 
   function saveSessionDrafts(newDrafts: SessionDraft[]) {
     sessionDrafts = newDrafts;
-    if (typeof sessionStorage !== "undefined") {
+    try {
       sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(newDrafts));
+    } catch {
+      // sessionStorage may be blocked; hub still works in-memory for this page
     }
   }
 
