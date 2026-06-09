@@ -2,12 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Help Onboarding Walkthrough", () => {
   test.beforeEach(async ({ page }) => {
-    // Ensure clean state and force onboarding
-    await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = false;
-      (window as any).__E2E__ = true;
-    });
-
+    // This suite intentionally exercises the real onboarding tour, so it does
+    // NOT seed onboarding-complete state. It clears storage and force-starts the
+    // tour below.
     await page.goto("/");
     // Clear localStorage after initial load to reset state, but don't put it in initScript
     // so it doesn't clear on subsequent reloads within the same test.

@@ -175,4 +175,85 @@ describe("Imports SvelteKit Route", () => {
       expect(importsConfig["world-anvil-export"].aiTrustSection).toBe(true);
     });
   });
+
+  describe("Related Pages section", () => {
+    afterEach(() => {
+      document.head.innerHTML = "";
+    });
+
+    it("renders related links when relatedLinks is provided", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+        relatedLinks: [
+          { href: "/vs/obsidian", label: "Codex vs Obsidian" },
+          {
+            href: "/solutions/local-first-worldbuilding-tool",
+            label: "Local-first worldbuilding",
+          },
+        ],
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      expect(screen.getByText("Related Pages")).toBeTruthy();
+      const link = screen.getByRole("link", { name: /codex vs obsidian/i });
+      expect(link.getAttribute("href")).toBe("/vs/obsidian");
+    });
+
+    it("does not render the related pages section when relatedLinks is absent", () => {
+      const mockPageData = {
+        slug: "obsidian-vault",
+        competitorName: "Obsidian",
+        title: "T",
+        description: "D",
+        h1: "H",
+        subheading: "S",
+        introText: "I",
+        ctaText: "C",
+        keywords: [],
+        features: [],
+        faq: [],
+      };
+
+      render(Page, { props: { data: { importPage: mockPageData } } });
+
+      expect(screen.queryByText("Related Pages")).toBeNull();
+    });
+
+    it("import configs have relatedLinks pointing to their vs counterpart", async () => {
+      const { importsConfig } = (await vi.importActual(
+        "$lib/config/seo-pages",
+      )) as typeof import("$lib/config/seo-pages");
+      expect(
+        importsConfig["obsidian-vault"].relatedLinks?.some(
+          (l) => l.href === "/vs/obsidian",
+        ),
+      ).toBe(true);
+      expect(
+        importsConfig["world-anvil-export"].relatedLinks?.some(
+          (l) => l.href === "/vs/world-anvil",
+        ),
+      ).toBe(true);
+      expect(
+        importsConfig["kanka-json"].relatedLinks?.some(
+          (l) => l.href === "/vs/kanka-alternative",
+        ),
+      ).toBe(true);
+      expect(
+        importsConfig["legendkeeper-json"].relatedLinks?.some(
+          (l) => l.href === "/vs/legendkeeper",
+        ),
+      ).toBe(true);
+    });
+  });
 });

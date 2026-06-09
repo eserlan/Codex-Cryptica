@@ -11,7 +11,6 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
-  import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
@@ -246,8 +245,6 @@
   {/if}
 
   <CanvasHint />
-  <CanvasSelectionModal />
-
   <EdgeLabelModal
     bind:isOpen={logic.labelModal.isOpen}
     initialValue={logic.labelModal.currentLabel}

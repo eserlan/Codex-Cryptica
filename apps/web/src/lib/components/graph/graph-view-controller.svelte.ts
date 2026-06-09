@@ -110,7 +110,7 @@ export class GraphViewController {
       instance.on("select unselect", "node", updateSelectionCount);
       updateSelectionCount();
 
-      if (import.meta.env.DEV || (window as any).__E2E__) {
+      if (import.meta.env.DEV) {
         (window as any).cy = instance;
       }
 

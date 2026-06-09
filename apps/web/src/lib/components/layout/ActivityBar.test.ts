@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ActivityBar from "./ActivityBar.svelte";
@@ -42,5 +42,13 @@ describe("ActivityBar", () => {
     expect(screen.getByTestId("activity-bar-oracle")).toBeDefined();
     expect(screen.getByTestId("activity-bar-explorer")).toBeDefined();
     expect(screen.getByTestId("activity-bar-quicknote")).toBeDefined();
+  });
+
+  it("opens the Oracle sidebar when the Oracle shortcut is clicked", async () => {
+    render(ActivityBar);
+
+    await fireEvent.click(screen.getByTestId("activity-bar-oracle"));
+
+    expect(layoutUIStore.toggleSidebarTool).toHaveBeenCalledWith("oracle");
   });
 });

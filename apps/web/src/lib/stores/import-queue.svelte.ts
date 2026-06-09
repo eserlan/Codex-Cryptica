@@ -72,9 +72,6 @@ class ImportQueueStore {
 
 export const importQueue = new ImportQueueStore();
 
-if (
-  typeof window !== "undefined" &&
-  (import.meta.env.DEV || (window as any).__E2E__)
-) {
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   (window as any).importQueue = importQueue;
 }

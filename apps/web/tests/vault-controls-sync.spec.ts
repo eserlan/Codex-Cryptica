@@ -3,7 +3,13 @@ import { test, expect } from "@playwright/test";
 test.describe("Vault Controls Sync Button", () => {
   test.beforeEach(async ({ page }) => {
     // Basic setup to ensure we're on a page with VaultControls
-    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+    });
 
     // Start a demo to ensure we have a populated vault and VaultControls are visible
     // Using URL param is more reliable than evaluating window.demoService

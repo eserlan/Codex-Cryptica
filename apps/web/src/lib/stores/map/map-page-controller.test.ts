@@ -18,6 +18,10 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   notificationStore: {},
 }));
 
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: {},
+}));
+
 vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: {},
 }));
@@ -108,6 +112,9 @@ function createController(overrides: Record<string, unknown> = {}) {
   const notificationStore = {
     notify: vi.fn(),
   };
+  const modalUIStore = {
+    openShare: vi.fn(),
+  };
   const sessionModeStore = {
     isGuestMode: false,
   };
@@ -122,6 +129,7 @@ function createController(overrides: Record<string, unknown> = {}) {
     mapStore,
     mapSession,
     vault,
+    modalUIStore,
     notificationStore,
     sessionModeStore,
     layoutUIStore,
@@ -133,6 +141,7 @@ function createController(overrides: Record<string, unknown> = {}) {
     mapStore,
     mapSession,
     vault,
+    modalUIStore,
     notificationStore,
     sessionModeStore,
     layoutUIStore,
@@ -260,5 +269,13 @@ describe("MapPageController", () => {
     expect(controller.showUpload).toBe(false);
     expect(controller.mapName).toBe("");
     expect(controller.files).toBeNull();
+  });
+
+  it("routes map share actions through the global modal store", () => {
+    const { controller, modalUIStore } = createController();
+
+    controller.openShareModal();
+
+    expect(modalUIStore.openShare).toHaveBeenCalledTimes(1);
   });
 });

@@ -4,13 +4,11 @@ test.describe("Minimap Navigation", () => {
   test.beforeEach(async ({ page }) => {
     // 1. Mock initialization to ensure a consistent graph state
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       const applyMocks = () => {
         if ((window as any).vault) {
           (window as any).vault.isAuthorized = true;

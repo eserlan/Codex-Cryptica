@@ -392,4 +392,355 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
   });
+
+  describe("generateSocialHub", () => {
+    it("should generate a venue using local fallback when useAI is false", async () => {
+      const res = await engine.generateSocialHub({
+        genre: "Cyberpunk",
+        venueType: "Noodle Bar",
+        atmosphere: "Tense and suspicious",
+        wealthLevel: "Poor (cheap but honest)",
+        clientele: "Hackers and netrunners",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.title).toBeDefined();
+      expect(res.title).not.toMatch(/The .* The /);
+      expect(res.summary).toContain("noodle bar");
+      expect(res.content).toContain("### The Place");
+      expect(res.content).toContain("### The Trouble");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Notable Regulars");
+      expect(res.lore).toContain("### Rumours");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("social-hub-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateSocialHub({
+        genre: "Western",
+        venueType: "Saloon",
+        campaignContext: "a lawless frontier town",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("a lawless frontier town");
+    });
+
+    it("should use genre-appropriate venue types in local fallback", async () => {
+      const res = await engine.generateSocialHub({
+        genre: "Sci-Fi",
+        venueType: "Spaceport Cantina",
+        useAI: false,
+      });
+
+      expect(res.summary).toContain("spaceport cantina");
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Reyes' Noodle Hole",
+                summary: "A cramped cyberpunk noodle bar.",
+                content: "### The Place\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: [
+                  "rpg-location",
+                  "social-hub-generator",
+                  "imported-draft",
+                ],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateSocialHub({
+        genre: "Cyberpunk",
+        venueType: "Noodle Bar",
+        campaignContext: "a corp-controlled district",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a corp-controlled district"),
+      );
+      expect(res.title).toBe("Reyes' Noodle Hole");
+      expect(res.labels).toContain("social-hub-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateSocialHub({
+        genre: "Fantasy",
+        venueType: "Tavern / Inn",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.labels).toContain("social-hub-generator");
+    });
+  });
+
+  describe("generateTavern", () => {
+    it("should generate tavern details using local fallback when useAI is false", async () => {
+      const res = await engine.generateTavern({
+        type: "Dockside Tavern",
+        atmosphere: "Tense and suspicious",
+        settlementType: "Coastal port",
+        wealthLevel: "Poor (cheap but honest)",
+        clientele: "Dockworkers and sailors",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.title).toBeDefined();
+      expect(res.title).toMatch(/^The /);
+      expect(res.title).not.toMatch(/The .* The /);
+      expect(res.summary).toContain("dockside tavern");
+      expect(res.content).toContain("### The Place");
+      expect(res.content).toContain("### The Trouble");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Notable Patrons");
+      expect(res.lore).toContain("### Rumours");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("tavern-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateTavern({
+        type: "Roadside Inn",
+        campaignContext: "a cursed forest road",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("a cursed forest road");
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Sullen Lantern",
+                summary: "A grim dockside alehouse.",
+                content: "### The Place\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: ["rpg-location", "tavern-generator", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateTavern({
+        type: "Dockside Tavern",
+        campaignContext: "a port under blockade",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a port under blockade"),
+      );
+      expect(res.title).toBe("The Sullen Lantern");
+      expect(res.summary).toBe("A grim dockside alehouse.");
+      expect(res.labels).toContain("tavern-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateTavern({
+        type: "Roadside Inn",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.title).toMatch(/^The /);
+      expect(res.labels).toContain("tavern-generator");
+    });
+  });
+
+  describe("generateKingdom", () => {
+    it("should generate a kingdom using local fallback when useAI is false", async () => {
+      const res = await engine.generateKingdom({
+        polityType: "Kingdom",
+        governmentStyle: "Hereditary dynasty",
+        geography: "Temperate highlands",
+        scale: "Mid-sized nation",
+        conflictLevel: "Simmering tensions",
+        magicLevel: "Common but regulated",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      expect(res.title).not.toMatch(/The .* The /);
+      expect(res.summary).toContain("kingdom");
+      expect(res.content).toContain("### The Realm");
+      expect(res.content).toContain("### Government & Power");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Major Factions");
+      expect(res.lore).toContain("### Rumours & Hooks");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("kingdom-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateKingdom({
+        polityType: "Empire",
+        campaignContext: "a crumbling empire on the edge of civil war",
+        useAI: false,
+      });
+
+      expect(res.content).toContain(
+        "a crumbling empire on the edge of civil war",
+      );
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Kingdom of Vaelthorn",
+                summary: "A mid-sized kingdom held together by old oaths.",
+                content: "### The Realm\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateKingdom({
+        polityType: "Kingdom",
+        campaignContext: "a succession crisis",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a succession crisis"),
+      );
+      expect(res.title).toBe("The Kingdom of Vaelthorn");
+      expect(res.labels).toContain("kingdom-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateKingdom({
+        polityType: "Duchy",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.labels).toContain("kingdom-generator");
+    });
+  });
+
+  describe("generateNation", () => {
+    it("should generate a nation using local fallback when useAI is false", async () => {
+      const res = await engine.generateNation({
+        genre: "Cyberpunk",
+        polityType: "Megacorp-State",
+        governmentStyle: "Corporate board",
+        scale: "Mid-sized nation",
+        conflictLevel: "Simmering tensions",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toBeDefined();
+      expect(res.summary).toContain("megacorp-state");
+      expect(res.content).toContain("### The State");
+      expect(res.content).toContain("### Power Structure");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Power Blocs");
+      expect(res.lore).toContain("### Rumours & Hooks");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("nation-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateNation({
+        genre: "Sci-Fi",
+        polityType: "Interstellar Federation",
+        campaignContext: "a collapsing interstellar federation",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("a collapsing interstellar federation");
+    });
+
+    it("should use genre-appropriate polity types", async () => {
+      const res = await engine.generateNation({
+        genre: "Western",
+        polityType: "Outlaw Republic",
+        useAI: false,
+      });
+
+      expect(res.summary).toContain("outlaw republic");
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Axiom Industrial Authority",
+                summary:
+                  "A cyberpunk megacorp-state controlling three districts.",
+                content: "### The State\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: ["rpg-nation", "nation-generator", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateNation({
+        genre: "Cyberpunk",
+        polityType: "Megacorp-State",
+        campaignContext: "a corp war over water rights",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a corp war over water rights"),
+      );
+      expect(res.title).toBe("Axiom Industrial Authority");
+      expect(res.labels).toContain("nation-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateNation({
+        genre: "Fantasy",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.labels).toContain("nation-generator");
+    });
+  });
 });

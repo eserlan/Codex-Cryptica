@@ -2,11 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Graph Category Context Menu", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject E2E flag
-    await page.addInitScript(() => {
-      (window as any).__E2E__ = true;
-    });
-
     await page.goto("/vault/default");
     // Wait for graph to load and settle
     await page.waitForSelector("canvas");

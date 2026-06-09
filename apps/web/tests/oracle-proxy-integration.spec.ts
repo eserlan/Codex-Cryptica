@@ -148,7 +148,7 @@ test.describe("Oracle Proxy E2E Flow", () => {
     });
 
     // Open Oracle sidebar
-    const oracleToggle = page.getByTestId("sidebar-oracle-button");
+    const oracleToggle = page.getByTestId("activity-bar-oracle");
     if (await oracleToggle.isVisible()) {
       await oracleToggle.click();
       await page.waitForTimeout(500);
@@ -179,7 +179,7 @@ test.describe("Oracle Proxy E2E Flow", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const oracleToggle = page.getByTestId("sidebar-oracle-button");
+    const oracleToggle = page.getByTestId("activity-bar-oracle");
     if (await oracleToggle.isVisible()) {
       await oracleToggle.click();
       await page.waitForTimeout(500);

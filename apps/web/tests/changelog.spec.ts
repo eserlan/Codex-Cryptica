@@ -7,10 +7,12 @@ test.describe("Changelog System", () => {
   }) => {
     // 1. Setup with an older MINOR version in localStorage
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      localStorage.setItem("codex_last_seen_version", "0.16.5");
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+      localStorage.setItem("codex_last_seen_version", "0.16.5");
     });
 
     await page.goto("/");
@@ -36,12 +38,13 @@ test.describe("Changelog System", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       // Stored version is 0.17.0, current app is 0.17.37.
       // Because minor is the same, it should NOT pop up.
       localStorage.setItem("codex_last_seen_version", "0.17.0");
-      localStorage.setItem("codex_skip_landing", "true");
     });
 
     await page.goto("/");

@@ -50,9 +50,7 @@
   ];
 
   const isSpecialEnv =
-    import.meta.env.DEV ||
-    (typeof window !== "undefined" && (window as any).__E2E__) ||
-    import.meta.env.VITE_STAGING === "true";
+    import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
 
   const demoThemes = [
     "vampire",

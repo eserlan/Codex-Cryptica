@@ -4,6 +4,10 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
+  import TavernFormFields from "$lib/components/seo/TavernFormFields.svelte";
+  import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
+  import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
+  import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
   import {
     generatorEngine,
     npcThemeConfig,
@@ -11,6 +15,9 @@
     magicItemConfig,
     factionConfig,
     questConfig,
+    socialHubConfig,
+    kingdomConfig,
+    nationConfig,
     themeIdToLabel,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
@@ -85,6 +92,50 @@
         "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
       canonicalPath: "/generators/item",
     },
+    "social-hub": {
+      pageTitle:
+        "Social Hub Generator | RPG Venue Generator for Any Genre | Codex Cryptica",
+      metaDescription:
+        "Generate a genre-agnostic social gathering location — from cyberpunk noodle bars to western saloons to fantasy inns. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "Social Hub Generator",
+      eyebrow: "Social Hub Generator",
+      introText:
+        "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
+      canonicalPath: "/generators/social-hub",
+    },
+    kingdom: {
+      pageTitle:
+        "Kingdom Generator | Free Fantasy Realm & Empire Creator | Codex Cryptica",
+      metaDescription:
+        "Generate a detailed fantasy kingdom or empire with ruler, factions, geography, conflict, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "Kingdom Generator",
+      eyebrow: "Kingdom Generator",
+      introText:
+        "Create a campaign-ready fantasy realm with a ruler, major factions, internal tensions, and adventure hooks. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/kingdom",
+    },
+    nation: {
+      pageTitle:
+        "Nation Generator | RPG Political Entity Creator for Any Genre | Codex Cryptica",
+      metaDescription:
+        "Generate a political entity for any RPG genre — fantasy kingdoms, cyberpunk megacorp-states, sci-fi federations, post-apoc warlord territories. Works without login.",
+      introTitle: "Nation Generator",
+      eyebrow: "Nation Generator",
+      introText:
+        "Create a campaign-ready political entity for any genre. Pick your setting and polity type — get a named state with power blocs, internal tensions, and adventure hooks.",
+      canonicalPath: "/generators/nation",
+    },
+    tavern: {
+      pageTitle:
+        "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
+      metaDescription:
+        "Generate a detailed RPG tavern or inn with owner, patrons, rumours, trouble, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "Tavern Generator",
+      eyebrow: "Tavern Generator",
+      introText:
+        "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/tavern",
+    },
   } as const;
 
   const meta = $derived(slugMeta[data.slug]);
@@ -127,12 +178,65 @@
     campaignContext: "",
   });
 
+  let tavern = $state({
+    type: socialHubConfig.venueTypesByGenre["Fantasy"][0],
+    atmosphere: socialHubConfig.atmospheres[0],
+    settlementType: socialHubConfig.settlementTypes[1],
+    wealthLevel: socialHubConfig.wealthLevels[2],
+    clientele: socialHubConfig.clientelesByGenre["Fantasy"][4],
+    campaignContext: "",
+  });
+
+  let kingdom = $state({
+    polityType: kingdomConfig.polityTypes[0],
+    governmentStyle: kingdomConfig.governmentStyles[0],
+    geography: kingdomConfig.geographies[0],
+    scale: kingdomConfig.scales[2],
+    conflictLevel: kingdomConfig.conflictLevels[0],
+    magicLevel: kingdomConfig.magicLevels[2],
+    campaignContext: "",
+  });
+
+  let nation = $state({
+    genre: nationConfig.genres[0],
+    polityType: nationConfig.polityTypesByGenre[nationConfig.genres[0]][0],
+    governmentStyle: nationConfig.governmentStyles[0],
+    scale: nationConfig.scales[2],
+    conflictLevel: nationConfig.conflictLevels[0],
+    campaignContext: "",
+  });
+
+  let socialHub = $state({
+    genre: socialHubConfig.genres[0],
+    venueType: socialHubConfig.venueTypesByGenre[socialHubConfig.genres[0]][0],
+    atmosphere: socialHubConfig.atmospheres[0],
+    wealthLevel: socialHubConfig.wealthLevels[2],
+    clientele: socialHubConfig.clientelesByGenre[socialHubConfig.genres[0]][0],
+    campaignContext: "",
+  });
+
+  const socialHubGenreToTheme: Record<string, string> = {
+    Fantasy: "Classic Fantasy",
+    "Dark Fantasy": "Vampire / Gothic Noir",
+    Pirate: "Classic Fantasy",
+    Cyberpunk: "Cyberpunk / Corporate",
+    "Sci-Fi": "Sci-Fi / Space Opera",
+    Modern: "Modern Conspiracy",
+    Horror: "Vampire / Gothic Noir",
+    "Post-Apocalyptic": "Post-Apocalyptic",
+    Western: "Modern Conspiracy",
+  };
+
   // Unified theme binding target — synced to the active generator's state
   let activeTheme = $state(factionConfig.themes[0]);
 
   $effect(() => {
     if (data.slug === "npc") npc.theme = activeTheme;
     else if (data.slug === "faction") faction.theme = activeTheme;
+    else if (data.slug === "social-hub")
+      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+    else if (data.slug === "nation")
+      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
   });
 
   onMount(() => {
@@ -153,6 +257,14 @@
       return generatorEngine.generateFaction({ ...faction, useAI });
     } else if (data.slug === "quest") {
       return generatorEngine.generateQuestHook({ ...quest, useAI });
+    } else if (data.slug === "tavern") {
+      return generatorEngine.generateTavern({ ...tavern, useAI });
+    } else if (data.slug === "kingdom") {
+      return generatorEngine.generateKingdom({ ...kingdom, useAI });
+    } else if (data.slug === "nation") {
+      return generatorEngine.generateNation({ ...nation, useAI });
+    } else if (data.slug === "social-hub") {
+      return generatorEngine.generateSocialHub({ ...socialHub, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -200,6 +312,50 @@
       labels: ["rpg-faction", "Guild", "Mercantile"],
       status: "draft",
     },
+    kingdom: {
+      type: "faction",
+      title: "The Kingdom of Vaelthorn",
+      summary:
+        "A mid-sized kingdom held together by old oaths and a ruler who is running out of allies.",
+      content:
+        "### The Realm\nVaelthorn spans three river valleys and two mountain passes. Its capital has stood for four centuries, though the walls have not been tested in a generation.\n\n### Government & Power\nKing Aldren rules through a council of six noble houses — three of which are quietly negotiating a change of leadership.",
+      lore: "",
+      labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
+      status: "draft",
+    },
+    nation: {
+      type: "faction",
+      title: "Axiom Industrial Authority",
+      summary:
+        "A cyberpunk megacorp-state that controls three districts and is aggressively expanding into a fourth.",
+      content:
+        "### The State\nAxiom controls food, water, and network access across its territory. Citizens are employees. Dissent is a performance review issue.\n\n### Power Structure\nCEO-Governor Reyes holds executive authority but the board is restless.",
+      lore: "",
+      labels: ["rpg-nation", "nation-generator", "imported-draft"],
+      status: "draft",
+    },
+    "social-hub": {
+      type: "location",
+      title: "Reyes' Noodle Hole",
+      summary:
+        "A cramped cyberpunk noodle bar where fixers and off-duty security share bad ramen and worse secrets.",
+      content:
+        "### The Place\nA steam-filled counter joint wedged under a transit overpass. Neon flickers, the broth is good, the owner asks nothing.\n\n### The Trouble\nThe owner is sitting on surveillance footage that would get someone very powerful arrested.",
+      lore: "",
+      labels: ["rpg-location", "social-hub-generator", "imported-draft"],
+      status: "draft",
+    },
+    tavern: {
+      type: "location",
+      title: "The Copper Boar",
+      summary:
+        "A rowdy crossroads tavern where travellers and locals share rumours and old grudges.",
+      content:
+        "### The Place\nA low-ceilinged roadside inn with smoke-stained rafters and a fire that runs all year. The house ale is cheap and reliable.\n\n### The Trouble\nThe owner owes a debt to someone who has just arrived in town.",
+      lore: "",
+      labels: ["rpg-location", "tavern-generator", "imported-draft"],
+      status: "draft",
+    },
   };
 
   const initialDraft = $derived(slugDrafts[data.slug]);
@@ -218,7 +374,10 @@
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
   bind:theme={activeTheme}
-  isThemeCustomizable={data.slug === "faction" || data.slug === "npc"}
+  isThemeCustomizable={data.slug === "faction" ||
+    data.slug === "npc" ||
+    data.slug === "social-hub" ||
+    data.slug === "nation"}
   {generate}
   {initialDraft}
 >
@@ -303,6 +462,47 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+      />
+    {:else if data.slug === "kingdom"}
+      <KingdomFormFields
+        bind:polityType={kingdom.polityType}
+        bind:governmentStyle={kingdom.governmentStyle}
+        bind:geography={kingdom.geography}
+        bind:scale={kingdom.scale}
+        bind:conflictLevel={kingdom.conflictLevel}
+        bind:magicLevel={kingdom.magicLevel}
+        bind:campaignContext={kingdom.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "nation"}
+      <NationFormFields
+        bind:genre={nation.genre}
+        bind:polityType={nation.polityType}
+        bind:governmentStyle={nation.governmentStyle}
+        bind:scale={nation.scale}
+        bind:conflictLevel={nation.conflictLevel}
+        bind:campaignContext={nation.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "social-hub"}
+      <SocialHubFormFields
+        bind:genre={socialHub.genre}
+        bind:venueType={socialHub.venueType}
+        bind:atmosphere={socialHub.atmosphere}
+        bind:wealthLevel={socialHub.wealthLevel}
+        bind:clientele={socialHub.clientele}
+        bind:campaignContext={socialHub.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "tavern"}
+      <TavernFormFields
+        bind:type={tavern.type}
+        bind:atmosphere={tavern.atmosphere}
+        bind:settlementType={tavern.settlementType}
+        bind:wealthLevel={tavern.wealthLevel}
+        bind:clientele={tavern.clientele}
+        bind:campaignContext={tavern.campaignContext}
+        onSurprise={trigger}
       />
     {/if}
   {/snippet}

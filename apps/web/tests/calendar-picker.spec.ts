@@ -39,13 +39,11 @@ const clickNodeProgrammatically = async (page: Page, label: string) => {
 test.describe("Campaign Date Picker E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).__E2E__ = true;
-      (window as any).DISABLE_ONBOARDING = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).DISABLE_ERROR_OVERLAY = true;
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",

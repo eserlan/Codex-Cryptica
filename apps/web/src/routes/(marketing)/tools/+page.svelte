@@ -101,6 +101,34 @@
                 "Generate item concepts with rarity, properties, history, and GM-facing lore.",
               icon: "icon-[lucide--sparkles]",
             },
+            {
+              href: "/generators/tavern",
+              label: "Tavern Generator",
+              summary:
+                "Generate a fantasy tavern or inn with owner, patrons, rumours, hidden trouble, and adventure hooks.",
+              icon: "icon-[lucide--beer]",
+            },
+            {
+              href: "/generators/social-hub",
+              label: "Social Hub Generator",
+              summary:
+                "Generate a social gathering venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
+              icon: "icon-[lucide--map-pin]",
+            },
+            {
+              href: "/generators/kingdom",
+              label: "Kingdom Generator",
+              summary:
+                "Generate a fantasy kingdom or empire with ruler, factions, geography, conflict level, and adventure hooks.",
+              icon: "icon-[lucide--crown]",
+            },
+            {
+              href: "/generators/nation",
+              label: "Nation Generator",
+              summary:
+                "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
+              icon: "icon-[lucide--globe]",
+            },
           ],
         },
       ],
