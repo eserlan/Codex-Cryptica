@@ -29,15 +29,13 @@ vi.mock("$lib/config/seo-pages", () => ({
 }));
 
 vi.mock("$lib/content/blog-content", () => ({
-  loadLocalBlogArticles: vi
-    .fn()
-    .mockReturnValue([
-      { slug: "test-blog-post", publishedAt: "2026-06-01T12:00:00.000Z" },
-      ...RA_SLUGS.map((slug) => ({
-        slug,
-        publishedAt: "2026-06-06T16:00:00.000Z",
-      })),
-    ]),
+  loadLocalBlogArticles: vi.fn().mockReturnValue([
+    { slug: "test-blog-post", publishedAt: "2026-06-01T12:00:00.000Z" },
+    ...RA_SLUGS.map((slug) => ({
+      slug,
+      publishedAt: "2026-06-06T16:00:00.000Z",
+    })),
+  ]),
 }));
 
 describe("Sitemap.xml API Endpoint", () => {
@@ -51,6 +49,7 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain("<urlset");
     expect(xml).toContain("https://codexcryptica.com/tools");
+    expect(xml).toContain("https://codexcryptica.com/generators");
     expect(xml).toContain("https://codexcryptica.com/generators/faction");
     expect(xml).toContain(
       "https://codexcryptica.com/tools/vampire-clan-generator",
