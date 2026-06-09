@@ -1,5 +1,67 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
-import { type GeneratorOutput, generateName } from "./base";
+import { type GeneratorOutput, generateName, pickFrom } from "./base";
+
+const REALM_ROOTS = [
+  "Ashenveil",
+  "Stonemark",
+  "Duskwall",
+  "Irongate",
+  "Coldmere",
+  "Blackthorn",
+  "Salthaven",
+  "Greymarch",
+  "Embervale",
+  "Cinderfall",
+  "Hollowreach",
+  "Dunmere",
+  "Thornwall",
+  "Wraithfen",
+  "Brokenridge",
+  "Dawnspire",
+  "Moorholt",
+  "Saltfang",
+  "Stormbreak",
+  "Halveth",
+  "Vorreth",
+  "Kaelthas",
+  "Myreth",
+  "Vorath",
+  "Dunrath",
+  "Solvane",
+  "Krethis",
+  "Aelvorn",
+  "Norrith",
+  "Caldreth",
+];
+
+const CAPITAL_WORDS = [
+  "Veth",
+  "Dorn",
+  "Rath",
+  "Moor",
+  "Holt",
+  "Fen",
+  "Wick",
+  "Crest",
+  "Gate",
+  "Hold",
+  "Keep",
+  "Reach",
+  "Wall",
+  "Ford",
+  "Vale",
+];
+
+function buildRealmName(polityType: string): string {
+  const root = pickFrom(REALM_ROOTS);
+  return `The ${root} ${polityType}`;
+}
+
+function buildCapitalName(): string {
+  const a = pickFrom(REALM_ROOTS).replace(/\s.*/, "").slice(0, 5);
+  const b = pickFrom(CAPITAL_WORDS);
+  return `${a}${b.toLowerCase()}`;
+}
 
 export const nationConfig = {
   genres: [
@@ -185,7 +247,7 @@ export async function generateKingdom(
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
-  "title": "The realm's name — invented, fantasy-appropriate, not a generic placeholder",
+  "title": "The realm's name — invented. Use one of: a compound place-word ('Ashenveil Kingdom', 'Stonemark Empire'), an ancient-sounding root ('Kaelthas', 'Vorath'), or a short descriptive ('The Iron March', 'The Sundered Coast'). Avoid 'Eldoria', 'Arandor', 'Valdris', and any name that sounds like a stock fantasy placeholder.",
   "summary": "One sentence: the kingdom's defining character and why a GM should use it.",
   "content": "Markdown. Use exactly these four section headers in order: '### The Realm', '### Government & Power', '### Society & Culture', '### How to use it at the table'. Each section: 3-5 tight sentences. Include campaign context if provided.",
   "lore": "Markdown. Use EXACTLY this structure:\\n### At a Glance\\n- **Polity Type**: ${polityType}\\n- **Ruler**: invented name and one-line description\\n- **Capital**: invented name and one-line description\\n- **Scale**: population/territory summary\\n- **Magic Level**: ${magicLevel}\\n- **Conflict Level**: ${conflictLevel}\\n- **Hidden Problem**: the tension simmering beneath the surface\\n- **Immediate Hook**: one-sentence GM hook\\n### Major Factions\\n- **Name**: one-line description (2-3 factions)\\n### Rumours & Hooks\\n- short hook (2-3 bullet points)\\n### Entity Seeds\\n- list of 4-5 Codex entity types (e.g. '**Character**: The regent', '**Faction**: The merchant guild', '**Location**: The capital city')",
@@ -199,13 +261,19 @@ QUALITY RULES:
 - Entity seeds should suggest concrete Codex entries a GM would actually create.
 - All names must be invented — avoid generic English words as names.`;
 
+      const namingStyles = [
+        "Use a compound place-word as the realm name (e.g. 'Ashenveil Kingdom', 'Irongate Empire', 'Duskwall Duchy').",
+        "Use an ancient-sounding invented root as the realm name (e.g. 'Kaelthas', 'Vorath', 'Myreth Dominion').",
+        "Use a short descriptive phrase as the realm name (e.g. 'The Iron March', 'The Sundered Coast', 'The Pale Reach').",
+      ];
       const userMessage = `Generate a fantasy kingdom. Variation seed: ${varianceSeed}.
 - Polity Type: ${polityType}
 - Government Style: ${governmentStyle}
 - Geography: ${geography}
 - Scale: ${scale}
 - Conflict Level: ${conflictLevel}
-- Magic Level: ${magicLevel}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}`;
+- Magic Level: ${magicLevel}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
+- Naming Directive: ${namingStyles[Math.floor(Math.random() * namingStyles.length)]}`;
 
       const model = await clientManager.getModel(
         "",
@@ -241,11 +309,10 @@ QUALITY RULES:
       Math.floor(Math.random() * kingdomConfig.troubles.length)
     ];
   const rulerName = generateName();
-  const factionName1 = `The ${generateName()} ${["Order", "Council", "League", "Brotherhood", "Guild"][Math.floor(Math.random() * 5)]}`;
-  const factionName2 = `The ${generateName()} ${["Compact", "Circle", "Assembly", "Society", "House"][Math.floor(Math.random() * 5)]}`;
-  const rawName = generateName().replace(/\s+The\s+\S+$/, "");
-  const realmName = `The ${["Kingdom", "Realm", "Domain", "Dominion", "Principality"][Math.floor(Math.random() * 5)]} of ${rawName}`;
-  const capitalName = generateName().replace(/\s+The\s+\S+$/, "");
+  const factionName1 = `The ${generateName()} ${pickFrom(["Order", "Council", "League", "Brotherhood", "Guild"])}`;
+  const factionName2 = `The ${generateName()} ${pickFrom(["Compact", "Circle", "Assembly", "Society", "House"])}`;
+  const realmName = buildRealmName(polityType);
+  const capitalName = buildCapitalName();
 
   const summary = `A ${conflictLevel.toLowerCase()} ${polityType.toLowerCase()} set in ${geography.toLowerCase()}, ruled by a ${governmentStyle.toLowerCase()}.`;
 
@@ -339,7 +406,7 @@ export async function generateNation(
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
-  "title": "The entity's name — genre-appropriate and invented",
+  "title": "The entity's name — genre-appropriate and invented. Fantasy: compound place-word or ancient-sounding root. Cyberpunk: corp acronym or district name. Sci-Fi: designation or colonial name. Avoid generic placeholders like 'Eldoria', 'The Republic', or 'New Earth'.",
   "summary": "One sentence: the entity's defining character and why a GM should use it.",
   "content": "Markdown. Use exactly these four section headers in order: '### The State', '### Power Structure', '### Society & Tensions', '### How to use it at the table'. Each section: 3-5 tight sentences. Write in the genre's register. Include campaign context if provided.",
   "lore": "Markdown. Use EXACTLY this structure:\\n### At a Glance\\n- **Type**: polity type\\n- **Leader / Authority**: name and one-line description (genre-appropriate)\\n- **Centre of Power**: name and one-line description\\n- **Scale**: territory/population summary\\n- **Conflict Level**: current state\\n- **Hidden Problem**: the tension simmering beneath the surface\\n- **Immediate Hook**: one-sentence GM hook\\n### Power Blocs\\n- **Name**: one-line description (2-3 factions/blocs)\\n### Rumours & Hooks\\n- short hook (2-3 bullet points)\\n### Entity Seeds\\n- list of 4-5 Codex entity types that naturally emerge from this state",
@@ -394,11 +461,10 @@ QUALITY RULES:
       Math.floor(Math.random() * nationConfig.troubles.length)
     ];
   const leaderName = generateName();
-  const bloc1 = `The ${generateName()} ${["Bloc", "Council", "Front", "Syndicate", "Coalition"][Math.floor(Math.random() * 5)]}`;
-  const bloc2 = `The ${generateName()} ${["Faction", "Assembly", "Circle", "Committee", "Network"][Math.floor(Math.random() * 5)]}`;
-  const rawName = generateName().replace(/\s+The\s+\S+$/, "");
-  const stateName = `${rawName} ${polityType}`;
-  const capitalName = generateName().replace(/\s+The\s+\S+$/, "");
+  const bloc1 = `The ${generateName()} ${pickFrom(["Bloc", "Council", "Front", "Syndicate", "Coalition"])}`;
+  const bloc2 = `The ${generateName()} ${pickFrom(["Faction", "Assembly", "Circle", "Committee", "Network"])}`;
+  const stateName = buildRealmName(polityType);
+  const capitalName = buildCapitalName();
 
   const summary = `A ${conflictLevel.toLowerCase()} ${polityType.toLowerCase()} operating under ${governmentStyle.toLowerCase()}.`;
 

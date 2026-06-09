@@ -1,5 +1,70 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
-import { type GeneratorOutput, generateName } from "./base";
+import { type GeneratorOutput, generateName, pickFrom } from "./base";
+
+const VENUE_ADJECTIVES = [
+  "Sullen",
+  "Hollow",
+  "Gilded",
+  "Rusted",
+  "Crooked",
+  "Dented",
+  "Ashen",
+  "Salted",
+  "Blackened",
+  "Broken",
+  "Mended",
+  "Tarnished",
+  "Pale",
+  "Sunken",
+  "Knotted",
+  "Scorched",
+  "Pitted",
+  "Leaning",
+  "Weathered",
+  "Splintered",
+  "Salted",
+  "Cracked",
+  "Smoked",
+  "Bitter",
+  "Coppery",
+  "Hammered",
+  "Bolted",
+  "Warped",
+  "Tarred",
+  "Lopsided",
+];
+
+const VENUE_NOUNS = [
+  "Flagon",
+  "Anvil",
+  "Lantern",
+  "Cauldron",
+  "Chain",
+  "Barrel",
+  "Bell",
+  "Crow",
+  "Hound",
+  "Kettle",
+  "Nail",
+  "Rope",
+  "Spoke",
+  "Tide",
+  "Torch",
+  "Wheel",
+  "Clasp",
+  "Rivet",
+  "Whetstone",
+  "Tallow",
+  "Spit",
+  "Hook",
+  "Peg",
+  "Gust",
+  "Ember",
+];
+
+function buildTavernName(): string {
+  return `The ${pickFrom(VENUE_ADJECTIVES)} ${pickFrom(VENUE_NOUNS)}`;
+}
 
 export const socialHubConfig = {
   genres: [
@@ -216,7 +281,7 @@ export async function generateSocialHub(
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
-  "title": "The venue's name — genre-appropriate (a cyberpunk dive has a neon handle, a fantasy inn has 'The X Y' naming, a western saloon uses frontier naming, etc.)",
+  "title": "The venue's name — genre-appropriate and specific. Fantasy: worn adjective + mundane noun (e.g. 'The Sullen Lantern', 'The Dented Kettle'). Cyberpunk: handle or moniker. Western: frontier object or ironic phrase. Avoid stock names like The Golden Goblet, The Silver Stag, The Prancing Pony.",
   "summary": "One sentence: the venue's character and why a GM should use it.",
   "content": "Markdown. Use exactly these four section headers in order: '### The Place', '### The People', '### The Trouble', '### How to use it at the table'. Each section: 2-4 tight sentences. Write in the genre's register. Include campaign context if provided.",
   "lore": "Markdown. Use EXACTLY this structure:\\n### At a Glance\\n- **Type**: venue type\\n- **Atmosphere**: mood and feel\\n- **Owner / Operator**: name and one-line description (genre-appropriate)\\n- **Signature Drink or Service**: specific invented item or service\\n- **Hidden Problem**: the trouble simmering beneath the surface\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable Regulars\\n- **Name**: one-line description (2-3 regulars, genre-appropriate)\\n### Rumours\\n- short rumour (2-3 rumours as bullet points)\\n### Entity Seeds\\n- list of 3-4 Codex entity types that naturally emerge from this venue (e.g. '**Location**: The back room')",
@@ -273,27 +338,26 @@ QUALITY RULES:
   const ownerName = generateName();
   const patron1 = generateName();
   const patron2 = generateName();
-  const rawName = generateName().replace(/\s+The\s+\S+$/, "");
 
-  const fantasyLikeSuffixes = ["Arms", "Rest", "Tap", "Lodge", "House"];
-  const cyberpunkSuffixes = ["Node", "Den", "Hub", "Spot", "Joint"];
-  const westernSuffixes = ["Saloon", "House", "Post", "Room", "Bar"];
   const suffixMap: Record<string, string[]> = {
-    Fantasy: fantasyLikeSuffixes,
-    "Dark Fantasy": fantasyLikeSuffixes,
+    Fantasy: ["Arms", "Rest", "Tap", "Lodge", "House"],
+    "Dark Fantasy": ["Hollow", "Den", "Haunt", "Cellar", "Pit"],
     Pirate: ["Cove", "Hole", "Deck", "Anchor", "Port"],
-    Cyberpunk: cyberpunkSuffixes,
+    Cyberpunk: ["Node", "Den", "Hub", "Spot", "Joint"],
     "Sci-Fi": ["Bay", "Dock", "Zone", "Platform", "Hub"],
     Modern: ["Bar", "Lounge", "Spot", "Place", "Corner"],
     Horror: ["Den", "Hollow", "Parlour", "Chamber", "Haunt"],
     "Post-Apocalyptic": ["Shack", "Hole", "Stop", "Den", "Post"],
-    Western: westernSuffixes,
+    Western: ["Saloon", "House", "Post", "Room", "Bar"],
   };
-  const suffixes = suffixMap[genre] ?? fantasyLikeSuffixes;
+  const suffixes = suffixMap[genre] ?? suffixMap["Fantasy"];
+  const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+  const adj = pickFrom(VENUE_ADJECTIVES);
+  const noun = pickFrom(VENUE_NOUNS);
   const venueName =
     genre === "Cyberpunk" || genre === "Sci-Fi"
-      ? `${rawName}'s ${suffixes[Math.floor(Math.random() * suffixes.length)]}`
-      : `The ${rawName} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`;
+      ? `${ownerName.split(" ")[0]}'s ${suffix}`
+      : `The ${adj} ${noun}`;
 
   const summary = `A ${atmosphere.toLowerCase()} ${venueType.toLowerCase()} serving ${clientele.toLowerCase()}.`;
 
@@ -383,11 +447,11 @@ export async function generateTavern(
   const campaignContext = options.campaignContext?.trim();
 
   const namingStyles = [
-    "Name it after an animal and a colour or material (e.g. 'The Copper Boar').",
-    "Name it after an object associated with the owner's past — a weapon, trade tool, or keepsake.",
-    "Use a short ironic phrase that locals find funny (e.g. 'The Honest Scales').",
-    "Name it after a local legend, battle, or geographical feature specific to the setting.",
-    "Use a two-word compound that evokes the atmosphere — one noun, one adjective (e.g. 'The Sullen Lantern').",
+    "Name it after an animal and a worn or unlikely material (e.g. 'The Tin Boar', 'The Pitted Heron').",
+    "Name it after a physical object associated with the owner's past — a weapon, trade tool, or keepsake (e.g. 'The Broken Spoke', 'The Dented Kettle').",
+    "Use a short ironic or sardonic phrase (e.g. 'The Honest Scales', 'The Fair Price', 'The Warm Welcome').",
+    "Name it after an obscure local legend, a minor battle, or a peculiar geographical feature — not a generic landmark.",
+    "Use a two-word compound that evokes the atmosphere — a worn adjective plus a mundane noun (e.g. 'The Sullen Lantern', 'The Leaning Barrel', 'The Scorched Bell').",
   ];
   const varianceSeed = Math.floor(Math.random() * 99991) + 10;
 
@@ -409,7 +473,9 @@ QUALITY RULES:
 - Each patron should feel like a distinct person with a reason to be there.
 - Rumours should be specific, not generic ('a merchant was poisoned last week' beats 'strange things have been happening').
 - Entity seeds should suggest concrete Codex entries a GM could create.
-- Place names and NPC names must be invented — avoid Oakhaven, Millbrook, Riverdale, and generic monosyllable English surnames.`;
+- Place names and NPC names must be invented — avoid Oakhaven, Millbrook, Riverdale, and generic monosyllable English surnames.
+- Never use: The Prancing Pony, The Silver Stag, The Golden Goblet, The Wandering Wizard, The Rusty Sword, The Dragon's Den, The Black Cat, The Red Lion, or any name that reads like a stock fantasy placeholder.
+- Prefer names with a specific, slightly worn quality — something that feels like it was named by a local, not by a committee.`;
 
       const userMessage = `Generate a tavern. Variation seed: ${varianceSeed}.
 - Type: ${tavernType}
@@ -455,8 +521,7 @@ QUALITY RULES:
   const ownerName = generateName();
   const patron1 = generateName();
   const patron2 = generateName();
-  const rawName = generateName().replace(/\s+The\s+\S+$/, "");
-  const tavernName = `The ${rawName} ${["Arms", "Rest", "Tap", "Lodge", "House"][Math.floor(Math.random() * 5)]}`;
+  const tavernName = buildTavernName();
 
   const summary = `A ${atmosphere.toLowerCase()} ${tavernType.toLowerCase()} serving ${clientele.toLowerCase()} in a ${settlementType.toLowerCase()}.`;
 
