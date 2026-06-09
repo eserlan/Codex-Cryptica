@@ -392,4 +392,86 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
   });
+
+  describe("generateTavern", () => {
+    it("should generate tavern details using local fallback when useAI is false", async () => {
+      const res = await engine.generateTavern({
+        type: "Dockside Tavern",
+        atmosphere: "Tense and suspicious",
+        settlementType: "Coastal port",
+        wealthLevel: "Poor (cheap but honest)",
+        clientele: "Dockworkers and sailors",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.title).toBeDefined();
+      expect(res.title).toMatch(/^The /);
+      expect(res.title).not.toMatch(/The .* The /);
+      expect(res.summary).toContain("dockside tavern");
+      expect(res.content).toContain("### The Place");
+      expect(res.content).toContain("### The Trouble");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Notable Patrons");
+      expect(res.lore).toContain("### Rumours");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("tavern-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateTavern({
+        type: "Roadside Inn",
+        campaignContext: "a cursed forest road",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("a cursed forest road");
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Sullen Lantern",
+                summary: "A grim dockside alehouse.",
+                content: "### The Place\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: ["rpg-location", "tavern-generator", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateTavern({
+        type: "Dockside Tavern",
+        campaignContext: "a port under blockade",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a port under blockade"),
+      );
+      expect(res.title).toBe("The Sullen Lantern");
+      expect(res.summary).toBe("A grim dockside alehouse.");
+      expect(res.labels).toContain("tavern-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateTavern({
+        type: "Roadside Inn",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.title).toMatch(/^The /);
+      expect(res.labels).toContain("tavern-generator");
+    });
+  });
 });

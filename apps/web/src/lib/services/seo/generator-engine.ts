@@ -2570,7 +2570,8 @@ QUALITY RULES:
     const ownerName = this.generateName();
     const patron1 = this.generateName();
     const patron2 = this.generateName();
-    const tavernName = `The ${this.generateName()} ${["Arms", "Rest", "Tap", "Lodge", "House"][Math.floor(Math.random() * 5)]}`;
+    const rawName = this.generateName().replace(/\s+The\s+\S+$/, "");
+    const tavernName = `The ${rawName} ${["Arms", "Rest", "Tap", "Lodge", "House"][Math.floor(Math.random() * 5)]}`;
 
     const summary = `A ${atmosphere.toLowerCase()} ${tavernType.toLowerCase()} serving ${clientele.toLowerCase()} in a ${settlementType.toLowerCase()}.`;
 
