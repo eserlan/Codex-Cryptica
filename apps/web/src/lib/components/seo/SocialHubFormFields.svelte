@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { socialHubConfig } from "$lib/services/seo/generator-engine";
+  import {
+    socialHubConfig,
+    pickFrom,
+  } from "$lib/services/seo/generator-engine";
 
   let {
     genre = $bindable(socialHubConfig.genres[0]),
@@ -48,10 +51,6 @@
       clientele = clienteles[0];
     }
   });
-
-  function pick<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -127,22 +126,22 @@
   <button
     type="button"
     onclick={() => {
-      genre = pick(socialHubConfig.genres);
-      const newVenueTypes =
+      const currentVenueTypes =
         socialHubConfig.venueTypesByGenre[genre] ??
         socialHubConfig.venueTypesByGenre["Fantasy"];
-      venueType = pick(newVenueTypes);
-      atmosphere = pick(socialHubConfig.atmospheres);
-      wealthLevel = pick(socialHubConfig.wealthLevels);
+      venueType = pickFrom(currentVenueTypes);
+      atmosphere = pickFrom(socialHubConfig.atmospheres);
+      wealthLevel = pickFrom(socialHubConfig.wealthLevels);
       const newClienteles =
         socialHubConfig.clientelesByGenre[genre] ??
         socialHubConfig.clientelesByGenre["Fantasy"];
-      clientele = pick(newClienteles);
+      clientele = pickFrom(newClienteles);
       if (onSurprise) {
         onSurprise();
       }
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
     Surprise Me

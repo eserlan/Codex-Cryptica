@@ -1,5 +1,16 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
+import { getSessionContext } from "./session-context";
 import { type GeneratorOutput, generateName } from "./base";
+
+export const themeToQuestGenre: Record<string, string> = {
+  "Classic Fantasy": "Classic Fantasy",
+  "Cyberpunk / Corporate": "Cyberpunk",
+  "Vampire / Gothic Noir": "Dark Fantasy",
+  "Sci-Fi / Space Opera": "Sci-Fi",
+  "Modern Conspiracy": "Political Intrigue",
+  "Post-Apocalyptic": "Post-Apocalyptic",
+};
 
 export const questConfig = {
   genres: [
@@ -10,11 +21,71 @@ export const questConfig = {
     "Comedy",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
+  tonesByTheme: {
+    "Classic Fantasy": ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
+    "Cyberpunk / Corporate": [
+      "Noir",
+      "Paranoid",
+      "High-Octane",
+      "Cynical",
+      "Bleak",
+    ],
+    "Vampire / Gothic Noir": [
+      "Dread",
+      "Melancholic",
+      "Sinister",
+      "Brooding",
+      "Tragic",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Epic",
+      "Tense",
+      "Mysterious",
+      "Satirical",
+      "Bleak",
+    ],
+    "Modern Conspiracy": ["Paranoid", "Tense", "Cynical", "Noir", "Bleak"],
+    "Post-Apocalyptic": [
+      "Gritty",
+      "Desperate",
+      "Bleak",
+      "Defiant",
+      "Melancholic",
+    ],
+  } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
     "Regional (kingdom / region)",
     "World-threatening",
   ],
+  scopesByTheme: {
+    "Classic Fantasy": [
+      "Local (village / district)",
+      "Regional (kingdom / region)",
+      "World-threatening",
+    ],
+    "Cyberpunk / Corporate": [
+      "Local (block / district)",
+      "City-wide",
+      "Corporate-scale",
+    ],
+    "Vampire / Gothic Noir": [
+      "Local (neighbourhood / district)",
+      "City-wide",
+      "Ancient conspiracy",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Local (station / colony)",
+      "Sector-wide",
+      "Galaxy-threatening",
+    ],
+    "Modern Conspiracy": ["Local (city / district)", "National", "Global"],
+    "Post-Apocalyptic": [
+      "Local (settlement / zone)",
+      "Regional (wasteland)",
+      "Civilisation-scale",
+    ],
+  } as Record<string, string[]>,
   locationTypes: [
     "Ancient Dungeon",
     "Urban City",
@@ -23,6 +94,56 @@ export const questConfig = {
     "Coastal / Maritime",
     "Planar Realm",
   ],
+  locationTypesByTheme: {
+    "Classic Fantasy": [
+      "Ancient Dungeon",
+      "Cursed Ruin",
+      "Wilderness",
+      "Coastal / Maritime",
+      "Feywild Crossing",
+      "Dwarven Stronghold",
+    ],
+    "Cyberpunk / Corporate": [
+      "Corporate Tower",
+      "Underground Market",
+      "Abandoned Factory",
+      "Neon District",
+      "Off-Grid Settlement",
+      "Server Farm",
+    ],
+    "Vampire / Gothic Noir": [
+      "Gothic Cathedral",
+      "Haunted Manor",
+      "Ancient Crypt",
+      "Fog-Shrouded Port",
+      "Secret Society Hall",
+      "Underground Passage",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Space Station",
+      "Alien Planet",
+      "Derelict Ship",
+      "Research Outpost",
+      "Jump Gate Hub",
+      "Colony World",
+    ],
+    "Modern Conspiracy": [
+      "Urban City",
+      "Abandoned Warehouse",
+      "Government Facility",
+      "Safe House",
+      "International Airport",
+      "Dark Web Hub",
+    ],
+    "Post-Apocalyptic": [
+      "Ruined City",
+      "Wasteland Outpost",
+      "Vault / Bunker",
+      "Irradiated Zone",
+      "Raider Stronghold",
+      "Pre-War Archive",
+    ],
+  } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
     "Corrupt Villain",
@@ -31,6 +152,56 @@ export const questConfig = {
     "Natural Disaster",
     "Betrayal from Within",
   ],
+  threatsByTheme: {
+    "Classic Fantasy": [
+      "Monstrous Creature",
+      "Corrupt Noble",
+      "Rival Adventuring Party",
+      "Ancient Curse",
+      "Undead Rising",
+      "Dragon's Influence",
+    ],
+    "Cyberpunk / Corporate": [
+      "Rogue AI",
+      "Corporate Extraction Team",
+      "Street Gang",
+      "Data Breach",
+      "Corrupt Official",
+      "Megacorp Rival",
+    ],
+    "Vampire / Gothic Noir": [
+      "Elder Vampire",
+      "Werewolf Pack",
+      "Inquisitor",
+      "Ancient Blood Curse",
+      "Rival Bloodline",
+      "Cult of the Damned",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Alien Threat",
+      "Rogue AI",
+      "Pirate Fleet",
+      "Ancient Weapon System",
+      "Galactic Bureaucracy",
+      "Rival Faction",
+    ],
+    "Modern Conspiracy": [
+      "Shadow Organisation",
+      "Corrupt Official",
+      "Intelligence Agency",
+      "Assassin Cell",
+      "Corporate Cover-Up",
+      "Whistleblower Hunt",
+    ],
+    "Post-Apocalyptic": [
+      "Raider Warlord",
+      "Mutant Creature",
+      "Resource War",
+      "Faction Power Struggle",
+      "Rogue Automaton",
+      "Plague Outbreak",
+    ],
+  } as Record<string, string[]>,
   hooks: [
     "A local official offers a reward to find a missing heir before a rival claims the title.",
     "Strange lights above the old tower have kept the village awake for three nights.",
@@ -63,6 +234,56 @@ export const questConfig = {
     "Valuable information from the client",
     "Respect from a previously hostile faction",
   ],
+  rewardsByTheme: {
+    "Classic Fantasy": [
+      "Coin plus a noble's favour",
+      "Deed to a useful property",
+      "Access to a restricted archive",
+      "A magic item from the site",
+      "Valuable information from the client",
+      "Respect from a previously hostile faction",
+    ],
+    "Cyberpunk / Corporate": [
+      "Cred plus a fixer's contact",
+      "Access codes to a restricted network",
+      "Safe house deed",
+      "Prototype gear from the site",
+      "Intel on a powerful corp",
+      "Street cred with a major gang",
+    ],
+    "Vampire / Gothic Noir": [
+      "Gold and a blood-debt cleared",
+      "A safe haven in the city",
+      "Access to forbidden archives",
+      "An artefact from the crypt",
+      "Blackmail material on a noble",
+      "Passage through enemy territory",
+    ],
+    "Sci-Fi / Space Opera": [
+      "Credits plus a nav contact",
+      "Docking rights at a key station",
+      "Access to a restricted database",
+      "Salvaged tech from the site",
+      "Intel on a rival faction",
+      "Loyalty from a previously hostile crew",
+    ],
+    "Modern Conspiracy": [
+      "Cash plus a government contact",
+      "Access to a secure facility",
+      "Safe identity documents",
+      "Prototype tech from the site",
+      "Intel on a shadow organisation",
+      "Protection from a powerful agency",
+    ],
+    "Post-Apocalyptic": [
+      "Supplies plus a settlement's protection",
+      "Claim to a defensible location",
+      "Access to pre-war tech",
+      "Salvage rights to the site",
+      "Intel on a raider stronghold",
+      "Loyalty from a survivor faction",
+    ],
+  } as Record<string, string[]>,
 };
 
 export async function generateQuestHook(
@@ -122,9 +343,11 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative quest name (3-6 words)",
   "content": "A detailed multi-paragraph quest hook (markdown formatted) describing the situation, what the party is asked to do, the location, the key NPC involved, and how it fits the campaign context if provided.",
-  "lore": "Structured GM details (markdown formatted) with sections for core fields, complication, key NPC, twist, and reward.",
+  "lore": "GM-only details (markdown formatted) with these sections: '### Core Fields' (bullet list with **Setting** and **Threat**, each a vivid one-sentence description with proper nouns), '### Complication' (a concrete mechanical or narrative pressure), '### Key NPC' (bullet with **Name**: motivation and secret), '### The Twist' (a paragraph revealing the hidden truth, ideally tying back to the party's past or the campaign context), '### Reward' (a paragraph describing what is gained and why it matters to the larger campaign).",
   "labels": ["rpg-quest", "quest-generator", "imported-draft"]
 }
+${NAME_BAN_PROMPT}
+${getSessionContext()}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
       const model = await clientManager.getModel(
@@ -176,21 +399,21 @@ ${locationName} serves as the primary setting — a ${locationType.toLowerCase()
 ### Threat
 The central danger is a ${threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`;
 
-  const lore = `### GM Reference Information
-- **Genre**: ${genre}
-- **Tone**: ${tone}
-- **Scope**: ${scope}
-- **Location Type**: ${locationType}
-- **Main Threat**: ${threat}
+  const lore = `### Core Fields
+- **Setting**: ${locationName}, a ${locationType.toLowerCase()} shaped by ${genre.toLowerCase()} conventions and a ${tone.toLowerCase()} atmosphere.
+- **Threat**: A ${threat.toLowerCase()}, active long enough to leave evidence, earn fear, and create a power vacuum.
 
 ### Complication
 ${complication}
 
-### Twist
-${twist}
+### Key NPC
+- **${npcName}**: The immediate contact, patron, or obstacle. Their stated reason for involving the party is credible, but their personal stake runs deeper than they admit.
+
+### The Twist
+${twist}. Reveal this only once the party is committed — it should recast earlier scenes in a new light.
 
 ### Reward
-${reward}`;
+${reward}. Beyond its face value, it opens a door in the wider campaign: a contact, a route, or a secret the party could not otherwise reach.`;
 
   return {
     type: "event",

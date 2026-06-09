@@ -1,9 +1,11 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
 import { type GeneratorOutput, nameGeneratorConfig } from "./base";
 
 export async function generateNames(
   clientManager: DefaultAIClientManager,
   options: {
+    theme?: string;
     culture?: string;
     gender?: string;
     nameType?: string;
@@ -15,7 +17,7 @@ export async function generateNames(
   const culture = options.culture || nameGeneratorConfig.cultures[0];
   const gender = options.gender || nameGeneratorConfig.genders[0];
   const nameType = options.nameType || nameGeneratorConfig.nameTypes[0];
-  const count = Math.max(1, parseInt(options.count || "5", 10) || 5);
+  const count = Math.max(1, parseInt(options.count || "10", 10) || 10);
   const context = options.context?.trim();
 
   const entityType: GeneratorOutput["type"] =
@@ -29,9 +31,9 @@ export async function generateNames(
 
   if (options.useAI !== false) {
     try {
-      const prompt = `Generate ${count} fantasy ${nameType.toLowerCase()} names in JSON format.
+      const prompt = `Generate ${count} ${nameType.toLowerCase()} names for a tabletop RPG in JSON format.
 Options:
-- Culture / Style: ${culture}
+${options.theme ? `- Setting / Genre: ${options.theme} — names must fit this genre's conventions.\n` : ""}- Culture / Style: ${culture}
 - Gender / Presentation: ${gender}
 - Name Type: ${nameType}
 - Count: ${count}
@@ -39,11 +41,11 @@ ${context ? `- Context: ${context}` : ""}
 
 You must return a valid JSON object matching the following structure exactly:
 {
-  "title": "The single best or most evocative name from the list",
   "content": "A brief lead sentence describing the naming style, followed by a markdown list of all ${count} names. Format each name as '- **Name**: one-sentence flavour note'.",
   "lore": "GM notes (markdown formatted) with sections for Culture, Style, and Usage Suggestions covering how to use these names in a campaign.",
   "labels": ["fantasy-name", "name-generator", "imported-draft"]
 }
+${NAME_BAN_PROMPT}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
       const model = await clientManager.getModel(
@@ -61,7 +63,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
       return {
         type: entityType,
-        title: data.title || "Fantasy Name",
+        title: `${culture} Names — ${nameType}`,
         content: data.content || "",
         lore: data.lore || "",
         labels: Array.isArray(data.labels)
@@ -88,7 +90,6 @@ Return only the JSON object. Do not include markdown code block formatting like 
     generated.push(prefix.charAt(0).toUpperCase() + prefix.slice(1) + suffix);
   }
 
-  const primary = generated[0];
   const nameList = generated.map((n) => `- ${n}`).join("\n");
 
   const content = `${culture} ${nameType.toLowerCase()} names in a ${gender.toLowerCase()} register.
@@ -105,7 +106,7 @@ Use these names for any ${nameType.toLowerCase()} in a ${culture.toLowerCase()}-
 
   return {
     type: entityType,
-    title: primary,
+    title: `${culture} Names — ${nameType}`,
     content,
     lore,
     labels: ["fantasy-name", "name-generator", "imported-draft"],

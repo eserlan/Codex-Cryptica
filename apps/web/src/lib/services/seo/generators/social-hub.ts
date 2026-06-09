@@ -1,4 +1,6 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
+import { getSessionContext } from "./session-context";
 import { type GeneratorOutput, generateName, pickFrom } from "./base";
 
 const VENUE_ADJECTIVES = [
@@ -292,7 +294,9 @@ QUALITY RULES:
 - The owner/operator must have a name, a distinguishing detail, and a secret or motive.
 - Each regular should feel like a distinct person with a reason to be there.
 - Rumours should be specific, not generic.
-- Entity seeds should suggest concrete Codex entries a GM could create.`;
+- Entity seeds should suggest concrete Codex entries a GM could create.
+- ${NAME_BAN_PROMPT}
+${getSessionContext()}`;
 
       const userMessage = `Generate a social gathering location. Variation seed: ${varianceSeed}.
 - Genre / Setting: ${genre}
@@ -461,7 +465,8 @@ QUALITY RULES:
 - Each patron should feel like a distinct person with a reason to be there.
 - Rumours should be specific, not generic ('a merchant was poisoned last week' beats 'strange things have been happening').
 - Entity seeds should suggest concrete Codex entries a GM could create.
-- Place names and NPC names must be invented — avoid Oakhaven, Millbrook, Riverdale, and generic monosyllable English surnames.
+- ${NAME_BAN_PROMPT}
+${getSessionContext()}
 - Never use: The Prancing Pony, The Silver Stag, The Golden Goblet, The Wandering Wizard, The Rusty Sword, The Dragon's Den, The Black Cat, The Red Lion, or any name that reads like a stock fantasy placeholder.
 - Prefer names with a specific, slightly worn quality — something that feels like it was named by a local, not by a committee.`;
 
