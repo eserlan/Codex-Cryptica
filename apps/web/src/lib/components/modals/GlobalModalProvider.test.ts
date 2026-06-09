@@ -74,6 +74,14 @@ vi.mock("./ZenModeModal.svelte", async () => ({
   default: (await import("./__tests__/ModalStub.svelte")).default,
 }));
 
+vi.mock("$lib/components/dice/DiceModal.svelte", async () => ({
+  default: (await import("./__tests__/ModalStub.svelte")).default,
+}));
+
+vi.mock("$lib/components/modals/GuestChatModal.svelte", async () => ({
+  default: (await import("./__tests__/ModalStub.svelte")).default,
+}));
+
 vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
   default: (await import("./__tests__/CanvasSelectionModalStub.svelte"))
     .default,
@@ -95,5 +103,11 @@ describe("GlobalModalProvider", () => {
     expect(
       await screen.findByTestId("canvas-selection-modal-stub"),
     ).toBeTruthy();
+  });
+
+  it("does not render CanvasSelectionModal content when the modal state is closed", () => {
+    render(GlobalModalProvider);
+
+    expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
   });
 });

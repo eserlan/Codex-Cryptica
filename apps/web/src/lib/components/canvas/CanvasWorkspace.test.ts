@@ -3,6 +3,12 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: {
+    showCanvasSelector: false,
+  },
+}));
+
 vi.mock("@xyflow/svelte", () => ({
   SvelteFlow: function SvelteFlowMock() {
     return {};
@@ -120,6 +126,11 @@ vi.mock("$lib/components/hints/CanvasHint.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
+  default: (await import("../modals/__tests__/CanvasSelectionModalStub.svelte"))
+    .default,
+}));
+
 vi.mock("./CanvasHUD.svelte", () => ({
   default: function CanvasHUDMock() {
     return {};
@@ -127,13 +138,17 @@ vi.mock("./CanvasHUD.svelte", () => ({
 }));
 
 import CanvasWorkspace from "./CanvasWorkspace.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("CanvasWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    modalUIStore.showCanvasSelector = false;
   });
 
   it("does not mount CanvasSelectionModal locally", () => {
+    modalUIStore.showCanvasSelector = true;
+
     render(CanvasWorkspace, {
       props: {
         engine: {} as any,
