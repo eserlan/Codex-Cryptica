@@ -111,6 +111,9 @@ describe("SyncCoordinator", () => {
         vi.fn(),
         vi.fn(),
         vi.fn(),
+        undefined,
+        undefined,
+        { interactive: true },
       );
 
       // The loop for await (const _ of localHandle) will trigger the error
@@ -134,10 +137,36 @@ describe("SyncCoordinator", () => {
         vi.fn(),
         vi.fn(),
         vi.fn(),
+        undefined,
+        undefined,
+        { interactive: true },
       );
 
       expect(mockLocal.requestPermission).not.toHaveBeenCalled();
       expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
+    });
+
+    it("should not open the directory picker on non-interactive syncs", async () => {
+      mockIO.getLocalHandle.mockResolvedValue(null);
+      const onStateChange = vi.fn();
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        "pull",
+        {},
+        vi.fn(),
+        onStateChange,
+        vi.fn(),
+      );
+
+      expect(mockIO.showDirectoryPicker).not.toHaveBeenCalled();
+      expect(onStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "error",
+          errorMessage: expect.stringContaining("Folder link lost"),
+        }),
+      );
     });
 
     it("should handle save queue timeout", async () => {

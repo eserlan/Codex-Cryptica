@@ -218,6 +218,7 @@ export class SyncCoordinator {
     checkForConflicts: () => Promise<void>,
     signal?: AbortSignal,
     onProgress?: (stats: any) => void,
+    options?: { interactive?: boolean },
   ) {
     return this.syncWithLocalFolder(
       activeVaultId,
@@ -229,6 +230,7 @@ export class SyncCoordinator {
       checkForConflicts,
       signal,
       onProgress,
+      options,
     );
   }
 
@@ -246,6 +248,7 @@ export class SyncCoordinator {
     checkForConflicts: () => Promise<void>,
     signal?: AbortSignal,
     onProgress?: (stats: any) => void,
+    options?: { interactive?: boolean },
   ) {
     return this.syncWithLocalFolder(
       activeVaultId,
@@ -257,6 +260,7 @@ export class SyncCoordinator {
       checkForConflicts,
       signal,
       onProgress,
+      options,
     );
   }
 
@@ -275,6 +279,7 @@ export class SyncCoordinator {
     checkForConflicts: () => Promise<void>,
     signal?: AbortSignal,
     onProgress?: (stats: any) => void,
+    options?: { interactive?: boolean },
   ) {
     if (!opfsHandle) return;
     if (signal?.aborted) return;
@@ -314,6 +319,18 @@ export class SyncCoordinator {
     }
 
     if (!localHandle) {
+      // Browsers only allow the directory picker inside a user gesture, so a
+      // background sync must not attempt to prompt — it would throw a raw
+      // SecurityError. Surface an actionable message instead.
+      if (!options?.interactive) {
+        onStateChange({
+          status: "error",
+          syncType: null,
+          errorMessage:
+            "Folder link lost. Use the sync button to reconnect this vault to its local folder.",
+        });
+        return;
+      }
       try {
         this.notifier.alert(
           "Please select a local folder to link this vault with. This is required to establish or reconnect a lost folder link.",
@@ -325,7 +342,10 @@ export class SyncCoordinator {
         onStateChange({
           status: "error",
           syncType: null,
-          errorMessage: "Failed to select folder: " + _err.message,
+          errorMessage:
+            _err.name === "SecurityError"
+              ? "The browser blocked the folder picker. Click the sync button again to choose your folder."
+              : "Failed to select folder: " + _err.message,
         });
         return;
       }
