@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
+import { BANNED_NAMES, NAME_BAN_PROMPT } from "./generators/banned-names";
 
 describe("DefaultGeneratorEngine", () => {
   let mockClientManager: any;
@@ -341,7 +342,7 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
       expect(res.type).toBe("character");
-      expect(res.title).toBe("Sylvara");
+      expect(res.title).toBe("High Elf Names — Person");
       expect(res.content).toContain("Sylvara");
     });
 
@@ -741,6 +742,158 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(res.type).toBe("faction");
       expect(res.labels).toContain("nation-generator");
+    });
+  });
+
+  describe("banned names", () => {
+    it("NAME_BAN_PROMPT contains every name in BANNED_NAMES", () => {
+      for (const name of BANNED_NAMES) {
+        expect(NAME_BAN_PROMPT).toContain(name);
+      }
+    });
+
+    const generators: Array<{
+      label: string;
+      call: (engine: DefaultGeneratorEngine) => Promise<unknown>;
+    }> = [
+      { label: "NPC", call: (e) => e.generateNPC({ useAI: true }) },
+      { label: "faction", call: (e) => e.generateFaction({ useAI: true }) },
+      {
+        label: "vampire clan",
+        call: (e) => e.generateVampireClan({ useAI: true }),
+      },
+      {
+        label: "settlement",
+        call: (e) => e.generateSettlement({ useAI: true }),
+      },
+      {
+        label: "magic item",
+        call: (e) => e.generateMagicItem({ useAI: true }),
+      },
+      { label: "quest", call: (e) => e.generateQuestHook({ useAI: true }) },
+      { label: "names", call: (e) => e.generateNames({ useAI: true }) },
+      {
+        label: "social hub",
+        call: (e) => e.generateSocialHub({ useAI: true }),
+      },
+      { label: "kingdom", call: (e) => e.generateKingdom({ useAI: true }) },
+      { label: "nation", call: (e) => e.generateNation({ useAI: true }) },
+    ];
+
+    for (const { label, call } of generators) {
+      it(`${label} generator injects NAME_BAN_PROMPT into AI prompt`, async () => {
+        let capturedSystemInstruction = "";
+        let capturedUserMessage = "";
+        const mockModel = {
+          generateContent: vi.fn().mockImplementation((prompt: string) => {
+            capturedUserMessage =
+              typeof prompt === "string" ? prompt : JSON.stringify(prompt);
+            return Promise.resolve({
+              response: {
+                text: () =>
+                  JSON.stringify({
+                    title: "Test",
+                    content: "",
+                    lore: "",
+                    labels: [],
+                  }),
+              },
+            });
+          }),
+        };
+        const localClientManager = {
+          getModel: vi
+            .fn()
+            .mockImplementation(
+              (_a: unknown, _b: unknown, systemInstruction: unknown) => {
+                capturedSystemInstruction =
+                  typeof systemInstruction === "string"
+                    ? systemInstruction
+                    : JSON.stringify(systemInstruction ?? "");
+                return Promise.resolve(mockModel);
+              },
+            ),
+        };
+        const localEngine = new DefaultGeneratorEngine(
+          localClientManager as any,
+        );
+
+        await call(localEngine);
+
+        const fullPrompt =
+          capturedSystemInstruction + "\n" + capturedUserMessage;
+        expect(fullPrompt.trim()).toBeTruthy();
+        for (const name of BANNED_NAMES) {
+          expect(
+            fullPrompt,
+            `${label} prompt missing banned name "${name}"`,
+          ).toContain(name);
+        }
+      });
+    }
+  });
+
+  describe("session hub context", () => {
+    const captureEngine = () => {
+      const captured = { system: "", user: "" };
+      const mockModel = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          captured.user =
+            typeof prompt === "string" ? prompt : JSON.stringify(prompt);
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Test",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+      const manager = {
+        getModel: vi
+          .fn()
+          .mockImplementation((_a: unknown, _b: unknown, sys: unknown) => {
+            captured.system =
+              typeof sys === "string" ? sys : JSON.stringify(sys ?? "");
+            return Promise.resolve(mockModel);
+          }),
+      };
+      return { engine: new DefaultGeneratorEngine(manager as any), captured };
+    };
+
+    afterEach(() => {
+      sessionStorage.removeItem("__codex_session_drafts");
+    });
+
+    it("injects session hub drafts into the NPC prompt", async () => {
+      sessionStorage.setItem(
+        "__codex_session_drafts",
+        JSON.stringify([
+          {
+            type: "faction",
+            title: "The Iron Syndicate",
+            content:
+              "### Operations\nA merchants' guild controlling trade routes.",
+            labels: [],
+            status: "draft",
+          },
+        ]),
+      );
+      const { engine, captured } = captureEngine();
+      await engine.generateNPC({ useAI: true });
+      expect(captured.system + captured.user).toContain("The Iron Syndicate");
+    });
+
+    it("omits session context when the hub is empty", async () => {
+      const { engine, captured } = captureEngine();
+      await engine.generateNPC({ useAI: true });
+      expect(captured.system + captured.user).not.toContain(
+        "Existing campaign elements created this session",
+      );
     });
   });
 });

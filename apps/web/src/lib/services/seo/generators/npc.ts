@@ -1,4 +1,6 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
+import { getSessionContext } from "./session-context";
 import {
   type GeneratorOutput,
   generateName,
@@ -454,7 +456,7 @@ export async function generateNPC(
 
   const npcNamingStyles = [
     "Give the NPC a name that sounds distinctly local to their culture — not generic fantasy.",
-    "Use a name with unusual phonetic texture. Avoid Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, and similar overused patterns.",
+    `Use a name with unusual phonetic texture. ${NAME_BAN_PROMPT}`,
     "Give the NPC a short epithet or title that hints at their reputation — invent an original one, do not reuse common examples.",
     "Use a name that suggests a specific cultural or ethnic origin consistent with their ancestry.",
     "Choose a name that is easy to say aloud at a gaming table — short, distinct, memorable, and not a common English surname.",
@@ -495,9 +497,9 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 
 QUALITY RULES:
 - Every NPC must feel like a completely different person — avoid repeating names, archetypes, or backstory structures.
-- Avoid overused NPC name patterns. Do NOT use: Kael, Theron, Zara, Aldric, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
+- ${NAME_BAN_PROMPT}
+${getSessionContext()}
 - The secret should be genuinely surprising and table-usable, not a generic "dark past."
-- Place names must be specific and invented — no "the old district", "the lower city", "Oakhaven", "Millbrook", "Riverdale", or similar generic compound settlement names.
 - Before finalising, silently check for: name not on the forbidden list; secret is genuinely surprising and not contradicted by the stated role or faction connection; all four content sections are internally consistent (what they want should explain why they are useful; their secret should reframe who they are). Rewrite any section where a contradiction exists.`;
 
       const moralityAnchor = theme

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { socialHubConfig } from "$lib/services/seo/generator-engine";
+  import {
+    socialHubConfig,
+    pickFrom,
+  } from "$lib/services/seo/generator-engine";
 
   const fantasyVenueTypes = socialHubConfig.venueTypesByGenre["Fantasy"];
   const fantasyClienteles = socialHubConfig.clientelesByGenre["Fantasy"];
@@ -26,10 +29,6 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
-
-  function pick<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -122,16 +121,17 @@
   <button
     type="button"
     onclick={() => {
-      type = pick(fantasyVenueTypes);
-      atmosphere = pick(socialHubConfig.atmospheres);
-      settlementType = pick(socialHubConfig.settlementTypes);
-      wealthLevel = pick(socialHubConfig.wealthLevels);
-      clientele = pick(fantasyClienteles);
+      type = pickFrom(fantasyVenueTypes);
+      atmosphere = pickFrom(socialHubConfig.atmospheres);
+      settlementType = pickFrom(socialHubConfig.settlementTypes);
+      wealthLevel = pickFrom(socialHubConfig.wealthLevels);
+      clientele = pickFrom(fantasyClienteles);
       if (onSurprise) {
         onSurprise();
       }
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
     Surprise Me

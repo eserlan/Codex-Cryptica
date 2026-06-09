@@ -16,7 +16,7 @@ export {
 } from "./generators/faction";
 export { settlementConfig } from "./generators/settlement";
 export { magicItemConfig } from "./generators/magic-item";
-export { questConfig } from "./generators/quest";
+export { questConfig, themeToQuestGenre } from "./generators/quest";
 export { socialHubConfig } from "./generators/social-hub";
 export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 

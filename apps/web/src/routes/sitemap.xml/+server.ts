@@ -96,6 +96,12 @@ export async function GET() {
     "social-hub",
     "kingdom",
     "nation",
+    "quest",
+    "item",
+    "vampire-clan",
+    "names",
+    "fantasy-names",
+    "dnd-npc",
   ].map((slug) => ({
     path: `/generators/${slug}`,
     changefreq: "monthly",

@@ -1,4 +1,6 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
+import { getSessionContext } from "./session-context";
 import type { GeneratorOutput } from "./base";
 
 export const magicItemConfig = {
@@ -90,6 +92,8 @@ You must return a valid JSON object matching the following structure exactly:
   "lore": "Structured GM details (markdown formatted) detailing its magical properties, rarity, curse (if any), and legendary backstory.",
   "labels": ["rpg-item", "imported-draft"]
 }
+${NAME_BAN_PROMPT}
+${getSessionContext()}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
       const model = await clientManager.getModel(

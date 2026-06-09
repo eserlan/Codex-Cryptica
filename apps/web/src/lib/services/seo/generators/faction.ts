@@ -1,4 +1,6 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
+import { getSessionContext } from "./session-context";
 import { type GeneratorOutput, generateName, pickFrom } from "./base";
 
 export const factionConfig = {
@@ -378,7 +380,7 @@ export async function generateFaction(
   ];
   const npcNamingStyles = [
     "Give each NPC a name that sounds distinctly local — not generic fantasy.",
-    "Each NPC name should have an unusual phonetic texture. Avoid Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, and similar overused patterns.",
+    `Each NPC name should have an unusual phonetic texture. ${NAME_BAN_PROMPT}`,
     "Give each NPC a short street name or title that hints at their role — invent an original one, do not reuse common examples.",
     "Use names that suggest a specific cultural or ethnic origin consistent with the setting.",
     "Each NPC should have a name that is easy to say aloud at a gaming table.",
@@ -421,8 +423,8 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 QUALITY RULES:
 - Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
 - Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
-- NPC names must feel culturally specific and phonetically varied — do NOT use Kael, Zara, Theron, Vane, Kane, Drake, Stone, Grey, Ash, Cole, Maren, Cross, Vale, or common English monosyllable surnames.
-- Place names (bases, districts, landmarks) must be specific and invented — never use 'the old district', 'the lower city', 'Oakhaven', 'Millbrook', 'Riverdale', or similar generic compound settlement names. Every location should have a proper, distinctive name.
+- ${NAME_BAN_PROMPT}
+${getSessionContext()}
 - Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), logical alignment between public face and secret agenda. Rewrite if issues found.`;
 
       const userMessage = `Generate a faction. Variation seed: ${varianceSeed}.
@@ -598,6 +600,8 @@ You must return a valid JSON object matching the following structure exactly:
   "lore": "Structured GM details (markdown formatted) with sections for core fields, bloodline traits, feeding habits, weakness, dark agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
   "labels": ["rpg-faction", "vampire-clan", "imported-draft"]
 }
+${NAME_BAN_PROMPT}
+${getSessionContext()}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
       const model = await clientManager.getModel(

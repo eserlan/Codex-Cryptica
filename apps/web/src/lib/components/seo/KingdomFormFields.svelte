@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { kingdomConfig } from "$lib/services/seo/generator-engine";
+  import { kingdomConfig, pickFrom } from "$lib/services/seo/generator-engine";
 
   let {
     polityType = $bindable(kingdomConfig.polityTypes[0]),
@@ -25,10 +25,6 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
-
-  function pick<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -122,15 +118,16 @@
   <button
     type="button"
     onclick={() => {
-      polityType = pick(kingdomConfig.polityTypes);
-      governmentStyle = pick(kingdomConfig.governmentStyles);
-      geography = pick(kingdomConfig.geographies);
-      scale = pick(kingdomConfig.scales);
-      conflictLevel = pick(kingdomConfig.conflictLevels);
-      magicLevel = pick(kingdomConfig.magicLevels);
+      polityType = pickFrom(kingdomConfig.polityTypes);
+      governmentStyle = pickFrom(kingdomConfig.governmentStyles);
+      geography = pickFrom(kingdomConfig.geographies);
+      scale = pickFrom(kingdomConfig.scales);
+      conflictLevel = pickFrom(kingdomConfig.conflictLevels);
+      magicLevel = pickFrom(kingdomConfig.magicLevels);
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
     Surprise Me

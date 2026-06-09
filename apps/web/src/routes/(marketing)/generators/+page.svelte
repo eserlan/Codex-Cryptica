@@ -6,14 +6,21 @@
 
   const generators = [
     {
-      group: "Characters",
+      group: "Characters & NPCs",
       items: [
         {
-          href: "/generators/npc",
-          label: "NPC Generator",
+          href: "/generators/dnd-npc",
+          label: "D&D NPC Generator",
           summary:
-            "Create NPCs across six genres with a secret, faction tie, and table-ready hook.",
+            "Create a fantasy NPC with ancestry, role, personality, secret, faction tie, and plot hook.",
           icon: "icon-[lucide--user-round-plus]",
+        },
+        {
+          href: "/generators/npc",
+          label: "RPG NPC Generator",
+          summary:
+            "Generate NPCs across six genres — fantasy, cyberpunk, gothic, sci-fi, modern, and post-apocalyptic.",
+          icon: "icon-[lucide--users]",
         },
       ],
     },
@@ -27,17 +34,52 @@
             "Build guilds, megacorps, vampire clans, and rebel cells with agendas, conflicts, and NPCs.",
           icon: "icon-[lucide--flag]",
         },
+        {
+          href: "/generators/vampire-clan",
+          label: "Vampire Clan Generator",
+          summary:
+            "Create vampire clans, bloodlines, covens, and secret societies with dark agendas and plot hooks.",
+          icon: "icon-[lucide--moon]",
+        },
+        {
+          href: "/generators/names",
+          label: "RPG Name Generator",
+          summary:
+            "Generate character, place, faction, and item names for any genre and cultural style.",
+          icon: "icon-[lucide--pen-line]",
+        },
+        {
+          href: "/generators/fantasy-names",
+          label: "Fantasy Name Generator",
+          summary:
+            "Generate fantasy names across ten cultural styles — elven, dwarven, orcish, Norse, and more.",
+          icon: "icon-[lucide--feather]",
+        },
       ],
     },
     {
-      group: "Locations",
+      group: "Adventure & Worldbuilding",
       items: [
+        {
+          href: "/generators/quest",
+          label: "Quest Hook Generator",
+          summary:
+            "Create a GM-ready adventure seed with a complication, key NPC, twist, and reward.",
+          icon: "icon-[lucide--scroll-text]",
+        },
         {
           href: "/generators/settlement",
           label: "Settlement Generator",
           summary:
             "Draft towns and villages with economy, government, notable locations, and factions.",
           icon: "icon-[lucide--landmark]",
+        },
+        {
+          href: "/generators/magic-item",
+          label: "Magic Item Generator",
+          summary:
+            "Generate items with rarity, properties, history, and GM-facing lore.",
+          icon: "icon-[lucide--sparkles]",
         },
         {
           href: "/generators/tavern",
@@ -53,11 +95,6 @@
             "Generate a social venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas.",
           icon: "icon-[lucide--map-pin]",
         },
-      ],
-    },
-    {
-      group: "Nations & Realms",
-      items: [
         {
           href: "/generators/kingdom",
           label: "Kingdom Generator",
@@ -71,30 +108,6 @@
           summary:
             "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations.",
           icon: "icon-[lucide--globe]",
-        },
-      ],
-    },
-    {
-      group: "Adventures",
-      items: [
-        {
-          href: "/generators/quest",
-          label: "Quest Hook Generator",
-          summary:
-            "Create a GM-ready adventure seed with a complication, key NPC, twist, and reward.",
-          icon: "icon-[lucide--scroll-text]",
-        },
-      ],
-    },
-    {
-      group: "Items & Names",
-      items: [
-        {
-          href: "/generators/magic-item",
-          label: "Magic Item Generator",
-          summary:
-            "Generate items with rarity, properties, history, and GM-facing lore.",
-          icon: "icon-[lucide--sparkles]",
         },
       ],
     },
