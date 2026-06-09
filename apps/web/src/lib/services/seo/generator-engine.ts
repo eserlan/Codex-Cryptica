@@ -1368,7 +1368,7 @@ export const nationConfig = {
 
 export const kingdomConfig = {
   polityTypes: nationConfig.polityTypesByGenre["Fantasy"],
-  governmentStyles: nationConfig.governmentStyles.slice(0, 6),
+  governmentStyles: nationConfig.governmentStyles.slice(0, 7),
   geographies: [
     "Temperate highlands",
     "Coastal plains",
@@ -3362,7 +3362,7 @@ Use ${stateName} as a campaign backdrop, the source of a mission, or the prize i
 - **Faction**: ${bloc1}
 - **Faction**: ${bloc2}
 - **Location**: ${capitalName} (centre of power)
-- **Event**: The crisis behind ${trouble.split(" ")[0].toLowerCase()} ${trouble.split(" ")[1] ?? ""}`;
+- **Event**: The crisis — ${trouble}`;
 
     return {
       type: "faction",
