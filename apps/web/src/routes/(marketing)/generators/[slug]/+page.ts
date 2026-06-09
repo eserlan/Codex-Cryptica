@@ -14,6 +14,10 @@ const validSlugs = new Set([
   "social-hub",
   "kingdom",
   "nation",
+  "vampire-clan",
+  "names",
+  "fantasy-names",
+  "dnd-npc",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -31,7 +35,11 @@ export const load: PageLoad = ({ params }) => {
       | "tavern"
       | "social-hub"
       | "kingdom"
-      | "nation",
+      | "nation"
+      | "vampire-clan"
+      | "names"
+      | "fantasy-names"
+      | "dnd-npc",
   };
 };
 
@@ -47,5 +55,9 @@ export const entries: EntryGenerator = () => {
     { slug: "social-hub" },
     { slug: "kingdom" },
     { slug: "nation" },
+    { slug: "vampire-clan" },
+    { slug: "names" },
+    { slug: "fantasy-names" },
+    { slug: "dnd-npc" },
   ];
 };

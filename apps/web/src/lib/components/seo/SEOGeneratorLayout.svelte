@@ -7,6 +7,8 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { renderMarkdown as renderMd } from "$lib/utils/markdown";
+  import { SESSION_DRAFTS_KEY } from "$lib/services/seo/generators/session-context";
 
   let {
     canonicalPath,
@@ -23,6 +25,7 @@
     formFields,
     worldTheme = "workspace",
     initialDraft = null,
+    variant = "default",
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -38,6 +41,7 @@
     formFields: Snippet<[() => void]>;
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
+    variant?: "default" | "names";
   } = $props();
 
   const HIDDEN_TAGS = new Set([
@@ -53,6 +57,7 @@
     "rpg-quest",
     "quest-generator",
     "rpg-names",
+    "fantasy-name",
     "name-generator",
   ]);
 
@@ -262,35 +267,23 @@
     }
   }
 
-  const escapeHtml = (value: string) =>
-    value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+  const labelValueHtml = (label: string, value: string) =>
+    `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-primary mb-0.5">${renderMd(label, { inline: true })}</span><span>${renderMd(value, { inline: true })}</span></div>\n`;
 
-  const LABEL_VALUE_HTML =
-    '<div class="flex flex-col mb-1"><span class="font-bold text-theme-muted uppercase tracking-wider text-[9px]">$1</span><span>$2</span></div>';
-
+  // Label/value pairs ("- **Key**: value") get a bespoke stacked layout
+  // marked can't produce; everything else is delegated to marked.
   const renderMarkdown = (value: string) =>
-    escapeHtml(value)
-      .replace(
-        /^#{3} (.*)$/gm,
-        '<h3 class="font-header font-bold text-base mt-4 mb-2 text-theme-primary">$1</h3>',
-      )
-      .replace(
-        /^#{2} (.*)$/gm,
-        '<h2 class="font-header font-bold text-lg mt-6 mb-3 border-b border-theme-border/40 pb-1">$1</h2>',
-      )
-      // bold-key variant: "- **Key**: value" or "* **Key**: value"
-      .replace(/^[*-] \*\*(.*?)\*\*: (.*)$/gm, LABEL_VALUE_HTML)
-      // plain-key variant: "* Key: value" or "- Key: value" (key ≤ 60 chars, no colon in key)
-      .replace(/^[*-] ([A-Za-z][^:\n]{0,58}): (.+)$/gm, LABEL_VALUE_HTML)
-      // remaining bullets
-      .replace(/^[*-] (.*)$/gm, '<li class="list-disc ml-4">$1</li>')
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\n\n/g, "<br/><br/>");
+    renderMd(
+      value
+        // bold-key variant: "- **Key**: value" or "* **Key**: value"
+        .replace(/^[*-] \*\*(.*?)\*\*: (.*)$/gm, (_, k, v) =>
+          labelValueHtml(k, v),
+        )
+        // plain-key variant: "* Key: value" or "- Key: value" (key ≤ 60 chars, no colon in key)
+        .replace(/^[*-] ([A-Za-z][^:\n]{0,58}): (.+)$/gm, (_, k, v) =>
+          labelValueHtml(k, v),
+        ),
+    );
 
   const renderLore = (value: string) =>
     renderMarkdown(value).replace(
@@ -311,7 +304,7 @@
 
   onMount(() => {
     if (typeof sessionStorage !== "undefined") {
-      const stored = sessionStorage.getItem("__codex_session_drafts");
+      const stored = sessionStorage.getItem(SESSION_DRAFTS_KEY);
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -328,10 +321,7 @@
   function saveSessionDrafts(newDrafts: SessionDraft[]) {
     sessionDrafts = newDrafts;
     if (typeof sessionStorage !== "undefined") {
-      sessionStorage.setItem(
-        "__codex_session_drafts",
-        JSON.stringify(newDrafts),
-      );
+      sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(newDrafts));
     }
   }
 
@@ -510,7 +500,7 @@
           >Devlog</a
         >
         <a
-          href="{base}/tools/dnd-npc-generator"
+          href="{base}/generators"
           class="hover:text-theme-primary transition-colors">Generators</a
         >
       </nav>
@@ -552,6 +542,7 @@
         aria-busy={isGenerating}
         class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
         id="strip-generate-btn"
+        title="Generate a new draft using your current form inputs"
       >
         {#if isGenerating}
           <span
@@ -577,10 +568,33 @@
       bind:this={outputCard}
     >
       <div
-        class="flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
+        class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
+        {#if isGenerating}
+          <div
+            in:fade={{ duration: 150 }}
+            class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              class="icon-[lucide--loader-2] animate-spin w-10 h-10 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <p
+              class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse"
+            >
+              Forging {generatedSingular}...
+            </p>
+          </div>
+        {/if}
         {#if generatedData}
-          <div in:fade={{ duration: 250 }} class="flex flex-col flex-grow">
+          <div
+            in:fade={{ duration: 250 }}
+            class="flex flex-col flex-grow transition-opacity duration-300 {isGenerating
+              ? 'opacity-40'
+              : ''}"
+          >
             <div class="border-b border-theme-border/60 pb-4 mb-6">
               <div class="flex items-start gap-3 flex-wrap">
                 <h2
@@ -616,28 +630,33 @@
                   {/each}
                 </div>
                 <div class="flex gap-2 flex-wrap items-center flex-shrink-0">
-                  <button
-                    type="button"
-                    onclick={handleSaveToCodex}
-                    class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
-                    id="save-to-codex-btn"
-                  >
-                    Save to Codex
-                  </button>
-                  <button
-                    type="button"
-                    onclick={addToSessionHub}
-                    class="px-4 py-2 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
-                    id="add-to-hub-btn"
-                  >
-                    <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
-                    Link to Hub
-                  </button>
+                  {#if variant !== "names"}
+                    <button
+                      type="button"
+                      onclick={handleSaveToCodex}
+                      class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+                      id="save-to-codex-btn"
+                      title="Import this draft into your local Codex Cryptica vault"
+                    >
+                      Save to Codex
+                    </button>
+                    <button
+                      type="button"
+                      onclick={addToSessionHub}
+                      class="px-4 py-2 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
+                      id="add-to-hub-btn"
+                      title="Add this draft to the Session Hub to bundle several drafts before exporting"
+                    >
+                      <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+                      Link to Hub
+                    </button>
+                  {/if}
                   <button
                     type="button"
                     onclick={handleCopyMarkdown}
                     class="px-4 py-2 bg-theme-surface border border-theme-border/80 text-theme-text font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:border-theme-primary/60 transition-all flex items-center gap-1.5"
                     id="copy-markdown-btn"
+                    title="Copy this draft as markdown to your clipboard"
                   >
                     <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
                     {copied ? "Copied!" : "Copy"}
@@ -647,7 +666,10 @@
             </div>
 
             <div
-              class="space-y-4 text-sm leading-relaxed text-theme-text/90 flex-grow"
+              class="seo-md text-sm leading-relaxed text-theme-text/90 flex-grow {variant ===
+              'names'
+                ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
+                : 'space-y-4'}"
               data-theme={worldTheme}
             >
               {@html renderMarkdown(generatedData.content || "")}
@@ -677,109 +699,114 @@
 
     <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
     <div class="lg:col-span-3 order-3 lg:order-3">
-      <div
-        class="p-5 bg-theme-surface/20 border border-theme-border/40 rounded-2xl shadow-sm sticky top-24"
-      >
-        {#if generatedData}
-          <div
-            in:fade={{ duration: 250 }}
-            class="text-sm leading-relaxed text-theme-text/80"
-          >
-            {@html renderLore(generatedData.lore || "")}
-          </div>
-        {:else}
-          <div
-            class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-          >
-            <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
-            <p class="text-[10px] uppercase tracking-widest font-header">
-              At the Table
-            </p>
-            <p class="text-sm mt-2 leading-relaxed">
-              GM utility details appear here after generation.
-            </p>
-          </div>
-        {/if}
-      </div>
-
-      <!-- Session Hub Widget -->
-      <div
-        class="p-5 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm mt-6 flex flex-col gap-3 sticky top-[28rem]"
-      >
+      <div class="sticky top-24 flex flex-col gap-6">
         <div
-          class="flex items-center justify-between border-b border-theme-border/60 pb-2"
+          class="p-5 bg-theme-surface/20 border border-theme-border/40 rounded-2xl shadow-sm"
         >
-          <h3
-            class="font-header font-bold text-xs uppercase tracking-wider text-theme-primary"
+          {#if generatedData}
+            <div
+              in:fade={{ duration: 250 }}
+              class="seo-md text-sm leading-relaxed text-theme-text/80"
+            >
+              {@html renderLore(generatedData.lore || "")}
+            </div>
+          {:else}
+            <div
+              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
+            >
+              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
+              <p class="text-[10px] uppercase tracking-widest font-header">
+                At the Table
+              </p>
+              <p class="text-sm mt-2 leading-relaxed">
+                GM utility details appear here after generation.
+              </p>
+            </div>
+          {/if}
+        </div>
+
+        <!-- Session Hub Widget -->
+        <div
+          class="p-5 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex-col gap-3 {variant ===
+          'names'
+            ? 'hidden'
+            : 'flex'}"
+        >
+          <div
+            class="flex items-center justify-between border-b border-theme-border/60 pb-2"
           >
-            Session Hub
-          </h3>
-          {#if sessionDrafts.length > 0}
+            <h3
+              class="font-header font-bold text-xs uppercase tracking-wider text-theme-primary"
+            >
+              Session Hub
+            </h3>
+            {#if sessionDrafts.length > 0}
+              <button
+                type="button"
+                onclick={clearSessionHub}
+                class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300"
+              >
+                Clear
+              </button>
+            {/if}
+          </div>
+          {#if sessionDrafts.length === 0}
+            <p class="text-[10px] text-theme-muted leading-relaxed">
+              Generate drafts and click "Link to Hub" to build a connected
+              campaign vault before exporting.
+            </p>
+          {:else}
+            <ul class="space-y-2 max-h-[200px] overflow-y-auto">
+              {#each sessionDrafts as draft (draft.title)}
+                <li
+                  class="flex items-center justify-between gap-2 p-2 bg-theme-surface/45 border border-theme-border/30 rounded-lg text-xs"
+                >
+                  <span
+                    class="truncate font-medium text-theme-text/90 flex items-center gap-1.5"
+                  >
+                    {#if draft.type === "character"}
+                      <span
+                        class="icon-[lucide--user] w-3.5 h-3.5 text-theme-primary"
+                      ></span>
+                    {:else if draft.type === "faction"}
+                      <span
+                        class="icon-[lucide--flag] w-3.5 h-3.5 text-theme-primary"
+                      ></span>
+                    {:else if draft.type === "settlement" || draft.type === "location"}
+                      <span
+                        class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+                      ></span>
+                    {:else if draft.type === "item"}
+                      <span
+                        class="icon-[lucide--sparkles] w-3.5 h-3.5 text-theme-primary"
+                      ></span>
+                    {:else}
+                      <span
+                        class="icon-[lucide--file-text] w-3.5 h-3.5 text-theme-primary"
+                      ></span>
+                    {/if}
+                    {draft.title}
+                  </span>
+                  <button
+                    type="button"
+                    onclick={() => removeFromSessionHub(draft.title)}
+                    class="text-theme-muted hover:text-rose-400 transition-colors flex-shrink-0"
+                    aria-label="Remove draft"
+                  >
+                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
             <button
               type="button"
-              onclick={clearSessionHub}
-              class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300"
+              onclick={handleSaveAllToCodex}
+              class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-1"
             >
-              Clear
+              Save Hub to Codex ({sessionDrafts.length})
             </button>
           {/if}
         </div>
-        {#if sessionDrafts.length === 0}
-          <p class="text-[10px] text-theme-muted leading-relaxed">
-            Generate drafts and click "Link to Hub" to build a connected
-            campaign vault before exporting.
-          </p>
-        {:else}
-          <ul class="space-y-2 max-h-[200px] overflow-y-auto">
-            {#each sessionDrafts as draft (draft.title)}
-              <li
-                class="flex items-center justify-between gap-2 p-2 bg-theme-surface/45 border border-theme-border/30 rounded-lg text-xs"
-              >
-                <span
-                  class="truncate font-medium text-theme-text/90 flex items-center gap-1.5"
-                >
-                  {#if draft.type === "character"}
-                    <span
-                      class="icon-[lucide--user] w-3.5 h-3.5 text-theme-primary"
-                    ></span>
-                  {:else if draft.type === "faction"}
-                    <span
-                      class="icon-[lucide--flag] w-3.5 h-3.5 text-theme-primary"
-                    ></span>
-                  {:else if draft.type === "settlement" || draft.type === "location"}
-                    <span
-                      class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
-                    ></span>
-                  {:else if draft.type === "item"}
-                    <span
-                      class="icon-[lucide--sparkles] w-3.5 h-3.5 text-theme-primary"
-                    ></span>
-                  {:else}
-                    <span
-                      class="icon-[lucide--file-text] w-3.5 h-3.5 text-theme-primary"
-                    ></span>
-                  {/if}
-                  {draft.title}
-                </span>
-                <button
-                  type="button"
-                  onclick={() => removeFromSessionHub(draft.title)}
-                  class="text-theme-muted hover:text-rose-400 transition-colors flex-shrink-0"
-                  aria-label="Remove draft"
-                >
-                  <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-          <button
-            type="button"
-            onclick={handleSaveAllToCodex}
-            class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-1"
-          >
-            Save Hub to Codex ({sessionDrafts.length})
-          </button>
-        {/if}
       </div>
     </div>
 
@@ -788,6 +815,14 @@
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
+        <a
+          href="{base}/generators"
+          class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
+        >
+          <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
+          ></span>
+          All generators
+        </a>
         <div
           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
         >
@@ -824,7 +859,26 @@
         >
           {@render formFields(() => void handleGenerate())}
 
-          <div class="flex items-center gap-2 pt-2">
+          <button
+            type="submit"
+            disabled={isGenerating}
+            aria-busy={isGenerating}
+            class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            id="generate-button"
+            title="Generate a new draft using your current form inputs"
+          >
+            {#if isGenerating}
+              <span
+                class="icon-[lucide--loader-2] animate-spin w-4 h-4"
+                aria-hidden="true"
+              ></span>
+              Forging...
+            {:else}
+              Generate {generatedSingular}
+            {/if}
+          </button>
+
+          <div class="flex items-center gap-2 pt-1">
             <input
               type="checkbox"
               id="ai-toggle"
@@ -834,6 +888,7 @@
             <label
               for="ai-toggle"
               class="text-[10px] font-bold uppercase tracking-wider text-theme-muted cursor-pointer flex items-center gap-1"
+              title="When enabled, an AI writes richer, unique lore. When off, drafts are built from local tables — fast and fully offline."
             >
               <span
                 class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
@@ -841,26 +896,6 @@
               AI Lore Co-Author Mode
             </label>
           </div>
-
-          <button
-            type="submit"
-            disabled={isGenerating}
-            aria-busy={isGenerating}
-            class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            id="generate-button"
-          >
-            {#if isGenerating}
-              <span
-                class="icon-[lucide--loader-2] animate-spin w-4 h-4"
-                aria-hidden="true"
-              ></span>
-              Forging...
-            {:else}
-              <span class="icon-[lucide--dice-5] w-4 h-4" aria-hidden="true"
-              ></span>
-              ✦ Generate {generatedSingular} ✦
-            {/if}
-          </button>
         </form>
 
         {#if errorMessage}
@@ -1016,3 +1051,34 @@
     </div>
   </footer>
 </div>
+
+<style>
+  .seo-md :global(h2) {
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin: 1.5rem 0 0.75rem;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-border) 40%, transparent);
+    padding-bottom: 0.25rem;
+  }
+  .seo-md :global(h3) {
+    font-family: var(--font-header);
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 1rem 0 0.5rem;
+    color: var(--color-primary);
+  }
+  .seo-md :global(ul) {
+    list-style: disc;
+    margin-left: 1rem;
+  }
+  .seo-md :global(p) {
+    margin-bottom: 0.75rem;
+  }
+  .seo-md :global(.seo-label) {
+    text-shadow: 0 0 10px
+      color-mix(in srgb, var(--color-primary) 70%, transparent);
+    filter: brightness(1.2);
+  }
+</style>

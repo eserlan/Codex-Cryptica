@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { nationConfig } from "$lib/services/seo/generator-engine";
+  import { nationConfig, pickFrom } from "$lib/services/seo/generator-engine";
 
   let {
     genre = $bindable(nationConfig.genres[0]),
@@ -36,10 +36,6 @@
       polityType = polityTypes[0];
     }
   });
-
-  function pick<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -123,13 +119,14 @@
       const currentPolityTypes =
         nationConfig.polityTypesByGenre[genre] ??
         nationConfig.polityTypesByGenre["Fantasy"];
-      polityType = pick(currentPolityTypes);
-      governmentStyle = pick(nationConfig.governmentStyles);
-      scale = pick(nationConfig.scales);
-      conflictLevel = pick(nationConfig.conflictLevels);
+      polityType = pickFrom(currentPolityTypes);
+      governmentStyle = pickFrom(nationConfig.governmentStyles);
+      scale = pickFrom(nationConfig.scales);
+      conflictLevel = pickFrom(nationConfig.conflictLevels);
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
     Surprise Me

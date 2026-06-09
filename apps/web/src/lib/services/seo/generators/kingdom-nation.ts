@@ -1,4 +1,6 @@
 import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+import { NAME_BAN_PROMPT } from "./banned-names";
+import { getSessionContext } from "./session-context";
 import { type GeneratorOutput, generateName, pickFrom } from "./base";
 
 const REALM_ROOTS = [
@@ -259,7 +261,9 @@ QUALITY RULES:
 - Each faction should have a clear agenda that creates tension with another faction.
 - Rumours should be specific and actionable — something a party could investigate.
 - Entity seeds should suggest concrete Codex entries a GM would actually create.
-- All names must be invented — avoid generic English words as names.`;
+- All names must be invented — avoid generic English words as names.
+- ${NAME_BAN_PROMPT}
+${getSessionContext()}`;
 
       const namingStyles = [
         "Use a compound place-word as the realm name (e.g. 'Ashenveil Kingdom', 'Irongate Empire', 'Duskwall Duchy').",
@@ -418,7 +422,9 @@ QUALITY RULES:
 - The leader/authority must have a name, a defining trait, and a secret motive.
 - Each power bloc should have an agenda that creates tension.
 - Rumours should be specific and actionable.
-- Entity seeds should suggest concrete Codex entries a GM would actually create.`;
+- Entity seeds should suggest concrete Codex entries a GM would actually create.
+- ${NAME_BAN_PROMPT}
+${getSessionContext()}`;
 
       const userMessage = `Generate a political entity. Variation seed: ${varianceSeed}.
 - Genre / Setting: ${genre}

@@ -8,8 +8,12 @@
   import SocialHubFormFields from "$lib/components/seo/SocialHubFormFields.svelte";
   import KingdomFormFields from "$lib/components/seo/KingdomFormFields.svelte";
   import NationFormFields from "$lib/components/seo/NationFormFields.svelte";
+  import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
+  import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
+  import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import {
     generatorEngine,
+    npcConfig,
     npcThemeConfig,
     settlementConfig,
     magicItemConfig,
@@ -18,7 +22,10 @@
     socialHubConfig,
     kingdomConfig,
     nationConfig,
+    vampireConfig,
+    nameGeneratorConfig,
     themeIdToLabel,
+    themeToQuestGenre,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
 
@@ -136,6 +143,50 @@
         "Create a campaign-ready tavern with atmosphere, owner, notable patrons, rumours, and a hidden problem. Works without login, then imports into your local vault.",
       canonicalPath: "/generators/tavern",
     },
+    "vampire-clan": {
+      pageTitle:
+        "Vampire Clan Generator | Free RPG Bloodline & Coven Tool | Codex Cryptica",
+      metaDescription:
+        "Create detailed vampire clans, bloodlines, occult covens, and secret societies. Generate history, feeding habits, weaknesses, and plot hooks for your campaign.",
+      introTitle: "Vampire Clan Generator",
+      eyebrow: "Vampire Clan Generator",
+      introText:
+        "Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      canonicalPath: "/generators/vampire-clan",
+    },
+    names: {
+      pageTitle:
+        "RPG Name Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Names | Codex Cryptica",
+      metaDescription:
+        "Generate names for characters, places, factions, and items across any genre — fantasy, cyberpunk, gothic horror, sci-fi, and more. Free for any tabletop RPG.",
+      introTitle: "RPG Name Generator",
+      eyebrow: "Name Generator",
+      introText:
+        "Generate names for characters, places, factions, and items in any genre. Pick a vibe and culture, steer with optional context, and copy your favourites.",
+      canonicalPath: "/generators/names",
+    },
+    "fantasy-names": {
+      pageTitle:
+        "Fantasy Name Generator | Free RPG & Worldbuilding Name Tool | Codex Cryptica",
+      metaDescription:
+        "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Free for D&D, Pathfinder, worldbuilding, and any tabletop RPG.",
+      introTitle: "Fantasy Name Generator",
+      eyebrow: "Fantasy Name Generator",
+      introText:
+        "Generate fantasy names for characters, places, factions, and items across ten cultural styles. Works without login — copy your favourites for your campaign.",
+      canonicalPath: "/generators/fantasy-names",
+    },
+    "dnd-npc": {
+      pageTitle:
+        "D&D NPC Generator | Free Fantasy Character Creator | Codex Cryptica",
+      metaDescription:
+        "Create a fantasy NPC with ancestry, role, personality, secret, faction tie, and plot hook. Works without login. Save into your Codex Cryptica campaign vault.",
+      introTitle: "D&D NPC Generator",
+      eyebrow: "D&D NPC Generator",
+      introText:
+        "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/dnd-npc",
+    },
   } as const;
 
   const meta = $derived(slugMeta[data.slug]);
@@ -215,6 +266,28 @@
     campaignContext: "",
   });
 
+  let vampireClan = $state({
+    archetype: vampireConfig.archetypes[0],
+    bloodline: vampireConfig.bloodlines[0],
+    feedingHabit: vampireConfig.feedingHabits[0],
+    weakness: vampireConfig.weaknesses[0],
+    campaignContext: "",
+  });
+
+  let names = $state({
+    culture: nameGeneratorConfig.cultures[0],
+    gender: nameGeneratorConfig.genders[0],
+    nameType: nameGeneratorConfig.nameTypes[0],
+    context: "",
+  });
+
+  let dndNpc = $state({
+    race: npcConfig.races[0],
+    role: npcConfig.roles[0],
+    alignment: npcConfig.alignments[0],
+    campaignContext: "",
+  });
+
   const socialHubGenreToTheme: Record<string, string> = {
     Fantasy: "Classic Fantasy",
     "Dark Fantasy": "Vampire / Gothic Noir",
@@ -233,6 +306,8 @@
   $effect(() => {
     if (data.slug === "npc") npc.theme = activeTheme;
     else if (data.slug === "faction") faction.theme = activeTheme;
+    else if (data.slug === "quest")
+      quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
     else if (data.slug === "social-hub")
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
     else if (data.slug === "nation")
@@ -249,7 +324,20 @@
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
       return;
     }
+    if (data.slug === "vampire-clan") {
+      activeTheme = "Vampire / Gothic Noir";
+      return;
+    }
+    if (
+      data.slug === "dnd-npc" ||
+      data.slug === "fantasy-names" ||
+      data.slug === "tavern"
+    ) {
+      activeTheme = "Classic Fantasy";
+      return;
+    }
     const stored = localStorage.getItem("codex-cryptica-active-theme");
+    // quest, npc, faction all fall through to read stored theme
     if (stored && themeIdToLabel[stored]) {
       activeTheme = themeIdToLabel[stored];
     }
@@ -274,6 +362,22 @@
       return generatorEngine.generateNation({ ...nation, useAI });
     } else if (data.slug === "social-hub") {
       return generatorEngine.generateSocialHub({ ...socialHub, useAI });
+    } else if (data.slug === "vampire-clan") {
+      return generatorEngine.generateVampireClan({ ...vampireClan, useAI });
+    } else if (data.slug === "names") {
+      return generatorEngine.generateNames({
+        ...names,
+        theme: activeTheme,
+        useAI,
+      });
+    } else if (data.slug === "fantasy-names") {
+      return generatorEngine.generateNames({
+        ...names,
+        theme: "Classic Fantasy",
+        useAI,
+      });
+    } else if (data.slug === "dnd-npc") {
+      return generatorEngine.generateNPC({ ...dndNpc, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -292,12 +396,12 @@
     },
     settlement: {
       type: "location",
-      title: "Oakhaven",
-      summary: "A quiet timber outpost nestled in the Great Forest.",
+      title: "Cinderveil",
+      summary: "A fortified mining town built into a dormant volcanic ridge.",
       content:
-        "### Geography\nSurrounded by ancient oaks and swift-running creeks.\n\n### Economy\nLumber, rare forest herbs, and hunting trade.",
+        "### Geography\nPerched above a network of ash-grey tunnels, the town's foundries run day and night.\n\n### Economy\nOre refining, black-market gems, and a militia that charges tolls on three mountain passes.",
       lore: "",
-      labels: ["rpg-settlement", "Outpost", "Forest"],
+      labels: ["rpg-settlement", "Mining", "Fortified"],
       status: "draft",
     },
     "magic-item": {
@@ -365,6 +469,47 @@
       labels: ["rpg-location", "tavern-generator", "imported-draft"],
       status: "draft",
     },
+    "vampire-clan": {
+      type: "faction",
+      title: "House of Thorn",
+      summary:
+        "An aristocratic bloodline that controls the city's banking houses from behind a veil of old money and older secrets.",
+      content:
+        "### Heritage\nAristocratic lineage feeding on the upper-class elite. The clan operates through mortal proxies in finance, law, and the clergy.\n\n### Clan Weakness\nSilver and consecrated ground erode their power — they avoid both with practised care.",
+      lore: "",
+      labels: ["rpg-faction", "vampire-clan", "imported-draft"],
+      status: "draft",
+    },
+    names: {
+      type: "character",
+      title: "Generic Fantasy Names — Person",
+      summary: "",
+      content:
+        "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
+      lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+      labels: ["fantasy-name", "name-generator", "imported-draft"],
+      status: "draft",
+    },
+    "fantasy-names": {
+      type: "character",
+      title: "Generic Fantasy Names — Person",
+      summary: "",
+      content:
+        "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
+      lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+      labels: ["fantasy-name", "name-generator", "imported-draft"],
+      status: "draft",
+    },
+    "dnd-npc": {
+      type: "character",
+      title: "Elowen Ashford",
+      summary: "A half-elf rogue with a hidden past and a talent for leverage.",
+      content:
+        "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine — mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
+      lore: "",
+      labels: ["rpg-npc", "Rogue", "Half-Elf"],
+      status: "draft",
+    },
   };
 
   const initialDraft = $derived(slugDrafts[data.slug]);
@@ -386,9 +531,18 @@
   isThemeCustomizable={data.slug === "faction" ||
     data.slug === "npc" ||
     data.slug === "social-hub" ||
-    data.slug === "nation"}
+    data.slug === "nation" ||
+    data.slug === "vampire-clan" ||
+    data.slug === "dnd-npc" ||
+    data.slug === "quest" ||
+    data.slug === "names" ||
+    data.slug === "fantasy-names" ||
+    data.slug === "tavern"}
   {generate}
   {initialDraft}
+  variant={data.slug === "names" || data.slug === "fantasy-names"
+    ? "names"
+    : "default"}
 >
   {#snippet formFields(trigger)}
     {#if data.slug === "npc"}
@@ -463,7 +617,7 @@
       />
     {:else if data.slug === "quest"}
       <QuestFormFields
-        bind:genre={quest.genre}
+        bind:theme={activeTheme}
         bind:tone={quest.tone}
         bind:scope={quest.scope}
         bind:locationType={quest.locationType}
@@ -471,6 +625,7 @@
         bind:twist={quest.twist}
         bind:reward={quest.reward}
         bind:campaignContext={quest.campaignContext}
+        onSurprise={trigger}
       />
     {:else if data.slug === "kingdom"}
       <KingdomFormFields
@@ -511,6 +666,39 @@
         bind:wealthLevel={tavern.wealthLevel}
         bind:clientele={tavern.clientele}
         bind:campaignContext={tavern.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "vampire-clan"}
+      <VampireFormFields
+        bind:archetype={vampireClan.archetype}
+        bind:bloodline={vampireClan.bloodline}
+        bind:feedingHabit={vampireClan.feedingHabit}
+        bind:weakness={vampireClan.weakness}
+        bind:campaignContext={vampireClan.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "names"}
+      <NameFormFields
+        bind:theme={activeTheme}
+        showTheme={true}
+        bind:culture={names.culture}
+        bind:gender={names.gender}
+        bind:nameType={names.nameType}
+        bind:context={names.context}
+      />
+    {:else if data.slug === "fantasy-names"}
+      <NameFormFields
+        bind:culture={names.culture}
+        bind:gender={names.gender}
+        bind:nameType={names.nameType}
+        bind:context={names.context}
+      />
+    {:else if data.slug === "dnd-npc"}
+      <NPCFormFields
+        bind:race={dndNpc.race}
+        bind:role={dndNpc.role}
+        bind:alignment={dndNpc.alignment}
+        bind:campaignContext={dndNpc.campaignContext}
         onSurprise={trigger}
       />
     {/if}
