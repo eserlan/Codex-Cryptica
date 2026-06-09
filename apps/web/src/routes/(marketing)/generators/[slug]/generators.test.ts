@@ -29,6 +29,8 @@ describe("Generators SvelteKit Route", () => {
         { slug: "item" },
         { slug: "tavern" },
         { slug: "social-hub" },
+        { slug: "kingdom" },
+        { slug: "nation" },
       ]);
     });
   });
