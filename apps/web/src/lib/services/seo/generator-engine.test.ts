@@ -393,6 +393,102 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateSocialHub", () => {
+    it("should generate a venue using local fallback when useAI is false", async () => {
+      const res = await engine.generateSocialHub({
+        genre: "Cyberpunk",
+        venueType: "Noodle Bar",
+        atmosphere: "Tense and suspicious",
+        wealthLevel: "Poor (cheap but honest)",
+        clientele: "Hackers and netrunners",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.title).toBeDefined();
+      expect(res.title).not.toMatch(/The .* The /);
+      expect(res.summary).toContain("noodle bar");
+      expect(res.content).toContain("### The Place");
+      expect(res.content).toContain("### The Trouble");
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("### Notable Regulars");
+      expect(res.lore).toContain("### Rumours");
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.labels).toContain("social-hub-generator");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include campaign context in local fallback output", async () => {
+      const res = await engine.generateSocialHub({
+        genre: "Western",
+        venueType: "Saloon",
+        campaignContext: "a lawless frontier town",
+        useAI: false,
+      });
+
+      expect(res.content).toContain("a lawless frontier town");
+    });
+
+    it("should use genre-appropriate venue types in local fallback", async () => {
+      const res = await engine.generateSocialHub({
+        genre: "Sci-Fi",
+        venueType: "Spaceport Cantina",
+        useAI: false,
+      });
+
+      expect(res.summary).toContain("spaceport cantina");
+    });
+
+    it("should call clientManager when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Reyes' Noodle Hole",
+                summary: "A cramped cyberpunk noodle bar.",
+                content: "### The Place\nAI content.",
+                lore: "### At a Glance\nAI lore.",
+                labels: [
+                  "rpg-location",
+                  "social-hub-generator",
+                  "imported-draft",
+                ],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateSocialHub({
+        genre: "Cyberpunk",
+        venueType: "Noodle Bar",
+        campaignContext: "a corp-controlled district",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("a corp-controlled district"),
+      );
+      expect(res.title).toBe("Reyes' Noodle Hole");
+      expect(res.labels).toContain("social-hub-generator");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generateSocialHub({
+        genre: "Fantasy",
+        venueType: "Tavern / Inn",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("location");
+      expect(res.labels).toContain("social-hub-generator");
+    });
+  });
+
   describe("generateTavern", () => {
     it("should generate tavern details using local fallback when useAI is false", async () => {
       const res = await engine.generateTavern({
