@@ -493,7 +493,7 @@ Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a
 - **Resource**: ${factionResource(factionType)}
 - **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
 - **Secret**: ${conflict}
-- **Immediate hook**: ${hook}
+- **Immediate Hook**: ${hook}
 
 ### Notable NPCs
 - **${leader}**: Public face who insists every deal serves the common good.
