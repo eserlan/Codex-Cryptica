@@ -244,6 +244,12 @@
     if (stored && themeIdToLabel[stored]) {
       activeTheme = themeIdToLabel[stored];
     }
+    // For genre-driven generators the theme follows the genre dropdown, not localStorage
+    if (data.slug === "nation") {
+      activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
+    } else if (data.slug === "social-hub") {
+      activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+    }
   });
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -376,8 +382,7 @@
   bind:theme={activeTheme}
   isThemeCustomizable={data.slug === "faction" ||
     data.slug === "npc" ||
-    data.slug === "social-hub" ||
-    data.slug === "nation"}
+    data.slug === "social-hub"}
   {generate}
   {initialDraft}
 >
