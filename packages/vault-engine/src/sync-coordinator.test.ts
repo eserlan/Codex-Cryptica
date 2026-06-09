@@ -165,6 +165,28 @@ describe("SyncCoordinator", () => {
       );
     });
 
+    it("should honor an AbortSignal passed as the legacy trailing argument", async () => {
+      mockIO.getLocalHandle.mockResolvedValue(null);
+      const onStateChange = vi.fn();
+      const controller = new AbortController();
+      controller.abort();
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        "pull",
+        {},
+        vi.fn(),
+        onStateChange,
+        vi.fn(),
+        controller.signal as any,
+      );
+
+      // Aborted before doing anything: no error state, no picker.
+      expect(onStateChange).not.toHaveBeenCalled();
+      expect(mockIO.showDirectoryPicker).not.toHaveBeenCalled();
+    });
+
     it("should handle save queue timeout", async () => {
       mockIO.getLocalHandle.mockResolvedValue({
         values: () => ({ next: vi.fn().mockResolvedValue({}) }),

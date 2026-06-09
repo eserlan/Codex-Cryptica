@@ -283,7 +283,11 @@ export class SyncCoordinator {
       interactive?: boolean;
     },
   ) {
-    const { signal, onProgress, interactive } = options ?? {};
+    // Defend against legacy/JS callers that still pass an AbortSignal as the
+    // trailing argument (the old positional signature) — treat it as { signal }
+    // rather than silently dropping it.
+    const { signal, onProgress, interactive } =
+      options instanceof AbortSignal ? { signal: options } : (options ?? {});
     if (!opfsHandle) return;
     if (signal?.aborted) return;
 
