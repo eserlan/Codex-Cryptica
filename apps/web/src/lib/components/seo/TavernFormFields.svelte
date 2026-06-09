@@ -1,12 +1,15 @@
 <script lang="ts">
-  import { tavernConfig } from "$lib/services/seo/generator-engine";
+  import { socialHubConfig } from "$lib/services/seo/generator-engine";
+
+  const fantasyVenueTypes = socialHubConfig.venueTypesByGenre["Fantasy"];
+  const fantasyClienteles = socialHubConfig.clientelesByGenre["Fantasy"];
 
   let {
-    type = $bindable(tavernConfig.types[0]),
-    atmosphere = $bindable(tavernConfig.atmospheres[0]),
-    settlementType = $bindable(tavernConfig.settlementTypes[1]),
-    wealthLevel = $bindable(tavernConfig.wealthLevels[2]),
-    clientele = $bindable(tavernConfig.clienteles[4]),
+    type = $bindable(fantasyVenueTypes[0]),
+    atmosphere = $bindable(socialHubConfig.atmospheres[0]),
+    settlementType = $bindable(socialHubConfig.settlementTypes[1]),
+    wealthLevel = $bindable(socialHubConfig.wealthLevels[2]),
+    clientele = $bindable(fantasyClienteles[4]),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
@@ -32,7 +35,7 @@
 <div class="flex flex-col gap-1.5">
   <label for="tavern-type-select" class={labelClass}>Tavern type</label>
   <select id="tavern-type-select" bind:value={type} class={selectClass}>
-    {#each tavernConfig.types as t (t)}
+    {#each fantasyVenueTypes as t (t)}
       <option value={t}>{t}</option>
     {/each}
   </select>
@@ -45,7 +48,7 @@
     bind:value={atmosphere}
     class={selectClass}
   >
-    {#each tavernConfig.atmospheres as a (a)}
+    {#each socialHubConfig.atmospheres as a (a)}
       <option value={a}>{a}</option>
     {/each}
   </select>
@@ -60,7 +63,7 @@
     bind:value={settlementType}
     class={selectClass}
   >
-    {#each tavernConfig.settlementTypes as s (s)}
+    {#each socialHubConfig.settlementTypes as s (s)}
       <option value={s}>{s}</option>
     {/each}
   </select>
@@ -73,7 +76,7 @@
     bind:value={wealthLevel}
     class={selectClass}
   >
-    {#each tavernConfig.wealthLevels as w (w)}
+    {#each socialHubConfig.wealthLevels as w (w)}
       <option value={w}>{w}</option>
     {/each}
   </select>
@@ -88,7 +91,7 @@
     bind:value={clientele}
     class={selectClass}
   >
-    {#each tavernConfig.clienteles as c (c)}
+    {#each fantasyClienteles as c (c)}
       <option value={c}>{c}</option>
     {/each}
   </select>
@@ -119,11 +122,11 @@
   <button
     type="button"
     onclick={() => {
-      type = pick(tavernConfig.types);
-      atmosphere = pick(tavernConfig.atmospheres);
-      settlementType = pick(tavernConfig.settlementTypes);
-      wealthLevel = pick(tavernConfig.wealthLevels);
-      clientele = pick(tavernConfig.clienteles);
+      type = pick(fantasyVenueTypes);
+      atmosphere = pick(socialHubConfig.atmospheres);
+      settlementType = pick(socialHubConfig.settlementTypes);
+      wealthLevel = pick(socialHubConfig.wealthLevels);
+      clientele = pick(fantasyClienteles);
       if (onSurprise) {
         onSurprise();
       }

@@ -1241,11 +1241,6 @@ export const socialHubConfig = {
     "A faction is using the venue as a dead-drop without the owner's knowledge",
     "The place is being squeezed out by a rival backed by local power",
   ],
-};
-
-export const tavernConfig = {
-  types: socialHubConfig.venueTypesByGenre["Fantasy"],
-  atmospheres: socialHubConfig.atmospheres,
   settlementTypes: [
     "Capital city",
     "Market town",
@@ -1254,9 +1249,6 @@ export const tavernConfig = {
     "Remote village",
     "Crossroads hamlet",
   ],
-  wealthLevels: socialHubConfig.wealthLevels,
-  clienteles: socialHubConfig.clientelesByGenre["Fantasy"],
-  troubles: socialHubConfig.troubles,
 };
 
 export interface GeneratorOutput {
@@ -2773,22 +2765,28 @@ Use ${venueName} as a home base, an information hub, or a pressure point. The tr
   ): Promise<GeneratorOutput> {
     const tavernType =
       options.type ||
-      tavernConfig.types[Math.floor(Math.random() * tavernConfig.types.length)];
+      socialHubConfig.venueTypesByGenre["Fantasy"][
+        Math.floor(
+          Math.random() * socialHubConfig.venueTypesByGenre["Fantasy"].length,
+        )
+      ];
     const atmosphere =
       options.atmosphere ||
-      tavernConfig.atmospheres[
-        Math.floor(Math.random() * tavernConfig.atmospheres.length)
+      socialHubConfig.atmospheres[
+        Math.floor(Math.random() * socialHubConfig.atmospheres.length)
       ];
     const settlementType =
       options.settlementType ||
-      tavernConfig.settlementTypes[
-        Math.floor(Math.random() * tavernConfig.settlementTypes.length)
+      socialHubConfig.settlementTypes[
+        Math.floor(Math.random() * socialHubConfig.settlementTypes.length)
       ];
-    const wealthLevel = options.wealthLevel || tavernConfig.wealthLevels[2];
+    const wealthLevel = options.wealthLevel || socialHubConfig.wealthLevels[2];
     const clientele =
       options.clientele ||
-      tavernConfig.clienteles[
-        Math.floor(Math.random() * tavernConfig.clienteles.length)
+      socialHubConfig.clientelesByGenre["Fantasy"][
+        Math.floor(
+          Math.random() * socialHubConfig.clientelesByGenre["Fantasy"].length,
+        )
       ];
     const campaignContext = options.campaignContext?.trim();
 
@@ -2863,8 +2861,8 @@ QUALITY RULES:
 
     // Local fallback
     const trouble =
-      tavernConfig.troubles[
-        Math.floor(Math.random() * tavernConfig.troubles.length)
+      socialHubConfig.troubles[
+        Math.floor(Math.random() * socialHubConfig.troubles.length)
       ];
     const ownerName = this.generateName();
     const patron1 = this.generateName();

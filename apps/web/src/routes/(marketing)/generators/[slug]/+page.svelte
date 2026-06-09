@@ -13,7 +13,6 @@
     magicItemConfig,
     factionConfig,
     questConfig,
-    tavernConfig,
     socialHubConfig,
     themeIdToLabel,
     type GeneratorOutput,
@@ -154,11 +153,11 @@
   });
 
   let tavern = $state({
-    type: tavernConfig.types[0],
-    atmosphere: tavernConfig.atmospheres[0],
-    settlementType: tavernConfig.settlementTypes[1],
-    wealthLevel: tavernConfig.wealthLevels[2],
-    clientele: tavernConfig.clienteles[4],
+    type: socialHubConfig.venueTypesByGenre["Fantasy"][0],
+    atmosphere: socialHubConfig.atmospheres[0],
+    settlementType: socialHubConfig.settlementTypes[1],
+    wealthLevel: socialHubConfig.wealthLevels[2],
+    clientele: socialHubConfig.clientelesByGenre["Fantasy"][4],
     campaignContext: "",
   });
 
