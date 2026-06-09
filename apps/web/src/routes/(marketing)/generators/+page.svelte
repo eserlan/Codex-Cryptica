@@ -1,5 +1,8 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { safeJsonLd } from "$lib/utils/json-ld";
+
+  const origin = "https://codexcryptica.com";
 
   const generators = [
     {
@@ -96,6 +99,44 @@
       ],
     },
   ];
+
+  const allItems = generators.flatMap((s) => s.items);
+
+  const itemListJsonLd = safeJsonLd({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "RPG Generators",
+    description:
+      "Free RPG generators for tabletop GMs — NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more.",
+    url: `${origin}/generators`,
+    numberOfItems: allItems.length,
+    itemListElement: allItems.map((gen, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: gen.label,
+      description: gen.summary,
+      url: `${origin}${gen.href}`,
+    })),
+  });
+
+  const breadcrumbJsonLd = safeJsonLd({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Codex Cryptica",
+        item: origin,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "RPG Generators",
+        item: `${origin}/generators`,
+      },
+    ],
+  });
 </script>
 
 <svelte:head>
@@ -107,6 +148,14 @@
     content="Free RPG generators for tabletop GMs — create NPCs, factions, kingdoms, taverns, quest hooks, magic items, and more. Works without login. Import into your local campaign vault."
   />
   <link rel="canonical" href="https://codexcryptica.com/generators" />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${itemListJsonLd}</scr` +
+    `ipt>`}
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${breadcrumbJsonLd}</scr` +
+    `ipt>`}
 </svelte:head>
 
 <main
