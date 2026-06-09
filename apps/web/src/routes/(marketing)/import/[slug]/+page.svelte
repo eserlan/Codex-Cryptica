@@ -11,20 +11,30 @@
   let filesParsed = $state<
     Array<{ type: string; title: string; content: string; labels: string[] }>
   >([]);
-  let parseStats = $derived({
-    total: filesParsed.length,
-    characters: filesParsed.filter((f) => f.type === "character").length,
-    locations: filesParsed.filter(
-      (f) => f.type === "location" || f.type === "creature",
-    ).length,
-    factions: filesParsed.filter((f) => f.type === "faction").length,
-    items: filesParsed.filter((f) => f.type === "item").length,
-    others: filesParsed.filter(
-      (f) =>
-        !["character", "location", "creature", "faction", "item"].includes(
-          f.type,
-        ),
-    ).length,
+  // ⚡ Bolt Optimization: Calculate stats in a single pass to avoid multiple .filter() array allocations.
+  let parseStats = $derived.by(() => {
+    let characters = 0;
+    let locations = 0;
+    let factions = 0;
+    let items = 0;
+    let others = 0;
+
+    for (const f of filesParsed) {
+      if (f.type === "character") characters++;
+      else if (f.type === "location" || f.type === "creature") locations++;
+      else if (f.type === "faction") factions++;
+      else if (f.type === "item") items++;
+      else others++;
+    }
+
+    return {
+      total: filesParsed.length,
+      characters,
+      locations,
+      factions,
+      items,
+      others,
+    };
   });
 
   let errorMessage = $state<string | null>(null);
