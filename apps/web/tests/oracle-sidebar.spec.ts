@@ -45,6 +45,10 @@ test.describe("Oracle Sidebar", () => {
     //    persistent activity bar; it is no longer hidden when the panel opens).
     const panel = page.getByTestId("oracle-sidebar-panel");
     await expect(panel).toBeVisible();
+    await expect(panel).toHaveCount(1);
+
+    const closeButton = page.getByLabel("Close panel");
+    await expect(closeButton).toHaveCount(1);
 
     // Wait for transition animation
     await page.waitForTimeout(500);
@@ -62,10 +66,9 @@ test.describe("Oracle Sidebar", () => {
     expect(openBox).not.toBeNull();
     expect(openBox!.width).toBeLessThan(initialWidth);
 
-    // 7. Close Oracle by toggling the activity-bar button again. (The in-panel
-    //    "Close panel" control resolves to an off-screen duplicate render and
-    //    can't be reached by a coordinate click — tracked separately under #1168.)
-    await sidebarBtn.click({ force: true });
+    // 7. Close Oracle with the in-panel control. This guards against a hidden
+    //    duplicate panel resolving the label to an off-screen button.
+    await closeButton.click();
     await expect(panel).not.toBeVisible();
     await expect(sidebarBtn).toBeVisible();
 
