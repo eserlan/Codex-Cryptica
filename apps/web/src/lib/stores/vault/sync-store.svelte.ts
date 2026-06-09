@@ -402,9 +402,6 @@ export class SyncStore {
           }
         },
         () => this.checkForConflicts(),
-        undefined,
-        undefined,
-        { interactive: true },
       );
 
       if (this.isStale(vaultIdAtStart)) return;
@@ -482,9 +479,6 @@ export class SyncStore {
           }
         },
         () => this.checkForConflicts(),
-        undefined,
-        undefined,
-        { interactive: true },
       );
 
       if (this.isStale(vaultIdAtStart)) return;
