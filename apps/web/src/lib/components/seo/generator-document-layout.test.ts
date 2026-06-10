@@ -167,21 +167,46 @@ They say the first loom was strung with hair from a drowned saint.`,
     expect(layout.lore).not.toContain("A guild older than the city charter.");
   });
 
-  it("leaves generators without a layout rule unchanged", () => {
+  it("moves NPC personality into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "character",
       title: "Brother Calix",
       content: "### Who they are\nA lapsed monk turned locksmith.",
-      lore: "### At a Glance\n- **Role**: Locksmith\n\n### Faction Connection\nOwes the thieves' guild a debt.",
+      lore: `### At a Glance
+- **Role**: Locksmith
+
+### Personality
+- Counts his steps out loud when nervous.
+- Refuses to lie inside a church.
+
+### Faction Connection
+Owes the thieves' guild a debt.`,
       labels: ["rpg-character", "npc-generator", "imported-draft"],
       status: "active",
     });
 
+    expect(layout.content).toContain("### Who they are");
+    expect(layout.content).toContain("### Personality");
+    expect(layout.lore).toContain("### At a Glance");
+    expect(layout.lore).toContain("### Faction Connection");
+    expect(layout.lore).not.toContain("### Personality");
+  });
+
+  it("leaves generators without a layout rule unchanged", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "location",
+      title: "Bellfork",
+      content: "### Description\nA river town built on stilts.",
+      lore: "### GM Reference Information\n- **Size**: Town\n\n### Points of Interest\n- **The Drowned Bell**: A flooded chapel.",
+      labels: ["rpg-location", "imported-draft"],
+      status: "active",
+    });
+
     expect(layout.content).toBe(
-      "### Who they are\nA lapsed monk turned locksmith.",
+      "### Description\nA river town built on stilts.",
     );
     expect(layout.lore).toBe(
-      "### At a Glance\n- **Role**: Locksmith\n\n### Faction Connection\nOwes the thieves' guild a debt.",
+      "### GM Reference Information\n- **Size**: Town\n\n### Points of Interest\n- **The Drowned Bell**: A flooded chapel.",
     );
   });
 

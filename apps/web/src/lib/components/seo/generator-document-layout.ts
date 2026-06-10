@@ -23,6 +23,10 @@ const LAYOUT_RULES: { label: string; railSections: Set<string> }[] = [
     label: "rpg-item",
     railSections: new Set(["GM Reference Information", "Magical Properties"]),
   },
+  {
+    label: "npc-generator",
+    railSections: new Set(["At a Glance", "Faction Connection"]),
+  },
 ];
 
 interface MarkdownSection {
