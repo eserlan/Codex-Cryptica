@@ -1,29 +1,29 @@
 # God File Analysis Report: Codex-Cryptica
 
-_(Last updated: May 28, 2026)_
+_(Last updated: June 10, 2026)_
 
 This report identifies the top "God Files" (files with excessive responsibilities and high line counts) in the Codex-Cryptica repository. Refactoring these files will improve maintainability, testability, and long-term project health.
 
-## Executive Summary (May 2026 Reassessment)
+## Executive Summary (June 2026 Reassessment)
 
-The **Map Interaction Manager Decomposition** refactor has resolved `MapInteractionManager` (626 → 407 lines) by extracting 11 focused handler modules into `components/map/interactions/` — each covering a single interaction concern (token drag, grid fit, fog painting, pin editing, measurement, box selection, etc.) and backed by its own test file.
+The **SoundBiteGenerator Decomposition** refactor has resolved `sound-bite-generator.ts` (852 → 170 lines) by extracting prompt builders, response parsing, voice mapping, and TTS backends into 9 focused modules under `packages/oracle-engine` (closes #968).
 
-With the UI store, P2P services, Map route, Graph surface, and Map interaction layer now modular, the largest remaining pressure points are a mix of **service-layer monoliths** (`search.svelte.ts`, `sound-bite-generator.ts`) that have grown into the critical zone, a **TemporalPicker regression** (594 → 782 lines), and the perennial **engine cores** (`renderer.ts`, `LayoutManager.ts`) and **store managers** (`map.svelte.ts`, `vtt-token-manager.svelte.ts`).
+Additionally, `MapInteractionManager` (626 → 407 lines) was previously resolved by extracting focused interaction concerns. The largest remaining pressure points are `SEOGeneratorLayout.svelte` (1098 lines), `DetailStatusTab.svelte` (902 lines), the Svelte components `ZenSidebar.svelte` (867 lines) and `TemporalPicker.svelte` (856 lines), and the core services and managers like `text-generation.service.svelte.ts` and `entity-store.svelte.ts`.
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
 | Rank | File Path                                                          | Line Count | Type          | Status        |
 | :--- | :----------------------------------------------------------------- | :--------- | :------------ | :------------ |
-| 1    | `packages/oracle-engine/src/sound-bite-generator.ts`               | 852        | Engine Core   | 🔴 CRITICAL   |
-| 2    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`       | 782        | UI Component  | 🔴 REGRESSION |
-| 3    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                | 675        | UI Component  | 🟡 WATCH      |
-| 4    | `packages/map-engine/src/renderer.ts`                              | 672        | Engine Core   | 🟡 WATCH      |
-| 5    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`   | 649        | Service       | 🟡 WATCH      |
-| 6    | `packages/graph-engine/src/LayoutManager.ts`                       | 637        | Engine Core   | 🟡 WATCH      |
-| 7    | `apps/web/src/lib/components/zen/ZenContent.svelte`                | 617        | UI Component  | 🟡 WATCH      |
-| 8    | `apps/web/src/lib/stores/map.svelte.ts`                            | 616        | Store (State) | 🟡 WATCH      |
-| 9    | `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte` | 607        | UI Component  | 🟡 WATCH      |
-| 10   | `apps/web/src/lib/stores/vtt/vtt-token-manager.svelte.ts`          | 605        | Store Manager | 🟡 WATCH      |
+| 1    | `apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte`        | 1098       | UI Component  | 🔴 CRITICAL   |
+| 2    | `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte` | 902        | UI Component  | 🟡 WATCH      |
+| 3    | `apps/web/src/lib/components/zen/ZenSidebar.svelte`                | 867        | UI Component  | 🟡 WATCH      |
+| 4    | `apps/web/src/lib/components/timeline/TemporalPicker.svelte`       | 856        | UI Component  | 🔴 REGRESSION |
+| 5    | `apps/web/src/lib/services/ai/text-generation.service.svelte.ts`   | 836        | Service       | 🟡 WATCH      |
+| 6    | `apps/web/src/lib/stores/vault/entity-store.svelte.ts`             | 812        | Store (State) | 🟡 WATCH      |
+| 7    | `packages/map-engine/src/renderer.ts`                              | 728        | Engine Core   | 🟡 WATCH      |
+| 8    | `packages/graph-engine/src/transformer.ts`                         | 674        | Engine Core   | 🟡 WATCH      |
+| 9    | `apps/web/src/lib/components/zen/ZenContent.svelte`                | 674        | UI Component  | 🟡 WATCH      |
+| 10   | `packages/graph-engine/src/LayoutManager.ts`                       | 637        | Engine Core   | 🟡 WATCH      |
 
 ---
 
@@ -82,3 +82,4 @@ With the UI store, P2P services, Map route, Graph surface, and Map interaction l
 - **`entity-store.svelte.ts`**: Maintaining boundaries at ~450 lines (down from 920).
 - **`ai.ts`**: Effectively eliminated as a god file.
 - **EntityList.svelte**: **RESOLVED**. Reduced from 510 to 349 lines (despite adding multi-level tree hierarchy, child creation, and drag-and-drop mechanics) by decomposing card rendering into `EntityListItem.svelte` (~253 lines), search/autocomplete logic into `EntityListSearch.svelte` (~189 lines), and filter/label bar UI into `EntityListFilterBar.svelte` (~140 lines) with core filtering logic isolated to pure helper `entityListFiltering.ts` (Spec 120).
+- **`SoundBiteGenerator` (`sound-bite-generator.ts`)**: **RESOLVED**. Reduced from 852 to 170 lines by decomposing prompt builders, voice mapping, JSON parsing, and TTS drivers into 9 focused modules under `packages/oracle-engine` (closes #968).
