@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+
   let {
     hasImage = false,
     isSaving = false,
@@ -17,6 +20,8 @@
   let isGenerating = $state(false);
   const isBusy = $derived(isSaving || isGenerating);
 
+  let fileInput = $state<HTMLInputElement | null>(null);
+
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
     isDragging = true;
@@ -30,6 +35,13 @@
     event.preventDefault();
     isDragging = false;
     const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    await onDrop(file);
+  };
+
+  const handleFileChange = async (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
     if (!file) return;
     await onDrop(file);
   };
@@ -58,9 +70,17 @@
       </h3>
       <p class="mt-1 text-sm text-theme-text/70">
         {#if hasImage}
-          Drop a new image to replace the current cover.
+          <span class="hidden md:inline"
+            >Drop a new image to replace the current cover.</span
+          >
+          <span class="md:hidden"
+            >Add a new image to replace the current cover.</span
+          >
         {:else}
-          Drop an image to set the world cover.
+          <span class="hidden md:inline"
+            >Drop an image to set the world cover.</span
+          >
+          <span class="md:hidden">Add an image to set the world cover.</span>
         {/if}
       </p>
     </div>
@@ -84,6 +104,14 @@
     ondragleave={handleDragLeave}
     ondrop={handleDrop}
   >
+    <input
+      bind:this={fileInput}
+      type="file"
+      accept="image/*"
+      class="sr-only"
+      onchange={handleFileChange}
+    />
+
     <div
       class="mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-theme-border text-theme-muted"
     >
@@ -92,20 +120,48 @@
 
     <p class="max-w-sm text-sm leading-relaxed text-theme-muted">
       {#if hasImage}
-        Drag a fresh cover image onto this zone to replace the current one.
+        <span class="hidden md:inline"
+          >Drag a fresh cover image onto this zone to replace the current one.</span
+        >
+        <span class="md:hidden"
+          >Add a cover image to replace the current one.</span
+        >
       {:else}
-        Drag a cover image here to give your world a stronger identity.
+        <span class="hidden md:inline"
+          >Drag a cover image here to give your world a stronger identity.</span
+        >
+        <span class="md:hidden"
+          >Add a cover image to give your world a stronger identity.</span
+        >
       {/if}
     </p>
 
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       <button
-        class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
-        onclick={handleGenerate}
+        class="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
+        onclick={() => fileInput?.click()}
         disabled={isBusy}
       >
-        {isBusy ? "Working..." : "Generate Art"}
+        Choose image
       </button>
+
+      {#if oracle.apiKey}
+        <button
+          class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
+          onclick={handleGenerate}
+          disabled={isBusy}
+        >
+          {isBusy ? "Working..." : "Generate Art"}
+        </button>
+      {:else}
+        <button
+          class="rounded-lg border border-dashed border-theme-border bg-theme-surface/30 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text hover:bg-theme-surface transition-colors"
+          onclick={() => modalUIStore.openSettings("intelligence")}
+          disabled={isBusy}
+        >
+          Set up AI Art
+        </button>
+      {/if}
     </div>
 
     {#if isBusy}
