@@ -29,6 +29,7 @@
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
+  import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
@@ -431,6 +432,9 @@
 
     {#if !isPopup && !isVttFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />
+      {#if sessionModeStore.isDemoMode}
+        <MobileDemoBanner />
+      {/if}
     {/if}
 
     <div
