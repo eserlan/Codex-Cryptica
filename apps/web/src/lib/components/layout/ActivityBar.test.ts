@@ -44,16 +44,6 @@ describe("ActivityBar", () => {
     expect(screen.getByTestId("activity-bar-quicknote")).toBeDefined();
   });
 
-  it("renders visible labels for views and tools", () => {
-    render(ActivityBar);
-    expect(screen.getByText("Graph")).toBeTruthy();
-    expect(screen.getByText("Map")).toBeTruthy();
-    expect(screen.getByText("Canvas")).toBeTruthy();
-    expect(screen.getByText("Oracle")).toBeTruthy();
-    expect(screen.getByText("Entities")).toBeTruthy();
-    expect(screen.getByText("Notes")).toBeTruthy();
-  });
-
   it("opens the Oracle sidebar when the Oracle shortcut is clicked", async () => {
     render(ActivityBar);
 

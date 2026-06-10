@@ -95,7 +95,7 @@
 
 <nav
   class="bg-chrome-surface border-chrome-border flex shrink-0 z-[80]
-    flex-row md:flex-col items-center justify-center md:justify-start py-1 md:py-4 gap-1.5 md:gap-4
+    flex-row md:flex-col items-center justify-center md:justify-start py-2 md:py-4 gap-2 md:gap-4
     w-full md:w-14 h-14 md:h-full border-t md:border-t-0 md:border-r"
   aria-label="Activity Bar"
   data-testid="activity-bar"
@@ -105,7 +105,7 @@
     {@const active = isViewActive(view)}
     <a
       href={view.href}
-      class="w-12 h-12 md:w-10 md:h-10 flex flex-col md:flex-row items-center justify-center rounded-md transition-all duration-200 group relative border {active
+      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={view.label}
@@ -113,14 +113,9 @@
       data-testid={`activity-bar-${view.id}`}
     >
       <span
-        class="{view.icon} w-[18px] h-[18px] md:w-5 md:h-5 transition-transform duration-200 group-hover:scale-110"
+        class="{view.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
         aria-hidden="true"
       ></span>
-      <span
-        class="text-[9px] md:hidden font-medium mt-0.5 tracking-tight leading-none text-center"
-      >
-        {view.label}
-      </span>
 
       {#if active}
         <div
@@ -145,7 +140,7 @@
         : layoutUIStore.activeSidebarTool === tool.id}
     <button
       onclick={tool.action}
-      class="w-12 h-12 md:w-10 md:h-10 flex flex-col md:flex-row items-center justify-center rounded-md transition-all duration-200 group relative border {active
+      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={tool.label}
@@ -153,18 +148,13 @@
       data-testid={`activity-bar-${tool.id}`}
     >
       <span
-        class="{tool.icon} w-[18px] h-[18px] md:w-5 md:h-5 transition-transform duration-200 group-hover:scale-110"
+        class="{tool.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
         aria-hidden="true"
       ></span>
-      <span
-        class="text-[9px] md:hidden font-medium mt-0.5 tracking-tight leading-none text-center"
-      >
-        {tool.label}
-      </span>
 
       {#if tool.id === "quicknote" && quickNoteStore.count > 0}
         <span
-          class="absolute top-0.5 right-0.5 md:-top-1 md:-right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-chrome-bg bg-chrome-accent shadow-md"
+          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-chrome-bg bg-chrome-accent shadow-md"
         >
           {quickNoteStore.count}
         </span>
