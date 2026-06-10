@@ -28,6 +28,7 @@ export const UI_STORAGE_KEYS = {
   VTT_ENTITY_LIST_COLLAPSED: "codex_vtt_entity_list_collapsed",
   VTT_SIDEBAR_COLLAPSED: "codex_vtt_sidebar_collapsed",
   WORLD_PAGE_DISMISSED_AT: "codex_world_page_dismissed_at",
+  MOBILE_GRAPH_COACH_MARKS_SEEN: "codex_mobile_graph_coach_marks_seen",
 } as const;
 
 export type UIStorageKey =

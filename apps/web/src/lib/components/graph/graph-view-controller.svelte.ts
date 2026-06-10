@@ -297,6 +297,7 @@ export class GraphViewController {
         centralNodeId: this.deps.graph.centralNodeId,
         stableLayout: this.deps.graph.stableLayout,
         isGuest: this.deps.vault.isGuest,
+        isMobile: this.deps.layoutUIStore.isMobile,
         onLayoutStart: () => {
           this.isLayoutRunning = true;
         },

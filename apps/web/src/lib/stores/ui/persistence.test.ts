@@ -20,6 +20,7 @@ describe("UIPersistence", () => {
       "codex_left_sidebar_open",
       "codex_left_sidebar_width",
       "codex_lite_mode",
+      "codex_mobile_graph_coach_marks_seen",
       "codex_recent_connection_labels",
       "codex_right_sidebar_width",
       "codex_skip_landing",
