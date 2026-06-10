@@ -9,12 +9,14 @@
     showPanel = true,
     showActions = true,
     isSaving = false,
+    aiDisabled = false,
     onClose,
     onOpenCoverEditor,
     onCloseCoverEditor,
     onOpenLightbox,
     onUploadCover,
     onGenerateCover,
+    onSetupAI,
     class: className = "",
     ...restProps
   }: {
@@ -24,12 +26,14 @@
     showPanel?: boolean;
     showActions?: boolean;
     isSaving?: boolean;
+    aiDisabled?: boolean;
     onClose?: () => void;
     onOpenCoverEditor: () => void;
     onCloseCoverEditor?: () => void;
     onOpenLightbox: () => void;
     onUploadCover: (file: File) => Promise<void>;
     onGenerateCover: () => Promise<void>;
+    onSetupAI?: () => void;
     class?: string;
   } & HTMLAttributes<HTMLElement> = $props();
 </script>
@@ -42,9 +46,11 @@
     <CoverImage
       hasImage={!!coverImage}
       {isSaving}
+      {aiDisabled}
       onDrop={onUploadCover}
       onGenerate={onGenerateCover}
       onCancel={coverImage ? onCloseCoverEditor : undefined}
+      {onSetupAI}
     />
   {/if}
 

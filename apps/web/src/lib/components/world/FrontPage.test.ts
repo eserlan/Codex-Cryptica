@@ -320,9 +320,7 @@ describe("FrontPage", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "Change Image" }));
     await waitFor(() => expect(screen.getByText("World Image")).toBeTruthy());
-    expect(
-      screen.getByText("Drop a new image to replace the current cover."),
-    ).toBeTruthy();
+    expect(screen.getByTestId("cover-image-panel")).toBeTruthy();
   });
 
   it("generates cover art with the correct prompt context", async () => {

@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
-
   let {
     hasImage = false,
     isSaving = false,
+    aiDisabled = false,
     onDrop,
     onGenerate,
     onCancel,
+    onSetupAI,
   } = $props<{
     hasImage?: boolean;
     isSaving?: boolean;
+    aiDisabled?: boolean;
     onDrop: (file: File) => Promise<void> | void;
     onGenerate: () => Promise<void> | void;
     onCancel?: () => void;
+    onSetupAI?: () => void;
   }>();
 
   let isDragging = $state(false);
   let isGenerating = $state(false);
-  const isBusy = $derived(isSaving || isGenerating);
-
   let fileInput = $state<HTMLInputElement | null>(null);
+  const isBusy = $derived(isSaving || isGenerating);
 
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
@@ -97,29 +97,34 @@
     {/if}
   </div>
 
+  <!-- Hidden file input — used by "Choose image" button for mobile -->
+  <input
+    bind:this={fileInput}
+    type="file"
+    accept="image/*"
+    class="sr-only"
+    onchange={handleFileChange}
+    aria-hidden="true"
+    tabindex="-1"
+  />
+
   <div
-    class={`flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center transition-colors border-theme-border bg-theme-bg/70 ${isDragging ? "border-theme-primary bg-theme-primary/5" : ""}`}
+    class={`flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center transition-colors border-theme-border bg-theme-bg/70 ${isDragging ? "border-theme-primary bg-theme-primary/5" : ""}`}
     role="region"
-    aria-label="World image drop zone"
+    aria-label="World image upload area"
     ondragover={handleDragOver}
     ondragleave={handleDragLeave}
     ondrop={handleDrop}
   >
-    <input
-      bind:this={fileInput}
-      type="file"
-      accept="image/*"
-      class="sr-only"
-      onchange={handleFileChange}
-    />
-
     <div
       class="mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-theme-border text-theme-muted"
     >
       <span class="icon-[lucide--image-plus] h-6 w-6"></span>
     </div>
 
-    <p class="max-w-sm text-sm leading-relaxed text-theme-muted">
+    <p
+      class="max-w-sm text-sm leading-relaxed text-theme-muted hidden sm:block"
+    >
       {#if hasImage}
         <span class="hidden md:inline"
           >Drag a fresh cover image onto this zone to replace the current one.</span
@@ -138,27 +143,35 @@
     </p>
 
     <div class="mt-4 flex flex-wrap justify-center gap-2">
+      <!-- Explicit file-picker button — works on both desktop and mobile -->
       <button
         class="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
         onclick={() => fileInput?.click()}
         disabled={isBusy}
+        data-testid="choose-image-button"
       >
         Choose image
       </button>
 
-      {#if discoveryPolicyStore.aiDisabled}
-        <button
-          class="rounded-lg border border-dashed border-theme-border bg-theme-surface/30 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text hover:bg-theme-surface transition-colors"
-          onclick={() => modalUIStore.openSettings("intelligence")}
-          disabled={isBusy}
-        >
-          Set up AI Art
-        </button>
+      {#if aiDisabled}
+        <!-- AI not configured: show link to settings instead of dead-end button -->
+        {#if onSetupAI}
+          <button
+            class="rounded-lg border border-dashed border-theme-border bg-theme-surface/30 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text hover:bg-theme-surface transition-colors"
+            onclick={onSetupAI}
+            disabled={isBusy}
+            title="Configure AI to enable art generation"
+            data-testid="setup-ai-button"
+          >
+            Set up AI Art
+          </button>
+        {/if}
       {:else}
         <button
           class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
           onclick={handleGenerate}
           disabled={isBusy}
+          data-testid="generate-art-button"
         >
           {isBusy ? "Working..." : "Generate Art"}
         </button>

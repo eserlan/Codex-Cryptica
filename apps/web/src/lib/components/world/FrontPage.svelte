@@ -47,6 +47,8 @@
   );
   const coverImage = $derived(metadata?.coverImage || "");
   const _worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
+  const isEmpty = $derived(vault.allEntities.length === 0);
+  const aiDisabled = $derived(discoveryPolicyStore.aiDisabled);
   const hasBriefing = $derived(
     !!(
       draftDescription.trim() ||
@@ -412,7 +414,7 @@
       </header>
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
-        {#if vault.allEntities.length === 0}
+        {#if isEmpty && !showCoverEditor}
           <div
             data-testid="start-your-world-card"
             class="rounded-3xl border border-theme-primary/30 bg-theme-surface/90 p-6 sm:p-8 flex flex-col gap-4 shadow-xl backdrop-blur-sm"
@@ -472,13 +474,12 @@
               {/if}
             </div>
           </div>
-        {/if}
-
-        {#if showCoverEditor || !coverImage}
+        {:else if showCoverEditor || !coverImage}
           <FrontPageHero
             {coverImageUrl}
             {coverImage}
             {showCoverEditor}
+            {aiDisabled}
             showActions={false}
             isSaving={worldStore.isSaving}
             onOpenCoverEditor={openCoverEditor}
@@ -486,6 +487,7 @@
             onOpenLightbox={openCoverLightbox}
             onUploadCover={handleUploadCover}
             onGenerateCover={handleGenerateCover}
+            onSetupAI={() => modalUIStore.openSettings("intelligence")}
             class="w-full"
           />
         {/if}
