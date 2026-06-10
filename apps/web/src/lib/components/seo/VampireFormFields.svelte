@@ -26,6 +26,9 @@
   function getParenthetical(val: string) {
     return val.match(/\(([^)]+)\)/)?.[1] ?? "";
   }
+
+  const feedingHint = $derived(getParenthetical(feedingHabit));
+  const weaknessHint = $derived(getParenthetical(weakness));
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -74,8 +77,8 @@
       <option value={f}>{f}</option>
     {/each}
   </select>
-  {#if getParenthetical(feedingHabit)}
-    <p class={hintClass}>{getParenthetical(feedingHabit)}</p>
+  {#if feedingHint}
+    <p class={hintClass}>{feedingHint}</p>
   {/if}
 </div>
 
@@ -93,8 +96,8 @@
       <option value={w}>{w}</option>
     {/each}
   </select>
-  {#if getParenthetical(weakness)}
-    <p class={hintClass}>{getParenthetical(weakness)}</p>
+  {#if weaknessHint}
+    <p class={hintClass}>{weaknessHint}</p>
   {/if}
 </div>
 

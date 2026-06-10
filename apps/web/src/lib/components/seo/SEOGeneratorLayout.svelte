@@ -863,6 +863,7 @@
                 type="checkbox"
                 id="ai-toggle"
                 bind:checked={useAI}
+                aria-describedby="ai-toggle-hint"
                 class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0"
               />
               <label
@@ -875,7 +876,10 @@
                 AI Lore Co-Author Mode
               </label>
             </div>
-            <p class="text-[9px] text-theme-muted/70 leading-snug pl-6">
+            <p
+              id="ai-toggle-hint"
+              class="text-[9px] text-theme-muted/70 leading-snug pl-6"
+            >
               {useAI
                 ? "AI writes unique, rich lore on each generate."
                 : "Fast offline mode — local tables only, no AI."}
@@ -1068,6 +1072,11 @@
     filter: brightness(1.2);
   }
   /* Rail stat block — compact heading scale, muted palette (#1276) */
+  .seo-rail.seo-md :global(.seo-label) {
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    text-shadow: none;
+    filter: none;
+  }
   .seo-rail.seo-md :global(h3) {
     font-size: 0.75rem;
     text-transform: uppercase;
