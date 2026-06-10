@@ -46,6 +46,58 @@ const LAYOUT_RULES: LayoutRule[] = [
       heading: "Secrets & Hooks",
     },
   },
+  {
+    label: "kingdom-generator",
+    railSections: new Set([
+      "At a Glance",
+      "Major Factions",
+      "Rumours & Hooks",
+      "Entity Seeds",
+    ]),
+    documentBullets: {
+      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
+  {
+    label: "nation-generator",
+    railSections: new Set([
+      "At a Glance",
+      "Power Blocs",
+      "Rumours & Hooks",
+      "Entity Seeds",
+    ]),
+    documentBullets: {
+      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
+  {
+    label: "social-hub-generator",
+    railSections: new Set([
+      "At a Glance",
+      "Notable Regulars",
+      "Rumours",
+      "Entity Seeds",
+    ]),
+    documentBullets: {
+      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
+  {
+    label: "tavern-generator",
+    railSections: new Set([
+      "At a Glance",
+      "Notable Patrons",
+      "Rumours",
+      "Entity Seeds",
+    ]),
+    documentBullets: {
+      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
 ];
 
 interface MarkdownSection {

@@ -214,6 +214,64 @@ Owes the thieves' guild a debt.`,
     expect(layout.lore).not.toContain("### Faction Connection");
   });
 
+  it("lifts hidden problem and hook bullets for kingdom and tavern generators", () => {
+    const kingdom = getGeneratorDocumentLayout({
+      type: "location",
+      title: "The Sundered March",
+      content: "### The Realm\nA border kingdom held together by toll roads.",
+      lore: `### At a Glance
+- **Polity Type**: Feudal kingdom
+- **Ruler**: Queen Maren II
+- **Hidden Problem**: The toll lords fund both sides of the border war.
+- **Immediate Hook**: A toll castle has stopped answering ravens.
+
+### Major Factions
+- **The Toll Lords**: Control every crossing.
+
+### Entity Seeds
+- **Location**: The silent toll castle`,
+      labels: ["rpg-kingdom", "kingdom-generator", "imported-draft"],
+      status: "active",
+    });
+
+    expect(kingdom.content).toContain("### Secrets & Hooks");
+    expect(kingdom.content).toContain("**Hidden Problem**: The toll lords");
+    expect(kingdom.content).toContain("**Immediate Hook**: A toll castle");
+    expect(kingdom.lore).toContain("**Polity Type**");
+    expect(kingdom.lore).toContain("### Major Factions");
+    expect(kingdom.lore).toContain("### Entity Seeds");
+    expect(kingdom.lore).not.toContain("**Hidden Problem**");
+    expect(kingdom.lore).not.toContain("**Immediate Hook**");
+
+    const tavern = getGeneratorDocumentLayout({
+      type: "location",
+      title: "The Crooked Flagon",
+      content: "### The Place\nA dockside tavern that never fully closes.",
+      lore: `### At a Glance
+- **Type**: Dockside tavern
+- **Owner**: Wide Marta
+- **Hidden Problem**: The cellar floods with the tide, and something swims in.
+- **Immediate Hook**: Marta is paying for silence about last night.
+
+### Notable Patrons
+- **One-Ear Fenn**: Hears everything anyway.
+
+### Rumours
+- The harbourmaster drinks here for free.`,
+      labels: ["rpg-location", "tavern-generator", "imported-draft"],
+      status: "active",
+    });
+
+    expect(tavern.content).toContain("### Secrets & Hooks");
+    expect(tavern.content).toContain("**Hidden Problem**: The cellar floods");
+    expect(tavern.content).toContain("**Immediate Hook**: Marta is paying");
+    expect(tavern.lore).toContain("**Owner**");
+    expect(tavern.lore).toContain("### Notable Patrons");
+    expect(tavern.lore).toContain("### Rumours");
+    expect(tavern.lore).not.toContain("**Hidden Problem**");
+    expect(tavern.lore).not.toContain("**Immediate Hook**");
+  });
+
   it("leaves generators without a layout rule unchanged", () => {
     const layout = getGeneratorDocumentLayout({
       type: "location",
