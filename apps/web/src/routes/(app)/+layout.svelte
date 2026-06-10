@@ -409,6 +409,24 @@
     }
   });
 
+  // Deferred inert / aria-hidden state to prevent focus-hiding warnings
+  let isBackgroundInert = $state(false);
+  $effect(() => {
+    if (anyModalOpen) {
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl &&
+        activeEl instanceof HTMLElement &&
+        activeEl !== document.body
+      ) {
+        activeEl.blur();
+      }
+      isBackgroundInert = true;
+    } else {
+      isBackgroundInert = false;
+    }
+  });
+
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,
@@ -425,8 +443,8 @@
   <!-- Background content — inert when any modal is open so keyboard/AT cannot reach it -->
   <div
     class="contents"
-    inert={anyModalOpen || undefined}
-    aria-hidden={anyModalOpen || undefined}
+    inert={isBackgroundInert || undefined}
+    aria-hidden={isBackgroundInert || undefined}
   >
     <NotificationToast />
 
