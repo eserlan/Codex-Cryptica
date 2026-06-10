@@ -1126,8 +1126,8 @@ describe("FrontPage", () => {
     const { worldStore } = await import("$lib/stores/world.svelte");
     const originalAllEntities = vault.allEntities;
     const originalRecentActivity = worldStore.recentActivity;
-    // Mock zero entities
-    vault.allEntities = [];
+    // Mock zero entities using type casting to bypass the read-only getter type check
+    (vault as any).allEntities = [];
     worldStore.recentActivity = [];
 
     render(FrontPage);
@@ -1142,7 +1142,7 @@ describe("FrontPage", () => {
     expect(screen.getAllByRole("button", { name: /Import/i })).toHaveLength(2); // One in start your world, one in empty state
 
     // Restore original allEntities and recentActivity
-    vault.allEntities = originalAllEntities;
+    (vault as any).allEntities = originalAllEntities;
     worldStore.recentActivity = originalRecentActivity;
   });
 });
