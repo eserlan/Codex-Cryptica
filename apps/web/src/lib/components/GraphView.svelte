@@ -444,7 +444,9 @@
         <EmptyState
           icon="icon-[lucide--network]"
           headline="Your graph is empty"
-          body="Create your first entity to see it appear here."
+          body={vault.isGuest
+            ? "Nothing has been shared with you yet."
+            : "Create your first entity to see it appear here."}
           cta={vault.isGuest ? undefined : "＋ Create your first entity"}
           onCta={vault.isGuest
             ? undefined

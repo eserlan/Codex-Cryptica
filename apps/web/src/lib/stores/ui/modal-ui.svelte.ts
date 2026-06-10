@@ -18,9 +18,10 @@ export class ModalUIStore {
   isImporting = $state(false);
   showDiceModal = $state(false);
 
-  // Incremented to signal that the entity-creation form should open
-  // (VaultControls listens; the app layout opens the mobile drawer first).
-  createEntityRequests = $state(0);
+  // Set to signal that the entity-creation form should open. A latching flag
+  // (not a counter) because on mobile VaultControls mounts only after the
+  // drawer opens, so it must be able to consume a request raised pre-mount.
+  pendingCreateEntity = $state(false);
 
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
@@ -161,7 +162,7 @@ export class ModalUIStore {
   }
 
   requestCreateEntity() {
-    this.createEntityRequests++;
+    this.pendingCreateEntity = true;
   }
 
   openVaultSwitcher(intent: "create" | "open" | null = null) {
@@ -297,6 +298,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v6__";
+const KEY = "__codex_modal_ui_store__v7__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

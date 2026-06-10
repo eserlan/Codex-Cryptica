@@ -401,14 +401,10 @@
   // On mobile, the entity-creation form lives in the drawer (VaultControls),
   // so a create request must also open the drawer and dismiss the full-screen
   // explorer that would otherwise cover it.
-  let lastCreateEntityRequest = modalUIStore.createEntityRequests;
   $effect(() => {
-    if (modalUIStore.createEntityRequests !== lastCreateEntityRequest) {
-      lastCreateEntityRequest = modalUIStore.createEntityRequests;
-      if (layoutUIStore.isMobile) {
-        layoutUIStore.closeSidebar();
-        isMobileMenuOpen = true;
-      }
+    if (modalUIStore.pendingCreateEntity && layoutUIStore.isMobile) {
+      layoutUIStore.closeSidebar();
+      isMobileMenuOpen = true;
     }
   });
 

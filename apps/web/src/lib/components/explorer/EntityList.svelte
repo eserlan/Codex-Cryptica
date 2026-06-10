@@ -342,7 +342,9 @@
             <EmptyState
               icon="icon-[lucide--ghost]"
               headline="No entities yet"
-              body="Create your first entity to start building your vault."
+              body={vault.isGuest
+                ? "Nothing has been shared with you yet."
+                : "Create your first entity to start building your vault."}
               cta={vault.isGuest ? undefined : "＋ Create your first entity"}
               onCta={vault.isGuest
                 ? undefined
