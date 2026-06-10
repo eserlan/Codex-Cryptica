@@ -287,7 +287,7 @@
   };
 
   const handleGenerateStarterWorld = async () => {
-    oracle.isOpen = true;
+    oracle.open();
     await oracle.chat.sendMessage(
       "Generate a starter world with 3 basic entities: a main location, a key character, and an active quest or conflict.",
     );
@@ -453,7 +453,7 @@
                 Import
               </button>
 
-              {#if !discoveryPolicyStore.aiDisabled && oracle.apiKey}
+              {#if !discoveryPolicyStore.aiDisabled}
                 <button
                   class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-primary/10 hover:bg-theme-primary/20 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-primary transition-colors"
                   onclick={handleGenerateStarterWorld}

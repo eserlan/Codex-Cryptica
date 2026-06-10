@@ -1130,19 +1130,22 @@ describe("FrontPage", () => {
     (vault as any).allEntities = [];
     worldStore.recentActivity = [];
 
-    render(FrontPage);
+    try {
+      render(FrontPage);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("start-your-world-card")).toBeTruthy(),
-    );
-    expect(screen.getByText("Start your world")).toBeTruthy();
-    expect(
-      screen.getAllByRole("button", { name: /Create Entity/i }),
-    ).toHaveLength(2); // One in start your world, one in empty state
-    expect(screen.getAllByRole("button", { name: /Import/i })).toHaveLength(2); // One in start your world, one in empty state
-
-    // Restore original allEntities and recentActivity
-    (vault as any).allEntities = originalAllEntities;
-    worldStore.recentActivity = originalRecentActivity;
+      await waitFor(() =>
+        expect(screen.getByTestId("start-your-world-card")).toBeTruthy(),
+      );
+      expect(screen.getByText("Start your world")).toBeTruthy();
+      expect(
+        screen.getAllByRole("button", { name: /Create Entity/i }),
+      ).toHaveLength(2); // One in start your world, one in empty state
+      expect(screen.getAllByRole("button", { name: /Import/i })).toHaveLength(
+        2,
+      ); // One in start your world, one in empty state
+    } finally {
+      (vault as any).allEntities = originalAllEntities;
+      worldStore.recentActivity = originalRecentActivity;
+    }
   });
 });
