@@ -43,8 +43,11 @@
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    await onDrop(file);
-    input.value = "";
+    try {
+      await onDrop(file);
+    } finally {
+      input.value = "";
+    }
   };
 
   const handleGenerate = async () => {

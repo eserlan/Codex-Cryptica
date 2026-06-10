@@ -201,9 +201,13 @@
 
     // Eagerly prefetch the heavy components in the background a second after boot
     // to eliminate the 10-15s dev-mode lag when clicking an entity for the first time.
-    setTimeout(() => {
+    const prefetchTimer = setTimeout(() => {
       loadHeavyComponents();
     }, 1000);
+
+    return () => {
+      clearTimeout(prefetchTimer);
+    };
   });
 
   // Consolidate reactive pre-loading and fallback loading into a single effect
