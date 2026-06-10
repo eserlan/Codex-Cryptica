@@ -9,6 +9,7 @@
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { renderMarkdown as renderMd } from "$lib/utils/markdown";
   import { SESSION_DRAFTS_KEY } from "$lib/services/seo/generators/session-context";
+  import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
 
   let {
     canonicalPath,
@@ -109,6 +110,8 @@
   const generatedSingular = $derived(
     eyebrow.replace(/\s*Generator\s*/i, "").trim() || "Draft",
   );
+
+  const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
 
   $effect(() => {
     if (browser && isThemeCustomizable && activeThemeId) {
@@ -328,13 +331,13 @@
   function addToSessionHub() {
     if (!generatedData) return;
     const content = generatedData.summary
-      ? `*${generatedData.summary}*\n\n${generatedData.content}`
-      : generatedData.content;
+      ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+      : documentLayout.content;
     const newDraft: SessionDraft = {
       type: generatedData.type,
       title: generatedData.title,
       content,
-      lore: generatedData.lore,
+      lore: documentLayout.lore,
       labels: generatedData.labels,
       status: generatedData.status,
     };
@@ -374,13 +377,13 @@
 
     try {
       const content = generatedData.summary
-        ? `*${generatedData.summary}*\n\n${generatedData.content}`
-        : generatedData.content;
+        ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+        : documentLayout.content;
       const payload = {
         type: generatedData.type,
         title: generatedData.title,
         content,
-        lore: generatedData.lore,
+        lore: documentLayout.lore,
         labels: generatedData.labels,
         status: generatedData.status,
       };
@@ -402,9 +405,9 @@
       generatedData.summary ? `*${generatedData.summary}*` : "",
       `Labels: ${generatedData.labels.join(", ")}`,
       "",
-      generatedData.content,
+      documentLayout.content,
       "",
-      generatedData.lore,
+      documentLayout.lore,
     ]
       .filter((line) => line !== undefined)
       .join("\n")
@@ -516,46 +519,16 @@
     </div>
   </header>
 
-  <!-- Compact Explainer / CTA Strip -->
+  <!-- Compact Explainer Strip — no duplicate generate CTA (#1274) -->
   <div
-    class="w-full border-b border-theme-border/30 bg-theme-surface/10 py-5 px-6"
+    class="w-full border-b border-theme-border/30 bg-theme-surface/10 py-4 px-6"
   >
-    <div
-      class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-    >
-      <div>
-        <p
-          class="text-xs font-bold text-theme-primary uppercase tracking-widest font-header"
-        >
-          Generate campaign-ready {generatedNoun} in seconds.
-        </p>
-        <p
-          class="text-[10px] text-theme-text/85 tracking-wider uppercase font-header mt-1"
-        >
-          No account required. Results save directly to your local Codex vault.
-        </p>
-      </div>
-      <button
-        type="button"
-        onclick={() => void handleGenerate()}
-        disabled={isGenerating}
-        aria-busy={isGenerating}
-        class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
-        id="strip-generate-btn"
-        title="Generate a new draft using your current form inputs"
+    <div class="max-w-6xl mx-auto">
+      <p
+        class="text-xs font-bold text-theme-muted uppercase tracking-widest font-header"
       >
-        {#if isGenerating}
-          <span
-            class="icon-[lucide--loader-2] animate-spin w-3.5 h-3.5"
-            aria-hidden="true"
-          ></span>
-          Forging...
-        {:else}
-          <span class="icon-[lucide--dice-5] w-3.5 h-3.5" aria-hidden="true"
-          ></span>
-          Generate {generatedSingular}
-        {/if}
-      </button>
+        Generate campaign-ready {generatedNoun} in seconds — no account required.
+      </p>
     </div>
   </div>
 
@@ -598,7 +571,7 @@
             <div class="border-b border-theme-border/60 pb-4 mb-6">
               <div class="flex items-start gap-3 flex-wrap">
                 <h2
-                  class="font-header font-extrabold text-2xl md:text-3xl tracking-wide uppercase text-theme-primary"
+                  class="font-header font-bold text-xl md:text-2xl tracking-wide text-theme-text/95"
                 >
                   {generatedData.title}
                 </h2>
@@ -672,7 +645,7 @@
                 : 'space-y-4'}"
               data-theme={worldTheme}
             >
-              {@html renderMarkdown(generatedData.content || "")}
+              {@html renderMarkdown(documentLayout.content)}
             </div>
           </div>
         {:else}
@@ -699,16 +672,22 @@
 
     <!-- At the Table Column: rendered third in DOM, positioned on the right on desktop -->
     <div class="lg:col-span-3 order-3 lg:order-3">
+      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
+      <p
+        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
+      >
+        GM Reference
+      </p>
       <div class="sticky top-24 flex flex-col gap-6">
         <div
-          class="p-5 bg-theme-surface/20 border border-theme-border/40 rounded-2xl shadow-sm"
+          class="p-5 bg-theme-surface/45 border border-theme-border/40 rounded-2xl shadow-sm backdrop-blur-sm"
         >
           {#if generatedData}
             <div
               in:fade={{ duration: 250 }}
-              class="seo-md text-sm leading-relaxed text-theme-text/80"
+              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/80"
             >
-              {@html renderLore(generatedData.lore || "")}
+              {@html renderLore(documentLayout.lore)}
             </div>
           {:else}
             <div
@@ -736,7 +715,7 @@
             class="flex items-center justify-between border-b border-theme-border/60 pb-2"
           >
             <h3
-              class="font-header font-bold text-xs uppercase tracking-wider text-theme-primary"
+              class="font-header font-bold text-xs uppercase tracking-wider text-theme-text/70"
             >
               Session Hub
             </h3>
@@ -878,23 +857,33 @@
             {/if}
           </button>
 
-          <div class="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
-              id="ai-toggle"
-              bind:checked={useAI}
-              class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none"
-            />
-            <label
-              for="ai-toggle"
-              class="text-[10px] font-bold uppercase tracking-wider text-theme-muted cursor-pointer flex items-center gap-1"
-              title="When enabled, an AI writes richer, unique lore. When off, drafts are built from local tables — fast and fully offline."
+          <div class="flex flex-col gap-1 pt-1">
+            <div class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="ai-toggle"
+                bind:checked={useAI}
+                aria-describedby="ai-toggle-hint"
+                class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0"
+              />
+              <label
+                for="ai-toggle"
+                class="text-[10px] font-bold uppercase tracking-wider text-theme-muted cursor-pointer flex items-center gap-1"
+              >
+                <span
+                  class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
+                ></span>
+                AI Lore Co-Author Mode
+              </label>
+            </div>
+            <p
+              id="ai-toggle-hint"
+              class="text-[9px] text-theme-muted/70 leading-snug pl-6"
             >
-              <span
-                class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
-              ></span>
-              AI Lore Co-Author Mode
-            </label>
+              {useAI
+                ? "AI writes unique, rich lore on each generate."
+                : "Fast offline mode — local tables only, no AI."}
+            </p>
           </div>
         </form>
 
@@ -1062,12 +1051,13 @@
       color-mix(in srgb, var(--color-border) 40%, transparent);
     padding-bottom: 0.25rem;
   }
+  /* Desaturated heading — primary actions keep saturated red (#1272) */
   .seo-md :global(h3) {
     font-family: var(--font-header);
     font-weight: 700;
     font-size: 1rem;
     margin: 1rem 0 0.5rem;
-    color: var(--color-primary);
+    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
   }
   .seo-md :global(ul) {
     list-style: disc;
@@ -1080,5 +1070,29 @@
     text-shadow: 0 0 10px
       color-mix(in srgb, var(--color-primary) 70%, transparent);
     filter: brightness(1.2);
+  }
+  /* Rail stat block — compact heading scale, muted palette (#1276) */
+  .seo-rail.seo-md :global(.seo-label) {
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    text-shadow: none;
+    filter: none;
+  }
+  .seo-rail.seo-md :global(h3) {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: color-mix(in srgb, var(--color-text) 65%, transparent);
+    margin: 0.875rem 0 0.375rem;
+    border-bottom: none;
+  }
+  .seo-rail.seo-md :global(h2) {
+    font-size: 0.8125rem;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-border) 30%, transparent);
+    margin: 1rem 0 0.5rem;
+    color: color-mix(in srgb, var(--color-text) 75%, transparent);
+  }
+  .seo-rail.seo-md :global(strong) {
+    color: color-mix(in srgb, var(--color-text) 80%, transparent);
   }
 </style>

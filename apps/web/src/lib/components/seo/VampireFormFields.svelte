@@ -21,6 +21,14 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
+  const hintClass = "text-[9px] text-theme-muted/75 leading-snug";
+
+  function getParenthetical(val: string) {
+    return val.match(/\(([^)]+)\)/)?.[1] ?? "";
+  }
+
+  const feedingHint = $derived(getParenthetical(feedingHabit));
+  const weaknessHint = $derived(getParenthetical(weakness));
 </script>
 
 <div class="flex flex-col gap-1.5">
@@ -69,6 +77,9 @@
       <option value={f}>{f}</option>
     {/each}
   </select>
+  {#if feedingHint}
+    <p class={hintClass}>{feedingHint}</p>
+  {/if}
 </div>
 
 <div class="flex flex-col gap-1.5">
@@ -85,6 +96,9 @@
       <option value={w}>{w}</option>
     {/each}
   </select>
+  {#if weaknessHint}
+    <p class={hintClass}>{weaknessHint}</p>
+  {/if}
 </div>
 
 <div class="flex flex-col gap-1.5">

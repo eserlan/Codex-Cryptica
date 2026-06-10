@@ -606,7 +606,7 @@ Return only the JSON object. Do not include markdown code block formatting like 
 
       const model = await clientManager.getModel(
         "",
-        "gemini-1.5-flash",
+        "gemini-3.1-flash-lite",
         "You are an assistant that generates detailed RPG campaign elements in JSON format.",
       );
       const response = await model.generateContent(prompt);
