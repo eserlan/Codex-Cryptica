@@ -65,7 +65,7 @@ Recommendation:
 Evidence:
 
 - Global host: [GlobalModalProvider.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/lib/components/modals/GlobalModalProvider.svelte:182)
-- Map-local host: [map/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/map/+page.svelte:72)
+- Map-local host: [map/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/map/+page.svelte:72>)
 - Global trigger state: [modal-ui.svelte.ts](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/lib/stores/ui/modal-ui.svelte.ts:61)
 
 Why this is a real risk:
@@ -91,7 +91,7 @@ Recommendation:
 
 Evidence:
 
-- Main content route: [routes/(app)/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/+page.svelte:236)
+- Main content route: [routes/(app)/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/+page.svelte:236>)
 - Modal shell: [GuestChatModal.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/lib/components/modals/GuestChatModal.svelte:44)
 - Modal gate: [guest-chat.svelte.ts](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/lib/stores/guest-chat.svelte.ts:34)
 
@@ -145,8 +145,8 @@ Recommendation:
 
 Used in:
 
-- [routes/(app)/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/+page.svelte:296)
-- [routes/(app)/vault/[id]/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/vault/[id]/+page.svelte:23)
+- [routes/(app)/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/+page.svelte:296>)
+- [routes/(app)/vault/[id]/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/vault/[id]/+page.svelte:23>)
 
 Reason:
 
@@ -156,8 +156,8 @@ Reason:
 
 Used in:
 
-- [routes/(app)/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/+page.svelte:259)
-- [routes/(app)/vault/[id]/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/vault/[id]/+page.svelte:27)
+- [routes/(app)/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/+page.svelte:259>)
+- [routes/(app)/vault/[id]/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/vault/[id]/+page.svelte:27>)
 
 Reason:
 
@@ -179,7 +179,7 @@ Reason:
 Used in:
 
 - [DiceModal.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/lib/components/dice/DiceModal.svelte:67)
-- [routes/(app)/dice/+page.svelte](/home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/dice/+page.svelte:30)
+- [routes/(app)/dice/+page.svelte](</home/espen/proj/Codex-Cryptica-v2/apps/web/src/routes/(app)/dice/+page.svelte:30>)
 
 Reason:
 

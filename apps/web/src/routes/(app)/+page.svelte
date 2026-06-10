@@ -181,6 +181,16 @@
   const isGuestMode = $derived(!!shareId);
 
   onMount(() => {
+    // Suppress guide immediately if arriving from the importer — before the
+    // async import completes, so the guide never flashes over the vault.
+    if (
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("__codex_pending_import")
+    ) {
+      onboardingStore.dismissLandingPage();
+      onboardingStore.dismissWorldPage();
+    }
+
     // Check for pending import from generator onboarding funnel
     void seoImportService.checkAndHandlePendingImport().then((importedId) => {
       if (importedId) {
