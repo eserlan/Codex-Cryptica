@@ -13,7 +13,7 @@
     </filter>
     
     <pattern id="blood-spatter" x="0" y="0" width="300" height="300" patternUnits="userSpaceOnUse">
-      <g fill="#5e0b0b" opacity="0.4" filter="url(#roughEdge)">
+      <g fill="#8a1414" opacity="0.75" filter="url(#roughEdge)">
         <!-- Splatter 1: Top Left -->
         <circle cx="60" cy="60" r="14"/>
         <circle cx="35" cy="45" r="4"/>
