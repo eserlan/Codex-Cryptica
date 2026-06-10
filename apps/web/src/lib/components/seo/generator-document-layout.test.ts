@@ -52,6 +52,8 @@ The clan needs a relic recovered before dawn.`,
       lore: `### At the Table
 - **Base**: The old mint
 - **Resource**: Canal tolls
+- **Secret**: The founding charter is forged.
+- **Immediate Hook**: A loom has started weaving on its own.
 
 ### Notable NPCs
 - **Guildmistress Hale**: Counts every favour twice.
@@ -67,10 +69,16 @@ The dockside cells want to stop paying tribute to the founding families, and the
 
     expect(layout.content).toContain("### What they control");
     expect(layout.content).toContain("### Internal Conflict");
+    expect(layout.content).toContain("### Secrets & Hooks");
+    expect(layout.content).toContain("**Secret**: The founding charter");
+    expect(layout.content).toContain("**Immediate Hook**: A loom has started");
     expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).toContain("**Base**");
     expect(layout.lore).toContain("### Notable NPCs");
     expect(layout.lore).toContain("### Rival Faction");
     expect(layout.lore).not.toContain("### Internal Conflict");
+    expect(layout.lore).not.toContain("**Secret**");
+    expect(layout.lore).not.toContain("**Immediate Hook**");
   });
 
   it("moves quest twist, reward, and complication into the main document", () => {
@@ -167,13 +175,17 @@ They say the first loom was strung with hair from a drowned saint.`,
     expect(layout.lore).not.toContain("A guild older than the city charter.");
   });
 
-  it("moves NPC personality into the main document", () => {
+  it("moves NPC personality, faction connection, secret, and hook into the main document", () => {
     const layout = getGeneratorDocumentLayout({
       type: "character",
       title: "Brother Calix",
       content: "### Who they are\nA lapsed monk turned locksmith.",
       lore: `### At a Glance
+- **Ancestry**: Human, hill country
 - **Role**: Locksmith
+- **Moral Stance**: Lawful to a fault
+- **Secret**: He never actually left the order.
+- **Immediate Hook**: He needs a lock opened that he made himself.
 
 ### Personality
 - Counts his steps out loud when nervous.
@@ -187,9 +199,19 @@ Owes the thieves' guild a debt.`,
 
     expect(layout.content).toContain("### Who they are");
     expect(layout.content).toContain("### Personality");
+    expect(layout.content).toContain("### Faction Connection");
+    expect(layout.content).toContain("### Secrets & Hooks");
+    expect(layout.content).toContain("**Secret**: He never actually left");
+    expect(layout.content).toContain("**Immediate Hook**: He needs a lock");
+    // Rail keeps only the compact at-a-glance facts
     expect(layout.lore).toContain("### At a Glance");
-    expect(layout.lore).toContain("### Faction Connection");
+    expect(layout.lore).toContain("**Ancestry**");
+    expect(layout.lore).toContain("**Role**");
+    expect(layout.lore).toContain("**Moral Stance**");
+    expect(layout.lore).not.toContain("**Secret**");
+    expect(layout.lore).not.toContain("**Immediate Hook**");
     expect(layout.lore).not.toContain("### Personality");
+    expect(layout.lore).not.toContain("### Faction Connection");
   });
 
   it("leaves generators without a layout rule unchanged", () => {

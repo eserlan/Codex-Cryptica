@@ -1,12 +1,23 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
+interface LayoutRule {
+  label: string;
+  // Lore sections that stay in the right rail; everything else moves into the
+  // main document.
+  railSections: Set<string>;
+  // Bullets inside rail sections whose `- **Label**:` matches are lifted out
+  // of the rail and grouped under `heading` in the main document. Use this for
+  // verbose, story-bearing bullets (secrets, hooks) embedded in stat blocks.
+  documentBullets?: { labels: Set<string>; heading: string };
+}
+
 // Content-ownership model (#1283): the center column owns narrative prose,
-// the right rail owns compact label/value reference. Each rule lists the lore
-// sections that stay in the rail for one generator family; every other lore
-// section (including unrecognised AI-invented headings) moves into the main
-// document. Generators without a rule keep their lore in the rail untouched.
-// Rules are matched in order, so more specific labels come first.
-const LAYOUT_RULES: { label: string; railSections: Set<string> }[] = [
+// the right rail owns compact label/value reference. Every lore section not
+// claimed by a rule's railSections (including unrecognised AI-invented
+// headings) moves into the main document. Generators without a rule keep
+// their lore in the rail untouched. Rules are matched in order, so more
+// specific labels come first.
+const LAYOUT_RULES: LayoutRule[] = [
   {
     label: "vampire-clan",
     railSections: new Set(["GM Reference Information"]),
@@ -14,6 +25,10 @@ const LAYOUT_RULES: { label: string; railSections: Set<string> }[] = [
   {
     label: "faction-generator",
     railSections: new Set(["At the Table", "Notable NPCs", "Rival Faction"]),
+    documentBullets: {
+      labels: new Set(["Secret", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
   },
   {
     label: "quest-generator",
@@ -25,7 +40,11 @@ const LAYOUT_RULES: { label: string; railSections: Set<string> }[] = [
   },
   {
     label: "npc-generator",
-    railSections: new Set(["At a Glance", "Faction Connection"]),
+    railSections: new Set(["At a Glance"]),
+    documentBullets: {
+      labels: new Set(["Secret", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
   },
 ];
 
@@ -67,6 +86,22 @@ function splitMarkdownSections(markdown: string): MarkdownSection[] {
   );
 }
 
+function extractBullets(body: string, labels: Set<string>) {
+  const kept: string[] = [];
+  const moved: string[] = [];
+
+  for (const line of body.split("\n")) {
+    const match = line.match(/^-\s+\*\*(.+?)\*\*/);
+    if (match && labels.has(match[1].trim())) {
+      moved.push(line.trim());
+    } else {
+      kept.push(line);
+    }
+  }
+
+  return { kept: kept.join("\n").trim(), moved };
+}
+
 export function getGeneratorDocumentLayout(
   generatedData: GeneratorOutput | null,
 ) {
@@ -96,13 +131,30 @@ export function getGeneratorDocumentLayout(
 
   const mainDocumentSections: string[] = [];
   const railSections: string[] = [];
+  const liftedBullets: string[] = [];
 
   for (const section of loreSections) {
-    if (rule.railSections.has(section.heading)) {
-      railSections.push(section.body);
-    } else {
+    if (!rule.railSections.has(section.heading)) {
       mainDocumentSections.push(section.body);
+      continue;
     }
+
+    if (rule.documentBullets) {
+      const { kept, moved } = extractBullets(
+        section.body,
+        rule.documentBullets.labels,
+      );
+      liftedBullets.push(...moved);
+      if (kept) railSections.push(kept);
+    } else {
+      railSections.push(section.body);
+    }
+  }
+
+  if (liftedBullets.length > 0 && rule.documentBullets) {
+    mainDocumentSections.push(
+      `### ${rule.documentBullets.heading}\n${liftedBullets.join("\n")}`,
+    );
   }
 
   return {
