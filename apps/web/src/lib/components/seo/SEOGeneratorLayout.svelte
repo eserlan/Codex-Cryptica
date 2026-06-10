@@ -9,6 +9,7 @@
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { renderMarkdown as renderMd } from "$lib/utils/markdown";
   import { SESSION_DRAFTS_KEY } from "$lib/services/seo/generators/session-context";
+  import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
 
   let {
     canonicalPath,
@@ -109,6 +110,8 @@
   const generatedSingular = $derived(
     eyebrow.replace(/\s*Generator\s*/i, "").trim() || "Draft",
   );
+
+  const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
 
   $effect(() => {
     if (browser && isThemeCustomizable && activeThemeId) {
@@ -672,7 +675,7 @@
                 : 'space-y-4'}"
               data-theme={worldTheme}
             >
-              {@html renderMarkdown(generatedData.content || "")}
+              {@html renderMarkdown(documentLayout.content)}
             </div>
           </div>
         {:else}
@@ -708,7 +711,7 @@
               in:fade={{ duration: 250 }}
               class="seo-md text-sm leading-relaxed text-theme-text/80"
             >
-              {@html renderLore(generatedData.lore || "")}
+              {@html renderLore(documentLayout.lore)}
             </div>
           {:else}
             <div
