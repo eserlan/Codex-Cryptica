@@ -440,11 +440,17 @@
       class="absolute inset-0 flex items-center justify-center pointer-events-none"
       data-testid="graph-empty-state"
     >
-      <EmptyState
-        icon="icon-[lucide--network]"
-        headline="Your graph is empty"
-        body="Add entities in the explorer to see them appear here."
-      />
+      <div class="pointer-events-auto">
+        <EmptyState
+          icon="icon-[lucide--network]"
+          headline="Your graph is empty"
+          body="Create your first entity to see it appear here."
+          cta={vault.isGuest ? undefined : "＋ Create your first entity"}
+          onCta={vault.isGuest
+            ? undefined
+            : () => modalUIStore.requestCreateEntity()}
+        />
+      </div>
     </div>
   {/if}
 

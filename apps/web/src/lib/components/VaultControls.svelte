@@ -26,6 +26,18 @@
   let useTemplate = $state(true);
   let draftContent = $state("");
 
+  // Open the create form when an empty-state CTA (graph/explorer) requests it.
+  let lastCreateRequest = modalUIStore.createEntityRequests;
+  $effect(() => {
+    if (modalUIStore.createEntityRequests !== lastCreateRequest) {
+      lastCreateRequest = modalUIStore.createEntityRequests;
+      if (!vault.isGuest) {
+        createError = null;
+        showForm = true;
+      }
+    }
+  });
+
   $effect(() => {
     const draft = proposerStore.draftEntity;
     if (draft) {

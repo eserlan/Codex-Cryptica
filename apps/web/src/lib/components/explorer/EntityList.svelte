@@ -11,6 +11,7 @@
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     onSelect,
@@ -342,6 +343,10 @@
               icon="icon-[lucide--ghost]"
               headline="No entities yet"
               body="Create your first entity to start building your vault."
+              cta={vault.isGuest ? undefined : "＋ Create your first entity"}
+              onCta={vault.isGuest
+                ? undefined
+                : () => modalUIStore.requestCreateEntity()}
             />
           {:else}
             <EmptyState

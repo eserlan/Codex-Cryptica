@@ -18,6 +18,10 @@ export class ModalUIStore {
   isImporting = $state(false);
   showDiceModal = $state(false);
 
+  // Incremented to signal that the entity-creation form should open
+  // (VaultControls listens; the app layout opens the mobile drawer first).
+  createEntityRequests = $state(0);
+
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
   zenModeActiveTab = $state<"overview" | "map" | "chats">("overview");
@@ -154,6 +158,10 @@ export class ModalUIStore {
 
   closeRelatedEntityDialog() {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
+  }
+
+  requestCreateEntity() {
+    this.createEntityRequests++;
   }
 
   openVaultSwitcher(intent: "create" | "open" | null = null) {
