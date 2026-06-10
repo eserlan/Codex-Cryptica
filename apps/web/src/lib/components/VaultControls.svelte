@@ -9,6 +9,7 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
@@ -26,11 +27,11 @@
   let useTemplate = $state(true);
   let draftContent = $state("");
 
-  // Open the create form when an empty-state CTA (graph/explorer) requests it.
-  // The flag latches in the store so a request raised before this component
-  // mounts (mobile drawer closed) is consumed once the drawer opens.
+  // Open the create form when an empty-state CTA requests it.
+  // On mobile, the layout intercepts this flag first and opens a bottom sheet;
+  // skip here so the flag isn't consumed before the layout effect runs.
   $effect(() => {
-    if (modalUIStore.pendingCreateEntity) {
+    if (modalUIStore.pendingCreateEntity && !layoutUIStore.isMobile) {
       modalUIStore.pendingCreateEntity = false;
       if (!vault.isGuest) {
         createError = null;
