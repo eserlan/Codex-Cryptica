@@ -405,8 +405,8 @@
       </header>
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
-        {#if isEmpty}
-          <!-- Start your world card — shown instead of cover image for empty vaults (#1297) -->
+        {#if isEmpty && !showCoverEditor}
+          <!-- Start your world card — shown for empty vaults unless cover editor is explicitly open (#1297) -->
           <div
             class="rounded-3xl border border-theme-primary/20 bg-theme-surface/60 p-5 md:p-6"
             data-testid="start-world-card"

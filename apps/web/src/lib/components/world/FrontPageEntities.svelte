@@ -139,6 +139,7 @@
         <div class="flex flex-wrap justify-center gap-2">
           {#if onCreateEntity}
             <button
+              type="button"
               class="inline-flex items-center gap-1.5 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
               onclick={onCreateEntity}
               data-testid="entities-create-button"
@@ -149,6 +150,7 @@
           {/if}
           {#if onEnterGraph}
             <button
+              type="button"
               class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/60 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary transition-colors"
               onclick={onEnterGraph}
               data-testid="entities-enter-graph-button"
