@@ -39,19 +39,28 @@ function splitMarkdownSections(markdown: string): MarkdownSection[] {
     return [];
   }
 
-  return matches.map((match, index) => {
-    const heading = match[1]?.trim() ?? "";
-    const start = match.index ?? 0;
-    const end =
-      index + 1 < matches.length
-        ? (matches[index + 1].index ?? normalized.length)
-        : normalized.length;
+  const sections: MarkdownSection[] = [];
 
-    return {
-      heading,
-      body: normalized.slice(start, end).trim(),
-    };
-  });
+  const preamble = normalized.slice(0, matches[0].index ?? 0).trim();
+  if (preamble) {
+    sections.push({ heading: "", body: preamble });
+  }
+
+  return sections.concat(
+    matches.map((match, index) => {
+      const heading = match[1]?.trim() ?? "";
+      const start = match.index ?? 0;
+      const end =
+        index + 1 < matches.length
+          ? (matches[index + 1].index ?? normalized.length)
+          : normalized.length;
+
+      return {
+        heading,
+        body: normalized.slice(start, end).trim(),
+      };
+    }),
+  );
 }
 
 export function getGeneratorDocumentLayout(

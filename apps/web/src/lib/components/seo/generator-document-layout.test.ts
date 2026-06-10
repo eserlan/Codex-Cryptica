@@ -149,6 +149,24 @@ They say the first loom was strung with hair from a drowned saint.`,
     expect(layout.lore).not.toContain("### Whispered Origins");
   });
 
+  it("keeps lore preamble before the first heading, routed to the document", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "faction",
+      title: "The Argent Loom",
+      content: "### What they control\nThe canal gates.",
+      lore: `A guild older than the city charter.
+
+### At the Table
+- **Base**: The old mint`,
+      labels: ["rpg-faction", "faction-generator", "imported-draft"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("A guild older than the city charter.");
+    expect(layout.lore).toContain("### At the Table");
+    expect(layout.lore).not.toContain("A guild older than the city charter.");
+  });
+
   it("leaves generators without a layout rule unchanged", () => {
     const layout = getGeneratorDocumentLayout({
       type: "character",
