@@ -20,19 +20,22 @@
     {
       id: "graph",
       icon: "icon-[lucide--network]",
-      label: "Knowledge Graph",
+      label: "Graph",
+      title: "Knowledge Graph",
       href: `${base}/`,
     },
     {
       id: "map",
       icon: "icon-[lucide--compass]",
-      label: "World Map",
+      label: "Map",
+      title: "World Map",
       href: `${base}/map`,
     },
     {
       id: "canvas",
       icon: "icon-[lucide--layout]",
-      label: "Spatial Canvas",
+      label: "Canvas",
+      title: "Spatial Canvas",
       href: `${base}/canvas`,
     },
   ];
@@ -42,7 +45,7 @@
       {
         id: "oracle",
         icon: "icon-[lucide--sparkles]",
-        label: "Lore Oracle",
+        label: "Oracle",
         title:
           "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
         action: () => layoutUIStore.toggleSidebarTool("oracle"),
@@ -50,13 +53,15 @@
       {
         id: "explorer",
         icon: "icon-[lucide--database]",
-        label: "Entity Explorer",
+        label: "Entities",
+        title: "Entity Explorer",
         action: () => layoutUIStore.toggleSidebarTool("explorer"),
       },
       {
         id: "quicknote",
         icon: "icon-[lucide--zap]",
-        label: "QuickNote Scratchpad",
+        label: "Notes",
+        title: "QuickNote Scratchpad",
         action: () => quickNoteStore.toggle(),
       },
     ];
@@ -65,7 +70,7 @@
       list.push({
         id: "guest-chat",
         icon: "icon-[lucide--messages-square]",
-        label: "Guest Character Chat",
+        label: "Chat",
         title: "Guest Chat — speak with enabled characters in-character.",
         action: () => {
           if (layoutUIStore.mainViewMode === "guest-chat") {
@@ -104,7 +109,7 @@
         ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
         : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
       aria-label={view.label}
-      title={view.label}
+      title={view.title ?? view.label}
       data-testid={`activity-bar-${view.id}`}
     >
       <span
