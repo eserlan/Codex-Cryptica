@@ -23,6 +23,9 @@ export class ModalUIStore {
   // drawer opens, so it must be able to consume a request raised pre-mount.
   pendingCreateEntity = $state(false);
 
+  // Mobile-only bottom sheet for creating entities
+  showMobileCreateSheet = $state(false);
+
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
   zenModeActiveTab = $state<"overview" | "map" | "chats">("overview");
@@ -276,6 +279,7 @@ export class ModalUIStore {
 
   get isAnyModalOpen() {
     return (
+      this.showMobileCreateSheet ||
       this.showSettings ||
       this.showZenMode ||
       this.showDiceModal ||
@@ -298,6 +302,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v7__";
+const KEY = "__codex_modal_ui_store__v8__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

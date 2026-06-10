@@ -94,6 +94,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.showMobileCreateSheet}
+      {#await loadModal(() => import("./MobileCreateEntitySheet.svelte"), "MobileCreateEntitySheet") then MobileCreateEntitySheet}
+        {#if MobileCreateEntitySheet}
+          <MobileCreateEntitySheet />
+        {/if}
+      {/await}
+    {/if}
+
     {#if notificationStore.confirmationDialog.open}
       {#await loadModal(() => import("./ConfirmationModal.svelte"), "ConfirmationModal") then ConfirmationModal}
         {#if ConfirmationModal}
