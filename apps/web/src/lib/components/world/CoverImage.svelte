@@ -40,11 +40,11 @@
   };
 
   const handleFileChange = async (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
     if (!file) return;
     await onDrop(file);
-    input.value = "";
+    target.value = "";
   };
 
   const handleGenerate = async () => {
@@ -71,9 +71,17 @@
       </h3>
       <p class="mt-1 text-sm text-theme-text/70">
         {#if hasImage}
-          Replace the current cover image.
+          <span class="hidden md:inline"
+            >Drop a new image to replace the current cover.</span
+          >
+          <span class="md:hidden"
+            >Add a new image to replace the current cover.</span
+          >
         {:else}
-          Add a cover image to give your world a stronger identity.
+          <span class="hidden md:inline"
+            >Drop an image to set the world cover.</span
+          >
+          <span class="md:hidden">Add an image to set the world cover.</span>
         {/if}
       </p>
     </div>
@@ -118,42 +126,49 @@
       class="max-w-sm text-sm leading-relaxed text-theme-muted hidden sm:block"
     >
       {#if hasImage}
-        Drag a fresh cover image here to replace the current one.
+        <span class="hidden md:inline"
+          >Drag a fresh cover image onto this zone to replace the current one.</span
+        >
+        <span class="md:hidden"
+          >Add a cover image to replace the current one.</span
+        >
       {:else}
-        Drag an image here, or use the button below.
+        <span class="hidden md:inline"
+          >Drag a cover image here to give your world a stronger identity.</span
+        >
+        <span class="md:hidden"
+          >Add a cover image to give your world a stronger identity.</span
+        >
       {/if}
     </p>
 
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       <!-- Explicit file-picker button — works on both desktop and mobile -->
       <button
-        class="rounded-lg border border-theme-border bg-theme-surface/60 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary disabled:opacity-50 transition-colors"
+        class="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
         onclick={() => fileInput?.click()}
         disabled={isBusy}
         data-testid="choose-image-button"
       >
-        <span class="icon-[lucide--upload] h-3 w-3 mr-1 inline-block"></span>
-        {hasImage ? "Choose new image" : "Choose image"}
+        Choose image
       </button>
 
       {#if aiDisabled}
         <!-- AI not configured: show link to settings instead of dead-end button -->
         {#if onSetupAI}
           <button
-            class="rounded-lg border border-theme-border px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted/60 hover:text-theme-primary disabled:opacity-50 transition-colors"
+            class="rounded-lg border border-dashed border-theme-border bg-theme-surface/30 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text hover:bg-theme-surface transition-colors"
             onclick={onSetupAI}
             disabled={isBusy}
             title="Configure AI to enable art generation"
             data-testid="setup-ai-button"
           >
-            <span class="icon-[lucide--settings] h-3 w-3 mr-1 inline-block"
-            ></span>
-            Set up AI
+            Set up AI Art
           </button>
         {/if}
       {:else}
         <button
-          class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 transition-colors ${isBusy ? "animate-pulse" : ""}`}
+          class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
           onclick={handleGenerate}
           disabled={isBusy}
           data-testid="generate-art-button"

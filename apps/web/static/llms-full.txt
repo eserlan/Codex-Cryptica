@@ -113,13 +113,13 @@ Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost e
 While you chat, the Oracle can identify new characters, locations, and items. In Settings, choose whether discoveries are off, shown as chips for review, or saved automatically as drafts.
 
 ### Oracle Automation
-Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.
+Entity Discovery controls whether Oracle surfaces discovered records as suggestions. Connection Discovery controls whether Oracle surfaces link suggestions after it creates or updates a record.
 
 ### Adjustable Sidebars
 Dynamically resize the left and right sidebars to suit your workspace needs. Hover over the inner edge of a sidebar and drag left or right. Your custom widths are automatically saved across sessions.
 
 ### Reviewing Drafts
-Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.
+Draft entities stay separate from your active lore until you review them. Open the Review tab in Entity Explorer, or use the draft controls in the entity panel, to approve or reject them.
 
 ### AI Description Revision
 Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
