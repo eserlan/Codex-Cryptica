@@ -62,6 +62,7 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
     revisionDialog: { open: false, entityId: null, instructions: "" },
     lightbox: { show: false, imageUrl: "", title: "" },
     showCanvasSelector: false,
+    showMobileCreateSheet: false,
     closeMergeDialog: vi.fn(),
     closeBulkLabelDialog: vi.fn(),
     closeRelatedEntityDialog: vi.fn(),
@@ -87,12 +88,18 @@ vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
     .default,
 }));
 
+vi.mock("./MobileCreateEntitySheet.svelte", async () => ({
+  default: (await import("./__tests__/MobileCreateEntitySheetStub.svelte"))
+    .default,
+}));
+
 import GlobalModalProvider from "./GlobalModalProvider.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("GlobalModalProvider", () => {
   beforeEach(() => {
     modalUIStore.showCanvasSelector = false;
+    modalUIStore.showMobileCreateSheet = false;
   });
 
   it("renders CanvasSelectionModal from the global provider when the modal state is open", async () => {
@@ -109,5 +116,21 @@ describe("GlobalModalProvider", () => {
     render(GlobalModalProvider);
 
     expect(screen.queryByTestId("canvas-selection-modal-stub")).toBeNull();
+  });
+
+  it("renders MobileCreateEntitySheet when showMobileCreateSheet is true", async () => {
+    modalUIStore.showMobileCreateSheet = true;
+
+    render(GlobalModalProvider);
+
+    expect(
+      await screen.findByTestId("mobile-create-entity-sheet-stub"),
+    ).toBeTruthy();
+  });
+
+  it("does not render MobileCreateEntitySheet when showMobileCreateSheet is false", () => {
+    render(GlobalModalProvider);
+
+    expect(screen.queryByTestId("mobile-create-entity-sheet-stub")).toBeNull();
   });
 });

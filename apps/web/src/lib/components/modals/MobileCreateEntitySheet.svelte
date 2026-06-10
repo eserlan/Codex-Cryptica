@@ -5,22 +5,25 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
 
   let newTitle = $state("");
   let newType = $state<string>("character");
+  let draftContent = $state("");
   let isCreating = $state(false);
   let createError = $state<string | null>(null);
   let useTemplate = $state(true);
   let inputEl = $state<HTMLInputElement | undefined>();
 
-  // Consume draft from proposer (e.g. AI-suggested entity)
+  // Consume draft from proposer (e.g. AI-suggested entity), including body content
   $effect(() => {
     const draft = proposerStore.draftEntity;
     if (draft && modalUIStore.showMobileCreateSheet) {
       newTitle = draft.title || "";
       newType = draft.type || "character";
+      draftContent = draft.content || "";
       proposerStore.clearDraftEntity();
     }
   });
@@ -33,18 +36,23 @@
     }
   });
 
-  // Autofocus input when sheet opens
+  // Autofocus input when sheet opens; reset all fields on close
   $effect(() => {
     if (modalUIStore.showMobileCreateSheet) {
       setTimeout(() => inputEl?.focus(), 100);
     } else {
       newTitle = "";
+      draftContent = "";
       createError = null;
     }
   });
 
   function close() {
     modalUIStore.showMobileCreateSheet = false;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") close();
   }
 
   const handleCreate = async () => {
@@ -65,6 +73,13 @@
         );
         resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
+      // Prepend AI draft content, matching VaultControls behaviour
+      if (draftContent) {
+        resolvedContent =
+          draftContent + (resolvedContent ? "\n\n" + resolvedContent : "");
+        resolvedLore =
+          draftContent + (resolvedLore ? "\n\n" + resolvedLore : "");
+      }
       const id = await vault.createEntity(newType, newTitle, {
         content: resolvedContent,
         lore: resolvedLore,
@@ -78,6 +93,8 @@
     }
   };
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <!-- Backdrop -->
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -95,6 +112,8 @@
   aria-modal="true"
   aria-label="Create {themeStore.jargon.entity}"
   data-testid="mobile-create-entity-sheet"
+  tabindex="-1"
+  use:focusTrap
   transition:fly={{ y: 400, duration: 700, easing: quintOut }}
 >
   <!-- Drag handle -->
@@ -147,6 +166,21 @@
           OPEN
         </button>
       </div>
+    </div>
+  {:else if vault.isGuest}
+    <!-- Guest mode — read-only, cannot create -->
+    <div class="px-5 pb-8 pt-2 flex flex-col gap-4 items-center text-center">
+      <span class="icon-[lucide--lock] w-8 h-8 text-chrome-muted"></span>
+      <p class="text-sm text-chrome-muted">
+        Guests cannot create entries. Exit guest mode to manage your own vault.
+      </p>
+      <button
+        type="button"
+        class="px-4 py-2.5 rounded border border-chrome-border text-chrome-muted text-sm font-bold tracking-wider hover:border-chrome-accent hover:text-chrome-text transition-colors"
+        onclick={close}
+      >
+        CLOSE
+      </button>
     </div>
   {:else}
     <!-- Create form -->
