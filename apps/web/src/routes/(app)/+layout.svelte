@@ -398,6 +398,16 @@
     }
   });
 
+  // On mobile, the entity-creation form lives in the drawer (VaultControls),
+  // so a create request must also open the drawer and dismiss the full-screen
+  // explorer that would otherwise cover it.
+  $effect(() => {
+    if (modalUIStore.pendingCreateEntity && layoutUIStore.isMobile) {
+      layoutUIStore.closeSidebar();
+      isMobileMenuOpen = true;
+    }
+  });
+
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,

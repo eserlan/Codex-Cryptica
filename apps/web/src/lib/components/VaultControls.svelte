@@ -26,6 +26,19 @@
   let useTemplate = $state(true);
   let draftContent = $state("");
 
+  // Open the create form when an empty-state CTA (graph/explorer) requests it.
+  // The flag latches in the store so a request raised before this component
+  // mounts (mobile drawer closed) is consumed once the drawer opens.
+  $effect(() => {
+    if (modalUIStore.pendingCreateEntity) {
+      modalUIStore.pendingCreateEntity = false;
+      if (!vault.isGuest) {
+        createError = null;
+        showForm = true;
+      }
+    }
+  });
+
   $effect(() => {
     const draft = proposerStore.draftEntity;
     if (draft) {
