@@ -1,23 +1,17 @@
 <script lang="ts">
   import { oracle, type ChatMessage } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { TIER_MODES, contextRetrievalService } from "$lib/services/ai";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
 
-  type Step =
-    | "SELECT_SOURCE"
-    | "SELECT_TARGET"
-    | "PROPOSING"
-    | "REVIEW"
-    | "DONE";
+  type Step = "SELECT_SOURCE" | "SELECT_TARGET" | "DONE";
 
   // Prefill logic for direct commands
   const prefill = (message as any).prefill;
 
-  let step = $state<Step>(prefill ? "REVIEW" : "SELECT_SOURCE");
+  let step = $state<Step>(prefill ? "SELECT_TARGET" : "SELECT_SOURCE");
   let sourceId = $state<string | null>(prefill?.sourceId || null);
   let sourceName = $state(
     prefill?.sourceId ? vault.entities[prefill.sourceId]?.title : "",
@@ -30,7 +24,6 @@
   let targetTitle = $derived(targetId ? vault.entities[targetId]?.title : "");
   let type = $state(prefill?.type || "related_to");
   let label = $state(prefill?.label || "");
-  let explanation = $state("");
   let error = $state<string | null>(null);
 
   const options = [
@@ -57,49 +50,6 @@
         error = "Source and Target cannot be the same entity.";
         return;
       }
-
-      // Fast path: Go to review immediately
-      step = "REVIEW";
-      // Trigger AI proposal in background
-      generateProposal();
-    }
-  };
-
-  let isProposing = $state(false);
-  const generateProposal = async () => {
-    try {
-      const key = oracle.effectiveApiKey || "";
-      isProposing = true;
-      const source = vault.entities[sourceId!];
-      const target = vault.entities[targetId!];
-
-      const modelName = TIER_MODES[oracle.tier];
-
-      const { ProposerService } = await import("@codex/proposer");
-      const proposer = new ProposerService();
-
-      const proposal = await proposer.generateConnectionProposal(
-        key,
-        modelName,
-        contextRetrievalService.getConsolidatedContext(source),
-        contextRetrievalService.getConsolidatedContext(target),
-        source.title,
-        target.title,
-      );
-
-      // Only apply if the user hasn't typed their own label yet
-      if (!label) {
-        const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
-        type = allowedTypes.includes(proposal.type)
-          ? proposal.type
-          : "related_to";
-        label = proposal.label;
-      }
-      explanation = proposal.explanation;
-    } catch (err: any) {
-      console.error("Proposal failed:", err);
-    } finally {
-      isProposing = false;
     }
   };
 
@@ -145,7 +95,7 @@
       />
     </div>
   {:else if step === "SELECT_TARGET"}
-    <div in:fade>
+    <div class="space-y-3" in:fade>
       <p class="text-xs text-theme-muted mb-2 font-mono">
         2. Select the destination entity (To):
       </p>
@@ -164,20 +114,6 @@
         id="wizard-target-search"
         ariaLabel="Search target entity"
       />
-    </div>
-  {:else if step === "PROPOSING"}
-    <div class="flex flex-col items-center py-4 gap-3" in:fade>
-      <div
-        class="w-8 h-8 border-2 border-theme-primary/30 border-t-theme-primary rounded-full animate-spin"
-      ></div>
-      <p
-        class="text-xs text-theme-primary animate-pulse font-mono uppercase tracking-widest"
-      >
-        Oracle is analyzing lore...
-      </p>
-    </div>
-  {:else if step === "REVIEW"}
-    <div class="space-y-3" in:fade>
       <div
         class="flex flex-col gap-1 p-2 bg-theme-bg/50 rounded border border-theme-border text-xs font-mono"
       >
@@ -194,26 +130,6 @@
           >
         </div>
       </div>
-
-      {#if explanation}
-        <div
-          class="p-2 bg-theme-primary/5 border-l-2 border-theme-primary italic text-xs text-theme-text/80 leading-relaxed"
-        >
-          "{explanation}"
-        </div>
-      {:else if isProposing}
-        <div
-          class="flex items-center gap-2 px-2 py-1.5 bg-theme-primary/5 rounded border border-theme-primary/10 animate-pulse"
-        >
-          <div
-            class="w-2.5 h-2.5 border border-theme-primary/30 border-t-theme-primary rounded-full animate-spin"
-          ></div>
-          <span
-            class="text-[10px] font-mono text-theme-primary uppercase tracking-widest"
-            >Oracle is weaving suggestions...</span
-          >
-        </div>
-      {/if}
 
       <div class="grid grid-cols-2 gap-2">
         <div class="flex flex-col gap-1">
@@ -273,13 +189,13 @@
         >Cancel</button
       >
 
-      {#if step === "SELECT_SOURCE" || step === "SELECT_TARGET"}
+      {#if step === "SELECT_SOURCE"}
         <button
           onclick={handleNext}
           class="px-4 py-1 bg-theme-primary text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:bg-theme-secondary active:scale-95 transition-all"
           >Next</button
         >
-      {:else if step === "REVIEW"}
+      {:else if step === "SELECT_TARGET"}
         <button
           onclick={handleFinalize}
           class="px-4 py-1 bg-theme-primary text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:bg-theme-secondary active:scale-95 transition-all"

@@ -162,6 +162,48 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/blog/revising-your-lore-with-the-oracle</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T22:00:00.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/ai-slop-is-context-failure</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T20:00:00.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/ai-campaign-prep-without-losing-your-voice</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T18:00:00.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/drafts-are-not-canon</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T16:00:00.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/worldbuilding-ai-needs-your-lore</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T14:00:00.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/worldbuilding-tool-without-ai</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T12:00:00.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/lore-oracle-not-the-author</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-06T10:00:00.000Z</lastmod>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/context-aware-entity-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -222,13 +264,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>

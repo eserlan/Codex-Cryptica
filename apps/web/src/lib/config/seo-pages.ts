@@ -25,6 +25,8 @@ export interface SEOPageData {
   secondaryCtaHref?: string;
   /** Links shown in a "Related pages" section above the FAQ. */
   relatedLinks?: Array<{ href: string; label: string }>;
+  /** Show the Responsible AI trust banner before the FAQ section. */
+  aiTrustSection?: boolean;
 }
 
 export interface SEOComparisonPageData extends SEOPageData {
@@ -608,10 +610,17 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     introText:
       "Both Obsidian and Codex Cryptica offer powerful local-first markdown linking, but they target different goals. Obsidian is a general-purpose note-taking application requiring multiple community plugins to manage campaigns, whereas Codex Cryptica is built from the ground up for TTRPG mechanics, maps, timelines, and relationships.",
     ctaText: "Try Codex Cryptica",
+    secondaryCtaText: "Import Obsidian Vault",
+    secondaryCtaHref: "/import/obsidian-vault",
     keywords: [
       "codex cryptica vs obsidian",
       "obsidian rpg campaign manager",
       "best obsidian alternative for dnd",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--folder-open]", label: "Obsidian Vault" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     features: [
       {
@@ -680,6 +689,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
     relatedLinks: [
+      { href: "/import/obsidian-vault", label: "Import Obsidian vault" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       {
         href: "/solutions/local-first-worldbuilding-tool",
@@ -800,6 +810,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         label: "Local-first worldbuilding",
       },
     ],
+    aiTrustSection: true,
   },
   legendkeeper: {
     slug: "legendkeeper",
@@ -813,10 +824,17 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     introText:
       "LegendKeeper is a fast, beautifully designed campaign manager, but it is a closed cloud service that requires paid hosting. Codex Cryptica brings the same fluid, interactive wiki experience directly to your browser as a local-first, privacy-respecting tool.",
     ctaText: "Try Private Wiki",
+    secondaryCtaText: "Import LegendKeeper Export",
+    secondaryCtaHref: "/import/legendkeeper-json",
     keywords: [
       "codex cryptica vs legendkeeper",
       "legendkeeper alternative",
       "free campaign wiki",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--cloud-download]", label: "LegendKeeper Export" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     features: [
       {
@@ -876,6 +894,10 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
     relatedLinks: [
+      {
+        href: "/import/legendkeeper-json",
+        label: "Import LegendKeeper export",
+      },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       { href: "/vs/obsidian", label: "vs Obsidian" },
       {
@@ -896,11 +918,18 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     introText:
       "Kanka is a popular cloud-hosted campaign management platform with strong sharing features, but it stores all your world data on remote servers and restricts some features behind paid tiers. Codex Cryptica offers the same rich wiki and relationship graph as a fully local, free, offline-first alternative.",
     ctaText: "Try Free Local Vault",
+    secondaryCtaText: "Import Kanka Export",
+    secondaryCtaHref: "/import/kanka-json",
     keywords: [
       "codex cryptica vs kanka",
       "kanka alternative",
       "kanka rpg campaign manager",
       "free kanka alternative",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--cloud-download]", label: "Kanka JSON Export" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     features: [
       {
@@ -957,6 +986,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     verdict:
       "Kanka excels at team-shared cloud wikis, but if you value offline access, data privacy, and no subscription fees, Codex Cryptica delivers a richer local experience with the same wiki depth and no monthly cost.",
     relatedLinks: [
+      { href: "/import/kanka-json", label: "Import Kanka export" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       { href: "/vs/obsidian", label: "vs Obsidian" },
       { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
@@ -1191,6 +1221,13 @@ export const importsConfig: Record<string, SEOImportPageData> = {
           "No, Codex is free and open-source. All parsing and vault generation is computed local-first in your browser.",
       },
     ],
+    relatedLinks: [
+      { href: "/vs/obsidian", label: "Codex vs Obsidian" },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   "world-anvil-export": {
     slug: "world-anvil-export",
@@ -1241,6 +1278,11 @@ export const importsConfig: Record<string, SEOImportPageData> = {
           "Yes. Since the JSON backup contains all articles, your private lore is fully imported and kept secure on your local drive.",
       },
     ],
+    aiTrustSection: true,
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "Codex vs World Anvil" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+    ],
   },
   "kanka-json": {
     slug: "kanka-json",
@@ -1286,6 +1328,10 @@ export const importsConfig: Record<string, SEOImportPageData> = {
         answer:
           "The importer extracts map coordinates and pin descriptions, letting you map locations inside Codex's spatial canvases.",
       },
+    ],
+    relatedLinks: [
+      { href: "/vs/kanka-alternative", label: "Codex vs Kanka" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
     ],
   },
   "legendkeeper-json": {
@@ -1336,6 +1382,13 @@ export const importsConfig: Record<string, SEOImportPageData> = {
         question: "Do my map pins translate to Codex?",
         answer:
           "Yes, the coordinates and wiki linkages are extracted and can be mapped directly onto the Codex campaign canvas.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/vs/legendkeeper", label: "Codex vs LegendKeeper" },
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
       },
     ],
   },

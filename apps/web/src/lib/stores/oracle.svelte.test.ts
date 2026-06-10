@@ -525,15 +525,15 @@ describe("OracleStore", () => {
 
     it("should expose oracle automation policy through the execution context", () => {
       (mockUiStore as any).oracleAutomationPolicy = {
-        entityDiscovery: "auto-create",
-        connectionDiscovery: "auto-apply",
+        entityDiscovery: "suggest",
+        connectionDiscovery: "suggest",
       };
 
       const context = oracle.getExecutionContext();
 
       expect(context.automationPolicy).toEqual({
-        entityDiscovery: "auto-create",
-        connectionDiscovery: "auto-apply",
+        entityDiscovery: "suggest",
+        connectionDiscovery: "suggest",
       });
     });
 
@@ -651,18 +651,18 @@ describe("OracleStore", () => {
       expect(mockAnalyzeAndApplyEntityById).not.toHaveBeenCalled();
     });
 
-    it("should apply discovery connections only when connection discovery is auto-apply", async () => {
+    it("does not auto-apply discovery connections for legacy auto-apply mode", async () => {
       (mockUiStore as any).connectionDiscoveryMode = "auto-apply";
-      mockAnalyzeAndApplyEntityById.mockResolvedValue(2);
 
       const count = await oracle.handleDiscoveryConnectionsForEntity("entity");
 
-      expect(count).toBe(2);
-      expect(mockAnalyzeAndApplyEntityById).toHaveBeenCalledWith(
+      expect(count).toBe(0);
+      expect(mockAnalyzeAndApplyEntityById).not.toHaveBeenCalled();
+      expect(mockAnalyzeEntityById).toHaveBeenCalledWith(
         "entity",
+        false,
         undefined,
       );
-      expect(mockAnalyzeEntityById).not.toHaveBeenCalled();
     });
 
     it("should skip discovery connection analysis when connection discovery is off", async () => {

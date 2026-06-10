@@ -8,7 +8,11 @@ export const MIN_LEFT_SIDEBAR_WIDTH = 240;
 export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
 export const MAX_SIDEBAR_VW = 40;
 
-export type SidebarTool = "oracle" | "explorer" | "ai-assessment" | "none";
+export type SidebarTool = "oracle" | "explorer" | "none";
+
+function isSidebarTool(value: string): value is SidebarTool {
+  return value === "oracle" || value === "explorer" || value === "none";
+}
 export type MainViewMode = "visualization" | "focus" | "guest-chat";
 
 type MediaQueryListLike = {
@@ -184,11 +188,14 @@ export class LayoutUIStore {
       (raw) => raw === "true",
       false,
     );
-    this.#activeSidebarTool = this.persistence.read(
+    const savedSidebarTool = this.persistence.read(
       UI_STORAGE_KEYS.ACTIVE_SIDEBAR_TOOL,
-      (raw) => raw as SidebarTool,
+      (raw) => raw,
       "none",
     );
+    this.#activeSidebarTool = isSidebarTool(savedSidebarTool)
+      ? savedSidebarTool
+      : "none";
 
     this.vttSidebarCollapsed = this.persistence.read(
       UI_STORAGE_KEYS.VTT_SIDEBAR_COLLAPSED,

@@ -3,7 +3,10 @@ import { test, expect } from "@playwright/test";
 test.describe("Vault Node Deletion", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         (window as any).localStorage.setItem("codex_skip_landing", "true");
       } catch {

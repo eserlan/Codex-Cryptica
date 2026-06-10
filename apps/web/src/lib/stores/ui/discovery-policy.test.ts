@@ -55,8 +55,8 @@ describe("DiscoveryPolicyStore", () => {
     const persistence = new UIPersistence({ storage: mockStorage });
     const store = new DiscoveryPolicyStore(persistence);
 
-    expect(store.entityDiscoveryMode).toBe("auto-create");
-    expect(store.autoArchive).toBe(true);
+    expect(store.entityDiscoveryMode).toBe("suggest");
+    expect(store.autoArchive).toBe(false);
     expect(store.connectionDiscoveryMode).toBe("off");
   });
 
@@ -72,11 +72,15 @@ describe("DiscoveryPolicyStore", () => {
     const persistence = new UIPersistence({ storage: mockStorage });
     const store = new DiscoveryPolicyStore(persistence);
 
-    expect(store.autoArchive).toBe(true);
-    expect(store.entityDiscoveryMode).toBe("auto-create");
+    expect(store.autoArchive).toBe(false);
+    expect(store.entityDiscoveryMode).toBe("suggest");
     expect(mockStorage.setItem).toHaveBeenCalledWith(
       "codex_entity_discovery_mode",
-      "auto-create",
+      "suggest",
+    );
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_auto_archive",
+      "false",
     );
   });
 
@@ -102,6 +106,25 @@ describe("DiscoveryPolicyStore", () => {
     expect(mockStorage.setItem).toHaveBeenCalledWith(
       "codex_entity_discovery_mode",
       "off",
+    );
+  });
+
+  it("normalizes legacy auto-apply connection mode to suggest", () => {
+    const mockStorage = {
+      getItem: vi.fn((key) => {
+        if (key === "codex_connection_discovery_mode") return "auto-apply";
+        return null;
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    const persistence = new UIPersistence({ storage: mockStorage });
+    const store = new DiscoveryPolicyStore(persistence);
+
+    expect(store.connectionDiscoveryMode).toBe("suggest");
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      "codex_connection_discovery_mode",
+      "suggest",
     );
   });
 });

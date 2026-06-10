@@ -417,7 +417,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref=import-nav"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
@@ -680,6 +680,53 @@
             </div>
           {/each}
         </div>
+      </section>
+    {/if}
+
+    {#if pageData.relatedLinks && pageData.relatedLinks.length > 0}
+      <section class="border-t border-theme-border/30 py-10">
+        <div class="max-w-4xl mx-auto px-6">
+          <h2
+            class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
+          >
+            Related Pages
+          </h2>
+          <div class="flex flex-wrap justify-center gap-3">
+            {#each pageData.relatedLinks as link (link.href)}
+              <a
+                href="{base}{link.href}"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors"
+              >
+                <span
+                  class="icon-[lucide--arrow-right] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                {link.label}
+              </a>
+            {/each}
+          </div>
+        </div>
+      </section>
+    {/if}
+
+    <!-- Responsible AI Trust Banner -->
+    {#if pageData.aiTrustSection}
+      <section class="border-t border-theme-border/60 mt-16 pt-10 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{base}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
       </section>
     {/if}
 

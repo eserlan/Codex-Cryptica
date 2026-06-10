@@ -3,11 +3,12 @@ import { test, expect } from "@playwright/test";
 test.describe("Visual Styling Templates", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
       try {
         localStorage.setItem("codex_skip_landing", "true");
-        localStorage.setItem("codex_dismissed_landing", "true");
+        localStorage.setItem(
+          "codex-cryptica-help-state",
+          JSON.stringify({ completedTours: ["initial-onboarding"] }),
+        );
         localStorage.setItem(
           "codex_world_page_dismissed_at",
           Date.now().toString(),
@@ -158,13 +159,9 @@ test.describe("Visual Styling Templates", () => {
   });
 
   test("Welcome page uses theme-aware styling", async ({ page }) => {
-    // 1. Ensure we are on the landing page (reload to reset dismissed state if needed, though beforeEach handles visiting /)
-    // The beforeEach disables onboarding but doesn't explicitly dismiss the landing page, so it should be visible if not skipped.
-    // However, our beforeEach sets DISABLE_ONBOARDING = true. Let's check if that affects the landing page.
-    // Looking at +page.svelte: !isGuestMode && uiStore.isLandingPageVisible
-    // uiStore.isLandingPageVisible depends on skipWelcomeScreen and dismissedLandingPage.
-    // We need to ensure we haven't set 'codex_skip_landing' in localStorage.
-
+    // The beforeEach seeds codex_skip_landing/dismissed_landing to hide the
+    // landing page. This test needs it visible, so override those keys to false
+    // and reload before asserting on the landing layer.
     await page.addInitScript(() => {
       try {
         localStorage.setItem("codex_skip_landing", "false");

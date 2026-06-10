@@ -1,4 +1,9 @@
-import { solutions, comparisons, featuresConfig, importsConfig } from "$lib/config/seo-pages";
+import {
+  solutions,
+  comparisons,
+  featuresConfig,
+  importsConfig,
+} from "$lib/config/seo-pages";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 export const prerender = true;
@@ -21,6 +26,7 @@ export async function GET() {
     { path: "/blog", changefreq: "weekly", priority: "0.9" },
     { path: "/features", changefreq: "monthly", priority: "0.8" },
     { path: "/tools", changefreq: "weekly", priority: "0.9" },
+    { path: "/generators", changefreq: "weekly", priority: "0.9" },
     {
       path: "/free-rpg-campaign-manager",
       changefreq: "monthly",
@@ -29,6 +35,11 @@ export async function GET() {
     { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
     {
       path: "/ai-rpg-campaign-manager",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/responsible-ai-worldbuilding",
       changefreq: "monthly",
       priority: "0.8",
     },
@@ -76,13 +87,26 @@ export async function GET() {
   }));
 
   // Generator pages
-  const generatorRoutes = ["npc", "settlement", "magic-item", "faction"].map(
-    (slug) => ({
-      path: `/generators/${slug}`,
-      changefreq: "monthly",
-      priority: "0.8",
-    }),
-  );
+  const generatorRoutes = [
+    "npc",
+    "settlement",
+    "magic-item",
+    "faction",
+    "tavern",
+    "social-hub",
+    "kingdom",
+    "nation",
+    "quest",
+    "item",
+    "vampire-clan",
+    "names",
+    "fantasy-names",
+    "dnd-npc",
+  ].map((slug) => ({
+    path: `/generators/${slug}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
 
   // Import pages
   const importRoutes = Object.keys(importsConfig).map((slug) => ({

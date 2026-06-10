@@ -124,7 +124,7 @@
         aria-label="Bold (Cmd+B)"
         aria-pressed={activeStates.isBold}
       >
-        <span class="icon-[lucide--bold] w-4 h-4"></span>
+        <span class="icon-[lucide--bold] w-4 h-4" aria-hidden="true"></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleItalic().run()}
@@ -133,7 +133,7 @@
         aria-label="Italic (Cmd+I)"
         aria-pressed={activeStates.isItalic}
       >
-        <span class="icon-[lucide--italic] w-4 h-4"></span>
+        <span class="icon-[lucide--italic] w-4 h-4" aria-hidden="true"></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleStrike().run()}
@@ -142,7 +142,8 @@
         aria-label="Strike"
         aria-pressed={activeStates.isStrike}
       >
-        <span class="icon-[lucide--strikethrough] w-4 h-4"></span>
+        <span class="icon-[lucide--strikethrough] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleCode().run()}
@@ -151,7 +152,7 @@
         aria-label="Code (Cmd+E)"
         aria-pressed={activeStates.isCode}
       >
-        <span class="icon-[lucide--code] w-4 h-4"></span>
+        <span class="icon-[lucide--code] w-4 h-4" aria-hidden="true"></span>
       </button>
     </div>
 
@@ -166,7 +167,8 @@
         aria-label="Heading 1"
         aria-pressed={activeStates.isH1}
       >
-        <span class="icon-[lucide--heading-1] w-4 h-4"></span>
+        <span class="icon-[lucide--heading-1] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -175,7 +177,8 @@
         aria-label="Heading 2"
         aria-pressed={activeStates.isH2}
       >
-        <span class="icon-[lucide--heading-2] w-4 h-4"></span>
+        <span class="icon-[lucide--heading-2] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
@@ -184,7 +187,8 @@
         aria-label="Heading 3"
         aria-pressed={activeStates.isH3}
       >
-        <span class="icon-[lucide--heading-3] w-4 h-4"></span>
+        <span class="icon-[lucide--heading-3] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
     </div>
 
@@ -199,7 +203,7 @@
         aria-label="Bullet List"
         aria-pressed={activeStates.isBulletList}
       >
-        <span class="icon-[lucide--list] w-4 h-4"></span>
+        <span class="icon-[lucide--list] w-4 h-4" aria-hidden="true"></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -208,7 +212,8 @@
         aria-label="Ordered List"
         aria-pressed={activeStates.isOrderedList}
       >
-        <span class="icon-[lucide--list-ordered] w-4 h-4"></span>
+        <span class="icon-[lucide--list-ordered] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
       <button
         onclick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -217,7 +222,7 @@
         aria-label="Blockquote"
         aria-pressed={activeStates.isBlockquote}
       >
-        <span class="icon-[lucide--quote] w-4 h-4"></span>
+        <span class="icon-[lucide--quote] w-4 h-4" aria-hidden="true"></span>
       </button>
     </div>
 
@@ -232,7 +237,7 @@
         aria-label="Link"
         aria-pressed={activeStates.isLink}
       >
-        <span class="icon-[lucide--link] w-4 h-4"></span>
+        <span class="icon-[lucide--link] w-4 h-4" aria-hidden="true"></span>
       </button>
     </div>
 
@@ -248,7 +253,7 @@
           title="Close Zen Mode"
           aria-label="Close Zen Mode"
         >
-          <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+          <span class="icon-[lucide--x] w-3.5 h-3.5" aria-hidden="true"></span>
           Close Zen Mode
         </button>
         <div class="w-px bg-theme-border/50 mx-1"></div>
@@ -264,9 +269,11 @@
         aria-pressed={isZenMode}
       >
         {#if isZenMode}
-          <span class="icon-[lucide--minimize] w-4 h-4"></span>
+          <span class="icon-[lucide--minimize] w-4 h-4" aria-hidden="true"
+          ></span>
         {:else}
-          <span class="icon-[lucide--maximize] w-4 h-4"></span>
+          <span class="icon-[lucide--maximize] w-4 h-4" aria-hidden="true"
+          ></span>
         {/if}
       </button>
     </div>

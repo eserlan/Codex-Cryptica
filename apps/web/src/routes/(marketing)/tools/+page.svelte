@@ -101,6 +101,34 @@
                 "Generate item concepts with rarity, properties, history, and GM-facing lore.",
               icon: "icon-[lucide--sparkles]",
             },
+            {
+              href: "/generators/tavern",
+              label: "Tavern Generator",
+              summary:
+                "Generate a fantasy tavern or inn with owner, patrons, rumours, hidden trouble, and adventure hooks.",
+              icon: "icon-[lucide--beer]",
+            },
+            {
+              href: "/generators/social-hub",
+              label: "Social Hub Generator",
+              summary:
+                "Generate a social gathering venue for any genre — cyberpunk dive bars, western saloons, sci-fi cantinas, and more.",
+              icon: "icon-[lucide--map-pin]",
+            },
+            {
+              href: "/generators/kingdom",
+              label: "Kingdom Generator",
+              summary:
+                "Generate a fantasy kingdom or empire with ruler, factions, geography, conflict level, and adventure hooks.",
+              icon: "icon-[lucide--crown]",
+            },
+            {
+              href: "/generators/nation",
+              label: "Nation Generator",
+              summary:
+                "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
+              icon: "icon-[lucide--globe]",
+            },
           ],
         },
       ],
@@ -132,6 +160,13 @@
               summary:
                 "Review the AI-assisted campaign workflow built around local notes and BYO Gemini access.",
               icon: "icon-[lucide--wand-sparkles]",
+            },
+            {
+              href: "/responsible-ai-worldbuilding",
+              label: "Responsible AI",
+              summary:
+                "Our guiding principles for ethical, optional, local-first AI assistance in worldbuilding.",
+              icon: "icon-[lucide--shield-alert]",
             },
           ],
         },
@@ -313,7 +348,7 @@
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
       <a
-        href="{base}/"
+        href="{base}/?ref=tools"
         class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
       >
         <span class="icon-[lucide--arrow-left] h-4 w-4"></span>

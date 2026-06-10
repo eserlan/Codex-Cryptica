@@ -65,10 +65,7 @@ class MapRegistryStore {
     const activeVaultId = vaultRegistry.activeVaultId;
     if (!activeVaultId || !vaultRegistry.rootHandle || !this.saveQueue) return;
 
-    if (
-      sessionModeStore.isDemoMode &&
-      !(typeof window !== "undefined" && (window as any).__E2E__)
-    ) {
+    if (sessionModeStore.isDemoMode) {
       notificationStore.notify("Deletion is disabled in Demo Mode.", "info");
       return;
     }

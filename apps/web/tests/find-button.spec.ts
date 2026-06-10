@@ -4,13 +4,11 @@ test.describe("Find in Graph Button", () => {
   test("should center the graph on the node when clicked", async ({ page }) => {
     page.on("console", (msg) => console.log(`[PAGE] ${msg.text()}`));
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
     await page.goto("/");

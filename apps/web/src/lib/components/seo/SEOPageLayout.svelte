@@ -191,7 +191,7 @@
       </nav>
       <div>
         <a
-          href="{base}/"
+          href="{base}/?ref={type === 'comparison' ? 'vs-nav' : 'solution-nav'}"
           class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
           id="nav-cta-btn"
         >
@@ -241,7 +241,7 @@
     {/each}
     <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
       <a
-        href="{base}/"
+        href="{base}/?ref={type === 'comparison' ? 'vs-hero' : 'solution-hero'}"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200"
         id="hero-primary-cta"
       >
@@ -354,12 +354,14 @@
                     {#if row.competitorHas}
                       <span
                         class="icon-[lucide--check] text-emerald-500 w-4 h-4"
-                        role="img" aria-label="Yes"
+                        role="img"
+                        aria-label="Yes"
                       ></span>
                     {:else}
                       <span
                         class="icon-[lucide--x] text-rose-500 w-4 h-4"
-                        role="img" aria-label="No"
+                        role="img"
+                        aria-label="No"
                       ></span>
                     {/if}
                   {:else}
@@ -377,12 +379,14 @@
                     {#if row.codexHas}
                       <span
                         class="icon-[lucide--check] text-emerald-400 w-4 h-4"
-                        role="img" aria-label="Yes"
+                        role="img"
+                        aria-label="Yes"
                       ></span>
                     {:else}
                       <span
                         class="icon-[lucide--x] text-rose-500 w-4 h-4"
-                        role="img" aria-label="No"
+                        role="img"
+                        aria-label="No"
                       ></span>
                     {/if}
                   {:else}
@@ -512,6 +516,29 @@
     </section>
   {/if}
 
+  <!-- Responsible AI Trust Banner -->
+  {#if data.aiTrustSection}
+    <section class="border-t border-theme-border/30 py-10">
+      <div class="max-w-3xl mx-auto px-6 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{base}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
+      </div>
+    </section>
+  {/if}
+
   <!-- FAQ Accordion Section -->
   <section class="border-t border-theme-border/30 bg-theme-surface/10 py-16">
     <div class="max-w-3xl mx-auto px-6">
@@ -571,7 +598,9 @@
           : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
       <a
-        href="{base}/"
+        href="{base}/?ref={type === 'comparison'
+          ? 'vs-footer'
+          : 'solution-footer'}"
         class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all"
         id="footer-cta-btn"
       >

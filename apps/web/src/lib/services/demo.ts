@@ -10,45 +10,44 @@ import { notificationStore } from "$lib/stores/ui/notification.svelte";
 class DemoService implements IDemoActions {
   async startDemo(theme: string): Promise<void> {
     try {
-      // 1. Map theme aliases
-      const themeMap: Record<string, string> = {
-        vampire: "horror",
-        wasteland: "apocalyptic",
+      // 1. Map theme aliases to JSON files and Svelte themes
+      const themeConfig: Record<string, { json: string; theme: string }> = {
+        fantasy: { json: "fantasy", theme: "fantasy" },
+        vampire: { json: "vampire", theme: "horror" },
+        wasteland: { json: "wasteland", theme: "apocalyptic" },
+        "sci-fi": { json: "scifi", theme: "scifi" },
+        cyberpunk: { json: "cyberpunk", theme: "cyberpunk" },
+        modern: { json: "modern", theme: "modern" },
+        "space opera": { json: "starwars", theme: "scifi" },
+        starfleet: { json: "startrek", theme: "scifi" },
+        "stellar fleet": { json: "startrek", theme: "scifi" },
+        "post-nuclear": { json: "fallout", theme: "fallout" },
       };
-      const actualTheme = themeMap[theme] || theme;
 
-      // Allowlist of supported demo themes (after alias mapping)
-      const allowedThemes = new Set([
-        "fantasy",
-        "horror",
-        "apocalyptic",
-        "scifi",
-        "cyberpunk",
-        "modern",
-        "fallout",
-      ]);
-
-      if (!allowedThemes.has(actualTheme)) {
+      const config = themeConfig[theme];
+      if (!config) {
         throw new Error(`Unsupported demo theme: ${theme}`);
       }
 
+      const { json: jsonName, theme: themeName } = config;
+
       // 2. Set UI State synchronously to lock out persistent init
       sessionModeStore.isDemoMode = true;
-      sessionModeStore.activeDemoTheme = actualTheme;
+      sessionModeStore.activeDemoTheme = themeName;
       onboardingStore.dismissedLandingPage = true;
       sessionModeStore.wasConverted = false;
 
       // 3. Fetch sample data
-      const response = await fetch(`${base}/vault-samples/${theme}.json`);
+      const response = await fetch(`${base}/vault-samples/${jsonName}.json`);
       if (!response.ok)
         throw new Error(`Failed to load demo data for ${theme}`);
       const data = await response.json();
 
       // 4. Set Theme (Note: themeStore.setTheme will check isDemoMode)
-      await themeStore.setTheme(actualTheme as any);
+      await themeStore.setTheme(themeName as any);
 
       // 5. Load into Vault
-      const demoName = `${actualTheme.charAt(0).toUpperCase() + actualTheme.slice(1)} Demo`;
+      const demoName = `${theme.charAt(0).toUpperCase() + theme.slice(1)} Demo`;
 
       // Ensure registry is initialized so we have rootHandle for OPFS operations (e.g. Map uploads)
       await vaultRegistry.init();
