@@ -171,6 +171,23 @@ vi.mock("$lib/stores/world.svelte", () => ({
   }),
 }));
 
+vi.mock("$lib/stores/oracle.svelte", () => ({
+  oracle: {
+    apiKey: "test-api-key",
+    effectiveApiKey: "test-api-key",
+    isOpen: false,
+    chat: {
+      sendMessage: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
+  discoveryPolicyStore: {
+    aiDisabled: false,
+  },
+}));
+
 describe("FrontPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -304,6 +321,7 @@ describe("FrontPage", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Change Image" }));
     await waitFor(() => expect(screen.getByText("World Image")).toBeTruthy());
     expect(screen.getByText("Replace the current cover image.")).toBeTruthy();
+    expect(screen.getByTestId("cover-image-panel")).toBeTruthy();
   });
 
   it("generates cover art with the correct prompt context", async () => {
@@ -1100,5 +1118,33 @@ describe("FrontPage", () => {
         screen.queryByText(/failed to generate cover|cover generation failed/i),
       ).toBeTruthy(),
     );
+  });
+
+  it("renders 'Start your world' card and empty state actions when vault has no entities", async () => {
+    const { vault } = await import("$lib/stores/vault.svelte");
+    const { worldStore } = await import("$lib/stores/world.svelte");
+    const originalAllEntities = vault.allEntities;
+    const originalRecentActivity = worldStore.recentActivity;
+    // Mock zero entities using type casting to bypass the read-only getter type check
+    (vault as any).allEntities = [];
+    worldStore.recentActivity = [];
+
+    try {
+      render(FrontPage);
+
+      await waitFor(() =>
+        expect(screen.getByTestId("start-your-world-card")).toBeTruthy(),
+      );
+      expect(screen.getByText("Start your world")).toBeTruthy();
+      expect(
+        screen.getAllByRole("button", { name: /Create Entity/i }),
+      ).toHaveLength(2); // One in start your world, one in empty state
+      expect(screen.getAllByRole("button", { name: /Import/i })).toHaveLength(
+        2,
+      ); // One in start your world, one in empty state
+    } finally {
+      (vault as any).allEntities = originalAllEntities;
+      worldStore.recentActivity = originalRecentActivity;
+    }
   });
 });

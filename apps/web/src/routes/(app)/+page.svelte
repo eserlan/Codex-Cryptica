@@ -291,14 +291,10 @@
         }
       }}
       onkeydown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          const t = event.target as HTMLElement;
-          if (
-            t.tagName === "INPUT" ||
-            t.tagName === "TEXTAREA" ||
-            t.isContentEditable
-          )
-            return;
+        if (
+          (event.key === "Enter" || event.key === " ") &&
+          event.target === event.currentTarget
+        ) {
           event.preventDefault();
           dismissFrontPageOverlay();
         }
@@ -312,7 +308,8 @@
       </div>
       <!-- Sticky "Enter your world" footer — mobile-only, so the overlay is always dismissible (#1298) -->
       <div
-        class="md:hidden fixed bottom-0 left-0 right-0 z-50 p-3 bg-theme-bg/90 backdrop-blur-sm border-t border-theme-border/40"
+        class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-theme-bg/90 backdrop-blur-sm border-t border-theme-border/40"
+        style="padding: 0.75rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom))"
       >
         <button
           class="w-full flex items-center justify-center gap-2 rounded-xl bg-theme-primary text-theme-bg font-bold uppercase tracking-wider text-sm py-3 transition active:scale-95"
