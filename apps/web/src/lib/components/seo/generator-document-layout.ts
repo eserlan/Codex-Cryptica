@@ -1,7 +1,29 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
-// Only compact label/value stat blocks belong in the rail; everything else is prose.
-const VAMPIRE_RAIL_SECTIONS = new Set(["GM Reference Information"]);
+// Content-ownership model (#1283): the center column owns narrative prose,
+// the right rail owns compact label/value reference. Each rule lists the lore
+// sections that stay in the rail for one generator family; every other lore
+// section (including unrecognised AI-invented headings) moves into the main
+// document. Generators without a rule keep their lore in the rail untouched.
+// Rules are matched in order, so more specific labels come first.
+const LAYOUT_RULES: { label: string; railSections: Set<string> }[] = [
+  {
+    label: "vampire-clan",
+    railSections: new Set(["GM Reference Information"]),
+  },
+  {
+    label: "faction-generator",
+    railSections: new Set(["At the Table", "Notable NPCs", "Rival Faction"]),
+  },
+  {
+    label: "quest-generator",
+    railSections: new Set(["Core Fields", "Key NPC"]),
+  },
+  {
+    label: "rpg-item",
+    railSections: new Set(["GM Reference Information", "Magical Properties"]),
+  },
+];
 
 interface MarkdownSection {
   heading: string;
@@ -43,7 +65,8 @@ export function getGeneratorDocumentLayout(
     ? generatedData.labels
     : [];
 
-  if (!labels.includes("vampire-clan")) {
+  const rule = LAYOUT_RULES.find((r) => labels.includes(r.label));
+  if (!rule) {
     return {
       content: generatedData.content || "",
       lore: generatedData.lore || "",
@@ -62,7 +85,7 @@ export function getGeneratorDocumentLayout(
   const railSections: string[] = [];
 
   for (const section of loreSections) {
-    if (VAMPIRE_RAIL_SECTIONS.has(section.heading)) {
+    if (rule.railSections.has(section.heading)) {
       railSections.push(section.body);
     } else {
       mainDocumentSections.push(section.body);
