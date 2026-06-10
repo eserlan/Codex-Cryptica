@@ -28,16 +28,20 @@ The clan needs a relic recovered before dawn.`,
       status: "active",
     });
 
+    // All prose sections move into the main document
     expect(layout.content).toContain("### Overview");
     expect(layout.content).toContain("### Dark Agenda");
     expect(layout.content).toContain("### Internal Conflict");
     expect(layout.content).toContain("### Notable NPCs");
+    expect(layout.content).toContain("### Rival Faction");
+    expect(layout.content).toContain("### Adventure Hook");
+    // Rail contains only the compact stat block
     expect(layout.lore).toContain("### GM Reference Information");
-    expect(layout.lore).toContain("### Rival Faction");
-    expect(layout.lore).toContain("### Adventure Hook");
     expect(layout.lore).not.toContain("### Dark Agenda");
     expect(layout.lore).not.toContain("### Internal Conflict");
     expect(layout.lore).not.toContain("### Notable NPCs");
+    expect(layout.lore).not.toContain("### Rival Faction");
+    expect(layout.lore).not.toContain("### Adventure Hook");
   });
 
   it("leaves non-vampire generator content unchanged", () => {

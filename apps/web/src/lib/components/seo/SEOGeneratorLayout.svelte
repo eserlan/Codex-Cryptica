@@ -331,13 +331,13 @@
   function addToSessionHub() {
     if (!generatedData) return;
     const content = generatedData.summary
-      ? `*${generatedData.summary}*\n\n${generatedData.content}`
-      : generatedData.content;
+      ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+      : documentLayout.content;
     const newDraft: SessionDraft = {
       type: generatedData.type,
       title: generatedData.title,
       content,
-      lore: generatedData.lore,
+      lore: documentLayout.lore,
       labels: generatedData.labels,
       status: generatedData.status,
     };
@@ -377,13 +377,13 @@
 
     try {
       const content = generatedData.summary
-        ? `*${generatedData.summary}*\n\n${generatedData.content}`
-        : generatedData.content;
+        ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+        : documentLayout.content;
       const payload = {
         type: generatedData.type,
         title: generatedData.title,
         content,
-        lore: generatedData.lore,
+        lore: documentLayout.lore,
         labels: generatedData.labels,
         status: generatedData.status,
       };
@@ -405,9 +405,9 @@
       generatedData.summary ? `*${generatedData.summary}*` : "",
       `Labels: ${generatedData.labels.join(", ")}`,
       "",
-      generatedData.content,
+      documentLayout.content,
       "",
-      generatedData.lore,
+      documentLayout.lore,
     ]
       .filter((line) => line !== undefined)
       .join("\n")

@@ -1,10 +1,7 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
-const VAMPIRE_MAIN_DOCUMENT_SECTIONS = new Set([
-  "Dark Agenda",
-  "Internal Conflict",
-  "Notable NPCs",
-]);
+// Only compact label/value stat blocks belong in the rail; everything else is prose.
+const VAMPIRE_RAIL_SECTIONS = new Set(["GM Reference Information"]);
 
 interface MarkdownSection {
   heading: string;
@@ -65,10 +62,10 @@ export function getGeneratorDocumentLayout(
   const railSections: string[] = [];
 
   for (const section of loreSections) {
-    if (VAMPIRE_MAIN_DOCUMENT_SECTIONS.has(section.heading)) {
-      mainDocumentSections.push(section.body);
-    } else {
+    if (VAMPIRE_RAIL_SECTIONS.has(section.heading)) {
       railSections.push(section.body);
+    } else {
+      mainDocumentSections.push(section.body);
     }
   }
 
