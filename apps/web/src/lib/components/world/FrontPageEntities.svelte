@@ -7,11 +7,15 @@
     recentLimit,
     isLoading,
     onRecentLimitChange,
+    onCreateEntity,
+    onEnterGraph,
   }: {
     displayedRecentActivity: RecentActivity[];
     recentLimit: number;
     isLoading: boolean;
     onRecentLimitChange: (limit: number) => void;
+    onCreateEntity?: () => void;
+    onEnterGraph?: () => void;
   } = $props();
 
   let isEditingRecentLimit = $state(false);
@@ -128,9 +132,33 @@
     </div>
   {:else}
     <div
-      class="rounded-2xl border border-dashed border-theme-border px-4 py-10 text-center text-sm text-theme-muted"
+      class="rounded-2xl border border-dashed border-theme-border px-4 py-8 text-center"
     >
-      No recent entities yet. Create or import a note to see it here.
+      <p class="text-sm text-theme-muted mb-4">No recent entities yet.</p>
+      {#if onCreateEntity || onEnterGraph}
+        <div class="flex flex-wrap justify-center gap-2">
+          {#if onCreateEntity}
+            <button
+              class="inline-flex items-center gap-1.5 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
+              onclick={onCreateEntity}
+              data-testid="entities-create-button"
+            >
+              <span class="icon-[lucide--plus] h-3 w-3"></span>
+              Create entity
+            </button>
+          {/if}
+          {#if onEnterGraph}
+            <button
+              class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/60 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary transition-colors"
+              onclick={onEnterGraph}
+              data-testid="entities-enter-graph-button"
+            >
+              <span class="icon-[lucide--arrow-right] h-3 w-3"></span>
+              Enter graph
+            </button>
+          {/if}
+        </div>
+      {/if}
     </div>
   {/if}
 </section>

@@ -2,19 +2,24 @@
   let {
     hasImage = false,
     isSaving = false,
+    aiDisabled = false,
     onDrop,
     onGenerate,
     onCancel,
+    onSetupAI,
   } = $props<{
     hasImage?: boolean;
     isSaving?: boolean;
+    aiDisabled?: boolean;
     onDrop: (file: File) => Promise<void> | void;
     onGenerate: () => Promise<void> | void;
     onCancel?: () => void;
+    onSetupAI?: () => void;
   }>();
 
   let isDragging = $state(false);
   let isGenerating = $state(false);
+  let fileInput = $state<HTMLInputElement | null>(null);
   const isBusy = $derived(isSaving || isGenerating);
 
   const handleDragOver = (event: DragEvent) => {
@@ -32,6 +37,14 @@
     const file = event.dataTransfer?.files?.[0];
     if (!file) return;
     await onDrop(file);
+  };
+
+  const handleFileChange = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    await onDrop(file);
+    input.value = "";
   };
 
   const handleGenerate = async () => {
@@ -58,9 +71,9 @@
       </h3>
       <p class="mt-1 text-sm text-theme-text/70">
         {#if hasImage}
-          Drop a new image to replace the current cover.
+          Replace the current cover image.
         {:else}
-          Drop an image to set the world cover.
+          Add a cover image to give your world a stronger identity.
         {/if}
       </p>
     </div>
@@ -76,10 +89,21 @@
     {/if}
   </div>
 
+  <!-- Hidden file input — used by "Choose image" button for mobile -->
+  <input
+    bind:this={fileInput}
+    type="file"
+    accept="image/*"
+    class="sr-only"
+    onchange={handleFileChange}
+    aria-hidden="true"
+    tabindex="-1"
+  />
+
   <div
-    class={`flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center transition-colors border-theme-border bg-theme-bg/70 ${isDragging ? "border-theme-primary bg-theme-primary/5" : ""}`}
+    class={`flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center transition-colors border-theme-border bg-theme-bg/70 ${isDragging ? "border-theme-primary bg-theme-primary/5" : ""}`}
     role="region"
-    aria-label="World image drop zone"
+    aria-label="World image upload area"
     ondragover={handleDragOver}
     ondragleave={handleDragLeave}
     ondrop={handleDrop}
@@ -90,22 +114,53 @@
       <span class="icon-[lucide--image-plus] h-6 w-6"></span>
     </div>
 
-    <p class="max-w-sm text-sm leading-relaxed text-theme-muted">
+    <p
+      class="max-w-sm text-sm leading-relaxed text-theme-muted hidden sm:block"
+    >
       {#if hasImage}
-        Drag a fresh cover image onto this zone to replace the current one.
+        Drag a fresh cover image here to replace the current one.
       {:else}
-        Drag a cover image here to give your world a stronger identity.
+        Drag an image here, or use the button below.
       {/if}
     </p>
 
     <div class="mt-4 flex flex-wrap justify-center gap-2">
+      <!-- Explicit file-picker button — works on both desktop and mobile -->
       <button
-        class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
-        onclick={handleGenerate}
+        class="rounded-lg border border-theme-border bg-theme-surface/60 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary disabled:opacity-50 transition-colors"
+        onclick={() => fileInput?.click()}
         disabled={isBusy}
+        data-testid="choose-image-button"
       >
-        {isBusy ? "Working..." : "Generate Art"}
+        <span class="icon-[lucide--upload] h-3 w-3 mr-1 inline-block"></span>
+        {hasImage ? "Choose new image" : "Choose image"}
       </button>
+
+      {#if aiDisabled}
+        <!-- AI not configured: show link to settings instead of dead-end button -->
+        {#if onSetupAI}
+          <button
+            class="rounded-lg border border-theme-border px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted/60 hover:text-theme-primary disabled:opacity-50 transition-colors"
+            onclick={onSetupAI}
+            disabled={isBusy}
+            title="Configure AI to enable art generation"
+            data-testid="setup-ai-button"
+          >
+            <span class="icon-[lucide--settings] h-3 w-3 mr-1 inline-block"
+            ></span>
+            Set up AI
+          </button>
+        {/if}
+      {:else}
+        <button
+          class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 transition-colors ${isBusy ? "animate-pulse" : ""}`}
+          onclick={handleGenerate}
+          disabled={isBusy}
+          data-testid="generate-art-button"
+        >
+          {isBusy ? "Working..." : "Generate Art"}
+        </button>
+      {/if}
     </div>
 
     {#if isBusy}

@@ -15,6 +15,7 @@
   import FrontPageBriefing from "./FrontPageBriefing.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -44,6 +45,8 @@
   );
   const coverImage = $derived(metadata?.coverImage || "");
   const _worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
+  const isEmpty = $derived(vault.allEntities.length === 0);
+  const aiDisabled = $derived(discoveryPolicyStore.aiDisabled);
   const hasBriefing = $derived(
     !!(
       draftDescription.trim() ||
@@ -402,11 +405,50 @@
       </header>
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
-        {#if showCoverEditor || !coverImage}
+        {#if isEmpty}
+          <!-- Start your world card — shown instead of cover image for empty vaults (#1297) -->
+          <div
+            class="rounded-3xl border border-theme-primary/20 bg-theme-surface/60 p-5 md:p-6"
+            data-testid="start-world-card"
+          >
+            <h3
+              class="font-header text-xs uppercase tracking-[0.25em] text-theme-muted mb-3"
+            >
+              Start your world
+            </h3>
+            <p class="text-sm text-theme-text/70 mb-4 leading-relaxed">
+              Create your first entity to begin building your lore.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="inline-flex items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
+                onclick={() => {
+                  onClose?.();
+                  modalUIStore.requestCreateEntity();
+                }}
+                data-testid="start-world-create-button"
+              >
+                <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
+                Create entity
+              </button>
+              <button
+                class="inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface/60 px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary transition-colors"
+                onclick={() => {
+                  onClose?.();
+                }}
+                data-testid="start-world-enter-button"
+              >
+                <span class="icon-[lucide--arrow-right] h-3.5 w-3.5"></span>
+                Enter graph
+              </button>
+            </div>
+          </div>
+        {:else if showCoverEditor || !coverImage}
           <FrontPageHero
             {coverImageUrl}
             {coverImage}
             {showCoverEditor}
+            {aiDisabled}
             showActions={false}
             isSaving={worldStore.isSaving}
             onOpenCoverEditor={openCoverEditor}
@@ -414,6 +456,7 @@
             onOpenLightbox={openCoverLightbox}
             onUploadCover={handleUploadCover}
             onGenerateCover={handleGenerateCover}
+            onSetupAI={() => modalUIStore.openSettings("intelligence")}
             class="w-full"
           />
         {/if}
@@ -430,6 +473,11 @@
           {recentLimit}
           isLoading={worldStore.isLoading}
           onRecentLimitChange={handleRecentLimitChange}
+          onCreateEntity={() => {
+            onClose?.();
+            modalUIStore.requestCreateEntity();
+          }}
+          onEnterGraph={onClose}
         />
 
         <FrontPageBriefing
