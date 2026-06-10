@@ -50,6 +50,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { worldStore } from "$lib/stores/world.svelte";
 
   let { children } = $props();
 
@@ -184,6 +185,10 @@
         eventBus: appEventBus,
         ...featureGlobals,
       });
+
+      if (import.meta.env.DEV || import.meta.env.VITE_STAGING === "true") {
+        (window as any).worldStore = worldStore;
+      }
     })();
   });
 
