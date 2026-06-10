@@ -84,10 +84,12 @@ test.describe("Empty vault start card (#1297)", () => {
   test("cover image editor opens from empty vault when cover exists", async ({
     page,
   }) => {
-    // Seed a fake cover image path so the "Change Image" button appears
+    // Wait for worldStore.metadata to be loaded, then seed a fake cover image path
+    await page.waitForFunction(() => !!(window as any).worldStore?.metadata, {
+      timeout: 10000,
+    });
     await page.evaluate(() => {
-      const ws = (window as any).worldStore;
-      if (ws?.metadata) ws.metadata.coverImage = "test-cover.webp";
+      (window as any).worldStore.metadata.coverImage = "test-cover.webp";
     });
 
     const overlay = page.getByTestId("front-page-overlay");
@@ -280,27 +282,27 @@ test.describe("Demo graph zoom (#1296)", () => {
   }) => {
     await page.setViewportSize(MOBILE_VIEWPORT);
     await page.addInitScript(seedOnboardingComplete);
-    await page.goto("/");
+    // /?demo=fantasy auto-starts the demo via the layout $effect
+    await page.goto("/?demo=fantasy");
 
-    await waitForVaultReady(page);
+    // Wait for demo mode to activate and entities to load
+    await page.waitForFunction(
+      () => {
+        const sm = (window as any).sessionModeStore;
+        const vault = (window as any).vault;
+        return sm?.isDemoMode && vault?.allEntities?.length > 0;
+      },
+      { timeout: 20000 },
+    );
+
     await dismissFrontPage(page);
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
     });
 
-    // Create several entities so the graph has enough nodes to trigger layout enforcement
-    await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      vault.isInitialized = true;
-      vault.rootHandle = {};
-      for (let i = 0; i < 5; i++) {
-        await vault.createEntity("npc", `Entity ${i}`, { content: "Test" });
-      }
-    });
-
-    // Wait for nodes to appear in cytoscape
-    await page.waitForFunction(() => (window as any).cy?.nodes().length >= 5, {
-      timeout: 15000,
+    // Wait for graph nodes to appear in cytoscape
+    await page.waitForFunction(() => !!(window as any).cy?.nodes().length, {
+      timeout: 10000,
     });
 
     const zoom = await page.evaluate(() => (window as any).cy?.zoom() ?? 0);
