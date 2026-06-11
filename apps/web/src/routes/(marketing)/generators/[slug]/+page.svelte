@@ -383,7 +383,7 @@
       | "single"
       | "pantheon",
     size: "small" as "small" | "medium" | "large",
-    width: "balanced" as "balanced" | "focused",
+    width: "balanced" as "balanced" | "focused" | "wide",
     genre: pantheonConfig.genres[0],
     divineType: pantheonConfig.divineTypes[0],
     domain: pantheonConfig.domains[0],

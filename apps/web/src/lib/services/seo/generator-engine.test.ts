@@ -956,6 +956,7 @@ describe("DefaultGeneratorEngine", () => {
     it("should include correct domain scope in prompt based on width selection", async () => {
       let capturedPromptFocused = "";
       let capturedPromptBalanced = "";
+      let capturedPromptWide = "";
 
       const mockModelFocused = {
         generateContent: vi.fn().mockImplementation((prompt: string) => {
@@ -991,9 +992,27 @@ describe("DefaultGeneratorEngine", () => {
         }),
       };
 
+      const mockModelWide = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          capturedPromptWide = prompt;
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Wide Pantheon",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+
       mockClientManager.getModel
         .mockResolvedValueOnce(mockModelFocused)
-        .mockResolvedValueOnce(mockModelBalanced);
+        .mockResolvedValueOnce(mockModelBalanced)
+        .mockResolvedValueOnce(mockModelWide);
 
       await engine.generatePantheon({
         mode: "pantheon",
@@ -1009,11 +1028,21 @@ describe("DefaultGeneratorEngine", () => {
         useAI: true,
       });
 
+      await engine.generatePantheon({
+        mode: "pantheon",
+        width: "wide",
+        domain: "Nature",
+        useAI: true,
+      });
+
       expect(capturedPromptFocused).toContain(
-        "Domain Scope: Focused (all member deities must be dedicated to aspects or sub-domains of the primary domain: Nature",
+        "Domain Scope: Focused Pantheon: every deity must represent a distinct aspect, sub-domain, philosophy, contradiction, or extreme interpretation of the primary domain: Nature.",
       );
       expect(capturedPromptBalanced).toContain(
-        "Domain Scope: Balanced (a diverse and complete set of different types of gods covering multiple domains, with Nature as a chief or central focus of the pantheon)",
+        "Domain Scope: Central Theme Pantheon: create a diverse pantheon, but make Nature the central force, sacred obsession, source of crisis, or highest divine authority.",
+      );
+      expect(capturedPromptWide).toContain(
+        "Domain Scope: Wide Mythic Pantheon: create a broad pantheon with many different divine domains, e.g. rulership, war, death, nature, craft, love, fate, trickery, knowledge, sea, sky, underworld, hearth, travel, harvest, magic, dreams, law, wilderness, art, prophecy, and other major mortal concerns. The primary domain Nature should appear as one important divine concern, but it must not dominate.",
       );
     });
 

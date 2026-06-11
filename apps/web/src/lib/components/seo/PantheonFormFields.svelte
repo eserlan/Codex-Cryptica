@@ -10,7 +10,7 @@
     worshippers = $bindable(pantheonConfig.worshippers[0]),
     conflictTheme = $bindable(pantheonConfig.conflictThemes[0]),
     size = $bindable("small" as "small" | "medium" | "large"),
-    width = $bindable("balanced" as "balanced" | "focused"),
+    width = $bindable("balanced" as "balanced" | "focused" | "wide"),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
@@ -22,7 +22,7 @@
     worshippers: string;
     conflictTheme: string;
     size: "small" | "medium" | "large";
-    width: "balanced" | "focused";
+    width: "balanced" | "focused" | "wide";
     campaignContext: string;
     onSurprise?: () => void;
   } = $props();
