@@ -33,8 +33,19 @@
 
   let { data } = $props();
 
+  type SlugMetaEntry = {
+    pageTitle: string;
+    metaDescription: string;
+    introTitle: string;
+    eyebrow: string;
+    introText: string;
+    canonicalPath: string;
+    faqs?: { question: string; answer: string }[];
+    relatedLinks?: { href: string; label: string }[];
+  };
+
   // Per-slug SEO metadata (#1)
-  const slugMeta = {
+  const slugMeta: Record<typeof data.slug, SlugMetaEntry> = {
     npc: {
       pageTitle:
         "RPG NPC Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Characters | Codex Cryptica",
@@ -45,6 +56,35 @@
       introText:
         "Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.",
       canonicalPath: "/generators/npc",
+      faqs: [
+        {
+          question: "Does the D&D NPC generator require an account?",
+          answer:
+            "No. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "What does the RPG NPC generator create?",
+          answer:
+            "It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook — structured for immediate use.",
+        },
+        {
+          question: "Can I use it outside D&D?",
+          answer:
+            "Yes. The output works for D&D, Pathfinder, OSR games, cyberpunk, and any genre. The generator is system-agnostic.",
+        },
+        {
+          question: "How does saving a generated NPC work?",
+          answer:
+            "Clicking 'Save to Codex' stores the NPC draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Character entity, ready to link to factions, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/solutions/ai-gm-assistant", label: "AI GM assistant" },
+        {
+          href: "/free-rpg-campaign-manager",
+          label: "Free RPG campaign manager",
+        },
+      ],
     },
     settlement: {
       pageTitle:
@@ -78,6 +118,32 @@
       introText:
         "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
       canonicalPath: "/generators/faction",
+      faqs: [
+        {
+          question: "What does the faction generator create?",
+          answer:
+            "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Can I aim the faction at my current campaign?",
+          answer:
+            "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
+        },
+        {
+          question: "How does saving a generated faction work?",
+          answer:
+            "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/tools/dnd-npc-generator", label: "D&D NPC Generator" },
+        { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      ],
     },
     quest: {
       pageTitle:
@@ -211,7 +277,7 @@
         "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
       canonicalPath: "/generators/god-generator",
     },
-  } as const;
+  };
 
   const meta = $derived(slugMeta[data.slug]);
 
@@ -598,6 +664,8 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  faqs={meta.faqs ?? []}
+  relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
   isThemeCustomizable={data.slug === "faction" ||
     data.slug === "npc" ||
