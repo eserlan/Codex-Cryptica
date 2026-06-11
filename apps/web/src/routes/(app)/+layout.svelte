@@ -29,6 +29,7 @@
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
+  import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
@@ -49,6 +50,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { worldStore } from "$lib/stores/world.svelte";
 
   let { children } = $props();
 
@@ -183,6 +185,10 @@
         eventBus: appEventBus,
         ...featureGlobals,
       });
+
+      if (import.meta.env.DEV || import.meta.env.VITE_STAGING === "true") {
+        (window as any).worldStore = worldStore;
+      }
     })();
   });
 
@@ -398,6 +404,32 @@
     }
   });
 
+  // On mobile, show a dedicated bottom sheet instead of opening the drawer.
+  $effect(() => {
+    if (modalUIStore.pendingCreateEntity && layoutUIStore.isMobile) {
+      modalUIStore.pendingCreateEntity = false;
+      modalUIStore.showMobileCreateSheet = true;
+    }
+  });
+
+  // Deferred inert / aria-hidden state to prevent focus-hiding warnings
+  let isBackgroundInert = $state(false);
+  $effect(() => {
+    if (anyModalOpen) {
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl &&
+        activeEl instanceof HTMLElement &&
+        activeEl !== document.body
+      ) {
+        activeEl.blur();
+      }
+      isBackgroundInert = true;
+    } else {
+      isBackgroundInert = false;
+    }
+  });
+
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,
@@ -414,13 +446,16 @@
   <!-- Background content — inert when any modal is open so keyboard/AT cannot reach it -->
   <div
     class="contents"
-    inert={anyModalOpen || undefined}
-    aria-hidden={anyModalOpen || undefined}
+    inert={isBackgroundInert || undefined}
+    aria-hidden={isBackgroundInert || undefined}
   >
     <NotificationToast />
 
     {#if !isPopup && !isVttFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />
+      {#if sessionModeStore.isDemoMode}
+        <MobileDemoBanner />
+      {/if}
     {/if}
 
     <div

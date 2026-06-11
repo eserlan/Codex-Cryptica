@@ -16,6 +16,7 @@ export interface LayoutOptions {
   centralNodeId: string | null;
   stableLayout: boolean;
   isGuest: boolean;
+  isMobile?: boolean;
   onLayoutStart?: () => void;
   onLayoutStop?: () => void;
   onLayoutComputed?: (durationMs: number) => void;
@@ -334,6 +335,17 @@ export class LayoutManager {
         this.cy.nodes().removeData("isPendingLayout");
         this.cy.nodes(".pending-layout").removeClass("pending-layout");
         this.cy.fit(this.cy.nodes(), 20);
+        // On mobile the full-fit zoom is often unreadably small — enforce a minimum
+        if (options.isMobile && this.cy.zoom() < 0.6) {
+          this.cy.zoom({
+            level: 0.6,
+            renderedPosition: {
+              x: this.cy.width() / 2,
+              y: this.cy.height() / 2,
+            },
+          });
+          this.cy.center();
+        }
         options.onLayoutStop?.();
         return;
       }

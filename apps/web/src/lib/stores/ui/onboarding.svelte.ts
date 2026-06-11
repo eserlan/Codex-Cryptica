@@ -13,6 +13,7 @@ export class OnboardingStore {
   worldPageDismissedAt = $state<number | null>(null);
   lastSeenVersion = $state<string | null>(null);
   showChangelog = $state(false);
+  dismissedMobileGraphCoachMarks = $state(false);
 
   constructor(persistence: UIPersistence = new DefaultPersistence()) {
     this.persistence = persistence;
@@ -51,6 +52,12 @@ export class OnboardingStore {
       (v) => v,
       null,
     );
+
+    this.dismissedMobileGraphCoachMarks = this.persistence.read(
+      UI_STORAGE_KEYS.MOBILE_GRAPH_COACH_MARKS_SEEN,
+      (v) => v === "true",
+      false,
+    );
   }
 
   get isLandingPageVisible() {
@@ -79,6 +86,15 @@ export class OnboardingStore {
     this.persistence.write(
       UI_STORAGE_KEYS.WORLD_PAGE_DISMISSED_AT,
       now,
+      String,
+    );
+  }
+
+  dismissMobileGraphCoachMarks() {
+    this.dismissedMobileGraphCoachMarks = true;
+    this.persistence.write(
+      UI_STORAGE_KEYS.MOBILE_GRAPH_COACH_MARKS_SEEN,
+      true,
       String,
     );
   }

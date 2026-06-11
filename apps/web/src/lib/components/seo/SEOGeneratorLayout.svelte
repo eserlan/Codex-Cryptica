@@ -27,6 +27,9 @@
     worldTheme = "workspace",
     initialDraft = null,
     variant = "default",
+    generateLabel = undefined,
+    inputHint = "Set your inputs — your draft updates to the right",
+    onLinkToHub = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -43,6 +46,9 @@
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
     variant?: "default" | "names";
+    generateLabel?: string;
+    inputHint?: string;
+    onLinkToHub?: () => void;
   } = $props();
 
   const HIDDEN_TAGS = new Set([
@@ -348,6 +354,7 @@
     if (!exists) {
       saveSessionDrafts([...sessionDrafts, newDraft]);
     }
+    onLinkToHub?.();
   }
 
   function removeFromSessionHub(title: string) {
@@ -820,12 +827,14 @@
         <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
         </p>
-        <p
-          class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-4 flex items-center gap-1.5"
-        >
-          <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
-          Set your inputs — your draft updates to the right
-        </p>
+        {#if inputHint}
+          <p
+            class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-4 flex items-center gap-1.5"
+          >
+            <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
+            {inputHint}
+          </p>
+        {/if}
 
         <form
           class="space-y-4"
@@ -853,7 +862,7 @@
               ></span>
               Forging...
             {:else}
-              Generate {generatedSingular}
+              {generateLabel ?? `Generate ${generatedSingular}`}
             {/if}
           </button>
 
