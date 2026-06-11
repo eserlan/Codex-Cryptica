@@ -7,10 +7,13 @@
     pickNextCategory,
     type RandomIdeaCategory,
   } from "$lib/services/seo/random-idea";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   let currentCategory = $state<RandomIdeaCategory | null>(null);
   let rollingLabel = $state<string | null>(null);
+  let inFlight = $state(false);
   let keepCategory = false;
+  let pending: Promise<GeneratorOutput> | null = null;
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -33,16 +36,27 @@
     await sleep(300);
   }
 
-  async function generate({ useAI }: { useAI: boolean }) {
-    const keep = keepCategory;
-    keepCategory = false;
-    const next = pickNextCategory(currentCategory, keep);
-    if (!keep) {
-      await animateSelection(next);
-    }
-    currentCategory = next;
-    rollingLabel = null;
-    return next.generate(generatorEngine, useAI);
+  // Serialise rolls: extra triggers while one is in flight (double-clicks,
+  // Enter on the form) just share the pending result instead of racing the
+  // category/animation state.
+  function generate({ useAI }: { useAI: boolean }) {
+    if (pending) return pending;
+    inFlight = true;
+    pending = (async () => {
+      const keep = keepCategory;
+      keepCategory = false;
+      const next = pickNextCategory(currentCategory, keep);
+      if (!keep) {
+        await animateSelection(next);
+      }
+      currentCategory = next;
+      rollingLabel = null;
+      return next.generate(generatorEngine, useAI);
+    })().finally(() => {
+      pending = null;
+      inFlight = false;
+    });
+    return pending;
   }
 </script>
 
@@ -83,11 +97,12 @@
     {#if currentCategory && !rollingLabel}
       <button
         type="button"
+        disabled={inFlight}
         onclick={() => {
           keepCategory = true;
           trigger();
         }}
-        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all"
+        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
         id="regenerate-category-btn"
         title="Keep this idea type and roll a fresh one"
       >
