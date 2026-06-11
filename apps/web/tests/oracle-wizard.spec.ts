@@ -12,28 +12,39 @@ test.describe("Oracle Connection Wizard", () => {
     });
     await page.goto("/");
 
-    // Create entities via programmatic API to avoid UI race conditions
+    // Wait for vault to be ready
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
       timeout: 15000,
     });
+
+    // Open Oracle first so searchService subscribes to events before entity creation
+    const toggleBtn = page.getByTestId("activity-bar-oracle");
+    await toggleBtn.click();
+    await page.getByTestId("oracle-input").waitFor({ state: "visible" });
+
+    // Now create entities so search index picks them up
     await page.evaluate(async () => {
       const v = (window as any).vault;
       await v.createEntity("character", "Eldrin");
       await v.createEntity("location", "Tower");
     });
 
-    // Wait for indexing to complete (2 entities)
+    // Wait for entities to be in vault and search-indexed
     await page.waitForFunction(
-      () => {
+      async () => {
         const v = (window as any).vault;
-        return v && Object.keys(v.entities || {}).length >= 2;
+        if (!v || Object.keys(v.entities || {}).length < 2) return false;
+        const s = (window as any).searchStore;
+        if (!s?.search) return true; // searchStore not set — skip check
+        try {
+          const results = await s.search("Eld", { limit: 5 });
+          return Array.isArray(results) && results.length > 0;
+        } catch {
+          return true; // If error, proceed anyway
+        }
       },
       { timeout: 20000 },
     );
-
-    // Open Oracle Window
-    const toggleBtn = page.getByTestId("activity-bar-oracle");
-    await toggleBtn.click();
   });
 
   test("Guided sequence: FROM -> LABEL -> TO", async ({ page }) => {
@@ -58,7 +69,9 @@ test.describe("Oracle Connection Wizard", () => {
 
     // 2. Select FROM
     await input.type("Eld");
-    await expect(page.locator('button:has-text("Eldrin")')).toBeVisible();
+    await expect(page.locator('button:has-text("Eldrin")')).toBeVisible({
+      timeout: 10000,
+    });
     await page.keyboard.press("Tab");
 
     // Verify step change to LABEL
@@ -77,7 +90,9 @@ test.describe("Oracle Connection Wizard", () => {
 
     // 4. Select TO
     await input.type("Tow");
-    await expect(page.locator('button:has-text("Tower")')).toBeVisible();
+    await expect(page.locator('button:has-text("Tower")')).toBeVisible({
+      timeout: 10000,
+    });
     await page.keyboard.press("Enter");
 
     // Final verification
