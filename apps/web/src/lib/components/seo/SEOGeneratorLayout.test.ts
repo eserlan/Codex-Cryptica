@@ -204,4 +204,48 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(personSchemaFound).toBe(true);
     });
   });
+
+  describe("Names variant rendering", () => {
+    it("renders names as beautiful cards with copy buttons when variant is 'names'", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+      const initialDraft = {
+        type: "character" as const,
+        title: "Test Names",
+        content: "- **Iridian Vespera**: A nomadic chronicler.",
+        lore: "",
+        labels: ["rpg-names"],
+        status: "draft" as const,
+      };
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Names Generator",
+          metaDescription: "Generate names.",
+          canonicalPath: "/tools/fantasy-name-generator",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft,
+          variant: "names",
+        },
+      });
+
+      // It should render a card div
+      const card = container.querySelector(".group.relative.flex.flex-col");
+      expect(card).toBeTruthy();
+
+      // The name should be rendered with font-header
+      const nameSpan = card?.querySelector(
+        ".font-header.font-bold.text-theme-primary",
+      );
+      expect(nameSpan).toBeTruthy();
+      expect(nameSpan?.textContent?.trim()).toBe("Iridian Vespera");
+
+      // The copy button should have copy icon and the data-copy-text attribute
+      const copyBtn = card?.querySelector(
+        "button[data-copy-text='Iridian Vespera']",
+      );
+      expect(copyBtn).toBeTruthy();
+      expect(copyBtn?.querySelector(".icon-\\[lucide--copy\\]")).toBeTruthy();
+    });
+  });
 });

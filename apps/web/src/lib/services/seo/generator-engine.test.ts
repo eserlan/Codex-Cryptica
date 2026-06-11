@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./generators/banned-names";
