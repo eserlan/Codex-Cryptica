@@ -175,7 +175,7 @@ You must return a valid JSON object matching the following structure exactly, no
   "title": "A majestic name for the Pantheon (e.g. The Solar Conclave, The Seven Broken Shields)",
   "summary": "One-sentence summary of the pantheon's main belief system.",
   "content": "Markdown. Use exactly these section headers in order: '### Origin & Dogma', '### Pantheon Structure', '### Divine Alliances & Rivalries'. Describe how the deities relate to one another, referencing them by name.",
-  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **Pantheon Name**: Name of pantheon\\n- **Conflict Theme**: ${conflictTheme}\\n- **Worshippers**: ${worshipperType}\\n- **Hidden Problem**: the underlying divine tension\\n- **Immediate Hook**: one-sentence GM hook\\n### Deities of the Pantheon\\nDetail ${sizeCfg.min}-${sizeCfg.max} member deities. For each deity, provide:\\n- **Name**: title and short 1-line description\\n### Rumours & Legends\\n- short hook 1\\n- short hook 2\\n### Entity Seeds\\n- list of Codex entity types for each deity plus one cult faction (e.g. '**Character**: Deity A', '**Faction**: Pantheon Cult')",
+  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **Pantheon Name**: Name of pantheon\\n- **Conflict Theme**: ${conflictTheme}\\n- **Worshippers**: ${worshipperType}\\n- **Hidden Problem**: the underlying divine tension\\n- **Immediate Hook**: one-sentence GM hook\\n### Deities of the Pantheon\\nDetail ${sizeCfg.min}-${sizeCfg.max} member deities. Format each deity exactly as:\\n- **[[Deity Name]]**: short 1-line description\\n### Clergy & Temples\\n- **Clergy Roles**: describe the core clergy roles and responsibilities\\n- **Temples & Shrines**: describe the main places of worship\\n### Rumours & Legends\\n- short hook 1\\n- short hook 2\\n### Entity Seeds\\n- list of Codex entity types for each deity plus one cult faction (e.g. '**Character**: Deity A', '**Faction**: Pantheon Cult')",
   "labels": ["rpg-pantheon", "pantheon-generator", "imported-draft", "${genre.toLowerCase().replace(/[^a-z0-9]/g, "-")}"]
 }
 ${NAME_BAN_PROMPT}
@@ -335,6 +335,10 @@ ${deityNames
       }`,
   )
   .join("\n")}
+
+### Clergy & Temples
+- **Clergy Roles**: The High Hierophant oversees the circle of priests, who are divided into keepers of rites and speakers of prophecy.
+- **Temples & Shrines**: Grand stone cathedrals are located in capital cities, while simple stone altars mark major crossroads.
 
 ### Rumours & Legends
 - A forgotten temple of the pantheon lies submerged under the local lake.
