@@ -876,6 +876,25 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
 
+    it("should generate focused pantheon details locally when useAI is false and width is focused", async () => {
+      const res = await engine.generatePantheon({
+        mode: "pantheon",
+        genre: "Classic Fantasy",
+        domain: "War",
+        width: "focused",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.summary?.toLowerCase()).toContain(
+        "focused on the domain of war",
+      );
+      expect(res.content).toContain(
+        "Controls a specific aspect of the war domain",
+      );
+      expect(res.lore).toContain("The deity representing a key facet of war");
+    });
+
     it("should call clientManager for single deity when useAI is true and succeed", async () => {
       const mockModel = {
         generateContent: vi.fn().mockResolvedValue({
@@ -932,6 +951,70 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toBe("AI Bio");
       expect(res.lore).toBe("AI Lore");
       expect(res.labels).toContain("pantheon-custom");
+    });
+
+    it("should include correct domain scope in prompt based on width selection", async () => {
+      let capturedPromptFocused = "";
+      let capturedPromptBalanced = "";
+
+      const mockModelFocused = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          capturedPromptFocused = prompt;
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Focused Pantheon",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+
+      const mockModelBalanced = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          capturedPromptBalanced = prompt;
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Balanced Pantheon",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+
+      mockClientManager.getModel
+        .mockResolvedValueOnce(mockModelFocused)
+        .mockResolvedValueOnce(mockModelBalanced);
+
+      await engine.generatePantheon({
+        mode: "pantheon",
+        width: "focused",
+        domain: "Nature",
+        useAI: true,
+      });
+
+      await engine.generatePantheon({
+        mode: "pantheon",
+        width: "balanced",
+        domain: "Nature",
+        useAI: true,
+      });
+
+      expect(capturedPromptFocused).toContain(
+        "Domain Scope: Focused (all member deities must be dedicated to aspects or sub-domains of the primary domain: Nature",
+      );
+      expect(capturedPromptBalanced).toContain(
+        "Domain Scope: Balanced (a diverse and complete set of different types of gods covering multiple domains, with Nature as a chief or central focus of the pantheon)",
+      );
     });
 
     it("should fall back to local tables if AI call fails", async () => {

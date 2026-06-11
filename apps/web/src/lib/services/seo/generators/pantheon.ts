@@ -56,6 +56,13 @@ export const pantheonConfig = {
     min: number;
     max: number;
   }[],
+  widths: [
+    { label: "Diverse (Multiple Domains)", value: "balanced" },
+    { label: "Focused (Single Domain Focus)", value: "focused" },
+  ] as {
+    label: string;
+    value: "balanced" | "focused";
+  }[],
   symbols: [
     "A weeping golden eye",
     "A black iron key wrapped in thorns",
@@ -87,6 +94,7 @@ export async function generatePantheon(
   options: {
     mode?: "single" | "pantheon";
     size?: "small" | "medium" | "large";
+    width?: "balanced" | "focused";
     genre?: string;
     divineType?: string;
     domain?: string;
@@ -101,6 +109,7 @@ export async function generatePantheon(
   const sizeCfg =
     pantheonConfig.sizes.find((s) => s.value === options.size) ??
     pantheonConfig.sizes[0];
+  const width = options.width || "balanced";
   const genre = options.genre || "Classic Fantasy";
   const divineType = options.divineType || pickFrom(pantheonConfig.divineTypes);
   const domain = options.domain || pickFrom(pantheonConfig.domains);
@@ -112,7 +121,7 @@ export async function generatePantheon(
   const campaignContext = options.campaignContext?.trim() || "";
 
   const randomSymbol = pickFrom(pantheonConfig.symbols);
-  const randomRitual = pickFrom(pantheonConfig.rituals);
+  const randomHighlightRitual = pickFrom(pantheonConfig.rituals);
   const randomMyth = pickFrom(pantheonConfig.myths);
 
   // Invent a base name for a deity
@@ -155,7 +164,8 @@ Options:
 - Genre/Theme: ${genre}
 - Tone: ${tone}
 - Primary Conflict Theme: ${conflictTheme}
-- Divine Domain focus: ${domain}
+- Primary Domain Focus: ${domain}
+- Domain Scope: ${width === "focused" ? `Focused (all member deities must be dedicated to aspects or sub-domains of the primary domain: ${domain}, representing different facets of it)` : `Balanced (a diverse and complete set of different types of gods covering multiple domains, with ${domain} as a chief or central focus of the pantheon)`}
 - Worshippers: ${worshipperType}
 - Pantheon Size: ${sizeCfg.min}–${sizeCfg.max} deities
 ${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
@@ -233,7 +243,7 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
 - **Immediate Hook**: A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.
 
 ### Rituals & Taboos
-- **Ritual**: ${randomRitual}
+- **Ritual**: ${randomHighlightRitual}
 - **Taboo**: Damaging or defacing sacred symbols of ${domain.toLowerCase()} is believed to bring immediate bad fortune.
 
 ### Myths & Legends
@@ -255,7 +265,10 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
   } else {
     // Pantheon fallback logic
     const pantheonTitle = `The ${generatedDeityName} Pantheon`;
-    const summary = `A collection of deities bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`;
+    const summary =
+      width === "focused"
+        ? `A collection of deities focused on the domain of ${domain.toLowerCase()} bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`
+        : `A collection of deities bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`;
 
     const deityCount = sizeCfg.min;
     const deityNames = Array.from({ length: deityCount }, () => generateName());
@@ -265,7 +278,26 @@ According to legend, the deities of this pantheon were born from a single cosmic
 
 ### Pantheon Structure
 The pantheon consists of ${deityCount} deities:
-${deityNames.map((n, i) => `${i + 1}. **${n}**: ${i === 0 ? `Represents the domain of ${domain}.` : i === deityCount - 1 ? "A neutral arbiter holding the balance." : "Controls opposing forces of the cosmos."}`).join("\n")}
+${deityNames
+  .map(
+    (n, i) =>
+      `${i + 1}. **${n}**: ${
+        width === "focused"
+          ? `Controls a specific aspect of the ${domain.toLowerCase()} domain (e.g. ${
+              i === 0
+                ? "its pure essence"
+                : i === deityCount - 1
+                  ? "its quiet or hidden aspects"
+                  : "its active or aggressive expression"
+            }).`
+          : i === 0
+            ? `Represents the domain of ${domain}.`
+            : i === deityCount - 1
+              ? "A neutral arbiter holding the balance."
+              : "Controls opposing forces of the cosmos."
+      }`,
+  )
+  .join("\n")}
 
 ### Divine Alliances & Rivalries
 - **[[${deityNames[0]}]]** is allied with **[[${deityNames[deityNames.length - 1]}]]**, but stands in direct opposition to **[[${deityNames[1]}]]**.
@@ -283,7 +315,26 @@ ${deityNames.map((n, i) => `${i + 1}. **${n}**: ${i === 0 ? `Represents the doma
 - **Immediate Hook**: Omens of celestial alignment have sent local cults into a frenzy of preparations.
 
 ### Deities of the Pantheon
-${deityNames.map((n, i) => `- **[[${n}]]**: ${i === 0 ? `The deity of ${domain}, depicted as a warrior.` : i === 1 ? "A mysterious spirit of chaos and shadows." : "An ancient ancestor guarding the gates of death."}`).join("\n")}
+${deityNames
+  .map(
+    (n, i) =>
+      `- **[[${n}]]**: ${
+        width === "focused"
+          ? `The deity representing a key facet of ${domain.toLowerCase()}${
+              i === 0
+                ? ", depicted as a guardian/warrior."
+                : i === 1
+                  ? ", representing the shadow or depth of the sphere."
+                  : ", guarding the balance/transition points."
+            }`
+          : i === 0
+            ? `The deity of ${domain}, depicted as a warrior.`
+            : i === 1
+              ? "A mysterious spirit of chaos and shadows."
+              : "An ancient ancestor guarding the gates of death."
+      }`,
+  )
+  .join("\n")}
 
 ### Rumours & Legends
 - A forgotten temple of the pantheon lies submerged under the local lake.

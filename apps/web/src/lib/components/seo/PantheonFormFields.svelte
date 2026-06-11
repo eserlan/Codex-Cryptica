@@ -10,6 +10,7 @@
     worshippers = $bindable(pantheonConfig.worshippers[0]),
     conflictTheme = $bindable(pantheonConfig.conflictThemes[0]),
     size = $bindable("small" as "small" | "medium" | "large"),
+    width = $bindable("balanced" as "balanced" | "focused"),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
@@ -21,6 +22,7 @@
     worshippers: string;
     conflictTheme: string;
     size: "small" | "medium" | "large";
+    width: "balanced" | "focused";
     campaignContext: string;
     onSurprise?: () => void;
   } = $props();
@@ -45,6 +47,17 @@
     <select id="pantheon-size-select" bind:value={size} class={selectClass}>
       {#each pantheonConfig.sizes as s (s.value)}
         <option value={s.value}>{s.label}</option>
+      {/each}
+    </select>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label for="pantheon-width-select" class={labelClass}
+      >Pantheon Focus / Width</label
+    >
+    <select id="pantheon-width-select" bind:value={width} class={selectClass}>
+      {#each pantheonConfig.widths as w (w.value)}
+        <option value={w.value}>{w.label}</option>
       {/each}
     </select>
   </div>
@@ -154,6 +167,7 @@
       tone = pickFrom(pantheonConfig.tones);
       worshippers = pickFrom(pantheonConfig.worshippers);
       conflictTheme = pickFrom(pantheonConfig.conflictThemes);
+      width = pickFrom(pantheonConfig.widths).value;
       if (onSurprise) onSurprise();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
