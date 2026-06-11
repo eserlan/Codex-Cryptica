@@ -43,7 +43,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
         removeEntry: async () => {},
       });
     });
-    await page.goto("http://0.0.0.0:5173/");
+    await page.goto("/");
 
     // Wait for app to be ready
     await page.waitForFunction(
@@ -91,9 +91,9 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     await page.getByTestId("activity-bar-oracle").click();
 
     // 2. Inject a structured message into the store
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const oracle = (window as any).oracle;
-      oracle.setMessages([
+      await oracle.setMessages([
         ...oracle.messages,
         {
           id: "test-msg-1",

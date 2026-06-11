@@ -14,7 +14,7 @@ test.describe("Vault Node Deletion", () => {
       }
     });
     // Create a fresh vault for each test if possible, or clear existing
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
   });
 
   test("should delete a node and its file", async ({ page }) => {

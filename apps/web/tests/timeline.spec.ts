@@ -71,7 +71,7 @@ test.describe("World Timeline - Graph Integration", () => {
         };
       };
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
   });
 
   test("should toggle timeline mode", async ({ page }) => {

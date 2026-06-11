@@ -19,7 +19,7 @@ test.describe("Oracle Merge Command E2E", () => {
       }
     });
 
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Wait for vault and oracle initialization
     await page.waitForFunction(

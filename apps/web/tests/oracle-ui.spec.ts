@@ -10,7 +10,7 @@ test.describe("Oracle UI - Elastic Input", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Ensure Oracle is initialized
     await page.waitForFunction(

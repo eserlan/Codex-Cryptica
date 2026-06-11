@@ -98,7 +98,7 @@ test.describe("Fuzzy Search", () => {
 
   test("Search works offline", async ({ page, context }) => {
     page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Create entities via UI to trigger indexing
     await page.getByTestId("new-entity-button").click();
@@ -150,7 +150,7 @@ test.describe("Fuzzy Search", () => {
     page,
   }) => {
     page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Create entities via UI
     await page.getByTestId("new-entity-button").click();
@@ -207,7 +207,7 @@ test.describe("Fuzzy Search", () => {
   test("selecting search result does not add redundant URL parameters", async ({
     page,
   }) => {
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Create entities via UI to trigger indexing
     await page.getByTestId("new-entity-button").click();
@@ -250,7 +250,7 @@ test.describe("Fuzzy Search", () => {
   test("selecting a searched entity zooms the graph to level 2", async ({
     page,
   }) => {
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Chronicle Title...").fill("My Note");
@@ -314,7 +314,7 @@ test.describe("Fuzzy Search", () => {
       }
     });
 
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
     await page.evaluate(() => {
       const ui = (window as any).uiStore;

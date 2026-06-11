@@ -48,7 +48,7 @@ test.describe("Oracle Undo", () => {
       };
     });
 
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Wait for the app to initialize
     await page.waitForFunction(
@@ -102,9 +102,9 @@ test.describe("Oracle Undo", () => {
     // 2. Open Oracle and simulate a message with parsed content
     await page.getByTestId("activity-bar-oracle").click();
 
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const oracle = (window as any).oracle;
-      oracle.setMessages([
+      await oracle.setMessages([
         ...oracle.messages,
         {
           id: "msg-assistant-1",
@@ -163,9 +163,9 @@ test.describe("Oracle Undo", () => {
     // 1. Open Oracle and simulate a /create message
     await page.getByTestId("activity-bar-oracle").click();
 
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const oracle = (window as any).oracle;
-      oracle.setMessages([
+      await oracle.setMessages([
         ...oracle.messages,
         {
           id: "msg-assistant-create",

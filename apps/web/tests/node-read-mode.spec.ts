@@ -10,7 +10,7 @@ test.describe("Node Read Mode", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     // Wait for vault to be ready
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
   });

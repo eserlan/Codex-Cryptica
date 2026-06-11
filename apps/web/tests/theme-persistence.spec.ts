@@ -16,7 +16,7 @@ test.describe("Campaign-Specific Theme Persistence", () => {
       });
     }
 
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => (window as any).vault?.isInitialized);
   });
 

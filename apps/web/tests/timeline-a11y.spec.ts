@@ -67,7 +67,7 @@ test.describe("Timeline Accessibility", () => {
       };
     });
 
-    await page.goto("http://localhost:5173/timeline");
+    await page.goto("/timeline");
     // Wait for stores to be attached and initialized
     await page.waitForFunction(
       () =>

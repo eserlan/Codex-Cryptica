@@ -10,21 +10,26 @@ test.describe("Oracle Connection Wizard", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
-    // Create entities via UI to trigger indexing
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Eldrin");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Tower");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
-      timeout: 20000,
+    // Create entities via programmatic API to avoid UI race conditions
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
     });
+    await page.evaluate(async () => {
+      const v = (window as any).vault;
+      await v.createEntity("character", "Eldrin");
+      await v.createEntity("location", "Tower");
+    });
+
+    // Wait for indexing to complete (2 entities)
+    await page.waitForFunction(
+      () => {
+        const v = (window as any).vault;
+        return v && Object.keys(v.entities || {}).length >= 2;
+      },
+      { timeout: 20000 },
+    );
 
     // Open Oracle Window
     const toggleBtn = page.getByTestId("activity-bar-oracle");

@@ -70,7 +70,7 @@ test.describe("Entity Labeling System", () => {
         };
       }
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Handle console logs from the page
     page.on("console", (msg) => {
