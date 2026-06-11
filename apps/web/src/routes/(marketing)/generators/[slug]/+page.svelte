@@ -11,6 +11,7 @@
   import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
+  import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -24,6 +25,7 @@
     nationConfig,
     vampireConfig,
     nameGeneratorConfig,
+    pantheonConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -31,8 +33,19 @@
 
   let { data } = $props();
 
+  type SlugMetaEntry = {
+    pageTitle: string;
+    metaDescription: string;
+    introTitle: string;
+    eyebrow: string;
+    introText: string;
+    canonicalPath: string;
+    faqs?: { question: string; answer: string }[];
+    relatedLinks?: { href: string; label: string }[];
+  };
+
   // Per-slug SEO metadata (#1)
-  const slugMeta = {
+  const slugMeta: Record<typeof data.slug, SlugMetaEntry> = {
     npc: {
       pageTitle:
         "RPG NPC Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Characters | Codex Cryptica",
@@ -43,6 +56,35 @@
       introText:
         "Create NPCs across any genre with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault.",
       canonicalPath: "/generators/npc",
+      faqs: [
+        {
+          question: "Does the D&D NPC generator require an account?",
+          answer:
+            "No. Generate and copy NPC notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "What does the RPG NPC generator create?",
+          answer:
+            "It generates a complete NPC with a name, ancestry, role, personality traits, a hidden secret, motivation, faction connection, and a table-ready GM hook — structured for immediate use.",
+        },
+        {
+          question: "Can I use it outside D&D?",
+          answer:
+            "Yes. The output works for D&D, Pathfinder, OSR games, cyberpunk, and any genre. The generator is system-agnostic.",
+        },
+        {
+          question: "How does saving a generated NPC work?",
+          answer:
+            "Clicking 'Save to Codex' stores the NPC draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Character entity, ready to link to factions, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/solutions/ai-gm-assistant", label: "AI GM assistant" },
+        {
+          href: "/free-rpg-campaign-manager",
+          label: "Free RPG campaign manager",
+        },
+      ],
     },
     settlement: {
       pageTitle:
@@ -76,6 +118,32 @@
       introText:
         "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
       canonicalPath: "/generators/faction",
+      faqs: [
+        {
+          question: "What does the faction generator create?",
+          answer:
+            "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy faction notes on this page without logging in. When you're ready, save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Can I aim the faction at my current campaign?",
+          answer:
+            "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
+        },
+        {
+          question: "How does saving a generated faction work?",
+          answer:
+            "Clicking 'Save to Codex' stores the faction draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/tools/dnd-npc-generator", label: "D&D NPC Generator" },
+        { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      ],
     },
     quest: {
       pageTitle:
@@ -187,7 +255,29 @@
         "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
       canonicalPath: "/generators/dnd-npc",
     },
-  } as const;
+    "pantheon-generator": {
+      pageTitle:
+        "RPG Pantheon Generator | Free Deity & Divine Assembly Tool | Codex Cryptica",
+      metaDescription:
+        "Generate detailed RPG pantheons with alliances, rivalries, myths, and hooks. Save drafts directly to your Codex campaign vault.",
+      introTitle: "RPG Pantheon Generator",
+      eyebrow: "Pantheon Generator",
+      introText:
+        "Create a campaign-ready pantheon with alliances, cosmic conflicts, and detailed member deities. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/pantheon-generator",
+    },
+    "god-generator": {
+      pageTitle:
+        "RPG God & Deity Generator | Free Tabletop Worldbuilding Tool | Codex Cryptica",
+      metaDescription:
+        "Generate fantasy RPG deities, saints, spirits, and demons with domains, taboos, symbols, and hooks. Save drafts directly to your campaign vault.",
+      introTitle: "RPG God & Deity Generator",
+      eyebrow: "Deity Generator",
+      introText:
+        "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/god-generator",
+    },
+  };
 
   const meta = $derived(slugMeta[data.slug]);
 
@@ -288,6 +378,20 @@
     campaignContext: "",
   });
 
+  let pantheon = $state({
+    mode: (data.slug === "pantheon-generator" ? "pantheon" : "single") as
+      | "single"
+      | "pantheon",
+    size: "small" as "small" | "medium" | "large",
+    genre: pantheonConfig.genres[0],
+    divineType: pantheonConfig.divineTypes[0],
+    domain: pantheonConfig.domains[0],
+    tone: pantheonConfig.tones[0],
+    worshippers: pantheonConfig.worshippers[0],
+    conflictTheme: pantheonConfig.conflictThemes[0],
+    campaignContext: "",
+  });
+
   const socialHubGenreToTheme: Record<string, string> = {
     Fantasy: "Classic Fantasy",
     "Dark Fantasy": "Vampire / Gothic Noir",
@@ -312,6 +416,11 @@
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
     else if (data.slug === "nation")
       activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
+    else if (
+      data.slug === "pantheon-generator" ||
+      data.slug === "god-generator"
+    )
+      activeTheme = pantheon.genre;
   });
 
   onMount(() => {
@@ -326,6 +435,10 @@
     }
     if (data.slug === "vampire-clan") {
       activeTheme = "Vampire / Gothic Noir";
+      return;
+    }
+    if (data.slug === "pantheon-generator" || data.slug === "god-generator") {
+      activeTheme = pantheon.genre;
       return;
     }
     if (
@@ -378,6 +491,11 @@
       });
     } else if (data.slug === "dnd-npc") {
       return generatorEngine.generateNPC({ ...dndNpc, useAI });
+    } else if (
+      data.slug === "pantheon-generator" ||
+      data.slug === "god-generator"
+    ) {
+      return generatorEngine.generatePantheon({ ...pantheon, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -503,11 +621,31 @@
     "dnd-npc": {
       type: "character",
       title: "Elowen Ashford",
-      summary: "A half-elf rogue with a hidden past and a talent for leverage.",
+      summary: "A half-elf rogue with a talent for leverage.",
       content:
         "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine — mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
       lore: "",
       labels: ["rpg-npc", "Rogue", "Half-Elf"],
+      status: "draft",
+    },
+    "pantheon-generator": {
+      type: "faction",
+      title: "The Silent Maw",
+      summary: "A small pantheon of forgotten deities.",
+      content:
+        "### Origin & Dogma\nThe Silent Maw is a collection of ancient entities who hold sway over the dark and forgotten corners of the world.\n\n### Divine Portfolio\nTheir tenets demand absolute silence and devotion to secrets.",
+      lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult",
+      labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
+      status: "draft",
+    },
+    "god-generator": {
+      type: "character",
+      title: "Oros, the Light of Dawn",
+      summary: "A deity of the rising sun and new beginnings.",
+      content:
+        "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
+      lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
+      labels: ["rpg-deity", "deity-generator", "imported-draft"],
       status: "draft",
     },
   };
@@ -527,6 +665,8 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  faqs={meta.faqs ?? []}
+  relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
   isThemeCustomizable={data.slug === "faction" ||
     data.slug === "npc" ||
@@ -699,6 +839,19 @@
         bind:role={dndNpc.role}
         bind:alignment={dndNpc.alignment}
         bind:campaignContext={dndNpc.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "pantheon-generator" || data.slug === "god-generator"}
+      <PantheonFormFields
+        bind:mode={pantheon.mode}
+        bind:genre={pantheon.genre}
+        bind:divineType={pantheon.divineType}
+        bind:domain={pantheon.domain}
+        bind:tone={pantheon.tone}
+        bind:worshippers={pantheon.worshippers}
+        bind:conflictTheme={pantheon.conflictTheme}
+        bind:size={pantheon.size}
+        bind:campaignContext={pantheon.campaignContext}
         onSurprise={trigger}
       />
     {/if}
