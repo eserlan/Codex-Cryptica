@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -173,36 +174,41 @@
   <header
     class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
   >
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="{base}/" class="flex items-center gap-2 group" id="logo-link">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <a
+        href="{cleanBase}/"
+        class="flex items-center gap-2 group min-w-0"
+        id="logo-link"
+      >
         <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 transition-transform group-hover:rotate-12"
+          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
         ></span>
         <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors"
+          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
         >
-          Codex Cryptica
+          Codex<span class="hidden sm:inline"> Cryptica</span>
         </span>
       </a>
       <nav
         class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
       >
         <a
-          href="{base}/features"
+          href="{cleanBase}/features"
           class="hover:text-theme-primary transition-colors">Features</a
         >
-        <a href="{base}/blog" class="hover:text-theme-primary transition-colors"
-          >Devlog</a
+        <a
+          href="{cleanBase}/blog"
+          class="hover:text-theme-primary transition-colors">Devlog</a
         >
         <a
-          href="{base}/tools/dnd-npc-generator"
+          href="{cleanBase}/tools/dnd-npc-generator"
           class="hover:text-theme-primary transition-colors">Generators</a
         >
       </nav>
-      <div>
+      <div class="shrink-0">
         <a
-          href="{base}/?ref=ra-pillar-nav"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+          href="{cleanBase}/?ref=ra-pillar-nav"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -543,23 +549,23 @@
       <div>© 2026 Codex Cryptica. All rights reserved.</div>
       <div class="flex gap-6">
         <a
-          href="{base}/terms"
+          href="{cleanBase}/terms"
           class="hover:text-theme-primary transition-colors">Terms</a
         >
         <a
-          href="{base}/privacy"
+          href="{cleanBase}/privacy"
           class="hover:text-theme-primary transition-colors">Privacy</a
         >
         <a
-          href="{base}/tools"
+          href="{cleanBase}/tools"
           class="hover:text-theme-primary transition-colors">Tools</a
         >
         <a
-          href="{base}/sitemap.xml"
+          href="{cleanBase}/sitemap.xml"
           class="hover:text-theme-primary transition-colors">Sitemap</a
         >
         <a
-          href="{base}/llms.txt"
+          href="{cleanBase}/llms.txt"
           class="hover:text-theme-primary transition-colors">LLM Docs</a
         >
       </div>
