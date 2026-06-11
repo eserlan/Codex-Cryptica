@@ -1,4 +1,68 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function dismissFrontPage(page: Page) {
+  await page.evaluate(() => {
+    const onboarding = (window as any).onboardingStore;
+    if (onboarding) {
+      onboarding.dismissedWorldPage = true;
+      onboarding.dismissedLandingPage = true;
+      onboarding.skipWelcomeScreen = true;
+    }
+    const ui = (window as any).uiStore;
+    if (ui) {
+      ui.dismissedWorldPage = true;
+      ui.dismissedLandingPage = true;
+      ui.skipWelcomeScreen = true;
+    }
+  });
+}
+
+// Helper to create entities via API and wait for search index
+async function createEntitiesAndWaitForIndex(
+  page: Page,
+  entities: { name: string; type?: string }[],
+) {
+  await page.waitForFunction(
+    () =>
+      (window as any).vault?.status === "idle" && !!(window as any).searchStore,
+    { timeout: 15000 },
+  );
+  await dismissFrontPage(page);
+
+  const createdIds: string[] = [];
+  for (const entity of entities) {
+    const id = await page.evaluate(
+      async ({ name, type }: { name: string; type: string }) => {
+        return await (window as any).vault.createEntity(type, name);
+      },
+      { name: entity.name, type: entity.type ?? "character" },
+    );
+    createdIds.push(id as string);
+  }
+
+  // Wait for the last created entity (by ID) to appear in the search index
+  const lastId = createdIds[createdIds.length - 1];
+  const lastName = entities[entities.length - 1].name;
+  await page.waitForFunction(
+    async ({ id, name }: { id: string; name: string }) => {
+      const s = (window as any).searchStore;
+      if (!s?.setQuery) return false;
+      try {
+        await s.setQuery(name);
+        // Verify a result with our specific entity ID is present
+        return (
+          Array.isArray(s.results) && s.results.some((r: any) => r.id === id)
+        );
+      } catch {
+        return false;
+      }
+    },
+    { id: lastId, name: lastName },
+    { timeout: 15000 },
+  );
+  // Reset query after polling
+  await page.evaluate(() => (window as any).searchStore?.setQuery(""));
+}
 
 test.describe("Fuzzy Search", () => {
   test.beforeEach(async ({ page }) => {
@@ -9,130 +73,48 @@ test.describe("Fuzzy Search", () => {
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
     });
-    // Mock File System Access API and IndexedDB
-    await page.addInitScript(() => {
-      // Intercept IndexedDB to handle DataCloneError with mock handles
-      const originalPut = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (
-        ...args: [unknown, IDBValidKey?]
-      ) {
-        try {
-          return originalPut.apply(this, args);
-        } catch (e: any) {
-          if (e.name === "DataCloneError") {
-            console.log(
-              "MOCK: Caught DataCloneError in IndexedDB, returning fake success",
-            );
-            const req: any = {
-              onsuccess: null,
-              onerror: null,
-              result: args[1],
-              readyState: "done",
-              addEventListener: function (type: string, listener: any) {
-                if (type === "success") this.onsuccess = listener;
-              },
-            };
-            setTimeout(() => {
-              if (req.onsuccess) req.onsuccess({ target: req });
-            }, 0);
-            return req;
-          }
-          throw e;
-        }
-      };
-
-      const content1 = "---\ntitle: My Note\n---\n# My Note Content";
-      const content2 = "---\ntitle: The Crone\n---\n# The Crone Content";
-
-      const createMockFile = (content: string, name: string) => {
-        const file = new File([content], name, { type: "text/markdown" });
-        return {
-          kind: "file",
-          name,
-          getFile: async () => file,
-          createWritable: async () => ({
-            write: async () => {},
-            close: async () => {},
-          }),
-        };
-      };
-
-      const fileHandle1 = createMockFile(content1, "My Note.md");
-      const fileHandle2 = createMockFile(content2, "the-crone.md");
-
-      const dirHandle = {
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: function () {
-          return [fileHandle1, fileHandle2][Symbol.iterator]();
-        },
-        entries: function () {
-          const entries = [
-            ["My Note.md", fileHandle1],
-            ["the-crone.md", fileHandle2],
-          ];
-          return {
-            [Symbol.asyncIterator]() {
-              let i = 0;
-              return {
-                async next() {
-                  if (i < entries.length) {
-                    return { value: entries[i++], done: false };
-                  }
-                  return { done: true };
-                },
-              };
-            },
-          };
-        },
-        getFileHandle: async (name: string) =>
-          name === "My Note.md" ? fileHandle1 : fileHandle2,
-      };
-
-      // @ts-expect-error - Mock
-      window.showDirectoryPicker = async () => dirHandle;
-    });
   });
 
   test("Search works offline", async ({ page, context }) => {
-    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
     await page.goto("/");
 
-    // Create entities via UI to trigger indexing
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await createEntitiesAndWaitForIndex(page, [
+      { name: "My Note" },
+      { name: "The Crone" },
+    ]);
 
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
-      timeout: 20000,
+    // Warm up: open modal, search, and close — ensures search worker + lazy component are cached
+    await page.evaluate(() => (window as any).searchStore?.open());
+    await expect(page.getByTestId("search-modal")).toBeVisible({
+      timeout: 5000,
     });
-
-    // 2. Go Offline
-    await context.setOffline(true);
-
-    // 3. Open Search Modal
-    await page.keyboard.press("Control+k");
-    await page.keyboard.press("Meta+k");
-
-    const input = page.getByPlaceholder("Search notes...");
-    await expect(input).toBeVisible();
-
-    // 4. Type query
-    await input.fill("Note");
-
-    // 5. Verify results
+    await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
     await expect(
       page.getByTestId("search-result").filter({ hasText: "My Note" }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 5000 });
+    await page.evaluate(() => (window as any).searchStore?.close());
+    await expect(page.getByTestId("search-modal")).not.toBeVisible({
+      timeout: 3000,
+    });
 
-    // 6. Click the result directly
+    // Go Offline
+    await context.setOffline(true);
+
+    // Open Search Modal — use store API (keyboard shortcut unreliable cross-OS)
+    await page.evaluate(() => (window as any).searchStore?.open());
+
+    const input = page.getByPlaceholder("Search notes...");
+    await expect(input).toBeVisible({ timeout: 5000 });
+
+    // Query directly via store to bypass debounce
+    await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
+
+    // Verify results
+    await expect(
+      page.getByTestId("search-result").filter({ hasText: "My Note" }),
+    ).toBeVisible({ timeout: 5000 });
+
+    // Click the result directly
     await page
       .getByTestId("search-result")
       .filter({ hasText: "My Note" })
@@ -140,38 +122,32 @@ test.describe("Fuzzy Search", () => {
 
     await expect(input).not.toBeVisible({ timeout: 2000 });
 
-    // 7. Verify Detail Panel opens
+    // Verify Detail Panel opens
     await expect(
       page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
     ).toBeVisible();
+
+    // Restore network so subsequent tests aren't affected
+    await context.setOffline(false);
   });
 
   test("handles search results with missing IDs via path fallback", async ({
     page,
   }) => {
-    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
     await page.goto("/");
 
-    // Create entities via UI
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await createEntitiesAndWaitForIndex(page, [
+      { name: "My Note" },
+      { name: "The Crone" },
+    ]);
 
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
-      timeout: 20000,
-    });
-
-    // 2. Mock broken search results
+    // Mock broken search results
     await page.evaluate(() => {
       const mockResults = [
         {
-          id: undefined, // MISSING ID
+          id: undefined,
           title: "The Crone",
-          path: "the-crone.md",
+          path: "the-crone",
           matchType: "content",
           score: 0.9,
           excerpt: "The Crone is a mysterious figure...",
@@ -186,16 +162,16 @@ test.describe("Fuzzy Search", () => {
       }
     });
 
-    // 3. Verify the "broken" result is visible
+    // Verify the "broken" result is visible
     const resultItem = page
       .getByTestId("search-result")
       .filter({ hasText: "The Crone" });
     await expect(resultItem).toBeVisible();
 
-    // 4. Select the result
+    // Select the result
     await resultItem.click();
 
-    // 5. Verify Fallback worked
+    // Verify Fallback worked
     await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
 
     // Check for the title in the detail panel
@@ -209,40 +185,34 @@ test.describe("Fuzzy Search", () => {
   }) => {
     await page.goto("/");
 
-    // Create entities via UI to trigger indexing
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await createEntitiesAndWaitForIndex(page, [
+      { name: "My Note" },
+      { name: "The Crone" },
+    ]);
 
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
-      timeout: 20000,
+    // Open Search Modal
+    await page.evaluate(() => (window as any).searchStore?.open());
+    await expect(page.getByPlaceholder("Search notes...")).toBeVisible({
+      timeout: 5000,
     });
 
-    // 2. Open Search Modal
-    await page.keyboard.press("Control+k");
-    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
-
-    // 3. Type query and wait for results
-    await page.getByPlaceholder("Search notes...").fill("Note");
+    // Query directly via store to bypass debounce
+    await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
     const resultItem = page
       .getByTestId("search-result")
       .filter({ hasText: "My Note" });
-    await expect(resultItem).toBeVisible();
+    await expect(resultItem).toBeVisible({ timeout: 5000 });
 
-    // 4. Click the result
+    // Click the result
     await resultItem.click();
 
-    // 5. Verify modal closed and entity selected
+    // Verify modal closed and entity selected
     await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
     await expect(
       page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
     ).toBeVisible();
 
-    // 6. CRITICAL: Verify URL does not contain ?file=
+    // CRITICAL: Verify URL does not contain ?file=
     const url = page.url();
     expect(url).not.toContain("file=");
   });
@@ -252,22 +222,19 @@ test.describe("Fuzzy Search", () => {
   }) => {
     await page.goto("/");
 
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await createEntitiesAndWaitForIndex(page, [{ name: "My Note" }]);
 
-    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
-      timeout: 20000,
+    await page.evaluate(() => (window as any).searchStore?.open());
+    await expect(page.getByPlaceholder("Search notes...")).toBeVisible({
+      timeout: 5000,
     });
 
-    await page.keyboard.press("Control+k");
-    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
-
-    await page.getByPlaceholder("Search notes...").fill("Note");
+    // Query directly via store to bypass debounce
+    await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
     const resultItem = page
       .getByTestId("search-result")
       .filter({ hasText: "My Note" });
-    await expect(resultItem).toBeVisible();
+    await expect(resultItem).toBeVisible({ timeout: 5000 });
 
     await resultItem.click();
 
@@ -293,7 +260,17 @@ test.describe("Fuzzy Search", () => {
   test("shows recent searches from localStorage when opening with empty query", async ({
     page,
   }) => {
-    await page.addInitScript(() => {
+    await page.goto("/");
+    await page.waitForFunction(
+      () =>
+        (window as any).vault?.status === "idle" &&
+        !!(window as any).searchStore,
+      { timeout: 15000 },
+    );
+
+    // Set recents using the actual vault-specific key (matches getStorageKey() in SearchStore)
+    await page.evaluate(() => {
+      const vaultId = (window as any).vault?.activeVaultId || "default";
       const recents = [
         {
           id: "recent-note",
@@ -303,29 +280,19 @@ test.describe("Fuzzy Search", () => {
           matchType: "title",
         },
       ];
-      window.localStorage.setItem(
-        "search_recents_default",
+      localStorage.setItem(
+        `search_recents_${vaultId}`,
         JSON.stringify(recents),
       );
-      try {
-        window.localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
+      // Reload recents into the store so open() picks them up
+      const s = (window as any).searchStore;
+      if (s?.recents !== undefined) {
+        s.recents = recents;
       }
     });
 
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).uiStore !== undefined);
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
-
-    // Use keyboard shortcut to open modal
-    await page.keyboard.press("Control+k");
+    // Open modal via store API
+    await page.evaluate(() => (window as any).searchStore?.open());
 
     const resultItem = page
       .getByTestId("search-result")

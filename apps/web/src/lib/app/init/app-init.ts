@@ -143,7 +143,6 @@ export function setupWindowGlobals(context: {
   explorerUIStore?: any;
   isEntityVisible: any;
   eventBus?: any;
-  revisionService?: any;
 }) {
   if (!browser) return;
 

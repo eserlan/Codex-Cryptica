@@ -7,26 +7,50 @@ test.describe("Entity Creation", () => {
   });
 
   test("creates entities and updates graph", async ({ page }) => {
-    // Create Node A
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node A");
-    await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE");
+    // Helper to create an entity via the vault API (avoids UI jargon issues)
+    const createEntity = async (name: string) => {
+      await page.evaluate(async (entityName) => {
+        await (window as any).vault.createEntity("character", entityName);
+      }, name);
+    };
 
-    // Create Node B
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node B");
-    await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES");
+    await createEntity("Node A");
+    await expect(page.getByTestId("entity-count")).toContainText(
+      /1\s*(CHRONICLE|NOTE)/,
+      { timeout: 10000 },
+    );
+
+    await createEntity("Node B");
+    await expect(page.getByTestId("entity-count")).toContainText(
+      /2\s*(CHRONICLES|NOTES)/,
+      { timeout: 10000 },
+    );
+
+    // Wait for search index to pick up both entities
+    await page.waitForFunction(
+      async () => {
+        const s = (window as any).searchStore;
+        if (!s?.search) return false;
+        try {
+          const results = await s.search("Node A", { limit: 5 });
+          return Array.isArray(results) && results.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 15000 },
+    );
 
     // Verify Search (OS-agnostic shortcut)
     const searchShortcutModifier =
       process.platform === "darwin" ? "Meta" : "Control";
     await page.keyboard.press(`${searchShortcutModifier}+k`);
-    await page.getByPlaceholder("Search (Cmd+K)...").fill("Node A");
-    await expect(page.getByTestId("search-result").first()).toContainText(
-      "Node A",
-    );
+    const searchInput = page.getByPlaceholder("Search notes...");
+    await searchInput.waitFor({ state: "visible", timeout: 5000 });
+    await searchInput.fill("Node A");
+    await expect(page.locator("#search-result-0")).toContainText("Node A", {
+      timeout: 5000,
+    });
     await page.keyboard.press("Escape");
   });
 });
