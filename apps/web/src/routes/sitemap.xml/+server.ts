@@ -102,6 +102,7 @@ export async function GET() {
     "names",
     "fantasy-names",
     "dnd-npc",
+    "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,
     changefreq: "monthly",

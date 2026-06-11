@@ -129,6 +129,13 @@
                 "Generate a political entity for any genre — fantasy empires, cyberpunk megacorp-states, sci-fi federations, and more.",
               icon: "icon-[lucide--globe]",
             },
+            {
+              href: "/generators/random",
+              label: "Surprise Me",
+              summary:
+                "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, or venue.",
+              icon: "icon-[lucide--dices]",
+            },
           ],
         },
       ],

@@ -59,6 +59,7 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain("https://codexcryptica.com/features/test-feat");
     expect(xml).toContain("https://codexcryptica.com/import/test-import");
     expect(xml).toContain("https://codexcryptica.com/generators/npc");
+    expect(xml).toContain("https://codexcryptica.com/generators/random");
     expect(xml).toContain("https://codexcryptica.com/blog/test-blog-post");
     // Responsible AI pillar page
     expect(xml).toContain(
