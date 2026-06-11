@@ -709,8 +709,7 @@
             </div>
 
             <div
-              role="group"
-              tabindex="-1"
+              role="none"
               class="seo-md text-sm leading-relaxed text-theme-text/90 flex-grow {variant ===
               'names'
                 ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
