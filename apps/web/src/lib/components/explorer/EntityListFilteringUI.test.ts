@@ -194,4 +194,19 @@ describe("EntityList Filtering", () => {
       expect(screen.getByText("Merchant")).not.toBeNull();
     });
   });
+
+  it("renders label pills container with responsive styling classes for better mobile experience", () => {
+    render(EntityList);
+
+    const merchantPill = screen.getByText("MerchantLabel");
+    const container = merchantPill.parentElement;
+    expect(container).not.toBeNull();
+
+    // Verify responsive mobile layout classes exist
+    expect(container?.className).toContain("w-full");
+    expect(container?.className).toContain("order-last");
+    expect(container?.className).toContain("pl-9");
+    expect(container?.className).toContain("md:order-none");
+    expect(container?.className).toContain("md:w-auto");
+  });
 });
