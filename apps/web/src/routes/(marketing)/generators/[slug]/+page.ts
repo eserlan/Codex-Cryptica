@@ -18,6 +18,8 @@ const validSlugs = new Set([
   "names",
   "fantasy-names",
   "dnd-npc",
+  "pantheon-generator",
+  "god-generator",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -39,7 +41,9 @@ export const load: PageLoad = ({ params }) => {
       | "vampire-clan"
       | "names"
       | "fantasy-names"
-      | "dnd-npc",
+      | "dnd-npc"
+      | "pantheon-generator"
+      | "god-generator",
   };
 };
 
@@ -59,5 +63,7 @@ export const entries: EntryGenerator = () => {
     { slug: "names" },
     { slug: "fantasy-names" },
     { slug: "dnd-npc" },
+    { slug: "pantheon-generator" },
+    { slug: "god-generator" },
   ];
 };

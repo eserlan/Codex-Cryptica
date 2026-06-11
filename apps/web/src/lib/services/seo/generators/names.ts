@@ -90,11 +90,14 @@ Return only the JSON object. Do not include markdown code block formatting like 
     generated.push(prefix.charAt(0).toUpperCase() + prefix.slice(1) + suffix);
   }
 
-  const nameList = generated.map((n) => `- ${n}`).join("\n");
+  const nameList = generated
+    .map(
+      (n) =>
+        `- **${n}**: Traditional ${culture} style ${nameType.toLowerCase()} name.`,
+    )
+    .join("\n");
 
-  const content = `${culture} ${nameType.toLowerCase()} names in a ${gender.toLowerCase()} register.
-
-${nameList}`;
+  const content = `These names represent the traditional ${culture} style for ${nameType.toLowerCase()}s, filtered for a ${gender.toLowerCase()} register.\n\n${nameList}`;
 
   const lore = `### Generator Settings
 - **Culture**: ${culture}

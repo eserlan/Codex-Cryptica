@@ -58,6 +58,25 @@
       ],
     },
     {
+      group: "Divine & Mythology",
+      items: [
+        {
+          href: "/generators/pantheon-generator",
+          label: "Pantheon Generator",
+          summary:
+            "Build a small pantheon with alliances, rivalries, cosmic conflicts, and member deities.",
+          icon: "icon-[lucide--sun]",
+        },
+        {
+          href: "/generators/god-generator",
+          label: "God & Deity Generator",
+          summary:
+            "Design a single deity, spirit, or abstract force with domains, taboos, symbols, and hooks.",
+          icon: "icon-[lucide--star]",
+        },
+      ],
+    },
+    {
       group: "Adventure & Worldbuilding",
       items: [
         {
@@ -113,7 +132,7 @@
           href: "/generators/random",
           label: "Surprise Me",
           summary:
-            "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, or venue.",
+            "Not sure what you need? Spin the idea machine — a random faction, realm, NPC, quest hook, deity, or venue.",
           icon: "icon-[lucide--dices]",
         },
       ],

@@ -5,7 +5,14 @@ import { npcThemeConfig } from "./generators/npc";
 import { themeToQuestGenre } from "./generators/quest";
 
 export interface RandomIdeaCategory {
-  key: "faction" | "nation" | "npc" | "quest" | "social-hub";
+  key:
+    | "faction"
+    | "nation"
+    | "npc"
+    | "quest"
+    | "social-hub"
+    | "pantheon"
+    | "deity";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -74,6 +81,18 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Social Hub",
     generate: (engine, useAI, theme) =>
       engine.generateSocialHub({ genre: themeToHubGenre[theme], useAI }),
+  },
+  {
+    key: "pantheon",
+    label: "Pantheon",
+    generate: (engine, useAI, theme) =>
+      engine.generatePantheon({ genre: theme, mode: "pantheon", useAI }),
+  },
+  {
+    key: "deity",
+    label: "Deity",
+    generate: (engine, useAI, theme) =>
+      engine.generatePantheon({ genre: theme, mode: "single", useAI }),
   },
 ];
 

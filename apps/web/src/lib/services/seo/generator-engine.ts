@@ -19,6 +19,7 @@ export { magicItemConfig } from "./generators/magic-item";
 export { questConfig, themeToQuestGenre } from "./generators/quest";
 export { socialHubConfig } from "./generators/social-hub";
 export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
+export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
 import { generateNPC } from "./generators/npc";
@@ -29,6 +30,7 @@ import { generateQuestHook } from "./generators/quest";
 import { generateNames } from "./generators/names";
 import { generateSocialHub, generateTavern } from "./generators/social-hub";
 import { generateKingdom, generateNation } from "./generators/kingdom-nation";
+import { generatePantheon } from "./generators/pantheon";
 import type { GeneratorOutput } from "./generators/base";
 
 export class DefaultGeneratorEngine {
@@ -102,6 +104,12 @@ export class DefaultGeneratorEngine {
     options: Parameters<typeof generateNation>[1] = {},
   ): Promise<GeneratorOutput> {
     return generateNation(this.clientManager, options);
+  }
+
+  async generatePantheon(
+    options: Parameters<typeof generatePantheon>[1] = {},
+  ): Promise<GeneratorOutput> {
+    return generatePantheon(this.clientManager, options);
   }
 }
 

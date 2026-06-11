@@ -15,9 +15,11 @@ import { nationConfig } from "./generators/kingdom-nation";
 describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {
     expect(randomIdeaCategories.map((c) => c.key).sort()).toEqual([
+      "deity",
       "faction",
       "nation",
       "npc",
+      "pantheon",
       "quest",
       "social-hub",
     ]);
@@ -37,6 +39,7 @@ describe("randomIdeaCategories", () => {
       generateNPC: vi.fn().mockResolvedValue("npc-result"),
       generateQuestHook: vi.fn().mockResolvedValue("quest-result"),
       generateSocialHub: vi.fn().mockResolvedValue("social-hub-result"),
+      generatePantheon: vi.fn().mockResolvedValue("pantheon-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -68,6 +71,16 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateSocialHub).toHaveBeenCalledWith({
       useAI: true,
       genre: "Cyberpunk",
+    });
+    expect(engine.generatePantheon).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+      mode: "pantheon",
+    });
+    expect(engine.generatePantheon).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
+      mode: "single",
     });
   });
 

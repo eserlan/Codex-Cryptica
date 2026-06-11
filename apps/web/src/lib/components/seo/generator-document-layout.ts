@@ -98,6 +98,26 @@ const LAYOUT_RULES: LayoutRule[] = [
       heading: "Secrets & Hooks",
     },
   },
+  {
+    label: "deity-generator",
+    railSections: new Set(["At a Glance", "Rituals & Taboos"]),
+    documentBullets: {
+      labels: new Set(["Secret", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
+  {
+    label: "pantheon-generator",
+    railSections: new Set([
+      "At a Glance",
+      "Deities of the Pantheon",
+      "Entity Seeds",
+    ]),
+    documentBullets: {
+      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      heading: "Secrets & Hooks",
+    },
+  },
 ];
 
 interface MarkdownSection {

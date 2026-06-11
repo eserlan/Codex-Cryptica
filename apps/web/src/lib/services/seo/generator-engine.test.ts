@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./generators/banned-names";
@@ -836,6 +837,114 @@ describe("DefaultGeneratorEngine", () => {
         }
       });
     }
+  });
+
+  describe("generatePantheon", () => {
+    it("should generate single deity details locally when useAI is false", async () => {
+      const res = await engine.generatePantheon({
+        mode: "single",
+        genre: "Classic Fantasy",
+        divineType: "God",
+        domain: "Death",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("character");
+      expect(res.title).toContain("Death");
+      expect(res.summary?.toLowerCase()).toContain("god");
+      expect(res.content).toContain("Deity Description");
+      expect(res.content.toLowerCase()).toContain("death");
+      expect(res.lore).toContain("At a Glance");
+      expect(res.labels).toContain("rpg-deity");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should generate pantheon details locally when useAI is false", async () => {
+      const res = await engine.generatePantheon({
+        mode: "pantheon",
+        genre: "Classic Fantasy",
+        conflictTheme: "Cosmic Balance",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.title).toContain("Pantheon");
+      expect(res.summary?.toLowerCase()).toContain("cosmic balance");
+      expect(res.content).toContain("Origin & Dogma");
+      expect(res.lore).toContain("At a Glance");
+      expect(res.labels).toContain("rpg-pantheon");
+      expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should call clientManager for single deity when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Hel, Lady of Hela",
+                content: "AI Bio",
+                lore: "AI Lore",
+                labels: ["deity-custom"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generatePantheon({
+        mode: "single",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(res.type).toBe("character");
+      expect(res.title).toBe("Hel, Lady of Hela");
+      expect(res.content).toBe("AI Bio");
+      expect(res.lore).toBe("AI Lore");
+      expect(res.labels).toContain("deity-custom");
+    });
+
+    it("should call clientManager for pantheon when useAI is true and succeed", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Silent Maw",
+                content: "AI Bio",
+                lore: "AI Lore",
+                labels: ["pantheon-custom"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generatePantheon({
+        mode: "pantheon",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(res.type).toBe("faction");
+      expect(res.title).toBe("The Silent Maw");
+      expect(res.content).toBe("AI Bio");
+      expect(res.lore).toBe("AI Lore");
+      expect(res.labels).toContain("pantheon-custom");
+    });
+
+    it("should fall back to local tables if AI call fails", async () => {
+      mockClientManager.getModel.mockRejectedValue(new Error("Network Error"));
+
+      const res = await engine.generatePantheon({
+        mode: "single",
+        useAI: true,
+      });
+
+      expect(res.type).toBe("character");
+      expect(res.content).toContain("Deity Description");
+    });
   });
 
   describe("session hub context", () => {
