@@ -382,6 +382,7 @@
     mode: (data.slug === "pantheon-generator" ? "pantheon" : "single") as
       | "single"
       | "pantheon",
+    size: "small" as "small" | "medium" | "large",
     genre: pantheonConfig.genres[0],
     divineType: pantheonConfig.divineTypes[0],
     domain: pantheonConfig.domains[0],
@@ -849,6 +850,7 @@
         bind:tone={pantheon.tone}
         bind:worshippers={pantheon.worshippers}
         bind:conflictTheme={pantheon.conflictTheme}
+        bind:size={pantheon.size}
         bind:campaignContext={pantheon.campaignContext}
         onSurprise={trigger}
       />

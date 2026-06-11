@@ -9,6 +9,7 @@
     tone = $bindable(pantheonConfig.tones[0]),
     worshippers = $bindable(pantheonConfig.worshippers[0]),
     conflictTheme = $bindable(pantheonConfig.conflictThemes[0]),
+    size = $bindable("small" as "small" | "medium" | "large"),
     campaignContext = $bindable(""),
     onSurprise = undefined,
   }: {
@@ -19,6 +20,7 @@
     tone: string;
     worshippers: string;
     conflictTheme: string;
+    size: "small" | "medium" | "large";
     campaignContext: string;
     onSurprise?: () => void;
   } = $props();
@@ -33,9 +35,20 @@
   <label for="pantheon-mode-select" class={labelClass}>Generate target</label>
   <select id="pantheon-mode-select" bind:value={mode} class={selectClass}>
     <option value="single">Single Deity / Spirit</option>
-    <option value="pantheon">Small Pantheon (3-4 Deities)</option>
+    <option value="pantheon">Pantheon</option>
   </select>
 </div>
+
+{#if mode === "pantheon"}
+  <div class="flex flex-col gap-1.5">
+    <label for="pantheon-size-select" class={labelClass}>Pantheon Size</label>
+    <select id="pantheon-size-select" bind:value={size} class={selectClass}>
+      {#each pantheonConfig.sizes as s (s.value)}
+        <option value={s.value}>{s.label}</option>
+      {/each}
+    </select>
+  </div>
+{/if}
 
 <div class="flex flex-col gap-1.5">
   <label for="pantheon-genre-select" class={labelClass}>Genre / Theme</label>

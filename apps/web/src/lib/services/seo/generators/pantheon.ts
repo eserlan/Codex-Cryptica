@@ -46,6 +46,16 @@ export const pantheonConfig = {
     "Forbidden Love",
     "Forgotten Pact",
   ],
+  sizes: [
+    { label: "Small (3–4 deities)", value: "small", min: 3, max: 4 },
+    { label: "Medium (5–7 deities)", value: "medium", min: 5, max: 7 },
+    { label: "Large (8–12 deities)", value: "large", min: 8, max: 12 },
+  ] as {
+    label: string;
+    value: "small" | "medium" | "large";
+    min: number;
+    max: number;
+  }[],
   symbols: [
     "A weeping golden eye",
     "A black iron key wrapped in thorns",
@@ -76,6 +86,7 @@ export async function generatePantheon(
   clientManager: DefaultAIClientManager,
   options: {
     mode?: "single" | "pantheon";
+    size?: "small" | "medium" | "large";
     genre?: string;
     divineType?: string;
     domain?: string;
@@ -87,6 +98,9 @@ export async function generatePantheon(
   } = {},
 ): Promise<GeneratorOutput> {
   const mode = options.mode || "single";
+  const sizeCfg =
+    pantheonConfig.sizes.find((s) => s.value === options.size) ??
+    pantheonConfig.sizes[0];
   const genre = options.genre || "Classic Fantasy";
   const divineType = options.divineType || pickFrom(pantheonConfig.divineTypes);
   const domain = options.domain || pickFrom(pantheonConfig.domains);
@@ -143,6 +157,7 @@ Options:
 - Primary Conflict Theme: ${conflictTheme}
 - Divine Domain focus: ${domain}
 - Worshippers: ${worshipperType}
+- Pantheon Size: ${sizeCfg.min}–${sizeCfg.max} deities
 ${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
 
 You must return a valid JSON object matching the following structure exactly, no markdown fences:
@@ -150,7 +165,7 @@ You must return a valid JSON object matching the following structure exactly, no
   "title": "A majestic name for the Pantheon (e.g. The Solar Conclave, The Seven Broken Shields)",
   "summary": "One-sentence summary of the pantheon's main belief system.",
   "content": "Markdown. Use exactly these section headers in order: '### Origin & Dogma', '### Pantheon Structure', '### Divine Alliances & Rivalries'. Describe how the deities relate to one another, referencing them by name.",
-  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **Pantheon Name**: Name of pantheon\\n- **Conflict Theme**: ${conflictTheme}\\n- **Worshippers**: ${worshipperType}\\n- **Hidden Problem**: the underlying divine tension\\n- **Immediate Hook**: one-sentence GM hook\\n### Deities of the Pantheon\\nDetail 3-4 member deities. For each deity, provide:\\n- **Name**: title and short 1-line description\\n### Rumours & Legends\\n- short hook 1\\n- short hook 2\\n### Entity Seeds\\n- list of 4-5 Codex entity types (e.g. '**Character**: Deity A', '**Character**: Deity B', '**Faction**: Pantheon Cult')",
+  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **Pantheon Name**: Name of pantheon\\n- **Conflict Theme**: ${conflictTheme}\\n- **Worshippers**: ${worshipperType}\\n- **Hidden Problem**: the underlying divine tension\\n- **Immediate Hook**: one-sentence GM hook\\n### Deities of the Pantheon\\nDetail ${sizeCfg.min}-${sizeCfg.max} member deities. For each deity, provide:\\n- **Name**: title and short 1-line description\\n### Rumours & Legends\\n- short hook 1\\n- short hook 2\\n### Entity Seeds\\n- list of Codex entity types for each deity plus one cult faction (e.g. '**Character**: Deity A', '**Faction**: Pantheon Cult')",
   "labels": ["rpg-pantheon", "pantheon-generator", "imported-draft", "${genre.toLowerCase().replace(/[^a-z0-9]/g, "-")}"]
 }
 ${NAME_BAN_PROMPT}
@@ -242,22 +257,19 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
     const pantheonTitle = `The ${generatedDeityName} Pantheon`;
     const summary = `A collection of deities bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`;
 
-    const deityNameA = generateName();
-    const deityNameB = generateName();
-    const deityNameC = generateName();
+    const deityCount = sizeCfg.min;
+    const deityNames = Array.from({ length: deityCount }, () => generateName());
 
     let content = `### Origin & Dogma
 According to legend, the deities of this pantheon were born from a single cosmic event. Under the theme of ${conflictTheme.toLowerCase()}, they divide the control of the cosmos between their spheres of influence.
 
 ### Pantheon Structure
-The pantheon consists of three major figures:
-1. **${deityNameA}**: Represents the domain of ${domain}.
-2. **${deityNameB}**: Controls the opposite forces of the cosmos.
-3. **${deityNameC}**: A neutral arbiter holding the balance.
+The pantheon consists of ${deityCount} deities:
+${deityNames.map((n, i) => `${i + 1}. **${n}**: ${i === 0 ? `Represents the domain of ${domain}.` : i === deityCount - 1 ? "A neutral arbiter holding the balance." : "Controls opposing forces of the cosmos."}`).join("\n")}
 
 ### Divine Alliances & Rivalries
-- **[[${deityNameA}]]** is allied with **[[${deityNameC}]]**, but stands in direct opposition to **[[${deityNameB}]]**.
-- **[[${deityNameB}]]** seeks to overthrow the established order of the other deities.`;
+- **[[${deityNames[0]}]]** is allied with **[[${deityNames[deityNames.length - 1]}]]**, but stands in direct opposition to **[[${deityNames[1]}]]**.
+- **[[${deityNames[1]}]]** seeks to overthrow the established order of the other deities.`;
 
     if (campaignContext) {
       content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the struggles of the pantheon are reflected in the shifting boundaries of the mortal kingdoms.`;
@@ -271,18 +283,14 @@ The pantheon consists of three major figures:
 - **Immediate Hook**: Omens of celestial alignment have sent local cults into a frenzy of preparations.
 
 ### Deities of the Pantheon
-- **[[${deityNameA}]]**: The deity of ${domain}, depicted as a warrior.
-- **[[${deityNameB}]]**: A mysterious spirit of chaos and shadows.
-- **[[${deityNameC}]]**: An ancient ancestor guarding the gates of death.
+${deityNames.map((n, i) => `- **[[${n}]]**: ${i === 0 ? `The deity of ${domain}, depicted as a warrior.` : i === 1 ? "A mysterious spirit of chaos and shadows." : "An ancient ancestor guarding the gates of death."}`).join("\n")}
 
 ### Rumours & Legends
 - A forgotten temple of the pantheon lies submerged under the local lake.
-- The high priests of the three deities are secretly meeting to avert a holy war.
+- The high priests of the deities are secretly meeting to avert a holy war.
 
 ### Entity Seeds
-- **Character**: [[${deityNameA}]]
-- **Character**: [[${deityNameB}]]
-- **Character**: [[${deityNameC}]]
+${deityNames.map((n) => `- **Character**: [[${n}]]`).join("\n")}
 - **Faction**: ${worshipperType}`;
 
     return {
