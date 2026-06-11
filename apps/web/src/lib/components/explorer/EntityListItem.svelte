@@ -183,7 +183,7 @@
 
   {#if entity.labels && entity.labels.length > 0}
     <div
-      class="w-full md:w-auto order-last md:order-none pl-9 md:pl-0 flex gap-1 px-2 pb-2 md:pb-0 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
+      class="w-full md:w-auto order-last md:order-none pl-9 pr-2 md:px-2 pb-2 md:pb-0 flex gap-1 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
     >
       {#each entity.labels.slice(0, 2) as label, index (`${entity.id}-label-${index}`)}
         <button

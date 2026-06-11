@@ -30,8 +30,21 @@ test.describe("Mobile Entity Explorer (Issue 1311)", () => {
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
+    await page.waitForFunction(
+      () => {
+        const v = (window as any).vault;
+        return v && v.isInitialized && v.status === "idle";
+      },
+      { timeout: 15000 },
+    );
+
+    // Dismiss any landing or world page overlays after vault is ready
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
     });
 
     // Create an entity with a long title and labels
@@ -44,11 +57,16 @@ test.describe("Mobile Entity Explorer (Issue 1311)", () => {
         "A Very Long Entity Name That Will Wrap On Mobile Screen Width",
         {
           content: "Content",
+          labels: ["Quest", "Secret"],
         },
       );
-      await vault.updateEntity(id, { labels: ["Quest", "Secret"] });
       return id;
     });
+
+    await page.waitForFunction((id) => {
+      const ent = (window as any).vault?.entities?.[id];
+      return ent && ent.labels && ent.labels.includes("Quest");
+    }, entityId);
 
     // Open the explorer sidebar directly via UI store state
     await page.evaluate(() => {
@@ -80,7 +98,9 @@ test.describe("Mobile Entity Explorer (Issue 1311)", () => {
     expect(titleRect).not.toBeNull();
     expect(labelRect).not.toBeNull();
 
-    // Label should be positioned vertically below the title (wrapping to second line)
-    expect(labelRect!.y).toBeGreaterThan(titleRect!.y);
+    // Label should be positioned vertically below the title block (wrapping to second line)
+    expect(labelRect!.y).toBeGreaterThanOrEqual(
+      titleRect!.y + titleRect!.height,
+    );
   });
 });
