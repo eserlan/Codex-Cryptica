@@ -11,6 +11,7 @@
   import VampireFormFields from "$lib/components/seo/VampireFormFields.svelte";
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
+  import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
   import {
     generatorEngine,
     npcConfig,
@@ -24,6 +25,7 @@
     nationConfig,
     vampireConfig,
     nameGeneratorConfig,
+    pantheonConfig,
     themeIdToLabel,
     themeToQuestGenre,
     type GeneratorOutput,
@@ -187,6 +189,28 @@
         "Create a fantasy NPC with ancestry, role, personality traits, a hidden secret, and a table-ready GM hook. Works without login, then imports into your local vault.",
       canonicalPath: "/generators/dnd-npc",
     },
+    "pantheon-generator": {
+      pageTitle:
+        "RPG Pantheon Generator | Free Deity & Divine Assembly Tool | Codex Cryptica",
+      metaDescription:
+        "Generate detailed RPG pantheons with alliances, rivalries, myths, and hooks. Save drafts directly to your Codex campaign vault.",
+      introTitle: "RPG Pantheon Generator",
+      eyebrow: "Pantheon Generator",
+      introText:
+        "Create a campaign-ready pantheon with alliances, cosmic conflicts, and detailed member deities. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/pantheon-generator",
+    },
+    "god-generator": {
+      pageTitle:
+        "RPG God & Deity Generator | Free Tabletop Worldbuilding Tool | Codex Cryptica",
+      metaDescription:
+        "Generate fantasy RPG deities, saints, spirits, and demons with domains, taboos, symbols, and hooks. Save drafts directly to your campaign vault.",
+      introTitle: "RPG God & Deity Generator",
+      eyebrow: "Deity Generator",
+      introText:
+        "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
+      canonicalPath: "/generators/god-generator",
+    },
   } as const;
 
   const meta = $derived(slugMeta[data.slug]);
@@ -288,6 +312,17 @@
     campaignContext: "",
   });
 
+  let pantheon = $state({
+    mode: "single" as "single" | "pantheon",
+    genre: pantheonConfig.genres[0],
+    divineType: pantheonConfig.divineTypes[0],
+    domain: pantheonConfig.domains[0],
+    tone: pantheonConfig.tones[0],
+    worshippers: pantheonConfig.worshippers[0],
+    conflictTheme: pantheonConfig.conflictThemes[0],
+    campaignContext: "",
+  });
+
   const socialHubGenreToTheme: Record<string, string> = {
     Fantasy: "Classic Fantasy",
     "Dark Fantasy": "Vampire / Gothic Noir",
@@ -312,6 +347,11 @@
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
     else if (data.slug === "nation")
       activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
+    else if (
+      data.slug === "pantheon-generator" ||
+      data.slug === "god-generator"
+    )
+      activeTheme = pantheon.genre;
   });
 
   onMount(() => {
@@ -326,6 +366,10 @@
     }
     if (data.slug === "vampire-clan") {
       activeTheme = "Vampire / Gothic Noir";
+      return;
+    }
+    if (data.slug === "pantheon-generator" || data.slug === "god-generator") {
+      activeTheme = pantheon.genre;
       return;
     }
     if (
@@ -378,6 +422,11 @@
       });
     } else if (data.slug === "dnd-npc") {
       return generatorEngine.generateNPC({ ...dndNpc, useAI });
+    } else if (
+      data.slug === "pantheon-generator" ||
+      data.slug === "god-generator"
+    ) {
+      return generatorEngine.generatePantheon({ ...pantheon, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${data.slug}`);
     }
@@ -503,11 +552,31 @@
     "dnd-npc": {
       type: "character",
       title: "Elowen Ashford",
-      summary: "A half-elf rogue with a hidden past and a talent for leverage.",
+      summary: "A half-elf rogue with a talent for leverage.",
       content:
         "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine — mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
       lore: "",
       labels: ["rpg-npc", "Rogue", "Half-Elf"],
+      status: "draft",
+    },
+    "pantheon-generator": {
+      type: "faction",
+      title: "The Silent Maw",
+      summary: "A small pantheon of forgotten deities.",
+      content:
+        "### Origin & Dogma\nThe Silent Maw is a collection of ancient entities who hold sway over the dark and forgotten corners of the world.\n\n### Divine Portfolio\nTheir tenets demand absolute silence and devotion to secrets.",
+      lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult",
+      labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
+      status: "draft",
+    },
+    "god-generator": {
+      type: "character",
+      title: "Oros, the Light of Dawn",
+      summary: "A deity of the rising sun and new beginnings.",
+      content:
+        "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
+      lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
+      labels: ["rpg-deity", "deity-generator", "imported-draft"],
       status: "draft",
     },
   };
@@ -699,6 +768,18 @@
         bind:role={dndNpc.role}
         bind:alignment={dndNpc.alignment}
         bind:campaignContext={dndNpc.campaignContext}
+        onSurprise={trigger}
+      />
+    {:else if data.slug === "pantheon-generator" || data.slug === "god-generator"}
+      <PantheonFormFields
+        bind:mode={pantheon.mode}
+        bind:genre={pantheon.genre}
+        bind:divineType={pantheon.divineType}
+        bind:domain={pantheon.domain}
+        bind:tone={pantheon.tone}
+        bind:worshippers={pantheon.worshippers}
+        bind:conflictTheme={pantheon.conflictTheme}
+        bind:campaignContext={pantheon.campaignContext}
         onSurprise={trigger}
       />
     {/if}

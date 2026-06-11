@@ -102,6 +102,8 @@ export async function GET() {
     "names",
     "fantasy-names",
     "dnd-npc",
+    "pantheon-generator",
+    "god-generator",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,
