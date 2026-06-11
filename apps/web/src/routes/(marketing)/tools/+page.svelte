@@ -78,6 +78,25 @@
           ],
         },
         {
+          title: "Divine & Mythology",
+          links: [
+            {
+              href: "/generators/pantheon-generator",
+              label: "Pantheon Generator",
+              summary:
+                "Build a small pantheon with alliances, rivalries, cosmic conflicts, and member deities.",
+              icon: "icon-[lucide--sun]",
+            },
+            {
+              href: "/generators/god-generator",
+              label: "God & Deity Generator",
+              summary:
+                "Design a single deity, spirit, or abstract force with domains, taboos, symbols, and hooks.",
+              icon: "icon-[lucide--star]",
+            },
+          ],
+        },
+        {
           title: "Adventure & Worldbuilding",
           links: [
             {
