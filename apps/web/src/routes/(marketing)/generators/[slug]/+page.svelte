@@ -313,7 +313,9 @@
   });
 
   let pantheon = $state({
-    mode: "single" as "single" | "pantheon",
+    mode: (data.slug === "pantheon-generator" ? "pantheon" : "single") as
+      | "single"
+      | "pantheon",
     genre: pantheonConfig.genres[0],
     divineType: pantheonConfig.divineTypes[0],
     domain: pantheonConfig.domains[0],

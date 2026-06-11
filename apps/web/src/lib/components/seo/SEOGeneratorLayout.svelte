@@ -69,8 +69,8 @@
   ]);
 
   let isGenerating = $state(false);
-  let generatedData = $state<GeneratorOutput | null>(initialDraft);
-  let isExampleDraft = $state(true);
+  let generatedData = $state<GeneratorOutput | null>(null);
+  let isExampleDraft = $state(false);
 
   $effect(() => {
     generatedData = initialDraft;
@@ -110,7 +110,12 @@
                 ? "settlements"
                 : eyebrow.toLowerCase().includes("item")
                   ? "magic items"
-                  : "RPG elements",
+                  : eyebrow.toLowerCase().includes("pantheon")
+                    ? "pantheons"
+                    : eyebrow.toLowerCase().includes("deity") ||
+                        eyebrow.toLowerCase().includes("god")
+                      ? "deities"
+                      : "RPG elements",
   );
 
   const generatedSingular = $derived(
@@ -120,7 +125,7 @@
   const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
 
   $effect(() => {
-    if (browser && isThemeCustomizable && activeThemeId) {
+    if (isThemeCustomizable && browser) {
       if (themeStore.worldThemeId !== activeThemeId) {
         void themeStore.setTheme(activeThemeId);
       }
@@ -134,6 +139,7 @@
   });
 
   async function handleGenerateOnMount() {
+    if (isGenerating || generatedData) return;
     isGenerating = true;
     errorMessage = null;
     try {
@@ -279,7 +285,12 @@
   const labelValueHtml = (label: string, value: string) => {
     if (variant === "names") {
       const cleanLabel = label.replace(/\*\*/g, "").trim();
-      const escapedLabel = cleanLabel.replace(/"/g, "&quot;");
+      const escapedLabel = cleanLabel
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
       return `<div class="group relative flex flex-col p-4 bg-theme-surface/30 border border-theme-border/60 rounded-xl hover:border-theme-primary/30 hover:bg-theme-surface/50 transition-all duration-200 shadow-sm mb-3 break-inside-avoid">
         <div class="flex items-start justify-between gap-3 mb-1">
           <span class="font-header font-bold text-base md:text-lg text-theme-primary leading-tight select-all">${renderMd(cleanLabel, { inline: true })}</span>
@@ -447,6 +458,12 @@
       }, 2000);
     } catch (err) {
       console.error("Failed to copy markdown:", err);
+    }
+  }
+
+  function handleContainerKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      handleContainerClick(event as unknown as MouseEvent);
     }
   }
 
@@ -691,15 +708,16 @@
               </div>
             </div>
 
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
+              role="group"
+              tabindex="-1"
               class="seo-md text-sm leading-relaxed text-theme-text/90 flex-grow {variant ===
               'names'
                 ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
                 : 'space-y-4'}"
               data-theme={worldTheme}
               onclick={handleContainerClick}
+              onkeydown={handleContainerKeydown}
             >
               {@html renderMarkdown(documentLayout.content)}
             </div>
