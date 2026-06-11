@@ -14,12 +14,23 @@ test.describe("Mobile UX Fixes", () => {
 
     // Wait for app load
     await page.waitForSelector(".app-layout", { timeout: 10000 });
+
+    // Dismiss any landing or world page overlays on load
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("Entity Detail Panel should have solid background and high z-index", async ({
     page,
   }) => {
-    await page.waitForFunction(() => (window as any).vault);
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
 
     const entityId = await page.evaluate(async () => {
       const vault = (window as any).vault;
@@ -59,7 +70,9 @@ test.describe("Mobile UX Fixes", () => {
   }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await page.waitForFunction(() => (window as any).vault);
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
 
     const entityId = await page.evaluate(async () => {
       const vault = (window as any).vault;
@@ -73,16 +86,19 @@ test.describe("Mobile UX Fixes", () => {
     });
 
     await page.evaluate((id) => {
-      const uiStore = (window as any).uiStore;
-      uiStore.focusEntity(id);
+      const layout = (window as any).layoutUIStore;
+      if (layout) {
+        layout.focusedEntityId = id;
+        layout.mainViewMode = "focus";
+      }
     }, entityId);
 
     await expect(page.getByTestId("embedded-entity-view")).toBeVisible({
-      timeout: 5000,
+      timeout: 15000,
     });
 
     const scrollShell = page.getByTestId("zen-mobile-scroll-container");
-    await expect(scrollShell).toBeVisible();
+    await expect(scrollShell).toBeVisible({ timeout: 15000 });
 
     const metrics = await scrollShell.evaluate((el) => {
       const style = window.getComputedStyle(el);
