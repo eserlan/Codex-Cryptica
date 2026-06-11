@@ -5,6 +5,7 @@
   import {
     randomIdeaCategories,
     pickNextCategory,
+    pickRandomIdeaTheme,
     type RandomIdeaCategory,
   } from "$lib/services/seo/random-idea";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
@@ -12,6 +13,10 @@
   let currentCategory = $state<RandomIdeaCategory | null>(null);
   let rollingLabel = $state<string | null>(null);
   let inFlight = $state(false);
+  // Linking a draft to the Session Hub locks the theme so follow-up rolls
+  // build a coherent set instead of hopping genres.
+  let lockedTheme = $state<string | null>(null);
+  let currentTheme: string | null = null;
   let keepCategory = false;
   let pending: Promise<GeneratorOutput> | null = null;
 
@@ -46,12 +51,14 @@
       const keep = keepCategory;
       keepCategory = false;
       const next = pickNextCategory(currentCategory, keep);
+      const theme = lockedTheme ?? pickRandomIdeaTheme();
       if (!keep) {
         await animateSelection(next);
       }
       currentCategory = next;
+      currentTheme = theme;
       rollingLabel = null;
-      return next.generate(generatorEngine, useAI);
+      return next.generate(generatorEngine, useAI, theme);
     })().finally(() => {
       pending = null;
       inFlight = false;
@@ -71,6 +78,9 @@
   initialDraft={null}
   generateLabel="Surprise Me"
   inputHint=""
+  onLinkToHub={() => {
+    lockedTheme = currentTheme;
+  }}
 >
   {#snippet formFields(trigger)}
     <div
@@ -93,6 +103,33 @@
         <span class="text-theme-muted">Rolling up something strange…</span>
       {/if}
     </div>
+
+    {#if lockedTheme}
+      <div
+        class="flex items-center justify-between gap-2 px-3 py-2 bg-theme-primary/5 border border-theme-primary/30 rounded-lg text-[10px]"
+      >
+        <span class="flex items-center gap-1.5 text-theme-text/80 min-w-0">
+          <span
+            class="icon-[lucide--lock] w-3.5 h-3.5 text-theme-primary flex-shrink-0"
+            aria-hidden="true"
+          ></span>
+          <span class="truncate">
+            Hub theme locked: <span class="font-bold">{lockedTheme}</span>
+          </span>
+        </span>
+        <button
+          type="button"
+          onclick={() => {
+            lockedTheme = null;
+          }}
+          class="font-bold uppercase tracking-wider text-theme-primary hover:brightness-110 flex-shrink-0"
+          id="unlock-theme-btn"
+          title="Let each roll pick a random theme again"
+        >
+          Unlock
+        </button>
+      </div>
+    {/if}
 
     {#if currentCategory && !rollingLabel}
       <button

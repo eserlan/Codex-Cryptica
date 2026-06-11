@@ -29,6 +29,7 @@
     variant = "default",
     generateLabel = undefined,
     inputHint = "Set your inputs — your draft updates to the right",
+    onLinkToHub = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -47,6 +48,7 @@
     variant?: "default" | "names";
     generateLabel?: string;
     inputHint?: string;
+    onLinkToHub?: () => void;
   } = $props();
 
   const HIDDEN_TAGS = new Set([
@@ -352,6 +354,7 @@
     if (!exists) {
       saveSessionDrafts([...sessionDrafts, newDraft]);
     }
+    onLinkToHub?.();
   }
 
   function removeFromSessionHub(title: string) {
