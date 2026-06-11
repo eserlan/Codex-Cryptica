@@ -199,15 +199,21 @@
 
     if (!isSpecialEnv) return {};
 
-    const [{ canvasRegistry }, { graph }, { oracle }, { calendarStore }] =
-      await Promise.all([
-        import("$lib/stores/canvas-registry.svelte"),
-        import("$lib/stores/graph.svelte"),
-        import("$lib/stores/oracle.svelte"),
-        import("$lib/stores/calendar.svelte"),
-      ]);
+    const [
+      { canvasRegistry },
+      { graph },
+      { oracle },
+      { calendarStore },
+      { revisionService },
+    ] = await Promise.all([
+      import("$lib/stores/canvas-registry.svelte"),
+      import("$lib/stores/graph.svelte"),
+      import("$lib/stores/oracle.svelte"),
+      import("$lib/stores/calendar.svelte"),
+      import("$lib/services/RevisionService.svelte"),
+    ]);
 
-    return { canvasRegistry, graph, oracle, calendarStore };
+    return { canvasRegistry, graph, oracle, calendarStore, revisionService };
   }
 
   // Help Hash Navigation
