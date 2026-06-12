@@ -91,6 +91,18 @@
         </p>
       {:else}
         <div class="space-y-1 max-h-48 overflow-y-auto pr-1 mb-2">
+          <div class="flex items-center gap-1">
+            <button
+              class="flex-1 min-w-0 text-left truncate px-2 py-1 rounded hover:bg-theme-muted/15 hover:text-theme-muted transition text-theme-muted/70 italic"
+              onclick={() => {
+                graph.resetView();
+                close();
+              }}
+              title="Clear all filters and modes"
+            >
+              Reset to default
+            </button>
+          </div>
           {#each graph.viewPresets as preset (preset.id)}
             <div class="flex items-center gap-1 group">
               {#if editingId === preset.id}

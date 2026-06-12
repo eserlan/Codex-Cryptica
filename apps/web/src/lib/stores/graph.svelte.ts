@@ -328,6 +328,17 @@ export class GraphStore {
     await this.persistViewPresets();
   }
 
+  resetView() {
+    this.activeLabels = new Set();
+    this.activeCategories = new Set();
+    this.labelFilterMode = "OR";
+    this.showLabels = true;
+    this.showImages = true;
+    this.timelineMode = false;
+    this.orbitMode = false;
+    this.centralNodeId = null;
+  }
+
   async saveEras() {
     const db = await getDB();
     const tx = db.transaction("world_eras", "readwrite");
