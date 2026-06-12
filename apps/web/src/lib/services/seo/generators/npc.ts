@@ -426,6 +426,52 @@ export const npcThemeConfig = {
   >,
 };
 
+const dndNpcQuickStatsByRole: Record<
+  string,
+  { archetype: string; tableRating: string }
+> = {
+  Mage: { archetype: "Wizard / Level 5", tableRating: "CR 3" },
+  Warrior: { archetype: "Fighter / Level 4", tableRating: "CR 2" },
+  Rogue: { archetype: "Rogue / Level 4", tableRating: "CR 2" },
+  Priest: { archetype: "Cleric / Level 5", tableRating: "CR 3" },
+  Merchant: { archetype: "Commoner-Expert / Level 2", tableRating: "CR 1/2" },
+  Scholar: { archetype: "Sage / Level 3", tableRating: "CR 1" },
+  Blacksmith: { archetype: "Artisan / Level 3", tableRating: "CR 1" },
+  Guard: { archetype: "Guard Veteran / Level 3", tableRating: "CR 1" },
+  Noble: { archetype: "Noble / Level 3", tableRating: "CR 1" },
+  Innkeeper: { archetype: "Commoner-Expert / Level 2", tableRating: "CR 1/2" },
+};
+
+function getDndNpcQuickStats(role: string) {
+  return (
+    dndNpcQuickStatsByRole[role] ?? {
+      archetype: `${role} / Level 3`,
+      tableRating: "CR 1",
+    }
+  );
+}
+
+function injectDndNpcQuickStats(lore: string, role: string) {
+  const { archetype, tableRating } = getDndNpcQuickStats(role);
+  const quickStats = `- **Class / Archetype**: ${archetype}
+- **Table Rating**: ${tableRating}`;
+
+  if (lore.includes("- **Class / Archetype**:")) return lore;
+
+  if (!lore.includes("### At a Glance")) {
+    return `### At a Glance
+${quickStats}
+
+${lore}`.trim();
+  }
+
+  return lore.replace(
+    /(### At a Glance\s*)/,
+    `$1${quickStats}
+`,
+  );
+}
+
 export async function generateNPC(
   clientManager: DefaultAIClientManager,
   options: {
@@ -435,6 +481,7 @@ export async function generateNPC(
     alignment?: string;
     campaignContext?: string;
     theme?: string;
+    includeDndQuickStats?: boolean;
     useAI?: boolean;
   } = {},
 ): Promise<GeneratorOutput> {
@@ -537,7 +584,9 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
           data.summary ||
           `A ${(moralityAnchor?.label ?? alignment).toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
         content: data.content || "",
-        lore: data.lore || "",
+        lore: options.includeDndQuickStats
+          ? injectDndNpcQuickStats(data.lore || "", role)
+          : data.lore || "",
         labels: Array.isArray(data.labels)
           ? data.labels
           : ["rpg-character", "npc-generator", "imported-draft"],
@@ -596,7 +645,9 @@ ${faction}`;
     title: name,
     summary,
     content,
-    lore,
+    lore: options.includeDndQuickStats
+      ? injectDndNpcQuickStats(lore, role)
+      : lore,
     labels: ["rpg-character", "npc-generator", "imported-draft"],
     status: "active",
   };
