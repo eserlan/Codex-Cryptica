@@ -27,13 +27,16 @@
 
 {#if dialog.open}
   <!-- Backdrop -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+    class="fixed inset-0 z-[200] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
-    onclick={handleCancel}
   >
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full bg-black/85 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close Confirmation Dialog"
+      onclick={handleCancel}
+    ></button>
     <!-- Modal -->
     <div
       role="dialog"
