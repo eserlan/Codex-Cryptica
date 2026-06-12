@@ -162,10 +162,10 @@ The air is filled with the smells of local industries, and visitors are greeted 
 - **Government**: ${government}
 
 ### Points of Interest
-${locs.map((l) => `- **${l}**: A crucial hub of local activity.`).join("\n")}
+${locs.map((l) => `- **📍 ${l}**: A crucial hub of local activity.`).join("\n")}
 
 ### Controlling Factions
-- **${faction}**: Maintains significant influence over the local district's rules and affairs.`;
+- **👥 ${faction}**: Maintains significant influence over the local district's rules and affairs.`;
 
   return {
     type: "location",

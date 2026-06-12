@@ -131,6 +131,9 @@ describe("DefaultGeneratorEngine", () => {
       );
       expect(res.lore).toContain("Internal Conflict");
       expect(res.lore).toContain("At the Table");
+      expect(res.lore).toContain("- **📍 Base**");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
       expect(res.labels).toContain("faction-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -237,6 +240,9 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("Clan Weakness");
       expect(res.lore).toContain("Internal Conflict");
       expect(res.lore).toContain("Adventure Hook");
+      expect(res.lore).toContain("- **👤 Sire");
+      expect(res.lore).toContain("- **👤 Thrall");
+      expect(res.lore).toContain("- **👥");
       expect(res.labels).toContain("vampire-clan");
       expect(res.labels).toContain("imported-draft");
     });
@@ -380,6 +386,8 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBeDefined();
       expect(res.content).toContain("mining");
       expect(res.lore).toContain("Town");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **👥");
       expect(res.labels).toContain("imported-draft");
     });
   });
@@ -396,6 +404,30 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBeDefined();
       expect(res.lore).toContain("Weapon");
       expect(res.lore).toContain("Legendary");
+      expect(res.labels).toContain("imported-draft");
+    });
+  });
+
+  describe("generateQuestHook", () => {
+    it("should generate quest hook details locally when useAI is false", async () => {
+      const res = await engine.generateQuestHook({
+        genre: "Classic Fantasy",
+        tone: "Heroic",
+        scope: "Local / Village",
+        locationType: "Dungeon",
+        threat: "Goblins",
+        twist: "The goblins were protecting a sacred egg",
+        reward: "A pouch of silver coins",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("event");
+      expect(res.title).toBeDefined();
+      expect(res.content).toContain("### The Hook");
+      expect(res.lore).toContain("### Core Fields");
+      expect(res.lore).toContain("- **📍 Setting**");
+      expect(res.lore).toContain("- **📅 Threat**");
+      expect(res.lore).toContain("- **👤");
       expect(res.labels).toContain("imported-draft");
     });
   });
