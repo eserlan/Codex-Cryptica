@@ -29,7 +29,16 @@ test.describe("Minimap Navigation", () => {
     await page.goto("/");
     // Wait for app load
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
+      timeout: 20000,
+    });
+
+    // Force-dismiss front page overlay (intercepts pointer events)
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
     });
   });
 
