@@ -98,4 +98,23 @@ describe("parsePresets", () => {
     expect(p.createdAt).toBeGreaterThan(0);
     expect(p.updatedAt).toBeGreaterThan(0);
   });
+
+  it("keeps createdAt <= updatedAt when only one timestamp is present", () => {
+    const [a] = parsePresets([
+      { id: "p7", name: "a", updatedAt: 5000, state: validState },
+    ]);
+    expect(a.createdAt).toBe(5000);
+    expect(a.updatedAt).toBe(5000);
+
+    const [b] = parsePresets([
+      { id: "p8", name: "b", createdAt: 3000, state: validState },
+    ]);
+    expect(b.createdAt).toBe(3000);
+    expect(b.updatedAt).toBe(3000);
+  });
+
+  it("trims whitespace from persisted names", () => {
+    const [p] = parsePresets([{ ...validPreset, name: "  Padded Name  " }]);
+    expect(p.name).toBe("Padded Name");
+  });
 });

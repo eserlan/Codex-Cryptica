@@ -96,16 +96,19 @@ export function parsePresets(raw: unknown): GraphViewPreset[] {
     if (typeof entry !== "object" || entry === null) continue;
     const p = entry as Record<string, any>;
     if (typeof p.id !== "string" || p.id.length === 0) continue;
-    if (typeof p.name !== "string" || p.name.trim().length === 0) continue;
+    const name = typeof p.name === "string" ? p.name.trim() : "";
+    if (name.length === 0) continue;
     const state = parsePresetState(p.state);
     if (!state) continue;
-    presets.push({
-      id: p.id,
-      name: p.name,
-      createdAt: isFiniteNumber(p.createdAt) ? p.createdAt : Date.now(),
-      updatedAt: isFiniteNumber(p.updatedAt) ? p.updatedAt : Date.now(),
-      state,
-    });
+    // Derive a missing timestamp from its sibling so createdAt <= updatedAt
+    // holds even for partial records.
+    const createdAt = isFiniteNumber(p.createdAt)
+      ? p.createdAt
+      : isFiniteNumber(p.updatedAt)
+        ? p.updatedAt
+        : Date.now();
+    const updatedAt = isFiniteNumber(p.updatedAt) ? p.updatedAt : createdAt;
+    presets.push({ id: p.id, name, createdAt, updatedAt, state });
   }
   return presets;
 }
