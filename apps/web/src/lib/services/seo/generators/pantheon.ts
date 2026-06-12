@@ -352,10 +352,10 @@ ${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **${d.name}**: $
 ${Array.isArray(data.campaign_seeds?.rumors) ? data.campaign_seeds.rumors.map((r: string) => `- ${r}`).join("\n") : ""}
 
 ### Entity Seeds
-${Array.isArray(data.campaign_seeds?.characters) ? data.campaign_seeds.characters.map((c: any) => `- **Character**: ${c.name || ""} (${c.role || ""}) - ${c.hook || ""}`).join("\n") : ""}
-${Array.isArray(data.campaign_seeds?.factions) ? data.campaign_seeds.factions.map((f: any) => `- **Faction**: ${f.name || ""} (${f.type || ""}) - ${f.hook || ""}`).join("\n") : ""}
-${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **Event**: ${e.name || ""} (${e.type || ""}) - ${e.hook || ""}`).join("\n") : ""}
-${Array.isArray(data.campaign_seeds?.locations) ? data.campaign_seeds.locations.map((l: any) => `- **Location**: ${l.name || ""} (${l.type || ""}) - ${l.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.characters) ? data.campaign_seeds.characters.map((c: any) => `- **👤 ${c.name || ""}${c.role ? ` (${c.role})` : ""}**: ${c.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.factions) ? data.campaign_seeds.factions.map((f: any) => `- **👥 ${f.name || ""}${f.type ? ` (${f.type})` : ""}**: ${f.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **⚡ ${e.name || ""}${e.type ? ` (${e.type})` : ""}**: ${e.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.locations) ? data.campaign_seeds.locations.map((l: any) => `- **📍 ${l.name || ""}${l.type ? ` (${l.type})` : ""}**: ${l.hook || ""}`).join("\n") : ""}
 `;
       }
 
@@ -530,7 +530,7 @@ ${deityNames
 - The high priests of the deities are secretly meeting to avert a holy war.
 
 ### Entity Seeds
-- **Faction**: ${worshipperType}`;
+- **👥 ${worshipperType}**: A major temple order or mystery cult dedicated to the worship of the pantheon.`;
 
     return {
       type: "faction",
