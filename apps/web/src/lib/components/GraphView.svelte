@@ -218,6 +218,7 @@
     void graph.orbitMode;
     void graph.centralNodeId;
     void graph.timelineMode;
+    void graph.chronologyEditMode;
     void controller.cy;
     untrack(() => controller.handleModeChange());
   });

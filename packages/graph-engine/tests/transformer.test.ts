@@ -375,4 +375,85 @@ describe("GraphTransformer", () => {
     expect(nodes.map((node) => node.data.textureVariant)).toEqual([0, 1, 2, 3]);
     randomSpy.mockRestore();
   });
+
+  it("should set hasHandles to true on range-based main nodes when includeTemporalEditHandles is true", () => {
+    const mockEntities: Entity[] = [
+      {
+        id: "e1",
+        title: "Range Entity",
+        type: "npc",
+        connections: [],
+        content: "...",
+        start_date: { year: 1000 },
+        end_date: { year: 1100 },
+      },
+      {
+        id: "e2",
+        title: "Point Entity",
+        type: "event",
+        connections: [],
+        content: "...",
+        date: { year: 1050 },
+      },
+    ];
+
+    const elementsWithHandles = GraphTransformer.entitiesToElements(
+      mockEntities,
+      undefined,
+      {
+        includeTemporalEditHandles: true,
+      },
+    );
+    const mainNodesWith = elementsWithHandles.filter(
+      (el) => el.group === "nodes" && !el.data.isTemporalAnchor,
+    );
+    expect(mainNodesWith[0].data.hasHandles).toBe(true);
+    expect(mainNodesWith[1].data.hasHandles).toBeUndefined();
+
+    const elementsWithoutHandles = GraphTransformer.entitiesToElements(
+      mockEntities,
+      undefined,
+      {
+        includeTemporalEditHandles: false,
+      },
+    );
+    const mainNodesWithout = elementsWithoutHandles.filter(
+      (el) => el.group === "nodes" && !el.data.isTemporalAnchor,
+    );
+    expect(mainNodesWithout[0].data.hasHandles).toBeUndefined();
+    expect(mainNodesWithout[1].data.hasHandles).toBeUndefined();
+  });
+
+  it("should generate a lifespan-connector edge for range-based entities when includeTemporalEditHandles is true", () => {
+    const mockEntities: Entity[] = [
+      {
+        id: "e1",
+        title: "Range Entity",
+        type: "character",
+        connections: [],
+        content: "...",
+        start_date: { year: 1000 },
+        end_date: { year: 1100 },
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(
+      mockEntities,
+      undefined,
+      {
+        includeTemporalEditHandles: true,
+      },
+    );
+    const edge = elements.find(
+      (el) =>
+        el.group === "edges" && el.data.connectionType === "lifespan-connector",
+    );
+    expect(edge).toBeDefined();
+    expect(edge?.data).toMatchObject({
+      id: "e1-lifespan-connector",
+      source: "e1::primary-range-start",
+      target: "e1::primary-range-end",
+      entityType: "character",
+    });
+  });
 });

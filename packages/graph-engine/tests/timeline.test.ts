@@ -217,4 +217,65 @@ describe("Timeline Layout", () => {
     expect(daysFor1005.length).toBeGreaterThan(0);
     expect(daysFor1005.length).toBe(1);
   });
+
+  it("should place main nodes at their start handle position and not stack them when handles are present", () => {
+    const nodes: GraphNode[] = [
+      {
+        group: "nodes",
+        data: {
+          id: "entity-1",
+          label: "Entity 1",
+          type: "npc",
+          weight: 0,
+          start_date: { year: 1000 },
+          end_date: { year: 1100 },
+        },
+      },
+      {
+        group: "nodes",
+        data: {
+          id: "entity-1::primary-range-start",
+          entityId: "entity-1",
+          anchorId: "primary-range-start",
+          anchorType: "rangeStart",
+          isTemporalAnchor: true,
+          label: "Entity 1 - start",
+          date: { year: 1000 },
+        },
+      },
+      {
+        group: "nodes",
+        data: {
+          id: "entity-1::primary-range-end",
+          entityId: "entity-1",
+          anchorId: "primary-range-end",
+          anchorType: "rangeEnd",
+          isTemporalAnchor: true,
+          label: "Entity 1 - end",
+          date: { year: 1100 },
+        },
+      },
+    ];
+
+    const positions = getTimelineLayout(nodes, {
+      axis: "x",
+      scale: 100,
+      jitter: 50,
+      minYear: 1000,
+    });
+
+    // The start handle is at year 1000. It is unique in datedNodes, so its y-coordinate is baseline (100).
+    expect(positions["entity-1::primary-range-start"].x).toBe(0);
+    expect(positions["entity-1::primary-range-start"].y).toBe(100);
+
+    // The main node "entity-1" is not placed as a separate dated node (since start/end handles exist),
+    // but its position is copied from the start handle "entity-1::primary-range-start".
+    // So its y-coordinate is also exactly 100 (not jittered).
+    expect(positions["entity-1"].x).toBe(0);
+    expect(positions["entity-1"].y).toBe(100);
+
+    // The end handle is at 1100.
+    expect(positions["entity-1::primary-range-end"].x).toBe(140);
+    expect(positions["entity-1::primary-range-end"].y).toBe(100);
+  });
 });

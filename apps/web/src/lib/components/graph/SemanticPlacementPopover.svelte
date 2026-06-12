@@ -197,20 +197,12 @@
   };
 
   onMount(() => {
-    console.log(
-      "[SemanticPlacementPopover] onMount, anchorPosition:",
-      anchorPosition,
-    );
     tick().then(updatePosition);
   });
 
   $effect(() => {
     void anchorPosition?.x;
     void anchorPosition?.y;
-    console.log(
-      "[SemanticPlacementPopover] position update effect, anchorPosition:",
-      anchorPosition,
-    );
     tick().then(updatePosition);
   });
 

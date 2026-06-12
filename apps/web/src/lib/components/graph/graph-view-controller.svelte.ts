@@ -58,6 +58,9 @@ export class GraphViewController {
   hoveredEntityId = $state<string | null>(null);
   hoverPosition = $state<{ x: number; y: number } | null>(null);
 
+  private _chronologyPopoverPos: { x: number; y: number } | undefined =
+    undefined;
+
   selectedId = $state<string | null>(null);
 
   editingEdge = $state<{
@@ -90,7 +93,7 @@ export class GraphViewController {
   private searchFocusListener: ((event: Event) => void) | null = null;
 
   private deps: GraphViewDependencies;
-  private chronologyEdit: ChronologyEditService;
+  public chronologyEdit: ChronologyEditService;
 
   constructor(
     options: { selectedId: string | null },
@@ -159,6 +162,7 @@ export class GraphViewController {
 
       this.cleanupEvents = setupGraphEvents(instance, {
         onNodeMouseOver: (id, renderedPos) => {
+          if (this.chronologyEdit.pendingIntent) return;
           this.hoverPosition = renderedPos;
           this.hoveredEntityId = id;
         },
@@ -413,6 +417,12 @@ export class GraphViewController {
   ) => {
     if (!this.layoutManager) return;
 
+    if (this.cy) {
+      const isTimeline = this.deps.graph.timelineMode;
+      const isEdit = this.deps.graph.chronologyEditMode;
+      this.cy.autoungrabify(isTimeline && !isEdit);
+    }
+
     await this.layoutManager.apply(
       {
         timelineMode: this.deps.graph.timelineMode,
@@ -636,52 +646,57 @@ export class GraphViewController {
 
   getChronologyPopoverPosition = (): { x: number; y: number } | undefined => {
     const drag = this.chronologyEdit.drag;
-    if (!this.cy || !drag) return undefined;
+    if (!this.cy || !drag) {
+      this._chronologyPopoverPos = undefined;
+      return undefined;
+    }
+    let nx: number;
+    let ny: number;
     if (drag.source === "explorer" && drag.dropPosition) {
-      return drag.dropPosition;
+      nx = drag.dropPosition.x;
+      ny = drag.dropPosition.y;
+    } else {
+      const nodeId = drag.anchorId
+        ? `${drag.entityId}::${drag.anchorId}`
+        : drag.entityId;
+      const node = this.cy.$id(nodeId);
+      if (node.length > 0) {
+        const rendered = node.renderedPosition();
+        const rect = this.cy.container()?.getBoundingClientRect();
+        nx = (rect?.left ?? 0) + rendered.x;
+        ny = (rect?.top ?? 0) + rendered.y;
+      } else {
+        const rect = this.cy.container()?.getBoundingClientRect();
+        if (!rect) {
+          this._chronologyPopoverPos = undefined;
+          return undefined;
+        }
+        nx = rect.left + 24;
+        ny = rect.top + 24;
+      }
     }
-    const nodeId = drag.anchorId
-      ? `${drag.entityId}::${drag.anchorId}`
-      : drag.entityId;
-    const node = this.cy.$id(nodeId);
-    if (node.length > 0) {
-      const rendered = node.renderedPosition();
-      const rect = this.cy.container()?.getBoundingClientRect();
-      return {
-        x: (rect?.left ?? 0) + rendered.x,
-        y: (rect?.top ?? 0) + rendered.y,
-      };
+    if (
+      !this._chronologyPopoverPos ||
+      this._chronologyPopoverPos.x !== nx ||
+      this._chronologyPopoverPos.y !== ny
+    ) {
+      this._chronologyPopoverPos = { x: nx, y: ny };
     }
-    const rect = this.cy.container()?.getBoundingClientRect();
-    return rect ? { x: rect.left + 24, y: rect.top + 24 } : undefined;
+    return this._chronologyPopoverPos;
   };
 
   beginExplorerChronologyPlacement = (
     entityId: string,
     clientPosition: { x: number; y: number },
   ): boolean => {
-    console.log(
-      "[GraphViewController] beginExplorerChronologyPlacement for:",
-      entityId,
-      clientPosition,
-    );
     if (
       !this.cy ||
       !this.deps.graph.timelineMode ||
       !this.deps.graph.chronologyEditMode
     ) {
-      console.log(
-        "[GraphViewController] placement rejected: cy, timelineMode, or chronologyEditMode is missing/false",
-        {
-          cy: !!this.cy,
-          timelineMode: this.deps.graph.timelineMode,
-          chronologyEditMode: this.deps.graph.chronologyEditMode,
-        },
-      );
       return false;
     }
     const entity = this.getEntityForNode(entityId);
-    console.log("[GraphViewController] entity resolved from node ID:", entity);
     if (!entity) return false;
 
     const container = this.cy.container();
@@ -693,10 +708,6 @@ export class GraphViewController {
       x: (clientPosition.x - rect.left - pan.x) / zoom,
       y: (clientPosition.y - rect.top - pan.y) / zoom,
     };
-    console.log(
-      "[GraphViewController] modelPosition calculated:",
-      modelPosition,
-    );
 
     const began = this.chronologyEdit.beginDrag({
       entity,
@@ -705,11 +716,9 @@ export class GraphViewController {
       context: this.getTimelineYearContext(),
       dropPosition: clientPosition,
     });
-    console.log("[GraphViewController] beginDrag began:", began);
     if (!began) return false;
 
     const dropIntent = this.chronologyEdit.prepareDrop(entity);
-    console.log("[GraphViewController] prepareDrop dropIntent:", dropIntent);
     return dropIntent !== null;
   };
 }

@@ -325,4 +325,44 @@ describe("GraphViewController", () => {
     );
     expect(chronologyEdit.prepareDrop).toHaveBeenCalledWith(entity);
   });
+
+  describe("getChronologyPopoverPosition", () => {
+    it("should return undefined when cy or drag is not present", () => {
+      expect(controller.getChronologyPopoverPosition()).toBeUndefined();
+    });
+
+    it("should return correct positions for drag source explorer", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+
+      controller.chronologyEdit.drag = {
+        entityId: "e1",
+        source: "explorer",
+        dropPosition: { x: 100, y: 200 },
+      } as any;
+
+      expect(controller.getChronologyPopoverPosition()).toEqual({
+        x: 100,
+        y: 200,
+      });
+    });
+
+    it("should return position based on node rendered position when drag source is not explorer", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+
+      controller.chronologyEdit.drag = {
+        entityId: "e1",
+        source: "graph",
+      } as any;
+
+      // The mock cy.$id returns renderedPosition: { x: 0, y: 0 }
+      // and container() returns { left: 10, top: 20 }
+      // So nx = 10 + 0 = 10, ny = 20 + 0 = 20
+      expect(controller.getChronologyPopoverPosition()).toEqual({
+        x: 10,
+        y: 20,
+      });
+    });
+  });
 });

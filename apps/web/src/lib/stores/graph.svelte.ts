@@ -79,8 +79,7 @@ export class GraphStore {
       visibleEntities,
       validIds,
       {
-        includeTemporalEditHandles:
-          this.timelineMode && this.chronologyEditMode,
+        includeTemporalEditHandles: this.timelineMode,
       },
     );
 

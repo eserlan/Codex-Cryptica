@@ -28,6 +28,16 @@ vi.mock("./adapters.svelte", () => ({
   },
 }));
 
+vi.mock("./registry", () => ({
+  updateLastSavedToFolder: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../theme.svelte", () => ({
+  themeStore: {
+    loadForVault: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 describe("SyncStore", () => {
   let store: SyncStore;
   let repository: {

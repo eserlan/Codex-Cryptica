@@ -1,121 +1,59 @@
 import { test, expect } from "@playwright/test";
+import { seedEntities, setupVaultPage } from "./test-helpers";
+
+async function waitForCytoscapeNodes(page: any, ids: string[]) {
+  await page.waitForFunction(
+    (expectedIds: string[]) => {
+      const cy = (window as any).cy;
+      if (!cy) return false;
+      return expectedIds.every((id) => {
+        const node = cy.$id(id);
+        return !node.empty();
+      });
+    },
+    ids,
+    { timeout: 15000 },
+  );
+}
 
 test.describe("World Timeline - Graph Integration", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-
-      // Mock IDB to prevent errors
-      const originalPut = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (
-        ...args: [unknown, IDBValidKey?]
-      ) {
-        try {
-          return originalPut.apply(this, args);
-        } catch {
-          return {} as any;
-        }
-      };
-
-      // Mock window.showDirectoryPicker
-      (window as any).showDirectoryPicker = async () => {
-        const createMockFile = (content: string, name: string) => ({
-          kind: "file",
-          name,
-          getFile: async () =>
-            new File([content], name, { type: "text/markdown" }),
-          createWritable: async () => ({
-            write: async () => {},
-            close: async () => {},
-          }),
-        });
-
-        const f1 = createMockFile(
-          "---\nid: e1\ntitle: Event 1\ntype: event\ndate:\n  year: 1000\n---\n# E1",
-          "e1.md",
-        );
-        const f2 = createMockFile(
-          "---\nid: e2\ntitle: Event 2\ntype: event\ndate:\n  year: 2000\n---\n# E2",
-          "e2.md",
-        );
-        const f3 = createMockFile(
-          "---\nid: e3\ntitle: Undated Event\ntype: event\n---\n# E3",
-          "e3.md",
-        );
-
-        return {
-          kind: "directory",
-          name: "test-vault",
-          requestPermission: async () => "granted",
-          queryPermission: async () => "granted",
-          values: () => [f1, f2, f3][Symbol.iterator](),
-          entries: () =>
-            [
-              ["e1.md", f1],
-              ["e2.md", f2],
-              ["e3.md", f3],
-            ][Symbol.iterator](),
-          getFileHandle: async (name: string) => {
-            if (name === "e1.md") return f1;
-            if (name === "e2.md") return f2;
-            return f3;
-          },
-          getDirectoryHandle: async (name: string) => ({
-            kind: "directory",
-            name,
-          }),
-        };
-      };
-    });
-    await page.goto("/");
+    await setupVaultPage(page);
   });
 
   test("should toggle timeline mode", async ({ page }) => {
-    // 1. Create entities via UI
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 1");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 2");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Undated Event");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // 2. Set dates via store for speed/stability in test
-    await page.evaluate(() => {
-      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
-      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
-    });
-
-    // Wait for entities to load/update
-    await expect(page.getByTestId("entity-count")).toContainText(
-      "3 CHRONICLES",
+    // 1. Seed entities
+    await seedEntities(page, [
       {
-        timeout: 15000,
+        id: "event-1",
+        title: "Event 1",
+        type: "event",
+        data: { date: { year: 1000 } },
       },
-    );
+      {
+        id: "event-2",
+        title: "Event 2",
+        type: "event",
+        data: { date: { year: 2000 } },
+      },
+      { id: "undated-event", title: "Undated Event", type: "event" },
+    ]);
 
-    // 3. Toggle Timeline
+    // Wait for Cytoscape to load nodes
+    await waitForCytoscapeNodes(page, ["event-1", "event-2", "undated-event"]);
+
+    // 2. Toggle Timeline
     const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
     await expect(timelineBtn).toBeVisible();
     await timelineBtn.click();
 
-    // 4. Verify status indicator
-    await expect(
-      page.getByText("Chronological Synchrony Active"),
-    ).toBeVisible();
+    // 3. Verify status indicator
+    await expect(page.getByText("Timeline Active (Horizontal)")).toBeVisible();
 
     // Wait for layout to settle
     await page.waitForTimeout(1000);
 
-    // 5. Verify node positions
+    // 4. Verify node positions
     const positions = await page.evaluate(() => {
       const { cy } = window as any;
       if (!cy) return null;
@@ -136,30 +74,25 @@ test.describe("World Timeline - Graph Integration", () => {
   });
 
   test("should hide undated nodes in timeline mode", async ({ page }) => {
-    // Create entities via UI
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 1");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 2");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Undated Event");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.evaluate(() => {
-      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
-      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
-    });
-
-    await expect(page.getByTestId("entity-count")).toContainText(
-      "3 CHRONICLES",
+    // Seed entities
+    await seedEntities(page, [
       {
-        timeout: 15000,
+        id: "event-1",
+        title: "Event 1",
+        type: "event",
+        data: { date: { year: 1000 } },
       },
-    );
+      {
+        id: "event-2",
+        title: "Event 2",
+        type: "event",
+        data: { date: { year: 2000 } },
+      },
+      { id: "undated-event", title: "Undated Event", type: "event" },
+    ]);
+
+    // Wait for Cytoscape to load nodes
+    await waitForCytoscapeNodes(page, ["event-1", "event-2", "undated-event"]);
 
     // Verify undated node (undated-event) is visible before toggling timeline mode
     await page.waitForFunction(() => {
@@ -179,5 +112,102 @@ test.describe("World Timeline - Graph Integration", () => {
       const node = cy.$id("undated-event");
       return node && !node.visible();
     });
+  });
+
+  test("should show range handles and hide main range nodes in chronology edit mode", async ({
+    page,
+  }) => {
+    // 1. Seed a range-based entity and a point-in-time event entity
+    await seedEntities(page, [
+      {
+        id: "range-entity",
+        title: "Range Entity",
+        type: "event",
+        data: {
+          start_date: { year: 1000 },
+          end_date: { year: 1500 },
+        },
+      },
+      {
+        id: "point-entity",
+        title: "Point Entity",
+        type: "event",
+        data: {
+          date: { year: 1200 },
+        },
+      },
+    ]);
+
+    // Wait for Cytoscape to load nodes
+    await waitForCytoscapeNodes(page, ["range-entity", "point-entity"]);
+
+    // 2. Toggle Timeline Mode
+    const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
+    await expect(timelineBtn).toBeVisible();
+    await timelineBtn.click();
+
+    // Verify timeline is active
+    await expect(page.getByText("Timeline Active (Horizontal)")).toBeVisible();
+
+    // 3. Toggle Edit Chronology Mode
+    const editBtn = page.getByTitle("Edit Chronology");
+    await expect(editBtn).toBeVisible();
+    await editBtn.click();
+
+    // Wait for handles to be generated in Cytoscape
+    await waitForCytoscapeNodes(page, [
+      "range-entity",
+      "point-entity",
+      "range-entity::primary-range-start",
+      "range-entity::primary-range-end",
+    ]);
+
+    // Wait for layout and styles to settle
+    await page.waitForTimeout(1000);
+
+    // 4. Verify in cytoscape that:
+    // - "point-entity" is visible (opacity > 0)
+    // - "range-entity::primary-range-start" and "range-entity::primary-range-end" are visible
+    // - "range-entity" (the main range node) is hidden (opacity === 0)
+    const visibilityStates = await page.evaluate(() => {
+      const { cy } = window as any;
+      if (!cy) return null;
+
+      const pNode = cy.$id("point-entity");
+      const rNode = cy.$id("range-entity");
+      const startNode = cy.$id("range-entity::primary-range-start");
+      const endNode = cy.$id("range-entity::primary-range-end");
+
+      if (
+        pNode.empty() ||
+        rNode.empty() ||
+        startNode.empty() ||
+        endNode.empty()
+      )
+        return null;
+
+      return {
+        pointVisible: pNode.visible() && pNode.style("opacity") > 0,
+        mainRangeHidden:
+          !rNode.visible() || Number(rNode.style("opacity")) === 0,
+        startVisible: startNode.visible() && startNode.style("opacity") > 0,
+        endVisible: endNode.visible() && endNode.style("opacity") > 0,
+        mainX: rNode.position().x,
+        startX: startNode.position().x,
+        mainY: rNode.position().y,
+        startY: startNode.position().y,
+      };
+    });
+
+    expect(visibilityStates).not.toBeNull();
+    if (visibilityStates) {
+      expect(visibilityStates.pointVisible).toBe(true);
+      expect(visibilityStates.mainRangeHidden).toBe(true);
+      expect(visibilityStates.startVisible).toBe(true);
+      expect(visibilityStates.endVisible).toBe(true);
+      // The main node's position should be exactly equal to the start handle's position
+      expect(visibilityStates.mainX).toBeCloseTo(visibilityStates.startX, 1);
+      expect(visibilityStates.mainY).toBeCloseTo(visibilityStates.startY, 1);
+    }
   });
 });

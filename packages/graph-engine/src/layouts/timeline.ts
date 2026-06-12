@@ -257,8 +257,24 @@ export function getTimelineLayout(
 ): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
 
+  const anchorNodeIds = new Set(
+    nodes.filter((n) => n.data.isTemporalAnchor).map((n) => n.data.id),
+  );
+
+  const hasHandles = (nodeId: string) => {
+    for (const anchorId of anchorNodeIds) {
+      if (anchorId.startsWith(`${nodeId}::`)) return true;
+    }
+    return false;
+  };
+
   // 1. Identify relevant year for each node (priority: date > start_date > end_date)
-  const datedNodes = nodes.filter((node) => hasTimelineDate(node));
+  // Exclude main nodes that have handles to prevent duplication/jittering
+  const datedNodes = nodes.filter((node) => {
+    if (!hasTimelineDate(node)) return false;
+    if (node.data.isTemporalAnchor) return true;
+    return !hasHandles(node.data.id);
+  });
 
   if (datedNodes.length === 0) return {};
 
@@ -310,6 +326,28 @@ export function getTimelineLayout(
         positions[node.data.id] = { x: secondaryCoord, y: primaryCoord };
       }
     });
+  }
+
+  // 4. Assign main node positions to match their primary start handle (or first handle)
+  for (const node of nodes) {
+    if (!node.data.isTemporalAnchor && hasHandles(node.data.id)) {
+      const startHandleId = `${node.data.id}::primary-range-start`;
+      const endHandleId = `${node.data.id}::primary-range-end`;
+
+      const targetHandleId = positions[startHandleId]
+        ? startHandleId
+        : positions[endHandleId]
+          ? endHandleId
+          : nodes.find(
+              (n) =>
+                n.data.isTemporalAnchor &&
+                n.data.id.startsWith(`${node.data.id}::`),
+            )?.data.id;
+
+      if (targetHandleId && positions[targetHandleId]) {
+        positions[node.data.id] = { ...positions[targetHandleId] };
+      }
+    }
   }
 
   return positions;

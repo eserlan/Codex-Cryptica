@@ -28,6 +28,7 @@ export interface GraphNode {
     anchorId?: string;
     anchorType?: string;
     isTemporalAnchor?: boolean;
+    hasHandles?: boolean;
     textureVariant?: number;
   };
   position?: { x: number; y: number };
@@ -42,6 +43,7 @@ export interface GraphEdge {
     label?: string;
     connectionType: string;
     strength?: number;
+    entityType?: string;
   };
 }
 
@@ -191,6 +193,10 @@ export class GraphTransformer {
       if ((entity as any).guestChatConfig?.isEnabled)
         nodeData.isChatEnabled = true;
       if (isRevealed) (nodeData as any).isRevealed = true;
+      const hasHandles = !!(
+        includeTemporalEditHandles &&
+        (entity.start_date || entity.end_date)
+      );
 
       const coords = entity.metadata?.coordinates;
       const hasValidCoords = !!(
@@ -207,15 +213,18 @@ export class GraphTransformer {
       if (hasValidCoords) {
         elements.push({
           group: "nodes",
-          data: nodeData,
+          data: hasHandles ? { ...nodeData, hasHandles: true } : nodeData,
           position: coords,
         });
       } else {
         // Mark as pending layout so it stays invisible until placed
-        (nodeData as any).isPendingLayout = true;
+        const mainNodeData = hasHandles
+          ? { ...nodeData, hasHandles: true }
+          : nodeData;
+        (mainNodeData as any).isPendingLayout = true;
         elements.push({
           group: "nodes",
-          data: nodeData,
+          data: mainNodeData,
           position: {
             x: Math.cos(angle) * distance,
             y: Math.sin(angle) * distance,
@@ -265,6 +274,20 @@ export class GraphTransformer {
             dateLabel: formatDate(entity.end_date),
           },
           position: basePosition,
+        });
+      }
+
+      if (includeTemporalEditHandles && entity.start_date && entity.end_date) {
+        elements.push({
+          group: "edges",
+          data: {
+            id: `${entity.id}-lifespan-connector`,
+            source: `${entity.id}::primary-range-start`,
+            target: `${entity.id}::primary-range-end`,
+            connectionType: "lifespan-connector",
+            entityType: entity.type,
+            label: "",
+          },
         });
       }
 
@@ -603,6 +626,18 @@ export const getGraphStyle = (
       },
     },
     {
+      selector: `edge[connectionType="lifespan-connector"]`,
+      style: {
+        "curve-style": "straight",
+        "target-arrow-shape": "none",
+        "line-style": "solid",
+        width: 3,
+        opacity: 0.6,
+        "line-color": tokens.primary,
+        "z-index": -1,
+      },
+    },
+    {
       selector: ".dimmed",
       style: {
         opacity: 0.08,
@@ -638,6 +673,13 @@ export const getGraphStyle = (
       // For fantasy, we want the category color to overlay the parchment background
       "background-color": cat.color,
       "background-opacity": isFantasy ? 0.58 : 0.55,
+    },
+  }));
+
+  const categoryEdgeStyles = categories.map((cat) => ({
+    selector: `edge[connectionType="lifespan-connector"][entityType="${cat.id}"]`,
+    style: {
+      "line-color": cat.color,
     },
   }));
 
@@ -705,6 +747,14 @@ export const getGraphStyle = (
   // (category colors, revealed borders, and focus-mode opacities)
   const selectionStyles: any[] = [
     {
+      selector: "node[hasHandles]",
+      style: {
+        opacity: 0,
+        "text-opacity": 0,
+        events: "no",
+      },
+    },
+    {
       selector: "node[isPendingLayout]",
       style: {
         opacity: 0,
@@ -763,6 +813,7 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
+    ...categoryEdgeStyles,
     ...importantStyles,
     ...revealedStyles,
     ...selectionStyles,
