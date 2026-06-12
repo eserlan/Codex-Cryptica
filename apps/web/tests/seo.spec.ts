@@ -112,6 +112,15 @@ test.describe("SEO and Prerendering", () => {
   });
 
   test.describe("SEO Landing Pages and Generator Funnel", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          "help_state",
+          JSON.stringify({ completedTours: ["initial-onboarding"] }),
+        );
+      });
+    });
+
     test("solutions and comparison pages prerender correctly", async ({
       request,
     }) => {
