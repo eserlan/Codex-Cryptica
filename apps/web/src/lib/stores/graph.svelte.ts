@@ -2,6 +2,12 @@ import { vault as defaultVault } from "./vault.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible, type Era, type Entity } from "schema";
 import { getDB } from "../utils/idb";
+import {
+  parsePresets,
+  presetsSettingsKey,
+  type GraphViewPreset,
+  type GraphViewPresetState,
+} from "./graph-presets";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -13,6 +19,7 @@ export class GraphStore {
   private sessionModeStore: typeof sessionModeStore;
   private connectionModeStore: typeof connectionModeStore;
   private _initPromise: Promise<void> | null = null;
+  private _vaultSwitchHandler: (() => void) | null = null;
 
   private get vault() {
     return this._vault ?? defaultVault;
@@ -93,6 +100,9 @@ export class GraphStore {
 
   eras = $state<Era[]>([]);
 
+  // Saved view presets for the active vault
+  viewPresets = $state<GraphViewPreset[]>([]);
+
   stats = $derived.by(() => {
     // OPTIMIZATION: Use imperative loop instead of multiple .filter() calls
     // to avoid intermediate array allocations and reduce GC pressure.
@@ -158,15 +168,181 @@ export class GraphStore {
       this.labelFilterMode = savedLabelFilterMode;
     }
 
+    await this.loadViewPresets();
+
     if (typeof window !== "undefined") {
-      window.addEventListener("vault-switched", () => {
+      if (this._vaultSwitchHandler) {
+        window.removeEventListener("vault-switched", this._vaultSwitchHandler);
+      }
+      this._vaultSwitchHandler = () => {
         this.clearLabelFilters();
         this.clearCategoryFilters();
         this.orbitMode = false;
         this.centralNodeId = null;
         // Keep timelineMode as it's a global preference usually
-      });
+        void this.loadViewPresets();
+      };
+      window.addEventListener("vault-switched", this._vaultSwitchHandler);
     }
+  }
+
+  // ── View presets ────────────────────────────────────────────────────────
+
+  private get viewPresetsKey() {
+    return presetsSettingsKey(this.vault.activeVaultId ?? "default");
+  }
+
+  async loadViewPresets() {
+    try {
+      const db = await getDB();
+      const raw = await db.get("settings", this.viewPresetsKey);
+      this.viewPresets = parsePresets(raw);
+    } catch (error) {
+      console.error("[GraphStore] Failed to load graph view presets:", error);
+      this.viewPresets = [];
+    }
+  }
+
+  private async persistViewPresets() {
+    try {
+      const db = await getDB();
+      await db.put(
+        "settings",
+        $state.snapshot(this.viewPresets),
+        this.viewPresetsKey,
+      );
+    } catch (error) {
+      console.error(
+        "[GraphStore] Failed to persist graph view presets:",
+        error,
+      );
+    }
+  }
+
+  captureViewState(viewport?: {
+    pan: { x: number; y: number };
+    zoom: number;
+  }): GraphViewPresetState {
+    return {
+      activeLabels: Array.from(this.activeLabels),
+      labelFilterMode: this.labelFilterMode,
+      activeCategories: Array.from(this.activeCategories),
+      showLabels: this.showLabels,
+      showImages: this.showImages,
+      stableLayout: this.stableLayout,
+      timelineMode: this.timelineMode,
+      timelineAxis: this.timelineAxis,
+      timelineRange: { ...this.timelineRange },
+      timelineScale: this.timelineScale,
+      orbitMode: this.orbitMode,
+      centralNodeId: this.centralNodeId,
+      viewport,
+    };
+  }
+
+  async saveViewPreset(
+    name: string,
+    viewport?: { pan: { x: number; y: number }; zoom: number },
+  ): Promise<GraphViewPreset | null> {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const now = Date.now();
+    const preset: GraphViewPreset = {
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `preset-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      name: trimmed,
+      createdAt: now,
+      updatedAt: now,
+      state: this.captureViewState(viewport),
+    };
+    this.viewPresets = [...this.viewPresets, preset];
+    await this.persistViewPresets();
+    return preset;
+  }
+
+  /**
+   * Restores a preset's visual state. Filters that reference labels,
+   * categories, or orbit centers that no longer exist in the vault are
+   * skipped instead of failing (preset drift).
+   *
+   * Returns the preset and whether a mode (timeline/orbit) flipped — callers
+   * use that to decide if restoring the stored viewport is safe or whether
+   * the mode layout's own fit should win.
+   */
+  applyViewPreset(
+    id: string,
+  ): { preset: GraphViewPreset; modeChanged: boolean } | null {
+    const preset = this.viewPresets.find((p) => p.id === id);
+    if (!preset) return null;
+    const s = preset.state;
+
+    const entities = this.vault.allEntities;
+    let labels = s.activeLabels;
+    let categories = s.activeCategories;
+    let centralNodeId = s.centralNodeId;
+    if (entities.length > 0) {
+      const existingLabels = new Set<string>();
+      const existingCategories = new Set<string>();
+      const existingIds = new Set<string>();
+      for (const e of entities) {
+        existingIds.add(e.id);
+        if (e.type) existingCategories.add(e.type);
+        for (const l of e.labels ?? []) existingLabels.add(l.toLowerCase());
+      }
+      labels = labels.filter((l) => existingLabels.has(l.toLowerCase()));
+      categories = categories.filter((c) => existingCategories.has(c));
+      if (centralNodeId && !existingIds.has(centralNodeId)) {
+        centralNodeId = null;
+      }
+    }
+
+    const wasTimeline = this.timelineMode;
+    const wasOrbit = this.orbitMode;
+
+    this.activeLabels = new Set(labels);
+    this.labelFilterMode = s.labelFilterMode;
+    this.activeCategories = new Set(categories);
+    this.showLabels = s.showLabels;
+    this.showImages = s.showImages;
+    this.stableLayout = s.stableLayout;
+    this.timelineAxis = s.timelineAxis;
+    this.timelineRange = { ...s.timelineRange };
+    this.timelineScale = s.timelineScale;
+    this.timelineMode = s.timelineMode;
+    this.centralNodeId = centralNodeId;
+    this.orbitMode = s.orbitMode && centralNodeId !== null;
+
+    const modeChanged =
+      wasTimeline !== this.timelineMode || wasOrbit !== this.orbitMode;
+    return { preset, modeChanged };
+  }
+
+  async renameViewPreset(id: string, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    this.viewPresets = this.viewPresets.map((p) =>
+      p.id === id ? { ...p, name: trimmed, updatedAt: Date.now() } : p,
+    );
+    await this.persistViewPresets();
+  }
+
+  async deleteViewPreset(id: string) {
+    this.viewPresets = this.viewPresets.filter((p) => p.id !== id);
+    await this.persistViewPresets();
+  }
+
+  resetView() {
+    this.activeLabels = new Set();
+    this.activeCategories = new Set();
+    this.labelFilterMode = "OR";
+    this.showLabels = true;
+    this.showImages = true;
+    this.stableLayout = true;
+    this.timelineMode = false;
+    this.orbitMode = false;
+    this.centralNodeId = null;
   }
 
   async saveEras() {
