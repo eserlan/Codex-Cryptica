@@ -40,12 +40,15 @@
   }
 
   let explorerTab = $state<"all" | "review">("all");
-  const draftCount = $derived(
-    vault.allEntities.reduce(
-      (count, entity) => count + (entity.status === "draft" ? 1 : 0),
-      0,
-    ),
-  );
+  const draftCount = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace .reduce() with imperative loop to avoid closure allocation
+    // and reduce GC pressure during reactive updates across a large array of entities.
+    let count = 0;
+    for (const entity of vault.allEntities) {
+      if (entity.status === "draft") count++;
+    }
+    return count;
+  });
   const actioningIds = $state(new Set<string>());
 
   async function handleApproveDraft(entity: Entity) {
