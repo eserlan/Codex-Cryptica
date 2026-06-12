@@ -5,6 +5,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { guestStore } from "$lib/stores/guest.svelte";
   import Minimap from "./Minimap.svelte";
+  import GraphViewPresets from "./GraphViewPresets.svelte";
   import TimelineControls from "./TimelineControls.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -88,6 +89,7 @@
     >
       <span class="icon-[lucide--map] w-4 h-4"></span>
     </button>
+    <GraphViewPresets {cy} />
     <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
   {/if}
   <TimelineControls
