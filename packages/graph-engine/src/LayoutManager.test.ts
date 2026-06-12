@@ -211,6 +211,53 @@ describe("LayoutManager", () => {
     expect(mockCy.animate).toHaveBeenCalled();
   });
 
+  it("should keep the camera still for preserve-policy stable updates", async () => {
+    const onLayoutStop = vi.fn();
+
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+        viewportPolicy: "preserve",
+        onLayoutStop,
+      },
+      false,
+      true,
+      "Elements Update",
+    );
+
+    // fit-only path with preserve policy: no worker, no fit animation
+    expect(capturedPostMessage).toBeNull();
+    expect(mockCy.animate).not.toHaveBeenCalled();
+    expect(mockCy.fit).not.toHaveBeenCalled();
+    expect(onLayoutStop).toHaveBeenCalledTimes(1);
+  });
+
+  it("should still fit when viewportPolicy is fit on the stable path", async () => {
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+        viewportPolicy: "fit",
+      },
+      false,
+      false,
+      "Elements Update",
+    );
+
+    expect(mockCy.animate).toHaveBeenCalled();
+  });
+
   it("should use lower gravity in landscape view", async () => {
     mockCy.width.mockReturnValue(1200);
     mockCy.height.mockReturnValue(800); // AR = 1.5 (Landscape)
