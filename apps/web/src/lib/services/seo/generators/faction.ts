@@ -597,7 +597,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single string for the vampire clan/house name",
   "content": "A detailed multi-paragraph overview (markdown formatted) describing its history, public facade in mortal society, dark haven, and how it fits the campaign context if provided.",
-  "lore": "Structured GM details (markdown formatted) with sections for core fields, bloodline traits, feeding habits, weakness, dark agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
+  "lore": "Structured GM details (markdown formatted). Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\n### GM Reference Information\n- **Faction Type**: Vampire Clan (archetype)\n- **Bloodline**: bloodline summary\n- **Scope**: scope of influence\n- **Moral Posture**: moral posture\n- **Feeding Habit**: feeding habit\n- **Clan Weakness**: weakness\n- **Entity Type**: Faction\n\n### Dark Agenda\none paragraph\n\n### Internal Conflict\none paragraph\n\n### Notable NPCs\n- **👤 Sire Name**: one-line description\n- **👤 Thrall Name**: one-line description\n\n### Rival Faction\n- **👥 Rival Name**: one-line rivalry summary\n\n### Adventure Hook\none paragraph",
   "labels": ["rpg-faction", "vampire-clan", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
