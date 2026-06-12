@@ -352,7 +352,6 @@ ${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **${d.name}**: $
 ${Array.isArray(data.campaign_seeds?.rumors) ? data.campaign_seeds.rumors.map((r: string) => `- ${r}`).join("\n") : ""}
 
 ### Entity Seeds
-${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **Character**: ${d.name}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.characters) ? data.campaign_seeds.characters.map((c: any) => `- **Character**: ${c.name || ""} (${c.role || ""}) - ${c.hook || ""}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.factions) ? data.campaign_seeds.factions.map((f: any) => `- **Faction**: ${f.name || ""} (${f.type || ""}) - ${f.hook || ""}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **Event**: ${e.name || ""} (${e.type || ""}) - ${e.hook || ""}`).join("\n") : ""}
@@ -531,7 +530,6 @@ ${deityNames
 - The high priests of the deities are secretly meeting to avert a holy war.
 
 ### Entity Seeds
-${deityNames.map((n) => `- **Character**: ${n}`).join("\n")}
 - **Faction**: ${worshipperType}`;
 
     return {
