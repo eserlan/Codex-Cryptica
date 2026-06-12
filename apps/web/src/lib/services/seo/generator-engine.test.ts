@@ -953,6 +953,65 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("pantheon-custom");
     });
 
+    it("should construct lore from structured JSON without inserting empty deity entries in entity seeds", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Silent Maw",
+                summary: "Core belief system",
+                meta: {
+                  conflict_theme: "Cosmic Balance",
+                  worshippers: "Scholars",
+                  public_dogma: "Mortals believe",
+                  hidden_problem: "Schism",
+                  immediate_hook: "Hook",
+                },
+                history: {
+                  origin_and_dogma: "Origin",
+                  structure_and_laws: "Structure",
+                },
+                deities: [
+                  {
+                    name: "Oryx-Malaphon",
+                    description: "God of Craft",
+                    portfolio: "Craft",
+                  },
+                ],
+                relationships: [
+                  {
+                    deity_a: "Oryx-Malaphon",
+                    deity_b: "Oryx-Malaphon",
+                    relationship_type: "Alliance",
+                    campaign_pressure: "Pressure",
+                  },
+                ],
+                campaign_seeds: {
+                  characters: [
+                    {
+                      name: "Elias the Unraveler",
+                      role: "Heretic",
+                      hook: "Forbidden text",
+                    },
+                  ],
+                },
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generatePantheon({
+        mode: "pantheon",
+        useAI: true,
+      });
+
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("Elias the Unraveler");
+      expect(res.lore).not.toContain("- **Character**: Oryx-Malaphon");
+    });
+
     it("should include correct domain scope in prompt based on width selection", async () => {
       let capturedPromptFocused = "";
       let capturedPromptBalanced = "";
