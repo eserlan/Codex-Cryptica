@@ -559,6 +559,35 @@ describe("LayoutManager", () => {
     expect(mockCy.fit).toHaveBeenCalled();
   });
 
+  it("enforces minimum zoom on mobile when fit result zoom is too small", async () => {
+    mockCy.zoom = vi.fn().mockReturnValue(0.3);
+    mockCy.center = vi.fn();
+
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: true,
+        isMobile: true,
+      },
+      true,
+    );
+
+    expect(mockCy.fit).toHaveBeenCalled();
+    expect(mockCy.zoom).toHaveBeenCalledWith({
+      level: 0.6,
+      renderedPosition: {
+        x: mockCy.width() / 2,
+        y: mockCy.height() / 2,
+      },
+    });
+    expect(mockCy.center).toHaveBeenCalled();
+  });
+
   it("should emit positions in the schema-compliant nested format", async () => {
     const onPositionsUpdated = vi.fn();
     const mockWorkerResult = {

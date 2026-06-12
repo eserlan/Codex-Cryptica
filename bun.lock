@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "codex-cryptica",
@@ -26,7 +26,7 @@
         "husky": "^9.1.7",
         "js-yaml": "^4.1.1",
         "lint-staged": "^17.0.5",
-        "prettier": "3.8.3",
+        "prettier": "3.8.4",
         "prettier-plugin-svelte": "^4.0.1",
         "rollup-plugin-visualizer": "^7.0.1",
         "svelte-eslint-parser": "^1.6.1",
@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.26.3",
+      "version": "0.26.9",
       "dependencies": {
         "@codex/canvas-engine": "workspace:*",
         "@codex/events": "workspace:*",
@@ -1639,7 +1639,7 @@
 
     "prelude-ls": ["prelude-ls@1.2.1", "", {}, "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="],
 
-    "prettier": ["prettier@3.8.3", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw=="],
+    "prettier": ["prettier@3.8.4", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q=="],
 
     "prettier-plugin-svelte": ["prettier-plugin-svelte@4.0.1", "", { "peerDependencies": { "prettier": "^3.0.0", "svelte": "^5.0.0" } }, "sha512-oDVmtKi+M8bJeUoMfPvulUqZYcuXrs5AmhhLYPKtBeg6hcpMdx7UYYisVCqEaLQuKtiPSYFpotfwp4cZK3D4xw=="],
 

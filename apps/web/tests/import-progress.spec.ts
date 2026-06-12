@@ -3,13 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Import Progress Management E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).DISABLE_ERROR_OVERLAY = true;
       // Mock the API key to allow import to proceed
       (window as any).__SHARED_GEMINI_KEY__ = "test-key-mock";

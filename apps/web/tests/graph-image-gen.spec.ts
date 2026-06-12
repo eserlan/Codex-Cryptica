@@ -2,10 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Graph Image Generation Context Menu", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      (window as any).__E2E__ = true;
-    });
-
     await page.goto("/vault/default");
     await page.waitForSelector("canvas");
     await page.waitForTimeout(2000);

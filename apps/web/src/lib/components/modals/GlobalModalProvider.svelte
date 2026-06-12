@@ -19,9 +19,7 @@
   const isLoginRoute = $derived(page.url.pathname === `${base}/login`);
 
   const isSpecialEnv =
-    import.meta.env.DEV ||
-    (typeof window !== "undefined" && (window as any).__E2E__) ||
-    import.meta.env.VITE_STAGING === "true";
+    import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
 
   const loadModal = async (
     loader: () => Promise<{ default: any }>,
@@ -92,6 +90,14 @@
       {#await loadModal(() => import("$lib/components/layout/MobileMenu.svelte"), "MobileMenu") then MobileMenu}
         {#if MobileMenu}
           <MobileMenu bind:isOpen={isMobileMenuOpen} />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if modalUIStore.showMobileCreateSheet}
+      {#await loadModal(() => import("./MobileCreateEntitySheet.svelte"), "MobileCreateEntitySheet") then MobileCreateEntitySheet}
+        {#if MobileCreateEntitySheet}
+          <MobileCreateEntitySheet />
         {/if}
       {/await}
     {/if}

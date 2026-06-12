@@ -47,20 +47,31 @@ test.describe("SEO and Prerendering", () => {
     page,
   }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle("Codex Cryptica | AI RPG Campaign Manager");
-    await expect(page.getByText(/Build Your World/i)).toBeVisible();
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await page.reload();
+    await expect(page).toHaveTitle("Codex Cryptica | AI RPG Campaign Manager", {
+      timeout: 15000,
+    });
+    await expect(page.getByText(/Private RPG Lore Vault/i)).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("non-prerendered routes fallback to SPA shell", async ({ page }) => {
     // Navigate to a route that isn't prerendered but exists in the app
     await page.goto("/oracle");
 
-    // It should still have the layout title from +layout.svelte
-    await expect(page).toHaveTitle(/Codex Cryptica/);
+    // It should still have the layout title from +layout.svelte, wait for compile/hydration
+    await expect(page).toHaveTitle(/Lore Oracle | Codex Cryptica/, {
+      timeout: 15000,
+    });
 
     // It should show the loading state or the oracle interface
     const oracleIndicator = page.getByText(/Lore Oracle/i).first();
-    await expect(oracleIndicator).toBeVisible();
+    await expect(oracleIndicator).toBeVisible({ timeout: 15000 });
   });
 
   test("llms.txt standard files exist and are discoverable", async ({
@@ -101,6 +112,16 @@ test.describe("SEO and Prerendering", () => {
   });
 
   test.describe("SEO Landing Pages and Generator Funnel", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          "codex-cryptica-help-state",
+          JSON.stringify({ completedTours: ["initial-onboarding"] }),
+        );
+        localStorage.setItem("codex_dismissed_landing", "true");
+      });
+    });
+
     test("solutions and comparison pages prerender correctly", async ({
       request,
     }) => {
@@ -136,8 +157,9 @@ test.describe("SEO and Prerendering", () => {
       const response = await request.get("/tools/dnd-npc-generator");
       expect(response.ok()).toBe(true);
       const html = await response.text();
-      expect(html).toContain("D&amp;D NPC Generator");
-      expect(html).toContain("What does each generated NPC include?");
+      // Since tools redirects, html is generators/npc
+      expect(html).toContain("RPG NPC Generator");
+      expect(html).toContain("Create NPCs across any genre");
       expect(html).toContain("/solutions/ai-gm-assistant");
       expect(html).toContain("/free-rpg-campaign-manager");
       const jsonLdScripts = [
@@ -158,9 +180,9 @@ test.describe("SEO and Prerendering", () => {
       // 1. Navigate to generator
       await page.goto("/tools/dnd-npc-generator");
       await expect(page.locator("#generator-title")).toContainText(
-        "D&D NPC Generator",
+        "RPG NPC Generator",
       );
-      await expect(page.getByLabel("Optional Campaign Context")).toBeVisible();
+      await expect(page.getByLabel("Add campaign context")).toBeVisible();
       await expect(
         page.getByRole("link", { name: /AI GM assistant/i }),
       ).toHaveAttribute("href", "/solutions/ai-gm-assistant");
@@ -171,7 +193,7 @@ test.describe("SEO and Prerendering", () => {
         await aiToggle.uncheck();
       }
       await page
-        .getByLabel("Optional Campaign Context")
+        .getByLabel("Add campaign context")
         .fill("a haunted border city under siege");
 
       // 3. Trigger generate
@@ -180,10 +202,10 @@ test.describe("SEO and Prerendering", () => {
       // 4. Wait for generated element to show up
       await expect(page.locator("#save-to-codex-btn")).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Faction Connection" }),
+        page.getByRole("heading", { name: "Who they are" }),
       ).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Plot Hook" }),
+        page.getByRole("heading", { name: "What they want" }),
       ).toBeVisible();
       const generatedTitle = page.locator("h2").first();
       await expect(generatedTitle).not.toContainText("No Draft Generated"); // Check that a title is populated
@@ -193,15 +215,15 @@ test.describe("SEO and Prerendering", () => {
 
       // 5. Click Save to Codex
       await page.click("#save-to-codex-btn");
+      await page.click("button:has-text('Open Codex')");
 
       // 6. Verify redirection to workspace app root
       await expect(page).toHaveURL(/\/$/);
 
       // 7. Verify the new vault is active and the entity is loaded/selected
-      // Since it's local-first OPFS or fallback, wait for the imported entity detail panel to open or show up in sidebar
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15000 });
     });
 
     test("faction generator page and import conversion funnel flow", async ({
@@ -211,9 +233,10 @@ test.describe("SEO and Prerendering", () => {
       const response = await request.get("/tools/faction-generator");
       expect(response.ok()).toBe(true);
       const html = await response.text();
-      expect(html).toContain("Faction Generator");
-      expect(html).toContain("What does the faction generator create?");
-      expect(html).toContain("/tools/dnd-npc-generator");
+      // Since tools redirects, html is generators/faction
+      expect(html).toContain("RPG Faction Generator");
+      expect(html).toContain("Forge campaign-ready organizations");
+      expect(html).toContain("tools/dnd-npc-generator");
       expect(html).toContain("/solutions/worldbuilding-tool");
       const jsonLdScripts = [
         ...html.matchAll(
@@ -233,10 +256,10 @@ test.describe("SEO and Prerendering", () => {
       await expect(page.locator("#generator-title")).toContainText(
         "Faction Generator",
       );
-      await expect(page.getByLabel("Faction Type")).toBeVisible();
-      await expect(page.getByLabel("Operating Scope")).toBeVisible();
-      await expect(page.getByLabel("Moral Posture")).toBeVisible();
-      await expect(page.getByLabel("Optional Campaign Context")).toBeVisible();
+      await expect(page.getByLabel("Choose what they are")).toBeVisible();
+      await expect(page.getByLabel("Choose their scale")).toBeVisible();
+      await expect(page.getByLabel("Choose their morality")).toBeVisible();
+      await expect(page.getByLabel("Add campaign context")).toBeVisible();
       await expect(
         page.getByRole("link", { name: /Worldbuilding tool/i }),
       ).toHaveAttribute("href", "/solutions/worldbuilding-tool");
@@ -245,20 +268,22 @@ test.describe("SEO and Prerendering", () => {
       if (await aiToggle.isChecked()) {
         await aiToggle.uncheck();
       }
-      await page.getByLabel("Faction Type").selectOption("Merchant Guild");
-      await page.getByLabel("Operating Scope").selectOption("Single city");
       await page
-        .getByLabel("Optional Campaign Context")
+        .getByLabel("Choose what they are")
+        .selectOption("Merchant Guild");
+      await page.getByLabel("Choose their scale").selectOption("Single city");
+      await page
+        .getByLabel("Add campaign context")
         .fill("a canal city split by old guild rivalries");
 
       await page.click("#generate-button");
 
       await expect(page.locator("#save-to-codex-btn")).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Internal Conflict" }),
+        page.getByRole("heading", { name: "What they control" }),
       ).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: "Adventure Hook" }),
+        page.getByRole("heading", { name: "What they want" }),
       ).toBeVisible();
       const generatedTitle = page.locator("h2").first();
       await expect(generatedTitle).not.toContainText("No Draft Generated");
@@ -266,10 +291,89 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
+      await page.click("button:has-text('Open Codex')");
       await expect(page).toHaveURL(/\/$/);
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15000 });
+    });
+
+    test("pantheon and god generator page funnel flows", async ({
+      page,
+      request,
+    }) => {
+      // 1. Check Pantheon Generator static HTML & SEO elements
+      const response = await request.get("/generators/pantheon-generator");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain("RPG Pantheon Generator");
+
+      // 2. Navigate to Pantheon Generator E2E page
+      await page.goto("/generators/pantheon-generator");
+      await expect(page.locator("#generator-title")).toContainText(
+        "RPG Pantheon Generator",
+      );
+
+      // Toggle AI off
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) {
+        await aiToggle.uncheck();
+      }
+
+      // Check default target mode (should be pantheon)
+      await expect(page.locator("#pantheon-mode-select")).toHaveValue(
+        "pantheon",
+      );
+
+      // Generate
+      await page.click("#generate-button");
+
+      // Verify generated content and saving
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated");
+      const generatedName = await generatedTitle.textContent();
+      expect(generatedName).toBeTruthy();
+
+      await page.click("#save-to-codex-btn");
+      await page.click("button:has-text('Open Codex')");
+      await expect(page).toHaveURL(/\/$/);
+      await expect(
+        page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
+      ).toBeVisible({ timeout: 15000 });
+
+      // 3. Navigate to Deity Generator E2E page
+      await page.goto("/generators/god-generator");
+      await expect(page.locator("#generator-title")).toContainText(
+        "RPG God & Deity Generator",
+      );
+
+      // Toggle AI off
+      const aiToggleGod = page.locator("#ai-toggle");
+      if (await aiToggleGod.isChecked()) {
+        await aiToggleGod.uncheck();
+      }
+
+      // Check default target mode (should be single)
+      await expect(page.locator("#pantheon-mode-select")).toHaveValue("single");
+
+      // Generate
+      await page.click("#generate-button");
+
+      // Verify generated content and saving
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      const generatedGodTitle = page.locator("h2").first();
+      await expect(generatedGodTitle).not.toContainText("No Draft Generated");
+      const generatedGodName = await generatedGodTitle.textContent();
+      expect(generatedGodName).toBeTruthy();
+
+      await page.click("#save-to-codex-btn");
+      await page.click("button:has-text('Open Codex')");
+      await page.waitForLoadState("networkidle");
+      await expect(page).toHaveURL(/\/$/);
+      await expect(
+        page.getByRole("heading", { name: generatedGodName!.trim(), level: 2 }),
+      ).toBeVisible({ timeout: 20000 });
     });
   });
 });

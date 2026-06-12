@@ -6,8 +6,11 @@ test.describe("Interactive Demo Mode", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       try {
         localStorage.removeItem("codex_was_converted");
@@ -72,13 +75,7 @@ test.describe("Interactive Demo Mode", () => {
 
   test("should start theme-specific demo via URL", async ({ page }) => {
     // For URL-based demo, we want to bypass landing page
-    await page.addInitScript(() => {
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
-    });
+    await page.addInitScript(() => {});
 
     await page.goto("/?demo=vampire&s=" + Date.now());
     await page.waitForFunction(

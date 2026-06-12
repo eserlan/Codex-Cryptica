@@ -58,10 +58,8 @@ export class SeoImportService {
         drafts = [ImportDraftSchema.parse(rawData)];
       }
 
-      // Clean up localStorage immediately to prevent double-import on reload
-      localStorage.removeItem("__codex_pending_import");
-
       if (drafts.length === 0) {
+        localStorage.removeItem("__codex_pending_import");
         return null;
       }
 
@@ -83,42 +81,79 @@ export class SeoImportService {
         }
       }
 
+      // title → entityId map for wiring [[wiki links]] after creation
+      const titleToId = new Map<string, string>();
       let lastImportedId: string | null = null;
 
-      for (const draft of drafts) {
-        // Check for duplicate entity title and append suffix if necessary
-        let title = draft.title;
-        let counter = 1;
-        const entities = this.vaultStore.entities;
-        const titleLower = title.toLowerCase();
+      try {
+        for (const draft of drafts) {
+          // Check for duplicate entity title and append suffix if necessary
+          let title = draft.title;
+          let counter = 1;
+          const titleLower = title.toLowerCase();
 
-        // Check if duplicate title exists in active vault
-        const isDuplicate = Object.values(entities).some(
-          (e) => e.title.toLowerCase() === titleLower,
-        );
+          const isDuplicate = Object.values(this.vaultStore.entities).some(
+            (e) => e.title.toLowerCase() === titleLower,
+          );
 
-        if (isDuplicate) {
-          let uniqueTitle = title;
-          while (
-            Object.values(this.vaultStore.entities).some(
-              (e) => e.title.toLowerCase() === uniqueTitle.toLowerCase(),
-            )
-          ) {
-            uniqueTitle = `${title} (Imported${counter > 1 ? ` ${counter}` : ""})`;
-            counter++;
+          if (isDuplicate) {
+            let uniqueTitle = title;
+            while (
+              Object.values(this.vaultStore.entities).some(
+                (e) => e.title.toLowerCase() === uniqueTitle.toLowerCase(),
+              )
+            ) {
+              uniqueTitle = `${title} (Imported${counter > 1 ? ` ${counter}` : ""})`;
+              counter++;
+            }
+            title = uniqueTitle;
           }
-          title = uniqueTitle;
+
+          const entityId = await this.vaultStore.createEntity(
+            draft.type,
+            title,
+            {
+              content: draft.content,
+              lore: draft.lore || "",
+              labels: draft.labels,
+              status: draft.status,
+            },
+          );
+
+          titleToId.set(title.toLowerCase(), entityId);
+          // Also index by original draft title in case it was de-duped
+          titleToId.set(draft.title.toLowerCase(), entityId);
+          lastImportedId = entityId;
         }
+      } finally {
+        // Remove only after all creates attempted — if we fail mid-loop the
+        // user at least gets the entities that succeeded; clear to prevent
+        // double-import on any subsequent load.
+        localStorage.removeItem("__codex_pending_import");
+      }
 
-        // Import entity to the vault
-        const entityId = await this.vaultStore.createEntity(draft.type, title, {
-          content: draft.content,
-          lore: draft.lore || "",
-          labels: draft.labels,
-          status: draft.status,
-        });
+      // Wire [[wiki links]] between imported entities
+      for (const draft of drafts) {
+        const sourceId = titleToId.get(draft.title.toLowerCase());
+        if (!sourceId || !draft.content) continue;
 
-        lastImportedId = entityId;
+        const wikiLinkPattern = /\[\[([^\]]+)\]\]/g;
+        let match: RegExpExecArray | null;
+        while ((match = wikiLinkPattern.exec(draft.content)) !== null) {
+          const targetId = titleToId.get(match[1].toLowerCase());
+          if (targetId && targetId !== sourceId) {
+            try {
+              await this.vaultStore.addConnection(
+                sourceId,
+                targetId,
+                "references",
+                match[1],
+              );
+            } catch {
+              // Non-fatal: link wiring is best-effort
+            }
+          }
+        }
       }
 
       // Select the last imported entity
@@ -129,7 +164,6 @@ export class SeoImportService {
       return lastImportedId;
     } catch (err) {
       console.error("Failed to parse and import pending SEO draft:", err);
-      // Clean up localStorage anyway to avoid stuck alert/loop
       localStorage.removeItem("__codex_pending_import");
       return null;
     }

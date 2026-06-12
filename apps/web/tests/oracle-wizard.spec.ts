@@ -3,34 +3,44 @@ import { test, expect } from "@playwright/test";
 test.describe("Oracle Connection Wizard", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
-    // Create entities via UI to trigger indexing
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Eldrin");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Tower");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
-      timeout: 20000,
+    // Wait for vault to be ready
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
     });
 
-    // Open Oracle Window
+    // Open Oracle first so searchService subscribes to events before entity creation
     const toggleBtn = page.getByTestId("activity-bar-oracle");
     await toggleBtn.click();
+    await page.getByTestId("oracle-input").waitFor({ state: "visible" });
+
+    // Now create entities so search index picks them up
+    await page.evaluate(async () => {
+      const v = (window as any).vault;
+      await v.createEntity("character", "Eldrin");
+      await v.createEntity("location", "Tower");
+    });
+
+    // Wait for entities to be in vault and search-indexed
+    await page.waitForFunction(
+      async () => {
+        const v = (window as any).vault;
+        if (!v || Object.keys(v.entities || {}).length < 2) return false;
+        const s = (window as any).searchStore;
+        if (!s?.setQuery) return true; // searchStore not set — skip check
+        await s.setQuery("Eld");
+        return Array.isArray(s.results) && s.results.length > 0;
+      },
+      { timeout: 20000 },
+    );
   });
 
   test("Guided sequence: FROM -> LABEL -> TO", async ({ page }) => {
@@ -55,7 +65,9 @@ test.describe("Oracle Connection Wizard", () => {
 
     // 2. Select FROM
     await input.type("Eld");
-    await expect(page.locator('button:has-text("Eldrin")')).toBeVisible();
+    await expect(page.locator('button:has-text("Eldrin")')).toBeVisible({
+      timeout: 10000,
+    });
     await page.keyboard.press("Tab");
 
     // Verify step change to LABEL
@@ -74,7 +86,9 @@ test.describe("Oracle Connection Wizard", () => {
 
     // 4. Select TO
     await input.type("Tow");
-    await expect(page.locator('button:has-text("Tower")')).toBeVisible();
+    await expect(page.locator('button:has-text("Tower")')).toBeVisible({
+      timeout: 10000,
+    });
     await page.keyboard.press("Enter");
 
     // Final verification

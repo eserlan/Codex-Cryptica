@@ -29,6 +29,7 @@
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
+  import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
@@ -49,6 +50,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
+  import { worldStore } from "$lib/stores/world.svelte";
 
   let { children } = $props();
 
@@ -88,6 +90,17 @@
     if (requestedTheme && requestedTheme in THEMES) {
       themeStore.currentThemeId = requestedTheme;
     }
+
+    // Strip funnel tracking params — defer so the CF beacon fires first
+    const trackingParams = ["ref", "utm_source", "utm_medium", "utm_campaign"];
+    if (trackingParams.some((p) => page.url.searchParams.has(p))) {
+      const clean = new URL(page.url);
+      trackingParams.forEach((p) => clean.searchParams.delete(p));
+      requestIdleCallback(
+        () => history.replaceState(history.state, "", clean.toString()),
+        { timeout: 3000 },
+      );
+    }
   }
 
   onDestroy(() => {
@@ -123,11 +136,9 @@
     // This layout only serves workspace routes — always boot except on landing page
     const isLandingPage = page.url.pathname === `${base}/`;
     const shouldShowLanding = onboardingStore.isLandingPageVisible;
-    const isTesting =
-      typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!isLandingPage || !shouldShowLanding || isTesting || isPopup) {
+      if (!isLandingPage || !shouldShowLanding || isPopup) {
         hasBooted = bootSystem({
           categories,
           vault,
@@ -174,14 +185,17 @@
         eventBus: appEventBus,
         ...featureGlobals,
       });
+
+      if (import.meta.env.DEV || import.meta.env.VITE_STAGING === "true") {
+        (window as any).worldStore = worldStore;
+        void featureGlobals.oracle?.init();
+      }
     })();
   });
 
   async function loadFeatureWindowGlobals() {
     const isSpecialEnv =
-      import.meta.env.DEV ||
-      (typeof window !== "undefined" && (window as any).__E2E__) ||
-      import.meta.env.VITE_STAGING === "true";
+      import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
 
     if (!isSpecialEnv) return {};
 
@@ -255,15 +269,11 @@
     if (vault.isInitialized && !onboardingStore.isLandingPageVisible) {
       if (
         !helpStore.hasSeen("initial-onboarding") &&
-        !(window as any).DISABLE_ONBOARDING &&
         !page.url.searchParams.has("demo")
       ) {
-        const isTesting =
-          typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
         if (
           vault.allEntities.length === 0 &&
           !sessionModeStore.isDemoMode &&
-          !isTesting &&
           !onboardingStore.dismissedLandingPage
         ) {
           demoService.startDemo("fantasy");
@@ -395,6 +405,32 @@
     }
   });
 
+  // On mobile, show a dedicated bottom sheet instead of opening the drawer.
+  $effect(() => {
+    if (modalUIStore.pendingCreateEntity && layoutUIStore.isMobile) {
+      modalUIStore.pendingCreateEntity = false;
+      modalUIStore.showMobileCreateSheet = true;
+    }
+  });
+
+  // Deferred inert / aria-hidden state to prevent focus-hiding warnings
+  let isBackgroundInert = $state(false);
+  $effect(() => {
+    if (anyModalOpen) {
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl &&
+        activeEl instanceof HTMLElement &&
+        activeEl !== document.body
+      ) {
+        activeEl.blur();
+      }
+      isBackgroundInert = true;
+    } else {
+      isBackgroundInert = false;
+    }
+  });
+
   // Keyboard Shortcuts
   const handleKeydown = useGlobalShortcuts({
     searchStore,
@@ -411,13 +447,16 @@
   <!-- Background content — inert when any modal is open so keyboard/AT cannot reach it -->
   <div
     class="contents"
-    inert={anyModalOpen || undefined}
-    aria-hidden={anyModalOpen || undefined}
+    inert={isBackgroundInert || undefined}
+    aria-hidden={isBackgroundInert || undefined}
   >
     <NotificationToast />
 
     {#if !isPopup && !isVttFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />
+      {#if sessionModeStore.isDemoMode}
+        <MobileDemoBanner />
+      {/if}
     {/if}
 
     <div

@@ -40,6 +40,7 @@ This file is the Codex-facing instruction layer for this repository.
 - **User-Facing Changelogs**: Keep all entries in the changelog (`apps/web/src/lib/content/changelog/releases.json`) strictly focused on high-impact, user-facing features. Do not list under-the-hood technical refactors, code optimization, or architectural decomposition updates in the changelog highlights.
 - Create a new branch for code changes, fixes, or refactors.
 - Prefer the GitHub app/MCP tools for structured GitHub work such as PR metadata, comments, labels, reviews, file patches, and PR edits.
+- Create regular ready-for-review pull requests by default; never create draft PRs unless the user explicitly asks for a draft.
 - Prefer `gh` for CI and Actions debugging, raw check/log inspection, or other terminal-native GitHub workflows.
 - Use `gh` as the fallback when the connector does not expose the needed GitHub action cleanly.
 

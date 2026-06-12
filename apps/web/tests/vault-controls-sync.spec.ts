@@ -3,14 +3,22 @@ import { test, expect } from "@playwright/test";
 test.describe("Vault Controls Sync Button", () => {
   test.beforeEach(async ({ page }) => {
     // Basic setup to ensure we're on a page with VaultControls
-    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+    });
 
     // Start a demo to ensure we have a populated vault and VaultControls are visible
     // Using URL param is more reliable than evaluating window.demoService
     await page.goto("/?demo=fantasy");
 
     // Wait for the vault to be loaded (Demo Mode badge appears)
-    await expect(page.getByText("DEMO MODE")).toBeVisible();
+    await expect(
+      page.getByText("DEMO MODE", { exact: true }).first(),
+    ).toBeVisible();
   });
 
   test("should display the Save button with correct initial state", async ({

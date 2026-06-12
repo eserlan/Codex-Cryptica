@@ -229,4 +229,83 @@ describe("SeoImportService", () => {
     await service.checkAndHandlePendingImport();
     expect(replaceState).not.toHaveBeenCalled();
   });
+
+  it("should clear localStorage only after entity creation, not before", async () => {
+    let removedBeforeCreate = false;
+    const storage: Record<string, string> = {};
+    const draft = { type: "character", title: "Erasmus", content: "A mage." };
+    storage["__codex_pending_import"] = JSON.stringify(draft);
+
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => storage[k] ?? null,
+      setItem: (k: string, v: string) => {
+        storage[k] = v;
+      },
+      removeItem: (k: string) => {
+        delete storage[k];
+      },
+    });
+
+    mockVaultStore.createEntity = vi.fn().mockImplementation(async () => {
+      // At point of creation the key should still be present
+      if (!storage["__codex_pending_import"]) removedBeforeCreate = true;
+      return "e1";
+    });
+
+    await service.checkAndHandlePendingImport();
+
+    expect(removedBeforeCreate).toBe(false);
+    expect(storage["__codex_pending_import"]).toBeUndefined();
+  });
+
+  it("should wire [[wiki link]] connections between imported entities", async () => {
+    mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+    // createEntity returns unique IDs per call
+    mockVaultStore.createEntity = vi
+      .fn()
+      .mockResolvedValueOnce("id-valen")
+      .mockResolvedValueOnce("id-guild");
+
+    const drafts = [
+      {
+        type: "character",
+        title: "Valen Frost",
+        content: "Member of [[The Iron Guild]].",
+        labels: ["world-anvil-import"],
+      },
+      {
+        type: "faction",
+        title: "The Iron Guild",
+        content: "A secret society.",
+        labels: ["world-anvil-import"],
+      },
+    ];
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+
+    await service.checkAndHandlePendingImport();
+
+    expect(mockVaultStore.addConnection).toHaveBeenCalledWith(
+      "id-valen",
+      "id-guild",
+      "references",
+      "The Iron Guild",
+    );
+  });
+
+  it("should not wire connection to self or unknown entities", async () => {
+    mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+    mockVaultStore.createEntity = vi.fn().mockResolvedValue("id-solo");
+
+    const draft = {
+      type: "character",
+      title: "Solo",
+      content: "Mentions [[Solo]] and [[Unknown Entity]].",
+      labels: [],
+    };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
+
+    await service.checkAndHandlePendingImport();
+
+    expect(mockVaultStore.addConnection).not.toHaveBeenCalled();
+  });
 });

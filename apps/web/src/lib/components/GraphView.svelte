@@ -30,6 +30,8 @@
   import { chronologyEdit } from "$lib/stores/chronology-edit.svelte";
   import type { TemporalMeaning } from "chronology-engine";
   import type { TemporalMetadata } from "schema";
+  import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
+  import { fly } from "svelte/transition";
 
   type ChronologyPlacementSave = {
     meaning: TemporalMeaning;
@@ -85,6 +87,40 @@
   });
 
   let container: HTMLElement;
+
+  const COACH_MARKS = [
+    {
+      id: "activity-bar",
+      icon: "icon-[lucide--layout-grid]",
+      title: "Views & tools",
+      body: "Switch between Graph, Map, Canvas and more from the bar at the bottom.",
+    },
+    {
+      id: "graph-fab",
+      icon: "icon-[lucide--sliders-horizontal]",
+      title: "Graph controls",
+      body: "The dark button opens layout, filters, and display options for the graph.",
+    },
+    {
+      id: "graph-search",
+      icon: "icon-[lucide--search]",
+      title: "Find anything",
+      body: "Tap the search icon to jump to any entity by name.",
+    },
+  ] as const;
+
+  let coachStep = $state(0);
+  const showCoachMarks = $derived(
+    layoutUIStore.isMobile && !onboardingStore.dismissedMobileGraphCoachMarks,
+  );
+
+  function nextCoachMark() {
+    if (coachStep < COACH_MARKS.length - 1) {
+      coachStep++;
+    } else {
+      onboardingStore.dismissMobileGraphCoachMarks();
+    }
+  }
 
   let graphStyle = $derived(
     getGraphStyles(
@@ -580,11 +616,78 @@
       class="absolute inset-0 flex items-center justify-center pointer-events-none"
       data-testid="graph-empty-state"
     >
-      <EmptyState
-        icon="icon-[lucide--network]"
-        headline="Your graph is empty"
-        body="Add entities in the explorer to see them appear here."
-      />
+      <div class="pointer-events-auto">
+        <EmptyState
+          icon="icon-[lucide--network]"
+          headline="Your graph is empty"
+          body={vault.isGuest
+            ? "Nothing has been shared with you yet."
+            : "Create your first entity to see it appear here."}
+          cta={vault.isGuest ? undefined : "＋ Create your first entity"}
+          onCta={vault.isGuest
+            ? undefined
+            : () => modalUIStore.requestCreateEntity()}
+        />
+      </div>
+    </div>
+  {/if}
+
+  {#if showCoachMarks}
+    {@const mark = COACH_MARKS[coachStep]}
+    <div
+      class="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[90] w-[calc(100%-2rem)] max-w-sm"
+      data-testid="mobile-coach-mark"
+      transition:fly={{ y: 8, duration: 200 }}
+    >
+      <div
+        class="rounded-2xl border border-theme-primary/40 bg-theme-surface/95 backdrop-blur-md p-4 shadow-2xl"
+      >
+        <div class="flex items-start gap-3">
+          <div
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-theme-primary/10 text-theme-primary"
+          >
+            <span class="{mark.icon} h-4 w-4"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p
+              class="text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary mb-1"
+            >
+              {mark.title}
+            </p>
+            <p class="text-xs leading-relaxed text-theme-text/80">
+              {mark.body}
+            </p>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center justify-between">
+          <div class="flex gap-1">
+            {#each COACH_MARKS as _, i}
+              <div
+                class="h-1.5 w-1.5 rounded-full transition-colors {i ===
+                coachStep
+                  ? 'bg-theme-primary'
+                  : 'bg-theme-border'}"
+              ></div>
+            {/each}
+          </div>
+          <div class="flex gap-2">
+            <button
+              class="text-[10px] text-theme-muted hover:text-theme-primary transition-colors"
+              onclick={() => onboardingStore.dismissMobileGraphCoachMarks()}
+              data-testid="coach-mark-skip"
+            >
+              Skip
+            </button>
+            <button
+              class="rounded-lg bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-bg transition-opacity hover:opacity-90"
+              onclick={nextCoachMark}
+              data-testid="coach-mark-next"
+            >
+              {coachStep < COACH_MARKS.length - 1 ? "Next" : "Got it"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   {/if}
 

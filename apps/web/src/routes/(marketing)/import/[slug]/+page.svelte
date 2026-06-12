@@ -1,30 +1,52 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { parseWaExport } from "$lib/services/seo/wa-parser";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const pageData = $derived(data.importPage);
 
   let isDragging = $state(false);
+  const ENTITY_TYPES = [
+    "character",
+    "creature",
+    "location",
+    "item",
+    "event",
+    "faction",
+    "note",
+  ] as const;
+
   let filesParsed = $state<
     Array<{ type: string; title: string; content: string; labels: string[] }>
   >([]);
-  let parseStats = $derived({
-    total: filesParsed.length,
-    characters: filesParsed.filter((f) => f.type === "character").length,
-    locations: filesParsed.filter(
-      (f) => f.type === "location" || f.type === "creature",
-    ).length,
-    factions: filesParsed.filter((f) => f.type === "faction").length,
-    items: filesParsed.filter((f) => f.type === "item").length,
-    others: filesParsed.filter(
-      (f) =>
-        !["character", "location", "creature", "faction", "item"].includes(
-          f.type,
-        ),
-    ).length,
+  // ⚡ Bolt Optimization: Calculate stats in a single pass to avoid multiple .filter() array allocations.
+  let parseStats = $derived.by(() => {
+    let characters = 0;
+    let locations = 0;
+    let factions = 0;
+    let items = 0;
+    let others = 0;
+
+    for (const f of filesParsed) {
+      if (f.type === "character") characters++;
+      else if (f.type === "location" || f.type === "creature") locations++;
+      else if (f.type === "faction") factions++;
+      else if (f.type === "item") items++;
+      else others++;
+    }
+
+    return {
+      total: filesParsed.length,
+      characters,
+      locations,
+      factions,
+      items,
+      others,
+    };
   });
 
   let errorMessage = $state<string | null>(null);
@@ -155,40 +177,7 @@
     const parsed: typeof filesParsed = [];
 
     if (slug === "world-anvil-export") {
-      // WA backup JSON structure is often an array or { articles: [...] }
-      const articles = Array.isArray(data)
-        ? data
-        : data.articles || Object.values(data);
-      for (const item of articles) {
-        if (!item || typeof item !== "object") continue;
-        const title = item.title || item.name || "Untitled Article";
-        const body = cleanHtml(
-          item.body || item.content || item.content_parsed || "",
-        );
-        let type = "note";
-        const template = String(item.template || "").toLowerCase();
-        if (template.includes("character") || template.includes("person"))
-          type = "character";
-        else if (
-          template.includes("location") ||
-          template.includes("settlement")
-        )
-          type = "location";
-        else if (template.includes("item") || template.includes("weapon"))
-          type = "item";
-        else if (
-          template.includes("organization") ||
-          template.includes("faction")
-        )
-          type = "faction";
-
-        parsed.push({
-          type,
-          title,
-          content: body,
-          labels: ["world-anvil-import", template].filter(Boolean),
-        });
-      }
+      parsed.push(...parseWaExport(data));
     } else if (slug === "kanka-json") {
       // Kanka campaign exports
       const entities =
@@ -300,7 +289,7 @@
         JSON.stringify(filesParsed),
       );
       // Redirect to Codex base route with UTM tracking
-      window.location.href = `${base}/?utm_source=importer-${pageData.slug}&utm_medium=landing-page&utm_campaign=seo-funnel`;
+      window.location.href = `${cleanBase}/?utm_source=importer-${pageData.slug}&utm_medium=landing-page&utm_campaign=seo-funnel`;
     } catch {
       errorMessage =
         "Failed to store import data. Please check localStorage permissions.";
@@ -411,36 +400,41 @@
   <header
     class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
   >
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="{base}/" class="flex items-center gap-2 group" id="logo-link">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <a
+        href="{cleanBase}/"
+        class="flex items-center gap-2 group min-w-0"
+        id="logo-link"
+      >
         <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 transition-transform group-hover:rotate-12"
+          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
         ></span>
         <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors"
+          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
         >
-          Codex Cryptica
+          Codex<span class="hidden sm:inline"> Cryptica</span>
         </span>
       </a>
       <nav
         class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
       >
         <a
-          href="{base}/features"
+          href="{cleanBase}/features"
           class="hover:text-theme-primary transition-colors">Features</a
         >
-        <a href="{base}/blog" class="hover:text-theme-primary transition-colors"
-          >Devlog</a
+        <a
+          href="{cleanBase}/blog"
+          class="hover:text-theme-primary transition-colors">Devlog</a
         >
         <a
-          href="{base}/tools/dnd-npc-generator"
+          href="{cleanBase}/tools/dnd-npc-generator"
           class="hover:text-theme-primary transition-colors">Generators</a
         >
       </nav>
-      <div>
+      <div class="shrink-0">
         <a
-          href="{base}/"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+          href="{cleanBase}/?ref=import-nav"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -638,55 +632,117 @@
           </div>
         </div>
 
-        <!-- Preview Tree List -->
+        <!-- Expectation warning -->
+        {#if pageData.slug === "world-anvil-export"}
+          <div
+            class="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300"
+          >
+            <span
+              class="icon-[lucide--triangle-alert] w-4 h-4 shrink-0 mt-0.5"
+              aria-hidden="true"
+            ></span>
+            <span
+              >Complex World Anvil formatting — columns, sidebars, and tooltips
+              — has been simplified to clean Markdown. Review entries below and
+              correct any misdetected types before importing.</span
+            >
+          </div>
+        {/if}
+
+        <!-- Review List -->
         <div
-          class="max-h-[300px] overflow-y-auto border border-theme-border/40 bg-theme-bg/60 rounded-2xl p-4"
+          class="max-h-[400px] overflow-y-auto border border-theme-border/40 bg-theme-bg/60 rounded-2xl p-3 space-y-1.5"
         >
-          <ul class="space-y-2">
-            {#each filesParsed.slice(0, 50) as parsedFile}
-              <li
-                class="flex items-center justify-between p-2 bg-theme-surface/35 border border-theme-border/30 rounded-lg text-xs"
+          {#each filesParsed as parsedFile, idx}
+            <div
+              class="flex items-center gap-2 px-3 py-2 bg-theme-surface/35 border border-theme-border/30 rounded-lg text-xs"
+            >
+              <!-- Type icon -->
+              <span
+                class="{parsedFile.type === 'character'
+                  ? 'icon-[lucide--user]'
+                  : parsedFile.type === 'creature'
+                    ? 'icon-[lucide--skull]'
+                    : parsedFile.type === 'location'
+                      ? 'icon-[lucide--map-pin]'
+                      : parsedFile.type === 'faction'
+                        ? 'icon-[lucide--flag]'
+                        : parsedFile.type === 'item'
+                          ? 'icon-[lucide--sparkles]'
+                          : parsedFile.type === 'event'
+                            ? 'icon-[lucide--calendar]'
+                            : 'icon-[lucide--file-text]'} w-4 h-4 text-theme-primary shrink-0"
+                aria-hidden="true"
+              ></span>
+
+              <!-- Editable title -->
+              <input
+                type="text"
+                class="flex-1 min-w-0 bg-transparent text-theme-text/90 font-medium placeholder-theme-muted focus:outline-none focus:ring-1 focus:ring-theme-primary/40 rounded px-1 py-0.5 truncate"
+                bind:value={filesParsed[idx].title}
+                aria-label="Entity title"
+              />
+
+              <!-- Type select -->
+              <select
+                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono uppercase rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
+                bind:value={filesParsed[idx].type}
+                aria-label="Entity type"
               >
-                <span
-                  class="font-medium text-theme-text/90 flex items-center gap-2 truncate"
-                >
-                  {#if parsedFile.type === "character"}
-                    <span class="icon-[lucide--user] w-4 h-4 text-theme-primary"
-                    ></span>
-                  {:else if parsedFile.type === "location"}
-                    <span
-                      class="icon-[lucide--map-pin] w-4 h-4 text-theme-primary"
-                    ></span>
-                  {:else if parsedFile.type === "faction"}
-                    <span class="icon-[lucide--flag] w-4 h-4 text-theme-primary"
-                    ></span>
-                  {:else if parsedFile.type === "item"}
-                    <span
-                      class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"
-                    ></span>
-                  {:else}
-                    <span
-                      class="icon-[lucide--file-text] w-4 h-4 text-theme-primary"
-                    ></span>
-                  {/if}
-                  {parsedFile.title}
-                </span>
-                <span
-                  class="text-[8px] font-mono uppercase bg-theme-primary/10 border border-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded-full flex-shrink-0"
-                >
-                  {parsedFile.type}
-                </span>
-              </li>
-            {/each}
-            {#if filesParsed.length > 50}
-              <li
-                class="text-center text-[10px] text-theme-muted py-2 border-t border-theme-border/20"
-              >
-                And {filesParsed.length - 50} more entries...
-              </li>
-            {/if}
-          </ul>
+                {#each ENTITY_TYPES as t}
+                  <option value={t}>{t}</option>
+                {/each}
+              </select>
+            </div>
+          {/each}
         </div>
+      </section>
+    {/if}
+
+    {#if pageData.relatedLinks && pageData.relatedLinks.length > 0}
+      <section class="border-t border-theme-border/30 py-10">
+        <div class="max-w-4xl mx-auto px-6">
+          <h2
+            class="font-header text-sm uppercase tracking-[0.2em] text-theme-muted mb-6 text-center"
+          >
+            Related Pages
+          </h2>
+          <div class="flex flex-wrap justify-center gap-3">
+            {#each pageData.relatedLinks as link (link.href)}
+              <a
+                href="{cleanBase}{link.href}"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
+              >
+                <span
+                  class="icon-[lucide--arrow-right] w-3 h-3"
+                  aria-hidden="true"
+                ></span>
+                {link.label}
+              </a>
+            {/each}
+          </div>
+        </div>
+      </section>
+    {/if}
+
+    <!-- Responsible AI Trust Banner -->
+    {#if pageData.aiTrustSection}
+      <section class="border-t border-theme-border/60 mt-16 pt-10 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{cleanBase}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
       </section>
     {/if}
 
@@ -726,23 +782,23 @@
       <div>© 2026 Codex Cryptica. All rights reserved.</div>
       <div class="flex gap-6">
         <a
-          href="{base}/terms"
+          href="{cleanBase}/terms"
           class="hover:text-theme-primary transition-colors">Terms</a
         >
         <a
-          href="{base}/privacy"
+          href="{cleanBase}/privacy"
           class="hover:text-theme-primary transition-colors">Privacy</a
         >
         <a
-          href="{base}/tools"
+          href="{cleanBase}/tools"
           class="hover:text-theme-primary transition-colors">Tools</a
         >
         <a
-          href="{base}/sitemap.xml"
+          href="{cleanBase}/sitemap.xml"
           class="hover:text-theme-primary transition-colors">Sitemap</a
         >
         <a
-          href="{base}/llms.txt"
+          href="{cleanBase}/llms.txt"
           class="hover:text-theme-primary transition-colors">LLM Docs</a
         >
       </div>

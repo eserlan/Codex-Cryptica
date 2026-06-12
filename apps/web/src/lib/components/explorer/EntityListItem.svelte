@@ -51,7 +51,7 @@
 </script>
 
 <div
-  class="[content-visibility:auto] [contain-intrinsic-size:0_56px] group relative flex items-center rounded-xl border transition-all {!isMatching
+  class="[content-visibility:auto] [contain-intrinsic-size:0_56px] group relative flex flex-wrap items-center rounded-xl border transition-all {!isMatching
     ? 'opacity-50'
     : ''} {entity.id === focusedEntityId
     ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
@@ -182,8 +182,10 @@
   </button>
 
   {#if entity.labels && entity.labels.length > 0}
-    <div class="flex gap-1 px-2 flex-nowrap justify-end max-w-[45%] shrink-0">
-      {#each entity.labels.slice(0, 2) as label}
+    <div
+      class="w-full md:w-auto order-last md:order-none pl-9 pr-2 md:px-2 pb-2 md:pb-0 flex gap-1 flex-nowrap justify-start md:justify-end max-w-full md:max-w-[45%] shrink-0"
+    >
+      {#each entity.labels.slice(0, 2) as label, index (`${entity.id}-label-${index}`)}
         <button
           type="button"
           onclick={(e) => {

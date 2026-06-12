@@ -274,7 +274,7 @@
   let isDraftActioning = $state(false);
 
   const handleApproveDraft = async () => {
-    if (!entity || isDraftActioning) return;
+    if (!entity || isDraftActioning || vault.isGuest) return;
     isDraftActioning = true;
     try {
       await vault.updateEntity(entity.id, { status: "active" });
@@ -286,7 +286,7 @@
   };
 
   const handleRejectDraft = async () => {
-    if (!entity || isDraftActioning) return;
+    if (!entity || isDraftActioning || vault.isGuest) return;
     isDraftActioning = true;
     try {
       await vault.deleteEntity(entity.id);
@@ -399,7 +399,7 @@
                 <span
                   class="text-[9px] font-bold tracking-widest text-amber-500 uppercase"
                 >
-                  AI Draft — Pending Review
+                  Draft Pending Review
                 </span>
                 <div class="flex items-center gap-1">
                   <button

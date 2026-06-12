@@ -34,3 +34,24 @@ describe("Comparisons SvelteKit Route", () => {
     });
   });
 });
+
+describe("Responsible AI trust banner config", () => {
+  it("world-anvil comparison has aiTrustSection enabled", async () => {
+    const { comparisons: realComparisons } = (await vi.importActual(
+      "$lib/config/seo-pages",
+    )) as typeof import("$lib/config/seo-pages");
+    expect(realComparisons["world-anvil"].aiTrustSection).toBe(true);
+  });
+
+  it("non-World-Anvil comparisons do not have aiTrustSection", async () => {
+    const { comparisons: realComparisons } = (await vi.importActual(
+      "$lib/config/seo-pages",
+    )) as typeof import("$lib/config/seo-pages");
+    const others = Object.entries(realComparisons).filter(
+      ([slug]) => slug !== "world-anvil",
+    );
+    for (const [, page] of others) {
+      expect(page.aiTrustSection).toBeFalsy();
+    }
+  });
+});

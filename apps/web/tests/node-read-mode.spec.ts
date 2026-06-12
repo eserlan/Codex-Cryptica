@@ -4,17 +4,18 @@ test.describe("Node Read Mode", () => {
   test.beforeEach(async ({ page }) => {
     // Disable onboarding to avoid popup interference
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
-    await page.goto("http://localhost:5173/");
-    // Wait for vault to be ready
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.goto("/");
+    // Wait for vault and uiStore to be ready
+    await page.waitForFunction(
+      () =>
+        (window as any).vault?.status === "idle" && !!(window as any).uiStore,
+    );
   });
 
   test("Open Read Mode, Copy, Navigate, and Close", async ({ page }) => {
@@ -49,7 +50,9 @@ test.describe("Node Read Mode", () => {
     await expect(modal).toBeVisible();
 
     // Use specific ID for title to avoid ambiguity
-    await expect(modal.getByTestId("entity-title")).toHaveText("Hero");
+    await expect(modal.getByTestId("entity-title")).toHaveText("Hero", {
+      timeout: 10000,
+    });
 
     // 3. Verify Copy (Mock Clipboard)
     await page.context().grantPermissions(["clipboard-write"]);
@@ -59,7 +62,9 @@ test.describe("Node Read Mode", () => {
     }
 
     // 4. Navigate to Villain
-    const connectionLink = modal.getByRole("button", { name: "Villain" });
+    const connectionLink = modal
+      .getByRole("button", { name: "Villain" })
+      .first();
     await expect(connectionLink).toBeVisible();
     await connectionLink.click();
 
@@ -82,7 +87,7 @@ test.describe("Node Read Mode", () => {
     const longTitle =
       "Doc Ripperdoc with a title long enough to wrap across the mobile header";
 
-    const id = await page.evaluate(async (title) => {
+    await page.evaluate(async (title) => {
       const entityId = await (window as any).vault.createEntity(
         "character",
         title,
@@ -91,13 +96,9 @@ test.describe("Node Read Mode", () => {
         },
       );
       (window as any).__TEST_IDS__ = { id: entityId };
-      return entityId;
     }, longTitle);
 
-    await page.waitForFunction(
-      (entityId) => !!(window as any).vault?.entities?.[entityId],
-      id,
-    );
+    await page.waitForTimeout(500); // allow entity store reactivity to settle
 
     await page.evaluate(() => {
       const { id } = (window as any).__TEST_IDS__;
@@ -135,7 +136,7 @@ test.describe("Node Read Mode", () => {
 
   test("Open Lightbox and Close with Escape", async ({ page }) => {
     // 1. Setup Data with Image
-    const id = await page.evaluate(async () => {
+    await page.evaluate(async () => {
       const base64Image =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAC1HAQAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
       const id = await (window as any).vault.createEntity(
@@ -147,12 +148,8 @@ test.describe("Node Read Mode", () => {
         },
       );
       (window as any).__TEST_IDS__ = { id };
-      return id;
     });
-    await page.waitForFunction(
-      (entityId) => !!(window as any).vault?.entities?.[entityId],
-      id,
-    );
+    await page.waitForTimeout(500); // allow entity store reactivity to settle
 
     // 2. Open Zen Mode
     await page.evaluate(() => {

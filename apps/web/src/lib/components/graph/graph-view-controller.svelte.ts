@@ -153,7 +153,7 @@ export class GraphViewController {
       });
       updateSelectionCount();
 
-      if (import.meta.env.DEV || (window as any).__E2E__) {
+      if (import.meta.env.DEV) {
         (window as any).cy = instance;
       }
 
@@ -425,6 +425,7 @@ export class GraphViewController {
         stableLayout: this.deps.graph.stableLayout,
         isGuest: this.deps.vault.isGuest,
         fit,
+        isMobile: this.deps.layoutUIStore.isMobile,
         onLayoutStart: () => {
           this.isLayoutRunning = true;
         },

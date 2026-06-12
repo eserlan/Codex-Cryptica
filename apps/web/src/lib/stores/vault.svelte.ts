@@ -555,10 +555,7 @@ export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());
 
-if (
-  typeof window !== "undefined" &&
-  (import.meta.env.DEV || (window as any).__E2E__)
-) {
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   (window as any).vault = vault;
   debugStore.log("[VaultStore] Module loaded, vault attached to window");
 }

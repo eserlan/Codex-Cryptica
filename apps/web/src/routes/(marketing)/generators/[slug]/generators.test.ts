@@ -27,6 +27,16 @@ describe("Generators SvelteKit Route", () => {
         { slug: "faction" },
         { slug: "quest" },
         { slug: "item" },
+        { slug: "tavern" },
+        { slug: "social-hub" },
+        { slug: "kingdom" },
+        { slug: "nation" },
+        { slug: "vampire-clan" },
+        { slug: "names" },
+        { slug: "fantasy-names" },
+        { slug: "dnd-npc" },
+        { slug: "pantheon-generator" },
+        { slug: "god-generator" },
       ]);
     });
   });

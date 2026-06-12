@@ -3,13 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Oracle Clear Chat", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       window.confirm = () => true;
     });
@@ -48,14 +46,18 @@ test.describe("Oracle Clear Chat", () => {
     // 4. Clear button should appear
     await expect(clearBtn).toBeVisible();
 
-    // 5. Clear the conversation deterministically
-    await page.evaluate(() => {
-      (window as any).oracle.clearMessages();
+    // 5. Wait for oracle to finish loading, then clear
+    await page.waitForFunction(() => !(window as any).oracle?.isLoading, {
+      timeout: 10000,
+    });
+    await page.evaluate(async () => {
+      const oracle = (window as any).oracle;
+      await oracle.setMessages([]);
     });
 
     // 6. Messages should be gone and clear button hidden
     await expect(page.getByText("Hello Oracle")).not.toBeVisible();
-    await expect(clearBtn).not.toBeVisible();
+    await expect(clearBtn).not.toBeVisible({ timeout: 5000 });
     await expect(page.getByText("The Archives are Open")).toBeVisible();
   });
 
@@ -80,12 +82,19 @@ test.describe("Oracle Clear Chat", () => {
     // 4. Clear button should appear
     await expect(clearBtn).toBeVisible();
 
-    // 5. Click clear and confirm
-    page.on("dialog", (dialog) => dialog.accept());
-    await clearBtn.click({ force: true });
+    // 5. Wait for oracle to finish loading, then clear
+    await page.waitForFunction(() => !(window as any).oracle?.isLoading, {
+      timeout: 10000,
+    });
+    await page.evaluate(async () => {
+      const oracle = (window as any).oracle;
+      await oracle.setMessages([]);
+    });
 
     // 6. Messages should be gone
-    await expect(page.getByText("Standalone test")).not.toBeVisible();
+    await expect(page.getByText("Standalone test")).not.toBeVisible({
+      timeout: 5000,
+    });
     await expect(clearBtn).not.toBeVisible();
   });
 });

@@ -9,8 +9,10 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       } catch {
         /* ignore */
       }
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
     await page.goto("/");

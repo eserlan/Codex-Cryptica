@@ -234,20 +234,14 @@ describe("app-init", () => {
   });
 
   describe("setupWindowGlobals", () => {
-    it("should attach context to window if special env (__E2E__)", () => {
-      (window as any).__E2E__ = true;
-
+    it("should attach context to window in special env (DEV)", () => {
       const mockContext = { searchStore: { name: "search" } };
       setupWindowGlobals(mockContext as any);
 
       expect((window as any).searchStore).toBe(mockContext.searchStore);
-
-      delete (window as any).__E2E__;
     });
 
     it("should handle dynamic imports in setupWindowGlobals", async () => {
-      (window as any).__E2E__ = true;
-
       // We don't necessarily need to mock the modules if we just want to hit the lines,
       // but wait for the promises to settle.
       setupWindowGlobals({} as any);
@@ -256,7 +250,6 @@ describe("app-init", () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Just verifying it doesn't crash is often enough for these lazy loads in init
-      delete (window as any).__E2E__;
     });
   });
 

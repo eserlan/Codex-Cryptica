@@ -3,67 +3,84 @@ import { test, expect } from "@playwright/test";
 test.describe("Vault Node Deletion", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         (window as any).localStorage.setItem("codex_skip_landing", "true");
       } catch {
         /* ignore */
       }
     });
-    // Create a fresh vault for each test if possible, or clear existing
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
+    await page.waitForFunction(
+      () =>
+        (window as any).vault?.status === "idle" && !!(window as any).uiStore,
+    );
   });
 
   test("should delete a node and its file", async ({ page }) => {
-    // 1. Create a node
-    const newButton = page.getByTestId("new-entity-button");
-    await newButton.click();
-    await page
-      .locator('input[placeholder="Chronicle Title..."]')
-      .fill("Delete Me");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // 2. Open the node
-    await page.getByText("Delete Me").first().click();
-    await expect(page.getByTestId("entity-count")).toBeVisible();
-
-    // 3. Trigger deletion
-    const deleteButton = page.getByTestId("delete-entity-button");
-
-    // Handle confirmation dialog
-    page.once("dialog", (dialog) => {
-      expect(dialog.message()).toContain("Are you sure");
-      dialog.accept();
+    // 1. Create a node via API
+    await page.evaluate(async () => {
+      await (window as any).vault.createEntity("note", "Delete Me", {
+        id: "delete-me",
+      });
     });
 
+    // 2. Select the entity to open the detail panel
+    await page.evaluate(() => {
+      (window as any).vault.selectedEntityId = "delete-me";
+    });
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
+      timeout: 5000,
+    });
+
+    // 3. Click the delete button
+    const deleteButton = page.getByTestId("delete-entity-button");
+    await expect(deleteButton).toBeVisible();
     await deleteButton.click();
 
-    // 4. Verify node is gone from UI
-    await expect(page.getByText("Delete Me")).toHaveCount(0);
+    // 4. Accept the Svelte confirmation dialog ("Delete permanently")
+    const confirmBtn = page.getByRole("button", { name: "Delete permanently" });
+    await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+    await confirmBtn.click();
+
+    // 5. Verify node is gone
+    await page.waitForFunction(
+      () => !(window as any).vault?.entities?.["delete-me"],
+      { timeout: 5000 },
+    );
     await expect(page.getByTestId("entity-detail-panel")).not.toBeVisible();
   });
 
   test("should cancel deletion", async ({ page }) => {
-    // 1. Create a node
-    const newButton = page.getByTestId("new-entity-button");
-    await newButton.click();
-    await page
-      .locator('input[placeholder="Chronicle Title..."]')
-      .fill("Keep Me");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // 2. Open the node
-    await page.getByText("Keep Me").first().click();
-
-    // 3. Trigger and cancel deletion
-    page.once("dialog", (dialog) => {
-      dialog.dismiss();
+    // 1. Create a node via API
+    await page.evaluate(async () => {
+      await (window as any).vault.createEntity("note", "Keep Me", {
+        id: "keep-me",
+      });
     });
 
+    // 2. Select the entity
+    await page.evaluate(() => {
+      (window as any).vault.selectedEntityId = "keep-me";
+    });
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
+      timeout: 5000,
+    });
+
+    // 3. Click delete, then cancel via Svelte dialog
     await page.getByTestId("delete-entity-button").click();
+    const cancelBtn = page.getByRole("button", { name: "Keep entity" });
+    await expect(cancelBtn).toBeVisible({ timeout: 5000 });
+    await cancelBtn.click();
 
     // 4. Verify node still exists
-    await expect(page.getByText("Keep Me").first()).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toBeVisible();
+    const entity = await page.evaluate(
+      () => (window as any).vault?.entities?.["keep-me"],
+    );
+    expect(entity).toBeTruthy();
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
   });
 });

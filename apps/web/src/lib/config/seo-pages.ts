@@ -18,11 +18,15 @@ export interface SEOPageData {
   }>;
   /** Hero badge text. Defaults to "100% Local-First Campaign Wiki". */
   eyebrow?: string;
+  /** Large emotional tagline rendered between h1 and subheading. Use \n to split lines. */
+  tagline?: string;
   /** Optional second button in the hero. */
   secondaryCtaText?: string;
   secondaryCtaHref?: string;
   /** Links shown in a "Related pages" section above the FAQ. */
   relatedLinks?: Array<{ href: string; label: string }>;
+  /** Show the Responsible AI trust banner before the FAQ section. */
+  aiTrustSection?: boolean;
 }
 
 export interface SEOComparisonPageData extends SEOPageData {
@@ -33,6 +37,8 @@ export interface SEOComparisonPageData extends SEOPageData {
     codexHas: boolean | string;
   }>;
   verdict: string;
+  /** Optional migration path strip shown below the hero CTAs. */
+  migrationStrip?: Array<{ icon: string; label: string }>;
 }
 
 export const solutions: Record<string, SEOPageData> = {
@@ -604,10 +610,17 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     introText:
       "Both Obsidian and Codex Cryptica offer powerful local-first markdown linking, but they target different goals. Obsidian is a general-purpose note-taking application requiring multiple community plugins to manage campaigns, whereas Codex Cryptica is built from the ground up for TTRPG mechanics, maps, timelines, and relationships.",
     ctaText: "Try Codex Cryptica",
+    secondaryCtaText: "Import Obsidian Vault",
+    secondaryCtaHref: "/import/obsidian-vault",
     keywords: [
       "codex cryptica vs obsidian",
       "obsidian rpg campaign manager",
       "best obsidian alternative for dnd",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--folder-open]", label: "Obsidian Vault" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     features: [
       {
@@ -676,6 +689,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
     relatedLinks: [
+      { href: "/import/obsidian-vault", label: "Import Obsidian vault" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       {
         href: "/solutions/local-first-worldbuilding-tool",
@@ -688,14 +702,14 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     competitorName: "World Anvil",
     title: "Codex Cryptica vs World Anvil: Private vs Cloud Worldbuilding",
     description:
-      "Compare Codex Cryptica and World Anvil. Choose between a hosted collaborative worldbuilding platform and private local-first Markdown vaults.",
-    h1: "Codex Cryptica vs World Anvil",
-    subheading:
-      "Choose hosted worldbuilding and publishing, or private local-first worldbuilding that runs in your browser.",
+      "Compare Codex Cryptica and World Anvil. Discover the differences between local-first privacy and online subscription-based worldbuilding.",
+    eyebrow: "Codex Cryptica vs World Anvil",
+    h1: "Your World Is Yours.",
+    subheading: "No subscriptions. No cloud lock-in.",
     introText:
-      "World Anvil is a powerful cloud-based worldbuilding suite for writers, GMs, and lore-heavy projects. Codex Cryptica takes a different path: your world lives in a local vault, works offline, opens fast, and can be explored as a graph with optional AI assistance.\n\nIf you want a hosted public wiki, reader-facing presentation, and collaboration features, World Anvil may be the better fit.\nIf you want privacy, portability, offline access, and direct control over your files, Codex Cryptica is built for that.",
+      "Import your World Anvil export and keep building. Your lore lives as local Markdown files — yours to keep, edit, and explore as a connected graph.",
     ctaText: "Get Free Local Vault",
-    secondaryCtaText: "Import Existing Lore",
+    secondaryCtaText: "Import World Anvil Export",
     secondaryCtaHref: "/import/world-anvil-export",
     keywords: [
       "codex cryptica vs world anvil",
@@ -704,93 +718,83 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     ],
     features: [
       {
-        title: "Local-First Storage",
+        title: "Bring Your World Anvil Export",
         description:
-          "Your campaign notes stay in your browser or local vault. Codex does not store your world in a remote hosted database.",
-        icon: "icon-[lucide--lock]",
+          "Already have years of lore in World Anvil? Import your export and pick up where you left off — no copy-pasting, no rebuilding from scratch.",
+        icon: "icon-[lucide--package-open]",
       },
       {
-        title: "Offline Session Running",
+        title: "Your Lore, Your Files",
         description:
-          "Run sessions at the table, on a plane, or in remote areas. Everything functions 100% offline-ready without latency.",
+          "Your world wiki is saved as plain Markdown files on your own device. No vendor lock-in, no export gatekeeping, no account required.",
+        icon: "icon-[lucide--file-text]",
+      },
+      {
+        title: "Core Vault Works Offline",
+        description:
+          "Write, search, and explore your campaign graph without an internet connection. No server latency at the game table.",
         icon: "icon-[lucide--wifi-off]",
       },
-      {
-        title: "Graph-Based Exploration",
-        description:
-          "Understand complex lore relationships visually. Wiki-link connections automatically build an interactive campaign graph.",
-        icon: "icon-[lucide--git-fork]",
-      },
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--cloud-download]", label: "World Anvil Export" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Vault" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     comparisonTable: [
       {
-        feature: "Hosted web publishing",
-        competitorHas: "Yes",
-        codexHas: "No / limited",
-      },
-      {
-        feature: "Public world presentation",
-        competitorHas: "Strong",
-        codexHas: "Basic / not the focus",
-      },
-      {
-        feature: "Collaboration and subscribers",
-        competitorHas: "Strong, built-in community features",
-        codexHas: "Local-first, single-user focused",
-      },
-      {
         feature: "Storage location",
-        competitorHas: "Remote hosted database",
-        codexHas: "Your browser / Local Markdown vault",
+        competitorHas: "Remote hosted platform",
+        codexHas: "Browser storage / local Markdown vault",
       },
       {
-        feature: "Offline compatibility",
-        competitorHas: "No (Cloud-dependent)",
-        codexHas: "Yes (100% offline functional)",
+        feature: "Offline core workflow",
+        competitorHas: "Cloud-dependent",
+        codexHas: "Yes — core vault works offline",
       },
       {
-        feature: "Native Markdown files",
+        feature: "Native local Markdown vault",
         competitorHas: "No",
         codexHas: "Yes",
       },
       {
-        feature: "Full world export",
-        competitorHas: "Paid feature (ZIP/JSON/HTML)",
-        codexHas: "Local files by default (No lock-in)",
+        feature: "World export",
+        competitorHas: "Guild feature for full world export",
+        codexHas: "Local files by default",
       },
       {
         feature: "Private worlds",
-        competitorHas: "Paid feature (Guild Tiers)",
+        competitorHas: "Guild (paid) feature",
         codexHas: "Private by default",
       },
       {
         feature: "AI assistance",
-        competitorHas: "Third-party / Platform-dependent",
-        codexHas: "Optional Gemini-powered assistance (BYO Key)",
-      },
-      {
-        feature: "Session performance",
-        competitorHas: "Cloud-dependent performance",
-        codexHas: "Local-first performance",
+        competitorHas: "External AI tools / not local-vault focused",
+        codexHas: "Optional BYO-key vault-aware assistance",
       },
       {
         feature: "Graph-based lore exploration",
-        competitorHas: "Limited / wiki-link based",
+        competitorHas: "Wiki-link/article based",
         codexHas: "Core feature",
       },
       {
         feature: "Price",
         competitorHas: "Freemium / paid tiers",
-        codexHas: "Free (Source Available)",
+        codexHas: "Free, source-available",
       },
     ],
     verdict:
-      "Choose World Anvil if you want a hosted, collaborative worldbuilding platform with strong publishing, presentation, and community features. Choose Codex Cryptica if you want your campaign world stored locally, available offline, easy to back up, and explorable as a private AI-assisted knowledge graph.",
+      "Your world should not feel trapped.\n\nChoose Codex Cryptica if you want full ownership of your lore, offline-first access, plain Markdown files, and no subscription fees.\n\nChoose World Anvil if hosted publishing, subscriber features, public presentation, and community wikis are your priority.",
     faq: [
       {
         question: "Is Codex Cryptica completely free?",
         answer:
           "Yes, Codex is free and source-available. There are no paywalls or storage restrictions on your local campaigns.",
+      },
+      {
+        question: "Can I import my World Anvil content?",
+        answer:
+          "Yes. Export your world from World Anvil and import it directly into Codex Cryptica. Your articles become local Markdown files you own outright.",
       },
       {
         question: "How do players access my Codex campaign?",
@@ -806,6 +810,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
         label: "Local-first worldbuilding",
       },
     ],
+    aiTrustSection: true,
   },
   legendkeeper: {
     slug: "legendkeeper",
@@ -819,10 +824,17 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     introText:
       "LegendKeeper is a fast, beautifully designed campaign manager, but it is a closed cloud service that requires paid hosting. Codex Cryptica brings the same fluid, interactive wiki experience directly to your browser as a local-first, privacy-respecting tool.",
     ctaText: "Try Private Wiki",
+    secondaryCtaText: "Import LegendKeeper Export",
+    secondaryCtaHref: "/import/legendkeeper-json",
     keywords: [
       "codex cryptica vs legendkeeper",
       "legendkeeper alternative",
       "free campaign wiki",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--cloud-download]", label: "LegendKeeper Export" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     features: [
       {
@@ -882,6 +894,10 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
     ],
     relatedLinks: [
+      {
+        href: "/import/legendkeeper-json",
+        label: "Import LegendKeeper export",
+      },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       { href: "/vs/obsidian", label: "vs Obsidian" },
       {
@@ -902,11 +918,18 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     introText:
       "Kanka is a popular cloud-hosted campaign management platform with strong sharing features, but it stores all your world data on remote servers and restricts some features behind paid tiers. Codex Cryptica offers the same rich wiki and relationship graph as a fully local, free, offline-first alternative.",
     ctaText: "Try Free Local Vault",
+    secondaryCtaText: "Import Kanka Export",
+    secondaryCtaHref: "/import/kanka-json",
     keywords: [
       "codex cryptica vs kanka",
       "kanka alternative",
       "kanka rpg campaign manager",
       "free kanka alternative",
+    ],
+    migrationStrip: [
+      { icon: "icon-[lucide--cloud-download]", label: "Kanka JSON Export" },
+      { icon: "icon-[lucide--file-text]", label: "Plain Markdown Files" },
+      { icon: "icon-[lucide--network]", label: "Interactive Entity Graph" },
     ],
     features: [
       {
@@ -963,6 +986,7 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     verdict:
       "Kanka excels at team-shared cloud wikis, but if you value offline access, data privacy, and no subscription fees, Codex Cryptica delivers a richer local experience with the same wiki depth and no monthly cost.",
     relatedLinks: [
+      { href: "/import/kanka-json", label: "Import Kanka export" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       { href: "/vs/obsidian", label: "vs Obsidian" },
       { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
@@ -1197,6 +1221,13 @@ export const importsConfig: Record<string, SEOImportPageData> = {
           "No, Codex is free and open-source. All parsing and vault generation is computed local-first in your browser.",
       },
     ],
+    relatedLinks: [
+      { href: "/vs/obsidian", label: "Codex vs Obsidian" },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   "world-anvil-export": {
     slug: "world-anvil-export",
@@ -1247,6 +1278,11 @@ export const importsConfig: Record<string, SEOImportPageData> = {
           "Yes. Since the JSON backup contains all articles, your private lore is fully imported and kept secure on your local drive.",
       },
     ],
+    aiTrustSection: true,
+    relatedLinks: [
+      { href: "/vs/world-anvil", label: "Codex vs World Anvil" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+    ],
   },
   "kanka-json": {
     slug: "kanka-json",
@@ -1292,6 +1328,10 @@ export const importsConfig: Record<string, SEOImportPageData> = {
         answer:
           "The importer extracts map coordinates and pin descriptions, letting you map locations inside Codex's spatial canvases.",
       },
+    ],
+    relatedLinks: [
+      { href: "/vs/kanka-alternative", label: "Codex vs Kanka" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
     ],
   },
   "legendkeeper-json": {
@@ -1342,6 +1382,13 @@ export const importsConfig: Record<string, SEOImportPageData> = {
         question: "Do my map pins translate to Codex?",
         answer:
           "Yes, the coordinates and wiki linkages are extracted and can be mapped directly onto the Codex campaign canvas.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/vs/legendkeeper", label: "Codex vs LegendKeeper" },
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
       },
     ],
   },

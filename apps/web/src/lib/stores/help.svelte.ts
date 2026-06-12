@@ -161,8 +161,6 @@ export class HelpStore {
   // --- Tour Methods ---
 
   startTour(id: string) {
-    if (browser && (window as any).DISABLE_ONBOARDING) return;
-
     if (id === "initial-onboarding") {
       // Dismiss landing page and close settings modal to ensure the tour is visible
       this.onboardingStore.dismissedLandingPage = true;

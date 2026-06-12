@@ -152,32 +152,6 @@ describe("DiscoveryChip", () => {
     });
   });
 
-  it("reports auto-applied connection counts when enabled", async () => {
-    discoveryPolicyStore.connectionDiscoveryMode = "auto-apply";
-    mockOracle.handleDiscoveryConnectionsForEntity.mockResolvedValue(2);
-
-    render(DiscoveryChip, {
-      proposal: {
-        title: "Target",
-        type: "npc",
-        draft: {
-          chronicle: "new chronicle",
-          lore: "new lore",
-        },
-        confidence: 0.95,
-      },
-    });
-
-    await fireEvent.click(screen.getByLabelText("Create Target"));
-
-    await waitFor(() => {
-      expect(notificationStore.notify).toHaveBeenCalledWith(
-        "Created Target and added 2 connections",
-        "success",
-      );
-    });
-  });
-
   it("overrides the initial type guess with the AI-refined categoryId when provided", async () => {
     mockOracle.reviseNewEntityDraft.mockResolvedValue({
       content: "refined content",

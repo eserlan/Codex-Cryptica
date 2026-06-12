@@ -3,13 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("World Timeline - Graph Integration", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
 
       // Mock IDB to prevent errors
       const originalPut = IDBObjectStore.prototype.put;
@@ -73,7 +71,7 @@ test.describe("World Timeline - Graph Integration", () => {
         };
       };
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
   });
 
   test("should toggle timeline mode", async ({ page }) => {

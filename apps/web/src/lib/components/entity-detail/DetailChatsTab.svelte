@@ -210,7 +210,7 @@
                   <button
                     type="button"
                     onclick={() => deleteHostTranscript(transcript)}
-                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100"
+                    class="text-theme-muted hover:text-theme-danger p-0.5 rounded transition opacity-0 group-hover/session:opacity-100 focus:opacity-100"
                     title="Delete entire session logs"
                   >
                     <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
@@ -234,7 +234,7 @@
                       </span>
 
                       <div
-                        class="flex items-center gap-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity"
+                        class="flex items-center gap-1.5 opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100 transition-opacity"
                       >
                         {#if editingMessageId !== msg.id}
                           <button
@@ -372,7 +372,7 @@
                 <span>{msg.role === "user" ? "You" : entity.title}</span>
                 {#if editingMessageId !== msg.id}
                   <div
-                    class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
                   >
                     <button
                       type="button"

@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-06-02
+Auto-generated from all feature plans. Last updated: 2026-06-11
 
 ## Active Technologies
 
@@ -207,8 +207,6 @@ TypeScript: Follow standard conventions
 - 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
 
 - 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
-
-- 128-guest-character-chat: Added TypeScript 6.0.3 + Svelte 5 Runes + `@google/generative-ai` (Gemini SDK), SvelteKit, Tailwind 4, Zod
 
 <!-- MANUAL ADDITIONS START -->
 

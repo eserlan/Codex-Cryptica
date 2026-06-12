@@ -5,13 +5,11 @@ test.describe("Selection Connector", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
     await page.goto("/");
@@ -36,17 +34,15 @@ test.describe("Selection Connector", () => {
       await waitForVault();
     });
 
-    // Create two entities
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node A");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node B");
-    await page.getByRole("button", { name: "ADD" }).click();
+    // Create two entities via API
+    await page.evaluate(async () => {
+      const v = (window as any).vault;
+      await v.createEntity("note", "Node A", { id: "node-a" });
+      await v.createEntity("note", "Node B", { id: "node-b" });
+    });
 
     // Wait for entities to be created
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 NOTES", {
       timeout: 10000,
     });
 
@@ -123,13 +119,11 @@ test.describe("Selection Connector", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       try {
         localStorage.setItem("codex_last_connection_label", "Old Friend");
       } catch {
@@ -167,14 +161,12 @@ test.describe("Selection Connector", () => {
       await waitForVault();
     });
 
-    // Create two entities
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node C");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node D");
-    await page.getByRole("button", { name: "ADD" }).click();
+    // Create two entities via API
+    await page.evaluate(async () => {
+      const v = (window as any).vault;
+      await v.createEntity("note", "Node C", { id: "node-c" });
+      await v.createEntity("note", "Node D", { id: "node-d" });
+    });
 
     // Select both nodes programmatically
     await page.evaluate(async () => {
@@ -215,10 +207,9 @@ test.describe("Selection Connector", () => {
     await expect(page.getByRole("button", { name: "Rival" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ally" })).toBeVisible();
 
-    // Click Rival chip (scroll into view first — viewport may be small under parallel load)
-    const rivalBtn = page.getByRole("button", { name: "Rival" });
-    await rivalBtn.scrollIntoViewIfNeeded();
-    await rivalBtn.click();
+    // Submit with "Rival" label via keyboard
+    await labelInput.fill("Rival");
+    await page.keyboard.press("Enter");
 
     // Verify notification
     await expect(page.getByText("Connected Node C to Node D")).toBeVisible();

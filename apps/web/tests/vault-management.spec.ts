@@ -3,13 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Vault Management", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
     await page.goto("/");
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
@@ -62,10 +60,10 @@ test.describe("Vault Management", () => {
     await renamedRow.hover();
     await renamedRow.getByTitle("Delete").click();
 
-    await expect(page.getByText("DELETE VAULT?")).toBeVisible();
-    await page.getByRole("button", { name: "DELETE FOREVER" }).click();
+    await expect(page.getByText("Delete Vault")).toBeVisible();
+    await page.getByRole("button", { name: "Delete Forever" }).click();
 
-    await expect(page.getByText("DELETE VAULT?")).not.toBeVisible();
+    await expect(page.getByText("Delete Vault")).not.toBeVisible();
     await expect(
       modal.locator(".group", { hasText: newName }),
     ).not.toBeVisible();

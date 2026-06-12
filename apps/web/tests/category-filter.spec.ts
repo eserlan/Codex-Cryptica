@@ -16,8 +16,10 @@ test.describe("Category Filter", () => {
       } catch {
         /* ignore */
       }
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).showDirectoryPicker = async () => {
         return {
           kind: "directory",
@@ -72,15 +74,10 @@ test.describe("Category Filter", () => {
         };
       }
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => !!(window as any).uiStore);
     await page.evaluate(() => {
       (window as any).uiStore.dismissedLandingPage = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
     await page.reload({ waitUntil: "load" });
     await expect(page.getByTestId("graph-canvas")).toBeVisible({

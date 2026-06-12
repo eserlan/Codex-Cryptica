@@ -3,16 +3,14 @@ import { test, expect } from "@playwright/test";
 test.describe("AI Disabled", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
     await page.evaluate(() => {
       const ui = (window as any).uiStore;
@@ -68,7 +66,7 @@ test.describe("AI Disabled", () => {
     await expect(suggestionsHeader).not.toBeVisible();
 
     // 5. Interact with Oracle and verify network silence
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
     const oracleInput = page.getByTestId("oracle-input");
     await oracleInput.fill("Hello AI");
     await page.keyboard.press("Enter");
@@ -94,7 +92,7 @@ test.describe("AI Disabled", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Oracle
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
     await expect(
       page.locator('[data-testid="oracle-sidebar-panel"]'),
     ).toBeVisible();
@@ -110,7 +108,7 @@ test.describe("AI Disabled", () => {
 
   test("Oracle supports /help command in AI mode", async ({ page }) => {
     // 1. Open Oracle
-    await page.getByTestId("sidebar-oracle-button").click();
+    await page.getByTestId("activity-bar-oracle").click();
     await expect(
       page.locator('[data-testid="oracle-sidebar-panel"]'),
     ).toBeVisible();

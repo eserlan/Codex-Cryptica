@@ -10,6 +10,16 @@ const validSlugs = new Set([
   "faction",
   "quest",
   "item",
+  "tavern",
+  "social-hub",
+  "kingdom",
+  "nation",
+  "vampire-clan",
+  "names",
+  "fantasy-names",
+  "dnd-npc",
+  "pantheon-generator",
+  "god-generator",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -23,7 +33,17 @@ export const load: PageLoad = ({ params }) => {
       | "magic-item"
       | "faction"
       | "quest"
-      | "item",
+      | "item"
+      | "tavern"
+      | "social-hub"
+      | "kingdom"
+      | "nation"
+      | "vampire-clan"
+      | "names"
+      | "fantasy-names"
+      | "dnd-npc"
+      | "pantheon-generator"
+      | "god-generator",
   };
 };
 
@@ -35,5 +55,15 @@ export const entries: EntryGenerator = () => {
     { slug: "faction" },
     { slug: "quest" },
     { slug: "item" },
+    { slug: "tavern" },
+    { slug: "social-hub" },
+    { slug: "kingdom" },
+    { slug: "nation" },
+    { slug: "vampire-clan" },
+    { slug: "names" },
+    { slug: "fantasy-names" },
+    { slug: "dnd-npc" },
+    { slug: "pantheon-generator" },
+    { slug: "god-generator" },
   ];
 };

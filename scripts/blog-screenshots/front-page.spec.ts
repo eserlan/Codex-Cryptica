@@ -124,8 +124,10 @@ The frontier city of Valdris balances on a cracked moonlit coast, where treaty h
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-test-key";
       localStorage.setItem("codex_skip_landing", "true");
       localStorage.removeItem("codex_active_vault_id");

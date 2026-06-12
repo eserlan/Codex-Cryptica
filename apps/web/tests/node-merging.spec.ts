@@ -4,13 +4,11 @@ test.describe("Node Merging", () => {
   test.beforeEach(async ({ page }) => {
     // Disable onboarding to access main UI
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
     if (process.env.PWDEBUG || process.env.DEBUG_E2E_LOGS) {
@@ -49,10 +47,10 @@ test.describe("Node Merging", () => {
 
     // 2. Open Merge Dialog
     await page.evaluate(() => {
-      (window as any).uiStore.openMergeDialog(["node-a", "node-b"]);
+      (window as any).codexUI.modal.openMergeDialog(["node-a", "node-b"]);
     });
     await page.waitForFunction(
-      () => (window as any).uiStore.mergeDialog.open === true,
+      () => (window as any).codexUI.modal.mergeDialog.open === true,
     );
 
     const bodyHtml = await page.locator("body").innerHTML();
@@ -77,10 +75,19 @@ test.describe("Node Merging", () => {
     await expect(preview).toHaveValue(/Content from B/, { timeout: 10000 });
     await expect(preview).toHaveValue(/Content from A/, { timeout: 10000 });
 
-    // 6. Confirm Merge
+    // 6. Confirm Merge (creates pending draft)
     await page.getByRole("button", { name: "Confirm Merge" }).click();
 
-    // 7. Verify Result
+    // 7. Accept the pending draft to finalize the merge
+    await page.waitForFunction(
+      () => !!(window as any).revisionService?.pendingDraft,
+      { timeout: 5000 },
+    );
+    await page.evaluate(async () => {
+      await (window as any).revisionService.acceptDraft();
+    });
+
+    // 8. Verify Result
     // Dialog should close
     await expect(
       page.locator("h2").filter({ hasText: /Merge/i }),
@@ -133,10 +140,10 @@ test.describe("Node Merging", () => {
         "[TEST] Entity C content:",
         (window as any).vault.entities["node-c"]?.content,
       );
-      (window as any).uiStore.openMergeDialog(["node-a", "node-b"]);
+      (window as any).codexUI.modal.openMergeDialog(["node-a", "node-b"]);
     });
     await page.waitForFunction(
-      () => (window as any).uiStore.mergeDialog.open === true,
+      () => (window as any).codexUI.modal.mergeDialog.open === true,
     );
 
     // 3. Verify Dialog Open
@@ -220,10 +227,10 @@ test.describe("Node Merging", () => {
         "[TEST] Entity C content:",
         (window as any).vault.entities["node-c"]?.content,
       );
-      (window as any).uiStore.openMergeDialog(["node-a", "node-b"]);
+      (window as any).codexUI.modal.openMergeDialog(["node-a", "node-b"]);
     });
     await page.waitForFunction(
-      () => (window as any).uiStore.mergeDialog.open === true,
+      () => (window as any).codexUI.modal.mergeDialog.open === true,
     );
 
     // 3. Verify Dialog Open
@@ -234,8 +241,17 @@ test.describe("Node Merging", () => {
     // 4. Trigger Concatenate
     await page.getByRole("button", { name: "Concatenate" }).click();
 
-    // 5. Confirm Merge
+    // 5. Confirm Merge (creates pending draft)
     await page.getByRole("button", { name: "Confirm Merge" }).click();
+
+    // 5b. Accept the pending draft to finalize the merge
+    await page.waitForFunction(
+      () => !!(window as any).revisionService?.pendingDraft,
+      { timeout: 5000 },
+    );
+    await page.evaluate(async () => {
+      await (window as any).revisionService.acceptDraft();
+    });
 
     // 6. Verify Dialog Closed
     await expect(
@@ -276,7 +292,6 @@ test.describe("Node Merging", () => {
 
           throw error;
         }
-        localStorage.setItem("codex_skip_landing", "true");
       });
       await page.reload();
       await page.waitForFunction(
@@ -320,7 +335,7 @@ test.describe("Node Merging", () => {
       );
 
       // 3. Verify hint NOT visible initially
-      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
+      await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
 
       // 4. Select two nodes via Cytoscape API
       await page.evaluate(() => {
@@ -330,12 +345,11 @@ test.describe("Node Merging", () => {
       });
 
       // 5. Verify hint appears
-      await expect(page.getByText("Merging Nodes")).toBeVisible();
-      await expect(page.getByText("You can combine duplicates.")).toBeVisible();
+      await expect(page.getByText("Multi-Selection Actions")).toBeVisible();
 
       // 6. Dismiss hint
       await page.getByTestId("dismiss-hint-button").click();
-      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
+      await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
 
       // 7. Unselect and re-select to verify it stays dismissed
       await page.evaluate(() => {
@@ -344,7 +358,7 @@ test.describe("Node Merging", () => {
         cy.$id("node-a").select();
         cy.$id("node-b").select();
       });
-      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
+      await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
     });
   });
 });

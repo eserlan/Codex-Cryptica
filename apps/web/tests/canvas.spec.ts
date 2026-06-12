@@ -4,13 +4,11 @@ test.describe("Spatial Canvas", () => {
   test.beforeEach(async ({ page }) => {
     // Inject global flag BEFORE goto so +layout.svelte sees it immediately
     await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
     await page.goto("/canvas");
@@ -46,18 +44,14 @@ test.describe("Spatial Canvas", () => {
   });
 
   test("should display the canvas and sidebar", async ({ page }) => {
-    await expect(
-      page.getByText("Workspace", { exact: false }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Entity Palette", { exact: false }).first(),
-    ).toBeVisible();
     await expect(page.locator(".svelte-flow")).toBeVisible();
+    // The HUD shows the canvas name button (title="Manage canvases")
+    await expect(page.getByTitle("Manage canvases")).toBeVisible();
   });
 
   test("should allow creating a new canvas", async ({ page }) => {
-    // Open the canvas registry modal using the Switch Workspace button in the palette
-    const switchBtn = page.locator('[aria-label="Switch workspace"]');
+    // Open the canvas registry modal using the Manage canvases button in the HUD
+    const switchBtn = page.getByTitle("Manage canvases");
     await expect(switchBtn).toBeVisible({ timeout: 5000 });
     await switchBtn.click();
 

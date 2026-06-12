@@ -56,12 +56,6 @@
     }
   };
 
-  // Derived values for the mask
-  const isDisabled = $derived.by(() => {
-    if (typeof window === "undefined") return false;
-    return (window as any).DISABLE_ONBOARDING;
-  });
-
   let maskStyle = $derived.by(() => {
     if (!targetRect) return "";
 
@@ -111,7 +105,7 @@
   });
 </script>
 
-{#if helpStore.activeTour && !isDisabled}
+{#if helpStore.activeTour}
   {#if targetRect}
     <div
       class="fixed inset-0 z-[var(--z-index-overlay-max,150)] bg-black/60 backdrop-blur-[2px] transition-all duration-300"

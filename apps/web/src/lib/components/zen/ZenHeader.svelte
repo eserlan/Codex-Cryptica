@@ -99,7 +99,7 @@
             aria-label="Entity Type"
             class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] md:text-xs font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-1 md:ml-2"
           >
-            {#each categories.list as cat}
+            {#each categories.list as cat (cat.id)}
               <option value={cat.id}>{cat.label || cat.id.toUpperCase()}</option
               >
             {/each}
@@ -137,7 +137,7 @@
                 class="text-[8px] md:text-[10px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
-              {#each entity.aliases as alias}
+              {#each entity.aliases as alias, index (`${entity.id}-alias-${index}`)}
                 <div
                   class="px-1.5 md:px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
                 >
@@ -252,10 +252,10 @@
           disabled={isDraftActioning}
           title="Approve draft"
           aria-label="Approve draft"
-          class="px-2 md:px-4 py-1.5 border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
+          class="flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="approve-draft-button"
         >
-          <span class="icon-[lucide--check] w-3 h-3"></span>
+          <span class="icon-[lucide--check] h-3 w-3"></span>
           <span class="hidden sm:inline">APPROVE</span>
         </button>
         <button
@@ -263,10 +263,10 @@
           disabled={isDraftActioning}
           title="Reject draft"
           aria-label="Reject draft"
-          class="px-2 md:px-4 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
+          class="flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="reject-draft-button"
         >
-          <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+          <span class="icon-[lucide--trash-2] h-3 w-3"></span>
           <span class="hidden sm:inline">REJECT</span>
         </button>
       {/if}

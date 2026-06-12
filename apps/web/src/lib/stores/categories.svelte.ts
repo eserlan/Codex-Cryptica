@@ -96,10 +96,7 @@ export class CategoryStore {
 
 export const categories = new CategoryStore();
 
-if (
-  typeof window !== "undefined" &&
-  (import.meta.env.DEV || (window as any).__E2E__)
-) {
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   (window as any).categories = categories;
   debugStore.log(
     "[CategoryStore] Module loaded, categories attached to window",

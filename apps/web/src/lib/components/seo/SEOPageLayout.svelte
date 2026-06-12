@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import { safeJsonLd } from "$lib/utils/json-ld";
   import type {
     SEOPageData,
@@ -144,7 +145,7 @@
   <meta name="twitter:title" content={data.title} />
   <meta name="twitter:description" content={data.description} />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
-  <link rel="help" href="{base}/llms.txt" />
+  <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${jsonLdString}</scr` +
@@ -163,36 +164,43 @@
   <header
     class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
   >
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="{base}/" class="flex items-center gap-2 group" id="logo-link">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <a
+        href="{cleanBase}/"
+        class="flex items-center gap-2 group min-w-0"
+        id="logo-link"
+      >
         <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 transition-transform group-hover:rotate-12"
+          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
         ></span>
         <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors"
+          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
         >
-          Codex Cryptica
+          Codex<span class="hidden sm:inline"> Cryptica</span>
         </span>
       </a>
       <nav
         class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
       >
         <a
-          href="{base}/features"
+          href="{cleanBase}/features"
           class="hover:text-theme-primary transition-colors">Features</a
         >
-        <a href="{base}/blog" class="hover:text-theme-primary transition-colors"
-          >Devlog</a
+        <a
+          href="{cleanBase}/blog"
+          class="hover:text-theme-primary transition-colors">Devlog</a
         >
         <a
-          href="{base}/tools/dnd-npc-generator"
+          href="{cleanBase}/tools/dnd-npc-generator"
           class="hover:text-theme-primary transition-colors">Generators</a
         >
       </nav>
-      <div>
+      <div class="shrink-0">
         <a
-          href="{base}/"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+          href="{cleanBase}/?ref={type === 'comparison'
+            ? 'vs-nav'
+            : 'solution-nav'}"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -204,7 +212,7 @@
   <!-- Hero Section -->
   <section class="max-w-4xl mx-auto px-6 pt-16 pb-12 text-center flex-grow">
     <div
-      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-6 uppercase tracking-wider"
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-10 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
       {data.eyebrow ??
@@ -218,34 +226,78 @@
     >
       {data.h1}
     </h1>
+    {#if data.tagline}
+      <p
+        class="text-3xl md:text-4xl font-extrabold font-header leading-tight mb-6 tracking-wide"
+      >
+        {#each data.tagline.split("\n") as line}
+          <span class="block">{line}</span>
+        {/each}
+      </p>
+    {/if}
     <p
       class="text-lg md:text-xl text-theme-primary/80 font-header italic mb-8 max-w-2xl mx-auto"
     >
       {data.subheading}
     </p>
-    <p
-      class="text-theme-muted text-sm md:text-base leading-relaxed mb-10 max-w-3xl mx-auto"
-    >
-      {data.introText}
-    </p>
-    <div class="flex flex-wrap justify-center gap-4">
+    {#each data.introText.split("\n\n") as paragraph}
+      <p
+        class="text-theme-text/75 text-sm md:text-base leading-relaxed mb-4 last:mb-10 max-w-3xl mx-auto"
+      >
+        {paragraph}
+      </p>
+    {/each}
+    <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4">
       <a
-        href="{base}/"
-        class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200"
+        href="{cleanBase}/?ref={type === 'comparison'
+          ? 'vs-hero'
+          : 'solution-hero'}"
+        class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 hover:-translate-y-0.5 transition-all duration-200 whitespace-nowrap"
         id="hero-primary-cta"
       >
         {data.ctaText}
       </a>
       {#if data.secondaryCtaText}
         <a
-          href="{base}{data.secondaryCtaHref ?? '/tools'}"
-          class="px-8 py-3.5 border border-theme-primary/60 text-theme-primary font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-primary/10 transition-all duration-200"
+          href="{cleanBase}{data.secondaryCtaHref ?? '/tools'}"
+          class="px-8 py-3.5 border border-theme-primary/60 text-theme-primary font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-primary/10 transition-all duration-200 whitespace-nowrap"
           id="hero-secondary-cta"
         >
           {data.secondaryCtaText}
         </a>
       {/if}
     </div>
+
+    {#if comparisonData?.migrationStrip}
+      <div
+        class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 mt-10"
+      >
+        {#each comparisonData.migrationStrip as step, idx}
+          {#if idx > 0}
+            <span
+              class="icon-[lucide--arrow-down] md:hidden text-theme-primary/65 w-4 h-4"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="icon-[lucide--arrow-right] hidden md:block self-center text-theme-primary/65 w-4 h-4"
+              aria-hidden="true"
+            ></span>
+          {/if}
+          <div
+            class="flex flex-row md:flex-col items-center gap-2 md:gap-1.5 px-5 py-3 bg-theme-surface/30 border border-theme-border/40 rounded-xl min-w-[160px] md:min-w-0"
+          >
+            <span
+              class="{step.icon} text-theme-primary w-5 h-5 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <span
+              class="text-xs font-bold uppercase tracking-wider font-header text-theme-text text-center"
+              >{step.label}</span
+            >
+          </div>
+        {/each}
+      </div>
+    {/if}
   </section>
 
   <!-- Features Grid -->
@@ -270,7 +322,7 @@
             >
               {feat.title}
             </h3>
-            <p class="text-theme-muted text-xs leading-relaxed">
+            <p class="text-theme-text/70 text-sm leading-relaxed">
               {feat.description}
             </p>
           </div>
@@ -328,22 +380,92 @@
         >
           Feature Matrix: Codex vs {comparisonData.competitorName}
         </h2>
+        <!-- Mobile: stacked cards -->
+        <div class="md:hidden space-y-3" id="comparison-table">
+          {#each comparisonData.comparisonTable as row, idx}
+            <div
+              class="border border-theme-border/60 rounded-xl bg-theme-surface/20 overflow-hidden"
+              id="feat-mobile-{idx}"
+            >
+              <div
+                class="px-4 py-2.5 bg-theme-surface/60 border-b border-theme-border/40 font-header font-bold text-xs uppercase tracking-wider"
+              >
+                {row.feature}
+              </div>
+              <div
+                class="grid grid-cols-2 divide-x divide-theme-border/30 text-xs"
+              >
+                <div class="p-3">
+                  <span
+                    class="block font-header font-bold text-[9px] uppercase tracking-wider text-theme-muted mb-1"
+                    >{comparisonData.competitorName}</span
+                  >
+                  {#if typeof row.competitorHas === "boolean"}
+                    {#if row.competitorHas}
+                      <span
+                        class="icon-[lucide--check] text-emerald-500 w-4 h-4"
+                        role="img"
+                        aria-label="Yes"
+                      ></span>
+                    {:else}
+                      <span
+                        class="icon-[lucide--x] text-rose-500 w-4 h-4"
+                        role="img"
+                        aria-label="No"
+                      ></span>
+                    {/if}
+                  {:else}
+                    <span class="text-theme-text/70 leading-snug"
+                      >{row.competitorHas}</span
+                    >
+                  {/if}
+                </div>
+                <div class="p-3">
+                  <span
+                    class="block font-header font-bold text-[9px] uppercase tracking-wider text-theme-primary mb-1"
+                    >Codex Cryptica</span
+                  >
+                  {#if typeof row.codexHas === "boolean"}
+                    {#if row.codexHas}
+                      <span
+                        class="icon-[lucide--check] text-emerald-400 w-4 h-4"
+                        role="img"
+                        aria-label="Yes"
+                      ></span>
+                    {:else}
+                      <span
+                        class="icon-[lucide--x] text-rose-500 w-4 h-4"
+                        role="img"
+                        aria-label="No"
+                      ></span>
+                    {/if}
+                  {:else}
+                    <span class="font-semibold text-theme-primary leading-snug"
+                      >{row.codexHas}</span
+                    >
+                  {/if}
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Desktop: table -->
         <div
-          class="overflow-x-auto border border-theme-border/60 rounded-2xl shadow-sm"
+          class="hidden md:block overflow-x-auto border border-theme-border/60 rounded-2xl shadow-sm"
         >
-          <table
-            class="w-full text-left border-collapse bg-theme-surface/20"
-            id="comparison-table"
-          >
+          <table class="w-full text-left border-collapse bg-theme-surface/20">
             <thead>
               <tr
                 class="border-b border-theme-border/60 bg-theme-surface/60 font-header text-xs uppercase tracking-wider"
               >
-                <th class="p-4 font-bold">Feature</th>
-                <th class="p-4 font-bold text-theme-muted"
+                <th class="px-4 py-4 pl-5 font-bold">Feature</th>
+                <th class="px-4 py-4 pl-5 font-bold text-theme-muted"
                   >{comparisonData.competitorName}</th
                 >
-                <th class="p-4 font-bold text-theme-primary">Codex Cryptica</th>
+                <th class="px-4 py-4 pl-5 font-bold text-theme-primary"
+                  >Codex Cryptica</th
+                >
               </tr>
             </thead>
             <tbody class="text-xs">
@@ -392,16 +514,26 @@
           </table>
         </div>
         <div
-          class="mt-8 p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm text-center"
+          class="mt-8 p-8 md:p-10 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm text-center"
         >
           <h3
-            class="font-header font-bold text-sm uppercase tracking-wider text-theme-primary mb-2"
+            class="font-header font-bold text-sm uppercase tracking-wider text-theme-primary mb-4"
           >
             The Verdict
           </h3>
-          <p class="text-xs leading-relaxed text-theme-muted">
-            {comparisonData.verdict}
-          </p>
+          <div class="space-y-3">
+            {#each comparisonData.verdict.split("\n\n") as para, idx}
+              <p
+                class="leading-relaxed text-theme-text/80"
+                class:text-base={idx === 0}
+                class:font-semibold={idx === 0}
+                class:text-sm={idx > 0}
+                class:text-theme-muted={idx > 0}
+              >
+                {para}
+              </p>
+            {/each}
+          </div>
         </div>
       </div>
     </section>
@@ -419,8 +551,8 @@
         <div class="flex flex-wrap justify-center gap-3">
           {#each data.relatedLinks as link (link.href)}
             <a
-              href="{base}{link.href}"
-              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors"
+              href="{cleanBase}{link.href}"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
             >
               <span
                 class="icon-[lucide--arrow-right] w-3 h-3"
@@ -430,6 +562,29 @@
             </a>
           {/each}
         </div>
+      </div>
+    </section>
+  {/if}
+
+  <!-- Responsible AI Trust Banner -->
+  {#if data.aiTrustSection}
+    <section class="border-t border-theme-border/30 py-10">
+      <div class="max-w-3xl mx-auto px-6 text-center">
+        <p class="text-sm text-theme-muted leading-relaxed mb-3">
+          Responsible AI, not replacement authorship. The Lore Oracle is
+          optional, vault-aware, and draft-based. Your vault remains the source
+          of truth.
+        </p>
+        <a
+          href="{cleanBase}/responsible-ai-worldbuilding"
+          class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
+        >
+          <span
+            class="icon-[lucide--shield-check] w-3.5 h-3.5"
+            aria-hidden="true"
+          ></span>
+          Read our responsible AI principles
+        </a>
       </div>
     </section>
   {/if}
@@ -492,24 +647,15 @@
           ? "No account required. No subscription. All your campaign notes stay on your own device."
           : "No account. No server database leaks. Just quick, private, local-first worldbuilding."}
       </p>
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a
-          href="{base}/"
-          class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all"
-          id="footer-cta-btn"
-        >
-          {type === "comparison" ? "Try Free Now" : "Launch Codex Cryptica"}
-        </a>
-        {#if data.slug === "world-anvil"}
-          <a
-            href="{base}/import/world-anvil-export"
-            class="px-8 py-3.5 border border-theme-primary text-theme-primary font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-primary/10 transition-all duration-200"
-            id="footer-migration-cta"
-          >
-            Migrating from World Anvil? Import your world
-          </a>
-        {/if}
-      </div>
+      <a
+        href="{cleanBase}/?ref={type === 'comparison'
+          ? 'vs-footer'
+          : 'solution-footer'}"
+        class="px-8 py-3.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all whitespace-nowrap"
+        id="footer-cta-btn"
+      >
+        {type === "comparison" ? "Try Free Now" : "Launch Codex Cryptica"}
+      </a>
     </div>
   </section>
 
@@ -523,23 +669,23 @@
       <div>© 2026 Codex Cryptica. All rights reserved.</div>
       <div class="flex gap-6">
         <a
-          href="{base}/terms"
+          href="{cleanBase}/terms"
           class="hover:text-theme-primary transition-colors">Terms</a
         >
         <a
-          href="{base}/privacy"
+          href="{cleanBase}/privacy"
           class="hover:text-theme-primary transition-colors">Privacy</a
         >
         <a
-          href="{base}/tools"
+          href="{cleanBase}/tools"
           class="hover:text-theme-primary transition-colors">Tools</a
         >
         <a
-          href="{base}/sitemap.xml"
+          href="{cleanBase}/sitemap.xml"
           class="hover:text-theme-primary transition-colors">Sitemap</a
         >
         <a
-          href="{base}/llms.txt"
+          href="{cleanBase}/llms.txt"
           class="hover:text-theme-primary transition-colors">LLM Docs</a
         >
       </div>

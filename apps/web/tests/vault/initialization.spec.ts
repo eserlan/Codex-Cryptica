@@ -10,7 +10,11 @@ test.describe("Vault Initialization", () => {
     await expect(page.getByTitle("Switch Vault")).toContainText(
       /Default Vault|Local Vault/,
     );
-    // Should be empty initially — when 0 entities, the UI shows "NO ARCHIVE" instead of entity-count
-    await expect(page.getByText("NO ARCHIVE")).toBeVisible();
+    // Should show empty vault status (0 notes)
+    await expect(
+      page
+        .locator("[aria-live='polite'], [role='status']")
+        .filter({ hasText: /0 (NOTES|CHRONICLES)/i }),
+    ).toBeVisible();
   });
 });

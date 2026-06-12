@@ -2,34 +2,58 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Graph Category Context Menu", () => {
   test.beforeEach(async ({ page }) => {
-    // Inject E2E flag
     await page.addInitScript(() => {
-      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
     });
 
-    await page.goto("/vault/default");
-    // Wait for graph to load and settle
-    await page.waitForSelector("canvas");
-    await page.waitForTimeout(2000);
+    await page.goto("/");
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.evaluate(async () => {
+      const waitForVault = () =>
+        new Promise((resolve) => {
+          const check = () => {
+            const vault = (window as any).vault;
+            if (vault && vault.status === "idle") resolve(true);
+            else setTimeout(check, 100);
+          };
+          check();
+        });
+      await waitForVault();
+    });
+
+    // Create a test entity
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      await vault.createEntity("character", "Category Test Node", {
+        id: "category-test-node",
+      });
+    });
+
+    await page.waitForTimeout(500);
   });
 
   test("should change category for a single node via context menu", async ({
     page,
   }) => {
-    const canvas = page.locator("canvas").first();
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error("Canvas not found");
-
-    // Right-click center of canvas
-    await canvas.click({
-      button: "right",
-      position: { x: box.width / 2, y: box.height / 2 },
+    // Trigger context menu on the node via Cytoscape
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const node = cy.nodes()[0];
+      const pos = node.renderedPosition();
+      node.trigger("cxttap", { renderedPosition: pos });
     });
 
     const categoryButton = page.getByRole("menuitem", {
       name: "Change Category",
     });
-    await expect(categoryButton).toBeVisible();
+    await expect(categoryButton).toBeVisible({ timeout: 5000 });
 
     // Hover to trigger submenu
     await categoryButton.hover();
@@ -37,9 +61,9 @@ test.describe("Graph Category Context Menu", () => {
     const categoryPicker = page.getByRole("menu", { name: "Select category" });
     await expect(categoryPicker).toBeVisible();
 
-    // Select 'Character'
+    // Select 'Location'
     const targetCategory = categoryPicker
-      .getByRole("menuitem", { name: /Character/i })
+      .getByRole("menuitem", { name: /Location/i })
       .first();
     await targetCategory.click();
 
@@ -51,18 +75,17 @@ test.describe("Graph Category Context Menu", () => {
   });
 
   test("should handle escape to close category menu", async ({ page }) => {
-    const canvas = page.locator("canvas").first();
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error("Canvas not found");
-
-    await canvas.click({
-      button: "right",
-      position: { x: box.width / 2, y: box.height / 2 },
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const node = cy.nodes()[0];
+      const pos = node.renderedPosition();
+      node.trigger("cxttap", { renderedPosition: pos });
     });
 
     const categoryButton = page.getByRole("menuitem", {
       name: "Change Category",
     });
+    await expect(categoryButton).toBeVisible({ timeout: 5000 });
     await categoryButton.hover();
 
     const categoryPicker = page.getByRole("menu", { name: "Select category" });

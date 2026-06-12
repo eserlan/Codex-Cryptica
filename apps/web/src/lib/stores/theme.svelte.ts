@@ -549,9 +549,6 @@ export const themeStore: ThemeStore =
   (globalThis as any)[THEME_KEY] ??
   ((globalThis as any)[THEME_KEY] = new ThemeStore());
 
-if (
-  typeof window !== "undefined" &&
-  (import.meta.env.DEV || (window as any).__E2E__)
-) {
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   (window as any).themeStore = themeStore;
 }

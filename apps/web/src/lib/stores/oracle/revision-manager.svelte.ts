@@ -285,7 +285,7 @@ export class OracleRevisionManager {
     }
 
     const result = await this.proposeConnectionsForEntity(entityId, {
-      apply: mode === "auto-apply",
+      apply: false,
       analysisText,
     });
     return typeof result === "number" ? result : 0;

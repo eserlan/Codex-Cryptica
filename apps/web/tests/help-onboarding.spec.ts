@@ -2,12 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Help Onboarding Walkthrough", () => {
   test.beforeEach(async ({ page }) => {
-    // Ensure clean state and force onboarding
-    await page.addInitScript(() => {
-      (window as any).DISABLE_ONBOARDING = false;
-      (window as any).__E2E__ = true;
-    });
-
+    // This suite intentionally exercises the real onboarding tour, so it does
+    // NOT seed onboarding-complete state. It clears storage and force-starts the
+    // tour below.
     await page.goto("/");
     // Clear localStorage after initial load to reset state, but don't put it in initScript
     // so it doesn't clear on subsequent reloads within the same test.
@@ -112,6 +109,12 @@ test.describe("Help Onboarding Walkthrough", () => {
       timeout: 10000,
     });
 
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Explorer
+    await page.waitForTimeout(500);
+    await expect(page.locator("h3").getByText("Entity Explorer")).toBeVisible({
+      timeout: 10000,
+    });
+
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Dice
     await page.waitForTimeout(500);
     await expect(page.locator("h3").getByText("Polyhedral Dice")).toBeVisible({
@@ -147,7 +150,9 @@ test.describe("Help Onboarding Walkthrough", () => {
     page,
   }) => {
     // Welcome step targets "body" so should NOT show dimming overlay
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible();
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).toBeVisible();
 
     // The dimming overlay has role="presentation" and a specific class
     const dimmingOverlay = page.locator('[role="presentation"].bg-black\\/60');
@@ -162,20 +167,28 @@ test.describe("Help Onboarding Walkthrough", () => {
   });
 
   test("should allow skipping the tour", async ({ page }) => {
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible();
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Dismiss tour" }).click();
-    await expect(page.getByText("Welcome to Codex Cryptica")).not.toBeVisible();
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).not.toBeVisible();
 
     // Verify it doesn't reappear
     await page.reload();
-    await expect(page.getByText("Welcome to Codex Cryptica")).not.toBeVisible();
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).not.toBeVisible();
   });
 
   test("should show contextual hints for advanced features", async ({
     page,
   }) => {
     // Skip onboarding
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible({
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).toBeVisible({
       timeout: 10000,
     });
     await page.getByRole("button", { name: "Dismiss tour" }).click();

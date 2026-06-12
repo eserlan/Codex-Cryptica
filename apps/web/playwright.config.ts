@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = process.env.E2E_PORT ?? "5173";
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -8,7 +11,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "on-failure",
   },
@@ -19,8 +22,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bun run dev --port 5173",
-    url: "http://127.0.0.1:5173",
+    command: `bun run dev --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
   },
 });

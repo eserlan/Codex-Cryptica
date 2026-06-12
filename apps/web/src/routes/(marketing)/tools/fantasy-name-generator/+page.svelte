@@ -9,7 +9,6 @@
   let culture = $state(nameGeneratorConfig.cultures[0]);
   let gender = $state(nameGeneratorConfig.genders[0]);
   let nameType = $state(nameGeneratorConfig.nameTypes[0]);
-  let count = $state(nameGeneratorConfig.counts[1]);
   let context = $state("");
 
   async function generate({ useAI }: { useAI: boolean }) {
@@ -17,7 +16,6 @@
       culture,
       gender,
       nameType,
-      count,
       context,
       useAI,
     });
@@ -55,13 +53,12 @@
 
   const initialDraft: GeneratorOutput = {
     type: "character",
-    title: "Aelthas The Wise",
-    summary:
-      "A legendary High Elf wizard and scholar from the ancient library of Silverspire.",
+    title: "Generic Fantasy Names — Person",
+    summary: "",
     content:
-      "### Scholar of Silverspire\nAelthas has spent centuries cataloging the planar portals and ley lines. He is quiet, calculating, and carries the weight of elven history.",
-    lore: "",
-    labels: ["rpg-names", "High Elf", "Wizard", "Scholar"],
+      "These names blend rolling vowels with grounded, archaic surnames — built for a classic secondary-world fantasy setting.\n\n- **Iridian Vespera**: A nomadic chronicler known for weaving history into rhythmic poetry.\n- **Bramwell Hallowfist**: A retired siege engineer who now runs a quiet borderlands apothecary.\n- **Sylvara Quint**: A sharp-witted investigator who recovers stolen celestial artifacts.\n- **Mordantus Krell**: A reclusive scholar obsessed with sunken underwater civilizations.\n- **Fennelora Brightspire**: A charismatic diplomat whose family has brokered peace for generations.",
+    lore: "### Culture\nDrawn from a composite culture where old trade-guild roots and nomadic mountain tongues have merged.\n\n### Style\nMulti-syllabic, rolling sounds over sharp consonants — elegant and historied rather than rugged.\n\n### Usage Suggestions\nUse the ornate first names for scholars and nobles, and the compound surnames as hooks players can ask about.",
+    labels: ["rpg-names", "name-generator", "imported-draft"],
     status: "draft",
   };
 </script>
@@ -77,14 +74,9 @@
   {faqs}
   {generate}
   {initialDraft}
+  variant="names"
 >
   {#snippet formFields(_trigger)}
-    <NameFormFields
-      bind:culture
-      bind:gender
-      bind:nameType
-      bind:count
-      bind:context
-    />
+    <NameFormFields bind:culture bind:gender bind:nameType bind:context />
   {/snippet}
 </SEOGeneratorLayout>

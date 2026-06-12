@@ -107,3 +107,18 @@
 
 **Learning:** Svelte `Object.fromEntries(Object.entries(obj).map(...))` allocates multiple intermediate arrays for extracting entries, transforming them, and then reassembling the object. For store methods operating on many keys, this introduces significant garbage collection pressure and CPU overhead on every invocation.
 **Action:** Replace `Object.fromEntries(Object.entries(obj).map(...))` with an imperative `for...in` loop constructing a new record natively when transforming or filtering object properties in Svelte stores.
+
+## 2026-05-18 - [Performance Insight: Array allocation in object key transformation]
+
+**Learning:** Replacing `Object.fromEntries(Object.entries(obj).map(...))` with a `for...of Object.keys()` loop when cloning or normalizing objects prevents multiple intermediate array allocations (`O(N)` mapping, `O(N)` entries, and the resultant array), removing GC overhead. This is particularly valuable for session sanitization and snapshot functions where object processing runs frequently.
+**Action:** When creating transformed copies of objects (such as `tokens` inside VTT maps), utilize an imperative `for...of Object.keys()` loop to directly build the target record natively instead of chaining functional object methods.
+
+## 2026-05-18 - [Optimize Vault Import Parsing Stats Calculation]
+
+**Learning:** In Svelte 5 `$derived` blocks, writing concise declarative code like `[...arrays].filter(condition).length` multiple times inside a single block can lead to significant unnecessary intermediate array allocations, memory pressure, and garbage collection overhead—especially visible when dealing with larger datasets like vault entity lists.
+**Action:** When calculating multiple aggregate stats over a single array in a reactive context, favor a single-pass imperative `for...of` loop inside a `$derived.by()` block. This avoids intermediate allocations while correctly preserving reactivity and drastically reducing execution time for large arrays.
+
+## 2025-02-12 - Imperative counting in reactive derived stores
+
+**Learning:** In Svelte `$derived` blocks, avoiding `.filter(...).length` and `.reduce(...)` allocations against large store properties (like `vault.allEntities`) prevents closure instantiations on every reactive loop execution. Using an imperative `for...of` loop tracking an inner counter is the most garbage-collection friendly method for these common counting operations.
+**Action:** Always replace `.reduce` loops inside derived counters that query `allEntities` with imperative loops to lower CPU bounds on hot rendering paths.
