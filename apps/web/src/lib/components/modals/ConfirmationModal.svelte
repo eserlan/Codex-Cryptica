@@ -83,17 +83,17 @@
       <!-- Actions -->
       <div class="flex flex-col gap-3 p-8">
         <button
-          class={`w-full rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-theme-surface ${
+          class={`w-full rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all ${
             dialog.isDangerous
-              ? "bg-red-600 text-white border border-red-600 hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.25)] focus-visible:ring-red-400"
-              : "bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] focus-visible:ring-theme-primary"
+              ? "bg-red-600 text-white border border-red-600 hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.25)]"
+              : "bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)]"
           }`}
           onclick={handleConfirm}
         >
           {dialog.confirmLabel || "Confirm"}
         </button>
         <button
-          class="w-full rounded-xl border border-theme-border bg-theme-bg/50 px-6 py-3 text-xs font-bold uppercase tracking-widest text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-surface"
+          class="w-full rounded-xl border border-theme-border bg-theme-bg/50 px-6 py-3 text-xs font-bold uppercase tracking-widest text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text"
           onclick={handleCancel}
         >
           {dialog.cancelLabel || "Cancel"}

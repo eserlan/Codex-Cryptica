@@ -18,7 +18,7 @@
         href={PATREON_URL}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
         >Support on Patreon</a
       >
     {/if}
@@ -27,47 +27,47 @@
         href={DISCORD_URL}
         target="_blank"
         rel="noopener noreferrer"
-        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+        class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
         >Discord</a
       >
     {/if}
     <a
       href="{base}/features"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Features</a
     >
     <a
       href="{base}/tools"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Tools</a
     >
     <a
       href="{base}/blog"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Blog</a
     >
     <a
       href="{base}/responsible-ai-worldbuilding"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Responsible AI</a
     >
     <button
       onclick={() => modalUIStore.openSettings("help")}
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest cursor-pointer"
       >Help</button
     >
     <a
       href="{base}/privacy"
       target="_blank"
       rel="noopener noreferrer"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Privacy Policy</a
     >
     <a
       href="{base}/terms"
       target="_blank"
       rel="noopener noreferrer"
-      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+      class="text-[10px] font-sans text-chrome-muted hover:text-chrome-text transition-colors uppercase tracking-widest"
       >Terms of Service</a
     >
   </div>
