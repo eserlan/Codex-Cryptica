@@ -513,6 +513,10 @@ export class LayoutManager {
       }
 
       if (options.viewportPolicy === "preserve") {
+        // Halt any in-flight fit animation from a previous layout pass —
+        // otherwise it would keep moving the camera after this update
+        // promised to preserve the viewport.
+        this.cy.stop();
         options.onLayoutStop?.();
       } else {
         this.animateFitAndStop(options, "ease-out-cubic");

@@ -122,6 +122,7 @@ describe("LayoutManager", () => {
       width: vi.fn().mockReturnValue(1000),
       height: vi.fn().mockReturnValue(800),
       fit: vi.fn(),
+      stop: vi.fn(),
       animate: vi.fn((animationOptions?: { complete?: () => void }) => {
         animationOptions?.complete?.();
       }),
@@ -231,10 +232,12 @@ describe("LayoutManager", () => {
       "Elements Update",
     );
 
-    // fit-only path with preserve policy: no worker, no fit animation
+    // fit-only path with preserve policy: no worker, no fit animation, and
+    // any in-flight viewport animation is halted
     expect(capturedPostMessage).toBeNull();
     expect(mockCy.animate).not.toHaveBeenCalled();
     expect(mockCy.fit).not.toHaveBeenCalled();
+    expect(mockCy.stop).toHaveBeenCalled();
     expect(onLayoutStop).toHaveBeenCalledTimes(1);
   });
 
