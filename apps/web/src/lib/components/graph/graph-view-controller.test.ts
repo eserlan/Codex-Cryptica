@@ -186,6 +186,46 @@ describe("GraphViewController", () => {
     expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
   });
 
+  describe("focus handoff", () => {
+    beforeEach(async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+    });
+
+    it("clearGraphSelection nulls selectedId and calls applyFocus(null)", () => {
+      controller.selectedId = "node-1";
+      const batchSpy = vi.spyOn(controller, "applyFocus");
+
+      controller.clearGraphSelection();
+
+      expect(controller.selectedId).toBeNull();
+      expect(batchSpy).toHaveBeenCalledWith(null);
+    });
+
+    it("clearGraphSelection unselects all nodes in cytoscape", () => {
+      controller.selectedId = "node-1";
+      const unselectSpy = vi.fn();
+      (controller.cy as any).$ = vi
+        .fn()
+        .mockReturnValue({ unselect: unselectSpy });
+
+      controller.clearGraphSelection();
+
+      expect(unselectSpy).toHaveBeenCalled();
+    });
+
+    it("clearGraphSelection cancels any pending node select timer", () => {
+      const clearSpy = vi.spyOn(global, "clearTimeout");
+      // Force a timer into place by inspecting private state via any cast
+      (controller as any).nodeSelectTimer = 999;
+
+      controller.clearGraphSelection();
+
+      expect(clearSpy).toHaveBeenCalledWith(999);
+      expect((controller as any).nodeSelectTimer).toBeNull();
+    });
+  });
+
   describe("viewport policy", () => {
     const lastPolicy = () => {
       const apply = (controller.layoutManager as any).apply;

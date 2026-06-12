@@ -151,10 +151,8 @@ export class GraphViewController {
             }
           } else {
             if (this.deps.layoutUIStore.isMobile) {
-              this.clearNodeSelectTimer();
+              this.clearGraphSelection();
               this.deps.modalUIStore.openZenMode(id);
-              this.selectedId = null;
-              node.unselect();
               return;
             }
             this.clearNodeSelectTimer();
@@ -164,11 +162,9 @@ export class GraphViewController {
             }, this.NODE_SELECT_DELAY_MS);
           }
         },
-        onNodeDoubleTap: (id, node) => {
-          this.clearNodeSelectTimer();
+        onNodeDoubleTap: (id) => {
+          this.clearGraphSelection();
           this.deps.modalUIStore.openZenMode(id);
-          this.selectedId = null;
-          node.unselect();
         },
         onEdgeTap: (data) => {
           if (this.deps.vault.isGuest) return;
@@ -180,8 +176,7 @@ export class GraphViewController {
           };
         },
         onBackgroundTap: () => {
-          this.clearNodeSelectTimer();
-          this.selectedId = null;
+          this.clearGraphSelection();
           if (this.deps.connectionModeStore.isConnecting)
             this.deps.connectionModeStore.toggleConnectMode();
         },
@@ -453,6 +448,20 @@ export class GraphViewController {
         });
       });
     }
+  };
+
+  /**
+   * Clears graph-side selection: deselects all nodes, nulls selectedId, and
+   * removes neighbourhood dimming. Call this whenever focus ownership moves
+   * away from the graph (focus mode takeover, double-tap Zen, background tap).
+   */
+  clearGraphSelection = () => {
+    this.selectedId = null;
+    this.clearNodeSelectTimer();
+    if (this.cy) {
+      this.cy.$("node:selected").unselect();
+    }
+    this.applyFocus(null);
   };
 
   applyFocus = (id: string | null) => {
