@@ -52,7 +52,7 @@
     {/if}
     <button
       type="button"
-      class="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-current/20 opacity-70 transition hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current/40"
+      class="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-current/20 opacity-70 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40"
       aria-label="Dismiss notification"
       title="Dismiss"
       onclick={() => notificationStore.clearNotification()}
