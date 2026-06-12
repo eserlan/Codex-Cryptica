@@ -11,6 +11,7 @@ The **Stable Layout** toggle (represented by a pin icon in the Graph Toolbar) co
 - **Manual Persistence:** Any nodes you drag will stay at their new coordinates. These positions are saved directly into the entity's markdown frontmatter under `metadata.coordinates`.
 - **No Auto-Redraw:** Adding new connections or entities will _not_ trigger a full graph re-simulation. New nodes will be placed at a stable default position, and existing nodes will not move.
 - **Performance:** This mode is highly recommended for large vaults (100+ nodes) as it prevents expensive force-directed calculations on every change.
+- **Camera Stability:** Safe updates also keep your current pan/zoom. Editing titles, lore, labels, categories, or dates — including content edits that add or remove connections — and plain window resizes will not move the camera. The viewport only re-fits for structural changes (new or deleted entities), mode changes (timeline/orbit), orientation changes, and explicit **Fit** or **Redraw** actions.
 
 ### When OFF (Unpinned)
 

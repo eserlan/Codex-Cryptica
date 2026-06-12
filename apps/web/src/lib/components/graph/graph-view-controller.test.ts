@@ -185,4 +185,93 @@ describe("GraphViewController", () => {
     expect(controller.didFinalizeLoad).toBe(true);
     expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
   });
+
+  describe("viewport policy", () => {
+    const lastPolicy = () => {
+      const apply = (controller.layoutManager as any).apply;
+      const calls = apply.mock.calls;
+      return calls[calls.length - 1][0].viewportPolicy;
+    };
+
+    beforeEach(async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+    });
+
+    it("preserves the camera for edge-only element updates with stable layout", async () => {
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Elements Update",
+        false,
+        false,
+        false,
+      );
+      expect(lastPolicy()).toBe("preserve");
+    });
+
+    it("fits when new nodes are added", async () => {
+      await controller.applyCurrentLayout(
+        false,
+        false,
+        "Elements Update",
+        false,
+        true,
+        false,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits when nodes are removed", async () => {
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Elements Update",
+        false,
+        false,
+        true,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("preserves the camera for plain window resizes", async () => {
+      await controller.applyCurrentLayout(false, false, "Window Resize", false);
+      expect(lastPolicy()).toBe("preserve");
+    });
+
+    it("fits on orientation-change resizes", async () => {
+      await controller.applyCurrentLayout(false, true, "Window Resize", true);
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits when stable layout is off", async () => {
+      deps.graph.stableLayout = false;
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Elements Update",
+        false,
+        false,
+        false,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits on initial layout", async () => {
+      await controller.applyCurrentLayout(true, true, "Load Finalized");
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits on mode changes and manual redraw", async () => {
+      await controller.applyCurrentLayout(false, true, "Mode Change Effect");
+      expect(lastPolicy()).toBe("fit");
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "UI Redraw Button",
+        true,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+  });
 });

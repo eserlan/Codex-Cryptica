@@ -279,12 +279,33 @@ export class GraphViewController {
     }
   };
 
+  /**
+   * Decides whether a layout pass may move the camera. With stable layout on,
+   * safe updates (edge churn from content edits, plain window resizes) keep
+   * the user's pan/zoom; structural changes (new/removed nodes), mode
+   * changes, explicit Fit/Redraw, and orientation changes still fit.
+   */
+  private resolveViewportPolicy = (
+    isInitial: boolean,
+    caller: string,
+    randomizeForced: boolean,
+    hasNewNodes: boolean,
+    hasRemovedNodes: boolean,
+  ): "preserve" | "fit" => {
+    if (isInitial || !this.deps.graph.stableLayout) return "fit";
+    if (caller === "Window Resize" && !randomizeForced) return "preserve";
+    if (caller === "Elements Update" && !hasNewNodes && !hasRemovedNodes)
+      return "preserve";
+    return "fit";
+  };
+
   applyCurrentLayout = async (
     isInitial = false,
     isForced = false,
     caller = "unknown",
     randomizeForced = false,
     hasNewNodes = false,
+    hasRemovedNodes = false,
   ) => {
     if (!this.layoutManager) return;
 
@@ -298,6 +319,13 @@ export class GraphViewController {
         stableLayout: this.deps.graph.stableLayout,
         isGuest: this.deps.vault.isGuest,
         isMobile: this.deps.layoutUIStore.isMobile,
+        viewportPolicy: this.resolveViewportPolicy(
+          isInitial,
+          caller,
+          randomizeForced,
+          hasNewNodes,
+          hasRemovedNodes,
+        ),
         onLayoutStart: () => {
           this.isLayoutRunning = true;
         },
@@ -380,13 +408,20 @@ export class GraphViewController {
           this.initialLoaded = true;
           this.graphVisible = true;
         },
-        onLayoutUpdate: (isInitial, isForced, caller, hasNewNodes) => {
+        onLayoutUpdate: (
+          isInitial,
+          isForced,
+          caller,
+          hasNewNodes,
+          hasRemovedNodes,
+        ) => {
           this.applyCurrentLayout(
             isInitial,
             isForced,
             caller,
             false,
             hasNewNodes,
+            hasRemovedNodes,
           );
         },
       });

@@ -21,6 +21,7 @@ export interface SyncOptions {
     isForced: boolean,
     caller: string,
     hasNewNodes?: boolean,
+    hasRemovedNodes?: boolean,
   ) => void;
 }
 
@@ -298,7 +299,16 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         // Preserve current positions for edge-only updates. This avoids a second
         // relayout when AI discovery adds connections right after creating a node.
         const force = hasDeletions;
-        options.onLayoutUpdate?.(false, force, "Elements Update", hasNewNodes);
+        // Edge churn (e.g. lore edits rewriting wiki-links) removes elements
+        // without removing nodes — callers use this to keep the camera still.
+        const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
+        options.onLayoutUpdate?.(
+          false,
+          force,
+          "Elements Update",
+          hasNewNodes,
+          hasRemovedNodes,
+        );
       }
     }
   } catch (err) {
