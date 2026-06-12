@@ -390,6 +390,18 @@ export function setupWindowGlobals(context: {
     },
   );
 
+  // Expose revisionService for DEV/staging E2E test access
+  if (import.meta.env.DEV || import.meta.env.VITE_STAGING === "true") {
+    import("../../services/RevisionService.svelte")
+      .then((m) => {
+        if (m?.revisionService)
+          (window as any).revisionService = m.revisionService;
+      })
+      .catch((e) =>
+        debugStore.warn("Failed to attach revisionService to window", e),
+      );
+  }
+
   // Lazy-load dynamic AI services if not already present
   import("../../services/ai")
     .then((m) => {

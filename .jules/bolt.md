@@ -112,3 +112,8 @@
 
 **Learning:** Replacing `Object.fromEntries(Object.entries(obj).map(...))` with a `for...of Object.keys()` loop when cloning or normalizing objects prevents multiple intermediate array allocations (`O(N)` mapping, `O(N)` entries, and the resultant array), removing GC overhead. This is particularly valuable for session sanitization and snapshot functions where object processing runs frequently.
 **Action:** When creating transformed copies of objects (such as `tokens` inside VTT maps), utilize an imperative `for...of Object.keys()` loop to directly build the target record natively instead of chaining functional object methods.
+
+## 2026-05-18 - [Optimize Vault Import Parsing Stats Calculation]
+
+**Learning:** In Svelte 5 `$derived` blocks, writing concise declarative code like `[...arrays].filter(condition).length` multiple times inside a single block can lead to significant unnecessary intermediate array allocations, memory pressure, and garbage collection overhead—especially visible when dealing with larger datasets like vault entity lists.
+**Action:** When calculating multiple aggregate stats over a single array in a reactive context, favor a single-pass imperative `for...of` loop inside a `$derived.by()` block. This avoids intermediate allocations while correctly preserving reactivity and drastically reducing execution time for large arrays.

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
   import { tick, onMount } from "svelte";
@@ -82,7 +83,7 @@
   let copied = $state(false);
   let useAI = $state(true);
   let showSaveModal = $state(false);
-  let redirectUrl = $state(`${base}/`);
+  let redirectUrl = $state(`${cleanBase}/`);
 
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
@@ -282,6 +283,38 @@
     }
   }
 
+  function replaceEmojisWithIcons(htmlStr: string): string {
+    return htmlStr
+      .replace(
+        /👤/g,
+        '<span class="icon-[lucide--user] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      )
+      .replace(
+        /👥/g,
+        '<span class="icon-[lucide--users] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      )
+      .replace(
+        /📍/g,
+        '<span class="icon-[lucide--map-pin] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      )
+      .replace(
+        /📅|⚡/g,
+        '<span class="icon-[lucide--calendar] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      )
+      .replace(
+        /🐾/g,
+        '<span class="icon-[lucide--paw-print] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      )
+      .replace(
+        /📦/g,
+        '<span class="icon-[lucide--package] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      )
+      .replace(
+        /📄/g,
+        '<span class="icon-[lucide--file-text] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      );
+  }
+
   const labelValueHtml = (label: string, value: string) => {
     if (variant === "names") {
       const cleanLabel = label.replace(/\*\*/g, "").trim();
@@ -291,9 +324,12 @@
         .replace(/'/g, "&#39;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+      const iconifiedLabel = replaceEmojisWithIcons(
+        renderMd(cleanLabel, { inline: true }),
+      );
       return `<div class="group relative flex flex-col p-4 bg-theme-surface/30 border border-theme-border/60 rounded-xl hover:border-theme-primary/30 hover:bg-theme-surface/50 transition-all duration-200 shadow-sm mb-3 break-inside-avoid">
         <div class="flex items-start justify-between gap-3 mb-1">
-          <span class="font-header font-bold text-base md:text-lg text-theme-primary leading-tight select-all">${renderMd(cleanLabel, { inline: true })}</span>
+          <span class="font-header font-bold text-base md:text-lg text-theme-primary leading-tight select-all">${iconifiedLabel}</span>
           <button 
             type="button" 
             class="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 p-1 hover:bg-theme-primary/10 text-theme-text/40 hover:text-theme-primary rounded transition-all duration-150 flex items-center justify-center cursor-pointer" 
@@ -306,7 +342,10 @@
         <span class="text-xs md:text-sm text-theme-text/80 leading-relaxed">${renderMd(value, { inline: true })}</span>
       </div>\n`;
     }
-    return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-primary mb-0.5">${renderMd(label, { inline: true })}</span><span>${renderMd(value, { inline: true })}</span></div>\n`;
+    const iconifiedLabel = replaceEmojisWithIcons(
+      renderMd(label, { inline: true }),
+    );
+    return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-primary mb-0.5">${iconifiedLabel}</span><span>${renderMd(value, { inline: true })}</span></div>\n`;
   };
 
   // Label/value pairs ("- **Key**: value") get a bespoke stacked layout
@@ -402,7 +441,7 @@
         "__codex_pending_import",
         JSON.stringify(sessionDrafts),
       );
-      redirectUrl = `${base}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
+      redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
       errorMessage = "Storage access is blocked. Please copy drafts manually.";
@@ -426,7 +465,7 @@
       };
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
-      redirectUrl = `${base}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
+      redirectUrl = `${cleanBase}/?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;
     } catch {
       errorMessage =
@@ -521,7 +560,7 @@
   <meta name="twitter:title" content={pageTitle} />
   <meta name="twitter:description" content={metaDescription} />
   <meta name="twitter:image" content="https://codexcryptica.com/logo.png" />
-  <link rel="help" href="{base}/llms.txt" />
+  <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${softwareApplicationJsonLd}</scr` +
@@ -551,36 +590,41 @@
   <header
     class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
   >
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="{base}/" class="flex items-center gap-2 group" id="logo-link">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <a
+        href="{cleanBase}/"
+        class="flex items-center gap-2 group min-w-0"
+        id="logo-link"
+      >
         <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 transition-transform group-hover:rotate-12"
+          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
         ></span>
         <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors"
+          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
         >
-          Codex Cryptica
+          Codex<span class="hidden sm:inline"> Cryptica</span>
         </span>
       </a>
       <nav
         class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
       >
         <a
-          href="{base}/features"
+          href="{cleanBase}/features"
           class="hover:text-theme-primary transition-colors">Features</a
         >
-        <a href="{base}/blog" class="hover:text-theme-primary transition-colors"
-          >Devlog</a
+        <a
+          href="{cleanBase}/blog"
+          class="hover:text-theme-primary transition-colors">Devlog</a
         >
         <a
-          href="{base}/generators"
+          href="{cleanBase}/generators"
           class="hover:text-theme-primary transition-colors">Generators</a
         >
       </nav>
-      <div>
+      <div class="shrink-0">
         <a
-          href="{base}/"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+          href="{cleanBase}/"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -868,7 +912,7 @@
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
         <a
-          href="{base}/generators"
+          href="{cleanBase}/generators"
           class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
         >
           <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
@@ -904,7 +948,7 @@
 
         <form
           class="space-y-4"
-          action={canonicalPath ? `${base}${canonicalPath}` : undefined}
+          action={canonicalPath ? `${cleanBase}${canonicalPath}` : undefined}
           method={canonicalPath ? "GET" : undefined}
           onsubmit={(event) => {
             event.preventDefault();
@@ -1016,7 +1060,7 @@
         <div class="flex flex-wrap justify-center gap-3">
           {#each relatedLinks as link (link.href)}
             <a
-              href="{base}{link.href}"
+              href="{cleanBase}{link.href}"
               class="px-4 py-2 bg-theme-surface/30 border border-theme-border/40 hover:border-theme-primary/60 text-xs font-bold uppercase tracking-wider text-theme-text rounded-full shadow-sm hover:bg-theme-surface/50 transition-all flex items-center gap-1.5"
             >
               <span>{link.label}</span>
@@ -1062,7 +1106,7 @@
           <button
             type="button"
             onclick={confirmSaveRedirect}
-            class="w-full py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            class="w-full py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
           >
             <span class="icon-[lucide--external-link] w-4 h-4"></span>
             Open Codex
@@ -1092,23 +1136,23 @@
       <div>© 2026 Codex Cryptica. All rights reserved.</div>
       <div class="flex gap-6">
         <a
-          href="{base}/terms"
+          href="{cleanBase}/terms"
           class="hover:text-theme-primary transition-colors">Terms</a
         >
         <a
-          href="{base}/privacy"
+          href="{cleanBase}/privacy"
           class="hover:text-theme-primary transition-colors">Privacy</a
         >
         <a
-          href="{base}/tools"
+          href="{cleanBase}/tools"
           class="hover:text-theme-primary transition-colors">Tools</a
         >
         <a
-          href="{base}/sitemap.xml"
+          href="{cleanBase}/sitemap.xml"
           class="hover:text-theme-primary transition-colors">Sitemap</a
         >
         <a
-          href="{base}/llms.txt"
+          href="{cleanBase}/llms.txt"
           class="hover:text-theme-primary transition-colors">LLM Docs</a
         >
       </div>

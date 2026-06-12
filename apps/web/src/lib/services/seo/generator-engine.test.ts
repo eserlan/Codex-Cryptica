@@ -421,6 +421,12 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Notable Regulars");
       expect(res.lore).toContain("### Rumours");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
       expect(res.labels).toContain("social-hub-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -518,6 +524,12 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Notable Patrons");
       expect(res.lore).toContain("### Rumours");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
       expect(res.labels).toContain("tavern-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -600,6 +612,14 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Major Factions");
       expect(res.lore).toContain("### Rumours & Hooks");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **📅");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
+      expect(res.lore).not.toContain("- **Event**:");
       expect(res.labels).toContain("kingdom-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -680,6 +700,14 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Power Blocs");
       expect(res.lore).toContain("### Rumours & Hooks");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **📅");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
+      expect(res.lore).not.toContain("- **Event**:");
       expect(res.labels).toContain("nation-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -876,6 +904,25 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
 
+    it("should generate focused pantheon details locally when useAI is false and width is focused", async () => {
+      const res = await engine.generatePantheon({
+        mode: "pantheon",
+        genre: "Classic Fantasy",
+        domain: "War",
+        width: "focused",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("faction");
+      expect(res.summary?.toLowerCase()).toContain(
+        "focused on the domain of war",
+      );
+      expect(res.content).toContain(
+        "Controls a specific aspect of the war domain",
+      );
+      expect(res.lore).toContain("The deity representing a key facet of war");
+    });
+
     it("should call clientManager for single deity when useAI is true and succeed", async () => {
       const mockModel = {
         generateContent: vi.fn().mockResolvedValue({
@@ -932,6 +979,160 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toBe("AI Bio");
       expect(res.lore).toBe("AI Lore");
       expect(res.labels).toContain("pantheon-custom");
+    });
+
+    it("should construct lore from structured JSON without inserting empty deity entries in entity seeds", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "The Silent Maw",
+                summary: "Core belief system",
+                meta: {
+                  conflict_theme: "Cosmic Balance",
+                  worshippers: "Scholars",
+                  public_dogma: "Mortals believe",
+                  hidden_problem: "Schism",
+                  immediate_hook: "Hook",
+                },
+                history: {
+                  origin_and_dogma: "Origin",
+                  structure_and_laws: "Structure",
+                },
+                deities: [
+                  {
+                    name: "Oryx-Malaphon",
+                    description: "God of Craft",
+                    portfolio: "Craft",
+                  },
+                ],
+                relationships: [
+                  {
+                    deity_a: "Oryx-Malaphon",
+                    deity_b: "Oryx-Malaphon",
+                    relationship_type: "Alliance",
+                    campaign_pressure: "Pressure",
+                  },
+                ],
+                campaign_seeds: {
+                  characters: [
+                    {
+                      name: "Elias the Unraveler",
+                      role: "Heretic",
+                      hook: "Forbidden text",
+                    },
+                  ],
+                },
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generatePantheon({
+        mode: "pantheon",
+        useAI: true,
+      });
+
+      expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain(
+        "- **👤 Elias the Unraveler (Heretic)**: Forbidden text",
+      );
+      expect(res.lore).not.toContain("- **Character**: Oryx-Malaphon");
+    });
+
+    it("should include correct domain scope in prompt based on width selection", async () => {
+      let capturedPromptFocused = "";
+      let capturedPromptBalanced = "";
+      let capturedPromptWide = "";
+
+      const mockModelFocused = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          capturedPromptFocused = prompt;
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Focused Pantheon",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+
+      const mockModelBalanced = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          capturedPromptBalanced = prompt;
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Balanced Pantheon",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+
+      const mockModelWide = {
+        generateContent: vi.fn().mockImplementation((prompt: string) => {
+          capturedPromptWide = prompt;
+          return Promise.resolve({
+            response: {
+              text: () =>
+                JSON.stringify({
+                  title: "Wide Pantheon",
+                  content: "",
+                  lore: "",
+                  labels: [],
+                }),
+            },
+          });
+        }),
+      };
+
+      mockClientManager.getModel
+        .mockResolvedValueOnce(mockModelFocused)
+        .mockResolvedValueOnce(mockModelBalanced)
+        .mockResolvedValueOnce(mockModelWide);
+
+      await engine.generatePantheon({
+        mode: "pantheon",
+        width: "focused",
+        domain: "Nature",
+        useAI: true,
+      });
+
+      await engine.generatePantheon({
+        mode: "pantheon",
+        width: "balanced",
+        domain: "Nature",
+        useAI: true,
+      });
+
+      await engine.generatePantheon({
+        mode: "pantheon",
+        width: "wide",
+        domain: "Nature",
+        useAI: true,
+      });
+
+      expect(capturedPromptFocused).toContain(
+        "Domain Scope: Focused Pantheon: every deity must represent a distinct aspect, sub-domain, philosophy, contradiction, or extreme interpretation of the primary domain: Nature.",
+      );
+      expect(capturedPromptBalanced).toContain(
+        "Domain Scope: Central Theme Pantheon: create a diverse pantheon, but make Nature the central force, sacred obsession, source of crisis, or highest divine authority.",
+      );
+      expect(capturedPromptWide).toContain(
+        "Domain Scope: Wide Mythic Pantheon: create a broad pantheon with many different divine domains, e.g. rulership, war, death, nature, craft, love, fate, trickery, knowledge, sea, sky, underworld, hearth, travel, harvest, magic, dreams, law, wilderness, art, prophecy, and other major mortal concerns. The primary domain Nature should appear as one important divine concern, but it must not dominate.",
+      );
     });
 
     it("should fall back to local tables if AI call fails", async () => {

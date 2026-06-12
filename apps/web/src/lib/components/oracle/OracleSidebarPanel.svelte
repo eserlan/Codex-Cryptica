@@ -31,6 +31,8 @@
   );
 
   onMount(() => {
+    void oracle.init();
+
     // Show hint on first open
     const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
     if (!hasSeenHint) {

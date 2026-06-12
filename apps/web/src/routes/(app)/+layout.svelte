@@ -188,6 +188,7 @@
 
       if (import.meta.env.DEV || import.meta.env.VITE_STAGING === "true") {
         (window as any).worldStore = worldStore;
+        void featureGlobals.oracle?.init();
       }
     })();
   });

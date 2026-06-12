@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { parseWaExport } from "$lib/services/seo/wa-parser";
@@ -22,20 +23,30 @@
   let filesParsed = $state<
     Array<{ type: string; title: string; content: string; labels: string[] }>
   >([]);
-  let parseStats = $derived({
-    total: filesParsed.length,
-    characters: filesParsed.filter((f) => f.type === "character").length,
-    locations: filesParsed.filter(
-      (f) => f.type === "location" || f.type === "creature",
-    ).length,
-    factions: filesParsed.filter((f) => f.type === "faction").length,
-    items: filesParsed.filter((f) => f.type === "item").length,
-    others: filesParsed.filter(
-      (f) =>
-        !["character", "location", "creature", "faction", "item"].includes(
-          f.type,
-        ),
-    ).length,
+  // ⚡ Bolt Optimization: Calculate stats in a single pass to avoid multiple .filter() array allocations.
+  let parseStats = $derived.by(() => {
+    let characters = 0;
+    let locations = 0;
+    let factions = 0;
+    let items = 0;
+    let others = 0;
+
+    for (const f of filesParsed) {
+      if (f.type === "character") characters++;
+      else if (f.type === "location" || f.type === "creature") locations++;
+      else if (f.type === "faction") factions++;
+      else if (f.type === "item") items++;
+      else others++;
+    }
+
+    return {
+      total: filesParsed.length,
+      characters,
+      locations,
+      factions,
+      items,
+      others,
+    };
   });
 
   let errorMessage = $state<string | null>(null);
@@ -278,7 +289,7 @@
         JSON.stringify(filesParsed),
       );
       // Redirect to Codex base route with UTM tracking
-      window.location.href = `${base}/?utm_source=importer-${pageData.slug}&utm_medium=landing-page&utm_campaign=seo-funnel`;
+      window.location.href = `${cleanBase}/?utm_source=importer-${pageData.slug}&utm_medium=landing-page&utm_campaign=seo-funnel`;
     } catch {
       errorMessage =
         "Failed to store import data. Please check localStorage permissions.";
@@ -389,36 +400,41 @@
   <header
     class="w-full border-b border-theme-border/60 bg-theme-surface/40 backdrop-blur-md px-6 py-4 sticky top-0 z-50"
   >
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="{base}/" class="flex items-center gap-2 group" id="logo-link">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      <a
+        href="{cleanBase}/"
+        class="flex items-center gap-2 group min-w-0"
+        id="logo-link"
+      >
         <span
-          class="icon-[lucide--castle] text-theme-primary w-6 h-6 transition-transform group-hover:rotate-12"
+          class="icon-[lucide--castle] text-theme-primary w-6 h-6 shrink-0 transition-transform group-hover:rotate-12"
         ></span>
         <span
-          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors"
+          class="font-header font-bold text-sm uppercase tracking-[0.2em] text-theme-text group-hover:text-theme-primary transition-colors whitespace-nowrap truncate"
         >
-          Codex Cryptica
+          Codex<span class="hidden sm:inline"> Cryptica</span>
         </span>
       </a>
       <nav
         class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
       >
         <a
-          href="{base}/features"
+          href="{cleanBase}/features"
           class="hover:text-theme-primary transition-colors">Features</a
         >
-        <a href="{base}/blog" class="hover:text-theme-primary transition-colors"
-          >Devlog</a
+        <a
+          href="{cleanBase}/blog"
+          class="hover:text-theme-primary transition-colors">Devlog</a
         >
         <a
-          href="{base}/tools/dnd-npc-generator"
+          href="{cleanBase}/tools/dnd-npc-generator"
           class="hover:text-theme-primary transition-colors">Generators</a
         >
       </nav>
-      <div>
+      <div class="shrink-0">
         <a
-          href="{base}/?ref=import-nav"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+          href="{cleanBase}/?ref=import-nav"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all whitespace-nowrap"
           id="nav-cta-btn"
         >
           Open Codex
@@ -694,8 +710,8 @@
           <div class="flex flex-wrap justify-center gap-3">
             {#each pageData.relatedLinks as link (link.href)}
               <a
-                href="{base}{link.href}"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors"
+                href="{cleanBase}{link.href}"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-theme-border/60 bg-theme-surface/30 text-xs font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/40 transition-colors whitespace-nowrap"
               >
                 <span
                   class="icon-[lucide--arrow-right] w-3 h-3"
@@ -718,7 +734,7 @@
           of truth.
         </p>
         <a
-          href="{base}/responsible-ai-worldbuilding"
+          href="{cleanBase}/responsible-ai-worldbuilding"
           class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary hover:underline"
         >
           <span
@@ -766,23 +782,23 @@
       <div>© 2026 Codex Cryptica. All rights reserved.</div>
       <div class="flex gap-6">
         <a
-          href="{base}/terms"
+          href="{cleanBase}/terms"
           class="hover:text-theme-primary transition-colors">Terms</a
         >
         <a
-          href="{base}/privacy"
+          href="{cleanBase}/privacy"
           class="hover:text-theme-primary transition-colors">Privacy</a
         >
         <a
-          href="{base}/tools"
+          href="{cleanBase}/tools"
           class="hover:text-theme-primary transition-colors">Tools</a
         >
         <a
-          href="{base}/sitemap.xml"
+          href="{cleanBase}/sitemap.xml"
           class="hover:text-theme-primary transition-colors">Sitemap</a
         >
         <a
-          href="{base}/llms.txt"
+          href="{cleanBase}/llms.txt"
           class="hover:text-theme-primary transition-colors">LLM Docs</a
         >
       </div>

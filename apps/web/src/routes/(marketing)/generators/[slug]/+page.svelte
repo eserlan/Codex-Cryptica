@@ -383,6 +383,7 @@
       | "single"
       | "pantheon",
     size: "small" as "small" | "medium" | "large",
+    width: "balanced" as "balanced" | "focused" | "wide",
     genre: pantheonConfig.genres[0],
     divineType: pantheonConfig.divineTypes[0],
     domain: pantheonConfig.domains[0],
@@ -406,6 +407,15 @@
 
   // Unified theme binding target — synced to the active generator's state
   let activeTheme = $state(factionConfig.themes[0]);
+  let lastSlug = $state(data.slug);
+
+  $effect(() => {
+    if (data.slug !== lastSlug) {
+      lastSlug = data.slug;
+      pantheon.mode =
+        data.slug === "pantheon-generator" ? "pantheon" : "single";
+    }
+  });
 
   $effect(() => {
     if (data.slug === "npc") npc.theme = activeTheme;
@@ -851,6 +861,7 @@
         bind:worshippers={pantheon.worshippers}
         bind:conflictTheme={pantheon.conflictTheme}
         bind:size={pantheon.size}
+        bind:width={pantheon.width}
         bind:campaignContext={pantheon.campaignContext}
         onSurprise={trigger}
       />
