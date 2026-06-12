@@ -110,15 +110,18 @@ export class MapStore {
 
     // Clear stack on vault switch and handle auto-selection
     if (typeof window !== "undefined") {
-      if (this._vaultSwitchHandler) {
-        window.removeEventListener("vault-switched", this._vaultSwitchHandler);
+      if (MapStore._vaultSwitchHandler) {
+        window.removeEventListener(
+          "vault-switched",
+          MapStore._vaultSwitchHandler,
+        );
       }
-      this._vaultSwitchHandler = () => {
+      MapStore._vaultSwitchHandler = () => {
         this.navigationStack = [];
         this.pendingActiveMapId = null;
         this.restorePageState();
       };
-      window.addEventListener("vault-switched", this._vaultSwitchHandler);
+      window.addEventListener("vault-switched", MapStore._vaultSwitchHandler);
 
       // Reactive auto-selection when maps are loaded or activeMapId is lost/invalid
       $effect.root(() => {
