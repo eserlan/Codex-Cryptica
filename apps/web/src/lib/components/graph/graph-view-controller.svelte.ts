@@ -162,7 +162,7 @@ export class GraphViewController {
             }, this.NODE_SELECT_DELAY_MS);
           }
         },
-        onNodeDoubleTap: (id) => {
+        onNodeDoubleTap: (id, _node) => {
           this.clearGraphSelection();
           this.deps.modalUIStore.openZenMode(id);
         },
@@ -460,8 +460,8 @@ export class GraphViewController {
     this.clearNodeSelectTimer();
     if (this.cy) {
       this.cy.$("node:selected").unselect();
+      this.applyFocus(null);
     }
-    this.applyFocus(null);
   };
 
   applyFocus = (id: string | null) => {

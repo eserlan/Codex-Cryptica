@@ -363,8 +363,12 @@
   // When focus mode takes over from outside the graph, clear stale graph
   // selection and dimming so both views don't claim ownership simultaneously.
   $effect(() => {
-    if (layoutUIStore.mainViewMode === "focus" && controller.selectedId) {
-      controller.clearGraphSelection();
+    if (layoutUIStore.mainViewMode === "focus") {
+      untrack(() => {
+        if (controller.selectedId) {
+          controller.clearGraphSelection();
+        }
+      });
     }
   });
 
