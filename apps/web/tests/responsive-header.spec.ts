@@ -6,6 +6,13 @@ test.describe("Mobile Header Responsiveness", () => {
   }) => {
     // Set viewport to a typical mobile width
     await page.setViewportSize({ width: 375, height: 667 });
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+    });
     await page.goto("/");
 
     // Verify "CA" logo is visible and "Codex Cryptica" is hidden
@@ -33,6 +40,13 @@ test.describe("Mobile Header Responsiveness", () => {
 
   test("should hide entity labels on small screens", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+    });
     await page.goto("/");
 
     // The "ENTITIES" label should be hidden (hidden sm:block)

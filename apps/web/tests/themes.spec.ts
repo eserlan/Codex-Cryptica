@@ -41,7 +41,7 @@ test.describe("Visual Styling Templates", () => {
         },
       };
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => (window as any).vault?.repository);
     await page.evaluate(() => {
       const v = (window as any).vault;

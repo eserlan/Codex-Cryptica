@@ -10,7 +10,7 @@ test.describe("Graph Focus Mode", () => {
       );
     });
 
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Wait for vault initialization (OPFS auto-load)
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {

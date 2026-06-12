@@ -10,7 +10,7 @@ test.describe("Draw Command Autocomplete", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Create entities via UI to trigger indexing
     await page.getByTestId("new-entity-button").click();

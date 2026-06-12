@@ -10,7 +10,7 @@ test.describe("Advanced Draw Button", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
 
     // Create an entity to test sidepanel/zen mode
     await page.getByTestId("new-entity-button").click();

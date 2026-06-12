@@ -10,7 +10,7 @@ test.describe("AI Disabled", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
     await page.evaluate(() => {
       const ui = (window as any).uiStore;

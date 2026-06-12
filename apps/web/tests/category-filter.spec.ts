@@ -74,7 +74,7 @@ test.describe("Category Filter", () => {
         };
       }
     });
-    await page.goto("http://localhost:5173/");
+    await page.goto("/");
     await page.waitForFunction(() => !!(window as any).uiStore);
     await page.evaluate(() => {
       (window as any).uiStore.dismissedLandingPage = true;
