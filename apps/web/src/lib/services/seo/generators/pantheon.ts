@@ -340,7 +340,7 @@ ${Array.isArray(data.relationships) ? data.relationships.map((r: any) => `- **${
 - **Immediate Hook**: ${data.meta?.immediate_hook || ""}
 
 ### Deities of the Pantheon
-${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **[[${d.name}]]**: ${d.description || ""} (Portfolio: ${d.portfolio || ""})`).join("\n") : ""}
+${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **${d.name}**: ${d.description || ""} (Portfolio: ${d.portfolio || ""})`).join("\n") : ""}
 
 ### Clergy & Temples
 - **Clergy Roles**: ${data.culture?.clergy_roles || ""}
@@ -352,7 +352,7 @@ ${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **[[${d.name}]]*
 ${Array.isArray(data.campaign_seeds?.rumors) ? data.campaign_seeds.rumors.map((r: string) => `- ${r}`).join("\n") : ""}
 
 ### Entity Seeds
-${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **Character**: [[${d.name}]]`).join("\n") : ""}
+${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **Character**: ${d.name}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.characters) ? data.campaign_seeds.characters.map((c: any) => `- **Character**: ${c.name || ""} (${c.role || ""}) - ${c.hook || ""}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.factions) ? data.campaign_seeds.factions.map((f: any) => `- **Faction**: ${f.name || ""} (${f.type || ""}) - ${f.hook || ""}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **Event**: ${e.name || ""} (${e.type || ""}) - ${e.hook || ""}`).join("\n") : ""}
@@ -476,8 +476,8 @@ ${deityNames
   .join("\n")}
 
 ### Divine Alliances & Rivalries
-- **[[${deityNames[0]}]]** is allied with **[[${deityNames[deityNames.length - 1]}]]**, but stands in direct opposition to **[[${deityNames[1]}]]**.
-- **[[${deityNames[1]}]]** seeks to overthrow the established order of the other deities.`;
+- **${deityNames[0]}** is allied with **${deityNames[deityNames.length - 1]}**, but stands in direct opposition to **${deityNames[1]}**.
+- **${deityNames[1]}** seeks to overthrow the established order of the other deities.`;
 
     if (campaignContext) {
       content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the struggles of the pantheon are reflected in the shifting boundaries of the mortal kingdoms.`;
@@ -494,7 +494,7 @@ ${deityNames
 ${deityNames
   .map(
     (n, i) =>
-      `- **[[${n}]]**: ${
+      `- **${n}**: ${
         width === "focused"
           ? `The deity representing a key facet of ${domain.toLowerCase()}${
               i === 0
@@ -531,7 +531,7 @@ ${deityNames
 - The high priests of the deities are secretly meeting to avert a holy war.
 
 ### Entity Seeds
-${deityNames.map((n) => `- **Character**: [[${n}]]`).join("\n")}
+${deityNames.map((n) => `- **Character**: ${n}`).join("\n")}
 - **Faction**: ${worshipperType}`;
 
     return {
