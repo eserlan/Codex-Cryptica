@@ -102,7 +102,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single string for the settlement name",
   "content": "A detailed multi-paragraph description (markdown formatted) describing the settlement's atmosphere, layout, and geography.",
-  "lore": "Structured GM details (markdown formatted) detailing its size, government, notable locations, active factions, and current rumors.",
+  "lore": "Structured GM details (markdown formatted). Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\n### GM Reference Information\n- **Size**: size with population\n- **Primary Economy**: economy summary\n- **Government**: government type\n\n### Points of Interest\n- **📍 Location Name**: one-line purpose or detail (1-4 items)\n\n### Controlling Factions\n- **👥 Faction Name**: one-line influence summary",
   "labels": ["rpg-location", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
@@ -162,10 +162,10 @@ The air is filled with the smells of local industries, and visitors are greeted 
 - **Government**: ${government}
 
 ### Points of Interest
-${locs.map((l) => `- **${l}**: A crucial hub of local activity.`).join("\n")}
+${locs.map((l) => `- **📍 ${l}**: A crucial hub of local activity.`).join("\n")}
 
 ### Controlling Factions
-- **${faction}**: Maintains significant influence over the local district's rules and affairs.`;
+- **👥 ${faction}**: Maintains significant influence over the local district's rules and affairs.`;
 
   return {
     type: "location",

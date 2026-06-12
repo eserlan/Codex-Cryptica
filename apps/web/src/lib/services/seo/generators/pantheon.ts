@@ -151,7 +151,7 @@ You must return a valid JSON object matching the following structure exactly, no
   "title": "A majestic name for the deity (e.g. Solaris the Lightbringer, Xal'Koth the Devourer)",
   "summary": "One-sentence overview of the deity's core nature.",
   "content": "Markdown. Use exactly these section headers in order: '### Deity Description', '### Divine Portfolio', '### Worship & Cults'. Describe their appearance, symbols, dogmas, and temples.",
-  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **Deity Type**: ${divineType}\\n- **Primary Domain**: ${domain}\\n- **Worshippers**: ${worshipperType}\\n- **Sacred Symbol**: description of symbol\\n- **Secret**: a dark truth or hidden vulnerability\\n- **Immediate Hook**: one-sentence GM hook\\n### Rituals & Taboos\\n- description of common ritual\\n- description of taboo\\n### Myths & Legends\\n- brief myth summary\\n### Adventure Hooks\\n- adventure hook 1\\n- adventure hook 2",
+  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **👤 Deity Type**: ${divineType}\\n- **✨ Primary Domain**: ${domain}\\n- **👥 Worshippers**: ${worshipperType}\\n- **📍 Sacred Symbol**: description of symbol\\n- **📅 Secret**: a dark truth or hidden vulnerability\\n- **⚔ Immediate Hook**: one-sentence GM hook\\n### Rituals & Taboos\\n- description of common ritual\\n- description of taboo\\n### Myths & Legends\\n- brief myth summary\\n### Adventure Hooks\\n- adventure hook 1\\n- adventure hook 2",
   "labels": ["rpg-deity", "deity-generator", "imported-draft", "${genre.toLowerCase().replace(/[^a-z0-9]/g, "-")}"]
 }
 ${NAME_BAN_PROMPT}
@@ -398,12 +398,12 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
     }
 
     const lore = `### At a Glance
-- **Deity Type**: ${divineType}
-- **Primary Domain**: ${domain}
-- **Worshippers**: ${worshipperType}
-- **Sacred Symbol**: ${randomSymbol}
-- **Secret**: Holds a secret fear of their own power being forgotten by mortal hearts.
-- **Immediate Hook**: A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.
+- **👤 Deity Type**: ${divineType}
+- **✨ Primary Domain**: ${domain}
+- **👥 Worshippers**: ${worshipperType}
+- **📍 Sacred Symbol**: ${randomSymbol}
+- **📅 Secret**: Holds a secret fear of their own power being forgotten by mortal hearts.
+- **⚔ Immediate Hook**: A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.
 
 ### Rituals & Taboos
 - **Ritual**: ${randomHighlightRitual}

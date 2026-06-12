@@ -416,7 +416,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
   "title": "Faction name (follow the naming directive in the user message)",
   "summary": "One sentence: what this faction is and what makes them interesting (e.g. 'A sanitation cult-technocracy that controls clean water in a poisoned city.').",
   "content": "Markdown. Use exactly these four section headers in order: '### What they control', '### What they want', '### Why they are dangerous', '### How to use them at the table'. Each section: 2-4 tight sentences. Include campaign context if provided.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At the Table\\n- **Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **Name**: one-line rivalry",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At the Table\\n- **📍 Base**: specific named location\\n- **Resource**: what they control that others need\\n- **Symbol**: identifying mark or emblem\\n- **Secret**: hidden truth that would destroy them\\n- **Immediate Hook**: one-sentence GM hook\\n### Notable NPCs\\n- **👤 Name**: one-line description (2-3 NPCs)\\n### Internal Conflict\\none paragraph\\n### Rival Faction\\n- **👥 Name**: one-line rivalry",
   "labels": ["2-5 lowercase tags for the faction's theme and activities, plus 'rpg-faction', 'faction-generator', 'imported-draft'"]
 }
 
@@ -491,21 +491,21 @@ ${conflict} Beyond their internal tensions, they will negotiate before striking 
 Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival who can operate in daylight. They reward players who deal in favors and punish those who make public enemies.`;
 
   const lore = `### At the Table
-- **Base**: ${factionBase(factionType)}
+- **📍 Base**: ${factionBase(factionType)}
 - **Resource**: ${factionResource(factionType)}
 - **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
 - **Secret**: ${conflict}
 - **Immediate Hook**: ${hook}
 
 ### Notable NPCs
-- **${leader}**: Public face who insists every deal serves the common good.
-- **${agent}**: Field operative who knows where the faction buries its failures.
+- **👤 ${leader}**: Public face who insists every deal serves the common good.
+- **👤 ${agent}**: Field operative who knows where the faction buries its failures.
 
 ### Internal Conflict
 ${conflict}
 
 ### Rival Faction
-${rival} is pursuing the same influence, relic, or route — and will reach it first if the party does nothing.`;
+- **👥 ${rival}**: Pursuing the same influence, relic, or route — and will reach it first if the party does nothing.`;
 
   return {
     type: "faction",
@@ -597,7 +597,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single string for the vampire clan/house name",
   "content": "A detailed multi-paragraph overview (markdown formatted) describing its history, public facade in mortal society, dark haven, and how it fits the campaign context if provided.",
-  "lore": "Structured GM details (markdown formatted) with sections for core fields, bloodline traits, feeding habits, weakness, dark agenda, internal conflict, notable NPCs, rival faction, and adventure hook.",
+  "lore": "Structured GM details (markdown formatted). Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\n### GM Reference Information\n- **Faction Type**: Vampire Clan (archetype)\n- **Bloodline**: bloodline summary\n- **Scope**: scope of influence\n- **Moral Posture**: moral posture\n- **Feeding Habit**: feeding habit\n- **Clan Weakness**: weakness\n- **Entity Type**: Faction\n\n### Dark Agenda\none paragraph\n\n### Internal Conflict\none paragraph\n\n### Notable NPCs\n- **👤 Sire Name**: one-line description\n- **👤 Thrall Name**: one-line description\n\n### Rival Faction\n- **👥 Rival Name**: one-line rivalry summary\n\n### Adventure Hook\none paragraph",
   "labels": ["rpg-faction", "vampire-clan", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
@@ -670,11 +670,11 @@ ${goal}
 ${conflict}
 
 ### Notable NPCs
-- **Sire ${sire}**: The ancient leader of the clan who has survived centuries of inquisitions and power struggles.
-- **Thrall ${thrall}**: A high-ranking mortal puppet who manages the clan's daytime assets and legal matters.
+- **👤 Sire ${sire}**: The ancient leader of the clan who has survived centuries of inquisitions and power struggles.
+- **👤 Thrall ${thrall}**: A high-ranking mortal puppet who manages the clan's daytime assets and legal matters.
 
 ### Rival Faction
-The ${rival} seeks to expose, purge, or take control of the secrets and assets held by ${name}.
+- **👥 The ${rival}**: Seeks to expose, purge, or take control of the secrets and assets held by ${name}.
 
 ### Adventure Hook
 ${hook}`;
