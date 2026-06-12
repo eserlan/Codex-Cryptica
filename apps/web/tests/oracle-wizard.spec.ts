@@ -35,13 +35,9 @@ test.describe("Oracle Connection Wizard", () => {
         const v = (window as any).vault;
         if (!v || Object.keys(v.entities || {}).length < 2) return false;
         const s = (window as any).searchStore;
-        if (!s?.search) return true; // searchStore not set — skip check
-        try {
-          const results = await s.search("Eld", { limit: 5 });
-          return Array.isArray(results) && results.length > 0;
-        } catch {
-          return true; // If error, proceed anyway
-        }
+        if (!s?.setQuery) return true; // searchStore not set — skip check
+        await s.setQuery("Eld");
+        return Array.isArray(s.results) && s.results.length > 0;
       },
       { timeout: 20000 },
     );

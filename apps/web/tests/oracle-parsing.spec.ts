@@ -149,6 +149,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     expect(vaultState.lore).toBe("Detailed background info.");
   });
 
+  // TODO(#1168): /create command flow changed — oracle response parsing for entity creation needs re-verification
   test.fixme("should support '/create' command for automatic node generation", async ({
     page,
   }) => {

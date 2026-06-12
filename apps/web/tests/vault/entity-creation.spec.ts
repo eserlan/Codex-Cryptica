@@ -26,17 +26,13 @@ test.describe("Entity Creation", () => {
       { timeout: 10000 },
     );
 
-    // Wait for search index to pick up both entities
+    // Wait for search index to pick up both entities via setQuery + results
     await page.waitForFunction(
       async () => {
         const s = (window as any).searchStore;
-        if (!s?.search) return false;
-        try {
-          const results = await s.search("Node A", { limit: 5 });
-          return Array.isArray(results) && results.length > 0;
-        } catch {
-          return false;
-        }
+        if (!s?.setQuery) return false;
+        await s.setQuery("Node A");
+        return Array.isArray(s.results) && s.results.length > 0;
       },
       { timeout: 15000 },
     );

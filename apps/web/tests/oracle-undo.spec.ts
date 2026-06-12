@@ -89,6 +89,7 @@ test.describe("Oracle Undo", () => {
     );
   });
 
+  // TODO(#1168): smart-apply undo flow needs investigation — revisionService.undo() path unclear after refactor
   test.fixme("can undo a smart apply action", async ({ page }) => {
     // 1. Create a dummy node first
     await page.evaluate(async () => {

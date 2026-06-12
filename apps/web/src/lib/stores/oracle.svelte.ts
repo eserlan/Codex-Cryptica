@@ -313,7 +313,7 @@ export class OracleStore implements IOracleStore {
     return this.chat.messages;
   }
 
-  async setMessages(messages: any[]) {
+  async setMessages(messages: ChatMessage[]) {
     await this.chatHistoryService.setMessages(messages);
   }
 
