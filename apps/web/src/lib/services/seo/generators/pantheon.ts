@@ -56,6 +56,14 @@ export const pantheonConfig = {
     min: number;
     max: number;
   }[],
+  widths: [
+    { label: "Diverse (Central Theme Focus)", value: "balanced" },
+    { label: "Focused (Single Domain Focus)", value: "focused" },
+    { label: "Wide (Broad Mythic Pantheon)", value: "wide" },
+  ] as {
+    label: string;
+    value: "balanced" | "focused" | "wide";
+  }[],
   symbols: [
     "A weeping golden eye",
     "A black iron key wrapped in thorns",
@@ -87,6 +95,7 @@ export async function generatePantheon(
   options: {
     mode?: "single" | "pantheon";
     size?: "small" | "medium" | "large";
+    width?: "balanced" | "focused" | "wide";
     genre?: string;
     divineType?: string;
     domain?: string;
@@ -101,6 +110,7 @@ export async function generatePantheon(
   const sizeCfg =
     pantheonConfig.sizes.find((s) => s.value === options.size) ??
     pantheonConfig.sizes[0];
+  const width = options.width || "balanced";
   const genre = options.genre || "Classic Fantasy";
   const divineType = options.divineType || pickFrom(pantheonConfig.divineTypes);
   const domain = options.domain || pickFrom(pantheonConfig.domains);
@@ -112,7 +122,7 @@ export async function generatePantheon(
   const campaignContext = options.campaignContext?.trim() || "";
 
   const randomSymbol = pickFrom(pantheonConfig.symbols);
-  const randomRitual = pickFrom(pantheonConfig.rituals);
+  const randomHighlightRitual = pickFrom(pantheonConfig.rituals);
   const randomMyth = pickFrom(pantheonConfig.myths);
 
   // Invent a base name for a deity
@@ -149,28 +159,147 @@ ${getSessionContext()}
 Return only the JSON object. Do not include markdown code block formatting.`;
       } else {
         systemInstruction =
-          "You are an expert RPG campaign writer. You generate cohesive, campaign-ready pantheons of deities and divine conflicts in JSON format.";
-        prompt = `Generate a detailed RPG Pantheon in JSON format.
-Options:
+          "You are an expert RPG campaign writer and worldbuilding assistant. You generate cohesive, campaign-ready pantheons of deities, divine politics, worship practices, myths, and adventure hooks. You always return strict valid JSON only, without markdown code fences or commentary.";
+        prompt = `Generate a detailed RPG Pantheon matching the parameters below.
+
+GENERATION OPTIONS
 - Genre/Theme: ${genre}
 - Tone: ${tone}
 - Primary Conflict Theme: ${conflictTheme}
-- Divine Domain focus: ${domain}
+- Primary Domain Focus: ${domain}
+- Domain Scope: ${
+          width === "focused"
+            ? `Focused Pantheon: every deity must represent a distinct aspect, sub-domain, philosophy, contradiction, or extreme interpretation of the primary domain: ${domain}. Do not include unrelated gods.`
+            : width === "wide"
+              ? `Wide Mythic Pantheon: create a broad pantheon with many different divine domains, e.g. rulership, war, death, nature, craft, love, fate, trickery, knowledge, sea, sky, underworld, hearth, travel, harvest, magic, dreams, law, wilderness, art, prophecy, and other major mortal concerns. The primary domain ${domain} should appear as one important divine concern, but it must not dominate.`
+              : `Central Theme Pantheon: create a diverse pantheon, but make ${domain} the central force, sacred obsession, source of crisis, or highest divine authority.`
+        }
 - Worshippers: ${worshipperType}
 - Pantheon Size: ${sizeCfg.min}–${sizeCfg.max} deities
 ${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
 
-You must return a valid JSON object matching the following structure exactly, no markdown fences:
+CREATIVE REQUIREMENTS
+1. The pantheon must be an interconnected divine system, not a list of unrelated gods.
+2. Include a critical hidden problem: an internal contradiction, schism, suppressed heresy, approaching divine disaster, divine succession crisis, cosmic wound, forbidden truth, or unresolved mythic crime that creates immediate campaign pressure.
+3. Establish strong, active relationships between the deities: alliance, rivalry, debt, ancient grievance, family bond, oath, betrayal, marriage, contested inheritance, theological opposition, or divine dependency.
+4. Avoid generic names like "God of War", "The Sun Goddess", "The Dark One", or "Lord of Death". Use evocative, genre-appropriate names.
+5. Do not use real-world religious names unless explicitly requested by the campaign context.
+6. Do not contradict the provided campaign context.
+7. Make the faith felt in the world: include rituals, taboos, clergy hierarchies, temple economies, omens, cultural impacts, and social consequences.
+8. Adhere strictly to the chosen Domain Scope regarding how heavily ${domain} influences individual deity portfolios.
+9. If Domain Scope is Focused Pantheon, every deity must be meaningfully tied to ${domain}.
+10. If Domain Scope is Central Theme Pantheon, most deities should relate to ${domain}, but they may also cover other important domains.
+11. If Domain Scope is Wide Mythic Pantheon, include a wide spread of divine portfolios. Do not force every deity to relate directly to ${domain}; make ${domain} one important part of the wider divine order.
+12. The hidden problem must be reflected across multiple sections: the meta, history, deities, relationships, culture, and campaign seeds. Do not isolate it in only one field.
+13. In Focused Pantheon scope, deity relationships should arise from conflicting interpretations, methods, virtues, taboos, duties, or extremes of ${domain}, not from unrelated domains.
+14. Ensure that the generated characters, factions, and events explicitly name and tie into the specific deities and relationships created in your arrays.
+
+OUTPUT FORMAT RULES
+- Return ONLY one valid JSON object.
+- Do not wrap the response in backticks or markdown code fences.
+- Do not include comments or explanatory text outside the JSON.
+- Ensure the response is valid JSON. Escape all newlines as \\n.
+- CHARACTER ESCAPE SAFETY: To prevent JSON parsing breaks, do not use double quotes inside string values. Use single quotes ('') for all titles, dialogue, or monikers inside the JSON strings. Do not backslash-escape these single quotes.
+- Do not include additional top-level fields.
+- ARRAY CONSTRAINTS:
+  * The "deities" array must contain between ${sizeCfg.min} and ${sizeCfg.max} elements.
+  * The "relationships" array must contain at least 2 elements mapping connections between the generated deities.
+  * Every "relationships.deity_a" and "relationships.deity_b" value must exactly match a deity name from the "deities" array.
+  * In each relationship object, "deity_a" and "deity_b" must be two completely different, distinct deities.
+  * The "characters" array must contain 2-4 entries.
+  * The "factions" array must contain 1-2 entries.
+  * The "events" array must contain 1-2 entries.
+  * The "locations" array must contain 1-2 entries.
+  * Each character, faction, and event hook must explicitly mention at least one deity name from the "deities" array.
+- Do not use wiki-style links, square-bracket links, or double-bracket entity links.
+
+The JSON object must match this structure exactly:
 {
-  "title": "A majestic name for the Pantheon (e.g. The Solar Conclave, The Seven Broken Shields)",
-  "summary": "One-sentence summary of the pantheon's main belief system.",
-  "content": "Markdown. Use exactly these section headers in order: '### Origin & Dogma', '### Pantheon Structure', '### Divine Alliances & Rivalries'. Describe how the deities relate to one another, referencing them by name.",
-  "lore": "Markdown. Use exactly this structure:\\n### At a Glance\\n- **Pantheon Name**: Name of pantheon\\n- **Conflict Theme**: ${conflictTheme}\\n- **Worshippers**: ${worshipperType}\\n- **Hidden Problem**: the underlying divine tension\\n- **Immediate Hook**: one-sentence GM hook\\n### Deities of the Pantheon\\nDetail ${sizeCfg.min}-${sizeCfg.max} member deities. For each deity, provide:\\n- **Name**: title and short 1-line description\\n### Rumours & Legends\\n- short hook 1\\n- short hook 2\\n### Entity Seeds\\n- list of Codex entity types for each deity plus one cult faction (e.g. '**Character**: Deity A', '**Faction**: Pantheon Cult')",
-  "labels": ["rpg-pantheon", "pantheon-generator", "imported-draft", "${genre.toLowerCase().replace(/[^a-z0-9]/g, "-")}"]
+  "title": "A majestic name for the pantheon",
+  "summary": "One-sentence summary of the core belief system and its primary tension.",
+  "meta": {
+    "conflict_theme": "${conflictTheme}",
+    "worshippers": "${worshipperType}",
+    "public_dogma": "What most mortals believe.",
+    "hidden_problem": "The underlying secret, divine wound, betrayal, forbidden truth, or approaching crisis.",
+    "immediate_hook": "A one-sentence GM hook tied directly to the hidden problem."
+  },
+  "history": {
+    "origin_and_dogma": "The mythic origin of the pantheon and the truth or lie holding the faith together.",
+    "structure_and_laws": "The hierarchy, divine roles, sacred laws, succession rules, divine family structure, or balance of power."
+  },
+  "deities": [
+    {
+      "name": "Unique deity name",
+      "description": "One-sentence mythic summary of who this deity is and why mortals care.",
+      "appearance": "One-sentence description of this deity's mythic appearance, iconic avatar, or physical manifestation.",
+      "portfolio": "Specific domains, abstract concepts, and mortal elements ruled by this deity.",
+      "divine_role": "Their role in the pantheon's hierarchy, family, mythic order, or cosmic machinery.",
+      "personality": "Divine demeanor, outlook, virtues, flaws, and mythic temperament.",
+      "common_worshippers": "Who most often worships, fears, bargains with, or serves this deity.",
+      "taboo": "What angers, offends, or spiritually violates this deity.",
+      "symbol": "Holy symbol, sacred animal, weapon, color, plant, constellation, or other recognizable sign.",
+      "worship_style": "How mortals usually worship this deity.",
+      "conflict_relation": "How this deity aligns with, worsens, resists, exploits, or misunderstands the primary conflict theme."
+    }
+  ],
+  "relationships": [
+    {
+      "deity_a": "Name of one deity from the deities array",
+      "deity_b": "Name of a different deity from the deities array",
+      "relationship_type": "Alliance, rivalry, marriage, debt, betrayal, oath, family bond, ancient grievance, theological opposition, contested inheritance, or divine dependency.",
+      "campaign_pressure": "How this relationship creates problems, hooks, omens, cult conflicts, wars, quests, or divine interference."
+    }
+  ],
+  "culture": {
+    "clergy_roles": "Priestly roles, ranks, duties, privileges, rival offices, and internal tensions.",
+    "temples_and_shrines": "Places of worship, sacred sites, pilgrimage customs, temple economies, and regional variations.",
+    "common_rite": "Everyday ritual practiced by ordinary mortals.",
+    "high_rite": "Major ceremony, festival, sacrifice, trial, coronation, funeral custom, or pilgrimage.",
+    "omens": ["Specific omen 1", "Specific omen 2"],
+    "taboos": ["Specific taboo 1", "Specific taboo 2"]
+  },
+  "campaign_seeds": {
+    "rumors": ["Rumor or legend 1", "Rumor or legend 2", "Rumor or legend 3"],
+    "characters": [
+      {
+        "name": "NPC name",
+        "role": "Senior clergy, prophet, saint, heretic, chosen vessel, temple assassin, rival high priest, oracle-child, or fallen priest.",
+        "hook": "Why this character matters in play and how they relate to the generated deities."
+      }
+    ],
+    "factions": [
+      {
+        "name": "Faction name",
+        "type": "Cult, temple order, inquisition, reform movement, schismatic sect, sacred bloodline, mystery cult, or divine conspiracy.",
+        "hook": "What this faction wants, how it causes trouble, and which deity they target or serve."
+      }
+    ],
+    "events": [
+      {
+        "name": "Event name",
+        "type": "Divine betrayal, broken oath, sacred festival, prophecy, miracle gone wrong, schism, apocalypse sign, godly disappearance, or mythic war.",
+        "hook": "How this event can enter the campaign and which deities are caught in its fallout."
+      }
+    ],
+    "locations": [
+      {
+        "name": "Location name",
+        "type": "Grand temple, forbidden shrine, holy battlefield, oracle cave, pilgrimage road, sealed divine prison, abandoned monastery, divine birthplace, underworld gate, or sky-palace ruin.",
+        "hook": "Why adventurers might go there."
+      }
+    ]
+  },
+  "labels": [
+    "rpg-pantheon",
+    "pantheon-generator",
+    "imported-draft",
+    "${genre.toLowerCase().replace(/[^a-z0-9]/g, "-")}"
+  ]
 }
 ${NAME_BAN_PROMPT}
 ${getSessionContext()}
-Return only the JSON object. Do not include markdown code block formatting.`;
+Return only the JSON object.`;
       }
 
       const model = await clientManager.getModel(
@@ -186,14 +315,58 @@ Return only the JSON object. Do not include markdown code block formatting.`;
         .trim();
       const data = JSON.parse(cleanText);
 
+      let content = "";
+      let lore = "";
+
+      if (mode === "single" || (data.content && data.lore)) {
+        content = data.content || "";
+        lore = data.lore || "";
+      } else {
+        content = `### Origin & Dogma
+${data.history?.origin_and_dogma || ""}
+
+### Pantheon Structure
+${data.history?.structure_and_laws || ""}
+
+### Divine Alliances & Rivalries
+${Array.isArray(data.relationships) ? data.relationships.map((r: any) => `- **${r.deity_a}** and **${r.deity_b}** (${r.relationship_type || "connected"}): ${r.campaign_pressure || ""}`).join("\n") : ""}
+`;
+
+        lore = `### At a Glance
+- **Pantheon Name**: ${data.title || ""}
+- **Conflict Theme**: ${data.meta?.conflict_theme || ""}
+- **Worshippers**: ${data.meta?.worshippers || ""}
+- **Hidden Problem**: ${data.meta?.hidden_problem || ""}
+- **Immediate Hook**: ${data.meta?.immediate_hook || ""}
+
+### Deities of the Pantheon
+${Array.isArray(data.deities) ? data.deities.map((d: any) => `- **${d.name}**: ${d.description || ""} (Portfolio: ${d.portfolio || ""})`).join("\n") : ""}
+
+### Clergy & Temples
+- **Clergy Roles**: ${data.culture?.clergy_roles || ""}
+- **Temples & Shrines**: ${data.culture?.temples_and_shrines || ""}
+- **Common Rite**: ${data.culture?.common_rite || ""}
+- **High Rite**: ${data.culture?.high_rite || ""}
+
+### Rumours & Legends
+${Array.isArray(data.campaign_seeds?.rumors) ? data.campaign_seeds.rumors.map((r: string) => `- ${r}`).join("\n") : ""}
+
+### Entity Seeds
+${Array.isArray(data.campaign_seeds?.characters) ? data.campaign_seeds.characters.map((c: any) => `- **👤 ${c.name || ""}${c.role ? ` (${c.role})` : ""}**: ${c.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.factions) ? data.campaign_seeds.factions.map((f: any) => `- **👥 ${f.name || ""}${f.type ? ` (${f.type})` : ""}**: ${f.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **📅 ${e.name || ""}${e.type ? ` (${e.type})` : ""}**: ${e.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.locations) ? data.campaign_seeds.locations.map((l: any) => `- **📍 ${l.name || ""}${l.type ? ` (${l.type})` : ""}**: ${l.hook || ""}`).join("\n") : ""}
+`;
+      }
+
       return {
         type: mode === "single" ? "character" : "faction",
         title:
           data.title ||
           (mode === "single" ? generatedDeityName : "The Divine Assembly"),
         summary: data.summary || "",
-        content: data.content || "",
-        lore: data.lore || "",
+        content,
+        lore,
         labels: Array.isArray(data.labels)
           ? data.labels
           : mode === "single"
@@ -233,7 +406,7 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
 - **Immediate Hook**: A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.
 
 ### Rituals & Taboos
-- **Ritual**: ${randomRitual}
+- **Ritual**: ${randomHighlightRitual}
 - **Taboo**: Damaging or defacing sacred symbols of ${domain.toLowerCase()} is believed to bring immediate bad fortune.
 
 ### Myths & Legends
@@ -255,7 +428,12 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
   } else {
     // Pantheon fallback logic
     const pantheonTitle = `The ${generatedDeityName} Pantheon`;
-    const summary = `A collection of deities bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`;
+    const summary =
+      width === "focused"
+        ? `A collection of deities focused on the domain of ${domain.toLowerCase()} bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`
+        : width === "wide"
+          ? `A wide mythic collection of deities representing various domains, bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`
+          : `A collection of deities bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world with ${domain.toLowerCase()} at its center.`;
 
     const deityCount = sizeCfg.min;
     const deityNames = Array.from({ length: deityCount }, () => generateName());
@@ -265,11 +443,40 @@ According to legend, the deities of this pantheon were born from a single cosmic
 
 ### Pantheon Structure
 The pantheon consists of ${deityCount} deities:
-${deityNames.map((n, i) => `${i + 1}. **${n}**: ${i === 0 ? `Represents the domain of ${domain}.` : i === deityCount - 1 ? "A neutral arbiter holding the balance." : "Controls opposing forces of the cosmos."}`).join("\n")}
+${deityNames
+  .map(
+    (n, i) =>
+      `${i + 1}. **${n}**: ${
+        width === "focused"
+          ? `Controls a specific aspect of the ${domain.toLowerCase()} domain (e.g. ${
+              i === 0
+                ? "its pure essence"
+                : i === deityCount - 1
+                  ? "its quiet or hidden aspects"
+                  : "its active or aggressive expression"
+            }).`
+          : width === "wide"
+            ? `Controls a distinct mythic domain (e.g. ${
+                i === 0
+                  ? `the domain of ${domain.toLowerCase()}`
+                  : i === 1
+                    ? "wildlands and travel"
+                    : i === 2
+                      ? "dreams and shadows"
+                      : "hearth and community"
+              }).`
+            : i === 0
+              ? `Represents the domain of ${domain}.`
+              : i === deityCount - 1
+                ? "A neutral arbiter holding the balance."
+                : "Controls opposing forces of the cosmos."
+      }`,
+  )
+  .join("\n")}
 
 ### Divine Alliances & Rivalries
-- **[[${deityNames[0]}]]** is allied with **[[${deityNames[deityNames.length - 1]}]]**, but stands in direct opposition to **[[${deityNames[1]}]]**.
-- **[[${deityNames[1]}]]** seeks to overthrow the established order of the other deities.`;
+- **${deityNames[0]}** is allied with **${deityNames[deityNames.length - 1]}**, but stands in direct opposition to **${deityNames[1]}**.
+- **${deityNames[1]}** seeks to overthrow the established order of the other deities.`;
 
     if (campaignContext) {
       content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the struggles of the pantheon are reflected in the shifting boundaries of the mortal kingdoms.`;
@@ -283,15 +490,47 @@ ${deityNames.map((n, i) => `${i + 1}. **${n}**: ${i === 0 ? `Represents the doma
 - **Immediate Hook**: Omens of celestial alignment have sent local cults into a frenzy of preparations.
 
 ### Deities of the Pantheon
-${deityNames.map((n, i) => `- **[[${n}]]**: ${i === 0 ? `The deity of ${domain}, depicted as a warrior.` : i === 1 ? "A mysterious spirit of chaos and shadows." : "An ancient ancestor guarding the gates of death."}`).join("\n")}
+${deityNames
+  .map(
+    (n, i) =>
+      `- **${n}**: ${
+        width === "focused"
+          ? `The deity representing a key facet of ${domain.toLowerCase()}${
+              i === 0
+                ? ", depicted as a guardian/warrior."
+                : i === 1
+                  ? ", representing the shadow or depth of the sphere."
+                  : ", guarding the balance/transition points."
+            }`
+          : width === "wide"
+            ? `The deity governing ${
+                i === 0
+                  ? domain.toLowerCase()
+                  : i === 1
+                    ? "wildlands and travel"
+                    : i === 2
+                      ? "dreams and shadows"
+                      : "hearth and community"
+              }.`
+            : i === 0
+              ? `The deity of ${domain}, depicted as a warrior.`
+              : i === 1
+                ? "A mysterious spirit of chaos and shadows."
+                : "An ancient ancestor guarding the gates of death."
+      }`,
+  )
+  .join("\n")}
+
+### Clergy & Temples
+- **Clergy Roles**: The High Hierophant oversees the circle of priests, who are divided into keepers of rites and speakers of prophecy.
+- **Temples & Shrines**: Grand stone cathedrals are located in capital cities, while simple stone altars mark major crossroads.
 
 ### Rumours & Legends
 - A forgotten temple of the pantheon lies submerged under the local lake.
 - The high priests of the deities are secretly meeting to avert a holy war.
 
 ### Entity Seeds
-${deityNames.map((n) => `- **Character**: [[${n}]]`).join("\n")}
-- **Faction**: ${worshipperType}`;
+- **👥 ${worshipperType}**: A major temple order or mystery cult dedicated to the worship of the pantheon.`;
 
     return {
       type: "faction",

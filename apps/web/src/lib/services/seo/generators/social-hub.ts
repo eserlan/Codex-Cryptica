@@ -383,10 +383,10 @@ Use ${venueName} as a home base, an information hub, or a pressure point. The tr
 - A faction has been asking after a specific regular who may have passed through recently
 
 ### Entity Seeds
-- **Location**: ${venueName} (this venue)
-- **Character**: ${ownerName} (operator)
-- **Character**: ${patron1} (regular)
-- **Faction**: Whoever is behind the hidden trouble`;
+- **📍 ${venueName} (this venue)**: The main location of the venue.
+- **👤 ${ownerName} (operator)**: The operator of the venue.
+- **👤 ${patron1} (regular)**: A notable regular patron.
+- **👥 Faction behind ${trouble.split("—")[0].trim()}**: Whoever is behind the hidden trouble.`;
 
   return {
     type: "location",
@@ -548,10 +548,10 @@ Use ${tavernName} as a home base, a rumour hub, or a pressure point. The trouble
 - A faction has been asking after a specific traveller who may have stayed here recently
 
 ### Entity Seeds
-- **Location**: ${tavernName} (this tavern)
-- **Character**: ${ownerName} (owner)
-- **Character**: ${patron1} (regular patron)
-- **Faction**: Whoever is behind the hidden trouble`;
+- **📍 ${tavernName} (this tavern)**: The main location of the tavern.
+- **👤 ${ownerName} (owner)**: The owner of the tavern.
+- **👤 ${patron1} (regular patron)**: A notable regular patron.
+- **👥 Faction behind ${trouble.split("—")[0].trim()}**: Whoever is behind the hidden trouble.`;
 
   return {
     type: "location",

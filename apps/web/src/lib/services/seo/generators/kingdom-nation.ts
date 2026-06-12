@@ -352,11 +352,11 @@ Use ${realmName} as the political backdrop for a campaign, the origin of a patro
 - ${factionName1} is recruiting outside its usual membership
 
 ### Entity Seeds
-- **Character**: ${rulerName} (ruler)
-- **Faction**: ${factionName1}
-- **Faction**: ${factionName2}
-- **Location**: ${capitalName} (capital)
-- **Event**: The hidden crisis behind ${trouble.split("—")[0].trim()}`;
+- **👤 ${rulerName} (ruler)**: The ruler of the kingdom.
+- **👥 ${factionName1}**: A major faction within the kingdom.
+- **👥 ${factionName2}**: A rival faction within the kingdom.
+- **📍 ${capitalName} (capital)**: The capital city.
+- **📅 Crisis behind ${trouble.split("—")[0].trim()}**: The active campaign threat.`;
 
   return {
     type: "faction",
@@ -511,11 +511,11 @@ Use ${stateName} as a campaign backdrop, the source of a mission, or the prize i
 - ${bloc1} is moving money through channels it has no business using
 
 ### Entity Seeds
-- **Character**: ${leaderName} (leader)
-- **Faction**: ${bloc1}
-- **Faction**: ${bloc2}
-- **Location**: ${capitalName} (centre of power)
-- **Event**: The crisis — ${trouble}`;
+- **👤 ${leaderName} (leader)**: The leader of the nation.
+- **👥 ${bloc1}**: A key faction or power bloc.
+- **👥 ${bloc2}**: A rival faction or power bloc.
+- **📍 ${capitalName} (centre of power)**: The main centre of power.
+- **📅 Crisis — ${trouble}**: The active campaign threat.`;
 
   return {
     type: "faction",
