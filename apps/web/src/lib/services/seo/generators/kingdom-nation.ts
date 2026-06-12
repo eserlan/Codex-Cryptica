@@ -356,7 +356,7 @@ Use ${realmName} as the political backdrop for a campaign, the origin of a patro
 - **👥 ${factionName1}**: A major faction within the kingdom.
 - **👥 ${factionName2}**: A rival faction within the kingdom.
 - **📍 ${capitalName} (capital)**: The capital city.
-- **⚡ Crisis behind ${trouble.split("—")[0].trim()}**: The active campaign threat.`;
+- **📅 Crisis behind ${trouble.split("—")[0].trim()}**: The active campaign threat.`;
 
   return {
     type: "faction",
@@ -515,7 +515,7 @@ Use ${stateName} as a campaign backdrop, the source of a mission, or the prize i
 - **👥 ${bloc1}**: A key faction or power bloc.
 - **👥 ${bloc2}**: A rival faction or power bloc.
 - **📍 ${capitalName} (centre of power)**: The main centre of power.
-- **⚡ Crisis — ${trouble}**: The active campaign threat.`;
+- **📅 Crisis — ${trouble}**: The active campaign threat.`;
 
   return {
     type: "faction",

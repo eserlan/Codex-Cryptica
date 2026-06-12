@@ -615,7 +615,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("- **👤");
       expect(res.lore).toContain("- **👥");
       expect(res.lore).toContain("- **📍");
-      expect(res.lore).toContain("- **⚡");
+      expect(res.lore).toContain("- **📅");
       expect(res.lore).not.toContain("- **Character**:");
       expect(res.lore).not.toContain("- **Location**:");
       expect(res.lore).not.toContain("- **Faction**:");
@@ -703,7 +703,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("- **👤");
       expect(res.lore).toContain("- **👥");
       expect(res.lore).toContain("- **📍");
-      expect(res.lore).toContain("- **⚡");
+      expect(res.lore).toContain("- **📅");
       expect(res.lore).not.toContain("- **Character**:");
       expect(res.lore).not.toContain("- **Location**:");
       expect(res.lore).not.toContain("- **Faction**:");

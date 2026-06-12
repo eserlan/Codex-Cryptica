@@ -354,7 +354,7 @@ ${Array.isArray(data.campaign_seeds?.rumors) ? data.campaign_seeds.rumors.map((r
 ### Entity Seeds
 ${Array.isArray(data.campaign_seeds?.characters) ? data.campaign_seeds.characters.map((c: any) => `- **👤 ${c.name || ""}${c.role ? ` (${c.role})` : ""}**: ${c.hook || ""}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.factions) ? data.campaign_seeds.factions.map((f: any) => `- **👥 ${f.name || ""}${f.type ? ` (${f.type})` : ""}**: ${f.hook || ""}`).join("\n") : ""}
-${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **⚡ ${e.name || ""}${e.type ? ` (${e.type})` : ""}**: ${e.hook || ""}`).join("\n") : ""}
+${Array.isArray(data.campaign_seeds?.events) ? data.campaign_seeds.events.map((e: any) => `- **📅 ${e.name || ""}${e.type ? ` (${e.type})` : ""}**: ${e.hook || ""}`).join("\n") : ""}
 ${Array.isArray(data.campaign_seeds?.locations) ? data.campaign_seeds.locations.map((l: any) => `- **📍 ${l.name || ""}${l.type ? ` (${l.type})` : ""}**: ${l.hook || ""}`).join("\n") : ""}
 `;
       }
