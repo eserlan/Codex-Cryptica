@@ -421,6 +421,12 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Notable Regulars");
       expect(res.lore).toContain("### Rumours");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
       expect(res.labels).toContain("social-hub-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -518,6 +524,12 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Notable Patrons");
       expect(res.lore).toContain("### Rumours");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
       expect(res.labels).toContain("tavern-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -600,6 +612,14 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Major Factions");
       expect(res.lore).toContain("### Rumours & Hooks");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **⚡");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
+      expect(res.lore).not.toContain("- **Event**:");
       expect(res.labels).toContain("kingdom-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -680,6 +700,14 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Power Blocs");
       expect(res.lore).toContain("### Rumours & Hooks");
       expect(res.lore).toContain("### Entity Seeds");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **⚡");
+      expect(res.lore).not.toContain("- **Character**:");
+      expect(res.lore).not.toContain("- **Location**:");
+      expect(res.lore).not.toContain("- **Faction**:");
+      expect(res.lore).not.toContain("- **Event**:");
       expect(res.labels).toContain("nation-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -1008,7 +1036,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(res.lore).toContain("### Entity Seeds");
-      expect(res.lore).toContain("Elias the Unraveler");
+      expect(res.lore).toContain(
+        "- **👤 Elias the Unraveler (Heretic)**: Forbidden text",
+      );
       expect(res.lore).not.toContain("- **Character**: Oryx-Malaphon");
     });
 
