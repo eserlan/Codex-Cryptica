@@ -61,7 +61,7 @@ export class MapStore {
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
-  private _vaultSwitchHandler: (() => void) | null = null;
+  private static _vaultSwitchHandler: (() => void) | null = null;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
