@@ -76,13 +76,17 @@
 
 {#if onboardingStore.showChangelog}
   <!-- Backdrop -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
-    onclick={close}
+    class="fixed inset-0 z-[200] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
   >
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full bg-black/85 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close Changelog Dialog"
+      onclick={close}
+    ></button>
+
     <div
       bind:this={dialogElement}
       class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface font-body shadow-2xl"
