@@ -9,6 +9,8 @@
   let newPresetName = $state("");
   let editingId = $state<string | null>(null);
   let editingName = $state("");
+  let isSaving = $state(false);
+  let isRenaming = $state(false);
 
   const close = () => {
     isOpen = false;
@@ -16,10 +18,17 @@
   };
 
   const saveCurrent = async () => {
-    if (!newPresetName.trim()) return;
-    const viewport = cy ? { pan: { ...cy.pan() }, zoom: cy.zoom() } : undefined;
-    await graph.saveViewPreset(newPresetName, viewport);
-    newPresetName = "";
+    if (!newPresetName.trim() || isSaving) return;
+    isSaving = true;
+    try {
+      const viewport = cy
+        ? { pan: { ...cy.pan() }, zoom: cy.zoom() }
+        : undefined;
+      await graph.saveViewPreset(newPresetName, viewport);
+      newPresetName = "";
+    } finally {
+      isSaving = false;
+    }
   };
 
   const applyPreset = (id: string) => {
@@ -52,8 +61,14 @@
   };
 
   const commitRename = async () => {
+    if (isRenaming) return;
     if (editingId && editingName.trim()) {
-      await graph.renameViewPreset(editingId, editingName);
+      isRenaming = true;
+      try {
+        await graph.renameViewPreset(editingId, editingName);
+      } finally {
+        isRenaming = false;
+      }
     }
     editingId = null;
   };
@@ -61,6 +76,7 @@
 
 <div class="relative">
   <button
+    type="button"
     class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isOpen
       ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
       : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
@@ -93,6 +109,7 @@
         <div class="space-y-1 max-h-48 overflow-y-auto pr-1 mb-2">
           <div class="flex items-center gap-1">
             <button
+              type="button"
               class="flex-1 min-w-0 text-left truncate px-2 py-1 rounded hover:bg-theme-muted/15 hover:text-theme-muted transition text-theme-muted/70 italic"
               onclick={() => {
                 graph.resetView();
@@ -116,6 +133,7 @@
                   aria-label="Preset name"
                 />
                 <button
+                  type="button"
                   class="w-6 h-6 flex items-center justify-center text-theme-primary hover:bg-theme-primary/20 rounded"
                   onclick={() => void commitRename()}
                   title="Save name"
@@ -125,6 +143,7 @@
                 >
               {:else}
                 <button
+                  type="button"
                   class="flex-1 min-w-0 text-left truncate px-2 py-1 rounded hover:bg-theme-primary/15 hover:text-theme-primary transition"
                   onclick={() => applyPreset(preset.id)}
                   title={`Apply "${preset.name}"`}
@@ -132,6 +151,7 @@
                   {preset.name}
                 </button>
                 <button
+                  type="button"
                   class="w-6 h-6 flex items-center justify-center text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
                   onclick={() => startRename(preset.id, preset.name)}
                   title="Rename"
@@ -139,6 +159,7 @@
                   ><span class="icon-[lucide--pencil] w-3 h-3"></span></button
                 >
                 <button
+                  type="button"
                   class="w-6 h-6 flex items-center justify-center text-theme-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
                   onclick={() => void graph.deleteViewPreset(preset.id)}
                   title="Delete"
@@ -163,9 +184,10 @@
           data-testid="view-preset-name-input"
         />
         <button
+          type="button"
           class="h-7 px-2 flex items-center justify-center border border-theme-primary/50 text-theme-primary hover:bg-theme-primary/20 rounded transition disabled:opacity-40 disabled:cursor-not-allowed"
           onclick={() => void saveCurrent()}
-          disabled={!newPresetName.trim()}
+          disabled={!newPresetName.trim() || isSaving}
           title="Save current view"
           aria-label="Save current view"
           data-testid="view-preset-save"

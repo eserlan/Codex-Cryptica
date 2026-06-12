@@ -19,6 +19,7 @@ export class GraphStore {
   private sessionModeStore: typeof sessionModeStore;
   private connectionModeStore: typeof connectionModeStore;
   private _initPromise: Promise<void> | null = null;
+  private _vaultSwitchHandler: (() => void) | null = null;
 
   private get vault() {
     return this._vault ?? defaultVault;
@@ -170,14 +171,18 @@ export class GraphStore {
     await this.loadViewPresets();
 
     if (typeof window !== "undefined") {
-      window.addEventListener("vault-switched", () => {
+      if (this._vaultSwitchHandler) {
+        window.removeEventListener("vault-switched", this._vaultSwitchHandler);
+      }
+      this._vaultSwitchHandler = () => {
         this.clearLabelFilters();
         this.clearCategoryFilters();
         this.orbitMode = false;
         this.centralNodeId = null;
         // Keep timelineMode as it's a global preference usually
         void this.loadViewPresets();
-      });
+      };
+      window.addEventListener("vault-switched", this._vaultSwitchHandler);
     }
   }
 
@@ -334,6 +339,7 @@ export class GraphStore {
     this.labelFilterMode = "OR";
     this.showLabels = true;
     this.showImages = true;
+    this.stableLayout = true;
     this.timelineMode = false;
     this.orbitMode = false;
     this.centralNodeId = null;
