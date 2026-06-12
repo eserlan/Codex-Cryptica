@@ -16,7 +16,9 @@ test.describe("Vault Controls Sync Button", () => {
     await page.goto("/?demo=fantasy");
 
     // Wait for the vault to be loaded (Demo Mode badge appears)
-    await expect(page.getByText("DEMO MODE")).toBeVisible();
+    await expect(
+      page.getByText("DEMO MODE", { exact: true }).first(),
+    ).toBeVisible();
   });
 
   test("should display the Save button with correct initial state", async ({

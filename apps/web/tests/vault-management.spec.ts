@@ -60,10 +60,10 @@ test.describe("Vault Management", () => {
     await renamedRow.hover();
     await renamedRow.getByTitle("Delete").click();
 
-    await expect(page.getByText("DELETE VAULT?")).toBeVisible();
-    await page.getByRole("button", { name: "DELETE FOREVER" }).click();
+    await expect(page.getByText("Delete Vault")).toBeVisible();
+    await page.getByRole("button", { name: "Delete Forever" }).click();
 
-    await expect(page.getByText("DELETE VAULT?")).not.toBeVisible();
+    await expect(page.getByText("Delete Vault")).not.toBeVisible();
     await expect(
       modal.locator(".group", { hasText: newName }),
     ).not.toBeVisible();
