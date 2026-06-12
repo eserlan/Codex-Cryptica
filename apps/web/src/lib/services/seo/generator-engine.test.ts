@@ -43,6 +43,25 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("Faction Connection");
       expect(res.labels).toContain("npc-generator");
       expect(res.labels).toContain("imported-draft");
+      expect(res.lore).not.toContain("Class / Archetype");
+      expect(res.lore).not.toContain("Table Rating");
+    });
+
+    it("should include D&D quick stats when requested", async () => {
+      const res = await engine.generateNPC({
+        race: "Human",
+        role: "Priest",
+        alignment: "Lawful Good",
+        includeDndQuickStats: true,
+        useAI: false,
+      });
+
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("**Class / Archetype**: Cleric / Level 5");
+      expect(res.lore).toContain("**Table Rating**: CR 3");
+      expect(res.lore.indexOf("Class / Archetype")).toBeLessThan(
+        res.lore.indexOf("Ancestry"),
+      );
     });
 
     it("should include optional campaign context in local NPC output", async () => {
@@ -79,6 +98,7 @@ describe("DefaultGeneratorEngine", () => {
         role: "Mage",
         alignment: "Neutral Good",
         campaignContext: "a ruined elven academy",
+        includeDndQuickStats: true,
         useAI: true,
       });
 
@@ -89,7 +109,9 @@ describe("DefaultGeneratorEngine", () => {
       );
       expect(res.title).toBe("Aelwen The Wise");
       expect(res.content).toBe("AI Generated Bio");
-      expect(res.lore).toBe("AI Generated Stats");
+      expect(res.lore).toContain("AI Generated Stats");
+      expect(res.lore).toContain("**Class / Archetype**: Wizard / Level 5");
+      expect(res.lore).toContain("**Table Rating**: CR 3");
       expect(res.labels).toContain("custom-label");
     });
 
