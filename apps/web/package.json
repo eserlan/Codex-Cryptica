@@ -53,6 +53,7 @@
     "dompurify": "^3.4.2",
     "editor-core": "workspace:*",
     "flexsearch": "^0.8.212",
+    "generator-engine": "workspace:*",
     "graph-engine": "workspace:*",
     "idb": "^8.0.3",
     "js-yaml": "^4.1.1",

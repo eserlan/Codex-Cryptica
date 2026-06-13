@@ -35,18 +35,18 @@
 
 **Critical**: No user story implementation should start until this phase is complete.
 
-- [ ] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in packages/generator-engine/src/campaign-generator-registry.test.ts
-- [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, labels, template heading preservation, and unmatched detail preservation in packages/generator-engine/src/campaign-generator-registry.test.ts
-- [ ] T006a [P] Add failing tests asserting the generator-id → vault-category mapping (npc→character, settlement→location, magic-item→item, faction→faction) and a safe fallback when the mapped category is absent, in packages/generator-engine/src/campaign-generator-registry.test.ts
-- [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
-- [ ] T009 Define generator ids, option definitions, vault context packet, template application metadata, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
-- [ ] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in packages/generator-engine/src/campaign-generator-registry.ts
-- [ ] T011 Implement campaign generator service constructor DI and draft generation orchestration in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T012 Export package public APIs and a default campaign generator service singleton in packages/generator-engine/src/index.ts and packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T013 Add generator workflow state and open/close methods to apps/web/src/lib/stores/ui/modal-ui.svelte.ts
-- [ ] T014 Create a minimal lazy-loadable CampaignGeneratorModal stub in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte and wire it through apps/web/src/lib/components/modals/GlobalModalProvider.svelte
-- [ ] T015 Run foundational package and store tests listed in specs/131-in-app-rpg-generators/quickstart.md
+- [x] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [x] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, labels, template heading preservation, and unmatched detail preservation in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [x] T006a [P] Add failing tests asserting the generator-id → vault-category mapping (npc→character, settlement→location, magic-item→item, faction→faction) and a safe fallback when the mapped category is absent, in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [x] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
+- [x] T009 Define generator ids, option definitions, vault context packet, template application metadata, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
+- [x] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in packages/generator-engine/src/campaign-generator-registry.ts
+- [x] T011 Implement campaign generator service constructor DI and draft generation orchestration in packages/generator-engine/src/campaign-generator-service.ts
+- [x] T012 Export package public APIs and a default campaign generator service singleton in packages/generator-engine/src/index.ts and packages/generator-engine/src/campaign-generator-service.ts
+- [x] T013 Add generator workflow state and open/close methods to apps/web/src/lib/stores/ui/modal-ui.svelte.ts
+- [x] T014 Create a minimal lazy-loadable CampaignGeneratorModal stub in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte and wire it through apps/web/src/lib/components/modals/GlobalModalProvider.svelte
+- [x] T015 Run foundational package and store tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Registry lookup, draft mapping, service orchestration, and modal state are test-covered and ready for UI stories.
 

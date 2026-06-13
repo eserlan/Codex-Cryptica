@@ -208,6 +208,14 @@
       {/await}
     {/if}
 
+    {#if modalUIStore.generatorWorkflow.open}
+      {#await loadModal(() => import("$lib/components/generators/CampaignGeneratorModal.svelte"), "CampaignGeneratorModal") then CampaignGeneratorModal}
+        {#if CampaignGeneratorModal}
+          <CampaignGeneratorModal />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if hasOpenedLightbox}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
