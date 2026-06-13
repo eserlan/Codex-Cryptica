@@ -5,11 +5,26 @@ import type { Core } from "cytoscape";
 function createMockNode(id: string, labels?: string[]) {
   return {
     id: vi.fn().mockReturnValue(id),
+    isNode: vi.fn().mockReturnValue(true),
     hasClass: vi.fn().mockReturnValue(false),
     data: vi.fn().mockReturnValue({ labels }),
+    removeData: vi.fn(),
     addClass: vi.fn(),
     removeClass: vi.fn(),
     connectedEdges: vi.fn().mockReturnValue([]),
+  };
+}
+
+function createMockEdge(id: string, source: string, target: string) {
+  return {
+    id: vi.fn().mockReturnValue(id),
+    isNode: vi.fn().mockReturnValue(false),
+    hasClass: vi.fn().mockReturnValue(false),
+    data: vi.fn().mockReturnValue({ id, source, target }),
+    addClass: vi.fn(),
+    removeClass: vi.fn(),
+    source: vi.fn(),
+    target: vi.fn(),
   };
 }
 
@@ -267,6 +282,34 @@ describe("syncGraphElements", () => {
       true,
       "Elements Update",
       false,
+      true,
+    );
+  });
+
+  it("should report edge-only removals with hasRemovedNodes=false", () => {
+    const onLayoutUpdate = vi.fn();
+    const nodeA = createMockNode("node-a");
+    const nodeB = createMockNode("node-b");
+    const staleEdge = createMockEdge("node-a-node-b-ally", "node-a", "node-b");
+    mockCy.elements.mockReturnValue([nodeA, nodeB, staleEdge]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        { group: "nodes", data: { id: "node-a" } },
+        { group: "nodes", data: { id: "node-b" } },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      onLayoutUpdate,
+    });
+
+    expect(onLayoutUpdate).toHaveBeenCalledWith(
+      false,
+      true,
+      "Elements Update",
+      false,
+      false,
     );
   });
 
@@ -287,6 +330,7 @@ describe("syncGraphElements", () => {
       false,
       "Elements Update",
       true,
+      false,
     );
   });
 

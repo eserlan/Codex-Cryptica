@@ -17,6 +17,13 @@ export interface LayoutOptions {
   stableLayout: boolean;
   isGuest: boolean;
   isMobile?: boolean;
+  /**
+   * Camera behavior for this layout pass. "fit" (default) may animate the
+   * viewport to fit all elements; "preserve" keeps the user's current
+   * pan/zoom. Only honored on the stable fit-only path — full layout solves
+   * always fit because node positions may change wholesale.
+   */
+  viewportPolicy?: "preserve" | "fit";
   onLayoutStart?: () => void;
   onLayoutStop?: () => void;
   onLayoutComputed?: (durationMs: number) => void;
@@ -505,7 +512,15 @@ export class LayoutManager {
         options.onPositionsUpdated?.(updates);
       }
 
-      this.animateFitAndStop(options, "ease-out-cubic");
+      if (options.viewportPolicy === "preserve") {
+        // Halt any in-flight fit animation from a previous layout pass —
+        // otherwise it would keep moving the camera after this update
+        // promised to preserve the viewport.
+        this.cy.stop();
+        options.onLayoutStop?.();
+      } else {
+        this.animateFitAndStop(options, "ease-out-cubic");
+      }
       return;
     }
 

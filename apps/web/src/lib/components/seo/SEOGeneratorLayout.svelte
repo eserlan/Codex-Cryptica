@@ -11,6 +11,7 @@
   import { renderMarkdown as renderMd } from "$lib/utils/markdown";
   import { SESSION_DRAFTS_KEY } from "$lib/services/seo/generators/session-context";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+  import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
 
   let {
     canonicalPath,
@@ -81,6 +82,7 @@
   let outputCard = $state<HTMLElement | null>(null);
   let errorMessage = $state<string | null>(null);
   let copied = $state(false);
+  let copiedSectionId = $state<string | null>(null);
   let useAI = $state(true);
   let showSaveModal = $state(false);
   let redirectUrl = $state(`${cleanBase}/`);
@@ -124,6 +126,9 @@
   );
 
   const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
+  const documentSections = $derived(
+    variant === "names" ? [] : splitMarkdownForCopy(documentLayout.content),
+  );
 
   $effect(() => {
     if (isThemeCustomizable && browser) {
@@ -500,6 +505,18 @@
     }
   }
 
+  async function handleCopySection(sectionId: string, markdown: string) {
+    try {
+      await navigator.clipboard.writeText(markdown.trim());
+      copiedSectionId = sectionId;
+      setTimeout(() => {
+        if (copiedSectionId === sectionId) copiedSectionId = null;
+      }, 1600);
+    } catch (err) {
+      console.error("Failed to copy section markdown:", err);
+    }
+  }
+
   function handleContainerKeydown(event: KeyboardEvent) {
     if (event.key === "Enter" || event.key === " ") {
       handleContainerClick(event as unknown as MouseEvent);
@@ -634,15 +651,17 @@
   </header>
 
   <!-- Compact Explainer Strip — no duplicate generate CTA (#1274) -->
-  <div
-    class="w-full border-b border-theme-border/30 bg-theme-surface/10 py-4 px-6"
-  >
-    <div class="max-w-6xl mx-auto">
+  <div class="w-full border-b border-theme-border/30 bg-theme-surface/10 px-6">
+    <div class="max-w-6xl mx-auto py-4 flex items-center justify-between gap-4">
       <p
-        class="text-xs font-bold text-theme-muted uppercase tracking-widest font-header"
+        class="text-xs font-bold text-theme-text/75 uppercase tracking-widest font-header"
       >
         Generate campaign-ready {generatedNoun} in seconds — no account required.
       </p>
+      <span
+        class="hidden md:inline-flex h-px flex-1 bg-gradient-to-r from-theme-primary/35 via-theme-border/30 to-transparent"
+        aria-hidden="true"
+      ></span>
     </div>
   </div>
 
@@ -716,12 +735,15 @@
                     </span>
                   {/each}
                 </div>
-                <div class="flex gap-2 flex-wrap items-center flex-shrink-0">
+                <div
+                  class="flex flex-wrap items-center overflow-hidden rounded-lg border border-theme-primary/25 bg-theme-bg/35 shadow-sm"
+                  aria-label="Draft actions"
+                >
                   {#if variant !== "names"}
                     <button
                       type="button"
                       onclick={handleSaveToCodex}
-                      class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+                      class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] hover:brightness-110 transition-all"
                       id="save-to-codex-btn"
                       title="Import this draft into your local Codex Cryptica vault"
                     >
@@ -730,22 +752,28 @@
                     <button
                       type="button"
                       onclick={addToSessionHub}
-                      class="px-4 py-2 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
+                      class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/45 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
                       id="add-to-hub-btn"
                       title="Add this draft to the Session Hub to bundle several drafts before exporting"
                     >
-                      <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+                      <span
+                        class="icon-[lucide--link] w-3.5 h-3.5"
+                        aria-hidden="true"
+                      ></span>
                       Link to Hub
                     </button>
                   {/if}
                   <button
                     type="button"
                     onclick={handleCopyMarkdown}
-                    class="px-4 py-2 bg-theme-surface border border-theme-border/80 text-theme-text font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:border-theme-primary/60 transition-all flex items-center gap-1.5"
+                    class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
                     id="copy-markdown-btn"
                     title="Copy this draft as markdown to your clipboard"
                   >
-                    <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
+                    <span
+                      class="icon-[lucide--copy] w-3.5 h-3.5"
+                      aria-hidden="true"
+                    ></span>
                     {copied ? "Copied!" : "Copy"}
                   </button>
                 </div>
@@ -762,7 +790,51 @@
               onclick={handleContainerClick}
               onkeydown={handleContainerKeydown}
             >
-              {@html renderMarkdown(documentLayout.content)}
+              {#if variant === "names"}
+                {@html renderMarkdown(documentLayout.content)}
+              {:else}
+                {#each documentSections as section (section.id)}
+                  <article
+                    class="group/section rounded-xl border border-transparent transition-colors hover:border-theme-border/35 hover:bg-theme-surface/10"
+                  >
+                    {#if section.heading}
+                      <div
+                        class="mb-2 flex items-center justify-between gap-3 border-b border-theme-border/35 pb-2"
+                      >
+                        <h3
+                          class="font-header text-base font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
+                        >
+                          {section.heading}
+                        </h3>
+                        <button
+                          type="button"
+                          onclick={() =>
+                            void handleCopySection(
+                              section.id,
+                              section.markdown,
+                            )}
+                          class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                          aria-label="Copy {section.heading} as Markdown"
+                          title="Copy this section as Markdown"
+                        >
+                          <span
+                            class={copiedSectionId === section.id
+                              ? "icon-[lucide--check] h-3.5 w-3.5"
+                              : "icon-[lucide--copy] h-3.5 w-3.5"}
+                            aria-hidden="true"
+                          ></span>
+                          {copiedSectionId === section.id
+                            ? "Copied"
+                            : "Copy MD"}
+                        </button>
+                      </div>
+                    {/if}
+                    <div>
+                      {@html renderMarkdown(section.body)}
+                    </div>
+                  </article>
+                {/each}
+              {/if}
             </div>
           </div>
         {:else}
@@ -797,12 +869,12 @@
       </p>
       <div class="sticky top-24 flex flex-col gap-6">
         <div
-          class="p-5 bg-theme-surface/45 border border-theme-border/40 rounded-2xl shadow-sm backdrop-blur-sm"
+          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
         >
           {#if generatedData}
             <div
               in:fade={{ duration: 250 }}
-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/80"
+              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85"
             >
               {@html renderLore(documentLayout.lore)}
             </div>
@@ -939,7 +1011,7 @@
         </p>
         {#if inputHint}
           <p
-            class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-4 flex items-center gap-1.5"
+            class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
           >
             <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
             {inputHint}
@@ -1192,7 +1264,7 @@
   }
   /* Rail stat block — compact heading scale, muted palette (#1276) */
   .seo-rail.seo-md :global(.seo-label) {
-    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    color: color-mix(in srgb, var(--color-primary) 42%, var(--color-text));
     text-shadow: none;
     filter: none;
   }
@@ -1200,7 +1272,7 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: color-mix(in srgb, var(--color-text) 65%, transparent);
+    color: color-mix(in srgb, var(--color-text) 82%, transparent);
     margin: 0.875rem 0 0.375rem;
     border-bottom: none;
   }
@@ -1209,9 +1281,9 @@
     border-bottom: 1px solid
       color-mix(in srgb, var(--color-border) 30%, transparent);
     margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-text) 75%, transparent);
+    color: color-mix(in srgb, var(--color-text) 88%, transparent);
   }
   .seo-rail.seo-md :global(strong) {
-    color: color-mix(in srgb, var(--color-text) 80%, transparent);
+    color: color-mix(in srgb, var(--color-text) 92%, transparent);
   }
 </style>

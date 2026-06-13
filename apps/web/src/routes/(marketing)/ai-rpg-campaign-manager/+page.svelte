@@ -44,6 +44,7 @@
       },
     ],
     relatedLinks: [
+      { href: "/", label: "RPG campaign manager" },
       { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
       {
         href: "/solutions/ai-worldbuilding-tool",

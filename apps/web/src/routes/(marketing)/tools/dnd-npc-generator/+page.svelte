@@ -17,6 +17,7 @@
       role,
       alignment,
       campaignContext,
+      includeDndQuickStats: true,
       useAI,
     });
   }

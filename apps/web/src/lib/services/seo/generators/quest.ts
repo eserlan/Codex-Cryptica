@@ -343,7 +343,7 @@ You must return a valid JSON object matching the following structure exactly:
 {
   "title": "A single evocative quest name (3-6 words)",
   "content": "A detailed multi-paragraph quest hook (markdown formatted) describing the situation, what the party is asked to do, the location, the key NPC involved, and how it fits the campaign context if provided.",
-  "lore": "GM-only details (markdown formatted) with these sections: '### Core Fields' (bullet list with **Setting** and **Threat**, each a vivid one-sentence description with proper nouns), '### Complication' (a concrete mechanical or narrative pressure), '### Key NPC' (bullet with **Name**: motivation and secret), '### The Twist' (a paragraph revealing the hidden truth, ideally tying back to the party's past or the campaign context), '### Reward' (a paragraph describing what is gained and why it matters to the larger campaign).",
+  "lore": "GM-only details (markdown formatted) with these sections: '### Core Fields' (bullet list with '**📍 Setting**' and '**📅 Threat**', each a vivid one-sentence description with proper nouns), '### Complication' (a concrete mechanical or narrative pressure), '### Key NPC' (bullet with '**👤 Name**': motivation and secret), '### The Twist' (a paragraph revealing the hidden truth, ideally tying back to the party's past or the campaign context), '### Reward' (a paragraph describing what is gained and why it matters to the larger campaign).",
   "labels": ["rpg-quest", "quest-generator", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
@@ -400,14 +400,14 @@ ${locationName} serves as the primary setting — a ${locationType.toLowerCase()
 The central danger is a ${threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`;
 
   const lore = `### Core Fields
-- **Setting**: ${locationName}, a ${locationType.toLowerCase()} shaped by ${genre.toLowerCase()} conventions and a ${tone.toLowerCase()} atmosphere.
-- **Threat**: A ${threat.toLowerCase()}, active long enough to leave evidence, earn fear, and create a power vacuum.
+- **📍 Setting**: ${locationName}, a ${locationType.toLowerCase()} shaped by ${genre.toLowerCase()} conventions and a ${tone.toLowerCase()} atmosphere.
+- **📅 Threat**: A ${threat.toLowerCase()}, active long enough to leave evidence, earn fear, and create a power vacuum.
 
 ### Complication
 ${complication}
 
 ### Key NPC
-- **${npcName}**: The immediate contact, patron, or obstacle. Their stated reason for involving the party is credible, but their personal stake runs deeper than they admit.
+- **👤 ${npcName}**: The immediate contact, patron, or obstacle. Their stated reason for involving the party is credible, but their personal stake runs deeper than they admit.
 
 ### The Twist
 ${twist}. Reveal this only once the party is committed — it should recast earlier scenes in a new light.

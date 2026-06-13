@@ -12,6 +12,7 @@
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
+  import { shouldSyncGeneratorTheme } from "./generator-theme";
   import {
     generatorEngine,
     npcConfig,
@@ -500,7 +501,11 @@
         useAI,
       });
     } else if (data.slug === "dnd-npc") {
-      return generatorEngine.generateNPC({ ...dndNpc, useAI });
+      return generatorEngine.generateNPC({
+        ...dndNpc,
+        includeDndQuickStats: true,
+        useAI,
+      });
     } else if (
       data.slug === "pantheon-generator" ||
       data.slug === "god-generator"
@@ -665,7 +670,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
+    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
 <SEOGeneratorLayout
@@ -678,16 +683,7 @@
   faqs={meta.faqs ?? []}
   relatedLinks={meta.relatedLinks ?? []}
   bind:theme={activeTheme}
-  isThemeCustomizable={data.slug === "faction" ||
-    data.slug === "npc" ||
-    data.slug === "social-hub" ||
-    data.slug === "nation" ||
-    data.slug === "vampire-clan" ||
-    data.slug === "dnd-npc" ||
-    data.slug === "quest" ||
-    data.slug === "names" ||
-    data.slug === "fantasy-names" ||
-    data.slug === "tavern"}
+  isThemeCustomizable={shouldSyncGeneratorTheme(data.slug)}
   {generate}
   {initialDraft}
   variant={data.slug === "names" || data.slug === "fantasy-names"

@@ -185,4 +185,133 @@ describe("GraphViewController", () => {
     expect(controller.didFinalizeLoad).toBe(true);
     expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
   });
+
+  describe("focus handoff", () => {
+    beforeEach(async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+    });
+
+    it("clearGraphSelection nulls selectedId and calls applyFocus(null)", () => {
+      controller.selectedId = "node-1";
+      const batchSpy = vi.spyOn(controller, "applyFocus");
+
+      controller.clearGraphSelection();
+
+      expect(controller.selectedId).toBeNull();
+      expect(batchSpy).toHaveBeenCalledWith(null);
+    });
+
+    it("clearGraphSelection unselects all nodes in cytoscape", () => {
+      controller.selectedId = "node-1";
+      const unselectSpy = vi.fn();
+      (controller.cy as any).$ = vi
+        .fn()
+        .mockReturnValue({ unselect: unselectSpy });
+
+      controller.clearGraphSelection();
+
+      expect(unselectSpy).toHaveBeenCalled();
+    });
+
+    it("clearGraphSelection cancels any pending node select timer", () => {
+      const clearSpy = vi.spyOn(global, "clearTimeout");
+      // Force a timer into place by inspecting private state via any cast
+      (controller as any).nodeSelectTimer = 999;
+
+      controller.clearGraphSelection();
+
+      expect(clearSpy).toHaveBeenCalledWith(999);
+      expect((controller as any).nodeSelectTimer).toBeNull();
+    });
+  });
+
+  describe("viewport policy", () => {
+    const lastPolicy = () => {
+      const apply = (controller.layoutManager as any).apply;
+      const calls = apply.mock.calls;
+      return calls[calls.length - 1][0].viewportPolicy;
+    };
+
+    beforeEach(async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+    });
+
+    it("preserves the camera for edge-only element updates with stable layout", async () => {
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Elements Update",
+        false,
+        false,
+        false,
+      );
+      expect(lastPolicy()).toBe("preserve");
+    });
+
+    it("fits when new nodes are added", async () => {
+      await controller.applyCurrentLayout(
+        false,
+        false,
+        "Elements Update",
+        false,
+        true,
+        false,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits when nodes are removed", async () => {
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Elements Update",
+        false,
+        false,
+        true,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("preserves the camera for plain window resizes", async () => {
+      await controller.applyCurrentLayout(false, false, "Window Resize", false);
+      expect(lastPolicy()).toBe("preserve");
+    });
+
+    it("fits on orientation-change resizes", async () => {
+      await controller.applyCurrentLayout(false, true, "Window Resize", true);
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits when stable layout is off", async () => {
+      deps.graph.stableLayout = false;
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "Elements Update",
+        false,
+        false,
+        false,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits on initial layout", async () => {
+      await controller.applyCurrentLayout(true, true, "Load Finalized");
+      expect(lastPolicy()).toBe("fit");
+    });
+
+    it("fits on mode changes and manual redraw", async () => {
+      await controller.applyCurrentLayout(false, true, "Mode Change Effect");
+      expect(lastPolicy()).toBe("fit");
+      await controller.applyCurrentLayout(
+        false,
+        true,
+        "UI Redraw Button",
+        true,
+      );
+      expect(lastPolicy()).toBe("fit");
+    });
+  });
 });

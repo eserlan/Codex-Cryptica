@@ -31,8 +31,8 @@ export const SCHEMA_ORG = {
       name: APP_NAME,
       description:
         "A free, local-first RPG campaign manager and worldbuilding workspace for private Markdown vaults, offline prep, spatial lore maps, timelines, and optional AI assistance.",
-      applicationCategory: "GameApplication",
-      applicationSubCategory: "RPG campaign manager",
+      applicationCategory: ["GameApplication", "UtilitiesApplication"],
+      applicationSubCategory: ["RPG campaign manager", "worldbuilding tool"],
       operatingSystem: "Web browser",
       url: "https://codexcryptica.com/",
       browserRequirements:

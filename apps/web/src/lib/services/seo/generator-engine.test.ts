@@ -43,6 +43,25 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("Faction Connection");
       expect(res.labels).toContain("npc-generator");
       expect(res.labels).toContain("imported-draft");
+      expect(res.lore).not.toContain("Class / Archetype");
+      expect(res.lore).not.toContain("Table Rating");
+    });
+
+    it("should include D&D quick stats when requested", async () => {
+      const res = await engine.generateNPC({
+        race: "Human",
+        role: "Priest",
+        alignment: "Lawful Good",
+        includeDndQuickStats: true,
+        useAI: false,
+      });
+
+      expect(res.lore).toContain("### At a Glance");
+      expect(res.lore).toContain("**Class / Archetype**: Cleric / Level 5");
+      expect(res.lore).toContain("**Table Rating**: CR 3");
+      expect(res.lore.indexOf("Class / Archetype")).toBeLessThan(
+        res.lore.indexOf("Ancestry"),
+      );
     });
 
     it("should include optional campaign context in local NPC output", async () => {
@@ -79,6 +98,7 @@ describe("DefaultGeneratorEngine", () => {
         role: "Mage",
         alignment: "Neutral Good",
         campaignContext: "a ruined elven academy",
+        includeDndQuickStats: true,
         useAI: true,
       });
 
@@ -89,7 +109,9 @@ describe("DefaultGeneratorEngine", () => {
       );
       expect(res.title).toBe("Aelwen The Wise");
       expect(res.content).toBe("AI Generated Bio");
-      expect(res.lore).toBe("AI Generated Stats");
+      expect(res.lore).toContain("AI Generated Stats");
+      expect(res.lore).toContain("**Class / Archetype**: Wizard / Level 5");
+      expect(res.lore).toContain("**Table Rating**: CR 3");
       expect(res.labels).toContain("custom-label");
     });
 
@@ -131,6 +153,9 @@ describe("DefaultGeneratorEngine", () => {
       );
       expect(res.lore).toContain("Internal Conflict");
       expect(res.lore).toContain("At the Table");
+      expect(res.lore).toContain("- **📍 Base**");
+      expect(res.lore).toContain("- **👤");
+      expect(res.lore).toContain("- **👥");
       expect(res.labels).toContain("faction-generator");
       expect(res.labels).toContain("imported-draft");
     });
@@ -237,6 +262,9 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("Clan Weakness");
       expect(res.lore).toContain("Internal Conflict");
       expect(res.lore).toContain("Adventure Hook");
+      expect(res.lore).toContain("- **👤 Sire");
+      expect(res.lore).toContain("- **👤 Thrall");
+      expect(res.lore).toContain("- **👥");
       expect(res.labels).toContain("vampire-clan");
       expect(res.labels).toContain("imported-draft");
     });
@@ -271,6 +299,15 @@ describe("DefaultGeneratorEngine", () => {
       );
       expect(mockModel.generateContent).toHaveBeenCalledWith(
         expect.stringContaining("an ancient cathedral ruin"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **👤 Sire Name**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **👤 Thrall Name**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **👥 Rival Name**"),
       );
       expect(res.type).toBe("faction");
       expect(res.title).toBe("House Karnstein");
@@ -380,7 +417,48 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBeDefined();
       expect(res.content).toContain("mining");
       expect(res.lore).toContain("Town");
+      expect(res.lore).toContain("- **📍");
+      expect(res.lore).toContain("- **👥");
       expect(res.labels).toContain("imported-draft");
+    });
+
+    it("should include settlement icon sections in the AI prompt", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Stonebridge",
+                content: "AI settlement description",
+                lore: "AI settlement lore",
+                labels: ["rpg-location", "imported-draft"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      const res = await engine.generateSettlement({
+        size: "Village",
+        economy: "Trade Hub",
+        useAI: true,
+      });
+
+      expect(mockClientManager.getModel).toHaveBeenCalled();
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("### Points of Interest"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **📍 Location Name**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("### Controlling Factions"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **👥 Faction Name**"),
+      );
+      expect(res.title).toBe("Stonebridge");
+      expect(res.lore).toBe("AI settlement lore");
     });
   });
 
@@ -396,6 +474,30 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBeDefined();
       expect(res.lore).toContain("Weapon");
       expect(res.lore).toContain("Legendary");
+      expect(res.labels).toContain("imported-draft");
+    });
+  });
+
+  describe("generateQuestHook", () => {
+    it("should generate quest hook details locally when useAI is false", async () => {
+      const res = await engine.generateQuestHook({
+        genre: "Classic Fantasy",
+        tone: "Heroic",
+        scope: "Local / Village",
+        locationType: "Dungeon",
+        threat: "Goblins",
+        twist: "The goblins were protecting a sacred egg",
+        reward: "A pouch of silver coins",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("event");
+      expect(res.title).toBeDefined();
+      expect(res.content).toContain("### The Hook");
+      expect(res.lore).toContain("### Core Fields");
+      expect(res.lore).toContain("- **📍 Setting**");
+      expect(res.lore).toContain("- **📅 Threat**");
+      expect(res.lore).toContain("- **👤");
       expect(res.labels).toContain("imported-draft");
     });
   });
@@ -883,6 +985,12 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toContain("Deity Description");
       expect(res.content.toLowerCase()).toContain("death");
       expect(res.lore).toContain("At a Glance");
+      expect(res.lore).toContain("- **👤 Deity Type**");
+      expect(res.lore).toContain("- **✨ Primary Domain**");
+      expect(res.lore).toContain("- **👥 Worshippers**");
+      expect(res.lore).toContain("- **📍 Sacred Symbol**");
+      expect(res.lore).toContain("- **📅 Secret**");
+      expect(res.lore).toContain("- **⚔ Immediate Hook**");
       expect(res.labels).toContain("rpg-deity");
       expect(res.labels).toContain("imported-draft");
     });
@@ -950,6 +1058,51 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toBe("AI Bio");
       expect(res.lore).toBe("AI Lore");
       expect(res.labels).toContain("deity-custom");
+    });
+
+    it("should include deity icon sections in the AI prompt", async () => {
+      const mockModel = {
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Hel, Lady of Hela",
+                content: "AI Bio",
+                lore: "AI Lore",
+                labels: ["deity-custom"],
+              }),
+          },
+        }),
+      };
+      mockClientManager.getModel.mockResolvedValue(mockModel);
+
+      await engine.generatePantheon({
+        mode: "single",
+        genre: "Classic Fantasy",
+        divineType: "God",
+        domain: "Death",
+        worshippers: "State Religion",
+        useAI: true,
+      });
+
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **👤 Deity Type**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **✨ Primary Domain**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **👥 Worshippers**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **📍 Sacred Symbol**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **📅 Secret**"),
+      );
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        expect.stringContaining("- **⚔ Immediate Hook**"),
+      );
     });
 
     it("should call clientManager for pantheon when useAI is true and succeed", async () => {

@@ -112,6 +112,16 @@ test.describe("SEO and Prerendering", () => {
   });
 
   test.describe("SEO Landing Pages and Generator Funnel", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          "codex-cryptica-help-state",
+          JSON.stringify({ completedTours: ["initial-onboarding"] }),
+        );
+        localStorage.setItem("codex_dismissed_landing", "true");
+      });
+    });
+
     test("solutions and comparison pages prerender correctly", async ({
       request,
     }) => {

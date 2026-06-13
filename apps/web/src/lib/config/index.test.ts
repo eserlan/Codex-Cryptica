@@ -55,8 +55,8 @@ describe("shared schema.org metadata", () => {
     expect(software).toMatchObject({
       "@type": "SoftwareApplication",
       name: "Codex Cryptica",
-      applicationCategory: "GameApplication",
-      applicationSubCategory: "RPG campaign manager",
+      applicationCategory: ["GameApplication", "UtilitiesApplication"],
+      applicationSubCategory: ["RPG campaign manager", "worldbuilding tool"],
       operatingSystem: "Web browser",
       isAccessibleForFree: true,
       image: "https://codexcryptica.com/og-image.png",

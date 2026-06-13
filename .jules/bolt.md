@@ -117,3 +117,6 @@
 
 **Learning:** In Svelte 5 `$derived` blocks, writing concise declarative code like `[...arrays].filter(condition).length` multiple times inside a single block can lead to significant unnecessary intermediate array allocations, memory pressure, and garbage collection overhead—especially visible when dealing with larger datasets like vault entity lists.
 **Action:** When calculating multiple aggregate stats over a single array in a reactive context, favor a single-pass imperative `for...of` loop inside a `$derived.by()` block. This avoids intermediate allocations while correctly preserving reactivity and drastically reducing execution time for large arrays.
+## 2025-02-12 - Imperative counting in reactive derived stores
+**Learning:** In Svelte `$derived` blocks, avoiding `.filter(...).length` and `.reduce(...)` allocations against large store properties (like `vault.allEntities`) prevents closure instantiations on every reactive loop execution. Using an imperative `for...of` loop tracking an inner counter is the most garbage-collection friendly method for these common counting operations.
+**Action:** Always replace `.reduce` loops inside derived counters that query `allEntities` with imperative loops to lower CPU bounds on hot rendering paths.
