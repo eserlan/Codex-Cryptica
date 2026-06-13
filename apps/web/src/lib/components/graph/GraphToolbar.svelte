@@ -74,6 +74,10 @@
       ? 0
       : Math.min(64 + activeGuests.length * 48, 280),
   );
+
+  const showEditToggle = $derived(
+    graph.timelineMode && !sessionModeStore.isGuestMode,
+  );
 </script>
 
 {#snippet toolbarItems()}
@@ -99,7 +103,7 @@
       closeMenuIfMobile();
     }}
   />
-  {#if graph.timelineMode && !sessionModeStore.isGuestMode}
+  {#if showEditToggle}
     <ChronologyEditToggle
       onToggle={() => {
         closeMenuIfMobile();

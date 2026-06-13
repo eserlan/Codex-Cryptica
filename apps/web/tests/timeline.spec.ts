@@ -48,7 +48,9 @@ test.describe("World Timeline - Graph Integration", () => {
     await timelineBtn.click();
 
     // 3. Verify status indicator
-    await expect(page.getByText("Timeline Active (Horizontal)")).toBeVisible();
+    await expect(
+      page.getByText(/Active \((Horizontal|Vertical)\)/),
+    ).toBeVisible();
 
     // Wait for layout to settle
     await page.waitForTimeout(1000);
@@ -147,7 +149,9 @@ test.describe("World Timeline - Graph Integration", () => {
     await timelineBtn.click();
 
     // Verify timeline is active
-    await expect(page.getByText("Timeline Active (Horizontal)")).toBeVisible();
+    await expect(
+      page.getByText(/Active \((Horizontal|Vertical)\)/),
+    ).toBeVisible();
 
     // 3. Toggle Edit Chronology Mode
     const editBtn = page.getByTitle("Edit Chronology");

@@ -178,6 +178,7 @@
   >
     {#if graph.timelineMode}
       <div
+        data-testid="timeline-status-indicator"
         class="{graph.chronologyEditMode
           ? 'bg-feedback-warning/15 border-feedback-warning/50 text-feedback-warning'
           : 'bg-timeline-dark/40 border-timeline-primary/30 text-timeline-primary'} backdrop-blur border px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] shadow-lg uppercase pointer-events-auto"
