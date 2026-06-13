@@ -112,4 +112,30 @@ describe("CampaignGeneratorModal", () => {
     // The config form must always offer a way to generate (non-AI path).
     expect(screen.getByRole("button", { name: /generate/i })).toBeTruthy();
   });
+
+  // Style-guide compliance: modal uses chrome token classes, not surface-* or primary-*
+  it("modal card uses chrome-surface background token", () => {
+    render(CampaignGeneratorModal);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).toContain("bg-chrome-surface");
+  });
+
+  it("modal card uses chrome-border token", () => {
+    render(CampaignGeneratorModal);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).toContain("border-chrome-border");
+  });
+
+  it("close button uses chrome border and muted text tokens", () => {
+    render(CampaignGeneratorModal);
+    const closeBtn = screen.getByLabelText("Close");
+    expect(closeBtn.className).toContain("border-chrome-border");
+    expect(closeBtn.className).toContain("text-chrome-muted");
+  });
+
+  it("modal heading uses chrome-accent text token", () => {
+    render(CampaignGeneratorModal);
+    const heading = screen.getByRole("heading", { name: /generate/i });
+    expect(heading.className).toContain("text-chrome-accent");
+  });
 });
