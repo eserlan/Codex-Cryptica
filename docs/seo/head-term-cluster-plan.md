@@ -80,9 +80,9 @@ Pages: `/worldbuilding-tool`, `/solutions/worldbuilding-tool`,
 
 ## Phase 4 — Authority internal links
 
-- [ ] Add homepage / nav / footer links into both hubs with exact-phrase anchor
+- [x] Add homepage / nav / footer links into both hubs with exact-phrase anchor
       text.
-- [ ] Add links from the `vs` comparison pages into the relevant cluster pages.
+- [x] Add links from the `vs` comparison pages into the relevant cluster pages.
 
 ## Phase 5 — GEO / LLM polish
 

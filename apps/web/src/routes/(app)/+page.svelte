@@ -746,21 +746,34 @@
 
         <!-- Footer actions & settings -->
         <footer class="flex flex-col items-center gap-4 w-full">
-          <div class="flex flex-col sm:flex-row items-center gap-4">
+          <div class="flex flex-wrap items-center justify-center gap-6">
             <a
-              href="{base}/features"
+              href="{base}/free-rpg-campaign-manager"
               class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
             >
-              <span class="icon-[lucide--zap] w-3 h-3"></span>
-              View Features Overview
+              <span class="icon-[lucide--castle] w-3 h-3"></span>
+              RPG Campaign Manager
             </a>
-
+            <a
+              href="{base}/worldbuilding-tool"
+              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--globe] w-3 h-3"></span>
+              Worldbuilding Tool
+            </a>
+            <a
+              href="{base}/features"
+              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--zap] w-3 h-3"></span>
+              Features
+            </a>
             <a
               href="{base}/changelog"
               class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
             >
               <span class="icon-[lucide--history] w-3 h-3"></span>
-              View Full Changelog
+              Changelog
             </a>
           </div>
 
