@@ -396,6 +396,9 @@
       class="mt-32 pt-8 border-t border-theme-border/40 text-center text-xs text-theme-muted space-y-4"
     >
       <div class="flex flex-wrap justify-center gap-6">
+        <a href="{base}/" class="hover:text-theme-primary transition-colors"
+          >RPG campaign manager</a
+        >
         <a
           href="{base}/worldbuilding-tool"
           class="hover:text-theme-primary transition-colors"

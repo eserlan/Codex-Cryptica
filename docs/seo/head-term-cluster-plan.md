@@ -35,17 +35,17 @@ canonical handling in `SEOPageLayout.svelte`, sitemap exposure, and
 
 Smallest, lowest-risk change; ~80% of the head-term win. Do first, standalone.
 
-- [ ] Update title/meta to lead with both categories, e.g. _"Codex Cryptica —
+- [x] Update title/meta to lead with both categories, e.g. _"Codex Cryptica —
       Local-First RPG Campaign Manager & Worldbuilding Tool"_ (`+layout.svelte:10-12`,
       or an explicit homepage `<title>` in `(app)/+page.svelte` `<svelte:head>`).
-- [ ] Add a keyword **subhead/H2** + quotable first sentence containing both
+- [x] Add a keyword **subhead/H2** + quotable first sentence containing both
       exact phrases. Keep the brand H1 ("Private RPG Lore Vault") — do **not**
       keyword-stuff the H1 (UX/brand tension).
-- [ ] Add `<link rel="canonical" href="https://codexcryptica.com/">`.
-- [ ] Extend homepage `SoftwareApplication` JSON-LD to name both
+- [x] Add `<link rel="canonical" href="https://codexcryptica.com/">`.
+- [x] Extend homepage `SoftwareApplication` JSON-LD to name both
       `applicationCategory` angles; optionally add a small `FAQPage`
       ("What is an RPG campaign manager?" / "...worldbuilding tool?").
-- [ ] Curl-smoke `/` to confirm title, subhead, canonical, and schema render
+- [x] Curl-smoke `/` to confirm title, subhead, canonical, and schema render
       server-side.
 
 ## Phase 2 — De-cannibalize & differentiate the campaign manager cluster
@@ -54,14 +54,14 @@ Pages: `/solutions/campaign-manager`, `/free-rpg-campaign-manager`,
 `/ai-rpg-campaign-manager`, `/solutions/offline-rpg-campaign-manager`,
 `/solutions/local-first-rpg-campaign-manager`.
 
-- [ ] Retitle `/solutions/campaign-manager` off "Best Free…" → features/how-to
+- [x] Retitle `/solutions/campaign-manager` off "Best Free…" → features/how-to
       solution angle (stops fighting homepage + `/free-`).
-- [ ] Lock intents: `/free-` = no-account/privacy, `/ai-` = AI prep/generation,
+- [x] Lock intents: `/free-` = no-account/privacy, `/ai-` = AI prep/generation,
       `/solutions/offline-` = offline, `/solutions/local-first-rpg-campaign-manager`
       = data ownership.
-- [ ] Ensure each has unique title, meta, H1, body copy, examples, FAQ, CTA.
-- [ ] Each spoke links up to `/` with "RPG campaign manager" anchor text.
-- [ ] Cross-link to relevant blog posts, comparison pages, and generator pages.
+- [x] Ensure each has unique title, meta, H1, body copy, examples, FAQ, CTA.
+- [x] Each spoke links up to `/` with "RPG campaign manager" anchor text.
+- [x] Cross-link to relevant blog posts, comparison pages, and generator pages.
 
 ## Phase 3 — De-cannibalize & differentiate the worldbuilding tool cluster
 
