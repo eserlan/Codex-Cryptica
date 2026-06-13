@@ -73,9 +73,21 @@
       const sourceEntity = sourceEntityId
         ? vault.entities[sourceEntityId]
         : undefined;
-      const sourceConnectedIds = sourceEntity
-        ? new Set(sourceEntity.connections?.map((c) => c.target) ?? [])
-        : new Set<string>();
+      // Collect both outbound connections and inbound (entities that link to source).
+      const sourceConnectedIds = new Set<string>();
+      if (sourceEntity) {
+        for (const c of sourceEntity.connections ?? []) {
+          sourceConnectedIds.add(c.target);
+        }
+        for (const [id, e] of Object.entries(vault.entities)) {
+          if (
+            id !== sourceEntityId &&
+            e.connections?.some((c) => c.target === sourceEntityId)
+          ) {
+            sourceConnectedIds.add(id);
+          }
+        }
+      }
       const vaultContext = buildVaultContext({
         themeId: themeStore.worldThemeId ?? "workspace",
         themeName: themeStore.activeTheme?.name,

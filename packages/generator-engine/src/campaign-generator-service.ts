@@ -92,7 +92,10 @@ export class CampaignGeneratorService {
       request.useAI &&
       this.aiPolicy.isEnabled &&
       this.aiPolicy.isAvailable &&
-      this.aiGateway;
+      !!this.aiGateway;
+
+    // Propagate the resolved AI flag so the merged request reflects reality.
+    mergedRequest.useAI = canUseAI;
 
     if (canUseAI && this.aiGateway) {
       try {
@@ -148,7 +151,6 @@ export class CampaignGeneratorService {
       draft.entityType,
       draft.title,
       {
-        summary: draft.summary,
         content: draft.summary,
         lore: draft.lore,
         labels: draft.labels,

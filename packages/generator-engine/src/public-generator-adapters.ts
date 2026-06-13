@@ -29,7 +29,7 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     type: draft.entityType,
     title: draft.title,
     summary: draft.summary,
-    content: draft.summary ?? "",
+    content: draft.lore,
     lore: draft.lore,
     labels: [...(draft.labels ?? [])],
     status: "active",

@@ -21,23 +21,21 @@ describe("theme-to-generator defaults (US3, T039)", () => {
 
   it("fantasy NPC has expected defaults", () => {
     expect(getThemeDefaults("fantasy", "npc")).toMatchObject({
-      raceLabel: "Human",
-      classLabel: "Adventurer",
+      race: "Human",
+      role: "Adventurer",
     });
   });
 
-  it("horror NPC has Survivor class label", () => {
-    expect(getThemeDefaults("horror", "npc").classLabel).toBe("Survivor");
+  it("horror NPC has Survivor role", () => {
+    expect(getThemeDefaults("horror", "npc").role).toBe("Survivor");
   });
 
-  it("cyberpunk settlement is Sprawl", () => {
-    expect(getThemeDefaults("cyberpunk", "settlement").settlementType).toBe(
-      "Sprawl",
-    );
+  it("cyberpunk settlement is City", () => {
+    expect(getThemeDefaults("cyberpunk", "settlement").type).toBe("City");
   });
 
   it("horror faction is Cult", () => {
-    expect(getThemeDefaults("horror", "faction").factionType).toBe("Cult");
+    expect(getThemeDefaults("horror", "faction").type).toBe("Cult");
   });
 
   it("workspace returns empty defaults (neutral theme)", () => {

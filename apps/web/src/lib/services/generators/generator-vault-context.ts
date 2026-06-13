@@ -70,7 +70,10 @@ export function buildVaultContext(
     templateOutline,
   } = opts;
 
-  const existingTitles = Object.values(allEntities).map((e) => e.title);
+  const MAX_TITLES = 50;
+  const existingTitles = Object.values(allEntities)
+    .map((e) => e.title)
+    .slice(0, MAX_TITLES);
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
