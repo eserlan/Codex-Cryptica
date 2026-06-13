@@ -87,9 +87,9 @@ export const solutions: Record<string, SEOPageData> = {
           "Codex Cryptica is fully local-first: your notes are stored on your own device, not a remote server. That means instant load times, complete privacy, and full offline support — features most cloud-based campaign managers can't offer.",
       },
       {
-        question: "Can I use it offline?",
+        question: "Can I use Codex Cryptica offline?",
         answer:
-          "Yes. Because all data is stored on your local device, the entire campaign manager, editor, and interactive graph run perfectly without an internet connection.",
+          "Yes. Codex Cryptica operates fully offline by storing files locally on your device. Codex Cryptica's local-first markdown capabilities, interactive relationship graph, and campaign manager run entirely in the browser without requiring an internet connection.",
       },
     ],
     relatedLinks: [
@@ -148,7 +148,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Can I customize the frontmatter schema?",
         answer:
-          "Yes, you can edit the YAML metadata directly in the editor. The app reads and updates keys without locking you into a proprietary format.",
+          "Yes. You can customize and edit YAML frontmatter metadata keys directly inside Codex Cryptica's editor. Codex Cryptica reads and updates structured frontmatter dynamically without locking your campaign notes into a proprietary format.",
       },
     ],
     relatedLinks: [
@@ -208,6 +208,7 @@ export const solutions: Record<string, SEOPageData> = {
       },
     ],
     relatedLinks: [
+      { href: "/", label: "RPG campaign manager" },
       { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
       {
         href: "/solutions/ai-worldbuilding-tool",
@@ -265,6 +266,7 @@ export const solutions: Record<string, SEOPageData> = {
       },
     ],
     relatedLinks: [
+      { href: "/", label: "RPG campaign manager" },
       {
         href: "/solutions/offline-rpg-campaign-manager",
         label: "Offline campaign manager",
@@ -399,7 +401,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Is my creative writing safe from model training?",
         answer:
-          "Yes. All AI API calls are client-directed. Codex does not scrape or store your notes, and we encourage using private developer API endpoints.",
+          "Yes. All AI interactions within Codex Cryptica are client-directed API calls made directly to your configured provider. Codex Cryptica does not collect, scrape, or store your notes on external databases, keeping your creative writing private.",
       },
     ],
   },
@@ -459,7 +461,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Can I filter the graph views?",
         answer:
-          "Yes, you can toggle active categories, focus on single nodes, or save customized view configurations for instant lookup.",
+          "Yes. Codex Cryptica's interactive graph explorer allows you to filter nodes by category, isolate specific relationships, focus on central hubs, and save custom view configurations for instant campaign navigation.",
       },
     ],
   },
@@ -583,12 +585,12 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Where are my world files stored?",
         answer:
-          "All your campaign data resides in your browser's sandboxed local filesystem. Your intellectual property is never uploaded to our servers.",
+          "All Codex Cryptica campaign files are stored locally in your browser's Origin Private File System (OPFS). Your intellectual property remains entirely on your machine and is never sent to external servers.",
       },
       {
         question: "Can I sync or backup my local-first world?",
         answer:
-          "Yes. You can mirror files to a local folder on your computer's hard drive or link your vault to a secure Google Drive backup folder.",
+          "Yes. Codex Cryptica allows you to back up and sync files by mirroring your local vault to a folder on your computer's hard drive via the File System Access API, or by linking it to a Google Drive backup folder.",
       },
     ],
   },
@@ -1122,6 +1124,17 @@ export const featuresConfig: Record<string, SEOPageData> = {
           "There are no cloud database connections. All files are written directly to your device. AI features are entirely optional and require explicit toggle.",
       },
     ],
+    relatedLinks: [
+      { href: "/", label: "worldbuilding tool" },
+      {
+        href: "/solutions/worldbuilding-tool",
+        label: "Structured worldbuilding tool",
+      },
+      {
+        href: "/solutions/local-first-worldbuilding-tool",
+        label: "Local-first worldbuilding",
+      },
+    ],
   },
   "ai-gm-assistant": {
     slug: "ai-gm-assistant",
@@ -1175,6 +1188,14 @@ export const featuresConfig: Record<string, SEOPageData> = {
         question: "Is my campaign prompt context secure?",
         answer:
           "Yes, your campaign text is sent directly to the LLM API provider and is never stored on our servers.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/", label: "RPG campaign manager" },
+      { href: "/solutions/ai-dm-assistant", label: "AI DM assistant" },
+      {
+        href: "/solutions/ai-worldbuilding-tool",
+        label: "AI worldbuilding tool",
       },
     ],
   },
@@ -1453,14 +1474,14 @@ export const worldbuildingToolRoot: SEOPageData = {
         "Yes. Codex Cryptica is a client-side local-first campaign wiki. All databases and files are run on your machine with no subscriptions required.",
     },
     {
-      question: "Can I use it offline?",
+      question: "Can I use Codex Cryptica offline?",
       answer:
-        "Absolutely. Once the page is loaded, the entire editor, graph explorer, and timeline system run fully offline.",
+        "Absolutely. Once the initial web app is loaded, Codex Cryptica's editor, interactive relationship graph, and timeline system run fully offline without requiring network access.",
     },
     {
-      question: "Can I import existing wiki files?",
+      question: "Can I import existing wiki files into Codex Cryptica?",
       answer:
-        "Yes, you can import Markdown folders from Obsidian or export packages from World Anvil and LegendKeeper directly.",
+        "Yes, Codex Cryptica supports importing Markdown folders from Obsidian or importing export packages from World Anvil and LegendKeeper directly.",
     },
   ],
   relatedLinks: [
