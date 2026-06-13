@@ -50,6 +50,10 @@ interface GeneratorRunRequest {
   generatorId: GeneratorId;
   options: Record<string, unknown>;
   useAI: boolean;
+  // Required. Defaults to "workspace" (the neutral world theme) when the
+  // campaign has no active world theme. GeneratorVaultContext.themeId is
+  // optional only because the packet may omit it; the run request always
+  // carries a resolved theme id.
   themeId: string;
   launchMode?: "workspace" | "contextual";
   sourceEntityId?: string;

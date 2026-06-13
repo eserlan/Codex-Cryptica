@@ -33,7 +33,7 @@ Validation rules:
 
 - `id` must be unique.
 - `entityType` must be a vault category id that exists in the active campaign's categories (default or custom), using the mapping above for the supported generators.
-- If a mapped category id is missing from the active campaign (for example a custom category set), the definition MUST resolve to a safe existing fallback category rather than creating an entity with an unknown type.
+- If a mapped category id is missing from the active campaign (for example a custom category set), the definition MUST resolve to the `note` category when present, otherwise the first available campaign category, rather than creating an entity with an unknown type.
 - `options` must have visible labels and deterministic default values.
 - `mapOutputToDraft` must preserve generated labels as labels.
 

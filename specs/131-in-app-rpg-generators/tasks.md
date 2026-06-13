@@ -61,9 +61,9 @@
 ### Tests for User Story 1
 
 - [ ] T016 [P] [US1] Add failing service tests for successful draft save and saved entity result in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T017 [P] [US1] Add failing service tests for save failure preserving draft state, guest/read-only/unavailable campaign blocked saves, and no localStorage transfer in packages/generator-engine/src/campaign-generator-service.test.ts
+- [ ] T017 [P] [US1] Add failing service tests for save failure preserving draft state, guest/read-only/unavailable campaign blocked saves, and no localStorage transfer (covers FR-009: no external transfer/leaving the app) in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T018 [P] [US1] Add failing component test for generator selection and configuration form rendering in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
-- [ ] T019 [P] [US1] Add failing component test for draft review editing and explicit save in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [ ] T019 [P] [US1] Add failing component test for draft review editing and explicit save, including editing a title that duplicates an existing entity title before save (edge case: relies on existing campaign duplicate-handling behavior), in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 - [ ] T020 [P] [US1] Add failing component test for cancel/close leaving campaign data unchanged in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 1
@@ -115,7 +115,7 @@
 
 ### Tests for User Story 3
 
-- [ ] T039 [P] [US3] Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts
+- [ ] T039 [P] [US3] Add failing theme mapping tests for horror, cyberpunk, fantasy, and neutral fallback (use real world-theme ids: workspace, fantasy, scifi, modern, horror, cyberpunk) in packages/generator-engine/src/campaign-generator-theme.test.ts
 - [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T042 [P] [US3] Add failing tests for bounded vault context packet building, system/custom template resolution precedence, contextual launch from an existing entity, and existing Generate Related entry points opening the unified workflow in apps/web/src/lib/services/generators/generator-vault-context.test.ts, apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts, apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts, and apps/web/src/lib/components/zen/ZenContent.related.test.ts
@@ -199,6 +199,7 @@
 - [ ] T073 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/131-in-app-rpg-generators/quickstart.md
 - [ ] T074 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/131-in-app-rpg-generators/quickstart.md
 - [ ] T075 Validate SC-009, SC-010, and SC-011 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, generated drafts preserve resolved template headings when enabled, and no standalone related modal is required
+- [ ] T076 [P] Verify the new packages/generator-engine package meets the constitution's 70% coverage goal (Principle X) by running bun run --filter generator-engine test -- --coverage and recording the result in specs/131-in-app-rpg-generators/quickstart.md
 
 ---
 
@@ -255,7 +256,7 @@ Task: "Add failing component test for cancel/close leaving campaign data unchang
 ## Parallel Example: User Story 3
 
 ```text
-Task: "Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts"
+Task: "Add failing theme mapping tests for horror, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts"
 Task: "Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts"
 Task: "Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts"
 ```

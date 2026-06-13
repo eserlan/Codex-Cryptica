@@ -54,7 +54,7 @@ As a Game Master, I want generator options to start with defaults that match my 
 
 **Acceptance Scenarios**:
 
-1. **Given** a campaign uses a gothic or noir theme, **When** the Game Master opens a supported generator, **Then** defaults favor genre-appropriate options while still allowing manual override.
+1. **Given** a campaign uses a horror or cyberpunk theme (from the supported world themes `workspace`, `fantasy`, `scifi`, `modern`, `horror`, `cyberpunk`), **When** the Game Master opens a supported generator, **Then** defaults favor genre-appropriate options while still allowing manual override.
 2. **Given** the Game Master launches generation from an existing entity, **When** they save the generated draft and choose to link it, **Then** the new entity is connected back to the source entity with the selected relationship.
 3. **Given** no theme-specific mapping exists for the current campaign theme, **When** the Game Master opens the generator, **Then** neutral defaults are used and generation still works.
 4. **Given** the existing entity sidebar or Zen Mode Generate Related button is visible, **When** the Game Master clicks it, **Then** the unified generator workflow opens with the source entity context prefilled instead of opening a separate legacy related-entity workflow.
@@ -152,7 +152,7 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **FR-038**: The public generator transition MUST preserve the behavior of secondary public generator surfaces that share `apps/web/src/lib/services/seo/generator-engine.ts`, including the `tools/*-generator` marketing pages (for example RPG/D&D NPC, Faction, Quest Hook, Fantasy Name, and Vampire Clan), not only the `generators/[slug]` route.
 - **FR-039**: The public generator transition MUST NOT change the behavior of public generators outside the initial supported set (for example quest, kingdom/nation, social-hub/tavern, pantheon, names, vampire-clan); those generators remain on existing `seo/generator-engine.ts` logic until separately migrated.
 - **FR-040**: The shared engine's dispatch boundary MUST be explicit, routing only supported NPC, Faction, Settlement, and Magic Item types to `packages/generator-engine` while leaving all other types on existing logic, so the engine does not silently diverge per type.
-- **FR-041**: Saved entities MUST use the vault entity category id, not the generator id. The NPC generator MUST produce a `character` entity, Settlement a `location` entity, and Magic Item an `item` entity; Faction maps directly to `faction`. When a mapped category is absent from the active campaign, the system MUST fall back to a safe existing category rather than saving an unknown entity type.
+- **FR-041**: Saved entities MUST use the vault entity category id, not the generator id. The NPC generator MUST produce a `character` entity, Settlement a `location` entity, and Magic Item an `item` entity; Faction maps directly to `faction`. When a mapped category is absent from the active campaign, the system MUST fall back to the `note` category when present, otherwise the first available campaign category, rather than saving an unknown entity type.
 
 ### Key Entities
 
