@@ -231,6 +231,16 @@
 </script>
 
 <svelte:head>
+  {#if !isGuestMode && (building || !page.url.searchParams.has("demo"))}
+    <title
+      >Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool</title
+    >
+    <meta
+      name="description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <link rel="canonical" href="https://codexcryptica.com/" />
+  {/if}
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html `<scr` +
@@ -356,6 +366,11 @@
             >
               Private RPG Lore Vault
             </h1>
+            <h2
+              class="text-xs sm:text-sm font-mono uppercase tracking-widest text-theme-primary/60 mb-3"
+            >
+              RPG Campaign Manager &amp; Worldbuilding Tool
+            </h2>
             <p
               class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
