@@ -67,6 +67,18 @@
 - AI-only campaign generation: rejected because it fails privacy/offline requirements.
 - Silent AI fallback after local generation: rejected because AI use must be explicit and policy-aware.
 
+## Decision: Build A Bounded Vault Context Packet In The Web App
+
+**Decision**: Build generator context in the web app layer as a plain `GeneratorVaultContext` packet. The packet includes active theme, category/template information, optional source entity excerpt, capped neighbor excerpts, bounded title hints, label suggestions, and a user-visible included-context summary. The generator package consumes only this packet and never imports vault stores.
+
+**Rationale**: Context-aware generation needs campaign relevance, but the privacy principle requires explicit minimal context. A bounded packet makes context inspectable, testable, removable, and safe to pass to AI-backed generation without exposing full vault contents.
+
+**Alternatives considered**:
+
+- Let `packages/generator-engine` read `vault.entities` directly: rejected because it inverts the package boundary and makes privacy review harder.
+- Pass full source entities and full neighbor records: rejected because contextual generation only needs excerpts and relationship cues.
+- Build prompts directly in Svelte components: rejected because context selection, caps, and privacy rules need service-level tests.
+
 ## Decision: Native Svelte Modal With Semantic Forms
 
 **Decision**: Build a native Svelte 5 modal flow with semantic `<form>` behavior, visible labels, grouped controls, accessible names/descriptions, clear validation, keyboard navigation, and platform-compatible dismissal.

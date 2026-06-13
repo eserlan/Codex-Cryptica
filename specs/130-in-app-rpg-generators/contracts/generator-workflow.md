@@ -48,8 +48,37 @@ interface GeneratorRunRequest {
   options: Record<string, unknown>;
   useAI: boolean;
   themeId: string;
+  launchMode?: "workspace" | "contextual";
   sourceEntityId?: string;
   relationshipLabel?: string;
+  vaultContext?: GeneratorVaultContext;
+}
+```
+
+```ts
+interface GeneratorVaultContext {
+  themeId?: string;
+  themeName?: string;
+  targetEntityType?: string;
+  categoryLabels: Array<{ id: string; label: string }>;
+  templateOutline?: string;
+  sourceEntity?: VaultContextEntityExcerpt;
+  neighbors: VaultContextEntityExcerpt[];
+  existingTitles: string[];
+  labelSuggestions: string[];
+  includedContext: Array<
+    "theme" | "schema" | "source" | "neighbors" | "titles" | "labels"
+  >;
+}
+
+interface VaultContextEntityExcerpt {
+  id: string;
+  title: string;
+  type: string;
+  relationship?: string;
+  contentExcerpt: string;
+  loreExcerpt?: string;
+  labels?: string[];
 }
 ```
 
@@ -75,6 +104,8 @@ interface GeneratedDraft {
 - Must preserve labels as labels.
 - Must not use `localStorage` for transfer.
 - Must avoid full-vault AI context by default.
+- Must consume campaign context only from `vaultContext`, not from direct vault store imports.
+- Must tolerate an empty or user-trimmed `vaultContext`.
 
 ### Failure
 
@@ -124,6 +155,21 @@ interface DraftSaveResult {
 - Review fields are editable before save.
 - Cancel/close before save leaves campaign data unchanged.
 - Loading and error states are announced with accessible status or alert semantics.
+- Existing Generate Related entry points in the entity sidebar and Zen Mode open this workflow with `launchMode: "contextual"` and `sourceEntityId`.
+- Contextual launches show relationship controls before save and can create a source-to-generated relationship.
+- The legacy standalone related-entity modal is not required once contextual workflow parity is complete.
+- AI-backed contextual launches show a user-readable summary of included context categories before generation.
+- Users can remove optional source or neighbor context before AI-backed generation.
+
+## Vault Context Builder Contract
+
+- The web app builds `GeneratorVaultContext` before calling package services.
+- The package receives `GeneratorVaultContext` as plain data and must not import `vault`, `themeStore`, `categories`, or other app stores.
+- Builder input may include active theme, categories, template service output, selected source entity id, graph connections, existing titles, and labels.
+- Builder output must cap entity excerpts and neighbor count before generation.
+- Default neighbor selection should prefer directly connected entities, explicit relationship labels, and entities with meaningful content.
+- The context summary must distinguish theme/schema context from source/neighbor campaign content.
+- Full campaign entity maps, full lore fields, full graph state, and API keys are never included in the packet.
 
 ## Public Generator Compatibility Contract
 

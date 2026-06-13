@@ -46,17 +46,18 @@ As a Game Master who has disabled AI features, lacks an active AI connection, or
 
 ### User Story 3 - Use Campaign Theme And Context (Priority: P3)
 
-As a Game Master, I want generator options to start with defaults that match my campaign's current theme and, when launched from an existing entity, optionally include relationship context so new drafts feel connected to the campaign.
+As a Game Master, I want generator options to start with defaults that match my campaign's current theme and, when launched from an existing entity through the existing Generate Related action, include relationship context so new drafts feel connected to the campaign.
 
 **Why this priority**: Theme and context reduce setup time and make generated content more useful, but the base workflow remains valuable without them.
 
-**Independent Test**: Can be tested by changing the active campaign theme, opening a supported generator, confirming defaults change appropriately, launching generation from an existing entity, and saving a draft with a relationship back to the source.
+**Independent Test**: Can be tested by changing the active campaign theme, opening a supported generator, confirming defaults change appropriately, launching generation from an existing entity via the current Generate Related entry point, and saving a draft with a relationship back to the source.
 
 **Acceptance Scenarios**:
 
 1. **Given** a campaign uses a gothic or noir theme, **When** the Game Master opens a supported generator, **Then** defaults favor genre-appropriate options while still allowing manual override.
 2. **Given** the Game Master launches generation from an existing entity, **When** they save the generated draft and choose to link it, **Then** the new entity is connected back to the source entity with the selected relationship.
 3. **Given** no theme-specific mapping exists for the current campaign theme, **When** the Game Master opens the generator, **Then** neutral defaults are used and generation still works.
+4. **Given** the existing entity sidebar or Zen Mode Generate Related button is visible, **When** the Game Master clicks it, **Then** the unified generator workflow opens with the source entity context prefilled instead of opening a separate legacy related-entity workflow.
 
 ---
 
@@ -101,6 +102,9 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - Theme-derived defaults are wrong for the user's intent: every theme-derived option remains editable before generation.
 - AI-backed generation has access to entity context: only explicitly selected or necessary context is used, and full campaign contents are not included by default.
 - Existing public generator pages depend on package logic that changes: the page route and public-facing behavior remain stable while shared logic is migrated behind the page.
+- Existing Generate Related users expect the old sidebar behavior: the entry point remains visible in the same places, but it launches the unified generator workflow with relationship controls.
+- A vault has many entities or very large lore entries: generator context is summarized, capped, and inspectable instead of passing the full vault or full entity text.
+- A user removes optional context before generation: the generator still works from selected options, theme defaults, and any remaining explicit context.
 
 ## Requirements _(mandatory)_
 
@@ -128,9 +132,15 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **FR-020**: The system MUST provide clear cancellation behavior that leaves campaign data unchanged.
 - **FR-021**: The system MUST keep existing public generator pages available and behaviorally aligned where they share generator outcomes.
 - **FR-022**: The system MUST include user-facing help or guidance for the in-app generator workflow.
-- **FR-023**: The system MUST maintain existing context-aware related-entity generation behavior while adding the broader generator workflow.
+- **FR-023**: The system MUST merge existing context-aware Generate Related behavior into the broader generator workflow rather than maintaining a separate competing related-entity workflow.
 - **FR-024**: Existing public NPC, Faction, Settlement, and Magic Item generator pages MUST transition to shared `packages/generator-engine` logic for supported generator contracts, defaults, and output mapping.
 - **FR-025**: The public generator transition MUST preserve existing public routes, SEO/discovery behavior, and primary generation flows.
+- **FR-026**: Existing Generate Related entry points in the entity sidebar and Zen Mode MUST remain available to hosts and MUST open the unified generator workflow with `sourceEntityId` context.
+- **FR-027**: The legacy related-entity modal MUST be retired or reduced to a compatibility wrapper once the unified workflow covers source context, relationship selection, review-before-save, and linked save behavior.
+- **FR-028**: The system MUST build a bounded vault context packet before generator execution when campaign context is used.
+- **FR-029**: The vault context packet MUST include only explicit, relevant context such as active theme, target category, template outline, selected source entity excerpt, capped neighboring entity excerpts, title hints, and label suggestions.
+- **FR-030**: Users MUST be able to inspect which vault context categories are included before AI-backed generation and remove optional source or neighbor context.
+- **FR-031**: Generator package logic MUST receive vault context only through the context packet and MUST NOT read campaign vault stores directly.
 
 ### Key Entities
 
@@ -145,6 +155,9 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **Label**: User-facing metadata used to categorize generated and saved entities.
 - **Public Generator Surface**: An existing public-facing generator page that remains available for discovery while delegating shared generator logic to the package.
 - **Generator Engine Package**: The workspace package that owns shared generator contracts, defaults, output mapping, non-AI generation, and package-safe AI policy boundaries.
+- **Contextual Generator Entry Point**: An existing campaign UI action, such as Generate Related in the entity sidebar or Zen Mode, that opens the unified generator workflow with a source entity.
+- **Legacy Related Workflow**: The current standalone related-entity generation modal that is replaced or wrapped by the unified workflow during migration.
+- **Vault Context Packet**: A bounded, explicit summary of active campaign context prepared by the web app before generator execution. It can include theme, category/template information, selected source entity excerpts, capped neighbor excerpts, existing-title hints, and label suggestions.
 
 ### Assumptions
 
@@ -154,6 +167,9 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - AI-backed generation is optional and follows existing user permissions and privacy controls.
 - Public generator pages remain available for discovery, while the in-app workflow is optimized for campaign creation.
 - Public generator pages transition behind their existing routes to package-backed logic instead of keeping a separate generator implementation.
+- The existing Generate Related button placement remains the preferred contextual entry point for entity-scoped generation.
+- Vault context is built by the campaign app layer from existing stores and passed to generator package functions as plain data.
+- Source and neighbor text excerpts are capped to avoid sending full campaign contents by default.
 - Existing campaign duplicate-name and entity-type rules continue to apply unless later planning identifies a required change.
 
 ## Success Criteria _(mandatory)_
@@ -168,3 +184,5 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **SC-006**: Theme-derived defaults are visible and editable before generation for every generator that supports theme-based defaults.
 - **SC-007**: Existing public generator pages and existing context-aware related-entity generation continue to complete their primary flows after the feature is introduced.
 - **SC-008**: 100% of public NPC, Faction, Settlement, and Magic Item generator flows call shared `packages/generator-engine` logic for supported non-AI generation and output mapping.
+- **SC-009**: 100% of existing Generate Related entry points open the unified generator workflow with source entity context and no longer require a separate related-entity modal to complete the primary contextual generation flow.
+- **SC-010**: 100% of AI-backed contextual generation attempts show the included context categories before generation and exclude full vault contents by default.

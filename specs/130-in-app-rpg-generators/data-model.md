@@ -62,6 +62,8 @@ Fields:
 - `themeId`: active campaign theme id
 - `sourceEntityId`: optional entity id when launched contextually
 - `relationshipLabel`: optional relationship label for source-linked saves
+- `launchMode`: workspace or contextual launch mode
+- `vaultContext`: optional bounded context packet built by the campaign app
 
 Validation rules:
 
@@ -69,6 +71,53 @@ Validation rules:
 - `options` must satisfy the selected generator's option definitions.
 - `useAI` must be false when AI is disabled or unavailable.
 - `sourceEntityId` must refer to an existing entity when provided.
+- `vaultContext` must be plain data and must not expose live vault store references.
+
+## GeneratorVaultContext
+
+Represents bounded campaign context passed into generator execution.
+
+Fields:
+
+- `themeId`: active world theme id
+- `themeName`: optional active theme display name
+- `targetEntityType`: selected target category/type
+- `categoryLabels`: available entity categories as ids and labels
+- `templateOutline`: optional template outline for the selected target type
+- `sourceEntity`: optional selected source entity excerpt for contextual launches
+- `neighbors`: capped connected entity excerpts around the source entity
+- `existingTitles`: bounded title hints for duplicate avoidance
+- `labelSuggestions`: bounded common labels or generated label suggestions
+- `includedContext`: user-visible summary of included context categories
+
+Validation rules:
+
+- Context is built by the web app layer before calling package services.
+- Package services consume this object as plain data and do not import or read vault stores.
+- `sourceEntity` and `neighbors` include excerpts, not full entity records.
+- Neighbor count is capped; the default cap should be small enough to inspect before generation.
+- Existing titles and label suggestions are bounded lists, not a full vault export.
+- Optional source and neighbor context can be removed before AI-backed generation.
+
+## VaultContextEntityExcerpt
+
+Represents an entity excerpt included in `GeneratorVaultContext`.
+
+Fields:
+
+- `id`: entity id
+- `title`: entity title
+- `type`: entity type/category
+- `relationship`: optional relationship label relative to the source entity
+- `contentExcerpt`: capped summary/content excerpt
+- `loreExcerpt`: optional capped lore excerpt
+- `labels`: optional bounded labels for relevance
+
+Validation rules:
+
+- Excerpts must be capped before being passed to generator package functions.
+- Relationship labels are included only when known from explicit graph connections.
+- Sensitive or unrelated full-vault data is excluded by default.
 
 ## GeneratedDraft
 
@@ -143,6 +192,7 @@ Fields:
 
 - `open`: whether the modal is open
 - `sourceEntityId`: optional contextual source
+- `launchMode`: workspace or related/contextual entry mode
 - `stage`: configure, generating, review, saving, error
 - `selectedGeneratorId`: current generator id
 - `draft`: current generated draft or null
@@ -153,6 +203,25 @@ Validation rules:
 - Closing or cancelling from configure/review must not mutate campaign data.
 - Opening without an active campaign shows a clear unavailable state.
 - Saving is disabled or blocked when campaign writes are unavailable.
+- Contextual launches from Generate Related must preserve the source entity id and show relationship controls.
+
+## ContextualGeneratorEntryPoint
+
+Represents an existing campaign UI action that opens the unified generator workflow with source entity context.
+
+Fields:
+
+- `location`: entity sidebar or Zen Mode
+- `label`: existing user-facing action label, such as Generate Related
+- `sourceEntityId`: entity id used to seed context and optional relationship creation
+- `launchMode`: contextual launch mode passed to the generator workflow
+
+Validation rules:
+
+- Entry points must remain hidden or blocked for guest/read-only states according to existing campaign permissions.
+- Entry points must open the unified generator workflow, not a separate standalone related-entity modal.
+- The source entity id must be available to package generation and save orchestration only as explicit context.
+- Relationship controls must be available before saving a contextual generated draft.
 
 ## PublicGeneratorSurface
 

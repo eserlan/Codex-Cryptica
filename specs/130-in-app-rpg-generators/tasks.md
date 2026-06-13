@@ -22,7 +22,7 @@
 
 **Purpose**: Prepare feature directories and establish baseline references.
 
-- [ ] T001 Create generator package skeleton files in packages/generator-engine and feature directories in packages/generator-engine/src and apps/web/src/lib/components/generators
+- [ ] T001 Create generator package skeleton files in packages/generator-engine and feature directories in packages/generator-engine/src, apps/web/src/lib/components/generators, and apps/web/src/lib/services/generators
 - [ ] T002 [P] Review existing generator engine baseline tests in apps/web/src/lib/services/seo/generator-engine.test.ts
 - [ ] T003 [P] Review existing direct entity creation patterns in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
 - [ ] T004 [P] Review existing related entity generation patterns in apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte
@@ -39,7 +39,7 @@
 - [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, and labels in packages/generator-engine/src/campaign-generator-registry.test.ts
 - [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
-- [ ] T009 Define generator ids, option definitions, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
+- [ ] T009 Define generator ids, option definitions, vault context packet, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
 - [ ] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in packages/generator-engine/src/campaign-generator-registry.ts
 - [ ] T011 Implement campaign generator service constructor DI and draft generation orchestration in packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T012 Export package public APIs and a default campaign generator service singleton in packages/generator-engine/src/index.ts and packages/generator-engine/src/campaign-generator-service.ts
@@ -91,12 +91,12 @@
 ### Tests for User Story 2
 
 - [ ] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation and AI context minimization excluding full vault contents in packages/generator-engine/src/campaign-generator-service.test.ts
+- [ ] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation and AI context minimization excluding full vault contents and direct vault store access in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T033 [P] [US2] Add failing component test for AI unavailable messaging without blocking non-AI generation in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Add AI policy inputs, local fallback enforcement, and explicit minimal AI context shaping to packages/generator-engine/src/campaign-generator-service.ts
+- [ ] T034 [US2] Add AI policy inputs, local fallback enforcement, and explicit minimal AI context packet consumption to packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T035 [US2] Add per-generator non-AI option defaults to packages/generator-engine/src/campaign-generator-registry.ts
 - [ ] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
 - [ ] T037 [US2] Ensure draft generation never mutates vault data before save in packages/generator-engine/src/campaign-generator-service.ts
@@ -117,18 +117,19 @@
 - [ ] T039 [P] [US3] Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts
 - [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T042 [P] [US3] Add failing component test for contextual launch from an existing entity in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [ ] T042 [P] [US3] Add failing tests for bounded vault context packet building, contextual launch from an existing entity, and existing Generate Related entry points opening the unified workflow in apps/web/src/lib/services/generators/generator-vault-context.test.ts, apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts, apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts, and apps/web/src/lib/components/zen/ZenContent.related.test.ts
 
 ### Implementation for User Story 3
 
 - [ ] T043 [US3] Implement theme-to-generator default mapping in packages/generator-engine/src/campaign-generator-theme.ts
 - [ ] T044 [US3] Apply theme defaults while preserving user overrides in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T045 [US3] Add sourceEntityId and relationship label handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
+- [ ] T045 [US3] Add sourceEntityId, relationship label, launchMode, and included context summary handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
 - [ ] T046 [US3] Add optional source relationship save through injected vault connection dependency in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T047 [US3] Add contextual launch button or action near existing related generation entry points in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
-- [ ] T048 [US3] Add contextual launch integration in Zen Mode actions in apps/web/src/lib/components/zen/ZenContent.svelte
-- [ ] T049 [US3] Add relationship review controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
-- [ ] T050 [US3] Run User Story 3 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T047 [US3] Implement bounded vault context packet builder with theme, category, template, source excerpt, capped neighbors, title hints, and label suggestions in apps/web/src/lib/services/generators/generator-vault-context.ts
+- [ ] T048 [US3] Route the existing Generate Related action in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte and apps/web/src/lib/components/zen/ZenContent.svelte to the unified generator workflow with sourceEntityId context
+- [ ] T049 [US3] Add relationship review controls and inspectable context controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte and apps/web/src/lib/components/generators/GeneratorContextReview.svelte
+- [ ] T050 [US3] Retire apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte or reduce it to a compatibility wrapper after unified contextual generation parity is covered
+- [ ] T051 [US3] Run User Story 3 tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Stories 1, 2, and 3 work independently, with theme defaults and optional contextual relationships.
 
@@ -142,17 +143,17 @@
 
 ### Tests for User Story 4
 
-- [ ] T051 [P] [US4] Add failing public adapter parity tests for NPC, Faction, Settlement, and Magic Item supported outputs in packages/generator-engine/src/public-generator-adapters.test.ts
-- [ ] T052 [P] [US4] Add failing regression test proving public generator routes complete supported generation through package-backed adapters in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
-- [ ] T053 [P] [US4] Add failing regression test preserving public generator route slugs and SEO/discovery metadata in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
+- [ ] T052 [P] [US4] Add failing public adapter parity tests for NPC, Faction, Settlement, and Magic Item supported outputs in packages/generator-engine/src/public-generator-adapters.test.ts
+- [ ] T053 [P] [US4] Add failing regression test proving public generator routes complete supported generation through package-backed adapters in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
+- [ ] T054 [P] [US4] Add failing regression test preserving public generator route slugs and SEO/discovery metadata in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
 
 ### Implementation for User Story 4
 
-- [ ] T054 [US4] Implement package-owned public generator adapters for existing public page inputs in packages/generator-engine/src/public-generator-adapters.ts
-- [ ] T055 [US4] Update apps/web/src/lib/services/seo/generator-engine.ts to delegate supported NPC, Faction, Settlement, and Magic Item logic to packages/generator-engine
-- [ ] T056 [US4] Update apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte only as needed to consume package-backed generator results without route or layout changes
-- [ ] T057 [US4] Preserve existing public page copy, route slugs, SEO metadata, and primary generation behavior in apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte
-- [ ] T058 [US4] Run public generator transition tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T055 [US4] Implement package-owned public generator adapters for existing public page inputs in packages/generator-engine/src/public-generator-adapters.ts
+- [ ] T056 [US4] Update apps/web/src/lib/services/seo/generator-engine.ts to delegate supported NPC, Faction, Settlement, and Magic Item logic to packages/generator-engine
+- [ ] T057 [US4] Update apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte only as needed to consume package-backed generator results without route or layout changes
+- [ ] T058 [US4] Preserve existing public page copy, route slugs, SEO metadata, and primary generation behavior in apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte
+- [ ] T059 [US4] Run public generator transition tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Public generator pages and the in-app workflow share package-owned logic for supported generator behavior.
 
@@ -166,15 +167,15 @@
 
 ### Tests for User Story 5
 
-- [ ] T059 [P] [US5] Add failing help content registration test for in-app generators in apps/web/src/lib/stores/help.test.ts
-- [ ] T060 [P] [US5] Add failing feature hint config test for in-app generators in apps/web/src/lib/config/help-content.test.ts
+- [ ] T060 [P] [US5] Add failing help content registration test for in-app generators in apps/web/src/lib/stores/help.test.ts
+- [ ] T061 [P] [US5] Add failing feature hint config test for in-app generators in apps/web/src/lib/config/help-content.test.ts
 
 ### Implementation for User Story 5
 
-- [ ] T061 [US5] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
-- [ ] T062 [US5] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
-- [ ] T063 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/layout/VaultControls.svelte
-- [ ] T064 [US5] Run User Story 5 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T062 [US5] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
+- [ ] T063 [US5] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
+- [ ] T064 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/layout/VaultControls.svelte
+- [ ] T065 [US5] Run User Story 5 tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Users have discoverable, plain-language guidance for the full workflow.
 
@@ -184,15 +185,16 @@
 
 **Purpose**: Regression checks, accessibility review, and release readiness across all stories.
 
-- [ ] T065 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
-- [ ] T066 [P] Verify existing related entity modal tests still pass in apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts
-- [ ] T067 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
-- [ ] T068 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
-- [ ] T069 [P] Add user-facing changelog entry only if shipping the visible workflow in apps/web/src/lib/content/changelog/releases.json
-- [ ] T070 Run full validation commands from specs/130-in-app-rpg-generators/quickstart.md
-- [ ] T071 Update master issue progress notes from completed implementation tasks in specs/130-in-app-rpg-generators/tasks.md
-- [ ] T072 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/130-in-app-rpg-generators/quickstart.md
-- [ ] T073 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T066 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
+- [ ] T067 [P] Verify existing Generate Related entry point tests pass or are migrated from apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts to unified generator workflow coverage
+- [ ] T068 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
+- [ ] T069 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [ ] T070 [P] Add user-facing changelog entry only if shipping the visible workflow in apps/web/src/lib/content/changelog/releases.json
+- [ ] T071 Run full validation commands from specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T072 Update master issue progress notes from completed implementation tasks in specs/130-in-app-rpg-generators/tasks.md
+- [ ] T073 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T074 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T075 Validate SC-009 and SC-010 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, and no standalone related modal is required
 
 ---
 
@@ -234,9 +236,9 @@
 - US1 component tests T018, T019, and T020 can run in parallel after modal test setup exists.
 - US2 tests T031, T032, and T033 can run in parallel.
 - US3 tests T039, T040, T041, and T042 can run in parallel.
-- US4 tests T051, T052, and T053 can run in parallel.
-- US5 tests T059 and T060 can run in parallel.
-- Polish regression checks T065, T066, T067, T068, and T069 can run in parallel.
+- US4 tests T052, T053, and T054 can run in parallel.
+- US5 tests T060 and T061 can run in parallel.
+- Polish regression checks T066, T067, T068, T069, and T070 can run in parallel.
 
 ## Parallel Example: User Story 1
 
@@ -269,13 +271,13 @@ Task: "Add failing regression test preserving public generator route slugs and S
 1. Complete Setup and Foundational phases.
 2. Complete US1 to support configure, generate, review, and direct save for supported generators.
 3. Validate US1 independently with service and component tests.
-4. Demo US1 before extending AI policy, theme/context, public-page migration, or docs.
+4. Demo US1 before extending AI policy, theme/context, Generate Related migration, public-page migration, or docs.
 
 ### Incremental Delivery
 
 1. US1: Native workflow and direct vault save.
 2. US2: Robust non-AI behavior and policy messaging.
-3. US3: Theme defaults and contextual relationships.
+3. US3: Theme defaults, contextual relationships, and Generate Related migration.
 4. US4: Public generator transition to shared package logic.
 5. US5: Help content and first-use guidance.
 6. Polish: related generation regressions, accessibility pass, public route regressions, and full validation.
@@ -292,6 +294,8 @@ Task: "Add failing regression test preserving public generator route slugs and S
 - Use Tailwind 4 semantic tokens and Iconify utility classes only.
 - Keep app chrome neutral; world-theme styling belongs inside campaign content surfaces.
 - Keep generator contracts, registry, theme defaults, AI policy, draft mapping, public-page adapters, and save orchestration in `packages/generator-engine`.
+- Treat existing Generate Related buttons as contextual entry points into the unified generator workflow, not as a separate long-term modal.
+- Build vault context packets in the web app layer and pass only bounded plain data into `packages/generator-engine`.
 - Do not introduce `localStorage` as a generator import bridge.
 - Preserve public generator routes, SEO/discovery behavior, and primary public generation flows.
 - Preserve "Labels" terminology in all user-facing text.

@@ -7,7 +7,7 @@
 
 ## Summary
 
-Add a native campaign-side generator workflow for NPC, Faction, Settlement, and Magic Item drafts. The workflow will expose a typed campaign generator registry, render a Svelte 5 configuration/review modal, generate drafts through shared generator package logic with non-AI fallback, save approved drafts directly into the active vault, optionally create a relationship to a source entity, and add user-facing help. Existing public SEO generator pages remain separate surfaces but transition to `packages/generator-engine` for supported generator contracts, defaults, and output mapping.
+Add a native campaign-side generator workflow for NPC, Faction, Settlement, and Magic Item drafts. The workflow will expose a typed campaign generator registry, render a Svelte 5 configuration/review modal, generate drafts through shared generator package logic with non-AI fallback, save approved drafts directly into the active vault, and add user-facing help. Existing Generate Related buttons in the entity sidebar and Zen Mode become contextual launchers for the same workflow with source entity and relationship controls. Existing public SEO generator pages remain separate surfaces but transition to `packages/generator-engine` for supported generator contracts, defaults, and output mapping.
 
 ## Technical Context
 
@@ -61,10 +61,14 @@ apps/web/src/lib/
 │   │   ├── CampaignGeneratorModal.svelte
 │   │   ├── GeneratorConfigForm.svelte
 │   │   ├── GeneratorDraftReview.svelte
+│   │   ├── GeneratorContextReview.svelte
 │   │   └── *.test.ts
 │   └── modals/
 │       └── GlobalModalProvider.svelte
 ├── services/
+│   ├── generators/
+│   │   ├── generator-vault-context.ts
+│   │   └── generator-vault-context.test.ts
 │   └── seo/
 │       ├── generator-engine.ts
 │       └── generator-engine.test.ts
@@ -95,7 +99,7 @@ packages/generator-engine/
     └── public-generator-adapters.test.ts
 ```
 
-**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine` and transition existing public generator pages to the same package for supported generator logic. Campaign generator contracts, mapping, validation, AI policy, theme defaults, public-page adapters, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components and public routes only render and pass injected dependencies into package services.
+**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine` and transition existing public generator pages to the same package for supported generator logic. Campaign generator contracts, mapping, validation, AI policy, theme defaults, public-page adapters, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components and public routes only render and pass injected dependencies into package services. The current `RelatedEntityModal` is not a parallel long-term workflow; it is either retired or kept only as a compatibility wrapper after the unified modal covers contextual Generate Related behavior. Vault context is built in the web app by `generator-vault-context.ts` because it reads app stores; `packages/generator-engine` receives only a plain bounded context packet.
 
 ## Complexity Tracking
 
@@ -110,7 +114,7 @@ No constitution violations.
 - Create `packages/generator-engine` with package metadata, TypeScript config, Vitest config, and public exports.
 - Define supported generator ids: `npc`, `faction`, `settlement`, `magic-item`.
 - Define a typed registry with option metadata, defaults, theme hook, generator invoker, and output mapper.
-- Define transient `GeneratedDraft` and save request shapes.
+- Define transient `GeneratedDraft`, `GeneratorVaultContext`, and save request shapes.
 - Add tests for successful registry lookup, invalid generator id, output-to-draft mapping, label preservation, and package exports.
 
 ### Phase 2: Native In-App Generator Hub
@@ -132,9 +136,13 @@ No constitution violations.
 
 - Map `themeStore.worldThemeId`/active theme to generator defaults without hiding user overrides.
 - Support optional source entity context when launched from an entity.
+- Build a bounded vault context packet from theme, categories, template outline, source entity excerpt, capped neighbor excerpts, existing-title hints, and label suggestions.
+- Show included context categories before AI-backed generation and allow optional source/neighbor context removal.
+- Route existing entity sidebar and Zen Mode Generate Related buttons into the unified generator workflow with `sourceEntityId`.
 - Save optional relationship through `vault.addConnection(...)`.
+- Retire or wrap the legacy `RelatedEntityModal` after contextual launch parity is covered.
 - Keep AI context explicit and minimal; do not send full vault contents.
-- Add tests for theme mapping, neutral fallback, relationship creation, AI-disabled/local fallback behavior, and AI context minimization.
+- Add tests for theme mapping, neutral fallback, relationship creation, AI-disabled/local fallback behavior, AI context minimization, context packet caps/removal, and existing Generate Related entry points.
 
 ### Phase 5: Public Generator Package Transition
 
@@ -146,7 +154,7 @@ No constitution violations.
 ### Phase 6: Documentation, Release Polish, And Alignment
 
 - Add help article and optional `FeatureHint`.
-- Verify existing `Generate Related Entity` behavior remains intact.
+- Verify existing Generate Related entry points launch the unified workflow and complete contextual generation without requiring the legacy standalone modal.
 - Add user-facing changelog only when the actual user-visible workflow ships.
 - Validate modal-open and non-AI generation timing against the performance goals or record a justified deviation.
 
@@ -154,6 +162,7 @@ No constitution violations.
 
 - `bun run --filter generator-engine test`
 - `bun run --filter web test -- src/lib/components/generators`
+- `bun run --filter web test -- src/lib/services/generators/generator-vault-context.test.ts`
 - `bun run --filter web test -- src/lib/stores/ui/modal-ui.svelte.test.ts`
 - `bun run --filter web test -- src/lib/services/seo/generator-engine.test.ts`
 - `bun run --filter '*' lint:types`

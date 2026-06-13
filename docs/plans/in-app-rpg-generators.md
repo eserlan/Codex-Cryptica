@@ -35,6 +35,7 @@ The new work should reuse these capabilities, but separate the concerns:
 - Campaign UI should be native Svelte 5, not marketing-page reuse.
 - Vault import should be a direct draft-to-entity operation.
 - AI use should respect existing Oracle settings, guest constraints, and AI-disabled policy.
+- Vault context should be passed as a bounded, inspectable plain-data packet rather than giving generator package code direct access to vault stores.
 
 ## Architecture Direction
 
@@ -82,7 +83,24 @@ Examples:
 - AI-backed generation must use existing Oracle configuration.
 - AI-backed generation must respect guest and AI-disabled states.
 - Context sent to AI must be explicit and minimal.
+- Context packets must cap source and neighbor excerpts.
+- Users should see which context categories are included before AI-backed generation and be able to remove optional source or neighbor context.
 - API keys must not be persisted in generator-specific state.
+
+### Vault Context Packet
+
+Build vault context in the web app layer, then pass it to `packages/generator-engine` as plain data. The package must not import campaign stores or read the vault directly.
+
+Packet construction:
+
+1. Include theme and schema context: active theme, selected target type, categories, and template outline.
+2. For contextual Generate Related launches, include only the selected source entity excerpt.
+3. Gather outbound and inbound neighbors from the source entity.
+4. Rank directly connected neighbors by relationship presence, meaningful content, and labels.
+5. Keep a capped neighbor set and convert each neighbor to a short excerpt.
+6. Add bounded title hints for duplicate avoidance and bounded label suggestions.
+7. Show a context summary before AI-backed generation.
+8. Never include full `vault.entities`, full graph state, full lore corpus, API keys, or live store references.
 
 ## Phases
 
@@ -151,13 +169,16 @@ Acceptance criteria:
 - Active vault/world theme preselects relevant generator defaults.
 - Users can override any theme-derived default before generation.
 - Launching from an entity can prefill relationship context.
+- Existing Generate Related buttons open the unified generator workflow with source entity context.
+- A bounded vault context packet is built from theme/schema/source/neighbor/title/label data.
+- Users can inspect included context categories before AI-backed generation and remove optional source or neighbor context.
 - Saving from an entity-launched flow can create a relationship back to the source entity.
 - AI-backed generation receives only explicit, minimal context.
-- Tests cover theme mapping and source-entity relationship creation.
+- Tests cover theme mapping, context packet caps, context removal, and source-entity relationship creation.
 
 Notes:
 
-- This should extend the current `Generate Related Entity` concept without bloating the Oracle facade.
+- This should merge the current `Generate Related Entity` concept into the unified generator workflow without bloating the Oracle facade.
 - Any Oracle-related state should live in the correct decomposed manager if needed.
 
 ### Phase 5: Public Generator Package Transition
@@ -187,7 +208,7 @@ Acceptance criteria:
 - Add or update user-facing help content for in-app generators.
 - Add a first-use hint if the interaction is not self-evident.
 - Confirm public generator pages still work after package delegation.
-- Confirm in-app generator import does not regress existing `Generate Related Entity` behavior.
+- Confirm existing Generate Related entry points open the unified workflow with source entity context.
 - Add a user-facing changelog entry only if the release includes visible in-app functionality.
 - Run lint and relevant tests before merge.
 
