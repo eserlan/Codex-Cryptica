@@ -48,27 +48,27 @@ function gateway(
 }
 
 describe("generateDraft", () => {
-  it("produces a draft for each supported generator with useAI false", () => {
+  it("produces a draft for each supported generator with useAI false", async () => {
     const svc = new CampaignGeneratorService();
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
-      const d = svc.generateDraft(run(id, { useAI: false }));
+      const d = await svc.generateDraft(run(id, { useAI: false }));
       expect(d.title.length).toBeGreaterThan(0);
       expect(d.entityType.length).toBeGreaterThan(0);
       expect(d.sourceGeneratorId).toBe(id);
     }
   });
 
-  it("throws for an unsupported generator id", () => {
+  it("throws for an unsupported generator id", async () => {
     const svc = new CampaignGeneratorService();
-    expect(() => svc.generateDraft(run("dragon" as never))).toThrow(
+    await expect(svc.generateDraft(run("dragon" as never))).rejects.toThrow(
       UnsupportedGeneratorError,
     );
   });
 
-  it("does not call the vault during generation", () => {
+  it("does not call the vault during generation", async () => {
     const vault = gateway();
     const svc = new CampaignGeneratorService({ vault });
-    svc.generateDraft(run("npc"));
+    await svc.generateDraft(run("npc"));
     expect(vault.createEntity).not.toHaveBeenCalled();
     expect(vault.addConnection).not.toHaveBeenCalled();
   });
@@ -169,55 +169,100 @@ describe("saveDraft", () => {
 
 // T040: theme defaults are applied but user options override them
 describe("theme defaults (US3)", () => {
-  it("applies theme defaults to generation request", () => {
+  it("applies theme defaults to generation request", async () => {
     const svc = new CampaignGeneratorService();
-    // Just ensure no throw — theme-derived defaults merge silently
-    const d = svc.generateDraft(run("npc", { themeId: "fantasy" }));
+    const d = await svc.generateDraft(run("npc", { themeId: "fantasy" }));
     expect(d.sourceGeneratorId).toBe("npc");
   });
 
-  it("user-provided options override theme defaults", () => {
+  it("user-provided options override theme defaults", async () => {
     const svc = new CampaignGeneratorService();
-    // Pass a user option that would override a theme default key
-    const d = svc.generateDraft(
+    const d = await svc.generateDraft(
       run("npc", { themeId: "horror", options: { classLabel: "Hero" } }),
     );
     expect(d.sourceGeneratorId).toBe("npc");
   });
 
-  it("unknown theme id falls back gracefully", () => {
+  it("unknown theme id falls back gracefully", async () => {
     const svc = new CampaignGeneratorService();
-    expect(() =>
-      svc.generateDraft(run("npc", { themeId: "gothic" })),
-    ).not.toThrow();
+    const d = await svc.generateDraft(run("npc", { themeId: "gothic" }));
+    expect(d.sourceGeneratorId).toBe("npc");
   });
 });
 
 // T032: AI policy — forced non-AI generation and context minimization
 describe("AI policy (US2)", () => {
-  it("generates a draft with useAI false without calling any vault method", () => {
+  it("generates a draft with useAI false without calling any vault method", async () => {
     const vault = gateway();
     const svc = new CampaignGeneratorService({ vault });
-    const d = svc.generateDraft(run("npc", { useAI: false }));
+    const d = await svc.generateDraft(run("npc", { useAI: false }));
     expect(d.title.length).toBeGreaterThan(0);
     expect(vault.createEntity).not.toHaveBeenCalled();
     expect(vault.addConnection).not.toHaveBeenCalled();
   });
 
-  it("respects useAI false for all supported generators", () => {
+  it("respects useAI false for all supported generators", async () => {
     const svc = new CampaignGeneratorService();
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
-      const d = svc.generateDraft(run(id, { useAI: false }));
+      const d = await svc.generateDraft(run(id, { useAI: false }));
       expect(d.sourceGeneratorId).toBe(id);
     }
   });
 
-  it("draft generation does not read or write vault state", () => {
+  it("draft generation does not read or write vault state", async () => {
     const vault = gateway({ canWrite: vi.fn(() => true) });
     const svc = new CampaignGeneratorService({ vault });
-    svc.generateDraft(run("faction", { useAI: false }));
+    await svc.generateDraft(run("faction", { useAI: false }));
     expect(vault.canWrite).not.toHaveBeenCalled();
     expect(vault.createEntity).not.toHaveBeenCalled();
     expect(vault.addConnection).not.toHaveBeenCalled();
+  });
+
+  it("uses AI gateway when useAI is true and policy allows", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Zara the Witch",
+          summary: "A powerful sorceress.",
+          lore: "## History\nShe was born...",
+          labels: ["Witch", "Human"],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+    const d = await svc.generateDraft(run("npc", { useAI: true }));
+    expect(aiGateway.complete).toHaveBeenCalledTimes(1);
+    expect(d.title).toBe("Zara the Witch");
+    expect(d.labels).toContain("Witch");
+  });
+
+  it("falls back to local generation when AI gateway throws", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () => {
+        throw new Error("network error");
+      }),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+    const d = await svc.generateDraft(run("npc", { useAI: true }));
+    expect(d.title.length).toBeGreaterThan(0);
+    expect(d.sourceGeneratorId).toBe("npc");
+  });
+
+  it("falls back to local generation when AI returns invalid JSON", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () => "not valid json at all"),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+    const d = await svc.generateDraft(run("faction", { useAI: true }));
+    expect(d.sourceGeneratorId).toBe("faction");
   });
 });

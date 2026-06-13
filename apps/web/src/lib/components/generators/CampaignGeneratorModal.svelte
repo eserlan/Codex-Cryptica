@@ -14,6 +14,8 @@
     type GeneratorRunRequest,
     type GeneratorVaultGateway,
   } from "generator-engine";
+  import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
+  import { oracle } from "$lib/stores/oracle.svelte";
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
@@ -37,7 +39,18 @@
     addConnection: (src, tgt, rel) => vault.addConnection(src, tgt, rel),
   };
 
-  const svc = new CampaignGeneratorService({ vault: vaultGateway });
+  const aiPolicy = $derived({
+    isEnabled: oracle.isEnabled,
+    isAvailable: !vault.isGuest,
+  });
+
+  const svc = $derived(
+    new CampaignGeneratorService({
+      vault: vaultGateway,
+      aiPolicy,
+      aiGateway: aiGeneratorGateway,
+    }),
+  );
 
   function close() {
     modalUIStore.closeGeneratorWorkflow();
@@ -74,7 +87,7 @@
           label: c.label,
         })),
       });
-      const result = svc.generateDraft({
+      const result = await svc.generateDraft({
         ...req,
         themeId: themeStore.worldThemeId ?? "workspace",
         vaultContext,

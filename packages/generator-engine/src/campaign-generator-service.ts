@@ -1,12 +1,15 @@
 import { getGenerator } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import {
+  type AIGeneratorGateway,
   type AIPolicy,
   type DraftSaveRequest,
   type DraftSaveResult,
   type GeneratedDraft,
+  type GeneratorOutput,
   type GeneratorRunRequest,
 } from "./campaign-generator-types";
+import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
 
 /**
  * Vault persistence boundary injected by the web app. The package never imports
@@ -39,6 +42,8 @@ export interface CampaignGeneratorServiceDeps {
   vault?: GeneratorVaultGateway;
   /** Optional AI policy; when absent, AI is treated as unavailable/disabled. */
   aiPolicy?: AIPolicy;
+  /** Optional AI gateway; required for AI-assisted generation. */
+  aiGateway?: AIGeneratorGateway;
 }
 
 /** User-readable error raised when a save is blocked or invalid. */
@@ -56,20 +61,24 @@ export class DraftSaveError extends Error {
  */
 export class CampaignGeneratorService {
   private readonly vault?: GeneratorVaultGateway;
+  private readonly aiGateway?: AIGeneratorGateway;
   readonly aiPolicy: AIPolicy;
 
   constructor(deps: CampaignGeneratorServiceDeps = {}) {
     this.vault = deps.vault;
+    this.aiGateway = deps.aiGateway;
     this.aiPolicy = deps.aiPolicy ?? { isEnabled: false, isAvailable: false };
   }
 
   /**
-   * Produce a transient draft. Throws {@link UnsupportedGeneratorError} for
-   * unknown generator ids. Does not write to the vault.
+   * Produce a transient draft. When `useAI` is true and both AI policy and
+   * gateway are available, calls the AI gateway and parses JSON output.
+   * Falls back to local table generation on any AI failure.
+   * Throws {@link UnsupportedGeneratorError} for unknown generator ids.
+   * Does not write to the vault.
    */
-  generateDraft(request: GeneratorRunRequest): GeneratedDraft {
+  async generateDraft(request: GeneratorRunRequest): Promise<GeneratedDraft> {
     const generator = getGenerator(request.generatorId);
-    // Merge theme defaults under user-provided options so user edits always win.
     const themeDefaults = getThemeDefaults(
       request.themeId,
       request.generatorId,
@@ -78,8 +87,36 @@ export class CampaignGeneratorService {
       ...request,
       options: { ...themeDefaults, ...request.options },
     };
-    // Local-first: AI is never required to produce a draft. When AI is
-    // unavailable/disabled the non-AI generator path always runs.
+
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      this.aiGateway;
+
+    if (canUseAI && this.aiGateway) {
+      try {
+        const prompt = generator.buildPrompt(mergedRequest);
+        const raw = await this.aiGateway.complete(prompt, SYSTEM_INSTRUCTION);
+        const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+        if (
+          typeof parsed.title === "string" &&
+          typeof parsed.summary === "string" &&
+          typeof parsed.lore === "string"
+        ) {
+          const output: GeneratorOutput = {
+            title: parsed.title,
+            summary: parsed.summary,
+            lore: parsed.lore,
+            labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+          };
+          return generator.mapOutputToDraft(output, mergedRequest);
+        }
+      } catch {
+        // Fall through to local generation.
+      }
+    }
+
     const output = generator.generate(mergedRequest);
     return generator.mapOutputToDraft(output, mergedRequest);
   }

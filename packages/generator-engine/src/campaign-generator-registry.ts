@@ -85,6 +85,102 @@ function mapOutputToDraft(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Shared prompt helpers
+// ---------------------------------------------------------------------------
+
+const SYSTEM_INSTRUCTION =
+  "You are a tabletop RPG campaign assistant. Generate campaign content grounded in the provided world context. Return ONLY valid JSON with no markdown fences.";
+
+const OUTPUT_SCHEMA = `{
+  "title": "string — name of the entity",
+  "summary": "string — one sentence description",
+  "lore": "string — markdown with backstory, motivations, and adventure hooks",
+  "labels": ["string"]
+}`;
+
+function vaultContextBlock(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  if (!ctx) return "";
+  const lines: string[] = [];
+  if (ctx.themeName && ctx.themeId !== "workspace") {
+    lines.push(`World Theme: ${ctx.themeName}`);
+  }
+  if (ctx.sourceEntity) {
+    lines.push(
+      `\nSource Entity (generate something related to this):\n- ${ctx.sourceEntity.title} (${ctx.sourceEntity.type}): ${ctx.sourceEntity.contentExcerpt || ctx.sourceEntity.loreExcerpt || ""}`,
+    );
+  }
+  if (ctx.neighbors.length) {
+    lines.push("\nConnected Entities (world context):");
+    for (const n of ctx.neighbors) {
+      lines.push(
+        `- ${n.title} (${n.type}): ${n.contentExcerpt || n.loreExcerpt || ""}`,
+      );
+    }
+  }
+  if (ctx.existingTitles.length) {
+    lines.push(
+      `\nAvoid duplicating these existing titles: ${ctx.existingTitles.slice(0, 30).join(", ")}`,
+    );
+  }
+  return lines.join("\n");
+}
+
+function optionsBlock(request: GeneratorRunRequest): string {
+  const entries = Object.entries(request.options).filter(([, v]) => v !== "");
+  if (!entries.length) return "";
+  return (
+    "\nPreferences:\n" + entries.map(([k, v]) => `- ${k}: ${v}`).join("\n")
+  );
+}
+
+export { SYSTEM_INSTRUCTION };
+
+// ---------------------------------------------------------------------------
+// Generator-specific prompt builders
+// ---------------------------------------------------------------------------
+
+function npcPrompt(request: GeneratorRunRequest): string {
+  return `${vaultContextBlock(request)}${optionsBlock(request)}
+
+Generate a campaign NPC. Return JSON matching this schema:
+${OUTPUT_SCHEMA}
+
+The "lore" field should include: who they are, what they want, a secret, and a first-scene hook. Use markdown headings.`;
+}
+
+function factionPrompt(request: GeneratorRunRequest): string {
+  return `${vaultContextBlock(request)}${optionsBlock(request)}
+
+Generate a campaign faction, guild, or organisation. Return JSON matching this schema:
+${OUTPUT_SCHEMA}
+
+The "lore" field should include: what they control, what they want, internal conflict, and an adventure hook. Use markdown headings.`;
+}
+
+function settlementPrompt(request: GeneratorRunRequest): string {
+  return `${vaultContextBlock(request)}${optionsBlock(request)}
+
+Generate a campaign settlement or location. Return JSON matching this schema:
+${OUTPUT_SCHEMA}
+
+The "lore" field should include: points of interest, power structure, notable rumours, and a hook for the players. Use markdown headings.`;
+}
+
+function magicItemPrompt(request: GeneratorRunRequest): string {
+  return `${vaultContextBlock(request)}${optionsBlock(request)}
+
+Generate a campaign magic item or artefact. Return JSON matching this schema:
+${OUTPUT_SCHEMA}
+
+The "lore" field should include: item history, its power/effect, a side effect or curse, and how it might enter play. Use markdown headings.`;
+}
+
+// ---------------------------------------------------------------------------
+// Local table-based generators
+// ---------------------------------------------------------------------------
+
 const NPC_RACES = ["Human", "Elf", "Dwarf", "Halfling", "Orc", "Tiefling"];
 const NPC_ROLES = [
   "Mage",
@@ -231,6 +327,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     defaults: { race: "", role: "" },
     generate: generateNpc,
     mapOutputToDraft: mapOutputToDraft("npc"),
+    buildPrompt: npcPrompt,
   },
   faction: {
     id: "faction",
@@ -249,6 +346,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     defaults: { type: "" },
     generate: generateFaction,
     mapOutputToDraft: mapOutputToDraft("faction"),
+    buildPrompt: factionPrompt,
   },
   settlement: {
     id: "settlement",
@@ -267,6 +365,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     defaults: { type: "" },
     generate: generateSettlement,
     mapOutputToDraft: mapOutputToDraft("settlement"),
+    buildPrompt: settlementPrompt,
   },
   "magic-item": {
     id: "magic-item",
@@ -291,6 +390,7 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     defaults: { rarity: "", kind: "" },
     generate: generateMagicItem,
     mapOutputToDraft: mapOutputToDraft("magic-item"),
+    buildPrompt: magicItemPrompt,
   },
 };
 

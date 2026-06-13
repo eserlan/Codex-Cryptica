@@ -133,6 +133,16 @@ export interface CampaignGeneratorDefinition {
     output: GeneratorOutput,
     request: GeneratorRunRequest,
   ) => GeneratedDraft;
+  /** Build an AI prompt string from the run request (including vault context). */
+  buildPrompt: (request: GeneratorRunRequest) => string;
+}
+
+/**
+ * AI generation boundary injected by the web app. The package sends a prompt
+ * string and receives a raw JSON string; all AI client details stay in the app.
+ */
+export interface AIGeneratorGateway {
+  complete(prompt: string, systemInstruction: string): Promise<string>;
 }
 
 /**
