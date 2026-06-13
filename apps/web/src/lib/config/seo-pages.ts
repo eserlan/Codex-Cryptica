@@ -44,20 +44,20 @@ export interface SEOComparisonPageData extends SEOPageData {
 export const solutions: Record<string, SEOPageData> = {
   "campaign-manager": {
     slug: "campaign-manager",
-    title: "Best Free RPG Campaign Manager | Codex Cryptica",
+    title: "How to Manage RPG Campaigns with Codex Cryptica | Features & Setup",
     description:
-      "Manage your TTRPG campaigns with Codex Cryptica's secure, zero-lag, local-first campaign manager. Keep your notes private and fully offline.",
-    h1: "The Ultimate Local-First RPG Campaign Manager",
+      "A feature-by-feature guide to managing TTRPG campaigns in Codex Cryptica: linked lore graphs, private Markdown notes, timelines, and offline prep — all local-first.",
+    h1: "RPG Campaign Manager Features & Setup Guide",
     subheading:
-      "Keep your campaign lore organized, connected, and completely private.",
+      "Everything you need to plan, run, and track campaigns — no cloud account required.",
     introText:
-      "Codex Cryptica is a modern RPG campaign management tool designed for GMs who value privacy, speed, and deep worldbuilding relationships. Unlike server-hosted managers, your campaign data remains on your local machine, delivering instant, zero-lag note loading during live sessions, even fully offline.",
-    ctaText: "Start Managing Campaigns",
+      "Codex Cryptica is a local-first RPG campaign manager built for GMs who want power without complexity. This guide walks through the core features: bidirectional wiki links, interactive lore graphs, timeline tracking, and offline-first storage. Your campaign data lives on your device and loads in milliseconds — even at the table without Wi-Fi.",
+    ctaText: "Explore Campaign Manager",
     keywords: [
-      "rpg campaign manager",
-      "campaign manager",
-      "dnd campaign manager",
-      "ttrpg campaign organizer",
+      "rpg campaign manager features",
+      "how to manage ttrpg campaigns",
+      "dnd campaign manager setup",
+      "ttrpg campaign organizer guide",
     ],
     features: [
       {
@@ -81,23 +81,25 @@ export const solutions: Record<string, SEOPageData> = {
     ],
     faq: [
       {
-        question: "Is my campaign data safe?",
+        question:
+          "What makes Codex Cryptica different from other RPG campaign managers?",
         answer:
-          "Yes. Codex Cryptica stores all campaign files directly on your own device. Your notes are never uploaded to a remote server, giving you complete privacy and instant loading speeds.",
+          "Codex Cryptica is fully local-first: your notes are stored on your own device, not a remote server. That means instant load times, complete privacy, and full offline support — features most cloud-based campaign managers can't offer.",
       },
       {
         question: "Can I use it offline?",
         answer:
-          "Absolutely. Because all data is stored on your local device, the entire campaign manager, editor, and interactive graph run perfectly without an internet connection.",
+          "Yes. Because all data is stored on your local device, the entire campaign manager, editor, and interactive graph run perfectly without an internet connection.",
       },
     ],
     relatedLinks: [
-      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
-      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+      { href: "/", label: "RPG campaign manager" },
       {
         href: "/free-rpg-campaign-manager",
         label: "Free RPG campaign manager",
       },
+      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
     ],
   },
   "worldbuilding-tool": {
@@ -508,6 +510,7 @@ export const solutions: Record<string, SEOPageData> = {
       },
     ],
     relatedLinks: [
+      { href: "/", label: "RPG campaign manager" },
       { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
       {
         href: "/free-rpg-campaign-manager",
@@ -1055,6 +1058,17 @@ export const featuresConfig: Record<string, SEOPageData> = {
         question: "Can I use this without internet?",
         answer:
           "Yes. Once loaded, the campaign manager, graph explorer, and timelines work 100% offline, making it perfect for table prep or remote play sessions.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/", label: "RPG campaign manager" },
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline RPG campaign manager",
+      },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
       },
     ],
   },
