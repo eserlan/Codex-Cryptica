@@ -21,7 +21,7 @@
         name: "Is Codex Cryptica really free?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes. Codex Cryptica is a client-side local-first campaign manager. All database creation and storage run inside your own browser, requiring no paid subscriptions or accounts.",
+          text: "Yes. Codex Cryptica is a completely free, local-first campaign manager. All campaign files, databases, and note storage run locally inside your browser using the Origin Private File System (OPFS), requiring no paid subscriptions, accounts, or advertisements.",
         },
       },
       {
@@ -29,7 +29,7 @@
         name: "Where is my campaign data stored?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Your lore is stored locally on your device's hard drive using the browser's Origin Private File System (OPFS). We do not host your campaign notes on our servers, ensuring total privacy.",
+          text: "Your campaign notes and worldbuilding files are stored locally on your device's hard drive using the browser's Origin Private File System (OPFS). Codex Cryptica does not host, sync, or upload your campaign data to external servers, guaranteeing complete privacy.",
         },
       },
       {
@@ -37,7 +37,7 @@
         name: "Does this RPG campaign manager work offline?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Absolutely. Because it is local-first, you can manage your maps, timelines, and entity files completely offline at the gaming table.",
+          text: "Absolutely. Because Codex Cryptica is built as a local-first application, you can view your interactive relationship maps, track game timelines, and edit all campaign notes completely offline at the table without any network connection.",
         },
       },
       {
@@ -45,7 +45,7 @@
         name: "How does the AI GM assistant work?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "You can connect your own Google Gemini API key in the settings panel to prompt the AI Oracle, or use the out-of-the-box shared system proxy for quick, free trials.",
+          text: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own Google Gemini API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
         },
       },
     ],
@@ -89,19 +89,19 @@
   const faqs = [
     {
       q: "Is Codex Cryptica really free?",
-      a: "Yes. All database creation and storage run inside your own browser using OPFS, requiring no paid subscriptions, accounts, or advertisements.",
+      a: "Yes. Codex Cryptica is a completely free, local-first campaign manager. All campaign files, databases, and note storage run locally inside your browser using the Origin Private File System (OPFS), requiring no paid subscriptions, accounts, or advertisements.",
     },
     {
       q: "Where is my campaign data stored?",
-      a: "Your lore is stored locally on your device's hard drive using browser sandboxed storage. We do not host your campaign notes on our servers, ensuring total data privacy.",
+      a: "Your campaign notes and worldbuilding files are stored locally on your device's hard drive using the browser's Origin Private File System (OPFS). Codex Cryptica does not host, sync, or upload your campaign data to external servers, guaranteeing complete privacy.",
     },
     {
       q: "Does this RPG campaign manager work offline?",
-      a: "Absolutely. Once the app shell is loaded in your browser cache, you can manage your maps, timelines, and entity files completely offline at the gaming table.",
+      a: "Absolutely. Because Codex Cryptica is built as a local-first application, you can view your interactive relationship maps, track game timelines, and edit all campaign notes completely offline at the table without any network connection.",
     },
     {
       q: "How does the AI GM assistant work?",
-      a: "You can prompt the AI Lore Oracle out-of-the-box using our shared system proxy for free, or plug in your own Google Gemini API key in the settings panel for direct, unlimited connection.",
+      a: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own Google Gemini API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
     },
   ];
 </script>

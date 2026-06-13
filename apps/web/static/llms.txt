@@ -4,7 +4,7 @@
 
 ## Core Product
 
-- [Codex Cryptica](https://codexcryptica.com/): Local-first RPG campaign manager and worldbuilding workspace.
+- [Codex Cryptica (https://codexcryptica.com/)](https://codexcryptica.com/): The primary entry point. A free, local-first RPG campaign manager and worldbuilding tool.
 - [Full User Guide & Features](https://codexcryptica.com/llms-full.txt): Complete AI-readable feature and help documentation.
 
 ## Key Features

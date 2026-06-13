@@ -86,10 +86,10 @@ Pages: `/worldbuilding-tool`, `/solutions/worldbuilding-tool`,
 
 ## Phase 5 — GEO / LLM polish
 
-- [ ] Update `static/llms.txt` so `/` is the clear primary entry for both
+- [x] Update `static/llms.txt` so `/` is the clear primary entry for both
       categories.
-- [ ] Make every FAQ answer self-contained / quotable (answer-engine friendly).
-- [ ] Align each page's `relatedLinks` with the hub-and-spoke graph.
+- [x] Make every FAQ answer self-contained / quotable (answer-engine friendly).
+- [x] Align each page's `relatedLinks` with the hub-and-spoke graph.
 
 ## Phase 6 — Verify & close #1156
 
