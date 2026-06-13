@@ -60,24 +60,24 @@
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Add failing service tests for successful draft save and saved entity result in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T017 [P] [US1] Add failing service tests for save failure preserving draft state, guest/read-only/unavailable campaign blocked saves, and no localStorage transfer (covers FR-009: no external transfer/leaving the app) in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T018 [P] [US1] Add failing component test for generator selection and configuration form rendering in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
-- [ ] T019 [P] [US1] Add failing component test for draft review editing and explicit save, including editing a title that duplicates an existing entity title before save (edge case: relies on existing campaign duplicate-handling behavior), in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
-- [ ] T020 [P] [US1] Add failing component test for cancel/close leaving campaign data unchanged in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [x] T016 [P] [US1] Add failing service tests for successful draft save and saved entity result in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T017 [P] [US1] Add failing service tests for save failure preserving draft state, guest/read-only/unavailable campaign blocked saves, and no localStorage transfer (covers FR-009: no external transfer/leaving the app) in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T018 [P] [US1] Add failing component test for generator selection and configuration form rendering in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [x] T019 [P] [US1] Add failing component test for draft review editing and explicit save, including editing a title that duplicates an existing entity title before save (edge case: relies on existing campaign duplicate-handling behavior), in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [x] T020 [P] [US1] Add failing component test for cancel/close leaving campaign data unchanged in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T021 [US1] Implement direct draft save through injected vault creation dependency in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T022 [US1] Implement required field validation, user-safe save errors, and blocked-write handling in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T023 [US1] Implement CampaignGeneratorModal shell with configure, generating, review, saving, and error stages in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
-- [ ] T024 [US1] Implement semantic generator option form with visible labels and native submit behavior in apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
-- [ ] T025 [US1] Implement editable draft review form for title, entity type, summary/content, lore, and labels in apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
-- [ ] T026 [US1] Connect CampaignGeneratorModal to campaignGeneratorService and modalUIStore in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
-- [ ] T027 [US1] Add a campaign workspace generator entry point near existing create actions in apps/web/src/lib/components/VaultControls.svelte
-- [ ] T028 [US1] Add a mobile generator entry point near mobile create actions in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
-- [ ] T029 [US1] Ensure successful save selects or opens the new entity using existing vault selection behavior in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
-- [ ] T030 [US1] Run User Story 1 tests listed in specs/131-in-app-rpg-generators/quickstart.md
+- [x] T021 [US1] Implement direct draft save through injected vault creation dependency in packages/generator-engine/src/campaign-generator-service.ts
+- [x] T022 [US1] Implement required field validation, user-safe save errors, and blocked-write handling in packages/generator-engine/src/campaign-generator-service.ts
+- [x] T023 [US1] Implement CampaignGeneratorModal shell with configure, generating, review, saving, and error stages in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [x] T024 [US1] Implement semantic generator option form with visible labels and native submit behavior in apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
+- [x] T025 [US1] Implement editable draft review form for title, entity type, summary/content, lore, and labels in apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
+- [x] T026 [US1] Connect CampaignGeneratorModal to campaignGeneratorService and modalUIStore in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [x] T027 [US1] Add a campaign workspace generator entry point near existing create actions in apps/web/src/lib/components/VaultControls.svelte
+- [x] T028 [US1] Add a mobile generator entry point near mobile create actions in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
+- [x] T029 [US1] Ensure successful save selects or opens the new entity using existing vault selection behavior in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [x] T030 [US1] Run User Story 1 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Story 1 is a complete MVP and can be demoed independently.
 

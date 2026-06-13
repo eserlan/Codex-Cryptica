@@ -496,6 +496,21 @@
           {/if}
 
           <button
+            class="{btnGhost} {iconOnlyClasses}"
+            onclick={() => modalUIStore.openGeneratorWorkflow()}
+            title="Generate campaign content"
+            aria-label={isVertical
+              ? "GENERATE - Generate campaign content"
+              : "Generate campaign content"}
+            data-testid="open-generator-button"
+          >
+            <span class="icon-[lucide--wand-2] w-3.5 h-3.5"></span>
+            {#if isVertical}<span class="font-bold tracking-widest"
+                >GENERATE</span
+              >{/if}
+          </button>
+
+          <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
             onclick={() => modalUIStore.openShare()}
             title="Share Campaign"
