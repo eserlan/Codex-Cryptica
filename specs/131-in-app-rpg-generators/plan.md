@@ -1,7 +1,7 @@
 # Implementation Plan: In-App RPG Generators
 
-**Branch**: `130-in-app-rpg-generators` | **Date**: 2026-06-13 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/130-in-app-rpg-generators/spec.md`
+**Branch**: `131-in-app-rpg-generators` | **Date**: 2026-06-13 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/131-in-app-rpg-generators/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
@@ -43,7 +43,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 ### Documentation (this feature)
 
 ```text
-specs/130-in-app-rpg-generators/
+specs/131-in-app-rpg-generators/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)

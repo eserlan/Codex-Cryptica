@@ -1,6 +1,6 @@
 # Tasks: In-App RPG Generators
 
-**Input**: Design documents from `/specs/130-in-app-rpg-generators/`  
+**Input**: Design documents from `/specs/131-in-app-rpg-generators/`  
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/generator-workflow.md](./contracts/generator-workflow.md), [quickstart.md](./quickstart.md)
 
 **Tests**: Required by project constitution. Write tests before implementation for each changed behavior, including success and failure/cancellation paths.
@@ -46,7 +46,7 @@
 - [ ] T012 Export package public APIs and a default campaign generator service singleton in packages/generator-engine/src/index.ts and packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T013 Add generator workflow state and open/close methods to apps/web/src/lib/stores/ui/modal-ui.svelte.ts
 - [ ] T014 Create a minimal lazy-loadable CampaignGeneratorModal stub in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte and wire it through apps/web/src/lib/components/modals/GlobalModalProvider.svelte
-- [ ] T015 Run foundational package and store tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T015 Run foundational package and store tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Registry lookup, draft mapping, service orchestration, and modal state are test-covered and ready for UI stories.
 
@@ -77,7 +77,7 @@
 - [ ] T027 [US1] Add a campaign workspace generator entry point near existing create actions in apps/web/src/lib/components/VaultControls.svelte
 - [ ] T028 [US1] Add a mobile generator entry point near mobile create actions in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
 - [ ] T029 [US1] Ensure successful save selects or opens the new entity using existing vault selection behavior in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
-- [ ] T030 [US1] Run User Story 1 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T030 [US1] Run User Story 1 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Story 1 is a complete MVP and can be demoed independently.
 
@@ -101,7 +101,7 @@
 - [ ] T035 [US2] Add per-generator non-AI option defaults to packages/generator-engine/src/campaign-generator-registry.ts
 - [ ] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
 - [ ] T037 [US2] Ensure draft generation never mutates vault data before save in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T038 [US2] Run User Story 2 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T038 [US2] Run User Story 2 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Stories 1 and 2 work independently and preserve local-first behavior.
 
@@ -130,7 +130,7 @@
 - [ ] T048 [US3] Route the existing Generate Related action in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte and apps/web/src/lib/components/zen/ZenContent.svelte to the unified generator workflow with sourceEntityId context
 - [ ] T049 [US3] Add relationship review controls, template application controls, and inspectable context controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte and apps/web/src/lib/components/generators/GeneratorContextReview.svelte
 - [ ] T050 [US3] Retire apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte or reduce it to a compatibility wrapper after unified contextual generation parity is covered
-- [ ] T051 [US3] Run User Story 3 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T051 [US3] Run User Story 3 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Stories 1, 2, and 3 work independently, with theme defaults and optional contextual relationships.
 
@@ -157,7 +157,7 @@
 - [ ] T057 [US4] Update apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte only as needed to consume package-backed generator results without route or layout changes
 - [ ] T058 [US4] Preserve existing public page copy, route slugs, SEO metadata, and primary generation behavior in apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte
 - [ ] T058a [US4] Verify the tools/_-generator marketing pages still produce expected output after the engine transition without route, copy, or layout changes in apps/web/src/routes/(marketing)/tools/_-generator/+page.svelte
-- [ ] T059 [US4] Run public generator transition tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T059 [US4] Run public generator transition tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Public generator pages and the in-app workflow share package-owned logic for supported generator behavior.
 
@@ -179,7 +179,7 @@
 - [ ] T062 [US5] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
 - [ ] T063 [US5] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
 - [ ] T064 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/VaultControls.svelte
-- [ ] T065 [US5] Run User Story 5 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T065 [US5] Run User Story 5 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Users have discoverable, plain-language guidance for the full workflow.
 
@@ -194,10 +194,10 @@
 - [ ] T068 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
 - [ ] T069 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
 - [ ] T070 [P] Add user-facing changelog entry only if shipping the visible workflow in apps/web/src/lib/content/changelog/releases.json
-- [ ] T071 Run full validation commands from specs/130-in-app-rpg-generators/quickstart.md
-- [ ] T072 Update master issue progress notes from completed implementation tasks in specs/130-in-app-rpg-generators/tasks.md
-- [ ] T073 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/130-in-app-rpg-generators/quickstart.md
-- [ ] T074 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T071 Run full validation commands from specs/131-in-app-rpg-generators/quickstart.md
+- [ ] T072 Update master issue progress notes from completed implementation tasks in specs/131-in-app-rpg-generators/tasks.md
+- [ ] T073 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/131-in-app-rpg-generators/quickstart.md
+- [ ] T074 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/131-in-app-rpg-generators/quickstart.md
 - [ ] T075 Validate SC-009, SC-010, and SC-011 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, generated drafts preserve resolved template headings when enabled, and no standalone related modal is required
 
 ---

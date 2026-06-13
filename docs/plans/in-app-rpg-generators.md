@@ -236,7 +236,7 @@ Notes:
 
 Use [#1129](https://github.com/eserlan/Codex-Cryptica/issues/1129) as the single master tracker.
 
-The implementation source of truth is the Speckit feature at `specs/130-in-app-rpg-generators/`.
+The implementation source of truth is the Speckit feature at `specs/131-in-app-rpg-generators/`.
 
 ## Success Criteria
 

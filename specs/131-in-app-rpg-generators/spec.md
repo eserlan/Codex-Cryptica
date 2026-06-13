@@ -1,6 +1,6 @@
 # Feature Specification: In-App RPG Generators
 
-**Feature Branch**: `130-in-app-rpg-generators`  
+**Feature Branch**: `131-in-app-rpg-generators`  
 **Created**: 2026-06-13  
 **Status**: Draft  
 **Input**: User description: "Bring the public RPG generators into the Codex Cryptica campaign app as a native workflow for configuring, generating, reviewing, and saving NPC, Faction, Settlement, and Magic Item drafts directly into the active vault, with theme-aware defaults, local fallback generation, and existing Oracle privacy controls."
