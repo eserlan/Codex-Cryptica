@@ -55,7 +55,11 @@
 
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
   <fieldset class="flex flex-col gap-2">
-    <legend class="text-surface-300 mb-1 text-sm font-medium">Generator</legend>
+    <legend
+      class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+    >
+      Generator
+    </legend>
     {#each generators as gen (gen.id)}
       <label class="flex cursor-pointer items-center gap-2">
         <input
@@ -64,9 +68,9 @@
           value={gen.id}
           bind:group={selectedId}
           {disabled}
-          class="accent-primary-500"
+          class="accent-chrome-accent"
         />
-        <span class="text-surface-100 text-sm">{gen.label}</span>
+        <span class="text-sm text-chrome-text">{gen.label}</span>
       </label>
     {/each}
   </fieldset>
@@ -77,25 +81,27 @@
         type="checkbox"
         bind:checked={useAI}
         {disabled}
-        class="accent-primary-500"
+        class="accent-chrome-accent"
         data-testid="use-ai-toggle"
       />
-      <span class="text-surface-200 text-sm">Use AI generation</span>
+      <span class="text-sm text-chrome-text">Use AI generation</span>
     </label>
   {:else if aiUnavailableReason}
     <p
-      class="text-amber-400 rounded border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs"
+      class="rounded border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-400"
       data-testid="ai-unavailable-notice"
     >
       {aiUnavailableReason}
     </p>
   {/if}
 
-  <button
-    type="submit"
-    {disabled}
-    class="bg-primary-600 hover:bg-primary-500 disabled:bg-surface-600 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
-  >
-    Generate
-  </button>
+  <div class="flex justify-end border-t border-chrome-border pt-4">
+    <button
+      type="submit"
+      {disabled}
+      class="px-5 py-2 bg-chrome-accent text-chrome-surface font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+    >
+      Generate
+    </button>
+  </div>
 </form>
