@@ -105,57 +105,58 @@ export const solutions: Record<string, SEOPageData> = {
   "worldbuilding-tool": {
     slug: "worldbuilding-tool",
     title:
-      "Free Worldbuilding Tool & Interactive Lore Database | Codex Cryptica",
+      "Structured Worldbuilding Tool & Campaign Wiki Schemas | Codex Cryptica",
     description:
-      "Design rich fantasy worlds with an interactive knowledge graph, customizable timelines, and local-first wiki files.",
-    h1: "Interactive Worldbuilding Tool & Campaign Database",
+      "Organize your campaign database with custom worldbuilding templates, structured schemas, entity metadata, and relational graphs.",
+    h1: "Structured Worldbuilding Tool & Campaign Schemas",
     subheading:
-      "Map your fantasy worlds visually with local-first bidirectional linking.",
+      "Design your lore database with templates and auto-generated links.",
     introText:
-      "Codex Cryptica provides an advanced visual workspace for authors, GMs, and worldbuilders. Construct timelines, link factions, map settlements, and visualize relationships in an interactive knowledge graph that works fully offline.",
-    ctaText: "Start Worldbuilding",
+      "For complex worldbuilding projects, simple document folders aren't enough. Codex Cryptica provides a structured worldbuilding tool that utilizes predefined entity schemas for characters, factions, locations, items, and events. Maintain complete metadata lists, tag assets, and keep your entire campaign database organized under standard Markdown frontmatter.",
+    ctaText: "Start Structuring Your World",
     keywords: [
-      "worldbuilding tool",
-      "free worldbuilding software",
-      "fantasy world creator",
-      "lore database",
+      "structured worldbuilding tool",
+      "worldbuilding templates",
+      "worldbuilding schemas",
+      "campaign wiki setup",
     ],
     features: [
       {
-        title: "Interactive Graph View",
+        title: "Custom Entity Schemas",
         description:
-          "Visualize how factions, characters, and events connect in an interactive node-link relationship diagram.",
-        icon: "icon-[lucide--git-fork]",
+          "Predefined templates for kingdoms, NPC stats, pantheons, factions, and quests out-of-the-box.",
+        icon: "icon-[lucide--database]",
       },
       {
-        title: "Chronological Timelines",
+        title: "Frontmatter Metadata",
         description:
-          "Map historical eras, campaign logs, and character life events on a temporal timeline scale.",
-        icon: "icon-[lucide--calendar]",
+          "Structure key stats in YAML frontmatter for quick database query filters and clean data views.",
+        icon: "icon-[lucide--file-json]",
       },
       {
-        title: "Private Offline Vaults",
+        title: "Direct Link Discovery",
         description:
-          "Own your files. Codex Cryptica reads and writes markdown files locally, ensuring zero data lock-in.",
-        icon: "icon-[lucide--folder-heart]",
+          "Wiki-style syntax automatically maps connections across markdown notes for instant traversal.",
+        icon: "icon-[lucide--link]",
       },
     ],
     faq: [
       {
-        question: "Can I export my world data?",
+        question: "What templates does this worldbuilding tool support?",
         answer:
-          "Yes, your vaults are saved as simple, standard Markdown files with YAML frontmatter. You can open them in any text editor or move them to another tool at any time.",
+          "Codex Cryptica includes pre-configured structures for NPCs, factions, settlements, items, timelines, and pantheons, letting you start writing immediately.",
       },
       {
-        question: "Does it support custom calendars?",
+        question: "Can I customize the frontmatter schema?",
         answer:
-          "Yes, the chronological timeline engine handles custom calendar definitions, fantasy months, and historical epoch calculations.",
+          "Yes, you can edit the YAML metadata directly in the editor. The app reads and updates keys without locking you into a proprietary format.",
       },
     ],
     relatedLinks: [
+      { href: "/", label: "worldbuilding tool" },
+      { href: "/worldbuilding-tool", label: "Worldbuilding tool guide" },
       { href: "/solutions/campaign-manager", label: "Campaign manager" },
       { href: "/solutions/rpg-knowledge-graph", label: "RPG knowledge graph" },
-      { href: "/vs/obsidian", label: "vs Obsidian" },
     ],
   },
   "ai-gm-assistant": {
@@ -344,67 +345,62 @@ export const solutions: Record<string, SEOPageData> = {
     slug: "ai-worldbuilding-tool",
     eyebrow: "AI-Assisted Worldbuilding",
     title:
-      "AI Worldbuilding Tool | AI-Assisted Lore & World Design | Codex Cryptica",
+      "AI Worldbuilding Tool | Private Lore & Campaign Co-Author | Codex Cryptica",
     description:
-      "Build richer worlds faster with Codex Cryptica's AI worldbuilding tools. Generate factions, places, histories, and lore drafts that stay consistent with your existing campaign.",
-    h1: "AI-Assisted Worldbuilding Tool",
+      "Generate rich lore, plot hooks, and characters client-side with Codex Cryptica's context-aware AI worldbuilding assistant.",
+    h1: "AI Worldbuilding Tool & Co-Author",
     subheading:
-      "Expand your world's depth with AI-generated lore that fits your campaign.",
+      "Expand your campaign details with private, context-aware AI generators.",
     introText:
-      "Codex Cryptica combines a local-first campaign wiki with an AI co-author that understands your world. Ask it to draft a new faction's history, suggest names for a city district, or write a rumour your party might hear — all grounded in the lore you've already written.",
-    ctaText: "Start Building Your World",
+      "Create deep fantasy lore without writing from scratch. Codex Cryptica's AI worldbuilding tools help you draft detailed characters, histories, and locations. The built-in Lore Oracle reads your active vault's context, ensuring new additions stay consistent with your established world. All prompts are processed directly via your own API key under strict creative privacy.",
+    ctaText: "Try AI Assistant Features",
     secondaryCtaText: "Try name generator",
     secondaryCtaHref: "/tools/fantasy-name-generator",
     keywords: [
       "ai worldbuilding tool",
-      "ai worldbuilding",
       "ai lore generator",
-      "worldbuilding ai assistant",
       "fantasy world builder ai",
+      "rpg co-author bot",
     ],
     features: [
       {
         title: "Entity-Aware Generation",
         description:
-          "The AI reads your existing characters, locations, and factions before generating new content, keeping lore consistent.",
+          "The AI reads your active campaign folders to draft NPC descriptions, rumors, and locations.",
         icon: "icon-[lucide--sparkles]",
       },
       {
-        title: "Graph-Connected Wiki",
+        title: "Visual Concept Review",
         description:
-          "Every generated entry links to related entities in your campaign graph — people, places, and events stay connected.",
-        icon: "icon-[lucide--network]",
+          "Generates custom entity headers and reviews image drafts in the app sidebars before inserting.",
+        icon: "icon-[lucide--image]",
       },
       {
-        title: "Local-First Privacy",
+        title: "Zero-Harvest Privacy",
         description:
-          "All your worldbuilding notes stay on your device. AI calls are direct to your API key — no data stored on Codex servers.",
-        icon: "icon-[lucide--shield-check]",
+          "Runs direct to your API endpoint without caching or storing your worldbuilding notes on external databases.",
+        icon: "icon-[lucide--eye-off]",
       },
     ],
     relatedLinks: [
+      { href: "/", label: "worldbuilding tool" },
+      { href: "/worldbuilding-tool", label: "Worldbuilding tool guide" },
       {
-        href: "/tools/fantasy-name-generator",
-        label: "Fantasy name generator",
+        href: "/solutions/worldbuilding-tool",
+        label: "Structured worldbuilding tool",
       },
-      { href: "/tools/faction-generator", label: "Faction generator" },
-      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
+      { href: "/tools/dnd-npc-generator", label: "DnD NPC generator" },
     ],
     faq: [
       {
-        question: "How is this different from ChatGPT for worldbuilding?",
+        question: "How does the AI co-author understand my world?",
         answer:
-          "The Lore Oracle has access to your existing campaign entities so it generates content that fits your established lore rather than generic fantasy tropes.",
+          "The Lore Oracle reads the active vault workspace context and selected entities to generate details consistent with your custom history.",
       },
       {
-        question: "Can I use it for non-D&D settings?",
+        question: "Is my creative writing safe from model training?",
         answer:
-          "Yes. Codex supports any genre — sci-fi, horror, historical, urban fantasy — and the AI adapts to the tone and terminology of your world.",
-      },
-      {
-        question: "Does it work offline?",
-        answer:
-          "The wiki and graph work fully offline. AI generation requires an internet connection to reach your API provider.",
+          "Yes. All AI API calls are client-directed. Codex does not scrape or store your notes, and we encourage using private developer API endpoints.",
       },
     ],
   },
@@ -412,61 +408,59 @@ export const solutions: Record<string, SEOPageData> = {
     slug: "rpg-knowledge-graph",
     eyebrow: "Campaign Knowledge Graph",
     title:
-      "RPG Knowledge Graph | Visual Campaign Map for TTRPGs | Codex Cryptica",
+      "RPG Knowledge Graph | Interactive Campaign Wiki Map | Codex Cryptica",
     description:
-      "Visualise your RPG campaign as an interactive knowledge graph. See how characters, factions, locations, and events connect in Codex Cryptica's built-in graph engine.",
+      "Visualize your worldbuilding connections. Map characters, factions, and events in an interactive node-link relationship graph.",
     h1: "RPG Campaign Knowledge Graph",
-    subheading:
-      "See the full web of relationships in your campaign at a glance.",
+    subheading: "Explore the web of relationships in your campaign visually.",
     introText:
-      "Codex Cryptica's graph engine maps every entity in your campaign — characters, factions, locations, events — as nodes connected by relationships. Zoom out to see the big picture, click a node to dive into its lore, and use the graph to spot connections you might have missed during prep.",
-    ctaText: "Explore the Graph",
+      "Track complex political factions and overlapping character relationships at a glance. Codex Cryptica's RPG knowledge graph reads bidirectional links in your markdown files and automatically maps them to interactive nodes. Filter by entity category, focus on specific hubs, and navigate your lore visually.",
+    ctaText: "Explore Visual Graph",
     keywords: [
       "rpg knowledge graph",
-      "campaign knowledge graph",
-      "ttrpg relationship graph",
-      "dnd campaign graph",
+      "campaign relationship map",
       "worldbuilding graph tool",
+      "ttrpg network nodes",
     ],
     features: [
       {
-        title: "Interactive Relationship Map",
+        title: "Cytoscape Layout Presets",
         description:
-          "Drag, zoom, and filter a live graph of every entity and connection in your campaign.",
-        icon: "icon-[lucide--git-fork]",
+          "Save customized stable viewports and layout coordinates for quick navigation during live gaming sessions.",
+        icon: "icon-[lucide--network]",
       },
       {
-        title: "Automatic Link Detection",
+        title: "Auto-Detected Connections",
         description:
-          "Wiki-style [[links]] in your notes automatically appear as edges in the graph — no manual wiring needed.",
+          "Wiki bracket links in markdown automatically construct visual edges in real-time, zero wiring required.",
         icon: "icon-[lucide--link]",
       },
       {
-        title: "Filter by Entity Type",
+        title: "Category Filters",
         description:
-          "Focus on characters, factions, or locations independently to untangle complex political webs.",
+          "Toggle nodes for characters, factions, settlements, and events to isolate specific campaign webs.",
         icon: "icon-[lucide--filter]",
       },
     ],
     relatedLinks: [
+      { href: "/", label: "worldbuilding tool" },
+      { href: "/worldbuilding-tool", label: "Worldbuilding tool guide" },
+      {
+        href: "/solutions/worldbuilding-tool",
+        label: "Structured worldbuilding tool",
+      },
       { href: "/solutions/campaign-manager", label: "Campaign manager" },
-      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
     ],
     faq: [
       {
-        question: "How big can the graph get?",
+        question: "How are connections added to the RPG graph?",
         answer:
-          "The graph engine handles hundreds of entities smoothly. Very large campaigns can use filtering to keep the view manageable.",
+          "Adding standard wiki bracket links [[NPC Name]] inside your markdown documents automatically draws visual edges on the canvas.",
       },
       {
-        question: "Can I export the graph?",
+        question: "Can I filter the graph views?",
         answer:
-          "Yes. You can export a PNG snapshot of the current graph view for use in session notes or sharing with players.",
-      },
-      {
-        question: "Does the graph update automatically?",
-        answer:
-          "Yes. Every time you add a [[link]] in your notes the graph updates in real time — no sync or rebuild needed.",
+          "Yes, you can toggle active categories, focus on single nodes, or save specific custom viewport presets for instant lookup.",
       },
     ],
   },
@@ -539,62 +533,63 @@ export const solutions: Record<string, SEOPageData> = {
     slug: "local-first-worldbuilding-tool",
     eyebrow: "Privacy-First Worldbuilding",
     title:
-      "Local-First Worldbuilding Tool | Private & Offline | Codex Cryptica",
+      "Local-First Worldbuilding Tool | Private Campaign Wiki | Codex Cryptica",
     description:
-      "Build your fantasy world with a local-first worldbuilding tool that keeps every note on your device. No cloud uploads, no subscription, no vendor lock-in.",
+      "Own your creative writing. A local-first worldbuilding tool with offline markdown storage, zero server uploads, and no subscription fees.",
     h1: "Local-First Worldbuilding Tool",
     subheading:
-      "Your world, your files — private, offline, and completely yours.",
+      "Write offline with complete data sovereignty and Markdown files.",
     introText:
-      "Most worldbuilding tools store your creative work on someone else's server. Codex Cryptica takes the opposite approach: everything lives in your browser's local file system, exportable as standard Markdown files you can open in any editor. Your intellectual property stays with you.",
-    ctaText: "Start Your World",
+      "Your fantasy world is your intellectual property. Codex Cryptica is a local-first worldbuilding tool that saves all entries as standard Markdown files directly to your device. No sign-up, no monthly fees, and no risk of server shutdowns. Access your wiki instantly at the table, with or without internet connection.",
+    ctaText: "Start Building Privately",
     keywords: [
       "local first worldbuilding",
-      "private worldbuilding tool",
-      "offline worldbuilding",
-      "worldbuilding tool no account",
-      "self-hosted worldbuilding",
+      "private worldbuilding wiki",
+      "offline campaign software",
+      "markdown lore database",
     ],
     features: [
       {
-        title: "No Account Required",
+        title: "Client-Side Sandbox",
         description:
-          "Open the app and start building. Your vault is created locally in seconds with no sign-up form.",
-        icon: "icon-[lucide--user-x]",
+          "Uses the browser's high-speed Origin Private File System (OPFS) to cache and index your notes securely.",
+        icon: "icon-[lucide--lock]",
       },
       {
-        title: "Standard Markdown Files",
+        title: "Standard Markdown Storage",
         description:
-          "Every note is a plain Markdown file. Open them in VS Code, Obsidian, or any text editor — no export needed.",
+          "Saves files with standard YAML frontmatter so you can open them in Obsidian, VS Code, or any reader.",
         icon: "icon-[lucide--file-text]",
       },
       {
-        title: "No Vendor Lock-In",
+        title: "Optional Sync Mirrors",
         description:
-          "Your world exists as files on your machine. Delete the app and your data is still there, untouched.",
-        icon: "icon-[lucide--unlock]",
+          "Link local directories via File System Access API or back up to Google Drive on demand.",
+        icon: "icon-[lucide--refresh-cw]",
       },
     ],
     relatedLinks: [
-      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
-      { href: "/solutions/worldbuilding-tool", label: "Worldbuilding tool" },
-      { href: "/vs/world-anvil", label: "vs World Anvil" },
+      { href: "/", label: "worldbuilding tool" },
+      { href: "/worldbuilding-tool", label: "Worldbuilding tool guide" },
+      {
+        href: "/solutions/worldbuilding-tool",
+        label: "Structured worldbuilding tool",
+      },
+      {
+        href: "/solutions/offline-rpg-campaign-manager",
+        label: "Offline campaign manager",
+      },
     ],
     faq: [
       {
-        question: "Is my world truly private?",
+        question: "Where are my world files stored?",
         answer:
-          "Yes. Codex uses the browser's Origin Private File System. Your notes never leave your device unless you explicitly sync or export them.",
+          "All your campaign data resides in your browser's sandboxed local filesystem. Your intellectual property is never uploaded to our servers.",
       },
       {
-        question: "What happens if I change browsers?",
+        question: "Can I sync or backup my local-first world?",
         answer:
-          "Export your vault as a zip or sync to a local folder. You can reimport it in any browser or open the Markdown files directly.",
-      },
-      {
-        question: "Can I collaborate with my players?",
-        answer:
-          "Yes. You can share selected entries or host a P2P session where invited players view your world in read-only mode.",
+          "Yes. You can mirror files to a local folder on your computer's hard drive or link your vault to a secure Google Drive backup folder.",
       },
     ],
   },
@@ -1406,4 +1401,73 @@ export const importsConfig: Record<string, SEOImportPageData> = {
       },
     ],
   },
+};
+
+export const worldbuildingToolRoot: SEOPageData = {
+  slug: "worldbuilding-tool",
+  title: "Free Worldbuilding Tool & Lore Database | Codex Cryptica",
+  description:
+    "Create, link, and organize world maps, history, and factions. Codex Cryptica is a free, local-first worldbuilding tool running 100% in your browser.",
+  h1: "Free Worldbuilding Tool & Lore Database",
+  subheading:
+    "Map your fantasy worlds visually with local-first bidirectional linking.",
+  introText:
+    "Codex Cryptica is a free worldbuilding tool and private lore database designed to keep your creative assets safe and organized on your own device. Plan characters, locations, factions, and items with standard Markdown files that load instantly. See the connections between your notes using our built-in relationship maps and chronological timelines, all running 100% in your browser.",
+  ctaText: "Start Worldbuilding",
+  keywords: [
+    "free worldbuilding tool",
+    "worldbuilding software",
+    "fantasy worldbuilder",
+    "lore database",
+  ],
+  features: [
+    {
+      title: "Interactive Canvas & Graph",
+      description:
+        "Visualize relationships and draw map pins dynamically across factions, NPCs, and events.",
+      icon: "icon-[lucide--network]",
+    },
+    {
+      title: "Fantasy Timelines",
+      description:
+        "Map campaign history and character journals using chronological eras and custom calendars.",
+      icon: "icon-[lucide--calendar-days]",
+    },
+    {
+      title: "Local-First Privacy",
+      description:
+        "Your files never leave your device. Stored securely in your browser's private filesystem.",
+      icon: "icon-[lucide--shield-check]",
+    },
+  ],
+  faq: [
+    {
+      question: "Is Codex Cryptica completely free?",
+      answer:
+        "Yes. Codex Cryptica is a client-side local-first campaign wiki. All databases and files are run on your machine with no subscriptions required.",
+    },
+    {
+      question: "Can I use it offline?",
+      answer:
+        "Absolutely. Once the page is loaded, the entire editor, graph explorer, and timeline system run fully offline.",
+    },
+    {
+      question: "Can I import existing wiki files?",
+      answer:
+        "Yes, you can import Markdown folders from Obsidian or export packages from World Anvil and LegendKeeper directly.",
+    },
+  ],
+  relatedLinks: [
+    { href: "/", label: "worldbuilding tool" },
+    {
+      href: "/solutions/worldbuilding-tool",
+      label: "Structured worldbuilding tool",
+    },
+    { href: "/solutions/ai-worldbuilding-tool", label: "AI worldbuilding" },
+    {
+      href: "/solutions/local-first-worldbuilding-tool",
+      label: "Local-first worldbuilding",
+    },
+    { href: "/solutions/rpg-knowledge-graph", label: "RPG knowledge graph" },
+  ],
 };
