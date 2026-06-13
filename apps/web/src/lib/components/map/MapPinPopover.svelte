@@ -54,6 +54,7 @@
       >
         <span
           class="icon-[lucide--map] w-3.5 h-3.5 group-hover/map:scale-110 transition-transform"
+          aria-hidden="true"
         ></span>
       </button>
     {/if}
@@ -64,14 +65,14 @@
         onclick={onDelete}
         aria-label="Delete pin"
       >
-        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+        <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
       </button>
       <button
         class="p-1.5 text-theme-muted hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-1 focus-visible:ring-offset-theme-surface"
         onclick={onClose}
         aria-label="Close pin details"
       >
-        <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+        <span class="icon-[lucide--x] w-3.5 h-3.5" aria-hidden="true"></span>
       </button>
     </div>
   </div>

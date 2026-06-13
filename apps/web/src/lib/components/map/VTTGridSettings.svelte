@@ -50,7 +50,7 @@
       id="vtt-grid-settings-title"
       class="text-lg font-bold text-theme-text mb-6 uppercase font-header tracking-wider flex items-center gap-2"
     >
-      <span class="icon-[lucide--grid-3x3] w-5 h-5 text-theme-primary"></span>
+      <span class="icon-[lucide--grid-3x3] w-5 h-5 text-theme-primary" aria-hidden="true"></span>
       Grid Settings
     </h3>
 
@@ -142,7 +142,7 @@
               close();
             }}
           >
-            <span class="icon-[lucide--square] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--square] w-3.5 h-3.5" aria-hidden="true"></span>
             Fit Grid from Map
           </button>
           <p class="text-[9px] text-theme-muted mt-1 text-center italic">
@@ -163,7 +163,7 @@
                 );
               }}
             >
-              <span class="icon-[lucide--move] w-3.5 h-3.5"></span>
+              <span class="icon-[lucide--move] w-3.5 h-3.5" aria-hidden="true"></span>
               Move Map to Fine-tune
             </button>
             <p class="text-[9px] text-theme-muted mt-1 text-center italic">

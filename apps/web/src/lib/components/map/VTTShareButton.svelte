@@ -22,6 +22,6 @@
     title="Share Campaign"
     aria-label="Share Campaign"
   >
-    <span class="icon-[lucide--share-2] w-4 h-4"></span>
+    <span class="icon-[lucide--share-2] w-4 h-4" aria-hidden="true"></span>
   </button>
 {/if}

@@ -27,3 +27,8 @@
 
 **Learning:** Found an `a11y_click_events_have_key_events` and `a11y_no_static_element_interactions` warning on a `div` used as a floating dialog backdrop in `QuickNoteScratchpad.svelte`. This pattern makes it difficult for keyboard users to interact with or understand the backdrop's function (closing the dialog).
 **Action:** When implementing floating dialogs or modals with clickable background overlays, use a semantic `<button type="button">` with `aria-label="Close [Modal Name]"`, `w-full h-full`, and proper keyboard focus classes (like `focus-visible:ring-2 focus:outline-none focus-visible:ring-inset`) instead of ignoring the accessibility warnings on a `div`. Ensure this backdrop `<button>` is a sibling of the main modal `div` container, as HTML specs forbid nesting a modal block inside a button.
+
+## 2024-06-13 - Hidden ARIA decorative icons inside buttons
+
+**Learning:** Svelte components frequently include decorative icons (such as those from `icon-[lucide--*]`) inside buttons that already provide an `aria-label` or visible text. Without explicitly hiding them, screen readers may interpret or announce redundant text or confusing graphics.
+**Action:** When adding or updating buttons with decorative icon spans (e.g. `<span class="icon-[lucide--...]"></span>`), always add `aria-hidden="true"` to the icon element so assistive technologies ignore the decoration and focus on the parent button's accessible name.
