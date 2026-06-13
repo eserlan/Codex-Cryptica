@@ -402,7 +402,7 @@
         <a
           href="{base}/worldbuilding-tool"
           class="hover:text-theme-primary transition-colors"
-          >Free Worldbuilding Tool</a
+          >worldbuilding tool</a
         >
         <a
           href="{base}/ai-rpg-campaign-manager"

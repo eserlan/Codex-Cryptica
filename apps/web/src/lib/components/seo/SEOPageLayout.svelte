@@ -183,6 +183,16 @@
         class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-widest font-header text-theme-muted"
       >
         <a
+          href="{cleanBase}/free-rpg-campaign-manager"
+          class="hover:text-theme-primary transition-colors"
+          >Free RPG campaign manager</a
+        >
+        <a
+          href="{cleanBase}/worldbuilding-tool"
+          class="hover:text-theme-primary transition-colors"
+          >worldbuilding tool</a
+        >
+        <a
           href="{cleanBase}/features"
           class="hover:text-theme-primary transition-colors">Features</a
         >
@@ -628,6 +638,16 @@
     >
       <div>© 2026 Codex Cryptica. All rights reserved.</div>
       <div class="flex gap-6">
+        <a
+          href="{cleanBase}/free-rpg-campaign-manager"
+          class="hover:text-theme-primary transition-colors"
+          >Free RPG campaign manager</a
+        >
+        <a
+          href="{cleanBase}/worldbuilding-tool"
+          class="hover:text-theme-primary transition-colors"
+          >worldbuilding tool</a
+        >
         <a
           href="{cleanBase}/terms"
           class="hover:text-theme-primary transition-colors">Terms</a

@@ -689,9 +689,10 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       { href: "/import/obsidian-vault", label: "Import Obsidian vault" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       {
-        href: "/solutions/local-first-worldbuilding-tool",
-        label: "Local-first worldbuilding",
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
       },
+      { href: "/worldbuilding-tool", label: "worldbuilding tool" },
     ],
   },
   "world-anvil": {
@@ -802,9 +803,10 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     relatedLinks: [
       { href: "/vs/obsidian", label: "vs Obsidian" },
       { href: "/vs/kanka-alternative", label: "vs Kanka" },
+      { href: "/worldbuilding-tool", label: "worldbuilding tool" },
       {
-        href: "/solutions/local-first-worldbuilding-tool",
-        label: "Local-first worldbuilding",
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
       },
     ],
     aiTrustSection: true,
@@ -897,9 +899,10 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
       { href: "/vs/obsidian", label: "vs Obsidian" },
+      { href: "/worldbuilding-tool", label: "worldbuilding tool" },
       {
-        href: "/solutions/offline-rpg-campaign-manager",
-        label: "Offline campaign manager",
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
       },
     ],
   },
@@ -985,8 +988,11 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
     relatedLinks: [
       { href: "/import/kanka-json", label: "Import Kanka export" },
       { href: "/vs/world-anvil", label: "vs World Anvil" },
-      { href: "/vs/obsidian", label: "vs Obsidian" },
-      { href: "/solutions/local-first-rpg", label: "Local-first RPG" },
+      {
+        href: "/free-rpg-campaign-manager",
+        label: "Free RPG campaign manager",
+      },
+      { href: "/worldbuilding-tool", label: "worldbuilding tool" },
     ],
     faq: [
       {
