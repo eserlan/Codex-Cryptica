@@ -40,7 +40,11 @@ export interface GeneratorVaultGateway {
 
 export interface CampaignGeneratorServiceDeps {
   vault?: GeneratorVaultGateway;
-  /** Optional AI policy; when absent, AI is treated as unavailable/disabled. */
+  /**
+   * Current AI policy. May be a plain object or a getter-backed object so
+   * the caller can supply a reactive reference without re-instantiating the
+   * service on every policy change.
+   */
   aiPolicy?: AIPolicy;
   /** Optional AI gateway; required for AI-assisted generation. */
   aiGateway?: AIGeneratorGateway;
@@ -62,12 +66,17 @@ export class DraftSaveError extends Error {
 export class CampaignGeneratorService {
   private readonly vault?: GeneratorVaultGateway;
   private readonly aiGateway?: AIGeneratorGateway;
-  readonly aiPolicy: AIPolicy;
+  private readonly _deps: CampaignGeneratorServiceDeps;
+
+  /** Returns the current AI policy, reading through any getter on the deps object. */
+  get aiPolicy(): AIPolicy {
+    return this._deps.aiPolicy ?? { isEnabled: false, isAvailable: false };
+  }
 
   constructor(deps: CampaignGeneratorServiceDeps = {}) {
+    this._deps = deps;
     this.vault = deps.vault;
     this.aiGateway = deps.aiGateway;
-    this.aiPolicy = deps.aiPolicy ?? { isEnabled: false, isAvailable: false };
   }
 
   /**
@@ -151,7 +160,7 @@ export class CampaignGeneratorService {
       draft.entityType,
       draft.title,
       {
-        content: draft.summary,
+        content: draft.lore,
         lore: draft.lore,
         labels: draft.labels,
       },

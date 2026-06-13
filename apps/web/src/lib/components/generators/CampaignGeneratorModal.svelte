@@ -44,13 +44,14 @@
     isAvailable: !vault.isGuest,
   });
 
-  const svc = $derived(
-    new CampaignGeneratorService({
-      vault: vaultGateway,
-      aiPolicy,
-      aiGateway: aiGeneratorGateway,
-    }),
-  );
+  const svcDeps = {
+    vault: vaultGateway,
+    aiGateway: aiGeneratorGateway,
+    get aiPolicy() {
+      return aiPolicy;
+    },
+  };
+  const svc = new CampaignGeneratorService(svcDeps);
 
   function close() {
     modalUIStore.closeGeneratorWorkflow();

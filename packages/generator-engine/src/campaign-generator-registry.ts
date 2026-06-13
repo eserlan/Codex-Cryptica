@@ -121,7 +121,7 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
   }
   if (ctx.existingTitles.length) {
     lines.push(
-      `\nAvoid duplicating these existing titles: ${ctx.existingTitles.slice(0, 30).join(", ")}`,
+      `\nAvoid duplicating these existing titles: ${ctx.existingTitles.join(", ")}`,
     );
   }
   return lines.join("\n");
