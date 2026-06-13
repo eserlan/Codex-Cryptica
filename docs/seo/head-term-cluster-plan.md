@@ -69,14 +69,14 @@ Pages: `/worldbuilding-tool`, `/solutions/worldbuilding-tool`,
 `/solutions/ai-worldbuilding-tool`, `/solutions/local-first-worldbuilding-tool`,
 `/solutions/rpg-knowledge-graph`.
 
-- [ ] Lock intents: `/worldbuilding-tool` = broad entry,
+- [x] Lock intents: `/worldbuilding-tool` = broad entry,
       `/solutions/worldbuilding-tool` = structured use-case,
       `/solutions/ai-worldbuilding-tool` = AI lore generation/refinement,
       `/solutions/local-first-worldbuilding-tool` = privacy/local vault,
       `/solutions/rpg-knowledge-graph` = graph/entity relationships.
-- [ ] Ensure each has unique title, meta, H1, body copy, examples, FAQ, CTA.
-- [ ] Each spoke links up to `/` with "worldbuilding tool" anchor text.
-- [ ] Cross-link to graph, Oracle, canvas, templates, and generator content.
+- [x] Ensure each has unique title, meta, H1, body copy, examples, FAQ, CTA.
+- [x] Each spoke links up to `/` with "worldbuilding tool" anchor text.
+- [x] Cross-link to graph, Oracle, canvas, templates, and generator content.
 
 ## Phase 4 — Authority internal links
 
