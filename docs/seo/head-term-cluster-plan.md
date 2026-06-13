@@ -93,8 +93,8 @@ Pages: `/worldbuilding-tool`, `/solutions/worldbuilding-tool`,
 
 ## Phase 6 — Verify & close #1156
 
-- [ ] Manual crawler smoke test (curl static HTML) confirms definition sentence + FAQ + schema on every URL.
-- [ ] Tick off all #1156 acceptance criteria for both clusters.
+- [x] Manual crawler smoke test (curl static HTML) confirms definition sentence + FAQ + schema on every URL.
+- [x] Tick off all #1156 acceptance criteria for both clusters.
 
 ---
 
