@@ -1,0 +1,257 @@
+# Tasks: In-App RPG Generators
+
+**Input**: Design documents from `/specs/130-in-app-rpg-generators/`  
+**Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/generator-workflow.md](./contracts/generator-workflow.md), [quickstart.md](./quickstart.md)
+
+**Tests**: Required by project constitution. Write tests before implementation for each changed behavior, including success and failure/cancellation paths.
+
+**Organization**: Tasks are grouped by user story for independent implementation and testing.
+
+## Format: `[ID] [P?] [Story] Description`
+
+- **[P]**: Can run in parallel because it touches different files or has no dependency on incomplete tasks
+- **[Story]**: Maps to a user story from [spec.md](./spec.md)
+- Every task includes concrete file paths
+
+## Issue Mapping
+
+- Master: [#1129](https://github.com/eserlan/Codex-Cryptica/issues/1129)
+- Use the master issue as the single GitHub tracker. Phase issues were closed in favor of this Speckit task list.
+
+## Phase 1: Setup (Shared Infrastructure)
+
+**Purpose**: Prepare feature directories and establish baseline references.
+
+- [ ] T001 Create generator feature directories in apps/web/src/lib/services/generators and apps/web/src/lib/components/generators
+- [ ] T002 [P] Review existing generator engine baseline tests in apps/web/src/lib/services/seo/generator-engine.test.ts
+- [ ] T003 [P] Review existing direct entity creation patterns in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
+- [ ] T004 [P] Review existing related entity generation patterns in apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte
+
+---
+
+## Phase 2: Foundational (Blocking Prerequisites)
+
+**Purpose**: Core generator contract, service boundary, and modal state needed by all user stories.
+
+**Critical**: No user story implementation should start until this phase is complete.
+
+- [ ] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in apps/web/src/lib/services/generators/campaign-generator-registry.test.ts
+- [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, and labels in apps/web/src/lib/services/generators/campaign-generator-registry.test.ts
+- [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
+- [ ] T009 Define generator ids, option definitions, draft, run request, save request, and result types in apps/web/src/lib/services/generators/campaign-generator-types.ts
+- [ ] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in apps/web/src/lib/services/generators/campaign-generator-registry.ts
+- [ ] T011 Implement campaign generator service constructor DI and draft generation orchestration in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T012 Export a default campaign generator service singleton in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T013 Add generator workflow state and open/close methods to apps/web/src/lib/stores/ui/modal-ui.svelte.ts
+- [ ] T014 Wire lazy loading of CampaignGeneratorModal through apps/web/src/lib/components/modals/GlobalModalProvider.svelte
+- [ ] T015 Run foundational service and store tests listed in specs/130-in-app-rpg-generators/quickstart.md
+
+**Checkpoint**: Registry lookup, draft mapping, service orchestration, and modal state are test-covered and ready for UI stories.
+
+---
+
+## Phase 3: User Story 1 - Generate And Save A Campaign Entity (Priority: P1)
+
+**Goal**: A Game Master can open the in-app generator, configure a supported generator, review/edit the draft, and save it directly into the active campaign.
+
+**Independent Test**: Open a writable campaign, generate one supported entity, edit the draft, save it, and confirm the created entity contains reviewed title, type, content, lore, and labels.
+
+### Tests for User Story 1
+
+- [ ] T016 [P] [US1] Add failing service tests for successful draft save and saved entity result in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T017 [P] [US1] Add failing service test for save failure preserving draft state in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T018 [P] [US1] Add failing component test for generator selection and configuration form rendering in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [ ] T019 [P] [US1] Add failing component test for draft review editing and explicit save in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [ ] T020 [P] [US1] Add failing component test for cancel/close leaving campaign data unchanged in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+
+### Implementation for User Story 1
+
+- [ ] T021 [US1] Implement direct draft save through existing vault creation dependency in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T022 [US1] Implement required field validation and user-safe errors for draft saves in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T023 [US1] Implement CampaignGeneratorModal shell with configure, generating, review, saving, and error stages in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [ ] T024 [US1] Implement semantic generator option form with visible labels and native submit behavior in apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
+- [ ] T025 [US1] Implement editable draft review form for title, entity type, summary/content, lore, and labels in apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
+- [ ] T026 [US1] Connect CampaignGeneratorModal to campaignGeneratorService and modalUIStore in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [ ] T027 [US1] Add a campaign workspace generator entry point near existing create actions in apps/web/src/lib/components/layout/VaultControls.svelte
+- [ ] T028 [US1] Add a mobile generator entry point near mobile create actions in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
+- [ ] T029 [US1] Ensure successful save selects or opens the new entity using existing vault selection behavior in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [ ] T030 [US1] Run User Story 1 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+
+**Checkpoint**: User Story 1 is a complete MVP and can be demoed independently.
+
+---
+
+## Phase 4: User Story 2 - Generate Without AI When Needed (Priority: P2)
+
+**Goal**: The in-app generators remain usable when AI is disabled, unavailable, or not allowed.
+
+**Independent Test**: Disable AI features and generate each supported entity type, confirming reviewable drafts are produced without AI.
+
+### Tests for User Story 2
+
+- [ ] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T032 [P] [US2] Add failing service test for AI-disabled policy forcing non-AI generation in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T033 [P] [US2] Add failing component test for AI unavailable messaging without blocking non-AI generation in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+
+### Implementation for User Story 2
+
+- [ ] T034 [US2] Add AI policy inputs and local fallback enforcement to apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T035 [US2] Add per-generator non-AI option defaults to apps/web/src/lib/services/generators/campaign-generator-registry.ts
+- [ ] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
+- [ ] T037 [US2] Ensure draft generation never mutates vault data before save in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T038 [US2] Run User Story 2 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+
+**Checkpoint**: User Stories 1 and 2 work independently and preserve local-first behavior.
+
+---
+
+## Phase 5: User Story 3 - Use Campaign Theme And Context (Priority: P3)
+
+**Goal**: Generator defaults reflect the active campaign theme and contextual launches can create a relationship back to the source entity.
+
+**Independent Test**: Change active theme, confirm defaults change and remain editable, launch from a source entity, save a draft with relationship enabled, and confirm the relationship exists.
+
+### Tests for User Story 3
+
+- [ ] T039 [P] [US3] Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in apps/web/src/lib/services/generators/campaign-generator-theme.test.ts
+- [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T042 [P] [US3] Add failing component test for contextual launch from an existing entity in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+
+### Implementation for User Story 3
+
+- [ ] T043 [US3] Implement theme-to-generator default mapping in apps/web/src/lib/services/generators/campaign-generator-theme.ts
+- [ ] T044 [US3] Apply theme defaults while preserving user overrides in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T045 [US3] Add sourceEntityId and relationship label handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
+- [ ] T046 [US3] Add optional source relationship save through existing vault connection dependency in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T047 [US3] Add contextual launch button or action near existing related generation entry points in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
+- [ ] T048 [US3] Add contextual launch integration in Zen Mode actions in apps/web/src/lib/components/zen/ZenContent.svelte
+- [ ] T049 [US3] Add relationship review controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
+- [ ] T050 [US3] Run User Story 3 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+
+**Checkpoint**: User Stories 1, 2, and 3 work independently, with theme defaults and optional contextual relationships.
+
+---
+
+## Phase 6: User Story 4 - Understand And Discover The Workflow (Priority: P4)
+
+**Goal**: Users can discover the generator workflow and understand review-before-save, privacy, and AI behavior.
+
+**Independent Test**: Open help/guidance, follow the described steps, generate a draft, and save it without external instructions.
+
+### Tests for User Story 4
+
+- [ ] T051 [P] [US4] Add failing help content registration test for in-app generators in apps/web/src/lib/stores/help.test.ts
+- [ ] T052 [P] [US4] Add failing feature hint config test for in-app generators in apps/web/src/lib/config/help-content.test.ts
+
+### Implementation for User Story 4
+
+- [ ] T053 [US4] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
+- [ ] T054 [US4] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
+- [ ] T055 [US4] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/layout/VaultControls.svelte
+- [ ] T056 [US4] Run User Story 4 tests listed in specs/130-in-app-rpg-generators/quickstart.md
+
+**Checkpoint**: Users have discoverable, plain-language guidance for the full workflow.
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns
+
+**Purpose**: Regression checks, accessibility review, and release readiness across all stories.
+
+- [ ] T057 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
+- [ ] T058 [P] Verify existing related entity modal tests still pass in apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts
+- [ ] T059 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
+- [ ] T060 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [ ] T061 [P] Add user-facing changelog entry only if shipping the visible workflow in apps/web/src/lib/content/changelog/releases.json
+- [ ] T062 Run full validation commands from specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T063 Update master issue progress notes from completed implementation tasks in specs/130-in-app-rpg-generators/tasks.md
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Setup (Phase 1)**: No dependencies.
+- **Foundational (Phase 2)**: Depends on Setup and blocks all user stories.
+- **US1 (Phase 3)**: Depends on Foundational and delivers the MVP.
+- **US2 (Phase 4)**: Depends on Foundational; can run after or alongside US1 once service contracts are stable.
+- **US3 (Phase 5)**: Depends on Foundational and benefits from US1 save/review implementation.
+- **US4 (Phase 6)**: Depends on visible entry points from US1 and can complete after UI labels stabilize.
+- **Polish (Phase 7)**: Depends on all desired user stories.
+
+### User Story Dependencies
+
+- **US1 Generate And Save A Campaign Entity**: MVP; no dependency on other user stories after Foundational.
+- **US2 Generate Without AI When Needed**: Depends on generator service contracts; does not require US3 or US4.
+- **US3 Use Campaign Theme And Context**: Depends on service contracts and direct save behavior from US1.
+- **US4 Understand And Discover The Workflow**: Depends on final user-facing entry points and copy.
+
+### Within Each User Story
+
+- Write tests first and confirm they fail before implementation.
+- Implement shared types before registry/service logic.
+- Implement registry/service logic before UI integration.
+- Implement UI shell before entry points.
+- Implement save behavior before relationship creation.
+- Run story-specific tests before proceeding to the next priority story.
+
+## Parallel Opportunities
+
+- T002, T003, and T004 can run in parallel during setup.
+- T005, T006, T007, and T008 can run in parallel because they target different test scopes.
+- US1 component tests T018, T019, and T020 can run in parallel after modal test setup exists.
+- US2 tests T031, T032, and T033 can run in parallel.
+- US3 tests T039, T040, T041, and T042 can run in parallel.
+- US4 tests T051 and T052 can run in parallel.
+- Polish regression checks T057, T058, T059, T060, and T061 can run in parallel.
+
+## Parallel Example: User Story 1
+
+```text
+Task: "Add failing component test for generator selection and configuration form rendering in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts"
+Task: "Add failing component test for draft review editing and explicit save in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts"
+Task: "Add failing component test for cancel/close leaving campaign data unchanged in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts"
+```
+
+## Parallel Example: User Story 3
+
+```text
+Task: "Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in apps/web/src/lib/services/generators/campaign-generator-theme.test.ts"
+Task: "Add failing service test proving user-edited options override theme-derived defaults in apps/web/src/lib/services/generators/campaign-generator-service.test.ts"
+Task: "Add failing service test for source relationship creation after successful entity save in apps/web/src/lib/services/generators/campaign-generator-service.test.ts"
+```
+
+## Implementation Strategy
+
+### MVP First (US1)
+
+1. Complete Setup and Foundational phases.
+2. Complete US1 to support configure, generate, review, and direct save for supported generators.
+3. Validate US1 independently with service and component tests.
+4. Demo US1 before extending AI policy, theme/context, or docs.
+
+### Incremental Delivery
+
+1. US1: Native workflow and direct vault save.
+2. US2: Robust non-AI behavior and policy messaging.
+3. US3: Theme defaults and contextual relationships.
+4. US4: Help content and first-use guidance.
+5. Polish: public generator regressions, related generation regressions, accessibility pass, and full validation.
+
+### TDD Enforcement
+
+- Each story includes explicit failing test tasks before implementation tasks.
+- Do not mark a story checkpoint complete until both success and failure/cancellation paths pass.
+- If a task changes behavior outside its story scope, add or update tests in the affected file before implementation.
+
+## Notes
+
+- Use Svelte 5 runes for all Svelte components and `.svelte.ts` stores.
+- Use Tailwind 4 semantic tokens and Iconify utility classes only.
+- Keep app chrome neutral; world-theme styling belongs inside campaign content surfaces.
+- Do not introduce `localStorage` as a generator import bridge.
+- Preserve "Labels" terminology in all user-facing text.
+- Commit after each completed story or logical group.

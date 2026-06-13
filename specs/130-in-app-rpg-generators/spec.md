@@ -9,7 +9,6 @@
 
 - Master issue: [#1129](https://github.com/eserlan/Codex-Cryptica/issues/1129)
 - Roadmap: [docs/plans/in-app-rpg-generators.md](../../docs/plans/in-app-rpg-generators.md)
-- Phase issues: [#1345](https://github.com/eserlan/Codex-Cryptica/issues/1345), [#1346](https://github.com/eserlan/Codex-Cryptica/issues/1346), [#1347](https://github.com/eserlan/Codex-Cryptica/issues/1347), [#1348](https://github.com/eserlan/Codex-Cryptica/issues/1348), [#1349](https://github.com/eserlan/Codex-Cryptica/issues/1349)
 
 ## User Scenarios & Testing _(mandatory)_
 

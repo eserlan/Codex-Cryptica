@@ -177,16 +177,11 @@ Notes:
 - Do not include internal refactors in user-facing changelog highlights.
 - Keep the public SEO pages optimized for discovery; keep campaign UI optimized for workflow.
 
-## Issue Breakdown
+## Issue Tracking
 
-| Phase   | Issue                                                          |
-| ------- | -------------------------------------------------------------- |
-| Master  | [#1129](https://github.com/eserlan/Codex-Cryptica/issues/1129) |
-| Phase 1 | [#1345](https://github.com/eserlan/Codex-Cryptica/issues/1345) |
-| Phase 2 | [#1346](https://github.com/eserlan/Codex-Cryptica/issues/1346) |
-| Phase 3 | [#1347](https://github.com/eserlan/Codex-Cryptica/issues/1347) |
-| Phase 4 | [#1348](https://github.com/eserlan/Codex-Cryptica/issues/1348) |
-| Phase 5 | [#1349](https://github.com/eserlan/Codex-Cryptica/issues/1349) |
+Use [#1129](https://github.com/eserlan/Codex-Cryptica/issues/1129) as the single master tracker.
+
+The implementation source of truth is the Speckit feature at `specs/130-in-app-rpg-generators/`.
 
 ## Success Criteria
 
