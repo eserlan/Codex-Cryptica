@@ -61,6 +61,7 @@ export class MapStore {
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private static _vaultSwitchHandler: (() => void) | null = null;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -109,11 +110,18 @@ export class MapStore {
 
     // Clear stack on vault switch and handle auto-selection
     if (typeof window !== "undefined") {
-      window.addEventListener("vault-switched", () => {
+      if (MapStore._vaultSwitchHandler) {
+        window.removeEventListener(
+          "vault-switched",
+          MapStore._vaultSwitchHandler,
+        );
+      }
+      MapStore._vaultSwitchHandler = () => {
         this.navigationStack = [];
         this.pendingActiveMapId = null;
         this.restorePageState();
-      });
+      };
+      window.addEventListener("vault-switched", MapStore._vaultSwitchHandler);
 
       // Reactive auto-selection when maps are loaded or activeMapId is lost/invalid
       $effect.root(() => {
