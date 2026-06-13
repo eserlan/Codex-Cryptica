@@ -135,6 +135,17 @@ export interface CampaignGeneratorDefinition {
   ) => GeneratedDraft;
 }
 
+/**
+ * Declares whether AI generation is permitted and available in the current
+ * session. Injected by the web app; the package MUST NOT read AI stores directly.
+ */
+export interface AIPolicy {
+  /** Whether the user has AI enabled in their settings. */
+  isEnabled: boolean;
+  /** Whether the AI service is reachable (network / key available). */
+  isAvailable: boolean;
+}
+
 /** Thrown when an unknown generator id is requested. Safe to show to users. */
 export class UnsupportedGeneratorError extends Error {
   constructor(public readonly generatorId: string) {

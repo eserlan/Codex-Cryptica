@@ -91,17 +91,17 @@
 
 ### Tests for User Story 2
 
-- [ ] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation, template-aware non-AI draft mapping, and AI context minimization excluding full vault contents and direct vault store access in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T033 [P] [US2] Add failing component test for AI unavailable messaging without blocking non-AI generation in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
+- [x] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation, template-aware non-AI draft mapping, and AI context minimization excluding full vault contents and direct vault store access in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T033 [P] [US2] Add failing component test for AI unavailable messaging without blocking non-AI generation in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Add AI policy inputs, local fallback enforcement, explicit minimal AI context packet consumption, and template-aware draft mapping to packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T035 [US2] Add per-generator non-AI option defaults to packages/generator-engine/src/campaign-generator-registry.ts
-- [ ] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
-- [ ] T037 [US2] Ensure draft generation never mutates vault data before save in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T038 [US2] Run User Story 2 tests listed in specs/131-in-app-rpg-generators/quickstart.md
+- [x] T034 [US2] Add AI policy inputs, local fallback enforcement, explicit minimal AI context packet consumption, and template-aware draft mapping to packages/generator-engine/src/campaign-generator-service.ts
+- [x] T035 [US2] Add per-generator non-AI option defaults to packages/generator-engine/src/campaign-generator-registry.ts
+- [x] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
+- [x] T037 [US2] Ensure draft generation never mutates vault data before save in packages/generator-engine/src/campaign-generator-service.ts
+- [x] T038 [US2] Run User Story 2 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Stories 1 and 2 work independently and preserve local-first behavior.
 

@@ -1,6 +1,10 @@
 <script lang="ts">
   import { listGenerators } from "generator-engine";
-  import type { GeneratorId, GeneratorRunRequest } from "generator-engine";
+  import type {
+    AIPolicy,
+    GeneratorId,
+    GeneratorRunRequest,
+  } from "generator-engine";
 
   interface Props {
     generatorId: GeneratorId | null;
@@ -8,13 +12,23 @@
       req: Pick<GeneratorRunRequest, "generatorId" | "options" | "useAI">,
     ) => void;
     disabled?: boolean;
+    aiPolicy?: AIPolicy;
   }
 
   let {
     generatorId = $bindable(null),
     onsubmit,
     disabled = false,
+    aiPolicy,
   }: Props = $props();
+
+  const aiUnavailableReason = $derived(
+    aiPolicy && (!aiPolicy.isEnabled || !aiPolicy.isAvailable)
+      ? !aiPolicy.isEnabled
+        ? "AI generation is disabled. Content will be generated locally."
+        : "AI is currently unavailable. Content will be generated locally."
+      : null,
+  );
 
   const generators = listGenerators();
 
@@ -29,6 +43,15 @@
 </script>
 
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
+  {#if aiUnavailableReason}
+    <p
+      class="text-amber-400 rounded border border-amber-800/40 bg-amber-950/30 px-3 py-2 text-xs"
+      data-testid="ai-unavailable-notice"
+    >
+      {aiUnavailableReason}
+    </p>
+  {/if}
+
   <fieldset class="flex flex-col gap-2">
     <legend class="text-surface-300 mb-1 text-sm font-medium">Generator</legend>
     {#each generators as gen (gen.id)}

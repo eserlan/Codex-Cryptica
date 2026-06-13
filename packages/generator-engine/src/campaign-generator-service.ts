@@ -1,5 +1,6 @@
 import { getGenerator } from "./campaign-generator-registry";
 import {
+  type AIPolicy,
   type DraftSaveRequest,
   type DraftSaveResult,
   type GeneratedDraft,
@@ -35,6 +36,8 @@ export interface GeneratorVaultGateway {
 
 export interface CampaignGeneratorServiceDeps {
   vault?: GeneratorVaultGateway;
+  /** Optional AI policy; when absent, AI is treated as unavailable/disabled. */
+  aiPolicy?: AIPolicy;
 }
 
 /** User-readable error raised when a save is blocked or invalid. */
@@ -52,9 +55,11 @@ export class DraftSaveError extends Error {
  */
 export class CampaignGeneratorService {
   private readonly vault?: GeneratorVaultGateway;
+  readonly aiPolicy: AIPolicy;
 
   constructor(deps: CampaignGeneratorServiceDeps = {}) {
     this.vault = deps.vault;
+    this.aiPolicy = deps.aiPolicy ?? { isEnabled: false, isAvailable: false };
   }
 
   /**

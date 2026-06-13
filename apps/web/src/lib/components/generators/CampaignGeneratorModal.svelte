@@ -141,7 +141,11 @@
     {/if}
 
     {#if stage === "configure"}
-      <GeneratorConfigForm bind:generatorId onsubmit={onGenerate} />
+      <GeneratorConfigForm
+        bind:generatorId
+        onsubmit={onGenerate}
+        aiPolicy={svc.aiPolicy}
+      />
     {:else if stage === "generating"}
       <p class="text-surface-400 text-sm">Generating your content…</p>
     {:else if stage === "review" && draft}

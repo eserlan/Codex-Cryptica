@@ -136,6 +136,20 @@ describe("saveDraft", () => {
     ).rejects.toThrow(/entity type/i);
   });
 
+  it("creates an entity passing labels array correctly", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    await svc.saveDraft({
+      draft: draft({ labels: ["Human", "Guard"] }),
+      createRelationship: false,
+    });
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ labels: ["Human", "Guard"] }),
+    );
+  });
+
   it("preserves the draft (throws without side effects) when persistence fails", async () => {
     const vault = gateway({
       createEntity: vi.fn(async () => {
@@ -150,5 +164,34 @@ describe("saveDraft", () => {
     expect(vault.addConnection).not.toHaveBeenCalled();
     // Draft object is untouched and remains available for retry.
     expect(d.title).toBe("Kaeldar");
+  });
+});
+
+// T032: AI policy — forced non-AI generation and context minimization
+describe("AI policy (US2)", () => {
+  it("generates a draft with useAI false without calling any vault method", () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    const d = svc.generateDraft(run("npc", { useAI: false }));
+    expect(d.title.length).toBeGreaterThan(0);
+    expect(vault.createEntity).not.toHaveBeenCalled();
+    expect(vault.addConnection).not.toHaveBeenCalled();
+  });
+
+  it("respects useAI false for all supported generators", () => {
+    const svc = new CampaignGeneratorService();
+    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+      const d = svc.generateDraft(run(id, { useAI: false }));
+      expect(d.sourceGeneratorId).toBe(id);
+    }
+  });
+
+  it("draft generation does not read or write vault state", () => {
+    const vault = gateway({ canWrite: vi.fn(() => true) });
+    const svc = new CampaignGeneratorService({ vault });
+    svc.generateDraft(run("faction", { useAI: false }));
+    expect(vault.canWrite).not.toHaveBeenCalled();
+    expect(vault.createEntity).not.toHaveBeenCalled();
+    expect(vault.addConnection).not.toHaveBeenCalled();
   });
 });

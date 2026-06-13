@@ -35,6 +35,31 @@ vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
 }));
 
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: {
+    isGuest: false,
+    createEntity: vi.fn(async () => "new-id"),
+    addConnection: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/categories.svelte", () => ({
+  categories: {
+    list: [
+      { id: "character", label: "Character" },
+      { id: "location", label: "Location" },
+    ],
+  },
+}));
+
+vi.mock("generator-engine", async () => {
+  const actual =
+    await vi.importActual<typeof import("generator-engine")>(
+      "generator-engine",
+    );
+  return actual;
+});
+
 import CampaignGeneratorModal from "./CampaignGeneratorModal.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
@@ -79,5 +104,12 @@ describe("CampaignGeneratorModal", () => {
   it("does not show contextual hint in workspace mode", () => {
     render(CampaignGeneratorModal);
     expect(screen.queryByTestId("contextual-hint")).toBeNull();
+  });
+
+  // T033: AI unavailable messaging — non-AI generation must remain accessible
+  it("configure stage shows a Generate button regardless of AI availability", () => {
+    render(CampaignGeneratorModal);
+    // The config form must always offer a way to generate (non-AI path).
+    expect(screen.getByRole("button", { name: /generate/i })).toBeTruthy();
   });
 });
