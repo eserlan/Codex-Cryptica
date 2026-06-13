@@ -171,15 +171,15 @@
 
 ### Tests for User Story 5
 
-- [ ] T060 [P] [US5] Add failing help content registration test for in-app generators in apps/web/src/lib/stores/help.test.ts
-- [ ] T061 [P] [US5] Add failing feature hint config test for in-app generators in apps/web/src/lib/config/help-content.test.ts
+- [x] T060 [P] [US5] Add failing help content registration test for in-app generators in apps/web/src/lib/stores/help.test.ts
+- [x] T061 [P] [US5] Add failing feature hint config test for in-app generators in apps/web/src/lib/config/help-content.test.ts
 
 ### Implementation for User Story 5
 
-- [ ] T062 [US5] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
-- [ ] T063 [US5] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
-- [ ] T064 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/VaultControls.svelte
-- [ ] T065 [US5] Run User Story 5 tests listed in specs/131-in-app-rpg-generators/quickstart.md
+- [x] T062 [US5] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
+- [x] T063 [US5] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
+- [x] T064 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/VaultControls.svelte
+- [x] T065 [US5] Run User Story 5 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Users have discoverable, plain-language guidance for the full workflow.
 
@@ -189,17 +189,17 @@
 
 **Purpose**: Regression checks, accessibility review, and release readiness across all stories.
 
-- [ ] T066 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts and that tools/\*-generator and non-supported-type regression tests (T054a, T054b) pass
-- [ ] T067 [P] Verify existing Generate Related entry point tests pass or are migrated from apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts to unified generator workflow coverage
-- [ ] T068 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
-- [ ] T069 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
+- [x] T066 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts and that tools/\*-generator and non-supported-type regression tests (T054a, T054b) pass
+- [x] T067 [P] Verify existing Generate Related entry point tests pass or are migrated from apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts to unified generator workflow coverage
+- [x] T068 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
+- [x] T069 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
 - [ ] T070 [P] Add user-facing changelog entry only if shipping the visible workflow in apps/web/src/lib/content/changelog/releases.json
-- [ ] T071 Run full validation commands from specs/131-in-app-rpg-generators/quickstart.md
-- [ ] T072 Update master issue progress notes from completed implementation tasks in specs/131-in-app-rpg-generators/tasks.md
+- [x] T071 Run full validation commands from specs/131-in-app-rpg-generators/quickstart.md
+- [x] T072 Update master issue progress notes from completed implementation tasks in specs/131-in-app-rpg-generators/tasks.md
 - [ ] T073 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/131-in-app-rpg-generators/quickstart.md
 - [ ] T074 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/131-in-app-rpg-generators/quickstart.md
-- [ ] T075 Validate SC-009, SC-010, and SC-011 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, generated drafts preserve resolved template headings when enabled, and no standalone related modal is required
-- [ ] T076 [P] Verify the new packages/generator-engine package meets the constitution's 70% coverage goal (Principle X) by running bun run --filter generator-engine test -- --coverage and recording the result in specs/131-in-app-rpg-generators/quickstart.md
+- [x] T075 Validate SC-009, SC-010, and SC-011 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, generated drafts preserve resolved template headings when enabled, and no standalone related modal is required
+- [x] T076 [P] Verify the new packages/generator-engine package meets the constitution's 70% coverage goal (Principle X) — result: 98.81% functions / 100% lines
 
 ---
 

@@ -13,6 +13,7 @@
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -509,6 +510,7 @@
                 >GENERATE</span
               >{/if}
           </button>
+          <FeatureHint hintId="in-app-generators" />
 
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
