@@ -86,24 +86,10 @@
     },
   ];
 
-  const faqs = [
-    {
-      q: "Is Codex Cryptica really free?",
-      a: "Yes. Codex Cryptica is a completely free, local-first campaign manager. All campaign files, databases, and note storage run locally inside your browser using the Origin Private File System (OPFS), requiring no paid subscriptions, accounts, or advertisements.",
-    },
-    {
-      q: "Where is my campaign data stored?",
-      a: "Your campaign notes and worldbuilding files are stored locally on your device's hard drive using the browser's Origin Private File System (OPFS). Codex Cryptica does not host, sync, or upload your campaign data to external servers, guaranteeing complete privacy.",
-    },
-    {
-      q: "Does this RPG campaign manager work offline?",
-      a: "Absolutely. Because Codex Cryptica is built as a local-first application, you can view your interactive relationship maps, track game timelines, and edit all campaign notes completely offline at the table without any network connection.",
-    },
-    {
-      q: "How does the AI GM assistant work?",
-      a: "Codex Cryptica's AI Lore Oracle assistant integrates directly with your own Google Gemini API key, which can be configured securely in the settings panel. Codex Cryptica also provides a shared system proxy for quick, free trials of the AI co-author features.",
-    },
-  ];
+  const faqs = faqSchema.mainEntity.map((item) => ({
+    q: item.name,
+    a: item.acceptedAnswer.text,
+  }));
 </script>
 
 <svelte:head>
