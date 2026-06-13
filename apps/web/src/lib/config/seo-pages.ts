@@ -104,15 +104,14 @@ export const solutions: Record<string, SEOPageData> = {
   },
   "worldbuilding-tool": {
     slug: "worldbuilding-tool",
-    title:
-      "Structured Worldbuilding Tool & Campaign Wiki Schemas | Codex Cryptica",
+    title: "Free Structured Worldbuilding Tool & Wiki Schemas | Codex Cryptica",
     description:
       "Organize your campaign database with custom worldbuilding templates, structured schemas, entity metadata, and relational graphs.",
-    h1: "Structured Worldbuilding Tool & Campaign Schemas",
+    h1: "Free Structured Worldbuilding Tool & Wiki Schemas",
     subheading:
-      "Design your lore database with templates and auto-generated links.",
+      "Design your lore database with free templates and auto-generated links.",
     introText:
-      "For complex worldbuilding projects, simple document folders aren't enough. Codex Cryptica provides a structured worldbuilding tool that utilizes predefined entity schemas for characters, factions, locations, items, and events. Maintain complete metadata lists, tag assets, and keep your entire campaign database organized under standard Markdown frontmatter.",
+      "For complex worldbuilding projects, simple document folders aren't enough. Codex Cryptica provides a free, structured worldbuilding tool that utilizes predefined entity schemas for characters, factions, locations, items, and events. Maintain complete metadata lists, tag assets, and keep your entire campaign database organized under standard Markdown frontmatter.",
     ctaText: "Start Structuring Your World",
     keywords: [
       "structured worldbuilding tool",
