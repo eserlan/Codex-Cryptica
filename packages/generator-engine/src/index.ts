@@ -12,6 +12,13 @@ export {
   FALLBACK_CATEGORY,
 } from "./campaign-generator-registry";
 export {
+  adaptNPC,
+  adaptFaction,
+  adaptSettlement,
+  adaptMagicItem,
+  type PublicGeneratorOutput,
+} from "./public-generator-adapters";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
