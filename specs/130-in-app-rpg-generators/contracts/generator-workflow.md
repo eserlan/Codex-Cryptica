@@ -26,6 +26,9 @@ interface CampaignGeneratorDefinition {
   id: GeneratorId;
   label: string;
   description: string;
+  // Vault category id, NOT the generator id. Mapping:
+  // npc -> "character", settlement -> "location",
+  // magic-item -> "item", faction -> "faction".
   entityType: string;
   icon: string;
   options: GeneratorOptionDefinition[];
@@ -69,7 +72,7 @@ interface GeneratorVaultContext {
   existingTitles: string[];
   labelSuggestions: string[];
   includedContext: Array<
-    "theme" | "schema" | "source" | "neighbors" | "titles" | "labels"
+    "theme" | "categories" | "source" | "neighbors" | "titles" | "labels"
   >;
 }
 
@@ -177,7 +180,7 @@ interface DraftSaveResult {
 - Builder input may include active theme, categories, template service output, selected source entity id, graph connections, existing titles, and labels.
 - Builder output must cap entity excerpts and neighbor count before generation.
 - Default neighbor selection should prefer directly connected entities, explicit relationship labels, and entities with meaningful content.
-- The context summary must distinguish theme/schema context from source/neighbor campaign content.
+- The context summary must distinguish theme and category/template context from source/neighbor campaign content.
 - Full campaign entity maps, full lore fields, full graph state, and API keys are never included in the packet.
 
 ## Template Application Contract
@@ -193,6 +196,8 @@ interface DraftSaveResult {
 ## Public Generator Compatibility Contract
 
 - Existing public NPC, Faction, Settlement, and Magic Item generator pages must keep their current routes.
+- Both public surfaces backed by `seo/generator-engine.ts` must be preserved: the `generators/[slug]` route and the `tools/*-generator` marketing pages.
+- The engine's per-type dispatch must be explicit: only supported NPC, Faction, Settlement, and Magic Item types route to `packages/generator-engine`; all other types (quest, kingdom/nation, social-hub/tavern, pantheon, names, vampire-clan) keep existing logic and behavior.
 - Public pages must delegate supported non-AI generation, defaults, and output mapping to `packages/generator-engine`.
 - Public pages may keep page-specific SEO copy, discovery content, layout, and marketing-only controls in the web app.
 - Public page adapters must not import campaign vault stores or require an active campaign.

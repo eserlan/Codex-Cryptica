@@ -74,7 +74,7 @@ Build the packet in `apps/web/src/lib/services/generators/generator-vault-contex
 
 Construction steps:
 
-1. Start with theme/schema context: active theme id/name, selected target category, available category labels, resolved template outline, template source, and whether template application is enabled.
+1. Start with theme and category/template context: active theme id/name, selected target category, available category labels, resolved template outline, template source, and whether template application is enabled.
 2. If launched from Generate Related, add the selected source entity as a capped excerpt with title, type, content excerpt, optional lore excerpt, and labels.
 3. Gather directly connected outbound and inbound neighbors from the source entity.
 4. Rank neighbors by direct relationship presence, meaningful content, and labels; keep a small capped set.

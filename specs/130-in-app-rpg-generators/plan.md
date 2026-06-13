@@ -150,8 +150,11 @@ No constitution violations.
 
 - Move or wrap supported public generator logic behind `packages/generator-engine` public-page adapters.
 - Update existing public generator routes/services to delegate NPC, Faction, Settlement, and Magic Item generation to the package.
+- Make the `seo/generator-engine.ts` dispatch boundary explicit: route only the supported four types to the package and leave all other types (quest, kingdom/nation, social-hub/tavern, pantheon, names, vampire-clan) on existing logic.
+- Cover both public surfaces backed by the engine: the `generators/[slug]` route and the `tools/*-generator` marketing pages.
+- Coordinate any `seo/generator-engine.ts` edits with spec `1255-pantheon-generator`, which shares the same engine.
 - Preserve existing public routes, SEO copy, and primary generation behavior.
-- Add parity/regression tests proving public pages still complete their supported generator flows through package logic.
+- Add parity/regression tests proving public pages still complete their supported generator flows through package logic and that non-supported types are unchanged.
 
 ### Phase 6: Documentation, Release Polish, And Alignment
 

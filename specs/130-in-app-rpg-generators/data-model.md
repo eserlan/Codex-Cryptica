@@ -9,17 +9,31 @@ Fields:
 - `id`: stable generator id (`npc`, `faction`, `settlement`, `magic-item`)
 - `label`: user-facing generator name
 - `description`: short plain-language description
-- `entityType`: default campaign entity type produced by the generator
+- `entityType`: default campaign entity **category id** produced by the generator (this is the vault category, not the generator id)
 - `icon`: Iconify utility class
 - `options`: list of option definitions used by the configuration form
 - `defaults`: default option values before theme mapping
 - `generate`: function that produces a generator output from resolved options
 - `mapOutputToDraft`: function that maps generator output into a reviewable draft
 
+### Generator id → vault category mapping
+
+The generator id is a content concept and is **not** the same as the vault entity category. Each definition's `entityType` must use the vault category id, mapped as follows against the default categories (`character`, `creature`, `location`, `item`, `event`, `faction`, `note`):
+
+| Generator `id` | `entityType` (vault category) |
+| -------------- | ----------------------------- |
+| `npc`          | `character`                   |
+| `faction`      | `faction`                     |
+| `settlement`   | `location`                    |
+| `magic-item`   | `item`                        |
+
+Only `faction` matches by name; `npc`, `settlement`, and `magic-item` must map to their distinct vault categories. The generated draft's `entityType` and the saved `createEntity(type, ...)` call MUST use the mapped vault category id, never the generator id.
+
 Validation rules:
 
 - `id` must be unique.
-- `entityType` must match an available campaign entity category or have a safe fallback.
+- `entityType` must be a vault category id that exists in the active campaign's categories (default or custom), using the mapping above for the supported generators.
+- If a mapped category id is missing from the active campaign (for example a custom category set), the definition MUST resolve to a safe existing fallback category rather than creating an entity with an unknown type.
 - `options` must have visible labels and deterministic default values.
 - `mapOutputToDraft` must preserve generated labels as labels.
 

@@ -37,6 +37,7 @@
 
 - [ ] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in packages/generator-engine/src/campaign-generator-registry.test.ts
 - [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, labels, template heading preservation, and unmatched detail preservation in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [ ] T006a [P] Add failing tests asserting the generator-id → vault-category mapping (npc→character, settlement→location, magic-item→item, faction→faction) and a safe fallback when the mapped category is absent, in packages/generator-engine/src/campaign-generator-registry.test.ts
 - [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
 - [ ] T009 Define generator ids, option definitions, vault context packet, template application metadata, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
@@ -73,7 +74,7 @@
 - [ ] T024 [US1] Implement semantic generator option form with visible labels and native submit behavior in apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
 - [ ] T025 [US1] Implement editable draft review form for title, entity type, summary/content, lore, and labels in apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
 - [ ] T026 [US1] Connect CampaignGeneratorModal to campaignGeneratorService and modalUIStore in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
-- [ ] T027 [US1] Add a campaign workspace generator entry point near existing create actions in apps/web/src/lib/components/layout/VaultControls.svelte
+- [ ] T027 [US1] Add a campaign workspace generator entry point near existing create actions in apps/web/src/lib/components/VaultControls.svelte
 - [ ] T028 [US1] Add a mobile generator entry point near mobile create actions in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
 - [ ] T029 [US1] Ensure successful save selects or opens the new entity using existing vault selection behavior in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
 - [ ] T030 [US1] Run User Story 1 tests listed in specs/130-in-app-rpg-generators/quickstart.md
@@ -146,13 +147,16 @@
 - [ ] T052 [P] [US4] Add failing public adapter parity tests for NPC, Faction, Settlement, and Magic Item supported outputs in packages/generator-engine/src/public-generator-adapters.test.ts
 - [ ] T053 [P] [US4] Add failing regression test proving public generator routes complete supported generation through package-backed adapters in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
 - [ ] T054 [P] [US4] Add failing regression test preserving public generator route slugs and SEO/discovery metadata in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
+- [ ] T054a [P] [US4] Add failing regression test proving the tools/\*-generator marketing pages (faction-generator, rpg-npc-generator, dnd-npc-generator, quest-hook-generator, fantasy-name-generator, vampire-clan-generator) still complete after the engine delegates supported types, in apps/web/src/routes/(marketing)/tools/faction-generator/+page.test.ts and apps/web/src/routes/(marketing)/tools/rpg-npc-generator/+page.test.ts
+- [ ] T054b [P] [US4] Add failing test proving non-supported generator types (quest, kingdom/nation, social-hub/tavern, pantheon, names, vampire-clan) remain on existing seo/generator-engine.ts logic with unchanged output, in apps/web/src/lib/services/seo/generator-engine.test.ts
 
 ### Implementation for User Story 4
 
 - [ ] T055 [US4] Implement package-owned public generator adapters for existing public page inputs in packages/generator-engine/src/public-generator-adapters.ts
-- [ ] T056 [US4] Update apps/web/src/lib/services/seo/generator-engine.ts to delegate supported NPC, Faction, Settlement, and Magic Item logic to packages/generator-engine
+- [ ] T056 [US4] Update apps/web/src/lib/services/seo/generator-engine.ts to delegate supported NPC, Faction, Settlement, and Magic Item logic to packages/generator-engine using an explicit per-type dispatch that leaves all other types (quest, kingdom/nation, social-hub/tavern, pantheon, names, vampire-clan) on existing logic; coordinate these edits with spec 1255-pantheon-generator
 - [ ] T057 [US4] Update apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte only as needed to consume package-backed generator results without route or layout changes
 - [ ] T058 [US4] Preserve existing public page copy, route slugs, SEO metadata, and primary generation behavior in apps/web/src/routes/(marketing)/generators/[slug]/+page.svelte
+- [ ] T058a [US4] Verify the tools/_-generator marketing pages still produce expected output after the engine transition without route, copy, or layout changes in apps/web/src/routes/(marketing)/tools/_-generator/+page.svelte
 - [ ] T059 [US4] Run public generator transition tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Public generator pages and the in-app workflow share package-owned logic for supported generator behavior.
@@ -174,7 +178,7 @@
 
 - [ ] T062 [US5] Add in-app generator help article in apps/web/src/lib/content/help/in-app-generators.md
 - [ ] T063 [US5] Register in-app generator help article and optional feature hint in apps/web/src/lib/config/help-content.ts
-- [ ] T064 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/layout/VaultControls.svelte
+- [ ] T064 [US5] Add first-use FeatureHint placement near the generator entry point in apps/web/src/lib/components/VaultControls.svelte
 - [ ] T065 [US5] Run User Story 5 tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Users have discoverable, plain-language guidance for the full workflow.
@@ -185,7 +189,7 @@
 
 **Purpose**: Regression checks, accessibility review, and release readiness across all stories.
 
-- [ ] T066 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts
+- [ ] T066 [P] Verify public generator route tests still pass in apps/web/src/routes/(marketing)/generators/[slug]/generators.test.ts and that tools/\*-generator and non-supported-type regression tests (T054a, T054b) pass
 - [ ] T067 [P] Verify existing Generate Related entry point tests pass or are migrated from apps/web/src/lib/components/entity-detail/RelatedEntityModal.test.ts to unified generator workflow coverage
 - [ ] T068 [P] Verify generator engine regression tests still pass in apps/web/src/lib/services/seo/generator-engine.test.ts
 - [ ] T069 [P] Run accessibility-focused keyboard and form review against apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
@@ -236,7 +240,7 @@
 - US1 component tests T018, T019, and T020 can run in parallel after modal test setup exists.
 - US2 tests T031, T032, and T033 can run in parallel.
 - US3 tests T039, T040, T041, and T042 can run in parallel.
-- US4 tests T052, T053, and T054 can run in parallel.
+- US4 tests T052, T053, T054, T054a, and T054b can run in parallel.
 - US5 tests T060 and T061 can run in parallel.
 - Polish regression checks T066, T067, T068, T069, and T070 can run in parallel.
 

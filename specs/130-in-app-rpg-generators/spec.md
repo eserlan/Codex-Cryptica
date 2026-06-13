@@ -149,6 +149,10 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **FR-035**: Users MUST be able to disable template application for a generated draft before generation or review.
 - **FR-036**: Non-AI generation MUST map generated fields into known template sections where possible and preserve unmatched generated details in an editable section.
 - **FR-037**: AI-backed generation MUST receive the resolved template outline as a structural requirement when template application is enabled.
+- **FR-038**: The public generator transition MUST preserve the behavior of secondary public generator surfaces that share `apps/web/src/lib/services/seo/generator-engine.ts`, including the `tools/*-generator` marketing pages (for example RPG/D&D NPC, Faction, Quest Hook, Fantasy Name, and Vampire Clan), not only the `generators/[slug]` route.
+- **FR-039**: The public generator transition MUST NOT change the behavior of public generators outside the initial supported set (for example quest, kingdom/nation, social-hub/tavern, pantheon, names, vampire-clan); those generators remain on existing `seo/generator-engine.ts` logic until separately migrated.
+- **FR-040**: The shared engine's dispatch boundary MUST be explicit, routing only supported NPC, Faction, Settlement, and Magic Item types to `packages/generator-engine` while leaving all other types on existing logic, so the engine does not silently diverge per type.
+- **FR-041**: Saved entities MUST use the vault entity category id, not the generator id. The NPC generator MUST produce a `character` entity, Settlement a `location` entity, and Magic Item an `item` entity; Faction maps directly to `faction`. When a mapped category is absent from the active campaign, the system MUST fall back to a safe existing category rather than saving an unknown entity type.
 
 ### Key Entities
 
@@ -183,6 +187,9 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - Template outlines are resolved by the campaign app layer using the same template service as manual entity creation.
 - Template application is enabled by default for campaign saves and can be disabled for a draft.
 - Existing campaign duplicate-name and entity-type rules continue to apply unless later planning identifies a required change.
+- The `generators/[slug]` route and the `tools/*-generator` marketing pages are two distinct public surfaces backed by the same `seo/generator-engine.ts`; both must be regression-checked when that engine starts delegating to the package.
+- The shared `seo/generator-engine.ts` serves more generator types than the initial supported four; only the supported types route to `packages/generator-engine`, and the remaining types keep their current logic until separately migrated.
+- The pantheon generator is owned by spec `1255-pantheon-generator`; because it shares `seo/generator-engine.ts`, edits to that engine in this feature must coordinate with `1255` to avoid conflicting changes.
 
 ## Success Criteria _(mandatory)_
 
@@ -199,3 +206,4 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **SC-009**: 100% of existing Generate Related entry points open the unified generator workflow with source entity context and no longer require a separate related-entity modal to complete the primary contextual generation flow.
 - **SC-010**: 100% of AI-backed contextual generation attempts show the included context categories before generation and exclude full vault contents by default.
 - **SC-011**: 100% of generated campaign drafts for templated entity types preserve the resolved template headings or clearly show template application was disabled before save.
+- **SC-012**: 100% of public generator surfaces backed by the shared engine — both the `generators/[slug]` route and the `tools/*-generator` pages — continue to complete their primary flows after the transition, and non-supported generator types show no behavior change.
