@@ -4,6 +4,8 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { buildVaultContext } from "$lib/services/generators/generator-vault-context";
   import {
     CampaignGeneratorService,
     isSupportedGenerator,
@@ -54,20 +56,24 @@
     stage = "generating";
     errorMsg = null;
     try {
+      const sourceEntityId = workflow.sourceEntityId;
+      const sourceEntity = sourceEntityId
+        ? vault.entities[sourceEntityId]
+        : undefined;
+      const vaultContext = buildVaultContext({
+        themeId: themeStore.worldThemeId ?? "workspace",
+        themeName: themeStore.worldThemeId,
+        sourceEntity,
+        allEntities: vault.entities,
+        categoryLabels: categories.list.map((c) => ({
+          id: c.id,
+          label: c.label,
+        })),
+      });
       const result = svc.generateDraft({
         ...req,
-        themeId: "workspace",
-        vaultContext: {
-          categoryLabels: categories.list.map((c) => ({
-            id: c.id,
-            label: c.label,
-          })),
-          applyTemplate: false,
-          neighbors: [],
-          existingTitles: [],
-          labelSuggestions: [],
-          includedContext: [],
-        },
+        themeId: themeStore.worldThemeId ?? "workspace",
+        vaultContext,
       });
       draft = result;
       stage = "review";
@@ -77,7 +83,7 @@
     }
   }
 
-  async function onSave(reviewed: GeneratedDraft) {
+  async function onSave(reviewed: GeneratedDraft, createRelationship: boolean) {
     stage = "saving";
     errorMsg = null;
     try {
@@ -88,8 +94,7 @@
           relationshipLabel:
             workflow.launchMode === "contextual" ? "related" : undefined,
         },
-        createRelationship:
-          workflow.launchMode === "contextual" && !!workflow.sourceEntityId,
+        createRelationship,
       });
       vault.selectedEntityId = result.entityId;
       close();
@@ -153,6 +158,8 @@
         bind:draft
         categories={categories.list}
         saving={false}
+        showRelationshipToggle={workflow.launchMode === "contextual" &&
+          !!workflow.sourceEntityId}
         onsave={onSave}
         onback={() => {
           stage = "configure";

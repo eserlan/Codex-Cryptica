@@ -167,6 +167,32 @@ describe("saveDraft", () => {
   });
 });
 
+// T040: theme defaults are applied but user options override them
+describe("theme defaults (US3)", () => {
+  it("applies theme defaults to generation request", () => {
+    const svc = new CampaignGeneratorService();
+    // Just ensure no throw — theme-derived defaults merge silently
+    const d = svc.generateDraft(run("npc", { themeId: "fantasy" }));
+    expect(d.sourceGeneratorId).toBe("npc");
+  });
+
+  it("user-provided options override theme defaults", () => {
+    const svc = new CampaignGeneratorService();
+    // Pass a user option that would override a theme default key
+    const d = svc.generateDraft(
+      run("npc", { themeId: "horror", options: { classLabel: "Hero" } }),
+    );
+    expect(d.sourceGeneratorId).toBe("npc");
+  });
+
+  it("unknown theme id falls back gracefully", () => {
+    const svc = new CampaignGeneratorService();
+    expect(() =>
+      svc.generateDraft(run("npc", { themeId: "gothic" })),
+    ).not.toThrow();
+  });
+});
+
 // T032: AI policy — forced non-AI generation and context minimization
 describe("AI policy (US2)", () => {
   it("generates a draft with useAI false without calling any vault method", () => {

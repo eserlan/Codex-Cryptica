@@ -1,4 +1,5 @@
 import { getGenerator } from "./campaign-generator-registry";
+import { getThemeDefaults } from "./campaign-generator-theme";
 import {
   type AIPolicy,
   type DraftSaveRequest,
@@ -68,10 +69,19 @@ export class CampaignGeneratorService {
    */
   generateDraft(request: GeneratorRunRequest): GeneratedDraft {
     const generator = getGenerator(request.generatorId);
+    // Merge theme defaults under user-provided options so user edits always win.
+    const themeDefaults = getThemeDefaults(
+      request.themeId,
+      request.generatorId,
+    );
+    const mergedRequest: GeneratorRunRequest = {
+      ...request,
+      options: { ...themeDefaults, ...request.options },
+    };
     // Local-first: AI is never required to produce a draft. When AI is
     // unavailable/disabled the non-AI generator path always runs.
-    const output = generator.generate(request);
-    return generator.mapOutputToDraft(output, request);
+    const output = generator.generate(mergedRequest);
+    return generator.mapOutputToDraft(output, mergedRequest);
   }
 
   /**

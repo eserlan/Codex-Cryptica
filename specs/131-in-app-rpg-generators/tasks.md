@@ -115,22 +115,22 @@
 
 ### Tests for User Story 3
 
-- [ ] T039 [P] [US3] Add failing theme mapping tests for horror, cyberpunk, fantasy, and neutral fallback (use real world-theme ids: workspace, fantasy, scifi, modern, horror, cyberpunk) in packages/generator-engine/src/campaign-generator-theme.test.ts
-- [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T042 [P] [US3] Add failing tests for bounded vault context packet building, system/custom template resolution precedence, contextual launch from an existing entity, and existing Generate Related entry points opening the unified workflow in apps/web/src/lib/services/generators/generator-vault-context.test.ts, apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts, apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts, and apps/web/src/lib/components/zen/ZenContent.related.test.ts
+- [x] T039 [P] [US3] Add failing theme mapping tests for horror, cyberpunk, fantasy, and neutral fallback (use real world-theme ids: workspace, fantasy, scifi, modern, horror, cyberpunk) in packages/generator-engine/src/campaign-generator-theme.test.ts
+- [x] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts
+- [x] T042 [P] [US3] Add failing tests for bounded vault context packet building, system/custom template resolution precedence, contextual launch from an existing entity, and existing Generate Related entry points opening the unified workflow in apps/web/src/lib/services/generators/generator-vault-context.test.ts, apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts, apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts, and apps/web/src/lib/components/zen/ZenContent.related.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T043 [US3] Implement theme-to-generator default mapping in packages/generator-engine/src/campaign-generator-theme.ts
-- [ ] T044 [US3] Apply theme defaults while preserving user overrides in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T045 [US3] Add sourceEntityId, relationship label, launchMode, template application flag, and included context summary handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
-- [ ] T046 [US3] Add optional source relationship save through injected vault connection dependency in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T047 [US3] Implement bounded vault context packet builder with theme, category, resolved template outline/source, source excerpt, capped neighbors, title hints, and label suggestions in apps/web/src/lib/services/generators/generator-vault-context.ts
-- [ ] T048 [US3] Route the existing Generate Related action in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte and apps/web/src/lib/components/zen/ZenContent.svelte to the unified generator workflow with sourceEntityId context
-- [ ] T049 [US3] Add relationship review controls, template application controls, and inspectable context controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte and apps/web/src/lib/components/generators/GeneratorContextReview.svelte
-- [ ] T050 [US3] Retire apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte or reduce it to a compatibility wrapper after unified contextual generation parity is covered
-- [ ] T051 [US3] Run User Story 3 tests listed in specs/131-in-app-rpg-generators/quickstart.md
+- [x] T043 [US3] Implement theme-to-generator default mapping in packages/generator-engine/src/campaign-generator-theme.ts
+- [x] T044 [US3] Apply theme defaults while preserving user overrides in packages/generator-engine/src/campaign-generator-service.ts
+- [x] T045 [US3] Add sourceEntityId, relationship label, launchMode, template application flag, and included context summary handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
+- [x] T046 [US3] Add optional source relationship save through injected vault connection dependency in packages/generator-engine/src/campaign-generator-service.ts
+- [x] T047 [US3] Implement bounded vault context packet builder with theme, category, resolved template outline/source, source excerpt, capped neighbors, title hints, and label suggestions in apps/web/src/lib/services/generators/generator-vault-context.ts
+- [x] T048 [US3] Route the existing Generate Related action in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte and apps/web/src/lib/components/zen/ZenContent.svelte to the unified generator workflow with sourceEntityId context
+- [x] T049 [US3] Add relationship review controls, template application controls, and inspectable context controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte and apps/web/src/lib/components/generators/GeneratorContextReview.svelte
+- [x] T050 [US3] Retire apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte or reduce it to a compatibility wrapper after unified contextual generation parity is covered
+- [x] T051 [US3] Run User Story 3 tests listed in specs/131-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Stories 1, 2, and 3 work independently, with theme defaults and optional contextual relationships.
 

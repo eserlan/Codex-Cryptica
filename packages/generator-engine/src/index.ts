@@ -1,5 +1,9 @@
 export * from "./campaign-generator-types";
 export {
+  getThemeDefaults,
+  THEME_GENERATOR_DEFAULTS,
+} from "./campaign-generator-theme";
+export {
   getGenerator,
   isSupportedGenerator,
   listGenerators,

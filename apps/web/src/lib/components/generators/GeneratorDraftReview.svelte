@@ -6,8 +6,10 @@
     draft: GeneratedDraft;
     categories: Category[];
     saving: boolean;
-    onsave: (draft: GeneratedDraft) => void;
+    onsave: (draft: GeneratedDraft, createRelationship: boolean) => void;
     onback: () => void;
+    /** When true, show the relationship creation toggle (contextual launch). */
+    showRelationshipToggle?: boolean;
   }
 
   let {
@@ -16,7 +18,13 @@
     saving,
     onsave,
     onback,
+    showRelationshipToggle = false,
   }: Props = $props();
+
+  let createRelationship = $state(false);
+  $effect(() => {
+    createRelationship = showRelationshipToggle;
+  });
 
   let title = $state(draft.title);
   let entityType = $state(draft.entityType);
@@ -28,17 +36,20 @@
 
   function handleSave(e: SubmitEvent) {
     e.preventDefault();
-    onsave({
-      ...draft,
-      title: title.trim(),
-      entityType,
-      summary: summary.trim(),
-      lore: lore.trim(),
-      labels: labelsRaw
-        .split(",")
-        .map((l) => l.trim())
-        .filter(Boolean),
-    });
+    onsave(
+      {
+        ...draft,
+        title: title.trim(),
+        entityType,
+        summary: summary.trim(),
+        lore: lore.trim(),
+        labels: labelsRaw
+          .split(",")
+          .map((l) => l.trim())
+          .filter(Boolean),
+      },
+      createRelationship,
+    );
   }
 </script>
 
@@ -111,6 +122,13 @@
       class="bg-surface-700 border-surface-500 rounded-md border px-3 py-2 text-sm text-white"
     />
   </div>
+
+  {#if showRelationshipToggle}
+    <label class="flex cursor-pointer items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={createRelationship} {disabled} />
+      <span class="text-surface-200">Link to source entity</span>
+    </label>
+  {/if}
 
   <div class="flex gap-2">
     <button

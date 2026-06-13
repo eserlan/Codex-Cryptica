@@ -248,7 +248,7 @@
       <div class="flex justify-end">
         <button
           type="button"
-          onclick={() => modalUIStore.openRelatedEntityDialog(entity.id)}
+          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
           class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
         >
           <span class="icon-[lucide--sparkles] w-4 h-4"></span>
