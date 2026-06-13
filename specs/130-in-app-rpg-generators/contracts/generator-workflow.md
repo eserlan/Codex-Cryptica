@@ -124,3 +124,12 @@ interface DraftSaveResult {
 - Review fields are editable before save.
 - Cancel/close before save leaves campaign data unchanged.
 - Loading and error states are announced with accessible status or alert semantics.
+
+## Public Generator Compatibility Contract
+
+- Existing public NPC, Faction, Settlement, and Magic Item generator pages must keep their current routes.
+- Public pages must delegate supported non-AI generation, defaults, and output mapping to `packages/generator-engine`.
+- Public pages may keep page-specific SEO copy, discovery content, layout, and marketing-only controls in the web app.
+- Public page adapters must not import campaign vault stores or require an active campaign.
+- Equivalent supported generator options should resolve through the same package-owned option/default contract used by the in-app workflow.
+- Public page regression tests must prove the primary public generation flows still complete after delegation to the package.

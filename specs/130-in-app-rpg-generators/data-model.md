@@ -27,6 +27,7 @@ Relationships:
 
 - Produces `GeneratedDraft`.
 - Uses zero or one `ThemeDefaultMapping`.
+- Can be exposed through one or more `PublicGeneratorSurface` adapters.
 
 ## GeneratorOptionDefinition
 
@@ -152,3 +153,22 @@ Validation rules:
 - Closing or cancelling from configure/review must not mutate campaign data.
 - Opening without an active campaign shows a clear unavailable state.
 - Saving is disabled or blocked when campaign writes are unavailable.
+
+## PublicGeneratorSurface
+
+Represents an existing public-facing generator page that delegates supported generator behavior to the shared package while keeping public routing and SEO behavior in the web app.
+
+Fields:
+
+- `slug`: existing public route slug
+- `generatorId`: supported shared generator id when the page maps to NPC, Faction, Settlement, or Magic Item behavior
+- `adapter`: package-owned adapter from public page inputs to generator run options
+- `preserveRoute`: whether the existing public route must remain stable
+- `preserveSeoContent`: whether existing public copy/discovery behavior must remain stable
+
+Validation rules:
+
+- Public route slugs must not change as part of the package transition.
+- Public page adapters must use shared `CampaignGeneratorDefinition` contracts for supported generators.
+- Public page output mapping must remain behaviorally aligned with the in-app draft mapping for shared fields.
+- Public pages must not depend on campaign vault state or campaign-only save behavior.

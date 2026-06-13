@@ -1,15 +1,27 @@
 # Research: In-App RPG Generators
 
-## Decision: Use A Campaign-Facing Registry Over Existing Generator Functions
+## Decision: Use A Shared Package Registry Over Existing Generator Functions
 
-**Decision**: Add an app-local campaign generator registry that wraps the existing generator engine for NPC, Faction, Settlement, and Magic Item. The registry defines supported generator ids, labels, option metadata, defaults, output mapping, and optional theme default hooks.
+**Decision**: Add `packages/generator-engine` with a shared generator registry that wraps or extracts the existing generator engine for NPC, Faction, Settlement, and Magic Item. The registry defines supported generator ids, labels, option metadata, defaults, output mapping, public-page adapters, and optional theme default hooks.
 
-**Rationale**: Existing public generator functions already provide local fallback and AI-backed generation paths. A registry gives the campaign app a stable contract without duplicating generator logic or embedding marketing pages.
+**Rationale**: Existing public generator functions already provide local fallback and AI-backed generation paths. A package registry gives the campaign app and public generator pages a stable shared contract without duplicating generator logic or embedding marketing pages in the campaign app.
 
 **Alternatives considered**:
 
 - Embed public generator pages: rejected because it would preserve the external workflow and make direct vault import awkward.
 - Keep campaign generator logic app-local: rejected because the constitution requires major features to live in standalone `packages/` workspace packages. The package boundary is required from Phase 1.
+- Leave existing public pages on separate logic: rejected because it would create two generator implementations and let public/in-app behavior drift.
+
+## Decision: Transition Public Generator Pages Behind Existing Routes
+
+**Decision**: Existing public NPC, Faction, Settlement, and Magic Item generator pages keep their current routes and public UI but delegate supported generation, defaults, and output mapping to `packages/generator-engine`.
+
+**Rationale**: This preserves SEO/discovery behavior while making the package the source of truth for both public and in-app generator flows.
+
+**Alternatives considered**:
+
+- Replace public pages with campaign app links: rejected because public generator discovery remains valuable and must stay available.
+- Duplicate package behavior in `apps/web/src/lib/services/seo/generator-engine.ts`: rejected because duplicated logic would undermine the package transition.
 
 ## Decision: Keep Drafts Transient Until Explicit Save
 

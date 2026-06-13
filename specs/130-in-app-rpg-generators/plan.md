@@ -7,7 +7,7 @@
 
 ## Summary
 
-Add a native campaign-side generator workflow for NPC, Faction, Settlement, and Magic Item drafts. The workflow will expose a typed campaign generator registry, render a Svelte 5 configuration/review modal, generate drafts through existing RPG generator services with non-AI fallback, save approved drafts directly into the active vault, optionally create a relationship to a source entity, and add user-facing help. The public SEO generator pages remain separate surfaces that share generator logic but are not embedded in the campaign app.
+Add a native campaign-side generator workflow for NPC, Faction, Settlement, and Magic Item drafts. The workflow will expose a typed campaign generator registry, render a Svelte 5 configuration/review modal, generate drafts through shared generator package logic with non-AI fallback, save approved drafts directly into the active vault, optionally create a relationship to a source entity, and add user-facing help. Existing public SEO generator pages remain separate surfaces but transition to `packages/generator-engine` for supported generator contracts, defaults, and output mapping.
 
 ## Technical Context
 
@@ -90,10 +90,12 @@ packages/generator-engine/
     ├── campaign-generator-service.ts
     ├── campaign-generator-service.test.ts
     ├── campaign-generator-theme.ts
-    └── campaign-generator-theme.test.ts
+    ├── campaign-generator-theme.test.ts
+    ├── public-generator-adapters.ts
+    └── public-generator-adapters.test.ts
 ```
 
-**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine`. Existing public generator code may be adapted or wrapped by the package, but campaign generator contracts, mapping, validation, AI policy, theme defaults, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components only render and pass injected dependencies into package services.
+**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine` and transition existing public generator pages to the same package for supported generator logic. Campaign generator contracts, mapping, validation, AI policy, theme defaults, public-page adapters, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components and public routes only render and pass injected dependencies into package services.
 
 ## Complexity Tracking
 
@@ -134,10 +136,16 @@ No constitution violations.
 - Keep AI context explicit and minimal; do not send full vault contents.
 - Add tests for theme mapping, neutral fallback, relationship creation, AI-disabled/local fallback behavior, and AI context minimization.
 
-### Phase 5: Documentation, Release Polish, And Alignment
+### Phase 5: Public Generator Package Transition
+
+- Move or wrap supported public generator logic behind `packages/generator-engine` public-page adapters.
+- Update existing public generator routes/services to delegate NPC, Faction, Settlement, and Magic Item generation to the package.
+- Preserve existing public routes, SEO copy, and primary generation behavior.
+- Add parity/regression tests proving public pages still complete their supported generator flows through package logic.
+
+### Phase 6: Documentation, Release Polish, And Alignment
 
 - Add help article and optional `FeatureHint`.
-- Verify public generator pages still load and primary generation behavior remains aligned.
 - Verify existing `Generate Related Entity` behavior remains intact.
 - Add user-facing changelog only when the actual user-visible workflow ships.
 - Validate modal-open and non-AI generation timing against the performance goals or record a justified deviation.

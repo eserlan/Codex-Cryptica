@@ -6,7 +6,7 @@
 
 ## Goal
 
-Bring the public RPG generators into the Codex Cryptica campaign app as a native creation workflow. Game Masters should be able to configure, generate, review, and save generator drafts directly into the active vault without using the public marketing pages or a `localStorage` transfer.
+Bring the public RPG generators into the Codex Cryptica campaign app as a native creation workflow and transition the existing public generator pages onto the same shared generator package. Game Masters should be able to configure, generate, review, and save generator drafts directly into the active vault without using the public marketing pages or a `localStorage` transfer.
 
 Initial generator set:
 
@@ -25,7 +25,7 @@ Initial generator set:
 
 ## Current Context
 
-The public generators already expose reusable service logic through `apps/web/src/lib/services/seo/generator-engine.ts` and individual generator modules under `apps/web/src/lib/services/seo/generators/`.
+The public generators already expose reusable service logic through `apps/web/src/lib/services/seo/generator-engine.ts` and individual generator modules under `apps/web/src/lib/services/seo/generators/`. This feature should migrate supported shared logic into `packages/generator-engine` and keep the public pages as route/SEO/UI consumers of that package.
 
 The campaign app already has a context-aware `Generate Related Entity` flow in `apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte`. That flow creates entities directly through the vault store and can create a directed relationship back to the source entity.
 
@@ -40,7 +40,7 @@ The new work should reuse these capabilities, but separate the concerns:
 
 ### Generator Registry
 
-Create a campaign-facing registry that describes each supported generator:
+Create a package-owned registry in `packages/generator-engine` that describes each supported generator:
 
 - `id`
 - display label
@@ -50,8 +50,9 @@ Create a campaign-facing registry that describes each supported generator:
 - theme option mapping
 - generator function
 - output-to-entity draft mapper
+- public-page adapter for supported existing generator pages
 
-The registry can start in the web app while the API settles. If the logic grows beyond UI orchestration, extract it into a workspace package such as `packages/generator-engine` to satisfy the constitution's library-first rule.
+The registry and adapters must start in `packages/generator-engine` to satisfy the constitution's library-first rule. The web app should import the package and inject web-specific dependencies instead of owning duplicate generator logic.
 
 ### Draft Import
 
@@ -139,7 +140,7 @@ Notes:
 
 - Do not use `localStorage` as an import bridge.
 - Reuse existing vault creation APIs.
-- Avoid changing the public generator page behavior in this phase.
+- Avoid changing the public generator page behavior in this phase; public-page delegation happens in the dedicated package transition phase.
 
 ### Phase 4: Contextual Launch And Theme-Aware Defaults
 
@@ -159,7 +160,25 @@ Notes:
 - This should extend the current `Generate Related Entity` concept without bloating the Oracle facade.
 - Any Oracle-related state should live in the correct decomposed manager if needed.
 
-### Phase 5: Documentation, Release Polish, And Public Generator Alignment
+### Phase 5: Public Generator Package Transition
+
+Move the supported public generator logic behind `packages/generator-engine` while preserving the existing public routes and SEO/discovery behavior.
+
+Acceptance criteria:
+
+- Existing public NPC, Faction, Settlement, and Magic Item pages delegate supported generator logic to the package.
+- Public route slugs and SEO/discovery metadata remain stable.
+- Public generator primary flows still generate usable output.
+- Package parity tests cover supported public generator adapters.
+- Route regression tests prove public pages still complete their primary flows.
+
+Notes:
+
+- Keep the public SEO pages optimized for discovery; keep campaign UI optimized for workflow.
+- Do not replace public routes with in-app links.
+- Avoid duplicating package behavior in `apps/web/src/lib/services/seo/generator-engine.ts`.
+
+### Phase 6: Documentation, Release Polish, And Alignment
 
 Document the in-app workflow and make sure public and in-app generator behavior stay aligned where they share logic.
 
@@ -167,7 +186,7 @@ Acceptance criteria:
 
 - Add or update user-facing help content for in-app generators.
 - Add a first-use hint if the interaction is not self-evident.
-- Confirm public generator pages still work.
+- Confirm public generator pages still work after package delegation.
 - Confirm in-app generator import does not regress existing `Generate Related Entity` behavior.
 - Add a user-facing changelog entry only if the release includes visible in-app functionality.
 - Run lint and relevant tests before merge.
@@ -175,7 +194,7 @@ Acceptance criteria:
 Notes:
 
 - Do not include internal refactors in user-facing changelog highlights.
-- Keep the public SEO pages optimized for discovery; keep campaign UI optimized for workflow.
+- Keep public generator migration details out of user-facing changelog highlights unless the release changes visible behavior.
 
 ## Issue Tracking
 
@@ -191,3 +210,4 @@ The implementation source of truth is the Speckit feature at `specs/130-in-app-r
 - The workflow works without AI through local fallback generation.
 - AI-backed generation respects existing Oracle settings and privacy constraints.
 - Theme-aware defaults reduce setup without hiding user control.
+- Public NPC, Faction, Settlement, and Magic Item pages use shared package logic while preserving existing public routes and primary flows.

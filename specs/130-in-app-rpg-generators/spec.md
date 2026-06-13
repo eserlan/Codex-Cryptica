@@ -60,7 +60,23 @@ As a Game Master, I want generator options to start with defaults that match my 
 
 ---
 
-### User Story 4 - Understand And Discover The Workflow (Priority: P4)
+### User Story 4 - Keep Public Generators On The Shared Engine (Priority: P4)
+
+As a visitor or Game Master using the existing public generator pages, I want those pages to keep working while they move onto the same generator package as the in-app workflow so public and campaign generation stay aligned without duplicated logic.
+
+**Why this priority**: The new package should become the shared generator source, not a second implementation. This protects existing public generator behavior while making future generator improvements available to both surfaces.
+
+**Independent Test**: Can be tested by running the existing public generator flows for NPC, Faction, Settlement, and Magic Item after package extraction and confirming the public pages still produce usable output from the shared package APIs.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user opens an existing public generator page, **When** they generate NPC, Faction, Settlement, or Magic Item output, **Then** the page completes its existing primary flow using shared package logic.
+2. **Given** public and in-app workflows support the same generator type, **When** non-AI generation runs with equivalent options, **Then** both workflows use the same package-owned generator contract and output mapping rules.
+3. **Given** a public generator has SEO copy, routing, or discovery behavior, **When** the underlying logic moves into the package, **Then** the public page keeps its current route and user-facing public-page behavior.
+
+---
+
+### User Story 5 - Understand And Discover The Workflow (Priority: P5)
 
 As a Game Master discovering the feature, I want clear in-app guidance and help content so I understand when to use generators, what is saved, and how privacy is handled.
 
@@ -84,6 +100,7 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - A selected generator is unsupported or unavailable: the workflow prevents generation and clearly identifies the unsupported choice.
 - Theme-derived defaults are wrong for the user's intent: every theme-derived option remains editable before generation.
 - AI-backed generation has access to entity context: only explicitly selected or necessary context is used, and full campaign contents are not included by default.
+- Existing public generator pages depend on package logic that changes: the page route and public-facing behavior remain stable while shared logic is migrated behind the page.
 
 ## Requirements _(mandatory)_
 
@@ -112,6 +129,8 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **FR-021**: The system MUST keep existing public generator pages available and behaviorally aligned where they share generator outcomes.
 - **FR-022**: The system MUST include user-facing help or guidance for the in-app generator workflow.
 - **FR-023**: The system MUST maintain existing context-aware related-entity generation behavior while adding the broader generator workflow.
+- **FR-024**: Existing public NPC, Faction, Settlement, and Magic Item generator pages MUST transition to shared `packages/generator-engine` logic for supported generator contracts, defaults, and output mapping.
+- **FR-025**: The public generator transition MUST preserve existing public routes, SEO/discovery behavior, and primary generation flows.
 
 ### Key Entities
 
@@ -124,6 +143,8 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **Source Entity**: An existing campaign entity that can provide optional context when launching a generator.
 - **Relationship**: An optional connection from a source entity to a generated entity.
 - **Label**: User-facing metadata used to categorize generated and saved entities.
+- **Public Generator Surface**: An existing public-facing generator page that remains available for discovery while delegating shared generator logic to the package.
+- **Generator Engine Package**: The workspace package that owns shared generator contracts, defaults, output mapping, non-AI generation, and package-safe AI policy boundaries.
 
 ### Assumptions
 
@@ -132,6 +153,7 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - Non-AI generation is available for every initial generator type.
 - AI-backed generation is optional and follows existing user permissions and privacy controls.
 - Public generator pages remain available for discovery, while the in-app workflow is optimized for campaign creation.
+- Public generator pages transition behind their existing routes to package-backed logic instead of keeping a separate generator implementation.
 - Existing campaign duplicate-name and entity-type rules continue to apply unless later planning identifies a required change.
 
 ## Success Criteria _(mandatory)_
@@ -145,3 +167,4 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **SC-005**: 100% of blocked save attempts in guest, read-only, or unavailable campaign states leave campaign data unchanged and show a user-readable explanation.
 - **SC-006**: Theme-derived defaults are visible and editable before generation for every generator that supports theme-based defaults.
 - **SC-007**: Existing public generator pages and existing context-aware related-entity generation continue to complete their primary flows after the feature is introduced.
+- **SC-008**: 100% of public NPC, Faction, Settlement, and Magic Item generator flows call shared `packages/generator-engine` logic for supported non-AI generation and output mapping.
