@@ -15,7 +15,7 @@ name: Deploy Blog Content
 
 on:
   push:
-    branches: ["blog"]
+    branches: ["main", "staging"]
     paths:
       - "apps/web/src/lib/content/blog/**"
   workflow_dispatch:

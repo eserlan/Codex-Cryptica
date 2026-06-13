@@ -789,7 +789,12 @@ export const comparisons: Record<string, SEOComparisonPageData> = {
       {
         question: "Is Codex Cryptica completely free?",
         answer:
-          "Yes, Codex is free and source-available. There are no paywalls or storage restrictions on your local campaigns.",
+          "Yes, Codex is free and open-source. There are no paywalls or storage restrictions on your local campaigns.",
+      },
+      {
+        question: "Can I import my World Anvil content?",
+        answer:
+          "Yes. Export your world from World Anvil and import it directly into Codex Cryptica. Your articles become local Markdown files you own outright.",
       },
       {
         question: "Can I import my World Anvil content?",

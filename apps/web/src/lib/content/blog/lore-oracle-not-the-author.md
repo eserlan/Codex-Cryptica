@@ -2,7 +2,7 @@
 id: lore-oracle-not-the-author
 slug: lore-oracle-not-the-author
 title: "How Codex Cryptica Uses AI Responsibly in RPG Worldbuilding"
-description: "The AI assistant that respects your canon, navigates your notes, and leaves the storytelling to you."
+description: "Codex Cryptica uses AI as an optional assistant for RPG worldbuilding, keeping the creator in control and treating AI suggestions as drafts, not canon."
 keywords:
   [
     "responsible AI worldbuilding",
@@ -33,38 +33,46 @@ Codex Cryptica is built differently. The vault is the source of truth. The Oracl
 
 ## What the Oracle actually does
 
-**Cross-referencing your history.** Ask which factions haven't appeared in sessions for months. Ask what was established about a location you're returning to. The Oracle is designed to ground answers in your vault rather than inventing context.
+Here is what it is useful for:
 
-**Flagging gaps and contradictions.** If your notes say a city was destroyed in session 4 and a character references visiting it in session 12, that's worth knowing. Pattern-finding across a large archive is exactly the kind of task that exhausts human attention and suits the Oracle well.
+**Finding what you've forgotten.** Ask which factions haven't appeared in sessions for months. Ask what was established about a location you're returning to. The Oracle reads your vault — it doesn't invent context.
 
-**Surfacing hidden connections.** Ask what connects a minor NPC to the main antagonist, drawing only from what's already in your world. The goal is to surface lore you wrote and forgot, not invent a new answer over the top of it.
+**Spotting gaps and contradictions.** If your notes say a city was destroyed in session 4 and a character references visiting it in session 12, that's worth knowing. Pattern-finding across a large archive is exactly the kind of task that exhausts human attention and costs the Oracle nothing.
 
-**Drafting, not deciding.** Ask the Oracle to propose three possible motivations for an underdeveloped faction. Those proposals are marked as suggestions — draft material that doesn't touch your canon until you accept it. You pick one, discard the rest, or write something better.
+**Connecting entities.** Ask what connects a minor NPC to the main antagonist, drawing only from what's already in your world. The answer surfaces lore you wrote and forgot, not lore the model fabricated.
 
-**Instant session recaps.** Recap last session. Summarise an entity's arc. Draft a player-facing handout from your private notes. Friction-reduction, not creative replacement.
+**Drafting, not deciding.** Ask the Oracle to propose three possible motivations for an underdeveloped faction. It will. Those proposals are marked as suggestions — draft material that doesn't touch your canon until you accept it. You pick one, discard the rest, or ignore all of them and write something better.
+
+**Prep support.** Recap last session. Summarise an entity's arc. Draft a player-facing handout from your private notes. These are friction-reduction tasks, not creative replacements.
 
 ## What it does not do
 
-**It does not override canon.** If you've established that resurrection is impossible in your setting, it won't casually suggest the party raise a dead king.
+The Oracle does not override canon. If you've established that resurrection is impossible in your setting, it doesn't casually suggest the party raise a dead king as a solution.
 
-**It does not silently add facts.** Generated material starts as a draft, not canon. You can accept it, rewrite it, or discard it. Codex Cryptica treats canon contamination as a design problem, not an edge case.
+It does not silently add facts. Generated content is marked as draft. Nothing becomes part of your world without your review.
 
-**It does not replace judgement.** The Oracle doesn't know what your players find interesting, what tone you're going for this arc, or what trade-offs you've already made in your setting's design. You do.
+It does not replace judgement. The Oracle doesn't know what your players find interesting, what tone you're going for this arc, or what trade-offs you've already made in your setting's design. You do.
 
-**It does not need to be used.** The knowledge graph, entity archive, timeline, and session log all work without the Oracle. It is an optional layer. Turning it off removes a feature, not functionality.
+It does not need to be used. Codex Cryptica is a campaign and worldbuilding manager without the Oracle. The knowledge graph, the entity archive, the timeline, the session log — none of that requires AI. The Oracle is an optional layer. Turning it off removes a feature, not functionality.
+
+## Drafts are not canon
+
+This is worth making explicit.
+
+When the Oracle generates something, it produces a **draft** — a suggestion based on the context in your vault. Drafts live separately from your saved entities and world facts until you accept them. Accepting a draft makes it canon. Discarding it removes it. There is no ambiguity about what your world contains.
+
+The distinction matters because most AI anxiety in creative communities is about contamination: the AI-generated detail that sneaks into the setting and can't easily be removed. Codex Cryptica treats this as a design constraint, not an edge case.
 
 ## The thing the Oracle is actually good at
 
 Your world is large. You wrote most of it months ago. The session is tomorrow.
 
-The Oracle can search across your vault, retrieve relevant notes, and answer from more context than you can comfortably keep in your head at the table. That is genuinely useful. That is the actual pitch.
+The Oracle is good at being the part of your brain that remembers everything. It can read the whole vault, hold it in context, and answer questions about it faster than you can flip through notes. That is genuinely useful. That is the actual pitch.
 
 It is not "AI writes your world." It is "AI helps your world answer back."
 
-The Oracle is designed to distinguish between vault canon and its own suggestions. When it is unsure, it should say so rather than inventing certainty. The GM stays the author.
+The GM stays the author. The Oracle is a very well-read research assistant who has read every note in the archive and will never pretend to know something it doesn't.
 
 ---
 
-Codex Cryptica is a local-first campaign and worldbuilding manager. Your vault stays on your machine by default. When you use the Oracle, only the context needed for your request is sent to the configured AI provider — Codex Cryptica does not host your vault or index it publicly.
-
-Your lore stays yours. Your canon stays yours. The Oracle is there to help you navigate what you have already built.
+_Codex Cryptica is a local-first campaign and worldbuilding manager. [Try it free](/app) — no account required._
