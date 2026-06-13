@@ -372,7 +372,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         title: "Visual Concept Review",
         description:
-          "Generates custom entity headers and reviews image drafts in the app sidebars before inserting.",
+          "Generates custom entity headers and reviews image prompt drafts in the app sidebars before generating.",
         icon: "icon-[lucide--image]",
       },
       {
@@ -424,9 +424,9 @@ export const solutions: Record<string, SEOPageData> = {
     ],
     features: [
       {
-        title: "Cytoscape Layout Presets",
+        title: "Saved Graph Views",
         description:
-          "Save customized stable viewports and layout coordinates for quick navigation during live gaming sessions.",
+          "Save customized graph filters and view configurations to switch layouts and focus states instantly.",
         icon: "icon-[lucide--network]",
       },
       {
@@ -460,7 +460,7 @@ export const solutions: Record<string, SEOPageData> = {
       {
         question: "Can I filter the graph views?",
         answer:
-          "Yes, you can toggle active categories, focus on single nodes, or save specific custom viewport presets for instant lookup.",
+          "Yes, you can toggle active categories, focus on single nodes, or save customized view configurations for instant lookup.",
       },
     ],
   },
@@ -1405,6 +1405,7 @@ export const importsConfig: Record<string, SEOImportPageData> = {
 
 export const worldbuildingToolRoot: SEOPageData = {
   slug: "worldbuilding-tool",
+  eyebrow: "Free TTRPG Worldbuilding Hub",
   title: "Free Worldbuilding Tool & Lore Database | Codex Cryptica",
   description:
     "Create, link, and organize world maps, history, and factions. Codex Cryptica is a free, local-first worldbuilding tool running 100% in your browser.",
