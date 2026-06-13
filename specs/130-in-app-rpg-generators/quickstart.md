@@ -6,22 +6,24 @@ Implement a native campaign generator workflow for NPC, Faction, Settlement, and
 
 ## Implementation Order
 
-1. Add failing tests for the campaign generator registry and output-to-draft mapping.
-2. Implement the registry and mapping service over the existing generator engine.
-3. Add failing tests for draft generation success, invalid generator id, and AI-disabled local fallback.
-4. Implement campaign draft generation orchestration.
-5. Add modal store state and lazy-load the generator modal through `GlobalModalProvider`.
-6. Build the native Svelte 5 modal flow: select generator, configure options, generate, review, save.
-7. Add failing tests for save success, save failure preserving draft, guest/read-only blocked save, cancellation/no-save, and optional source relationship.
-8. Implement direct vault save through existing vault APIs.
-9. Add theme-default mapping tests and implementation.
-10. Add help content and optional feature hint.
-11. Verify public generator pages and existing related-entity generation still work.
+1. Create `packages/generator-engine` with package metadata, TypeScript config, Vitest config, and public exports.
+2. Add failing tests for the campaign generator registry and output-to-draft mapping in `packages/generator-engine`.
+3. Implement the registry and mapping service over the existing generator logic.
+4. Add failing tests for draft generation success, invalid generator id, AI-disabled local fallback, minimal AI context, blocked saves, and no `localStorage` transfer.
+5. Implement campaign draft generation and save orchestration in `packages/generator-engine`.
+6. Add a minimal lazy-loadable modal stub, then add modal store state and lazy-load the generator modal through `GlobalModalProvider`.
+7. Build the native Svelte 5 modal flow: select generator, configure options, generate, review, save.
+8. Add failing tests for save success, save failure preserving draft, guest/read-only/unavailable blocked save, cancellation/no-save, and optional source relationship.
+9. Wire direct vault save through injected vault APIs.
+10. Add theme-default mapping tests and implementation.
+11. Add help content and optional feature hint.
+12. Verify public generator pages and existing related-entity generation still work.
+13. Validate the guided usability criteria and performance goals, or document justified deviations.
 
 ## Commands
 
 ```sh
-bun run --filter web test -- src/lib/services/generators
+bun run --filter generator-engine test
 bun run --filter web test -- src/lib/components/generators
 bun run --filter web test -- src/lib/stores/ui/modal-ui.svelte.test.ts
 bun run --filter web test -- src/lib/services/seo/generator-engine.test.ts
@@ -37,6 +39,7 @@ bun run --filter '*' test -- --changed
 - Use Iconify utility classes, not `lucide-svelte` components.
 - Keep app chrome neutral; use world-theme tokens only inside campaign content surfaces.
 - Use constructor-based dependency injection for new services.
+- Keep generator contracts, registry, theme defaults, AI policy, draft mapping, and save orchestration in `packages/generator-engine`.
 - Keep generated drafts transient until explicit save.
 - Do not use `localStorage` as an import bridge.
 - Use labels, not tags.
@@ -61,3 +64,5 @@ bun run --filter '*' test -- --changed
 6. Confirm the new faction exists and is connected to the source entity.
 7. Switch to guest/read-only mode and confirm saving is blocked.
 8. Confirm public generator pages still load.
+9. Record whether the full flow can be completed in under 2 minutes and whether save-before-persist behavior is clear before clicking Save.
+10. Record modal-open timing and non-AI generation timing, or document why a target is not currently measurable.

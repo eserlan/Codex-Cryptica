@@ -59,7 +59,7 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
-- TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, existing `apps/web/src/lib/services/seo/generator-engine.ts`, `@google/generative-ai` via existing `aiClientManager`, existing vault/theme/modal/help stores (130-in-app-rpg-generators)
+- TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, new `packages/generator-engine` workspace package over existing public generator logic, `@google/generative-ai` via existing `aiClientManager`, existing vault/theme/modal/help stores (130-in-app-rpg-generators)
 - OPFS and IndexedDB through existing vault stores; generated drafts remain transient until explicit save (130-in-app-rpg-generators)
 
 - TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine` (129-seo-landing-pages)

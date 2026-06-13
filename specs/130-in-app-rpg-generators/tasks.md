@@ -22,7 +22,7 @@
 
 **Purpose**: Prepare feature directories and establish baseline references.
 
-- [ ] T001 Create generator feature directories in apps/web/src/lib/services/generators and apps/web/src/lib/components/generators
+- [ ] T001 Create generator package skeleton files in packages/generator-engine and feature directories in packages/generator-engine/src and apps/web/src/lib/components/generators
 - [ ] T002 [P] Review existing generator engine baseline tests in apps/web/src/lib/services/seo/generator-engine.test.ts
 - [ ] T003 [P] Review existing direct entity creation patterns in apps/web/src/lib/components/modals/MobileCreateEntitySheet.svelte
 - [ ] T004 [P] Review existing related entity generation patterns in apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte
@@ -35,17 +35,17 @@
 
 **Critical**: No user story implementation should start until this phase is complete.
 
-- [ ] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in apps/web/src/lib/services/generators/campaign-generator-registry.test.ts
-- [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, and labels in apps/web/src/lib/services/generators/campaign-generator-registry.test.ts
-- [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, and labels in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
-- [ ] T009 Define generator ids, option definitions, draft, run request, save request, and result types in apps/web/src/lib/services/generators/campaign-generator-types.ts
-- [ ] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in apps/web/src/lib/services/generators/campaign-generator-registry.ts
-- [ ] T011 Implement campaign generator service constructor DI and draft generation orchestration in apps/web/src/lib/services/generators/campaign-generator-service.ts
-- [ ] T012 Export a default campaign generator service singleton in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T009 Define generator ids, option definitions, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
+- [ ] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in packages/generator-engine/src/campaign-generator-registry.ts
+- [ ] T011 Implement campaign generator service constructor DI and draft generation orchestration in packages/generator-engine/src/campaign-generator-service.ts
+- [ ] T012 Export package public APIs and a default campaign generator service singleton in packages/generator-engine/src/index.ts and packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T013 Add generator workflow state and open/close methods to apps/web/src/lib/stores/ui/modal-ui.svelte.ts
-- [ ] T014 Wire lazy loading of CampaignGeneratorModal through apps/web/src/lib/components/modals/GlobalModalProvider.svelte
-- [ ] T015 Run foundational service and store tests listed in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T014 Create a minimal lazy-loadable CampaignGeneratorModal stub in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte and wire it through apps/web/src/lib/components/modals/GlobalModalProvider.svelte
+- [ ] T015 Run foundational package and store tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: Registry lookup, draft mapping, service orchestration, and modal state are test-covered and ready for UI stories.
 
@@ -59,16 +59,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Add failing service tests for successful draft save and saved entity result in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
-- [ ] T017 [P] [US1] Add failing service test for save failure preserving draft state in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T016 [P] [US1] Add failing service tests for successful draft save and saved entity result in packages/generator-engine/src/campaign-generator-service.test.ts
+- [ ] T017 [P] [US1] Add failing service tests for save failure preserving draft state, guest/read-only/unavailable campaign blocked saves, and no localStorage transfer in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T018 [P] [US1] Add failing component test for generator selection and configuration form rendering in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 - [ ] T019 [P] [US1] Add failing component test for draft review editing and explicit save in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 - [ ] T020 [P] [US1] Add failing component test for cancel/close leaving campaign data unchanged in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T021 [US1] Implement direct draft save through existing vault creation dependency in apps/web/src/lib/services/generators/campaign-generator-service.ts
-- [ ] T022 [US1] Implement required field validation and user-safe errors for draft saves in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T021 [US1] Implement direct draft save through injected vault creation dependency in packages/generator-engine/src/campaign-generator-service.ts
+- [ ] T022 [US1] Implement required field validation, user-safe save errors, and blocked-write handling in packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T023 [US1] Implement CampaignGeneratorModal shell with configure, generating, review, saving, and error stages in apps/web/src/lib/components/generators/CampaignGeneratorModal.svelte
 - [ ] T024 [US1] Implement semantic generator option form with visible labels and native submit behavior in apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
 - [ ] T025 [US1] Implement editable draft review form for title, entity type, summary/content, lore, and labels in apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
@@ -90,16 +90,16 @@
 
 ### Tests for User Story 2
 
-- [ ] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
-- [ ] T032 [P] [US2] Add failing service test for AI-disabled policy forcing non-AI generation in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in packages/generator-engine/src/campaign-generator-service.test.ts
+- [ ] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation and AI context minimization excluding full vault contents in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T033 [P] [US2] Add failing component test for AI unavailable messaging without blocking non-AI generation in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Add AI policy inputs and local fallback enforcement to apps/web/src/lib/services/generators/campaign-generator-service.ts
-- [ ] T035 [US2] Add per-generator non-AI option defaults to apps/web/src/lib/services/generators/campaign-generator-registry.ts
+- [ ] T034 [US2] Add AI policy inputs, local fallback enforcement, and explicit minimal AI context shaping to packages/generator-engine/src/campaign-generator-service.ts
+- [ ] T035 [US2] Add per-generator non-AI option defaults to packages/generator-engine/src/campaign-generator-registry.ts
 - [ ] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
-- [ ] T037 [US2] Ensure draft generation never mutates vault data before save in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T037 [US2] Ensure draft generation never mutates vault data before save in packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T038 [US2] Run User Story 2 tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
 **Checkpoint**: User Stories 1 and 2 work independently and preserve local-first behavior.
@@ -114,17 +114,17 @@
 
 ### Tests for User Story 3
 
-- [ ] T039 [P] [US3] Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in apps/web/src/lib/services/generators/campaign-generator-theme.test.ts
-- [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
-- [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in apps/web/src/lib/services/generators/campaign-generator-service.test.ts
+- [ ] T039 [P] [US3] Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts
+- [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts
+- [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T042 [P] [US3] Add failing component test for contextual launch from an existing entity in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T043 [US3] Implement theme-to-generator default mapping in apps/web/src/lib/services/generators/campaign-generator-theme.ts
-- [ ] T044 [US3] Apply theme defaults while preserving user overrides in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T043 [US3] Implement theme-to-generator default mapping in packages/generator-engine/src/campaign-generator-theme.ts
+- [ ] T044 [US3] Apply theme defaults while preserving user overrides in packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T045 [US3] Add sourceEntityId and relationship label handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
-- [ ] T046 [US3] Add optional source relationship save through existing vault connection dependency in apps/web/src/lib/services/generators/campaign-generator-service.ts
+- [ ] T046 [US3] Add optional source relationship save through injected vault connection dependency in packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T047 [US3] Add contextual launch button or action near existing related generation entry points in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte
 - [ ] T048 [US3] Add contextual launch integration in Zen Mode actions in apps/web/src/lib/components/zen/ZenContent.svelte
 - [ ] T049 [US3] Add relationship review controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte
@@ -167,6 +167,8 @@
 - [ ] T061 [P] Add user-facing changelog entry only if shipping the visible workflow in apps/web/src/lib/content/changelog/releases.json
 - [ ] T062 Run full validation commands from specs/130-in-app-rpg-generators/quickstart.md
 - [ ] T063 Update master issue progress notes from completed implementation tasks in specs/130-in-app-rpg-generators/tasks.md
+- [ ] T064 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/130-in-app-rpg-generators/quickstart.md
+- [ ] T065 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/130-in-app-rpg-generators/quickstart.md
 
 ---
 
@@ -219,9 +221,9 @@ Task: "Add failing component test for cancel/close leaving campaign data unchang
 ## Parallel Example: User Story 3
 
 ```text
-Task: "Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in apps/web/src/lib/services/generators/campaign-generator-theme.test.ts"
-Task: "Add failing service test proving user-edited options override theme-derived defaults in apps/web/src/lib/services/generators/campaign-generator-service.test.ts"
-Task: "Add failing service test for source relationship creation after successful entity save in apps/web/src/lib/services/generators/campaign-generator-service.test.ts"
+Task: "Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts"
+Task: "Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts"
+Task: "Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts"
 ```
 
 ## Implementation Strategy
@@ -252,6 +254,7 @@ Task: "Add failing service test for source relationship creation after successfu
 - Use Svelte 5 runes for all Svelte components and `.svelte.ts` stores.
 - Use Tailwind 4 semantic tokens and Iconify utility classes only.
 - Keep app chrome neutral; world-theme styling belongs inside campaign content surfaces.
+- Keep generator contracts, registry, theme defaults, AI policy, draft mapping, and save orchestration in `packages/generator-engine`.
 - Do not introduce `localStorage` as a generator import bridge.
 - Preserve "Labels" terminology in all user-facing text.
 - Commit after each completed story or logical group.

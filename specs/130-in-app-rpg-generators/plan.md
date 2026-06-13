@@ -12,11 +12,11 @@ Add a native campaign-side generator workflow for NPC, Faction, Settlement, and 
 ## Technical Context
 
 **Language/Version**: TypeScript 6.0.3 + Svelte 5 runes  
-**Primary Dependencies**: SvelteKit, Tailwind 4 semantic tokens, existing `apps/web/src/lib/services/seo/generator-engine.ts`, `@google/generative-ai` via existing `aiClientManager`, existing vault/theme/modal/help stores  
+**Primary Dependencies**: SvelteKit, Tailwind 4 semantic tokens, new `packages/generator-engine` workspace package over existing public generator logic, `@google/generative-ai` via existing `aiClientManager`, existing vault/theme/modal/help stores  
 **Storage**: OPFS and IndexedDB through existing vault stores; generated drafts remain transient until explicit save  
-**Testing**: Vitest, Svelte Testing Library, existing `bun run --filter '*' lint:types`, `bun run --filter '*' lint`, `bun run --filter '*' test -- --changed`  
+**Testing**: Vitest, Svelte Testing Library, `bun run --filter generator-engine test`, existing `bun run --filter '*' lint:types`, `bun run --filter '*' lint`, `bun run --filter '*' test -- --changed`  
 **Target Platform**: Browser, local-first Codex Cryptica campaign app  
-**Project Type**: SvelteKit web app with reusable app-local service modules over existing workspace packages  
+**Project Type**: SvelteKit web app as a thin UI layer over reusable workspace packages  
 **Performance Goals**: Open generator modal under 100ms after lazy component load; non-AI draft generation under 500ms for supported generators; direct save uses existing vault write path without extra import roundtrip  
 **Constraints**: Must work without AI; must not send full vault contents to AI by default; must respect guest/read-only/AI-disabled states; must use labels rather than tags; must use Svelte 5 runes, Iconify utility classes, and Tailwind 4 semantic tokens  
 **Scale/Scope**: Initial support for 4 generators, one active draft at a time, optional source-entity context, no new persistence format
@@ -25,9 +25,9 @@ Add a native campaign-side generator workflow for NPC, Faction, Settlement, and 
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-1. **Library-First**: PASS. The plan adds a reusable campaign generator service/registry layer instead of putting mapping and persistence rules inside the modal. It starts app-local because existing generator logic is already app-local under the SEO service tree; extraction to `packages/generator-engine` is deferred until the contract stabilizes or implementation complexity justifies it.
+1. **Library-First**: PASS. The plan adds `packages/generator-engine` for generator contracts, registry, theme defaults, draft mapping, AI policy, and save orchestration. The web app stays a thin Svelte UI layer that injects vault, AI, theme, and modal dependencies.
 2. **TDD**: PASS. Phase 1 tasks must add failing tests for generator registry lookup, output mapping, invalid generator handling, save success, save failure, guest/read-only blocking, and theme defaults before implementation.
-3. **Simplicity & YAGNI**: PASS. The plan reuses current generator functions and vault APIs, does not embed SEO pages, and avoids a new package until the boundary proves necessary.
+3. **Simplicity & YAGNI**: PASS. The plan reuses current generator functions and vault APIs, does not embed SEO pages, and limits the new package to the core logic required by this major feature.
 4. **AI-First Extraction**: PASS. AI-backed generation uses existing AI client plumbing and structured generator outputs; non-AI fallback remains mandatory.
 5. **Privacy & Client-Side Processing**: PASS. Drafts are transient client state, saving uses local vault persistence, and AI context is explicit/minimal.
 6. **Clean Implementation**: PASS. UI must follow `docs/STYLE_GUIDE.md`, Svelte 5 runes, Tailwind 4 tokens, and Iconify utility icons. Validation commands are defined.
@@ -65,13 +65,6 @@ apps/web/src/lib/
 │   └── modals/
 │       └── GlobalModalProvider.svelte
 ├── services/
-│   ├── generators/
-│   │   ├── campaign-generator-registry.ts
-│   │   ├── campaign-generator-registry.test.ts
-│   │   ├── campaign-generator-service.ts
-│   │   ├── campaign-generator-service.test.ts
-│   │   ├── campaign-generator-theme.ts
-│   │   └── campaign-generator-theme.test.ts
 │   └── seo/
 │       ├── generator-engine.ts
 │       └── generator-engine.test.ts
@@ -84,9 +77,23 @@ apps/web/src/lib/
 
 apps/web/src/lib/content/help/
 └── in-app-generators.md
+
+packages/generator-engine/
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+└── src/
+    ├── index.ts
+    ├── campaign-generator-types.ts
+    ├── campaign-generator-registry.ts
+    ├── campaign-generator-registry.test.ts
+    ├── campaign-generator-service.ts
+    ├── campaign-generator-service.test.ts
+    ├── campaign-generator-theme.ts
+    └── campaign-generator-theme.test.ts
 ```
 
-**Structure Decision**: Implement the feature as a campaign-app UI flow over app-local generator service modules. Existing public generator code remains under `services/seo/` until Phase 1 proves a package extraction is needed. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; complex generation, mapping, validation, and save orchestration live in injectable services, not Svelte components.
+**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine`. Existing public generator code may be adapted or wrapped by the package, but campaign generator contracts, mapping, validation, AI policy, theme defaults, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components only render and pass injected dependencies into package services.
 
 ## Complexity Tracking
 
@@ -98,10 +105,11 @@ No constitution violations.
 
 ### Phase 1: Generator Contracts And Campaign Registry
 
+- Create `packages/generator-engine` with package metadata, TypeScript config, Vitest config, and public exports.
 - Define supported generator ids: `npc`, `faction`, `settlement`, `magic-item`.
 - Define a typed registry with option metadata, defaults, theme hook, generator invoker, and output mapper.
 - Define transient `GeneratedDraft` and save request shapes.
-- Add tests for successful registry lookup, invalid generator id, output-to-draft mapping, and label preservation.
+- Add tests for successful registry lookup, invalid generator id, output-to-draft mapping, label preservation, and package exports.
 
 ### Phase 2: Native In-App Generator Hub
 
@@ -115,8 +123,8 @@ No constitution violations.
 
 - Add review step for title, type, content/summary, lore/details, and labels.
 - Save approved drafts through existing `vault.createEntity(...)`.
-- Preserve unsaved draft on save failure and block guest/read-only saves with plain language.
-- Add tests for save success, save failure preserving draft, guest blocked save, and no `localStorage` transfer.
+- Preserve unsaved draft on save failure and block guest/read-only/unavailable campaign saves with plain language.
+- Add tests for save success, save failure preserving draft, guest blocked save, read-only blocked save, unavailable campaign blocked save, and no `localStorage` transfer.
 
 ### Phase 4: Contextual Launch And Theme-Aware Defaults
 
@@ -124,7 +132,7 @@ No constitution violations.
 - Support optional source entity context when launched from an entity.
 - Save optional relationship through `vault.addConnection(...)`.
 - Keep AI context explicit and minimal; do not send full vault contents.
-- Add tests for theme mapping, neutral fallback, relationship creation, and AI-disabled/local fallback behavior.
+- Add tests for theme mapping, neutral fallback, relationship creation, AI-disabled/local fallback behavior, and AI context minimization.
 
 ### Phase 5: Documentation, Release Polish, And Alignment
 
@@ -132,10 +140,11 @@ No constitution violations.
 - Verify public generator pages still load and primary generation behavior remains aligned.
 - Verify existing `Generate Related Entity` behavior remains intact.
 - Add user-facing changelog only when the actual user-visible workflow ships.
+- Validate modal-open and non-AI generation timing against the performance goals or record a justified deviation.
 
 ## Verification Plan
 
-- `bun run --filter web test -- src/lib/services/generators`
+- `bun run --filter generator-engine test`
 - `bun run --filter web test -- src/lib/components/generators`
 - `bun run --filter web test -- src/lib/stores/ui/modal-ui.svelte.test.ts`
 - `bun run --filter web test -- src/lib/services/seo/generator-engine.test.ts`

@@ -9,7 +9,7 @@
 **Alternatives considered**:
 
 - Embed public generator pages: rejected because it would preserve the external workflow and make direct vault import awkward.
-- Immediately extract to `packages/generator-engine`: deferred because the campaign-facing contract should stabilize first. Extraction remains available if Phase 1 introduces substantial reusable logic.
+- Keep campaign generator logic app-local: rejected because the constitution requires major features to live in standalone `packages/` workspace packages. The package boundary is required from Phase 1.
 
 ## Decision: Keep Drafts Transient Until Explicit Save
 
