@@ -60,11 +60,15 @@
       const sourceEntity = sourceEntityId
         ? vault.entities[sourceEntityId]
         : undefined;
+      const sourceConnectedIds = sourceEntity
+        ? new Set(sourceEntity.connections?.map((c) => c.target) ?? [])
+        : new Set<string>();
       const vaultContext = buildVaultContext({
         themeId: themeStore.worldThemeId ?? "workspace",
-        themeName: themeStore.worldThemeId,
+        themeName: themeStore.activeTheme?.name,
         sourceEntity,
         allEntities: vault.entities,
+        connectedIds: sourceConnectedIds,
         categoryLabels: categories.list.map((c) => ({
           id: c.id,
           label: c.label,
@@ -100,7 +104,8 @@
       close();
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : String(err);
-      stage = "error";
+      // Return to review so the user can retry the save without losing edits.
+      stage = "review";
     }
   }
 
@@ -115,12 +120,12 @@
   );
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
   role="dialog"
   aria-modal="true"
   aria-label="Campaign Generator"
+  tabindex="-1"
   use:focusTrap
   {onkeydown}
   transition:fade={{ duration: 150 }}
@@ -130,6 +135,7 @@
     transition:scale={{ start: 0.95, duration: 150 }}
   >
     <button
+      type="button"
       class="text-surface-400 hover:text-surface-100 absolute right-4 top-4"
       onclick={close}
       aria-label="Close generator">✕</button
@@ -153,23 +159,26 @@
       />
     {:else if stage === "generating"}
       <p class="text-surface-400 text-sm">Generating your content…</p>
-    {:else if stage === "review" && draft}
+    {:else if (stage === "review" || stage === "saving") && draft}
+      {#if errorMsg}
+        <p class="text-red-400 mb-3 text-sm">{errorMsg}</p>
+      {/if}
       <GeneratorDraftReview
         bind:draft
         categories={categories.list}
-        saving={false}
+        saving={stage === "saving"}
         showRelationshipToggle={workflow.launchMode === "contextual" &&
           !!workflow.sourceEntityId}
         onsave={onSave}
         onback={() => {
           stage = "configure";
+          errorMsg = null;
         }}
       />
-    {:else if stage === "saving"}
-      <p class="text-surface-400 text-sm">Saving to campaign…</p>
     {:else if stage === "error"}
       <p class="text-red-400 mb-4 text-sm">{errorMsg}</p>
       <button
+        type="button"
         class="text-surface-300 hover:text-surface-100 text-sm"
         onclick={() => {
           stage = "configure";

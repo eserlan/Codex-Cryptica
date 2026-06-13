@@ -105,4 +105,36 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     expect(ctx.existingTitles).toContain("Kaeldar");
   });
+
+  it("selects neighbors from connectedIds (graph) when provided", () => {
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const connected = entity({ id: "c1", title: "Ally", type: "faction" });
+    const unrelated = entity({
+      id: "u1",
+      title: "Stranger",
+      type: "character",
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, c1: connected, u1: unrelated },
+      connectedIds: new Set(["c1"]),
+    });
+    expect(ctx.neighbors.map((n) => n.id)).toContain("c1");
+    expect(ctx.neighbors.map((n) => n.id)).not.toContain("u1");
+  });
+
+  it("falls back to same-type selection when connectedIds is empty", () => {
+    const src = entity({ id: "src", title: "Hero", type: "character" });
+    const sameType = entity({ id: "s1", title: "Guard", type: "character" });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      sourceEntity: src,
+      allEntities: { src, s1: sameType },
+      connectedIds: new Set(),
+    });
+    expect(ctx.neighbors.map((n) => n.id)).toContain("s1");
+  });
 });

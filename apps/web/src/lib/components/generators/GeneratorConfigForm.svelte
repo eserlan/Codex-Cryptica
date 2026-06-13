@@ -32,12 +32,14 @@
 
   const generators = listGenerators();
 
-  let selectedId = $state<GeneratorId>(
-    (generatorId as GeneratorId) ?? generators[0].id,
-  );
+  let selectedId = $state<GeneratorId>(generators[0].id);
+  $effect(() => {
+    if (generatorId) selectedId = generatorId;
+  });
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
+    generatorId = selectedId;
     onsubmit({ generatorId: selectedId, options: {}, useAI: false });
   }
 </script>

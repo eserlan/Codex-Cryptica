@@ -38,6 +38,12 @@ export interface BuildVaultContextOptions {
   sourceEntity?: Entity;
   /** All entities in the vault (used for neighbor lookup and title hints). */
   allEntities: Record<string, Entity>;
+  /**
+   * Set of entity ids directly connected to the source entity (first-degree
+   * graph neighbors). When provided, neighbors are selected from this set
+   * rather than from same-type vault entities.
+   */
+  connectedIds?: Set<string>;
   categoryLabels: Array<{ id: string; label: string }>;
   labelSuggestions?: string[];
   applyTemplate?: boolean;
@@ -57,6 +63,7 @@ export function buildVaultContext(
     themeName,
     sourceEntity,
     allEntities,
+    connectedIds,
     categoryLabels,
     labelSuggestions = [],
     applyTemplate = false,
@@ -65,13 +72,22 @@ export function buildVaultContext(
 
   const existingTitles = Object.values(allEntities).map((e) => e.title);
 
-  // Neighbors: entities of the same type as the source, capped.
+  // Neighbors: first-degree graph connections when available, otherwise
+  // same-type entities as a fallback for vaults without connection data.
   let neighbors: VaultContextEntityExcerpt[] = [];
   if (sourceEntity) {
-    neighbors = Object.values(allEntities)
-      .filter((e) => e.id !== sourceEntity.id && e.type === sourceEntity.type)
-      .slice(0, MAX_NEIGHBORS)
-      .map((e) => entityToExcerpt(e));
+    if (connectedIds && connectedIds.size > 0) {
+      neighbors = [...connectedIds]
+        .map((id) => allEntities[id])
+        .filter((e): e is Entity => !!e)
+        .slice(0, MAX_NEIGHBORS)
+        .map((e) => entityToExcerpt(e));
+    } else {
+      neighbors = Object.values(allEntities)
+        .filter((e) => e.id !== sourceEntity.id && e.type === sourceEntity.type)
+        .slice(0, MAX_NEIGHBORS)
+        .map((e) => entityToExcerpt(e));
+    }
   }
 
   const includedContext: GeneratorVaultContext["includedContext"] = [
