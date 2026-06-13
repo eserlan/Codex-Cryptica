@@ -184,11 +184,13 @@
       >
         <a
           href="{cleanBase}/free-rpg-campaign-manager"
-          class="hover:text-theme-primary transition-colors">Campaign Manager</a
+          class="hover:text-theme-primary transition-colors"
+          >Free RPG campaign manager</a
         >
         <a
           href="{cleanBase}/worldbuilding-tool"
-          class="hover:text-theme-primary transition-colors">Worldbuilder</a
+          class="hover:text-theme-primary transition-colors"
+          >worldbuilding tool</a
         >
         <a
           href="{cleanBase}/features"
@@ -639,7 +641,7 @@
         <a
           href="{cleanBase}/free-rpg-campaign-manager"
           class="hover:text-theme-primary transition-colors"
-          >RPG campaign manager</a
+          >Free RPG campaign manager</a
         >
         <a
           href="{cleanBase}/worldbuilding-tool"
