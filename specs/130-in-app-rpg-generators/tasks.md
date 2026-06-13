@@ -36,10 +36,10 @@
 **Critical**: No user story implementation should start until this phase is complete.
 
 - [ ] T005 [P] Add failing registry contract tests for supported and unsupported generator ids in packages/generator-engine/src/campaign-generator-registry.test.ts
-- [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, and labels in packages/generator-engine/src/campaign-generator-registry.test.ts
+- [ ] T006 [P] Add failing draft mapping tests for title, entity type, content, lore, labels, template heading preservation, and unmatched detail preservation in packages/generator-engine/src/campaign-generator-registry.test.ts
 - [ ] T007 [P] Add failing generator service tests for generate-draft success and unsupported generator failure in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T008 [P] Add failing modal UI store tests for open/close generator workflow state in apps/web/src/lib/stores/ui/modal-ui.svelte.test.ts
-- [ ] T009 Define generator ids, option definitions, vault context packet, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
+- [ ] T009 Define generator ids, option definitions, vault context packet, template application metadata, draft, run request, save request, and result types in packages/generator-engine/src/campaign-generator-types.ts
 - [ ] T010 Implement campaign generator registry for NPC, Faction, Settlement, and Magic Item in packages/generator-engine/src/campaign-generator-registry.ts
 - [ ] T011 Implement campaign generator service constructor DI and draft generation orchestration in packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T012 Export package public APIs and a default campaign generator service singleton in packages/generator-engine/src/index.ts and packages/generator-engine/src/campaign-generator-service.ts
@@ -91,12 +91,12 @@
 ### Tests for User Story 2
 
 - [ ] T031 [P] [US2] Add failing service tests proving NPC, Faction, Settlement, and Magic Item generate drafts with useAI false in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation and AI context minimization excluding full vault contents and direct vault store access in packages/generator-engine/src/campaign-generator-service.test.ts
+- [ ] T032 [P] [US2] Add failing service tests for AI-disabled policy forcing non-AI generation, template-aware non-AI draft mapping, and AI context minimization excluding full vault contents and direct vault store access in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T033 [P] [US2] Add failing component test for AI unavailable messaging without blocking non-AI generation in apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T034 [US2] Add AI policy inputs, local fallback enforcement, and explicit minimal AI context packet consumption to packages/generator-engine/src/campaign-generator-service.ts
+- [ ] T034 [US2] Add AI policy inputs, local fallback enforcement, explicit minimal AI context packet consumption, and template-aware draft mapping to packages/generator-engine/src/campaign-generator-service.ts
 - [ ] T035 [US2] Add per-generator non-AI option defaults to packages/generator-engine/src/campaign-generator-registry.ts
 - [ ] T036 [US2] Add AI-disabled and AI-unavailable explanatory UI copy to apps/web/src/lib/components/generators/GeneratorConfigForm.svelte
 - [ ] T037 [US2] Ensure draft generation never mutates vault data before save in packages/generator-engine/src/campaign-generator-service.ts
@@ -117,17 +117,17 @@
 - [ ] T039 [P] [US3] Add failing theme mapping tests for gothic/noir, cyberpunk, fantasy, and neutral fallback in packages/generator-engine/src/campaign-generator-theme.test.ts
 - [ ] T040 [P] [US3] Add failing service test proving user-edited options override theme-derived defaults in packages/generator-engine/src/campaign-generator-service.test.ts
 - [ ] T041 [P] [US3] Add failing service test for source relationship creation after successful entity save in packages/generator-engine/src/campaign-generator-service.test.ts
-- [ ] T042 [P] [US3] Add failing tests for bounded vault context packet building, contextual launch from an existing entity, and existing Generate Related entry points opening the unified workflow in apps/web/src/lib/services/generators/generator-vault-context.test.ts, apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts, apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts, and apps/web/src/lib/components/zen/ZenContent.related.test.ts
+- [ ] T042 [P] [US3] Add failing tests for bounded vault context packet building, system/custom template resolution precedence, contextual launch from an existing entity, and existing Generate Related entry points opening the unified workflow in apps/web/src/lib/services/generators/generator-vault-context.test.ts, apps/web/src/lib/components/generators/CampaignGeneratorModal.test.ts, apps/web/src/lib/components/entity-detail/DetailStatusTab.test.ts, and apps/web/src/lib/components/zen/ZenContent.related.test.ts
 
 ### Implementation for User Story 3
 
 - [ ] T043 [US3] Implement theme-to-generator default mapping in packages/generator-engine/src/campaign-generator-theme.ts
 - [ ] T044 [US3] Apply theme defaults while preserving user overrides in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T045 [US3] Add sourceEntityId, relationship label, launchMode, and included context summary handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
+- [ ] T045 [US3] Add sourceEntityId, relationship label, launchMode, template application flag, and included context summary handling to modal state in apps/web/src/lib/stores/ui/modal-ui.svelte.ts
 - [ ] T046 [US3] Add optional source relationship save through injected vault connection dependency in packages/generator-engine/src/campaign-generator-service.ts
-- [ ] T047 [US3] Implement bounded vault context packet builder with theme, category, template, source excerpt, capped neighbors, title hints, and label suggestions in apps/web/src/lib/services/generators/generator-vault-context.ts
+- [ ] T047 [US3] Implement bounded vault context packet builder with theme, category, resolved template outline/source, source excerpt, capped neighbors, title hints, and label suggestions in apps/web/src/lib/services/generators/generator-vault-context.ts
 - [ ] T048 [US3] Route the existing Generate Related action in apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte and apps/web/src/lib/components/zen/ZenContent.svelte to the unified generator workflow with sourceEntityId context
-- [ ] T049 [US3] Add relationship review controls and inspectable context controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte and apps/web/src/lib/components/generators/GeneratorContextReview.svelte
+- [ ] T049 [US3] Add relationship review controls, template application controls, and inspectable context controls to apps/web/src/lib/components/generators/GeneratorDraftReview.svelte and apps/web/src/lib/components/generators/GeneratorContextReview.svelte
 - [ ] T050 [US3] Retire apps/web/src/lib/components/entity-detail/RelatedEntityModal.svelte or reduce it to a compatibility wrapper after unified contextual generation parity is covered
 - [ ] T051 [US3] Run User Story 3 tests listed in specs/130-in-app-rpg-generators/quickstart.md
 
@@ -194,7 +194,7 @@
 - [ ] T072 Update master issue progress notes from completed implementation tasks in specs/130-in-app-rpg-generators/tasks.md
 - [ ] T073 Validate guided usability criteria SC-001 and SC-004 with a documented manual smoke result in specs/130-in-app-rpg-generators/quickstart.md
 - [ ] T074 Validate modal-open and non-AI generation timing against plan performance goals or document justified deviation in specs/130-in-app-rpg-generators/quickstart.md
-- [ ] T075 Validate SC-009 and SC-010 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, and no standalone related modal is required
+- [ ] T075 Validate SC-009, SC-010, and SC-011 by confirming all existing Generate Related entry points open the unified generator workflow with source entity context, context categories are inspectable before AI generation, full vault contents are excluded, generated drafts preserve resolved template headings when enabled, and no standalone related modal is required
 
 ---
 
@@ -296,6 +296,7 @@ Task: "Add failing regression test preserving public generator route slugs and S
 - Keep generator contracts, registry, theme defaults, AI policy, draft mapping, public-page adapters, and save orchestration in `packages/generator-engine`.
 - Treat existing Generate Related buttons as contextual entry points into the unified generator workflow, not as a separate long-term modal.
 - Build vault context packets in the web app layer and pass only bounded plain data into `packages/generator-engine`.
+- Resolve entity templates in the web app layer and apply them to generated campaign drafts by default while preserving user control to disable or edit template sections.
 - Do not introduce `localStorage` as a generator import bridge.
 - Preserve public generator routes, SEO/discovery behavior, and primary public generation flows.
 - Preserve "Labels" terminology in all user-facing text.

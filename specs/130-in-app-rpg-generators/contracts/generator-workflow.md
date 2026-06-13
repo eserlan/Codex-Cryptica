@@ -62,6 +62,8 @@ interface GeneratorVaultContext {
   targetEntityType?: string;
   categoryLabels: Array<{ id: string; label: string }>;
   templateOutline?: string;
+  templateSource?: "none" | "system" | "vault-custom";
+  applyTemplate: boolean;
   sourceEntity?: VaultContextEntityExcerpt;
   neighbors: VaultContextEntityExcerpt[];
   existingTitles: string[];
@@ -94,6 +96,9 @@ interface GeneratedDraft {
   sourceGeneratorId: GeneratorId;
   sourceEntityId?: string;
   relationshipLabel?: string;
+  templateOutline?: string;
+  templateApplied: boolean;
+  unmappedDetails?: string;
 }
 ```
 
@@ -106,6 +111,8 @@ interface GeneratedDraft {
 - Must avoid full-vault AI context by default.
 - Must consume campaign context only from `vaultContext`, not from direct vault store imports.
 - Must tolerate an empty or user-trimmed `vaultContext`.
+- Must apply `vaultContext.templateOutline` to campaign draft structure when `applyTemplate` is true and a template is present.
+- Must preserve unmatched generated details in editable draft content instead of dropping them.
 
 ### Failure
 
@@ -160,6 +167,8 @@ interface DraftSaveResult {
 - The legacy standalone related-entity modal is not required once contextual workflow parity is complete.
 - AI-backed contextual launches show a user-readable summary of included context categories before generation.
 - Users can remove optional source or neighbor context before AI-backed generation.
+- Users can inspect whether a system or vault-custom template will be applied.
+- Users can disable template application for a draft before generation or review.
 
 ## Vault Context Builder Contract
 
@@ -170,6 +179,16 @@ interface DraftSaveResult {
 - Default neighbor selection should prefer directly connected entities, explicit relationship labels, and entities with meaningful content.
 - The context summary must distinguish theme/schema context from source/neighbor campaign content.
 - Full campaign entity maps, full lore fields, full graph state, and API keys are never included in the packet.
+
+## Template Application Contract
+
+- The web app resolves the template outline before generation using the same template resolution behavior as manual entity creation.
+- Vault-level custom templates take precedence over system defaults.
+- `packages/generator-engine` receives the resolved template as plain markdown in `vaultContext.templateOutline`.
+- Package logic maps generated fields into known template headings where possible.
+- If no matching heading exists, generated details are placed in an editable fallback section or `unmappedDetails`.
+- Public generator pages may keep their public output format, but campaign save/review flows apply templates through the campaign draft mapper.
+- AI-backed generation receives the template outline as a structural instruction only when `applyTemplate` is true.
 
 ## Public Generator Compatibility Contract
 

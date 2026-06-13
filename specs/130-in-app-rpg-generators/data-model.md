@@ -84,6 +84,8 @@ Fields:
 - `targetEntityType`: selected target category/type
 - `categoryLabels`: available entity categories as ids and labels
 - `templateOutline`: optional template outline for the selected target type
+- `templateSource`: none, system, or vault-custom
+- `applyTemplate`: whether generated draft mapping should apply the resolved template
 - `sourceEntity`: optional selected source entity excerpt for contextual launches
 - `neighbors`: capped connected entity excerpts around the source entity
 - `existingTitles`: bounded title hints for duplicate avoidance
@@ -98,6 +100,8 @@ Validation rules:
 - Neighbor count is capped; the default cap should be small enough to inspect before generation.
 - Existing titles and label suggestions are bounded lists, not a full vault export.
 - Optional source and neighbor context can be removed before AI-backed generation.
+- Template outline is included only as plain markdown text and never as a live file handle.
+- Vault-custom templates take precedence when the web app resolves the outline.
 
 ## VaultContextEntityExcerpt
 
@@ -133,6 +137,9 @@ Fields:
 - `sourceGeneratorId`: generator id that produced the draft
 - `sourceEntityId`: optional source entity id
 - `relationshipLabel`: optional relationship label
+- `templateOutline`: optional resolved template outline used for draft structure
+- `templateApplied`: whether the draft currently follows the resolved template
+- `unmappedDetails`: optional generated details that did not map cleanly to known template sections
 
 Validation rules:
 
@@ -140,6 +147,8 @@ Validation rules:
 - `entityType` is required before save.
 - `labels` are stored as labels, never tags.
 - Draft remains transient until explicit save.
+- Template headings are preserved when template application is enabled.
+- Unmapped generated details remain editable and are not discarded.
 
 State transitions:
 

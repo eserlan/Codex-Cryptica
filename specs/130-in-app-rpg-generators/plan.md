@@ -99,7 +99,7 @@ packages/generator-engine/
     └── public-generator-adapters.test.ts
 ```
 
-**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine` and transition existing public generator pages to the same package for supported generator logic. Campaign generator contracts, mapping, validation, AI policy, theme defaults, public-page adapters, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components and public routes only render and pass injected dependencies into package services. The current `RelatedEntityModal` is not a parallel long-term workflow; it is either retired or kept only as a compatibility wrapper after the unified modal covers contextual Generate Related behavior. Vault context is built in the web app by `generator-vault-context.ts` because it reads app stores; `packages/generator-engine` receives only a plain bounded context packet.
+**Structure Decision**: Implement the feature as a campaign-app UI flow over `packages/generator-engine` and transition existing public generator pages to the same package for supported generator logic. Campaign generator contracts, mapping, validation, AI policy, theme defaults, public-page adapters, and save orchestration must live in the package. The modal stays lazy-loaded through `GlobalModalProvider`; modal state lives in `modal-ui.svelte.ts`; Svelte components and public routes only render and pass injected dependencies into package services. The current `RelatedEntityModal` is not a parallel long-term workflow; it is either retired or kept only as a compatibility wrapper after the unified modal covers contextual Generate Related behavior. Vault context is built in the web app by `generator-vault-context.ts` because it reads app stores and resolves vault-custom templates; `packages/generator-engine` receives only a plain bounded context packet with a resolved markdown template outline.
 
 ## Complexity Tracking
 
@@ -114,7 +114,7 @@ No constitution violations.
 - Create `packages/generator-engine` with package metadata, TypeScript config, Vitest config, and public exports.
 - Define supported generator ids: `npc`, `faction`, `settlement`, `magic-item`.
 - Define a typed registry with option metadata, defaults, theme hook, generator invoker, and output mapper.
-- Define transient `GeneratedDraft`, `GeneratorVaultContext`, and save request shapes.
+- Define transient `GeneratedDraft`, `GeneratorVaultContext`, template application metadata, and save request shapes.
 - Add tests for successful registry lookup, invalid generator id, output-to-draft mapping, label preservation, and package exports.
 
 ### Phase 2: Native In-App Generator Hub
@@ -137,12 +137,14 @@ No constitution violations.
 - Map `themeStore.worldThemeId`/active theme to generator defaults without hiding user overrides.
 - Support optional source entity context when launched from an entity.
 - Build a bounded vault context packet from theme, categories, template outline, source entity excerpt, capped neighbor excerpts, existing-title hints, and label suggestions.
+- Resolve entity templates through the existing template service, including vault-custom overrides, and include the resolved outline plus template source in the context packet.
 - Show included context categories before AI-backed generation and allow optional source/neighbor context removal.
+- Let users inspect or disable template application before generation/review.
 - Route existing entity sidebar and Zen Mode Generate Related buttons into the unified generator workflow with `sourceEntityId`.
 - Save optional relationship through `vault.addConnection(...)`.
 - Retire or wrap the legacy `RelatedEntityModal` after contextual launch parity is covered.
 - Keep AI context explicit and minimal; do not send full vault contents.
-- Add tests for theme mapping, neutral fallback, relationship creation, AI-disabled/local fallback behavior, AI context minimization, context packet caps/removal, and existing Generate Related entry points.
+- Add tests for theme mapping, neutral fallback, relationship creation, AI-disabled/local fallback behavior, AI context minimization, context packet caps/removal, template outline application, custom template precedence, and existing Generate Related entry points.
 
 ### Phase 5: Public Generator Package Transition
 

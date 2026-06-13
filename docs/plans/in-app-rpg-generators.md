@@ -36,6 +36,7 @@ The new work should reuse these capabilities, but separate the concerns:
 - Vault import should be a direct draft-to-entity operation.
 - AI use should respect existing Oracle settings, guest constraints, and AI-disabled policy.
 - Vault context should be passed as a bounded, inspectable plain-data packet rather than giving generator package code direct access to vault stores.
+- Generated campaign drafts should use the same entity template structure as manual entity creation, including vault-level custom template overrides.
 
 ## Architecture Direction
 
@@ -93,14 +94,26 @@ Build vault context in the web app layer, then pass it to `packages/generator-en
 
 Packet construction:
 
-1. Include theme and schema context: active theme, selected target type, categories, and template outline.
+1. Include theme and schema context: active theme, selected target type, categories, resolved template outline, template source, and whether template application is enabled.
 2. For contextual Generate Related launches, include only the selected source entity excerpt.
 3. Gather outbound and inbound neighbors from the source entity.
 4. Rank directly connected neighbors by relationship presence, meaningful content, and labels.
 5. Keep a capped neighbor set and convert each neighbor to a short excerpt.
 6. Add bounded title hints for duplicate avoidance and bounded label suggestions.
 7. Show a context summary before AI-backed generation.
-8. Never include full `vault.entities`, full graph state, full lore corpus, API keys, or live store references.
+8. Let users inspect or disable template application before save.
+9. Never include full `vault.entities`, full graph state, full lore corpus, API keys, file handles, or live store references.
+
+### Template Application
+
+Use the same template resolution behavior as manual entity creation:
+
+- Check vault-level custom templates under `.cc/templates/` first.
+- Fall back to `.codex/templates/`.
+- Fall back to theme-specific system templates.
+- Fall back to generic system templates.
+
+Generated campaign drafts apply the resolved template by default. Non-AI generation maps known generated fields into matching headings and preserves unmatched generated details in an editable fallback section. AI-backed generation receives the resolved template outline as a structural requirement when template application is enabled. Public generator pages can keep their public display format; template application happens when a generated result becomes a campaign draft.
 
 ## Phases
 
@@ -171,10 +184,12 @@ Acceptance criteria:
 - Launching from an entity can prefill relationship context.
 - Existing Generate Related buttons open the unified generator workflow with source entity context.
 - A bounded vault context packet is built from theme/schema/source/neighbor/title/label data.
+- The packet includes the resolved entity template outline and template source.
+- Generated drafts preserve template headings unless template application is disabled.
 - Users can inspect included context categories before AI-backed generation and remove optional source or neighbor context.
 - Saving from an entity-launched flow can create a relationship back to the source entity.
 - AI-backed generation receives only explicit, minimal context.
-- Tests cover theme mapping, context packet caps, context removal, and source-entity relationship creation.
+- Tests cover theme mapping, context packet caps, context removal, custom template precedence, generated template heading preservation, and source-entity relationship creation.
 
 Notes:
 

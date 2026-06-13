@@ -105,6 +105,8 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - Existing Generate Related users expect the old sidebar behavior: the entry point remains visible in the same places, but it launches the unified generator workflow with relationship controls.
 - A vault has many entities or very large lore entries: generator context is summarized, capped, and inspectable instead of passing the full vault or full entity text.
 - A user removes optional context before generation: the generator still works from selected options, theme defaults, and any remaining explicit context.
+- A target entity type has a custom vault template: generated campaign drafts use that custom structure instead of only the system default.
+- Generator output contains details that do not match any template heading: the unmatched details remain reviewable and are placed in an appropriate editable section rather than being discarded.
 
 ## Requirements _(mandatory)_
 
@@ -141,6 +143,12 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **FR-029**: The vault context packet MUST include only explicit, relevant context such as active theme, target category, template outline, selected source entity excerpt, capped neighboring entity excerpts, title hints, and label suggestions.
 - **FR-030**: Users MUST be able to inspect which vault context categories are included before AI-backed generation and remove optional source or neighbor context.
 - **FR-031**: Generator package logic MUST receive vault context only through the context packet and MUST NOT read campaign vault stores directly.
+- **FR-032**: Generated campaign drafts MUST apply the active entity template for the selected target entity type when a template exists.
+- **FR-033**: Vault-level custom templates MUST take precedence over system default templates for generated campaign draft structure.
+- **FR-034**: Users MUST be able to review and edit generated template sections before saving.
+- **FR-035**: Users MUST be able to disable template application for a generated draft before generation or review.
+- **FR-036**: Non-AI generation MUST map generated fields into known template sections where possible and preserve unmatched generated details in an editable section.
+- **FR-037**: AI-backed generation MUST receive the resolved template outline as a structural requirement when template application is enabled.
 
 ### Key Entities
 
@@ -158,6 +166,8 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **Contextual Generator Entry Point**: An existing campaign UI action, such as Generate Related in the entity sidebar or Zen Mode, that opens the unified generator workflow with a source entity.
 - **Legacy Related Workflow**: The current standalone related-entity generation modal that is replaced or wrapped by the unified workflow during migration.
 - **Vault Context Packet**: A bounded, explicit summary of active campaign context prepared by the web app before generator execution. It can include theme, category/template information, selected source entity excerpts, capped neighbor excerpts, existing-title hints, and label suggestions.
+- **Entity Template**: A markdown outline used to structure entity lore/content. Templates can come from system defaults or vault-level custom files.
+- **Template-Applied Draft**: A generated draft whose lore/detail text follows the resolved entity template while remaining editable before save.
 
 ### Assumptions
 
@@ -170,6 +180,8 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - The existing Generate Related button placement remains the preferred contextual entry point for entity-scoped generation.
 - Vault context is built by the campaign app layer from existing stores and passed to generator package functions as plain data.
 - Source and neighbor text excerpts are capped to avoid sending full campaign contents by default.
+- Template outlines are resolved by the campaign app layer using the same template service as manual entity creation.
+- Template application is enabled by default for campaign saves and can be disabled for a draft.
 - Existing campaign duplicate-name and entity-type rules continue to apply unless later planning identifies a required change.
 
 ## Success Criteria _(mandatory)_
@@ -186,3 +198,4 @@ As a Game Master discovering the feature, I want clear in-app guidance and help 
 - **SC-008**: 100% of public NPC, Faction, Settlement, and Magic Item generator flows call shared `packages/generator-engine` logic for supported non-AI generation and output mapping.
 - **SC-009**: 100% of existing Generate Related entry points open the unified generator workflow with source entity context and no longer require a separate related-entity modal to complete the primary contextual generation flow.
 - **SC-010**: 100% of AI-backed contextual generation attempts show the included context categories before generation and exclude full vault contents by default.
+- **SC-011**: 100% of generated campaign drafts for templated entity types preserve the resolved template headings or clearly show template application was disabled before save.

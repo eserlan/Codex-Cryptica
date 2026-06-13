@@ -79,6 +79,18 @@
 - Pass full source entities and full neighbor records: rejected because contextual generation only needs excerpts and relationship cues.
 - Build prompts directly in Svelte components: rejected because context selection, caps, and privacy rules need service-level tests.
 
+## Decision: Apply Resolved Entity Templates To Campaign Drafts
+
+**Decision**: Resolve the active entity template in the web app layer and pass it as plain markdown in the context packet. Generated campaign drafts apply the template by default, with vault-custom templates taking precedence over system defaults. Users can disable template application or edit the generated sections before save.
+
+**Rationale**: Manual entity creation already uses entity templates, and generated campaign drafts should not bypass the same structure users configured for their vault. Resolving the template in the web app preserves access to vault-local override files while keeping the generator package free of filesystem and store dependencies.
+
+**Alternatives considered**:
+
+- Let generators ignore templates: rejected because generated entities would feel structurally inconsistent with manual entries.
+- Let `packages/generator-engine` read vault template files: rejected because package code must not depend on browser file handles or vault stores.
+- Require AI to perfectly fill every template section: rejected because non-AI generation and partial outputs need a safe editable fallback for unmatched details.
+
 ## Decision: Native Svelte Modal With Semantic Forms
 
 **Decision**: Build a native Svelte 5 modal flow with semantic `<form>` behavior, visible labels, grouped controls, accessible names/descriptions, clear validation, keyboard navigation, and platform-compatible dismissal.

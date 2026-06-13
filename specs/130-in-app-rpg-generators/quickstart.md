@@ -16,7 +16,7 @@ Implement a native campaign generator workflow for NPC, Faction, Settlement, and
 8. Add failing tests for save success, save failure preserving draft, guest/read-only/unavailable blocked save, cancellation/no-save, and optional source relationship.
 9. Wire direct vault save through injected vault APIs.
 10. Add theme-default mapping tests and implementation.
-11. Build the bounded vault context packet in the web app layer and pass it into package services as plain data.
+11. Build the bounded vault context packet in the web app layer, including resolved entity template outline/source, and pass it into package services as plain data.
 12. Route existing entity sidebar and Zen Mode Generate Related buttons into the unified generator workflow with source entity context.
 13. Retire the standalone related-entity modal or reduce it to a compatibility wrapper after contextual parity is covered.
 14. Transition public NPC, Faction, Settlement, and Magic Item generator pages to package-backed adapters while preserving routes, SEO/discovery behavior, and primary public generation flows.
@@ -52,6 +52,8 @@ bun run --filter '*' test -- --changed
 - Treat Generate Related as a contextual entry point into the unified generator workflow, not as a separate long-term modal.
 - Build vault context in the web app layer; `packages/generator-engine` receives only a bounded plain-data packet.
 - Cap source and neighbor excerpts before package generation. Do not pass full vault maps, full graph state, API keys, or full lore fields.
+- Resolve templates in the web app layer using the same behavior as manual entity creation, including `.cc/templates/` and `.codex/templates/` custom overrides.
+- Apply resolved templates to generated campaign drafts by default, while allowing template application to be disabled before save.
 - Keep generated drafts transient until explicit save.
 - Do not use `localStorage` as an import bridge.
 - Use labels, not tags.
@@ -72,15 +74,16 @@ Build the packet in `apps/web/src/lib/services/generators/generator-vault-contex
 
 Construction steps:
 
-1. Start with theme/schema context: active theme id/name, selected target category, available category labels, and resolved template outline.
+1. Start with theme/schema context: active theme id/name, selected target category, available category labels, resolved template outline, template source, and whether template application is enabled.
 2. If launched from Generate Related, add the selected source entity as a capped excerpt with title, type, content excerpt, optional lore excerpt, and labels.
 3. Gather directly connected outbound and inbound neighbors from the source entity.
 4. Rank neighbors by direct relationship presence, meaningful content, and labels; keep a small capped set.
 5. Convert neighbors to capped excerpts with title, type, relationship label, content excerpt, optional lore excerpt, and bounded labels.
 6. Add bounded existing-title hints for duplicate avoidance and bounded label suggestions.
-7. Produce an `includedContext` summary for the UI, grouped as theme, schema, source, neighbors, titles, and labels.
+7. Produce an `includedContext` summary for the UI, grouped as theme, schema, template, source, neighbors, titles, and labels.
 8. Let the user remove optional source or neighbor context before AI-backed generation.
-9. Pass the final packet to package services. Never pass the full `vault.entities`, full graph, full lore corpus, or live stores.
+9. Let the user inspect whether a system or vault-custom template will be applied and disable template application for the draft.
+10. Pass the final packet to package services. Never pass the full `vault.entities`, full graph, full lore corpus, file handles, or live stores.
 
 ## Manual Smoke Test
 
@@ -96,3 +99,5 @@ Construction steps:
 10. Record modal-open timing and non-AI generation timing, or document why a target is not currently measurable.
 11. Confirm the Generate Related action no longer needs a standalone related-entity modal to complete contextual generation.
 12. Confirm AI-backed contextual generation shows included context categories and excludes full vault contents by default.
+13. Confirm generated campaign drafts preserve resolved template headings when template application is enabled.
+14. Confirm a custom `.cc/templates/{type}.md` or `.codex/templates/{type}.md` file takes precedence over the system template.
