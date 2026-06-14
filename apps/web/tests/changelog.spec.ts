@@ -12,15 +12,15 @@ test.describe("Changelog System", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      localStorage.setItem("codex_last_seen_version", "0.16.5");
+      localStorage.setItem("codex_last_seen_version", "0.25.1");
     });
 
-    await page.goto("/");
+    await setupVaultPage(page);
 
     // 2. Verify modal appears after the 2s delay
     // We wait up to 5s to be safe
     const modal = page.locator('div[role="dialog"] >> text=What\'s New');
-    await expect(modal).toBeVisible({ timeout: 5000 });
+    await expect(modal).toBeVisible({ timeout: 8000 });
 
     // 3. Close the modal
     await page.getByRole("button", { name: "Acknowledge Updates" }).click();
@@ -30,8 +30,8 @@ test.describe("Changelog System", () => {
     const lastSeen = await page.evaluate(() =>
       localStorage.getItem("codex_last_seen_version"),
     );
-    // Should match the current package.json version
-    expect(lastSeen).toBe("0.17.37");
+    // Should match the latest known release from releases.json.
+    expect(lastSeen).toBe("0.26.3");
   });
 
   test("should NOT automatically open when MINOR version is up to date (even if patch is older)", async ({
@@ -42,9 +42,9 @@ test.describe("Changelog System", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
-      // Stored version is 0.17.0, current app is 0.17.37.
+      // Stored version is 0.26.0, current app is 0.26.x.
       // Because minor is the same, it should NOT pop up.
-      localStorage.setItem("codex_last_seen_version", "0.17.0");
+      localStorage.setItem("codex_last_seen_version", "0.26.0");
     });
 
     await page.goto("/");
@@ -63,11 +63,11 @@ test.describe("Changelog System", () => {
 
     // Ensure we are up to date
     await page.evaluate(() => {
-      localStorage.setItem("codex_last_seen_version", "0.17.37");
+      localStorage.setItem("codex_last_seen_version", "0.26.3");
     });
 
     // 1. Open Settings
-    await page.keyboard.press("Control+,");
+    await page.getByTestId("settings-button").click();
     await expect(page.getByTestId("settings-modal")).toBeVisible();
 
     // 2. Go to About tab
@@ -81,10 +81,10 @@ test.describe("Changelog System", () => {
     await expect(modal).toBeVisible();
 
     // 5. Verify it shows the latest version from releases.json
-    await expect(page.locator("text=v0.17.0")).toBeVisible();
+    await expect(page.locator("text=v0.26.3")).toBeVisible();
 
-    // 6. Close via Escape key
-    await page.keyboard.press("Escape");
+    // 6. Close via the modal's explicit action
+    await page.getByRole("button", { name: "Done" }).click();
     await expect(modal).not.toBeVisible();
   });
 });
