@@ -1,4 +1,4 @@
-import { getGenerator } from "./campaign-generator-registry";
+import { getGenerator, isTitleBanned } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import {
   type AIGeneratorGateway,
@@ -49,6 +49,9 @@ export interface CampaignGeneratorServiceDeps {
   /** Optional AI gateway; required for AI-assisted generation. */
   aiGateway?: AIGeneratorGateway;
 }
+
+/** Max AI generation attempts when the model keeps returning a banned name. */
+const MAX_AI_ATTEMPTS = 3;
 
 /** User-readable error raised when a save is blocked or invalid. */
 export class DraftSaveError extends Error {
@@ -106,36 +109,44 @@ export class CampaignGeneratorService {
     // Propagate the resolved AI flag so the merged request reflects reality.
     mergedRequest.useAI = canUseAI;
 
-    if (canUseAI && this.aiGateway) {
-      try {
-        const prompt = generator.buildPrompt(mergedRequest);
-        const raw = await this.aiGateway.complete(prompt, SYSTEM_INSTRUCTION);
-        const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
-        if (
-          typeof parsed.title === "string" &&
-          typeof parsed.summary === "string" &&
-          typeof parsed.lore === "string"
-        ) {
-          const output: GeneratorOutput = {
-            title: parsed.title,
-            summary: parsed.summary,
-            lore: parsed.lore,
-            labels: Array.isArray(parsed.labels) ? parsed.labels : [],
-          };
-          return generator.mapOutputToDraft(output, mergedRequest);
-        }
-      } catch {
-        // Fall through to local generation.
-      }
-    }
-
     const bannedNames = new Set([
       ...(mergedRequest.vaultContext?.bannedNames ?? []),
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
+
+    if (canUseAI && this.aiGateway) {
+      const prompt = generator.buildPrompt(mergedRequest);
+      // Retry a few times if the model returns a banned name (including
+      // derivatives like "Vane-Smithe"); fall through to local generation if it
+      // keeps doing so.
+      for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
+        try {
+          const raw = await this.aiGateway.complete(prompt, SYSTEM_INSTRUCTION);
+          const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+          if (
+            typeof parsed.title === "string" &&
+            typeof parsed.summary === "string" &&
+            typeof parsed.lore === "string"
+          ) {
+            if (isTitleBanned(parsed.title, bannedNames)) continue;
+            const output: GeneratorOutput = {
+              title: parsed.title,
+              summary: parsed.summary,
+              lore: parsed.lore,
+              labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+            };
+            return generator.mapOutputToDraft(output, mergedRequest);
+          }
+          break; // Valid JSON but wrong shape — fall through to local.
+        } catch {
+          break; // Network/parse failure — fall through to local.
+        }
+      }
+    }
+
     let output = generator.generate(mergedRequest);
-    // Retry up to 5× if the generated title collides with an existing entity name.
-    for (let i = 0; i < 5 && bannedNames.has(output.title); i++) {
+    // Retry up to 5× if the generated title collides with a banned name.
+    for (let i = 0; i < 5 && isTitleBanned(output.title, bannedNames); i++) {
       output = generator.generate(mergedRequest);
     }
     return generator.mapOutputToDraft(output, mergedRequest);

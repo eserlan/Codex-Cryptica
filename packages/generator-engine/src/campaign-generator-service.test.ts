@@ -47,6 +47,23 @@ function gateway(
   };
 }
 
+function ctx(bannedNames: string[]): GeneratorRunRequest["vaultContext"] {
+  return {
+    categoryLabels: [],
+    neighbors: [],
+    worldSample: [],
+    existingTitles: [],
+    bannedNames,
+    labelSuggestions: [],
+    includedContext: [],
+    applyTemplate: false,
+  };
+}
+
+function aiJson(title: string): string {
+  return JSON.stringify({ title, summary: "s", lore: "l", labels: [] });
+}
+
 describe("generateDraft", () => {
   it("produces a draft for each supported generator with useAI false", async () => {
     const svc = new CampaignGeneratorService();
@@ -264,5 +281,35 @@ describe("AI policy (US2)", () => {
     });
     const d = await svc.generateDraft(run("faction", { useAI: true }));
     expect(d.sourceGeneratorId).toBe("faction");
+  });
+
+  it("retries AI generation when it returns a banned name, then accepts a clean one", async () => {
+    const complete = vi
+      .fn()
+      .mockResolvedValueOnce(aiJson("Vane-Smithe"))
+      .mockResolvedValueOnce(aiJson("Aric Dawnward"));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const d = await svc.generateDraft(
+      run("npc", { useAI: true, vaultContext: ctx(["Vane"]) }),
+    );
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(d.title).toBe("Aric Dawnward");
+  });
+
+  it("falls back to local generation when AI keeps returning banned names", async () => {
+    const complete = vi.fn(async () => aiJson("Vane-Smithe"));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const d = await svc.generateDraft(
+      run("npc", { useAI: true, vaultContext: ctx(["Vane"]) }),
+    );
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(d.title.toLowerCase()).not.toContain("vane");
+    expect(d.sourceGeneratorId).toBe("npc");
   });
 });

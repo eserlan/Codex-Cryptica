@@ -5,19 +5,28 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { buildVaultContext } from "$lib/services/generators/generator-vault-context";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import {
+    buildVaultContext,
+    latestTemporalYear,
+  } from "$lib/services/generators/generator-vault-context";
   import {
     CampaignGeneratorService,
+    getDefaultInstruction,
     isSupportedGenerator,
+    resolveEntityType,
     type GeneratedDraft,
     type GeneratorId,
     type GeneratorRunRequest,
     type GeneratorVaultGateway,
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
+  import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { searchService } from "$lib/services/search.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
@@ -94,9 +103,66 @@
           }
         }
       }
+      // Resolve the entity template following the normal selection rules
+      // (local vault override → theme default → generic) so the AI shapes its
+      // output to match the template the user would get from manual creation.
+      const targetEntityType = resolveEntityType(
+        req.generatorId,
+        categories.list.map((c) => c.id),
+      );
+      let templateOutline = "";
+      try {
+        const folderHandle = await vault.getActiveFolderHandle();
+        const vaultHandle = await vault.getActiveVaultHandle();
+        const customTemplatesDirHandle = folderHandle ?? vaultHandle;
+        templateOutline = await entityTemplateService.resolveTemplate(
+          targetEntityType,
+          themeStore.worldThemeId,
+          customTemplatesDirHandle,
+        );
+      } catch {
+        // Fall back to system defaults if the vault handle is unavailable.
+        templateOutline = await entityTemplateService.resolveTemplate(
+          targetEntityType,
+          themeStore.worldThemeId,
+        );
+      }
+
+      // Use the non-AI search engine to find vault entities relevant to the
+      // user's request, so the world-grounding context is about what they asked
+      // for (e.g. "plains of shas") rather than a blind type sample.
+      let relevantIds: string[] = [];
+      const searchQuery = (
+        req.instructions?.trim() ||
+        sourceEntity?.title ||
+        ""
+      ).trim();
+      if (searchQuery) {
+        try {
+          const hits = await searchService.search(searchQuery, { limit: 8 });
+          relevantIds = hits.map((h) => h.id);
+        } catch {
+          // Search index unavailable — fall back to type-based sampling.
+        }
+      }
+
+      // Pass the in-world campaign date so generated content fits the current
+      // point in the timeline. Prefer the calendar's explicit present year;
+      // otherwise fall back to the latest structured event year in the vault.
+      const cal = calendarStore.config;
+      const presentYear =
+        typeof cal.presentYear === "number" && cal.presentYear !== 0
+          ? cal.presentYear
+          : latestTemporalYear(vault.entities);
+      const currentDate =
+        presentYear !== undefined
+          ? `${presentYear}${cal.epochLabel ? ` ${cal.epochLabel}` : ""}`
+          : undefined;
+
       const vaultContext = buildVaultContext({
         themeId: themeStore.worldThemeId ?? "workspace",
         themeName: themeStore.activeTheme?.name,
+        currentDate,
         sourceEntity,
         allEntities: vault.entities,
         connectedIds: sourceConnectedIds,
@@ -104,9 +170,18 @@
           id: c.id,
           label: c.label,
         })),
+        targetEntityType,
+        templateOutline: templateOutline || undefined,
+        applyTemplate: !!templateOutline,
+        relevantIds,
       });
+      // When the user gives no instructions, fall back to the category's
+      // default brief so the model always has direction.
+      const instructions =
+        req.instructions?.trim() || getDefaultInstruction(req.generatorId);
       const result = await svc.generateDraft({
         ...req,
+        instructions,
         themeId: themeStore.worldThemeId ?? "workspace",
         vaultContext,
       });
@@ -145,7 +220,14 @@
         deleteOnDiscard: true,
       };
       close();
-      focusEntity(result.entityId);
+      // Review where the user launched from: stay in zen if already in zen (or
+      // on mobile, where zen is the better surface), otherwise show the draft
+      // in the entity sidebar without yanking the user into zen.
+      if (layoutUIStore.mainViewMode === "focus" || layoutUIStore.isMobile) {
+        focusEntity(result.entityId);
+      } else {
+        vault.selectedEntityId = result.entityId;
+      }
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : String(err);
       stage = "review";
@@ -226,7 +308,7 @@
     </div>
 
     <!-- Body -->
-    <div class="px-5 py-4 overflow-y-auto max-h-[70vh]">
+    <div class="px-5 py-4 overflow-y-auto max-h-[70vh] md:max-h-[85vh]">
       {#if stage === "configure"}
         <GeneratorConfigForm
           bind:generatorId

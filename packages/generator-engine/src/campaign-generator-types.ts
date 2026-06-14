@@ -52,6 +52,7 @@ export type IncludedContextCategory =
   | "categories"
   | "source"
   | "neighbors"
+  | "world"
   | "titles"
   | "labels";
 
@@ -61,6 +62,8 @@ export type TemplateSource = "none" | "system" | "vault-custom";
 export interface GeneratorVaultContext {
   themeId?: string;
   themeName?: string;
+  /** Current in-world campaign date/year, when the vault's calendar sets one. */
+  currentDate?: string;
   targetEntityType?: string;
   categoryLabels: Array<{ id: string; label: string }>;
   templateOutline?: string;
@@ -68,6 +71,12 @@ export interface GeneratorVaultContext {
   applyTemplate: boolean;
   sourceEntity?: VaultContextEntityExcerpt;
   neighbors: VaultContextEntityExcerpt[];
+  /**
+   * A bounded sample of existing vault entities (excerpts) used as positive
+   * world grounding — distinct from {@link neighbors} (graph-connected) and
+   * {@link existingTitles} (name ban list).
+   */
+  worldSample: VaultContextEntityExcerpt[];
   existingTitles: string[];
   bannedNames?: string[];
   labelSuggestions: string[];
@@ -128,6 +137,11 @@ export interface CampaignGeneratorDefinition {
   description: string;
   /** Vault category id (NOT the generator id). See README/data-model mapping. */
   entityType: string;
+  /**
+   * Fallback generation brief used when the user provides no instructions, so
+   * the model always has direction for this category.
+   */
+  defaultInstruction: string;
   icon: string;
   options: GeneratorOptionDefinition[];
   defaults: Record<string, unknown>;

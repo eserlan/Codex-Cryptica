@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   getGenerator,
+  getDefaultInstruction,
+  isTitleBanned,
   isSupportedGenerator,
   listGenerators,
   resolveEntityType,
@@ -8,6 +10,7 @@ import {
 } from "./campaign-generator-registry";
 import {
   type GeneratorRunRequest,
+  type GeneratorVaultContext,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
 
@@ -43,6 +46,15 @@ describe("registry lookup", () => {
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
     expect(() => getGenerator("dragon")).toThrow(UnsupportedGeneratorError);
     expect(() => getGenerator("dragon")).toThrow(/not available/);
+  });
+
+  it("provides a non-empty default instruction for every generator", () => {
+    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+      expect(getDefaultInstruction(id).trim().length).toBeGreaterThan(0);
+      expect(getDefaultInstruction(id)).toBe(
+        getGenerator(id).defaultInstruction,
+      );
+    }
   });
 
   it("isSupportedGenerator narrows known ids", () => {
@@ -90,6 +102,7 @@ describe("draft mapping", () => {
           applyTemplate: true,
           templateOutline: "## Overview\n## Secrets",
           neighbors: [],
+          worldSample: [],
           existingTitles: [],
           labelSuggestions: [],
           includedContext: [],
@@ -113,6 +126,210 @@ describe("draft mapping", () => {
       run("npc"),
     );
     expect(draft.unmappedDetails).toBe("extra");
+  });
+});
+
+describe("buildPrompt template injection", () => {
+  const ctxWithTemplate = (applyTemplate: boolean) => ({
+    categoryLabels: [],
+    applyTemplate,
+    templateOutline: "## Overview\n## Secrets",
+    neighbors: [],
+    worldSample: [],
+    existingTitles: [],
+    labelSuggestions: [],
+    includedContext: [],
+  });
+
+  it("includes the template outline in the prompt when applyTemplate is true", () => {
+    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+      const prompt = getGenerator(id).buildPrompt(
+        run(id, { vaultContext: ctxWithTemplate(true) }),
+      );
+      expect(prompt).toContain(
+        'Structure the "lore" field to follow this template',
+      );
+      expect(prompt).toContain("## Overview");
+    }
+  });
+
+  it("omits the template block when applyTemplate is false", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: ctxWithTemplate(false) }),
+    );
+    expect(prompt).not.toContain("## Overview");
+  });
+
+  it("omits the template block when no outline is supplied", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: true,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(prompt).not.toContain("follow this template");
+  });
+});
+
+describe("buildPrompt cultural naming", () => {
+  it("instructs the model to match the world's naming conventions", () => {
+    const prompt = getGenerator("npc").buildPrompt(run("npc"));
+    expect(prompt).toContain("naming conventions");
+    expect(prompt).toContain("do not default to generic");
+  });
+
+  it("points to the example entities when world context is present", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [
+            {
+              id: "w1",
+              title: "Aranyvér",
+              type: "character",
+              contentExcerpt: "x",
+            },
+          ],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(prompt).toContain(
+      "Infer the naming style from the example entities",
+    );
+  });
+});
+
+describe("buildPrompt campaign date", () => {
+  const baseCtx = (): GeneratorVaultContext => ({
+    categoryLabels: [],
+    applyTemplate: false,
+    neighbors: [],
+    worldSample: [],
+    existingTitles: [],
+    labelSuggestions: [],
+    includedContext: [],
+  });
+
+  it("includes the current campaign date when provided", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: { ...baseCtx(), themeName: "X", currentDate: "1247 AE" },
+      }),
+    );
+    expect(prompt).toContain("Current campaign date: 1247 AE");
+  });
+
+  it("omits the date line when no campaign date is set", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: baseCtx() }),
+    );
+    expect(prompt).not.toContain("Current campaign date");
+  });
+});
+
+describe("buildPrompt source entity", () => {
+  it("includes both the content and lore of the source entity", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+          sourceEntity: {
+            id: "s1",
+            title: "Lord Aric",
+            type: "character",
+            contentExcerpt: "A grim border lord.",
+            loreExcerpt: "Secretly bankrupt and beholden to a smuggling ring.",
+          },
+        },
+      }),
+    );
+    expect(prompt).toContain("A grim border lord.");
+    expect(prompt).toContain(
+      "Lore: Secretly bankrupt and beholden to a smuggling ring.",
+    );
+  });
+});
+
+describe("buildPrompt world grounding", () => {
+  const ctxWithWorld = (worldSample: GeneratorVaultContext["worldSample"]) => ({
+    categoryLabels: [],
+    applyTemplate: false,
+    neighbors: [],
+    worldSample,
+    existingTitles: [],
+    labelSuggestions: [],
+    includedContext: [],
+  });
+
+  it("injects existing world entities as positive grounding", () => {
+    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+      const prompt = getGenerator(id).buildPrompt(
+        run(id, {
+          vaultContext: ctxWithWorld([
+            {
+              id: "e1",
+              title: "Ironhold Keep",
+              type: "location",
+              contentExcerpt: "A mountain fortress.",
+            },
+          ]),
+        }),
+      );
+      expect(prompt).toContain("Existing entities in this world");
+      expect(prompt).toContain("Ironhold Keep");
+      expect(prompt).toContain("A mountain fortress.");
+    }
+  });
+
+  it("omits the world block when no sample is present", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: ctxWithWorld([]) }),
+    );
+    expect(prompt).not.toContain("Existing entities in this world");
+  });
+});
+
+describe("isTitleBanned", () => {
+  const banned = ["Vane", "Archmage Elara Voss", "Dávid Farkas"];
+
+  it("catches hyphenated/compound derivatives of a banned token", () => {
+    expect(isTitleBanned("Vane-Smithe", banned)).toBe(true);
+    expect(isTitleBanned("Lord Vane", banned)).toBe(true);
+    expect(isTitleBanned("Vane", banned)).toBe(true);
+  });
+
+  it("does not flag substrings inside a larger word", () => {
+    expect(isTitleBanned("Vanessa", banned)).toBe(false);
+    expect(isTitleBanned("Vanguard", banned)).toBe(false);
+  });
+
+  it("matches multi-word and accented banned names", () => {
+    expect(isTitleBanned("Archmage Elara Voss", banned)).toBe(true);
+    expect(isTitleBanned("Dávid Farkas the Bold", banned)).toBe(true);
+  });
+
+  it("is case-insensitive and returns false for clean names", () => {
+    expect(isTitleBanned("VANE-smithe", banned)).toBe(true);
+    expect(isTitleBanned("Aric Thornfield", banned)).toBe(false);
   });
 });
 

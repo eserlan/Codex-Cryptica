@@ -90,7 +90,7 @@ function mapOutputToDraft(
 // ---------------------------------------------------------------------------
 
 const SYSTEM_INSTRUCTION =
-  "You are a tabletop RPG campaign assistant. Generate campaign content grounded in the provided world context. Return ONLY valid JSON with no markdown fences.";
+  "You are a tabletop RPG campaign assistant. Generate campaign content grounded in the provided world context. Keep the result internally consistent: names, facts, dates, motivations, and relationships must agree across every field and section, with no self-contradictions. Return ONLY valid JSON with no markdown fences.";
 
 const OUTPUT_SCHEMA = `{
   "title": "string — name of the entity",
@@ -106,10 +106,19 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
   if (ctx.themeName && ctx.themeId !== "workspace") {
     lines.push(`World Theme: ${ctx.themeName}`);
   }
-  if (ctx.sourceEntity) {
+  if (ctx.currentDate) {
     lines.push(
-      `\nSource Entity (generate something related to this):\n- ${ctx.sourceEntity.title} (${ctx.sourceEntity.type}): ${ctx.sourceEntity.contentExcerpt || ctx.sourceEntity.loreExcerpt || ""}`,
+      `Current campaign date: ${ctx.currentDate}. Place the content at this point in the timeline — no anachronisms and no references to events that have not yet happened.`,
     );
+  }
+  if (ctx.sourceEntity) {
+    const src = ctx.sourceEntity;
+    lines.push(
+      `\nSource Entity (generate something related to this):\n- ${src.title} (${src.type}): ${src.contentExcerpt || ""}`,
+    );
+    if (src.loreExcerpt) {
+      lines.push(`  Lore: ${src.loreExcerpt}`);
+    }
   }
   if (ctx.neighbors.length) {
     lines.push("\nConnected Entities (world context):");
@@ -118,6 +127,25 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
         `- ${n.title} (${n.type}): ${n.contentExcerpt || n.loreExcerpt || ""}`,
       );
     }
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Positive world grounding: a sample of existing vault entities so the model
+ * matches the established tone and stays consistent with the campaign. Distinct
+ * from the source/neighbor context and the name ban list.
+ */
+function worldBlock(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  if (!ctx?.worldSample?.length) return "";
+  const lines = [
+    "\nExisting entities in this world (match their tone and stay consistent — do not duplicate or contradict them):",
+  ];
+  for (const e of ctx.worldSample) {
+    lines.push(
+      `- ${e.title} (${e.type}): ${e.contentExcerpt || e.loreExcerpt || ""}`,
+    );
   }
   return lines.join("\n");
 }
@@ -140,7 +168,57 @@ function bannedNamesBlock(request: GeneratorRunRequest): string {
   const ctx = request.vaultContext;
   const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
   if (!all.length) return "";
-  return `\nDo NOT use any of these names: ${all.join(", ")}`;
+  return `\nDo NOT use any of these names, or hyphenated/compound variations of them (e.g. if "Vane" is listed, do not use "Vane-Smithe"): ${all.join(", ")}`;
+}
+
+/**
+ * True when a generated title collides with a banned name. Matches whole tokens
+ * case-insensitively (splitting on spaces, hyphens, punctuation, and accents
+ * preserved) so derivatives like "Vane-Smithe" are caught for a banned "Vane",
+ * while substrings inside a larger word ("Vanessa") are not.
+ */
+export function isTitleBanned(
+  title: string,
+  banned: Iterable<string>,
+): boolean {
+  const normalize = (s: string) =>
+    ` ${s
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()} `;
+  const haystack = normalize(title);
+  for (const name of banned) {
+    const needle = normalize(name).trim();
+    if (needle && haystack.includes(` ${needle} `)) return true;
+  }
+  return false;
+}
+
+/**
+ * Instruct the model to keep the generated name culturally consistent with the
+ * world — deriving its linguistic style from the example entities and source
+ * context (e.g. Magyar-flavoured names for a Magyar-inspired culture) rather
+ * than defaulting to generic, culture-neutral fantasy names.
+ */
+function namingBlock(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  const hasExamples =
+    !!ctx?.sourceEntity || !!ctx?.neighbors.length || !!ctx?.worldSample.length;
+  const basis = hasExamples
+    ? "Infer the naming style from the example entities and source context above"
+    : "Use a consistent naming style appropriate to the world theme";
+  return `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`;
+}
+
+/**
+ * When a template outline is supplied, instruct the model to shape the "lore"
+ * field to match it — mirroring the markdown template a manually-created entity
+ * of this type would receive.
+ */
+function templateBlock(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  if (!ctx?.applyTemplate || !ctx.templateOutline) return "";
+  return `\nStructure the "lore" field to follow this template, keeping its markdown headings and filling every section with generated content:\n${ctx.templateOutline}\n`;
 }
 
 export { SYSTEM_INSTRUCTION };
@@ -150,7 +228,7 @@ export { SYSTEM_INSTRUCTION };
 // ---------------------------------------------------------------------------
 
 function npcPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
 
 Generate a campaign NPC. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -159,7 +237,7 @@ The "lore" field should include: who they are, what they want, a secret, and a f
 }
 
 function factionPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
 
 Generate a campaign faction, guild, or organisation. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -168,7 +246,7 @@ The "lore" field should include: what they control, what they want, internal con
 }
 
 function settlementPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
 
 Generate a campaign settlement or location. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -177,7 +255,7 @@ The "lore" field should include: points of interest, power structure, notable ru
 }
 
 function magicItemPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
 
 Generate a campaign magic item or artefact. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -317,6 +395,8 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     label: "NPC",
     description: "Generate a non-player character for your campaign.",
     entityType: GENERATOR_ENTITY_TYPE.npc,
+    defaultInstruction:
+      "A distinctive supporting character with a clear motivation, a memorable quirk, and a secret the party could uncover.",
     icon: "lucide:user",
     options: [
       {
@@ -342,6 +422,8 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     label: "Faction",
     description: "Generate a faction, guild, or organization.",
     entityType: GENERATOR_ENTITY_TYPE.faction,
+    defaultInstruction:
+      "An organisation with a clear agenda, an internal tension, and a reason the party might ally with or oppose it.",
     icon: "lucide:users",
     options: [
       {
@@ -361,6 +443,8 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     label: "Settlement",
     description: "Generate a settlement or location.",
     entityType: GENERATOR_ENTITY_TYPE.settlement,
+    defaultInstruction:
+      "A place the party can visit, with notable locations, a local power, and simmering tension or a rumour to investigate.",
     icon: "lucide:map-pin",
     options: [
       {
@@ -380,6 +464,8 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     label: "Magic Item",
     description: "Generate a magic item or artifact.",
     entityType: GENERATOR_ENTITY_TYPE["magic-item"],
+    defaultInstruction:
+      "An evocative item with a clear benefit, a meaningful drawback or cost, and a hook tying it into the world.",
     icon: "lucide:package",
     options: [
       {
@@ -410,6 +496,11 @@ export function getGenerator(id: string): CampaignGeneratorDefinition {
 
 export function isSupportedGenerator(id: string): id is GeneratorId {
   return (SUPPORTED_GENERATOR_IDS as readonly string[]).includes(id);
+}
+
+/** The fallback generation brief for a generator (used when no user input). */
+export function getDefaultInstruction(id: GeneratorId): string {
+  return REGISTRY[id].defaultInstruction;
 }
 
 /** All supported generator definitions, in display order. */

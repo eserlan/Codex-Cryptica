@@ -5,6 +5,8 @@ export {
 } from "./campaign-generator-theme";
 export {
   getGenerator,
+  getDefaultInstruction,
+  isTitleBanned,
   isSupportedGenerator,
   listGenerators,
   resolveEntityType,
