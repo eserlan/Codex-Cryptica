@@ -28,8 +28,6 @@
 
   let title = $state(draft.title);
   let entityType = $state(draft.entityType);
-  let summary = $state(draft.summary ?? "");
-  let lore = $state(draft.lore ?? "");
   let labelsRaw = $state(draft.labels?.join(", ") ?? "");
 
   const disabled = $derived(saving);
@@ -41,8 +39,6 @@
         ...draft,
         title: title.trim(),
         entityType,
-        summary: summary.trim(),
-        lore: lore.trim(),
         labels: labelsRaw
           .split(",")
           .map((l) => l.trim())
@@ -54,6 +50,11 @@
 </script>
 
 <form onsubmit={handleSave} class="flex flex-col gap-4">
+  <p class="text-xs text-chrome-muted">
+    Review the title and type, then open in the editor to read and accept the
+    generated content.
+  </p>
+
   <div class="flex flex-col gap-1">
     <label
       for="draft-title"
@@ -88,38 +89,6 @@
         <option value={cat.id}>{cat.label}</option>
       {/each}
     </select>
-  </div>
-
-  <div class="flex flex-col gap-1">
-    <label
-      for="draft-summary"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
-    >
-      Summary
-    </label>
-    <textarea
-      id="draft-summary"
-      bind:value={summary}
-      rows={3}
-      {disabled}
-      class="w-full resize-none rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-    ></textarea>
-  </div>
-
-  <div class="flex flex-col gap-1">
-    <label
-      for="draft-lore"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
-    >
-      Lore
-    </label>
-    <textarea
-      id="draft-lore"
-      bind:value={lore}
-      rows={5}
-      {disabled}
-      class="w-full resize-none rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-    ></textarea>
   </div>
 
   <div class="flex flex-col gap-1">
@@ -165,7 +134,7 @@
       disabled={saving}
       class="px-5 py-2 bg-chrome-accent text-chrome-surface font-bold uppercase tracking-wider text-xs rounded-lg hover:brightness-110 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
     >
-      {saving ? "Saving…" : "Save to Campaign"}
+      {saving ? "Opening…" : "Open in Editor"}
     </button>
   </div>
 </form>

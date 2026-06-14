@@ -16,6 +16,8 @@
   } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { revisionService } from "$lib/services/RevisionService.svelte";
+  import { focusEntity } from "$lib/stores/ui/navigation";
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
@@ -120,20 +122,31 @@
     stage = "saving";
     errorMsg = null;
     try {
+      // Create the entity skeleton (title + type + labels, no content yet).
       const result = await svc.saveDraft({
         draft: {
           ...reviewed,
+          summary: "",
+          lore: "",
           sourceEntityId: workflow.sourceEntityId ?? undefined,
           relationshipLabel:
             workflow.launchMode === "contextual" ? "related" : undefined,
         },
         createRelationship,
       });
-      vault.selectedEntityId = result.entityId;
+      // Push generated content as a pending draft so zen mode shows the
+      // proposal diff — user accepts or discards from the editor.
+      revisionService.pendingDraft = {
+        entityId: result.entityId,
+        source: "revise",
+        chronicle: reviewed.summary || "",
+        lore: reviewed.lore || "",
+        timestamp: Date.now(),
+      };
       close();
+      focusEntity(result.entityId);
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : String(err);
-      // Return to review so the user can retry the save without losing edits.
       stage = "review";
     }
   }
