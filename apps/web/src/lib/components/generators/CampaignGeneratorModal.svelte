@@ -218,6 +218,10 @@
           bind:generatorId
           onsubmit={onGenerate}
           aiPolicy={svc.aiPolicy}
+          categoryLabels={categories.list.map((c) => ({
+            id: c.id,
+            label: c.label,
+          }))}
         />
       {:else if stage === "generating"}
         <div class="flex items-center gap-3 py-6 text-sm text-chrome-muted">

@@ -16,6 +16,7 @@
     ) => void;
     disabled?: boolean;
     aiPolicy?: AIPolicy;
+    categoryLabels?: Array<{ id: string; label: string }>;
   }
 
   let {
@@ -23,7 +24,13 @@
     onsubmit,
     disabled = false,
     aiPolicy,
+    categoryLabels = [],
   }: Props = $props();
+
+  function resolveLabel(gen: { label: string; entityType: string }): string {
+    const match = categoryLabels.find((c) => c.id === gen.entityType);
+    return match?.label ?? gen.label;
+  }
 
   const aiAvailable = $derived(
     !!(aiPolicy?.isEnabled && aiPolicy?.isAvailable),
@@ -75,7 +82,7 @@
           {disabled}
           class="accent-chrome-accent"
         />
-        <span class="text-sm text-chrome-text">{gen.label}</span>
+        <span class="text-sm text-chrome-text">{resolveLabel(gen)}</span>
       </label>
     {/each}
   </fieldset>
