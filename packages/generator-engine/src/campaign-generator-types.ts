@@ -80,6 +80,8 @@ export interface GeneratorRunRequest {
   generatorId: GeneratorId;
   options: Record<string, unknown>;
   useAI: boolean;
+  /** Free-form instructions from the user, applied with highest priority. */
+  instructions?: string;
   /**
    * Required. Defaults to "workspace" (the neutral world theme) when the
    * campaign has no active world theme.

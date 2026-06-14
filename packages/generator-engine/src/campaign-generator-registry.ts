@@ -119,11 +119,6 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
       );
     }
   }
-  if (ctx.existingTitles.length) {
-    lines.push(
-      `\nAvoid duplicating these existing titles: ${ctx.existingTitles.join(", ")}`,
-    );
-  }
   return lines.join("\n");
 }
 
@@ -135,6 +130,18 @@ function optionsBlock(request: GeneratorRunRequest): string {
   );
 }
 
+function instructionsBlock(request: GeneratorRunRequest): string {
+  const inst = request.instructions?.trim();
+  if (!inst) return "";
+  return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\n`;
+}
+
+function bannedNamesBlock(request: GeneratorRunRequest): string {
+  const titles = request.vaultContext?.existingTitles;
+  if (!titles?.length) return "";
+  return `\nDo NOT use any of these already-existing names: ${titles.join(", ")}`;
+}
+
 export { SYSTEM_INSTRUCTION };
 
 // ---------------------------------------------------------------------------
@@ -142,7 +149,7 @@ export { SYSTEM_INSTRUCTION };
 // ---------------------------------------------------------------------------
 
 function npcPrompt(request: GeneratorRunRequest): string {
-  return `${vaultContextBlock(request)}${optionsBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
 
 Generate a campaign NPC. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -151,7 +158,7 @@ The "lore" field should include: who they are, what they want, a secret, and a f
 }
 
 function factionPrompt(request: GeneratorRunRequest): string {
-  return `${vaultContextBlock(request)}${optionsBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
 
 Generate a campaign faction, guild, or organisation. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -160,7 +167,7 @@ The "lore" field should include: what they control, what they want, internal con
 }
 
 function settlementPrompt(request: GeneratorRunRequest): string {
-  return `${vaultContextBlock(request)}${optionsBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
 
 Generate a campaign settlement or location. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}
@@ -169,7 +176,7 @@ The "lore" field should include: points of interest, power structure, notable ru
 }
 
 function magicItemPrompt(request: GeneratorRunRequest): string {
-  return `${vaultContextBlock(request)}${optionsBlock(request)}
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}
 
 Generate a campaign magic item or artefact. Return JSON matching this schema:
 ${OUTPUT_SCHEMA}

@@ -65,7 +65,10 @@
   }
 
   async function onGenerate(
-    req: Pick<GeneratorRunRequest, "generatorId" | "options" | "useAI">,
+    req: Pick<
+      GeneratorRunRequest,
+      "generatorId" | "options" | "useAI" | "instructions"
+    >,
   ) {
     stage = "generating";
     errorMsg = null;

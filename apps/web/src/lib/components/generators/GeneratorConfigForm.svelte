@@ -9,7 +9,10 @@
   interface Props {
     generatorId: GeneratorId | null;
     onsubmit: (
-      req: Pick<GeneratorRunRequest, "generatorId" | "options" | "useAI">,
+      req: Pick<
+        GeneratorRunRequest,
+        "generatorId" | "options" | "useAI" | "instructions"
+      >,
     ) => void;
     disabled?: boolean;
     aiPolicy?: AIPolicy;
@@ -38,6 +41,7 @@
 
   let selectedId = $state<GeneratorId>(generators[0].id);
   let useAI = $state(true);
+  let instructions = $state("");
   $effect(() => {
     if (generatorId) selectedId = generatorId;
   });
@@ -49,6 +53,7 @@
       generatorId: selectedId,
       options: {},
       useAI: aiAvailable && useAI,
+      instructions: instructions.trim() || undefined,
     });
   }
 </script>
@@ -74,6 +79,23 @@
       </label>
     {/each}
   </fieldset>
+
+  <div class="flex flex-col gap-1">
+    <label
+      for="gen-instructions"
+      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+    >
+      Instructions <span class="normal-case font-normal">(optional)</span>
+    </label>
+    <textarea
+      id="gen-instructions"
+      bind:value={instructions}
+      {disabled}
+      rows={3}
+      placeholder="e.g. Make them a spy working for the Thieves Guild, female, morally grey…"
+      class="w-full resize-none rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition placeholder:text-chrome-muted/60 focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+    ></textarea>
+  </div>
 
   {#if aiAvailable}
     <label class="flex cursor-pointer items-center gap-2">
