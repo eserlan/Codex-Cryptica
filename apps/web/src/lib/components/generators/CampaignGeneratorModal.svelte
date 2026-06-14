@@ -142,6 +142,7 @@
         chronicle: reviewed.summary || "",
         lore: reviewed.lore || "",
         timestamp: Date.now(),
+        deleteOnDiscard: true,
       };
       close();
       focusEntity(result.entityId);

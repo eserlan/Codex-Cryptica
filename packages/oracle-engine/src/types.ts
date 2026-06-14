@@ -104,6 +104,8 @@ export interface RevisionDraft {
     finalContent: unknown;
   };
   timestamp: number;
+  /** When true, discarding this draft deletes the entity (e.g. generator skeleton). */
+  deleteOnDiscard?: boolean;
 }
 
 /**

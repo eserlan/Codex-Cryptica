@@ -133,7 +133,8 @@ export class RevisionService {
           lore: this.pendingDraft.lore,
         });
       }
-      this.discardDraft();
+      if (this.pendingDraft) this.pendingDraft.deleteOnDiscard = false;
+      await this.discardDraft();
       notificationStore.notify(
         draftSource === "merge"
           ? "Merge saved successfully."
@@ -145,8 +146,16 @@ export class RevisionService {
     }
   }
 
-  discardDraft() {
+  async discardDraft() {
+    const draft = this.pendingDraft;
     this.pendingDraft = null;
+    if (draft?.deleteOnDiscard) {
+      try {
+        await vault.deleteEntity(draft.entityId);
+      } catch {
+        // Entity may already be gone; silently ignore.
+      }
+    }
   }
 }
 
