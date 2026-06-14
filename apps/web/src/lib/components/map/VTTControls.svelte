@@ -37,7 +37,7 @@
       title="Explore"
       aria-pressed={mapSession.mode === "exploration"}
     >
-      <span class="icon-[lucide--compass] h-4 w-4"></span>
+      <span class="icon-[lucide--compass] h-4 w-4" aria-hidden="true"></span>
     </button>
 
     <button
@@ -48,7 +48,7 @@
       title="Combat"
       aria-pressed={mapSession.mode === "combat"}
     >
-      <span class="icon-[lucide--swords] h-4 w-4"></span>
+      <span class="icon-[lucide--swords] h-4 w-4" aria-hidden="true"></span>
     </button>
 
     {#if canManageVtt}
@@ -64,7 +64,7 @@
         aria-haspopup="dialog"
         aria-expanded={!!mapSession.pendingTokenCoords}
       >
-        <span class="icon-[lucide--user-plus] h-4 w-4"></span>
+        <span class="icon-[lucide--user-plus] h-4 w-4" aria-hidden="true"></span>
       </button>
 
       <button
@@ -76,7 +76,7 @@
         aria-haspopup="dialog"
         aria-expanded={showEncounters}
       >
-        <span class="icon-[lucide--scroll-text] h-4 w-4"></span>
+        <span class="icon-[lucide--scroll-text] h-4 w-4" aria-hidden="true"></span>
       </button>
     {/if}
   </div>
