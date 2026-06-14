@@ -129,9 +129,10 @@ export class CampaignGeneratorService {
       }
     }
 
-    const bannedNames = new Set(
-      mergedRequest.vaultContext?.existingTitles ?? [],
-    );
+    const bannedNames = new Set([
+      ...(mergedRequest.vaultContext?.bannedNames ?? []),
+      ...(mergedRequest.vaultContext?.existingTitles ?? []),
+    ]);
     let output = generator.generate(mergedRequest);
     // Retry up to 5× if the generated title collides with an existing entity name.
     for (let i = 0; i < 5 && bannedNames.has(output.title); i++) {

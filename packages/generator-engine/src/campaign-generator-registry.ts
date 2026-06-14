@@ -137,9 +137,10 @@ function instructionsBlock(request: GeneratorRunRequest): string {
 }
 
 function bannedNamesBlock(request: GeneratorRunRequest): string {
-  const titles = request.vaultContext?.existingTitles;
-  if (!titles?.length) return "";
-  return `\nDo NOT use any of these already-existing names: ${titles.join(", ")}`;
+  const ctx = request.vaultContext;
+  const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
+  if (!all.length) return "";
+  return `\nDo NOT use any of these names: ${all.join(", ")}`;
 }
 
 export { SYSTEM_INSTRUCTION };

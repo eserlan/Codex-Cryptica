@@ -69,6 +69,7 @@ export interface GeneratorVaultContext {
   sourceEntity?: VaultContextEntityExcerpt;
   neighbors: VaultContextEntityExcerpt[];
   existingTitles: string[];
+  bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
 }

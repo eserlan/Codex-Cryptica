@@ -2,6 +2,7 @@ import type {
   GeneratorVaultContext,
   VaultContextEntityExcerpt,
 } from "generator-engine";
+import { BANNED_NAMES } from "$lib/services/seo/generators/banned-names";
 import type { Entity } from "schema";
 
 /** Maximum number of neighboring entities included in the context packet. */
@@ -109,6 +110,7 @@ export function buildVaultContext(
     sourceEntity: sourceEntity ? entityToExcerpt(sourceEntity) : undefined,
     neighbors,
     existingTitles,
+    bannedNames: [...BANNED_NAMES],
     labelSuggestions,
     applyTemplate,
     templateOutline,
