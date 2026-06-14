@@ -132,7 +132,7 @@
         Lore
       </span>
       <div
-        class="draft-preview max-h-48 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
+        class="draft-preview max-h-72 md:max-h-96 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
       >
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html renderMarkdown(draft.lore)}
