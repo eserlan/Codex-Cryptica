@@ -116,7 +116,7 @@
         Content
       </span>
       <div
-        class="prose prose-sm prose-invert max-w-none rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-sm text-chrome-text/90 leading-relaxed max-h-32 overflow-y-auto"
+        class="draft-preview max-h-32 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
       >
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html renderMarkdown(draft.summary)}
@@ -132,7 +132,7 @@
         Lore
       </span>
       <div
-        class="prose prose-sm prose-invert max-w-none rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-sm text-chrome-text/90 leading-relaxed max-h-48 overflow-y-auto"
+        class="draft-preview max-h-48 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
       >
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html renderMarkdown(draft.lore)}
@@ -170,3 +170,47 @@
     </button>
   </div>
 </form>
+
+<style>
+  .draft-preview :global(h1),
+  .draft-preview :global(h2),
+  .draft-preview :global(h3) {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-chrome-accent, #e6b450);
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+  .draft-preview :global(h1:first-child),
+  .draft-preview :global(h2:first-child),
+  .draft-preview :global(h3:first-child) {
+    margin-top: 0;
+  }
+  .draft-preview :global(p) {
+    font-size: 0.8125rem;
+    color: var(--color-chrome-text, #e2e8f0);
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+  }
+  .draft-preview :global(strong) {
+    font-weight: 600;
+    color: var(--color-chrome-text, #e2e8f0);
+  }
+  .draft-preview :global(ul),
+  .draft-preview :global(ol) {
+    padding-left: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-chrome-text, #e2e8f0);
+  }
+  .draft-preview :global(li) {
+    margin-bottom: 0.15rem;
+    line-height: 1.5;
+  }
+  .draft-preview :global(em) {
+    font-style: italic;
+    opacity: 0.85;
+  }
+</style>

@@ -186,7 +186,7 @@
     aria-labelledby="generator-modal-title"
     tabindex="-1"
     use:focusTrap
-    class="relative w-full max-w-lg flex flex-col overflow-hidden rounded-xl border border-chrome-border bg-chrome-surface shadow-2xl"
+    class="relative w-full max-w-lg md:max-w-2xl flex flex-col overflow-hidden rounded-xl border border-chrome-border bg-chrome-surface shadow-2xl"
     transition:scale={{ duration: 180, start: 0.96 }}
     onclick={(e) => e.stopPropagation()}
   >
@@ -226,7 +226,7 @@
     </div>
 
     <!-- Body -->
-    <div class="px-5 py-4">
+    <div class="px-5 py-4 overflow-y-auto max-h-[70vh]">
       {#if stage === "configure"}
         <GeneratorConfigForm
           bind:generatorId
