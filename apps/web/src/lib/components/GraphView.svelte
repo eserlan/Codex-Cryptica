@@ -360,6 +360,18 @@
     }
   });
 
+  // When focus mode takes over from outside the graph, clear stale graph
+  // selection and dimming so both views don't claim ownership simultaneously.
+  $effect(() => {
+    if (layoutUIStore.mainViewMode === "focus") {
+      untrack(() => {
+        if (controller.selectedId) {
+          controller.clearGraphSelection();
+        }
+      });
+    }
+  });
+
   // Connect Mode Visual Cleanup
   $effect(() => {
     if (!connectionModeStore.isConnecting && controller.cy) {

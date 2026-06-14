@@ -93,13 +93,16 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if dialog.open && target}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[210] flex items-center justify-center bg-black/85 p-3 backdrop-blur-md md:p-6"
+    class="fixed inset-0 z-[210] flex items-center justify-center p-3 md:p-6"
     transition:fade={{ duration: 160 }}
-    onclick={handleCancel}
   >
+    <button
+      type="button"
+      class="absolute inset-0 h-full w-full bg-black/85 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-theme-primary cursor-default"
+      aria-label="Close Image Prompt Review Dialog"
+      onclick={handleCancel}
+    ></button>
     <div
       role="dialog"
       aria-modal="true"

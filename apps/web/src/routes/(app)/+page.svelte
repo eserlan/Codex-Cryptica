@@ -231,6 +231,16 @@
 </script>
 
 <svelte:head>
+  {#if !isGuestMode && (building || !page.url.searchParams.has("demo"))}
+    <title
+      >Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool</title
+    >
+    <meta
+      name="description"
+      content="Codex Cryptica is a free, local-first RPG campaign manager and worldbuilding tool for GMs: private Markdown notes, visual lore graphs, timelines, offline prep, and optional AI — all in your browser."
+    />
+    <link rel="canonical" href="https://codexcryptica.com/" />
+  {/if}
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html `<scr` +
@@ -356,6 +366,11 @@
             >
               Private RPG Lore Vault
             </h1>
+            <h2
+              class="text-xs sm:text-sm font-mono uppercase tracking-widest text-theme-primary/60 mb-3"
+            >
+              RPG Campaign Manager &amp; Worldbuilding Tool
+            </h2>
             <p
               class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-theme-muted max-w-3xl mx-auto leading-relaxed mb-5 md:mb-6 font-body font-light"
             >
@@ -731,21 +746,38 @@
 
         <!-- Footer actions & settings -->
         <footer class="flex flex-col items-center gap-4 w-full">
-          <div class="flex flex-col sm:flex-row items-center gap-4">
+          <div class="flex flex-wrap items-center justify-center gap-6">
             <a
-              href="{base}/features"
+              href="{base}/free-rpg-campaign-manager"
               class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
             >
-              <span class="icon-[lucide--zap] w-3 h-3"></span>
-              View Features Overview
+              <span class="icon-[lucide--castle] w-3 h-3" aria-hidden="true"
+              ></span>
+              Free RPG campaign manager
             </a>
-
+            <a
+              href="{base}/worldbuilding-tool"
+              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--globe] w-3 h-3" aria-hidden="true"
+              ></span>
+              worldbuilding tool
+            </a>
+            <a
+              href="{base}/features"
+              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--zap] w-3 h-3" aria-hidden="true"
+              ></span>
+              Features
+            </a>
             <a
               href="{base}/changelog"
               class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
             >
-              <span class="icon-[lucide--history] w-3 h-3"></span>
-              View Full Changelog
+              <span class="icon-[lucide--history] w-3 h-3" aria-hidden="true"
+              ></span>
+              Changelog
             </a>
           </div>
 

@@ -79,6 +79,8 @@ describe("GraphStore", () => {
     // Reset mocks
     (vault as any).allEntities = [];
     (vault as any).isGuest = false;
+    (vault as any).activeVaultId = "vault-1";
+    graph.viewPresets = [];
     sessionModeStore.sharedMode = false;
     explorerUIStore.labelFilters = new Set();
   });
@@ -176,7 +178,8 @@ describe("GraphStore", () => {
     await graph.init();
 
     expect(getAllSpy).toHaveBeenCalledTimes(1);
-    expect(getSpy).toHaveBeenCalledTimes(5);
+    // 5 global graph settings + 1 vault-scoped view presets key
+    expect(getSpy).toHaveBeenCalledTimes(6);
     expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
 
     addEventListenerSpy.mockRestore();
@@ -301,6 +304,138 @@ describe("GraphStore", () => {
     graph.toggleOrbit();
     expect(graph.orbitMode).toBe(false);
     expect(graph.centralNodeId).toBe(null);
+  });
+
+  describe("view presets", () => {
+    it("should save a preset capturing current state and persist it", async () => {
+      graph.activeLabels = new Set(["arc"]);
+      graph.labelFilterMode = "AND";
+      graph.activeCategories = new Set(["person"]);
+      graph.showImages = false;
+
+      const preset = await graph.saveViewPreset("Quest Arc", {
+        pan: { x: 5, y: 6 },
+        zoom: 2,
+      });
+
+      expect(preset).not.toBeNull();
+      expect(preset!.name).toBe("Quest Arc");
+      expect(preset!.state.activeLabels).toEqual(["arc"]);
+      expect(preset!.state.labelFilterMode).toBe("AND");
+      expect(preset!.state.activeCategories).toEqual(["person"]);
+      expect(preset!.state.showImages).toBe(false);
+      expect(preset!.state.viewport).toEqual({ pan: { x: 5, y: 6 }, zoom: 2 });
+      expect(graph.viewPresets).toHaveLength(1);
+
+      const db = await getDB();
+      expect(db.put).toHaveBeenCalledWith(
+        "settings",
+        expect.arrayContaining([
+          expect.objectContaining({ name: "Quest Arc" }),
+        ]),
+        "graphViewPresets:vault-1",
+      );
+    });
+
+    it("should reject empty preset names", async () => {
+      expect(await graph.saveViewPreset("   ")).toBeNull();
+      expect(graph.viewPresets).toHaveLength(0);
+    });
+
+    it("should apply a preset and report mode changes", async () => {
+      (vault as any).allEntities = [
+        { id: "e1", type: "person", labels: ["Arc"] },
+      ];
+      const preset = await graph.saveViewPreset("base");
+      graph.activeLabels = new Set();
+      graph.timelineMode = true;
+
+      const result = graph.applyViewPreset(preset!.id);
+
+      expect(result).not.toBeNull();
+      expect(result!.modeChanged).toBe(true); // timeline true -> false
+      expect(graph.timelineMode).toBe(false);
+    });
+
+    it("should skip filters and orbit centers that no longer exist", async () => {
+      graph.activeLabels = new Set(["arc", "gone-label"]);
+      graph.activeCategories = new Set(["person", "gone-type"]);
+      graph.setCentralNode("deleted-node");
+      const preset = await graph.saveViewPreset("drifted");
+
+      (vault as any).allEntities = [
+        { id: "e1", type: "person", labels: ["Arc"] },
+      ];
+      graph.activeLabels = new Set();
+      graph.activeCategories = new Set();
+      graph.orbitMode = false;
+      graph.centralNodeId = null;
+
+      graph.applyViewPreset(preset!.id);
+
+      expect(Array.from(graph.activeLabels)).toEqual(["arc"]);
+      expect(Array.from(graph.activeCategories)).toEqual(["person"]);
+      expect(graph.centralNodeId).toBeNull();
+      expect(graph.orbitMode).toBe(false);
+    });
+
+    it("should return null when applying an unknown preset", () => {
+      expect(graph.applyViewPreset("nope")).toBeNull();
+    });
+
+    it("should rename and delete presets with persistence", async () => {
+      const preset = await graph.saveViewPreset("old name");
+      await graph.renameViewPreset(preset!.id, "new name");
+      expect(graph.viewPresets[0].name).toBe("new name");
+
+      await graph.deleteViewPreset(preset!.id);
+      expect(graph.viewPresets).toHaveLength(0);
+
+      const db = await getDB();
+      expect(db.put).toHaveBeenLastCalledWith(
+        "settings",
+        [],
+        "graphViewPresets:vault-1",
+      );
+    });
+
+    it("should ignore malformed persisted preset data on load", async () => {
+      const db = await getDB();
+      (db.get as any).mockResolvedValue([
+        { id: "bad" },
+        "junk",
+        {
+          id: "ok",
+          name: "Valid",
+          state: {
+            activeLabels: [],
+            activeCategories: [],
+          },
+        },
+      ]);
+
+      await graph.loadViewPresets();
+
+      expect(graph.viewPresets).toHaveLength(1);
+      expect(graph.viewPresets[0].name).toBe("Valid");
+    });
+
+    it("should recover with empty presets when loading fails", async () => {
+      const db = await getDB();
+      (db.get as any).mockRejectedValue(new Error("IDB Error"));
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      graph.viewPresets = [{ id: "stale" } as any];
+      await graph.loadViewPresets();
+
+      expect(graph.viewPresets).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to load graph view presets"),
+        expect.anything(),
+      );
+    });
   });
 
   it("should handle IDB errors gracefully in toggle methods", async () => {

@@ -32,3 +32,8 @@
 
 **Learning:** Svelte components frequently include decorative icons (such as those from `icon-[lucide--*]`) inside buttons that already provide an `aria-label` or visible text. Without explicitly hiding them, screen readers may interpret or announce redundant text or confusing graphics.
 **Action:** When adding or updating buttons with decorative icon spans (e.g. `<span class="icon-[lucide--...]"></span>`), always add `aria-hidden="true"` to the icon element so assistive technologies ignore the decoration and focus on the parent button's accessible name.
+
+## 2026-06-12 - Semantic Modal Backdrops
+
+**Learning:** Found multiple modals (`ConfirmationModal`, `ChangelogModal`, `ImagePromptReviewModal`) using `div` elements with `svelte-ignore` comments for backdrops. This anti-pattern prevents keyboard navigation and violates accessibility rules.
+**Action:** Replaced the `div` backdrops with semantic `<button type="button">` elements. Ensured they have proper ARIA labels (e.g., `aria-label="Close dialog"`) and focus styling (`focus-visible:ring-2 focus:outline-none focus-visible:ring-inset`) to allow screen readers and keyboard users to correctly navigate and interact with the overlays.
