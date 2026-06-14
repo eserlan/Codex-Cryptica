@@ -1,4 +1,9 @@
 import { test, expect } from "@playwright/test";
+import {
+  openEntitySidepanel,
+  seedEntity,
+  setupVaultPage,
+} from "./test-helpers";
 
 test.describe("AI Entity Regeneration", () => {
   test.beforeEach(async ({ page }) => {
@@ -16,20 +21,20 @@ test.describe("AI Entity Regeneration", () => {
       }
     });
 
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).vault !== undefined);
+    await setupVaultPage(page);
   });
 
   test("should show regenerate button for host and trigger flow", async ({
     page,
   }) => {
     // 1. Create a mock entity
-    await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      await vault.createEntity("npc", "Test Hero", {
-        content: "Initial chronicle",
+    const heroId = await seedEntity(page, {
+      type: "npc",
+      title: "Test Hero",
+      content: "Initial chronicle",
+      data: {
         lore: "Initial lore",
-      });
+      },
     });
 
     // Wait for UI to reflect creation
@@ -38,34 +43,29 @@ test.describe("AI Entity Regeneration", () => {
     });
 
     // 2. Open the entity
-    const heroLink = page
-      .getByTestId("entity-list-item")
-      .filter({ hasText: "Test Hero" })
-      .first();
-    await expect(heroLink).toBeVisible({ timeout: 15000 });
-    await heroLink.click();
+    await openEntitySidepanel(page, heroId);
     await expect(page.getByText("Initial chronicle")).toBeVisible();
 
     // 3. Verify AI Regen button exists
-    const regenButton = page.getByLabel("AI Regenerate Description");
+    const sidePanel = page.getByRole("complementary");
+    const regenButton = sidePanel.getByLabel("AI Revise Description").last();
     await expect(regenButton).toBeVisible();
 
-    // 4. Mock AI Response
-    await page.route(
-      /.*\/v1beta\/models\/.*:streamGenerateContent.*/,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "text/event-stream",
-          body: `data: {"candidates": [{"content": {"parts": [{"text": "### CHRONICLE\nNew atmospheric chronicle.\n\n### LORE\nNew detailed lore with secrets."}]}}]}
-
-`,
-        });
-      },
-    );
+    // 4. Mock AI revision response at the Oracle boundary
+    await page.evaluate(() => {
+      (window as any).oracle.reviseEntity = async () => ({
+        content: "New atmospheric chronicle.",
+        lore: "New detailed lore with secrets.",
+      });
+    });
 
     // 5. Trigger Regeneration
     await regenButton.click();
+    const revisionDialog = page.getByRole("dialog", {
+      name: "Revise Description",
+    });
+    await expect(revisionDialog).toBeVisible();
+    await revisionDialog.getByRole("button", { name: "Revise" }).click();
 
     // 6. Verify Preview State
     await expect(page.locator("text=AI Suggestion Ready")).toBeVisible();
@@ -86,6 +86,7 @@ test.describe("AI Entity Regeneration", () => {
 
     // 10. Verify persistence
     await expect(page.locator("text=AI Suggestion Ready")).not.toBeVisible();
+    await page.getByRole("tab", { name: "STATUS" }).click();
     await expect(page.locator("text=New atmospheric chronicle.")).toBeVisible();
   });
 });
