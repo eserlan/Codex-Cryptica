@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GeneratedDraft } from "generator-engine";
   import type { Category } from "schema";
+  import { renderMarkdown } from "$lib/utils/markdown";
 
   interface Props {
     draft: GeneratedDraft;
@@ -51,8 +52,7 @@
 
 <form onsubmit={handleSave} class="flex flex-col gap-4">
   <p class="text-xs text-chrome-muted">
-    Review the title and type, then open in the editor to read and accept the
-    generated content.
+    Review the draft below, then open in the editor to accept or discard.
   </p>
 
   <div class="flex flex-col gap-1">
@@ -107,6 +107,38 @@
       class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
     />
   </div>
+
+  {#if draft.summary}
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Content
+      </span>
+      <div
+        class="prose prose-sm prose-invert max-w-none rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-sm text-chrome-text/90 leading-relaxed max-h-32 overflow-y-auto"
+      >
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        {@html renderMarkdown(draft.summary)}
+      </div>
+    </div>
+  {/if}
+
+  {#if draft.lore}
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Lore
+      </span>
+      <div
+        class="prose prose-sm prose-invert max-w-none rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2 text-sm text-chrome-text/90 leading-relaxed max-h-48 overflow-y-auto"
+      >
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+        {@html renderMarkdown(draft.lore)}
+      </div>
+    </div>
+  {/if}
 
   {#if showRelationshipToggle}
     <label class="flex cursor-pointer items-center gap-2">
