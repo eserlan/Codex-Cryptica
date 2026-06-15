@@ -813,6 +813,15 @@ export class DefaultTextGenerationService implements TextGenerationService {
       session.previousInteractionId = result.id;
       session.tracker.commit(loreEntries);
       await onUpdate(result.text);
+
+      // Rollout metric (plan 6.2): how much lore the delta flow kept off the wire.
+      if (import.meta.env.DEV) {
+        const total = loreEntries.length;
+        const sent = total - partition.unchanged.length;
+        console.log(
+          `[Interactions] lore records sent ${sent}/${total} (${partition.unchanged.length} retained server-side)`,
+        );
+      }
     } catch (err: unknown) {
       console.error("Gemini Interactions Error:", err);
       const classified = classifyApiError(err);

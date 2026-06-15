@@ -54,6 +54,17 @@ previous_interaction_id, cached_content?, stream? }`. `input` is just the new tu
 
 ---
 
+## Status
+
+- **Phases 1–3 implemented and unit-tested**, feature-flagged **off** by default
+  (`setInteractionsEnabled`). Core delta flow, worker Interactions path, and
+  client wiring with replay fallback are in place.
+- **Phase 0** items 0.2/0.3 need a live API key and are marked for manual
+  verification before enabling the flag; the worker's interaction default model
+  is `gemini-3-flash-preview` (0.1).
+- **Phases 4 (streaming) and 5 (hardening) are optional** and deferred; the
+  worker returns `{ id, text }` (non-streamed) for now.
+
 ## Phase 0 — Spike & contract (de-risk)
 
 - [ ] 0.1 Confirm the target model supports Interactions (worker default is
@@ -72,20 +83,20 @@ previous_interaction_id, cached_content?, stream? }`. `input` is just the new tu
 
 Independently testable; no behavior change until wired in Phase 3.
 
-- [ ] 1.1 Extend `retrieveContext` (or add a sibling) to return per-entity entries
+- [x] 1.1 Extend `retrieveContext` (or add a sibling) to return per-entity entries
       `{ id, snippet, hash }` in addition to the joined `content`. Hash the
       **stable body only** (`lore + content + connections`) — exclude the volatile
       `[ACTIVE FILE]` header (line ~361).
-- [ ] 1.2 Add `LoreDeltaTracker`: holds `sentLore: Map<entityId, hash>`; given the
+- [x] 1.2 Add `LoreDeltaTracker`: holds `sentLore: Map<entityId, hash>`; given the
       current entries returns `{ newOrChanged, unchanged }` partitions.
-- [ ] 1.3 Treat the global art-style block (line ~193) as a synthetic id
+- [x] 1.3 Treat the global art-style block (line ~193) as a synthetic id
       `__style__` so it follows the same send-once / resend-on-change rule.
-- [ ] 1.4 Emit a one-line **relevance hint** for unchanged-but-relevant titles
+- [x] 1.4 Emit a one-line **relevance hint** for unchanged-but-relevant titles
       (e.g. "Relevant earlier records: Aldric, Ravenhold") to preserve focus
       without resending bodies.
-- [ ] 1.5 `commit(entries)` to merge new/changed hashes after a successful send;
+- [x] 1.5 `commit(entries)` to merge new/changed hashes after a successful send;
       `reset()` to clear on expiry/new conversation.
-- [ ] 1.6 Unit tests: new entity included; unchanged stripped; edited entity
+- [x] 1.6 Unit tests: new entity included; unchanged stripped; edited entity
       (lore/content/connection) detected as changed; active-file toggle does **not**
       force resend; style block cached.
 
@@ -93,35 +104,35 @@ Independently testable; no behavior change until wired in Phase 3.
 
 ## Phase 2 — Worker Interactions path
 
-- [ ] 2.1 Add an `interactions` request mode to the worker: POST to
+- [x] 2.1 Add an `interactions` request mode to the worker: POST to
       `/v1beta/interactions` with `{ model, input, system_instruction,
-  generation_config, store: true, previous_interaction_id }`.
-- [ ] 2.2 Normalize the response to `{ id, text }` (extract `steps[].content[].text`).
-- [ ] 2.3 Keep the existing `:generateContent` path intact as the retention-expiry
+generation_config, store: true, previous_interaction_id }`.
+- [x] 2.2 Normalize the response to `{ id, text }` (extract `steps[].content[].text`).
+- [x] 2.3 Keep the existing `:generateContent` path intact as the retention-expiry
       fallback; gate the new path behind a request flag so current flow is unchanged.
-- [ ] 2.4 Preserve CORS / origin checks / rate-limit structure; drop only the
+- [x] 2.4 Preserve CORS / origin checks / rate-limit structure; drop only the
       now-unneeded camelCase→snake_case mapping for the interactions path.
-- [ ] 2.5 Echo back only the id to the creating client; do not accept arbitrary
+- [x] 2.5 Echo back only the id to the creating client; do not accept arbitrary
       cross-client ids beyond passthrough.
-- [ ] 2.6 Worker tests: create returns id+text; follow-up with
+- [x] 2.6 Worker tests: create returns id+text; follow-up with
       `previous_interaction_id` works; expired id surfaces a typed error.
 
 **Exit:** worker can run a stateful multi-turn exchange end-to-end.
 
 ## Phase 3 — Client wiring (proxy path)
 
-- [ ] 3.1 Add `previousInteractionId` to the oracle conversation/session state
+- [x] 3.1 Add `previousInteractionId` to the oracle conversation/session state
       (in-memory) alongside the tracker.
-- [ ] 3.2 In `createProxyModel` / `generateResponse`, when on the proxy path:
+- [x] 3.2 In `createProxyModel` / `generateResponse`, when on the proxy path:
       send `input` = user query + new/changed lore + relevance hint +
       `previous_interaction_id`, instead of full `sanitizedHistory` + full lore.
-- [ ] 3.3 On response: store returned `id`; call `tracker.commit(...)`.
-- [ ] 3.4 **Replay fallback:** on id-invalid/expired error, `tracker.reset()`,
+- [x] 3.3 On response: store returned `id`; call `tracker.commit(...)`.
+- [x] 3.4 **Replay fallback:** on id-invalid/expired error, `tracker.reset()`,
       clear `previousInteractionId`, resend full local history + full lore once,
       then resume delta mode.
-- [ ] 3.5 Keep `text-generation.service` consumer loop unchanged
+- [x] 3.5 Keep `text-generation.service` consumer loop unchanged
       (`for await chunk.text()`), so downstream code is untouched.
-- [ ] 3.6 Leave custom-key direct path on the existing stateless flow.
+- [x] 3.6 Leave custom-key direct path on the existing stateless flow.
 
 **Exit:** proxy chats run multi-turn with only deltas on the wire.
 
@@ -144,8 +155,8 @@ Independently testable; no behavior change until wired in Phase 3.
 
 ## Phase 6 — Rollout
 
-- [ ] 6.1 Feature-flag the Interactions path (default off → staged on).
-- [ ] 6.2 Log delta sizes (bytes saved / turn) and id-expiry replay frequency.
+- [x] 6.1 Feature-flag the Interactions path (default off → staged on).
+- [x] 6.2 Log delta sizes (bytes saved / turn) and id-expiry replay frequency.
 - [ ] 6.3 Validate retention edge cases (free-tier 1-day expiry mid-session).
 - [ ] 6.4 Update `docs/ARCH_ORACLE.md` with the stateful flow + fallback.
 
