@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from "vitest";
+import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
 import worker, { isOriginAllowed } from "./index";
 
@@ -164,6 +164,116 @@ describe("Oracle Proxy Worker image generation", () => {
           body: expect.any(Object),
           contentType: expect.stringContaining("multipart/form-data"),
         }),
+      }),
+    );
+  });
+});
+
+describe("Oracle Proxy Worker Interactions API", () => {
+  const env = { GEMINI_API_KEY: "test-key" };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const request = (body: Record<string, unknown>) =>
+    new Request("https://oracle-proxy.espen-erlandsen.workers.dev/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "https://codex-cryptica.com",
+      },
+      body: JSON.stringify(body),
+    });
+
+  it("forwards an interaction and returns id + extracted text", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_abc",
+            status: "completed",
+            steps: [
+              {
+                type: "model_output",
+                content: [{ type: "text", text: "The crone speaks." }],
+              },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await worker.fetch(
+      request({
+        input: "Tell me about the crone",
+        model: "gemini-3-flash-preview",
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ id: "v1_abc", text: "The crone speaks." }),
+    );
+
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1beta/interactions");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.input).toBe("Tell me about the crone");
+    expect(sent.store).toBe(true);
+  });
+
+  it("threads previous_interaction_id through to the upstream", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "v1_two", steps: [] }), {
+          status: 200,
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await worker.fetch(
+      request({ input: "and then?", previous_interaction_id: "v1_abc" }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const sent = JSON.parse(init.body as string);
+    expect(sent.previous_interaction_id).toBe("v1_abc");
+  });
+
+  it("maps an expired previous_interaction_id to a 409 INTERACTION_NOT_FOUND", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { message: "previous_interaction_id not found" },
+          }),
+          { status: 404 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await worker.fetch(
+      request({ input: "continue", previous_interaction_id: "expired" }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: "INTERACTION_NOT_FOUND" }),
       }),
     );
   });
