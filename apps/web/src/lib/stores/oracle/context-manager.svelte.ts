@@ -173,9 +173,14 @@ export class OracleContextManager {
           ),
       },
       searchService: {
-        search: wrap((query: string, options?: any) =>
-          s.searchService.search(query, { includeDrafts: true, ...options }),
-        ),
+        search: s.searchService.search
+          ? wrap((query: string, options?: any) =>
+              s.searchService.search(query, {
+                includeDrafts: true,
+                ...options,
+              }),
+            )
+          : undefined,
       },
       diceParser: {
         parse: wrap(s.diceParser.parse?.bind(s.diceParser)),
