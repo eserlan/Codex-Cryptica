@@ -19,6 +19,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   faction: "faction",
   settlement: "location",
   "magic-item": "item",
+  event: "event",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -75,6 +76,7 @@ function mapOutputToDraft(
       sourceGeneratorId: generatorId,
       sourceEntityId: request.sourceEntityId,
       relationshipLabel: request.relationshipLabel,
+      connections: output.connections ? [...output.connections] : undefined,
       templateOutline: request.vaultContext?.templateOutline,
       templateApplied: Boolean(
         request.vaultContext?.applyTemplate &&
@@ -90,13 +92,20 @@ function mapOutputToDraft(
 // ---------------------------------------------------------------------------
 
 const SYSTEM_INSTRUCTION =
-  "You are a tabletop RPG campaign assistant. Generate campaign content grounded in the provided world context. Keep the result internally consistent: names, facts, dates, motivations, and relationships must agree across every field and section, with no self-contradictions. Return ONLY valid JSON with no markdown fences.";
+  "You are a master tabletop RPG game master and worldbuilder. Generate campaign content, grounded in the provided world context, that a GM can use directly at the table. " +
+  "Quality bar: write concrete, sensory, specific detail; show through action and example rather than abstract description; give every entity at least one secret or complication and one actionable hook the players can pursue. " +
+  'Avoid clichés ("ancient evil", "the chosen one", "a shadowy figure"), purple prose, filler adjectives, modern idioms, and restating the prompt back to the user. ' +
+  "Keep the result internally consistent: names, facts, dates, motivations, and relationships must agree across every field and section, with no self-contradictions. " +
+  "Return ONLY valid JSON (a single object) with no markdown code fences. In string values, escape newlines as \\n.";
 
 const OUTPUT_SCHEMA = `{
-  "title": "string — name of the entity",
-  "summary": "string — one sentence description",
-  "lore": "string — markdown with backstory, motivations, and adventure hooks",
-  "labels": ["string"]
+  "title": "string — the entity's name",
+  "summary": "string — one vivid sentence",
+  "lore": "string — markdown using the requested section headings",
+  "labels": ["string — short thematic tags"],
+  "connections": [
+    { "targetTitle": "string — EXACT title of an entity from the world context above", "relationship": "string — short label, e.g. ally, rival, member of, located in, caused by" }
+  ]
 }`;
 
 function vaultContextBlock(request: GeneratorRunRequest): string {
@@ -161,7 +170,7 @@ function optionsBlock(request: GeneratorRunRequest): string {
 function instructionsBlock(request: GeneratorRunRequest): string {
   const inst = request.instructions?.trim();
   if (!inst) return "";
-  return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\n`;
+  return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\nThe entity you generate MUST directly depict what this instruction describes. Use the world context below only as supporting background — never substitute a different, better-documented event or subject for the one requested.\n`;
 }
 
 function bannedNamesBlock(request: GeneratorRunRequest): string {
@@ -221,46 +230,105 @@ function templateBlock(request: GeneratorRunRequest): string {
   return `\nStructure the "lore" field to follow this template, keeping its markdown headings and filling every section with generated content:\n${ctx.templateOutline}\n`;
 }
 
+/**
+ * Require the model to weave the new entity into the world, and to fill the
+ * "connections" array only with entities that actually appear in the context.
+ */
+function groundingNote(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  const hasWorld =
+    !!ctx?.sourceEntity || !!ctx?.neighbors.length || !!ctx?.worldSample.length;
+  if (!hasWorld) {
+    return `\nThis world has no existing entities yet — leave "connections" as an empty array.`;
+  }
+  return `\nGround the entity in the world: weave in at least one entity named in the context above, reusing its exact name and the world's established terminology. In "connections", reference only entities that appear in the context above, using their exact titles; omit anything uncertain (an empty array is fine — never invent a target).`;
+}
+
+/**
+ * Lore guidance that defers to the resolved template when one is present (so the
+ * model follows the template's sections rather than a competing generic
+ * checklist), and otherwise supplies a per-generator checklist.
+ */
+function loreGuidance(request: GeneratorRunRequest, builtin: string): string {
+  const ctx = request.vaultContext;
+  if (ctx?.applyTemplate && ctx.templateOutline) {
+    return `Fill every section of the template above with specific, evocative content; keep its exact markdown headings.`;
+  }
+  return `The "lore" field should include: ${builtin}. Use clear markdown headings.`;
+}
+
+/**
+ * Compact, illustrative few-shot examples — one per generator — that set the
+ * depth, tone, and JSON shape. Newlines inside "lore" are escaped so the model
+ * is reinforced to emit valid JSON.
+ */
+const EXEMPLARS: Record<GeneratorId, string> = {
+  npc: `{"title":"Ottavia Brenn","summary":"A one-eyed dockmaster who trades secrets faster than cargo.","lore":"## Who She Is\\nOttavia keeps the tide-ledgers of a silt-choked harbour, and nothing crosses the wharf without her mark.\\n## Secret\\nShe quietly forged three years of customs records to bury a smuggling debt that would hang her brother.\\n## Hook\\nShe offers the party safe berth — if they retrieve a sealed manifest from a rival's strongbox first.","labels":["Dockmaster","Information Broker"],"connections":[{"targetTitle":"Harbour Authority","relationship":"member of"}]}`,
+  faction: `{"title":"The Salt Concord","summary":"A merchant pact that rules the coast through debt rather than swords.","lore":"## What They Control\\nEvery harbour crane and grain silo within a week's sail answers to their ledgers.\\n## Internal Conflict\\nThe old founding houses want stability; a rising faction wants to call in every debt at once.\\n## Hook\\nThey hire the party to recover a defaulting captain — alive, because dead men pay nothing.","labels":["Merchant Pact","Coastal Power"],"connections":[{"targetTitle":"Ottavia Brenn","relationship":"employs"}]}`,
+  settlement: `{"title":"Greywick Landing","summary":"A half-sunk port town that thrives on what the tide drags back.","lore":"## Points of Interest\\nThe Drowned Market trades only at low tide; the rest of the day it is waist-deep in brine.\\n## Power Structure\\nA harbourmaster rules by controlling the only dry granary.\\n## Hook\\nA ship thought lost for a decade has drifted back into the bay — crewed, and silent.","labels":["Port Town","Coastal"],"connections":[{"targetTitle":"The Salt Concord","relationship":"controlled by"}]}`,
+  "magic-item": `{"title":"The Ledger of Brine","summary":"A waterlogged tome that records debts no one remembers owing.","lore":"## History\\nKept by a drowned customs house, its pages re-ink themselves each tide.\\n## Power\\nName a debtor and the book reveals what they truly owe — and to whom.\\n## Cost\\nEach reading adds the reader's own name to a growing column at the back.","labels":["Cursed Tome","Uncommon"],"connections":[{"targetTitle":"Greywick Landing","relationship":"located in"}]}`,
+  event: `{"title":"The Long Low Tide","summary":"The season the sea withdrew a mile and would not return.","lore":"## Summary\\nFor forty days the bay emptied, stranding ships and exposing what the water had hidden.\\n## Causes\\nNo one agrees — a broken pact, a sleeping leviathan, a curse called in.\\n## Consequences\\nSalvage made paupers rich and drowned the old harbour law in disputes.\\n## Hook\\nThe tide is beginning to recede again, and the old salvagers are sharpening their hooks.","labels":["Disaster","Maritime"],"connections":[{"targetTitle":"Greywick Landing","relationship":"struck"}]}`,
+};
+
+function exemplarBlock(id: GeneratorId): string {
+  return `\nExample (illustrative only — match the world context above and do NOT reuse these names or details):\n${EXEMPLARS[id]}\n`;
+}
+
 export { SYSTEM_INSTRUCTION };
 
 // ---------------------------------------------------------------------------
 // Generator-specific prompt builders
 // ---------------------------------------------------------------------------
 
+/** Shared prompt context chain (everything before the task instruction). */
+function contextChain(request: GeneratorRunRequest): string {
+  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}`;
+}
+
 function npcPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
+  return `${contextChain(request)}
 
-Generate a campaign NPC. Return JSON matching this schema:
+Generate a campaign NPC. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-
-The "lore" field should include: who they are, what they want, a secret, and a first-scene hook. Use markdown headings.`;
+${exemplarBlock("npc")}${groundingNote(request)}
+${loreGuidance(request, "who they are, what they want, a secret, and a first-scene hook")}`;
 }
 
 function factionPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
+  return `${contextChain(request)}
 
-Generate a campaign faction, guild, or organisation. Return JSON matching this schema:
+Generate a campaign faction, guild, or organisation. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-
-The "lore" field should include: what they control, what they want, internal conflict, and an adventure hook. Use markdown headings.`;
+${exemplarBlock("faction")}${groundingNote(request)}
+${loreGuidance(request, "what they control, what they want, internal conflict, and an adventure hook")}`;
 }
 
 function settlementPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
+  return `${contextChain(request)}
 
-Generate a campaign settlement or location. Return JSON matching this schema:
+Generate a campaign settlement or location. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
-
-The "lore" field should include: points of interest, power structure, notable rumours, and a hook for the players. Use markdown headings.`;
+${exemplarBlock("settlement")}${groundingNote(request)}
+${loreGuidance(request, "points of interest, power structure, notable rumours, and a hook for the players")}`;
 }
 
 function magicItemPrompt(request: GeneratorRunRequest): string {
-  return `${instructionsBlock(request)}${vaultContextBlock(request)}${worldBlock(request)}${optionsBlock(request)}${bannedNamesBlock(request)}${namingBlock(request)}${templateBlock(request)}
+  return `${contextChain(request)}
 
-Generate a campaign magic item or artefact. Return JSON matching this schema:
+Generate a campaign magic item or artefact. Return ONLY a JSON object matching this schema:
 ${OUTPUT_SCHEMA}
+${exemplarBlock("magic-item")}${groundingNote(request)}
+${loreGuidance(request, "item history, its power/effect, a side effect or curse, and how it might enter play")}`;
+}
 
-The "lore" field should include: item history, its power/effect, a side effect or curse, and how it might enter play. Use markdown headings.`;
+function eventPrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+Generate a campaign event — a historical or unfolding occurrence in the world. Return ONLY a JSON object matching this schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock("event")}${groundingNote(request)}
+Place it correctly within the world's timeline (consistent with any campaign date and existing events).
+${loreGuidance(request, "what happened, its causes, who and what was involved, its consequences, and a hook for the players")}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -322,6 +390,23 @@ const ITEM_EFFECTS = [
   "grows warm in the presence of the undead",
   "lets the bearer recall one forgotten memory each night",
   "turns aside the first blow of any duel",
+];
+
+const EVENT_TYPES = [
+  "Battle",
+  "Festival",
+  "Disaster",
+  "Discovery",
+  "Ritual",
+  "Treaty",
+  "Uprising",
+  "Betrayal",
+];
+const EVENT_OUTCOMES = [
+  "reshaped the balance of power across the region",
+  "left a wound the locals have never forgotten",
+  "forged an uneasy alliance between former enemies",
+  "uncovered a secret that should have stayed buried",
 ];
 
 function generateName(): string {
@@ -386,6 +471,18 @@ function generateMagicItem(request: GeneratorRunRequest): GeneratorOutput {
     summary: `${name}, a ${rarity.toLowerCase()} ${kind.toLowerCase()} that ${effect}.`,
     lore: `${name} is a ${rarity} ${kind.toLowerCase()}. It ${effect}.`,
     labels: [rarity, kind],
+  };
+}
+
+function generateEvent(request: GeneratorRunRequest): GeneratorOutput {
+  const type = optionString(request, "type", pick(EVENT_TYPES));
+  const name = `The ${type} of ${generateName()}`;
+  const outcome = pick(EVENT_OUTCOMES);
+  return {
+    title: name,
+    summary: `${name}, a ${type.toLowerCase()} that ${outcome}.`,
+    lore: `${name} was a ${type.toLowerCase()} that ${outcome}.`,
+    labels: [type],
   };
 }
 
@@ -485,6 +582,27 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateMagicItem,
     mapOutputToDraft: mapOutputToDraft("magic-item"),
     buildPrompt: magicItemPrompt,
+  },
+  event: {
+    id: "event",
+    label: "Event",
+    description: "Generate a historical or unfolding event for your campaign.",
+    entityType: GENERATOR_ENTITY_TYPE.event,
+    defaultInstruction:
+      "A pivotal occurrence with clear causes, the key figures and places involved, lasting consequences, and a thread the party can pull on.",
+    icon: "lucide:calendar",
+    options: [
+      {
+        id: "type",
+        label: "Type",
+        control: "select",
+        choices: EVENT_TYPES.map((t) => ({ value: t, label: t })),
+      },
+    ],
+    defaults: { type: "" },
+    generate: generateEvent,
+    mapOutputToDraft: mapOutputToDraft("event"),
+    buildPrompt: eventPrompt,
   },
 };
 

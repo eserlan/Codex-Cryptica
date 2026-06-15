@@ -116,9 +116,10 @@ describe("saveDraft", () => {
       createRelationship: true,
     });
     expect(result.relationshipCreated).toBe(true);
+    // Linked outbound from the new entity to its source.
     expect(vault.addConnection).toHaveBeenCalledWith(
-      "src-1",
       "entity-1",
+      "src-1",
       "knows",
     );
   });
@@ -297,6 +298,44 @@ describe("AI policy (US2)", () => {
     );
     expect(complete).toHaveBeenCalledTimes(2);
     expect(d.title).toBe("Aric Dawnward");
+  });
+
+  it("parses and normalises connections from AI output", async () => {
+    const complete = vi.fn(async () =>
+      JSON.stringify({
+        title: "Aric Dawnward",
+        summary: "s",
+        lore: "l",
+        labels: [],
+        connections: [
+          { targetTitle: "The Salt Concord", relationship: "member of" },
+          { targetTitle: "Greywick", relationship: "" }, // empty rel -> "related"
+          { relationship: "ally" }, // no targetTitle -> dropped
+          "garbage", // wrong shape -> dropped
+        ],
+      }),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const d = await svc.generateDraft(run("npc", { useAI: true }));
+    expect(d.connections).toEqual([
+      { targetTitle: "The Salt Concord", relationship: "member of" },
+      { targetTitle: "Greywick", relationship: "related" },
+    ]);
+  });
+
+  it("leaves connections undefined when AI omits them", async () => {
+    const complete = vi.fn(async () =>
+      JSON.stringify({ title: "Solo", summary: "s", lore: "l", labels: [] }),
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const d = await svc.generateDraft(run("npc", { useAI: true }));
+    expect(d.connections).toBeUndefined();
   });
 
   it("falls back to local generation when AI keeps returning banned names", async () => {

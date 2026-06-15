@@ -122,15 +122,15 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(n?.contentExcerpt.length).toBeLessThanOrEqual(304);
   });
 
-  it("keeps the full content and lore of the source entity (not truncated)", () => {
-    const longContent = "c".repeat(1000);
-    const longLore = "l".repeat(1000);
+  it("keeps a generous source excerpt but caps extreme length", () => {
+    const shortLore = "l".repeat(1000);
+    const hugeLore = "h".repeat(5000);
     const src = entity({
       id: "e1",
       title: "Anchor",
       type: "character",
-      content: longContent,
-      lore: longLore,
+      content: shortLore,
+      lore: hugeLore,
     });
     const ctx = buildVaultContext({
       themeId: "workspace",
@@ -138,8 +138,11 @@ describe("buildVaultContext (T042/T047)", () => {
       sourceEntity: src,
       allEntities: { e1: src },
     });
-    expect(ctx.sourceEntity?.contentExcerpt).toBe(longContent);
-    expect(ctx.sourceEntity?.loreExcerpt).toBe(longLore);
+    // under the source cap → kept in full
+    expect(ctx.sourceEntity?.contentExcerpt).toBe(shortLore);
+    // over the cap → bounded (much larger than a background excerpt, but not 5k)
+    expect(ctx.sourceEntity?.loreExcerpt?.length).toBeLessThanOrEqual(1501);
+    expect(ctx.sourceEntity?.loreExcerpt?.length).toBeGreaterThan(1000);
   });
 
   it("flattens markdown headings and newlines in excerpts", () => {
@@ -255,7 +258,8 @@ describe("buildVaultContext (T042/T047)", () => {
     });
     // The single character must make the (capped) sample ahead of factions.
     expect(ctx.worldSample.map((e) => e.id)).toContain("c1");
-    expect(ctx.worldSample.length).toBeLessThanOrEqual(6);
+    expect(ctx.worldSample.length).toBeLessThanOrEqual(8);
+    expect(ctx.worldSample[0].id).toBe("c1");
   });
 
   it("prefers search-relevant ids (in order) for the world sample", () => {
@@ -290,6 +294,24 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(ids[0]).toBe("a"); // relevance hit first
     expect(ids).toContain("b"); // then same-type backfill
     expect(ids).toContain("c");
+  });
+
+  it("includes events as grounding and puts notes last in the world sample", () => {
+    const character = entity({ id: "c1", title: "Hero", type: "character" });
+    const event = entity({ id: "e1", title: "The Sundering", type: "event" });
+    const note = entity({ id: "n1", title: "DM scratchpad", type: "note" });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities: { c1: character, e1: event, n1: note },
+      targetEntityType: "character",
+    });
+    const ids = ctx.worldSample.map((e) => e.id);
+    // character (target type) first, event before note, note last.
+    expect(ids.indexOf("c1")).toBeLessThan(ids.indexOf("e1"));
+    expect(ids.indexOf("e1")).toBeLessThan(ids.indexOf("n1"));
+    expect(ids).toContain("e1");
+    expect(ids[ids.length - 1]).toBe("n1");
   });
 
   it("excludes the source and neighbors from the world sample", () => {

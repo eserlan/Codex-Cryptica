@@ -8,8 +8,30 @@ import {
   type GeneratedDraft,
   type GeneratorOutput,
   type GeneratorRunRequest,
+  type SuggestedConnection,
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
+
+/** Validate and normalise the model's "connections" array. */
+function parseConnections(value: unknown): SuggestedConnection[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .filter(
+      (c): c is SuggestedConnection =>
+        !!c &&
+        typeof c === "object" &&
+        typeof (c as SuggestedConnection).targetTitle === "string" &&
+        (c as SuggestedConnection).targetTitle.trim().length > 0,
+    )
+    .map((c) => ({
+      targetTitle: c.targetTitle.trim(),
+      relationship:
+        typeof c.relationship === "string" && c.relationship.trim()
+          ? c.relationship.trim()
+          : "related",
+    }));
+  return out.length ? out : undefined;
+}
 
 /**
  * Vault persistence boundary injected by the web app. The package never imports
@@ -134,6 +156,7 @@ export class CampaignGeneratorService {
               summary: parsed.summary,
               lore: parsed.lore,
               labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+              connections: parseConnections(parsed.connections),
             };
             return generator.mapOutputToDraft(output, mergedRequest);
           }
@@ -187,9 +210,13 @@ export class CampaignGeneratorService {
 
     let relationshipCreated = false;
     if (request.createRelationship && draft.sourceEntityId) {
+      // Link OUTBOUND from the new entity to its source, so the originating
+      // relationship shows in the new entity's own bonds alongside any
+      // AI-suggested connections (which are also outbound). The source still
+      // surfaces it via its inbound-connection index.
       await this.vault.addConnection(
-        draft.sourceEntityId,
         entityId,
+        draft.sourceEntityId,
         request.relationshipLabel || draft.relationshipLabel || "related",
       );
       relationshipCreated = true;

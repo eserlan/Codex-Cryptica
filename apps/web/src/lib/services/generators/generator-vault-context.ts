@@ -9,8 +9,18 @@ import type { Entity } from "schema";
 const MAX_NEIGHBORS = 5;
 /** Maximum number of world-grounding entity excerpts included. */
 const MAX_WORLD_SAMPLE = 6;
-/** Maximum character length of any individual excerpt. */
+/** Maximum character length of a background (neighbor/world) excerpt. */
 const MAX_EXCERPT_CHARS = 300;
+/**
+ * Maximum length of the source entity's excerpt. Generous (it's the anchor) but
+ * bounded, so a very long source entry can't dominate the prompt and drown the
+ * user's instruction.
+ */
+const MAX_SOURCE_CHARS = 1500;
+/** Vault category id for events (included as grounding for any new entity). */
+const EVENT_TYPE = "event";
+/** Vault category id for notes (lowest-priority grounding). */
+const NOTE_TYPE = "note";
 
 /**
  * Highest year found across all entities' structured temporal metadata
@@ -47,20 +57,24 @@ function flatten(text: string | undefined): string {
     .trim();
 }
 
-function excerpt(text: string | undefined): string {
+function clampFlat(text: string | undefined, max: number): string {
   const flattened = flatten(text);
-  return flattened.length > MAX_EXCERPT_CHARS
-    ? flattened.slice(0, MAX_EXCERPT_CHARS) + "…"
-    : flattened;
+  return flattened.length > max ? flattened.slice(0, max) + "…" : flattened;
+}
+
+function excerpt(text: string | undefined): string {
+  return clampFlat(text, MAX_EXCERPT_CHARS);
 }
 
 function entityToExcerpt(
   entity: Entity,
   relationship?: string,
-  /** Source entity: include full content/lore (not truncated) as the anchor. */
+  /** Source entity: include a generous (but bounded) excerpt as the anchor. */
   full = false,
 ): VaultContextEntityExcerpt {
-  const render = full ? flatten : excerpt;
+  const render = full
+    ? (t: string | undefined) => clampFlat(t, MAX_SOURCE_CHARS)
+    : excerpt;
   return {
     id: entity.id,
     title: entity.title,
@@ -152,9 +166,12 @@ export function buildVaultContext(
     }
   }
 
-  // World sample: positive grounding for the AI. Prefers entities the non-AI
-  // search engine ranked as relevant to the user's request, then backfills with
-  // same-type entities (matching tone) and finally any remaining entities.
+  // World sample: positive grounding for the AI, in priority order:
+  //   1. search-relevant entities (ranked by the non-AI search engine)
+  //   2. same-type entities (matching tone for the category being generated)
+  //   3. events (timeline/world context useful for any new entity)
+  //   4. other entities
+  //   5. notes (lowest priority — usually meta, not world canon)
   // Excludes the source and already-listed neighbors. Order is significant.
   const seen = new Set<string>();
   if (sourceEntity) seen.add(sourceEntity.id);
@@ -169,11 +186,11 @@ export function buildVaultContext(
   for (const id of relevantIds ?? []) consider(allEntities[id]);
   const samplePool = Object.values(allEntities);
   if (targetEntityType) {
-    for (const e of samplePool) {
-      if (e.type === targetEntityType) consider(e);
-    }
+    for (const e of samplePool) if (e.type === targetEntityType) consider(e);
   }
-  for (const e of samplePool) consider(e);
+  for (const e of samplePool) if (e.type === EVENT_TYPE) consider(e);
+  for (const e of samplePool) if (e.type !== NOTE_TYPE) consider(e);
+  for (const e of samplePool) consider(e); // notes last
   const worldSample = ordered
     .slice(0, MAX_WORLD_SAMPLE)
     .map((e) => entityToExcerpt(e));

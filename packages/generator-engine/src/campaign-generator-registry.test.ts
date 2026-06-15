@@ -7,6 +7,7 @@ import {
   listGenerators,
   resolveEntityType,
   GENERATOR_ENTITY_TYPE,
+  SYSTEM_INSTRUCTION,
 } from "./campaign-generator-registry";
 import {
   type GeneratorRunRequest,
@@ -34,13 +35,26 @@ describe("registry lookup", () => {
     }
   });
 
-  it("lists all four generators in order", () => {
+  it("lists all generators in order", () => {
     expect(listGenerators().map((g) => g.id)).toEqual([
       "npc",
       "faction",
       "settlement",
       "magic-item",
+      "event",
     ]);
+  });
+
+  it("maps the event generator to the event vault category", () => {
+    expect(GENERATOR_ENTITY_TYPE.event).toBe("event");
+    expect(getGenerator("event").entityType).toBe("event");
+  });
+
+  it("builds an event prompt and generates an event draft", () => {
+    const prompt = getGenerator("event").buildPrompt(run("event"));
+    expect(prompt).toContain("Generate a campaign event");
+    const draft = getGenerator("event").generate(run("event"));
+    expect(draft.title.length).toBeGreaterThan(0);
   });
 
   it("throws a user-safe UnsupportedGeneratorError for unknown ids", () => {
@@ -176,6 +190,73 @@ describe("buildPrompt template injection", () => {
     );
     expect(prompt).not.toContain("follow this template");
   });
+
+  it("defers the generic lore checklist to the template when one is present", () => {
+    const withTpl = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: ctxWithTemplate(true) }),
+    );
+    // generic checklist suppressed, template-fill guidance used instead
+    expect(withTpl).not.toContain('The "lore" field should include:');
+    expect(withTpl).toContain("Fill every section of the template above");
+
+    const withoutTpl = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: ctxWithTemplate(false) }),
+    );
+    expect(withoutTpl).toContain('The "lore" field should include:');
+  });
+});
+
+describe("buildPrompt quality + schema", () => {
+  it("includes a connections field in the output schema", () => {
+    const prompt = getGenerator("npc").buildPrompt(run("npc"));
+    expect(prompt).toContain('"connections"');
+    expect(prompt).toContain("EXACT title");
+  });
+
+  it("includes a few-shot exemplar for every generator", () => {
+    for (const id of [
+      "npc",
+      "faction",
+      "settlement",
+      "magic-item",
+      "event",
+    ] as const) {
+      const prompt = getGenerator(id).buildPrompt(run(id));
+      expect(prompt).toContain("Example (illustrative only");
+    }
+  });
+
+  it("carries the system instruction quality rubric", () => {
+    expect(SYSTEM_INSTRUCTION).toMatch(/show through action/i);
+    expect(SYSTEM_INSTRUCTION).toMatch(/avoid clich/i);
+  });
+
+  it("asks the model to ground in the world when context is present", () => {
+    const grounded = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [
+            {
+              id: "w1",
+              title: "Aranyvér",
+              type: "faction",
+              contentExcerpt: "x",
+            },
+          ],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(grounded).toContain("weave in at least one entity");
+
+    const empty = getGenerator("npc").buildPrompt(run("npc"));
+    expect(empty).toContain('leave "connections" as an empty array');
+  });
 });
 
 describe("buildPrompt cultural naming", () => {
@@ -241,31 +322,34 @@ describe("buildPrompt campaign date", () => {
 });
 
 describe("buildPrompt source entity", () => {
-  it("includes both the content and lore of the source entity", () => {
-    const prompt = getGenerator("npc").buildPrompt(
-      run("npc", {
-        vaultContext: {
-          categoryLabels: [],
-          applyTemplate: false,
-          neighbors: [],
-          worldSample: [],
-          existingTitles: [],
-          labelSuggestions: [],
-          includedContext: [],
-          sourceEntity: {
-            id: "s1",
-            title: "Lord Aric",
-            type: "character",
-            contentExcerpt: "A grim border lord.",
-            loreExcerpt: "Secretly bankrupt and beholden to a smuggling ring.",
+  it("includes both the content and lore of the source entity for every generator", () => {
+    for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
+      const prompt = getGenerator(id).buildPrompt(
+        run(id, {
+          vaultContext: {
+            categoryLabels: [],
+            applyTemplate: false,
+            neighbors: [],
+            worldSample: [],
+            existingTitles: [],
+            labelSuggestions: [],
+            includedContext: [],
+            sourceEntity: {
+              id: "s1",
+              title: "Lord Aric",
+              type: "character",
+              contentExcerpt: "A grim border lord.",
+              loreExcerpt:
+                "Secretly bankrupt and beholden to a smuggling ring.",
+            },
           },
-        },
-      }),
-    );
-    expect(prompt).toContain("A grim border lord.");
-    expect(prompt).toContain(
-      "Lore: Secretly bankrupt and beholden to a smuggling ring.",
-    );
+        }),
+      );
+      expect(prompt).toContain("A grim border lord.");
+      expect(prompt).toContain(
+        "Lore: Secretly bankrupt and beholden to a smuggling ring.",
+      );
+    }
   });
 });
 
@@ -340,6 +424,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       faction: "faction",
       settlement: "location",
       "magic-item": "item",
+      event: "event",
     });
   });
 

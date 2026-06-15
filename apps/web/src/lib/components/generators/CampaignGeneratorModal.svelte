@@ -209,6 +209,35 @@
         },
         createRelationship,
       });
+      // Auto-wire the AI's suggested connections to existing entities (matched
+      // by exact, case-insensitive title). These live on the skeleton, so they
+      // are removed too if the user discards the draft.
+      if (reviewed.connections?.length) {
+        const sourceId = workflow.sourceEntityId ?? undefined;
+        const byTitle = new Map<string, string>();
+        for (const [id, e] of Object.entries(vault.entities)) {
+          byTitle.set(e.title.trim().toLowerCase(), id);
+        }
+        for (const conn of reviewed.connections) {
+          const targetId = byTitle.get(conn.targetTitle.trim().toLowerCase());
+          // Skip self and the source (the source link is created above).
+          if (
+            targetId &&
+            targetId !== result.entityId &&
+            targetId !== sourceId
+          ) {
+            try {
+              await vault.addConnection(
+                result.entityId,
+                targetId,
+                conn.relationship || "related",
+              );
+            } catch {
+              // Skip connections that fail (e.g. already exist).
+            }
+          }
+        }
+      }
       // Push generated content as a pending draft so zen mode shows the
       // proposal diff — user accepts or discards from the editor.
       revisionService.pendingDraft = {

@@ -6,13 +6,19 @@
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
 
-export type GeneratorId = "npc" | "faction" | "settlement" | "magic-item";
+export type GeneratorId =
+  | "npc"
+  | "faction"
+  | "settlement"
+  | "magic-item"
+  | "event";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
   "faction",
   "settlement",
   "magic-item",
+  "event",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -26,12 +32,26 @@ export interface GeneratorOptionDefinition {
   defaultValue?: unknown;
 }
 
+/**
+ * A relationship the model proposes between the generated entity and an existing
+ * vault entity, referenced by its exact title. The web app resolves the title to
+ * an id and may auto-create the edge on save.
+ */
+export interface SuggestedConnection {
+  /** Exact title of an existing entity from the provided world context. */
+  targetTitle: string;
+  /** Short relationship label, e.g. "ally", "rival", "located in". */
+  relationship: string;
+}
+
 /** Raw structured output produced by a generator before draft mapping. */
 export interface GeneratorOutput {
   title: string;
   summary: string;
   lore: string;
   labels: string[];
+  /** Proposed relationships to existing entities (by exact title). */
+  connections?: SuggestedConnection[];
   /** Generated details that do not map onto a known template heading. */
   unmappedDetails?: string;
 }
@@ -113,6 +133,8 @@ export interface GeneratedDraft {
   sourceGeneratorId: GeneratorId;
   sourceEntityId?: string;
   relationshipLabel?: string;
+  /** Proposed relationships to existing entities (by exact title). */
+  connections?: SuggestedConnection[];
   templateOutline?: string;
   templateApplied: boolean;
   unmappedDetails?: string;

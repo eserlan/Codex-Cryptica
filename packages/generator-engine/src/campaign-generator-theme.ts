@@ -15,30 +15,35 @@ export const THEME_GENERATOR_DEFAULTS: Record<
     settlement: { type: "Town" },
     faction: { type: "Guild" },
     "magic-item": { rarity: "Uncommon" },
+    event: { type: "Battle" },
   },
   scifi: {
     npc: { race: "Human", role: "Crew" },
     settlement: { type: "Station" },
     faction: { type: "Corporation" },
     "magic-item": { rarity: "Uncommon" },
+    event: { type: "Discovery" },
   },
   modern: {
     npc: { race: "Human", role: "Civilian" },
     settlement: { type: "City" },
     faction: { type: "Guild" },
     "magic-item": { rarity: "Rare" },
+    event: { type: "Disaster" },
   },
   horror: {
     npc: { race: "Human", role: "Survivor" },
     settlement: { type: "Town" },
     faction: { type: "Cult" },
     "magic-item": { rarity: "Rare" },
+    event: { type: "Ritual" },
   },
   cyberpunk: {
     npc: { race: "Human", role: "Runner" },
     settlement: { type: "City" },
     faction: { type: "Syndicate" },
     "magic-item": { rarity: "Rare" },
+    event: { type: "Uprising" },
   },
 };
 

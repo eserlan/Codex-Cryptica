@@ -140,6 +140,28 @@
     </div>
   {/if}
 
+  {#if draft.connections?.length}
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Suggested Connections
+      </span>
+      <ul class="flex flex-col gap-1">
+        {#each draft.connections as conn (conn.targetTitle + conn.relationship)}
+          <li class="flex items-center gap-2 text-xs text-chrome-text">
+            <span class="icon-[lucide--link] h-3 w-3 text-chrome-muted"></span>
+            <span class="text-chrome-muted">{conn.relationship}</span>
+            <span class="font-medium">{conn.targetTitle}</span>
+          </li>
+        {/each}
+      </ul>
+      <p class="text-[10px] text-chrome-muted">
+        Links to entities that already exist will be created on save.
+      </p>
+    </div>
+  {/if}
+
   {#if showRelationshipToggle}
     <label class="flex cursor-pointer items-center gap-2">
       <input
