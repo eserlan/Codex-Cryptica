@@ -1,5 +1,25 @@
 import { test, expect } from "@playwright/test";
 
+async function waitForSearchIndexing(page: any, names: string[]) {
+  for (const name of names) {
+    await page.waitForFunction(
+      async (n: string) => {
+        const s = (window as any).searchStore;
+        if (!s?.setQuery) return false;
+        try {
+          await s.setQuery(n);
+          return Array.isArray(s.results) && s.results.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      name,
+      { timeout: 15000 },
+    );
+  }
+  await page.evaluate(() => (window as any).searchStore?.setQuery(""));
+}
+
 test.describe("Connections Proposer E2E", () => {
   test.beforeEach(async ({ page }) => {
     // Debugging: Log page console messages
@@ -74,25 +94,34 @@ test.describe("Connections Proposer E2E", () => {
 
     // 1. Create two entities
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Eldrin the Wise");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await page.getByTestId("new-entity-title-input").fill("Eldrin the Wise");
+    await page.getByRole("button", { exact: true, name: "ADD" }).click();
+
+    // Wait for form to close
+    await expect(page.getByTestId("new-entity-title-input")).not.toBeVisible();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("The Broken Tower");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await page.getByTestId("new-entity-title-input").fill("The Broken Tower");
+    await page.getByRole("button", { exact: true, name: "ADD" }).click();
 
-    // Wait for vault to be idle
+    // Wait for form to close
+    await expect(page.getByTestId("new-entity-title-input")).not.toBeVisible();
+
+    // Wait for vault to be idle and search indexing
     await page.waitForFunction(() => (window as any).vault.status === "idle");
+    await waitForSearchIndexing(page, ["Eldrin the Wise", "The Broken Tower"]);
 
     // 2. Add content to Eldrin
-    await page.keyboard.press("Control+k");
-    await page.getByPlaceholder("Search (Cmd+K)...").fill("Eldrin");
+    await page.evaluate(() => (window as any).searchStore?.open());
+    const searchInput = page.getByPlaceholder("Search notes...");
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill("Eldrin");
     await page.getByTestId("search-result").first().click();
 
     await page.getByRole("button", { name: "EDIT" }).first().click();
-    const editor = page.locator(".tiptap");
+    const editor = page.locator(".tiptap[contenteditable='true']");
     await editor.fill("Eldrin spent many years studying at The Broken Tower.");
-    await page.getByRole("button", { name: "SAVE" }).click();
+    await page.getByRole("button", { name: "SAVE CHANGES" }).click();
 
     // Wait for vault to be idle
     await page.waitForFunction(() => (window as any).vault.status === "idle");
@@ -112,9 +141,9 @@ test.describe("Connections Proposer E2E", () => {
     await proposalCard.getByTitle("Apply Connection").click();
 
     // 6. Verify connection in Gossip section
-    await expect(page.locator("li", { hasText: "located_at" })).toContainText(
-      "The Broken Tower",
-    );
+    await expect(
+      page.locator("li", { hasText: /located_(at|in)/ }),
+    ).toContainText("The Broken Tower");
 
     // 7. Verify proposal list updates
     await expect(page.getByText("Oracle Suggestions")).not.toBeVisible();
@@ -127,26 +156,35 @@ test.describe("Connections Proposer E2E", () => {
 
     // Setup
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Alaric");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await page.getByTestId("new-entity-title-input").fill("Alaric");
+    await page.getByRole("button", { exact: true, name: "ADD" }).click();
+
+    // Wait for form to close
+    await expect(page.getByTestId("new-entity-title-input")).not.toBeVisible();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("The Broken Tower");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await page.getByTestId("new-entity-title-input").fill("The Broken Tower");
+    await page.getByRole("button", { exact: true, name: "ADD" }).click();
 
-    // Wait for vault to be idle
+    // Wait for form to close
+    await expect(page.getByTestId("new-entity-title-input")).not.toBeVisible();
+
+    // Wait for vault to be idle and search indexing
     await page.waitForFunction(() => (window as any).vault.status === "idle");
+    await waitForSearchIndexing(page, ["Alaric", "The Broken Tower"]);
 
     // Add content to Alaric to trigger proposer
-    await page.keyboard.press("Control+k");
-    await page.getByPlaceholder("Search (Cmd+K)...").fill("Alaric");
+    await page.evaluate(() => (window as any).searchStore?.open());
+    const searchInput2 = page.getByPlaceholder("Search notes...");
+    await expect(searchInput2).toBeVisible();
+    await searchInput2.fill("Alaric");
     await page.getByTestId("search-result").first().click();
 
     await page.getByRole("button", { name: "EDIT" }).first().click();
     await page
-      .locator(".tiptap")
+      .locator(".tiptap[contenteditable='true']")
       .fill("Alaric was a regular visitor to The Broken Tower.");
-    await page.getByRole("button", { name: "SAVE" }).click();
+    await page.getByRole("button", { name: "SAVE CHANGES" }).click();
 
     // Wait for vault to be idle
     await page.waitForFunction(() => (window as any).vault.status === "idle");

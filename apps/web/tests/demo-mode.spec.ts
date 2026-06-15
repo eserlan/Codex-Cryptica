@@ -6,7 +6,8 @@ test.describe("Interactive Demo Mode", () => {
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.removeItem("codex_skip_landing");
+      localStorage.removeItem("codex_dismissed_landing");
       localStorage.setItem(
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
@@ -28,7 +29,8 @@ test.describe("Interactive Demo Mode", () => {
   test("should start demo from landing page", async ({ page }) => {
     await page.addInitScript(() => {
       try {
-        localStorage.setItem("codex_skip_landing", "false");
+        localStorage.removeItem("codex_skip_landing");
+        localStorage.removeItem("codex_dismissed_landing");
       } catch {
         /* ignore */
       }
@@ -42,14 +44,15 @@ test.describe("Interactive Demo Mode", () => {
     );
 
     await page.evaluate(() => {
-      (window as any).uiStore.dismissedLandingPage = false;
+      (window as any).onboardingStore.dismissedLandingPage = false;
+      (window as any).onboardingStore.skipWelcomeScreen = false;
       if ((window as any).vault) (window as any).vault.status = "idle";
     });
 
     // Verify landing page visible
-    await expect(page.getByText("Build Your World.")).toBeVisible({
-      timeout: 15000,
-    });
+    await expect(
+      page.getByRole("heading", { name: "Private RPG Lore Vault" }),
+    ).toBeVisible({ timeout: 15000 });
 
     // Click Explore Demo Vault
     await page.getByTestId("welcome-demo-button").click();
@@ -57,7 +60,7 @@ test.describe("Interactive Demo Mode", () => {
     // Wait for demo mode state
     await page.waitForFunction(
       () =>
-        (window as any).uiStore.isDemoMode &&
+        (window as any).sessionModeStore.isDemoMode &&
         (window as any).vault.status === "idle" &&
         (window as any).vault.demoVaultName &&
         (window as any).vault.demoVaultName.includes("Fantasy"),
@@ -65,7 +68,7 @@ test.describe("Interactive Demo Mode", () => {
     );
 
     // Demo mode badge should be visible
-    await expect(page.getByText("DEMO MODE")).toBeVisible();
+    await expect(page.getByText("DEMO MODE", { exact: true })).toBeVisible();
 
     // Sample data should be loaded - check entity count as indicator of successful load
     const count = page.getByTestId("entity-count");
@@ -87,15 +90,15 @@ test.describe("Interactive Demo Mode", () => {
     // Wait for demo detection and loading
     await page.waitForFunction(
       () =>
-        (window as any).uiStore?.isDemoMode &&
+        (window as any).sessionModeStore?.isDemoMode &&
         (window as any).vault?.status === "idle" &&
         (window as any).vault.demoVaultName &&
-        (window as any).vault.demoVaultName.toLowerCase().includes("horror"),
+        (window as any).vault.demoVaultName.toLowerCase().includes("vampire"),
       { timeout: 15000 },
     );
 
     // Demo badge visible
-    await expect(page.getByText("DEMO MODE")).toBeVisible();
+    await expect(page.getByText("DEMO MODE", { exact: true })).toBeVisible();
 
     // Theme should have changed - check for horror-specific jargon if possible,
     // or just verify that entities loaded
@@ -108,7 +111,7 @@ test.describe("Interactive Demo Mode", () => {
     await page.goto("/?demo=fantasy&s=" + Date.now());
     await page.waitForFunction(
       () =>
-        (window as any).uiStore?.isDemoMode &&
+        (window as any).sessionModeStore?.isDemoMode &&
         (window as any).vault?.status === "idle",
       { timeout: 15000 },
     );
@@ -120,42 +123,34 @@ test.describe("Interactive Demo Mode", () => {
     await input.fill("New Transient Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // Wait for indexing
-    await page.waitForTimeout(1000);
-
-    // Open search to find the new node
-    await page.keyboard.press("Control+k");
-    const searchInput = page.locator('input[placeholder*="..."]').first();
-    await expect(searchInput).toBeVisible();
-    await searchInput.fill("New Transient Node");
-
-    // Indicator should show transient mode in the detail panel
-    await page
-      .getByTestId("search-result")
-      .filter({ hasText: "New Transient Node" })
-      .first()
-      .click();
+    await expect(
+      page.getByRole("heading", { name: "New Transient Node" }),
+    ).toBeVisible();
     await expect(page.getByText(/TRANSIENT MODE/)).toBeVisible();
 
     // Reload page
     await page.reload();
-    await page.waitForFunction(() => (window as any).uiStore !== undefined, {
-      timeout: 15000,
-    });
+    await page.waitForFunction(
+      () =>
+        (window as any).sessionModeStore?.isDemoMode &&
+        (window as any).vault?.status === "idle",
+      { timeout: 15000 },
+    );
 
     // Node should be gone
-    await page.keyboard.press("Control+k");
-    const searchInput2 = page.locator('input[placeholder*="..."]').first();
-    await expect(searchInput2).toBeVisible();
-    await searchInput2.fill("New Transient Node");
-    await expect(page.getByTestId("search-result")).not.toBeVisible();
+    const hasTransientNode = await page.evaluate(() =>
+      Object.values((window as any).vault.entities).some(
+        (entity: any) => entity.title === "New Transient Node",
+      ),
+    );
+    expect(hasTransientNode).toBe(false);
   });
 
   test("should convert demo to real campaign", async ({ page }) => {
     await page.goto("/?demo=fantasy&s=" + Date.now());
     await page.waitForFunction(
       () =>
-        (window as any).uiStore?.isDemoMode &&
+        (window as any).sessionModeStore?.isDemoMode &&
         (window as any).vault?.status === "idle",
       { timeout: 15000 },
     );
@@ -171,6 +166,8 @@ test.describe("Interactive Demo Mode", () => {
     });
 
     // Demo badge should be gone
-    await expect(page.getByText("DEMO MODE")).not.toBeVisible();
+    await expect(
+      page.getByText("DEMO MODE", { exact: true }),
+    ).not.toBeVisible();
   });
 });

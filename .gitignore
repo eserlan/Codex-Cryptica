@@ -77,3 +77,6 @@ blogPics/
 .cache/
 .eslintcache
 .claude/
+
+# Playwright Smart E2E Cache
+apps/web/.e2e-success.json

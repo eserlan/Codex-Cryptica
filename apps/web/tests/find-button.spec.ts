@@ -1,49 +1,18 @@
 import { test, expect } from "@playwright/test";
+import { seedEntity, setupVaultPage } from "./test-helpers";
 
 test.describe("Find in Graph Button", () => {
   test("should center the graph on the node when clicked", async ({ page }) => {
     page.on("console", (msg) => console.log(`[PAGE] ${msg.text()}`));
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-
-    // Wait for vault initialization
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
+    await setupVaultPage(page);
 
     // Create a node
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Target Node");
-    await page.getByRole("button", { name: "ADD" }).click();
+    const nodeId = await seedEntity(page, { title: "Target Node" });
 
     // Wait for entities to be created in the UI
-    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
+    await expect(page.getByTestId("entity-count")).toHaveText(/1\s+NOTE/, {
       timeout: 10000,
     });
-
-    // Get the node ID and wait for it to be in vault
-    const nodeIdHandle = await page.waitForFunction(
-      () => {
-        const vault = (window as any).vault;
-        if (!vault || !vault.entities) return null;
-        const entity = Object.values(vault.entities).find(
-          (e: any) => e.title === "Target Node",
-        );
-        return entity ? (entity as any).id : null;
-      },
-      { timeout: 10000 },
-    );
-    const nodeId = (await nodeIdHandle.jsonValue()) as string;
 
     // Wait until Cytoscape (window.cy) is initialized and contains the created node
     await page.waitForFunction(
@@ -61,7 +30,7 @@ test.describe("Find in Graph Button", () => {
     }, nodeId);
 
     // Wait for sidebar button
-    const findBtn = page.getByTestId("find-in-graph-button");
+    const findBtn = page.getByTestId("find-in-graph-button").last();
     await expect(findBtn).toBeVisible({ timeout: 10000 });
 
     // Pan the graph far away

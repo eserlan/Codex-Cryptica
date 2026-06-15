@@ -1,24 +1,26 @@
 import { test, expect } from "@playwright/test";
+import {
+  openGraphContextMenuForTitle,
+  seedEntity,
+  setupVaultPage,
+} from "./test-helpers";
 
 test.describe("Graph Image Generation Context Menu", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/vault/default");
-    await page.waitForSelector("canvas");
-    await page.waitForTimeout(2000);
+    await setupVaultPage(page);
   });
 
   test("should show image actions and handle interaction", async ({ page }) => {
-    const canvas = page.locator("canvas").first();
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error("Canvas not found");
-
-    // Right-click center
-    await canvas.click({
-      button: "right",
-      position: { x: box.width / 2, y: box.height / 2 },
+    const title = "Image Action Node";
+    await seedEntity(page, {
+      title,
+      content: "A node used to verify graph image context menu actions.",
     });
+    await openGraphContextMenuForTitle(page, title);
 
-    const imageSubMenu = page.getByRole("menuitem", { name: "Image" });
+    const imageSubMenu = page.getByRole("menuitem", {
+      name: "Image actions",
+    });
     await expect(imageSubMenu).toBeVisible();
 
     // Hover to see generation actions

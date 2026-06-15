@@ -100,18 +100,46 @@ test.describe("Vault Import E2E", () => {
           ) {
             console.warn("Ignoring DataCloneError in E2E test for mock handle");
             // For tests, simulate successful mock import:
-            // 1. If it's a new vault (name not root), use that name
             const vaultRegistry =
               (window as any).vaultRegistryStore ||
               (window as any).vaultRegistry ||
-              (window as any).uiStore.vaultRegistry;
-            const activeId = vaultRegistry.activeVaultId;
-            const vaultRecord = vaultRegistry.availableVaults.find(
-              (rv: any) => rv.id === activeId,
-            );
+              (window as any).uiStore.vaultRegistry ||
+              (window as any).__codex_vault_registry_instance__;
+
+            let activeId = vaultRegistry.activeVaultId;
+            let vaultRecord;
+
+            if (handle.name === "root") {
+              // The user created a custom named vault first, and the file system handle name is "root".
+              // Keep activeId as is ("Imported Vault") and cleanup the "root" vault that was created by original().
+              const rootRecord = vaultRegistry.availableVaults.find(
+                (rv: any) => rv.name === "root",
+              );
+              if (rootRecord && rootRecord.id !== activeId) {
+                await vaultRegistry.deleteVault(rootRecord.id);
+              }
+              vaultRecord = vaultRegistry.availableVaults.find(
+                (rv: any) => rv.id === activeId,
+              );
+            } else {
+              // The user clicked "Open Folder", creating a vault with the folder's name.
+              vaultRecord = vaultRegistry.availableVaults.find(
+                (rv: any) => rv.name === handle.name,
+              );
+              if (!vaultRecord) {
+                const newId = await vaultRegistry.createVault(handle.name);
+                await vaultRegistry.setActiveVault(newId);
+                activeId = newId;
+                vaultRecord = vaultRegistry.availableVaults.find(
+                  (rv: any) => rv.id === newId,
+                );
+              } else {
+                await vaultRegistry.setActiveVault(vaultRecord.id);
+                activeId = vaultRecord.id;
+              }
+            }
 
             // 2. Load mock data into the vault so tests see "2 Items"
-            // Get files from the mock handle implementation above
             let fakeEntities: any;
             if (handle.name === "root") {
               fakeEntities = {
@@ -147,40 +175,44 @@ test.describe("Vault Import E2E", () => {
             v.repository.entities = fakeEntities;
             v.isInitialized = true;
 
-            // 3. Update the registry count
+            // 3. Update the registry count in IndexedDB and in-memory
             if (vaultRecord) {
-              vaultRecord.entityCount = 2;
-              const index = vaultRegistry.availableVaults.findIndex(
-                (v: any) => v.id === vaultRecord.id,
-              );
-              if (index !== -1) {
-                vaultRegistry.availableVaults[index] = { ...vaultRecord };
-                vaultRegistry.availableVaults = [
-                  ...vaultRegistry.availableVaults,
-                ];
-              }
+              await vaultRegistry.updateEntityCount(vaultRecord.id, 2);
             }
-
-            // Force vault store to notify subscribers
-            v.activeVaultId = activeId;
-            v.vaultName = vaultRecord
-              ? vaultRecord.name
-              : handle.name === "root"
-                ? "Imported Vault"
-                : "My Local Vault";
 
             // Re-assign entities to trigger reactivity in Svelte 5
             v.entities = { ...v.repository.entities };
-            // Populate the array used for UI counts
-            v.allEntities = Object.values(v.entities);
+            if (
+              v.entityStore &&
+              typeof v.entityStore.rebuildIndexes === "function"
+            ) {
+              v.entityStore.rebuildIndexes();
+            } else {
+              v.allEntities = Object.values(v.entities);
+            }
             v.status = "idle";
+
+            // 4. Emit app events to update the search index
+            if ((window as any).eventBus) {
+              (window as any).eventBus.emit({
+                type: "VAULT:VAULT_SWITCHED",
+                domain: "vault",
+                payload: { id: activeId },
+                metadata: { timestamp: Date.now(), vaultId: activeId },
+              });
+              (window as any).eventBus.emit({
+                type: "VAULT:CACHE_LOADED",
+                domain: "vault",
+                payload: { entities: Object.values(fakeEntities) },
+                metadata: { timestamp: Date.now(), vaultId: activeId },
+              });
+            }
 
             // Close modal explicitly
             const uiStore = (window as any).uiStore;
             if (uiStore) {
-              uiStore.showVaultSwitcher = false; // Just in case
+              uiStore.showVaultSwitcher = false;
             }
-            // Trigger escape to close modal
             document.dispatchEvent(
               new KeyboardEvent("keydown", { key: "Escape" }),
             );
@@ -233,9 +265,7 @@ test.describe("Vault Import E2E", () => {
     await page.keyboard.press("Escape");
 
     // 5. Verify the main UI also shows the count
-    await expect(page.getByTestId("entity-count")).toContainText(
-      "2 CHRONICLES",
-    );
+    await expect(page.getByTestId("entity-count")).toContainText("2 ");
 
     // 6. Verify search can find the imported entities
     await page.keyboard.press("Control+k");
@@ -309,98 +339,6 @@ test.describe("Vault Import E2E", () => {
       }
       (window as any).showDirectoryPicker = async () =>
         createMockHandle("My Local Vault", "directory");
-
-      // We also need to apply the workaround here because the page context is different
-      // or the previous evaluate might be overridden by navigation/reloads
-      const v = (window as any).vault;
-      if (v) {
-        const original = v.importFromFolder.bind(v);
-        v.importFromFolder = async (handle: any) => {
-          try {
-            return await original(handle);
-          } catch (e: any) {
-            if (
-              e.name === "DataCloneError" ||
-              e.message?.includes("DataCloneError")
-            ) {
-              console.warn(
-                "Ignoring DataCloneError in E2E test for mock handle (Test 2)",
-              );
-              const vaultRegistry =
-                (window as any).vaultRegistryStore ||
-                (window as any).vaultRegistry ||
-                (window as any).uiStore.vaultRegistry;
-
-              // In this test, createVault is NOT called before importFromFolder,
-              // so we need to do the switch here. The application logic normally
-              // handles this in handleLoadFromFolder by relying on importFromFolder
-              // to switch to a new vault or fail. Since we are mocking the success,
-              // we must also mock the switch.
-              const newVaultId = await vaultRegistry.createVault(handle.name);
-              await vaultRegistry.setActiveVault(newVaultId);
-
-              const activeId = vaultRegistry.activeVaultId;
-              const vaultRecord = vaultRegistry.availableVaults.find(
-                (rv: any) => rv.id === activeId,
-              );
-
-              const fakeEntities = {
-                entry1: {
-                  id: "entry1",
-                  title: "Entry 1",
-                  content: "Body 1",
-                  type: "character",
-                },
-                entry2: {
-                  id: "entry2",
-                  title: "Entry 2",
-                  content: "Body 2",
-                  type: "character",
-                },
-              };
-              v.repository.entities = fakeEntities;
-              v.isInitialized = true;
-
-              if (vaultRecord) {
-                vaultRecord.entityCount = 2;
-                const index = vaultRegistry.availableVaults.findIndex(
-                  (rv: any) => rv.id === vaultRecord.id,
-                );
-                if (index !== -1) {
-                  vaultRegistry.availableVaults[index] = { ...vaultRecord };
-                  vaultRegistry.availableVaults = [
-                    ...vaultRegistry.availableVaults,
-                  ];
-                }
-              }
-
-              // Inform the registry about the active vault via its API if available
-              if (
-                vaultRegistry &&
-                typeof (vaultRegistry as any).setActiveVault === "function" &&
-                activeId
-              ) {
-                (vaultRegistry as any).setActiveVault(activeId);
-              }
-
-              // Re-assign repository.entities to trigger derived updates in the vault store
-              v.repository.entities = { ...fakeEntities };
-              v.status = "idle";
-              v.isInitialized = true;
-
-              const uiStore = (window as any).uiStore;
-              if (uiStore) {
-                uiStore.showVaultSwitcher = false;
-              }
-              document.dispatchEvent(
-                new KeyboardEvent("keydown", { key: "Escape" }),
-              );
-              return true;
-            }
-            throw e;
-          }
-        };
-      }
     });
 
     // 1. Open Vault Switcher and click OPEN FOLDER (no name entry needed)

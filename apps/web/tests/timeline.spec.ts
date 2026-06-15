@@ -1,113 +1,35 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage, seedEntities } from "./test-helpers";
 
 test.describe("World Timeline - Graph Integration", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-
-      // Mock IDB to prevent errors
-      const originalPut = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (
-        ...args: [unknown, IDBValidKey?]
-      ) {
-        try {
-          return originalPut.apply(this, args);
-        } catch {
-          return {} as any;
-        }
-      };
-
-      // Mock window.showDirectoryPicker
-      (window as any).showDirectoryPicker = async () => {
-        const createMockFile = (content: string, name: string) => ({
-          kind: "file",
-          name,
-          getFile: async () =>
-            new File([content], name, { type: "text/markdown" }),
-          createWritable: async () => ({
-            write: async () => {},
-            close: async () => {},
-          }),
-        });
-
-        const f1 = createMockFile(
-          "---\nid: e1\ntitle: Event 1\ntype: event\ndate:\n  year: 1000\n---\n# E1",
-          "e1.md",
-        );
-        const f2 = createMockFile(
-          "---\nid: e2\ntitle: Event 2\ntype: event\ndate:\n  year: 2000\n---\n# E2",
-          "e2.md",
-        );
-        const f3 = createMockFile(
-          "---\nid: e3\ntitle: Undated Event\ntype: event\n---\n# E3",
-          "e3.md",
-        );
-
-        return {
-          kind: "directory",
-          name: "test-vault",
-          requestPermission: async () => "granted",
-          queryPermission: async () => "granted",
-          values: () => [f1, f2, f3][Symbol.iterator](),
-          entries: () =>
-            [
-              ["e1.md", f1],
-              ["e2.md", f2],
-              ["e3.md", f3],
-            ][Symbol.iterator](),
-          getFileHandle: async (name: string) => {
-            if (name === "e1.md") return f1;
-            if (name === "e2.md") return f2;
-            return f3;
-          },
-          getDirectoryHandle: async (name: string) => ({
-            kind: "directory",
-            name,
-          }),
-        };
-      };
-    });
-    await page.goto("/");
+    await setupVaultPage(page);
   });
 
   test("should toggle timeline mode", async ({ page }) => {
-    // 1. Create entities via UI
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 1");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 2");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Undated Event");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // 2. Set dates via store for speed/stability in test
-    await page.evaluate(() => {
-      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
-      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
-    });
-
-    // Wait for entities to load/update
-    await expect(page.getByTestId("entity-count")).toContainText(
-      "3 CHRONICLES",
+    // 1. Create entities via API
+    await seedEntities(page, [
       {
-        timeout: 15000,
+        id: "event-1",
+        title: "Event 1",
+        type: "event",
+        data: { date: { year: 1000 } },
       },
-    );
+      {
+        id: "event-2",
+        title: "Event 2",
+        type: "event",
+        data: { date: { year: 2000 } },
+      },
+      { id: "event-3", title: "Undated Event", type: "event" },
+    ]);
 
-    // 3. Toggle Timeline
+    // 2. Toggle Timeline
     const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
     await expect(timelineBtn).toBeVisible();
     await timelineBtn.click();
 
-    // 4. Verify status indicator
+    // 3. Verify status indicator
     await expect(
       page.getByText("Chronological Synchrony Active"),
     ).toBeVisible();
@@ -115,7 +37,7 @@ test.describe("World Timeline - Graph Integration", () => {
     // Wait for layout to settle
     await page.waitForTimeout(1000);
 
-    // 5. Verify node positions
+    // 4. Verify node positions
     const positions = await page.evaluate(() => {
       const { cy } = window as any;
       if (!cy) return null;
@@ -136,32 +58,24 @@ test.describe("World Timeline - Graph Integration", () => {
   });
 
   test("should hide undated nodes in timeline mode", async ({ page }) => {
-    // Create entities via UI
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 1");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Event 2");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Undated Event");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.evaluate(() => {
-      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
-      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
-    });
-
-    await expect(page.getByTestId("entity-count")).toContainText(
-      "3 CHRONICLES",
+    // 1. Create entities via API
+    await seedEntities(page, [
       {
-        timeout: 15000,
+        id: "event-1",
+        title: "Event 1",
+        type: "event",
+        data: { date: { year: 1000 } },
       },
-    );
+      {
+        id: "event-2",
+        title: "Event 2",
+        type: "event",
+        data: { date: { year: 2000 } },
+      },
+      { id: "undated-event", title: "Undated Event", type: "event" },
+    ]);
 
-    // Verify undated node (undated-event) is visible before toggling timeline mode
+    // 2. Verify undated node (undated-event) is visible before toggling timeline mode
     await page.waitForFunction(() => {
       const { cy } = window as any;
       if (!cy) return false;
@@ -169,10 +83,12 @@ test.describe("World Timeline - Graph Integration", () => {
       return node && node.visible();
     });
 
+    // 3. Toggle timeline
     const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
+    await expect(timelineBtn).toBeVisible();
     await timelineBtn.click();
 
-    // Verify undated node is now hidden in timeline mode
+    // 4. Verify undated node is now hidden in timeline mode
     await page.waitForFunction(() => {
       const { cy } = window as any;
       if (!cy) return false;

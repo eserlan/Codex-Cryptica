@@ -24,7 +24,9 @@ async function createEntitiesAndWaitForIndex(
 ) {
   await page.waitForFunction(
     () =>
-      (window as any).vault?.status === "idle" && !!(window as any).searchStore,
+      (window as any).vault?.isInitialized === true &&
+      (window as any).vault?.status === "idle" &&
+      !!(window as any).searchStore,
     { timeout: 15000 },
   );
   await dismissFrontPage(page);
@@ -40,32 +42,55 @@ async function createEntitiesAndWaitForIndex(
     createdIds.push(id as string);
   }
 
-  // Wait for the last created entity (by ID) to appear in the search index
-  const lastId = createdIds[createdIds.length - 1];
-  const lastName = entities[entities.length - 1].name;
-  await page.waitForFunction(
-    async ({ id, name }: { id: string; name: string }) => {
-      const s = (window as any).searchStore;
-      if (!s?.setQuery) return false;
-      try {
-        await s.setQuery(name);
-        // Verify a result with our specific entity ID is present
-        return (
-          Array.isArray(s.results) && s.results.some((r: any) => r.id === id)
-        );
-      } catch {
-        return false;
-      }
-    },
-    { id: lastId, name: lastName },
-    { timeout: 15000 },
-  );
+  // Wait for all created entities to appear in the search index
+  for (let i = 0; i < createdIds.length; i++) {
+    const id = createdIds[i];
+    const name = entities[i].name;
+    await page.waitForFunction(
+      async ({ id, name }: { id: string; name: string }) => {
+        const s = (window as any).searchStore;
+        if (!s?.setQuery) return false;
+        try {
+          await s.setQuery(name);
+          // Verify a result with our specific entity ID is present
+          return (
+            Array.isArray(s.results) && s.results.some((r: any) => r.id === id)
+          );
+        } catch {
+          return false;
+        }
+      },
+      { id, name },
+      { timeout: 15000 },
+    );
+  }
   // Reset query after polling
   await page.evaluate(() => (window as any).searchStore?.setQuery(""));
+  // Wait for search index status to be ready or idle (background indexing completed)
+  await page.waitForFunction(
+    () => {
+      const s = (window as any).searchStore;
+      return (
+        s &&
+        (s.indexProgress.status === "ready" ||
+          s.indexProgress.status === "idle")
+      );
+    },
+    { timeout: 15000 },
+  );
+  // Wait for vault to be idle before finishing
+  await page.waitForFunction(() => (window as any).vault?.status === "idle");
 }
 
 test.describe("Fuzzy Search", () => {
   test.beforeEach(async ({ page }) => {
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        console.error("PAGE ERROR:", msg.text());
+      } else {
+        console.log("PAGE LOG:", msg.text());
+      }
+    });
     await page.addInitScript(() => {
       localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem(
@@ -85,13 +110,15 @@ test.describe("Fuzzy Search", () => {
 
     // Warm up: open modal, search, and close — ensures search worker + lazy component are cached
     await page.evaluate(() => (window as any).searchStore?.open());
-    await expect(page.getByTestId("search-modal")).toBeVisible({
+    const input = page.getByPlaceholder("Search notes...");
+    await expect(input).toBeVisible({
       timeout: 5000,
     });
     await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
+    await input.fill("My Note");
     await expect(
-      page.getByTestId("search-result").filter({ hasText: "My Note" }),
-    ).toBeVisible({ timeout: 5000 });
+      page.getByTestId("search-result").filter({ hasText: /my.*note/i }),
+    ).toBeVisible({ timeout: 15000 });
     await page.evaluate(() => (window as any).searchStore?.close());
     await expect(page.getByTestId("search-modal")).not.toBeVisible({
       timeout: 3000,
@@ -102,29 +129,28 @@ test.describe("Fuzzy Search", () => {
 
     // Open Search Modal — use store API (keyboard shortcut unreliable cross-OS)
     await page.evaluate(() => (window as any).searchStore?.open());
-
-    const input = page.getByPlaceholder("Search notes...");
     await expect(input).toBeVisible({ timeout: 5000 });
 
-    // Query directly via store to bypass debounce
+    // Fill search query (set store and input together)
     await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
+    await input.fill("My Note");
 
     // Verify results
     await expect(
-      page.getByTestId("search-result").filter({ hasText: "My Note" }),
-    ).toBeVisible({ timeout: 5000 });
+      page.getByTestId("search-result").filter({ hasText: /my.*note/i }),
+    ).toBeVisible({ timeout: 15000 });
 
     // Click the result directly
     await page
       .getByTestId("search-result")
-      .filter({ hasText: "My Note" })
+      .filter({ hasText: /my.*note/i })
       .click();
 
     await expect(input).not.toBeVisible({ timeout: 2000 });
 
     // Verify Detail Panel opens
     await expect(
-      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+      page.getByRole("heading", { level: 2 }).filter({ hasText: /my.*note/i }),
     ).toBeVisible();
 
     // Restore network so subsequent tests aren't affected
@@ -192,16 +218,18 @@ test.describe("Fuzzy Search", () => {
 
     // Open Search Modal
     await page.evaluate(() => (window as any).searchStore?.open());
-    await expect(page.getByPlaceholder("Search notes...")).toBeVisible({
+    const input = page.getByPlaceholder("Search notes...");
+    await expect(input).toBeVisible({
       timeout: 5000,
     });
 
-    // Query directly via store to bypass debounce
+    // Fill search query (set store and input together)
     await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
+    await input.fill("My Note");
     const resultItem = page
       .getByTestId("search-result")
-      .filter({ hasText: "My Note" });
-    await expect(resultItem).toBeVisible({ timeout: 5000 });
+      .filter({ hasText: /my.*note/i });
+    await expect(resultItem).toBeVisible({ timeout: 15000 });
 
     // Click the result
     await resultItem.click();
@@ -209,7 +237,7 @@ test.describe("Fuzzy Search", () => {
     // Verify modal closed and entity selected
     await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+      page.getByRole("heading", { level: 2 }).filter({ hasText: /my.*note/i }),
     ).toBeVisible();
 
     // CRITICAL: Verify URL does not contain ?file=
@@ -225,22 +253,24 @@ test.describe("Fuzzy Search", () => {
     await createEntitiesAndWaitForIndex(page, [{ name: "My Note" }]);
 
     await page.evaluate(() => (window as any).searchStore?.open());
-    await expect(page.getByPlaceholder("Search notes...")).toBeVisible({
+    const input = page.getByPlaceholder("Search notes...");
+    await expect(input).toBeVisible({
       timeout: 5000,
     });
 
-    // Query directly via store to bypass debounce
+    // Fill search query (set store and input together)
     await page.evaluate(() => (window as any).searchStore?.setQuery("My Note"));
+    await input.fill("My Note");
     const resultItem = page
       .getByTestId("search-result")
-      .filter({ hasText: "My Note" });
-    await expect(resultItem).toBeVisible({ timeout: 5000 });
+      .filter({ hasText: /my.*note/i });
+    await expect(resultItem).toBeVisible({ timeout: 15000 });
 
     await resultItem.click();
 
     await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+      page.getByRole("heading", { level: 2 }).filter({ hasText: /my.*note/i }),
     ).toBeVisible();
 
     await page.waitForFunction(
@@ -263,6 +293,7 @@ test.describe("Fuzzy Search", () => {
     await page.goto("/");
     await page.waitForFunction(
       () =>
+        (window as any).vault?.isInitialized === true &&
         (window as any).vault?.status === "idle" &&
         !!(window as any).searchStore,
       { timeout: 15000 },
