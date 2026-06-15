@@ -1,61 +1,40 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Zen Mode Label Management", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
   });
 
   test("should add and remove labels in Zen Mode", async ({ page }) => {
-    // 1. Create a new entity
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Zen Label Test");
-    await page.getByRole("button", { name: "ADD" }).click();
+    // 1. Create a new entity using API
+    await page.evaluate(async () => {
+      await (window as any).vault.createEntity("note", "Zen Label Test", {
+        id: "zen-label-test",
+      });
+    });
 
-    // 2. Open it in Zen Mode
+    // 2. Open it in Zen Mode using API
     await page.evaluate(() => {
-      const vault = (window as any).vault;
-      const entity = Object.values(vault.entities).find(
-        (e: any) => e.title === "Zen Label Test",
-      );
-      if (entity) {
-        (window as any).uiStore.openZenMode((entity as any).id);
-      }
+      (window as any).uiStore.openZenMode("zen-label-test");
     });
 
     const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
 
     // 3. Add a label
-    const labelInput = modal.getByPlaceholder("Add label...");
+    const labelInput = modal.getByRole("combobox", { name: "Quick add label" });
     await expect(labelInput).toBeVisible();
-    await labelInput.fill("E2E-Zen-Label");
+    await labelInput.fill("e2e-zen-label");
     await labelInput.press("Enter");
 
     // 4. Verify label is added
-    const labelBadge = modal.getByText("E2E-Zen-Label");
+    const labelBadge = modal.getByText("e2e-zen-label");
     await expect(labelBadge).toBeVisible();
 
     // 5. Remove the label
     const removeButton = modal.locator(
-      'button[aria-label="Remove label E2E-Zen-Label"]',
+      'button[aria-label="Remove label e2e-zen-label"]',
     );
     await removeButton.click();
 

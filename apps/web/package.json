@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.26.20",
+  "version": "0.26.21",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -12,7 +12,10 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test --reporter=list",
+    "test:e2e": "E2E_SMART=true playwright test --reporter=list,./tests/success-tracker-reporter.ts",
+    "test:e2e:all": "playwright test --reporter=list,./tests/success-tracker-reporter.ts",
+    "test:e2e:failed": "playwright test --reporter=list,./tests/success-tracker-reporter.ts --last-failed",
+    "test:e2e:clear": "rm -f .e2e-success.json",
     "lint": "eslint .",
     "lint:types": "svelte-check --tsconfig ./tsconfig.json",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

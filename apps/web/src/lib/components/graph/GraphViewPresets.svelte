@@ -152,7 +152,7 @@
                 </button>
                 <button
                   type="button"
-                  class="w-6 h-6 flex items-center justify-center text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
+                  class="w-6 h-6 flex items-center justify-center text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded transition"
                   onclick={() => startRename(preset.id, preset.name)}
                   title="Rename"
                   aria-label={`Rename "${preset.name}"`}
@@ -160,7 +160,7 @@
                 >
                 <button
                   type="button"
-                  class="w-6 h-6 flex items-center justify-center text-theme-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
+                  class="w-6 h-6 flex items-center justify-center text-theme-muted hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded transition"
                   onclick={() => void graph.deleteViewPreset(preset.id)}
                   title="Delete"
                   aria-label={`Delete "${preset.name}"`}

@@ -197,7 +197,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       (m: ChatMessage) => m.entityId,
     )?.entityId;
 
-    const { content: aiContext } =
+    const { content: aiContext, entries: loreEntries } =
       await context.contextRetrieval.retrieveContext(
         searchQuery, // Use expanded search query for specific retrieval here
         alreadySentTitles,
@@ -229,6 +229,14 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
         existingEntities:
           options.existingEntities ||
           Object.values(context.vault.entities || {}),
+        // Interactions API delta flow (proxy path; no-op when disabled/keyed).
+        // Flag passed explicitly: text generation runs in a worker that can't
+        // read a main-thread module-global.
+        loreEntries,
+        // One oracle worker per tab means one chat session per vault; vaultId
+        // is effectively a unique conversation key in the current architecture.
+        conversationId: context.vaultId,
+        interactionsEnabled: context.interactionsEnabled,
       },
     );
 

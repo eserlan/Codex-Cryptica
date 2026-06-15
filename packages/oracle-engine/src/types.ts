@@ -154,6 +154,8 @@ export interface DiscoveryProposal {
 export interface OracleExecutionContext {
   userId?: string;
   vaultId?: string;
+  /** Whether the Gemini Interactions API delta flow is enabled (main-thread). */
+  interactionsEnabled?: boolean;
   aiDisabled?: boolean;
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;

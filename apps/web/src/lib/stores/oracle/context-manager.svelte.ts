@@ -2,6 +2,7 @@ import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
+import { interactionSessions } from "../../services/ai/interaction-session";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
 
 export class OracleContextManager {
@@ -34,6 +35,7 @@ export class OracleContextManager {
 
     return {
       vaultId: s.vault.activeVaultId,
+      interactionsEnabled: interactionSessions.enabled,
       vault: {
         activeVaultId: s.vault.activeVaultId,
         selectedEntityId: s.vault.selectedEntityId,
@@ -107,6 +109,9 @@ export class OracleContextManager {
             requestId?: string;
             vaultId?: string;
             existingEntities?: any[];
+            loreEntries?: import("@codex/oracle-engine").LoreEntry[];
+            conversationId?: string;
+            interactionsEnabled?: boolean;
           },
         ) => {
           const callback = isWorker
@@ -173,7 +178,14 @@ export class OracleContextManager {
           ),
       },
       searchService: {
-        search: wrap(s.searchService.search?.bind(s.searchService)),
+        search: s.searchService.search
+          ? wrap((query: string, options?: any) =>
+              s.searchService.search(query, {
+                includeDrafts: true,
+                ...options,
+              }),
+            )
+          : undefined,
       },
       diceParser: {
         parse: wrap(s.diceParser.parse?.bind(s.diceParser)),
@@ -230,6 +242,18 @@ export class OracleContextManager {
       ),
       draftingEngine: s.draftingEngine,
       eventBus: appEventBus,
+      nodeMergeService: {
+        proposeMerge: wrap(async (request: any) => {
+          const { nodeMergeService: nms } =
+            await import("../../services/node-merge.service.svelte");
+          return nms.proposeMerge(request);
+        }),
+        executeMerge: wrap(async (finalContent: any, sourceIds: any) => {
+          const { nodeMergeService: nms } =
+            await import("../../services/node-merge.service.svelte");
+          return nms.executeMerge(finalContent, sourceIds);
+        }),
+      },
       categories: $state.snapshot(s.categories.list),
     } as OracleExecutionContext;
   }

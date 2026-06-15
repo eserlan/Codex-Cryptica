@@ -32,7 +32,9 @@ test.describe("Better Imports E2E", () => {
     await page.waitForFunction(
       () =>
         (window as any).uiStore !== undefined &&
-        (window as any).oracle !== undefined,
+        (window as any).oracle !== undefined &&
+        (window as any).vault !== undefined &&
+        (window as any).vault.isInitialized === true,
     );
 
     // Mock BOTH direct and proxy paths to ensure reliability
@@ -198,6 +200,12 @@ test.describe("Better Imports E2E", () => {
         labels: [],
         tags: [],
       };
+      if (
+        vault.entityStore &&
+        typeof vault.entityStore.rebuildIndexes === "function"
+      ) {
+        vault.entityStore.rebuildIndexes();
+      }
     });
 
     // 3. Upload a file to trigger the importer
@@ -270,6 +278,12 @@ test.describe("Better Imports E2E", () => {
         labels: [],
         tags: [],
       };
+      if (
+        vault.entityStore &&
+        typeof vault.entityStore.rebuildIndexes === "function"
+      ) {
+        vault.entityStore.rebuildIndexes();
+      }
     });
 
     // 3. Upload a file

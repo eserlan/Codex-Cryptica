@@ -254,7 +254,7 @@ describe("ContextRetrievalService", () => {
       },
     ]);
 
-    const { sourceIds } = await service.retrieveContext(
+    const { sourceIds, entries } = await service.retrieveContext(
       "The Woods and Crone",
       new Set(),
       mockVault,
@@ -263,5 +263,14 @@ describe("ContextRetrievalService", () => {
     );
     expect(sourceIds).toContain("woods-id");
     expect(sourceIds).toContain("crone-id");
+
+    // Per-entity delta entries mirror the consulted records and carry a hash.
+    const ids = entries?.map((e) => e.id) ?? [];
+    expect(ids).toContain("woods-id");
+    expect(ids).toContain("crone-id");
+    for (const e of entries ?? []) {
+      expect(typeof e.hash).toBe("string");
+      expect(e.hash.length).toBeGreaterThan(0);
+    }
   });
 });

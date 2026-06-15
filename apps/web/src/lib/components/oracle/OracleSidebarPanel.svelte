@@ -19,7 +19,9 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
-  let showHint = $state(false);
+  let showHint = $state<"oracle-connection-modes" | "oracle-memory" | null>(
+    null,
+  );
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
   let activityCount = $derived(discoveryPolicyStore.archiveActivityLog.length);
   let headerTitle = $derived(
@@ -33,11 +35,15 @@
   onMount(() => {
     void oracle.init();
 
-    // Show hint on first open
-    const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
-    if (!hasSeenHint) {
-      showHint = true;
+    // Show connection hint on first open, then memory hint on second open.
+    const hasSeenConnection = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
+    const hasSeenMemory = localStorage.getItem(HINT_KEYS.ORACLE_MEMORY);
+    if (!hasSeenConnection) {
+      showHint = "oracle-connection-modes";
       localStorage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
+    } else if (!hasSeenMemory) {
+      showHint = "oracle-memory";
+      localStorage.setItem(HINT_KEYS.ORACLE_MEMORY, "true");
     }
   });
 
@@ -177,11 +183,12 @@
 
   <!-- Feature Hint Modal -->
   {#if showHint}
+    {@const hint = FEATURE_HINTS[showHint]}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="absolute inset-0 bg-black/60 z-[70] flex items-center justify-center p-4"
-      onclick={() => (showHint = false)}
+      onclick={() => (showHint = null)}
     >
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -193,23 +200,22 @@
           <div
             class="w-8 h-8 rounded-full bg-theme-primary/20 flex items-center justify-center text-theme-primary shrink-0"
           >
-            <span
-              class={FEATURE_HINTS["oracle-connection-modes"].icon + " w-5 h-5"}
-            ></span>
+            <span class={hint.icon + " w-5 h-5"}></span>
           </div>
           <div class="flex-1">
             <h4
               class="text-sm font-bold text-theme-text uppercase font-header tracking-wider mb-1"
             >
-              {FEATURE_HINTS["oracle-connection-modes"].title}
+              {hint.title}
             </h4>
             <p class="text-xs text-theme-text/80 leading-relaxed">
-              {FEATURE_HINTS["oracle-connection-modes"].content}
+              {hint.content}
             </p>
           </div>
         </div>
         <button
-          onclick={() => (showHint = false)}
+          type="button"
+          onclick={() => (showHint = null)}
           class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-primary/20 transition-colors"
         >
           Got It

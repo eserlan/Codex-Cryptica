@@ -28,6 +28,7 @@ export interface FeatureHint {
  */
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
+  ORACLE_MEMORY: "oracle-memory-hint-seen",
   FRONT_PAGE: "front-page-hint-seen",
   VTT_MODE: "vtt-mode-hint-seen",
   ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",
@@ -139,6 +140,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.",
     icon: "icon-[lucide--cloud]",
+  },
+  "oracle-memory": {
+    id: "oracle-memory",
+    title: "Oracle Memory",
+    content:
+      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
+    icon: "icon-[lucide--brain]",
   },
   "visual-graph": {
     id: "visual-graph",

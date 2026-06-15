@@ -684,6 +684,8 @@
                   >
                     <input
                       type="text"
+                      id={"manual-" + col.id + "-input"}
+                      data-testid={"manual-" + col.id + "-input"}
                       value={col.selectedId}
                       onkeydown={(e) => {
                         if (e.key === "Enter") {
@@ -745,6 +747,7 @@
                   {#if col.canDirectEnter}
                     <button
                       type="button"
+                      onmousedown={(e) => e.preventDefault()}
                       onclick={() => (directEntryModes[col.id] = true)}
                       class="absolute bottom-1 right-1 p-0.5 bg-theme-surface/80 hover:bg-theme-primary/10 hover:text-theme-primary border border-theme-border/30 rounded text-theme-muted transition-all z-20"
                       aria-label="Direct jump to {col.label}"

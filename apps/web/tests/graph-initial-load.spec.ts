@@ -1,78 +1,26 @@
 import { test, expect } from "@playwright/test";
+import {
+  seedEntities,
+  setupVaultPage,
+  waitForVaultReady,
+} from "./test-helpers";
 
 test.describe("Graph Initial Load", () => {
   test("all nodes in cytoscape are visible and not pending layout on page load/reload", async ({
     page,
   }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
     page.on("console", (msg) => {
       console.log(`[BROWSER] [${msg.type()}] ${msg.text()}`);
     });
 
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
+    await setupVaultPage(page);
+    await seedEntities(page, [
+      { title: "Test Source" },
+      { title: "Test Target" },
+    ]);
 
-    // Create Test Source
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Test Source");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for first modal to close
-    await expect(page.getByPlaceholder("Chronicle Title...")).not.toBeVisible({
-      timeout: 10000,
-    });
-
-    // Wait for the entity to appear in the vault store
-    await page.waitForFunction(
-      () => {
-        const vault = (window as any).vault;
-        return (
-          vault &&
-          Object.values(vault.entities).some(
-            (e: any) => e.title === "Test Source",
-          )
-        );
-      },
-      null,
-      { timeout: 10000 },
-    );
-
-    // Create Test Target
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Test Target");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for second modal to close
-    await expect(page.getByPlaceholder("Chronicle Title...")).not.toBeVisible({
-      timeout: 10000,
-    });
-
-    // Wait for the entity to appear in the vault store
-    await page.waitForFunction(
-      () => {
-        const vault = (window as any).vault;
-        return (
-          vault &&
-          Object.values(vault.entities).some(
-            (e: any) => e.title === "Test Target",
-          )
-        );
-      },
-      null,
-      { timeout: 10000 },
-    );
-
-    // Wait for entities count to show 2 CHRONICLES
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
+    // Wait for entities count to show 2 notes
+    await expect(page.getByTestId("entity-count")).toHaveText(/2\s+NOTES/, {
       timeout: 10000,
     });
 
@@ -83,21 +31,7 @@ test.describe("Graph Initial Load", () => {
     });
 
     // Wait for vault to finish loading
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") {
-              resolve(true);
-            } else {
-              setTimeout(check, 100);
-            }
-          };
-          check();
-        });
-      await waitForVault();
-    });
+    await waitForVaultReady(page);
 
     // Check if there are indeed 2 nodes in cytoscape
     const nodesCount = await page.evaluate(() => {

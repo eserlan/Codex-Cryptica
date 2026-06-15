@@ -72,7 +72,7 @@ export function isLoreMessage(
 }
 
 export function shouldShowActions(
-  message: Pick<ChatMessage, "role" | "type" | "content">,
+  message: Pick<ChatMessage, "role" | "type" | "content" | "hasDrawAction">,
   parsed: Pick<ParsedChatMessage, "title" | "wasSplit">,
   isLoading: boolean,
 ): boolean {
@@ -83,6 +83,10 @@ export function shouldShowActions(
     message.type === "wizard"
   ) {
     return false;
+  }
+
+  if (message.hasDrawAction) {
+    return true;
   }
 
   if (parsed.wasSplit || (parsed.title && parsed.title.length > 3)) {

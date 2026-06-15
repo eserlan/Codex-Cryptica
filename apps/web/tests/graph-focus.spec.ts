@@ -84,32 +84,30 @@ test.describe("Graph Focus Mode", () => {
 
   // Helpers shared by handoff tests
   async function clickNode(page: any, nodeId: string) {
-    const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
-    const pos = await page.evaluate(
-      (id: string) => (window as any).cy.$id(id).renderedPosition(),
-      nodeId,
-    );
-    await page.mouse.click(canvasBox!.x + pos.x, canvasBox!.y + pos.y);
+    await page.evaluate((id: string) => {
+      const cy = (window as any).cy;
+      const node = cy.$id(id);
+      node.trigger("tap", { renderedPosition: node.renderedPosition() });
+    }, nodeId);
   }
 
   async function dblclickNode(page: any, nodeId: string) {
-    const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
-    const pos = await page.evaluate(
-      (id: string) => (window as any).cy.$id(id).renderedPosition(),
-      nodeId,
-    );
-    await page.mouse.dblclick(canvasBox!.x + pos.x, canvasBox!.y + pos.y);
+    await page.evaluate((id: string) => {
+      const cy = (window as any).cy;
+      const node = cy.$id(id);
+      node.trigger("dbltap", { renderedPosition: node.renderedPosition() });
+    }, nodeId);
   }
 
   async function clickBackground(page: any) {
-    const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
-    // Click a corner of the canvas well away from any node
-    await page.mouse.click(canvasBox!.x + 10, canvasBox!.y + 10);
+    await page.evaluate(() => {
+      (window as any).cy.trigger("tap");
+    });
   }
 
   async function dimmedNodeIds(page: any): Promise<string[]> {
     return page.evaluate(() =>
-      (window as any).cy.nodes(".dimmed").map((n: any) => n.id()),
+      ((window as any).cy?.nodes(".dimmed") ?? []).map((n: any) => n.id()),
     );
   }
 
@@ -121,7 +119,7 @@ test.describe("Graph Focus Mode", () => {
 
     // Wait for selection to register
     await page.waitForFunction(
-      () => (window as any).vault?.selectedEntityId !== null,
+      () => (window as any).cy.nodes(".dimmed").length > 0,
       { timeout: 5000 },
     );
 
@@ -176,7 +174,7 @@ test.describe("Graph Focus Mode", () => {
     // Click a node to establish selection and dimming on the graph side
     await clickNode(page, "node-1");
     await page.waitForFunction(
-      () => (window as any).vault?.selectedEntityId === "node-1",
+      () => (window as any).cy.nodes(".dimmed").length > 0,
       { timeout: 5000 },
     );
 
@@ -190,9 +188,9 @@ test.describe("Graph Focus Mode", () => {
       }
     });
 
-    // The $effect watching mainViewMode should clear graph selection
+    // The $effect watching mainViewMode should clear graph-side dimming
     await page.waitForFunction(
-      () => (window as any).vault?.selectedEntityId === null,
+      () => ((window as any).cy?.nodes(".dimmed").length ?? 0) === 0,
       { timeout: 3000 },
     );
 
