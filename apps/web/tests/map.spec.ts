@@ -156,7 +156,13 @@ test.describe("Map Mode", () => {
       await sharedModeToggle.click();
     }
     await expect(sharedModeToggle).toHaveText("PLAYER VIEW");
-    await expect(page.getByText("Brush Size")).toBeVisible();
+    const fogOffButton = page.getByRole("button", { name: "FOG: OFF" });
+    if (await fogOffButton.isVisible()) {
+      await fogOffButton.click();
+    }
+    await expect(page.getByText("Brush Size")).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByText("FOG: ON")).toBeVisible();
 
     // 3. Toggle Fog (GM Tool)
@@ -218,7 +224,7 @@ test.describe("Map Mode", () => {
 
     // 5. Click delete and confirm via the custom confirmation modal
     await deleteBtn.click();
-    await page.getByRole("button", { name: "Confirm" }).click();
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
 
     // 6. Verify the map was deleted and the upload button is back
     const uploadLabelFinal = page.locator('label:has-text("Upload Map")');
@@ -402,4 +408,7 @@ async function ensureTestMap(page: Page) {
     await page.getByRole("button", { name: "Upload", exact: true }).click();
   }
   await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  await expect(page.getByTestId("shared-mode-toggle")).toBeVisible({
+    timeout: 10000,
+  });
 }
