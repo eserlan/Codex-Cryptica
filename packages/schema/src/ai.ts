@@ -106,6 +106,12 @@ export interface TextGenerationService {
       loreEntries?: LoreContextEntry[];
       /** Stable key identifying the conversation for interaction state. */
       conversationId?: string;
+      /**
+       * Whether the Interactions API path is enabled. Must be passed explicitly
+       * because text generation runs in a Web Worker with its own module scope —
+       * a main-thread module-global flag would never reach it.
+       */
+      interactionsEnabled?: boolean;
     },
   ): Promise<void>;
   generateMergeProposal(

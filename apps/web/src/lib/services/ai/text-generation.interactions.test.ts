@@ -18,9 +18,10 @@ function makeService(sendInteraction: any) {
   return new DefaultTextGenerationService({ sendInteraction } as any);
 }
 
-const opts = (loreEntries: LoreEntry[]) => ({
+const opts = (loreEntries: LoreEntry[], interactionsEnabled = true) => ({
   conversationId: "vault-1",
   loreEntries,
+  interactionsEnabled,
 });
 
 describe("generateResponse — Interactions API path", () => {
@@ -154,13 +155,23 @@ describe("generateResponse — Interactions API path", () => {
   });
 
   it("is a no-op (falls through) when the flag is disabled", async () => {
-    setInteractionsEnabled(false);
     const send = vi.fn();
     const svc = makeService(send);
+    // Flag passed per-call (off): the interaction path must NOT be taken.
     // No api key + no model client -> getModel path will throw; we only assert
-    // that the interaction path was NOT taken.
+    // that sendInteraction was never called.
     await svc
-      .generateResponse("", "q", [], "", "m", vi.fn(), false, [], opts([]))
+      .generateResponse(
+        "",
+        "q",
+        [],
+        "",
+        "m",
+        vi.fn(),
+        false,
+        [],
+        opts([], false),
+      )
       .catch(() => {});
     expect(send).not.toHaveBeenCalled();
   });

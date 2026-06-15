@@ -230,8 +230,11 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
           options.existingEntities ||
           Object.values(context.vault.entities || {}),
         // Interactions API delta flow (proxy path; no-op when disabled/keyed).
+        // Flag passed explicitly: text generation runs in a worker that can't
+        // read a main-thread module-global.
         loreEntries,
         conversationId: context.vaultId,
+        interactionsEnabled: context.interactionsEnabled,
       },
     );
 

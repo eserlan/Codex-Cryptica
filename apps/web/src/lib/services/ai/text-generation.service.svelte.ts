@@ -3,7 +3,6 @@ import {
   InteractionExpiredError,
 } from "./client-manager";
 import {
-  interactionsEnabled,
   getSession,
   resetSession,
   buildInteractionInput,
@@ -637,6 +636,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       systemInstructionOverride?: string;
       loreEntries?: LoreEntry[];
       conversationId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<void> {
     const cleanHistory = history ? safeSnapshot(history) : history;
@@ -649,7 +649,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     // lore and the new turn; prior turns + unchanged lore are retained
     // server-side via `previous_interaction_id`.
     if (
-      interactionsEnabled &&
+      _options?.interactionsEnabled &&
       !apiKey &&
       _options?.conversationId &&
       _options?.loreEntries
@@ -657,7 +657,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
       await this.generateViaInteraction(
         query,
         cleanHistory,
-        context,
         modelName,
         systemInstruction,
         _options.conversationId,
@@ -769,7 +768,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
   private async generateViaInteraction(
     query: string,
     history: any[],
-    context: string,
     modelName: string,
     systemInstruction: string,
     conversationId: string,
@@ -789,7 +787,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     };
 
     try {
-      const partition = session.tracker.partition(loreEntries);
+      let partition = session.tracker.partition(loreEntries);
       const input = buildInteractionInput(query, partition);
 
       let result;
@@ -800,13 +798,13 @@ export class DefaultTextGenerationService implements TextGenerationService {
         // Retention window elapsed: drop server state and replay full history +
         // full lore in a single fresh interaction, then resume delta mode.
         resetSession(conversationId);
-        const replayPartition = session.tracker.partition(loreEntries);
+        // After reset, the partition holds every record as new/changed, so the
+        // built input already carries all lore — pass the bare query (and the
+        // prior transcript) so lore is not embedded a second time.
+        partition = session.tracker.partition(loreEntries);
         const replayInput =
           this.formatHistoryTranscript(history) +
-          buildInteractionInput(
-            context ? `[VAULT LORE CONTEXT]\n${context}\n\n${query}` : query,
-            replayPartition,
-          );
+          buildInteractionInput(query, partition);
         result = await send(replayInput, null);
       }
 
@@ -814,7 +812,8 @@ export class DefaultTextGenerationService implements TextGenerationService {
       session.tracker.commit(loreEntries);
       await onUpdate(result.text);
 
-      // Rollout metric (plan 6.2): how much lore the delta flow kept off the wire.
+      // Rollout metric (plan 6.2): how much lore the delta flow kept off the
+      // wire. Uses the partition actually sent (post-replay if it occurred).
       if (import.meta.env.DEV) {
         const total = loreEntries.length;
         const sent = total - partition.unchanged.length;

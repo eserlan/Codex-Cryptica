@@ -71,35 +71,45 @@ export function evictEntity(entityId: string): void {
  *
  * Idempotent and best-effort — safe to call at module load. Returns an
  * unsubscribe function.
+ *
+ * NOTE: this only helps on the main thread. When oracle generation runs in a
+ * Web Worker, vault events are emitted on the main thread while the worker's
+ * `sessions` Map lives in worker scope, so the worker's subscription never
+ * fires. Correctness there relies on per-turn body hashing, which already
+ * re-detects changed lore; this subscription is a main-thread optimization.
  */
 let invalidationUnsub: (() => void) | null = null;
 export function registerLoreInvalidation(): () => void {
   if (invalidationUnsub) return invalidationUnsub;
   try {
-    invalidationUnsub = appEventBus.subscribe("vault:*", (event: any) => {
-      switch (event.type) {
-        case "VAULT:ENTITY_UPDATED":
-          if (event.payload?.id) evictEntity(event.payload.id);
-          break;
-        case "VAULT:ENTITY_DELETED":
-          if (event.payload?.entityId) evictEntity(event.payload.entityId);
-          break;
-        case "VAULT:CONNECTION_ADDED":
-        case "VAULT:CONNECTION_UPDATED":
-        case "VAULT:CONNECTION_REMOVED":
-          if (event.payload?.sourceId) evictEntity(event.payload.sourceId);
-          if (event.payload?.targetId) evictEntity(event.payload.targetId);
-          break;
-        case "VAULT:SYNC_CHUNK_READY":
-          for (const id of event.payload?.newOrChangedIds ?? [])
-            evictEntity(id);
-          break;
-        case "VAULT:VAULT_SWITCHED":
-        case "VAULT:VAULT_DELETED":
-          clearAllSessions();
-          break;
-      }
-    });
+    invalidationUnsub = appEventBus.subscribe(
+      "vault:*",
+      (event: any) => {
+        switch (event.type) {
+          case "VAULT:ENTITY_UPDATED":
+            if (event.payload?.id) evictEntity(event.payload.id);
+            break;
+          case "VAULT:ENTITY_DELETED":
+            if (event.payload?.entityId) evictEntity(event.payload.entityId);
+            break;
+          case "VAULT:CONNECTION_ADDED":
+          case "VAULT:CONNECTION_UPDATED":
+          case "VAULT:CONNECTION_REMOVED":
+            if (event.payload?.sourceId) evictEntity(event.payload.sourceId);
+            if (event.payload?.targetId) evictEntity(event.payload.targetId);
+            break;
+          case "VAULT:SYNC_CHUNK_READY":
+            for (const id of event.payload?.newOrChangedIds ?? [])
+              evictEntity(id);
+            break;
+          case "VAULT:VAULT_SWITCHED":
+          case "VAULT:VAULT_DELETED":
+            clearAllSessions();
+            break;
+        }
+      },
+      "interactions-lore-invalidation",
+    );
   } catch {
     invalidationUnsub = () => {};
   }
