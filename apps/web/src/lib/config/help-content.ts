@@ -144,7 +144,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "oracle-memory",
     title: "Oracle Memory",
     content:
-      "When Oracle Memory is on, the Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. Prefer to keep everything fully on your device? Turn Oracle Memory off, or use your own API key.",
+      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
     icon: "icon-[lucide--brain]",
   },
   "visual-graph": {

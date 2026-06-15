@@ -27,9 +27,10 @@ export interface InteractionSession {
 
 export class InteractionSessionManager {
   /**
-   * Whether the Interactions API path is enabled. Off by default — rollout is
-   * staged (plan Phase 6.1). Read on the main thread and forwarded into the
-   * worker via generateResponse options (the worker has its own module scope).
+   * Whether the Interactions API path is enabled. Enabled by default; set to
+   * false to fall back to stateless generateContent (no server-side retention).
+   * Read on the main thread and forwarded into the worker via generateResponse
+   * options (the worker has its own module scope).
    */
   enabled = true;
 
@@ -146,3 +147,4 @@ import { appEventBus } from "@codex/events";
 export const interactionSessions = new InteractionSessionManager(
   appEventBus as unknown as InvalidationBus,
 );
+interactionSessions.registerInvalidation();

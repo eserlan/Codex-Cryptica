@@ -794,9 +794,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
         // Retention window elapsed: drop server state and replay full history +
         // full lore in a single fresh interaction, then resume delta mode.
         interactionSessions.resetSession(conversationId);
-        // After reset, the partition holds every record as new/changed, so the
-        // built input already carries all lore — pass the bare query (and the
-        // prior transcript) so lore is not embedded a second time.
+        // After reset the tracker is empty, so partition.newOrChanged holds
+        // every entry. buildInteractionInput will include the full lore context;
+        // prepend the conversation transcript so the model can re-establish context.
         partition = session.tracker.partition(loreEntries);
         const replayInput =
           this.formatHistoryTranscript(history) +

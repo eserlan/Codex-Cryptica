@@ -109,6 +109,9 @@ export class OracleContextManager {
             requestId?: string;
             vaultId?: string;
             existingEntities?: any[];
+            loreEntries?: import("@codex/oracle-engine").LoreEntry[];
+            conversationId?: string;
+            interactionsEnabled?: boolean;
           },
         ) => {
           const callback = isWorker

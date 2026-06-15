@@ -502,6 +502,7 @@ async function handleInteraction(
     const isStaleId =
       body.previous_interaction_id &&
       (upstream.status === 404 ||
+        upstream.status === 400 ||
         /previous_interaction_id|interaction.*not found/i.test(message));
     if (isStaleId) {
       return json({ error: { message, code: "INTERACTION_NOT_FOUND" } }, 409);

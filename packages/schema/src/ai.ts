@@ -44,7 +44,7 @@ export interface LoreContextEntry {
   id: string;
   /** The text block to send to the model (may include a stable header). */
   snippet: string;
-  /** Hash of the stable body (lore + content + connections) only. */
+  /** Hash of entity.content (always-hydrated short field) + connection context. */
   hash: string;
 }
 

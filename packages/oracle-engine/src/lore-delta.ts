@@ -9,19 +9,9 @@
  * seen. See docs/adr/018-oracle-server-side-conversation-state.md.
  */
 
-/** A single lore record retrieved for a turn. */
-export interface LoreEntry {
-  /** Entity id, or a synthetic id such as `__style__`. */
-  id: string;
-  /** The text block to send to the model (may include a stable header). */
-  snippet: string;
-  /**
-   * Hash of the *stable body only* (lore + content + connections), excluding
-   * volatile markers like `[ACTIVE FILE]`, so toggling the active file does not
-   * force a needless resend.
-   */
-  hash: string;
-}
+/** A single lore record retrieved for a turn. Canonical shape lives in schema. */
+import type { LoreContextEntry as LoreEntry } from "schema";
+export type { LoreEntry };
 
 export interface LorePartition {
   /** Records the server has not seen, or whose body changed since last sent. */

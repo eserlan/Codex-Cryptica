@@ -39,6 +39,7 @@ export class DefaultAIClientManager {
     input: string;
     systemInstruction?: string;
     previousInteractionId?: string | null;
+    storeConversation?: boolean;
   }): Promise<{ id: string; text: string }> {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       throw new Error("You appear to be offline. Generation is unavailable.");
@@ -47,7 +48,7 @@ export class DefaultAIClientManager {
     const body: Record<string, unknown> = {
       model: params.model,
       input: params.input,
-      store: true,
+      store: params.storeConversation ?? true,
     };
     if (params.systemInstruction) {
       body.system_instruction = params.systemInstruction;
