@@ -1,69 +1,24 @@
 import { test, expect } from "@playwright/test";
+import { seedEntity, setupVaultPage } from "./test-helpers";
 
 test.describe("Graph Zen Mode", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
   });
 
   test("should open Zen mode directly from a graph node double click", async ({
     page,
   }) => {
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Double Click Node");
-    await page.getByRole("button", { name: "ADD" }).click();
+    const nodeId = await seedEntity(page, {
+      title: "Double Click Node",
+      content: "Opened from a graph double click.",
+    });
 
-    const nodeIdHandle = await page.waitForFunction(
-      () => {
-        const vault = (window as any).vault;
-        const entity = Object.values(vault?.entities || {}).find(
-          (item: any) => item.title === "Double Click Node",
-        );
-        return entity ? (entity as any).id : null;
-      },
-      { timeout: 10000 },
-    );
-    const nodeId = (await nodeIdHandle.jsonValue()) as string;
-
-    await page.waitForFunction(
-      (id) => {
-        const cy = (window as any).cy;
-        return cy && cy.$id(id).length > 0;
-      },
-      nodeId,
-      { timeout: 10000 },
-    );
-
-    const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
-    const nodePosition = await page.evaluate((id) => {
+    await page.evaluate((id) => {
       const cy = (window as any).cy;
-      return cy.$id(id).renderedPosition();
+      const node = cy.$id(id);
+      node.trigger("dbltap", { renderedPosition: node.renderedPosition() });
     }, nodeId);
-
-    expect(canvasBox).not.toBeNull();
-    if (!canvasBox) return;
-
-    await page.mouse.dblclick(
-      canvasBox.x + nodePosition.x,
-      canvasBox.y + nodePosition.y,
-    );
 
     const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
