@@ -418,8 +418,8 @@ export default {
  * Forwards to `/v1beta/interactions` with the system key, threading
  * `previous_interaction_id` so the model retains prior turns server-side. The
  * client therefore sends only the new `input` (query + new/changed lore).
- * Returns `{ id, text, rawResponse }`; an expired/invalid previous id is mapped
- * to a typed 409 so the client can reset and replay full history.
+ * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
+ * 409 so the client can reset and replay full history.
  */
 async function handleInteraction(
   body: any,
@@ -433,7 +433,9 @@ async function handleInteraction(
       headers: { ...cors, "Content-Type": "application/json" },
     });
 
-  const targetModel = body.model || "gemini-3-flash-preview";
+  // Align with the stateless :generateContent default so a follow-up that omits
+  // `model` cannot silently switch models mid-conversation.
+  const targetModel = body.model || "gemini-3.1-flash-lite";
 
   const systemInstruction = body.system_instruction || body.systemInstruction;
   const formattedSystemInstruction =
@@ -512,7 +514,7 @@ async function handleInteraction(
     .filter(Boolean)
     .join("");
 
-  return json({ id: data.id, text: extractedText, rawResponse: data }, 200);
+  return json({ id: data.id, text: extractedText }, 200);
 }
 
 /**

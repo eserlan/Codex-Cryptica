@@ -416,7 +416,11 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
       if (currentTotal + fullSnippet.length > MAX_CHARS) {
         if (!isEnrichment) {
-          const overhead = header.length + connectionContext.length + 50;
+          // Exclude the volatile `[ACTIVE FILE]` prefix from the budget so the
+          // truncated body length (and thus its hash) is stable when the active
+          // file toggles — otherwise delta tracking would force needless resends.
+          const stableHeaderLen = header.length - prefix.length;
+          const overhead = stableHeaderLen + connectionContext.length + 50;
           const allowed = MAX_CHARS - currentTotal - overhead;
           if (allowed > 100) {
             const truncated =

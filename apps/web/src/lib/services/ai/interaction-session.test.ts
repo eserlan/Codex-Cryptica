@@ -46,6 +46,19 @@ describe("InteractionSessionManager", () => {
         .newOrChanged,
     ).toHaveLength(1);
   });
+
+  it("tears down the subscription when disabled", () => {
+    let unsubscribed = false;
+    const bus = {
+      subscribe: () => () => {
+        unsubscribed = true;
+      },
+    };
+    const mgr = new InteractionSessionManager(bus);
+    mgr.setEnabled(true);
+    mgr.setEnabled(false);
+    expect(unsubscribed).toBe(true);
+  });
 });
 
 describe("buildInteractionInput", () => {

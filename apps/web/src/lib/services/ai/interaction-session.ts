@@ -38,10 +38,11 @@ export class InteractionSessionManager {
 
   constructor(private bus?: InvalidationBus) {}
 
-  /** Toggle the Interactions API path; wires lore invalidation when enabling. */
+  /** Toggle the Interactions API path; wires/tears down lore invalidation. */
   setEnabled(value: boolean): void {
     this.enabled = value;
     if (value) this.registerInvalidation();
+    else this.destroy();
   }
 
   getSession(conversationId: string): InteractionSession {
