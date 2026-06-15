@@ -1,33 +1,21 @@
 import { test, expect } from "@playwright/test";
+import { openOracle, seedEntities, setupVaultPage } from "./test-helpers";
 
 test.describe("Oracle Connection Wizard", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("/");
-
-    // Wait for vault to be ready
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
+    await setupVaultPage(page);
 
     // Open Oracle first so searchService subscribes to events before entity creation
-    const toggleBtn = page.getByTestId("activity-bar-oracle");
-    await toggleBtn.click();
-    await page.getByTestId("oracle-input").waitFor({ state: "visible" });
+    await openOracle(page);
 
     // Now create entities so search index picks them up
-    await page.evaluate(async () => {
-      const v = (window as any).vault;
-      await v.createEntity("character", "Eldrin");
-      await v.createEntity("location", "Tower");
-    });
+    await seedEntities(page, [
+      { type: "character", title: "Eldrin" },
+      { type: "location", title: "Tower" },
+    ]);
 
     // Wait for entities to be in vault and search-indexed
     await page.waitForFunction(
