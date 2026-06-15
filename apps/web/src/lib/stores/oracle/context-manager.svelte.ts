@@ -2,6 +2,7 @@ import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
+import { interactionSessions } from "../../services/ai/interaction-session";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
 
 export class OracleContextManager {
@@ -34,6 +35,7 @@ export class OracleContextManager {
 
     return {
       vaultId: s.vault.activeVaultId,
+      interactionsEnabled: interactionSessions.enabled,
       vault: {
         activeVaultId: s.vault.activeVaultId,
         selectedEntityId: s.vault.selectedEntityId,
@@ -107,6 +109,9 @@ export class OracleContextManager {
             requestId?: string;
             vaultId?: string;
             existingEntities?: any[];
+            loreEntries?: import("@codex/oracle-engine").LoreEntry[];
+            conversationId?: string;
+            interactionsEnabled?: boolean;
           },
         ) => {
           const callback = isWorker

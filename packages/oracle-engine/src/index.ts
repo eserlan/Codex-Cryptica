@@ -10,3 +10,4 @@ export * from "./drafting-engine";
 export * from "./revision-context";
 export * from "./sound-bite-generator";
 export * from "./image-defaults";
+export * from "./lore-delta";
