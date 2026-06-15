@@ -1,6 +1,7 @@
 import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
+import { loreHash, type LoreEntry } from "./lore-delta-tracker";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -137,6 +138,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     content: string;
     primaryEntityId?: string;
     sourceIds: string[];
+    entries: LoreEntry[];
     activeStyleTitle?: string;
   }> {
     let styleContext = "";
@@ -333,6 +335,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     const contextMap = new Map<string, string>();
     const sourceIds: string[] = [];
+    // Per-entity records for lore-delta tracking. The hash covers the stable
+    // body only (mainContent + connections), excluding the volatile
+    // `[ACTIVE FILE]` header so toggling the active file does not force resends.
+    const entries: LoreEntry[] = [];
     const MAX_CHARS = 10000;
     let currentTotal = styleContext.length;
 
@@ -415,8 +421,14 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
           if (allowed > 100) {
             const truncated =
               mainContent.slice(0, allowed) + "... [truncated content]";
-            contextMap.set(id, `${header}${truncated}${connectionContext}`);
+            const truncatedSnippet = `${header}${truncated}${connectionContext}`;
+            contextMap.set(id, truncatedSnippet);
             sourceIds.push(id);
+            entries.push({
+              id,
+              snippet: truncatedSnippet,
+              hash: loreHash(`${truncated}${connectionContext}`),
+            });
             currentTotal = MAX_CHARS;
           }
         }
@@ -425,6 +437,11 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
       contextMap.set(id, fullSnippet);
       sourceIds.push(id);
+      entries.push({
+        id,
+        snippet: fullSnippet,
+        hash: loreHash(`${mainContent}${connectionContext}`),
+      });
       currentTotal += fullSnippet.length + 2;
     };
 
@@ -532,10 +549,21 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       }
     }
 
+    // The global art-style block follows the same send-once / resend-on-change
+    // rule under a synthetic id so it is not re-uploaded every turn.
+    if (styleContext) {
+      entries.unshift({
+        id: "__style__",
+        snippet: styleContext,
+        hash: loreHash(styleContext),
+      });
+    }
+
     return {
       content: styleContext + finalContent,
       primaryEntityId: primaryEntityId || undefined,
       sourceIds,
+      entries,
       activeStyleTitle,
     };
   }
