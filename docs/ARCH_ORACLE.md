@@ -53,11 +53,15 @@ already-sent lore are retained server-side instead of re-uploaded each turn. See
 [ADR 018](adr/018-oracle-server-side-conversation-state.md) and
 [the plan](plan-oracle-interactions-api.md).
 
-- **Flag-gated** (`setInteractionsEnabled`, default off) and **proxy-path only**;
-  the custom-key direct path stays stateless.
-- `retrieveContext` emits per-record `entries` ({ id, snippet, hash }); a
-  `LoreDeltaTracker` (in `interaction-session`, keyed per `conversationId`) sends
-  only new/changed lore and names unchanged records in a relevance hint.
+- **Flag-gated** (`interactionSessions.setEnabled`, default off) and
+  **proxy-path only**; the custom-key direct path stays stateless. The flag is
+  read on the main thread and forwarded into the worker via generateResponse
+  options (the worker has its own module scope).
+- `retrieveContext` emits per-record `entries` ({ id, snippet, hash }); the pure
+  `LoreDeltaTracker` + `buildInteractionInput` live in `@codex/oracle-engine`,
+  while `InteractionSessionManager` (DI class in `interaction-session.ts`, keyed
+  per `conversationId`) holds session state and sends only new/changed lore,
+  naming unchanged records in a relevance hint.
 - The worker (`oracle-proxy`) routes requests carrying `input` to
   `/v1beta/interactions`, threading `previous_interaction_id`, and returns
   `{ id, text }`. An expired id → `409 INTERACTION_NOT_FOUND`, which the client

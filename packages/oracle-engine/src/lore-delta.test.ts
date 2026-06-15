@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  LoreDeltaTracker,
-  loreHash,
-  type LoreEntry,
-} from "./lore-delta-tracker";
+import { LoreDeltaTracker, loreHash, type LoreEntry } from "./lore-delta";
 
 const entry = (id: string, body: string): LoreEntry => ({
   id,

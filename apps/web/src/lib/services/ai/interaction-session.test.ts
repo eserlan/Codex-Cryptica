@@ -1,11 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import {
-  getSession,
-  resetSession,
-  clearAllSessions,
-  buildInteractionInput,
-} from "./interaction-session";
-import { loreHash, type LoreEntry } from "./lore-delta-tracker";
+import { describe, it, expect } from "vitest";
+import { InteractionSessionManager } from "./interaction-session";
+import { buildInteractionInput, loreHash } from "@codex/oracle-engine";
+import type { LoreEntry } from "@codex/oracle-engine";
 
 const entry = (id: string, title: string, body: string): LoreEntry => ({
   id,
@@ -13,23 +9,42 @@ const entry = (id: string, title: string, body: string): LoreEntry => ({
   hash: loreHash(body),
 });
 
-describe("interaction-session", () => {
-  beforeEach(() => clearAllSessions());
-
+describe("InteractionSessionManager", () => {
   it("creates and reuses a session per conversation", () => {
-    const a = getSession("vault-1");
-    const b = getSession("vault-1");
+    const mgr = new InteractionSessionManager();
+    const a = mgr.getSession("vault-1");
+    const b = mgr.getSession("vault-1");
     expect(a).toBe(b);
-    expect(getSession("vault-2")).not.toBe(a);
+    expect(mgr.getSession("vault-2")).not.toBe(a);
   });
 
   it("resets server-side state on demand", () => {
-    const s = getSession("v");
+    const mgr = new InteractionSessionManager();
+    const s = mgr.getSession("v");
     s.previousInteractionId = "v1_abc";
     s.tracker.commit([entry("a", "Aldric", "body")]);
-    resetSession("v");
+    mgr.resetSession("v");
     expect(s.previousInteractionId).toBeNull();
     expect(s.tracker.isEmpty).toBe(true);
+  });
+
+  it("wires invalidation through an injected bus when enabled", () => {
+    let handler: ((e: any) => void) | undefined;
+    const bus = {
+      subscribe: (_f: string, l: (e: any) => void) => {
+        handler = l;
+        return () => {};
+      },
+    };
+    const mgr = new InteractionSessionManager(bus);
+    mgr.getSession("v").tracker.commit([entry("e1", "X", "body")]);
+    mgr.setEnabled(true);
+
+    handler?.({ type: "VAULT:ENTITY_UPDATED", payload: { id: "e1" } });
+    expect(
+      mgr.getSession("v").tracker.partition([entry("e1", "X", "body")])
+        .newOrChanged,
+    ).toHaveLength(1);
   });
 });
 

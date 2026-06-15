@@ -72,6 +72,16 @@ Phasing, tasks, and code touch-points are in the linked implementation plan.
 - User keys stay off the worker; rollout is feature-flaggable and incremental.
 - Composes with later streaming (`stream: true`, SSE) and `cached_content`.
 
+### Privacy trade-off (Constitution V — explicit decision)
+
+This is a conscious, signed-off deviation from "client-side first." On the free
+System Proxy path, the conversation and the lore it references are retained on
+Google's servers for the retention window (free 1 day / paid 55 days) to power
+server-side memory. The vault itself never leaves the device; only chat turns +
+referenced lore are stored, and they expire. Users are disclosed this via the
+`oracle-memory` feature hint and can keep everything client-side by leaving the
+feature off or using a custom API key (which stays on the direct path).
+
 ### Negative / risks
 
 - **Server-side history is immutable**, so edited lore must be re-sent as an

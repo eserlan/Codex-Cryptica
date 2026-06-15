@@ -1,10 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import {
-  getSession,
-  evictEntity,
-  clearAllSessions,
-} from "./interaction-session";
-import { loreHash, type LoreEntry } from "./lore-delta-tracker";
+import { describe, it, expect } from "vitest";
+import { InteractionSessionManager } from "./interaction-session";
+import { loreHash } from "@codex/oracle-engine";
+import type { LoreEntry } from "@codex/oracle-engine";
 
 const entry = (id: string, body: string): LoreEntry => ({
   id,
@@ -13,15 +10,14 @@ const entry = (id: string, body: string): LoreEntry => ({
 });
 
 describe("lore eviction (Phase 5.1)", () => {
-  beforeEach(() => clearAllSessions());
-
   it("evicts a record from every conversation so it is re-sent", () => {
-    const a = getSession("vault-1");
-    const b = getSession("vault-2");
+    const mgr = new InteractionSessionManager();
+    const a = mgr.getSession("vault-1");
+    const b = mgr.getSession("vault-2");
     a.tracker.commit([entry("e1", "body"), entry("e2", "other")]);
     b.tracker.commit([entry("e1", "body")]);
 
-    evictEntity("e1");
+    mgr.evictEntity("e1");
 
     // e1 is now treated as new again; e2 stays known.
     expect(
@@ -36,9 +32,10 @@ describe("lore eviction (Phase 5.1)", () => {
   });
 
   it("is a no-op for unknown ids", () => {
-    const s = getSession("v");
+    const mgr = new InteractionSessionManager();
+    const s = mgr.getSession("v");
     s.tracker.commit([entry("e1", "body")]);
-    evictEntity("nope");
+    mgr.evictEntity("nope");
     expect(s.tracker.partition([entry("e1", "body")]).unchanged).toHaveLength(
       1,
     );

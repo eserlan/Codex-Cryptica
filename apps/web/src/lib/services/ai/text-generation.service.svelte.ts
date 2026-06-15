@@ -2,12 +2,8 @@ import {
   aiClientManager as defaultAiClientManager,
   InteractionExpiredError,
 } from "./client-manager";
-import {
-  getSession,
-  resetSession,
-  buildInteractionInput,
-} from "./interaction-session";
-import type { LoreEntry } from "./lore-delta-tracker";
+import { interactionSessions } from "./interaction-session";
+import { buildInteractionInput, type LoreEntry } from "@codex/oracle-engine";
 import { classifyApiError } from "./api-error-classifier";
 import { u } from "./prompts/user-content";
 import {
@@ -774,7 +770,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     loreEntries: LoreEntry[],
     onUpdate: (partial: string) => void | Promise<void>,
   ): Promise<void> {
-    const session = getSession(conversationId);
+    const session = interactionSessions.getSession(conversationId);
 
     const send = async (input: string, previousId: string | null) => {
       const result = await this.aiClientManager.sendInteraction({
@@ -797,7 +793,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
         if (!(err instanceof InteractionExpiredError)) throw err;
         // Retention window elapsed: drop server state and replay full history +
         // full lore in a single fresh interaction, then resume delta mode.
-        resetSession(conversationId);
+        interactionSessions.resetSession(conversationId);
         // After reset, the partition holds every record as new/changed, so the
         // built input already carries all lore — pass the bare query (and the
         // prior transcript) so lore is not embedded a second time.

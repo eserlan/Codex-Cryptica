@@ -1,16 +1,12 @@
 /**
- * Lore delta tracking for the Gemini Interactions API flow.
+ * Lore delta tracking + interaction input building for the Gemini Interactions
+ * API flow. Pure, framework-agnostic logic (library-first): no Svelte runes, no
+ * DOM, no event bus — safe to bundle into the oracle Web Worker.
  *
  * When oracle chat runs through the proxy with server-side conversation state
  * (`previous_interaction_id`), lore is delivered as user `input` turns that
- * Gemini retains as history. We therefore only need to (re)send lore that the
- * server hasn't seen yet. This tracker remembers, per conversation, a content
- * hash of every lore record already sent, and partitions the current turn's
- * candidate records into what must be sent versus what can be stripped.
- *
- * State is intentionally in-memory: on reload the conversation restarts, the
- * interaction id is dropped, and lore re-syncs on the first turn. See
- * docs/adr/018-oracle-server-side-conversation-state.md.
+ * Gemini retains as history. We therefore only (re)send lore the server hasn't
+ * seen. See docs/adr/018-oracle-server-side-conversation-state.md.
  */
 
 /** A single lore record retrieved for a turn. */
@@ -101,4 +97,44 @@ export class LoreDeltaTracker {
   reset(): void {
     this.sentLore.clear();
   }
+}
+
+const TITLE_RE = /^---\s*(?:\[ACTIVE FILE\]\s*)?File:\s*(.+?)\s*---/m;
+
+/** Best-effort extraction of a record's title from its snippet header. */
+function titleOf(entry: LoreEntry): string | null {
+  if (entry.id === "__style__") return null;
+  const m = TITLE_RE.exec(entry.snippet);
+  return m ? m[1] : null;
+}
+
+/**
+ * Build the `input` for an interaction turn: the user query, the new/changed
+ * lore snippets, and a lightweight relevance hint naming unchanged-but-relevant
+ * records (whose bodies the server already holds).
+ */
+export function buildInteractionInput(
+  query: string,
+  partition: LorePartition,
+): string {
+  const blocks: string[] = [];
+
+  if (partition.newOrChanged.length > 0) {
+    blocks.push(
+      "[VAULT LORE CONTEXT]\n" +
+        partition.newOrChanged.map((e) => e.snippet).join("\n\n"),
+    );
+  }
+
+  const hintTitles = partition.unchanged
+    .map(titleOf)
+    .filter((t): t is string => !!t);
+  if (hintTitles.length > 0) {
+    blocks.push(
+      `[RELEVANT EARLIER RECORDS] ${hintTitles.join(", ")} (already provided above).`,
+    );
+  }
+
+  blocks.push(`[USER QUERY]\n${query}`);
+  return blocks.join("\n\n");
 }

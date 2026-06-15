@@ -1,11 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DefaultTextGenerationService } from "./text-generation.service.svelte";
 import { InteractionExpiredError } from "./client-manager";
-import {
-  setInteractionsEnabled,
-  clearAllSessions,
-} from "./interaction-session";
-import { loreHash, type LoreEntry } from "./lore-delta-tracker";
+import { interactionSessions } from "./interaction-session";
+import { loreHash, type LoreEntry } from "@codex/oracle-engine";
 
 const entry = (id: string, title: string, body: string): LoreEntry => ({
   id,
@@ -26,8 +23,7 @@ const opts = (loreEntries: LoreEntry[], interactionsEnabled = true) => ({
 
 describe("generateResponse — Interactions API path", () => {
   beforeEach(() => {
-    clearAllSessions();
-    setInteractionsEnabled(true);
+    interactionSessions.clearAllSessions();
   });
 
   it("sends full lore on the first turn, only the delta on the next", async () => {

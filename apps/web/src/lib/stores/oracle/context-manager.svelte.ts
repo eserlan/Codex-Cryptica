@@ -2,7 +2,7 @@ import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
-import { interactionsEnabled } from "../../services/ai/interaction-session";
+import { interactionSessions } from "../../services/ai/interaction-session";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
 
 export class OracleContextManager {
@@ -35,7 +35,7 @@ export class OracleContextManager {
 
     return {
       vaultId: s.vault.activeVaultId,
-      interactionsEnabled,
+      interactionsEnabled: interactionSessions.enabled,
       vault: {
         activeVaultId: s.vault.activeVaultId,
         selectedEntityId: s.vault.selectedEntityId,

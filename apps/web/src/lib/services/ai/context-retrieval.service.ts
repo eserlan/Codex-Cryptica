@@ -1,7 +1,7 @@
 import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
-import { loreHash, type LoreEntry } from "./lore-delta-tracker";
+import { loreHash, type LoreEntry } from "@codex/oracle-engine";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
