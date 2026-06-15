@@ -158,6 +158,14 @@ test.describe("Intelligent Importer E2E", () => {
                           lore: "Trained in the shadow isles since she was five.",
                           frontmatter: { labels: ["Assassin"] },
                         },
+                        {
+                          title: "Silent Blade",
+                          type: "Faction",
+                          chronicle:
+                            "An elite guild of assassins operating in the shadows.",
+                          lore: "Founded centuries ago to serve the highest bidder.",
+                          frontmatter: { labels: ["Guild"] },
+                        },
                       ]),
                     },
                   ],

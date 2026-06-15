@@ -133,7 +133,12 @@ test.describe("Guest Mode (P2P Share)", () => {
         Object.keys((window as any).vault?.entities || {}).length > 0,
     );
 
-    // 2. Verify shared data is loaded
+    // 2. Verify shared data is loaded — wait for the count to stabilise
+    // after any async P2P GRAPH_SYNC processing finishes.
+    await page.waitForFunction(
+      () => Object.keys((window as any).vault.entities).length === 2,
+      { timeout: 5000 },
+    );
     const entitiesCount = await page.evaluate(
       () => Object.keys((window as any).vault.entities).length,
     );
