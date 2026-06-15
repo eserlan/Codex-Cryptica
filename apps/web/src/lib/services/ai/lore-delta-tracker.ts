@@ -88,6 +88,15 @@ export class LoreDeltaTracker {
     }
   }
 
+  /**
+   * Forget a single record so it is re-sent next turn. Used when a vault event
+   * signals the entity changed, as a proactive complement to body hashing.
+   * Returns true if the record was being tracked.
+   */
+  evict(id: string): boolean {
+    return this.sentLore.delete(id);
+  }
+
   /** Forget everything (new conversation, or interaction id expired/rejected). */
   reset(): void {
     this.sentLore.clear();

@@ -11,6 +11,7 @@ import {
   type LoreEntry,
   type LorePartition,
 } from "./lore-delta-tracker";
+import { appEventBus } from "@codex/events";
 
 /**
  * Feature flag for the Interactions API path. Off by default — rollout is
@@ -21,6 +22,7 @@ export let interactionsEnabled = false;
 /** Toggle the Interactions API path (used by rollout flag / tests). */
 export function setInteractionsEnabled(value: boolean): void {
   interactionsEnabled = value;
+  if (value) registerLoreInvalidation();
 }
 
 export interface InteractionSession {
@@ -51,6 +53,57 @@ export function resetSession(conversationId: string): void {
 /** Clear all sessions (e.g. on vault switch). */
 export function clearAllSessions(): void {
   sessions.clear();
+}
+
+/**
+ * Evict a single record across every conversation so it is re-sent next turn.
+ * Driven by vault change events (Phase 5.1) as a proactive complement to the
+ * per-turn body hashing.
+ */
+export function evictEntity(entityId: string): void {
+  for (const s of sessions.values()) s.tracker.evict(entityId);
+}
+
+/**
+ * Subscribe to vault change events so server-side lore is invalidated promptly:
+ * updated/deleted entities and changed connections are evicted; a vault switch
+ * or delete drops all sessions (restart-on-major-change, Phase 5.1/5.2).
+ *
+ * Idempotent and best-effort — safe to call at module load. Returns an
+ * unsubscribe function.
+ */
+let invalidationUnsub: (() => void) | null = null;
+export function registerLoreInvalidation(): () => void {
+  if (invalidationUnsub) return invalidationUnsub;
+  try {
+    invalidationUnsub = appEventBus.subscribe("vault:*", (event: any) => {
+      switch (event.type) {
+        case "VAULT:ENTITY_UPDATED":
+          if (event.payload?.id) evictEntity(event.payload.id);
+          break;
+        case "VAULT:ENTITY_DELETED":
+          if (event.payload?.entityId) evictEntity(event.payload.entityId);
+          break;
+        case "VAULT:CONNECTION_ADDED":
+        case "VAULT:CONNECTION_UPDATED":
+        case "VAULT:CONNECTION_REMOVED":
+          if (event.payload?.sourceId) evictEntity(event.payload.sourceId);
+          if (event.payload?.targetId) evictEntity(event.payload.targetId);
+          break;
+        case "VAULT:SYNC_CHUNK_READY":
+          for (const id of event.payload?.newOrChangedIds ?? [])
+            evictEntity(id);
+          break;
+        case "VAULT:VAULT_SWITCHED":
+        case "VAULT:VAULT_DELETED":
+          clearAllSessions();
+          break;
+      }
+    });
+  } catch {
+    invalidationUnsub = () => {};
+  }
+  return invalidationUnsub;
 }
 
 const TITLE_RE = /^---\s*(?:\[ACTIVE FILE\]\s*)?File:\s*(.+?)\s*---/m;

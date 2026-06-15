@@ -56,18 +56,22 @@ previous_interaction_id, cached_content?, stream? }`. `input` is just the new tu
 
 ## Status
 
-- **Phases 1–3 implemented and unit-tested**, feature-flagged **off** by default
-  (`setInteractionsEnabled`). Core delta flow, worker Interactions path, and
-  client wiring with replay fallback are in place.
-- **Phase 0** items 0.2/0.3 need a live API key and are marked for manual
-  verification before enabling the flag; the worker's interaction default model
-  is `gemini-3-flash-preview` (0.1).
-- **Phases 4 (streaming) and 5 (hardening) are optional** and deferred; the
-  worker returns `{ id, text }` (non-streamed) for now.
+- **Phases 1–3 + 5 implemented and unit-tested**, feature-flagged **off** by
+  default (`setInteractionsEnabled`). Core delta flow, worker Interactions path,
+  client wiring with replay fallback, and event-driven lore invalidation are in.
+- **Phase 0**: 0.1/0.4 decided (model passed from client, defaulting to
+  `gemini-3.1-flash-lite`; system instruction re-sent minimal). 0.2/0.3 need a
+  live key — a verification harness is provided at
+  `apps/workers/oracle-proxy/scripts/verify-interactions.sh`; **run it before
+  enabling the flag.**
+- **Phase 4 (streaming): dropped.** `gemini-3.1-flash-lite` is fast enough that
+  token-by-token streaming isn't worth the SSE complexity. Worker returns
+  `{ id, text }`.
+- **Phase 5.3 (`cached_content`): deferred** as a stretch optimization.
 
 ## Phase 0 — Spike & contract (de-risk)
 
-- [ ] 0.1 Confirm the target model supports Interactions (worker default is
+- [x] 0.1 Confirm the target model supports Interactions (worker default is
       `gemini-3.1-flash-lite`; docs use `gemini-3-flash-preview` / `gemini-3.5-flash`).
       Bump default if needed.
 - [ ] 0.2 Manual `curl` against `/v1beta/interactions`: one create, then a second
@@ -75,7 +79,7 @@ previous_interaction_id, cached_content?, stream? }`. `input` is just the new tu
       `steps[].content[].text` shape.
 - [ ] 0.3 Confirm behavior when `previous_interaction_id` is expired/invalid
       (error code/shape) — drives the replay fallback in Phase 3.
-- [ ] 0.4 Decide `system_instruction` handling (re-sent each turn; keep minimal).
+- [x] 0.4 Decide `system_instruction` handling (re-sent each turn; keep minimal).
 
 **Exit:** documented request/response contract + the id-expiry error signature.
 
@@ -136,7 +140,7 @@ generation_config, store: true, previous_interaction_id }`.
 
 **Exit:** proxy chats run multi-turn with only deltas on the wire.
 
-## Phase 4 — Streaming (optional, composable)
+## Phase 4 — Streaming (DROPPED — fast model, see Status)
 
 - [ ] 4.1 Worker: `stream: true`, pipe SSE (`step.delta` / `interaction.completed`)
       back as a `ReadableStream`.
@@ -146,9 +150,9 @@ generation_config, store: true, previous_interaction_id }`.
 
 ## Phase 5 — Staleness & cache hardening (optional)
 
-- [ ] 5.1 Subscribe `LoreDeltaTracker` to `appEventBus` entity-update events to
+- [x] 5.1 Subscribe `LoreDeltaTracker` to `appEventBus` entity-update events to
       proactively evict changed ids (belt-and-suspenders over hashing).
-- [ ] 5.2 Restart-on-major-change policy: drop `previous_interaction_id` and
+- [x] 5.2 Restart-on-major-change policy: drop `previous_interaction_id` and
       resync when the vault has materially changed since the priming turn.
 - [ ] 5.3 (Stretch) Use `cached_content` for the truly-stable system instruction /
       style block to cut Google-side cost further.
