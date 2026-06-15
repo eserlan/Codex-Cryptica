@@ -5,6 +5,17 @@ import type {
 } from "@google/generative-ai";
 
 /**
+ * Thrown when a `previous_interaction_id` is no longer valid (retention window
+ * elapsed). The caller should reset interaction state and replay full history.
+ */
+export class InteractionExpiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InteractionExpiredError";
+  }
+}
+
+/**
  * DefaultAIClientManager manages connections to Google's Generative AI service.
  */
 export class DefaultAIClientManager {
@@ -16,6 +27,59 @@ export class DefaultAIClientManager {
   // Proxy configuration
   private static readonly PROXY_URL =
     "https://oracle-proxy.espen-erlandsen.workers.dev";
+
+  /**
+   * Send a Gemini Interactions API turn through the proxy (server-side state).
+   * Returns the new interaction id plus the model's text. Throws
+   * {@link InteractionExpiredError} when the previous id has expired so the
+   * caller can reset and replay full history.
+   */
+  async sendInteraction(params: {
+    model: string;
+    input: string;
+    systemInstruction?: string;
+    previousInteractionId?: string | null;
+  }): Promise<{ id: string; text: string }> {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      throw new Error("You appear to be offline. Generation is unavailable.");
+    }
+
+    const body: Record<string, unknown> = {
+      model: params.model,
+      input: params.input,
+      store: true,
+    };
+    if (params.systemInstruction) {
+      body.system_instruction = params.systemInstruction;
+    }
+    if (params.previousInteractionId) {
+      body.previous_interaction_id = params.previousInteractionId;
+    }
+
+    const response = await fetch(DefaultAIClientManager.PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json().catch(() => ({}) as any);
+
+    if (!response.ok) {
+      if (
+        response.status === 409 ||
+        data?.error?.code === "INTERACTION_NOT_FOUND"
+      ) {
+        throw new InteractionExpiredError(
+          data?.error?.message || "Interaction expired",
+        );
+      }
+      throw new Error(
+        `[OracleProxy] Interaction failed: ${data?.error?.message || "Unknown error"}`,
+      );
+    }
+
+    return { id: data.id as string, text: (data.text as string) || "" };
+  }
 
   /**
    * Lazy-loads the @google/generative-ai SDK.

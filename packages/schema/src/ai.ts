@@ -98,6 +98,14 @@ export interface TextGenerationService {
       vaultId?: string;
       existingEntities?: Entity[];
       systemInstructionOverride?: string;
+      /**
+       * Per-record lore for the Interactions API delta flow. When present (and
+       * running through the proxy), only new/changed records are sent; the rest
+       * are retained server-side via `previous_interaction_id`.
+       */
+      loreEntries?: LoreContextEntry[];
+      /** Stable key identifying the conversation for interaction state. */
+      conversationId?: string;
     },
   ): Promise<void>;
   generateMergeProposal(
