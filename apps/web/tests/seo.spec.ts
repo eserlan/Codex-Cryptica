@@ -52,9 +52,12 @@ test.describe("SEO and Prerendering", () => {
       sessionStorage.clear();
     });
     await page.reload();
-    await expect(page).toHaveTitle("Codex Cryptica | AI RPG Campaign Manager", {
-      timeout: 15000,
-    });
+    await expect(page).toHaveTitle(
+      "Codex Cryptica — Local-First RPG Campaign Manager & Worldbuilding Tool",
+      {
+        timeout: 15000,
+      },
+    );
     await expect(page.getByText(/Private RPG Lore Vault/i)).toBeVisible({
       timeout: 15000,
     });
@@ -138,8 +141,10 @@ test.describe("SEO and Prerendering", () => {
       const response = await request.get("/solutions/campaign-manager");
       expect(response.ok()).toBe(true);
       const html = await response.text();
-      expect(html).toContain("Best Free RPG Campaign Manager");
-      expect(html).toContain("The Ultimate Local-First RPG Campaign Manager");
+      expect(html).toContain("RPG Campaign Manager Features & Setup Guide");
+      expect(html).toContain(
+        "Everything you need to plan, run, and track campaigns",
+      );
 
       // Test Comparisons page prerendering
       const compResponse = await request.get("/vs/obsidian");
@@ -369,7 +374,6 @@ test.describe("SEO and Prerendering", () => {
 
       await page.click("#save-to-codex-btn");
       await page.click("button:has-text('Open Codex')");
-      await page.waitForLoadState("networkidle");
       await expect(page).toHaveURL(/\/$/);
       await expect(
         page.getByRole("heading", { name: generatedGodName!.trim(), level: 2 }),

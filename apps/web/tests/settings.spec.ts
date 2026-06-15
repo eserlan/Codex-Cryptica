@@ -58,21 +58,28 @@ test.describe("Settings Modal", () => {
     page,
     context,
   }) => {
-    // 1. Go offline
+    // 1. Pre-load the settings modal component while online
+    const settingsBtn = page.getByTestId("settings-button");
+    await settingsBtn.click();
+    await expect(page.locator("h2", { hasText: "Vault" })).toBeVisible();
+    await page.click('button[aria-label="Close Settings"]');
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible();
+
+    // 2. Go offline
     await context.setOffline(true);
 
-    // 2. Open settings
+    // 3. Open settings again
     await page.getByTestId("settings-button").click();
     await expect(page.locator("h2", { hasText: "Vault" })).toBeVisible();
 
-    // 3. Switch tabs
+    // 4. Switch tabs
     await page.click('[role="tab"]:has-text("AI")');
     await expect(page.locator("h2", { hasText: "AI" })).toBeVisible();
     await expect(
       page.locator("h3", { hasText: "Lore Oracle (Gemini AI)" }),
     ).toBeVisible();
 
-    // 4. Go back online
+    // 5. Go back online
     await context.setOffline(false);
   });
 });

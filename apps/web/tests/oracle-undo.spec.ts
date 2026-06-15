@@ -46,6 +46,10 @@ test.describe("Oracle Undo", () => {
           requestPermission: async () => "granted",
         };
       };
+      // Listen for console messages
+      page.on("console", (msg) => {
+        console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);
+      });
     });
 
     await page.goto("/");
@@ -200,6 +204,10 @@ test.describe("Oracle Undo", () => {
 
     // 5. Verify node removed (undo restores state; UNDO button disappears)
     await expect(undoBtn).not.toBeVisible({ timeout: 5000 });
+    await page.waitForFunction(
+      () => !(window as any).vault.entities["new-character"],
+      { timeout: 5000 },
+    );
     const nodeExistsAfterUndo = await page.evaluate(
       () => !!(window as any).vault.entities["new-character"],
     );

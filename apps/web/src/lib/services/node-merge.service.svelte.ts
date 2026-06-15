@@ -7,7 +7,6 @@ import {
   concatenateBody,
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
 import { vault } from "../stores/vault.svelte";
-import { oracle } from "../stores/oracle.svelte";
 import { textGenerationService } from "./ai/text-generation.service.svelte";
 import { TIER_MODES } from "schema";
 import type { LocalEntity } from "../stores/vault/types";
@@ -76,6 +75,7 @@ export class NodeMergeService {
     let suggestedBody: string;
 
     if (strategy === "ai") {
+      const { oracle } = await import("../stores/oracle.svelte");
       const apiKey = oracle.effectiveApiKey || "";
       const modelName = TIER_MODES[oracle.tier];
 

@@ -9,11 +9,16 @@ test.describe("Connect Mode", () => {
   test("toggles connect mode via keyboard", async ({ page }) => {
     // Need at least one node to connect
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Source Node");
+    await page.getByPlaceholder(/Title.../i).fill("Source Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
+    // Wait for indexing
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+    );
+
     // Blur any focused input to ensure shortcut handler runs
-    await page.locator("#graph-canvas, canvas").first().click();
+    await page.getByTestId("graph-canvas").click();
 
     // 1. Toggle via Keyboard 'C'
     await page.keyboard.press("c");

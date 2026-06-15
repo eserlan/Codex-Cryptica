@@ -173,7 +173,9 @@ export class OracleContextManager {
           ),
       },
       searchService: {
-        search: wrap(s.searchService.search?.bind(s.searchService)),
+        search: wrap((query: string, options?: any) =>
+          s.searchService.search(query, { includeDrafts: true, ...options }),
+        ),
       },
       diceParser: {
         parse: wrap(s.diceParser.parse?.bind(s.diceParser)),
@@ -230,6 +232,18 @@ export class OracleContextManager {
       ),
       draftingEngine: s.draftingEngine,
       eventBus: appEventBus,
+      nodeMergeService: {
+        proposeMerge: wrap(async (request: any) => {
+          const { nodeMergeService: nms } =
+            await import("../../services/node-merge.service.svelte");
+          return nms.proposeMerge(request);
+        }),
+        executeMerge: wrap(async (finalContent: any, sourceIds: any) => {
+          const { nodeMergeService: nms } =
+            await import("../../services/node-merge.service.svelte");
+          return nms.executeMerge(finalContent, sourceIds);
+        }),
+      },
       categories: $state.snapshot(s.categories.list),
     } as OracleExecutionContext;
   }

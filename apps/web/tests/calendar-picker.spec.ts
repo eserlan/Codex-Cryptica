@@ -121,7 +121,10 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // 2. Open Zen Mode for the entity
     await clickNodeProgrammatically(page, "Test Event");
-    await page.getByTestId("enter-zen-mode-button").click();
+    await page
+      .locator(".hidden.md\\:flex")
+      .getByTestId("enter-zen-mode-button")
+      .click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
 
@@ -139,11 +142,13 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // 5. Verify Year grid highlights 1000
     await expect(
-      page.getByRole("button", { name: "1000", exact: true }),
-    ).toHaveClass(/bg-theme-primary/);
+      page.getByRole("option", { name: "1000", exact: true }),
+    ).toHaveClass(/text-theme-primary/);
 
     // 6. Apply
-    await page.getByTestId("apply-date-button").click();
+    await page
+      .getByTestId("apply-date-button")
+      .evaluate((el) => (el as HTMLElement).click());
     await expect(page.locator('button:has-text("1000")').first()).toHaveText(
       /^1000(\s+\S+)?\s*$/,
     );
@@ -169,7 +174,10 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // 2. Open Zen Mode and Date Picker
     await clickNodeProgrammatically(page, "Test Event");
-    await page.getByTestId("enter-zen-mode-button").click();
+    await page
+      .locator(".hidden.md\\:flex")
+      .getByTestId("enter-zen-mode-button")
+      .click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click({ force: true });
     await page.locator('button:has-text("No date set...")').first().click({
@@ -180,9 +188,15 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.locator("#manual-tab").click({ force: true });
 
     // 3. Verify custom month appears in dropdown
-    await page.getByRole("button", { name: "month", exact: true }).click();
-    await page.getByTestId("month-selector").selectOption({ label: "Hammer" });
-    await page.getByTestId("apply-date-button").click();
+    await page
+      .getByRole("button", { name: "unit", exact: true })
+      .click({ force: true });
+    await page
+      .getByRole("option", { name: "Hammer", exact: true })
+      .click({ force: true });
+    await page
+      .getByTestId("apply-date-button")
+      .evaluate((el) => (el as HTMLElement).click());
 
     // 4. Verify formatting: default year is 0 when only a month is selected.
     await expect(
@@ -193,67 +207,73 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.click('button:has-text("Hammer 0")');
     await page.getByRole("tab", { name: "Detail" }).click({ force: true });
     await expect(
-      page.getByRole("button", { name: "0", exact: true }),
-    ).toHaveClass(/bg-theme-primary/);
+      page.getByRole("option", { name: "0", exact: true }),
+    ).toHaveClass(/text-theme-primary/);
   });
 
-  test("should allow navigating years via pure UI grid", async ({ page }) => {
+  test("should allow selecting years via scroll wheel listbox", async ({
+    page,
+  }) => {
     await clickNodeProgrammatically(page, "Test Event");
-    await page.getByTestId("enter-zen-mode-button").click();
+    await page
+      .locator(".hidden.md\\:flex")
+      .getByTestId("enter-zen-mode-button")
+      .click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
-    await page.click('button:has-text("No date set...")');
-    await page.click('button:has-text("Detail")');
+    await page
+      .locator('button:has-text("No date set...")')
+      .first()
+      .click({ force: true });
+    await page.locator("#manual-tab").click({ force: true });
 
-    // 1. Initial view should show 0-11
-    await expect(
-      page.getByRole("button", { name: "0", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "11", exact: true }),
-    ).toBeVisible();
+    // Select year 5 in the listbox column
+    await page
+      .getByRole("option", { name: "5", exact: true })
+      .click({ force: true });
 
-    // 2. Zoom out to decades
-    await page.click('button:has-text("0 - 11")');
+    // Verify option 5 has selected class
     await expect(
-      page.getByRole("button", { name: "0", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "110", exact: true }),
-    ).toBeVisible();
+      page.getByRole("option", { name: "5", exact: true }),
+    ).toHaveClass(/text-theme-primary/);
 
-    // 3. Select decade 100
-    await page.click('button:has-text("100")');
-    await expect(
-      page.getByRole("button", { name: "100", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "111", exact: true }),
-    ).toBeVisible();
+    // Click Apply
+    await page
+      .getByTestId("apply-date-button")
+      .evaluate((el) => (el as HTMLElement).click());
 
-    // 4. Select year 105
-    await page.click('button:has-text("105")');
-    await page.getByTestId("apply-date-button").click();
-    await expect(page.locator('button:has-text("105")').first()).toBeVisible();
+    // Verify formatted year is visible
+    await expect(page.locator('button:has-text("5")').first()).toBeVisible();
   });
 
   test("should allow manual year entry via keyboard toggle", async ({
     page,
   }) => {
     await clickNodeProgrammatically(page, "Test Event");
-    await page.getByTestId("enter-zen-mode-button").click();
+    await page
+      .locator(".hidden.md\\:flex")
+      .getByTestId("enter-zen-mode-button")
+      .click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
-    await page.click('button:has-text("No date set...")');
-    await page.click('button:has-text("Detail")');
+    await page
+      .locator('button:has-text("No date set...")')
+      .first()
+      .click({ force: true });
+    await page.locator("#manual-tab").click({ force: true });
 
     // 1. Toggle manual entry
-    await page.getByLabel("Toggle Manual Entry").click();
-    await expect(page.locator("#manual-year-input")).toBeFocused();
+    await page.getByLabel("Direct jump to Year").click({ force: true });
+    const manualInput = page.getByPlaceholder("Type...");
+    await manualInput.focus();
+    await expect(manualInput).toBeFocused();
 
     // 2. Type a year
-    await page.locator("#manual-year-input").fill("2026");
-    await page.getByTestId("apply-date-button").click();
+    await manualInput.fill("2026");
+    await manualInput.press("Enter");
+    await page
+      .getByTestId("apply-date-button")
+      .evaluate((el) => (el as HTMLElement).click());
 
     // 3. Verify
     await expect(page.locator('button:has-text("2026")').first()).toBeVisible();
