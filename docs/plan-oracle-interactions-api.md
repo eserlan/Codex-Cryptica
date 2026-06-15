@@ -1,6 +1,7 @@
 # Plan: Oracle Chat → Gemini Interactions API + Lore Delta Tracking
 
 > **Tracking issue:** [#1357](https://github.com/eserlan/Codex-Cryptica/issues/1357)
+> **ADR:** [018-oracle-server-side-conversation-state](adr/018-oracle-server-side-conversation-state.md)
 > **Branch:** `feature/oracle-interactions-api` (base: `staging`)
 
 ## Goal
@@ -94,7 +95,7 @@ Independently testable; no behavior change until wired in Phase 3.
 
 - [ ] 2.1 Add an `interactions` request mode to the worker: POST to
       `/v1beta/interactions` with `{ model, input, system_instruction,
-    generation_config, store: true, previous_interaction_id }`.
+  generation_config, store: true, previous_interaction_id }`.
 - [ ] 2.2 Normalize the response to `{ id, text }` (extract `steps[].content[].text`).
 - [ ] 2.3 Keep the existing `:generateContent` path intact as the retention-expiry
       fallback; gate the new path behind a request flag so current flow is unchanged.
