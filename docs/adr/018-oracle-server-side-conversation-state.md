@@ -56,9 +56,11 @@ Chosen option: **Option 5 — Gemini Interactions API**, with a client-side
 - **Local history remains the source of truth.** The interaction id is an
   optimization with a **replay fallback**: on an invalid/expired id we resend full
   history + lore once, then resume delta mode.
-- Lore is sent as user `input` turns; a per-entity **content hash** (stable body
-  only — excluding the volatile `[ACTIVE FILE]` marker) decides new vs. changed
-  vs. unchanged, so only deltas go on the wire.
+- Lore is sent as user `input` turns; a per-entity **`entityContentHash`** of
+  `entity.content` (the always-hydrated short field) decides new vs. changed vs.
+  unchanged, so only deltas go on the wire. Hashing the long lazy-loaded `lore`
+  field was discarded because it isn't always hydrated on first access, causing
+  spurious hash mismatches and unnecessary re-sends.
 
 Phasing, tasks, and code touch-points are in the linked implementation plan.
 
@@ -79,8 +81,9 @@ System Proxy path, the conversation and the lore it references are retained on
 Google's servers for the retention window (free 1 day / paid 55 days) to power
 server-side memory. The vault itself never leaves the device; only chat turns +
 referenced lore are stored, and they expire. Users are disclosed this via the
-`oracle-memory` feature hint and can keep everything client-side by leaving the
-feature off or using a custom API key (which stays on the direct path).
+`oracle-memory` feature hint (surfaces on second oracle panel open). The feature
+is **on by default** for the system proxy path; users who want to keep everything
+on-device should use a custom API key, which stays on the stateless direct path.
 
 ### Negative / risks
 

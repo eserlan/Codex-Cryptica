@@ -54,20 +54,20 @@ previous_interaction_id, cached_content?, stream? }`. `input` is just the new tu
 
 ---
 
-## Status
+## Status — SHIPPED (merged to staging 2026-06-16)
 
-- **Phases 1–3 + 5 implemented and unit-tested**, feature-flagged **off** by
-  default (`setInteractionsEnabled`). Core delta flow, worker Interactions path,
-  client wiring with replay fallback, and event-driven lore invalidation are in.
-- **Phase 0**: 0.1/0.4 decided (model passed from client, defaulting to
-  `gemini-3.1-flash-lite`; system instruction re-sent minimal). 0.2/0.3 need a
-  live key — a verification harness is provided at
-  `apps/workers/oracle-proxy/scripts/verify-interactions.sh`; **run it before
-  enabling the flag.**
-- **Phase 4 (streaming): dropped.** `gemini-3.1-flash-lite` is fast enough that
-  token-by-token streaming isn't worth the SSE complexity. Worker returns
-  `{ id, text }`.
+All phases complete. Feature is **on by default** for the system proxy path.
+Key decisions made during implementation:
+
+- **Hash field**: changed from `lore + content + connections` to `entity.content`
+  only (`entityContentHash`). The long `lore` field is lazy-loaded and not always
+  hydrated on first access, causing spurious mismatches. `content` is always
+  hydrated and stable.
+- **Phase 4 (streaming): dropped.** `gemini-3.1-flash-lite` is fast enough;
+  worker returns `{ id, text }`.
 - **Phase 5.3 (`cached_content`): deferred** as a stretch optimization.
+- **Phase 0.2/0.3**: verified end-to-end in a live browser session across 6 turns;
+  stale-id detection updated to catch HTTP 400 in addition to 404.
 
 ## Phase 0 — Spike & contract (de-risk)
 
@@ -88,9 +88,10 @@ previous_interaction_id, cached_content?, stream? }`. `input` is just the new tu
 Independently testable; no behavior change until wired in Phase 3.
 
 - [x] 1.1 Extend `retrieveContext` (or add a sibling) to return per-entity entries
-      `{ id, snippet, hash }` in addition to the joined `content`. Hash the
-      **stable body only** (`lore + content + connections`) — exclude the volatile
-      `[ACTIVE FILE]` header (line ~361).
+      `{ id, snippet, hash }` in addition to the joined `content`. Hash
+      `entity.content` only (`entityContentHash`) — the always-hydrated short
+      field. Hashing `lore + content` was tried but discarded: `lore` is
+      lazy-loaded and absent on first access, producing false "changed" signals.
 - [x] 1.2 Add `LoreDeltaTracker`: holds `sentLore: Map<entityId, hash>`; given the
       current entries returns `{ newOrChanged, unchanged }` partitions.
 - [x] 1.3 Treat the global art-style block (line ~193) as a synthetic id
@@ -159,10 +160,10 @@ generation_config, store: true, previous_interaction_id }`.
 
 ## Phase 6 — Rollout
 
-- [x] 6.1 Feature-flag the Interactions path (default off → staged on).
+- [x] 6.1 Feature-flag the Interactions path (shipped on by default for proxy path).
 - [x] 6.2 Log delta sizes (bytes saved / turn) and id-expiry replay frequency.
 - [ ] 6.3 Validate retention edge cases (free-tier 1-day expiry mid-session).
-- [ ] 6.4 Update `docs/ARCH_ORACLE.md` with the stateful flow + fallback.
+- [x] 6.4 Update `docs/ARCH_ORACLE.md` with the stateful flow + fallback.
 
 ---
 
