@@ -437,11 +437,14 @@ async function handleInteraction(
   // `model` cannot silently switch models mid-conversation.
   const targetModel = body.model || "gemini-3.1-flash-lite";
 
-  const systemInstruction = body.system_instruction || body.systemInstruction;
-  const formattedSystemInstruction =
-    typeof systemInstruction === "string"
-      ? { parts: [{ text: systemInstruction }] }
-      : systemInstruction;
+  // Interactions API expects system_instruction as a plain string, not the
+  // { parts: [...] } object format used by generateContent.
+  const systemInstruction: string | undefined =
+    typeof body.system_instruction === "string"
+      ? body.system_instruction
+      : typeof body.systemInstruction === "string"
+        ? body.systemInstruction
+        : body.system_instruction?.parts?.[0]?.text;
 
   const payload: Record<string, unknown> = {
     model: targetModel,
@@ -451,8 +454,8 @@ async function handleInteraction(
   if (body.previous_interaction_id) {
     payload.previous_interaction_id = body.previous_interaction_id;
   }
-  if (formattedSystemInstruction) {
-    payload.system_instruction = formattedSystemInstruction;
+  if (systemInstruction) {
+    payload.system_instruction = systemInstruction;
   }
   if (body.generation_config || body.generationConfig) {
     payload.generation_config = body.generation_config || body.generationConfig;

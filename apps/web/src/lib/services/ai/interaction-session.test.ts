@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { InteractionSessionManager } from "./interaction-session";
-import { buildInteractionInput, loreHash } from "@codex/oracle-engine";
+import { buildInteractionInput, entityContentHash } from "@codex/oracle-engine";
 import type { LoreEntry } from "@codex/oracle-engine";
 
 const entry = (id: string, title: string, body: string): LoreEntry => ({
   id,
   snippet: `--- File: ${title} ---\n${body}`,
-  hash: loreHash(body),
+  hash: entityContentHash(body),
 });
 
 describe("InteractionSessionManager", () => {

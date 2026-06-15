@@ -1,7 +1,7 @@
 import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
-import { loreHash, type LoreEntry } from "@codex/oracle-engine";
+import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -209,7 +209,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     }
 
     let results = await this.searchService.search(query, {
-      limit: 5,
+      limit: 8,
       includeDrafts: true,
     });
 
@@ -253,7 +253,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
       if (keywords.length > 0) {
         results = await this.searchService.search(keywords.join(" "), {
-          limit: 5,
+          limit: 8,
           includeDrafts: true,
         });
 
@@ -431,7 +431,9 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
             entries.push({
               id,
               snippet: truncatedSnippet,
-              hash: loreHash(`${truncated}${connectionContext}`),
+              hash: entityContentHash(
+                `${entity.content || ""}${connectionContext}`,
+              ),
             });
             currentTotal = MAX_CHARS;
           }
@@ -444,7 +446,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       entries.push({
         id,
         snippet: fullSnippet,
-        hash: loreHash(`${mainContent}${connectionContext}`),
+        hash: entityContentHash(`${entity.content || ""}${connectionContext}`),
       });
       currentTotal += fullSnippet.length + 2;
     };
@@ -559,7 +561,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       entries.unshift({
         id: "__style__",
         snippet: styleContext,
-        hash: loreHash(styleContext),
+        hash: entityContentHash(styleContext),
       });
     }
 

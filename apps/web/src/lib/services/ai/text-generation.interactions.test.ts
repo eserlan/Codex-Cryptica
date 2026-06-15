@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DefaultTextGenerationService } from "./text-generation.service.svelte";
 import { InteractionExpiredError } from "./client-manager";
 import { interactionSessions } from "./interaction-session";
-import { loreHash, type LoreEntry } from "@codex/oracle-engine";
+import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 
 const entry = (id: string, title: string, body: string): LoreEntry => ({
   id,
   snippet: `--- File: ${title} ---\n${body}`,
-  hash: loreHash(body),
+  hash: entityContentHash(body),
 });
 
 function makeService(sendInteraction: any) {

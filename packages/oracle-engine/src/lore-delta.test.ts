@@ -1,16 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { LoreDeltaTracker, loreHash, type LoreEntry } from "./lore-delta";
+import {
+  LoreDeltaTracker,
+  entityContentHash,
+  type LoreEntry,
+} from "./lore-delta";
 
 const entry = (id: string, body: string): LoreEntry => ({
   id,
   snippet: `--- File: ${id} ---\n${body}`,
-  hash: loreHash(body),
+  hash: entityContentHash(body),
 });
 
-describe("loreHash", () => {
+describe("entityContentHash", () => {
   it("is stable for identical input and differs on change", () => {
-    expect(loreHash("hello")).toBe(loreHash("hello"));
-    expect(loreHash("hello")).not.toBe(loreHash("hello!"));
+    expect(entityContentHash("hello")).toBe(entityContentHash("hello"));
+    expect(entityContentHash("hello")).not.toBe(entityContentHash("hello!"));
   });
 });
 

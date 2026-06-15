@@ -31,7 +31,7 @@ export class InteractionSessionManager {
    * staged (plan Phase 6.1). Read on the main thread and forwarded into the
    * worker via generateResponse options (the worker has its own module scope).
    */
-  enabled = false;
+  enabled = true;
 
   private sessions = new Map<string, InteractionSession>();
   private invalidationUnsub: (() => void) | null = null;

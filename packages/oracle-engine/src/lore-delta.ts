@@ -34,7 +34,7 @@ export interface LorePartition {
  * Fast, synchronous, non-cryptographic 53-bit string hash (cyrb53).
  * Adequate for change detection of lore bodies.
  */
-export function loreHash(str: string): string {
+export function entityContentHash(str: string): string {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) {
@@ -131,7 +131,7 @@ export function buildInteractionInput(
     .filter((t): t is string => !!t);
   if (hintTitles.length > 0) {
     blocks.push(
-      `[RELEVANT EARLIER RECORDS] ${hintTitles.join(", ")} (already provided above).`,
+      `[RELEVANT EARLIER RECORDS] ${hintTitles.join(", ")} (retained from prior turns).`,
     );
   }
 

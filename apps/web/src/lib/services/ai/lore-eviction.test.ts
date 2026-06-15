@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { InteractionSessionManager } from "./interaction-session";
-import { loreHash } from "@codex/oracle-engine";
+import { entityContentHash } from "@codex/oracle-engine";
 import type { LoreEntry } from "@codex/oracle-engine";
 
 const entry = (id: string, body: string): LoreEntry => ({
   id,
   snippet: `--- File: ${id} ---\n${body}`,
-  hash: loreHash(body),
+  hash: entityContentHash(body),
 });
 
 describe("lore eviction (Phase 5.1)", () => {
