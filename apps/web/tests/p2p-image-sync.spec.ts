@@ -49,10 +49,9 @@ test.describe("P2P Image Sync", () => {
   });
 
   test("Guest: should convert FILE_RESPONSE to Blob", async ({ page }) => {
-    await page.goto("/?shareId=p2p-test-host");
+    await page.goto("/");
 
     const result = await page.evaluate(async () => {
-      // Wait for p2pGuestService
       const guestService = await new Promise<any | null>((resolve) => {
         const check = setInterval(() => {
           const s = (window as any).p2pGuestService;
@@ -71,33 +70,38 @@ test.describe("P2P Image Sync", () => {
         return null;
       }
 
-      // Wait for connection
-      await new Promise<void>((resolve) => {
-        if (guestService.connection?.open) resolve();
-        else {
-          const check = setInterval(() => {
-            if (guestService.connection?.open) {
-              clearInterval(check);
-              resolve();
-            }
-          }, 100);
-        }
+      const transport = guestService.transport;
+      const listeners: Record<string, Array<(data?: any) => void>> = {};
+      Object.defineProperty(transport, "connected", {
+        configurable: true,
+        get: () => true,
       });
+      transport.on = (event: string, callback: (data?: any) => void) => {
+        listeners[event] ??= [];
+        listeners[event].push(callback);
+      };
+      transport.off = (event: string, callback: (data?: any) => void) => {
+        listeners[event] = (listeners[event] ?? []).filter(
+          (listener) => listener !== callback,
+        );
+      };
+      transport.send = (data: any) => {
+        (window as any).lastSentData = data;
+        queueMicrotask(() => {
+          const buffer = new Uint8Array([1, 2, 3]).buffer;
+          for (const listener of listeners.data ?? []) {
+            listener({
+              type: "FILE_RESPONSE",
+              requestId: data.requestId,
+              found: true,
+              mime: "image/png",
+              data: buffer,
+            });
+          }
+        });
+      };
 
       const promise = guestService.getFile("images/test.png");
-
-      setTimeout(() => {
-        const requestId = (window as any).lastSentData.requestId;
-        const buffer = new Uint8Array([1, 2, 3]).buffer;
-        (window as any).mockGuestConn._onData({
-          type: "FILE_RESPONSE",
-          requestId: requestId,
-          found: true,
-          mime: "image/png",
-          data: buffer,
-        });
-      }, 100);
-
       const blob = await promise;
       return { size: blob.size, type: blob.type };
     });
@@ -158,9 +162,6 @@ test.describe("P2P Image Sync", () => {
         }, 100);
       });
 
-      // We don't need to await p2pHostService.initHost() if we simply call the handler directly
-      // But let's verify it exists
-
       return new Promise<any>((resolve) => {
         const mockConn = {
           send: (data: any) => resolve(data),
@@ -168,12 +169,14 @@ test.describe("P2P Image Sync", () => {
           peer: "guest-1",
         };
 
-        // p2pHostService is likely a proxy or frozen? No, it's a class instance.
-        // handleFileRequest is private, so we cast to any.
-        (p2pHostService as any).handleFileRequest(
+        (p2pHostService as any).dispatcher.dispatch(
+          {
+            type: "GET_FILE",
+            path: "images/test.webp",
+            requestId: "req-123",
+          },
           mockConn,
-          "images/test.webp",
-          "req-123",
+          (p2pHostService as any).getHandlerContext(),
         );
       });
     });
