@@ -28,7 +28,6 @@ export interface FeatureHint {
  */
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
-  ORACLE_MEMORY: "oracle-memory-hint-seen",
   FRONT_PAGE: "front-page-hint-seen",
   VTT_MODE: "vtt-mode-hint-seen",
   ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",

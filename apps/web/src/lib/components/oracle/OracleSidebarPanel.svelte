@@ -13,15 +13,14 @@
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
+  import FeatureHint from "../help/FeatureHint.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
-  let showHint = $state<"oracle-connection-modes" | "oracle-memory" | null>(
-    null,
-  );
+  let showHint = $state(false);
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
   let activityCount = $derived(discoveryPolicyStore.archiveActivityLog.length);
   let headerTitle = $derived(
@@ -35,15 +34,11 @@
   onMount(() => {
     void oracle.init();
 
-    // Show connection hint on first open, then memory hint on second open.
-    const hasSeenConnection = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
-    const hasSeenMemory = localStorage.getItem(HINT_KEYS.ORACLE_MEMORY);
-    if (!hasSeenConnection) {
-      showHint = "oracle-connection-modes";
+    // Show hint on first open
+    const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
+    if (!hasSeenHint) {
+      showHint = true;
       localStorage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
-    } else if (!hasSeenMemory) {
-      showHint = "oracle-memory";
-      localStorage.setItem(HINT_KEYS.ORACLE_MEMORY, "true");
     }
   });
 
@@ -168,6 +163,9 @@
   <!-- Chat Content -->
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
     {#if activeTab === "oracle"}
+      <div class="px-3 pt-2 shrink-0">
+        <FeatureHint hintId="oracle-memory" />
+      </div>
       <OracleChat
         onOpenSettings={() => {
           modalUIStore.openSettings();
@@ -183,12 +181,11 @@
 
   <!-- Feature Hint Modal -->
   {#if showHint}
-    {@const hint = FEATURE_HINTS[showHint]}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="absolute inset-0 bg-black/60 z-[70] flex items-center justify-center p-4"
-      onclick={() => (showHint = null)}
+      onclick={() => (showHint = false)}
     >
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -200,22 +197,24 @@
           <div
             class="w-8 h-8 rounded-full bg-theme-primary/20 flex items-center justify-center text-theme-primary shrink-0"
           >
-            <span class={hint.icon + " w-5 h-5"}></span>
+            <span
+              class={FEATURE_HINTS["oracle-connection-modes"].icon + " w-5 h-5"}
+            ></span>
           </div>
           <div class="flex-1">
             <h4
               class="text-sm font-bold text-theme-text uppercase font-header tracking-wider mb-1"
             >
-              {hint.title}
+              {FEATURE_HINTS["oracle-connection-modes"].title}
             </h4>
             <p class="text-xs text-theme-text/80 leading-relaxed">
-              {hint.content}
+              {FEATURE_HINTS["oracle-connection-modes"].content}
             </p>
           </div>
         </div>
         <button
           type="button"
-          onclick={() => (showHint = null)}
+          onclick={() => (showHint = false)}
           class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-primary/20 transition-colors"
         >
           Got It
