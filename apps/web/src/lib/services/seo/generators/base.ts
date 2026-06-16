@@ -468,7 +468,13 @@ export function getRandomItems<T>(
   count: number,
   rng: Rng = defaultRng,
 ): T[] {
-  const shuffled = [...arr].sort(() => 0.5 - rng());
+  // Fisher-Yates shuffle — unbiased and deterministic for a fixed rng sequence
+  // (a random `sort` comparator is non-transitive: biased and engine-dependent).
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   return shuffled.slice(0, count);
 }
 

@@ -31,6 +31,18 @@ describe("seo generators base — injectable RNG", () => {
     expect(first).toHaveLength(3);
   });
 
+  it("getRandomItems produces the exact Fisher-Yates result for a known rng", () => {
+    // rng() === 0 always → each swap picks index 0.
+    // [1,2,3,4,5] -> [5,2,3,4,1] -> [4,2,3,5,1] -> [3,2,4,5,1] -> [2,3,4,5,1]
+    expect(getRandomItems([1, 2, 3, 4, 5], 3, () => 0)).toEqual([2, 3, 4]);
+  });
+
+  it("getRandomItems keeps all elements (no loss/duplication)", () => {
+    const rng = seededRng([0.7, 0.2, 0.5, 0.9]);
+    const all = getRandomItems([1, 2, 3, 4, 5], 5, rng);
+    expect([...all].sort()).toEqual([1, 2, 3, 4, 5]);
+  });
+
   it("generateName is deterministic under a seeded rng", () => {
     // rng sequence: prefix idx, suffix idx, descriptor gate (>0.6 false), ...
     const rng = seededRng([0, 0, 0]);
