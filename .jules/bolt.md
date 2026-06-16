@@ -120,3 +120,8 @@
 ## 2025-02-12 - Imperative counting in reactive derived stores
 **Learning:** In Svelte `$derived` blocks, avoiding `.filter(...).length` and `.reduce(...)` allocations against large store properties (like `vault.allEntities`) prevents closure instantiations on every reactive loop execution. Using an imperative `for...of` loop tracking an inner counter is the most garbage-collection friendly method for these common counting operations.
 **Action:** Always replace `.reduce` loops inside derived counters that query `allEntities` with imperative loops to lower CPU bounds on hot rendering paths.
+
+## 2026-06-16 - [Performance Insight: Reuse store indexes instead of full mapping in components]
+
+**Learning:** Svelte components often recalculate full search indexes via `$derived` blocks, mapping over `Object.values(vault.entities)`. When `flatMap()` and `map()` are used inside these derived computations, they trigger multiple intermediate array allocations. Since the vault store already maintains a pre-calculated index incrementally (`titleAndAliasIndex`), redefining it inside component scope wastes significant GC cycles on large vaults.
+**Action:** Always favor retrieving pre-calculated, flat structures directly from the store (`vault.titleAndAliasIndex`) rather than running `Object.values(store.data).flatMap()` inside UI component `$derived` blocks. If shape mapping is strictly required, use an imperative loop to populate the final array structure.
