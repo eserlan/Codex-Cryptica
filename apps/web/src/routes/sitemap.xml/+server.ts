@@ -124,6 +124,10 @@ export async function GET() {
     "dnd-npc",
     "pantheon-generator",
     "god-generator",
+    "cyberpunk-megacorp",
+    "fantasy-guild",
+    "sci-fi-faction",
+    "wasteland-faction",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,

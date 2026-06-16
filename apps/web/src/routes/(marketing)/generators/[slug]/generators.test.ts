@@ -37,6 +37,10 @@ describe("Generators SvelteKit Route", () => {
         { slug: "dnd-npc" },
         { slug: "pantheon-generator" },
         { slug: "god-generator" },
+        { slug: "cyberpunk-megacorp" },
+        { slug: "fantasy-guild" },
+        { slug: "sci-fi-faction" },
+        { slug: "wasteland-faction" },
       ]);
     });
   });

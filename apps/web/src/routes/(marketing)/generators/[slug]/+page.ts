@@ -20,6 +20,10 @@ const validSlugs = new Set([
   "dnd-npc",
   "pantheon-generator",
   "god-generator",
+  "cyberpunk-megacorp",
+  "fantasy-guild",
+  "sci-fi-faction",
+  "wasteland-faction",
 ]);
 
 export const load: PageLoad = ({ params }) => {
@@ -43,7 +47,11 @@ export const load: PageLoad = ({ params }) => {
       | "fantasy-names"
       | "dnd-npc"
       | "pantheon-generator"
-      | "god-generator",
+      | "god-generator"
+      | "cyberpunk-megacorp"
+      | "fantasy-guild"
+      | "sci-fi-faction"
+      | "wasteland-faction",
   };
 };
 
@@ -65,5 +73,9 @@ export const entries: EntryGenerator = () => {
     { slug: "dnd-npc" },
     { slug: "pantheon-generator" },
     { slug: "god-generator" },
+    { slug: "cyberpunk-megacorp" },
+    { slug: "fantasy-guild" },
+    { slug: "sci-fi-faction" },
+    { slug: "wasteland-faction" },
   ];
 };
