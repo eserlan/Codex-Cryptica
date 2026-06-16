@@ -20,6 +20,8 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
+  const connectionHint = FEATURE_HINTS["oracle-connection-modes"];
+
   let showHint = $state(false);
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
   let activityCount = $derived(discoveryPolicyStore.archiveActivityLog.length);
@@ -197,18 +199,16 @@
           <div
             class="w-8 h-8 rounded-full bg-theme-primary/20 flex items-center justify-center text-theme-primary shrink-0"
           >
-            <span
-              class={FEATURE_HINTS["oracle-connection-modes"].icon + " w-5 h-5"}
-            ></span>
+            <span class={connectionHint.icon + " w-5 h-5"}></span>
           </div>
           <div class="flex-1">
             <h4
               class="text-sm font-bold text-theme-text uppercase font-header tracking-wider mb-1"
             >
-              {FEATURE_HINTS["oracle-connection-modes"].title}
+              {connectionHint.title}
             </h4>
             <p class="text-xs text-theme-text/80 leading-relaxed">
-              {FEATURE_HINTS["oracle-connection-modes"].content}
+              {connectionHint.content}
             </p>
           </div>
         </div>

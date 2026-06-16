@@ -23,14 +23,12 @@ export interface FeatureHint {
 }
 
 /**
- * LocalStorage keys for feature hints.
- * Used to track which hints the user has already seen.
+ * LocalStorage keys for hints that persist their "seen" state directly via
+ * LocalStorage (as opposed to `helpStore`). Add a key here only when wiring
+ * another such hint.
  */
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
-  FRONT_PAGE: "front-page-hint-seen",
-  VTT_MODE: "vtt-mode-hint-seen",
-  ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
 } as const;
 
