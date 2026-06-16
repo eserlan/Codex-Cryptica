@@ -1,5 +1,6 @@
 # Plan: Vault-Aware Generator Sessions → Gemini Interactions API
 
+> **Tracking issue:** [#1359](https://github.com/eserlan/Codex-Cryptica/issues/1359)
 > **ADR:** [019-generator-sessions-on-interactions-api](adr/019-generator-sessions-on-interactions-api.md)
 > **Builds on:** [ADR 018](adr/018-oracle-server-side-conversation-state.md) ·
 > [`docs/plan-oracle-interactions-api.md`](plan-oracle-interactions-api.md)
