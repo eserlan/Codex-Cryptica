@@ -121,7 +121,7 @@ export function draftToAcceptedEntity(
     id: entityId,
     title: draft.title,
     type: draft.entityType,
-    content: draft.lore,
+    content: draft.summary,
     lore: draft.lore,
     labels: draft.labels,
   };
@@ -191,6 +191,16 @@ export class GeneratorSession {
     const entryId = `generator-accepted:${entityId}`;
     this.acceptedEntries.delete(entryId);
     this.tracker.evict(entryId);
+  }
+
+  /**
+   * Reset only the server-side interaction tracking (previous id + sent-lore
+   * hashes) while keeping accepted entities, so an expired-id replay re-sends
+   * all accumulated session lore instead of losing it. Used on retention replay.
+   */
+  resetInteractionState(): void {
+    this.previousInteractionId = null;
+    this.tracker.reset();
   }
 
   reset(): void {

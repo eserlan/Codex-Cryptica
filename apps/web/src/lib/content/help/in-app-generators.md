@@ -19,7 +19,7 @@ The **Campaign Generators** let you create NPCs, factions, settlements, and magi
 
 1. Pick a generator type: **NPC**, **Faction**, **Settlement**, or **Magic Item**.
 2. Adjust any available options (race, type, rarity, etc.).
-3. Click **Generate** to produce a draft. No AI key is required — all generators run locally.
+3. Click **Generate** to produce a draft. With AI enabled, the Oracle writes the draft for you; if AI is unavailable or turned off, generators fall back to a built-in local template — so you always get a result, no AI key required.
 
 ### Reviewing and Saving
 
@@ -37,4 +37,4 @@ When the generator is opened from an entity's detail panel, it automatically inc
 
 ### Privacy
 
-All generation runs locally on your device. No content is sent to any server during the generation step.
+When AI generation is enabled, your instruction plus a small, bounded slice of relevant lore (the source entity and its immediate neighbours) is sent to the Lore Oracle to write the draft — your **full vault is never sent**. If you use the free system proxy, that chat context is briefly retained server-side to power Oracle Memory and then expires (see the Oracle Memory help). Prefer to keep everything on your device? Turn AI off (or use a custom API key): generators then run entirely locally from built-in templates, and no content leaves your device.

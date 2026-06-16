@@ -44,6 +44,20 @@ describe("GeneratorSessionManager", () => {
     ).toBeNull();
   });
 
+  it("unsubscribes from the bus when disabled", () => {
+    const unsubscribe = vi.fn();
+    const bus = { subscribe: vi.fn(() => unsubscribe) };
+    const manager = new GeneratorSessionManager(bus);
+
+    manager.setEnabled(true);
+    manager.setEnabled(false);
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+
+    // Re-enabling cleanly re-subscribes.
+    manager.setEnabled(true);
+    expect(bus.subscribe).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps recent prompt metrics in memory and clears them on reset", () => {
     const manager = new GeneratorSessionManager();
 

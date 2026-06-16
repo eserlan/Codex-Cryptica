@@ -135,6 +135,30 @@ describe("GeneratorSession", () => {
     expect(turn.input).not.toContain("Captain Orra");
     expect(turn.sentLoreCount).toBe(loreEntries.length);
   });
+
+  it("resetInteractionState keeps accepted entities and re-sends them on replay", () => {
+    const session = new GeneratorSession();
+    const loreEntries = buildGeneratorLoreEntries(context());
+    session.commitTurn("interaction-1", loreEntries);
+    session.commitAcceptedEntity({
+      id: "accepted-1",
+      title: "Captain Orra",
+      type: "character",
+      lore: "Accepted into the campaign.",
+    });
+
+    // Retention replay: drop interaction tracking but keep accepted entities.
+    session.resetInteractionState();
+    const turn = session.prepareTurn({
+      instruction: "Replay after expiry.",
+      loreEntries,
+    });
+
+    expect(turn.previousInteractionId).toBeNull();
+    // Accepted entity survives and is re-sent (tracker was reset → counted new).
+    expect(turn.input).toContain("Captain Orra");
+    expect(turn.sentLoreCount).toBe(loreEntries.length + 1);
+  });
 });
 
 describe("buildGeneratorSessionInput", () => {

@@ -296,7 +296,7 @@ export class CampaignGeneratorService {
       draft.entityType,
       draft.title,
       {
-        content: draft.lore,
+        content: draft.summary,
         lore: draft.lore,
         labels: draft.labels,
       },

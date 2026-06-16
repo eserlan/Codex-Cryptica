@@ -36,6 +36,9 @@ export class GeneratorSessionManager {
       this.registerInvalidation();
       return;
     }
+    // Tear down the subscription so it doesn't keep firing while disabled and
+    // can be cleanly re-registered if re-enabled.
+    this.destroy();
     this.reset();
   }
 
@@ -51,7 +54,9 @@ export class GeneratorSessionManager {
   }
 
   commitInteraction(interactionId: string, replayed = false): void {
-    if (replayed) this.session.reset();
+    // On a retention replay, drop only the interaction tracking (id + sent-lore
+    // hashes) — keep accepted entities so they thread into subsequent turns.
+    if (replayed) this.session.resetInteractionState();
     this.session.commitTurn(interactionId, this.activeLoreEntries);
   }
 
