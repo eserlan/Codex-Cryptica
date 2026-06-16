@@ -28,6 +28,15 @@ PublicGeneratorOutput` for **4** types only (npc, faction, settlement,
   magic-item), local-only (`useAI:false`), and sets `content: draft.summary`
   (lossy — drops the rich SEO body). **No page imports it yet.**
 
+## Confirmed decisions (2026-06-17)
+
+- **Theme taxonomy:** port the rich SEO content-theme data (Classic Fantasy,
+  Cyberpunk / Corporate, Vampire / Gothic Noir, …) into `generator-engine` as
+  canonical; map the vault `themeId` onto it. Preserves all public-page richness.
+- **Cadence:** one generator type per PR, end-to-end (expand → migrate page →
+  port tests → delete SEO source), each verified in-app before the next. NPC
+  first. Phase 0 (shared output + adapters) already merged onto the branch.
+
 ## Blocker resolution (decisions)
 
 1. **Output shape.** Extend the package `GeneratorOutput` with an optional

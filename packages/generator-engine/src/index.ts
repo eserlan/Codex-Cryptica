@@ -23,6 +23,18 @@ export {
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
+  buildNpcPrompt,
+  parseNpcResponse,
+  generateNpcLocal,
+  injectDndNpcQuickStats,
+  npcConfig,
+  npcThemeConfig,
+  BANNED_NAMES,
+  NAME_BAN_PROMPT,
+  type NpcGeneratorOptions,
+  type NpcPrompt,
+} from "./public-npc";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
