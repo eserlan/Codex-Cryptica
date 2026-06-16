@@ -48,13 +48,41 @@ describe("DriveRestClient (injected fetcher)", () => {
   it("sends the auth header and never touches the global fetch", async () => {
     const globalFetch = vi.fn();
     vi.stubGlobal("fetch", globalFetch);
+    try {
+      const fetcher = vi.fn().mockResolvedValue(ok({ files: [{ id: "x" }] }));
+
+      await new DriveRestClient(fetcher as any).findOrCreateFolder("tok", "V");
+
+      const init = fetcher.mock.calls[0][1];
+      expect(init.headers.Authorization).toBe("Bearer tok");
+      expect(globalFetch).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("escapes single quotes in folder names so the query stays valid", async () => {
     const fetcher = vi.fn().mockResolvedValue(ok({ files: [{ id: "x" }] }));
+    await new DriveRestClient(fetcher as any).findOrCreateFolder(
+      "tok",
+      "O'Reilly",
+    );
+    const url = String(fetcher.mock.calls[0][0]);
+    // encoded `name='O\'Reilly'` — the apostrophe is backslash-escaped.
+    expect(decodeURIComponent(url)).toContain("name='O\\'Reilly'");
+  });
 
-    await new DriveRestClient(fetcher as any).findOrCreateFolder("tok", "V");
+  it("getFolderMetadataResponse hits the file endpoint via the injected fetcher", async () => {
+    const response = ok({ id: "f", name: "F", trashed: false });
+    const fetcher = vi.fn().mockResolvedValue(response);
 
-    const init = fetcher.mock.calls[0][1];
-    expect(init.headers.Authorization).toBe("Bearer tok");
-    expect(globalFetch).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
+    const res = await new DriveRestClient(
+      fetcher as any,
+    ).getFolderMetadataResponse("tok", "folder-1");
+
+    expect(res).toBe(response);
+    const [url, init] = fetcher.mock.calls[0];
+    expect(String(url)).toContain("/files/folder-1?fields=id,name,trashed");
+    expect((init as any).headers.Authorization).toBe("Bearer tok");
   });
 });

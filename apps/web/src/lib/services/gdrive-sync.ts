@@ -53,6 +53,15 @@ export class DriveRestClient {
     return { Authorization: `Bearer ${token}` };
   }
 
+  /**
+   * Escapes a value for safe interpolation inside a single-quoted Drive query
+   * term. Without this, names containing `'` (e.g. "O'Reilly") produce an
+   * invalid query and fail to match existing folders (creating duplicates).
+   */
+  private escapeQueryValue(value: string): string {
+    return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  }
+
   async findOrCreateFolder(
     token: string,
     name: string,
@@ -61,7 +70,7 @@ export class DriveRestClient {
     const parentClause = parentId
       ? `'${parentId}' in parents`
       : `'root' in parents`;
-    const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`;
+    const query = `name='${this.escapeQueryValue(name)}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`;
     const searchRes = await this.fetcher(
       `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id)`,
       { headers: this.authHeaders(token) },
