@@ -40,10 +40,11 @@ PublicGeneratorOutput` for **4** types only (npc, faction, settlement,
 ## Blocker resolution (decisions)
 
 1. **Output shape.** Extend the package `GeneratorOutput` with an optional
-   `content?: string` rich body (and let `mapOutputToDraft` populate it from
-   `lore`/`unmappedDetails` when absent). `PublicGeneratorOutput` then maps
-   `content` straight through instead of aliasing `summary`. Keep `type`/`status`
-   in the adapter layer (public-only concerns), not in the core type.
+   `content?: string` rich body, carried through `mapOutputToDraft`. The public
+   adapter (`toPublic`) then renders `content`, falling back to the first
+   non-blank of `lore` then `summary` (so an empty `content` never yields a
+   blank body) instead of aliasing `summary`. Keep `type`/`status` in the
+   adapter layer (public-only concerns), not in the core type.
 2. **Option richness.** Expand each migrated generator's
    `GeneratorOptionDefinition[]` + local tables to cover the SEO option surface
    (e.g. npc: race, role, alignment, trait, secret, motive, faction, plotHook,

@@ -24,6 +24,14 @@ export interface PublicGeneratorOutput {
   status: "active" | "draft";
 }
 
+/** First non-blank value, or the last one if all are blank. */
+function firstNonBlank(...values: Array<string | undefined>): string {
+  for (const v of values) {
+    if (v && v.trim()) return v;
+  }
+  return values[values.length - 1] ?? "";
+}
+
 function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
   return {
     type: draft.entityType,
@@ -31,7 +39,8 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     summary: draft.summary,
     // Prefer the rich body; fall back to lore, then the one-line summary, so the
     // public page always renders a full body even for local-only generators.
-    content: draft.content ?? draft.lore ?? draft.summary,
+    // Uses a non-blank check so an empty-string `content` still falls back.
+    content: firstNonBlank(draft.content, draft.lore, draft.summary),
     lore: draft.lore,
     labels: [...(draft.labels ?? [])],
     status: "active",
