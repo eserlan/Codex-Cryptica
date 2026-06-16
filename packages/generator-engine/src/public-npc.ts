@@ -1,12 +1,94 @@
-import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
-import { NAME_BAN_PROMPT } from "./banned-names";
-import { getSessionContext } from "./session-context";
-import {
-  type GeneratorOutput,
-  generateName,
-  pickFrom,
-  getRandomItems,
-} from "./base";
+/**
+ * Public NPC generator — framework-free port of the SEO NPC generator
+ * (`apps/web/src/lib/services/seo/generators/npc.ts`). Owns the rich,
+ * theme-keyed content data, the local fallback generator, the AI prompt
+ * builder, and response parsing.
+ *
+ * Per the unification plan (#1351) this package stays framework-free: it does
+ * NOT call the AI client or read `sessionStorage`. The web page builds the
+ * prompt here, runs it through `aiClientManager`, parses with {@link
+ * parseNpcResponse}, and falls back to {@link generateNpcLocal} on failure.
+ * Session context (from the Session Hub) is injected as a plain string.
+ */
+
+import type { PublicGeneratorOutput } from "./public-generator-adapters";
+
+/** Random source in [0,1) — injectable for deterministic tests. */
+export type Rng = () => number;
+const defaultRng: Rng = () => Math.random();
+
+function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function getRandomItems<T>(
+  arr: readonly T[],
+  count: number,
+  rng: Rng = defaultRng,
+): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
+
+function generateName(rng: Rng = defaultRng): string {
+  const prefixes = [
+    "Ael",
+    "Bran",
+    "Cael",
+    "Dax",
+    "Kael",
+    "Morg",
+    "Thor",
+    "Vael",
+  ];
+  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
+  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Banned names (ported from seo/generators/banned-names.ts)
+// ---------------------------------------------------------------------------
+
+export const BANNED_NAMES = [
+  "Vane",
+  "Elara",
+  "Valerius",
+  "Kael",
+  "Kaelen",
+  "Theron",
+  "Zara",
+  "Aldric",
+  "Kane",
+  "Drake",
+  "Maren",
+  "Cross",
+  "Vale",
+  "Stone",
+  "Grey",
+  "Ash",
+  "Cole",
+  "Thorne",
+  "Voss",
+  "Julian",
+  "Julianne",
+  "Halloway",
+  "Oakhaven",
+  "Oakhollow",
+  "Millbrook",
+  "Riverdale",
+] as const;
+
+export const NAME_BAN_PROMPT =
+  `Names must never include: ${BANNED_NAMES.join(", ")}. ` +
+  `Avoid all similar generic fantasy placeholders and common English monosyllable surnames.`;
+
+// ---------------------------------------------------------------------------
+// Theme-keyed content data (ported from seo npc.ts)
+// ---------------------------------------------------------------------------
 
 export const npcConfig = {
   races: [
@@ -86,6 +168,12 @@ export const npcConfig = {
     "They own a clue that reframes a recent villain as someone else's pawn.",
   ],
 };
+
+interface MoralityAnchor {
+  id: string;
+  label: string;
+  aiPromptDirective: string;
+}
 
 export const npcThemeConfig = {
   ancestries: {
@@ -420,11 +508,35 @@ export const npcThemeConfig = {
           "Write this character with a resilient, hopeful, and idealistic tone. Despite the harsh wasteland environment, they emphasize laws, education, historical recovery, and long-term societal rebuilding.",
       },
     ],
-  } as Record<
-    string,
-    { id: string; label: string; aiPromptDirective: string }[]
-  >,
+  } as Record<string, MoralityAnchor[]>,
 };
+
+const NPC_THEME_VOICE: Record<string, string> = {
+  "Classic Fantasy":
+    "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+  "Cyberpunk / Corporate":
+    "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
+  "Vampire / Gothic Noir":
+    "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
+  "Sci-Fi / Space Opera":
+    "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
+  "Modern Conspiracy":
+    "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
+  "Post-Apocalyptic":
+    "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+};
+
+const NPC_NAMING_STYLES = [
+  "Give the NPC a name that sounds distinctly local to their culture — not generic fantasy.",
+  `Use a name with unusual phonetic texture. ${NAME_BAN_PROMPT}`,
+  "Give the NPC a short epithet or title that hints at their reputation — invent an original one, do not reuse common examples.",
+  "Use a name that suggests a specific cultural or ethnic origin consistent with their ancestry.",
+  "Choose a name that is easy to say aloud at a gaming table — short, distinct, memorable, and not a common English surname.",
+];
+
+// ---------------------------------------------------------------------------
+// D&D quick stats
+// ---------------------------------------------------------------------------
 
 const dndNpcQuickStatsByRole: Record<
   string,
@@ -451,7 +563,7 @@ function getDndNpcQuickStats(role: string) {
   );
 }
 
-function injectDndNpcQuickStats(lore: string, role: string) {
+export function injectDndNpcQuickStats(lore: string, role: string): string {
   const { archetype, tableRating } = getDndNpcQuickStats(role);
   const quickStats = `- **Class / Archetype**: ${archetype}
 - **Table Rating**: ${tableRating}`;
@@ -472,66 +584,76 @@ ${lore}`.trim();
   );
 }
 
-export async function generateNPC(
-  clientManager: DefaultAIClientManager,
-  options: {
-    race?: string;
-    ancestry?: string;
-    role?: string;
-    alignment?: string;
-    campaignContext?: string;
-    theme?: string;
-    includeDndQuickStats?: boolean;
-    useAI?: boolean;
-  } = {},
-): Promise<GeneratorOutput> {
-  const theme = options.theme;
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export interface NpcGeneratorOptions {
+  race?: string;
+  ancestry?: string;
+  role?: string;
+  alignment?: string;
+  campaignContext?: string;
+  theme?: string;
+  includeDndQuickStats?: boolean;
+}
+
+/** Resolved inputs shared by the prompt builder and the local fallback. */
+interface ResolvedNpc {
+  race: string;
+  role: string;
+  alignment: string;
+  campaignContext?: string;
+  theme?: string;
+  name: string;
+  moralityAnchor?: MoralityAnchor;
+}
+
+function resolveNpc(options: NpcGeneratorOptions, rng: Rng): ResolvedNpc {
   const race =
-    options.ancestry ||
-    options.race ||
-    npcConfig.races[Math.floor(Math.random() * npcConfig.races.length)];
-  const role =
-    options.role ||
-    npcConfig.roles[Math.floor(Math.random() * npcConfig.roles.length)];
-  const alignment =
-    options.alignment ||
-    npcConfig.alignments[
-      Math.floor(Math.random() * npcConfig.alignments.length)
-    ];
-  const campaignContext = options.campaignContext?.trim();
-  const name = generateName();
+    options.ancestry || options.race || pickFrom(npcConfig.races, rng);
+  const role = options.role || pickFrom(npcConfig.roles, rng);
+  const alignment = options.alignment || pickFrom(npcConfig.alignments, rng);
+  const moralityAnchor = options.theme
+    ? npcThemeConfig.moralities[options.theme]?.find((m) => m.id === alignment)
+    : undefined;
+  return {
+    race,
+    role,
+    alignment,
+    campaignContext: options.campaignContext?.trim() || undefined,
+    theme: options.theme,
+    name: generateName(rng),
+    moralityAnchor,
+  };
+}
 
-  const npcNamingStyles = [
-    "Give the NPC a name that sounds distinctly local to their culture — not generic fantasy.",
-    `Use a name with unusual phonetic texture. ${NAME_BAN_PROMPT}`,
-    "Give the NPC a short epithet or title that hints at their reputation — invent an original one, do not reuse common examples.",
-    "Use a name that suggests a specific cultural or ethnic origin consistent with their ancestry.",
-    "Choose a name that is easy to say aloud at a gaming table — short, distinct, memorable, and not a common English surname.",
-  ];
-  const chosenNamingStyle = pickFrom(npcNamingStyles);
-  const varianceSeed = Math.floor(Math.random() * 99991) + 10;
+export interface NpcPrompt {
+  systemInstruction: string;
+  userMessage: string;
+  /** Resolved inputs, so the caller can pass them to {@link parseNpcResponse}. */
+  resolved: ResolvedNpc;
+}
 
-  if (options.useAI !== false) {
-    try {
-      const npcThemeVoice: Record<string, string> = {
-        "Classic Fantasy":
-          "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
-        "Cyberpunk / Corporate":
-          "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
-        "Vampire / Gothic Noir":
-          "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
-        "Sci-Fi / Space Opera":
-          "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
-        "Modern Conspiracy":
-          "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
-        "Post-Apocalyptic":
-          "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
-      };
-      const voice = theme
-        ? (npcThemeVoice[theme] ?? "tabletop RPG")
-        : "tabletop RPG";
+/**
+ * Build the AI prompt for an NPC. `sessionContext` is the Session Hub fragment
+ * (built web-side from sessionStorage); pass "" when none.
+ */
+export function buildNpcPrompt(
+  options: NpcGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): NpcPrompt {
+  const resolved = resolveNpc(options, rng);
+  const { race, role, theme, campaignContext, moralityAnchor, alignment } =
+    resolved;
+  const voice = theme
+    ? (NPC_THEME_VOICE[theme] ?? "tabletop RPG")
+    : "tabletop RPG";
+  const chosenNamingStyle = pickFrom(NPC_NAMING_STYLES, rng);
+  const varianceSeed = Math.floor(rng() * 99991) + 10;
 
-      const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original NPC drafts for that setting in JSON format.
+  const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original NPC drafts for that setting in JSON format.
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
@@ -545,18 +667,14 @@ OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 QUALITY RULES:
 - Every NPC must feel like a completely different person — avoid repeating names, archetypes, or backstory structures.
 - ${NAME_BAN_PROMPT}
-${getSessionContext()}
+${sessionContext}
 - The secret should be genuinely surprising and table-usable, not a generic "dark past."
 - Before finalising, silently check for: name not on the forbidden list; secret is genuinely surprising and not contradicted by the stated role or faction connection; all four content sections are internally consistent (what they want should explain why they are useful; their secret should reframe who they are). Rewrite any section where a contradiction exists.`;
 
-      const moralityAnchor = theme
-        ? npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
-        : undefined;
-      const behavioralDirective =
-        moralityAnchor?.aiPromptDirective ?? alignment;
-      const moralityLabel = moralityAnchor?.label ?? alignment;
+  const behavioralDirective = moralityAnchor?.aiPromptDirective ?? alignment;
+  const moralityLabel = moralityAnchor?.label ?? alignment;
 
-      const userMessage = `Generate an NPC. Variation seed: ${varianceSeed}.
+  const userMessage = `Generate an NPC. Variation seed: ${varianceSeed}.
 ${theme ? `- Genre/Theme: ${theme}` : ""}
 - Ancestry/Race: ${race}
 - Role: ${role}
@@ -564,55 +682,59 @@ ${theme ? `- Genre/Theme: ${theme}` : ""}
 - Behavioral Directive: ${behavioralDirective}${campaignContext ? `\n- Campaign Context: ${campaignContext}` : ""}
 - Naming Directive: ${chosenNamingStyle}`;
 
-      const model = await clientManager.getModel(
-        "",
-        "gemini-3.1-flash-lite",
-        systemInstruction,
-      );
-      const response = await model.generateContent(userMessage);
-      const text = response.response.text().trim();
-      const cleanText = text
-        .replace(/^```json\s*/i, "")
-        .replace(/```$/, "")
-        .trim();
-      const data = JSON.parse(cleanText);
+  return { systemInstruction, userMessage, resolved };
+}
 
-      return {
-        type: "character",
-        title: data.title || name,
-        summary:
-          data.summary ||
-          `A ${(moralityAnchor?.label ?? alignment).toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
-        content: data.content || "",
-        lore: options.includeDndQuickStats
-          ? injectDndNpcQuickStats(data.lore || "", role)
-          : data.lore || "",
-        labels: Array.isArray(data.labels)
-          ? data.labels
-          : ["rpg-character", "npc-generator", "imported-draft"],
-        status: "active",
-      };
-    } catch (err) {
-      console.warn("AI generation failed, falling back to local tables:", err);
-    }
-  }
+/**
+ * Parse the AI's JSON response into a {@link PublicGeneratorOutput}. Tolerates
+ * markdown code fences. Throws on invalid JSON so the caller can fall back to
+ * {@link generateNpcLocal}.
+ */
+export function parseNpcResponse(
+  text: string,
+  options: NpcGeneratorOptions,
+  resolved: ResolvedNpc,
+): PublicGeneratorOutput {
+  const cleanText = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  const data = JSON.parse(cleanText);
+  const { race, role, name, moralityAnchor, alignment } = resolved;
 
-  // Local fallback
-  const traits = getRandomItems(npcConfig.traits, 2);
-  const secret =
-    npcConfig.secrets[Math.floor(Math.random() * npcConfig.secrets.length)];
-  const motive =
-    npcConfig.motives[Math.floor(Math.random() * npcConfig.motives.length)];
-  const faction =
-    npcConfig.factions[Math.floor(Math.random() * npcConfig.factions.length)];
-  const plotHook =
-    npcConfig.plotHooks[Math.floor(Math.random() * npcConfig.plotHooks.length)];
+  return {
+    type: "character",
+    title: data.title || name,
+    summary:
+      data.summary ||
+      `A ${(moralityAnchor?.label ?? alignment).toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
+    content: data.content || "",
+    lore: options.includeDndQuickStats
+      ? injectDndNpcQuickStats(data.lore || "", role)
+      : data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-character", "npc-generator", "imported-draft"],
+    status: "active",
+  };
+}
 
-  const fallbackMoralityLabel = theme
-    ? (npcThemeConfig.moralities[theme]?.find((m) => m.id === alignment)
-        ?.label ?? alignment)
-    : alignment;
-  const summary = `A ${fallbackMoralityLabel.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`;
+/** Local, AI-free NPC generator — the fallback when AI is unavailable. */
+export function generateNpcLocal(
+  options: NpcGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const resolved = resolveNpc(options, rng);
+  const { race, role, name, campaignContext, moralityAnchor, alignment } =
+    resolved;
+
+  const traits = getRandomItems(npcConfig.traits, 2, rng);
+  const secret = pickFrom(npcConfig.secrets, rng);
+  const motive = pickFrom(npcConfig.motives, rng);
+  const faction = pickFrom(npcConfig.factions, rng);
+  const plotHook = pickFrom(npcConfig.plotHooks, rng);
+  const moralityLabel = moralityAnchor?.label ?? alignment;
 
   const content = `### Who they are
 ${name} is a ${race} ${role} whose public reputation is useful, incomplete, and just suspicious enough to matter. Locals know them as someone who gets results, even when the work requires favors, secrets, or a carefully timed lie.${campaignContext ? ` In ${campaignContext}, they are already entangled in the edges of the main conflict.` : ""}
@@ -629,7 +751,7 @@ Introduce ${name} when the party needs a social lead, a compromised witness, or 
   const lore = `### At a Glance
 - **Ancestry**: ${race}
 - **Role**: ${role}
-- **Moral Stance**: ${fallbackMoralityLabel}
+- **Moral Stance**: ${moralityLabel}
 - **Secret**: ${secret}
 - **Immediate Hook**: ${plotHook}
 
@@ -643,7 +765,7 @@ ${faction}`;
   return {
     type: "character",
     title: name,
-    summary,
+    summary: `A ${moralityLabel.toLowerCase()} ${race.toLowerCase()} ${role.toLowerCase()} with something to hide.`,
     content,
     lore: options.includeDndQuickStats
       ? injectDndNpcQuickStats(lore, role)

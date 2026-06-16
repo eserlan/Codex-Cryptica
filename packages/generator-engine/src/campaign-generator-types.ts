@@ -50,6 +50,12 @@ export interface GeneratorOutput {
   summary: string;
   lore: string;
   labels: string[];
+  /**
+   * Rich, fully-rendered body for public/SEO surfaces. Distinct from {@link
+   * summary} (one sentence) and {@link lore} (vault markdown). When absent,
+   * consumers should fall back to `lore`.
+   */
+  content?: string;
   /** Proposed relationships to existing entities (by exact title). */
   connections?: SuggestedConnection[];
   /** Generated details that do not map onto a known template heading. */
@@ -131,6 +137,8 @@ export interface GeneratedDraft {
   summary: string;
   lore: string;
   labels: string[];
+  /** Rich public/SEO body carried through from {@link GeneratorOutput.content}. */
+  content?: string;
   sourceGeneratorId: GeneratorId;
   sourceEntityId?: string;
   relationshipLabel?: string;

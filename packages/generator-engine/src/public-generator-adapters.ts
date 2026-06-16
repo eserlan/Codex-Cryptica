@@ -24,12 +24,23 @@ export interface PublicGeneratorOutput {
   status: "active" | "draft";
 }
 
+/** First non-blank value, or the last one if all are blank. */
+function firstNonBlank(...values: Array<string | undefined>): string {
+  for (const v of values) {
+    if (v && v.trim()) return v;
+  }
+  return values[values.length - 1] ?? "";
+}
+
 function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
   return {
     type: draft.entityType,
     title: draft.title,
     summary: draft.summary,
-    content: draft.summary,
+    // Prefer the rich body; fall back to lore, then the one-line summary, so the
+    // public page always renders a full body even for local-only generators.
+    // Uses a non-blank check so an empty-string `content` still falls back.
+    content: firstNonBlank(draft.content, draft.lore, draft.summary),
     lore: draft.lore,
     labels: [...(draft.labels ?? [])],
     status: "active",
@@ -81,5 +92,29 @@ export function adaptMagicItem(
 ): PublicGeneratorOutput {
   const gen = getGenerator("magic-item");
   const req = baseReq("magic-item", options, themeId);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
+}
+
+/** Generate an Event using the package's local generator. */
+export function adaptEvent(
+  options: Record<string, unknown> = {},
+  themeId?: string,
+): PublicGeneratorOutput {
+  const gen = getGenerator("event");
+  const req = baseReq("event", options, themeId);
+  return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
+}
+
+/**
+ * Generate a Vampire Clan. There is no dedicated `vampire` generator id; a
+ * vampire clan is a faction generated under the gothic vampire theme, matching
+ * the SEO `generateVampireClan` surface.
+ */
+export function adaptVampire(
+  options: Record<string, unknown> = {},
+  themeId = "vampire-gothic-noir",
+): PublicGeneratorOutput {
+  const gen = getGenerator("faction");
+  const req = baseReq("faction", options, themeId);
   return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
 }
