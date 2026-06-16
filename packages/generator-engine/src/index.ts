@@ -18,6 +18,8 @@ export {
   adaptFaction,
   adaptSettlement,
   adaptMagicItem,
+  adaptEvent,
+  adaptVampire,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {

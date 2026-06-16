@@ -72,6 +72,7 @@ function mapOutputToDraft(
       entityType: resolveEntityType(generatorId, availableIds),
       summary: output.summary,
       lore: output.lore,
+      content: output.content,
       labels: [...output.labels],
       sourceGeneratorId: generatorId,
       sourceEntityId: request.sourceEntityId,
