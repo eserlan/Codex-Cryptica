@@ -264,7 +264,7 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
   });
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
-  // vault.entities is available to both host and guest sessions (FR-011).
+  // vault.titleAndAliasIndex is available to both host and guest sessions (FR-011).
   // ⚡ Bolt Optimization: Use the pre-cached titleAndAliasIndex with an imperative loop
   // to avoid intermediate array allocations from Object.values().flatMap()
   const entityIndex = $derived.by<EntityIndexEntry[]>(() => {
