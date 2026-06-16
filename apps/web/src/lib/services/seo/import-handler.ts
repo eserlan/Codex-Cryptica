@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 export const ImportDraftSchema = z.object({
   type: z.enum([
@@ -25,6 +26,7 @@ export class SeoImportService {
   constructor(
     private vaultStore = vault,
     private registryStore = vaultRegistry,
+    private storage: StorageLike = browserStorage,
   ) {}
 
   /**
@@ -42,7 +44,7 @@ export class SeoImportService {
       window.history.replaceState({}, document.title, cleanUrl);
     }
 
-    const payload = localStorage.getItem("__codex_pending_import");
+    const payload = this.storage.getItem("__codex_pending_import");
     if (!payload) {
       return null;
     }
@@ -59,7 +61,7 @@ export class SeoImportService {
       }
 
       if (drafts.length === 0) {
-        localStorage.removeItem("__codex_pending_import");
+        this.storage.removeItem("__codex_pending_import");
         return null;
       }
 
@@ -129,7 +131,7 @@ export class SeoImportService {
         // Remove only after all creates attempted — if we fail mid-loop the
         // user at least gets the entities that succeeded; clear to prevent
         // double-import on any subsequent load.
-        localStorage.removeItem("__codex_pending_import");
+        this.storage.removeItem("__codex_pending_import");
       }
 
       // Wire [[wiki links]] between imported entities
@@ -164,7 +166,7 @@ export class SeoImportService {
       return lastImportedId;
     } catch (err) {
       console.error("Failed to parse and import pending SEO draft:", err);
-      localStorage.removeItem("__codex_pending_import");
+      this.storage.removeItem("__codex_pending_import");
       return null;
     }
   }
