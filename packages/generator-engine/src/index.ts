@@ -35,6 +35,14 @@ export {
   type NpcPrompt,
 } from "./public-npc";
 export {
+  buildMagicItemPrompt,
+  parseMagicItemResponse,
+  generateMagicItemLocal,
+  magicItemConfig,
+  type MagicItemGeneratorOptions,
+  type MagicItemPrompt,
+} from "./public-magic-item";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
