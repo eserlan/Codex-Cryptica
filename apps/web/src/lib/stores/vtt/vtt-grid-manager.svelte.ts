@@ -1,5 +1,6 @@
 import { type mapStore } from "../map.svelte";
 import type { VTTMessage } from "../../../types/vtt";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const GRID_MEASURE_PREFIX = "codex.vtt.grid-measure";
 
@@ -8,6 +9,8 @@ export interface VTTGridManagerDependencies {
   getMapId: () => string | null;
   emit: (message: VTTMessage) => void;
   persistDraft: () => void;
+  /** Optional injectable storage; defaults to the SSR-safe browserStorage. */
+  storage?: StorageLike;
 }
 
 export class VTTGridManager {
@@ -19,12 +22,14 @@ export class VTTGridManager {
 
   constructor(private deps: VTTGridManagerDependencies) {}
 
+  private get storage(): StorageLike {
+    return this.deps.storage ?? browserStorage;
+  }
+
   loadGridMeasure(mapId: string) {
     if (typeof window === "undefined") return;
     try {
-      const raw = window.localStorage.getItem(
-        `${GRID_MEASURE_PREFIX}:${mapId}`,
-      );
+      const raw = this.storage.getItem(`${GRID_MEASURE_PREFIX}:${mapId}`);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (typeof parsed.gridUnit === "string") this.gridUnit = parsed.gridUnit;
@@ -38,7 +43,7 @@ export class VTTGridManager {
   saveGridMeasure(mapId: string) {
     if (typeof window === "undefined") return;
     try {
-      window.localStorage.setItem(
+      this.storage.setItem(
         `${GRID_MEASURE_PREFIX}:${mapId}`,
         JSON.stringify({
           gridUnit: this.gridUnit,
