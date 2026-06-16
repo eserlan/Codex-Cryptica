@@ -50,6 +50,26 @@ export async function GET() {
       priority: "0.8",
     },
     {
+      path: "/tools/cyberpunk-megacorp-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/fantasy-guild-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/sci-fi-faction-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
+      path: "/tools/wasteland-faction-generator",
+      changefreq: "monthly",
+      priority: "0.8",
+    },
+    {
       path: "/tools/quest-hook-generator",
       changefreq: "monthly",
       priority: "0.8",
@@ -104,6 +124,10 @@ export async function GET() {
     "dnd-npc",
     "pantheon-generator",
     "god-generator",
+    "cyberpunk-megacorp",
+    "fantasy-guild",
+    "sci-fi-faction",
+    "wasteland-faction",
     "random",
   ].map((slug) => ({
     path: `/generators/${slug}`,

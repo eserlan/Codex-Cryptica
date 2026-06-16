@@ -64,7 +64,6 @@
   eyebrow="D&D NPC Generator"
   introTitle="D&D NPC Generator"
   introText="Create NPCs with secrets, faction ties, and table-ready hooks. Works without login, then imports into your local Codex vault."
-  worldTheme="fantasy"
   {relatedLinks}
   {faqs}
   {generate}

@@ -24,19 +24,19 @@ export class GuestVaultHandler extends BaseHandler<GuestHandlerContext> {
     const { callbacks } = context;
     switch (message.type) {
       case "GRAPH_SYNC":
-        callbacks.onGraphData((message as any).payload);
+        callbacks.onGraphData(message.payload);
         return;
       case "ENTITY_UPDATE":
-        callbacks.onEntityUpdate((message as any).payload);
+        callbacks.onEntityUpdate(message.payload);
         return;
       case "ENTITY_BATCH_UPDATE":
-        callbacks.onBatchUpdate((message as any).payload);
+        callbacks.onBatchUpdate(message.payload);
         return;
       case "ENTITY_DELETE":
-        callbacks.onEntityDelete((message as any).payload);
+        callbacks.onEntityDelete(message.payload);
         return;
       case "THEME_UPDATE":
-        callbacks.onThemeUpdate((message as any).payload);
+        callbacks.onThemeUpdate(message.payload);
         return;
     }
   }
