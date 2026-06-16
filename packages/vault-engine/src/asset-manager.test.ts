@@ -121,6 +121,25 @@ describe("AssetManager", () => {
       expect(result).toBe("blob:mock-url");
     });
 
+    it("uses the injected fetcher for external URLs (no global fetch)", async () => {
+      const injected = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(["img"])),
+      });
+      const isolated = new AssetManager(mockIO, mockImageProcessor, injected);
+
+      // External https URL with no vault handle takes the fetcher path.
+      const result = await isolated.resolveImageUrl(
+        undefined,
+        "https://example.com/pic.png",
+      );
+
+      expect(injected).toHaveBeenCalledWith("https://example.com/pic.png", {
+        mode: "cors",
+      });
+      expect(result).toBe("blob:mock-url");
+    });
+
     it("should try fallback handle if file not in primary vault", async () => {
       mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not found"));
       mockIO.readOpfsBlob.mockResolvedValueOnce(new Blob(["fallback"]));
