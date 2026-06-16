@@ -7,7 +7,7 @@ import {
   type RandomIdeaCategory,
 } from "./random-idea";
 import type { DefaultGeneratorEngine } from "./generator-engine";
-import { factionConfig } from "./generators/faction";
+import { factionConfig } from "generator-engine";
 import { npcThemeConfig } from "generator-engine";
 import { socialHubConfig } from "./generators/social-hub";
 import { nationConfig } from "./generators/kingdom-nation";

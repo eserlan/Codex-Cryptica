@@ -35,6 +35,21 @@ export {
   type NpcPrompt,
 } from "./public-npc";
 export {
+  buildFactionPrompt,
+  parseFactionResponse,
+  generateFactionLocal,
+  buildVampirePrompt,
+  parseVampireResponse,
+  generateVampireLocal,
+  factionConfig,
+  themeIdToLabel,
+  vampireConfig,
+  type FactionGeneratorOptions,
+  type FactionPrompt,
+  type VampireGeneratorOptions,
+  type VampirePrompt,
+} from "./public-faction";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
