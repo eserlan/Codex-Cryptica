@@ -1,7 +1,41 @@
-import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
-import { NAME_BAN_PROMPT } from "./banned-names";
-import { getSessionContext } from "./session-context";
-import { type GeneratorOutput, generateName, pickFrom } from "./base";
+/**
+ * Public Faction + Vampire Clan generators — framework-free port of the SEO
+ * faction generator (`apps/web/src/lib/services/seo/generators/faction.ts`).
+ *
+ * Per the unification plan (#1351) this stays framework-free: no AI client, no
+ * sessionStorage. The web page builds the prompt here, runs it through
+ * aiClientManager, parses with the parse* helpers, and falls back to the
+ * generate*Local helpers on failure. Session context is injected as a string.
+ */
+
+import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import { NAME_BAN_PROMPT } from "./public-npc";
+
+export type Rng = () => number;
+const defaultRng: Rng = () => Math.random();
+
+function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function generateName(rng: Rng = defaultRng): string {
+  const prefixes = [
+    "Ael",
+    "Bran",
+    "Cael",
+    "Dax",
+    "Kael",
+    "Morg",
+    "Thor",
+    "Vael",
+  ];
+  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
+  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Config (ported verbatim from seo faction.ts)
+// ---------------------------------------------------------------------------
 
 export const factionConfig = {
   themes: [
@@ -144,7 +178,43 @@ export const vampireConfig = {
   ],
 };
 
-function factionBase(type: string): string {
+const FACTION_THEME_VOICE: Record<string, string> = {
+  "Classic Fantasy":
+    "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
+  "Cyberpunk / Corporate":
+    "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
+  "Vampire / Gothic Noir":
+    "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
+  "Sci-Fi / Space Opera":
+    "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
+  "Modern Conspiracy":
+    "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
+  "Post-Apocalyptic":
+    "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+};
+
+const FACTION_NAMING_STYLES = [
+  "Name this faction after a material, substance, or natural phenomenon twisted to their purpose.",
+  "Name this faction after an abstract concept, virtue, or doctrine — not a person or place.",
+  "Use a short stark one-word name or a tight two-word compound (e.g. 'The Writ', 'Iron Accord').",
+  "Base the faction name on a specific local landmark, street, district, or geographic feature.",
+  "Name the faction after their founding secret, hidden method, or signature act.",
+  "Use a name that sounds like a legitimate civic institution but carries a sinister undertone.",
+  "Name the faction after a historical event, failed uprising, or forgotten figure from the setting.",
+  "Give the faction a name derived from an unusual profession, trade, or craft.",
+  "Use an archaic or invented word that evokes the faction's cultural roots.",
+  "Name the faction after a symbol, emblem, or recurring motif associated with their work.",
+];
+
+const FACTION_NPC_NAMING_STYLES = [
+  "Give each NPC a name that sounds distinctly local — not generic fantasy.",
+  `Each NPC name should have an unusual phonetic texture. ${NAME_BAN_PROMPT}`,
+  "Give each NPC a short street name or title that hints at their role — invent an original one, do not reuse common examples.",
+  "Use names that suggest a specific cultural or ethnic origin consistent with the setting.",
+  "Each NPC should have a name that is easy to say aloud at a gaming table.",
+];
+
+function factionBase(type: string, rng: Rng = defaultRng): string {
   const map: Record<string, string[]> = {
     "Merchant Guild": [
       "A bonded counting house whose ledgers are sealed by city charter",
@@ -238,10 +308,11 @@ function factionBase(type: string): string {
       "A licensed premises that provides cover for activities conducted elsewhere",
       "A distributed network of locations with no single point of failure",
     ],
+    rng,
   );
 }
 
-function factionResource(type: string): string {
+function factionResource(type: string, rng: Rng = defaultRng): string {
   const map: Record<string, string[]> = {
     "Merchant Guild": [
       "Exclusive trade licences, bonded debts, and letters of introduction that open every city gate",
@@ -335,81 +406,64 @@ function factionResource(type: string): string {
       "A network of obligations, debts, and dependencies too entangled to cut cleanly",
       "Control of a single critical resource that everyone else needs to function",
     ],
+    rng,
   );
 }
 
-export async function generateFaction(
-  clientManager: DefaultAIClientManager,
-  options: {
-    type?: string;
-    scope?: string;
-    alignment?: string;
-    campaignContext?: string;
-    theme?: string;
-    useAI?: boolean;
-  } = {},
-): Promise<GeneratorOutput> {
-  const theme = options.theme || factionConfig.themes[0];
-  const factionType =
-    options.type ||
-    factionConfig.types[Math.floor(Math.random() * factionConfig.types.length)];
-  const scope =
-    options.scope ||
-    factionConfig.scopes[
-      Math.floor(Math.random() * factionConfig.scopes.length)
-    ];
-  const alignment =
-    options.alignment ||
-    factionConfig.alignments[
-      Math.floor(Math.random() * factionConfig.alignments.length)
-    ];
-  const campaignContext = options.campaignContext?.trim();
-  const name = `${generateName()} Compact`;
+// ---------------------------------------------------------------------------
+// Faction public API
+// ---------------------------------------------------------------------------
 
-  const namingStyles = [
-    "Name this faction after a material, substance, or natural phenomenon twisted to their purpose.",
-    "Name this faction after an abstract concept, virtue, or doctrine — not a person or place.",
-    "Use a short stark one-word name or a tight two-word compound (e.g. 'The Writ', 'Iron Accord').",
-    "Base the faction name on a specific local landmark, street, district, or geographic feature.",
-    "Name the faction after their founding secret, hidden method, or signature act.",
-    "Use a name that sounds like a legitimate civic institution but carries a sinister undertone.",
-    "Name the faction after a historical event, failed uprising, or forgotten figure from the setting.",
-    "Give the faction a name derived from an unusual profession, trade, or craft.",
-    "Use an archaic or invented word that evokes the faction's cultural roots.",
-    "Name the faction after a symbol, emblem, or recurring motif associated with their work.",
-  ];
-  const npcNamingStyles = [
-    "Give each NPC a name that sounds distinctly local — not generic fantasy.",
-    `Each NPC name should have an unusual phonetic texture. ${NAME_BAN_PROMPT}`,
-    "Give each NPC a short street name or title that hints at their role — invent an original one, do not reuse common examples.",
-    "Use names that suggest a specific cultural or ethnic origin consistent with the setting.",
-    "Each NPC should have a name that is easy to say aloud at a gaming table.",
-  ];
-  const chosenNamingStyle =
-    namingStyles[Math.floor(Math.random() * namingStyles.length)];
-  const chosenNpcStyle =
-    npcNamingStyles[Math.floor(Math.random() * npcNamingStyles.length)];
-  const varianceSeed = Math.floor(Math.random() * 99991) + 10;
+export interface FactionGeneratorOptions {
+  type?: string;
+  scope?: string;
+  alignment?: string;
+  campaignContext?: string;
+  theme?: string;
+}
 
-  if (options.useAI !== false) {
-    try {
-      const themeVoice: Record<string, string> = {
-        "Classic Fantasy":
-          "medieval fantasy — guilds, nobles, arcane orders, political intrigue in a world of swords and sorcery",
-        "Cyberpunk / Corporate":
-          "near-future cyberpunk — megacorporations, street gangs, hackers, corporate espionage, neon-lit dystopia",
-        "Vampire / Gothic Noir":
-          "gothic horror — vampire covens, inquisitions, decadent aristocracy, forbidden rites, candlelit conspiracies",
-        "Sci-Fi / Space Opera":
-          "science fiction space opera — stellar federations, alien factions, interstellar trade, colony politics, advanced technology",
-        "Modern Conspiracy":
-          "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
-        "Post-Apocalyptic":
-          "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
-      };
-      const voice = themeVoice[theme] ?? "tabletop RPG";
+interface ResolvedFaction {
+  theme: string;
+  factionType: string;
+  scope: string;
+  alignment: string;
+  campaignContext?: string;
+  name: string;
+}
 
-      const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original faction drafts for that setting in JSON format.
+function resolveFaction(
+  options: FactionGeneratorOptions,
+  rng: Rng,
+): ResolvedFaction {
+  return {
+    theme: options.theme || factionConfig.themes[0],
+    factionType: options.type || pickFrom(factionConfig.types, rng),
+    scope: options.scope || pickFrom(factionConfig.scopes, rng),
+    alignment: options.alignment || pickFrom(factionConfig.alignments, rng),
+    campaignContext: options.campaignContext?.trim() || undefined,
+    name: `${generateName(rng)} Compact`,
+  };
+}
+
+export interface FactionPrompt {
+  systemInstruction: string;
+  userMessage: string;
+  resolved: ResolvedFaction;
+}
+
+export function buildFactionPrompt(
+  options: FactionGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): FactionPrompt {
+  const resolved = resolveFaction(options, rng);
+  const { theme, factionType, scope, alignment, campaignContext } = resolved;
+  const voice = FACTION_THEME_VOICE[theme] ?? "tabletop RPG";
+  const chosenNamingStyle = pickFrom(FACTION_NAMING_STYLES, rng);
+  const chosenNpcStyle = pickFrom(FACTION_NPC_NAMING_STYLES, rng);
+  const varianceSeed = Math.floor(rng() * 99991) + 10;
+
+  const systemInstruction = `You are an expert RPG campaign writer specialising in ${voice}. You generate detailed, original faction drafts for that setting in JSON format.
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
@@ -424,10 +478,10 @@ QUALITY RULES:
 - Every generation must feel like a completely different faction — avoid repeating names, concepts, or structures from prior outputs.
 - Avoid generic RPG naming clichés (no 'Gilded Ledger', 'Iron Brotherhood', 'Shadow Hand', etc.).
 - ${NAME_BAN_PROMPT}
-${getSessionContext()}
+${sessionContext}
 - Before finalising, silently critique for: name originality, internal consistency (NPCs don't contradict each other), logical alignment between public face and secret agenda. Rewrite if issues found.`;
 
-      const userMessage = `Generate a faction. Variation seed: ${varianceSeed}.
+  const userMessage = `Generate a faction. Variation seed: ${varianceSeed}.
 - Theme/Genre: ${theme}
 - Faction Type: ${factionType}
 - Scope: ${scope}
@@ -435,46 +489,44 @@ ${getSessionContext()}
 - Faction Naming Directive: ${chosenNamingStyle}
 - NPC Naming Directive: ${chosenNpcStyle}`;
 
-      const model = await clientManager.getModel(
-        "",
-        "gemini-3.1-flash-lite",
-        systemInstruction,
-      );
-      const response = await model.generateContent(userMessage);
-      const text = response.response.text().trim();
-      const cleanText = text
-        .replace(/^```json\s*/i, "")
-        .replace(/```$/, "")
-        .trim();
-      const data = JSON.parse(cleanText);
+  return { systemInstruction, userMessage, resolved };
+}
 
-      return {
-        type: "faction",
-        title: data.title || name,
-        summary: data.summary || "",
-        content: data.content || "",
-        lore: data.lore || "",
-        labels: Array.isArray(data.labels)
-          ? data.labels
-          : ["rpg-faction", "faction-generator", "imported-draft"],
-        status: "active",
-      };
-    } catch (err) {
-      console.warn("AI generation failed, falling back to local tables:", err);
-    }
-  }
+export function parseFactionResponse(
+  text: string,
+  resolved: ResolvedFaction,
+): PublicGeneratorOutput {
+  const cleanText = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  const data = JSON.parse(cleanText);
+  return {
+    type: "faction",
+    title: data.title || resolved.name,
+    summary: data.summary || "",
+    content: data.content || "",
+    lore: data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-faction", "faction-generator", "imported-draft"],
+    status: "active",
+  };
+}
 
-  const goal =
-    factionConfig.goals[Math.floor(Math.random() * factionConfig.goals.length)];
-  const conflict =
-    factionConfig.conflicts[
-      Math.floor(Math.random() * factionConfig.conflicts.length)
-    ];
-  const hook =
-    factionConfig.hooks[Math.floor(Math.random() * factionConfig.hooks.length)];
-  const rival = `${generateName()} Covenant`;
-  const leader = generateName();
-  const agent = generateName();
+export function generateFactionLocal(
+  options: FactionGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const { factionType, scope, alignment, campaignContext, name } =
+    resolveFaction(options, rng);
+  const goal = pickFrom(factionConfig.goals, rng);
+  const conflict = pickFrom(factionConfig.conflicts, rng);
+  const hook = pickFrom(factionConfig.hooks, rng);
+  const rival = `${generateName(rng)} Covenant`;
+  const leader = generateName(rng);
+  const agent = generateName(rng);
 
   const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
 
@@ -491,8 +543,8 @@ ${conflict} Beyond their internal tensions, they will negotiate before striking 
 Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival who can operate in daylight. They reward players who deal in favors and punish those who make public enemies.`;
 
   const lore = `### At the Table
-- **📍 Base**: ${factionBase(factionType)}
-- **Resource**: ${factionResource(factionType)}
+- **📍 Base**: ${factionBase(factionType, rng)}
+- **Resource**: ${factionResource(factionType, rng)}
 - **Symbol**: ${name.split(" ")[0]} iconography worn by inner-circle members
 - **Secret**: ${conflict}
 - **Immediate Hook**: ${hook}
@@ -518,51 +570,35 @@ ${conflict}
   };
 }
 
-export async function generateVampireClan(
-  clientManager: DefaultAIClientManager,
-  options: {
-    archetype?: string;
-    bloodline?: string;
-    feedingHabit?: string;
-    weakness?: string;
-    scope?: string;
-    alignment?: string;
-    campaignContext?: string;
-    useAI?: boolean;
-  } = {},
-): Promise<GeneratorOutput> {
-  const archetype =
-    options.archetype ||
-    vampireConfig.archetypes[
-      Math.floor(Math.random() * vampireConfig.archetypes.length)
-    ];
-  const bloodline =
-    options.bloodline ||
-    vampireConfig.bloodlines[
-      Math.floor(Math.random() * vampireConfig.bloodlines.length)
-    ];
-  const feedingHabit =
-    options.feedingHabit ||
-    vampireConfig.feedingHabits[
-      Math.floor(Math.random() * vampireConfig.feedingHabits.length)
-    ];
-  const weakness =
-    options.weakness ||
-    vampireConfig.weaknesses[
-      Math.floor(Math.random() * vampireConfig.weaknesses.length)
-    ];
-  const scope =
-    options.scope ||
-    vampireConfig.scopes[
-      Math.floor(Math.random() * vampireConfig.scopes.length)
-    ];
-  const alignment =
-    options.alignment ||
-    vampireConfig.alignments[
-      Math.floor(Math.random() * vampireConfig.alignments.length)
-    ];
-  const campaignContext = options.campaignContext?.trim();
+// ---------------------------------------------------------------------------
+// Vampire Clan public API
+// ---------------------------------------------------------------------------
 
+export interface VampireGeneratorOptions {
+  archetype?: string;
+  bloodline?: string;
+  feedingHabit?: string;
+  weakness?: string;
+  scope?: string;
+  alignment?: string;
+  campaignContext?: string;
+}
+
+interface ResolvedVampire {
+  archetype: string;
+  bloodline: string;
+  feedingHabit: string;
+  weakness: string;
+  scope: string;
+  alignment: string;
+  campaignContext?: string;
+  name: string;
+}
+
+function resolveVampire(
+  options: VampireGeneratorOptions,
+  rng: Rng,
+): ResolvedVampire {
   const prefixes = ["House ", "The ", "Covenant of ", "Order of ", "Clan "];
   const roots = [
     "Dracul",
@@ -576,13 +612,43 @@ export async function generateVampireClan(
     "Vargo",
     "Ruthven",
   ];
-  const name =
-    prefixes[Math.floor(Math.random() * prefixes.length)] +
-    roots[Math.floor(Math.random() * roots.length)];
+  return {
+    archetype: options.archetype || pickFrom(vampireConfig.archetypes, rng),
+    bloodline: options.bloodline || pickFrom(vampireConfig.bloodlines, rng),
+    feedingHabit:
+      options.feedingHabit || pickFrom(vampireConfig.feedingHabits, rng),
+    weakness: options.weakness || pickFrom(vampireConfig.weaknesses, rng),
+    scope: options.scope || pickFrom(vampireConfig.scopes, rng),
+    alignment: options.alignment || pickFrom(vampireConfig.alignments, rng),
+    campaignContext: options.campaignContext?.trim() || undefined,
+    name: pickFrom(prefixes, rng) + pickFrom(roots, rng),
+  };
+}
 
-  if (options.useAI !== false) {
-    try {
-      const prompt = `Generate a detailed RPG vampire clan/faction in JSON format.
+export interface VampirePrompt {
+  systemInstruction: string;
+  userMessage: string;
+  resolved: ResolvedVampire;
+}
+
+export function buildVampirePrompt(
+  options: VampireGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): VampirePrompt {
+  const resolved = resolveVampire(options, rng);
+  const {
+    name,
+    archetype,
+    bloodline,
+    feedingHabit,
+    weakness,
+    scope,
+    alignment,
+    campaignContext,
+  } = resolved;
+
+  const userMessage = `Generate a detailed RPG vampire clan/faction in JSON format.
 Options:
 - Name: ${name}
 - Clan Archetype: ${archetype}
@@ -601,54 +667,65 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["rpg-faction", "vampire-clan", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
-${getSessionContext()}
+${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
-      const model = await clientManager.getModel(
-        "",
-        "gemini-3.1-flash-lite",
-        "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-      );
-      const response = await model.generateContent(prompt);
-      const text = response.response.text().trim();
-      const cleanText = text
-        .replace(/^```json\s*/i, "")
-        .replace(/```$/, "")
-        .trim();
-      const data = JSON.parse(cleanText);
+  return {
+    systemInstruction:
+      "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+    userMessage,
+    resolved,
+  };
+}
 
-      return {
-        type: "faction",
-        title: data.title || name,
-        content: data.content || "",
-        lore: data.lore || "",
-        labels: Array.isArray(data.labels)
-          ? data.labels
-          : ["rpg-faction", "vampire-clan", "imported-draft"],
-        status: "active",
-      };
-    } catch (err) {
-      console.warn("AI generation failed, falling back to local tables:", err);
-    }
-  }
+export function parseVampireResponse(
+  text: string,
+  resolved: ResolvedVampire,
+): PublicGeneratorOutput {
+  const cleanText = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  const data = JSON.parse(cleanText);
+  return {
+    type: "faction",
+    title: data.title || resolved.name,
+    summary: data.summary || "",
+    content: data.content || "",
+    lore: data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-faction", "vampire-clan", "imported-draft"],
+    status: "active",
+  };
+}
 
-  const goal =
-    vampireConfig.goals[Math.floor(Math.random() * vampireConfig.goals.length)];
-  const conflict =
-    vampireConfig.conflicts[
-      Math.floor(Math.random() * vampireConfig.conflicts.length)
-    ];
-  const hook =
-    vampireConfig.hooks[Math.floor(Math.random() * vampireConfig.hooks.length)];
-  const rival = `${generateName()} Inquisition`;
-  const sire = generateName();
-  const thrall = generateName();
+export function generateVampireLocal(
+  options: VampireGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const {
+    archetype,
+    bloodline,
+    feedingHabit,
+    weakness,
+    scope,
+    alignment,
+    campaignContext,
+    name,
+  } = resolveVampire(options, rng);
+  const goal = pickFrom(vampireConfig.goals, rng);
+  const conflict = pickFrom(vampireConfig.conflicts, rng);
+  const hook = pickFrom(vampireConfig.hooks, rng);
+  const rival = `${generateName(rng)} Inquisition`;
+  const sire = generateName(rng);
+  const thrall = generateName(rng);
 
   const content = `### Overview
 ${name} is a powerful vampire clan of the ${bloodline.toLowerCase()} lineage, operating as a ${archetype.toLowerCase()} across ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
 
-${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their influence should touch the local halls of power, forgotten catacombs, or ongoing dark mysteries.\n` : ""}
-### Public Facade
+${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their influence should touch the local halls of power, forgotten catacombs, or ongoing dark mysteries.\n` : ""}### Public Facade
 To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a highly organized coven of undead hunters.
 
 ### Table Use
@@ -682,6 +759,7 @@ ${hook}`;
   return {
     type: "faction",
     title: name,
+    summary: "",
     content,
     lore,
     labels: ["rpg-faction", "vampire-clan", "imported-draft"],
