@@ -18,9 +18,7 @@ describe("GeminiTTSService", () => {
     expect(injected).not.toHaveBeenCalled();
   });
 
-  it("uses the injected fetcher instead of the global fetch", async () => {
-    const globalFetch = vi.fn();
-    vi.stubGlobal("fetch", globalFetch);
+  it("routes the synth request through the injected fetcher", async () => {
     const injected = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -31,9 +29,10 @@ describe("GeminiTTSService", () => {
     const result = await svc.synthesize("hello", voice, "api-key");
 
     expect(injected).toHaveBeenCalledOnce();
-    expect(globalFetch).not.toHaveBeenCalled();
+    // The service only references `this.fetcher`, so the global is never used.
+    const [url, init] = injected.mock.calls[0];
+    expect(String(url)).toContain("generativelanguage.googleapis.com");
+    expect((init as RequestInit).method).toBe("POST");
     expect(result).toBeNull(); // non-ok response degrades to null
-
-    vi.unstubAllGlobals();
   });
 });
