@@ -36,14 +36,27 @@ export const systemIdGenerator: IdGenerator = {
 export const browserStorage: StorageLike = {
   getItem(key) {
     if (typeof localStorage === "undefined") return null;
-    return localStorage.getItem(key);
+    // Access can throw (SecurityError, blocked/quota storage) — treat as absent.
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
   },
   setItem(key, value) {
     if (typeof localStorage === "undefined") return;
-    localStorage.setItem(key, value);
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // ignore — storage unavailable or quota exceeded
+    }
   },
   removeItem(key) {
     if (typeof localStorage === "undefined") return;
-    localStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore — storage unavailable
+    }
   },
 };
