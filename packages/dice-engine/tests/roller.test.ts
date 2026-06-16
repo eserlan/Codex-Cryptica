@@ -89,47 +89,41 @@ describe("DiceEngine", () => {
     expect(res.timestamp).toBe(fixedTime);
   });
 
-  it("default crypto provider resolves globalThis.crypto lazily (not at construction)", () => {
-    const original = globalThis.crypto;
-    try {
-      // Construct while crypto is absent — must NOT capture undefined.
-      Object.defineProperty(globalThis, "crypto", {
-        value: undefined,
-        configurable: true,
-      });
-      const engine = new DiceEngine();
+  it("should lazily resolve crypto to support late polyfills", () => {
+    const originalCrypto = (global as any).crypto;
+    (global as any).crypto = undefined;
+    const engine = new DiceEngine();
 
-      // crypto becomes available only after construction (late polyfill).
-      Object.defineProperty(globalThis, "crypto", {
-        value: original,
-        configurable: true,
-      });
+    // Now late polyfill it
+    (global as any).crypto = {
+      getRandomValues: (arr: Uint32Array) => {
+        for (let i = 0; i < arr.length; i++) {
+          arr[i] = 5;
+        }
+        return arr;
+      },
+    };
 
-      const res = engine.evaluate("1d6");
-      expect(res.total).toBeGreaterThanOrEqual(1);
-      expect(res.total).toBeLessThanOrEqual(6);
-    } finally {
-      Object.defineProperty(globalThis, "crypto", {
-        value: original,
-        configurable: true,
-      });
-    }
+    const cmd = diceParser.parse("1d20");
+    const res = engine.execute(cmd);
+    expect(res.total).toBe(6); // (5%20)+1
+
+    // restore
+    (global as any).crypto = originalCrypto;
   });
 
-  it("default crypto provider throws a clear error when crypto is unavailable", () => {
-    const original = globalThis.crypto;
-    try {
-      Object.defineProperty(globalThis, "crypto", {
-        value: undefined,
-        configurable: true,
-      });
-      expect(() => new DiceEngine().evaluate("1d6")).toThrow(/crypto/i);
-    } finally {
-      Object.defineProperty(globalThis, "crypto", {
-        value: original,
-        configurable: true,
-      });
-    }
+  it("should throw error when crypto is unavailable during execution", () => {
+    const originalCrypto = (global as any).crypto;
+    (global as any).crypto = undefined;
+    const engine = new DiceEngine();
+
+    const cmd = diceParser.parse("1d20");
+    expect(() => engine.execute(cmd)).toThrow(
+      "CryptoProvider (or globalThis.crypto) is not available",
+    );
+
+    // restore
+    (global as any).crypto = originalCrypto;
   });
 
   describe("Statistical Fairness (Rejection Sampling)", () => {
