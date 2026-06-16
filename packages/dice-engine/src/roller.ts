@@ -4,12 +4,31 @@ import { diceParser } from "./parser";
 type CryptoProvider = { getRandomValues(arr: Uint32Array): Uint32Array };
 type Clock = { now(): number };
 
+/**
+ * Default crypto provider that resolves `globalThis.crypto` lazily at call time
+ * (not at construction). This keeps the exported `diceEngine` singleton working
+ * when `globalThis.crypto` is polyfilled after this module is imported (e.g. a
+ * test `beforeAll`), and surfaces a clear error if it is genuinely unavailable.
+ */
+const defaultCryptoProvider: CryptoProvider = {
+  getRandomValues(arr: Uint32Array): Uint32Array {
+    const c = globalThis.crypto;
+    if (!c?.getRandomValues) {
+      throw new Error(
+        "DiceEngine: globalThis.crypto.getRandomValues is unavailable; inject a CryptoProvider.",
+      );
+    }
+    c.getRandomValues(arr as Uint32Array<ArrayBuffer>); // fills in place
+    return arr;
+  },
+};
+
 export class DiceEngine {
   private randomBuffer = new Uint32Array(256);
   private bufferIndex = 256;
 
   constructor(
-    private cryptoProvider: CryptoProvider = globalThis.crypto,
+    private cryptoProvider: CryptoProvider = defaultCryptoProvider,
     private clock: Clock = Date,
   ) {}
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { diceEngine, DiceEngine } from "../src/roller";
 import { diceParser } from "../src/parser";
 
@@ -87,6 +87,49 @@ describe("DiceEngine", () => {
     const res = engine.execute(cmd);
 
     expect(res.timestamp).toBe(fixedTime);
+  });
+
+  it("default crypto provider resolves globalThis.crypto lazily (not at construction)", () => {
+    const original = globalThis.crypto;
+    try {
+      // Construct while crypto is absent — must NOT capture undefined.
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+      });
+      const engine = new DiceEngine();
+
+      // crypto becomes available only after construction (late polyfill).
+      Object.defineProperty(globalThis, "crypto", {
+        value: original,
+        configurable: true,
+      });
+
+      const res = engine.evaluate("1d6");
+      expect(res.total).toBeGreaterThanOrEqual(1);
+      expect(res.total).toBeLessThanOrEqual(6);
+    } finally {
+      Object.defineProperty(globalThis, "crypto", {
+        value: original,
+        configurable: true,
+      });
+    }
+  });
+
+  it("default crypto provider throws a clear error when crypto is unavailable", () => {
+    const original = globalThis.crypto;
+    try {
+      Object.defineProperty(globalThis, "crypto", {
+        value: undefined,
+        configurable: true,
+      });
+      expect(() => new DiceEngine().evaluate("1d6")).toThrow(/crypto/i);
+    } finally {
+      Object.defineProperty(globalThis, "crypto", {
+        value: original,
+        configurable: true,
+      });
+    }
   });
 
   describe("Statistical Fairness (Rejection Sampling)", () => {
