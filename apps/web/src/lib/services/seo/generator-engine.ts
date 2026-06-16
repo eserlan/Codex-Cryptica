@@ -1,4 +1,12 @@
 import { aiClientManager } from "$lib/services/ai/client-manager";
+import {
+  buildNpcPrompt,
+  parseNpcResponse,
+  generateNpcLocal,
+  type NpcGeneratorOptions,
+  type PublicGeneratorOutput,
+} from "generator-engine";
+import { getSessionContext } from "./generators/session-context";
 
 export {
   nameTable,
@@ -8,7 +16,10 @@ export {
   getRandomItems,
   generateName,
 } from "./generators/base";
-export { npcConfig, npcThemeConfig } from "./generators/npc";
+// NPC content data now lives in the generator-engine package (#1351); re-export
+// it here so existing SEO consumers (form fields, random-idea) keep importing
+// from this module.
+export { npcConfig, npcThemeConfig } from "generator-engine";
 export {
   factionConfig,
   themeIdToLabel,
@@ -22,7 +33,6 @@ export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
-import { generateNPC } from "./generators/npc";
 import { generateFaction, generateVampireClan } from "./generators/faction";
 import { generateSettlement } from "./generators/settlement";
 import { generateMagicItem } from "./generators/magic-item";
@@ -33,6 +43,14 @@ import { generateKingdom, generateNation } from "./generators/kingdom-nation";
 import { generatePantheon } from "./generators/pantheon";
 import type { GeneratorOutput } from "./generators/base";
 
+/**
+ * Bridge the package's {@link PublicGeneratorOutput} (whose `type` is a plain
+ * string) onto the SEO {@link GeneratorOutput} union the public pages expect.
+ */
+function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
+  return { ...o, type: o.type as GeneratorOutput["type"] };
+}
+
 export class DefaultGeneratorEngine {
   constructor(private clientManager = aiClientManager) {}
 
@@ -40,10 +58,38 @@ export class DefaultGeneratorEngine {
     return _generateName();
   }
 
+  /**
+   * NPC generation now delegates to the generator-engine package (#1351). AI
+   * orchestration stays here at the call site: build the prompt in the package,
+   * run it through the AI client, parse the result, fall back to the package's
+   * local generator when AI is unavailable or fails.
+   */
   async generateNPC(
-    options: Parameters<typeof generateNPC>[1] = {},
+    options: NpcGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateNPC(this.clientManager, options);
+    const { useAI, ...npcOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
+          npcOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseNpcResponse(text, npcOptions, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateNpcLocal(npcOptions));
   }
 
   async generateFaction(
