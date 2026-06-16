@@ -122,6 +122,38 @@ describe("ModalUIStore", () => {
     expect(store.lightbox.imagePath).toBe("");
   });
 
+  it("openGeneratorWorkflow sets workspace launch mode", () => {
+    const store = new ModalUIStore();
+    store.openGeneratorWorkflow("npc");
+    expect(store.generatorWorkflow).toEqual({
+      open: true,
+      launchMode: "workspace",
+      sourceEntityId: null,
+      generatorId: "npc",
+    });
+    store.closeGeneratorWorkflow();
+    expect(store.generatorWorkflow.open).toBe(false);
+    expect(store.generatorWorkflow.generatorId).toBeNull();
+  });
+
+  it("openGeneratorWorkflow defaults generatorId to null", () => {
+    const store = new ModalUIStore();
+    store.openGeneratorWorkflow();
+    expect(store.generatorWorkflow.generatorId).toBeNull();
+    expect(store.generatorWorkflow.launchMode).toBe("workspace");
+  });
+
+  it("openGeneratorWorkflowForEntity sets contextual launch mode", () => {
+    const store = new ModalUIStore();
+    store.openGeneratorWorkflowForEntity("src-42", "faction");
+    expect(store.generatorWorkflow).toEqual({
+      open: true,
+      launchMode: "contextual",
+      sourceEntityId: "src-42",
+      generatorId: "faction",
+    });
+  });
+
   it("handles revision dialog", () => {
     const store = new ModalUIStore();
     expect(store.revisionDialog).toEqual({

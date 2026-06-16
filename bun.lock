@@ -76,6 +76,7 @@
         "dompurify": "^3.4.2",
         "editor-core": "workspace:*",
         "flexsearch": "^0.8.212",
+        "generator-engine": "workspace:*",
         "graph-engine": "workspace:*",
         "idb": "^8.0.3",
         "js-yaml": "^4.1.1",
@@ -187,6 +188,18 @@
       "devDependencies": {
         "@vitest/coverage-v8": "^4.1.7",
         "eslint": "^10.4.1",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.7",
+      },
+    },
+    "packages/generator-engine": {
+      "name": "generator-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "@codex/oracle-engine": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
         "typescript": "^6.0.3",
         "vitest": "^4.1.7",
       },
@@ -1270,6 +1283,8 @@
     "function-bind": ["function-bind@1.1.2", "", {}, "sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA=="],
 
     "fuse.js": ["fuse.js@7.1.0", "", {}, "sha512-trLf4SzuuUxfusZADLINj+dE8clK1frKdmqiJNb1Es75fmI5oY6X2mxLVUciLLjxqw/xr72Dhy+lER6dGd02FQ=="],
+
+    "generator-engine": ["generator-engine@workspace:packages/generator-engine"],
 
     "get-caller-file": ["get-caller-file@2.0.5", "", {}, "sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg=="],
 

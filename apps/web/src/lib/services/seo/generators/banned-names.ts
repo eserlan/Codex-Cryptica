@@ -4,6 +4,7 @@ export const BANNED_NAMES = [
   "Elara",
   "Valerius",
   "Kael",
+  "Kaelen",
   "Theron",
   "Zara",
   "Aldric",

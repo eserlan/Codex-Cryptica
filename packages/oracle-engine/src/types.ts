@@ -104,6 +104,10 @@ export interface RevisionDraft {
     finalContent: unknown;
   };
   timestamp: number;
+  /** When true, discarding this draft deletes the entity (e.g. generator skeleton). */
+  deleteOnDiscard?: boolean;
+  /** True when accepting this draft should add it to the active generator session. */
+  generatorSessionCommit?: boolean;
 }
 
 /**

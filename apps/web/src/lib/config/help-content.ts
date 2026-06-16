@@ -32,6 +32,7 @@ export const HINT_KEYS = {
   FRONT_PAGE: "front-page-hint-seen",
   VTT_MODE: "vtt-mode-hint-seen",
   ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",
+  IN_APP_GENERATORS: "in-app-generators-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -412,6 +413,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.",
     icon: "icon-[lucide--messages-square]",
+  },
+  "in-app-generators": {
+    id: "in-app-generators",
+    title: "Campaign Generators",
+    content:
+      "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+    icon: "icon-[lucide--wand-2]",
   },
 };
 

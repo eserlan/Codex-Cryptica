@@ -40,6 +40,7 @@ export class DefaultAIClientManager {
     systemInstruction?: string;
     previousInteractionId?: string | null;
     storeConversation?: boolean;
+    generationConfig?: Record<string, unknown>;
   }): Promise<{ id: string; text: string }> {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       throw new Error("You appear to be offline. Generation is unavailable.");
@@ -55,6 +56,9 @@ export class DefaultAIClientManager {
     }
     if (params.previousInteractionId) {
       body.previous_interaction_id = params.previousInteractionId;
+    }
+    if (params.generationConfig) {
+      body.generationConfig = params.generationConfig;
     }
 
     const response = await fetch(DefaultAIClientManager.PROXY_URL, {

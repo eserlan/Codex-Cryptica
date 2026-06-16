@@ -64,7 +64,8 @@
         aria-haspopup="dialog"
         aria-expanded={!!mapSession.pendingTokenCoords}
       >
-        <span class="icon-[lucide--user-plus] h-4 w-4" aria-hidden="true"></span>
+        <span class="icon-[lucide--user-plus] h-4 w-4" aria-hidden="true"
+        ></span>
       </button>
 
       <button
@@ -76,7 +77,8 @@
         aria-haspopup="dialog"
         aria-expanded={showEncounters}
       >
-        <span class="icon-[lucide--scroll-text] h-4 w-4" aria-hidden="true"></span>
+        <span class="icon-[lucide--scroll-text] h-4 w-4" aria-hidden="true"
+        ></span>
       </button>
     {/if}
   </div>

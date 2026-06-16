@@ -50,6 +50,41 @@ describe("DefaultAIClientManager", () => {
     });
   });
 
+  describe("sendInteraction", () => {
+    it("forwards generation config to the proxy interaction path", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: "interaction-1",
+          text: "response",
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      await manager.sendInteraction({
+        model: "gemini-3.1-flash-lite",
+        input: "Prompt",
+        systemInstruction: "System",
+        previousInteractionId: "previous-1",
+        generationConfig: { responseMimeType: "application/json" },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+
+      expect(body).toEqual(
+        expect.objectContaining({
+          model: "gemini-3.1-flash-lite",
+          input: "Prompt",
+          system_instruction: "System",
+          previous_interaction_id: "previous-1",
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      );
+    });
+  });
+
   describe("createProxyModel", () => {
     it("should forward requests to proxy URL", async () => {
       const mockResponse = {
