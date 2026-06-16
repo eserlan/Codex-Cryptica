@@ -15,10 +15,6 @@ const GENERATOR_SLUGS = new Set([
   "dnd-npc",
   "pantheon-generator",
   "god-generator",
-  "cyberpunk-megacorp",
-  "fantasy-guild",
-  "sci-fi-faction",
-  "wasteland-faction",
 ]);
 
 export function shouldSyncGeneratorTheme(slug: string) {
