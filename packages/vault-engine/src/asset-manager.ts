@@ -26,6 +26,8 @@ export class AssetManager {
   constructor(
     private ioAdapter: IAssetIOAdapter,
     private imageProcessor: IImageProcessor,
+    // Injected for tests; default wraps the global `fetch` lazily.
+    private fetcher: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
   async saveImageToVault(
@@ -108,7 +110,7 @@ export class AssetManager {
           // try to resolve to a blob URL to satisfy CORS requirements for canvas.
           if (!vaultHandle) {
             try {
-              const response = await fetch(cleanPath, { mode: "cors" });
+              const response = await this.fetcher(cleanPath, { mode: "cors" });
               if (!response.ok) return cleanPath;
               const blob = await response.blob();
               url = URL.createObjectURL(blob);
@@ -146,7 +148,9 @@ export class AssetManager {
             } catch {
               let blob: Blob;
               try {
-                const response = await fetch(cleanPath, { mode: "cors" });
+                const response = await this.fetcher(cleanPath, {
+                  mode: "cors",
+                });
                 if (!response.ok)
                   throw new Error(`Fetch failed: ${response.status}`);
                 blob = await response.blob();
@@ -291,7 +295,7 @@ export class AssetManager {
 
       if (source && source.startsWith("blob:")) {
         try {
-          const response = await fetch(source);
+          const response = await this.fetcher(source);
           blob = await response.blob();
         } catch (err) {
           console.warn(
