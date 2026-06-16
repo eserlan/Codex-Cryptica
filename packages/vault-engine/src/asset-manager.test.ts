@@ -137,6 +137,7 @@ describe("AssetManager", () => {
       expect(injected).toHaveBeenCalledWith("https://example.com/pic.png", {
         mode: "cors",
       });
+      expect(global.fetch).not.toHaveBeenCalled();
       expect(result).toBe("blob:mock-url");
     });
 
