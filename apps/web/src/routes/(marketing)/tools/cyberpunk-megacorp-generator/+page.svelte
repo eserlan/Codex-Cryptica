@@ -68,7 +68,6 @@
   eyebrow="Cyberpunk Megacorp Generator"
   introTitle="Cyberpunk Megacorp Generator"
   introText="Create corporations with hidden agendas, boardroom conflicts, rival corps, and table-ready run hooks. Works without login, then imports into your local Codex vault."
-  worldTheme="cyberpunk"
   isThemeCustomizable={true}
   bind:theme
   {relatedLinks}

@@ -26,7 +26,6 @@
     isThemeCustomizable = false,
     generate,
     formFields,
-    worldTheme = "workspace",
     initialDraft = null,
     variant = "default",
     generateLabel = undefined,
@@ -45,7 +44,6 @@
     isThemeCustomizable?: boolean;
     generate: (opts: { useAI: boolean }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
-    worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
     variant?: "default" | "names";
     generateLabel?: string;
@@ -786,7 +784,7 @@
               'names'
                 ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
                 : 'space-y-4'}"
-              data-theme={worldTheme}
+              data-theme={activeThemeId}
               onclick={handleContainerClick}
               onkeydown={handleContainerKeydown}
             >

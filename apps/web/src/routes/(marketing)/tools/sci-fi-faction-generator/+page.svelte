@@ -68,7 +68,6 @@
   eyebrow="Sci-Fi Faction Generator"
   introTitle="Sci-Fi Faction Generator"
   introText="Create star-spanning factions with agendas, internal conflicts, rivals, and table-ready hooks. Works without login, then imports into your local Codex vault."
-  worldTheme="scifi"
   isThemeCustomizable={true}
   bind:theme
   {relatedLinks}

@@ -65,7 +65,6 @@
   eyebrow="Fantasy Guild Generator"
   introTitle="Fantasy Guild Generator"
   introText="Create guilds and orders with agendas, internal conflicts, rivals, and table-ready hooks. Works without login, then imports into your local Codex vault."
-  worldTheme="fantasy"
   isThemeCustomizable={true}
   bind:theme
   {relatedLinks}

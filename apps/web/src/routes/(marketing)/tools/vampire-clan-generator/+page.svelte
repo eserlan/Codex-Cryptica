@@ -78,7 +78,6 @@
   eyebrow="Vampire Clan Generator"
   introTitle="Vampire Clan Generator"
   introText="Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault."
-  worldTheme="horror"
   isThemeCustomizable={true}
   theme="Vampire / Gothic Noir"
   {relatedLinks}
