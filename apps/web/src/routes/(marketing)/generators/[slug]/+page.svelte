@@ -278,9 +278,175 @@
         "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
       canonicalPath: "/generators/god-generator",
     },
+    "cyberpunk-megacorp": {
+      pageTitle:
+        "Cyberpunk Megacorp Generator | Free RPG Corporation & Syndicate Tool | Codex Cryptica",
+      metaDescription:
+        "Generate cyberpunk megacorps, corporate syndicates, and fixer crews. Create agendas, executives, rival corps, and run hooks for Cyberpunk RED, Shadowrun, and more.",
+      introTitle: "Cyberpunk Megacorp Generator",
+      eyebrow: "Cyberpunk Megacorp Generator",
+      introText:
+        "Create corporations with hidden agendas, boardroom conflicts, rival corps, and table-ready run hooks. Works without login, then imports into your local Codex vault.",
+      canonicalPath: "/generators/cyberpunk-megacorp",
+      faqs: [
+        {
+          question: "What does the cyberpunk megacorp generator create?",
+          answer:
+            "It generates a complete cyberpunk corporation — a megacorp, syndicate, or fixer crew — with a name, public face, hidden agenda, internal conflict, rival corp, notable executives, and a table-ready run hook.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy corp notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Which RPG systems does it work with?",
+          answer:
+            "It's system-agnostic. Use it for Cyberpunk RED, Shadowrun, The Sprawl, or any near-future dystopian setting.",
+        },
+        {
+          question: "How does saving a generated corp work?",
+          answer:
+            "Clicking 'Save to Codex' stores the draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/tools/faction-generator", label: "Faction generator" },
+        {
+          href: "/generators/sci-fi-faction",
+          label: "Sci-fi faction generator",
+        },
+      ],
+    },
+    "fantasy-guild": {
+      pageTitle:
+        "Fantasy Guild Generator | Free D&D Guild, Order & Faction Tool | Codex Cryptica",
+      metaDescription:
+        "Generate fantasy guilds, temple orders, arcane circles, and thieves' guilds. Create agendas, rival factions, notable NPCs, and adventure hooks for D&D, Pathfinder, and more.",
+      introTitle: "Fantasy Guild Generator",
+      eyebrow: "Fantasy Guild Generator",
+      introText:
+        "Create guilds and orders with agendas, internal conflicts, rivals, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      canonicalPath: "/generators/fantasy-guild",
+      faqs: [
+        {
+          question: "What does the fantasy guild generator create?",
+          answer:
+            "It generates a complete fantasy guild or order — merchant guild, temple order, arcane circle, or thieves' guild — with a name, agenda, internal conflict, rival faction, notable NPCs, and a table-ready adventure hook.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy guild notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Which RPG systems does it work with?",
+          answer:
+            "It's system-agnostic. Use it for D&D 5e, Pathfinder, Old-School Essentials, or any classic fantasy campaign.",
+        },
+        {
+          question: "How does saving a generated guild work?",
+          answer:
+            "Clicking 'Save to Codex' stores the draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/tools/faction-generator", label: "Faction generator" },
+        { href: "/tools/dnd-npc-generator", label: "D&D NPC generator" },
+      ],
+    },
+    "sci-fi-faction": {
+      pageTitle:
+        "Sci-Fi Faction Generator | Free Space Opera Empire & Fleet Tool | Codex Cryptica",
+      metaDescription:
+        "Generate sci-fi factions, galactic empires, rebel cells, and trade federations. Create agendas, rival powers, notable NPCs, and mission hooks for Traveller, Stars Without Number, and more.",
+      introTitle: "Sci-Fi Faction Generator",
+      eyebrow: "Sci-Fi Faction Generator",
+      introText:
+        "Create star-spanning factions with agendas, internal conflicts, rivals, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      canonicalPath: "/generators/sci-fi-faction",
+      faqs: [
+        {
+          question: "What does the sci-fi faction generator create?",
+          answer:
+            "It generates a complete sci-fi faction — a galactic empire, megacorp, rebel cell, or trade federation — with a name, agenda, internal conflict, rival power, notable NPCs, and a table-ready mission hook.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy faction notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Which RPG systems does it work with?",
+          answer:
+            "It's system-agnostic. Use it for Stars Without Number, Traveller, Starfinder, Lancer, or any space opera campaign.",
+        },
+        {
+          question: "How does saving a generated faction work?",
+          answer:
+            "Clicking 'Save to Codex' stores the draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/tools/faction-generator", label: "Faction generator" },
+        {
+          href: "/generators/cyberpunk-megacorp",
+          label: "Cyberpunk megacorp generator",
+        },
+      ],
+    },
+    "wasteland-faction": {
+      pageTitle:
+        "Wasteland Faction Generator | Free Post-Apocalyptic Raider & Settlement Tool | Codex Cryptica",
+      metaDescription:
+        "Generate post-apocalyptic factions, raider gangs, settlements, and doomsday cults. Create agendas, rival groups, survivors, and plot hooks for Fallout-style and wasteland campaigns.",
+      introTitle: "Wasteland Faction Generator",
+      eyebrow: "Wasteland Faction Generator",
+      introText:
+        "Create survivor factions with agendas, internal conflicts, rivals, and table-ready hooks. Works without login, then imports into your local Codex vault.",
+      canonicalPath: "/generators/wasteland-faction",
+      faqs: [
+        {
+          question: "What does the wasteland faction generator create?",
+          answer:
+            "It generates a complete post-apocalyptic faction — a raider gang, settlement council, scavenger crew, or doomsday cult — with a name, agenda, internal conflict, rival group, notable survivors, and a table-ready hook.",
+        },
+        {
+          question: "Can I use it without an account?",
+          answer:
+            "Yes. Generate and copy faction notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "Which RPG systems does it work with?",
+          answer:
+            "It's system-agnostic. Use it for Fallout-style games, Mutant: Year Zero, Apocalypse World, or any wasteland survival campaign.",
+        },
+        {
+          question: "How does saving a generated faction work?",
+          answer:
+            "Clicking 'Save to Codex' stores the draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity, ready to link to NPCs, locations, and campaign notes.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/tools/faction-generator", label: "Faction generator" },
+        {
+          href: "/generators/sci-fi-faction",
+          label: "Sci-fi faction generator",
+        },
+      ],
+    },
   };
 
   const meta = $derived(slugMeta[data.slug]);
+
+  // Faction-style slugs that lock the generator to a specific theme (#1123)
+  const factionThemeSlugs: Record<string, string> = {
+    "cyberpunk-megacorp": "Cyberpunk / Corporate",
+    "fantasy-guild": "Classic Fantasy",
+    "sci-fi-faction": "Sci-Fi / Space Opera",
+    "wasteland-faction": "Post-Apocalyptic",
+  };
+  const isFactionThemeSlug = $derived(data.slug in factionThemeSlugs);
 
   // State grouped per generator type (#6)
   let npc = $state({
@@ -420,7 +586,8 @@
 
   $effect(() => {
     if (data.slug === "npc") npc.theme = activeTheme;
-    else if (data.slug === "faction") faction.theme = activeTheme;
+    else if (data.slug === "faction" || isFactionThemeSlug)
+      faction.theme = activeTheme;
     else if (data.slug === "quest")
       quest.genre = themeToQuestGenre[activeTheme] ?? "Classic Fantasy";
     else if (data.slug === "social-hub")
@@ -446,6 +613,10 @@
     }
     if (data.slug === "vampire-clan") {
       activeTheme = "Vampire / Gothic Noir";
+      return;
+    }
+    if (isFactionThemeSlug) {
+      activeTheme = factionThemeSlugs[data.slug];
       return;
     }
     if (data.slug === "pantheon-generator" || data.slug === "god-generator") {
@@ -474,7 +645,7 @@
       return generatorEngine.generateSettlement({ ...settlement, useAI });
     } else if (data.slug === "magic-item" || data.slug === "item") {
       return generatorEngine.generateMagicItem({ ...magicItem, useAI });
-    } else if (data.slug === "faction") {
+    } else if (data.slug === "faction" || isFactionThemeSlug) {
       return generatorEngine.generateFaction({ ...faction, useAI });
     } else if (data.slug === "quest") {
       return generatorEngine.generateQuestHook({ ...quest, useAI });
@@ -752,7 +923,7 @@
           {/each}
         </select>
       </div>
-    {:else if data.slug === "faction"}
+    {:else if data.slug === "faction" || isFactionThemeSlug}
       <FactionFormFields
         bind:theme={activeTheme}
         bind:type={faction.type}

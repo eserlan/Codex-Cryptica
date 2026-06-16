@@ -69,6 +69,34 @@
               icon: "icon-[lucide--moon]",
             },
             {
+              href: "/tools/cyberpunk-megacorp-generator",
+              label: "Cyberpunk Megacorp Generator",
+              summary:
+                "Create cyberpunk megacorps, syndicates, and fixer crews with hidden agendas, executives, and run hooks.",
+              icon: "icon-[lucide--building-2]",
+            },
+            {
+              href: "/tools/fantasy-guild-generator",
+              label: "Fantasy Guild Generator",
+              summary:
+                "Create fantasy guilds, temple orders, and arcane circles with agendas, rivals, and adventure hooks.",
+              icon: "icon-[lucide--shield]",
+            },
+            {
+              href: "/tools/sci-fi-faction-generator",
+              label: "Sci-Fi Faction Generator",
+              summary:
+                "Create galactic empires, rebel cells, and trade federations with agendas, rivals, and mission hooks.",
+              icon: "icon-[lucide--rocket]",
+            },
+            {
+              href: "/tools/wasteland-faction-generator",
+              label: "Wasteland Faction Generator",
+              summary:
+                "Create post-apocalyptic raider gangs, settlements, and cults with agendas, rivals, and plot hooks.",
+              icon: "icon-[lucide--radiation]",
+            },
+            {
               href: "/tools/fantasy-name-generator",
               label: "Fantasy Name Generator",
               summary:
