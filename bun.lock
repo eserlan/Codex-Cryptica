@@ -195,6 +195,9 @@
     "packages/generator-engine": {
       "name": "generator-engine",
       "version": "0.0.0",
+      "dependencies": {
+        "@codex/oracle-engine": "workspace:*",
+      },
       "devDependencies": {
         "@vitest/coverage-v8": "^4.1.7",
         "typescript": "^6.0.3",

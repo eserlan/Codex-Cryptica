@@ -121,6 +121,7 @@ export interface GeneratorRunRequest {
   sourceEntityId?: string;
   relationshipLabel?: string;
   vaultContext?: GeneratorVaultContext;
+  interaction?: GeneratorInteractionRequest;
 }
 
 /** A transient, reviewable result produced before save. */
@@ -181,7 +182,45 @@ export interface CampaignGeneratorDefinition {
  * string and receives a raw JSON string; all AI client details stay in the app.
  */
 export interface AIGeneratorGateway {
-  complete(prompt: string, systemInstruction: string): Promise<string>;
+  complete(
+    prompt: string,
+    systemInstruction: string,
+    options?: AIGeneratorCompleteOptions,
+  ): Promise<string | AIGeneratorCompleteResult>;
+}
+
+export interface GeneratorInteractionRequest {
+  input: string;
+  previousInteractionId?: string | null;
+  store?: boolean;
+  /**
+   * Full prompt replayed when the server-side interaction id has expired.
+   * The gateway owns expiry detection because it wraps the concrete AI client.
+   */
+  replayPrompt?: string;
+}
+
+export interface AIGeneratorCompleteOptions {
+  interaction?: GeneratorInteractionRequest;
+}
+
+export interface AIGeneratorCompleteResult {
+  text: string;
+  interactionId?: string;
+  usedInteraction: boolean;
+  replayed?: boolean;
+}
+
+export interface GeneratorPromptMetrics {
+  generatorId: GeneratorId;
+  usedInteraction: boolean;
+  replayed: boolean;
+  fullPromptChars: number;
+  sentPromptChars: number;
+  savedPromptChars: number;
+  estimatedFullPromptTokens: number;
+  estimatedSentPromptTokens: number;
+  estimatedSavedTokens: number;
 }
 
 /**

@@ -27,3 +27,12 @@ export {
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,
 } from "./campaign-generator-service";
+export {
+  GeneratorSession,
+  acceptedEntityToLoreEntry,
+  buildGeneratorLoreEntries,
+  buildGeneratorSessionInput,
+  draftToAcceptedEntity,
+  type GeneratorAcceptedEntity,
+  type GeneratorSessionTurn,
+} from "./generator-session";

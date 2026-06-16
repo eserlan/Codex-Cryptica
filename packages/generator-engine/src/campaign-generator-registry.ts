@@ -109,6 +109,7 @@ const OUTPUT_SCHEMA = `{
 }`;
 
 function vaultContextBlock(request: GeneratorRunRequest): string {
+  if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx) return "";
   const lines: string[] = [];
@@ -146,6 +147,7 @@ function vaultContextBlock(request: GeneratorRunRequest): string {
  * from the source/neighbor context and the name ban list.
  */
 function worldBlock(request: GeneratorRunRequest): string {
+  if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx?.worldSample?.length) return "";
   const lines = [
@@ -174,6 +176,7 @@ function instructionsBlock(request: GeneratorRunRequest): string {
 }
 
 function bannedNamesBlock(request: GeneratorRunRequest): string {
+  if (request.interaction) return "";
   const ctx = request.vaultContext;
   const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
   if (!all.length) return "";
@@ -225,6 +228,7 @@ function namingBlock(request: GeneratorRunRequest): string {
  * of this type would receive.
  */
 function templateBlock(request: GeneratorRunRequest): string {
+  if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx?.applyTemplate || !ctx.templateOutline) return "";
   return `\nStructure the "lore" field to follow this template, keeping its markdown headings and filling every section with generated content:\n${ctx.templateOutline}\n`;

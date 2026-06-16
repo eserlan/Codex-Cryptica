@@ -2,15 +2,60 @@ import { getGenerator, isTitleBanned } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import {
   type AIGeneratorGateway,
+  type AIGeneratorCompleteResult,
   type AIPolicy,
   type DraftSaveRequest,
   type DraftSaveResult,
   type GeneratedDraft,
+  type GeneratorPromptMetrics,
   type GeneratorOutput,
   type GeneratorRunRequest,
   type SuggestedConnection,
 } from "./campaign-generator-types";
 import { SYSTEM_INSTRUCTION } from "./campaign-generator-registry";
+
+function completeText(result: string | AIGeneratorCompleteResult): string {
+  return typeof result === "string" ? result : result.text;
+}
+
+function withGeneratorRequest(input: string, prompt: string): string {
+  const marker = "[GENERATOR REQUEST]";
+  const index = input.lastIndexOf(marker);
+  if (index === -1) return `${input}\n\n${marker}\n${prompt}`;
+  return `${input.slice(0, index)}${marker}\n${prompt}`;
+}
+
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+function promptMetrics(params: {
+  request: GeneratorRunRequest;
+  fullPrompt: string;
+  sentPrompt: string;
+  usedInteraction: boolean;
+  replayed: boolean;
+}): GeneratorPromptMetrics {
+  const estimatedFullPromptTokens = estimateTokens(params.fullPrompt);
+  const estimatedSentPromptTokens = estimateTokens(params.sentPrompt);
+  return {
+    generatorId: params.request.generatorId,
+    usedInteraction: params.usedInteraction,
+    replayed: params.replayed,
+    fullPromptChars: params.fullPrompt.length,
+    sentPromptChars: params.sentPrompt.length,
+    savedPromptChars: Math.max(
+      0,
+      params.fullPrompt.length - params.sentPrompt.length,
+    ),
+    estimatedFullPromptTokens,
+    estimatedSentPromptTokens,
+    estimatedSavedTokens: Math.max(
+      0,
+      estimatedFullPromptTokens - estimatedSentPromptTokens,
+    ),
+  };
+}
 
 /** Validate and normalise the model's "connections" array. */
 function parseConnections(value: unknown): SuggestedConnection[] | undefined {
@@ -70,6 +115,10 @@ export interface CampaignGeneratorServiceDeps {
   aiPolicy?: AIPolicy;
   /** Optional AI gateway; required for AI-assisted generation. */
   aiGateway?: AIGeneratorGateway;
+  /** Called after an interaction-backed AI response succeeds. */
+  onInteractionResult?: (result: AIGeneratorCompleteResult) => void;
+  /** Called after successful AI generation so callers can compare prompt size. */
+  onPromptMetrics?: (metrics: GeneratorPromptMetrics) => void;
 }
 
 /** Max AI generation attempts when the model keeps returning a banned name. */
@@ -91,6 +140,10 @@ export class DraftSaveError extends Error {
 export class CampaignGeneratorService {
   private readonly vault?: GeneratorVaultGateway;
   private readonly aiGateway?: AIGeneratorGateway;
+  private readonly onInteractionResult?: (
+    result: AIGeneratorCompleteResult,
+  ) => void;
+  private readonly onPromptMetrics?: (metrics: GeneratorPromptMetrics) => void;
   private readonly _deps: CampaignGeneratorServiceDeps;
 
   /** Returns the current AI policy, reading through any getter on the deps object. */
@@ -102,6 +155,8 @@ export class CampaignGeneratorService {
     this._deps = deps;
     this.vault = deps.vault;
     this.aiGateway = deps.aiGateway;
+    this.onInteractionResult = deps.onInteractionResult;
+    this.onPromptMetrics = deps.onPromptMetrics;
   }
 
   /**
@@ -137,13 +192,36 @@ export class CampaignGeneratorService {
     ]);
 
     if (canUseAI && this.aiGateway) {
-      const prompt = generator.buildPrompt(mergedRequest);
+      const fullPrompt = generator.buildPrompt({
+        ...mergedRequest,
+        interaction: undefined,
+      });
+      const prompt = mergedRequest.interaction
+        ? generator.buildPrompt(mergedRequest)
+        : fullPrompt;
+      const interaction = mergedRequest.interaction
+        ? {
+            ...mergedRequest.interaction,
+            input: withGeneratorRequest(
+              mergedRequest.interaction.input,
+              prompt,
+            ),
+            replayPrompt: mergedRequest.interaction.replayPrompt ?? fullPrompt,
+          }
+        : undefined;
       // Retry a few times if the model returns a banned name (including
       // derivatives like "Vane-Smithe"); fall through to local generation if it
       // keeps doing so.
       for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
         try {
-          const raw = await this.aiGateway.complete(prompt, SYSTEM_INSTRUCTION);
+          const result = await this.aiGateway.complete(
+            fullPrompt,
+            SYSTEM_INSTRUCTION,
+            {
+              interaction,
+            },
+          );
+          const raw = completeText(result);
           const parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
           if (
             typeof parsed.title === "string" &&
@@ -158,6 +236,22 @@ export class CampaignGeneratorService {
               labels: Array.isArray(parsed.labels) ? parsed.labels : [],
               connections: parseConnections(parsed.connections),
             };
+            if (typeof result !== "string" && result.usedInteraction) {
+              this.onInteractionResult?.(result);
+            }
+            this.onPromptMetrics?.(
+              promptMetrics({
+                request: mergedRequest,
+                fullPrompt,
+                sentPrompt:
+                  typeof result !== "string" && result.replayed
+                    ? (interaction?.replayPrompt ?? fullPrompt)
+                    : (interaction?.input ?? fullPrompt),
+                usedInteraction:
+                  typeof result !== "string" && result.usedInteraction,
+                replayed: typeof result !== "string" && !!result.replayed,
+              }),
+            );
             return generator.mapOutputToDraft(output, mergedRequest);
           }
           break; // Valid JSON but wrong shape — fall through to local.
@@ -207,7 +301,6 @@ export class CampaignGeneratorService {
         labels: draft.labels,
       },
     );
-
     let relationshipCreated = false;
     if (request.createRelationship && draft.sourceEntityId) {
       // Link OUTBOUND from the new entity to its source, so the originating

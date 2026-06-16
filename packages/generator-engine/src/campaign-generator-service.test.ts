@@ -5,10 +5,16 @@ import {
   type GeneratorVaultGateway,
 } from "./campaign-generator-service";
 import {
+  type AIGeneratorGateway,
   type GeneratedDraft,
   type GeneratorRunRequest,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import {
+  GeneratorSession,
+  buildGeneratorLoreEntries,
+  draftToAcceptedEntity,
+} from "./generator-session";
 
 function run(
   generatorId: GeneratorRunRequest["generatorId"],
@@ -57,6 +63,66 @@ function ctx(bannedNames: string[]): GeneratorRunRequest["vaultContext"] {
     labelSuggestions: [],
     includedContext: [],
     applyTemplate: false,
+  };
+}
+
+function richCtx(): GeneratorRunRequest["vaultContext"] {
+  return {
+    themeId: "fantasy",
+    themeName: "Low Myth",
+    currentDate: "1492",
+    targetEntityType: "character",
+    categoryLabels: [
+      { id: "character", label: "Character" },
+      { id: "faction", label: "Faction" },
+      { id: "location", label: "Location" },
+      { id: "item", label: "Item" },
+    ],
+    templateOutline:
+      "## Summary\n## Motives\n## Secrets\n## Hooks\nUse these headings in order.",
+    applyTemplate: true,
+    sourceEntity: {
+      id: "source-1",
+      title: "Ash Market",
+      type: "location",
+      relationship: "origin",
+      contentExcerpt:
+        "A fire-scarred trading quarter where guild law is enforced by debt.",
+      loreExcerpt: "The market bell is rung only when old contracts come due.",
+      labels: ["district", "trade"],
+    },
+    neighbors: Array.from({ length: 5 }, (_, i) => ({
+      id: `neighbor-${i}`,
+      title: `Neighbor ${i}`,
+      type: "character",
+      relationship: "connected",
+      contentExcerpt:
+        "A politically connected figure tied to Ash Market's old contracts.",
+      loreExcerpt: "Keeps careful notes on rivals, debts, and forbidden cargo.",
+      labels: ["contact"],
+    })),
+    worldSample: Array.from({ length: 12 }, (_, i) => ({
+      id: `world-${i}`,
+      title: `World Anchor ${i}`,
+      type: i % 2 === 0 ? "faction" : "location",
+      contentExcerpt:
+        "A campaign anchor with trade disputes, hidden alliances, old grudges, and unresolved hooks.",
+      loreExcerpt:
+        "Relevant world lore that should inform generated factions, NPCs, items, and places.",
+      labels: ["world"],
+    })),
+    existingTitles: Array.from({ length: 20 }, (_, i) => `Existing Title ${i}`),
+    bannedNames: ["Vane"],
+    labelSuggestions: ["guild", "debt", "market", "rival"],
+    includedContext: [
+      "theme",
+      "categories",
+      "source",
+      "neighbors",
+      "world",
+      "titles",
+      "labels",
+    ],
   };
 }
 
@@ -238,14 +304,16 @@ describe("AI policy (US2)", () => {
 
   it("uses AI gateway when useAI is true and policy allows", async () => {
     const aiGateway = {
-      complete: vi.fn(async () =>
-        JSON.stringify({
+      complete: vi.fn(async () => ({
+        text: JSON.stringify({
           title: "Zara the Witch",
           summary: "A powerful sorceress.",
           lore: "## History\nShe was born...",
           labels: ["Witch", "Human"],
         }),
-      ),
+        usedInteraction: true,
+        interactionId: "interaction-1",
+      })),
     };
     const svc = new CampaignGeneratorService({
       aiPolicy: { isEnabled: true, isAvailable: true },
@@ -255,6 +323,225 @@ describe("AI policy (US2)", () => {
     expect(aiGateway.complete).toHaveBeenCalledTimes(1);
     expect(d.title).toBe("Zara the Witch");
     expect(d.labels).toContain("Witch");
+  });
+
+  it("passes interaction request through to the AI gateway when present", async () => {
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => ({
+      text: JSON.stringify({
+        title: "Threaded",
+        summary: "s",
+        lore: "l",
+        labels: [],
+      }),
+      usedInteraction: true,
+      interactionId: "interaction-2",
+    }));
+    const onInteractionResult = vi.fn();
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onInteractionResult,
+    });
+    await svc.generateDraft(
+      run("npc", {
+        useAI: true,
+        vaultContext: ctx(["Vane"]),
+        interaction: {
+          input: "delta context plus request",
+          previousInteractionId: "interaction-1",
+          store: true,
+        },
+      }),
+    );
+    expect(onInteractionResult).toHaveBeenCalledWith(
+      expect.objectContaining({ interactionId: "interaction-2" }),
+    );
+    expect(complete).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({
+        interaction: expect.objectContaining({
+          input: expect.stringContaining("Return ONLY a JSON object"),
+          previousInteractionId: "interaction-1",
+          replayPrompt: expect.stringContaining(
+            "Do NOT use any of these names",
+          ),
+        }),
+      }),
+    );
+    const interaction = complete.mock.calls[0][2]?.interaction;
+    expect(interaction?.input).toContain("delta context plus request");
+    expect(interaction?.input).not.toContain("Do NOT use any of these names");
+  });
+
+  it("reports prompt metrics for stateless and interaction-backed AI generations", async () => {
+    const metrics = vi.fn();
+    const complete = vi.fn<AIGeneratorGateway["complete"]>(async () => ({
+      text: JSON.stringify({
+        title: "Threaded",
+        summary: "s",
+        lore: "l",
+        labels: [],
+      }),
+      usedInteraction: true,
+      interactionId: "interaction-2",
+    }));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+      onPromptMetrics: metrics,
+    });
+
+    await svc.generateDraft(
+      run("npc", {
+        useAI: true,
+        vaultContext: ctx(["Vane"]),
+        interaction: {
+          input:
+            "[GENERATOR VAULT CONTEXT]\nDelta only\n\n[GENERATOR REQUEST]\n",
+          previousInteractionId: "interaction-1",
+          store: true,
+        },
+      }),
+    );
+
+    expect(metrics).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "npc",
+        usedInteraction: true,
+        replayed: false,
+      }),
+    );
+    const interactionMetrics = metrics.mock.calls[0][0];
+    expect(interactionMetrics.fullPromptChars).toBeGreaterThan(
+      interactionMetrics.sentPromptChars,
+    );
+    expect(interactionMetrics.savedPromptChars).toBeGreaterThan(0);
+    expect(interactionMetrics.estimatedSavedTokens).toBeGreaterThan(0);
+
+    metrics.mockClear();
+    complete.mockResolvedValueOnce(
+      JSON.stringify({
+        title: "Stateless",
+        summary: "s",
+        lore: "l",
+        labels: [],
+      }),
+    );
+
+    await svc.generateDraft(run("npc", { useAI: true, vaultContext: ctx([]) }));
+
+    expect(metrics).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "npc",
+        usedInteraction: false,
+        replayed: false,
+        savedPromptChars: 0,
+        estimatedSavedTokens: 0,
+      }),
+    );
+  });
+
+  it("compares representative flow prompt size with interactions against stateless calls", async () => {
+    const flow: Array<GeneratorRunRequest["generatorId"]> = [
+      "faction",
+      "npc",
+      "npc",
+      "npc",
+      "npc",
+      "magic-item",
+      "settlement",
+      "settlement",
+      "settlement",
+      "settlement",
+      "faction",
+    ];
+    const context = richCtx();
+    const statelessMetrics: Array<{
+      fullPromptChars: number;
+      sentPromptChars: number;
+    }> = [];
+    const interactionMetrics: Array<{
+      fullPromptChars: number;
+      sentPromptChars: number;
+      savedPromptChars: number;
+    }> = [];
+
+    const stateless = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: {
+        complete: vi.fn(async (_prompt, _system, options) => {
+          expect(options?.interaction).toBeUndefined();
+          return aiJson(`Stateless ${statelessMetrics.length}`);
+        }),
+      },
+      onPromptMetrics: (metrics) => statelessMetrics.push(metrics),
+    });
+
+    for (const generatorId of flow) {
+      await stateless.generateDraft(
+        run(generatorId, { useAI: true, vaultContext: context }),
+      );
+    }
+
+    const session = new GeneratorSession();
+    const interactive = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: {
+        complete: vi.fn(async (_prompt, _system, options) => {
+          expect(options?.interaction).toBeDefined();
+          return {
+            text: aiJson(`Interactive ${interactionMetrics.length}`),
+            usedInteraction: true,
+            interactionId: `interaction-${interactionMetrics.length}`,
+          };
+        }),
+      },
+      onInteractionResult: (result) => {
+        if (result.interactionId) {
+          session.commitTurn(
+            result.interactionId,
+            buildGeneratorLoreEntries(context),
+          );
+        }
+      },
+      onPromptMetrics: (metrics) => interactionMetrics.push(metrics),
+    });
+
+    for (const generatorId of flow) {
+      const turn = session.prepareTurn({
+        instruction: `Generate ${generatorId}.`,
+        loreEntries: buildGeneratorLoreEntries(context),
+      });
+      const draft = await interactive.generateDraft(
+        run(generatorId, {
+          useAI: true,
+          instructions: `Generate ${generatorId}.`,
+          vaultContext: context,
+          interaction: {
+            input: turn.input,
+            previousInteractionId: turn.previousInteractionId,
+            store: true,
+          },
+        }),
+      );
+      session.commitAcceptedEntity(draftToAcceptedEntity(draft.title, draft));
+    }
+
+    const statelessSent = statelessMetrics.reduce(
+      (total, metrics) => total + metrics.sentPromptChars,
+      0,
+    );
+    const interactionSent = interactionMetrics.reduce(
+      (total, metrics) => total + metrics.sentPromptChars,
+      0,
+    );
+
+    expect(statelessMetrics).toHaveLength(flow.length);
+    expect(interactionMetrics).toHaveLength(flow.length);
+    expect(interactionMetrics[0].savedPromptChars).toBe(0);
+    expect(interactionMetrics[1].savedPromptChars).toBeGreaterThan(0);
+    expect(interactionSent).toBeLessThan(statelessSent);
   });
 
   it("falls back to local generation when AI gateway throws", async () => {

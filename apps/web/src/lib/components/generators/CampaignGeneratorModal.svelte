@@ -20,7 +20,13 @@
     type GeneratorRunRequest,
     type GeneratorVaultGateway,
   } from "generator-engine";
+  import type {
+    AIGeneratorCompleteResult,
+    GeneratorPromptMetrics,
+  } from "generator-engine";
   import { aiGeneratorGateway } from "$lib/services/generators/ai-generator-gateway";
+  import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
+  import { interactionSessions } from "$lib/services/ai/interaction-session";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { searchService } from "$lib/services/search.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
@@ -58,14 +64,26 @@
   const svcDeps = {
     vault: vaultGateway,
     aiGateway: aiGeneratorGateway,
+    onInteractionResult(result: AIGeneratorCompleteResult) {
+      if (result.interactionId) {
+        generatorSessionManager.commitInteraction(
+          result.interactionId,
+          result.replayed,
+        );
+      }
+    },
+    onPromptMetrics(metrics: GeneratorPromptMetrics) {
+      generatorSessionManager.recordPromptMetrics(metrics);
+    },
     get aiPolicy() {
       return aiPolicy;
     },
   };
   const svc = new CampaignGeneratorService(svcDeps);
 
-  function close() {
+  function close(options: { preserveSession?: boolean } = {}) {
     modalUIStore.closeGeneratorWorkflow();
+    if (!options.preserveSession) generatorSessionManager.reset();
     stage = "configure";
     draft = null;
     errorMsg = null;
@@ -81,6 +99,7 @@
       "generatorId" | "options" | "useAI" | "instructions"
     >,
   ) {
+    if (stage === "generating" || stage === "saving") return;
     stage = "generating";
     errorMsg = null;
     try {
@@ -179,11 +198,29 @@
       // default brief so the model always has direction.
       const instructions =
         req.instructions?.trim() || getDefaultInstruction(req.generatorId);
+      const interactionTurn =
+        req.useAI &&
+        aiPolicy.isEnabled &&
+        aiPolicy.isAvailable &&
+        interactionSessions.enabled &&
+        generatorSessionManager.enabled
+          ? generatorSessionManager.prepare({
+              instruction: instructions,
+              vaultContext,
+            })
+          : null;
       const result = await svc.generateDraft({
         ...req,
         instructions,
         themeId: themeStore.worldThemeId ?? "workspace",
         vaultContext,
+        interaction: interactionTurn
+          ? {
+              input: interactionTurn.input,
+              previousInteractionId: interactionTurn.previousInteractionId,
+              store: true,
+            }
+          : undefined,
       });
       draft = result;
       stage = "review";
@@ -194,6 +231,7 @@
   }
 
   async function onSave(reviewed: GeneratedDraft, createRelationship: boolean) {
+    if (stage === "saving") return;
     stage = "saving";
     errorMsg = null;
     try {
@@ -247,8 +285,9 @@
         lore: reviewed.lore || "",
         timestamp: Date.now(),
         deleteOnDiscard: true,
+        generatorSessionCommit: true,
       };
-      close();
+      close({ preserveSession: true });
       // Review where the user launched from: stay in zen if already in zen (or
       // on mobile, where zen is the better surface), otherwise show the draft
       // in the entity sidebar without yanking the user into zen.
@@ -285,7 +324,7 @@
     type="button"
     class="absolute inset-0 h-full w-full cursor-default focus:outline-none"
     aria-label="Close generator"
-    onclick={close}
+    onclick={() => close()}
   ></button>
 
   <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -328,7 +367,7 @@
       </div>
       <button
         type="button"
-        onclick={close}
+        onclick={() => close()}
         class="flex h-8 w-8 items-center justify-center rounded border border-chrome-border text-chrome-muted transition hover:border-chrome-accent hover:text-chrome-accent"
         aria-label="Close"
       >

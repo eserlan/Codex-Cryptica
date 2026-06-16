@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { extractJsonObject } from "./ai-generator-gateway";
+import { InteractionExpiredError } from "$lib/services/ai/client-manager";
+import {
+  ProxyAIGeneratorGateway,
+  extractJsonObject,
+} from "./ai-generator-gateway";
 
 describe("extractJsonObject", () => {
   it("returns a clean object unchanged", () => {
@@ -33,5 +37,87 @@ describe("extractJsonObject", () => {
   it("handles escaped quotes inside strings", () => {
     const s = '{"lore":"she said \\"hi\\""}}}}';
     expect(JSON.parse(extractJsonObject(s))).toEqual({ lore: 'she said "hi"' });
+  });
+});
+
+describe("ProxyAIGeneratorGateway", () => {
+  it("uses the Interactions API when interaction options are provided", async () => {
+    const client = {
+      sendInteraction: async (params: unknown) => {
+        expect(params).toEqual(
+          expect.objectContaining({
+            input: "delta request",
+            previousInteractionId: "interaction-1",
+            storeConversation: true,
+            generationConfig: expect.objectContaining({
+              responseMimeType: "application/json",
+              maxOutputTokens: 2048,
+            }),
+          }),
+        );
+        return { id: "interaction-2", text: '{"title":"A"} trailing' };
+      },
+      getModel: async () => {
+        throw new Error("stateless path should not be used");
+      },
+    };
+    const gateway = new ProxyAIGeneratorGateway(client as never);
+
+    await expect(
+      gateway.complete("full prompt", "system", {
+        interaction: {
+          input: "delta request",
+          previousInteractionId: "interaction-1",
+          store: true,
+          replayPrompt: "full replay",
+        },
+      }),
+    ).resolves.toEqual({
+      text: '{"title":"A"}',
+      interactionId: "interaction-2",
+      usedInteraction: true,
+    });
+  });
+
+  it("replays the full prompt once when the interaction id expired", async () => {
+    const calls: unknown[] = [];
+    const client = {
+      sendInteraction: async (params: unknown) => {
+        calls.push(params);
+        if (calls.length === 1) {
+          throw new InteractionExpiredError("expired");
+        }
+        return { id: "fresh", text: '{"title":"Replay"}' };
+      },
+      getModel: async () => {
+        throw new Error("stateless path should not be used");
+      },
+    };
+    const gateway = new ProxyAIGeneratorGateway(client as never);
+
+    const result = await gateway.complete("full prompt", "system", {
+      interaction: {
+        input: "delta request",
+        previousInteractionId: "stale",
+        replayPrompt: "full replay",
+      },
+    });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toEqual(
+      expect.objectContaining({
+        input: "full replay",
+        previousInteractionId: null,
+        generationConfig: expect.objectContaining({
+          responseMimeType: "application/json",
+        }),
+      }),
+    );
+    expect(result).toEqual({
+      text: '{"title":"Replay"}',
+      interactionId: "fresh",
+      usedInteraction: true,
+      replayed: true,
+    });
   });
 });
