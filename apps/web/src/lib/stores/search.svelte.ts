@@ -5,6 +5,7 @@ import { searchService as defaultSearchService } from "$lib/services/search.svel
 import { debugStore } from "./debug.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 export class SearchStore {
   query = $state("");
@@ -32,14 +33,18 @@ export class SearchStore {
   private unsubscribeIndexProgress: (() => void) | null = null;
   private onVaultSwitched = () => this.reset();
 
+  private storage: StorageLike;
+
   constructor(
     vault: typeof defaultVault = defaultVault,
     sessionStore: typeof sessionModeStore = sessionModeStore,
     searchService: typeof defaultSearchService = defaultSearchService,
+    storage: StorageLike = browserStorage,
   ) {
     this.vault = vault;
     this.sessionModeStore = sessionStore;
     this.searchService = searchService;
+    this.storage = storage;
     this.recents = this.loadRecents();
     if (this.searchService.subscribeIndexProgress) {
       this.unsubscribeIndexProgress = this.searchService.subscribeIndexProgress(
@@ -69,10 +74,9 @@ export class SearchStore {
   }
 
   private loadRecents(): SearchResult[] {
-    if (typeof localStorage === "undefined") return [];
     try {
       const key = this.getStorageKey();
-      const raw = localStorage.getItem(key);
+      const raw = this.storage.getItem(key);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as SearchResult[];
       if (!Array.isArray(parsed)) return [];
@@ -234,12 +238,7 @@ export class SearchStore {
       }
       this.recents = nextRecents;
 
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem(
-          this.getStorageKey(),
-          JSON.stringify(this.recents),
-        );
-      }
+      this.storage.setItem(this.getStorageKey(), JSON.stringify(this.recents));
       return selected;
     }
     return null;

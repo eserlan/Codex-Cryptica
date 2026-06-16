@@ -451,27 +451,43 @@ export interface GeneratorOutput {
   status: "active" | "draft";
 }
 
-export function pickFrom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+/**
+ * Random source returning a float in [0, 1) — the same contract as
+ * `Math.random`. Injected (as a trailing optional arg) so generators can be
+ * driven by a seeded RNG in tests for stable snapshots; defaults to the global.
+ */
+export type Rng = () => number;
+export const defaultRng: Rng = () => Math.random();
+
+export function pickFrom<T>(arr: T[], rng: Rng = defaultRng): T {
+  return arr[Math.floor(rng() * arr.length)];
 }
 
-export function getRandomItems<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+export function getRandomItems<T>(
+  arr: T[],
+  count: number,
+  rng: Rng = defaultRng,
+): T[] {
+  // Fisher-Yates shuffle — unbiased and deterministic for a fixed rng sequence
+  // (a random `sort` comparator is non-transitive: biased and engine-dependent).
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   return shuffled.slice(0, count);
 }
 
-export function generateName(): string {
+export function generateName(rng: Rng = defaultRng): string {
   const prefix =
-    nameTable.prefixes[Math.floor(Math.random() * nameTable.prefixes.length)];
+    nameTable.prefixes[Math.floor(rng() * nameTable.prefixes.length)];
   const suffix =
-    nameTable.suffixes[Math.floor(Math.random() * nameTable.suffixes.length)];
-  const useDescriptor = Math.random() > 0.6;
+    nameTable.suffixes[Math.floor(rng() * nameTable.suffixes.length)];
+  const useDescriptor = rng() > 0.6;
   let name = `${prefix}${suffix}`;
   if (useDescriptor) {
     const descriptor =
-      nameTable.descriptors[
-        Math.floor(Math.random() * nameTable.descriptors.length)
-      ];
+      nameTable.descriptors[Math.floor(rng() * nameTable.descriptors.length)];
     name = `${name} ${descriptor}`;
   }
   return name;

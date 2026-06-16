@@ -1,5 +1,13 @@
 import type { ActivityEvent } from "$lib/types/activity";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+import {
+  systemClock,
+  systemIdGenerator,
+  browserStorage,
+  type Clock,
+  type IdGenerator,
+  type StorageLike,
+} from "$lib/utils/runtime-deps";
 
 export type { ActivityEvent };
 
@@ -8,15 +16,19 @@ const MAX_EVENTS = 50;
 export const ACTIVITY_LOG_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export class SessionActivityService {
-  constructor() {
+  constructor(
+    private clock: Clock = systemClock,
+    private idGenerator: IdGenerator = systemIdGenerator,
+    private storage: StorageLike = browserStorage,
+  ) {
     this.load();
   }
 
   addEvent(event: Omit<ActivityEvent, "id" | "timestamp">) {
     const fullEvent: ActivityEvent = {
       ...event,
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
+      id: this.idGenerator.uuid(),
+      timestamp: this.clock.now(),
     };
 
     discoveryPolicyStore.archiveActivityLog = this.prune([
@@ -28,15 +40,11 @@ export class SessionActivityService {
 
   clear() {
     discoveryPolicyStore.archiveActivityLog = [];
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    this.storage.removeItem(STORAGE_KEY);
   }
 
   load() {
-    if (typeof window === "undefined") return;
-
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = this.storage.getItem(STORAGE_KEY);
     if (!raw) {
       discoveryPolicyStore.archiveActivityLog = this.prune(
         discoveryPolicyStore.archiveActivityLog ?? [],
@@ -54,20 +62,19 @@ export class SessionActivityService {
       this.persist();
     } catch {
       discoveryPolicyStore.archiveActivityLog = [];
-      localStorage.removeItem(STORAGE_KEY);
+      this.storage.removeItem(STORAGE_KEY);
     }
   }
 
   private prune(events: ActivityEvent[]) {
-    const cutoff = Date.now() - ACTIVITY_LOG_RETENTION_MS;
+    const cutoff = this.clock.now() - ACTIVITY_LOG_RETENTION_MS;
     return events
       .filter((event) => event.timestamp >= cutoff)
       .sort((a, b) => b.timestamp - a.timestamp);
   }
 
   private persist() {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(
+    this.storage.setItem(
       STORAGE_KEY,
       JSON.stringify(discoveryPolicyStore.archiveActivityLog),
     );

@@ -1,4 +1,10 @@
 import type { ChatMessage } from "./types";
+import {
+  systemClock,
+  systemIdGenerator,
+  type Clock,
+  type IdGenerator,
+} from "./runtime";
 
 interface AppSettingsStore {
   appSettings: {
@@ -19,6 +25,11 @@ export class ChatHistoryService {
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
   private vaultId: string | null = null;
   private switchSequence = 0;
+
+  constructor(
+    private clock: Clock = systemClock,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   private get key() {
     return `chat_history_${this.vaultId ?? "default"}`;
@@ -55,13 +66,13 @@ export class ChatHistoryService {
       await db.appSettings.put({
         key: this.key,
         value: saved.value,
-        updatedAt: Date.now(),
+        updatedAt: this.clock.now(),
       });
     } else {
       this.messages = [];
     }
 
-    this.lastUpdated = Date.now();
+    this.lastUpdated = this.clock.now();
   }
 
   async switchVault(newVaultId: string) {
@@ -97,7 +108,7 @@ export class ChatHistoryService {
       });
     }
 
-    this.lastUpdated = Date.now();
+    this.lastUpdated = this.clock.now();
   }
 
   destroy() {
@@ -114,7 +125,7 @@ export class ChatHistoryService {
 
   async addMessage(msg: ChatMessage) {
     this.messages = [...this.messages, msg];
-    this.lastUpdated = Date.now();
+    this.lastUpdated = this.clock.now();
     await this.saveToDB();
   }
 
@@ -124,7 +135,7 @@ export class ChatHistoryService {
       URL.revokeObjectURL(msg.imageUrl);
     }
     this.messages = this.messages.filter((m) => m.id !== id);
-    this.lastUpdated = Date.now();
+    this.lastUpdated = this.clock.now();
     await this.saveToDB();
   }
 
@@ -135,7 +146,7 @@ export class ChatHistoryService {
       }
     });
     this.messages = [];
-    this.lastUpdated = Date.now();
+    this.lastUpdated = this.clock.now();
     await this.saveToDB();
   }
 
@@ -152,7 +163,7 @@ export class ChatHistoryService {
     if (msgIndex !== -1) {
       this.messages[msgIndex] = { ...this.messages[msgIndex], ...updates };
       this.messages = [...this.messages];
-      this.lastUpdated = Date.now();
+      this.lastUpdated = this.clock.now();
       if (persist) {
         await this.saveToDB();
       }
@@ -169,7 +180,7 @@ export class ChatHistoryService {
       const proposals = [...existing, proposal];
       this.messages[msgIndex] = { ...msg, proposals };
       this.messages = [...this.messages];
-      this.lastUpdated = Date.now();
+      this.lastUpdated = this.clock.now();
 
       if (this.debounceTimeout) {
         clearTimeout(this.debounceTimeout);
@@ -195,7 +206,7 @@ export class ChatHistoryService {
       await this.db.appSettings.put({
         key: this.key,
         value: messagesToPersist,
-        updatedAt: Date.now(),
+        updatedAt: this.clock.now(),
       });
     } catch {
       // non-critical persistence failure
@@ -204,13 +215,13 @@ export class ChatHistoryService {
 
   async setMessages(messages: ChatMessage[]) {
     this.messages = messages;
-    this.lastUpdated = Date.now();
+    this.lastUpdated = this.clock.now();
     await this.saveToDB();
   }
 
   async startWizard(type: "connection" | "merge") {
     await this.addMessage({
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       role: "assistant",
       content: `Starting ${type} wizard...`,
       type: "wizard",
@@ -233,7 +244,7 @@ export class ChatHistoryService {
     entityId?: string,
   ) {
     await this.addMessage({
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       role: "assistant",
       content,
       type: "image",

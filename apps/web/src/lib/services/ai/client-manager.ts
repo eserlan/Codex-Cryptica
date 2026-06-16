@@ -28,6 +28,12 @@ export class DefaultAIClientManager {
   private static readonly PROXY_URL =
     "https://oracle-proxy.espen-erlandsen.workers.dev";
 
+  // Injected so tests can supply a fake without stubbing the global `fetch`.
+  // Default wraps the global lazily (resolved at call time, not construction).
+  constructor(
+    private fetcher: typeof fetch = (input, init) => fetch(input, init),
+  ) {}
+
   /**
    * Send a Gemini Interactions API turn through the proxy (server-side state).
    * Returns the new interaction id plus the model's text. Throws
@@ -61,7 +67,7 @@ export class DefaultAIClientManager {
       body.generationConfig = params.generationConfig;
     }
 
-    const response = await fetch(DefaultAIClientManager.PROXY_URL, {
+    const response = await this.fetcher(DefaultAIClientManager.PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -137,6 +143,7 @@ export class DefaultAIClientManager {
     systemInstruction?: string,
   ): GenerativeModel {
     const proxyUrl = DefaultAIClientManager.PROXY_URL;
+    const doFetch = this.fetcher;
 
     return {
       model: modelName,
@@ -243,7 +250,7 @@ export class DefaultAIClientManager {
           };
 
           console.log(`[OracleProxy] Fetching from: ${proxyUrl}`);
-          const response = await fetch(proxyUrl, {
+          const response = await doFetch(proxyUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

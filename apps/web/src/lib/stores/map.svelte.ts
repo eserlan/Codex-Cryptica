@@ -4,6 +4,7 @@ import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
@@ -62,6 +63,7 @@ export class MapStore {
   private pendingActiveMapId = $state<string | null>(null);
   private _persistTimer: ReturnType<typeof setTimeout> | null = null;
   private static _vaultSwitchHandler: (() => void) | null = null;
+  private storage: StorageLike;
 
   activeMap = $derived.by(() => {
     const maps = vault.maps ?? {};
@@ -85,7 +87,8 @@ export class MapStore {
     return this.activeMap?.pins || [];
   });
 
-  constructor() {
+  constructor(storage: StorageLike = browserStorage) {
+    this.storage = storage;
     if (typeof window !== "undefined") {
       this.applySettings(null);
       this.restorePageState();
@@ -157,9 +160,7 @@ export class MapStore {
     if (typeof window === "undefined") return null;
 
     try {
-      const raw = window.localStorage.getItem(
-        this.getSettingsStorageKey(mapId),
-      );
+      const raw = this.storage.getItem(this.getSettingsStorageKey(mapId));
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Partial<PersistedMapSettings>;
       return {
@@ -230,7 +231,7 @@ export class MapStore {
     };
 
     try {
-      window.localStorage.setItem(
+      this.storage.setItem(
         this.getSettingsStorageKey(this.activeMapId),
         JSON.stringify(payload),
       );
@@ -247,7 +248,7 @@ export class MapStore {
     if (typeof window === "undefined") return null;
 
     try {
-      const raw = window.localStorage.getItem(this.getPageStateStorageKey());
+      const raw = this.storage.getItem(this.getPageStateStorageKey());
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Partial<PersistedMapPageState>;
       return {
@@ -304,7 +305,7 @@ export class MapStore {
     }
 
     try {
-      window.localStorage.setItem(
+      this.storage.setItem(
         this.getPageStateStorageKey(),
         JSON.stringify(pageState),
       );

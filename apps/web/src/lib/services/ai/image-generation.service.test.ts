@@ -250,6 +250,26 @@ describe("DefaultImageGenerationService", () => {
       expect(await blob.text()).toBe("custom-image");
     });
 
+    it("uses an injected fetcher instead of the global fetch", async () => {
+      const injected = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ b64_json: "Y3VzdG9t" }] }),
+      });
+      const isolated = new DefaultImageGenerationService(
+        mockAiClientManager,
+        injected as any,
+      );
+
+      const blob = await isolated.generateImage("k", "prompt", "model", {
+        provider: "custom",
+        baseUrl: "https://custom.example/v1/images/generations",
+      });
+
+      expect(injected).toHaveBeenCalledOnce();
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(blob).toBeInstanceOf(Blob);
+    });
+
     it("should fail fast when custom provider API key is missing", async () => {
       await expect(
         service.generateImage("", "prompt", "model", { provider: "custom" }),

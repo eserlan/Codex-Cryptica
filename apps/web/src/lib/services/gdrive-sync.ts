@@ -38,41 +38,97 @@ export async function initGDriveSync() {
 const ROOT_FOLDER_NAME = "CodexCryptica";
 const DRIVE_FILES_API = "https://www.googleapis.com/drive/v3/files";
 
-async function findOrCreateFolder(
-  token: string,
-  name: string,
-  parentId?: string,
-): Promise<string> {
-  const parentClause = parentId
-    ? `'${parentId}' in parents`
-    : `'root' in parents`;
-  const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`;
-  const searchRes = await fetch(
-    `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id)`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  if (!searchRes.ok)
-    throw new Error(`Failed to search Drive for folder "${name}"`);
-  const { files } = await searchRes.json();
-  if (files.length > 0) return files[0].id;
+/**
+ * Thin client for the Drive REST calls this module makes. Owns the only `fetch`
+ * usages here so the network seam is constructor-injectable (Constitution VIII);
+ * the module functions below delegate to the {@link driveRest} singleton.
+ */
+export class DriveRestClient {
+  constructor(
+    // Injected for tests; default wraps the global `fetch` lazily.
+    private fetcher: typeof fetch = (input, init) => fetch(input, init),
+  ) {}
 
-  const body: Record<string, unknown> = {
-    name,
-    mimeType: "application/vnd.google-apps.folder",
-  };
-  if (parentId) body.parents = [parentId];
-  const createRes = await fetch(DRIVE_FILES_API, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!createRes.ok) throw new Error(`Failed to create Drive folder "${name}"`);
-  const data = await createRes.json();
-  return data.id;
+  private authHeaders(token: string) {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  /**
+   * Escapes a value for safe interpolation inside a single-quoted Drive query
+   * term. Without this, names containing `'` (e.g. "O'Reilly") produce an
+   * invalid query and fail to match existing folders (creating duplicates).
+   */
+  private escapeQueryValue(value: string): string {
+    return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  }
+
+  async findOrCreateFolder(
+    token: string,
+    name: string,
+    parentId?: string,
+  ): Promise<string> {
+    const parentClause = parentId
+      ? `'${parentId}' in parents`
+      : `'root' in parents`;
+    const query = `name='${this.escapeQueryValue(name)}' and mimeType='application/vnd.google-apps.folder' and trashed=false and ${parentClause}`;
+    const searchRes = await this.fetcher(
+      `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id)`,
+      { headers: this.authHeaders(token) },
+    );
+    if (!searchRes.ok)
+      throw new Error(`Failed to search Drive for folder "${name}"`);
+    const { files } = await searchRes.json();
+    if (files.length > 0) return files[0].id;
+
+    const body: Record<string, unknown> = {
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+    };
+    if (parentId) body.parents = [parentId];
+    const createRes = await this.fetcher(DRIVE_FILES_API, {
+      method: "POST",
+      headers: {
+        ...this.authHeaders(token),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!createRes.ok)
+      throw new Error(`Failed to create Drive folder "${name}"`);
+    const data = await createRes.json();
+    return data.id;
+  }
+
+  /** Lists immediate subfolders of `parentId`, ordered by name. */
+  async listSubfolders(
+    token: string,
+    parentId: string,
+  ): Promise<Array<{ id: string; name: string }>> {
+    const query = `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const res = await this.fetcher(
+      `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id,name)&orderBy=name`,
+      { headers: this.authHeaders(token) },
+    );
+    if (!res.ok) throw new Error("Failed to list Drive vaults");
+    const { files } = await res.json();
+    return files as Array<{ id: string; name: string }>;
+  }
+
+  /** Raw folder-metadata response so callers keep their status-specific errors. */
+  async getFolderMetadataResponse(
+    token: string,
+    folderId: string,
+  ): Promise<Response> {
+    return this.fetcher(
+      `${DRIVE_FILES_API}/${folderId}?fields=id,name,trashed`,
+      {
+        headers: this.authHeaders(token),
+      },
+    );
+  }
 }
+
+export const driveRest = new DriveRestClient();
 
 /**
  * Connects a vault to a Google Drive folder inside the "CodexCryptica" root.
@@ -94,8 +150,15 @@ export async function connectVaultToDrive(vaultId: string, folderId?: string) {
 
   if (!finalFolderId) {
     const vaultName = vault.activeVaultRecord?.name || "Unnamed Vault";
-    const rootFolderId = await findOrCreateFolder(token, ROOT_FOLDER_NAME);
-    finalFolderId = await findOrCreateFolder(token, vaultName, rootFolderId);
+    const rootFolderId = await driveRest.findOrCreateFolder(
+      token,
+      ROOT_FOLDER_NAME,
+    );
+    finalFolderId = await driveRest.findOrCreateFolder(
+      token,
+      vaultName,
+      rootFolderId,
+    );
   } else {
     // Validate existing folder
     driveBackend.setVaultFolderId(finalFolderId);
@@ -208,15 +271,11 @@ export async function listDriveVaults(): Promise<
   const token = await gdriveAuthService.getAccessToken();
   if (!token) throw new Error("Authentication failed");
 
-  const rootFolderId = await findOrCreateFolder(token, ROOT_FOLDER_NAME);
-  const query = `'${rootFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  const res = await fetch(
-    `${DRIVE_FILES_API}?q=${encodeURIComponent(query)}&fields=files(id,name)&orderBy=name`,
-    { headers: { Authorization: `Bearer ${token}` } },
+  const rootFolderId = await driveRest.findOrCreateFolder(
+    token,
+    ROOT_FOLDER_NAME,
   );
-  if (!res.ok) throw new Error("Failed to list Drive vaults");
-  const { files } = await res.json();
-  return files as Array<{ id: string; name: string }>;
+  return driveRest.listSubfolders(token, rootFolderId);
 }
 
 /**
@@ -316,10 +375,7 @@ export async function joinSharedVault(urlOrId: string): Promise<void> {
   );
 
   // Fetch folder metadata to get its name
-  const res = await fetch(
-    `${DRIVE_FILES_API}/${folderId}?fields=id,name,trashed`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
+  const res = await driveRest.getFolderMetadataResponse(token, folderId);
   if (!res.ok) {
     if (res.status === 404 || res.status === 403) {
       throw new Error(
