@@ -21,7 +21,13 @@ export class SessionActivityService {
     private idGenerator: IdGenerator = systemIdGenerator,
     private storage: StorageLike = browserStorage,
   ) {
-    this.load();
+    // The exported singleton is constructed at import time, which also runs
+    // during SSR. Skip auto-load there so we never mutate the shared
+    // discoveryPolicyStore on the server (cross-request state bleed). Tests run
+    // under jsdom (window present) and still exercise constructor load.
+    if (typeof window !== "undefined") {
+      this.load();
+    }
   }
 
   addEvent(event: Omit<ActivityEvent, "id" | "timestamp">) {
