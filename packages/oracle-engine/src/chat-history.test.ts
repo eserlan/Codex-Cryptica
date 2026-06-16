@@ -318,4 +318,27 @@ describe("ChatHistoryService", () => {
       expect(mockDB.appSettings.put).toHaveBeenCalledTimes(1); // Only the initial addMessage call
     });
   });
+
+  describe("injected runtime seams", () => {
+    it("stamps lastUpdated from the injected clock", async () => {
+      const NOW = 1_700_000_000_000;
+      const svc = new ChatHistoryService({ now: () => NOW });
+      await svc.addMessage({
+        id: "m1",
+        role: "assistant",
+        content: "c",
+      } as any);
+      expect(svc.lastUpdated).toBe(NOW);
+    });
+
+    it("uses the injected id generator for wizard message ids", async () => {
+      let n = 0;
+      const svc = new ChatHistoryService(
+        { now: () => 0 },
+        { uuid: () => `wiz-${++n}` },
+      );
+      await svc.startWizard("merge");
+      expect(svc.messages[0].id).toBe("wiz-1");
+    });
+  });
 });
