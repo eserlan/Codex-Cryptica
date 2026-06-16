@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "codex-cryptica",
@@ -40,7 +39,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.26.9",
+      "version": "0.26.21",
       "dependencies": {
         "@codex/canvas-engine": "workspace:*",
         "@codex/events": "workspace:*",

@@ -1,9 +1,17 @@
 import type { RollCommand, RollResult, PartResult, DicePart } from "./types";
 import { diceParser } from "./parser";
 
+type CryptoProvider = { getRandomValues(arr: Uint32Array): Uint32Array };
+type Clock = { now(): number };
+
 export class DiceEngine {
   private randomBuffer = new Uint32Array(256);
   private bufferIndex = 256;
+
+  constructor(
+    private cryptoProvider: CryptoProvider = globalThis.crypto,
+    private clock: Clock = Date,
+  ) {}
 
   /**
    * Generates a random integer between 1 and sides (inclusive)
@@ -18,7 +26,7 @@ export class DiceEngine {
 
     do {
       if (this.bufferIndex >= this.randomBuffer.length) {
-        crypto.getRandomValues(this.randomBuffer);
+        this.cryptoProvider.getRandomValues(this.randomBuffer);
         this.bufferIndex = 0;
       }
       unbiasedRoll = this.randomBuffer[this.bufferIndex++];
@@ -123,7 +131,7 @@ export class DiceEngine {
       total,
       parts: partResults,
       formula: command.formula,
-      timestamp: Date.now(),
+      timestamp: this.clock.now(),
     };
   }
 
