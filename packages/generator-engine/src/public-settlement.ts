@@ -1,7 +1,35 @@
-import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
-import { NAME_BAN_PROMPT } from "./banned-names";
-import { getSessionContext } from "./session-context";
-import { type GeneratorOutput, getRandomItems } from "./base";
+/**
+ * Public Settlement / Location generator — framework-free port of the SEO
+ * settlement generator (`apps/web/src/lib/services/seo/generators/settlement.ts`).
+ *
+ * Framework-free per the unification plan (#1351): no AI client, no
+ * sessionStorage. The web page builds the prompt here, runs it through
+ * aiClientManager, parses with parseSettlementResponse, and falls back to
+ * generateSettlementLocal. Session context is injected as a string.
+ */
+
+import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import { NAME_BAN_PROMPT } from "./public-npc";
+
+export type Rng = () => number;
+const defaultRng: Rng = () => Math.random();
+
+function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function getRandomItems<T>(
+  arr: readonly T[],
+  count: number,
+  rng: Rng = defaultRng,
+): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
 
 export const settlementConfig = {
   sizes: [
@@ -45,26 +73,27 @@ export const settlementConfig = {
   ],
 };
 
-export async function generateSettlement(
-  clientManager: DefaultAIClientManager,
-  options: {
-    size?: string;
-    economy?: string;
-    useAI?: boolean;
-  } = {},
-): Promise<GeneratorOutput> {
+export interface SettlementGeneratorOptions {
+  size?: string;
+  economy?: string;
+}
+
+interface ResolvedSettlement {
+  size: string;
+  population: string;
+  pointsOfInterestCount: number;
+  economy: string;
+  name: string;
+}
+
+function resolveSettlement(
+  options: SettlementGeneratorOptions,
+  rng: Rng,
+): ResolvedSettlement {
   const sizeConfig =
     settlementConfig.sizes.find((s) => s.name === options.size) ||
-    settlementConfig.sizes[
-      Math.floor(Math.random() * settlementConfig.sizes.length)
-    ];
-  const size = sizeConfig.name;
-  const population = sizeConfig.range;
-  const economy =
-    options.economy ||
-    settlementConfig.economies[
-      Math.floor(Math.random() * settlementConfig.economies.length)
-    ];
+    pickFrom(settlementConfig.sizes, rng);
+  const economy = options.economy || pickFrom(settlementConfig.economies, rng);
 
   const namePrefixes = [
     "Cinderwall",
@@ -86,13 +115,31 @@ export async function generateSettlement(
     " Falls",
     " Ridge",
   ];
-  const name =
-    namePrefixes[Math.floor(Math.random() * namePrefixes.length)] +
-    nameSuffixes[Math.floor(Math.random() * nameSuffixes.length)];
 
-  if (options.useAI !== false) {
-    try {
-      const prompt = `Generate a detailed RPG Settlement in JSON format.
+  return {
+    size: sizeConfig.name,
+    population: sizeConfig.range,
+    pointsOfInterestCount: sizeConfig.pointsOfInterestCount,
+    economy,
+    name: pickFrom(namePrefixes, rng) + pickFrom(nameSuffixes, rng),
+  };
+}
+
+export interface SettlementPrompt {
+  systemInstruction: string;
+  userMessage: string;
+  resolved: ResolvedSettlement;
+}
+
+export function buildSettlementPrompt(
+  options: SettlementGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): SettlementPrompt {
+  const resolved = resolveSettlement(options, rng);
+  const { name, size, population, economy } = resolved;
+
+  const userMessage = `Generate a detailed RPG Settlement in JSON format.
 Options:
 - Name: ${name}
 - Size: ${size} (${population})
@@ -106,48 +153,52 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["rpg-location", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
-${getSessionContext()}
+${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
-      const model = await clientManager.getModel(
-        "",
-        "gemini-3.1-flash-lite",
-        "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-      );
-      const response = await model.generateContent(prompt);
-      const text = response.response.text().trim();
-      const cleanText = text
-        .replace(/^```json\s*/i, "")
-        .replace(/```$/, "")
-        .trim();
-      const data = JSON.parse(cleanText);
+  return {
+    systemInstruction:
+      "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+    userMessage,
+    resolved,
+  };
+}
 
-      return {
-        type: "location",
-        title: data.title || name,
-        content: data.content || "",
-        lore: data.lore || "",
-        labels: Array.isArray(data.labels)
-          ? data.labels
-          : ["rpg-location", "imported-draft"],
-        status: "active",
-      };
-    } catch (err) {
-      console.warn("AI generation failed, falling back to local tables:", err);
-    }
-  }
+export function parseSettlementResponse(
+  text: string,
+  resolved: ResolvedSettlement,
+): PublicGeneratorOutput {
+  const cleanText = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  const data = JSON.parse(cleanText);
+  return {
+    type: "location",
+    title: data.title || resolved.name,
+    summary: data.summary || "",
+    content: data.content || "",
+    lore: data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-location", "imported-draft"],
+    status: "active",
+  };
+}
 
-  const government =
-    settlementConfig.governments[
-      Math.floor(Math.random() * settlementConfig.governments.length)
-    ];
-  const faction =
-    settlementConfig.factions[
-      Math.floor(Math.random() * settlementConfig.factions.length)
-    ];
+export function generateSettlementLocal(
+  options: SettlementGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const { size, population, economy, pointsOfInterestCount, name } =
+    resolveSettlement(options, rng);
+  const government = pickFrom(settlementConfig.governments, rng);
+  const faction = pickFrom(settlementConfig.factions, rng);
   const locs = getRandomItems(
     settlementConfig.notableLocations,
-    sizeConfig.pointsOfInterestCount,
+    pointsOfInterestCount,
+    rng,
   );
 
   const content = `### Description
@@ -170,6 +221,7 @@ ${locs.map((l) => `- **📍 ${l}**: A crucial hub of local activity.`).join("\n"
   return {
     type: "location",
     title: name,
+    summary: "",
     content,
     lore,
     labels: ["rpg-location", "imported-draft"],

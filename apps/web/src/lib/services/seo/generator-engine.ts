@@ -9,9 +9,13 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildSettlementPrompt,
+  parseSettlementResponse,
+  generateSettlementLocal,
   type NpcGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type SettlementGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -28,9 +32,9 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-// Faction + vampire content data now live in the package (#1351).
+// Faction + vampire + settlement content data now live in the package (#1351).
 export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
-export { settlementConfig } from "./generators/settlement";
+export { settlementConfig } from "generator-engine";
 export { magicItemConfig } from "./generators/magic-item";
 export { questConfig, themeToQuestGenre } from "./generators/quest";
 export { socialHubConfig } from "./generators/social-hub";
@@ -38,7 +42,6 @@ export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
-import { generateSettlement } from "./generators/settlement";
 import { generateMagicItem } from "./generators/magic-item";
 import { generateQuestHook } from "./generators/quest";
 import { generateNames } from "./generators/names";
@@ -154,10 +157,31 @@ export class DefaultGeneratorEngine {
     return toSeoOutput(generateVampireLocal(vampireOptions));
   }
 
+  /** Settlement generation delegates to the generator-engine package (#1351). */
   async generateSettlement(
-    options: Parameters<typeof generateSettlement>[1] = {},
+    options: SettlementGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateSettlement(this.clientManager, options);
+    const { useAI, ...settlementOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } =
+          buildSettlementPrompt(settlementOptions, getSessionContext());
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseSettlementResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateSettlementLocal(settlementOptions));
   }
 
   async generateMagicItem(
