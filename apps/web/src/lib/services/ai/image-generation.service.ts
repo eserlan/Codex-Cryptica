@@ -9,7 +9,11 @@ import { GEMINI_API_BASE_URL } from "../../config/oracle-constants";
 import { classifyApiError } from "./api-error-classifier";
 
 export class DefaultImageGenerationService implements ImageGenerationService {
-  constructor(private aiClientManager = defaultAiClientManager) {}
+  constructor(
+    private aiClientManager = defaultAiClientManager,
+    // Injected for tests; default wraps the global `fetch` lazily.
+    private fetcher: typeof fetch = (input, init) => fetch(input, init),
+  ) {}
 
   async distillVisualPrompt(
     apiKey: string,
@@ -97,7 +101,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           form.append("prompt", prompt);
           form.append("width", "1024");
           form.append("height", "1024");
-          const response = await fetch(url, {
+          const response = await this.fetcher(url, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${cfApiToken}`,
@@ -133,7 +137,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           );
           const proxyUrl =
             "https://oracle-proxy.espen-erlandsen.workers.dev/v1/images/generations";
-          const response = await fetch(proxyUrl, {
+          const response = await this.fetcher(proxyUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -175,7 +179,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
         );
         const customBaseUrl =
           options?.baseUrl || "https://api.together.xyz/v1/images/generations";
-        const response = await fetch(customBaseUrl, {
+        const response = await this.fetcher(customBaseUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -229,7 +233,7 @@ export class DefaultImageGenerationService implements ImageGenerationService {
           `[ImageGenerationService] Generating image directly with model: ${modelName}`,
         );
         const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
-        const response = await fetch(url, {
+        const response = await this.fetcher(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

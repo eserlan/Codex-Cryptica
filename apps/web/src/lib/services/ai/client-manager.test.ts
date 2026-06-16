@@ -83,6 +83,23 @@ describe("DefaultAIClientManager", () => {
         }),
       );
     });
+
+    it("uses an injected fetcher instead of the global fetch", async () => {
+      const injected = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ id: "i1", text: "ok" }),
+      });
+      const isolated = new DefaultAIClientManager(injected as any);
+
+      const result = await isolated.sendInteraction({
+        model: "m",
+        input: "hi",
+      });
+
+      expect(injected).toHaveBeenCalledOnce();
+      expect(fetch).not.toHaveBeenCalled();
+      expect(result).toEqual({ id: "i1", text: "ok" });
+    });
   });
 
   describe("createProxyModel", () => {
