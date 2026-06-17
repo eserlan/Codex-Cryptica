@@ -17,7 +17,7 @@
     <div class="grid grid-cols-3 gap-2">
       <button
         type="button"
-        aria-pressed={themeStore.appAppearanceId === 'system'}
+        aria-pressed={themeStore.appAppearanceId === "system"}
         class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'system'
           ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
@@ -29,7 +29,7 @@
       </button>
       <button
         type="button"
-        aria-pressed={themeStore.appAppearanceId === 'neutral-light'}
+        aria-pressed={themeStore.appAppearanceId === "neutral-light"}
         class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'neutral-light'
           ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
@@ -41,7 +41,7 @@
       </button>
       <button
         type="button"
-        aria-pressed={themeStore.appAppearanceId === 'neutral-dark'}
+        aria-pressed={themeStore.appAppearanceId === "neutral-dark"}
         class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'neutral-dark'
           ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'

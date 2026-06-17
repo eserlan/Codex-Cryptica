@@ -132,3 +132,8 @@
 
 **Learning:** Svelte components often recalculate full search indexes via `$derived` blocks, mapping over `Object.values(vault.entities)`. When `flatMap()` and `map()` are used inside these derived computations, they trigger multiple intermediate array allocations. Since the vault store already maintains a pre-calculated index incrementally (`titleAndAliasIndex`), redefining it inside component scope wastes significant GC cycles on large vaults.
 **Action:** Always favor retrieving pre-calculated, flat structures directly from the store (`vault.titleAndAliasIndex`) rather than running `Object.values(store.data).flatMap()` inside UI component `$derived` blocks. If shape mapping is strictly required, use an imperative loop to populate the final array structure.
+
+## 2026-06-17 - [Optimize entity index building in $derived]
+
+**Learning:** In Svelte components using $derived blocks, chaining array methods like `Object.values(obj).flatMap(...)` causes significant O(N) overhead during reactive updates due to multiple intermediate array allocations.
+**Action:** Replace `Object.values().flatMap(...)` with imperative loops using pre-cached array indexes (like `titleAndAliasIndex` mapped on the store) inside `$derived.by(() => { ... })` to reduce garbage collection pressure.
