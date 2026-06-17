@@ -58,6 +58,15 @@ export {
   type VampirePrompt,
 } from "./public-faction";
 export {
+  buildQuestPrompt,
+  parseQuestResponse,
+  generateQuestLocal,
+  questConfig,
+  themeToQuestGenre,
+  type QuestGeneratorOptions,
+  type QuestPrompt,
+} from "./public-quest";
+export {
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
