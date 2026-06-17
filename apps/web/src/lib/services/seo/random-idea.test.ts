@@ -10,7 +10,7 @@ import type { DefaultGeneratorEngine } from "./generator-engine";
 import { factionConfig } from "generator-engine";
 import { npcThemeConfig } from "generator-engine";
 import { socialHubConfig } from "generator-engine";
-import { nationConfig } from "./generators/kingdom-nation";
+import { nationConfig } from "generator-engine";
 
 describe("randomIdeaCategories", () => {
   it("contains exactly the standalone generator pool", () => {

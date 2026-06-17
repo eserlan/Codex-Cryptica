@@ -50,7 +50,7 @@ import {
   type NamesGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
-import { getSessionContext } from "./generators/session-context";
+import { getSessionContext } from "./session-context";
 
 export {
   nameTable,
@@ -58,7 +58,7 @@ export {
   pickFrom,
   getRandomItems,
   generateName,
-} from "./generators/base";
+} from "./generator-helpers";
 // NPC content data now lives in the generator-engine package (#1351); re-export
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
@@ -75,8 +75,8 @@ export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "generator-engine";
 export { nameGeneratorConfig } from "generator-engine";
 
-import { generateName as _generateName } from "./generators/base";
-import type { GeneratorOutput } from "./generators/base";
+import { generateName as _generateName } from "./generator-helpers";
+import type { GeneratorOutput } from "./generator-helpers";
 
 /**
  * Bridge the package's {@link PublicGeneratorOutput} (whose `type` is a plain
