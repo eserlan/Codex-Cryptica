@@ -50,6 +50,14 @@ export {
   type VampirePrompt,
 } from "./public-faction";
 export {
+  buildKingdomPrompt,
+  parseKingdomResponse,
+  generateKingdomLocal,
+  kingdomConfig,
+  type KingdomGeneratorOptions,
+  type KingdomPrompt,
+} from "./public-kingdom";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
