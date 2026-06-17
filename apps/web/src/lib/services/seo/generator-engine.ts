@@ -33,6 +33,9 @@ import {
   buildPantheonPrompt,
   parsePantheonResponse,
   generatePantheonLocal,
+  buildNamesPrompt,
+  parseNamesResponse,
+  generateNamesLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -44,13 +47,13 @@ import {
   type KingdomGeneratorOptions,
   type NationGeneratorOptions,
   type PantheonGeneratorOptions,
+  type NamesGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
 
 export {
   nameTable,
-  nameGeneratorConfig,
   type GeneratorOutput,
   pickFrom,
   getRandomItems,
@@ -70,9 +73,9 @@ export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "generator-engine";
+export { nameGeneratorConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generators/base";
-import { generateNames } from "./generators/names";
 import type { GeneratorOutput } from "./generators/base";
 
 /**
@@ -264,10 +267,31 @@ export class DefaultGeneratorEngine {
     return toSeoOutput(generateQuestLocal(questOptions));
   }
 
+  /** Name generation delegates to the generator-engine package (#1351). */
   async generateNames(
-    options: Parameters<typeof generateNames>[1] = {},
+    options: NamesGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateNames(this.clientManager, options);
+    const { useAI, ...nameOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } =
+          buildNamesPrompt(nameOptions);
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseNamesResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateNamesLocal(nameOptions));
   }
 
   async generateSocialHub(
