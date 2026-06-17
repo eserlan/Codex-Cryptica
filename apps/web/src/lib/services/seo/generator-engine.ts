@@ -9,9 +9,17 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildSocialHubPrompt,
+  parseSocialHubResponse,
+  generateSocialHubLocal,
+  buildTavernPrompt,
+  parseTavernResponse,
+  generateTavernLocal,
   type NpcGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type SocialHubGeneratorOptions,
+  type TavernGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -33,7 +41,7 @@ export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
 export { settlementConfig } from "./generators/settlement";
 export { magicItemConfig } from "./generators/magic-item";
 export { questConfig, themeToQuestGenre } from "./generators/quest";
-export { socialHubConfig } from "./generators/social-hub";
+export { socialHubConfig } from "generator-engine";
 export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
 
@@ -42,7 +50,6 @@ import { generateSettlement } from "./generators/settlement";
 import { generateMagicItem } from "./generators/magic-item";
 import { generateQuestHook } from "./generators/quest";
 import { generateNames } from "./generators/names";
-import { generateSocialHub, generateTavern } from "./generators/social-hub";
 import { generateKingdom, generateNation } from "./generators/kingdom-nation";
 import { generatePantheon } from "./generators/pantheon";
 import type { GeneratorOutput } from "./generators/base";
@@ -179,15 +186,59 @@ export class DefaultGeneratorEngine {
   }
 
   async generateSocialHub(
-    options: Parameters<typeof generateSocialHub>[1] = {},
+    options: SocialHubGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateSocialHub(this.clientManager, options);
+    const { useAI, ...hubOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage } = buildSocialHubPrompt(
+          hubOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseSocialHubResponse(text));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateSocialHubLocal(hubOptions));
   }
 
   async generateTavern(
-    options: Parameters<typeof generateTavern>[1] = {},
+    options: TavernGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateTavern(this.clientManager, options);
+    const { useAI, ...tavernOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage } = buildTavernPrompt(
+          tavernOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseTavernResponse(text));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateTavernLocal(tavernOptions));
   }
 
   async generateKingdom(
