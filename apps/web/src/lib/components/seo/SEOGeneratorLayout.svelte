@@ -8,7 +8,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { SESSION_DRAFTS_KEY } from "$lib/services/seo/generators/session-context";
+  import { SESSION_DRAFTS_KEY } from "$lib/services/seo/session-context";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import {

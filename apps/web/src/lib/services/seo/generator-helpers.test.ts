@@ -5,7 +5,7 @@ import {
   generateName,
   nameTable,
   type Rng,
-} from "./base";
+} from "./generator-helpers";
 
 /** Deterministic RNG cycling through a fixed sequence of [0,1) values. */
 function seededRng(values: number[]): Rng {

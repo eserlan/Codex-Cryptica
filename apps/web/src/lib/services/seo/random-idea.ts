@@ -1,5 +1,5 @@
 import type { DefaultGeneratorEngine } from "./generator-engine";
-import { pickFrom, type GeneratorOutput } from "./generators/base";
+import { pickFrom, type GeneratorOutput } from "./generator-helpers";
 import { factionConfig } from "generator-engine";
 import { npcThemeConfig } from "generator-engine";
 import { themeToQuestGenre } from "generator-engine";

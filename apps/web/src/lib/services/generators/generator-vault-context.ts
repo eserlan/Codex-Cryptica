@@ -2,7 +2,7 @@ import type {
   GeneratorVaultContext,
   VaultContextEntityExcerpt,
 } from "generator-engine";
-import { BANNED_NAMES } from "$lib/services/seo/generators/banned-names";
+import { BANNED_NAMES } from "generator-engine";
 import type { Entity } from "schema";
 
 /** Maximum number of neighboring entities included in the context packet. */
