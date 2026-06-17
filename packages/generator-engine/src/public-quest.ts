@@ -1,7 +1,37 @@
-import type { DefaultAIClientManager } from "$lib/services/ai/client-manager";
-import { NAME_BAN_PROMPT } from "./banned-names";
-import { getSessionContext } from "./session-context";
-import { type GeneratorOutput, generateName } from "./base";
+/**
+ * Public Quest generator — framework-free port of the SEO quest generator
+ * (`apps/web/src/lib/services/seo/generators/quest.ts`).
+ *
+ * Per the unification plan (#1351) this stays framework-free: no AI client, no
+ * sessionStorage. The web page builds the prompt here, runs it through
+ * aiClientManager, parses with parseQuestResponse, and falls back to
+ * generateQuestLocal. Session context is injected as a string.
+ */
+
+import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import { NAME_BAN_PROMPT } from "./public-npc";
+
+export type Rng = () => number;
+const defaultRng: Rng = () => Math.random();
+
+function pickFrom<T>(arr: readonly T[], rng: Rng = defaultRng): T {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function generateName(rng: Rng = defaultRng): string {
+  const prefixes = [
+    "Ael",
+    "Bran",
+    "Cael",
+    "Dax",
+    "Kael",
+    "Morg",
+    "Thor",
+    "Vael",
+  ];
+  const suffixes = ["dar", "wen", "ric", "mar", "thas", "gar", "rin", "on"];
+  return `${pickFrom(prefixes, rng)}${pickFrom(suffixes, rng)}`;
+}
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
@@ -205,13 +235,13 @@ export const questConfig = {
   hooks: [
     "A local official offers a reward to find a missing heir before a rival claims the title.",
     "Strange lights above the old tower have kept the village awake for three nights.",
-    "A caravan was found empty on the road — no blood, no tracks, just silence.",
+    "A caravan was found empty on the road -- no blood, no tracks, just silence.",
     "An imprisoned criminal offers the location of a cache in exchange for a pardon.",
     "A temple guardian collapses mid-ceremony, whispering a single forbidden name.",
     "A child wanders into town carrying an item that should not exist.",
   ],
   complications: [
-    "The client is hiding their true motive — the real target is someone the party knows.",
+    "The client is hiding their true motive -- the real target is someone the party knows.",
     "The threat has already moved; the location the party was sent to is a decoy.",
     "A second party has been hired for the same job and has a head start.",
     "The threat is connected to a powerful patron who expects the party to look away.",
@@ -286,58 +316,67 @@ export const questConfig = {
   } as Record<string, string[]>,
 };
 
-export async function generateQuestHook(
-  clientManager: DefaultAIClientManager,
-  options: {
-    genre?: string;
-    tone?: string;
-    scope?: string;
-    locationType?: string;
-    threat?: string;
-    twist?: string;
-    reward?: string;
-    campaignContext?: string;
-    useAI?: boolean;
-  } = {},
-): Promise<GeneratorOutput> {
-  const genre =
-    options.genre ||
-    questConfig.genres[Math.floor(Math.random() * questConfig.genres.length)];
-  const tone =
-    options.tone ||
-    questConfig.tones[Math.floor(Math.random() * questConfig.tones.length)];
-  const scope =
-    options.scope ||
-    questConfig.scopes[Math.floor(Math.random() * questConfig.scopes.length)];
-  const locationType =
-    options.locationType ||
-    questConfig.locationTypes[
-      Math.floor(Math.random() * questConfig.locationTypes.length)
-    ];
-  const threat =
-    options.threat ||
-    questConfig.threats[Math.floor(Math.random() * questConfig.threats.length)];
-  const twist =
-    options.twist ||
-    questConfig.twists[Math.floor(Math.random() * questConfig.twists.length)];
-  const reward =
-    options.reward ||
-    questConfig.rewards[Math.floor(Math.random() * questConfig.rewards.length)];
-  const campaignContext = options.campaignContext?.trim();
-  const questName = `${generateName()}'s ${["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"][Math.floor(Math.random() * 6)]}`;
+export interface QuestGeneratorOptions {
+  genre?: string;
+  tone?: string;
+  scope?: string;
+  locationType?: string;
+  threat?: string;
+  twist?: string;
+  reward?: string;
+  campaignContext?: string;
+}
 
-  if (options.useAI !== false) {
-    try {
-      const prompt = `Generate a detailed RPG quest hook in JSON format.
+export interface ResolvedQuest {
+  genre: string;
+  tone: string;
+  scope: string;
+  locationType: string;
+  threat: string;
+  twist: string;
+  reward: string;
+  campaignContext?: string;
+  questName: string;
+}
+
+function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
+  return {
+    genre: options.genre || pickFrom(questConfig.genres, rng),
+    tone: options.tone || pickFrom(questConfig.tones, rng),
+    scope: options.scope || pickFrom(questConfig.scopes, rng),
+    locationType:
+      options.locationType || pickFrom(questConfig.locationTypes, rng),
+    threat: options.threat || pickFrom(questConfig.threats, rng),
+    twist: options.twist || pickFrom(questConfig.twists, rng),
+    reward: options.reward || pickFrom(questConfig.rewards, rng),
+    campaignContext: options.campaignContext?.trim() || undefined,
+    questName: `${generateName(rng)}'s ${pickFrom(["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"], rng)}`,
+  };
+}
+
+export interface QuestPrompt {
+  systemInstruction: string;
+  userMessage: string;
+  resolved: ResolvedQuest;
+}
+
+export function buildQuestPrompt(
+  options: QuestGeneratorOptions = {},
+  sessionContext = "",
+  rng: Rng = defaultRng,
+): QuestPrompt {
+  const resolved = resolveQuest(options, rng);
+
+  const userMessage = `Generate a detailed RPG quest hook in JSON format.
 Options:
-- Genre: ${genre}
-- Tone: ${tone}
-- Scope: ${scope}
-- Location Type: ${locationType}
-- Main Threat: ${threat}
-- Twist: ${twist}
-- Reward: ${reward}
-${campaignContext ? `- Campaign Context: ${campaignContext}` : ""}
+- Genre: ${resolved.genre}
+- Tone: ${resolved.tone}
+- Scope: ${resolved.scope}
+- Location Type: ${resolved.locationType}
+- Main Threat: ${resolved.threat}
+- Twist: ${resolved.twist}
+- Reward: ${resolved.reward}
+${resolved.campaignContext ? `- Campaign Context: ${resolved.campaignContext}` : ""}
 
 You must return a valid JSON object matching the following structure exactly:
 {
@@ -347,61 +386,65 @@ You must return a valid JSON object matching the following structure exactly:
   "labels": ["rpg-quest", "quest-generator", "imported-draft"]
 }
 ${NAME_BAN_PROMPT}
-${getSessionContext()}
+${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
-      const model = await clientManager.getModel(
-        "",
-        "gemini-3.1-flash-lite",
-        "You are an assistant that generates detailed RPG campaign elements in JSON format.",
-      );
-      const response = await model.generateContent(prompt);
-      const text = response.response.text().trim();
-      const cleanText = text
-        .replace(/^```json\s*/i, "")
-        .replace(/```$/, "")
-        .trim();
-      const data = JSON.parse(cleanText);
+  return {
+    systemInstruction:
+      "You are an assistant that generates detailed RPG campaign elements in JSON format.",
+    userMessage,
+    resolved,
+  };
+}
 
-      return {
-        type: "event",
-        title: data.title || questName,
-        content: data.content || "",
-        lore: data.lore || "",
-        labels: Array.isArray(data.labels)
-          ? data.labels
-          : ["rpg-quest", "quest-generator", "imported-draft"],
-        status: "active",
-      };
-    } catch (err) {
-      console.warn("AI generation failed, falling back to local tables:", err);
-    }
-  }
+export function parseQuestResponse(
+  text: string,
+  resolved: ResolvedQuest,
+): PublicGeneratorOutput {
+  const cleanText = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  const data = JSON.parse(cleanText);
+  return {
+    type: "event",
+    title: data.title || resolved.questName,
+    summary: data.summary || "",
+    content: data.content || "",
+    lore: data.lore || "",
+    labels: Array.isArray(data.labels)
+      ? data.labels
+      : ["rpg-quest", "quest-generator", "imported-draft"],
+    status: "active",
+  };
+}
 
-  const hook =
-    questConfig.hooks[Math.floor(Math.random() * questConfig.hooks.length)];
-  const complication =
-    questConfig.complications[
-      Math.floor(Math.random() * questConfig.complications.length)
-    ];
-  const npcName = generateName();
-  const locationName = `The ${generateName()} ${locationType}`;
+export function generateQuestLocal(
+  options: QuestGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const resolved = resolveQuest(options, rng);
+  const hook = pickFrom(questConfig.hooks, rng);
+  const complication = pickFrom(questConfig.complications, rng);
+  const npcName = generateName(rng);
+  const locationName = `The ${generateName(rng)} ${resolved.locationType}`;
 
   const content = `### The Hook
 ${hook}
 
-${campaignContext ? `### Campaign Fit\nThis quest ties into ${campaignContext}. The threat and location should reflect existing tensions or unresolved threads.\n` : ""}### Location
-${locationName} serves as the primary setting — a ${locationType.toLowerCase()} shaped by ${genre.toLowerCase()} conventions and a ${tone.toLowerCase()} atmosphere.
+${resolved.campaignContext ? `### Campaign Fit\nThis quest ties into ${resolved.campaignContext}. The threat and location should reflect existing tensions or unresolved threads.\n` : ""}### Location
+${locationName} serves as the primary setting -- a ${resolved.locationType.toLowerCase()} shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
 
 ### Key NPC
 **${npcName}** is the immediate contact, patron, or obstacle. Their stated reason for hiring the party is credible enough, but their personal stake runs deeper than they admit.
 
 ### Threat
-The central danger is a ${threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`;
+The central danger is a ${resolved.threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`;
 
   const lore = `### Core Fields
-- **📍 Setting**: ${locationName}, a ${locationType.toLowerCase()} shaped by ${genre.toLowerCase()} conventions and a ${tone.toLowerCase()} atmosphere.
-- **📅 Threat**: A ${threat.toLowerCase()}, active long enough to leave evidence, earn fear, and create a power vacuum.
+- **📍 Setting**: ${locationName}, a ${resolved.locationType.toLowerCase()} shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
+- **📅 Threat**: A ${resolved.threat.toLowerCase()}, active long enough to leave evidence, earn fear, and create a power vacuum.
 
 ### Complication
 ${complication}
@@ -410,14 +453,15 @@ ${complication}
 - **👤 ${npcName}**: The immediate contact, patron, or obstacle. Their stated reason for involving the party is credible, but their personal stake runs deeper than they admit.
 
 ### The Twist
-${twist}. Reveal this only once the party is committed — it should recast earlier scenes in a new light.
+${resolved.twist}. Reveal this only once the party is committed -- it should recast earlier scenes in a new light.
 
 ### Reward
-${reward}. Beyond its face value, it opens a door in the wider campaign: a contact, a route, or a secret the party could not otherwise reach.`;
+${resolved.reward}. Beyond its face value, it opens a door in the wider campaign: a contact, a route, or a secret the party could not otherwise reach.`;
 
   return {
     type: "event",
-    title: questName,
+    title: resolved.questName,
+    summary: "",
     content,
     lore,
     labels: ["rpg-quest", "quest-generator", "imported-draft"],
