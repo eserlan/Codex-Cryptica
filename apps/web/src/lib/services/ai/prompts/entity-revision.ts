@@ -76,9 +76,9 @@ export function buildEntityRevisionUserPrompt(
     categories.length > 0
       ? `\nALLOWED CATEGORIES:\n${categories
           .map((category) => {
-            const label = category.label ? ` (${category.label})` : "";
+            const label = category.label ? ` (${u(category.label)})` : "";
             const description = category.description
-              ? `: ${category.description}`
+              ? `: ${u(category.description)}`
               : "";
             return `- ${category.id}${label}${description}`;
           })

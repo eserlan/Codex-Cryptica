@@ -100,21 +100,21 @@ One verbose entry must not starve the other five.
 
 **Implementation** (`packages/oracle-engine/src/revision-context.ts`):
 
-- Reintroduce a soft per-entity cap and add a total budget, as named constants:
+- Add a total budget as a named constant:
   ```ts
-  const MAX_PER_ENTITY_CHARS = 320; // soft cap; trims the rare verbose outlier
   const MAX_TOTAL_CHARS = 1600; // overall related-context budget
   ```
-- Restore a `summarizeContext(value, max)` helper (whitespace-normalise + trim
-  - ellipsis) and apply `MAX_PER_ENTITY_CHARS` per candidate.
+- Chronicle content is typically short, so no per-entity cap is applied (the
+  original `MAX_PER_ENTITY_CHARS = 320` was dropped after validation showed
+  chronicles fit comfortably within budget). Any single entry that exceeds
+  `MAX_TOTAL_CHARS` is truncated with an ellipsis as a hard safety cap.
 - In the final, score-sorted map: accumulate summary length and stop including
   further candidates once `MAX_TOTAL_CHARS` is reached (highest-scoring entities
   claim their share first because the list is pre-sorted).
 
 **Tests:**
 
-- A candidate whose summary exceeds `MAX_PER_ENTITY_CHARS` is truncated with an
-  ellipsis.
+- A single entry whose summary passes the total budget is capped with an ellipsis.
 - Given many candidates, the returned set's combined summary length stays within
   `MAX_TOTAL_CHARS` and drops lowest-ranked entries first.
 

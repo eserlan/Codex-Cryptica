@@ -69,6 +69,26 @@ describe("buildEntityRevisionPrompt", () => {
     expect(stripped).not.toContain(INJECTION);
   });
 
+  it("wraps category labels and descriptions in USER_CONTENT delimiters", () => {
+    const prompt = buildEntityRevisionPrompt(
+      {
+        id: "test-entity",
+        title: "Test Entity",
+        type: "npc",
+        content: "",
+        lore: "",
+      } as any,
+      { chronicle: "", lore: "" },
+      [],
+      [{ id: "npc", label: INJECTION, description: INJECTION }],
+    );
+    const stripped = prompt.replace(
+      /<USER_CONTENT>[\s\S]*?<\/USER_CONTENT>/g,
+      "",
+    );
+    expect(stripped).not.toContain(INJECTION);
+  });
+
   it("asks for a category only when allowed categories are provided", () => {
     const prompt = buildEntityRevisionPrompt(
       {
@@ -90,7 +110,7 @@ describe("buildEntityRevisionPrompt", () => {
     );
 
     expect(prompt).toContain("ALLOWED CATEGORIES:");
-    expect(prompt).toContain("- item (Item)");
+    expect(prompt).toContain("- item (");
     expect(prompt).toContain("based on the final revised chronicle and lore");
     expect(prompt).toContain('"categoryId": "one allowed category id"');
   });

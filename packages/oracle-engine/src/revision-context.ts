@@ -61,15 +61,30 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Unicode-safe word boundary: asserts position is not surrounded by letter/digit/underscore.
+function wordBoundaryRegex(word: string): RegExp {
+  const escaped = escapeRegex(word);
+  return new RegExp(
+    `(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`,
+    "u",
+  );
+}
+
 function scoreStringMentions(candidate: string, text: string): number {
   const normalized = candidate.trim().toLowerCase();
   if (!normalized) return 0;
-  if (text.includes(normalized)) return 2;
+  const isPhrase = /\s/.test(normalized);
+  if (isPhrase) {
+    // Multi-word phrase: substring match is specific enough.
+    if (text.includes(normalized)) return 2;
+  } else {
+    // Single word: require boundary so "shas" doesn't match "shasoria".
+    if (wordBoundaryRegex(normalized).test(text)) return 2;
+  }
   const words = normalized
     .split(/\s+/)
     .filter((w) => w.length >= MIN_TITLE_SCAN_LENGTH);
-  if (words.some((w) => new RegExp(`\\b${escapeRegex(w)}\\b`).test(text)))
-    return 1;
+  if (words.some((w) => wordBoundaryRegex(w).test(text))) return 1;
   return 0;
 }
 
@@ -191,12 +206,16 @@ export function buildRelatedEntityContext(
     [];
   let totalChars = 0;
   for (const { title, type, relation, summary, score } of sorted) {
-    // Always include at least one entry; after that, stop if the budget is full.
-    if (result.length > 0 && totalChars + summary.length > MAX_TOTAL_CHARS)
+    // Hard-cap any single entry so even the first can't exceed the total budget.
+    const entry =
+      summary.length > MAX_TOTAL_CHARS
+        ? summary.slice(0, MAX_TOTAL_CHARS) + "..."
+        : summary;
+    if (result.length > 0 && totalChars + entry.length > MAX_TOTAL_CHARS)
       break;
-    result.push({ title, type, relation, summary });
-    debugEntries.push({ title, score, chars: summary.length });
-    totalChars += summary.length;
+    result.push({ title, type, relation, summary: entry });
+    debugEntries.push({ title, score, chars: entry.length });
+    totalChars += entry.length;
   }
   debug?.(debugEntries);
   return result;
