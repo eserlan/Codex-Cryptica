@@ -1,58 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { openOracle, seedEntity, setupVaultPage } from "./test-helpers";
 
 test.describe("Entity Explorer Sidebar", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    // Seed a known entity and dismiss front page for testing focus mode
-    await page.addInitScript(() => {
-      const checkVaultAndUI = () => {
-        const v = (window as any).vault;
-        const ui = (window as any).uiStore;
-        if (v && v.repository && ui) {
-          // Manually populate repository entities to trigger reactivity
-          v.repository.entities = {
-            "test-entry": {
-              id: "test-entry",
-              title: "Test Entry",
-              type: "npc",
-              content: "Test content",
-              lore: "Test lore",
-              labels: ["test"],
-              connections: [],
-              updatedAt: Date.now(),
-              _path: ["test-entry.md"],
-            },
-          };
-          v.isInitialized = true;
-          v.status = "idle";
-          ui.dismissedWorldPage = true;
-        } else {
-          setTimeout(checkVaultAndUI, 20);
-        }
-      };
-      checkVaultAndUI();
-    });
-
-    await page.goto("/");
-    // Wait for vault to be idle
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
-    // Reliably dismiss the front-page overlay (initScript polling may lose the race)
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
   });
 
   test("should toggle explorer sidebar and show entity list", async ({
@@ -85,7 +36,7 @@ test.describe("Entity Explorer Sidebar", () => {
     const explorerBtn = page.getByTestId("activity-bar-explorer");
 
     // Open Oracle
-    await oracleBtn.click();
+    await openOracle(page);
     await expect(page.getByTestId("oracle-sidebar-panel")).toBeVisible();
 
     // Click Explorer
@@ -106,27 +57,15 @@ test.describe("Entity Explorer Sidebar", () => {
     // Ensure explorer is loaded
     await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
 
-    // Re-seed to ensure it's there after vault init
-    await page.evaluate(() => {
-      const v = (window as any).vault;
-      if (v && v.repository) {
-        v.repository.entities = {
-          "test-entry": {
-            id: "test-entry",
-            title: "Test Entry",
-            type: "npc",
-            content: "Test content",
-            lore: "Test lore",
-            labels: ["test"],
-            connections: [],
-            updatedAt: Date.now(),
-            _path: ["test-entry.md"],
-          },
-        };
-        v.entities = { ...v.repository.entities };
-        v.isInitialized = true;
-        v.status = "idle";
-      }
+    await seedEntity(page, {
+      id: "test-entry",
+      title: "Test Entry",
+      type: "npc",
+      content: "Test content",
+      data: {
+        lore: "Test lore",
+        labels: ["test"],
+      },
     });
 
     // 2. Click the seeded entity
@@ -143,15 +82,14 @@ test.describe("Entity Explorer Sidebar", () => {
     await expect(entityRow).toBeVisible({ timeout: 10000 });
     await entityRow.click();
 
-    // 3. Verify Embedded View is visible
-    await expect(page.getByTestId("embedded-entity-view")).toBeVisible();
+    // 3. Verify Zen Mode dialog is visible
+    const dialog = page.getByRole("dialog", { name: "Test Entry" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Test content")).toBeVisible();
 
-    // 4. Verify Graph is NOT visible
-    await expect(page.getByTestId("graph-canvas")).not.toBeVisible();
-
-    // 5. Close focus mode
-    await page.getByTestId("embedded-entity-view").getByLabel("Close").click();
-    await expect(page.getByTestId("embedded-entity-view")).not.toBeVisible();
+    // 4. Close Zen Mode
+    await dialog.getByLabel("Close").click();
+    await expect(dialog).not.toBeVisible();
     await expect(page.getByTestId("graph-canvas")).toBeVisible();
   });
 });

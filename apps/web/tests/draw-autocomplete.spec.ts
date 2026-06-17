@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openOracle, seedEntities, setupVaultPage } from "./test-helpers";
 
 test.describe("Draw Command Autocomplete", () => {
   test.beforeEach(async ({ page }) => {
@@ -10,29 +11,19 @@ test.describe("Draw Command Autocomplete", () => {
       );
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-    await page.goto("/");
-
-    // Create entities via UI to trigger indexing
-    await page.getByTestId("new-entity-button").click();
-    await expect(page.getByPlaceholder("Chronicle Title...")).toBeVisible();
-    await page.getByPlaceholder("Chronicle Title...").fill("Ancient Dragon");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Mystic Forest");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await setupVaultPage(page);
+    await seedEntities(page, [
+      { title: "Ancient Dragon" },
+      { title: "Mystic Forest" },
+    ]);
 
     // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText(
-      /2\s+CHRONICLES/,
-      {
-        timeout: 20000,
-      },
-    );
+    await expect(page.getByTestId("entity-count")).toHaveText(/2\s+NOTES/, {
+      timeout: 20000,
+    });
 
     // Open Oracle Window
-    const toggleBtn = page.getByTestId("activity-bar-oracle");
-    await toggleBtn.click();
+    await openOracle(page);
   });
 
   test("Autocompletes /draw command", async ({ page }) => {

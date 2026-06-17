@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../stores/oracle.svelte", () => ({
+vi.mock("$lib/stores/oracle.svelte", () => ({
   oracle: {
     reviseSmartApply: vi.fn().mockImplementation((_id, incoming) =>
       Promise.resolve({
@@ -12,11 +12,12 @@ vi.mock("../stores/oracle.svelte", () => ({
   },
 }));
 
-vi.mock("../stores/vault.svelte", () => ({
+vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     entities: {} as any,
     updateEntity: vi.fn().mockResolvedValue(undefined),
+    deleteEntity: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -26,11 +27,19 @@ vi.mock("$lib/services/node-merge.service.svelte", () => ({
   },
 }));
 
-import { oracle } from "../stores/oracle.svelte";
-import { vault } from "../stores/vault.svelte";
+vi.mock("$lib/services/generators/generator-session-manager", () => ({
+  generatorSessionManager: {
+    commitAcceptedEntity: vi.fn(),
+    reset: vi.fn(),
+  },
+}));
+
+import { oracle } from "$lib/stores/oracle.svelte";
+import { vault } from "$lib/stores/vault.svelte";
 import { nodeMergeService } from "$lib/services/node-merge.service.svelte";
 import { revisionService } from "./RevisionService.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
 
 describe("RevisionService", () => {
   beforeEach(() => {
@@ -40,6 +49,7 @@ describe("RevisionService", () => {
     revisionService.isRevising = false;
     (vault.entities as any) = {};
     (vault as any).isGuest = false;
+    (vault as any).deleteEntity = vi.fn().mockResolvedValue(undefined);
     notificationStore.notify = vi.fn();
   });
 
@@ -145,5 +155,58 @@ describe("RevisionService", () => {
       "Merge saved successfully.",
       "success",
     );
+  });
+
+  it("commits a generated draft to the generator session only after accept", async () => {
+    (vault.entities as any).generated = {
+      id: "generated",
+      title: "Captain Orra",
+      type: "character",
+      labels: ["watch"],
+    };
+    revisionService.pendingDraft = {
+      entityId: "generated",
+      source: "revise",
+      chronicle: "Accepted chronicle",
+      lore: "Accepted lore",
+      timestamp: Date.now(),
+      deleteOnDiscard: true,
+      generatorSessionCommit: true,
+    };
+
+    await revisionService.acceptDraft();
+
+    expect(vault.updateEntity).toHaveBeenCalledWith("generated", {
+      content: "Accepted chronicle",
+      lore: "Accepted lore",
+    });
+    expect(generatorSessionManager.commitAcceptedEntity).toHaveBeenCalledWith({
+      id: "generated",
+      title: "Captain Orra",
+      type: "character",
+      content: "Accepted chronicle",
+      lore: "Accepted lore",
+      labels: ["watch"],
+    });
+    expect(generatorSessionManager.reset).not.toHaveBeenCalled();
+    expect(vault.deleteEntity).not.toHaveBeenCalled();
+  });
+
+  it("resets the generator session and deletes the skeleton when a generated draft is discarded", async () => {
+    revisionService.pendingDraft = {
+      entityId: "generated",
+      source: "revise",
+      chronicle: "Draft chronicle",
+      lore: "Draft lore",
+      timestamp: Date.now(),
+      deleteOnDiscard: true,
+      generatorSessionCommit: true,
+    };
+
+    await revisionService.discardDraft();
+
+    expect(generatorSessionManager.commitAcceptedEntity).not.toHaveBeenCalled();
+    expect(generatorSessionManager.reset).toHaveBeenCalledTimes(1);
+    expect(vault.deleteEntity).toHaveBeenCalledWith("generated");
   });
 });

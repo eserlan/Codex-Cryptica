@@ -1,36 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { seedEntity, setupVaultPage, waitForVaultReady } from "./test-helpers";
 
 test.describe("Graph Deletion Persistence", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Wait for vault initialization
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") {
-              resolve(true);
-            } else {
-              setTimeout(check, 100);
-            }
-          };
-          check();
-        });
-      await waitForVault();
-    });
+    await setupVaultPage(page);
   });
 
   test("deleting an entity in the graph should persist after reload", async ({
@@ -38,50 +11,40 @@ test.describe("Graph Deletion Persistence", () => {
   }) => {
     // 1. Create an entity
     const title = `Persistent Deletion Test ${Date.now()}`;
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill(title);
-    await page.getByRole("button", { name: "ADD" }).click();
+    const entityId = await seedEntity(page, { title });
 
     // Verify it exists in graph
-    await expect(page.getByText(title).first()).toBeVisible();
+    await page.waitForFunction(
+      (id) => Boolean((window as any).cy?.$id(id)?.length),
+      entityId,
+      { timeout: 10000 },
+    );
 
     // 2. Delete the entity via the vault store (most reliable way in tests)
-    await page.evaluate(async (t) => {
-      const vault = (window as any).vault;
-      const entityId = Object.keys(vault.entities).find(
-        (id) => vault.entities[id].title === t,
-      );
-      if (entityId) {
-        await vault.deleteEntity(entityId);
-      }
-    }, title);
+    await page.evaluate(async (id) => {
+      await (window as any).vault.deleteEntity(id);
+    }, entityId);
 
     // Verify it's gone from UI
-    await expect(page.getByText(title).first()).not.toBeVisible();
+    await page.waitForFunction(
+      (id) => !(window as any).cy?.$id(id)?.length,
+      entityId,
+      { timeout: 10000 },
+    );
 
     // 3. Reload the page
     await page.reload();
     await expect(page.getByTestId("graph-canvas")).toBeVisible();
 
     // Wait for vault idle again
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") {
-              resolve(true);
-            } else {
-              setTimeout(check, 100);
-            }
-          };
-          check();
-        });
-      await waitForVault();
-    });
+    await waitForVaultReady(page);
 
     // 4. Verify it's STILL gone (this tests the Dexie cache cleanup)
-    await expect(page.getByText(title).first()).not.toBeVisible();
+    await page.waitForFunction(
+      (id) => !(window as any).cy?.$id(id)?.length,
+      entityId,
+      { timeout: 10000 },
+    );
 
     // Check internal store state too
     const existsInStore = await page.evaluate((t) => {

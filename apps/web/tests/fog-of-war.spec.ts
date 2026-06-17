@@ -144,10 +144,9 @@ test.describe("Fog of War", () => {
     expect(visibleIds).not.toContain("visible-node");
 
     // 3. Update 'visible-node' to have 'revealed' tag
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const { vault } = window as any;
-      const entity = vault.entities["visible-node"];
-      vault.entities["visible-node"] = { ...entity, tags: ["revealed"] };
+      await vault.updateEntity("visible-node", { tags: ["revealed"] });
     });
 
     // Wait for reactivity

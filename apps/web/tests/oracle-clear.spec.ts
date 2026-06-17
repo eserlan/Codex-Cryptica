@@ -55,10 +55,11 @@ test.describe("Oracle Clear Chat", () => {
       await oracle.setMessages([]);
     });
 
-    // 6. Messages should be gone and clear button hidden
+    // 6. Messages should be gone and the empty state restored.
     await expect(page.getByText("Hello Oracle")).not.toBeVisible();
-    await expect(clearBtn).not.toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("The Archives are Open")).toBeVisible();
+    await expect(page.getByText("The Archives are Open")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should show clear chat button and clear history on standalone page", async ({

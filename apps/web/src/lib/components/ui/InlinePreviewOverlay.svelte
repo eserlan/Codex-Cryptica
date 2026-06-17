@@ -27,7 +27,7 @@
     <div class="flex items-center gap-2">
       <button
         type="button"
-        onclick={() => revisionService.discardDraft()}
+        onclick={() => void revisionService.discardDraft()}
         class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
       >
         Discard

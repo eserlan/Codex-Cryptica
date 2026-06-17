@@ -33,6 +33,9 @@ export class GDriveBackend implements ISyncBackend {
     private readonly vaultId: string,
     private readonly wait = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms)),
+    // Injected for tests; default wraps the global `fetch` lazily.
+    private readonly fetcher: typeof fetch = (input, init) =>
+      fetch(input, init),
   ) {}
 
   /**
@@ -219,7 +222,7 @@ export class GDriveBackend implements ISyncBackend {
     headers.set("Authorization", `Bearer ${token}`);
 
     try {
-      const response = await fetch(url, { ...options, headers });
+      const response = await this.fetcher(url, { ...options, headers });
 
       if (response.ok) return response;
 

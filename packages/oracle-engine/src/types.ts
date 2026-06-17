@@ -104,6 +104,10 @@ export interface RevisionDraft {
     finalContent: unknown;
   };
   timestamp: number;
+  /** When true, discarding this draft deletes the entity (e.g. generator skeleton). */
+  deleteOnDiscard?: boolean;
+  /** True when accepting this draft should add it to the active generator session. */
+  generatorSessionCommit?: boolean;
 }
 
 /**
@@ -152,6 +156,8 @@ export interface DiscoveryProposal {
 export interface OracleExecutionContext {
   userId?: string;
   vaultId?: string;
+  /** Whether the Gemini Interactions API delta flow is enabled (main-thread). */
+  interactionsEnabled?: boolean;
   aiDisabled?: boolean;
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;

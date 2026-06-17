@@ -8,10 +8,13 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { browser } from "$app/environment";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { renderMarkdown as renderMd } from "$lib/utils/markdown";
-  import { SESSION_DRAFTS_KEY } from "$lib/services/seo/generators/session-context";
+  import { SESSION_DRAFTS_KEY } from "$lib/services/seo/session-context";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
+  import {
+    renderGeneratorMarkdown,
+    renderGeneratorLore,
+  } from "$lib/components/seo/markdown-renderers";
 
   let {
     canonicalPath,
@@ -32,6 +35,8 @@
     generateLabel = undefined,
     inputHint = "Set your inputs — your draft updates to the right",
     onLinkToHub = undefined,
+    backHref = undefined,
+    backLabel = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -51,7 +56,101 @@
     generateLabel?: string;
     inputHint?: string;
     onLinkToHub?: () => void;
+    backHref?: string;
+    backLabel?: string;
   } = $props();
+
+  // Paths that only make sense in a fantasy context
+  const FANTASY_ONLY = new Set([
+    "/generators/dnd-npc",
+    "/generators/fantasy-names",
+    "/generators/magic-item",
+    "/generators/kingdom",
+    "/generators/pantheon-generator",
+    "/generators/god-generator",
+    "/generators/tavern",
+  ]);
+
+  // Paths specific to the horror/vampire theme
+  const HORROR_ONLY = new Set(["/generators/vampire-clan"]);
+
+  const GENERATOR_GROUPS = [
+    {
+      label: "Characters & Names",
+      items: [
+        { label: "RPG NPC Generator", path: "/generators/npc" },
+        { label: "D&D NPC Generator", path: "/generators/dnd-npc" },
+        { label: "Vampire Clan Generator", path: "/generators/vampire-clan" },
+        { label: "RPG Name Generator", path: "/generators/names" },
+        { label: "Fantasy Name Generator", path: "/generators/fantasy-names" },
+      ],
+    },
+    {
+      label: "Worldbuilding",
+      items: [
+        { label: "Faction Generator", path: "/generators/faction" },
+        { label: "Settlement Generator", path: "/generators/settlement" },
+        { label: "Kingdom Generator", path: "/generators/kingdom" },
+        { label: "Nation Generator", path: "/generators/nation" },
+        { label: "Pantheon Generator", path: "/generators/pantheon-generator" },
+        { label: "God & Deity Generator", path: "/generators/god-generator" },
+      ],
+    },
+    {
+      label: "Adventure",
+      items: [
+        { label: "Quest Hook Generator", path: "/generators/quest" },
+        { label: "Magic Item Generator", path: "/generators/magic-item" },
+        { label: "Tavern Generator", path: "/generators/tavern" },
+        { label: "Social Hub Generator", path: "/generators/social-hub" },
+      ],
+    },
+  ];
+
+  const visibleGroups = $derived.by(() => {
+    const themeId = themeStore.worldThemeId;
+    const isFantasy = themeId === "fantasy" || themeId === "workspace";
+    const isHorror = themeId === "horror";
+    return GENERATOR_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (isFantasy) return true;
+        if (FANTASY_ONLY.has(item.path)) return false;
+        if (HORROR_ONLY.has(item.path)) return isHorror;
+        return true;
+      }),
+    })).filter((group) => group.items.length > 0);
+  });
+
+  let showGeneratorMenu = $state(false);
+  let menuButtonEl = $state<HTMLButtonElement | null>(null);
+  let menuEl = $state<HTMLDivElement | null>(null);
+
+  function handleMenuKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") showGeneratorMenu = false;
+  }
+
+  function handleOutsideClick(e: MouseEvent) {
+    if (
+      menuButtonEl &&
+      menuEl &&
+      !menuButtonEl.contains(e.target as Node) &&
+      !menuEl.contains(e.target as Node)
+    ) {
+      showGeneratorMenu = false;
+    }
+  }
+
+  $effect(() => {
+    if (browser && showGeneratorMenu) {
+      document.addEventListener("click", handleOutsideClick);
+      document.addEventListener("keydown", handleMenuKeydown);
+      return () => {
+        document.removeEventListener("click", handleOutsideClick);
+        document.removeEventListener("keydown", handleMenuKeydown);
+      };
+    }
+  });
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -287,92 +386,6 @@
       isGenerating = false;
     }
   }
-
-  function replaceEmojisWithIcons(htmlStr: string): string {
-    return htmlStr
-      .replace(
-        /👤/g,
-        '<span class="icon-[lucide--user] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      )
-      .replace(
-        /👥/g,
-        '<span class="icon-[lucide--users] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      )
-      .replace(
-        /📍/g,
-        '<span class="icon-[lucide--map-pin] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      )
-      .replace(
-        /📅|⚡/g,
-        '<span class="icon-[lucide--calendar] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      )
-      .replace(
-        /🐾/g,
-        '<span class="icon-[lucide--paw-print] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      )
-      .replace(
-        /📦/g,
-        '<span class="icon-[lucide--package] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      )
-      .replace(
-        /📄/g,
-        '<span class="icon-[lucide--file-text] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
-      );
-  }
-
-  const labelValueHtml = (label: string, value: string) => {
-    if (variant === "names") {
-      const cleanLabel = label.replace(/\*\*/g, "").trim();
-      const escapedLabel = cleanLabel
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-      const iconifiedLabel = replaceEmojisWithIcons(
-        renderMd(cleanLabel, { inline: true }),
-      );
-      return `<div class="group relative flex flex-col p-4 bg-theme-surface/30 border border-theme-border/60 rounded-xl hover:border-theme-primary/30 hover:bg-theme-surface/50 transition-all duration-200 shadow-sm mb-3 break-inside-avoid">
-        <div class="flex items-start justify-between gap-3 mb-1">
-          <span class="font-header font-bold text-base md:text-lg text-theme-primary leading-tight select-all">${iconifiedLabel}</span>
-          <button 
-            type="button" 
-            class="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 p-1 hover:bg-theme-primary/10 text-theme-text/40 hover:text-theme-primary rounded transition-all duration-150 flex items-center justify-center cursor-pointer" 
-            data-copy-text="${escapedLabel}"
-            title="Copy name to clipboard"
-          >
-            <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
-          </button>
-        </div>
-        <span class="text-xs md:text-sm text-theme-text/80 leading-relaxed">${renderMd(value, { inline: true })}</span>
-      </div>\n`;
-    }
-    const iconifiedLabel = replaceEmojisWithIcons(
-      renderMd(label, { inline: true }),
-    );
-    return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-primary mb-0.5">${iconifiedLabel}</span><span>${renderMd(value, { inline: true })}</span></div>\n`;
-  };
-
-  // Label/value pairs ("- **Key**: value") get a bespoke stacked layout
-  // marked can't produce; everything else is delegated to marked.
-  const renderMarkdown = (value: string) =>
-    renderMd(
-      value
-        // bold-key variant: "- **Key**: value" or "* **Key**: value"
-        .replace(/^[*-] \*\*(.*?)\*\*: (.*)$/gm, (_, k, v) =>
-          labelValueHtml(k, v),
-        )
-        // plain-key variant: "* Key: value" or "- Key: value" (key ≤ 60 chars, no colon in key)
-        .replace(/^[*-] ([A-Za-z][^:\n]{0,58}): (.+)$/gm, (_, k, v) =>
-          labelValueHtml(k, v),
-        ),
-    );
-
-  const renderLore = (value: string) =>
-    renderMarkdown(value).replace(
-      /class="flex flex-col mb-1"/g,
-      'class="flex flex-col mb-5"',
-    );
 
   interface SessionDraft {
     type: string;
@@ -791,7 +804,7 @@
               onkeydown={handleContainerKeydown}
             >
               {#if variant === "names"}
-                {@html renderMarkdown(documentLayout.content)}
+                {@html renderGeneratorMarkdown(documentLayout.content, variant)}
               {:else}
                 {#each documentSections as section (section.id)}
                   <article
@@ -830,7 +843,7 @@
                       </div>
                     {/if}
                     <div>
-                      {@html renderMarkdown(section.body)}
+                      {@html renderGeneratorMarkdown(section.body, variant)}
                     </div>
                   </article>
                 {/each}
@@ -876,7 +889,7 @@
               in:fade={{ duration: 250 }}
               class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85"
             >
-              {@html renderLore(documentLayout.lore)}
+              {@html renderGeneratorLore(documentLayout.lore, variant)}
             </div>
           {:else}
             <div
@@ -984,21 +997,92 @@
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
         <a
-          href="{cleanBase}/generators"
+          href="{cleanBase}{backHref ?? '/generators'}"
           class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
         >
           <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
           ></span>
-          All generators
+          {backLabel ?? "All generators"}
         </a>
-        <div
-          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
-        >
-          <span
-            class="icon-[lucide--wand-sparkles] w-3.5 h-3.5"
-            aria-hidden="true"
-          ></span>
-          {eyebrow}
+        <div class="relative mb-4">
+          <button
+            type="button"
+            id="generator-switcher-btn"
+            bind:this={menuButtonEl}
+            onclick={() => (showGeneratorMenu = !showGeneratorMenu)}
+            aria-haspopup="true"
+            aria-expanded={showGeneratorMenu}
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary hover:bg-theme-primary/20 transition-colors"
+          >
+            <span
+              class="icon-[lucide--wand-sparkles] w-3.5 h-3.5"
+              aria-hidden="true"
+            ></span>
+            {eyebrow}
+            <span
+              class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {showGeneratorMenu
+                ? 'rotate-180'
+                : ''}"
+              aria-hidden="true"
+            ></span>
+          </button>
+
+          {#if showGeneratorMenu}
+            <div
+              bind:this={menuEl}
+              transition:fade={{ duration: 100 }}
+              class="absolute left-0 top-full mt-1.5 z-50 w-64 rounded-xl border border-theme-border/60 bg-theme-surface shadow-xl backdrop-blur-sm overflow-hidden"
+              role="menu"
+              aria-labelledby="generator-switcher-btn"
+            >
+              {#each visibleGroups as group (group.label)}
+                <div class="px-3 pt-3 pb-1">
+                  <p
+                    class="text-[9px] font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
+                  >
+                    {group.label}
+                  </p>
+                  {#each group.items as item (item.path)}
+                    {@const isCurrent =
+                      canonicalPath === item.path ||
+                      canonicalPath?.startsWith(item.path + "/")}
+                    <a
+                      href="{cleanBase}{item.path}"
+                      role="menuitem"
+                      onclick={() => (showGeneratorMenu = false)}
+                      class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-colors {isCurrent
+                        ? 'text-theme-primary bg-theme-primary/10'
+                        : 'text-theme-text/80 hover:bg-theme-surface/80 hover:text-theme-primary'}"
+                    >
+                      {#if isCurrent}
+                        <span
+                          class="icon-[lucide--check] w-3 h-3 text-theme-primary shrink-0"
+                          aria-hidden="true"
+                        ></span>
+                      {:else}
+                        <span class="w-3 h-3 shrink-0"></span>
+                      {/if}
+                      {item.label}
+                    </a>
+                  {/each}
+                </div>
+              {/each}
+              <div class="px-3 py-2 mt-1 border-t border-theme-border/40">
+                <a
+                  href="{cleanBase}/generators"
+                  role="menuitem"
+                  onclick={() => (showGeneratorMenu = false)}
+                  class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-theme-muted hover:text-theme-primary hover:bg-theme-surface/80 transition-colors"
+                >
+                  <span
+                    class="icon-[lucide--layout-grid] w-3 h-3 shrink-0"
+                    aria-hidden="true"
+                  ></span>
+                  All generators
+                </a>
+              </div>
+            </div>
+          {/if}
         </div>
         <h1
           class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"

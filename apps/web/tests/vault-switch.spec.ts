@@ -83,7 +83,13 @@ test.describe("Vault Switching", () => {
     await page.getByPlaceholder("Vault Name...").fill("Vault Beta");
     await page.getByRole("button", { name: "CREATE" }).click();
 
-    await page.waitForFunction(() => (window as any).vault.status === "idle");
+    await page.waitForFunction(
+      () => {
+        const v = (window as any).vault;
+        return v && v.status === "idle" && v.vaultName === "Vault Beta";
+      },
+      { timeout: 15000 },
+    );
     await expect(page.getByTestId("open-vault-button")).toContainText(
       "Vault Beta",
     );

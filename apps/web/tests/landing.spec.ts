@@ -29,7 +29,10 @@ test.describe("Landing Page", () => {
       page.getByRole("heading", { name: "Try a themed vault:" }),
     ).toBeVisible();
 
-    const featuresLink = page.locator('a:has-text("View Features Overview")');
+    const featuresLink = page.getByRole("main").getByRole("link", {
+      name: "Features",
+      exact: true,
+    });
     await expect(featuresLink).toBeVisible();
 
     // Test navigation

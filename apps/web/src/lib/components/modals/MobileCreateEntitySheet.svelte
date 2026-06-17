@@ -264,5 +264,20 @@
         </button>
       </div>
     </form>
+
+    <div class="px-5 pb-6 border-t border-chrome-border pt-4">
+      <button
+        type="button"
+        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded border border-chrome-border text-chrome-muted text-sm font-bold tracking-wider hover:border-chrome-accent hover:text-chrome-text transition-colors"
+        onclick={() => {
+          close();
+          modalUIStore.openGeneratorWorkflow();
+        }}
+        data-testid="mobile-open-generator-button"
+      >
+        <span class="icon-[lucide--wand-2] w-4 h-4"></span>
+        GENERATE
+      </button>
+    </div>
   {/if}
 </div>

@@ -135,4 +135,16 @@ describe("HelpStore", () => {
     // Verify no crash, internal count updated
     expect((helpStore as any).indexedCount).toBe(HELP_ARTICLES.length);
   });
+
+  // T060: in-app generators help article is registered (US5)
+  it("in-app-generators help article is present in HELP_ARTICLES", () => {
+    expect(HELP_ARTICLES.some((a) => a.id === "in-app-generators")).toBe(true);
+  });
+
+  it("in-app-generators article is discoverable by search", () => {
+    helpStore.setSearchQuery("generator");
+    expect(
+      helpStore.searchResults.some((a) => a.id === "in-app-generators"),
+    ).toBe(true);
+  });
 });

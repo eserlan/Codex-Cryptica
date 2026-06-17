@@ -5,6 +5,7 @@ import {
   importsConfig,
 } from "$lib/config/seo-pages";
 import { loadLocalBlogArticles } from "$lib/content/blog-content";
+import { VALID_HUB_THEMES } from "../../params/theme_hub";
 
 export const prerender = true;
 
@@ -111,6 +112,13 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Theme hub pages — derived from VALID_HUB_THEMES to stay in sync with the route matcher
+  const themeHubRoutes = [...VALID_HUB_THEMES].map((theme) => ({
+    path: `/generators/${theme}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   // Import pages
   const importRoutes = Object.keys(importsConfig).map((slug) => ({
     path: `/import/${slug}`,
@@ -124,6 +132,7 @@ export async function GET() {
     ...comparisonRoutes,
     ...featureRoutes,
     ...generatorRoutes,
+    ...themeHubRoutes,
     ...importRoutes,
   ];
 
