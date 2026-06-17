@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import releases from "../src/lib/content/changelog/releases.json";
+import releases from "../src/lib/content/changelog/releases.json" with { type: "json" };
 import { setupVaultPage } from "./test-helpers";
 
 const LATEST_VERSION = releases[0].version;

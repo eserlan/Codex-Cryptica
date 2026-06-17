@@ -52,7 +52,7 @@ jobs:
         working-directory: apps/web
         # We use 'github' for annotations and 'list' for logs.
         # The HTML report is for the artifact.
-        run: bunx playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
+        run: bunx playwright test --config=playwright.config.ts --reporter=list,html,github --workers=100%
 
       - name: Upload Playwright Report
         if: always()
