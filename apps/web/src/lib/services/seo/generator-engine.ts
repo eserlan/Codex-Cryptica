@@ -27,6 +27,9 @@ import {
   buildKingdomPrompt,
   parseKingdomResponse,
   generateKingdomLocal,
+  buildNationPrompt,
+  parseNationResponse,
+  generateNationLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -36,6 +39,7 @@ import {
   type QuestGeneratorOptions,
   type SettlementGeneratorOptions,
   type KingdomGeneratorOptions,
+  type NationGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -60,12 +64,11 @@ export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
 export { kingdomConfig } from "generator-engine";
-export { nationConfig } from "./generators/kingdom-nation";
+export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
 import { generateNames } from "./generators/names";
-import { generateNation } from "./generators/kingdom-nation";
 import { generatePantheon } from "./generators/pantheon";
 import type { GeneratorOutput } from "./generators/base";
 
@@ -348,10 +351,33 @@ export class DefaultGeneratorEngine {
     return toSeoOutput(generateKingdomLocal(kingdomOptions));
   }
 
+  /** Nation generation delegates to the generator-engine package (#1351). */
   async generateNation(
-    options: Parameters<typeof generateNation>[1] = {},
+    options: NationGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateNation(this.clientManager, options);
+    const { useAI, ...nationOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage } = buildNationPrompt(
+          nationOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseNationResponse(text));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateNationLocal(nationOptions));
   }
 
   async generatePantheon(
