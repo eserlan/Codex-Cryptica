@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { browser } from "$app/environment";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -406,8 +407,28 @@
     Western: "Modern Conspiracy",
   };
 
+  // Read localStorage at init time for slugs that respect the stored theme.
+  // This prevents SEOGeneratorLayout's $effect from overriding the hub's theme
+  // before onMount can read localStorage and correct activeTheme.
+  const SLUGS_USING_STORED_THEME = new Set([
+    "npc",
+    "faction",
+    "quest",
+    "settlement",
+    "magic-item",
+    "item",
+    "names",
+  ]);
+  const _initStoredThemeId =
+    browser && SLUGS_USING_STORED_THEME.has(data.slug)
+      ? localStorage.getItem("codex-cryptica-active-theme")
+      : null;
+
   // Unified theme binding target — synced to the active generator's state
-  let activeTheme = $state(factionConfig.themes[0]);
+  let activeTheme = $state(
+    (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
+      factionConfig.themes[0],
+  );
   let lastSlug = $state(data.slug);
 
   $effect(() => {
