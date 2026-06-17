@@ -114,3 +114,23 @@ export function deriveIdFromPath(path: string[]): string {
   const basename = filename.replace(/\.(md|markdown)$/i, "");
   return sanitizeId(basename);
 }
+
+export function upsertMarkdownSection(
+  content: string | undefined,
+  title: string,
+  sectionMarkdown: string,
+): string {
+  const body = (content || "").trimEnd();
+  const section = `## ${title}\n${sectionMarkdown.trim()}`;
+  const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const sectionPattern = new RegExp(
+    `(^|\\n)##\\s+${escapedTitle}\\s*\\n[\\s\\S]*?(?=\\n##\\s+|$)`,
+    "i",
+  );
+
+  if (sectionPattern.test(body)) {
+    return body.replace(sectionPattern, `$1${section}`);
+  }
+
+  return body ? `${body}\n\n${section}` : section;
+}
