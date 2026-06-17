@@ -31,7 +31,7 @@ test.describe("Changelog System", () => {
       localStorage.getItem("codex_last_seen_version"),
     );
     // Should match the latest known release from releases.json.
-    expect(lastSeen).toBe("0.26.3");
+    expect(lastSeen).toBe("0.26.4");
   });
 
   test("should NOT automatically open when MINOR version is up to date (even if patch is older)", async ({
@@ -63,7 +63,7 @@ test.describe("Changelog System", () => {
 
     // Ensure we are up to date
     await page.evaluate(() => {
-      localStorage.setItem("codex_last_seen_version", "0.26.3");
+      localStorage.setItem("codex_last_seen_version", "0.26.4");
     });
 
     // 1. Open Settings
@@ -81,7 +81,7 @@ test.describe("Changelog System", () => {
     await expect(modal).toBeVisible();
 
     // 5. Verify it shows the latest version from releases.json
-    await expect(page.locator("text=v0.26.3")).toBeVisible();
+    await expect(page.locator("text=v0.26.4")).toBeVisible();
 
     // 6. Close via the modal's explicit action
     await page.getByRole("button", { name: "Done" }).click();
