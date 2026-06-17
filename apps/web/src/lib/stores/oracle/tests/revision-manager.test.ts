@@ -65,6 +65,42 @@ describe("OracleRevisionManager", () => {
     );
   });
 
+  it("uses chronicle (content) not lore for related entity thumbnails", async () => {
+    mockStore.vault.entities.e1.connections = [
+      { target: "e2", type: "relates" },
+    ];
+    mockStore.vault.entities.e2 = {
+      id: "e2",
+      title: "Related Entity",
+      type: "npc",
+      content: "short chronicle",
+      lore: "very long lore that should not appear in related context",
+    };
+    mockStore.vault.inboundConnections = {};
+    mockStore.textGeneration.reviseEntityUpdate.mockResolvedValue({
+      content: "new",
+      lore: "new",
+    });
+
+    await manager.reviseEntity({
+      source: "revise",
+      entityId: "e1",
+      incoming: { chronicle: "", lore: "" },
+    });
+
+    const [, , , , relatedContext] =
+      mockStore.textGeneration.reviseEntityUpdate.mock.calls[0];
+    const related = relatedContext.find(
+      (r: any) => r.title === "Related Entity",
+    );
+    expect(related).toBeDefined();
+    expect(related.summary).toBe("short chronicle");
+    expect(related.summary).not.toContain("lore that should not appear");
+    expect(
+      mockStore.contextRetrieval.getConsolidatedContext,
+    ).not.toHaveBeenCalled();
+  });
+
   it("falls back to existing content when revision cannot use AI", async () => {
     mockStore.discoveryPolicyStore.aiDisabled = true;
 

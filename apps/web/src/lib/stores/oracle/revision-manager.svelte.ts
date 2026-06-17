@@ -35,7 +35,11 @@ export class OracleRevisionManager {
         instructions: options.instructions,
         vault: s.vault,
         getConsolidatedContext: (related) =>
+          related.content?.trim() ||
           s.contextRetrieval.getConsolidatedContext(related),
+        debug: import.meta.env.DEV
+          ? (sel) => console.log("[RevisionContext] selected related:", sel)
+          : undefined,
       }),
     );
     const snapCategories = $state.snapshot(s.categories.list).map((c: any) => ({
@@ -54,7 +58,7 @@ export class OracleRevisionManager {
         source: options.source,
         instructions: options.instructions,
         priority: options.priority,
-        themeId: $state.snapshot(this.store.themeStore)?.activeTheme?.id,
+        themeId: this.store.themeStore?.activeTheme?.id,
       },
     );
   }
