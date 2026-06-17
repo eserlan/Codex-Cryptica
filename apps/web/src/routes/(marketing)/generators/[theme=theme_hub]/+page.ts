@@ -14,7 +14,7 @@ export type ThemeSlug =
 
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {
-    error(404, "Theme not found");
+    throw error(404, "Theme not found");
   }
   return { theme: params.theme as ThemeSlug };
 };

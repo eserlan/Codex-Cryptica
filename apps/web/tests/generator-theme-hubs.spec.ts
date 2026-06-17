@@ -50,15 +50,19 @@ test.describe("Generator Theme Hubs", () => {
   test("visiting a hub applies its theme immediately", async ({ page }) => {
     await page.goto("/generators/cyberpunk");
 
-    const stored = await page.evaluate(() =>
-      localStorage.getItem("codex-cryptica-active-theme"),
-    );
-    expect(stored).toBe("cyberpunk");
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          localStorage.getItem("codex-cryptica-active-theme"),
+        ),
+      )
+      .toBe("cyberpunk");
 
-    const worldTheme = await page.evaluate(
-      () => document.documentElement.dataset.worldTheme,
-    );
-    expect(worldTheme).toBe("cyberpunk");
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.documentElement.dataset.worldTheme),
+      )
+      .toBe("cyberpunk");
   });
 
   test("card click sets correct localStorage theme and navigates", async ({
@@ -71,12 +75,17 @@ test.describe("Generator Theme Hubs", () => {
 
     await firstCard.click();
 
-    const stored = await page.evaluate(() =>
-      localStorage.getItem("codex-cryptica-active-theme"),
-    );
-    expect(stored).toBe("cyberpunk");
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          localStorage.getItem("codex-cryptica-active-theme"),
+        ),
+      )
+      .toBe("cyberpunk");
 
-    await expect(page).toHaveURL(new RegExp(href!.replace(/^\//, "")));
+    await expect(page).toHaveURL(
+      new RegExp(href!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"),
+    );
   });
 
   test("unknown theme returns 404", async ({ page }) => {
