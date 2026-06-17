@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
+import releases from "../src/lib/content/changelog/releases.json";
 import { setupVaultPage } from "./test-helpers";
+
+const LATEST_VERSION = releases[0].version;
 
 test.describe("Changelog System", () => {
   test("should automatically open when a new MINOR version is detected", async ({
@@ -31,7 +34,7 @@ test.describe("Changelog System", () => {
       localStorage.getItem("codex_last_seen_version"),
     );
     // Should match the latest known release from releases.json.
-    expect(lastSeen).toBe("0.26.4");
+    expect(lastSeen).toBe(LATEST_VERSION);
   });
 
   test("should NOT automatically open when MINOR version is up to date (even if patch is older)", async ({
@@ -62,9 +65,9 @@ test.describe("Changelog System", () => {
     await setupVaultPage(page);
 
     // Ensure we are up to date
-    await page.evaluate(() => {
-      localStorage.setItem("codex_last_seen_version", "0.26.4");
-    });
+    await page.evaluate((v) => {
+      localStorage.setItem("codex_last_seen_version", v);
+    }, LATEST_VERSION);
 
     // 1. Open Settings
     await page.getByTestId("settings-button").click();
@@ -81,7 +84,7 @@ test.describe("Changelog System", () => {
     await expect(modal).toBeVisible();
 
     // 5. Verify it shows the latest version from releases.json
-    await expect(page.locator("text=v0.26.4")).toBeVisible();
+    await expect(page.locator(`text=v${LATEST_VERSION}`)).toBeVisible();
 
     // 6. Close via the modal's explicit action
     await page.getByRole("button", { name: "Done" }).click();
