@@ -483,7 +483,7 @@ describe("buildRelatedEntityContext", () => {
     );
   });
 
-  it("truncates a candidate whose summary exceeds MAX_PER_ENTITY_CHARS with an ellipsis", () => {
+  it("returns full content without per-entity truncation", () => {
     const longContent = "A".repeat(1000);
     const related = buildRelatedEntityContext({
       entity: {
@@ -511,12 +511,12 @@ describe("buildRelatedEntityContext", () => {
     });
 
     expect(related).toHaveLength(1);
-    expect(related[0].summary.endsWith("...")).toBe(true);
-    expect(related[0].summary.length).toBeLessThan(longContent.length);
+    expect(related[0].summary).toBe(longContent);
+    expect(related[0].summary).not.toContain("...");
   });
 
   it("drops lowest-ranked candidates once MAX_TOTAL_CHARS budget is reached", () => {
-    // 6 connected entities each with ~400 chars content — total would exceed 1600 budget
+    // 6 connected entities each with 400 chars — total would exceed 1600 budget
     const chunk = "B".repeat(400);
     const connections = ["e2", "e3", "e4", "e5", "e6", "e7"].map((id) => ({
       target: id,
@@ -557,7 +557,7 @@ describe("buildRelatedEntityContext", () => {
     });
 
     const totalChars = related.reduce((sum, r) => sum + r.summary.length, 0);
-    expect(totalChars).toBeLessThanOrEqual(1600 + 3); // budget + possible ellipsis
+    expect(totalChars).toBeLessThanOrEqual(1600);
     // TopEntity (highest score: connected+named) must be in the result
     expect(related.map((r) => r.title)).toContain("TopEntity");
   });

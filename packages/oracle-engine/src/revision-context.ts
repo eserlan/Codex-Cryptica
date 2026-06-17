@@ -50,8 +50,7 @@ const WEIGHT_CONNECTION = 3;
 const WEIGHT_NAMED_INCOMING = 6;
 const WEIGHT_NAMED_CURRENT = 2;
 
-// Context budget — prevents one verbose entity from starving the rest.
-const MAX_PER_ENTITY_CHARS = 320;
+// Total context budget — prevents the combined related block from becoming too large.
 const MAX_TOTAL_CHARS = 1600;
 
 function normalizeText(value: string): string {
@@ -94,10 +93,8 @@ function scoreEntityMentions(
   return best;
 }
 
-function summarizeContext(value: string, max: number): string {
-  const normalized = value.replace(/[ \t]+/g, " ").trim();
-  if (normalized.length <= max) return normalized;
-  return normalized.slice(0, max) + "...";
+function normalizeContext(value: string): string {
+  return value.replace(/[ \t]+/g, " ").trim();
 }
 
 export function buildRelatedEntityContext(
@@ -140,10 +137,7 @@ export function buildRelatedEntityContext(
     const related = vault.entities[relatedId];
     if (!related?.title) return;
 
-    const summary = summarizeContext(
-      getConsolidatedContext(related),
-      MAX_PER_ENTITY_CHARS,
-    );
+    const summary = normalizeContext(getConsolidatedContext(related));
     if (!summary) return;
 
     const titleScore =
