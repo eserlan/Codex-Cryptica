@@ -459,7 +459,7 @@ describe("OracleStore", () => {
             title: "Szass Tam",
             type: "npc",
             relation: "rules",
-            summary: "mock context",
+            summary: "Lich-regent",
           },
         ],
         expect.any(Array),
