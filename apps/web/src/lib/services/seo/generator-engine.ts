@@ -6,8 +6,16 @@ import {
   buildMagicItemPrompt,
   parseMagicItemResponse,
   generateMagicItemLocal,
+  buildFactionPrompt,
+  parseFactionResponse,
+  generateFactionLocal,
+  buildVampirePrompt,
+  parseVampireResponse,
+  generateVampireLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
+  type FactionGeneratorOptions,
+  type VampireGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -24,11 +32,8 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-export {
-  factionConfig,
-  themeIdToLabel,
-  vampireConfig,
-} from "./generators/faction";
+// Faction + vampire content data now live in the package (#1351).
+export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
 export { settlementConfig } from "./generators/settlement";
 // Magic item content data now lives in the package (#1351).
 export { magicItemConfig } from "generator-engine";
@@ -38,7 +43,6 @@ export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
-import { generateFaction, generateVampireClan } from "./generators/faction";
 import { generateSettlement } from "./generators/settlement";
 import { generateQuestHook } from "./generators/quest";
 import { generateNames } from "./generators/names";
@@ -96,16 +100,62 @@ export class DefaultGeneratorEngine {
     return toSeoOutput(generateNpcLocal(npcOptions));
   }
 
+  /** Faction generation delegates to the generator-engine package (#1351). */
   async generateFaction(
-    options: Parameters<typeof generateFaction>[1] = {},
+    options: FactionGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateFaction(this.clientManager, options);
+    const { useAI, ...factionOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } = buildFactionPrompt(
+          factionOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseFactionResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateFactionLocal(factionOptions));
   }
 
+  /** Vampire clan generation delegates to the generator-engine package (#1351). */
   async generateVampireClan(
-    options: Parameters<typeof generateVampireClan>[1] = {},
+    options: VampireGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateVampireClan(this.clientManager, options);
+    const { useAI, ...vampireOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } = buildVampirePrompt(
+          vampireOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseVampireResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateVampireLocal(vampireOptions));
   }
 
   async generateSettlement(

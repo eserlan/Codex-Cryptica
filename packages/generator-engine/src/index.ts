@@ -43,6 +43,21 @@ export {
   type MagicItemPrompt,
 } from "./public-magic-item";
 export {
+  buildFactionPrompt,
+  parseFactionResponse,
+  generateFactionLocal,
+  buildVampirePrompt,
+  parseVampireResponse,
+  generateVampireLocal,
+  factionConfig,
+  themeIdToLabel,
+  vampireConfig,
+  type FactionGeneratorOptions,
+  type FactionPrompt,
+  type VampireGeneratorOptions,
+  type VampirePrompt,
+} from "./public-faction";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
