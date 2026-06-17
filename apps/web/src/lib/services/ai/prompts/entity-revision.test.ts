@@ -37,7 +37,7 @@ describe("buildEntityRevisionPrompt", () => {
       "Make the lore richer and more complete when the source material supports it.",
     );
     expect(prompt).toContain(
-      "Only integrate incoming details that directly reveal new information about Szass Tam",
+      "Only integrate incoming details that directly reveal new information about the PRIMARY SUBJECT",
     );
     expect(prompt).toContain("Preserve named developments, power shifts");
     expect(prompt).toContain("RELATED ENTITY CONTEXT:");
@@ -61,8 +61,32 @@ describe("buildEntityRevisionPrompt", () => {
     for (const block of userContentBlocks) {
       expect(block).toContain(INJECTION);
     }
-    const rulesSection = prompt.split("RULES:")[1] ?? "";
-    expect(rulesSection).not.toContain(INJECTION);
+    // INJECTION must not appear outside of USER_CONTENT delimiters
+    const stripped = prompt.replace(
+      /<USER_CONTENT>[\s\S]*?<\/USER_CONTENT>/g,
+      "",
+    );
+    expect(stripped).not.toContain(INJECTION);
+  });
+
+  it("wraps category labels and descriptions in USER_CONTENT delimiters", () => {
+    const prompt = buildEntityRevisionPrompt(
+      {
+        id: "test-entity",
+        title: "Test Entity",
+        type: "npc",
+        content: "",
+        lore: "",
+      } as any,
+      { chronicle: "", lore: "" },
+      [],
+      [{ id: "npc", label: INJECTION, description: INJECTION }],
+    );
+    const stripped = prompt.replace(
+      /<USER_CONTENT>[\s\S]*?<\/USER_CONTENT>/g,
+      "",
+    );
+    expect(stripped).not.toContain(INJECTION);
   });
 
   it("asks for a category only when allowed categories are provided", () => {
@@ -86,7 +110,7 @@ describe("buildEntityRevisionPrompt", () => {
     );
 
     expect(prompt).toContain("ALLOWED CATEGORIES:");
-    expect(prompt).toContain("- item (Item)");
+    expect(prompt).toContain("- item (");
     expect(prompt).toContain("based on the final revised chronicle and lore");
     expect(prompt).toContain('"categoryId": "one allowed category id"');
   });
@@ -110,7 +134,7 @@ describe("buildEntityRevisionPrompt", () => {
       "Incoming passage is the highest-priority content input unless user instructions explicitly correct it.",
     );
     expect(prompt).toContain(
-      "Resolve contradictions according to the priority rule.",
+      "Resolve contradictions according to the priority rule stated in the request.",
     );
   });
 
