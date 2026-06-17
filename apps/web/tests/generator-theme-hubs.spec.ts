@@ -33,11 +33,11 @@ test.describe("Generator Theme Hubs", () => {
     });
   }
 
-  test("fantasy hub has 9 cards", async ({ page }) => {
+  test("fantasy hub has 10 cards", async ({ page }) => {
     await page.goto("/generators/fantasy");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(9);
+    expect(await cards.count()).toBe(10);
   });
 
   test("non-fantasy hub has 6 cards", async ({ page }) => {

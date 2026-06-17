@@ -74,6 +74,13 @@
 
   const fantasyOnlyCards: GeneratorCard[] = [
     {
+      slug: "dnd-npc",
+      label: "D&D NPC Generator",
+      summary:
+        "Create a D&D-ready NPC with ancestry, role, personality, secret, faction tie, and plot hook.",
+      icon: "icon-[lucide--shield]",
+    },
+    {
       slug: "magic-item",
       label: "Magic Item Generator",
       summary:
