@@ -60,3 +60,4 @@
 ## 2026-05-16 - Focus Visible for VTT Grid Settings
 **Learning:** Interactive buttons within modals and menus often miss explicit keyboard focus indicators if they only use mouse-centric hover classes.
 **Action:** Add Tailwind focus-visible utilities to ensure accessibility without degrading the mouse user experience.
+## 2024-06-17 - Button Toggle State Accessibility\n\n**Learning:** Found custom toggle buttons (like the App Appearance theme switchers) that changed visual state via classes but didn't communicate their "pressed" status to screen readers, making it impossible for non-visual users to know which mode was active.\n**Action:** Always add `aria-pressed={isActive}` to button elements that function as state toggles, ensuring their programmatic state matches their visual state.\n
