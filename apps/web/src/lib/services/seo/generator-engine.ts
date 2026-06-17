@@ -3,6 +3,9 @@ import {
   buildNpcPrompt,
   parseNpcResponse,
   generateNpcLocal,
+  buildMagicItemPrompt,
+  parseMagicItemResponse,
+  generateMagicItemLocal,
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -12,10 +15,15 @@ import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  buildSettlementPrompt,
+  parseSettlementResponse,
+  generateSettlementLocal,
   type NpcGeneratorOptions,
+  type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
   type QuestGeneratorOptions,
+  type SettlementGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -32,18 +40,17 @@ export {
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
 export { npcConfig, npcThemeConfig } from "generator-engine";
-// Faction + vampire content data now live in the package (#1351).
+// Faction + vampire + settlement content data now live in the package (#1351).
 export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
-export { settlementConfig } from "./generators/settlement";
-export { magicItemConfig } from "./generators/magic-item";
+export { settlementConfig } from "generator-engine";
+// Magic item content data now lives in the package (#1351).
+export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
 export { socialHubConfig } from "./generators/social-hub";
 export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
-import { generateSettlement } from "./generators/settlement";
-import { generateMagicItem } from "./generators/magic-item";
 import { generateNames } from "./generators/names";
 import { generateSocialHub, generateTavern } from "./generators/social-hub";
 import { generateKingdom, generateNation } from "./generators/kingdom-nation";
@@ -157,16 +164,58 @@ export class DefaultGeneratorEngine {
     return toSeoOutput(generateVampireLocal(vampireOptions));
   }
 
+  /** Settlement generation delegates to the generator-engine package (#1351). */
   async generateSettlement(
-    options: Parameters<typeof generateSettlement>[1] = {},
+    options: SettlementGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateSettlement(this.clientManager, options);
+    const { useAI, ...settlementOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } =
+          buildSettlementPrompt(settlementOptions, getSessionContext());
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseSettlementResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateSettlementLocal(settlementOptions));
   }
 
+  /** Magic item generation delegates to the generator-engine package (#1351). */
   async generateMagicItem(
-    options: Parameters<typeof generateMagicItem>[1] = {},
+    options: MagicItemGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateMagicItem(this.clientManager, options);
+    const { useAI, ...itemOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } =
+          buildMagicItemPrompt(itemOptions, getSessionContext());
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseMagicItemResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateMagicItemLocal(itemOptions));
   }
 
   async generateQuestHook(

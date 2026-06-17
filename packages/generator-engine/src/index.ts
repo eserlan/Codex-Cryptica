@@ -35,6 +35,14 @@ export {
   type NpcPrompt,
 } from "./public-npc";
 export {
+  buildMagicItemPrompt,
+  parseMagicItemResponse,
+  generateMagicItemLocal,
+  magicItemConfig,
+  type MagicItemGeneratorOptions,
+  type MagicItemPrompt,
+} from "./public-magic-item";
+export {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -58,6 +66,14 @@ export {
   type QuestGeneratorOptions,
   type QuestPrompt,
 } from "./public-quest";
+export {
+  buildSettlementPrompt,
+  parseSettlementResponse,
+  generateSettlementLocal,
+  settlementConfig,
+  type SettlementGeneratorOptions,
+  type SettlementPrompt,
+} from "./public-settlement";
 export {
   CampaignGeneratorService,
   campaignGeneratorService,
