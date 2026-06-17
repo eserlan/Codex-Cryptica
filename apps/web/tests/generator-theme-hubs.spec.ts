@@ -47,6 +47,20 @@ test.describe("Generator Theme Hubs", () => {
     expect(await cards.count()).toBe(6);
   });
 
+  test("visiting a hub applies its theme immediately", async ({ page }) => {
+    await page.goto("/generators/cyberpunk");
+
+    const stored = await page.evaluate(() =>
+      localStorage.getItem("codex-cryptica-active-theme"),
+    );
+    expect(stored).toBe("cyberpunk");
+
+    const worldTheme = await page.evaluate(
+      () => document.documentElement.dataset.worldTheme,
+    );
+    expect(worldTheme).toBe("cyberpunk");
+  });
+
   test("card click sets correct localStorage theme and navigates", async ({
     page,
   }) => {
