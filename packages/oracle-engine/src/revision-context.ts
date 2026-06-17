@@ -21,6 +21,7 @@ interface BuildRevisionContextOptions {
     chronicle: string;
     lore: string;
   };
+  instructions?: string;
   vault: {
     entities: Record<string, any>;
     inboundConnections?: Record<
@@ -38,20 +39,36 @@ interface BuildRevisionContextOptions {
   limit?: number;
 }
 
+const MIN_TITLE_SCAN_LENGTH = 4;
+
 function normalizeText(value: string): string {
   return value.toLowerCase();
 }
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Returns 2 for a full-title match, 1 for a word-level match on any
+ * significant word (≥ MIN_TITLE_SCAN_LENGTH chars) from the title, 0 otherwise.
+ * Word-level matching catches partial references like "shas" hitting
+ * "Republic of Shas".
+ */
 function scoreTitleMentions(title: string, text: string): number {
   const normalizedTitle = title.trim().toLowerCase();
   if (!normalizedTitle) return 0;
-  return text.includes(normalizedTitle) ? 1 : 0;
+  if (text.includes(normalizedTitle)) return 2;
+  const words = normalizedTitle
+    .split(/\s+/)
+    .filter((w) => w.length >= MIN_TITLE_SCAN_LENGTH);
+  if (words.some((w) => new RegExp(`\\b${escapeRegex(w)}\\b`).test(text)))
+    return 1;
+  return 0;
 }
 
-function summarizeContext(value: string, maxChars: number): string {
-  const trimmed = value.replace(/[ \t]+/g, " ").trim();
-  if (trimmed.length <= maxChars) return trimmed;
-  return trimmed.slice(0, maxChars).trimEnd() + "...";
+function normalizeContext(value: string): string {
+  return value.replace(/[ \t]+/g, " ").trim();
 }
 
 export function buildRelatedEntityContext(
@@ -60,6 +77,7 @@ export function buildRelatedEntityContext(
   const {
     entity,
     incoming,
+    instructions,
     vault,
     getConsolidatedContext,
     limit = 6,
@@ -68,7 +86,9 @@ export function buildRelatedEntityContext(
     [entity.title, entity.content || "", entity.lore || ""].join("\n"),
   );
   const incomingText = normalizeText(
-    [incoming.chronicle || "", incoming.lore || ""].join("\n"),
+    [incoming.chronicle || "", incoming.lore || "", instructions || ""].join(
+      "\n",
+    ),
   );
   const candidates = new Map<
     string,
@@ -90,7 +110,7 @@ export function buildRelatedEntityContext(
     const related = vault.entities[relatedId];
     if (!related?.title) return;
 
-    const summary = summarizeContext(getConsolidatedContext(related), 420);
+    const summary = normalizeContext(getConsolidatedContext(related));
     if (!summary) return;
 
     const titleScore =
@@ -118,6 +138,17 @@ export function buildRelatedEntityContext(
       inbound.connection.label || inbound.connection.type,
       2,
     );
+  }
+
+  // Title-scan pass: pick up vault entities mentioned by name but lacking a graph edge
+  for (const [id, related] of Object.entries(vault.entities)) {
+    if (!id || id === entity.id || candidates.has(id)) continue;
+    if (!related?.title || related.title.trim().length < MIN_TITLE_SCAN_LENGTH)
+      continue;
+    const mentionScore =
+      scoreTitleMentions(related.title, incomingText) * 6 +
+      scoreTitleMentions(related.title, currentText) * 2;
+    if (mentionScore > 0) addCandidate(id, undefined, 0);
   }
 
   return Array.from(candidates.values())

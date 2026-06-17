@@ -37,7 +37,7 @@ describe("buildEntityRevisionPrompt", () => {
       "Make the lore richer and more complete when the source material supports it.",
     );
     expect(prompt).toContain(
-      "Only integrate incoming details that directly reveal new information about Szass Tam",
+      "Only integrate incoming details that directly reveal new information about the PRIMARY SUBJECT",
     );
     expect(prompt).toContain("Preserve named developments, power shifts");
     expect(prompt).toContain("RELATED ENTITY CONTEXT:");
@@ -61,8 +61,12 @@ describe("buildEntityRevisionPrompt", () => {
     for (const block of userContentBlocks) {
       expect(block).toContain(INJECTION);
     }
-    const rulesSection = prompt.split("RULES:")[1] ?? "";
-    expect(rulesSection).not.toContain(INJECTION);
+    // INJECTION must not appear outside of USER_CONTENT delimiters
+    const stripped = prompt.replace(
+      /<USER_CONTENT>[\s\S]*?<\/USER_CONTENT>/g,
+      "",
+    );
+    expect(stripped).not.toContain(INJECTION);
   });
 
   it("asks for a category only when allowed categories are provided", () => {
@@ -110,7 +114,7 @@ describe("buildEntityRevisionPrompt", () => {
       "Incoming passage is the highest-priority content input unless user instructions explicitly correct it.",
     );
     expect(prompt).toContain(
-      "Resolve contradictions according to the priority rule.",
+      "Resolve contradictions according to the priority rule stated in the request.",
     );
   });
 

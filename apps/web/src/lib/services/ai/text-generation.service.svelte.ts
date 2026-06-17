@@ -16,7 +16,10 @@ import {
   buildPlotGenerationPrompt,
 } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
-import { buildEntityRevisionPrompt } from "./prompts/entity-revision";
+import {
+  buildEntityRevisionSystemInstruction,
+  buildEntityRevisionUserPrompt,
+} from "./prompts/entity-revision";
 import { resolveTemplateSync } from "../EntityTemplateConstants";
 import {
   buildCreationLoreSynthesisPrompt,
@@ -399,7 +402,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
       : relatedEntities;
     const cleanCategories = categories ? safeSnapshot(categories) : categories;
 
-    const model = await this.aiClientManager.getModel(apiKey, modelName);
+    const systemInstruction = buildEntityRevisionSystemInstruction();
+    const model = await this.aiClientManager.getModel(
+      apiKey,
+      modelName,
+      systemInstruction,
+    );
 
     const allowedCategoryIds = new Set(
       cleanCategories.map((category) => category.id),
@@ -413,7 +421,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const loreTemplate = sanitizedEntity?.type
       ? resolveTemplateSync(sanitizedEntity.type, options?.themeId) || undefined
       : undefined;
-    const prompt = buildEntityRevisionPrompt(
+    const userPrompt = buildEntityRevisionUserPrompt(
       sanitizedEntity,
       cleanIncoming,
       cleanRelatedEntities,
@@ -428,11 +436,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
     console.log(
       "[ReconPipeline] Constructed LLM prompt of length:",
-      prompt.length,
+      systemInstruction.length + userPrompt.length,
     );
 
     try {
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(userPrompt);
       const text = result.response.text();
       if (import.meta.env.DEV) {
         console.log("[ReconPipeline] Raw LLM response metadata:", {

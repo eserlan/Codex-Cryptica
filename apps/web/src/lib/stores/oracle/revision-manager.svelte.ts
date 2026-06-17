@@ -32,6 +32,7 @@ export class OracleRevisionManager {
       buildRelatedEntityContext({
         entity: existing,
         incoming,
+        instructions: options.instructions,
         vault: s.vault,
         getConsolidatedContext: (related) =>
           s.contextRetrieval.getConsolidatedContext(related),
