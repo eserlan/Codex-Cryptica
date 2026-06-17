@@ -58,6 +58,19 @@ export {
   type VampirePrompt,
 } from "./public-faction";
 export {
+  buildSocialHubPrompt,
+  parseSocialHubResponse,
+  generateSocialHubLocal,
+  buildTavernPrompt,
+  parseTavernResponse,
+  generateTavernLocal,
+  socialHubConfig,
+  type SocialHubGeneratorOptions,
+  type SocialHubPrompt,
+  type TavernGeneratorOptions,
+  type TavernPrompt,
+} from "./public-social-hub";
+export {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
