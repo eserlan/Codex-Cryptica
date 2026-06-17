@@ -50,6 +50,14 @@ export {
   type VampirePrompt,
 } from "./public-faction";
 export {
+  buildSettlementPrompt,
+  parseSettlementResponse,
+  generateSettlementLocal,
+  settlementConfig,
+  type SettlementGeneratorOptions,
+  type SettlementPrompt,
+} from "./public-settlement";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
