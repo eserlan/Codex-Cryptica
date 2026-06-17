@@ -47,6 +47,18 @@ test.describe("Generator Theme Hubs", () => {
     expect(await cards.count()).toBe(6);
   });
 
+  test("vampire hub has 7 cards including vampire clan generator", async ({
+    page,
+  }) => {
+    await page.goto("/generators/vampire");
+    const cards = page.locator("ul > li > a");
+    await expect(cards.first()).toBeVisible();
+    expect(await cards.count()).toBe(7);
+    await expect(
+      page.getByRole("link", { name: "Vampire Clan Generator" }),
+    ).toBeVisible();
+  });
+
   test("visiting a hub applies its theme immediately", async ({ page }) => {
     await page.goto("/generators/cyberpunk");
 

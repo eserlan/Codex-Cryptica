@@ -77,6 +77,14 @@
   // parametricCards = coreCards + nation (all non-fantasy hubs)
   const parametricCards: GeneratorCard[] = [...coreCards, nationCard];
 
+  const vampireClanCard: GeneratorCard = {
+    slug: "vampire-clan",
+    label: "Vampire Clan Generator",
+    summary:
+      "Create vampire clans and bloodlines with hierarchy, feeding grounds, internal politics, and dark secrets.",
+    icon: "icon-[lucide--moon]",
+  };
+
   const fantasyOnlyCards: GeneratorCard[] = [
     {
       slug: "dnd-npc",
@@ -179,7 +187,7 @@
         "Vampire RPG Generators — NPC, Clan, Quest & More | Codex Cryptica",
       metaDescription:
         "Free vampire RPG generators for tabletop GMs. Create vampire clans, gothic factions, undead NPCs, and dark quest hooks for your horror campaign. No login required.",
-      cards: parametricCards,
+      cards: [vampireClanCard, ...parametricCards],
     },
   };
 
