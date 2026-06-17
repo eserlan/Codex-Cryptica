@@ -27,7 +27,7 @@
     cards: GeneratorCard[];
   };
 
-  const parametricCards: GeneratorCard[] = [
+  const coreCards: GeneratorCard[] = [
     {
       slug: "npc",
       label: "NPC Generator",
@@ -63,14 +63,18 @@
         "Draft towns, cities, and outposts with demographics, districts, power factions, and hooks.",
       icon: "icon-[lucide--building-2]",
     },
-    {
-      slug: "nation",
-      label: "Nation Generator",
-      summary:
-        "Build nations and power blocs with government, economy, military, and foreign relations.",
-      icon: "icon-[lucide--globe]",
-    },
   ];
+
+  const nationCard: GeneratorCard = {
+    slug: "nation",
+    label: "Nation Generator",
+    summary:
+      "Build nations and power blocs with government, economy, military, and foreign relations.",
+    icon: "icon-[lucide--globe]",
+  };
+
+  // parametricCards = coreCards + nation (all non-fantasy hubs)
+  const parametricCards: GeneratorCard[] = [...coreCards, nationCard];
 
   const fantasyOnlyCards: GeneratorCard[] = [
     {
@@ -114,7 +118,7 @@
         "Fantasy RPG Generators — NPC, Faction, Kingdom & More | Codex Cryptica",
       metaDescription:
         "Free fantasy RPG generators for tabletop GMs. Create NPCs, factions, kingdoms, magic items, pantheons, quests, and names for your fantasy campaign. No login required.",
-      cards: [...parametricCards, ...fantasyOnlyCards],
+      cards: [...coreCards, ...fantasyOnlyCards],
     },
     cyberpunk: {
       label: "Cyberpunk",
