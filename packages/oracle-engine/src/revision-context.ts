@@ -37,9 +37,22 @@ interface BuildRevisionContextOptions {
   };
   getConsolidatedContext: (entity: any) => string;
   limit?: number;
+  debug?: (
+    selected: Array<{ title: string; score: number; chars: number }>,
+  ) => void;
 }
 
 const MIN_TITLE_SCAN_LENGTH = 4;
+
+// Scoring weights — additive model: connected+named sums above either signal alone.
+// e.g. connected(3) + named_incoming(6) = 9 > named_only(6) > connected_only(3)
+const WEIGHT_CONNECTION = 3;
+const WEIGHT_NAMED_INCOMING = 6;
+const WEIGHT_NAMED_CURRENT = 2;
+
+// Context budget — prevents one verbose entity from starving the rest.
+const MAX_PER_ENTITY_CHARS = 320;
+const MAX_TOTAL_CHARS = 1600;
 
 function normalizeText(value: string): string {
   return value.toLowerCase();
@@ -49,17 +62,11 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/**
- * Returns 2 for a full-title match, 1 for a word-level match on any
- * significant word (≥ MIN_TITLE_SCAN_LENGTH chars) from the title, 0 otherwise.
- * Word-level matching catches partial references like "shas" hitting
- * "Republic of Shas".
- */
-function scoreTitleMentions(title: string, text: string): number {
-  const normalizedTitle = title.trim().toLowerCase();
-  if (!normalizedTitle) return 0;
-  if (text.includes(normalizedTitle)) return 2;
-  const words = normalizedTitle
+function scoreStringMentions(candidate: string, text: string): number {
+  const normalized = candidate.trim().toLowerCase();
+  if (!normalized) return 0;
+  if (text.includes(normalized)) return 2;
+  const words = normalized
     .split(/\s+/)
     .filter((w) => w.length >= MIN_TITLE_SCAN_LENGTH);
   if (words.some((w) => new RegExp(`\\b${escapeRegex(w)}\\b`).test(text)))
@@ -67,8 +74,30 @@ function scoreTitleMentions(title: string, text: string): number {
   return 0;
 }
 
-function normalizeContext(value: string): string {
-  return value.replace(/[ \t]+/g, " ").trim();
+/**
+ * Scores an entity against a text by checking its title and each alias,
+ * returning the maximum score (2=full match, 1=word-level, 0=none).
+ * Aliases shorter than MIN_TITLE_SCAN_LENGTH are skipped.
+ */
+function scoreEntityMentions(
+  entity: { title: string; aliases?: string[] },
+  text: string,
+): number {
+  let best = scoreStringMentions(entity.title, text);
+  if (best === 2) return best;
+  for (const alias of entity.aliases || []) {
+    if (!alias || alias.trim().length < MIN_TITLE_SCAN_LENGTH) continue;
+    const s = scoreStringMentions(alias, text);
+    if (s > best) best = s;
+    if (best === 2) return best;
+  }
+  return best;
+}
+
+function summarizeContext(value: string, max: number): string {
+  const normalized = value.replace(/[ \t]+/g, " ").trim();
+  if (normalized.length <= max) return normalized;
+  return normalized.slice(0, max) + "...";
 }
 
 export function buildRelatedEntityContext(
@@ -81,6 +110,7 @@ export function buildRelatedEntityContext(
     vault,
     getConsolidatedContext,
     limit = 6,
+    debug,
   } = options;
   const currentText = normalizeText(
     [entity.title, entity.content || "", entity.lore || ""].join("\n"),
@@ -110,12 +140,15 @@ export function buildRelatedEntityContext(
     const related = vault.entities[relatedId];
     if (!related?.title) return;
 
-    const summary = normalizeContext(getConsolidatedContext(related));
+    const summary = summarizeContext(
+      getConsolidatedContext(related),
+      MAX_PER_ENTITY_CHARS,
+    );
     if (!summary) return;
 
     const titleScore =
-      scoreTitleMentions(related.title, incomingText) * 6 +
-      scoreTitleMentions(related.title, currentText) * 2;
+      scoreEntityMentions(related, incomingText) * WEIGHT_NAMED_INCOMING +
+      scoreEntityMentions(related, currentText) * WEIGHT_NAMED_CURRENT;
     const existing = candidates.get(relatedId);
     const nextScore = baseScore + titleScore + (existing?.score || 0);
 
@@ -129,14 +162,18 @@ export function buildRelatedEntityContext(
   };
 
   for (const connection of entity.connections || []) {
-    addCandidate(connection.target, connection.label || connection.type, 2);
+    addCandidate(
+      connection.target,
+      connection.label || connection.type,
+      WEIGHT_CONNECTION,
+    );
   }
 
   for (const inbound of vault.inboundConnections?.[entity.id] || []) {
     addCandidate(
       inbound.sourceId,
       inbound.connection.label || inbound.connection.type,
-      2,
+      WEIGHT_CONNECTION,
     );
   }
 
@@ -146,18 +183,27 @@ export function buildRelatedEntityContext(
     if (!related?.title || related.title.trim().length < MIN_TITLE_SCAN_LENGTH)
       continue;
     const mentionScore =
-      scoreTitleMentions(related.title, incomingText) * 6 +
-      scoreTitleMentions(related.title, currentText) * 2;
+      scoreEntityMentions(related, incomingText) * WEIGHT_NAMED_INCOMING +
+      scoreEntityMentions(related, currentText) * WEIGHT_NAMED_CURRENT;
     if (mentionScore > 0) addCandidate(id, undefined, 0);
   }
 
-  return Array.from(candidates.values())
+  const sorted = Array.from(candidates.values())
     .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
-    .slice(0, limit)
-    .map(({ title, type, relation, summary }) => ({
-      title,
-      type,
-      relation,
-      summary,
-    }));
+    .slice(0, limit);
+
+  const result: RelatedEntityContext[] = [];
+  const debugEntries: Array<{ title: string; score: number; chars: number }> =
+    [];
+  let totalChars = 0;
+  for (const { title, type, relation, summary, score } of sorted) {
+    // Always include at least one entry; after that, stop if the budget is full.
+    if (result.length > 0 && totalChars + summary.length > MAX_TOTAL_CHARS)
+      break;
+    result.push({ title, type, relation, summary });
+    debugEntries.push({ title, score, chars: summary.length });
+    totalChars += summary.length;
+  }
+  debug?.(debugEntries);
+  return result;
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildRelatedEntityContext } from "./revision-context";
 
 describe("buildRelatedEntityContext", () => {
@@ -289,7 +289,201 @@ describe("buildRelatedEntityContext", () => {
     expect(titles).toContain("Wars of the North");
   });
 
-  it("returns full context without truncation", () => {
+  it("finds entities via alias full match when title is not mentioned", () => {
+    const related = buildRelatedEntityContext({
+      entity: {
+        id: "subject",
+        title: "Subject",
+        connections: [],
+        content: "",
+        lore: "",
+      },
+      incoming: { chronicle: "The Library holds all records.", lore: "" },
+      vault: {
+        entities: {
+          subject: { id: "subject", title: "Subject", type: "note" },
+          library: {
+            id: "library",
+            title: "Great Library of Shas",
+            type: "location",
+            aliases: ["The Library"],
+            content: "Repository of all known lore.",
+            lore: "",
+          },
+          unrelated: {
+            id: "unrelated",
+            title: "The Deep Ocean",
+            type: "location",
+            content: "Far away.",
+            lore: "",
+          },
+        },
+        inboundConnections: {},
+      },
+      getConsolidatedContext: (entity) => entity.content || "",
+    });
+
+    const titles = related.map((r) => r.title);
+    expect(titles).toContain("Great Library of Shas");
+    expect(titles).not.toContain("The Deep Ocean");
+  });
+
+  it("does not match entities via aliases shorter than MIN_TITLE_SCAN_LENGTH", () => {
+    const related = buildRelatedEntityContext({
+      entity: {
+        id: "subject",
+        title: "Subject",
+        connections: [],
+        content: "",
+        lore: "",
+      },
+      incoming: { chronicle: "The spy known as Ji was seen.", lore: "" },
+      vault: {
+        entities: {
+          subject: { id: "subject", title: "Subject", type: "note" },
+          spy: {
+            id: "spy",
+            title: "Shadow Operative",
+            type: "npc",
+            aliases: ["Ji"],
+            content: "An intelligence agent.",
+            lore: "",
+          },
+        },
+        inboundConnections: {},
+      },
+      getConsolidatedContext: (entity) => entity.content || "",
+    });
+
+    const titles = related.map((r) => r.title);
+    expect(titles).not.toContain("Shadow Operative");
+  });
+
+  it("invokes the debug callback with the selected set including score and chars", () => {
+    const debugSpy = vi.fn();
+    buildRelatedEntityContext({
+      entity: {
+        id: "subject",
+        title: "Subject",
+        connections: [{ target: "linked", type: "link" }],
+        content: "",
+        lore: "",
+      },
+      incoming: { chronicle: "LinkedEntity is notable.", lore: "" },
+      vault: {
+        entities: {
+          subject: { id: "subject", title: "Subject", type: "note" },
+          linked: {
+            id: "linked",
+            title: "LinkedEntity",
+            type: "note",
+            content: "A linked entity.",
+            lore: "",
+          },
+        },
+        inboundConnections: {},
+      },
+      getConsolidatedContext: (entity) => entity.content || "",
+      debug: debugSpy,
+    });
+
+    expect(debugSpy).toHaveBeenCalledOnce();
+    const [entries] = debugSpy.mock.calls[0];
+    expect(entries).toHaveLength(1);
+    expect(entries[0].title).toBe("LinkedEntity");
+    expect(typeof entries[0].score).toBe("number");
+    expect(typeof entries[0].chars).toBe("number");
+    expect(entries[0].score > 0).toBe(true);
+    expect(entries[0].chars > 0).toBe(true);
+  });
+
+  it("finds entities via word-level alias match", () => {
+    const related = buildRelatedEntityContext({
+      entity: {
+        id: "subject",
+        title: "Subject",
+        connections: [],
+        content: "",
+        lore: "",
+      },
+      incoming: { chronicle: "Shas dominates the northern plains.", lore: "" },
+      vault: {
+        entities: {
+          subject: { id: "subject", title: "Subject", type: "note" },
+          republic: {
+            id: "republic",
+            title: "Grand Republic of Shasoria",
+            type: "location",
+            aliases: ["Republic of Shas", "Shas"],
+            content: "A major power.",
+            lore: "",
+          },
+        },
+        inboundConnections: {},
+      },
+      getConsolidatedContext: (entity) => entity.content || "",
+    });
+
+    const titles = related.map((r) => r.title);
+    expect(titles).toContain("Grand Republic of Shasoria");
+  });
+
+  it("ranks connected+named above named-only above connected-only", () => {
+    const related = buildRelatedEntityContext({
+      entity: {
+        id: "subject",
+        title: "Subject",
+        connections: [
+          { target: "connected-named", type: "link" },
+          { target: "connected-only", type: "link" },
+        ],
+        content: "",
+        lore: "",
+      },
+      incoming: {
+        chronicle: "The ConnectedNamed entity and NamedOnly entity appear.",
+        lore: "",
+      },
+      vault: {
+        entities: {
+          subject: { id: "subject", title: "Subject", type: "note" },
+          "connected-named": {
+            id: "connected-named",
+            title: "ConnectedNamed",
+            type: "note",
+            content: "Has both a graph edge and a name mention.",
+            lore: "",
+          },
+          "connected-only": {
+            id: "connected-only",
+            title: "ConnectedOnly",
+            type: "note",
+            content: "Has a graph edge but is not mentioned in incoming.",
+            lore: "",
+          },
+          "named-only": {
+            id: "named-only",
+            title: "NamedOnly",
+            type: "note",
+            content: "Mentioned in incoming but has no graph edge.",
+            lore: "",
+          },
+        },
+        inboundConnections: {},
+      },
+      getConsolidatedContext: (entity) => entity.content || "",
+    });
+
+    const titles = related.map((r) => r.title);
+    expect(titles.indexOf("ConnectedNamed")).toBeLessThan(
+      titles.indexOf("NamedOnly"),
+    );
+    expect(titles.indexOf("NamedOnly")).toBeLessThan(
+      titles.indexOf("ConnectedOnly"),
+    );
+  });
+
+  it("truncates a candidate whose summary exceeds MAX_PER_ENTITY_CHARS with an ellipsis", () => {
     const longContent = "A".repeat(1000);
     const related = buildRelatedEntityContext({
       entity: {
@@ -317,7 +511,54 @@ describe("buildRelatedEntityContext", () => {
     });
 
     expect(related).toHaveLength(1);
-    expect(related[0].summary).toBe(longContent);
-    expect(related[0].summary).not.toContain("...");
+    expect(related[0].summary.endsWith("...")).toBe(true);
+    expect(related[0].summary.length).toBeLessThan(longContent.length);
+  });
+
+  it("drops lowest-ranked candidates once MAX_TOTAL_CHARS budget is reached", () => {
+    // 6 connected entities each with ~400 chars content — total would exceed 1600 budget
+    const chunk = "B".repeat(400);
+    const connections = ["e2", "e3", "e4", "e5", "e6", "e7"].map((id) => ({
+      target: id,
+      type: "link",
+    }));
+    const entities: Record<string, any> = {
+      e1: { id: "e1", title: "Subject", type: "note" },
+    };
+    // Assign descending scores: e2 is named in incoming (highest), e7 is not (lowest)
+    entities["e2"] = {
+      id: "e2",
+      title: "TopEntity",
+      type: "note",
+      content: chunk,
+      lore: "",
+    };
+    for (const id of ["e3", "e4", "e5", "e6", "e7"]) {
+      entities[id] = {
+        id,
+        title: `Entity${id}`,
+        type: "note",
+        content: chunk,
+        lore: "",
+      };
+    }
+
+    const related = buildRelatedEntityContext({
+      entity: {
+        id: "e1",
+        title: "Subject",
+        connections,
+        content: "",
+        lore: "",
+      },
+      incoming: { chronicle: "TopEntity is important.", lore: "" },
+      vault: { entities, inboundConnections: {} },
+      getConsolidatedContext: (entity) => entity.content || "",
+    });
+
+    const totalChars = related.reduce((sum, r) => sum + r.summary.length, 0);
+    expect(totalChars).toBeLessThanOrEqual(1600 + 3); // budget + possible ellipsis
+    // TopEntity (highest score: connected+named) must be in the result
+    expect(related.map((r) => r.title)).toContain("TopEntity");
   });
 });
