@@ -9,16 +9,19 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildNamesPrompt,
+  parseNamesResponse,
+  generateNamesLocal,
   type NpcGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type NamesGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
 
 export {
   nameTable,
-  nameGeneratorConfig,
   type GeneratorOutput,
   pickFrom,
   getRandomItems,
@@ -30,6 +33,7 @@ export {
 export { npcConfig, npcThemeConfig } from "generator-engine";
 // Faction + vampire content data now live in the package (#1351).
 export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
+export { nameGeneratorConfig } from "generator-engine";
 export { settlementConfig } from "./generators/settlement";
 export { magicItemConfig } from "./generators/magic-item";
 export { questConfig, themeToQuestGenre } from "./generators/quest";
@@ -41,7 +45,6 @@ import { generateName as _generateName } from "./generators/base";
 import { generateSettlement } from "./generators/settlement";
 import { generateMagicItem } from "./generators/magic-item";
 import { generateQuestHook } from "./generators/quest";
-import { generateNames } from "./generators/names";
 import { generateSocialHub, generateTavern } from "./generators/social-hub";
 import { generateKingdom, generateNation } from "./generators/kingdom-nation";
 import { generatePantheon } from "./generators/pantheon";
@@ -172,10 +175,31 @@ export class DefaultGeneratorEngine {
     return generateQuestHook(this.clientManager, options);
   }
 
+  /** Name generation delegates to the generator-engine package (#1351). */
   async generateNames(
-    options: Parameters<typeof generateNames>[1] = {},
+    options: NamesGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateNames(this.clientManager, options);
+    const { useAI, ...nameOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } =
+          buildNamesPrompt(nameOptions);
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseNamesResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateNamesLocal(nameOptions));
   }
 
   async generateSocialHub(

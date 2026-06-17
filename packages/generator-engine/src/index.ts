@@ -50,6 +50,14 @@ export {
   type VampirePrompt,
 } from "./public-faction";
 export {
+  buildNamesPrompt,
+  parseNamesResponse,
+  generateNamesLocal,
+  nameGeneratorConfig,
+  type NamesGeneratorOptions,
+  type NamesPrompt,
+} from "./public-names";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
