@@ -33,30 +33,43 @@ test.describe("Generator Theme Hubs", () => {
     });
   }
 
-  test("fantasy hub has 9 cards", async ({ page }) => {
+  test("fantasy hub has 12 cards including tavern and surprise me", async ({
+    page,
+  }) => {
     await page.goto("/generators/fantasy");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(9);
+    expect(await cards.count()).toBe(12);
+    await expect(
+      page.getByRole("link", { name: "Tavern Generator" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Surprise Me" })).toBeVisible();
   });
 
-  test("non-fantasy hub has 6 cards", async ({ page }) => {
+  test("non-fantasy hub has 8 cards including social hub and surprise me", async ({
+    page,
+  }) => {
     await page.goto("/generators/cyberpunk");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(6);
+    expect(await cards.count()).toBe(8);
+    await expect(
+      page.getByRole("link", { name: "Social Hub Generator" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Surprise Me" })).toBeVisible();
   });
 
-  test("vampire hub has 7 cards including vampire clan generator", async ({
+  test("vampire hub has 9 cards including clan generator and surprise me", async ({
     page,
   }) => {
     await page.goto("/generators/vampire");
     const cards = page.locator("ul > li > a");
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBe(7);
+    expect(await cards.count()).toBe(9);
     await expect(
       page.getByRole("link", { name: "Vampire Clan Generator" }),
     ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Surprise Me" })).toBeVisible();
   });
 
   test("visiting a hub applies its theme immediately", async ({ page }) => {

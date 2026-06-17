@@ -28,7 +28,10 @@
     cards: GeneratorCard[];
   };
 
-  const coreCards: GeneratorCard[] = [
+  const sharedCards = (
+    settlementLabel: string,
+    settlementSummary: string,
+  ): GeneratorCard[] => [
     {
       slug: "npc",
       label: "NPC Generator",
@@ -59,12 +62,19 @@
     },
     {
       slug: "settlement",
-      label: "Settlement Generator",
-      summary:
-        "Draft towns, cities, and outposts with demographics, districts, power factions, and hooks.",
+      label: settlementLabel,
+      summary: settlementSummary,
       icon: "icon-[lucide--building-2]",
     },
   ];
+
+  const surpriseMeCard: GeneratorCard = {
+    slug: "random",
+    label: "Surprise Me",
+    summary:
+      "Not sure what to generate? Spin the machine — a random idea tuned to your active theme.",
+    icon: "icon-[lucide--dices]",
+  };
 
   const nationCard: GeneratorCard = {
     slug: "nation",
@@ -74,8 +84,21 @@
     icon: "icon-[lucide--globe]",
   };
 
-  // parametricCards = coreCards + nation (all non-fantasy hubs)
-  const parametricCards: GeneratorCard[] = [...coreCards, nationCard];
+  const tavernCard: GeneratorCard = {
+    slug: "tavern",
+    label: "Tavern Generator",
+    summary:
+      "Generate a fantasy tavern or inn with owner, patrons, rumours, and a hidden problem.",
+    icon: "icon-[lucide--beer]",
+  };
+
+  const socialHubCard: GeneratorCard = {
+    slug: "social-hub",
+    label: "Social Hub Generator",
+    summary:
+      "Generate a social venue for your genre — dive bars, cantinas, nightclubs, or underground markets.",
+    icon: "icon-[lucide--map-pin]",
+  };
 
   const vampireClanCard: GeneratorCard = {
     slug: "vampire-clan",
@@ -127,7 +150,16 @@
         "Fantasy RPG Generators — NPC, Faction, Kingdom & More | Codex Cryptica",
       metaDescription:
         "Free fantasy RPG generators for tabletop GMs. Create NPCs, factions, kingdoms, magic items, pantheons, quests, and names for your fantasy campaign. No login required.",
-      cards: [...coreCards, ...fantasyOnlyCards],
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Draft villages, towns, and cities with guilds, power factions, notable locations, and hooks.",
+        ),
+        tavernCard,
+        nationCard,
+        ...fantasyOnlyCards,
+        surpriseMeCard,
+      ],
     },
     cyberpunk: {
       label: "Cyberpunk",
@@ -139,7 +171,15 @@
         "Cyberpunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
         "Free cyberpunk RPG generators for tabletop GMs. Create fixers, megacorp factions, settlements, quest hooks, and names for your cyberpunk campaign. No login required.",
-      cards: parametricCards,
+      cards: [
+        ...sharedCards(
+          "District Generator",
+          "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
     },
     "sci-fi": {
       label: "Sci-Fi",
@@ -151,7 +191,15 @@
         "Sci-Fi RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
         "Free sci-fi RPG generators for tabletop GMs. Create alien NPCs, space factions, frontier settlements, quest hooks, and names for your sci-fi campaign. No login required.",
-      cards: parametricCards,
+      cards: [
+        ...sharedCards(
+          "Colony Generator",
+          "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
     },
     "post-apocalyptic": {
       label: "Post-Apocalyptic",
@@ -163,7 +211,15 @@
         "Post-Apocalyptic RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
         "Free post-apocalyptic RPG generators for tabletop GMs. Create survivor factions, wasteland settlements, scavenger NPCs, and quest hooks. No login required.",
-      cards: parametricCards,
+      cards: [
+        ...sharedCards(
+          "Enclave Generator",
+          "Build survivor settlements with scarcity, faction rivalries, desperate NPCs, and brutal hooks.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
     },
     modern: {
       label: "Modern",
@@ -175,7 +231,15 @@
         "Modern RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
       metaDescription:
         "Free modern RPG generators for tabletop GMs. Create conspiracy factions, urban settlements, modern NPCs, and investigation hooks. No login required.",
-      cards: parametricCards,
+      cards: [
+        ...sharedCards(
+          "Neighbourhood Generator",
+          "Generate urban areas with power dynamics, local factions, points of interest, and hidden conflicts.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
     },
     vampire: {
       label: "Vampire",
@@ -187,7 +251,16 @@
         "Vampire RPG Generators — NPC, Clan, Quest & More | Codex Cryptica",
       metaDescription:
         "Free vampire RPG generators for tabletop GMs. Create vampire clans, gothic factions, undead NPCs, and dark quest hooks for your horror campaign. No login required.",
-      cards: [vampireClanCard, ...parametricCards],
+      cards: [
+        vampireClanCard,
+        ...sharedCards(
+          "Domain Generator",
+          "Build vampire domains, gothic districts, and Elysiums with power brokers, hunting grounds, and dark secrets.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
     },
   };
 
