@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { base } from "$app/paths";
   import { safeJsonLd } from "$lib/utils/json-ld";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import type { ThemeSlug } from "./+page";
 
   const { data } = $props();
@@ -217,17 +218,8 @@
     }),
   );
 
-  function applyTheme(localStorageId: string) {
-    try {
-      localStorage.setItem("codex-cryptica-active-theme", localStorageId);
-      document.documentElement.dataset.worldTheme = localStorageId;
-    } catch {
-      // ignore — private browsing or quota exceeded
-    }
-  }
-
   onMount(() => {
-    applyTheme(config.localStorageId);
+    themeStore.setTheme(config.localStorageId);
   });
 </script>
 
@@ -282,7 +274,7 @@
         <li>
           <a
             href="{base}/generators/{card.slug}"
-            onclick={() => applyTheme(config.localStorageId)}
+            onclick={() => themeStore.setTheme(config.localStorageId)}
             class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
           >
             <span class="{card.icon} h-5 w-5 text-theme-primary mb-4 block"
