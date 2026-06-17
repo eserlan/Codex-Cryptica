@@ -17,6 +17,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
   import * as Comlink from "comlink";
+  import { upsertMarkdownSection } from "$lib/utils/markdown";
 
   let isGeneratingPersonality = $state(false);
   let personalityError = $state<string | null>(null);
@@ -26,26 +27,6 @@
     const lore = isEditing ? editLore || entity.lore || "" : entity.lore || "";
     return /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore);
   });
-
-  function upsertMarkdownSection(
-    content: string | undefined,
-    title: string,
-    sectionMarkdown: string,
-  ): string {
-    const body = (content || "").trimEnd();
-    const section = `## ${title}\n${sectionMarkdown.trim()}`;
-    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const sectionPattern = new RegExp(
-      `(^|\\n)##\\s+${escapedTitle}\\s*\\n[\\s\\S]*?(?=\\n##\\s+|$)`,
-      "i",
-    );
-
-    if (sectionPattern.test(body)) {
-      return body.replace(sectionPattern, `$1${section}`);
-    }
-
-    return body ? `${body}\n\n${section}` : section;
-  }
 
   async function generatePersonality(): Promise<boolean> {
     if (isGeneratingPersonality) return false;
