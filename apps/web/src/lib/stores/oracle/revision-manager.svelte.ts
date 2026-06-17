@@ -37,9 +37,6 @@ export class OracleRevisionManager {
         getConsolidatedContext: (related) =>
           related.content?.trim() ||
           s.contextRetrieval.getConsolidatedContext(related),
-        debug: import.meta.env.DEV
-          ? (sel) => console.log("[RevisionContext] selected related:", sel)
-          : undefined,
       }),
     );
     const snapCategories = $state.snapshot(s.categories.list).map((c: any) => ({
