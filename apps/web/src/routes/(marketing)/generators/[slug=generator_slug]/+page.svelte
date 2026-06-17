@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
-  import { page } from "$app/stores";
+  import { hubContext } from "$lib/stores/hub-context.svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -45,13 +45,14 @@
     vampire: "Vampire Hub",
   };
 
-  const hubParam = $derived($page.url.searchParams.get("hub") ?? "");
   const backHref = $derived(
-    hubParam && HUB_LABELS[hubParam]
-      ? `/generators/${hubParam}`
+    hubContext.theme && HUB_LABELS[hubContext.theme]
+      ? `/generators/${hubContext.theme}`
       : "/generators",
   );
-  const backLabel = $derived(HUB_LABELS[hubParam] ?? "All generators");
+  const backLabel = $derived(
+    (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
+  );
 
   type SlugMetaEntry = {
     pageTitle: string;
