@@ -60,6 +60,20 @@
     backLabel?: string;
   } = $props();
 
+  // Paths that only make sense in a fantasy context
+  const FANTASY_ONLY = new Set([
+    "/generators/dnd-npc",
+    "/generators/fantasy-names",
+    "/generators/magic-item",
+    "/generators/kingdom",
+    "/generators/pantheon-generator",
+    "/generators/god-generator",
+    "/generators/tavern",
+  ]);
+
+  // Paths specific to the horror/vampire theme
+  const HORROR_ONLY = new Set(["/generators/vampire-clan"]);
+
   const GENERATOR_GROUPS = [
     {
       label: "Characters & Names",
@@ -92,6 +106,21 @@
       ],
     },
   ];
+
+  const visibleGroups = $derived.by(() => {
+    const themeId = themeStore.worldThemeId;
+    const isFantasy = themeId === "fantasy" || themeId === "workspace";
+    const isHorror = themeId === "horror";
+    return GENERATOR_GROUPS.map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (isFantasy) return true;
+        if (FANTASY_ONLY.has(item.path)) return false;
+        if (HORROR_ONLY.has(item.path)) return isHorror;
+        return true;
+      }),
+    })).filter((group) => group.items.length > 0);
+  });
 
   let showGeneratorMenu = $state(false);
   let menuButtonEl = $state<HTMLButtonElement | null>(null);
@@ -1004,7 +1033,7 @@
               class="absolute left-0 top-full mt-1.5 z-50 w-64 rounded-xl border border-theme-border/60 bg-theme-surface shadow-xl backdrop-blur-sm overflow-hidden"
               role="menu"
             >
-              {#each GENERATOR_GROUPS as group (group.label)}
+              {#each visibleGroups as group (group.label)}
                 <div class="px-3 pt-3 pb-1">
                   <p
                     class="text-[9px] font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
