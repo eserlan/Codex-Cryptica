@@ -124,3 +124,7 @@
 ## 2026-06-03 - [Performance Insight: Early exit imperative loops over chained array methods for Autocomplete]
 **Learning:** In `$derived` blocks for autocomplete functionality (like in `EntityListSearch.svelte`), chaining `.filter(condition).slice(0, 10)` over an array of tokens processes the entire array and creates an intermediate allocated array every time the user types. This generates noticeable lag and GC pressure when searching through many tokens.
 **Action:** Replace full array `.filter().slice(0, limit)` calls with an early-exit imperative `for` loop that uses `.push()` and `if (results.length >= limit) break;`. This avoids full traversal and limits intermediate array size.
+
+## 2026-06-17 - [Optimize entity index building in $derived]
+**Learning:** In Svelte components using $derived blocks, chaining array methods like `Object.values(obj).flatMap(...)` causes significant O(N) overhead during reactive updates due to multiple intermediate array allocations.
+**Action:** Replace `Object.values().flatMap(...)` with imperative loops using pre-cached array indexes (like `titleAndAliasIndex` mapped on the store) inside `$derived.by(() => { ... })` to reduce garbage collection pressure.

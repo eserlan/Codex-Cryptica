@@ -264,13 +264,18 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
   });
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
-  // vault.entities is available to both host and guest sessions (FR-011).
-  const entityIndex = $derived<EntityIndexEntry[]>(
-    Object.values(vault.entities).flatMap((e) => [
-      { text: e.title.toLowerCase(), id: e.id },
-      ...(e.aliases || []).map((a) => ({ text: a.toLowerCase(), id: e.id })),
-    ]),
-  );
+  // vault.titleAndAliasIndex is available to both host and guest sessions (FR-011).
+  // ⚡ Bolt Optimization: Use pre-calculated vault index to avoid O(N) allocations in $derived
+  const entityIndex = $derived.by<EntityIndexEntry[]>(() => {
+    const arr = vault.titleAndAliasIndex;
+    const len = arr.length;
+    const result = new Array(len);
+    for (let i = 0; i < len; i++) {
+      const e = arr[i];
+      result[i] = { text: e.lowercaseText, id: e.entityId };
+    }
+    return result;
+  });
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const draft = $derived(
