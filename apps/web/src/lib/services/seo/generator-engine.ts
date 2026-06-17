@@ -9,9 +9,13 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildPantheonPrompt,
+  parsePantheonResponse,
+  generatePantheonLocal,
   type NpcGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type PantheonGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -35,7 +39,7 @@ export { magicItemConfig } from "./generators/magic-item";
 export { questConfig, themeToQuestGenre } from "./generators/quest";
 export { socialHubConfig } from "./generators/social-hub";
 export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
-export { pantheonConfig } from "./generators/pantheon";
+export { pantheonConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generators/base";
 import { generateSettlement } from "./generators/settlement";
@@ -44,7 +48,6 @@ import { generateQuestHook } from "./generators/quest";
 import { generateNames } from "./generators/names";
 import { generateSocialHub, generateTavern } from "./generators/social-hub";
 import { generateKingdom, generateNation } from "./generators/kingdom-nation";
-import { generatePantheon } from "./generators/pantheon";
 import type { GeneratorOutput } from "./generators/base";
 
 /**
@@ -202,10 +205,31 @@ export class DefaultGeneratorEngine {
     return generateNation(this.clientManager, options);
   }
 
+  /** Pantheon generation delegates to the generator-engine package (#1351). */
   async generatePantheon(
-    options: Parameters<typeof generatePantheon>[1] = {},
+    options: PantheonGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generatePantheon(this.clientManager, options);
+    const { useAI, ...pantheonOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } =
+          buildPantheonPrompt(pantheonOptions, getSessionContext());
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parsePantheonResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generatePantheonLocal(pantheonOptions));
   }
 }
 
