@@ -111,6 +111,20 @@ export async function GET() {
     priority: "0.8",
   }));
 
+  // Theme hub pages
+  const themeHubRoutes = [
+    "fantasy",
+    "cyberpunk",
+    "sci-fi",
+    "post-apocalyptic",
+    "modern",
+    "vampire",
+  ].map((theme) => ({
+    path: `/generators/${theme}`,
+    changefreq: "monthly",
+    priority: "0.8",
+  }));
+
   // Import pages
   const importRoutes = Object.keys(importsConfig).map((slug) => ({
     path: `/import/${slug}`,
@@ -124,6 +138,7 @@ export async function GET() {
     ...comparisonRoutes,
     ...featureRoutes,
     ...generatorRoutes,
+    ...themeHubRoutes,
     ...importRoutes,
   ];
 

@@ -139,6 +139,51 @@
     },
   ];
 
+  const themeHubs = [
+    {
+      href: "/generators/fantasy",
+      label: "Fantasy Hub",
+      summary:
+        "All fantasy generators in one place — NPCs, factions, kingdoms, magic items, pantheons, and more.",
+      icon: "icon-[lucide--wand-sparkles]",
+    },
+    {
+      href: "/generators/cyberpunk",
+      label: "Cyberpunk Hub",
+      summary:
+        "Megacorp fixers, neon-lit factions, street-level settlements, and chrome-edged quests.",
+      icon: "icon-[lucide--cpu]",
+    },
+    {
+      href: "/generators/sci-fi",
+      label: "Sci-Fi Hub",
+      summary:
+        "Space opera NPCs, alien factions, frontier settlements, and interstellar quest hooks.",
+      icon: "icon-[lucide--rocket]",
+    },
+    {
+      href: "/generators/post-apocalyptic",
+      label: "Post-Apocalyptic Hub",
+      summary:
+        "Survivor factions, wasteland settlements, scavenger NPCs, and brutal quest hooks.",
+      icon: "icon-[lucide--radiation]",
+    },
+    {
+      href: "/generators/modern",
+      label: "Modern Hub",
+      summary:
+        "Conspiracy factions, urban settlements, modern-era NPCs, and investigation hooks.",
+      icon: "icon-[lucide--building]",
+    },
+    {
+      href: "/generators/vampire",
+      label: "Vampire Hub",
+      summary:
+        "Vampire clans, gothic factions, undead NPCs, and dark quest hooks for horror campaigns.",
+      icon: "icon-[lucide--moon]",
+    },
+  ];
+
   const allItems = generators.flatMap((s) => s.items);
 
   const itemListJsonLd = safeJsonLd({
@@ -231,6 +276,36 @@
   </section>
 
   <div class="max-w-6xl mx-auto px-6 py-12 md:py-16 space-y-12">
+    <section aria-labelledby="theme-hubs-heading">
+      <h2
+        id="theme-hubs-heading"
+        class="font-header text-sm font-bold uppercase tracking-widest text-theme-text mb-4"
+      >
+        Browse by Theme
+      </h2>
+      <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {#each themeHubs as hub (hub.href)}
+          <li>
+            <a
+              href="{base}{hub.href}"
+              class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
+            >
+              <span class="{hub.icon} h-5 w-5 text-theme-primary mb-4 block"
+              ></span>
+              <span
+                class="block font-header text-sm font-bold uppercase tracking-wider mb-2 group-hover:text-theme-primary transition-colors"
+              >
+                {hub.label}
+              </span>
+              <span class="block text-sm text-theme-muted leading-relaxed">
+                {hub.summary}
+              </span>
+            </a>
+          </li>
+        {/each}
+      </ul>
+    </section>
+
     {#each generators as section (section.group)}
       <section aria-labelledby={`${section.group}-heading`}>
         <h2
