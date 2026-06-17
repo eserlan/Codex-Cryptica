@@ -17,6 +17,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
   import * as Comlink from "comlink";
+  import { upsertMarkdownSection } from "$lib/utils/markdown";
 
   let isGeneratingPersonality = $state(false);
   let personalityError = $state<string | null>(null);
@@ -26,26 +27,6 @@
     const lore = isEditing ? editLore || entity.lore || "" : entity.lore || "";
     return /(?:^|\n)##\s+Personality\s*&\s*Voice\s*\n/i.test(lore);
   });
-
-  function upsertMarkdownSection(
-    content: string | undefined,
-    title: string,
-    sectionMarkdown: string,
-  ): string {
-    const body = (content || "").trimEnd();
-    const section = `## ${title}\n${sectionMarkdown.trim()}`;
-    const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const sectionPattern = new RegExp(
-      `(^|\\n)##\\s+${escapedTitle}\\s*\\n[\\s\\S]*?(?=\\n##\\s+|$)`,
-      "i",
-    );
-
-    if (sectionPattern.test(body)) {
-      return body.replace(sectionPattern, `$1${section}`);
-    }
-
-    return body ? `${body}\n\n${section}` : section;
-  }
 
   async function generatePersonality(): Promise<boolean> {
     if (isGeneratingPersonality) return false;
@@ -265,14 +246,13 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
   // vault.titleAndAliasIndex is available to both host and guest sessions (FR-011).
-  // ⚡ Bolt Optimization: Use pre-calculated vault index to avoid O(N) allocations in $derived
+  // ⚡ Bolt Optimization: Use the pre-cached titleAndAliasIndex with an imperative loop
+  // to avoid intermediate array allocations from Object.values().flatMap()
   const entityIndex = $derived.by<EntityIndexEntry[]>(() => {
-    const arr = vault.titleAndAliasIndex;
-    const len = arr.length;
-    const result = new Array(len);
-    for (let i = 0; i < len; i++) {
-      const e = arr[i];
-      result[i] = { text: e.lowercaseText, id: e.entityId };
+    const index = vault.titleAndAliasIndex;
+    const result: EntityIndexEntry[] = [];
+    for (let i = 0; i < index.length; i++) {
+      result.push({ text: index[i].lowercaseText, id: index[i].entityId });
     }
     return result;
   });
@@ -291,7 +271,7 @@ Do not include a heading, preamble, summary, stat block, lore rewrite, secrets, 
       <div class="flex justify-end">
         <button
           type="button"
-          onclick={() => modalUIStore.openRelatedEntityDialog(entity.id)}
+          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
           class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
         >
           <span class="icon-[lucide--sparkles] w-4 h-4"></span>

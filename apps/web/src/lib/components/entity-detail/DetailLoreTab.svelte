@@ -22,14 +22,13 @@
   );
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
-  // ⚡ Bolt Optimization: Use pre-calculated vault index to avoid O(N) allocations in $derived
+  // ⚡ Bolt Optimization: Use the pre-cached titleAndAliasIndex with an imperative loop
+  // to avoid intermediate array allocations from Object.values().flatMap()
   const entityIndex = $derived.by<EntityIndexEntry[]>(() => {
-    const arr = vault.titleAndAliasIndex;
-    const len = arr.length;
-    const result = new Array(len);
-    for (let i = 0; i < len; i++) {
-      const e = arr[i];
-      result[i] = { text: e.lowercaseText, id: e.entityId };
+    const index = vault.titleAndAliasIndex;
+    const result: EntityIndexEntry[] = [];
+    for (let i = 0; i < index.length; i++) {
+      result.push({ text: index[i].lowercaseText, id: index[i].entityId });
     }
     return result;
   });

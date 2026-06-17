@@ -229,14 +229,13 @@
   );
 
   // Entity auto-link: build flat index of titles + aliases for mention detection.
-  // ⚡ Bolt Optimization: Use pre-calculated vault index to avoid O(N) allocations in $derived
+  // ⚡ Bolt Optimization: Use the pre-cached titleAndAliasIndex with an imperative loop
+  // to avoid intermediate array allocations from Object.values().flatMap()
   const entityIndex = $derived.by<EntityIndexEntry[]>(() => {
-    const arr = vault.titleAndAliasIndex;
-    const len = arr.length;
-    const result = new Array(len);
-    for (let i = 0; i < len; i++) {
-      const e = arr[i];
-      result[i] = { text: e.lowercaseText, id: e.entityId };
+    const index = vault.titleAndAliasIndex;
+    const result: EntityIndexEntry[] = [];
+    for (let i = 0; i < index.length; i++) {
+      result.push({ text: index[i].lowercaseText, id: index[i].entityId });
     }
     return result;
   });
@@ -253,7 +252,7 @@
       <div class="flex justify-end">
         <button
           type="button"
-          onclick={() => modalUIStore.openRelatedEntityDialog(entity.id)}
+          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
           class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
         >
           <span class="icon-[lucide--sparkles] w-4 h-4"></span>

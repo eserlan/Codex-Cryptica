@@ -13,11 +13,14 @@
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
+  import FeatureHint from "../help/FeatureHint.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+
+  const connectionHint = FEATURE_HINTS["oracle-connection-modes"];
 
   let showHint = $state(false);
   let activeTab = $state<"oracle" | "activity" | "chat">("oracle");
@@ -162,6 +165,9 @@
   <!-- Chat Content -->
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
     {#if activeTab === "oracle"}
+      <div class="px-3 pt-2 shrink-0">
+        <FeatureHint hintId="oracle-memory" />
+      </div>
       <OracleChat
         onOpenSettings={() => {
           modalUIStore.openSettings();
@@ -193,22 +199,21 @@
           <div
             class="w-8 h-8 rounded-full bg-theme-primary/20 flex items-center justify-center text-theme-primary shrink-0"
           >
-            <span
-              class={FEATURE_HINTS["oracle-connection-modes"].icon + " w-5 h-5"}
-            ></span>
+            <span class={connectionHint.icon + " w-5 h-5"}></span>
           </div>
           <div class="flex-1">
             <h4
               class="text-sm font-bold text-theme-text uppercase font-header tracking-wider mb-1"
             >
-              {FEATURE_HINTS["oracle-connection-modes"].title}
+              {connectionHint.title}
             </h4>
             <p class="text-xs text-theme-text/80 leading-relaxed">
-              {FEATURE_HINTS["oracle-connection-modes"].content}
+              {connectionHint.content}
             </p>
           </div>
         </div>
         <button
+          type="button"
           onclick={() => (showHint = false)}
           class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-primary/20 transition-colors"
         >

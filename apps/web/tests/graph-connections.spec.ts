@@ -1,35 +1,15 @@
 import { test, expect } from "@playwright/test";
+import { seedEntities, setupVaultPage } from "./test-helpers";
 
 test.describe("Graph Connection Labels & Colors", () => {
   test("should allow changing connection type and see color indication (indirectly via label)", async ({
     page,
   }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Create two entities using the correct UI flow
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Test Source");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Test Target");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for entities to be created
-    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
-      timeout: 10000,
-    });
+    await setupVaultPage(page);
+    await seedEntities(page, [
+      { type: "character", title: "Test Source" },
+      { type: "character", title: "Test Target" },
+    ]);
 
     // Connect entities via vault API
     await page.evaluate(async () => {
@@ -70,7 +50,10 @@ test.describe("Graph Connection Labels & Colors", () => {
       .fill("Nemesis");
 
     // Save
-    await page.getByRole("button", { name: "SAVE" }).click();
+    await page
+      .getByTestId("entity-detail-panel")
+      .getByRole("button", { name: "SAVE" })
+      .click();
 
     // Verify UI update
     await expect(page.getByText("Nemesis")).toBeVisible();

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
-import { diceEngine } from "../src/roller";
+import { describe, it, expect, beforeAll } from "vitest";
+import { diceEngine, DiceEngine } from "../src/roller";
 import { diceParser } from "../src/parser";
 
 describe("DiceEngine", () => {
   beforeAll(() => {
-    if (typeof global.crypto === "undefined") {
-      (global as any).crypto = {
+    if (typeof globalThis.crypto === "undefined") {
+      (globalThis as any).crypto = {
         getRandomValues: (arr: Uint32Array) => {
           for (let i = 0; i < arr.length; i++) {
             arr[i] = Math.floor(Math.random() * 0xffffffff);
@@ -40,55 +40,93 @@ describe("DiceEngine", () => {
   });
 
   it("should handle keep highest (kh)", () => {
-    const _callIdx = 0;
     const values = [9, 14]; // (9%20)+1=10, (14%20)+1=15
-    const spy = vi
-      .spyOn(crypto, "getRandomValues")
-      .mockImplementation((arr: any) => {
-        // The engine uses a buffer, so we need to fill the beginning of the buffer
-        // Note: the engine calls this when bufferIndex >= length.
-        // For testing, we can force a flush by calling a private method or just filling the whole thing
-        // but here we just mock the values the engine will consume.
+    const cryptoProvider = {
+      getRandomValues: (arr: Uint32Array) => {
         for (let i = 0; i < values.length; i++) {
           arr[i] = values[i];
         }
         return arr;
-      });
-
-    // We must reset the buffer to force a fetch
-    (diceEngine as any).bufferIndex = 256;
+      },
+    };
+    const engine = new DiceEngine(cryptoProvider);
 
     const cmd = diceParser.parse("2d20kh1");
-    const res = diceEngine.execute(cmd);
+    const res = engine.execute(cmd);
 
     expect(res.total).toBe(15);
     expect(res.parts[0].rolls).toEqual([15]);
     expect(res.parts[0].dropped).toEqual([10]);
-
-    spy.mockRestore();
   });
 
   it("should handle exploding dice (!)", () => {
-    const _callIdx = 0;
     const values = [5, 2]; // (5%6)+1=6 (Explode), (2%6)+1=3
-    const spy = vi
-      .spyOn(crypto, "getRandomValues")
-      .mockImplementation((arr: any) => {
+    const cryptoProvider = {
+      getRandomValues: (arr: Uint32Array) => {
         for (let i = 0; i < values.length; i++) {
           arr[i] = values[i];
         }
         return arr;
-      });
-
-    (diceEngine as any).bufferIndex = 256;
+      },
+    };
+    const engine = new DiceEngine(cryptoProvider);
 
     const cmd = diceParser.parse("1d6!");
-    const res = diceEngine.execute(cmd);
+    const res = engine.execute(cmd);
 
     expect(res.total).toBe(9); // 6 + 3
     expect(res.parts[0].rolls).toHaveLength(2);
+  });
 
-    spy.mockRestore();
+  it("should properly set timestamp using the injected clock", () => {
+    const fixedTime = 1620000000000;
+    const mockClock = { now: () => fixedTime };
+    // Use the default (lazy) crypto provider; only the clock is injected here.
+    const engine = new DiceEngine(undefined, mockClock);
+
+    const cmd = diceParser.parse("1d20");
+    const res = engine.execute(cmd);
+
+    expect(res.timestamp).toBe(fixedTime);
+  });
+
+  // `globalThis.crypto` is a read-only getter in this runtime, so override it
+  // via defineProperty (plain assignment throws) and restore afterwards.
+  const setCrypto = (value: unknown) =>
+    Object.defineProperty(globalThis, "crypto", { value, configurable: true });
+
+  it("should lazily resolve crypto to support late polyfills", () => {
+    const originalCrypto = globalThis.crypto;
+    try {
+      setCrypto(undefined);
+      const engine = new DiceEngine(); // constructed while crypto is absent
+
+      // Late polyfill, after construction.
+      setCrypto({
+        getRandomValues: (arr: Uint32Array) => {
+          for (let i = 0; i < arr.length; i++) arr[i] = 5;
+          return arr;
+        },
+      });
+
+      const res = engine.execute(diceParser.parse("1d20"));
+      expect(res.total).toBe(6); // (5%20)+1
+    } finally {
+      setCrypto(originalCrypto);
+    }
+  });
+
+  it("should throw error when crypto is unavailable during execution", () => {
+    const originalCrypto = globalThis.crypto;
+    try {
+      setCrypto(undefined);
+      const engine = new DiceEngine();
+      expect(() => engine.execute(diceParser.parse("1d20"))).toThrow(
+        "CryptoProvider (or globalThis.crypto) is not available",
+      );
+    } finally {
+      setCrypto(originalCrypto);
+    }
   });
 
   describe("Statistical Fairness (Rejection Sampling)", () => {

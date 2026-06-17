@@ -23,14 +23,13 @@ export interface FeatureHint {
 }
 
 /**
- * LocalStorage keys for feature hints.
- * Used to track which hints the user has already seen.
+ * LocalStorage keys for hints that persist their "seen" state directly via
+ * LocalStorage (as opposed to `helpStore`). Add a key here only when wiring
+ * another such hint.
  */
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
-  FRONT_PAGE: "front-page-hint-seen",
-  VTT_MODE: "vtt-mode-hint-seen",
-  ENTITY_HIERARCHY: "entity-hierarchy-hint-seen",
+  IN_APP_GENERATORS: "in-app-generators-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -138,6 +137,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.",
     icon: "icon-[lucide--cloud]",
+  },
+  "oracle-memory": {
+    id: "oracle-memory",
+    title: "Oracle Memory",
+    content:
+      "The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.",
+    icon: "icon-[lucide--brain]",
   },
   "visual-graph": {
     id: "visual-graph",
@@ -404,6 +410,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.",
     icon: "icon-[lucide--messages-square]",
+  },
+  "in-app-generators": {
+    id: "in-app-generators",
+    title: "Campaign Generators",
+    content:
+      "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
+    icon: "icon-[lucide--wand-2]",
   },
 };
 

@@ -104,6 +104,11 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
       ]);
     });
 
+    // Abort Gemini API calls so background AI generation can't overwrite Smart Apply results.
+    await page.route(/.*\/v1beta\/models\/.*:generateContent.*/, (route) =>
+      route.abort(),
+    );
+
     // 3. Select a dummy node to enable 'Apply'
     await page.evaluate(async () => {
       const vault = (window as any).vault;

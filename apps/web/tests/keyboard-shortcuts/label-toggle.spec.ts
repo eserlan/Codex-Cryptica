@@ -9,11 +9,16 @@ test.describe("Label Toggle", () => {
   test("toggles node labels via shortcut", async ({ page }) => {
     // Create a node first so we can check label style
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Test Node");
+    await page.getByPlaceholder(/Title.../i).fill("Test Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
+    // Wait for indexing
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+    );
+
     // Blur any focused input to ensure shortcut handler runs
-    await page.locator("#graph-canvas, canvas").first().click();
+    await page.getByTestId("graph-canvas").click();
 
     // 1. Initial State: Labels should be shown by default
     const isShownInitially = await page.evaluate(

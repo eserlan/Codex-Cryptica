@@ -25,14 +25,20 @@ test.describe("Changelog Page", () => {
   test("should navigate to changelog via landing page link", async ({
     page,
   }) => {
+    await page.addInitScript(() => {
+      localStorage.removeItem("codex_skip_landing");
+    });
+
     await page.goto("/");
 
-    // Verify we are on the landing page (marketing layer)
-    const landingHeading = page.getByText(/Build Your World./);
+    // Verify we are on the welcome landing page.
+    const landingHeading = page.getByRole("heading", {
+      name: "Private RPG Lore Vault",
+    });
     await expect(landingHeading).toBeVisible();
 
     const changelogLink = page.getByRole("link", {
-      name: "View Full Changelog",
+      name: "Changelog",
     });
     await expect(changelogLink).toBeVisible();
 
@@ -46,14 +52,16 @@ test.describe("Changelog Page", () => {
   });
 
   test("should support anchor links for versions", async ({ page }) => {
-    await page.goto("/changelog#v0.17.0");
+    await page.goto("/changelog#v0.26.0");
 
     // Check if the specific release is in view or at least exists
 
-    const v0170 = page.locator("#v0\\.17\\.0");
-    await expect(v0170).toBeAttached();
+    const v0260 = page.locator("#v0\\.26\\.0");
+    await expect(v0260).toBeAttached();
 
-    const releaseTitle = page.getByText("The Playable Tabletop Update");
+    const releaseTitle = page.getByText(
+      "The Multi-Sensory & Interactive Chronology Update",
+    );
     await expect(releaseTitle).toBeVisible();
   });
 });
