@@ -49,6 +49,10 @@ export class OracleSettingsManager {
     await this.service.updateSettings({ apiKey: key });
   }
 
+  async setTier(tier: "lite" | "advanced") {
+    await this.service.setTier(tier);
+  }
+
   async clearKey() {
     await this.service.clearKey();
   }

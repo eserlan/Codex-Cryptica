@@ -1,7 +1,33 @@
 import { test, expect } from "@playwright/test";
 
+async function waitForSearchIndexing(page: any, names: string[]) {
+  for (const name of names) {
+    await page.waitForFunction(
+      async (n: string) => {
+        const s = (window as any).searchStore;
+        if (!s?.setQuery) return false;
+        try {
+          await s.setQuery(n);
+          return Array.isArray(s.results) && s.results.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      name,
+      { timeout: 15000 },
+    );
+  }
+}
+
 test.describe("Oracle Merge Command E2E", () => {
   test.beforeEach(async ({ page }) => {
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        console.error("PAGE ERROR:", msg.text());
+      } else {
+        console.log("PAGE LOG:", msg.text());
+      }
+    });
     // Set desktop viewport to avoid mobile UI hiding elements
     await page.setViewportSize({ width: 1280, height: 800 });
 
@@ -14,6 +40,9 @@ test.describe("Oracle Merge Command E2E", () => {
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       try {
         localStorage.setItem("oracle-hint-seen", "true");
+        localStorage.setItem("front-page-hint-seen", "true");
+        localStorage.setItem("vtt-mode-hint-seen", "true");
+        localStorage.setItem("entity-hierarchy-hint-seen", "true");
       } catch {
         /* ignore */
       }
@@ -24,6 +53,7 @@ test.describe("Oracle Merge Command E2E", () => {
     // Wait for vault and oracle initialization
     await page.waitForFunction(
       () =>
+        (window as any).vault?.isInitialized === true &&
         (window as any).vault?.status === "idle" &&
         (window as any).oracle !== undefined,
       { timeout: 15000 },
@@ -39,14 +69,6 @@ test.describe("Oracle Merge Command E2E", () => {
 
       const oracle = (window as any).oracle;
       await oracle.setKey("fake-key");
-
-      const vault = (window as any).vault;
-      // Ensure deleteEntity actually removes from in-memory state for the test
-      vault.deleteEntity = async (id: string) => {
-        delete vault.repository.entities[id];
-        vault.repository.entities = { ...vault.repository.entities };
-        return Promise.resolve();
-      };
     });
 
     // Final wait for UI to stabilize
@@ -64,9 +86,13 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 NOTES", {
-      timeout: 20000,
-    });
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /2\s+(CHRONICLES|NOTES)/i,
+      {
+        timeout: 20000,
+      },
+    );
+    await waitForSearchIndexing(page, ["Old Hero", "Legendary Hero"]);
 
     // 2. Open Oracle and start merge
     await page.getByTestId("activity-bar-oracle").click();
@@ -82,7 +108,9 @@ test.describe("Oracle Merge Command E2E", () => {
 
     // 3. Select Source (Old Hero)
     await chatInput.type("Old");
-    await expect(page.locator('button:has-text("Old Hero")')).toBeVisible();
+    const sourceBtn = page.locator('div.w-64 button:has-text("Old Hero")');
+    await expect(sourceBtn).toBeVisible();
+    await expect(sourceBtn).toHaveClass(/bg-theme-primary/);
     await page.keyboard.press("Tab");
     await expect(chatInput).toHaveValue('/merge "Old Hero" ');
 
@@ -94,9 +122,11 @@ test.describe("Oracle Merge Command E2E", () => {
     // 5. Select Target (Legendary Hero)
     await expect(page.getByText("TARGET", { exact: true })).toBeVisible();
     await chatInput.type("Leg");
-    await expect(
-      page.locator('button:has-text("Legendary Hero")'),
-    ).toBeVisible();
+    const targetBtn = page.locator(
+      'div.w-64 button:has-text("Legendary Hero")',
+    );
+    await expect(targetBtn).toBeVisible();
+    await expect(targetBtn).toHaveClass(/bg-theme-primary/);
     await page.keyboard.press("Tab");
     await expect(chatInput).toHaveValue(
       /\/merge "Old Hero" into "Legendary Hero"\s*/,
@@ -109,9 +139,13 @@ test.describe("Oracle Merge Command E2E", () => {
     await expect(
       page.locator("text=Merged Old Hero into Legendary Hero"),
     ).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 NOTE", {
-      timeout: 10000,
-    });
+
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+      {
+        timeout: 10000,
+      },
+    );
 
     const entities = await page.evaluate(() =>
       Object.keys((window as any).vault.repository.entities),
@@ -134,6 +168,8 @@ test.describe("Oracle Merge Command E2E", () => {
       });
     });
 
+    await waitForSearchIndexing(page, ["Source Node", "Target Node"]);
+
     // 2. Trigger wizard
     await page.getByTestId("activity-bar-oracle").click();
     const chatInput = page.getByTestId("oracle-input");
@@ -145,12 +181,16 @@ test.describe("Oracle Merge Command E2E", () => {
 
     // 4. Select Source
     await page.getByPlaceholder(/Type source .* name/i).type("Source");
-    await page.locator('button:has-text("Source Node")').click({ force: true });
+    await page
+      .locator('[role="listbox"] [role="option"]:has-text("Source Node")')
+      .click();
     await page.click('button:has-text("Next")');
 
     // 5. Select Target
     await page.getByPlaceholder(/Type target .* name/i).type("Target");
-    await page.locator('button:has-text("Target Node")').click({ force: true });
+    await page
+      .locator('[role="listbox"] [role="option"]:has-text("Target Node")')
+      .click();
     await page.click('button:has-text("Next")');
 
     // 6. Review and Confirm
@@ -163,12 +203,19 @@ test.describe("Oracle Merge Command E2E", () => {
 
     // 7. Success - The wizard converts itself to a normal message, so we look for the transcript text
     const SLOW_TIMEOUT = 10000;
-    await expect(
-      page.getByText(/Merged Source Node into Target Node/),
-    ).toBeVisible({ timeout: SLOW_TIMEOUT });
-    await expect(page.getByTestId("entity-count")).toHaveText("1 NOTE", {
+    await expect(page.getByText(/Prepared a merge draft for/)).toBeVisible({
       timeout: SLOW_TIMEOUT,
     });
+
+    // Apply the changes to finalize the merge
+    await page.getByRole("button", { name: "Apply Changes" }).click();
+
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+      {
+        timeout: SLOW_TIMEOUT,
+      },
+    );
   });
 
   test("should merge two entities using direct quoted command", async ({
@@ -180,9 +227,13 @@ test.describe("Oracle Merge Command E2E", () => {
       await v.createEntity("note", "Minion", { id: "minion" });
       await v.createEntity("note", "Boss", { id: "boss" });
     });
-    await expect(page.getByTestId("entity-count")).toHaveText("2 NOTES", {
-      timeout: 10000,
-    });
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /2\s+(CHRONICLES|NOTES)/i,
+      {
+        timeout: 10000,
+      },
+    );
+    await waitForSearchIndexing(page, ["Minion", "Boss"]);
 
     // 2. Direct command
     await page.getByTestId("activity-bar-oracle").click();
@@ -191,10 +242,13 @@ test.describe("Oracle Merge Command E2E", () => {
     await page.keyboard.press("Enter");
 
     // 3. Verify success message
-    await expect(page.locator("text=Merged Minion into Boss")).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 NOTE", {
-      timeout: 10000,
-    });
+    await expect(page.getByText(/Merged.*Minion.*into.*Boss/i)).toBeVisible();
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+      {
+        timeout: 10000,
+      },
+    );
   });
 
   test("should undo a merge and restore source, target, and connections", async ({
@@ -206,9 +260,13 @@ test.describe("Oracle Merge Command E2E", () => {
       await v.createEntity("note", "Minion", { id: "minion" });
       await v.createEntity("note", "Boss", { id: "boss" });
     });
-    await expect(page.getByTestId("entity-count")).toHaveText("2 NOTES", {
-      timeout: 10000,
-    });
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /2\s+(CHRONICLES|NOTES)/i,
+      {
+        timeout: 10000,
+      },
+    );
+    await waitForSearchIndexing(page, ["Minion", "Boss"]);
 
     // Capture pre-merge state from the in-memory vault
     const preMergeState = await page.evaluate(() => {
@@ -233,10 +291,13 @@ test.describe("Oracle Merge Command E2E", () => {
     await chatInput.fill('/merge "Minion" into "Boss"');
     await page.keyboard.press("Enter");
 
-    await expect(page.locator("text=Merged Minion into Boss")).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 NOTE", {
-      timeout: 10000,
-    });
+    await expect(page.getByText(/Merged.*Minion.*into.*Boss/i)).toBeVisible();
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+      {
+        timeout: 10000,
+      },
+    );
 
     // Sanity check: source entity should be gone after merge
     const postMergeState = await page.evaluate(() => {
@@ -256,9 +317,12 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // Wait for UI to reflect undo (entity count back to 2)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 NOTES", {
-      timeout: 10000,
-    });
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /2\s+(CHRONICLES|NOTES)/i,
+      {
+        timeout: 10000,
+      },
+    );
 
     // 4. Verify that undo recreated the source entity with the same ID,
     // restored the target entity to its pre-merge state, and restored connections.

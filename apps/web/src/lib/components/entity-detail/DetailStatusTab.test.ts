@@ -48,7 +48,7 @@ vi.mock("$lib/stores/theme.svelte", () => ({
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
-    openRelatedEntityDialog: vi.fn(),
+    openGeneratorWorkflowForEntity: vi.fn(),
   },
 }));
 
@@ -326,7 +326,7 @@ describe("DetailStatusTab", () => {
     expect(generateBtn).toBeDefined();
 
     await fireEvent.click(generateBtn);
-    expect(modalUIStore.openRelatedEntityDialog).toHaveBeenCalledWith(
+    expect(modalUIStore.openGeneratorWorkflowForEntity).toHaveBeenCalledWith(
       "entity-1",
     );
   });
@@ -345,7 +345,7 @@ describe("DetailStatusTab", () => {
     });
 
     expect(screen.queryByText("Generate Related")).toBeNull();
-    expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 
   const mockCharacterEntity = {

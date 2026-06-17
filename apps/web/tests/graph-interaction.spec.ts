@@ -1,19 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Graph Keyboard Interactions", () => {
   test("should toggle connect mode with 'C' key", async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
+    await setupVaultPage(page);
 
     // Press 'C' to enter connect mode
     await page.keyboard.press("c");
@@ -36,15 +26,7 @@ test.describe("Graph Keyboard Interactions", () => {
   });
 
   test("should exit connect mode with 'Escape' key", async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible();
+    await setupVaultPage(page);
 
     await page.keyboard.press("c");
     await expect(page.getByText("Select Source Entity")).toBeVisible();

@@ -55,6 +55,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
+      "generator-engine": resolve(
+        __dirname,
+        "../../packages/generator-engine/src",
+      ),
     },
     dedupe: ["svelte"],
   },
@@ -180,6 +184,7 @@ export default defineConfig({
       "schema",
       "chronology-engine",
       "dice-engine",
+      "generator-engine",
       "@codex/sync-engine",
       "@codex/oracle-engine",
       "@codex/proposer",
@@ -209,6 +214,7 @@ export default defineConfig({
       "editor-core",
       "schema",
       "chronology-engine",
+      "generator-engine",
       "@codex/canvas-engine",
     ],
     include: ["@xyflow/svelte"],

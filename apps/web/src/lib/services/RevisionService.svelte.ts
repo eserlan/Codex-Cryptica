@@ -6,11 +6,17 @@ import {
 } from "$lib/services/node-merge.service.svelte";
 import { type RevisionDraft } from "@codex/oracle-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { generatorSessionManager } from "$lib/services/generators/generator-session-manager";
+import type { LocalEntity } from "$lib/stores/vault/types";
 
 export type RevisionRequest = {
   entityId: string;
   instructions?: string;
 };
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
 
 export class RevisionService {
   pendingDraft = $state<RevisionDraft | null>(null);
@@ -50,8 +56,8 @@ export class RevisionService {
 
       this.pendingDraft = this.buildRevisionDraft(request.entityId, revised);
       return true;
-    } catch (err: any) {
-      this.error = err.message;
+    } catch (err: unknown) {
+      this.error = errorMessage(err);
       console.error("[RevisionService] Failed to revise:", err);
       return false;
     } finally {
@@ -77,7 +83,7 @@ export class RevisionService {
     entityId: string,
     revised: { content?: string; lore?: string },
   ): RevisionDraft {
-    const entity = vault.entities[entityId] as any;
+    const entity = vault.entities[entityId] as LocalEntity | undefined;
     return {
       entityId,
       source: "revise",
@@ -92,7 +98,9 @@ export class RevisionService {
     sourceIds: string[],
     messageId?: string,
   ) {
-    const entity = vault.entities[finalContent.targetId] as any;
+    const entity = vault.entities[finalContent.targetId] as
+      | LocalEntity
+      | undefined;
     this.pendingDraft = {
       entityId: finalContent.targetId,
       messageId,
@@ -113,6 +121,7 @@ export class RevisionService {
 
     try {
       const draftSource = this.pendingDraft.source;
+      const acceptedDraft = this.pendingDraft;
       if (this.pendingDraft.merge) {
         const finalContent = this.pendingDraft.merge
           .finalContent as IMergedContentProposal;
@@ -133,20 +142,51 @@ export class RevisionService {
           lore: this.pendingDraft.lore,
         });
       }
-      this.discardDraft();
+      if (acceptedDraft.generatorSessionCommit) {
+        const entity = vault.entities[acceptedDraft.entityId] as
+          | LocalEntity
+          | undefined;
+        generatorSessionManager.commitAcceptedEntity({
+          id: acceptedDraft.entityId,
+          title: entity?.title ?? acceptedDraft.entityId,
+          type: entity?.type ?? "note",
+          content: acceptedDraft.chronicle,
+          lore: acceptedDraft.lore,
+          labels: entity?.labels ?? [],
+        });
+      }
+      if (this.pendingDraft) {
+        this.pendingDraft.deleteOnDiscard = false;
+        this.pendingDraft.generatorSessionCommit = false;
+      }
+      await this.discardDraft();
       notificationStore.notify(
         draftSource === "merge"
           ? "Merge saved successfully."
           : "AI content saved successfully.",
         "success",
       );
-    } catch (err: any) {
-      notificationStore.notify(`Failed to save draft: ${err.message}`, "error");
+    } catch (err: unknown) {
+      notificationStore.notify(
+        `Failed to save draft: ${errorMessage(err)}`,
+        "error",
+      );
     }
   }
 
-  discardDraft() {
+  async discardDraft() {
+    const draft = this.pendingDraft;
     this.pendingDraft = null;
+    if (draft?.generatorSessionCommit) {
+      generatorSessionManager.reset();
+    }
+    if (draft?.deleteOnDiscard) {
+      try {
+        await vault.deleteEntity(draft.entityId);
+      } catch {
+        // Entity may already be gone; silently ignore.
+      }
+    }
   }
 }
 

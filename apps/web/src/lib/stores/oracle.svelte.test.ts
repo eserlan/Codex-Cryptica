@@ -456,10 +456,11 @@ describe("OracleStore", () => {
         },
         [
           {
+            id: "ally",
             title: "Szass Tam",
             type: "npc",
             relation: "rules",
-            summary: "mock context",
+            summary: "Lich-regent",
           },
         ],
         expect.any(Array),
@@ -467,6 +468,7 @@ describe("OracleStore", () => {
           source: "discovery",
           instructions: undefined,
           priority: "incoming-first",
+          interactionsEnabled: true,
         }),
       );
     });

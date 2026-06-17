@@ -50,6 +50,58 @@ describe("DefaultAIClientManager", () => {
     });
   });
 
+  describe("sendInteraction", () => {
+    it("forwards generation config to the proxy interaction path", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: "interaction-1",
+          text: "response",
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      await manager.sendInteraction({
+        model: "gemini-3.1-flash-lite",
+        input: "Prompt",
+        systemInstruction: "System",
+        previousInteractionId: "previous-1",
+        generationConfig: { responseMimeType: "application/json" },
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+
+      expect(body).toEqual(
+        expect.objectContaining({
+          model: "gemini-3.1-flash-lite",
+          input: "Prompt",
+          system_instruction: "System",
+          previous_interaction_id: "previous-1",
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      );
+    });
+
+    it("uses an injected fetcher instead of the global fetch", async () => {
+      const injected = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ id: "i1", text: "ok" }),
+      });
+      const isolated = new DefaultAIClientManager(injected as any);
+
+      const result = await isolated.sendInteraction({
+        model: "m",
+        input: "hi",
+      });
+
+      expect(injected).toHaveBeenCalledOnce();
+      expect(fetch).not.toHaveBeenCalled();
+      expect(result).toEqual({ id: "i1", text: "ok" });
+    });
+  });
+
   describe("createProxyModel", () => {
     it("should forward requests to proxy URL", async () => {
       const mockResponse = {

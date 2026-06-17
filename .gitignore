@@ -76,4 +76,11 @@ blogPics/
 .netlify/
 .cache/
 .eslintcache
-.claude/
+.claude/*
+!.claude/skills/
+
+# Playwright Smart E2E Cache
+apps/web/.e2e-success.json
+
+# Local debugging scratch
+scratch/

@@ -29,7 +29,8 @@
         class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={() => mapStore.goBack()}
       >
-        <span class="icon-[lucide--arrow-left] w-3 h-3"></span>
+        <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
+        ></span>
         BACK
       </button>
     {/if}
@@ -68,14 +69,17 @@
           onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
           title="Set as World Map"
         >
-          <span class="icon-[lucide--star] w-3 h-3"></span>
+          <span class="icon-[lucide--star] w-3 h-3" aria-hidden="true"></span>
           SET WORLD
         </button>
       {:else if mapStore.activeMap?.isWorldMap}
         <div
           class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold rounded-lg flex items-center gap-2"
         >
-          <span class="icon-[lucide--star] w-3 h-3 fill-theme-primary"></span>
+          <span
+            class="icon-[lucide--star] w-3 h-3 fill-theme-primary"
+            aria-hidden="true"
+          ></span>
           WORLD MAP
         </div>
       {/if}
@@ -96,7 +100,7 @@
         }}
         title="Delete Map"
       >
-        <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+        <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
         DELETE
       </button>
 

@@ -3,6 +3,7 @@ import {
   type DiscoveryProposal,
 } from "@codex/oracle-engine";
 import type { Entity } from "schema";
+import { interactionSessions } from "../../services/ai/interaction-session";
 import type {
   EntityRevisionRequest,
   EntityRevisionResult,
@@ -32,8 +33,10 @@ export class OracleRevisionManager {
       buildRelatedEntityContext({
         entity: existing,
         incoming,
+        instructions: options.instructions,
         vault: s.vault,
         getConsolidatedContext: (related) =>
+          related.content?.trim() ||
           s.contextRetrieval.getConsolidatedContext(related),
       }),
     );
@@ -53,7 +56,8 @@ export class OracleRevisionManager {
         source: options.source,
         instructions: options.instructions,
         priority: options.priority,
-        themeId: $state.snapshot(this.store.themeStore)?.activeTheme?.id,
+        themeId: this.store.themeStore?.activeTheme?.id,
+        interactionsEnabled: interactionSessions.enabled,
       },
     );
   }

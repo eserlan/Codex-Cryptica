@@ -117,10 +117,23 @@
 
 **Learning:** In Svelte 5 `$derived` blocks, writing concise declarative code like `[...arrays].filter(condition).length` multiple times inside a single block can lead to significant unnecessary intermediate array allocations, memory pressure, and garbage collection overhead—especially visible when dealing with larger datasets like vault entity lists.
 **Action:** When calculating multiple aggregate stats over a single array in a reactive context, favor a single-pass imperative `for...of` loop inside a `$derived.by()` block. This avoids intermediate allocations while correctly preserving reactivity and drastically reducing execution time for large arrays.
+
 ## 2025-02-12 - Imperative counting in reactive derived stores
+
 **Learning:** In Svelte `$derived` blocks, avoiding `.filter(...).length` and `.reduce(...)` allocations against large store properties (like `vault.allEntities`) prevents closure instantiations on every reactive loop execution. Using an imperative `for...of` loop tracking an inner counter is the most garbage-collection friendly method for these common counting operations.
 **Action:** Always replace `.reduce` loops inside derived counters that query `allEntities` with imperative loops to lower CPU bounds on hot rendering paths.
 
 ## 2026-06-03 - [Performance Insight: Early exit imperative loops over chained array methods for Autocomplete]
+
 **Learning:** In `$derived` blocks for autocomplete functionality (like in `EntityListSearch.svelte`), chaining `.filter(condition).slice(0, 10)` over an array of tokens processes the entire array and creates an intermediate allocated array every time the user types. This generates noticeable lag and GC pressure when searching through many tokens.
 **Action:** Replace full array `.filter().slice(0, limit)` calls with an early-exit imperative `for` loop that uses `.push()` and `if (results.length >= limit) break;`. This avoids full traversal and limits intermediate array size.
+
+## 2026-06-16 - [Performance Insight: Reuse store indexes instead of full mapping in components]
+
+**Learning:** Svelte components often recalculate full search indexes via `$derived` blocks, mapping over `Object.values(vault.entities)`. When `flatMap()` and `map()` are used inside these derived computations, they trigger multiple intermediate array allocations. Since the vault store already maintains a pre-calculated index incrementally (`titleAndAliasIndex`), redefining it inside component scope wastes significant GC cycles on large vaults.
+**Action:** Always favor retrieving pre-calculated, flat structures directly from the store (`vault.titleAndAliasIndex`) rather than running `Object.values(store.data).flatMap()` inside UI component `$derived` blocks. If shape mapping is strictly required, use an imperative loop to populate the final array structure.
+
+## 2026-06-17 - [Optimize entity index building in $derived]
+
+**Learning:** In Svelte components using $derived blocks, chaining array methods like `Object.values(obj).flatMap(...)` causes significant O(N) overhead during reactive updates due to multiple intermediate array allocations.
+**Action:** Replace `Object.values().flatMap(...)` with imperative loops using pre-cached array indexes (like `titleAndAliasIndex` mapped on the store) inside `$derived.by(() => { ... })` to reduce garbage collection pressure.

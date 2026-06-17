@@ -6,6 +6,17 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Oracle Status", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem(
+        "codex-cryptica-help-state",
+        JSON.stringify({ completedTours: ["initial-onboarding"] }),
+      );
+      localStorage.setItem("oracle-hint-seen", "true");
+      localStorage.setItem("front-page-hint-seen", "true");
+      localStorage.setItem("vtt-mode-hint-seen", "true");
+      localStorage.setItem("entity-hierarchy-hint-seen", "true");
+    });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
   });
@@ -50,13 +61,9 @@ test.describe("Oracle Status", () => {
   test("should switch modes in real-time when API key is added/removed", async ({
     page,
   }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-
     const oracleToggle = page.getByTestId("activity-bar-oracle");
-    if (await oracleToggle.isVisible()) {
-      await oracleToggle.click();
-    }
+    await expect(oracleToggle).toBeVisible();
+    await oracleToggle.click();
 
     const statusIndicator = page.locator(".oracle-status");
     const statusText = statusIndicator.locator(".status-text");
@@ -66,26 +73,12 @@ test.describe("Oracle Status", () => {
       await (window as any).oracle.setKey("new-test-key");
     });
 
-    await page.reload();
-    await page.waitForLoadState("networkidle");
-
-    if (await oracleToggle.isVisible()) {
-      await oracleToggle.click();
-    }
-
     await expect(statusText).toContainText("Direct Connection");
     await expect(statusText).toContainText("Custom Key");
 
     await page.evaluate(async () => {
       await (window as any).oracle.clearKey();
     });
-
-    await page.reload();
-    await page.waitForLoadState("networkidle");
-
-    if (await oracleToggle.isVisible()) {
-      await oracleToggle.click();
-    }
 
     await expect(statusText).toContainText("System Proxy");
   });

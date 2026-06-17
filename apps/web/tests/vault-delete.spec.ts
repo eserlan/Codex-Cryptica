@@ -1,23 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { setupVaultPage } from "./test-helpers";
 
 test.describe("Vault Node Deletion", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-      try {
-        (window as any).localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
-    });
-    await page.goto("/");
-    await page.waitForFunction(
-      () =>
-        (window as any).vault?.status === "idle" && !!(window as any).uiStore,
-    );
+    await setupVaultPage(page);
   });
 
   test("should delete a node and its file", async ({ page }) => {

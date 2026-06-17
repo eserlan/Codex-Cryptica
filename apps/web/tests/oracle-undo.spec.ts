@@ -200,6 +200,10 @@ test.describe("Oracle Undo", () => {
 
     // 5. Verify node removed (undo restores state; UNDO button disappears)
     await expect(undoBtn).not.toBeVisible({ timeout: 5000 });
+    await page.waitForFunction(
+      () => !(window as any).vault.entities["new-character"],
+      { timeout: 5000 },
+    );
     const nodeExistsAfterUndo = await page.evaluate(
       () => !!(window as any).vault.entities["new-character"],
     );

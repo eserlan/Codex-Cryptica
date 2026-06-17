@@ -1,70 +1,30 @@
 import { test, expect } from "@playwright/test";
+import {
+  seedEntities,
+  setupVaultPage,
+  selectGraphNodesByTitle,
+  openGraphContextMenuForTitle,
+} from "./test-helpers";
 
 test.describe("Graph Deletion and UI Safety", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Wait for vault initialization
-    await page.evaluate(async () => {
-      const waitForVault = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            if (vault && vault.status === "idle") {
-              resolve(true);
-            } else {
-              setTimeout(check, 100);
-            }
-          };
-          check();
-        });
-      await waitForVault();
-    });
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
+    await setupVaultPage(page);
   });
 
   test("should delete multiple nodes from graph context menu", async ({
     page,
   }) => {
     // 1. Create two entities
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node A");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Node B");
-    await page.getByRole("button", { name: "ADD" }).click();
+    await seedEntities(page, [
+      { type: "character", title: "Node A" },
+      { type: "character", title: "Node B" },
+    ]);
 
     // Select both nodes
-    await page.evaluate(async () => {
-      const cy = (window as any).cy;
-      cy.nodes().select();
-    });
+    await selectGraphNodesByTitle(page, ["Node A", "Node B"]);
 
     // Right click to open context menu
-    await page.evaluate(() => {
-      const cy = (window as any).cy;
-      const node = cy.nodes()[0];
-      const pos = node.renderedPosition();
-      node.trigger("cxttap", { renderedPosition: pos });
-    });
+    await openGraphContextMenuForTitle(page, "Node A");
 
     const deleteMenuItem = page.getByRole("menuitem", {
       name: /Delete 2 Nodes/,

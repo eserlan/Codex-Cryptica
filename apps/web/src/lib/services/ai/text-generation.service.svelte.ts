@@ -1,4 +1,14 @@
-import { aiClientManager as defaultAiClientManager } from "./client-manager";
+import {
+  aiClientManager as defaultAiClientManager,
+  InteractionExpiredError,
+} from "./client-manager";
+import { interactionSessions } from "./interaction-session";
+import {
+  buildInteractionInput,
+  buildRevisionInteractionInput,
+  relatedToLoreEntries,
+  type LoreEntry,
+} from "@codex/oracle-engine";
 import { classifyApiError } from "./api-error-classifier";
 import { u } from "./prompts/user-content";
 import {
@@ -16,7 +26,11 @@ import {
   buildPlotGenerationPrompt,
 } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
-import { buildEntityRevisionPrompt } from "./prompts/entity-revision";
+import {
+  buildEntityRevisionSystemInstruction,
+  buildEntityRevisionPromptCore,
+  buildEntityRevisionUserPrompt,
+} from "./prompts/entity-revision";
 import { resolveTemplateSync } from "../EntityTemplateConstants";
 import {
   buildCreationLoreSynthesisPrompt,
@@ -371,6 +385,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<{
     content: string;
@@ -399,7 +414,12 @@ export class DefaultTextGenerationService implements TextGenerationService {
       : relatedEntities;
     const cleanCategories = categories ? safeSnapshot(categories) : categories;
 
-    const model = await this.aiClientManager.getModel(apiKey, modelName);
+    const systemInstruction = buildEntityRevisionSystemInstruction();
+    const model = await this.aiClientManager.getModel(
+      apiKey,
+      modelName,
+      systemInstruction,
+    );
 
     const allowedCategoryIds = new Set(
       cleanCategories.map((category) => category.id),
@@ -413,7 +433,18 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const loreTemplate = sanitizedEntity?.type
       ? resolveTemplateSync(sanitizedEntity.type, options?.themeId) || undefined
       : undefined;
-    const prompt = buildEntityRevisionPrompt(
+    const promptCore = buildEntityRevisionPromptCore(
+      sanitizedEntity,
+      cleanIncoming,
+      cleanCategories,
+      {
+        source: options?.source,
+        instructions: options?.instructions,
+        priority: options?.priority,
+        loreTemplate,
+      },
+    );
+    const userPrompt = buildEntityRevisionUserPrompt(
       sanitizedEntity,
       cleanIncoming,
       cleanRelatedEntities,
@@ -428,12 +459,23 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
     console.log(
       "[ReconPipeline] Constructed LLM prompt of length:",
-      prompt.length,
+      systemInstruction.length + userPrompt.length,
     );
 
     try {
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      const interactionsEnabled =
+        Boolean(options?.interactionsEnabled) && !apiKey && Boolean(entity?.id);
+      const text = interactionsEnabled
+        ? await this.reviseViaInteraction(
+            modelName,
+            systemInstruction,
+            entity.id,
+            promptCore,
+            cleanRelatedEntities,
+          )
+        : await model
+            .generateContent(userPrompt)
+            .then((r) => r.response.text());
       if (import.meta.env.DEV) {
         console.log("[ReconPipeline] Raw LLM response metadata:", {
           textLength: text.length,
@@ -489,6 +531,62 @@ export class DefaultTextGenerationService implements TextGenerationService {
       throw new Error(`Entity revision failed: ${err.message}`, {
         cause: err,
       });
+    }
+  }
+
+  private async reviseViaInteraction(
+    modelName: string,
+    systemInstruction: string,
+    entityId: string,
+    promptCore: string,
+    relatedEntities: RelatedEntityContext[],
+  ): Promise<string> {
+    const session = interactionSessions.getSession(entityId);
+    const loreEntries = relatedToLoreEntries(relatedEntities);
+
+    const send = async (input: string, previousId: string | null) =>
+      this.aiClientManager.sendInteraction({
+        model: modelName,
+        input,
+        systemInstruction,
+        previousInteractionId: previousId,
+      });
+
+    try {
+      let partition = session.tracker.partition(loreEntries);
+      let result;
+
+      try {
+        result = await send(
+          buildRevisionInteractionInput(promptCore, partition),
+          session.previousInteractionId,
+        );
+      } catch (err) {
+        if (!(err instanceof InteractionExpiredError)) throw err;
+        interactionSessions.resetSession(entityId);
+        partition = session.tracker.partition(loreEntries);
+        result = await send(
+          buildRevisionInteractionInput(promptCore, partition),
+          null,
+        );
+      }
+
+      session.previousInteractionId = result.id;
+      session.tracker.commit(loreEntries);
+
+      if (import.meta.env.DEV) {
+        const total = loreEntries.length;
+        const sent = total - partition.unchanged.length;
+        console.log(
+          `[Interactions] revision related sent ${sent}/${total} (${partition.unchanged.length} retained)`,
+        );
+      }
+
+      return result.text;
+    } catch (err: unknown) {
+      console.error("Gemini Interactions Error:", err);
+      const classified = classifyApiError(err);
+      throw new Error(classified.message, { cause: err });
     }
   }
 
@@ -625,6 +723,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
       vaultId?: string;
       existingEntities?: any[];
       systemInstructionOverride?: string;
+      loreEntries?: LoreEntry[];
+      conversationId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<void> {
     const cleanHistory = history ? safeSnapshot(history) : history;
@@ -632,6 +733,28 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const systemInstruction =
       _options?.systemInstructionOverride ||
       buildSystemInstruction(demoMode, categories);
+
+    // Interactions API path (proxy only, flag-gated): send just the new/changed
+    // lore and the new turn; prior turns + unchanged lore are retained
+    // server-side via `previous_interaction_id`.
+    if (
+      _options?.interactionsEnabled &&
+      !apiKey &&
+      _options?.conversationId &&
+      _options?.loreEntries
+    ) {
+      await this.generateViaInteraction(
+        query,
+        cleanHistory,
+        modelName,
+        systemInstruction,
+        _options.conversationId,
+        _options.loreEntries,
+        onUpdate,
+      );
+      return;
+    }
+
     const model = await this.aiClientManager.getModel(
       apiKey,
       modelName,
@@ -723,6 +846,90 @@ export class DefaultTextGenerationService implements TextGenerationService {
       const classified = classifyApiError(err);
       throw new Error(classified.message, { cause: err });
     }
+  }
+
+  /**
+   * Drive one chat turn through the Gemini Interactions API. Sends only the
+   * new/changed lore plus the user query, threading server-side conversation
+   * state. On an expired interaction id, resets and replays full history + lore
+   * once (see ADR 018, plan Phase 3.4).
+   */
+  private async generateViaInteraction(
+    query: string,
+    history: any[],
+    modelName: string,
+    systemInstruction: string,
+    conversationId: string,
+    loreEntries: LoreEntry[],
+    onUpdate: (partial: string) => void | Promise<void>,
+  ): Promise<void> {
+    const session = interactionSessions.getSession(conversationId);
+
+    const send = async (input: string, previousId: string | null) => {
+      const result = await this.aiClientManager.sendInteraction({
+        model: modelName,
+        input,
+        systemInstruction,
+        previousInteractionId: previousId,
+      });
+      return result;
+    };
+
+    try {
+      let partition = session.tracker.partition(loreEntries);
+      const input = buildInteractionInput(query, partition);
+
+      let result;
+      try {
+        result = await send(input, session.previousInteractionId);
+      } catch (err) {
+        if (!(err instanceof InteractionExpiredError)) throw err;
+        // Retention window elapsed: drop server state and replay full history +
+        // full lore in a single fresh interaction, then resume delta mode.
+        interactionSessions.resetSession(conversationId);
+        // After reset the tracker is empty, so partition.newOrChanged holds
+        // every entry. buildInteractionInput will include the full lore context;
+        // prepend the conversation transcript so the model can re-establish context.
+        partition = session.tracker.partition(loreEntries);
+        const replayInput =
+          this.formatHistoryTranscript(history) +
+          buildInteractionInput(query, partition);
+        result = await send(replayInput, null);
+      }
+
+      session.previousInteractionId = result.id;
+      session.tracker.commit(loreEntries);
+      await onUpdate(result.text);
+
+      // Rollout metric (plan 6.2): how much lore the delta flow kept off the
+      // wire. Uses the partition actually sent (post-replay if it occurred).
+      if (import.meta.env.DEV) {
+        const total = loreEntries.length;
+        const sent = total - partition.unchanged.length;
+        console.log(
+          `[Interactions] lore records sent ${sent}/${total} (${partition.unchanged.length} retained server-side)`,
+        );
+      }
+    } catch (err: unknown) {
+      console.error("Gemini Interactions Error:", err);
+      const classified = classifyApiError(err);
+      throw new Error(classified.message, { cause: err });
+    }
+  }
+
+  /** Render prior chat turns as a plain-text transcript for replay. */
+  private formatHistoryTranscript(history: any[]): string {
+    if (!history?.length) return "";
+    const lines = history
+      .filter((m) => m?.role === "user" || m?.role === "assistant")
+      .map((m) => {
+        const who = m.role === "assistant" ? "Oracle" : "User";
+        const content = (m.content || "").trim();
+        return content ? `${who}: ${content}` : "";
+      })
+      .filter(Boolean);
+    if (lines.length === 0) return "";
+    return `[CONVERSATION SO FAR]\n${lines.join("\n")}\n\n`;
   }
 
   async generateRelatedEntity(

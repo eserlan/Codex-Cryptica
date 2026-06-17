@@ -400,6 +400,18 @@ export function setupWindowGlobals(context: {
       .catch((e) =>
         debugStore.warn("Failed to attach revisionService to window", e),
       );
+
+    import("../../services/generators/generator-session-manager")
+      .then((m) => {
+        if (m?.generatorSessionManager)
+          (window as any).generatorSessionManager = m.generatorSessionManager;
+      })
+      .catch((e) =>
+        debugStore.warn(
+          "Failed to attach generatorSessionManager to window",
+          e,
+        ),
+      );
   }
 
   // Lazy-load dynamic AI services if not already present

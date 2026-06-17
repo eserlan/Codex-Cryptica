@@ -1,6 +1,7 @@
 import { searchService as defaultSearchService } from "../search.svelte";
 import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
+import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -137,6 +138,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     content: string;
     primaryEntityId?: string;
     sourceIds: string[];
+    entries: LoreEntry[];
     activeStyleTitle?: string;
   }> {
     let styleContext = "";
@@ -207,7 +209,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     }
 
     let results = await this.searchService.search(query, {
-      limit: 5,
+      limit: 8,
       includeDrafts: true,
     });
 
@@ -251,7 +253,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
       if (keywords.length > 0) {
         results = await this.searchService.search(keywords.join(" "), {
-          limit: 5,
+          limit: 8,
           includeDrafts: true,
         });
 
@@ -333,6 +335,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     const contextMap = new Map<string, string>();
     const sourceIds: string[] = [];
+    // Per-entity records for lore-delta tracking. The hash covers the stable
+    // body only (mainContent + connections), excluding the volatile
+    // `[ACTIVE FILE]` header so toggling the active file does not force resends.
+    const entries: LoreEntry[] = [];
     const MAX_CHARS = 10000;
     let currentTotal = styleContext.length;
 
@@ -410,13 +416,25 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
       if (currentTotal + fullSnippet.length > MAX_CHARS) {
         if (!isEnrichment) {
-          const overhead = header.length + connectionContext.length + 50;
+          // Exclude the volatile `[ACTIVE FILE]` prefix from the budget so the
+          // truncated body length (and thus its hash) is stable when the active
+          // file toggles — otherwise delta tracking would force needless resends.
+          const stableHeaderLen = header.length - prefix.length;
+          const overhead = stableHeaderLen + connectionContext.length + 50;
           const allowed = MAX_CHARS - currentTotal - overhead;
           if (allowed > 100) {
             const truncated =
               mainContent.slice(0, allowed) + "... [truncated content]";
-            contextMap.set(id, `${header}${truncated}${connectionContext}`);
+            const truncatedSnippet = `${header}${truncated}${connectionContext}`;
+            contextMap.set(id, truncatedSnippet);
             sourceIds.push(id);
+            entries.push({
+              id,
+              snippet: truncatedSnippet,
+              hash: entityContentHash(
+                `${entity.content || ""}${connectionContext}`,
+              ),
+            });
             currentTotal = MAX_CHARS;
           }
         }
@@ -425,6 +443,11 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
       contextMap.set(id, fullSnippet);
       sourceIds.push(id);
+      entries.push({
+        id,
+        snippet: fullSnippet,
+        hash: entityContentHash(`${entity.content || ""}${connectionContext}`),
+      });
       currentTotal += fullSnippet.length + 2;
     };
 
@@ -532,10 +555,21 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       }
     }
 
+    // The global art-style block follows the same send-once / resend-on-change
+    // rule under a synthetic id so it is not re-uploaded every turn.
+    if (styleContext) {
+      entries.unshift({
+        id: "__style__",
+        snippet: styleContext,
+        hash: entityContentHash(styleContext),
+      });
+    }
+
     return {
       content: styleContext + finalContent,
       primaryEntityId: primaryEntityId || undefined,
       sourceIds,
+      entries,
       activeStyleTitle,
     };
   }

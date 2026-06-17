@@ -226,6 +226,13 @@ export default {
       // Parse the incoming request body
       const body = (await request.json()) as any;
 
+      // Interactions API path: server-side conversation state. Selected when the
+      // client sends an `input` field (instead of full `contents`). Keeps the
+      // stateless generateContent path below intact as the retention fallback.
+      if (body.input !== undefined) {
+        return await handleInteraction(body, request, env);
+      }
+
       // Validate required fields
       if (!body.contents || !Array.isArray(body.contents)) {
         return new Response(
@@ -404,6 +411,115 @@ export default {
     }
   },
 };
+
+/**
+ * Handle a Gemini Interactions API request (server-side conversation state).
+ *
+ * Forwards to `/v1beta/interactions` with the system key, threading
+ * `previous_interaction_id` so the model retains prior turns server-side. The
+ * client therefore sends only the new `input` (query + new/changed lore).
+ * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
+ * 409 so the client can reset and replay full history.
+ */
+async function handleInteraction(
+  body: any,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const cors = getCorsHeaders(request.headers, env);
+  const json = (data: unknown, status: number) =>
+    new Response(JSON.stringify(data), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
+  // Align with the stateless :generateContent default so a follow-up that omits
+  // `model` cannot silently switch models mid-conversation.
+  const targetModel = body.model || "gemini-3.1-flash-lite";
+
+  // Interactions API expects system_instruction as a plain string, not the
+  // { parts: [...] } object format used by generateContent.
+  const systemInstruction: string | undefined =
+    typeof body.system_instruction === "string"
+      ? body.system_instruction
+      : typeof body.systemInstruction === "string"
+        ? body.systemInstruction
+        : body.system_instruction?.parts?.[0]?.text;
+
+  const payload: Record<string, unknown> = {
+    model: targetModel,
+    input: body.input,
+    store: body.store ?? true,
+  };
+  if (body.previous_interaction_id) {
+    payload.previous_interaction_id = body.previous_interaction_id;
+  }
+  if (systemInstruction) {
+    payload.system_instruction = systemInstruction;
+  }
+  if (body.generation_config || body.generationConfig) {
+    payload.generation_config = body.generation_config || body.generationConfig;
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${env.GEMINI_API_KEY}`;
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error("[Oracle Proxy] Interactions fetch error:", err);
+    return json(
+      { error: { message: "Failed to reach Interactions API" } },
+      502,
+    );
+  }
+
+  const text = await upstream.text();
+  let data: any;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    return json(
+      {
+        error: {
+          message: "Proxy error: invalid response from Interactions API",
+          code: "UPSTREAM_PARSE_ERROR",
+        },
+      },
+      502,
+    );
+  }
+
+  if (!upstream.ok) {
+    const message: string =
+      data?.error?.message || "Interaction request failed";
+    // An expired or unknown previous_interaction_id (retention window elapsed)
+    // is recoverable: the client should drop the id and replay full history.
+    const isStaleId =
+      body.previous_interaction_id &&
+      (upstream.status === 404 ||
+        upstream.status === 400 ||
+        /previous_interaction_id|interaction.*not found/i.test(message));
+    if (isStaleId) {
+      return json({ error: { message, code: "INTERACTION_NOT_FOUND" } }, 409);
+    }
+    return json({ error: { message } }, upstream.status);
+  }
+
+  // Output text lives at steps[].content[].text (model_output steps).
+  const steps: any[] = Array.isArray(data.steps) ? data.steps : [];
+  const extractedText = steps
+    .flatMap((s) => (Array.isArray(s?.content) ? s.content : []))
+    .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
+    .filter(Boolean)
+    .join("");
+
+  return json({ id: data.id, text: extractedText }, 200);
+}
 
 /**
  * Handle CORS preflight requests

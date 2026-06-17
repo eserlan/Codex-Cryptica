@@ -7,6 +7,7 @@ import type {
   OracleWorkerEvent,
   DiscoveryProposal,
 } from "../../../../../packages/oracle-engine/src/types";
+import type { LoreContextEntry } from "schema";
 
 /**
  * OracleWorker handles heavy-lifting AI and logic tasks off the main thread.
@@ -70,6 +71,7 @@ class OracleWorker {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<any> {
     return this.textGeneration.reviseEntityUpdate(
@@ -115,6 +117,10 @@ class OracleWorker {
       requestId?: string;
       existingEntities?: any[];
       systemInstructionOverride?: string;
+      // Interactions API delta flow — forwarded to TextGenerationService.
+      loreEntries?: LoreContextEntry[];
+      conversationId?: string;
+      interactionsEnabled?: boolean;
     } = {},
   ): Promise<void> {
     const { vaultId, requestId, existingEntities = [] } = options;
