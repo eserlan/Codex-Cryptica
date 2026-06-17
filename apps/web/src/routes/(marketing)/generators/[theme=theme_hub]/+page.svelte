@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { base } from "$app/paths";
+  const cleanBase = base === "/" ? "" : base;
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { hubContext } from "$lib/stores/hub-context.svelte";
@@ -251,7 +252,7 @@
   <meta name="description" content={config.metaDescription} />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href={canonicalUrl} />
-  <link rel="help" href="{base}/llms.txt" />
+  <link rel="help" href="{cleanBase}/llms.txt" />
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Codex Cryptica" />
@@ -287,7 +288,7 @@
   <section class="border-b border-theme-border/60 px-6 py-14 md:py-18">
     <div class="max-w-6xl mx-auto">
       <a
-        href="{base}/generators"
+        href="{cleanBase}/generators"
         class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition-colors mb-8"
       >
         <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
@@ -316,7 +317,7 @@
       {#each config.cards as card (card.slug)}
         <li>
           <a
-            href="{base}/generators/{card.slug}"
+            href="{cleanBase}/generators/{card.slug}"
             onclick={() => {
               themeStore.setTheme(config.localStorageId);
               hubContext.set(data.theme);

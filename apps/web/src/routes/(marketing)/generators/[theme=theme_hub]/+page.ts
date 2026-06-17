@@ -1,5 +1,6 @@
 import { error } from "@sveltejs/kit";
 import type { EntryGenerator, PageLoad } from "./$types";
+import { VALID_HUB_THEMES } from "../../../../params/theme_hub";
 
 export const prerender = true;
 
@@ -11,17 +12,8 @@ export type ThemeSlug =
   | "modern"
   | "vampire";
 
-const validThemes = new Set<ThemeSlug>([
-  "fantasy",
-  "cyberpunk",
-  "sci-fi",
-  "post-apocalyptic",
-  "modern",
-  "vampire",
-]);
-
 export const load: PageLoad = ({ params }) => {
-  if (!validThemes.has(params.theme as ThemeSlug)) {
+  if (!VALID_HUB_THEMES.has(params.theme)) {
     error(404, "Theme not found");
   }
   return { theme: params.theme as ThemeSlug };

@@ -1,10 +1,13 @@
-let _lastHubTheme = $state<string | null>(null);
+export class HubContextStore {
+  #theme = $state<string | null>(null);
 
-export const hubContext = {
   get theme(): string | null {
-    return _lastHubTheme;
-  },
+    return this.#theme;
+  }
+
   set(theme: string | null) {
-    _lastHubTheme = theme;
-  },
-};
+    this.#theme = theme;
+  }
+}
+
+export const hubContext = new HubContextStore();

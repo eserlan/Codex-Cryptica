@@ -1007,6 +1007,7 @@
         <div class="relative mb-4">
           <button
             type="button"
+            id="generator-switcher-btn"
             bind:this={menuButtonEl}
             onclick={() => (showGeneratorMenu = !showGeneratorMenu)}
             aria-haspopup="true"
@@ -1032,6 +1033,7 @@
               transition:fade={{ duration: 100 }}
               class="absolute left-0 top-full mt-1.5 z-50 w-64 rounded-xl border border-theme-border/60 bg-theme-surface shadow-xl backdrop-blur-sm overflow-hidden"
               role="menu"
+              aria-labelledby="generator-switcher-btn"
             >
               {#each visibleGroups as group (group.label)}
                 <div class="px-3 pt-3 pb-1">
@@ -1043,7 +1045,7 @@
                   {#each group.items as item (item.path)}
                     {@const isCurrent =
                       canonicalPath === item.path ||
-                      canonicalPath?.startsWith(item.path)}
+                      canonicalPath?.startsWith(item.path + "/")}
                     <a
                       href="{cleanBase}{item.path}"
                       role="menuitem"

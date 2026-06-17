@@ -1,6 +1,6 @@
 import type { ParamMatcher } from "@sveltejs/kit";
 
-const validThemes = new Set([
+export const VALID_HUB_THEMES = new Set([
   "fantasy",
   "cyberpunk",
   "sci-fi",
@@ -9,4 +9,4 @@ const validThemes = new Set([
   "vampire",
 ]);
 
-export const match: ParamMatcher = (param) => validThemes.has(param);
+export const match: ParamMatcher = (param) => VALID_HUB_THEMES.has(param);
