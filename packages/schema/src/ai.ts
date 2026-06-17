@@ -32,6 +32,7 @@ export interface PlotAnalysisEntity {
 }
 
 export interface RelatedEntityContext {
+  id: string;
   title: string;
   type: string;
   relation?: string;
@@ -137,6 +138,7 @@ export interface TextGenerationService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<{
     content: string;

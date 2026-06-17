@@ -45,13 +45,28 @@ Return JSON only, with this shape:
 Include "categoryId" only when the request provides ALLOWED CATEGORIES; otherwise omit that field entirely.`;
 }
 
-export function buildEntityRevisionUserPrompt(
+export function buildEntityRevisionRelatedSection(
+  relatedEntities: RelatedEntityContext[] = [],
+): string {
+  if (relatedEntities.length === 0) return "";
+
+  return `\nRELATED ENTITY CONTEXT:\n${relatedEntities
+    .map((related) =>
+      u(
+        `${related.title} (${related.type})${
+          related.relation ? ` [${related.relation}]` : ""
+        }: ${related.summary}`,
+      ),
+    )
+    .join("\n")}\n`;
+}
+
+export function buildEntityRevisionPromptCore(
   entity: Entity,
   incoming: {
     chronicle: string;
     lore: string;
   },
-  relatedEntities: RelatedEntityContext[] = [],
   categories: { id: string; label?: string; description?: string }[] = [],
   options: {
     source?: string;
@@ -60,18 +75,6 @@ export function buildEntityRevisionUserPrompt(
     loreTemplate?: string;
   } = {},
 ): string {
-  const relatedSection =
-    relatedEntities.length > 0
-      ? `\nRELATED ENTITY CONTEXT:\n${relatedEntities
-          .map((related) =>
-            u(
-              `${related.title} (${related.type})${
-                related.relation ? ` [${related.relation}]` : ""
-              }: ${related.summary}`,
-            ),
-          )
-          .join("\n")}\n`
-      : "";
   const categorySection =
     categories.length > 0
       ? `\nALLOWED CATEGORIES:\n${categories
@@ -118,7 +121,32 @@ ${u(incoming.chronicle || "")}
 
 --- INCOMING LORE CANDIDATE ---
 ${u(incoming.lore || "")}
-${instructionSection}${relatedSection}`;
+${instructionSection}`;
+}
+
+export function buildEntityRevisionUserPrompt(
+  entity: Entity,
+  incoming: {
+    chronicle: string;
+    lore: string;
+  },
+  relatedEntities: RelatedEntityContext[] = [],
+  categories: { id: string; label?: string; description?: string }[] = [],
+  options: {
+    source?: string;
+    instructions?: string;
+    priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+    loreTemplate?: string;
+  } = {},
+): string {
+  return (
+    buildEntityRevisionPromptCore(
+      entity,
+      incoming,
+      categories,
+      options,
+    ) + buildEntityRevisionRelatedSection(relatedEntities)
+  );
 }
 
 export function buildEntityRevisionPrompt(

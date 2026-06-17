@@ -1,6 +1,6 @@
 # Implementation Plan: Entity Revision over the Gemini Interactions API
 
-**Status:** Draft
+**Status:** Done
 **Date:** 2026-06-17
 **Branch:** `1406-revision-interactions-api`
 **Issue:** #1406
@@ -77,28 +77,28 @@ Files:
 
 > Lets each related entity become a delta-trackable `LoreEntry`.
 
-- [ ] **T101** SCHEMA — add `id: string` to `RelatedEntityContext`.
-- [ ] **T102** ENGINE — carry the internal candidate `id` into the
+- [x] **T101** SCHEMA — add `id: string` to `RelatedEntityContext`.
+- [x] **T102** ENGINE — carry the internal candidate `id` into the
       `buildRelatedEntityContext` result (also update the local duplicate
       `RelatedEntityContext` interface in this file, or import schema's).
-- [ ] **T103** ENGINE/DELTA — add `relatedToLoreEntries(related[])` →
+- [x] **T103** ENGINE/DELTA — add `relatedToLoreEntries(related[])` →
       `{ id, snippet: formatted "<title> (<type>) [<relation>]: <summary>" block,
       hash: entityContentHash(summary) }`. Pure; worker-safe.
-- [ ] **T104** ENGINE-TEST — `buildRelatedEntityContext` output includes `id`;
+- [x] **T104** ENGINE-TEST — `buildRelatedEntityContext` output includes `id`;
       `relatedToLoreEntries` produces stable hashes that change with summary.
 
 ### Phase 2 — Revision-shaped interaction input
 
 > The structured revision prompt with the related block reduced to the delta.
 
-- [ ] **T201** DELTA — `buildRevisionInteractionInput(promptCore, partition)`:
+- [x] **T201** DELTA — `buildRevisionInteractionInput(promptCore, partition)`:
       emit `[RELATED ENTITY CONTEXT]` from `partition.newOrChanged` only, append a
       `[RELEVANT EARLIER RECORDS] …` hint for `partition.unchanged`, then the
       revision prompt core.
-- [ ] **T202** PROMPT — refactor `buildEntityRevisionUserPrompt` so the related
+- [x] **T202** PROMPT — refactor `buildEntityRevisionUserPrompt` so the related
       section can be supplied pre-filtered (or split out a `…Core` builder that
       omits the related block), enabling the delta path to inject only new ones.
-- [ ] **T203** TEST — input contains only new/changed related entities; retained
+- [x] **T203** TEST — input contains only new/changed related entities; retained
       ones appear only in the hint line; prompt core (entity/incoming/instructions)
       is intact and still `u()`-wrapped.
 
@@ -106,36 +106,36 @@ Files:
 
 > Mirror `generateViaInteraction` for the revision call.
 
-- [ ] **T301** SVC — add `reviseViaInteraction(...)`: get per-entity session,
+- [x] **T301** SVC — add `reviseViaInteraction(...)`: get per-entity session,
       partition related `LoreEntry`s, `sendInteraction({model, input,
       systemInstruction, previousInteractionId})`, on `InteractionExpiredError`
       reset + replay full related context once, then `commit` + parse JSON.
-- [ ] **T302** SVC — in `reviseEntityUpdate`, branch into `reviseViaInteraction`
+- [x] **T302** SVC — in `reviseEntityUpdate`, branch into `reviseViaInteraction`
       when `interactionsEnabled && !apiKey && entity.id` present; else current path.
-- [ ] **T303** SVC — `[Interactions] revision related sent x/total (n retained)`
+- [x] **T303** SVC — `[Interactions] revision related sent x/total (n retained)`
       metric, matching the chat log.
-- [ ] **T304** TEST — interaction path used when gated on; stateless path when a
+- [x] **T304** TEST — interaction path used when gated on; stateless path when a
       key is set / flag off / unsaved entity; expiry triggers single replay.
 
 ### Phase 4 — Wiring + invalidation
 
-- [ ] **T401** MGR — pass `interactionsEnabled: interactionSessions.enabled`
+- [x] **T401** MGR — pass `interactionsEnabled: interactionSessions.enabled`
       (and ensure the entity id reaches the service as the session key).
-- [ ] **T402** Verify the existing `InteractionSessionManager` vault-event
+- [x] **T402** Verify the existing `InteractionSessionManager` vault-event
       eviction already invalidates related entities on edit (they are vault
       entities); add a test asserting an edited related entity is re-sent.
-- [ ] **T403** Confirm worker-scope caveat (per ADR 018) — revision runs on the
+- [x] **T403** Confirm worker-scope caveat (per ADR 018) — revision runs on the
       main thread, so eviction subscription applies; note if not.
 
 ### Phase 5 — Validation & ship
 
-- [ ] **T501** Run affected suites (engine revision-context, lore-delta,
+- [x] **T501** Run affected suites (engine revision-context, lore-delta,
       text-generation interactions, revision-manager).
-- [ ] **T502** Manual: revise one entity twice in a session; confirm the second
+- [x] **T502** Manual: revise one entity twice in a session; confirm the second
       turn's proxy request omits already-sent related entities and names them in
       the hint; confirm output quality holds.
-- [ ] **T503** Manual: edit a related entity mid-session; confirm it is re-sent.
-- [ ] **T504** Status → Done; open/extend PR against `staging`.
+- [x] **T503** Manual: edit a related entity mid-session; confirm it is re-sent.
+- [x] **T504** Status → Done; open/extend PR against `staging`.
 
 ## Dependency summary
 

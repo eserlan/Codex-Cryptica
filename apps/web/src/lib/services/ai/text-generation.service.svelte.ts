@@ -3,7 +3,12 @@ import {
   InteractionExpiredError,
 } from "./client-manager";
 import { interactionSessions } from "./interaction-session";
-import { buildInteractionInput, type LoreEntry } from "@codex/oracle-engine";
+import {
+  buildInteractionInput,
+  buildRevisionInteractionInput,
+  relatedToLoreEntries,
+  type LoreEntry,
+} from "@codex/oracle-engine";
 import { classifyApiError } from "./api-error-classifier";
 import { u } from "./prompts/user-content";
 import {
@@ -23,6 +28,7 @@ import {
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import {
   buildEntityRevisionSystemInstruction,
+  buildEntityRevisionPromptCore,
   buildEntityRevisionUserPrompt,
 } from "./prompts/entity-revision";
 import { resolveTemplateSync } from "../EntityTemplateConstants";
@@ -379,6 +385,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<{
     content: string;
@@ -426,6 +433,17 @@ export class DefaultTextGenerationService implements TextGenerationService {
     const loreTemplate = sanitizedEntity?.type
       ? resolveTemplateSync(sanitizedEntity.type, options?.themeId) || undefined
       : undefined;
+    const promptCore = buildEntityRevisionPromptCore(
+      sanitizedEntity,
+      cleanIncoming,
+      cleanCategories,
+      {
+        source: options?.source,
+        instructions: options?.instructions,
+        priority: options?.priority,
+        loreTemplate,
+      },
+    );
     const userPrompt = buildEntityRevisionUserPrompt(
       sanitizedEntity,
       cleanIncoming,
@@ -445,8 +463,17 @@ export class DefaultTextGenerationService implements TextGenerationService {
     );
 
     try {
-      const result = await model.generateContent(userPrompt);
-      const text = result.response.text();
+      const interactionsEnabled =
+        Boolean(options?.interactionsEnabled) && !apiKey && Boolean(entity?.id);
+      const text = interactionsEnabled
+        ? await this.reviseViaInteraction(
+            modelName,
+            systemInstruction,
+            entity.id,
+            promptCore,
+            cleanRelatedEntities,
+          )
+        : await model.generateContent(userPrompt).then((r) => r.response.text());
       if (import.meta.env.DEV) {
         console.log("[ReconPipeline] Raw LLM response metadata:", {
           textLength: text.length,
@@ -502,6 +529,62 @@ export class DefaultTextGenerationService implements TextGenerationService {
       throw new Error(`Entity revision failed: ${err.message}`, {
         cause: err,
       });
+    }
+  }
+
+  private async reviseViaInteraction(
+    modelName: string,
+    systemInstruction: string,
+    entityId: string,
+    promptCore: string,
+    relatedEntities: RelatedEntityContext[],
+  ): Promise<string> {
+    const session = interactionSessions.getSession(entityId);
+    const loreEntries = relatedToLoreEntries(relatedEntities);
+
+    const send = async (input: string, previousId: string | null) =>
+      this.aiClientManager.sendInteraction({
+        model: modelName,
+        input,
+        systemInstruction,
+        previousInteractionId: previousId,
+      });
+
+    try {
+      let partition = session.tracker.partition(loreEntries);
+      let result;
+
+      try {
+        result = await send(
+          buildRevisionInteractionInput(promptCore, partition),
+          session.previousInteractionId,
+        );
+      } catch (err) {
+        if (!(err instanceof InteractionExpiredError)) throw err;
+        interactionSessions.resetSession(entityId);
+        partition = session.tracker.partition(loreEntries);
+        result = await send(
+          buildRevisionInteractionInput(promptCore, partition),
+          null,
+        );
+      }
+
+      session.previousInteractionId = result.id;
+      session.tracker.commit(loreEntries);
+
+      if (import.meta.env.DEV) {
+        const total = loreEntries.length;
+        const sent = total - partition.unchanged.length;
+        console.log(
+          `[Interactions] revision related sent ${sent}/${total} (${partition.unchanged.length} retained)`,
+        );
+      }
+
+      return result.text;
+    } catch (err: unknown) {
+      console.error("Gemini Interactions Error:", err);
+      const classified = classifyApiError(err);
+      throw new Error(classified.message, { cause: err });
     }
   }
 

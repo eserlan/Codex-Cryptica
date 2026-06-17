@@ -3,6 +3,7 @@ import {
   type DiscoveryProposal,
 } from "@codex/oracle-engine";
 import type { Entity } from "schema";
+import { interactionSessions } from "../../services/ai/interaction-session";
 import type {
   EntityRevisionRequest,
   EntityRevisionResult,
@@ -56,6 +57,7 @@ export class OracleRevisionManager {
         instructions: options.instructions,
         priority: options.priority,
         themeId: this.store.themeStore?.activeTheme?.id,
+        interactionsEnabled: interactionSessions.enabled,
       },
     );
   }

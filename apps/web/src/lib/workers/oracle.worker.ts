@@ -71,6 +71,7 @@ class OracleWorker {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      interactionsEnabled?: boolean;
     },
   ): Promise<any> {
     return this.textGeneration.reviseEntityUpdate(
