@@ -52,7 +52,7 @@ vi.mock(
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: {
-    openRelatedEntityDialog: vi.fn(),
+    openGeneratorWorkflowForEntity: vi.fn(),
   },
 }));
 
@@ -80,7 +80,7 @@ describe("ZenContent Related Entity Generation Trigger", () => {
     expect(generateBtn).toBeDefined();
 
     await fireEvent.click(generateBtn);
-    expect(modalUIStore.openRelatedEntityDialog).toHaveBeenCalledWith(
+    expect(modalUIStore.openGeneratorWorkflowForEntity).toHaveBeenCalledWith(
       "entity-1",
     );
   });
@@ -101,6 +101,6 @@ describe("ZenContent Related Entity Generation Trigger", () => {
     });
 
     expect(screen.queryByText("Generate Related")).toBeNull();
-    expect(modalUIStore.openRelatedEntityDialog).not.toHaveBeenCalled();
+    expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 });

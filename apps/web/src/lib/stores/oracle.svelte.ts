@@ -489,6 +489,10 @@ export class OracleStore implements IOracleStore {
     await this.settingsManager.setKey(key);
   }
 
+  async setTier(tier: "lite" | "advanced") {
+    await this.settingsManager.setTier(tier);
+  }
+
   async clearKey() {
     await this.settingsManager.clearKey();
   }

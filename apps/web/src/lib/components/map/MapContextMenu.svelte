@@ -43,7 +43,10 @@
         onClose();
       }}
     >
-      <span class="icon-[lucide--radar] w-3.5 h-3.5 text-theme-primary"></span>
+      <span
+        class="icon-[lucide--radar] w-3.5 h-3.5 text-theme-primary"
+        aria-hidden="true"
+      ></span>
       <span>Ping Token</span>
     </button>
 
@@ -61,7 +64,9 @@
           }
         }}
       >
-        <span class="icon-[lucide--book-open] w-3.5 h-3.5 text-theme-primary"
+        <span
+          class="icon-[lucide--book-open] w-3.5 h-3.5 text-theme-primary"
+          aria-hidden="true"
         ></span>
         <span>Look at {_ctxToken.name}</span>
       </button>
@@ -87,7 +92,9 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
+          <span
+            class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
+            aria-hidden="true"
           ></span>
           <span>Hide Selected</span>
         </button>
@@ -102,7 +109,8 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+          <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"
+          ></span>
           <span>Remove Selected</span>
         </button>
       {:else}
@@ -136,7 +144,8 @@
           onClose();
         }}
       >
-        <span class="icon-[lucide--copy-plus] w-3.5 h-3.5"></span>
+        <span class="icon-[lucide--copy-plus] w-3.5 h-3.5" aria-hidden="true"
+        ></span>
         <span>Clone Token</span>
       </button>
 
@@ -150,11 +159,15 @@
         }}
       >
         {#if _ctxToken?.visibleTo === "all"}
-          <span class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
+          <span
+            class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
+            aria-hidden="true"
           ></span>
           <span>Hide from Guests</span>
         {:else}
-          <span class="icon-[lucide--eye] w-3.5 h-3.5 text-theme-primary"
+          <span
+            class="icon-[lucide--eye] w-3.5 h-3.5 text-theme-primary"
+            aria-hidden="true"
           ></span>
           <span>Show to All</span>
         {/if}
@@ -168,7 +181,8 @@
           onClose();
         }}
       >
-        <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+        <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"
+        ></span>
         <span>Remove Token</span>
       </button>
 
@@ -205,10 +219,14 @@
           }}
         >
           <div class="flex items-center gap-2">
-            <span class="icon-[lucide--maximize] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--maximize] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
             <span>Resize</span>
           </div>
-          <span class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"></span>
+          <span
+            class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+            aria-hidden="true"
+          ></span>
         </button>
 
         {#if showResizeSubmenu}
@@ -286,10 +304,14 @@
           }}
         >
           <div class="flex items-center gap-2">
-            <span class="icon-[lucide--badge] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--badge] w-3.5 h-3.5" aria-hidden="true"
+            ></span>
             <span>Status</span>
           </div>
-          <span class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"></span>
+          <span
+            class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+            aria-hidden="true"
+          ></span>
         </button>
 
         {#if showStatusSubmenu}
@@ -350,7 +372,9 @@
         onClose();
       }}
     >
-      <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+      <span
+        class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+        aria-hidden="true"
       ></span>
       <span>Ping Here</span>
     </button>

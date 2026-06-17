@@ -68,22 +68,21 @@ test.describe("Guest Login Modal Accessibility", () => {
     const usernameInput = page.locator("#username-input");
     const submitButton = page.getByRole("button", { name: "JOIN" });
 
+    await page.waitForFunction(() => (window as any).p2pGuestService);
+    await page.evaluate(() => {
+      (window as any).__connectAttempts = 0;
+      (window as any).p2pGuestService.connectToHost = () => {
+        (window as any).__connectAttempts += 1;
+        return Promise.reject(new Error("Connection failed"));
+      };
+    });
+
     await usernameInput.fill("Baddy");
     await submitButton.click();
 
-    // Wait for the connection object to be created by the submit handler
-    await page.waitForFunction(
-      () => (window as any).__guestConn !== undefined,
-      {
-        timeout: 5000,
-      },
-    );
-
-    await page.evaluate(() => {
-      const conn = (window as any).__guestConn;
-      conn?.emit("error", new Error("Connection failed"));
-    });
-
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__connectAttempts))
+      .toBe(1);
     await expect(page.locator("#username-input")).toBeVisible();
     await expect(page.locator("#username-input")).toHaveValue("Baddy");
   });

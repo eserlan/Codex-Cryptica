@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Footer", () => {
+  const appFooter = (page: import("@playwright/test").Page) =>
+    page.locator("footer").filter({ hasText: "© 2026 Codex Cryptica" });
+
   test.beforeEach(async ({ page }) => {
     // Ensure viewport is large enough for the footer
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -12,7 +15,7 @@ test.describe("Footer", () => {
   test("should display Patreon support link in the footer", async ({
     page,
   }) => {
-    const footer = page.locator("footer");
+    const footer = appFooter(page);
     const patreonLink = footer.locator('a:has-text("Support on Patreon")');
 
     await expect(patreonLink).toBeVisible();
@@ -25,7 +28,7 @@ test.describe("Footer", () => {
   });
 
   test("should display Discord link in the footer", async ({ page }) => {
-    const footer = page.locator("footer");
+    const footer = appFooter(page);
     const discordLink = footer.locator('a:has-text("Discord")');
 
     await expect(discordLink).toBeVisible();
@@ -40,7 +43,7 @@ test.describe("Footer", () => {
   test("should display Help link in the footer and open settings", async ({
     page,
   }) => {
-    const footer = page.locator("footer");
+    const footer = appFooter(page);
     const helpLink = footer.locator('button:has-text("Help")');
 
     // Scroll to footer to ensure it's in view
@@ -64,11 +67,13 @@ test.describe("Footer", () => {
   test("should have correct styling classes on Patreon link", async ({
     page,
   }) => {
-    const patreonLink = page.locator('footer a:has-text("Support on Patreon")');
+    const patreonLink = appFooter(page).locator(
+      'a:has-text("Support on Patreon")',
+    );
     const classes = await patreonLink.getAttribute("class");
 
     expect(classes).toContain("text-[10px]");
-    expect(classes).toContain("font-header");
+    expect(classes).toContain("font-sans");
     expect(classes).toContain("uppercase");
     expect(classes).toContain("tracking-widest");
   });
@@ -91,7 +96,9 @@ test.describe("Footer", () => {
     await context.setOffline(true);
     await page.reload();
 
-    const patreonLink = page.locator('footer a:has-text("Support on Patreon")');
+    const patreonLink = appFooter(page).locator(
+      'a:has-text("Support on Patreon")',
+    );
     await expect(patreonLink).toBeVisible();
 
     // Go back online
@@ -99,7 +106,7 @@ test.describe("Footer", () => {
   });
 
   test("should NOT display LLMS.TXT link in the footer", async ({ page }) => {
-    const footer = page.locator("footer");
+    const footer = appFooter(page);
     const llmsLink = footer.locator('a:has-text("LLMS.TXT")');
 
     await expect(llmsLink).not.toBeVisible();

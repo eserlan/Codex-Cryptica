@@ -65,5 +65,17 @@ describe("capability-guard", () => {
       localStorage.setItem("codex_ai_disabled", "");
       expect(isAIEnabled()).toBe(true);
     });
+
+    it("reads from an injected storage, not the global", () => {
+      // Global says disabled; injected storage says enabled — injected wins.
+      localStorage.setItem("codex_ai_disabled", "true");
+      const injected = {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+      };
+      expect(isAIEnabled(injected)).toBe(true);
+      expect(() => assertAIEnabled(injected)).not.toThrow();
+    });
   });
 });

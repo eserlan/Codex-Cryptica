@@ -42,18 +42,16 @@
 
   const suggestions = $derived.by(() => {
     if (!isLabelAutocompleteActive) return [];
-    // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
-    const results: string[] = [];
-    const limit = 10;
-    const search = autocompleteSearch;
-    for (let i = 0; i < uniqueLabels.length; i++) {
-      const label = uniqueLabels[i];
-      if (label.toLowerCase().includes(search)) {
-        results.push(label);
-        if (results.length >= limit) break;
+    // ⚡ Bolt Optimization: Replace chained .filter().slice() with a bounded imperative loop
+    // to avoid intermediate array allocations and reduce GC overhead during rapid keystrokes.
+    const result: string[] = [];
+    for (const label of uniqueLabels) {
+      if (label.toLowerCase().includes(autocompleteSearch)) {
+        result.push(label);
+        if (result.length >= 10) break;
       }
     }
-    return results;
+    return result;
   });
 
   // Reset dismissed state when the word being typed changes

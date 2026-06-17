@@ -248,4 +248,25 @@ describe("GDriveBackend", () => {
       expect(global.fetch).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe("injected fetcher", () => {
+    it("uses the injected fetcher instead of the global fetch", async () => {
+      const injected = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: folderId, trashed: false }),
+      });
+      const isolated = new GDriveBackend(
+        mockAuthService,
+        vaultId,
+        vi.fn().mockResolvedValue(undefined),
+        injected as any,
+      );
+      isolated.setVaultFolderId(folderId);
+
+      await isolated.connect();
+
+      expect(injected).toHaveBeenCalledOnce();
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
 });

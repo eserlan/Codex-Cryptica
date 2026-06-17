@@ -308,4 +308,31 @@ describe("SeoImportService", () => {
 
     expect(mockVaultStore.addConnection).not.toHaveBeenCalled();
   });
+
+  it("reads and clears the pending import via an injected storage", async () => {
+    const mem = new Map<string, string>([
+      [
+        "__codex_pending_import",
+        JSON.stringify({ type: "note", title: "Injected", content: "hi" }),
+      ],
+    ]);
+    const storage = {
+      getItem: (k: string) => mem.get(k) ?? null,
+      setItem: (k: string, v: string) => void mem.set(k, v),
+      removeItem: (k: string) => void mem.delete(k),
+    };
+    const injectedService = new SeoImportService(
+      mockVaultStore,
+      mockRegistryStore,
+      storage,
+    );
+
+    const id = await injectedService.checkAndHandlePendingImport();
+
+    expect(id).toBe("e1");
+    expect(mockVaultStore.createEntity).toHaveBeenCalled();
+    // Consumed from the injected storage, not the stubbed global.
+    expect(mem.has("__codex_pending_import")).toBe(false);
+    expect(localStorage.getItem("__codex_pending_import")).toBeNull();
+  });
 });

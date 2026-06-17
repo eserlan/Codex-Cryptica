@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.26.4",
+    "title": "The In-App Campaign Generator Update",
+    "date": "2026-06-14",
+    "type": "minor",
+    "highlights": [
+      "Campaign Generators: Generate NPCs, factions, settlements, and magic items directly inside your vault using the new Generate button in the toolbar.",
+      "Review Before Save: Every generated draft is fully editable before it touches your vault — nothing is written until you confirm.",
+      "Theme-Aware Defaults: Generator options automatically bias toward your active world theme (gothic, cyberpunk, sci-fi, etc.) so results feel native to your setting.",
+      "AI + Local Fallback: Generation works with the Lore Oracle when connected, and falls back to local offline generation when AI is unavailable or disabled.",
+      "Contextual Launch: Open the generator from any entity to prefill relationship context and optionally link the result back to the source entity."
+    ]
+  },
+  {
     "version": "0.26.3",
     "title": "The Grounded Context-Aware Entity Creator Update",
     "date": "2026-05-30",

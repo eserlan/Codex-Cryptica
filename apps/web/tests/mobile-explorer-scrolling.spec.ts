@@ -1,46 +1,29 @@
 import { test, expect } from "@playwright/test";
+import { seedEntities, setupVaultPage } from "./test-helpers";
 
 test.describe("Mobile Explorer Scrolling", () => {
   test.beforeEach(async ({ page }) => {
     // Set mobile viewport BEFORE navigation so responsive layout initializes correctly
     await page.setViewportSize({ width: 375, height: 667 });
-
-    await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem(
-        "codex-cryptica-help-state",
-        JSON.stringify({ completedTours: ["initial-onboarding"] }),
-      );
-    });
-
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
-    await page.evaluate(() => {
-      const ui = (window as any).uiStore;
-      if (ui) {
-        ui.dismissedWorldPage = true;
-        ui.dismissedLandingPage = true;
-      }
-    });
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({
-      timeout: 10000,
-    });
+    await setupVaultPage(page);
   });
 
   test("explorer header stays fixed while list scrolls on mobile", async ({
     page,
   }) => {
     // Create multiple entities to enable scrolling
-    for (let i = 0; i < 10; i++) {
-      await page.getByTestId("new-entity-button").click();
-      await page.getByPlaceholder("Chronicle Title...").fill(`Entity ${i}`);
-      await page.getByRole("button", { name: "ADD" }).click();
-    }
+    await seedEntities(
+      page,
+      Array.from({ length: 20 }, (_, i) => ({
+        title: `Entity ${i.toString().padStart(2, "0")}`,
+      })),
+    );
 
-    // Open the explorer sidebar using the activity bar testid
-    await page.getByTestId("activity-bar-explorer").click();
+    // Open the explorer sidebar directly; the dev debug overlay can cover the
+    // mobile activity bar in test runs.
+    await page.evaluate(() => {
+      (window as any).layoutUIStore.toggleSidebarTool("explorer");
+    });
     const explorerPanel = page.getByTestId("entity-explorer-panel");
     await expect(explorerPanel).toBeVisible();
 

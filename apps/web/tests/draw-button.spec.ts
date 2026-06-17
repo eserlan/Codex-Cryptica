@@ -8,6 +8,10 @@ test.describe("Advanced Draw Button", () => {
         "codex-cryptica-help-state",
         JSON.stringify({ completedTours: ["initial-onboarding"] }),
       );
+      localStorage.setItem("oracle-hint-seen", "true");
+      localStorage.setItem("front-page-hint-seen", "true");
+      localStorage.setItem("vtt-mode-hint-seen", "true");
+      localStorage.setItem("entity-hierarchy-hint-seen", "true");
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("/");
@@ -18,7 +22,25 @@ test.describe("Advanced Draw Button", () => {
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for indexing
-    await expect(page.getByTestId("entity-count")).toHaveText(/1\s+CHRONICLE/);
+    await expect(page.getByTestId("entity-count")).toHaveText(
+      /1\s+(CHRONICLE|NOTE)/i,
+    );
+
+    // Wait for the search index to include "Ancient Dragon"
+    await page.waitForFunction(
+      async () => {
+        const s = (window as any).searchStore;
+        if (!s?.setQuery) return false;
+        try {
+          await s.setQuery("Ancient Dragon");
+          return Array.isArray(s.results) && s.results.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      null,
+      { timeout: 15000 },
+    );
   });
 
   test("Lite tier does NOT show draw buttons", async ({ page }) => {
@@ -73,9 +95,7 @@ test.describe("Advanced Draw Button", () => {
     ).toBeVisible();
 
     // Button should be in the DOM
-    const sidepanelDraw = page.getByLabel(
-      "Draw visualization for Ancient Dragon",
-    );
+    const sidepanelDraw = page.getByLabel("Generate image for Ancient Dragon");
     await expect(sidepanelDraw).toBeAttached();
 
     // Click it and verify loading state appears
@@ -94,8 +114,7 @@ test.describe("Advanced Draw Button", () => {
         content: "I can visualize this dragon for you.",
         hasDrawAction: true,
       };
-      oracle.messages = [...oracle.messages, newMsg];
-      oracle.lastUpdated = Date.now();
+      await oracle.setMessages([...oracle.messages, newMsg]);
     });
 
     // Verify button exists in chat and click it
@@ -122,7 +141,10 @@ test.describe("Advanced Draw Button", () => {
     await page.getByTestId("search-result").first().click();
 
     // Open Zen Mode
-    await page.getByTestId("enter-zen-mode-button").click();
+    await page
+      .locator(".hidden.md\\:flex")
+      .getByTestId("enter-zen-mode-button")
+      .click();
 
     // Wait for Zen Mode transition and ensure heading is visible
     const zenModal = page.getByTestId("zen-mode-modal");

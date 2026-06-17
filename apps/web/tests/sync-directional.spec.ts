@@ -53,7 +53,7 @@ test.describe("Directional Vault Sync UI", () => {
     page,
   }) => {
     // Note: This test assumes no folder is linked initially, so it might be disabled with a specific title.
-    const saveButton = page.getByRole("button", { name: /SAVE/i }).first();
+    const saveButton = page.getByLabel("SAVE TO FOLDER");
 
     // Create an entity to trigger dirty state
     await page.evaluate(async () => {

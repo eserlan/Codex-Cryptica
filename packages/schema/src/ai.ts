@@ -38,6 +38,16 @@ export interface RelatedEntityContext {
   summary: string;
 }
 
+/** A single retrieved lore record, used for Interactions API delta tracking. */
+export interface LoreContextEntry {
+  /** Entity id, or a synthetic id such as `__style__`. */
+  id: string;
+  /** The text block to send to the model (may include a stable header). */
+  snippet: string;
+  /** Hash of entity.content (always-hydrated short field) + connection context. */
+  hash: string;
+}
+
 export interface ContextRetrievalService {
   retrieveContext(
     query: string,
@@ -49,6 +59,12 @@ export interface ContextRetrievalService {
     content: string;
     primaryEntityId?: string;
     sourceIds: string[];
+    /**
+     * Per-record lore entries (entity id + sent snippet + stable-body hash) used
+     * by the Interactions API flow to send only new/changed lore. Optional so
+     * non-delta callers can ignore it.
+     */
+    entries?: LoreContextEntry[];
     activeStyleTitle?: string;
   }>;
   getConsolidatedContext(
@@ -82,6 +98,20 @@ export interface TextGenerationService {
       vaultId?: string;
       existingEntities?: Entity[];
       systemInstructionOverride?: string;
+      /**
+       * Per-record lore for the Interactions API delta flow. When present (and
+       * running through the proxy), only new/changed records are sent; the rest
+       * are retained server-side via `previous_interaction_id`.
+       */
+      loreEntries?: LoreContextEntry[];
+      /** Stable key identifying the conversation for interaction state. */
+      conversationId?: string;
+      /**
+       * Whether the Interactions API path is enabled. Must be passed explicitly
+       * because text generation runs in a Web Worker with its own module scope —
+       * a main-thread module-global flag would never reach it.
+       */
+      interactionsEnabled?: boolean;
     },
   ): Promise<void>;
   generateMergeProposal(

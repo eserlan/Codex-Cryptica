@@ -8,6 +8,11 @@ import { pcmBytesToWav } from "./pcm-to-wav";
  * Synthesizes audio via Gemini 2.5 Flash Preview TTS for rich voice control.
  */
 export class GeminiTTSService implements TTSService {
+  // Injected for tests; default wraps the global `fetch` lazily.
+  constructor(
+    private fetcher: typeof fetch = (input, init) => fetch(input, init),
+  ) {}
+
   async synthesize(
     text: string,
     voiceProfile: VoiceProfile,
@@ -38,7 +43,7 @@ export class GeminiTTSService implements TTSService {
       // currently causes Google's backend to throw an internal HTTP 500 crash.
       // So we bypass it entirely.
 
-      const response = await fetch(url, {
+      const response = await this.fetcher(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),

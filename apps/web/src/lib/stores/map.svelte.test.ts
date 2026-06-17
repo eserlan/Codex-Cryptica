@@ -182,6 +182,26 @@ describe("MapStore settings persistence", () => {
     });
   });
 
+  it("uses an injected storage instead of window.localStorage", async () => {
+    const mem = new Map<string, string>();
+    const storage = {
+      getItem: (k: string) => mem.get(k) ?? null,
+      setItem: (k: string, v: string) => void mem.set(k, v),
+      removeItem: (k: string) => void mem.delete(k),
+    };
+    const store = new MapStore(storage);
+    store.selectMap("map-x");
+    store.brushRadius = 77;
+
+    await waitFor(() => {
+      const raw = mem.get("codex-map-settings:map-x");
+      expect(raw).not.toBeUndefined();
+      expect(JSON.parse(raw!).brushRadius).toBe(77);
+    });
+    // Nothing leaked to the real localStorage.
+    expect(window.localStorage.getItem("codex-map-settings:map-x")).toBeNull();
+  });
+
   it("loads remote fog masks from URL paths", async () => {
     const drawImage = vi.fn();
     const ctx = {

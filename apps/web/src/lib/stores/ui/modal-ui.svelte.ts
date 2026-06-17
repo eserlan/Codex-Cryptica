@@ -164,6 +164,51 @@ export class ModalUIStore {
     this.relatedEntityDialog = { open: false, sourceEntityId: null };
   }
 
+  // In-app RPG generator workflow (see specs/131-in-app-rpg-generators).
+  generatorWorkflow = $state<{
+    open: boolean;
+    launchMode: "workspace" | "contextual";
+    sourceEntityId: string | null;
+    generatorId: string | null;
+  }>({
+    open: false,
+    launchMode: "workspace",
+    sourceEntityId: null,
+    generatorId: null,
+  });
+
+  /** Open the unified generator workflow from the campaign workspace. */
+  openGeneratorWorkflow(generatorId: string | null = null) {
+    this.generatorWorkflow = {
+      open: true,
+      launchMode: "workspace",
+      sourceEntityId: null,
+      generatorId,
+    };
+  }
+
+  /** Open the unified generator workflow seeded from a source entity. */
+  openGeneratorWorkflowForEntity(
+    sourceEntityId: string,
+    generatorId: string | null = null,
+  ) {
+    this.generatorWorkflow = {
+      open: true,
+      launchMode: "contextual",
+      sourceEntityId,
+      generatorId,
+    };
+  }
+
+  closeGeneratorWorkflow() {
+    this.generatorWorkflow = {
+      open: false,
+      launchMode: "workspace",
+      sourceEntityId: null,
+      generatorId: null,
+    };
+  }
+
   requestCreateEntity() {
     this.pendingCreateEntity = true;
   }

@@ -1,8 +1,8 @@
 import type { DefaultGeneratorEngine } from "./generator-engine";
-import { pickFrom, type GeneratorOutput } from "./generators/base";
-import { factionConfig } from "./generators/faction";
-import { npcThemeConfig } from "./generators/npc";
-import { themeToQuestGenre } from "./generators/quest";
+import { pickFrom, type GeneratorOutput } from "./generator-helpers";
+import { factionConfig } from "generator-engine";
+import { npcThemeConfig } from "generator-engine";
+import { themeToQuestGenre } from "generator-engine";
 
 export interface RandomIdeaCategory {
   key:
