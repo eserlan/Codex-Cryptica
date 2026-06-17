@@ -1,9 +1,5 @@
-export interface RelatedEntityContext {
-  title: string;
-  type: string;
-  relation?: string;
-  summary: string;
-}
+import type { RelatedEntityContext } from "schema";
+export type { RelatedEntityContext };
 
 interface BuildRevisionContextOptions {
   entity: {
@@ -135,6 +131,7 @@ export function buildRelatedEntityContext(
   const candidates = new Map<
     string,
     {
+      id: string;
       title: string;
       type: string;
       relation?: string;
@@ -162,6 +159,7 @@ export function buildRelatedEntityContext(
     const nextScore = baseScore + titleScore + (existing?.score || 0);
 
     candidates.set(relatedId, {
+      id: relatedId,
       title: related.title,
       type: related.type || "concept",
       relation: existing?.relation || relation,
@@ -205,7 +203,7 @@ export function buildRelatedEntityContext(
   const debugEntries: Array<{ title: string; score: number; chars: number }> =
     [];
   let totalChars = 0;
-  for (const { title, type, relation, summary, score } of sorted) {
+  for (const { id, title, type, relation, summary, score } of sorted) {
     // Hard-cap any single entry so even the first can't exceed the total budget.
     const entry =
       summary.length > MAX_TOTAL_CHARS
@@ -213,7 +211,7 @@ export function buildRelatedEntityContext(
         : summary;
     if (result.length > 0 && totalChars + entry.length > MAX_TOTAL_CHARS)
       break;
-    result.push({ title, type, relation, summary: entry });
+    result.push({ id, title, type, relation, summary: entry });
     debugEntries.push({ title, score, chars: entry.length });
     totalChars += entry.length;
   }

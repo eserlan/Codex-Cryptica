@@ -456,6 +456,7 @@ describe("OracleStore", () => {
         },
         [
           {
+            id: "ally",
             title: "Szass Tam",
             type: "npc",
             relation: "rules",
@@ -467,6 +468,7 @@ describe("OracleStore", () => {
           source: "discovery",
           instructions: undefined,
           priority: "incoming-first",
+          interactionsEnabled: true,
         }),
       );
     });

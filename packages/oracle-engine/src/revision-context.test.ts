@@ -43,12 +43,14 @@ describe("buildRelatedEntityContext", () => {
     expect(related).toHaveLength(2);
     expect(related[0]).toEqual(
       expect.objectContaining({
+        id: "aglarond",
         title: "Aglarond",
         type: "location",
       }),
     );
     expect(related[1]).toEqual(
       expect.objectContaining({
+        id: "szass",
         title: "Szass Tam",
         type: "npc",
       }),

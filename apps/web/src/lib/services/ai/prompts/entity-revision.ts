@@ -45,6 +45,84 @@ Return JSON only, with this shape:
 Include "categoryId" only when the request provides ALLOWED CATEGORIES; otherwise omit that field entirely.`;
 }
 
+export function buildEntityRevisionRelatedSection(
+  relatedEntities: RelatedEntityContext[] = [],
+): string {
+  if (relatedEntities.length === 0) return "";
+
+  return `\nRELATED ENTITY CONTEXT:\n${relatedEntities
+    .map((related) =>
+      u(
+        `${related.title} (${related.type})${
+          related.relation ? ` [${related.relation}]` : ""
+        }: ${related.summary}`,
+      ),
+    )
+    .join("\n")}\n`;
+}
+
+export function buildEntityRevisionPromptCore(
+  entity: Entity,
+  incoming: {
+    chronicle: string;
+    lore: string;
+  },
+  categories: { id: string; label?: string; description?: string }[] = [],
+  options: {
+    source?: string;
+    instructions?: string;
+    priority?: "instructions-first" | "incoming-first" | "preserve-existing";
+    loreTemplate?: string;
+  } = {},
+): string {
+  const instructionSection = options.instructions?.trim()
+    ? `\nUSER INSTRUCTIONS (HIGHEST PRIORITY):\n${u(options.instructions.trim())}\n`
+    : "";
+  const categorySection =
+    categories.length > 0
+      ? `\nALLOWED CATEGORIES:\n${u(
+          categories
+            .map((cat) => {
+              const label = cat.label ? ` (${cat.label})` : "";
+              const desc = cat.description ? `: ${cat.description}` : "";
+              return `- ${cat.id}${label}${desc}`;
+            })
+            .join("\n"),
+        )}\n`
+      : "";
+  const sourceLine = options.source
+    ? `\nREVISION SOURCE: ${options.source}`
+    : "";
+  const loreTemplateSection = options.loreTemplate
+    ? `\nLORE TEMPLATE (structural blueprint for this entity type):\n${options.loreTemplate}\n`
+    : "";
+  const priority =
+    options.priority ||
+    (options.instructions?.trim() ? "instructions-first" : "incoming-first");
+
+  const hasIncoming =
+    (incoming.chronicle || "").trim() || (incoming.lore || "").trim();
+  const newPassageSection = hasIncoming
+    ? `\nNEW PASSAGE:\n--- INCOMING CHRONICLE CANDIDATE ---\n${u(incoming.chronicle || "")}\n\n--- INCOMING LORE CANDIDATE ---\n${u(incoming.lore || "")}\n`
+    : "";
+
+  return `Revise the record for the PRIMARY SUBJECT below using the provided inputs, and return the result per the OUTPUT CONTRACT.
+${sourceLine}
+ACTIVE PRIORITY: ${priority}
+
+ENTITY:
+- Title: ${entity.title}
+- Type: ${entity.type}
+${instructionSection}${categorySection}${loreTemplateSection}
+CURRENT RECORD:
+--- CURRENT CHRONICLE ---
+${u(entity.content || "")}
+
+--- CURRENT LORE ---
+${u(entity.lore || "")}
+${newPassageSection}`;
+}
+
 export function buildEntityRevisionUserPrompt(
   entity: Entity,
   incoming: {
@@ -60,65 +138,14 @@ export function buildEntityRevisionUserPrompt(
     loreTemplate?: string;
   } = {},
 ): string {
-  const relatedSection =
-    relatedEntities.length > 0
-      ? `\nRELATED ENTITY CONTEXT:\n${relatedEntities
-          .map((related) =>
-            u(
-              `${related.title} (${related.type})${
-                related.relation ? ` [${related.relation}]` : ""
-              }: ${related.summary}`,
-            ),
-          )
-          .join("\n")}\n`
-      : "";
-  const categorySection =
-    categories.length > 0
-      ? `\nALLOWED CATEGORIES:\n${categories
-          .map((category) => {
-            const label = category.label ? ` (${u(category.label)})` : "";
-            const description = category.description
-              ? `: ${u(category.description)}`
-              : "";
-            return `- ${category.id}${label}${description}`;
-          })
-          .join("\n")}\n`
-      : "";
-  const instructionSection = options.instructions?.trim()
-    ? `\nUSER INSTRUCTIONS / CORRECTIONS (HIGHEST PRIORITY):\n${u(options.instructions.trim())}\n`
-    : "";
-  const sourceLine = options.source
-    ? `\nREVISION SOURCE: ${options.source}`
-    : "";
-  const loreTemplateSection = options.loreTemplate
-    ? `\nLORE TEMPLATE (structural blueprint for this entity type):\n${options.loreTemplate}\n`
-    : "";
-  const priority =
-    options.priority ||
-    (options.instructions?.trim() ? "instructions-first" : "incoming-first");
-
-  return `Revise the record for the PRIMARY SUBJECT below using the provided inputs, and return the result per the OUTPUT CONTRACT.
-${sourceLine}
-ACTIVE PRIORITY: ${priority}
-
-ENTITY:
-- Title: ${entity.title}
-- Type: ${entity.type}
-${categorySection}${loreTemplateSection}
-CURRENT RECORD:
---- CURRENT CHRONICLE ---
-${u(entity.content || "")}
-
---- CURRENT LORE ---
-${u(entity.lore || "")}
-
-NEW PASSAGE:
---- INCOMING CHRONICLE CANDIDATE ---
-${u(incoming.chronicle || "")}
-
---- INCOMING LORE CANDIDATE ---
-${u(incoming.lore || "")}
-${instructionSection}${relatedSection}`;
+  return (
+    buildEntityRevisionPromptCore(
+      entity,
+      incoming,
+      categories,
+      options,
+    ) + buildEntityRevisionRelatedSection(relatedEntities)
+  );
 }
 
 export function buildEntityRevisionPrompt(

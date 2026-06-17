@@ -10,7 +10,10 @@
  */
 
 /** A single lore record retrieved for a turn. Canonical shape lives in schema. */
-import type { LoreContextEntry as LoreEntry } from "schema";
+import type {
+  LoreContextEntry as LoreEntry,
+  RelatedEntityContext,
+} from "schema";
 export type { LoreEntry };
 
 export interface LorePartition {
@@ -18,6 +21,17 @@ export interface LorePartition {
   newOrChanged: LoreEntry[];
   /** Records already present server-side with an identical body. */
   unchanged: LoreEntry[];
+}
+
+const CLOSING_USER_CONTENT_TAG = "</USER_CONTENT>";
+const ESCAPED_USER_CONTENT_TAG = "<\\/USER_CONTENT>";
+
+function wrapUserContent(content: string): string {
+  const safe = content.replaceAll(
+    CLOSING_USER_CONTENT_TAG,
+    ESCAPED_USER_CONTENT_TAG,
+  );
+  return `<USER_CONTENT>\n${safe}\n</USER_CONTENT>`;
 }
 
 /**
@@ -126,5 +140,58 @@ export function buildInteractionInput(
   }
 
   blocks.push(`[USER QUERY]\n${query}`);
+  return blocks.join("\n\n");
+}
+
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.+?)\*\*/gs, "$1")
+    .replace(/\*(.+?)\*/gs, "$1")
+    .replace(/^[-*]\s+/gm, "")
+    .trim();
+}
+
+export function relatedToLoreEntries(
+  relatedEntities: RelatedEntityContext[],
+): LoreEntry[] {
+  return relatedEntities.map((related) => {
+    const summary = stripMarkdown(related.summary);
+    const snippet = `${related.title} (${related.type})${related.relation ? ` [${related.relation}]` : ""}: ${summary}`;
+    return {
+      id: related.id,
+      snippet,
+      hash: entityContentHash(snippet),
+    };
+  });
+}
+
+export function buildRevisionInteractionInput(
+  promptCore: string,
+  partition: LorePartition,
+): string {
+  const blocks: string[] = [];
+
+  if (partition.newOrChanged.length > 0) {
+    blocks.push(
+      "[RELATED ENTITY CONTEXT]\n" +
+        partition.newOrChanged
+          .map((entry) => wrapUserContent(entry.snippet))
+          .join("\n"),
+    );
+  }
+
+  if (partition.unchanged.length > 0) {
+    blocks.push(
+      `[RELEVANT EARLIER RECORDS] ${partition.unchanged
+          .map((entry) => {
+            const sep = entry.snippet.indexOf(": ");
+            return sep >= 0 ? entry.snippet.slice(0, sep) : entry.snippet;
+          })
+          .join(", ")} (retained from prior turns).`,
+    );
+  }
+
+  blocks.push(promptCore);
   return blocks.join("\n\n");
 }

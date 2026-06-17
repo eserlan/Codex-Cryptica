@@ -41,6 +41,10 @@ vi.mock("./prompts/context-distillation", () => ({
 }));
 vi.mock("./prompts/entity-revision", () => ({
   buildEntityRevisionSystemInstruction: vi.fn(() => "SYSTEM_INSTRUCTION"),
+  buildEntityRevisionPromptCore: vi.fn(
+    (entity, incoming, categories, options) =>
+      `core:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}:${options?.instructions || ""}:${options?.priority || ""}`,
+  ),
   buildEntityRevisionUserPrompt: vi.fn(
     (entity, incoming, _related, categories, options) =>
       `revise:${entity.title}:${incoming.chronicle}:${incoming.lore}:${categories?.map((c: any) => c.id).join(",") || ""}:${options?.instructions || ""}:${options?.priority || ""}`,
@@ -308,6 +312,7 @@ describe("DefaultTextGenerationService", () => {
         },
         [
           {
+            id: "szass",
             title: "Szass Tam",
             type: "npc",
             relation: "rules",

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { OracleRevisionManager } from "../revision-manager.svelte";
+import { interactionSessions } from "../../../services/ai/interaction-session";
 import type { IOracleStore } from "../types";
 
 describe("OracleRevisionManager", () => {
@@ -7,6 +8,10 @@ describe("OracleRevisionManager", () => {
   let mockStore: any;
 
   beforeEach(() => {
+    interactionSessions.enabled = true;
+    (globalThis as any).$state = {
+      snapshot: (value: unknown) => structuredClone(value),
+    };
     mockStore = {
       vault: {
         entities: {
@@ -27,6 +32,7 @@ describe("OracleRevisionManager", () => {
       contextRetrieval: { getConsolidatedContext: vi.fn(() => "context") },
       effectiveApiKey: "key",
       modelName: "model",
+      themeStore: { activeTheme: undefined },
     };
     manager = new OracleRevisionManager(mockStore as IOracleStore);
   });
@@ -61,6 +67,8 @@ describe("OracleRevisionManager", () => {
         source: "revise",
         instructions: "Make the correction.",
         priority: "instructions-first",
+        themeId: undefined,
+        interactionsEnabled: true,
       },
     );
   });
@@ -94,6 +102,7 @@ describe("OracleRevisionManager", () => {
       (r: any) => r.title === "Related Entity",
     );
     expect(related).toBeDefined();
+    expect(related.id).toBe("e2");
     expect(related.summary).toBe("short chronicle");
     expect(related.summary).not.toContain("lore that should not appear");
     expect(
