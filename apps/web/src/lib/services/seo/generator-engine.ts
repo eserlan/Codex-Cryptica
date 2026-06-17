@@ -9,9 +9,13 @@ import {
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
+  buildQuestPrompt,
+  parseQuestResponse,
+  generateQuestLocal,
   type NpcGeneratorOptions,
   type FactionGeneratorOptions,
   type VampireGeneratorOptions,
+  type QuestGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -32,7 +36,7 @@ export { npcConfig, npcThemeConfig } from "generator-engine";
 export { factionConfig, themeIdToLabel, vampireConfig } from "generator-engine";
 export { settlementConfig } from "./generators/settlement";
 export { magicItemConfig } from "./generators/magic-item";
-export { questConfig, themeToQuestGenre } from "./generators/quest";
+export { questConfig, themeToQuestGenre } from "generator-engine";
 export { socialHubConfig } from "./generators/social-hub";
 export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
@@ -40,7 +44,6 @@ export { pantheonConfig } from "./generators/pantheon";
 import { generateName as _generateName } from "./generators/base";
 import { generateSettlement } from "./generators/settlement";
 import { generateMagicItem } from "./generators/magic-item";
-import { generateQuestHook } from "./generators/quest";
 import { generateNames } from "./generators/names";
 import { generateSocialHub, generateTavern } from "./generators/social-hub";
 import { generateKingdom, generateNation } from "./generators/kingdom-nation";
@@ -167,9 +170,31 @@ export class DefaultGeneratorEngine {
   }
 
   async generateQuestHook(
-    options: Parameters<typeof generateQuestHook>[1] = {},
+    options: QuestGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateQuestHook(this.clientManager, options);
+    const { useAI, ...questOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage, resolved } = buildQuestPrompt(
+          questOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseQuestResponse(text, resolved));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateQuestLocal(questOptions));
   }
 
   async generateNames(
