@@ -1,10 +1,5 @@
-export interface RelatedEntityContext {
-  id: string;
-  title: string;
-  type: string;
-  relation?: string;
-  summary: string;
-}
+import type { RelatedEntityContext } from "schema";
+export type { RelatedEntityContext };
 
 interface BuildRevisionContextOptions {
   entity: {

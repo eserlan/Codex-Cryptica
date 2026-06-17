@@ -22,7 +22,7 @@ flowchart LR
 ```
 
 1. Open a Pull Request targeting the `staging` branch.
-2. The [`deploy.yml`](.github/workflows/deploy.yml) workflow triggers on `pull_request`:
+2. The [`deploy.yml`](../../.github/workflows/deploy.yml) workflow triggers on `pull_request`:
    - Installs dependencies, runs lint and tests.
    - Builds the application.
    - Deploys a **Preview** to Cloudflare Pages.
@@ -72,11 +72,11 @@ The promotion workflow:
 
 | File                                                                       | Purpose                                                            |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [`deploy.yml`](.github/workflows/deploy.yml)                               | Build + deploy on push to `main` or `staging`                      |
-| [`promote-to-prod.yml`](.github/workflows/promote-to-prod.yml)             | Manual promotion of staging artifact to production                 |
-| [`auto-merge-staging.yml`](.github/workflows/auto-merge-staging.yml)       | Auto-enables merge for staging-targeted PRs                        |
-| [`auto-bump-web-version.yml`](.github/workflows/auto-bump-web-version.yml) | Auto-increments `apps/web/package.json` version on merge to `main` |
-| [`release.yml`](.github/workflows/release.yml)                             | Creates GitHub releases for major/minor version bumps              |
+| [`deploy.yml`](../../.github/workflows/deploy.yml)                               | Build + deploy on push to `main` or `staging`                      |
+| [`promote-to-prod.yml`](../../.github/workflows/promote-to-prod.yml)             | Manual promotion of staging artifact to production                 |
+| [`auto-merge-staging.yml`](../../.github/workflows/auto-merge-staging.yml)       | Auto-enables merge for staging-targeted PRs                        |
+| [`auto-bump-web-version.yml`](../../.github/workflows/auto-bump-web-version.yml) | Auto-increments `apps/web/package.json` version on merge to `main` |
+| [`release.yml`](../../.github/workflows/release.yml)                             | Creates GitHub releases for major/minor version bumps              |
 
 ## Branch Flow
 

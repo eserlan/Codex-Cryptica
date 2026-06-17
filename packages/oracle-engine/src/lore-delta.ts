@@ -161,7 +161,7 @@ export function relatedToLoreEntries(
     return {
       id: related.id,
       snippet,
-      hash: entityContentHash(related.summary),
+      hash: entityContentHash(snippet),
     };
   });
 }

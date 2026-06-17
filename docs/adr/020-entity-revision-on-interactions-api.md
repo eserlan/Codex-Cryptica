@@ -1,6 +1,6 @@
 # ADR 020: Entity Revision on the Gemini Interactions API
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Tracking issue:** [#1406](https://github.com/eserlan/Codex-Cryptica/issues/1406)
 - **Builds on:** [ADR 018 — Server-Side Oracle Conversation State](018-oracle-server-side-conversation-state.md)
 - **Implementation plan:** [`docs/proposals/1406-revision-interactions-api.md`](../proposals/1406-revision-interactions-api.md)
