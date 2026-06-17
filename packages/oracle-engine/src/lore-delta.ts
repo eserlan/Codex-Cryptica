@@ -143,11 +143,21 @@ export function buildInteractionInput(
   return blocks.join("\n\n");
 }
 
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.+?)\*\*/gs, "$1")
+    .replace(/\*(.+?)\*/gs, "$1")
+    .replace(/^[-*]\s+/gm, "")
+    .trim();
+}
+
 export function relatedToLoreEntries(
   relatedEntities: RelatedEntityContext[],
 ): LoreEntry[] {
   return relatedEntities.map((related) => {
-    const snippet = `${related.title} (${related.type})${related.relation ? ` [${related.relation}]` : ""}: ${related.summary}`;
+    const summary = stripMarkdown(related.summary);
+    const snippet = `${related.title} (${related.type})${related.relation ? ` [${related.relation}]` : ""}: ${summary}`;
     return {
       id: related.id,
       snippet,
