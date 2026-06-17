@@ -173,6 +173,17 @@
   const config = $derived(themeConfig[data.theme]);
   const canonicalUrl = $derived(`${origin}/generators/${data.theme}`);
 
+  const collectionPageJsonLd = $derived(
+    safeJsonLd({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: config.metaTitle,
+      description: config.metaDescription,
+      url: canonicalUrl,
+      inLanguage: "en",
+    }),
+  );
+
   const itemListJsonLd = $derived(
     safeJsonLd({
       "@context": "https://schema.org",
@@ -226,7 +237,27 @@
 <svelte:head>
   <title>{config.metaTitle}</title>
   <meta name="description" content={config.metaDescription} />
+  <meta name="robots" content="index, follow" />
   <link rel="canonical" href={canonicalUrl} />
+  <link rel="help" href="{base}/llms.txt" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Codex Cryptica" />
+  <meta property="og:title" content={config.metaTitle} />
+  <meta property="og:description" content={config.metaDescription} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:image" content="{origin}/logo.png" />
+  <meta property="og:image:width" content="1024" />
+  <meta property="og:image:height" content="1024" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={config.metaTitle} />
+  <meta name="twitter:description" content={config.metaDescription} />
+  <meta name="twitter:image" content="{origin}/logo.png" />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<scr` +
+    `ipt type="application/ld+json">${collectionPageJsonLd}</scr` +
+    `ipt>`}
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${itemListJsonLd}</scr` +
