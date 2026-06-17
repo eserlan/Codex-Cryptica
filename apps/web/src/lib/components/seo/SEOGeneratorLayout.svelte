@@ -912,15 +912,6 @@
           ></span>
           {backLabel ?? "All generators"}
         </a>
-        <div
-          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
-        >
-          <span
-            class="icon-[lucide--wand-sparkles] w-3.5 h-3.5"
-            aria-hidden="true"
-          ></span>
-          {eyebrow}
-        </div>
         <h1
           class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"
           id="generator-title"
