@@ -35,6 +35,14 @@ export {
   type NpcPrompt,
 } from "./public-npc";
 export {
+  buildMagicItemPrompt,
+  parseMagicItemResponse,
+  generateMagicItemLocal,
+  magicItemConfig,
+  type MagicItemGeneratorOptions,
+  type MagicItemPrompt,
+} from "./public-magic-item";
+export {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
@@ -49,6 +57,44 @@ export {
   type VampireGeneratorOptions,
   type VampirePrompt,
 } from "./public-faction";
+export {
+  buildSocialHubPrompt,
+  parseSocialHubResponse,
+  generateSocialHubLocal,
+  buildTavernPrompt,
+  parseTavernResponse,
+  generateTavernLocal,
+  socialHubConfig,
+  type SocialHubGeneratorOptions,
+  type SocialHubPrompt,
+  type TavernGeneratorOptions,
+  type TavernPrompt,
+} from "./public-social-hub";
+export {
+  buildQuestPrompt,
+  parseQuestResponse,
+  generateQuestLocal,
+  questConfig,
+  themeToQuestGenre,
+  type QuestGeneratorOptions,
+  type QuestPrompt,
+} from "./public-quest";
+export {
+  buildSettlementPrompt,
+  parseSettlementResponse,
+  generateSettlementLocal,
+  settlementConfig,
+  type SettlementGeneratorOptions,
+  type SettlementPrompt,
+} from "./public-settlement";
+export {
+  buildKingdomPrompt,
+  parseKingdomResponse,
+  generateKingdomLocal,
+  kingdomConfig,
+  type KingdomGeneratorOptions,
+  type KingdomPrompt,
+} from "./public-kingdom";
 export {
   buildNationPrompt,
   parseNationResponse,
