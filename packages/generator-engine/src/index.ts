@@ -104,6 +104,14 @@ export {
   type NationPrompt,
 } from "./public-nation";
 export {
+  buildPantheonPrompt,
+  parsePantheonResponse,
+  generatePantheonLocal,
+  pantheonConfig,
+  type PantheonGeneratorOptions,
+  type PantheonPrompt,
+} from "./public-pantheon";
+export {
   CampaignGeneratorService,
   campaignGeneratorService,
   DraftSaveError,
