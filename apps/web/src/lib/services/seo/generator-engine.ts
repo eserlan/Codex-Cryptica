@@ -24,6 +24,9 @@ import {
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
+  buildKingdomPrompt,
+  parseKingdomResponse,
+  generateKingdomLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -32,6 +35,7 @@ import {
   type TavernGeneratorOptions,
   type QuestGeneratorOptions,
   type SettlementGeneratorOptions,
+  type KingdomGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./generators/session-context";
@@ -55,12 +59,13 @@ export { settlementConfig } from "generator-engine";
 export { magicItemConfig } from "generator-engine";
 export { questConfig, themeToQuestGenre } from "generator-engine";
 export { socialHubConfig } from "generator-engine";
-export { nationConfig, kingdomConfig } from "./generators/kingdom-nation";
+export { kingdomConfig } from "generator-engine";
+export { nationConfig } from "./generators/kingdom-nation";
 export { pantheonConfig } from "./generators/pantheon";
 
 import { generateName as _generateName } from "./generators/base";
 import { generateNames } from "./generators/names";
-import { generateKingdom, generateNation } from "./generators/kingdom-nation";
+import { generateNation } from "./generators/kingdom-nation";
 import { generatePantheon } from "./generators/pantheon";
 import type { GeneratorOutput } from "./generators/base";
 
@@ -316,9 +321,31 @@ export class DefaultGeneratorEngine {
   }
 
   async generateKingdom(
-    options: Parameters<typeof generateKingdom>[1] = {},
+    options: KingdomGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
-    return generateKingdom(this.clientManager, options);
+    const { useAI, ...kingdomOptions } = options;
+    if (useAI !== false) {
+      try {
+        const { systemInstruction, userMessage } = buildKingdomPrompt(
+          kingdomOptions,
+          getSessionContext(),
+        );
+        const model = await this.clientManager.getModel(
+          "",
+          "gemini-3.1-flash-lite",
+          systemInstruction,
+        );
+        const response = await model.generateContent(userMessage);
+        const text = response.response.text().trim();
+        return toSeoOutput(parseKingdomResponse(text));
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+      }
+    }
+    return toSeoOutput(generateKingdomLocal(kingdomOptions));
   }
 
   async generateNation(
