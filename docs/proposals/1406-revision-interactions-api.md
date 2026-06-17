@@ -1,10 +1,11 @@
-# Proposal: Entity Revision over the Gemini Interactions API
+# Implementation Plan: Entity Revision over the Gemini Interactions API
 
 **Status:** Draft
 **Date:** 2026-06-17
 **Branch:** `1406-revision-interactions-api`
 **Issue:** #1406
-**Related:** ADR 018 (server-side conversation state), PR #1404 (related-context quality), `docs/proposals/revision-context-quality.md`
+**Decision record:** [ADR 020](../adr/020-entity-revision-on-interactions-api.md) (the *why*; this doc is the *how*)
+**Related:** ADR 018 (server-side conversation state), ADR 019 (generator sessions — sibling precedent), PR #1404 (related-context quality), `docs/proposals/revision-context-quality.md`
 **Scope:** Route `reviseEntityUpdate` through the existing Interactions API flow so related-entity context is delta-sent (only new/changed) and threaded server-side, instead of re-sending the full related block on every revision.
 
 ## Problem
