@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { browser } from "$app/environment";
+  import { page } from "$app/stores";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -34,6 +35,23 @@
   } from "$lib/services/seo/generator-engine";
 
   let { data } = $props();
+
+  const HUB_LABELS: Record<string, string> = {
+    fantasy: "Fantasy Hub",
+    cyberpunk: "Cyberpunk Hub",
+    "sci-fi": "Sci-Fi Hub",
+    "post-apocalyptic": "Post-Apocalyptic Hub",
+    modern: "Modern Hub",
+    vampire: "Vampire Hub",
+  };
+
+  const hubParam = $derived($page.url.searchParams.get("hub") ?? "");
+  const backHref = $derived(
+    hubParam && HUB_LABELS[hubParam]
+      ? `/generators/${hubParam}`
+      : "/generators",
+  );
+  const backLabel = $derived(HUB_LABELS[hubParam] ?? "All generators");
 
   type SlugMetaEntry = {
     pageTitle: string;
@@ -707,6 +725,8 @@
   isThemeCustomizable={shouldSyncGeneratorTheme(data.slug)}
   {generate}
   {initialDraft}
+  {backHref}
+  {backLabel}
   variant={data.slug === "names" || data.slug === "fantasy-names"
     ? "names"
     : "default"}

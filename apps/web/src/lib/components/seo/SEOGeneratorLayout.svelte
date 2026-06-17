@@ -35,6 +35,8 @@
     generateLabel = undefined,
     inputHint = "Set your inputs — your draft updates to the right",
     onLinkToHub = undefined,
+    backHref = undefined,
+    backLabel = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -54,6 +56,8 @@
     generateLabel?: string;
     inputHint?: string;
     onLinkToHub?: () => void;
+    backHref?: string;
+    backLabel?: string;
   } = $props();
 
   const HIDDEN_TAGS = new Set([
@@ -901,12 +905,12 @@
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
         <a
-          href="{cleanBase}/generators"
+          href="{cleanBase}{backHref ?? '/generators'}"
           class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
         >
           <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
           ></span>
-          All generators
+          {backLabel ?? "All generators"}
         </a>
         <div
           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"

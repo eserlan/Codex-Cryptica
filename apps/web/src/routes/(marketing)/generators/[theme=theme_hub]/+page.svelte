@@ -304,7 +304,7 @@
       {#each config.cards as card (card.slug)}
         <li>
           <a
-            href="{base}/generators/{card.slug}"
+            href="{base}/generators/{card.slug}?hub={data.theme}"
             onclick={() => themeStore.setTheme(config.localStorageId)}
             class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
           >
