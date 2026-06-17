@@ -16,6 +16,8 @@
     </h3>
     <div class="grid grid-cols-3 gap-2">
       <button
+        type="button"
+        aria-pressed={themeStore.appAppearanceId === 'system'}
         class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'system'
           ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
@@ -26,6 +28,8 @@
         System
       </button>
       <button
+        type="button"
+        aria-pressed={themeStore.appAppearanceId === 'neutral-light'}
         class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'neutral-light'
           ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
@@ -36,6 +40,8 @@
         Light
       </button>
       <button
+        type="button"
+        aria-pressed={themeStore.appAppearanceId === 'neutral-dark'}
         class="flex items-center justify-center gap-2 p-3 bg-chrome-surface border transition-all rounded text-xs font-bold tracking-wide uppercase
         {themeStore.appAppearanceId === 'neutral-dark'
           ? 'border-chrome-accent ring-1 ring-chrome-accent text-chrome-accent'
@@ -59,6 +65,8 @@
       {#each worldThemes as theme}
         {@const isSelected = themeStore.currentThemeId === theme.id}
         <button
+          type="button"
+          aria-pressed={isSelected}
           class="group relative flex flex-col items-start p-4 bg-theme-surface border transition-all rounded overflow-hidden
           {isSelected
             ? 'border-theme-primary ring-1 ring-theme-primary'

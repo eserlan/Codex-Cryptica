@@ -262,14 +262,27 @@ describe("markdown.ts utility", () => {
   describe("upsertMarkdownSection", () => {
     it("should append a new section if the title does not exist", () => {
       const content = "Initial content.";
-      const result = upsertMarkdownSection(content, "New Section", "Section content here.");
-      expect(result).toBe("Initial content.\n\n## New Section\nSection content here.");
+      const result = upsertMarkdownSection(
+        content,
+        "New Section",
+        "Section content here.",
+      );
+      expect(result).toBe(
+        "Initial content.\n\n## New Section\nSection content here.",
+      );
     });
 
     it("should replace the content of an existing section with the same title", () => {
-      const content = "Initial content.\n\n## Existing Section\nOld content.\n\n## Another Section\nOther content.";
-      const result = upsertMarkdownSection(content, "Existing Section", "New content.");
-      expect(result).toBe("Initial content.\n\n## Existing Section\nNew content.\n## Another Section\nOther content.");
+      const content =
+        "Initial content.\n\n## Existing Section\nOld content.\n\n## Another Section\nOther content.";
+      const result = upsertMarkdownSection(
+        content,
+        "Existing Section",
+        "New content.",
+      );
+      expect(result).toBe(
+        "Initial content.\n\n## Existing Section\nNew content.\n## Another Section\nOther content.",
+      );
     });
   });
 });

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { browser } from "$app/environment";
+  import { hubContext } from "$lib/stores/hub-context.svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
@@ -33,6 +35,24 @@
   } from "$lib/services/seo/generator-engine";
 
   let { data } = $props();
+
+  const HUB_LABELS: Record<string, string> = {
+    fantasy: "Fantasy Hub",
+    cyberpunk: "Cyberpunk Hub",
+    "sci-fi": "Sci-Fi Hub",
+    "post-apocalyptic": "Post-Apocalyptic Hub",
+    modern: "Modern Hub",
+    vampire: "Vampire Hub",
+  };
+
+  const backHref = $derived(
+    hubContext.theme && HUB_LABELS[hubContext.theme]
+      ? `/generators/${hubContext.theme}`
+      : "/generators",
+  );
+  const backLabel = $derived(
+    (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
+  );
 
   type SlugMetaEntry = {
     pageTitle: string;
@@ -406,8 +426,28 @@
     Western: "Modern Conspiracy",
   };
 
+  // Read localStorage at init time for slugs that respect the stored theme.
+  // This prevents SEOGeneratorLayout's $effect from overriding the hub's theme
+  // before onMount can read localStorage and correct activeTheme.
+  const SLUGS_USING_STORED_THEME = new Set([
+    "npc",
+    "faction",
+    "quest",
+    "settlement",
+    "magic-item",
+    "item",
+    "names",
+  ]);
+  const _initStoredThemeId =
+    browser && SLUGS_USING_STORED_THEME.has(data.slug)
+      ? localStorage.getItem("codex-cryptica-active-theme")
+      : null;
+
   // Unified theme binding target — synced to the active generator's state
-  let activeTheme = $state(factionConfig.themes[0]);
+  let activeTheme = $state(
+    (_initStoredThemeId && themeIdToLabel[_initStoredThemeId]) ||
+      factionConfig.themes[0],
+  );
   let lastSlug = $state(data.slug);
 
   $effect(() => {
@@ -686,6 +726,8 @@
   isThemeCustomizable={shouldSyncGeneratorTheme(data.slug)}
   {generate}
   {initialDraft}
+  {backHref}
+  {backLabel}
   variant={data.slug === "names" || data.slug === "fantasy-names"
     ? "names"
     : "default"}

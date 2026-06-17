@@ -80,6 +80,8 @@ export const BANNED_NAMES = [
   "Oakhollow",
   "Millbrook",
   "Riverdale",
+  "Silas",
+  "Vesper",
 ] as const;
 
 export const NAME_BAN_PROMPT =
