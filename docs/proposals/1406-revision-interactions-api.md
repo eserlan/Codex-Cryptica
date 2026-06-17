@@ -2,7 +2,7 @@
 
 **Status:** Draft
 **Date:** 2026-06-17
-**Branch:** `132-revision-interactions-api`
+**Branch:** `1406-revision-interactions-api`
 **Issue:** #1406
 **Related:** ADR 018 (server-side conversation state), PR #1404 (related-context quality), `docs/proposals/revision-context-quality.md`
 **Scope:** Route `reviseEntityUpdate` through the existing Interactions API flow so related-entity context is delta-sent (only new/changed) and threaded server-side, instead of re-sending the full related block on every revision.
