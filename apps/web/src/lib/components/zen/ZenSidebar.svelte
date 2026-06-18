@@ -239,7 +239,8 @@
 
     // Add children if exist
     const entityId = entity?.id || "";
-    const allEntities = Object.values(vault.entities);
+    // ⚡ Bolt Optimization: Use vault.allEntities instead of allocating Object.values()
+    const allEntities = vault.allEntities || [];
     const children = allEntities.filter(
       (e) => e.parent && e.parent.toLowerCase() === entityId.toLowerCase(),
     );

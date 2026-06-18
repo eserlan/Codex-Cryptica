@@ -12,6 +12,14 @@ vi.mock("$app/paths", () => ({
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
+    allEntities: [
+      {
+        id: "entity-1",
+        title: "Zen Source",
+        type: "character",
+        connections: [],
+      },
+    ],
     entities: {
       "entity-1": {
         id: "entity-1",
