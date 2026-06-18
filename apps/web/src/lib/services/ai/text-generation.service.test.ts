@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  DefaultTextGenerationService,
-  resolvePronounsLocally,
-} from "./text-generation.service.svelte";
+import { DefaultTextGenerationService } from "./text-generation.service.svelte";
+import { resolvePronounsLocally } from "./resolve-pronouns";
 import { TIER_MODES } from "schema";
 import * as capabilityGuard from "./capability-guard";
 
