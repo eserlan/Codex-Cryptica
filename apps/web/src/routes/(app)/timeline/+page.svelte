@@ -12,9 +12,19 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
 
+  let EntityDetailPanel = $state<any>(null);
+
   onMount(() => {
     void graph.init();
     void calendarStore.init().then(() => timelineStore.init());
+    import("../../../lib/components/EntityDetailPanel.svelte")
+      .then((m) => (EntityDetailPanel = m?.default))
+      .catch(() => {});
+  });
+
+  const selectedEntity = $derived.by(() => {
+    const id = vault.selectedEntityId;
+    return id ? vault.entities[id] : null;
   });
 
   const handleSelectEntry = (entry: { entityId: string }) => {
@@ -33,6 +43,13 @@
     content="Browse your world history in a month-grid calendar, agenda list, or classic timeline views powered by local-first data."
   />
 </svelte:head>
+
+{#if EntityDetailPanel}
+  <EntityDetailPanel
+    entity={selectedEntity}
+    onClose={() => (vault.selectedEntityId = null)}
+  />
+{/if}
 
 <div class="h-full flex flex-col bg-theme-bg overflow-hidden">
   <!-- Header / Controls -->
