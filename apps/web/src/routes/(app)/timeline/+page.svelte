@@ -36,6 +36,19 @@
         vault.selectedEntityId === entry.entityId ? null : entry.entityId;
     }
   };
+
+  const handleDropEntity = async (
+    entityId: string,
+    date: { year: number; month: number; day: number },
+  ) => {
+    const entity = vault.entities[entityId];
+    if (!entity) return;
+    if (!entity.start_date) {
+      await vault.updateEntity(entityId, { start_date: date });
+    } else if (!entity.end_date) {
+      await vault.updateEntity(entityId, { end_date: date });
+    }
+  };
 </script>
 
 <svelte:head>
@@ -142,6 +155,7 @@
               <CalendarMonthView
                 month={timelineStore.calendarMonthView}
                 onSelect={handleSelectEntry}
+                onDropEntity={handleDropEntity}
               />
             </div>
           {:else if timelineStore.viewMode === "agenda"}
