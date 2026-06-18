@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.7",
-    "eslint": "^10.4.1",
+    "eslint": "^10.5.0",
     "fake-indexeddb": "^6.0.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"

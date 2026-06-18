@@ -1,5 +1,6 @@
 <script lang="ts">
   import { npcConfig } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     race = $bindable(npcConfig.races[0]),
@@ -21,49 +22,41 @@
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="npc-race-select" class={labelClass}>Choose their ancestry</label>
-  <select
-    id="npc-race-select"
-    name="npc_race"
-    bind:value={race}
-    class={selectClass}
-  >
-    {#each npcConfig.races as r (r)}
-      <option value={r}>{r}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="npc-race-select"
+  name="npc_race"
+  label="Choose their ancestry"
+  bind:value={race}
+  choices={npcConfig.races.map((r: string) => ({ value: r, label: r }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom ancestry"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="npc-role-select" class={labelClass}>Choose their role</label>
-  <select
-    id="npc-role-select"
-    name="npc_role"
-    bind:value={role}
-    class={selectClass}
-  >
-    {#each npcConfig.roles as r (r)}
-      <option value={r}>{r}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="npc-role-select"
+  name="npc_role"
+  label="Choose their role"
+  bind:value={role}
+  choices={npcConfig.roles.map((r: string) => ({ value: r, label: r }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom role"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="npc-alignment-select" class={labelClass}
-    >Choose their morality</label
-  >
-  <select
-    id="npc-alignment-select"
-    name="npc_alignment"
-    bind:value={alignment}
-    class={selectClass}
-  >
-    {#each npcConfig.alignments as a (a)}
-      <option value={a}>{a}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="npc-alignment-select"
+  name="npc_alignment"
+  label="Choose their morality"
+  bind:value={alignment}
+  choices={npcConfig.alignments.map((a: string) => ({ value: a, label: a }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom morality"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="npc-campaign-context" class={labelClass}

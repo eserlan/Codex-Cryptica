@@ -1,6 +1,20 @@
-import { vault } from "./vault.svelte";
+import {
+  buildAgendaSections,
+  buildCalendarMonth,
+  calendarEngine,
+  resolveCalendarCurrentDate,
+  type AgendaSection,
+  type CalendarEventEntry,
+  type CalendarExactDate,
+  type CalendarMonthViewModel,
+  type DateSelection,
+  type TemporalMetadata,
+  type WorldCalendar,
+} from "chronology-engine";
+import type { Entity, Era } from "schema";
 import { graph } from "./graph.svelte";
-import type { Era, TemporalMetadata } from "schema";
+import { vault, type VaultStore } from "./vault.svelte";
+import { calendarStore, type CalendarStore } from "./calendar.svelte";
 
 export interface TimelineEntry {
   entityId: string;
@@ -10,131 +24,464 @@ export interface TimelineEntry {
   eraId?: string;
 }
 
-class TimelineStore {
+export type TimelineViewMode =
+  | "calendar"
+  | "agenda"
+  | "vertical"
+  | "horizontal";
+
+interface TimelineStoreDependencies {
+  vault: Pick<
+    VaultStore,
+    "allEntities" | "entities" | "activeVaultId" | "status"
+  >;
+  graph: Pick<typeof graph, "eras">;
+  calendarStore: Pick<CalendarStore, "config" | "calendarCurrentDate">;
+}
+
+function isLegacyDate(
+  date: TemporalMetadata | null | undefined,
+): date is Extract<
+  TemporalMetadata,
+  { year: number; month?: number; day?: number }
+> {
+  return !!date && !("precision" in date);
+}
+
+function normalizeLabel(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function resolveExactDate(
+  date: TemporalMetadata | null | undefined,
+  config: WorldCalendar,
+): CalendarExactDate | undefined {
+  if (!date) return undefined;
+
+  if (isLegacyDate(date)) {
+    if (
+      typeof date.year === "number" &&
+      typeof date.month === "number" &&
+      typeof date.day === "number"
+    ) {
+      return { year: date.year, month: date.month, day: date.day };
+    }
+    return undefined;
+  }
+
+  const selection = date as DateSelection;
+  if (
+    selection.precision !== "day" ||
+    !selection.unitId ||
+    typeof selection.day !== "number"
+  ) {
+    return undefined;
+  }
+
+  const months = calendarEngine.getMonths(config);
+  const monthIndex = months.findIndex((month) => month.id === selection.unitId);
+  if (monthIndex < 0) return undefined;
+
+  return {
+    year: selection.year,
+    month: monthIndex + 1,
+    day: selection.day,
+  };
+}
+
+function getDateKind(
+  date: TemporalMetadata | null | undefined,
+  exactDate?: CalendarExactDate,
+): CalendarEventEntry["dateKind"] {
+  if (!date) return "missing";
+  return exactDate ? "exact" : "approximate";
+}
+
+function buildDisplayDateLabel(
+  date: TemporalMetadata | null | undefined,
+  config: WorldCalendar,
+  dateKind: CalendarEventEntry["dateKind"],
+): string {
+  if (!date) return "Undated";
+  if (dateKind === "missing") return "Undated";
+
+  try {
+    return calendarEngine.format(date, config);
+  } catch {
+    if (isLegacyDate(date) && date.label) return date.label;
+    return "Approximate date";
+  }
+}
+
+function toCalendarEntry(
+  entity: Entity,
+  date: TemporalMetadata | undefined,
+  config: WorldCalendar,
+  title = entity.title,
+): CalendarEventEntry | null {
+  if (!date) return null;
+
+  const exactDate = resolveExactDate(date, config);
+  const dateKind = getDateKind(date, exactDate);
+  const sortKey = calendarEngine.isValid(date, config)
+    ? calendarEngine.getTimelineValue(date, config)
+    : undefined;
+
+  return {
+    entityId: entity.id,
+    title,
+    entityType: entity.type,
+    dateKind,
+    date,
+    exactDate,
+    displayDateLabel: buildDisplayDateLabel(date, config, dateKind),
+    sortKey,
+    relatedEntityIds: (entity.connections ?? []).map(
+      (connection) => connection.target,
+    ),
+    labels: entity.labels ?? [],
+  };
+}
+
+export class TimelineStore {
   includeUndated = $state(false);
+  viewMode = $state<TimelineViewMode>("calendar");
+  activeYear = $state(new Date().getFullYear());
+  activeMonth = $state(new Date().getMonth() + 1);
+  typeFilters = $state<Set<string>>(new Set());
+  labelFilters = $state<Set<string>>(new Set());
+  selectedRelatedEntityId = $state<string | null>(null);
+  maxVisiblePerDay = $state(3);
+  /** FR-013: filter bar is collapsed by default on mobile. */
+  filterBarCollapsed = $state(true);
+
+  constructor(
+    private readonly deps: TimelineStoreDependencies = {
+      vault,
+      graph,
+      calendarStore,
+    },
+  ) {}
 
   entries = $derived.by(() => {
-    const list: TimelineEntry[] = [];
-    // ⚡ Bolt Optimization: Use derived vault.allEntities array with an imperative loop
-    // to prevent continuous Object.values() allocations during frequent reactive updates.
-    const allEntities = vault.allEntities;
-    const count = allEntities.length;
-    for (let i = 0; i < count; i++) {
-      const entity = allEntities[i];
+    const config = this.deps.calendarStore.config;
+    const calendarEntries: TimelineEntry[] = [];
+
+    for (const entity of this.deps.vault.allEntities) {
+      const variants: Array<{ date?: TemporalMetadata; title: string }> = [];
       if (entity.date) {
-        list.push({
-          entityId: entity.id,
-          title: entity.title,
-          type: entity.type,
-          date: entity.date,
-          eraId: this.getEraForYear(entity.date.year)?.id,
-        });
-      } else if (this.includeUndated) {
-        list.push({
-          entityId: entity.id,
-          title: entity.title,
-          type: entity.type,
-          date: { year: 99999, label: "Undated" },
-        });
+        variants.push({ date: entity.date, title: entity.title });
+      } else if (entity.start_date) {
+        variants.push({ date: entity.start_date, title: entity.title });
+      } else if (entity.end_date) {
+        variants.push({ date: entity.end_date, title: entity.title });
       }
 
-      if (entity.start_date) {
-        list.push({
+      for (const variant of variants) {
+        if (!variant.date) continue;
+        const exactDate = resolveExactDate(variant.date, config);
+        const timelineDate = exactDate ?? (variant.date as TemporalMetadata);
+
+        calendarEntries.push({
           entityId: entity.id,
-          title: `${entity.title} (Start)`,
+          title: variant.title,
           type: entity.type,
-          date: entity.start_date,
-          eraId: this.getEraForYear(entity.start_date.year)?.id,
-        });
-      }
-      if (entity.end_date) {
-        list.push({
-          entityId: entity.id,
-          title: `${entity.title} (End)`,
-          type: entity.type,
-          date: entity.end_date,
-          eraId: this.getEraForYear(entity.end_date.year)?.id,
+          date: timelineDate,
+          eraId: this.getEraForYear(variant.date.year)?.id,
         });
       }
     }
 
-    return list.sort((a, b) => {
-      if (a.date.year !== b.date.year) return a.date.year - b.date.year;
-      const aMonth = "month" in a.date ? (a.date as any).month : undefined;
-      const bMonth = "month" in b.date ? (b.date as any).month : undefined;
-      if ((aMonth ?? 1) !== (bMonth ?? 1)) return (aMonth ?? 1) - (bMonth ?? 1);
-      if ((a.date.day ?? 1) !== (b.date.day ?? 1))
-        return (a.date.day ?? 1) - (b.date.day ?? 1);
-      return a.title.localeCompare(b.title);
+    return calendarEntries.sort((a, b) => {
+      const aSort = calendarEngine.isValid(a.date, config)
+        ? calendarEngine.getTimelineValue(a.date, config)
+        : Number.MAX_SAFE_INTEGER;
+      const bSort = calendarEngine.isValid(b.date, config)
+        ? calendarEngine.getTimelineValue(b.date, config)
+        : Number.MAX_SAFE_INTEGER;
+      if (aSort !== bSort) return aSort - bSort;
+      return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
     });
   });
 
-  viewMode = $state<"vertical" | "horizontal">("vertical");
+  calendarEntries = $derived.by(() => {
+    const config = this.deps.calendarStore.config;
+    const entries: CalendarEventEntry[] = [];
 
-  // Filtering
-  filterType = $state<string | null>(null);
-  filterYearStart = $state<number | null>(null);
-  filterYearEnd = $state<number | null>(null);
+    for (const entity of this.deps.vault.allEntities) {
+      const primaryDate =
+        entity.date ?? entity.start_date ?? entity.end_date ?? undefined;
+      const entityEntries = [
+        toCalendarEntry(entity, primaryDate, config),
+      ].filter((entry): entry is CalendarEventEntry => entry !== null);
 
-  filteredEntries = $derived.by(() => {
-    // ⚡ Bolt Optimization: Use an imperative loop instead of .filter()
-    // to avoid per-element callback overhead and allow a tighter loop during frequent reactive updates.
-    const entries = this.entries;
-    const len = entries.length;
-    const filtered: TimelineEntry[] = [];
+      for (const entry of entityEntries) {
+        entries.push(entry);
+      }
 
-    for (let i = 0; i < len; i++) {
-      const entry = entries[i];
-      if (this.filterType && entry.type !== this.filterType) continue;
       if (
-        this.filterYearStart !== null &&
-        entry.date.year < this.filterYearStart
-      )
-        continue;
-      if (this.filterYearEnd !== null && entry.date.year > this.filterYearEnd)
-        continue;
-
-      filtered.push(entry);
+        this.includeUndated &&
+        !entity.date &&
+        !entity.start_date &&
+        !entity.end_date
+      ) {
+        entries.push({
+          entityId: entity.id,
+          title: entity.title,
+          entityType: entity.type,
+          dateKind: "missing",
+          date: null,
+          displayDateLabel: "Undated",
+          relatedEntityIds: (entity.connections ?? []).map(
+            (connection) => connection.target,
+          ),
+          labels: entity.labels ?? [],
+        });
+      }
     }
 
-    return filtered;
+    return entries.sort((a, b) => {
+      const aSort = a.sortKey ?? Number.MAX_SAFE_INTEGER;
+      const bSort = b.sortKey ?? Number.MAX_SAFE_INTEGER;
+      if (aSort !== bSort) return aSort - bSort;
+      const t = a.title.localeCompare(b.title, undefined, {
+        sensitivity: "base",
+      });
+      if (t !== 0) return t;
+      return a.entityId.localeCompare(b.entityId, undefined, {
+        sensitivity: "base",
+      });
+    });
   });
 
-  isLoading = $derived(vault.status === "loading");
+  availableLabels = $derived.by(() => {
+    const labels = new Set<string>();
+    for (const entry of this.calendarEntries) {
+      for (const label of entry.labels ?? []) labels.add(label);
+    }
+    return [...labels].sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
+    );
+  });
+
+  availableRelatedEntities = $derived.by(() => {
+    const items = new Map<
+      string,
+      { id: string; title: string; type: string }
+    >();
+    for (const entry of this.calendarEntries) {
+      for (const relatedEntityId of entry.relatedEntityIds) {
+        const entity = this.deps.vault.entities[relatedEntityId];
+        if (!entity) continue;
+        items.set(relatedEntityId, {
+          id: relatedEntityId,
+          title: entity.title,
+          type: entity.type,
+        });
+      }
+    }
+    return [...items.values()].sort((a, b) =>
+      a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+    );
+  });
+
+  filteredCalendarEntries = $derived.by(() => {
+    const activeLabels = [...this.labelFilters].map(normalizeLabel);
+
+    return this.calendarEntries.filter((entry) => {
+      if (this.typeFilters.size > 0 && !this.typeFilters.has(entry.entityType))
+        return false;
+
+      if (
+        activeLabels.length > 0 &&
+        !activeLabels.every((label) =>
+          entry.labels.some(
+            (entryLabel) => normalizeLabel(entryLabel) === label,
+          ),
+        )
+      )
+        return false;
+
+      if (
+        this.selectedRelatedEntityId &&
+        !entry.relatedEntityIds.includes(this.selectedRelatedEntityId)
+      )
+        return false;
+
+      return true;
+    });
+  });
+
+  filteredEntries = $derived.by(() =>
+    this.filteredCalendarEntries
+      .filter((entry) => entry.date !== null)
+      .map((entry) => ({
+        entityId: entry.entityId,
+        title: entry.title,
+        type: entry.entityType,
+        date: entry.exactDate ?? (entry.date as TemporalMetadata),
+        eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
+      })),
+  );
+
+  calendarMonthView = $derived.by(
+    (): CalendarMonthViewModel =>
+      buildCalendarMonth(
+        this.filteredCalendarEntries,
+        this.activeYear,
+        this.activeMonth,
+        this.deps.calendarStore.config,
+        this.maxVisiblePerDay,
+      ),
+  );
+
+  agendaSections = $derived.by((): AgendaSection[] =>
+    buildAgendaSections(
+      this.filteredCalendarEntries,
+      this.deps.calendarStore.config,
+    ),
+  );
+
+  isLoading = $derived.by(
+    () =>
+      this.deps.vault.status === "loading" ||
+      this.deps.vault.status === "saving",
+  );
+
+  #initializedForVault = "";
 
   async init() {
-    // Eras are now handled by graph store
+    const currentVaultId = this.deps.vault.activeVaultId ?? "";
+    if (this.#initializedForVault === currentVaultId && currentVaultId !== "")
+      return;
+
+    // Build the minimal entity shape required by the pure FR-012 resolver
+    const entities = this.deps.vault.allEntities.map((e) => {
+      const primaryDate = e.date ?? e.start_date ?? e.end_date ?? undefined;
+      const exactDate = primaryDate
+        ? (resolveExactDate(primaryDate, this.deps.calendarStore.config) ??
+          undefined)
+        : undefined;
+      return {
+        id: e.id,
+        title: e.title,
+        exactDate,
+        dateKind: exactDate ? "exact" : primaryDate ? "approximate" : "missing",
+        createdAt: (e as Record<string, unknown>).createdAt as
+          | string
+          | undefined,
+      };
+    });
+
+    const settings = {
+      currentYear: this.deps.calendarStore.config.presentYear ?? null,
+    };
+
+    const resolved = resolveCalendarCurrentDate(entities, settings);
+
+    // Persist the result on the calendar store so other surfaces share it
+    this.deps.calendarStore.calendarCurrentDate = resolved;
+
+    this.activeYear = resolved.date.year;
+    this.activeMonth = resolved.date.month;
+    this.#initializedForVault = currentVaultId;
   }
 
   private getEraForYear(year: number): Era | undefined {
-    return graph.eras.find((era) => {
+    return this.deps.graph.eras.find((era) => {
       const starts = year >= era.start_year;
       const ends = era.end_year === undefined || year <= era.end_year;
       return starts && ends;
     });
   }
 
+  setViewMode(mode: TimelineViewMode) {
+    this.viewMode = mode;
+  }
+
+  nextMonth() {
+    const monthCount = calendarEngine.getMonths(
+      this.deps.calendarStore.config,
+    ).length;
+    this.activeMonth += 1;
+    if (this.activeMonth > monthCount) {
+      this.activeMonth = 1;
+      this.activeYear += 1;
+    }
+  }
+
+  previousMonth() {
+    const monthCount = calendarEngine.getMonths(
+      this.deps.calendarStore.config,
+    ).length;
+    if (this.activeMonth === 1) {
+      this.activeMonth = monthCount;
+      this.activeYear -= 1;
+      return;
+    }
+    this.activeMonth -= 1;
+  }
+
+  clearFilters() {
+    this.typeFilters = new Set();
+    this.labelFilters = new Set();
+    this.selectedRelatedEntityId = null;
+    this.includeUndated = false;
+  }
+
+  /** FR-013: toggle the mobile filter-bar collapsed state. */
+  toggleFilterBar() {
+    this.filterBarCollapsed = !this.filterBarCollapsed;
+  }
+
+  /** FR-013: true when any filter is active. */
+  get hasActiveFilters(): boolean {
+    return (
+      this.typeFilters.size > 0 ||
+      this.labelFilters.size > 0 ||
+      !!this.selectedRelatedEntityId ||
+      this.includeUndated
+    );
+  }
+
   toggleViewMode() {
-    this.viewMode = this.viewMode === "vertical" ? "horizontal" : "vertical";
+    const modes: TimelineViewMode[] = [
+      "calendar",
+      "agenda",
+      "vertical",
+      "horizontal",
+    ];
+    const idx = modes.indexOf(this.viewMode);
+    this.viewMode = modes[(idx + 1) % modes.length];
+  }
+
+  resetVaultGuard() {
+    this.#initializedForVault = "";
   }
 
   getEntriesByEra(eraId: string): TimelineEntry[] {
-    return this.entries.filter((e) => e.eraId === eraId);
+    return this.entries.filter((entry) => entry.eraId === eraId);
   }
 
   getEntriesByType(type: string): TimelineEntry[] {
-    return this.entries.filter((e) => e.type === type);
+    return this.entries.filter((entry) => entry.type === type);
   }
 
   getEntriesInRange(start: number, end: number): TimelineEntry[] {
     return this.entries.filter(
-      (e) => e.date.year >= start && e.date.year <= end,
+      (entry) => entry.date.year >= start && entry.date.year <= end,
     );
   }
 }
 
-export const timelineStore = new TimelineStore();
+const TIMELINE_KEY = "__codex_timeline_store_instance__";
+export const timelineStore: TimelineStore =
+  (globalThis as Record<string, unknown>)[TIMELINE_KEY] instanceof TimelineStore
+    ? ((globalThis as Record<string, unknown>)[TIMELINE_KEY] as TimelineStore)
+    : (((globalThis as Record<string, unknown>)[TIMELINE_KEY] =
+        new TimelineStore()) as TimelineStore);
 
 if (typeof window !== "undefined" && import.meta.env.DEV) {
-  (window as any).timelineStore = timelineStore;
+  (window as unknown as { timelineStore?: TimelineStore }).timelineStore =
+    timelineStore;
 }

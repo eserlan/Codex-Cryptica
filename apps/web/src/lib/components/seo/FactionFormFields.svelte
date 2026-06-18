@@ -1,5 +1,6 @@
 <script lang="ts">
   import { factionConfig } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     theme = $bindable(factionConfig.themes[0]),
@@ -74,74 +75,66 @@
   };
 
   const availableTypes = $derived(thematicTypes[theme] || factionConfig.types);
+  const knownTypes = $derived(
+    Array.from(
+      new Set([...factionConfig.types, ...Object.values(thematicTypes).flat()]),
+    ),
+  );
 
   $effect(() => {
-    if (theme && !availableTypes.includes(type)) {
+    if (theme && type && knownTypes.includes(type) && !availableTypes.includes(type)) {
       type = availableTypes[0] || factionConfig.types[0];
     }
   });
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="faction-theme-select" class={labelClass}>Choose a vibe</label>
-  <select
-    id="faction-theme-select"
-    name="faction_theme"
-    bind:value={theme}
-    class={selectClass}
-  >
-    {#each factionConfig.themes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="faction-theme-select"
+  name="faction_theme"
+  label="Choose a vibe"
+  bind:value={theme}
+  choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom vibe"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="faction-type-select" class={labelClass}
-    >Choose what they are</label
-  >
-  <select
-    id="faction-type-select"
-    name="faction_type"
-    bind:value={type}
-    class={selectClass}
-  >
-    {#each availableTypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="faction-type-select"
+  name="faction_type"
+  label="Choose what they are"
+  bind:value={type}
+  choices={availableTypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom faction type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="faction-scope-select" class={labelClass}>Choose their scale</label
-  >
-  <select
-    id="faction-scope-select"
-    name="faction_scope"
-    bind:value={scope}
-    class={selectClass}
-  >
-    {#each factionConfig.scopes as s (s)}
-      <option value={s}>{s}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="faction-scope-select"
+  name="faction_scope"
+  label="Choose their scale"
+  bind:value={scope}
+  choices={factionConfig.scopes.map((s: string) => ({ value: s, label: s }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom scale"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="faction-alignment-select" class={labelClass}
-    >Choose their morality</label
-  >
-  <select
-    id="faction-alignment-select"
-    name="faction_alignment"
-    bind:value={alignment}
-    class={selectClass}
-  >
-    {#each factionConfig.alignments as a (a)}
-      <option value={a}>{a}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="faction-alignment-select"
+  name="faction_alignment"
+  label="Choose their morality"
+  bind:value={alignment}
+  choices={factionConfig.alignments.map((a: string) => ({ value: a, label: a }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom morality"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="faction-campaign-context" class={labelClass}

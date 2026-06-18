@@ -152,6 +152,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
     icon: "icon-[lucide--share-2]",
   },
+  "world-chronology": {
+    id: "world-chronology",
+    title: "World Chronology",
+    content:
+      "Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year, not the real-world date — use Previous / Next to navigate months. Days with more events than fit show a '+N more' button to reveal the rest. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and Related filters together to narrow what's visible.",
+    icon: "icon-[lucide--calendar-days]",
+  },
   "front-page": {
     id: "front-page",
     title: "World Front Page",

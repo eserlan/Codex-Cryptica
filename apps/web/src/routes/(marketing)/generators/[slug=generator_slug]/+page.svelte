@@ -3,6 +3,7 @@
   import { browser } from "$app/environment";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import SEOGeneratorLayout from "$lib/components/seo/SEOGeneratorLayout.svelte";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
@@ -743,57 +744,55 @@
         onSurprise={trigger}
       />
     {:else if data.slug === "settlement"}
-      <div class="flex flex-col gap-1.5">
-        <label for="size-select" class={labelClass}>Settlement Size</label>
-        <select
-          id="size-select"
-          bind:value={settlement.size}
-          class={selectClass}
-        >
-          {#each settlementConfig.sizes as s (s.name)}
-            <option value={s.name}>{s.name} ({s.range})</option>
-          {/each}
-        </select>
-      </div>
+      <SelectWithCustomOption
+        id="size-select"
+        label="Settlement Size"
+        bind:value={settlement.size}
+        choices={settlementConfig.sizes.map((s: { name: string; range: string }) => ({
+          value: s.name,
+          label: `${s.name} (${s.range})`,
+        }))}
+        className="flex flex-col gap-1.5"
+        labelClass={labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom settlement size"
+      />
 
-      <div class="flex flex-col gap-1.5">
-        <label for="economy-select" class={labelClass}>Primary Economy</label>
-        <select
-          id="economy-select"
-          bind:value={settlement.economy}
-          class={selectClass}
-        >
-          {#each settlementConfig.economies as e (e)}
-            <option value={e}>{e}</option>
-          {/each}
-        </select>
-      </div>
+      <SelectWithCustomOption
+        id="economy-select"
+        label="Primary Economy"
+        bind:value={settlement.economy}
+        choices={settlementConfig.economies.map((e: string) => ({
+          value: e,
+          label: e,
+        }))}
+        className="flex flex-col gap-1.5"
+        labelClass={labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom primary economy"
+      />
     {:else if data.slug === "magic-item" || data.slug === "item"}
-      <div class="flex flex-col gap-1.5">
-        <label for="item-type-select" class={labelClass}>Item Type</label>
-        <select
-          id="item-type-select"
-          bind:value={magicItem.type}
-          class={selectClass}
-        >
-          {#each magicItemConfig.types as t (t)}
-            <option value={t}>{t}</option>
-          {/each}
-        </select>
-      </div>
+      <SelectWithCustomOption
+        id="item-type-select"
+        label="Item Type"
+        bind:value={magicItem.type}
+        choices={magicItemConfig.types.map((t: string) => ({ value: t, label: t }))}
+        className="flex flex-col gap-1.5"
+        labelClass={labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom item type"
+      />
 
-      <div class="flex flex-col gap-1.5">
-        <label for="rarity-select" class={labelClass}>Rarity</label>
-        <select
-          id="rarity-select"
-          bind:value={magicItem.rarity}
-          class={selectClass}
-        >
-          {#each magicItemConfig.rarities as r (r)}
-            <option value={r}>{r}</option>
-          {/each}
-        </select>
-      </div>
+      <SelectWithCustomOption
+        id="rarity-select"
+        label="Rarity"
+        bind:value={magicItem.rarity}
+        choices={magicItemConfig.rarities.map((r: string) => ({ value: r, label: r }))}
+        className="flex flex-col gap-1.5"
+        labelClass={labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom rarity"
+      />
     {:else if data.slug === "faction"}
       <FactionFormFields
         bind:theme={activeTheme}

@@ -1,10 +1,14 @@
 <script lang="ts">
-  import { listGenerators } from "generator-engine";
+  import {
+    getGenerator,
+    listGenerators,
+  } from "generator-engine";
   import type {
     AIPolicy,
     GeneratorId,
     GeneratorRunRequest,
   } from "generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   interface Props {
     generatorId: GeneratorId | null;
@@ -45,20 +49,53 @@
   );
 
   const generators = listGenerators();
-
   let selectedId = $state<GeneratorId>(generators[0].id);
   let useAI = $state(true);
   let instructions = $state("");
+  let optionValues = $state<Record<string, unknown>>({});
+  let lastOptionsGeneratorId = $state<GeneratorId | null>(null);
+  const selectedGenerator = $derived(getGenerator(selectedId));
   $effect(() => {
     if (generatorId) selectedId = generatorId;
   });
+  $effect(() => {
+    if (lastOptionsGeneratorId === selectedId) return;
+    lastOptionsGeneratorId = selectedId;
+    const definition = getGenerator(selectedId);
+    const previousValues = optionValues;
+    optionValues = Object.fromEntries(
+      definition.options.map((option: { id: string; defaultValue?: unknown }) => [
+        option.id,
+        typeof previousValues[option.id] !== "undefined"
+          ? previousValues[option.id]
+          : (definition.defaults[option.id] ?? option.defaultValue ?? ""),
+      ]),
+    );
+  });
+
+  function updateOptionValue(optionId: string, value: unknown) {
+    optionValues = {
+      ...optionValues,
+      [optionId]: value,
+    };
+  }
+
+  function stringValue(optionId: string): string {
+    const value = optionValues[optionId];
+    return typeof value === "string" ? value : "";
+  }
+
+  function numberValue(optionId: string): number | undefined {
+    const value = optionValues[optionId];
+    return typeof value === "number" ? value : undefined;
+  }
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     generatorId = selectedId;
     onsubmit({
       generatorId: selectedId,
-      options: {},
+      options: optionValues,
       useAI: aiAvailable && useAI,
       instructions: instructions.trim() || undefined,
     });
@@ -86,6 +123,116 @@
       </label>
     {/each}
   </fieldset>
+
+  {#if selectedGenerator.options.length > 0}
+    <fieldset class="flex flex-col gap-3">
+      <legend
+        class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      >
+        Generator options
+      </legend>
+      {#each selectedGenerator.options as option (option.id)}
+        {@const inputId = `generator-option-${option.id}`}
+        {#if option.control === "select" && option.choices}
+          <SelectWithCustomOption
+            id={inputId}
+            name={option.id}
+            label={option.label}
+            value={stringValue(option.id)}
+            onvaluechange={(nextValue) =>
+              updateOptionValue(option.id, nextValue)}
+            choices={option.choices}
+            disabled={disabled}
+            className="flex flex-col gap-1.5"
+            labelClass="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+            customPlaceholder={`Enter a custom ${option.label.toLowerCase()}`}
+          />
+        {:else if option.control === "checkbox"}
+          <label class="flex cursor-pointer items-center gap-2">
+            <input
+              id={inputId}
+              type="checkbox"
+              checked={Boolean(optionValues[option.id])}
+              onchange={(event) =>
+                updateOptionValue(
+                  option.id,
+                  (event.currentTarget as HTMLInputElement).checked,
+                )}
+              {disabled}
+              class="accent-chrome-accent"
+            />
+            <span class="text-sm text-chrome-text">{option.label}</span>
+          </label>
+        {:else if option.control === "textarea"}
+          <div class="flex flex-col gap-1">
+            <label
+              for={inputId}
+              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            >
+              {option.label}
+            </label>
+            <textarea
+              id={inputId}
+              rows={3}
+              value={stringValue(option.id)}
+              oninput={(event) =>
+                updateOptionValue(
+                  option.id,
+                  (event.currentTarget as HTMLTextAreaElement).value,
+                )}
+              {disabled}
+              class="w-full resize-y rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+            ></textarea>
+          </div>
+        {:else if option.control === "number"}
+          <div class="flex flex-col gap-1">
+            <label
+              for={inputId}
+              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            >
+              {option.label}
+            </label>
+            <input
+              id={inputId}
+              type="number"
+              value={numberValue(option.id)}
+              oninput={(event) => {
+                const rawValue = (event.currentTarget as HTMLInputElement).value;
+                updateOptionValue(
+                  option.id,
+                  rawValue === "" ? "" : Number(rawValue),
+                );
+              }}
+              {disabled}
+              class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+            />
+          </div>
+        {:else}
+          <div class="flex flex-col gap-1">
+            <label
+              for={inputId}
+              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            >
+              {option.label}
+            </label>
+            <input
+              id={inputId}
+              type="text"
+              value={stringValue(option.id)}
+              oninput={(event) =>
+                updateOptionValue(
+                  option.id,
+                  (event.currentTarget as HTMLInputElement).value,
+                )}
+              {disabled}
+              class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+            />
+          </div>
+        {/if}
+      {/each}
+    </fieldset>
+  {/if}
 
   <div class="flex flex-col gap-1">
     <label

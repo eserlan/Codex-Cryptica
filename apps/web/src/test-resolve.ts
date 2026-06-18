@@ -1,4 +1,4 @@
-import { resolvePronounsLocally } from "./lib/services/ai/text-generation.service.svelte.ts";
+import { resolvePronounsLocally } from "./lib/services/ai/resolve-pronouns";
 
 const history = [{ role: "user" as const, content: "who is kardos" }];
 const query = "what does he do";

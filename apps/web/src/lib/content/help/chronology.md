@@ -1,7 +1,7 @@
 ---
 id: chronology
 title: Custom Chronology
-description: Master the sands of time with tactile grid pickers and custom campaign calendars.
+description: Browse campaign history with calendar, agenda, and timeline views plus custom date controls.
 icon: icon-[lucide--history]
 rank: 11
 tags: ["time", "timeline", "calendar", "eras"]
@@ -9,7 +9,7 @@ tags: ["time", "timeline", "calendar", "eras"]
 
 # Custom Chronology
 
-Codex Cryptica allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
+Codex Cryptica lets you shape time for your campaign world and then browse it in a way that fits the moment. Use the month calendar for day-by-day history, switch to the agenda view for a clean running list, or keep the classic timeline when you want a broader sweep.
 
 ## The Date Picker
 
@@ -47,4 +47,24 @@ In the **Vault Settings**, you can fully customize your world's calendar:
 
 ## Linear Time Mapping
 
-Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly on the **World Timeline**.
+Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly across the **World Timeline**, **Calendar**, and **Agenda** views.
+
+## Calendar And Agenda Views
+
+Open the chronology route to switch between four ways of browsing history:
+
+- **Calendar** shows exact-dated events in a month grid.
+- **Agenda** groups events in chronological order and keeps `Undated/Approximate` entries visible.
+- **Timeline** and **Bands** keep the earlier vertical and horizontal chronology layouts available.
+
+The calendar and agenda views support the same core filters:
+
+- **Type** narrows entries by entity type.
+- **Label** narrows entries by metadata labels.
+- **Related** narrows entries by linked factions, characters, regions, or other connected entities.
+
+When multiple filters are active, an event must match all of them to remain visible.
+
+## Handling Approximate Dates
+
+Approximate or incomplete dates are intentionally kept out of exact day cells in the month grid. You can still find them in the **Agenda** view under **Undated/Approximate**.

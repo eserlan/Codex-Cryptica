@@ -182,6 +182,51 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/stores/timeline.svelte", () => ({
+  timelineStore: {
+    calendarMonthView: {
+      title: "June 2026",
+      year: 2026,
+      month: 6,
+      weeks: [
+        {
+          days: Array.from({ length: 7 }, (_, index) => ({
+            date: { year: 2026, month: 6, day: index + 1 },
+            inCurrentMonth: true,
+            entries:
+              index === 0
+                ? [
+                    {
+                      entityId: "entity-1",
+                      title: "Captain Ril",
+                      entityType: "npc",
+                      dateKind: "exact",
+                      date: { year: 2026, month: 6, day: 1 },
+                      exactDate: { year: 2026, month: 6, day: 1 },
+                      displayDateLabel: "June 1, 2026",
+                      relatedEntityIds: [],
+                      labels: [],
+                    },
+                  ]
+                : [],
+            overflowCount: 0,
+            hiddenEntries: [],
+          })),
+        },
+      ],
+    },
+    filteredCalendarEntries: [
+      {
+        entityId: "entity-1",
+        title: "Captain Ril",
+      },
+    ],
+    previousMonth: vi.fn(),
+    nextMonth: vi.fn(),
+    init: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock("$lib/stores/ui/discovery-policy.svelte", () => ({
   discoveryPolicyStore: {
     aiDisabled: false,
@@ -270,7 +315,7 @@ describe("FrontPage", () => {
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
 
     expect(screen.getByText("Front Page Chronicle")).toBeTruthy();
-    expect(screen.getByText("Captain Ril")).toBeTruthy();
+    expect(screen.getAllByText("Captain Ril").length).toBeGreaterThan(0);
 
     const cards = screen.getAllByTestId("entity-card");
     expect(within(cards[0]).getByText("moon").tagName).toBe("STRONG");

@@ -38,6 +38,13 @@
       title: "Spatial Canvas",
       href: `${base}/canvas`,
     },
+    {
+      id: "timeline",
+      icon: "icon-[lucide--calendar-days]",
+      label: "Timeline",
+      title: "World Chronology",
+      href: `${base}/timeline`,
+    },
   ];
 
   const tools = $derived.by<NavItem[]>(() => {

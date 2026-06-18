@@ -39,6 +39,13 @@ vi.mock("$lib/stores/calendar.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/stores/timeline.svelte", () => ({
+  timelineStore: {
+    resetVaultGuard: vi.fn(),
+    init: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import {
   bootSystem,
   initializeGlobalListeners,
@@ -47,6 +54,7 @@ import {
 } from "./app-init";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { calendarStore } from "$lib/stores/calendar.svelte";
+import { timelineStore } from "$lib/stores/timeline.svelte";
 
 describe("app-init", () => {
   let listenersCleanup: (() => void)[] = [];
@@ -211,6 +219,8 @@ describe("app-init", () => {
         expect(calendarStore.init).toHaveBeenCalled();
       });
 
+      expect(timelineStore.resetVaultGuard).toHaveBeenCalled();
+      expect(timelineStore.init).toHaveBeenCalled();
       expect(mockCalendarStore.init).not.toHaveBeenCalled();
     });
 
