@@ -183,8 +183,8 @@ describe("TimelineStore", () => {
   it("filters with AND semantics across type, label, and related entity", () => {
     const { store } = createStore();
 
-    store.filterType = "event";
-    store.selectedLabel = "royal";
+    store.typeFilters = new Set(["event"]);
+    store.labelFilters = new Set(["royal"]);
     store.selectedRelatedEntityId = "faction-1";
 
     expect(
@@ -251,7 +251,7 @@ describe("TimelineStore", () => {
   it("tolerates undated entities without labels when filters are active", () => {
     const { store } = createStore();
 
-    store.selectedLabel = "royal";
+    store.labelFilters = new Set(["royal"]);
     store.includeUndated = true;
 
     expect(store.availableLabels).toContain("Royal");

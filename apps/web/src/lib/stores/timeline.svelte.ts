@@ -148,8 +148,8 @@ export class TimelineStore {
   viewMode = $state<TimelineViewMode>("calendar");
   activeYear = $state(new Date().getFullYear());
   activeMonth = $state(new Date().getMonth() + 1);
-  filterType = $state<string | null>(null);
-  selectedLabel = $state<string | null>(null);
+  typeFilters = $state<Set<string>>(new Set());
+  labelFilters = $state<Set<string>>(new Set());
   selectedRelatedEntityId = $state<string | null>(null);
   maxVisiblePerDay = $state(3);
   /** FR-013: filter bar is collapsed by default on mobile. */
@@ -286,30 +286,27 @@ export class TimelineStore {
   });
 
   filteredCalendarEntries = $derived.by(() => {
-    const labelFilter = this.selectedLabel
-      ? [normalizeLabel(this.selectedLabel)]
-      : [];
+    const activeLabels = [...this.labelFilters].map(normalizeLabel);
 
     return this.calendarEntries.filter((entry) => {
-      if (this.filterType && entry.entityType !== this.filterType) return false;
+      if (this.typeFilters.size > 0 && !this.typeFilters.has(entry.entityType))
+        return false;
 
       if (
-        labelFilter.length > 0 &&
-        !labelFilter.every((label) =>
+        activeLabels.length > 0 &&
+        !activeLabels.every((label) =>
           entry.labels.some(
             (entryLabel) => normalizeLabel(entryLabel) === label,
           ),
         )
-      ) {
+      )
         return false;
-      }
 
       if (
         this.selectedRelatedEntityId &&
         !entry.relatedEntityIds.includes(this.selectedRelatedEntityId)
-      ) {
+      )
         return false;
-      }
 
       return true;
     });
@@ -426,8 +423,8 @@ export class TimelineStore {
   }
 
   clearFilters() {
-    this.filterType = null;
-    this.selectedLabel = null;
+    this.typeFilters = new Set();
+    this.labelFilters = new Set();
     this.selectedRelatedEntityId = null;
     this.includeUndated = false;
   }
@@ -439,10 +436,10 @@ export class TimelineStore {
 
   /** FR-013: true when any filter is active. */
   get hasActiveFilters(): boolean {
-    return !!(
-      this.filterType ||
-      this.selectedLabel ||
-      this.selectedRelatedEntityId ||
+    return (
+      this.typeFilters.size > 0 ||
+      this.labelFilters.size > 0 ||
+      !!this.selectedRelatedEntityId ||
       this.includeUndated
     );
   }
