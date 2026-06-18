@@ -37,15 +37,33 @@
     }
   };
 
+  function cmpDate(
+    a: { year: number; month?: number; day?: number },
+    b: { year: number; month?: number; day?: number },
+  ): number {
+    if (a.year !== b.year) return a.year - b.year;
+    if ((a.month ?? 0) !== (b.month ?? 0))
+      return (a.month ?? 0) - (b.month ?? 0);
+    return (a.day ?? 0) - (b.day ?? 0);
+  }
+
   const handleDropEntity = async (
     entityId: string,
     date: { year: number; month: number; day: number },
   ) => {
     const entity = vault.entities[entityId];
     if (!entity) return;
-    if (!entity.start_date) {
+
+    const start = entity.start_date;
+    const end = entity.end_date;
+
+    if (!start) {
       await vault.updateEntity(entityId, { start_date: date });
-    } else if (!entity.end_date) {
+    } else if (!end) {
+      await vault.updateEntity(entityId, { end_date: date });
+    } else if (cmpDate(date, start) < 0) {
+      await vault.updateEntity(entityId, { start_date: date });
+    } else if (cmpDate(date, end) > 0) {
       await vault.updateEntity(entityId, { end_date: date });
     }
   };
