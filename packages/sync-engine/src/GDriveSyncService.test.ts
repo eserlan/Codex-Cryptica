@@ -10,8 +10,10 @@ describe("GDriveSyncService", () => {
   let mockDriveBackend: any;
   let mockOpfsBackend: any;
   let mockDeps: any;
+  let fixedNow: number;
 
   beforeEach(() => {
+    fixedNow = 1000000;
     mockEventBus = new AppEventBus();
     mockSyncService = {
       sync: vi.fn().mockResolvedValue({
@@ -34,7 +36,7 @@ describe("GDriveSyncService", () => {
     };
     mockDeps = {
       getOpfsHandle: vi.fn().mockResolvedValue({}),
-      now: vi.fn().mockReturnValue(1000000), // Fixed time for tests
+      now: vi.fn().mockReturnValue(fixedNow),
     };
 
     service = new GDriveSyncService(
@@ -74,7 +76,6 @@ describe("GDriveSyncService", () => {
 
   it("should skip sync if another tab is recently synced", async () => {
     // Simulate another tab starting sync 5 seconds ago
-    const fixedNow = 1000000;
     (service as any).lastTabSync = fixedNow - 5000;
 
     await service.push("v1");

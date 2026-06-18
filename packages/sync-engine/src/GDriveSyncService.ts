@@ -38,7 +38,7 @@ export class GDriveSyncService {
       this.channel = new BroadcastChannel("codex_gdrive_sync_guard");
       this.channel.onmessage = (msg) => {
         if (msg.data.type === "SYNC_START") {
-          this.lastTabSync = this.deps.now ? this.deps.now() : Date.now();
+          this.lastTabSync = this.getNow();
         }
       };
     }
