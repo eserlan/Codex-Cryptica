@@ -28,6 +28,9 @@ export const DEFAULT_CALENDAR: WorldCalendar = {
   useGregorian: true,
   months: GREGORIAN_MONTHS,
   daysPerWeek: 7,
+  // Anchors the grid: epoch day 0 (year 0, Jan 1) is a Monday (index 1 in Sun=0 column order).
+  // Verified: getTimelineValue({year:2026,month:6,day:1}) % 7 === 0; +1 → column 1 = Monday ✓
+  epochWeekday: 1,
 };
 
 const daysInYearCache = new WeakMap<WorldCalendar, number>();

@@ -53,11 +53,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/131-in-app-rpg-generators/plan.md).
+shell commands, and other important information, read the [current plan](./specs/132-calendar-agenda-view/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, existing `packages/chronology-engine`, existing `schema` types, existing vault/world/timeline stores (132-calendar-agenda-view)
+- Existing vault entity data plus browser-local IndexedDB-backed calendar settings via `apps/web/src/lib/stores/calendar.svelte.ts`; no new persistence format (132-calendar-agenda-view)
 
 - TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, new `packages/generator-engine` workspace package over existing public generator logic, `@google/generative-ai` via existing `aiClientManager`, existing vault/theme/modal/help stores (131-in-app-rpg-generators)
 - OPFS and IndexedDB through existing vault stores; generated drafts remain transient until explicit save (131-in-app-rpg-generators)

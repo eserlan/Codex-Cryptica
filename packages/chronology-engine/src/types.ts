@@ -38,6 +38,12 @@ export interface WorldCalendar {
   presentYear?: number;
   revision?: number;
   anchors?: IntercalaryAnchor[];
+  /**
+   * Which weekday (0-indexed) falls on the calendar's epoch day 0 (year 0, day 1).
+   * Used to align the month grid so that day-1 of any month lands in the correct column.
+   * Defaults to 0 when absent.
+   */
+  epochWeekday?: number;
 }
 
 export type DatePrecision = "year" | "unit" | "day" | "anchor";
@@ -92,4 +98,82 @@ export interface WheelOption {
   label: string;
   value: number | string;
   disabled?: boolean;
+}
+
+export interface CalendarExactDate {
+  year: number;
+  month: number;
+  day: number;
+}
+
+export interface CalendarEventEntry {
+  entityId: string;
+  title: string;
+  entityType: string;
+  dateKind: "exact" | "approximate" | "missing";
+  date: TemporalMetadata | DateSelection | null;
+  exactDate?: CalendarExactDate;
+  displayDateLabel: string;
+  sortKey?: number;
+  relatedEntityIds: string[];
+  labels: string[];
+}
+
+export interface CalendarFilterInput {
+  entityType?: string | null;
+  labelIds?: string[];
+  relatedEntityIds?: string[];
+}
+
+export interface CalendarDayCell {
+  date: CalendarExactDate;
+  inCurrentMonth: boolean;
+  entries: CalendarEventEntry[];
+  overflowCount: number;
+  hiddenEntries: CalendarEventEntry[];
+}
+
+export interface CalendarMonthWeek {
+  days: CalendarDayCell[];
+}
+
+export interface CalendarMonthViewModel {
+  year: number;
+  month: number;
+  title: string;
+  weeks: CalendarMonthWeek[];
+}
+
+export interface AgendaSection {
+  id: string;
+  label: string;
+  entries: CalendarEventEntry[];
+}
+
+/**
+ * Which tier of the FR-012 priority chain resolved the calendar's current date.
+ */
+export type CalendarCurrentDateSourceKind =
+  | "entity"
+  | "vaultSetting"
+  | "realWorld";
+
+/**
+ * Resolved output of the FR-012 priority chain.
+ * Exposed as `calendarCurrentDate` from `calendar.svelte.ts`.
+ */
+export interface CalendarCurrentDateSource {
+  source: CalendarCurrentDateSourceKind;
+  /** Resolved year/month; `day` is absent when source is `"vaultSetting"`. */
+  date: { year: number; month: number; day?: number };
+  /** Entity that provided the date when source is `"entity"`; null otherwise. */
+  entityId: string | null;
+}
+
+/**
+ * Vault-level calendar preferences (persisted subset surfaced to FR-012).
+ * A `null` currentYear means the user has not configured one.
+ */
+export interface VaultCalendarSettings {
+  currentYear: number | null;
 }
