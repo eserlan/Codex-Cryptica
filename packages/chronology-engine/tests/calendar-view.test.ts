@@ -141,6 +141,74 @@ describe("calendar-view helpers", () => {
     expect(targetDay?.overflowCount).toBe(2);
   });
 
+  it("leading blank cells match firstWeekday offset for a known Gregorian month", () => {
+    // June 2026 starts on a Monday. getTimelineValue({year:2026,month:6,day:1}) % 7
+    // must equal 1 (Mon=1 in Sun-indexed week) for the grid to be correct.
+    // If epochWeekday is wrong, the leading cell count will be wrong.
+    const month = buildCalendarMonth([], 2026, 6, DEFAULT_CALENDAR, 3);
+
+    const firstWeek = month.weeks[0].days;
+    const leadingBlanks = firstWeek.filter((d) => !d.inCurrentMonth);
+    // June 1 2026 is Monday: 1 leading blank (Sunday column)
+    expect(leadingBlanks).toHaveLength(1);
+    expect(firstWeek[0].inCurrentMonth).toBe(false);
+    expect(firstWeek[1].inCurrentMonth).toBe(true);
+    expect(firstWeek[1].date.day).toBe(1);
+  });
+
+  it("trailing cells fill out to a full week when month ends mid-week", () => {
+    // June 2026 has 30 days; June 30 is a Tuesday, so 5 trailing cells needed
+    const month = buildCalendarMonth([], 2026, 6, DEFAULT_CALENDAR, 3);
+
+    const lastWeek = month.weeks[month.weeks.length - 1].days;
+    const trailingBlanks = lastWeek.filter((d) => !d.inCurrentMonth);
+    expect(trailingBlanks.length).toBeGreaterThan(0);
+    trailingBlanks.forEach((cell) => {
+      expect(cell.date.month).toBe(7); // July
+    });
+  });
+
+  it("month starting on weekday 0 with day-count divisible by daysPerWeek still renders correctly", () => {
+    // Synthetic 7-day-week calendar: 28-day month starting on weekday 0
+    const syntheticCalendar = {
+      ...DEFAULT_CALENDAR,
+      useGregorian: false,
+      months: [{ id: "m1", name: "Month One", days: 28 }],
+      daysPerWeek: 7,
+      epochWeekday: 0,
+    };
+    const month = buildCalendarMonth([], 1, 1, syntheticCalendar, 3);
+
+    // 0 leading blanks, 28 cells, 0 trailing cells — exactly 4 complete rows
+    const allDays = month.weeks.flatMap((w) => w.days);
+    expect(allDays).toHaveLength(28);
+    expect(allDays.filter((d) => d.inCurrentMonth)).toHaveLength(28);
+    expect(allDays[0].date.day).toBe(1);
+  });
+
+  it("epochWeekday offset shifts the starting column by the declared amount", () => {
+    // Epoch day 0 = year 0, month 1, day 1; declaring epochWeekday=3 means
+    // that day falls in column 3. buildCalendarMonth for year=0, month=1
+    // should therefore have 3 leading blank cells.
+    const syntheticCalendar = {
+      ...DEFAULT_CALENDAR,
+      useGregorian: false,
+      months: [
+        { id: "m1", name: "Month One", days: 30 },
+        { id: "m2", name: "Month Two", days: 30 },
+      ],
+      daysPerWeek: 7,
+      epochWeekday: 3,
+    };
+    const month = buildCalendarMonth([], 0, 1, syntheticCalendar, 3);
+
+    const firstWeek = month.weeks[0].days;
+    const leadingBlanks = firstWeek.filter((d) => !d.inCurrentMonth);
+    expect(leadingBlanks).toHaveLength(3);
+    expect(firstWeek[3].inCurrentMonth).toBe(true);
+    expect(firstWeek[3].date.day).toBe(1);
+  });
+
   it("groups agenda sections chronologically and keeps undated entries separate", () => {
     const sections = buildAgendaSections(
       [

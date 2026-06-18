@@ -3,6 +3,7 @@
     CalendarEventEntry,
     CalendarMonthViewModel,
   } from "chronology-engine";
+  import { calendarEngine } from "chronology-engine";
   import CalendarDayOverflow from "./CalendarDayOverflow.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
 
@@ -28,11 +29,11 @@
   }
 
   function dayLabel(year: number, monthNumber: number, day: number): string {
-    return new Date(year, monthNumber - 1, day).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    const months = calendarStore.config
+      ? calendarEngine.getMonths(calendarStore.config)
+      : null;
+    const monthName = months?.[monthNumber - 1]?.name ?? `Month ${monthNumber}`;
+    return `${monthName} ${day}, ${year}`;
   }
 </script>
 

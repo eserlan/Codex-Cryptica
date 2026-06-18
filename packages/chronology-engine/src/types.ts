@@ -38,6 +38,12 @@ export interface WorldCalendar {
   presentYear?: number;
   revision?: number;
   anchors?: IntercalaryAnchor[];
+  /**
+   * Which weekday (0-indexed) falls on the calendar's epoch day 0 (year 0, day 1).
+   * Used to align the month grid so that day-1 of any month lands in the correct column.
+   * Defaults to 0 when absent.
+   */
+  epochWeekday?: number;
 }
 
 export type DatePrecision = "year" | "unit" | "day" | "anchor";

@@ -96,7 +96,8 @@ export function buildCalendarMonth(
   const prevMonthIndex = month === 1 ? months.length - 1 : month - 2;
   const daysInPreviousMonth = months[prevMonthIndex]?.days ?? 30;
   const firstWeekday =
-    calendarEngine.getTimelineValue({ year, month, day: 1 }, config) %
+    (calendarEngine.getTimelineValue({ year, month, day: 1 }, config) +
+      (config.epochWeekday ?? 0)) %
     daysPerWeek;
 
   const exactEntries = entries

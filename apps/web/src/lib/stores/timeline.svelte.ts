@@ -244,7 +244,13 @@ export class TimelineStore {
       const aSort = a.sortKey ?? Number.MAX_SAFE_INTEGER;
       const bSort = b.sortKey ?? Number.MAX_SAFE_INTEGER;
       if (aSort !== bSort) return aSort - bSort;
-      return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+      const t = a.title.localeCompare(b.title, undefined, {
+        sensitivity: "base",
+      });
+      if (t !== 0) return t;
+      return a.entityId.localeCompare(b.entityId, undefined, {
+        sensitivity: "base",
+      });
     });
   });
 
@@ -318,15 +324,7 @@ export class TimelineStore {
         type: entry.entityType,
         date: entry.exactDate ?? (entry.date as TemporalMetadata),
         eraId: this.getEraForYear(entry.date?.year ?? 0)?.id,
-        _sortKey: entry.sortKey ?? Number.MAX_SAFE_INTEGER,
-      }))
-      .sort((a, b) => {
-        if (a._sortKey !== b._sortKey) return a._sortKey - b._sortKey;
-        return a.title.localeCompare(b.title, undefined, {
-          sensitivity: "base",
-        });
-      })
-      .map(({ _sortKey: _sk, ...rest }) => rest),
+      })),
   );
 
   calendarMonthView = $derived.by(
@@ -408,12 +406,11 @@ export class TimelineStore {
     const monthCount = calendarEngine.getMonths(
       this.deps.calendarStore.config,
     ).length;
-    if (this.activeMonth >= monthCount) {
+    this.activeMonth += 1;
+    if (this.activeMonth > monthCount) {
       this.activeMonth = 1;
       this.activeYear += 1;
-      return;
     }
-    this.activeMonth += 1;
   }
 
   previousMonth() {
@@ -451,7 +448,18 @@ export class TimelineStore {
   }
 
   toggleViewMode() {
-    this.viewMode = this.viewMode === "calendar" ? "agenda" : "calendar";
+    const modes: TimelineViewMode[] = [
+      "calendar",
+      "agenda",
+      "vertical",
+      "horizontal",
+    ];
+    const idx = modes.indexOf(this.viewMode);
+    this.viewMode = modes[(idx + 1) % modes.length];
+  }
+
+  resetVaultGuard() {
+    this.#initializedForVault = "";
   }
 
   getEntriesByEra(eraId: string): TimelineEntry[] {
