@@ -1,10 +1,11 @@
-import { GREGORIAN_MONTHS } from "./engine";
+import { calendarEngine } from "./engine";
 import type {
   AgendaSection,
   CalendarDayCell,
   CalendarEventEntry,
   CalendarFilterInput,
   CalendarMonthViewModel,
+  WorldCalendar,
 } from "./types";
 
 const DEFAULT_MAX_VISIBLE_PER_DAY = 3;
@@ -83,13 +84,18 @@ export function buildCalendarMonth(
   entries: CalendarEventEntry[],
   year: number,
   month: number,
+  config: WorldCalendar,
   maxVisiblePerDay = DEFAULT_MAX_VISIBLE_PER_DAY,
 ): CalendarMonthViewModel {
-  const monthName = GREGORIAN_MONTHS[month - 1]?.name ?? `Month ${month}`;
-  const firstDay = new Date(year, month - 1, 1);
-  const firstWeekday = firstDay.getDay();
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const daysInPreviousMonth = new Date(year, month - 1, 0).getDate();
+  const months = calendarEngine.getMonths(config);
+  const daysPerWeek = config.daysPerWeek;
+  const monthName = months[month - 1]?.name ?? `Month ${month}`;
+  const daysInMonth = months[month - 1]?.days ?? 30;
+  const prevMonthIndex = month === 1 ? months.length - 1 : month - 2;
+  const daysInPreviousMonth = months[prevMonthIndex]?.days ?? 30;
+  const firstWeekday =
+    calendarEngine.getTimelineValue({ year, month, day: 1 }, config) %
+    daysPerWeek;
 
   const exactEntries = entries
     .filter((entry) => {
@@ -115,18 +121,15 @@ export function buildCalendarMonth(
 
   const cells: CalendarDayCell[] = [];
 
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? months.length : month - 1;
+  const nextYear = month === months.length ? year + 1 : year;
+  const nextMonth = month === months.length ? 1 : month + 1;
+
   for (let i = 0; i < firstWeekday; i++) {
     const day = daysInPreviousMonth - firstWeekday + i + 1;
-    const previousMonthDate = new Date(year, month - 2, day);
     cells.push(
-      createDayCell(
-        previousMonthDate.getFullYear(),
-        previousMonthDate.getMonth() + 1,
-        day,
-        false,
-        [],
-        maxVisiblePerDay,
-      ),
+      createDayCell(prevYear, prevMonth, day, false, [], maxVisiblePerDay),
     );
   }
 
@@ -143,24 +146,16 @@ export function buildCalendarMonth(
     );
   }
 
-  while (cells.length % 7 !== 0) {
-    const nextMonthDate = new Date(year, month - 1, daysInMonth + 1);
+  while (cells.length % daysPerWeek !== 0) {
     const day = cells.length - (firstWeekday + daysInMonth) + 1;
     cells.push(
-      createDayCell(
-        nextMonthDate.getFullYear(),
-        nextMonthDate.getMonth() + 1,
-        day,
-        false,
-        [],
-        maxVisiblePerDay,
-      ),
+      createDayCell(nextYear, nextMonth, day, false, [], maxVisiblePerDay),
     );
   }
 
   const weeks = [];
-  for (let i = 0; i < cells.length; i += 7) {
-    weeks.push({ days: cells.slice(i, i + 7) });
+  for (let i = 0; i < cells.length; i += daysPerWeek) {
+    weeks.push({ days: cells.slice(i, i + daysPerWeek) });
   }
 
   return {
@@ -173,7 +168,9 @@ export function buildCalendarMonth(
 
 export function buildAgendaSections(
   entries: CalendarEventEntry[],
+  config: WorldCalendar,
 ): AgendaSection[] {
+  const months = calendarEngine.getMonths(config);
   const exactSections = new Map<string, AgendaSection>();
   const uncertainEntries: CalendarEventEntry[] = [];
 
@@ -183,7 +180,7 @@ export function buildAgendaSections(
     if (entry.dateKind === "exact" && entry.exactDate) {
       const { year, month, day } = entry.exactDate;
       const sectionId = `${year}-${month}-${day}`;
-      const monthName = GREGORIAN_MONTHS[month - 1]?.name ?? `Month ${month}`;
+      const monthName = months[month - 1]?.name ?? `Month ${month}`;
       const label = `${monthName} ${day}, ${year}`;
       const section = exactSections.get(sectionId);
       if (section) {

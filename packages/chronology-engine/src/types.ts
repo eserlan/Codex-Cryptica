@@ -105,7 +105,7 @@ export interface CalendarEventEntry {
   title: string;
   entityType: string;
   dateKind: "exact" | "approximate" | "missing";
-  date: TemporalMetadata | null;
+  date: TemporalMetadata | DateSelection | null;
   exactDate?: CalendarExactDate;
   displayDateLabel: string;
   sortKey?: number;

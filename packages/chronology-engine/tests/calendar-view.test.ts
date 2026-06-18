@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_CALENDAR,
   buildAgendaSections,
   buildCalendarMonth,
   filterCalendarEntries,
@@ -35,6 +36,7 @@ describe("calendar-view helpers", () => {
       ],
       2026,
       6,
+      DEFAULT_CALENDAR,
       3,
     );
 
@@ -71,6 +73,7 @@ describe("calendar-view helpers", () => {
       ],
       2026,
       6,
+      DEFAULT_CALENDAR,
       3,
     );
 
@@ -118,6 +121,7 @@ describe("calendar-view helpers", () => {
       ],
       2026,
       6,
+      DEFAULT_CALENDAR,
       2,
     );
 
@@ -137,31 +141,34 @@ describe("calendar-view helpers", () => {
   });
 
   it("groups agenda sections chronologically and keeps undated entries separate", () => {
-    const sections = buildAgendaSections([
-      createEntry({
-        entityId: "event-2",
-        title: "Second Event",
-        exactDate: { year: 2026, month: 6, day: 20 },
-        displayDateLabel: "June 20, 2026",
-        sortKey: 20,
-      }),
-      createEntry({
-        entityId: "event-1",
-        title: "First Event",
-        exactDate: { year: 2026, month: 6, day: 18 },
-        displayDateLabel: "June 18, 2026",
-        sortKey: 18,
-      }),
-      createEntry({
-        entityId: "event-3",
-        title: "Approximate Event",
-        dateKind: "approximate",
-        exactDate: undefined,
-        date: { precision: "year", year: 2026, calendarRevision: 1 },
-        displayDateLabel: "2026",
-        sortKey: 26,
-      }),
-    ]);
+    const sections = buildAgendaSections(
+      [
+        createEntry({
+          entityId: "event-2",
+          title: "Second Event",
+          exactDate: { year: 2026, month: 6, day: 20 },
+          displayDateLabel: "June 20, 2026",
+          sortKey: 20,
+        }),
+        createEntry({
+          entityId: "event-1",
+          title: "First Event",
+          exactDate: { year: 2026, month: 6, day: 18 },
+          displayDateLabel: "June 18, 2026",
+          sortKey: 18,
+        }),
+        createEntry({
+          entityId: "event-3",
+          title: "Approximate Event",
+          dateKind: "approximate",
+          exactDate: undefined,
+          date: { precision: "year", year: 2026, calendarRevision: 1 },
+          displayDateLabel: "2026",
+          sortKey: 26,
+        }),
+      ],
+      DEFAULT_CALENDAR,
+    );
 
     expect(sections.map((section) => section.label)).toEqual([
       "June 18, 2026",

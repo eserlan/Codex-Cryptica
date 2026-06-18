@@ -124,6 +124,7 @@ function createStore() {
       activeVaultId: "vault-1",
       entities,
       allEntities: Object.values(entities),
+      status: "idle",
     },
     graph: {
       eras: [{ id: "era-1", name: "Age of Crowns", start_year: 2020 }],
@@ -268,6 +269,7 @@ describe("resolveExactDate edge cases (via calendarEntries)", () => {
         activeVaultId: "vault-1",
         entities: extraEntities,
         allEntities: Object.values(extraEntities),
+        status: "idle",
       },
       graph: { eras: [] },
       calendarStore: { config: { ...DEFAULT_CALENDAR, revision: 1 } },

@@ -5,7 +5,6 @@ import {
   type AgendaSection,
   type CalendarEventEntry,
   type CalendarExactDate,
-  type CalendarFilterInput,
   type CalendarMonthViewModel,
   type DateSelection,
   type TemporalMetadata,
@@ -31,7 +30,10 @@ export type TimelineViewMode =
   | "horizontal";
 
 interface TimelineStoreDependencies {
-  vault: Pick<VaultStore, "allEntities" | "entities" | "activeVaultId">;
+  vault: Pick<
+    VaultStore,
+    "allEntities" | "entities" | "activeVaultId" | "status"
+  >;
   graph: Pick<typeof graph, "eras">;
   calendarStore: Pick<CalendarStore, "config">;
 }
@@ -274,16 +276,6 @@ export class TimelineStore {
     );
   });
 
-  calendarFilters = $derived.by(
-    (): CalendarFilterInput => ({
-      entityType: this.filterType,
-      labelIds: this.selectedLabel ? [this.selectedLabel] : [],
-      relatedEntityIds: this.selectedRelatedEntityId
-        ? [this.selectedRelatedEntityId]
-        : [],
-    }),
-  );
-
   filteredCalendarEntries = $derived.by(() => {
     const labelFilter = this.selectedLabel
       ? [normalizeLabel(this.selectedLabel)]
@@ -340,20 +332,30 @@ export class TimelineStore {
         this.filteredCalendarEntries,
         this.activeYear,
         this.activeMonth,
+        this.deps.calendarStore.config,
         this.maxVisiblePerDay,
       ),
   );
 
   agendaSections = $derived.by((): AgendaSection[] =>
-    buildAgendaSections(this.filteredCalendarEntries),
+    buildAgendaSections(
+      this.filteredCalendarEntries,
+      this.deps.calendarStore.config,
+    ),
   );
 
-  isLoading = $derived(false);
+  isLoading = $derived.by(
+    () =>
+      this.deps.vault.status === "loading" ||
+      this.deps.vault.status === "saving",
+  );
 
-  #initialized = false;
+  #initializedForVault = "";
 
   async init() {
-    if (this.#initialized) return;
+    const currentVaultId = this.deps.vault.activeVaultId ?? "";
+    if (this.#initializedForVault === currentVaultId && currentVaultId !== "")
+      return;
     if (this.filteredCalendarEntries.length === 0) return;
     const firstExactEntry = this.filteredCalendarEntries.find(
       (entry) => entry.dateKind === "exact" && entry.exactDate,
@@ -361,7 +363,7 @@ export class TimelineStore {
     if (!firstExactEntry?.exactDate) return;
     this.activeYear = firstExactEntry.exactDate.year;
     this.activeMonth = firstExactEntry.exactDate.month;
-    this.#initialized = true;
+    this.#initializedForVault = currentVaultId;
   }
 
   private getEraForYear(year: number): Era | undefined {

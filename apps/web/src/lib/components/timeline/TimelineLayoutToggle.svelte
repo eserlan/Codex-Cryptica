@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { timelineStore } from "$lib/stores/timeline.svelte";
+  import {
+    timelineStore,
+    type TimelineViewMode,
+  } from "$lib/stores/timeline.svelte";
 
-  const modes = [
+  const modes: Array<{ id: TimelineViewMode; icon: string; label: string }> = [
     { id: "calendar", icon: "icon-[lucide--calendar-days]", label: "Calendar" },
     { id: "agenda", icon: "icon-[lucide--scroll-text]", label: "Agenda" },
     { id: "vertical", icon: "icon-[lucide--list]", label: "Timeline" },
@@ -13,7 +16,7 @@
   {#each modes as mode}
     <button
       type="button"
-      onclick={() => timelineStore.setViewMode(mode.id as any)}
+      onclick={() => timelineStore.setViewMode(mode.id)}
       class="px-3 py-1.5 flex items-center gap-2 rounded text-[10px] font-bold tracking-widest transition-all
       {timelineStore.viewMode === mode.id
         ? 'bg-theme-primary/20 text-theme-primary'
