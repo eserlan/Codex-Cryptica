@@ -64,13 +64,12 @@
         {@const isDropTarget = dragOverDay === key && !!onDropEntity}
         <section
           class={[
-            "flex min-h-16 flex-col gap-1 border p-1 align-top rounded-none sm:rounded-2xl sm:min-h-32 sm:gap-2 sm:p-3 transition-colors",
-            day.inCurrentMonth
-              ? "border-theme-border bg-theme-surface/70"
-              : "border-theme-border/50 bg-theme-bg/35 text-theme-muted/70",
+            "relative flex min-h-16 flex-col gap-1 border p-1 align-top rounded-none sm:rounded-2xl sm:min-h-32 sm:gap-2 sm:p-3 transition-all duration-150",
             isDropTarget
-              ? "border-theme-primary/60 bg-theme-primary/10 ring-2 ring-theme-primary/30"
-              : "",
+              ? "border-theme-primary bg-theme-primary/15 ring-2 ring-theme-primary/50 scale-[1.02] shadow-lg shadow-theme-primary/20"
+              : day.inCurrentMonth
+                ? "border-theme-border bg-theme-surface/70"
+                : "border-theme-border/50 bg-theme-bg/35 text-theme-muted/70",
           ]}
           aria-label={dayLabel(day.date.year, day.date.month, day.date.day)}
           ondragover={(e) => {
@@ -102,6 +101,19 @@
             }
           }}
         >
+          {#if isDropTarget}
+            <div
+              class="absolute inset-0 flex items-center justify-center rounded-none sm:rounded-2xl pointer-events-none z-10"
+            >
+              <div
+                class="flex items-center gap-1.5 rounded-full bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-bg shadow-lg animate-pulse"
+              >
+                <span class="icon-[lucide--calendar-plus] h-3.5 w-3.5"></span>
+                Set date
+              </div>
+            </div>
+          {/if}
+
           <div class="flex items-center justify-between gap-1">
             <span
               class={[
