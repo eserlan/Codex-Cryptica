@@ -4,6 +4,7 @@
     npcThemeConfig,
     npcConfig,
   } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     theme = $bindable(factionConfig.themes[0]),
@@ -25,6 +26,7 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+  type MoralityOption = { id: string; label: string };
 
   const availableAncestries = $derived(
     npcThemeConfig.ancestries[theme] ?? npcConfig.races,
@@ -33,86 +35,105 @@
     npcThemeConfig.roles[theme] ?? npcConfig.roles,
   );
   const availableMoralities = $derived(npcThemeConfig.moralities[theme] ?? []);
+  const knownAncestries = $derived(
+    Array.from(
+      new Set([
+        ...npcConfig.races,
+        ...((Object.values(npcThemeConfig.ancestries) as string[][]).flat()),
+      ]),
+    ),
+  );
+  const knownRoles = $derived(
+    Array.from(
+      new Set([
+        ...npcConfig.roles,
+        ...((Object.values(npcThemeConfig.roles) as string[][]).flat()),
+      ]),
+    ),
+  );
+  const allMoralities = $derived(
+    (Object.values(npcThemeConfig.moralities) as MoralityOption[][]).flat(),
+  );
+  const knownMoralityIds = $derived(
+    Array.from(
+      new Set(allMoralities.map((morality: MoralityOption) => morality.id)),
+    ),
+  );
 
   $effect(() => {
-    if (!availableAncestries.includes(ancestry)) {
+    if (
+      ancestry &&
+      knownAncestries.includes(ancestry) &&
+      !availableAncestries.includes(ancestry)
+    ) {
       ancestry = availableAncestries[0];
     }
   });
 
   $effect(() => {
-    if (!availableRoles.includes(role)) {
+    if (role && knownRoles.includes(role) && !availableRoles.includes(role)) {
       role = availableRoles[0];
     }
   });
 
   $effect(() => {
-    const ids = availableMoralities.map((m) => m.id);
-    if (!ids.includes(alignment)) {
+    const ids = availableMoralities.map((m: MoralityOption) => m.id);
+    if (alignment && knownMoralityIds.includes(alignment) && !ids.includes(alignment)) {
       alignment = ids[0] ?? "";
     }
   });
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="rpgnpc-theme-select" class={labelClass}>Choose a vibe</label>
-  <select
-    id="rpgnpc-theme-select"
-    name="npc_theme"
-    bind:value={theme}
-    class={selectClass}
-  >
-    {#each factionConfig.themes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="rpgnpc-theme-select"
+  name="npc_theme"
+  label="Choose a vibe"
+  bind:value={theme}
+  choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom vibe"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="rpgnpc-ancestry-select" class={labelClass}
-    >Choose their ancestry</label
-  >
-  <select
-    id="rpgnpc-ancestry-select"
-    name="npc_ancestry"
-    bind:value={ancestry}
-    class={selectClass}
-  >
-    {#each availableAncestries as a (a)}
-      <option value={a}>{a}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="rpgnpc-ancestry-select"
+  name="npc_ancestry"
+  label="Choose their ancestry"
+  bind:value={ancestry}
+  choices={availableAncestries.map((a: string) => ({ value: a, label: a }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom ancestry"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="rpgnpc-role-select" class={labelClass}>Choose their role</label>
-  <select
-    id="rpgnpc-role-select"
-    name="npc_role"
-    bind:value={role}
-    class={selectClass}
-  >
-    {#each availableRoles as r (r)}
-      <option value={r}>{r}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="rpgnpc-role-select"
+  name="npc_role"
+  label="Choose their role"
+  bind:value={role}
+  choices={availableRoles.map((r: string) => ({ value: r, label: r }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom role"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="rpgnpc-alignment-select" class={labelClass}
-    >Choose their moral stance</label
-  >
-  <select
-    id="rpgnpc-alignment-select"
-    name="npc_alignment"
-    bind:value={alignment}
-    class={selectClass}
-  >
-    {#each availableMoralities as m (m.id)}
-      <option value={m.id}>{m.label}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="rpgnpc-alignment-select"
+  name="npc_alignment"
+  label="Choose their moral stance"
+  bind:value={alignment}
+  choices={availableMoralities.map((m: MoralityOption) => ({
+    value: m.id,
+    label: m.label,
+  }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom moral stance"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="rpgnpc-campaign-context" class={labelClass}

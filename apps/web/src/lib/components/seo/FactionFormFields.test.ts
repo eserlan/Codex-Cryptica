@@ -71,4 +71,21 @@ describe("FactionFormFields Theme Swapping", () => {
     await fireEvent.click(surpriseBtn);
     expect(onSurprise).toHaveBeenCalled();
   });
+
+  it("reveals a custom input when Own option is selected", async () => {
+    render(FactionFormFields, {
+      props: {
+        theme: "Classic Fantasy",
+        type: "Arcane Circle",
+        scope: "Single city",
+        alignment: "Pragmatic and profit-driven",
+        campaignContext: "",
+      },
+    });
+
+    const typeSelect = screen.getByLabelText("Choose what they are");
+    await fireEvent.change(typeSelect, { target: { value: "__custom__" } });
+
+    expect(screen.getByLabelText("Choose what they are (Own option)")).toBeTruthy();
+  });
 });
