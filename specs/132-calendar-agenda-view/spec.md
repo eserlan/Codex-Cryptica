@@ -40,17 +40,19 @@ A user clicks an event entry on the calendar and is taken to the existing relate
 
 ### User Story 3 - Filter Calendar by Entity or Type (Priority: P2)
 
-A user filters the calendar to show only events related to a specific world, faction, character, or event type, so they can focus on a particular thread of history.
+A user filters the calendar to show only events related to a specific world, event type, label, faction, character, or region, so they can focus on a particular thread of history.
 
 **Why this priority**: Without filtering, a world with hundreds of events becomes unreadable. Filtering is essential for large worlds and campaigns.
 
-**Independent Test**: Can be tested by applying a filter (e.g., "faction: Iron Throne") and verifying only matching events remain visible on the calendar.
+**Independent Test**: Can be tested by applying a filter (e.g., related entity `faction: Iron Throne` or a specific label) and verifying only matching events remain visible on the calendar.
 
 **Acceptance Scenarios**:
 
 1. **Given** a user has events from multiple factions, **When** they filter by a specific faction, **Then** only events related to that faction appear on the calendar.
 2. **Given** a user applies multiple filters, **When** viewing the calendar, **Then** only events matching all selected filters are shown.
 3. **Given** a user clears all filters, **When** viewing the calendar, **Then** all events are shown again.
+
+Label filters apply to event metadata labels, while faction, character, and region filters apply through related-entity links.
 
 ---
 
@@ -78,7 +80,7 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 - What happens when a user has no events at all — is there an empty state?
 - What happens if there are hundreds of events in a single month?
 - Crowded day cells show a fixed number of inline events plus an interactive overflow control (for example, "+3 more") that reveals the full list for that date.
-- How are events displayed when two events share the exact same date and time?
+- Events that share the same exact date and time are shown in a stable deterministic order, using title-based ordering when no more specific chronology field distinguishes them.
 
 ## Requirements _(mandatory)_
 
@@ -88,27 +90,27 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 - **FR-002**: Users MUST be able to navigate between months (previous/next) in the calendar.
 - **FR-003**: System MUST allow users to click/tap a calendar entry to open the existing related entity or event detail view used elsewhere in the app.
 - **FR-004**: System MUST provide a list/agenda view as an alternative to the grid view.
-- **FR-005**: Users MUST be able to filter events by world, event type, entity tag, or related entity (faction, character, region), and when multiple filters are active, an event MUST match all selected filters to remain visible.
+- **FR-005**: Users MUST be able to filter events by world, event type, entity label, or related entity (faction, character, region), and when multiple filters are active, an event MUST match all selected filters to remain visible.
 - **FR-006**: System MUST handle dates with approximate or missing values gracefully: these events MUST NOT be placed into exact day cells in the month grid, and they MUST remain accessible in agenda view under an "Undated/Approximate" grouping with their uncertainty indicated.
 - **FR-007**: System MUST show an empty state when no events match the current view or filters.
 - **FR-008**: The calendar view MUST be scoped to the currently-viewed world; events from other worlds do not appear unless the user navigates to that world.
-- **FR-009**: System MUST surface the calendar view within the world detail context (e.g., as a tab or section on the world dashboard).
-- **FR-010**: Events with dates on the same day MUST all be accessible (overflow pattern for crowded cells).
+- **FR-009**: System MUST surface the calendar view in two places: the existing chronology route and a dedicated calendar section on the world front page/dashboard for the currently-viewed world.
 - **FR-010**: Events with dates on the same day MUST all be accessible through a crowded-cell overflow pattern that shows a fixed number of inline events plus an interactive control that reveals the full list for that date.
+- **FR-011**: When two or more events share the same exact date and time, the system MUST present them in a stable deterministic order, using title-based ordering when no more specific chronology field distinguishes them.
 
 ### Key Entities
 
-- **Event**: A worldbuilding entry with a date (exact or approximate), a title, a type/tag, and a link to one or more related entities (faction, character, location, etc.).
+- **Event**: A worldbuilding entry with a date (exact or approximate), a title, a type or labels, and a link to one or more related entities (faction, character, location, etc.).
 - **World**: The top-level container; events belong to a world (and optionally a campaign or region within it).
-- **Filter State**: The set of active filters (world, entity, event type, tag) that determines which events appear in the current calendar view.
+- **Filter State**: The set of active filters (world, entity, event type, label) that determines which events appear in the current calendar view.
 
 ## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can open the calendar view and see their events within 2 seconds of navigation.
+- **SC-001**: Users can open the calendar view and see their events within 2 seconds of navigation, measured with a manual smoke check against a representative populated world.
 - **SC-002**: Users can navigate from the calendar to an event detail in a single click/tap.
-- **SC-003**: Filtering reduces visible events in under 500ms with no full page reload.
+- **SC-003**: Filtering reduces visible events in under 500ms with no full page reload, measured with a manual smoke check against a representative populated world.
 - **SC-004**: The calendar correctly places events on the right dates for 100% of events with valid dates.
 - **SC-005**: Users with 0 events see a helpful empty state with a prompt to create events.
 - **SC-006**: The view is usable on mobile screen sizes (no horizontal scroll, tappable targets).
@@ -123,6 +125,8 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 - Q: How should multi-day events be displayed in this version? → A: Show them on their start date only in v1.
 - Q: For FR-003, what should happen when a user clicks a calendar event entry? → A: Open the existing related entity or event detail view used elsewhere in the app.
 - Q: For crowded day cells, how should overflow events be accessed? → A: Show a fixed count plus an interactive "+N more" control that reveals the full list for that date.
+- Q: For FR-009, where should the calendar be surfaced in the app? → A: In the existing chronology route and as a dedicated calendar section on the world front page/dashboard.
+- Q: How should events with the same exact date and time be ordered? → A: Keep a stable deterministic order using title-based ordering when nothing else distinguishes them.
 
 ## Assumptions
 
