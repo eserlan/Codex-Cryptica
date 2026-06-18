@@ -82,8 +82,11 @@
             e.preventDefault();
             dragOverDay = key;
           }}
-          ondragleave={() => {
-            if (dragOverDay === key) dragOverDay = null;
+          ondragleave={(e) => {
+            if (dragOverDay !== key) return;
+            if ((e.currentTarget as Element).contains(e.relatedTarget as Node))
+              return;
+            dragOverDay = null;
           }}
           ondrop={(e) => {
             dragOverDay = null;
