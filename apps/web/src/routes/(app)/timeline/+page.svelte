@@ -138,8 +138,9 @@
           </div>
         {:else if timelineStore.viewMode === "vertical"}
           <VerticalTimeline />
-        {:else}
-          <HorizontalTimeline />
+        {:else if timelineStore.viewMode === "horizontal"}
+          <div class="hidden md:block h-full"><HorizontalTimeline /></div>
+          <div class="md:hidden h-full"><VerticalTimeline /></div>
         {/if}
       </div>
     {/if}

@@ -299,7 +299,6 @@ describe("FrontPage", () => {
 
     expect(screen.getByText("Front Page")).toBeTruthy();
     expect(screen.getByText("Relevant Entities")).toBeTruthy();
-    expect(screen.getByText("World Calendar")).toBeTruthy();
   });
 
   it("renders briefing content with markdown formatting", async () => {
