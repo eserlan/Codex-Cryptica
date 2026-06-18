@@ -165,9 +165,7 @@ describe("buildEntityRevisionPrompt", () => {
     );
 
     expect(prompt).toContain("REVISION SOURCE: revise");
-    expect(prompt).toContain(
-      "USER INSTRUCTIONS (HIGHEST PRIORITY):",
-    );
+    expect(prompt).toContain("USER INSTRUCTIONS (HIGHEST PRIORITY):");
     expect(prompt).toContain("Actually, it is a living crystal, not a key.");
     expect(prompt).toContain(
       "User instructions/corrections are the highest-priority input.",

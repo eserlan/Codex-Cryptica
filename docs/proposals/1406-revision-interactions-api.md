@@ -4,7 +4,7 @@
 **Date:** 2026-06-17
 **Branch:** `1406-revision-interactions-api`
 **Issue:** #1406
-**Decision record:** [ADR 020](../adr/020-entity-revision-on-interactions-api.md) (the *why*; this doc is the *how*)
+**Decision record:** [ADR 020](../adr/020-entity-revision-on-interactions-api.md) (the _why_; this doc is the _how_)
 **Related:** ADR 018 (server-side conversation state), ADR 019 (generator sessions — sibling precedent), PR #1404 (related-context quality), `docs/proposals/revision-context-quality.md`
 **Scope:** Route `reviseEntityUpdate` through the existing Interactions API flow so related-entity context is delta-sent (only new/changed) and threaded server-side, instead of re-sending the full related block on every revision.
 
@@ -53,19 +53,20 @@ proposal applies the same pattern to revisions.
 
 ## Mapping (chat → revision)
 
-| Chat concept | Revision equivalent |
-|---|---|
-| `conversationId` session key | entity id being revised |
-| delta-tracked lore entries | the related-entity context (one `LoreEntry` per related entity) |
-| `[USER QUERY]` | revision prompt core: ENTITY + CURRENT RECORD + NEW PASSAGE + INSTRUCTIONS |
-| stable system instruction | `buildEntityRevisionSystemInstruction()` |
-| `result.text` | the revision JSON payload |
+| Chat concept                 | Revision equivalent                                                        |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `conversationId` session key | entity id being revised                                                    |
+| delta-tracked lore entries   | the related-entity context (one `LoreEntry` per related entity)            |
+| `[USER QUERY]`               | revision prompt core: ENTITY + CURRENT RECORD + NEW PASSAGE + INSTRUCTIONS |
+| stable system instruction    | `buildEntityRevisionSystemInstruction()`                                   |
+| `result.text`                | the revision JSON payload                                                  |
 
 ---
 
 ## Implementation phases & tasks
 
 Files:
+
 - **SCHEMA** = `packages/schema/src/ai.ts`
 - **ENGINE** = `packages/oracle-engine/src/revision-context.ts`
 - **DELTA** = `packages/oracle-engine/src/lore-delta.ts`
@@ -83,7 +84,7 @@ Files:
       `RelatedEntityContext` interface in this file, or import schema's).
 - [x] **T103** ENGINE/DELTA — add `relatedToLoreEntries(related[])` →
       `{ id, snippet: formatted "<title> (<type>) [<relation>]: <summary>" block,
-      hash: entityContentHash(summary) }`. Pure; worker-safe.
+    hash: entityContentHash(summary) }`. Pure; worker-safe.
 - [x] **T104** ENGINE-TEST — `buildRelatedEntityContext` output includes `id`;
       `relatedToLoreEntries` produces stable hashes that change with summary.
 
@@ -108,7 +109,7 @@ Files:
 
 - [x] **T301** SVC — add `reviseViaInteraction(...)`: get per-entity session,
       partition related `LoreEntry`s, `sendInteraction({model, input,
-      systemInstruction, previousInteractionId})`, on `InteractionExpiredError`
+    systemInstruction, previousInteractionId})`, on `InteractionExpiredError`
       reset + replay full related context once, then `commit` + parse JSON.
 - [x] **T302** SVC — in `reviseEntityUpdate`, branch into `reviseViaInteraction`
       when `interactionsEnabled && !apiKey && entity.id` present; else current path.

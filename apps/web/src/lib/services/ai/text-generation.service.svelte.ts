@@ -323,7 +323,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
             promptCore,
             cleanRelatedEntities,
           )
-        : await model.generateContent(userPrompt).then((r) => r.response.text());
+        : await model
+            .generateContent(userPrompt)
+            .then((r) => r.response.text());
       if (import.meta.env.DEV) {
         console.log("[ReconPipeline] Raw LLM response metadata:", {
           textLength: text.length,

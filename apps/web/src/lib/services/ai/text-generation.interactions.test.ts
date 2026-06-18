@@ -244,7 +244,9 @@ describe("reviseEntityUpdate — Interactions API path", () => {
       "<USER_CONTENT>\nSzass Tam (npc) [rules]: The lich-regent of Thay.\n</USER_CONTENT>",
     );
     expect(send.mock.calls[1][0].previousInteractionId).toBe("r1");
-    expect(send.mock.calls[1][0].input).not.toContain("The lich-regent of Thay.");
+    expect(send.mock.calls[1][0].input).not.toContain(
+      "The lich-regent of Thay.",
+    );
     expect(send.mock.calls[1][0].input).toContain(
       "[RELEVANT EARLIER RECORDS] Szass Tam (npc) [rules]",
     );

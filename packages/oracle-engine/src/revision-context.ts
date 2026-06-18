@@ -60,10 +60,7 @@ function escapeRegex(str: string): string {
 // Unicode-safe word boundary: asserts position is not surrounded by letter/digit/underscore.
 function wordBoundaryRegex(word: string): RegExp {
   const escaped = escapeRegex(word);
-  return new RegExp(
-    `(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`,
-    "u",
-  );
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, "u");
 }
 
 function scoreStringMentions(candidate: string, text: string): number {
@@ -209,8 +206,7 @@ export function buildRelatedEntityContext(
       summary.length > MAX_TOTAL_CHARS
         ? summary.slice(0, MAX_TOTAL_CHARS) + "..."
         : summary;
-    if (result.length > 0 && totalChars + entry.length > MAX_TOTAL_CHARS)
-      break;
+    if (result.length > 0 && totalChars + entry.length > MAX_TOTAL_CHARS) break;
     result.push({ id, title, type, relation, summary: entry });
     debugEntries.push({ title, score, chars: entry.length });
     totalChars += entry.length;

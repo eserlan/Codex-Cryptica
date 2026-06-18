@@ -184,11 +184,11 @@ export function buildRevisionInteractionInput(
   if (partition.unchanged.length > 0) {
     blocks.push(
       `[RELEVANT EARLIER RECORDS] ${partition.unchanged
-          .map((entry) => {
-            const sep = entry.snippet.indexOf(": ");
-            return sep >= 0 ? entry.snippet.slice(0, sep) : entry.snippet;
-          })
-          .join(", ")} (retained from prior turns).`,
+        .map((entry) => {
+          const sep = entry.snippet.indexOf(": ");
+          return sep >= 0 ? entry.snippet.slice(0, sep) : entry.snippet;
+        })
+        .join(", ")} (retained from prior turns).`,
     );
   }
 

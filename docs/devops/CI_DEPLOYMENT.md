@@ -70,8 +70,8 @@ The promotion workflow:
 
 ## Workflow Files
 
-| File                                                                       | Purpose                                                            |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| File                                                                             | Purpose                                                            |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | [`deploy.yml`](../../.github/workflows/deploy.yml)                               | Build + deploy on push to `main` or `staging`                      |
 | [`promote-to-prod.yml`](../../.github/workflows/promote-to-prod.yml)             | Manual promotion of staging artifact to production                 |
 | [`auto-merge-staging.yml`](../../.github/workflows/auto-merge-staging.yml)       | Auto-enables merge for staging-targeted PRs                        |

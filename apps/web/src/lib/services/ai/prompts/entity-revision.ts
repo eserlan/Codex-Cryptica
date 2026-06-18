@@ -139,12 +139,8 @@ export function buildEntityRevisionUserPrompt(
   } = {},
 ): string {
   return (
-    buildEntityRevisionPromptCore(
-      entity,
-      incoming,
-      categories,
-      options,
-    ) + buildEntityRevisionRelatedSection(relatedEntities)
+    buildEntityRevisionPromptCore(entity, incoming, categories, options) +
+    buildEntityRevisionRelatedSection(relatedEntities)
   );
 }
 

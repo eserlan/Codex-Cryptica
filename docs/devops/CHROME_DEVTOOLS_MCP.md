@@ -49,15 +49,15 @@ mcp__chrome-devtools__select_page  { pageId: 1 }
 
 ### Useful tools
 
-| Tool | Purpose |
-|---|---|
-| `take_snapshot` | Accessibility tree — use `uid` values to click elements |
-| `click` | Click by `uid` from snapshot |
-| `wait_for` | Wait for text to appear before continuing |
-| `list_network_requests` | All requests; filter with `resourceTypes: ["fetch", "xhr"]` |
-| `get_network_request` | Save request + response bodies to disk via `requestFilePath` / `responseFilePath` |
-| `take_screenshot` | Visual check |
-| `evaluate_script` | Run JS in page context |
+| Tool                    | Purpose                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `take_snapshot`         | Accessibility tree — use `uid` values to click elements                           |
+| `click`                 | Click by `uid` from snapshot                                                      |
+| `wait_for`              | Wait for text to appear before continuing                                         |
+| `list_network_requests` | All requests; filter with `resourceTypes: ["fetch", "xhr"]`                       |
+| `get_network_request`   | Save request + response bodies to disk via `requestFilePath` / `responseFilePath` |
+| `take_screenshot`       | Visual check                                                                      |
+| `evaluate_script`       | Run JS in page context                                                            |
 
 ### Example: inspect a proxy request
 

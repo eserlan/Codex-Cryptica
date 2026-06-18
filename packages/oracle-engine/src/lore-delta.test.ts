@@ -102,7 +102,9 @@ describe("relatedToLoreEntries", () => {
       {
         id: "szass",
         snippet: "Szass Tam (npc) [rules]: The lich-regent of Thay.",
-        hash: entityContentHash("Szass Tam (npc) [rules]: The lich-regent of Thay."),
+        hash: entityContentHash(
+          "Szass Tam (npc) [rules]: The lich-regent of Thay.",
+        ),
       },
     ]);
   });
