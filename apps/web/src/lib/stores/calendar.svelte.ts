@@ -3,7 +3,7 @@ import type { WorldCalendar, CalendarSnapshot } from "chronology-engine";
 import { vault } from "./vault.svelte";
 import { getDB } from "../utils/idb";
 
-class CalendarStore {
+export class CalendarStore {
   config = $state<WorldCalendar>({ ...DEFAULT_CALENDAR, revision: 1 });
 
   constructor() {

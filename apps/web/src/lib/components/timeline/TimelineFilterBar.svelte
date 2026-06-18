@@ -1,27 +1,12 @@
 <script lang="ts">
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-
-  let startYear = $state<number | null>(null);
-  let endYear = $state<number | null>(null);
-
-  const applyRange = () => {
-    timelineStore.filterYearStart = startYear;
-    timelineStore.filterYearEnd = endYear;
-  };
-
-  const clearFilters = () => {
-    timelineStore.filterType = null;
-    startYear = null;
-    endYear = null;
-    applyRange();
-  };
 </script>
 
 <div class="flex flex-wrap items-center gap-4 text-[10px] font-mono">
   <!-- Type Filter -->
   <div class="flex items-center gap-2">
-    <span class="text-theme-muted uppercase tracking-widest">Filter:</span>
+    <span class="text-theme-muted uppercase tracking-widest">Type:</span>
     <select
       aria-label="Filter Timeline by Type"
       bind:value={timelineStore.filterType}
@@ -34,26 +19,32 @@
     </select>
   </div>
 
-  <!-- Date Range -->
   <div class="flex items-center gap-2">
-    <span class="text-theme-muted uppercase tracking-widest">Years:</span>
-    <input
-      type="number"
-      aria-label="Timeline Filter Start Year"
-      bind:value={startYear}
-      onchange={applyRange}
-      placeholder="Start"
-      class="w-16 bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors placeholder:text-theme-muted/50"
-    />
-    <span class="text-theme-muted">→</span>
-    <input
-      type="number"
-      aria-label="Timeline Filter End Year"
-      bind:value={endYear}
-      onchange={applyRange}
-      placeholder="End"
-      class="w-16 bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors placeholder:text-theme-muted/50"
-    />
+    <span class="text-theme-muted uppercase tracking-widest">Label:</span>
+    <select
+      aria-label="Filter timeline by label"
+      bind:value={timelineStore.selectedLabel}
+      class="bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors"
+    >
+      <option value={null}>ALL LABELS</option>
+      {#each timelineStore.availableLabels as label (label)}
+        <option value={label}>{label.toUpperCase()}</option>
+      {/each}
+    </select>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <span class="text-theme-muted uppercase tracking-widest">Related:</span>
+    <select
+      aria-label="Filter timeline by related entity"
+      bind:value={timelineStore.selectedRelatedEntityId}
+      class="max-w-44 bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors"
+    >
+      <option value={null}>ALL LINKS</option>
+      {#each timelineStore.availableRelatedEntities as entity (entity.id)}
+        <option value={entity.id}>{entity.title}</option>
+      {/each}
+    </select>
   </div>
 
   <!-- Undated Toggle -->
@@ -85,9 +76,9 @@
   </label>
 
   <!-- Clear -->
-  {#if timelineStore.filterType || startYear !== null || endYear !== null || timelineStore.includeUndated}
+  {#if timelineStore.filterType || timelineStore.selectedLabel || timelineStore.selectedRelatedEntityId || timelineStore.includeUndated}
     <button
-      onclick={clearFilters}
+      onclick={() => timelineStore.clearFilters()}
       class="text-red-700 hover:text-red-500 uppercase tracking-widest transition-colors font-bold font-header"
     >
       Clear All

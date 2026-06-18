@@ -41,3 +41,26 @@ bun run --filter '*' test -- --changed
 4. Apply multiple filters and confirm only entries matching all active filters remain visible.
 5. Trigger a crowded day and confirm the `+N more` control reveals the full list accessibly on desktop and mobile.
 6. Click or tap an entry and confirm the existing detail view opens.
+
+## 5. Manual verification log
+
+Manual smoke verification was completed on June 18, 2026 against the local dev server at `http://localhost:5175` using Playwright CLI with seeded demo events.
+
+Timeline route: `http://localhost:5175/timeline?demo=fantasy`
+
+- June 18, 2026 rendered four seeded events in the month grid, with three visible cards and a `+1 more` overflow control.
+- Month navigation refreshed in place without a reload. Measured DOM update time was ~101 ms moving to July 2026 and ~100 ms moving back to June 2026.
+- Agenda mode showed exact-dated groups plus an `Undated/Approximate` section containing the approximate `Rumored Eclipse` entry.
+- With filters `type=event`, `label=royal`, and `related=The Gilded Hand`, only `Banner Procession`, `Royal Coronation`, and `Harvest Accord` remained visible. `Heirloom Recovery` and `War Council` were correctly excluded, confirming AND semantics.
+- After clearing filters and enabling `Include Undated Entries`, the undated `Lost Ledger` entry appeared without errors.
+- Selecting `Royal Coronation` from agenda mode set `window.vault.selectedEntityId` to `calendar-crowd-1`, confirming the existing detail-selection flow.
+
+Front page route: `http://localhost:5175/vault/default?demo=fantasy`
+
+- The `World Calendar` section rendered the same crowded June 2026 day with the `+1 more` overflow control.
+- Front page month navigation advanced to July 2026 in ~104 ms and returned to June correctly.
+- Selecting `Royal Coronation` from the front-page calendar also set `window.vault.selectedEntityId` to `calendar-crowd-1`.
+
+Known runtime noise during manual testing:
+
+- Browser console showed existing third-party/demo asset issues unrelated to this feature: Cloudflare RUM CORS failures and demo image fetch errors.

@@ -18,6 +18,9 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
+  import { timelineStore } from "$lib/stores/timeline.svelte";
+  import CalendarMonthView from "$lib/components/timeline/CalendarMonthView.svelte";
+  import { onMount } from "svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -294,6 +297,14 @@
       "Generate a starter world with 3 basic entities: a main location, a key character, and an active quest or conflict.",
     );
   };
+
+  const openCalendarEntry = (entry: { entityId: string }) => {
+    vault.selectedEntityId = entry.entityId;
+  };
+
+  onMount(() => {
+    void timelineStore.init();
+  });
 </script>
 
 <section
@@ -505,6 +516,53 @@
           isLoading={worldStore.isLoading}
           onRecentLimitChange={handleRecentLimitChange}
         />
+
+        <section
+          class="rounded-3xl border border-theme-border/80 bg-theme-surface/70 p-4 sm:p-5 shadow-xl backdrop-blur-sm"
+        >
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-[0.22em] text-theme-primary"
+              >
+                World Calendar
+              </p>
+              <h2 class="mt-1 font-header text-xl text-theme-text">
+                {timelineStore.calendarMonthView.title}
+              </h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="rounded-full border border-theme-border bg-theme-bg/70 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-theme-text transition hover:border-theme-primary hover:text-theme-primary"
+                onclick={() => timelineStore.previousMonth()}
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                class="rounded-full border border-theme-border bg-theme-bg/70 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-theme-text transition hover:border-theme-primary hover:text-theme-primary"
+                onclick={() => timelineStore.nextMonth()}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          {#if timelineStore.filteredCalendarEntries.length === 0}
+            <div
+              class="rounded-2xl border border-theme-border bg-theme-bg/35 p-4 text-sm text-theme-muted"
+            >
+              No dated events yet. Add an event with a date to populate the
+              calendar.
+            </div>
+          {:else}
+            <CalendarMonthView
+              month={timelineStore.calendarMonthView}
+              onSelect={openCalendarEntry}
+            />
+          {/if}
+        </section>
 
         <FrontPageBriefing
           bind:draftDescription

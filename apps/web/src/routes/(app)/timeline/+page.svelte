@@ -1,23 +1,30 @@
 <script lang="ts">
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { graph } from "$lib/stores/graph.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import VerticalTimeline from "$lib/components/timeline/VerticalTimeline.svelte";
   import HorizontalTimeline from "$lib/components/timeline/HorizontalTimeline.svelte";
   import TimelineLayoutToggle from "$lib/components/timeline/TimelineLayoutToggle.svelte";
   import TimelineFilterBar from "$lib/components/timeline/TimelineFilterBar.svelte";
+  import CalendarMonthView from "$lib/components/timeline/CalendarMonthView.svelte";
+  import CalendarAgendaView from "$lib/components/timeline/CalendarAgendaView.svelte";
   import { onMount } from "svelte";
 
   onMount(() => {
     void graph.init();
     void timelineStore.init();
   });
+
+  const handleSelectEntry = (entry: { entityId: string }) => {
+    vault.selectedEntityId = entry.entityId;
+  };
 </script>
 
 <svelte:head>
   <title>World Timeline | Codex Cryptica</title>
   <meta
     name="description"
-    content="Visualize the chronological history of your RPG campaign world. Dynamic vertical and horizontal timeline views powered by local-first data."
+    content="Browse your world history in a month-grid calendar, agenda list, or classic timeline views powered by local-first data."
   />
 </svelte:head>
 
@@ -27,11 +34,11 @@
     class="p-4 border-b border-green-900/30 bg-[#0c0c0c] flex flex-wrap items-center justify-between gap-4"
   >
     <div class="flex items-center gap-3">
-      <span class="icon-[lucide--calendar] text-green-500 w-6 h-6"></span>
+      <span class="icon-[lucide--calendar-days] text-green-500 w-6 h-6"></span>
       <h2
         class="text-xl font-bold text-gray-100 font-mono tracking-wider uppercase font-header"
       >
-        World Timeline
+        World Chronology
       </h2>
     </div>
 
@@ -60,24 +67,70 @@
       </div>
     {/if}
 
-    {#if timelineStore.entries.length === 0 && !timelineStore.isLoading}
+    {#if timelineStore.filteredCalendarEntries.length === 0 && !timelineStore.isLoading}
       <div
         class="h-full flex flex-col items-center justify-center text-center p-8 space-y-4"
       >
-        <span class="icon-[lucide--history] w-16 h-16 text-zinc-800"></span>
+        <span class="icon-[lucide--calendar-search] w-16 h-16 text-zinc-800"
+        ></span>
         <h3
           class="text-zinc-500 font-bold uppercase font-header tracking-widest"
         >
-          No Chronological Data
+          No Matching Events
         </h3>
         <p class="text-xs text-zinc-600 max-w-sm leading-relaxed">
-          The archives are currently undated. Add "Date" or "Start/End Date"
-          metadata to your nodes to see them appear here.
+          Add dated events or clear your filters to see the calendar fill in.
+          Approximate and undated entries appear in agenda mode when available.
         </p>
       </div>
     {:else}
-      <div class="h-full">
-        {#if timelineStore.viewMode === "vertical"}
+      <div class="h-full overflow-y-auto p-4 sm:p-6">
+        {#if timelineStore.viewMode === "calendar"}
+          <div class="mx-auto flex max-w-7xl flex-col gap-4">
+            <div
+              class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-theme-border bg-theme-surface/60 p-4"
+            >
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-[0.22em] text-theme-muted"
+                >
+                  Active month
+                </p>
+                <h3 class="text-lg font-bold text-theme-text">
+                  {timelineStore.calendarMonthView.title}
+                </h3>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="rounded-full border border-theme-border bg-theme-bg/70 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-theme-text transition hover:border-theme-primary hover:text-theme-primary"
+                  onclick={() => timelineStore.previousMonth()}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full border border-theme-border bg-theme-bg/70 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-theme-text transition hover:border-theme-primary hover:text-theme-primary"
+                  onclick={() => timelineStore.nextMonth()}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+
+            <CalendarMonthView
+              month={timelineStore.calendarMonthView}
+              onSelect={handleSelectEntry}
+            />
+          </div>
+        {:else if timelineStore.viewMode === "agenda"}
+          <div class="mx-auto max-w-5xl">
+            <CalendarAgendaView
+              sections={timelineStore.agendaSections}
+              onSelect={handleSelectEntry}
+            />
+          </div>
+        {:else if timelineStore.viewMode === "vertical"}
           <VerticalTimeline />
         {:else}
           <HorizontalTimeline />

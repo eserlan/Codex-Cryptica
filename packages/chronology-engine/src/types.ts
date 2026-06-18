@@ -93,3 +93,53 @@ export interface WheelOption {
   value: number | string;
   disabled?: boolean;
 }
+
+export interface CalendarExactDate {
+  year: number;
+  month: number;
+  day: number;
+}
+
+export interface CalendarEventEntry {
+  entityId: string;
+  title: string;
+  entityType: string;
+  dateKind: "exact" | "approximate" | "missing";
+  date: TemporalMetadata | null;
+  exactDate?: CalendarExactDate;
+  displayDateLabel: string;
+  sortKey?: number;
+  relatedEntityIds: string[];
+  labels: string[];
+}
+
+export interface CalendarFilterInput {
+  entityType?: string | null;
+  labelIds?: string[];
+  relatedEntityIds?: string[];
+}
+
+export interface CalendarDayCell {
+  date: CalendarExactDate;
+  inCurrentMonth: boolean;
+  entries: CalendarEventEntry[];
+  overflowCount: number;
+  hiddenEntries: CalendarEventEntry[];
+}
+
+export interface CalendarMonthWeek {
+  days: CalendarDayCell[];
+}
+
+export interface CalendarMonthViewModel {
+  year: number;
+  month: number;
+  title: string;
+  weeks: CalendarMonthWeek[];
+}
+
+export interface AgendaSection {
+  id: string;
+  label: string;
+  entries: CalendarEventEntry[];
+}

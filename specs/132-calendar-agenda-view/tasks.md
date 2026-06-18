@@ -17,10 +17,10 @@
 
 **Purpose**: Establish the feature files and review the existing chronology/timeline surfaces that the implementation will extend.
 
-- [ ] T001 Review the current timeline route and components in `apps/web/src/routes/(app)/timeline/+page.svelte`, `apps/web/src/lib/components/timeline/VerticalTimeline.svelte`, and `apps/web/src/lib/components/timeline/HorizontalTimeline.svelte`
-- [ ] T002 [P] Review the current chronology state and date configuration stores in `apps/web/src/lib/stores/timeline.svelte.ts` and `apps/web/src/lib/stores/calendar.svelte.ts`
-- [ ] T003 [P] Review world/front-page integration points in `apps/web/src/lib/components/world/FrontPage.svelte` and `apps/web/src/lib/stores/world.svelte.ts`
-- [ ] T004 Create feature scaffolding files `packages/chronology-engine/src/calendar-view.ts`, `packages/chronology-engine/tests/calendar-view.test.ts`, `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`, `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`, `apps/web/src/lib/components/timeline/CalendarDayOverflow.svelte`, and `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T001 Review the current timeline route and components in `apps/web/src/routes/(app)/timeline/+page.svelte`, `apps/web/src/lib/components/timeline/VerticalTimeline.svelte`, and `apps/web/src/lib/components/timeline/HorizontalTimeline.svelte`
+- [x] T002 [P] Review the current chronology state and date configuration stores in `apps/web/src/lib/stores/timeline.svelte.ts` and `apps/web/src/lib/stores/calendar.svelte.ts`
+- [x] T003 [P] Review world/front-page integration points in `apps/web/src/lib/components/world/FrontPage.svelte` and `apps/web/src/lib/stores/world.svelte.ts`
+- [x] T004 Create feature scaffolding files `packages/chronology-engine/src/calendar-view.ts`, `packages/chronology-engine/tests/calendar-view.test.ts`, `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`, `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`, `apps/web/src/lib/components/timeline/CalendarDayOverflow.svelte`, and `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
 
 ---
 
@@ -30,13 +30,13 @@
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete.
 
-- [ ] T005 [P] Add failing package tests for exact-date month bucketing, approximate/missing-date exclusion, AND filter semantics, and crowded-day overflow counts in `packages/chronology-engine/tests/calendar-view.test.ts`
-- [ ] T006 [P] Add failing store tests for world-scoped calendar entry derivation, active month navigation state, agenda grouping, and stable same-date ordering in `apps/web/src/lib/stores/timeline.test.ts`
-- [ ] T007 Define and export `CalendarEventEntry`, `CalendarFilterInput`, `CalendarMonthViewModel`, and `AgendaSection` contracts in `packages/chronology-engine/src/types.ts` and `packages/chronology-engine/src/index.ts`
-- [ ] T008 Implement pure filtering, month-grid shaping, and agenda grouping helpers in `packages/chronology-engine/src/calendar-view.ts`
-- [ ] T009 Extend `apps/web/src/lib/stores/timeline.svelte.ts` with calendar/agenda mode, active month state, and world-scoped calendar entry derivation using `packages/chronology-engine/src/calendar-view.ts`
-- [ ] T010 Add timeline store helper coverage for undated/approximate grouping, start-date-only multi-day placement, label-normalized filtering, and exclusion of non-current-world events in `apps/web/src/lib/stores/timeline.test.ts`
-- [ ] T011 Run foundational verification for `packages/chronology-engine/tests/calendar-view.test.ts` and `apps/web/src/lib/stores/timeline.test.ts`
+- [x] T005 [P] Add failing package tests for exact-date month bucketing, approximate/missing-date exclusion, AND filter semantics, and crowded-day overflow counts in `packages/chronology-engine/tests/calendar-view.test.ts`
+- [x] T006 [P] Add failing store tests for world-scoped calendar entry derivation, active month navigation state, agenda grouping, and stable same-date ordering in `apps/web/src/lib/stores/timeline.test.ts`
+- [x] T007 Define and export `CalendarEventEntry`, `CalendarFilterInput`, `CalendarMonthViewModel`, and `AgendaSection` contracts in `packages/chronology-engine/src/types.ts` and `packages/chronology-engine/src/index.ts`
+- [x] T008 Implement pure filtering, month-grid shaping, and agenda grouping helpers in `packages/chronology-engine/src/calendar-view.ts`
+- [x] T009 Extend `apps/web/src/lib/stores/timeline.svelte.ts` with calendar/agenda mode, active month state, and world-scoped calendar entry derivation using `packages/chronology-engine/src/calendar-view.ts`
+- [x] T010 Add timeline store helper coverage for undated/approximate grouping, start-date-only multi-day placement, label-normalized filtering, and exclusion of non-current-world events in `apps/web/src/lib/stores/timeline.test.ts`
+- [x] T011 Run foundational verification for `packages/chronology-engine/tests/calendar-view.test.ts` and `apps/web/src/lib/stores/timeline.test.ts`
 
 **Checkpoint**: Reusable chronology helpers and store state are ready; story UI work can proceed independently.
 
@@ -50,17 +50,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Add failing month-grid component tests for date placement, empty month state, and previous/next month navigation in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
-- [ ] T013 [P] [US1] Add failing overflow interaction tests for crowded day cells in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
-- [ ] T014 [P] [US1] Add failing route integration tests for rendering the month view from `timelineStore` in `apps/web/src/routes/(app)/timeline/+page.svelte`
+- [x] T012 [P] [US1] Add failing month-grid component tests for date placement, empty month state, and previous/next month navigation in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T013 [P] [US1] Add failing overflow interaction tests for crowded day cells in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T014 [P] [US1] Add failing route integration tests for rendering the month view from `timelineStore` in `apps/web/src/routes/(app)/timeline/+page.svelte`
 
 ### Implementation for User Story 1
 
-- [ ] T015 [P] [US1] Implement the month-grid renderer in `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`
-- [ ] T016 [P] [US1] Implement the interactive crowded-day overflow surface in `apps/web/src/lib/components/timeline/CalendarDayOverflow.svelte`
-- [ ] T017 [US1] Update `apps/web/src/routes/(app)/timeline/+page.svelte` to render the calendar month view, previous/next month controls, and month-level empty state
-- [ ] T018 [US1] Update `apps/web/src/lib/components/timeline/TimelineLayoutToggle.svelte` and related timeline view controls to support calendar mode without breaking existing timeline layout switching
-- [ ] T019 [US1] Run User Story 1 verification from `apps/web/src/lib/components/timeline/CalendarViews.test.ts` and the timeline route tests
+- [x] T015 [P] [US1] Implement the month-grid renderer in `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`
+- [x] T016 [P] [US1] Implement the interactive crowded-day overflow surface in `apps/web/src/lib/components/timeline/CalendarDayOverflow.svelte`
+- [x] T017 [US1] Update `apps/web/src/routes/(app)/timeline/+page.svelte` to render the calendar month view, previous/next month controls, and month-level empty state
+- [x] T018 [US1] Update `apps/web/src/lib/components/timeline/TimelineLayoutToggle.svelte` and related timeline view controls to support calendar mode without breaking existing timeline layout switching
+- [x] T019 [US1] Run User Story 1 verification from `apps/web/src/lib/components/timeline/CalendarViews.test.ts` and the timeline route tests
 
 **Checkpoint**: User Story 1 is independently functional as the MVP calendar browser.
 
@@ -74,14 +74,14 @@
 
 ### Tests for User Story 2
 
-- [ ] T020 [P] [US2] Add failing interaction tests for month-grid entry click and mobile tap behavior in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
-- [ ] T021 [P] [US2] Add failing integration tests for existing detail-view navigation from the timeline route in `apps/web/src/routes/(app)/timeline/+page.svelte`
+- [x] T020 [P] [US2] Add failing interaction tests for month-grid entry click and mobile tap behavior in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T021 [P] [US2] Add failing integration tests for existing detail-view navigation from the timeline route in `apps/web/src/routes/(app)/timeline/+page.svelte`
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Wire calendar and agenda entries to the existing detail navigation flow in `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`, `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`, and `apps/web/src/routes/(app)/timeline/+page.svelte`
-- [ ] T023 [US2] Keep navigation orchestration in the app layer by extending `apps/web/src/lib/stores/timeline.svelte.ts` or existing UI navigation utilities in `apps/web/src/lib/stores/ui/navigation.ts`
-- [ ] T024 [US2] Run User Story 2 verification for entry activation and existing detail-view opening
+- [x] T022 [US2] Wire calendar and agenda entries to the existing detail navigation flow in `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`, `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`, and `apps/web/src/routes/(app)/timeline/+page.svelte`
+- [x] T023 [US2] Keep navigation orchestration in the app layer by extending `apps/web/src/lib/stores/timeline.svelte.ts` or existing UI navigation utilities in `apps/web/src/lib/stores/ui/navigation.ts`
+- [x] T024 [US2] Run User Story 2 verification for entry activation and existing detail-view opening
 
 **Checkpoint**: Month-grid browsing now connects directly to the app’s existing content detail workflow.
 
@@ -95,15 +95,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T025 [P] [US3] Add failing store tests for AND-based filter combinations and filter reset behavior in `apps/web/src/lib/stores/timeline.test.ts`
-- [ ] T026 [P] [US3] Add failing filter-bar component tests for label/type/entity filter interaction in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T025 [P] [US3] Add failing store tests for AND-based filter combinations and filter reset behavior in `apps/web/src/lib/stores/timeline.test.ts`
+- [x] T026 [P] [US3] Add failing filter-bar component tests for label/type/entity filter interaction in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Extend `apps/web/src/lib/stores/timeline.svelte.ts` with filter state for entity type, labels, and related entities using existing "Labels" terminology
-- [ ] T028 [US3] Update `apps/web/src/lib/components/timeline/TimelineFilterBar.svelte` to drive the calendar/agenda filters and expose clear-all behavior
-- [ ] T029 [US3] Normalize any remaining user-facing "tag" language to "label" in `apps/web/src/lib/components/timeline/TimelineFilterBar.svelte` and `apps/web/src/lib/content/help/chronology.md`
-- [ ] T030 [US3] Run User Story 3 verification for combined filters and filter reset behavior
+- [x] T027 [US3] Extend `apps/web/src/lib/stores/timeline.svelte.ts` with filter state for entity type, labels, and related entities using existing "Labels" terminology
+- [x] T028 [US3] Update `apps/web/src/lib/components/timeline/TimelineFilterBar.svelte` to drive the calendar/agenda filters and expose clear-all behavior
+- [x] T029 [US3] Normalize any remaining user-facing "tag" language to "label" in `apps/web/src/lib/components/timeline/TimelineFilterBar.svelte` and `apps/web/src/lib/content/help/chronology.md`
+- [x] T030 [US3] Run User Story 3 verification for combined filters and filter reset behavior
 
 **Checkpoint**: Large worlds remain scannable through independently testable filter behavior.
 
@@ -117,15 +117,15 @@
 
 ### Tests for User Story 4
 
-- [ ] T031 [P] [US4] Add failing agenda view tests for chronological section ordering, `Undated/Approximate` grouping, and no-events messaging in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
-- [ ] T032 [P] [US4] Add failing route integration tests for switching between month and agenda modes in `apps/web/src/routes/(app)/timeline/+page.svelte`
+- [x] T031 [P] [US4] Add failing agenda view tests for chronological section ordering, `Undated/Approximate` grouping, and no-events messaging in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T032 [P] [US4] Add failing route integration tests for switching between month and agenda modes in `apps/web/src/routes/(app)/timeline/+page.svelte`
 
 ### Implementation for User Story 4
 
-- [ ] T033 [P] [US4] Implement the agenda/list renderer in `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`
-- [ ] T034 [US4] Update `apps/web/src/routes/(app)/timeline/+page.svelte` and `apps/web/src/lib/components/timeline/TimelineLayoutToggle.svelte` to switch cleanly between month and agenda presentations
-- [ ] T035 [US4] Ensure approximate/missing dates are rendered only in agenda mode via `apps/web/src/lib/stores/timeline.svelte.ts` and `packages/chronology-engine/src/calendar-view.ts`
-- [ ] T036 [US4] Run User Story 4 verification for agenda ordering, undated grouping, and empty range handling
+- [x] T033 [P] [US4] Implement the agenda/list renderer in `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`
+- [x] T034 [US4] Update `apps/web/src/routes/(app)/timeline/+page.svelte` and `apps/web/src/lib/components/timeline/TimelineLayoutToggle.svelte` to switch cleanly between month and agenda presentations
+- [x] T035 [US4] Ensure approximate/missing dates are rendered only in agenda mode via `apps/web/src/lib/stores/timeline.svelte.ts` and `packages/chronology-engine/src/calendar-view.ts`
+- [x] T036 [US4] Run User Story 4 verification for agenda ordering, undated grouping, and empty range handling
 
 **Checkpoint**: Users can choose the chronology presentation that best fits dense or sparse event histories.
 
@@ -135,13 +135,13 @@
 
 **Purpose**: World-context integration, help updates, performance checks, and final validation across all stories.
 
-- [ ] T037 [P] Surface the calendar experience in the required world front-page/dashboard section by updating `apps/web/src/lib/components/world/FrontPage.svelte` and any supporting world front-page controller files under `apps/web/src/lib/components/world/front-page/`
-- [ ] T038 [P] Update chronology help content and empty-state guidance in `apps/web/src/lib/content/help/chronology.md` and related help registration files if needed
-- [ ] T039 Validate month-grid mobile usability, tappable targets, and no-horizontal-scroll behavior across `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`, `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`, and `apps/web/src/routes/(app)/timeline/+page.svelte`
-- [ ] T040 [P] Add any missing regression coverage for front-page/world entry points in `apps/web/src/lib/components/world/FrontPage.test.ts`
-- [ ] T041 Run full validation from `specs/132-calendar-agenda-view/quickstart.md`
-- [ ] T042 Document manual smoke results for month navigation, agenda mode, filters, overflow access, existing detail navigation, and world-front-page entry points in `specs/132-calendar-agenda-view/quickstart.md`
-- [ ] T043 Measure and document SC-001 and SC-003 timing checks in `specs/132-calendar-agenda-view/quickstart.md`
+- [x] T037 [P] Surface the calendar experience in the required world front-page/dashboard section by updating `apps/web/src/lib/components/world/FrontPage.svelte` and any supporting world front-page controller files under `apps/web/src/lib/components/world/front-page/`
+- [x] T038 [P] Update chronology help content and empty-state guidance in `apps/web/src/lib/content/help/chronology.md` and related help registration files if needed
+- [x] T039 Validate month-grid mobile usability, tappable targets, and no-horizontal-scroll behavior across `apps/web/src/lib/components/timeline/CalendarMonthView.svelte`, `apps/web/src/lib/components/timeline/CalendarAgendaView.svelte`, and `apps/web/src/routes/(app)/timeline/+page.svelte`
+- [x] T040 [P] Add any missing regression coverage for front-page/world entry points in `apps/web/src/lib/components/world/FrontPage.test.ts`
+- [x] T041 Run full validation from `specs/132-calendar-agenda-view/quickstart.md`
+- [x] T042 Document manual smoke results for month navigation, agenda mode, filters, overflow access, existing detail navigation, and world-front-page entry points in `specs/132-calendar-agenda-view/quickstart.md`
+- [x] T043 Measure and document SC-001 and SC-003 timing checks in `specs/132-calendar-agenda-view/quickstart.md`
 
 ---
 
