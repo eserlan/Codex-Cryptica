@@ -8,12 +8,14 @@
   import TimelineFilterBar from "$lib/components/timeline/TimelineFilterBar.svelte";
   import CalendarMonthView from "$lib/components/timeline/CalendarMonthView.svelte";
   import CalendarAgendaView from "$lib/components/timeline/CalendarAgendaView.svelte";
+  import YearWheelPicker from "$lib/components/timeline/YearWheelPicker.svelte";
   import { onMount } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   let EntityDetailPanel = $state<any>(null);
+  let showYearPicker = $state(false);
 
   onMount(() => {
     void graph.init();
@@ -142,15 +144,32 @@
               <div
                 class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-theme-border bg-theme-surface/60 p-4"
               >
-                <div>
+                <div class="relative">
                   <p
                     class="text-[10px] uppercase tracking-[0.22em] text-theme-muted"
                   >
                     Active month
                   </p>
-                  <h3 class="text-lg font-bold text-theme-text">
+                  <button
+                    type="button"
+                    class="group flex items-center gap-1.5 text-lg font-bold text-theme-text hover:text-theme-primary transition-colors"
+                    onclick={() => (showYearPicker = !showYearPicker)}
+                    title="Jump to year"
+                  >
                     {timelineStore.calendarMonthView.title}
-                  </h3>
+                    <span
+                      class="icon-[lucide--chevrons-up-down] h-4 w-4 text-theme-muted group-hover:text-theme-primary transition-colors"
+                    ></span>
+                  </button>
+
+                  {#if showYearPicker}
+                    <div class="absolute left-0 top-full mt-2 z-50">
+                      <YearWheelPicker
+                        bind:year={timelineStore.activeYear}
+                        onClose={() => (showYearPicker = false)}
+                      />
+                    </div>
+                  {/if}
                 </div>
                 <div class="flex items-center gap-2">
                   <button
