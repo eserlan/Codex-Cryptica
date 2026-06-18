@@ -100,7 +100,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     try {
       const { calendarStore } = await import("$lib/stores/calendar.svelte");
       const { timelineStore } = await import("$lib/stores/timeline.svelte");
-      calendarStore.init();
+      await calendarStore.init();
       timelineStore.resetVaultGuard();
       void timelineStore.init();
     } catch (err) {

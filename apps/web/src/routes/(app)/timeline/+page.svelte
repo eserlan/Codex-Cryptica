@@ -10,10 +10,11 @@
   import CalendarAgendaView from "$lib/components/timeline/CalendarAgendaView.svelte";
   import { onMount } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
 
   onMount(() => {
     void graph.init();
-    void timelineStore.init();
+    void calendarStore.init().then(() => timelineStore.init());
   });
 
   const handleSelectEntry = (entry: { entityId: string }) => {

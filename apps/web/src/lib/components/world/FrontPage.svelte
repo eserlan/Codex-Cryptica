@@ -19,6 +19,7 @@
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { timelineStore } from "$lib/stores/timeline.svelte";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
   import CalendarMonthView from "$lib/components/timeline/CalendarMonthView.svelte";
   import { onMount } from "svelte";
 
@@ -307,7 +308,7 @@
   };
 
   onMount(() => {
-    void timelineStore.init();
+    void calendarStore.init().then(() => timelineStore.init());
   });
 </script>
 
