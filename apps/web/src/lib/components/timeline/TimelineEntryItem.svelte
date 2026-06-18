@@ -7,6 +7,26 @@
 
   const entity = $derived(vault.entities[entry.entityId]);
 
+  let imageUrl = $state("");
+
+  $effect(() => {
+    const imagePath = entity?.thumbnail || entity?.image || "";
+    let stale = false;
+
+    if (!imagePath) {
+      imageUrl = "";
+      return;
+    }
+
+    void vault.resolveImageUrl(imagePath).then((url) => {
+      if (!stale) imageUrl = url;
+    });
+
+    return () => {
+      stale = true;
+    };
+  });
+
   const formatDate = (date: TimelineEntry["date"]) => {
     if (date.label) return date.label;
     const parts = [date.year];
@@ -56,14 +76,11 @@
       {/if}
     </div>
 
-    {#if entity?.image}
+    {#if imageUrl}
       <div
-        class="w-12 h-12 rounded overflow-hidden border border-theme-border shrink-0"
-      >
-        <!-- We don't resolve here for performance in lists, but we could if needed -->
-        <span class="icon-[lucide--image] w-full h-full text-theme-muted p-2"
-        ></span>
-      </div>
+        class="w-12 h-12 rounded overflow-hidden border border-theme-border shrink-0 bg-cover bg-center"
+        style={`background-image: url("${imageUrl}")`}
+      ></div>
     {/if}
   </div>
 
