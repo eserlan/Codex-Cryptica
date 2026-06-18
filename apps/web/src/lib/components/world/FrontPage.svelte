@@ -299,7 +299,11 @@
   };
 
   const openCalendarEntry = (entry: { entityId: string }) => {
-    vault.selectedEntityId = entry.entityId;
+    if (window.innerWidth < 768) {
+      modalUIStore.openZenMode(entry.entityId);
+    } else {
+      vault.selectedEntityId = entry.entityId;
+    }
   };
 
   onMount(() => {

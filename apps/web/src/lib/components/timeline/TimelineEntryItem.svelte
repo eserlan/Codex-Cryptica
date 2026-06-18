@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TimelineEntry } from "$lib/stores/timeline.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let { entry } = $props<{ entry: TimelineEntry }>();
 
@@ -16,7 +17,11 @@
   };
 
   const handleClick = () => {
-    vault.selectedEntityId = entry.entityId;
+    if (window.innerWidth < 768) {
+      modalUIStore.openZenMode(entry.entityId);
+    } else {
+      vault.selectedEntityId = entry.entityId;
+    }
   };
 </script>
 

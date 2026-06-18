@@ -9,6 +9,7 @@
   import CalendarMonthView from "$lib/components/timeline/CalendarMonthView.svelte";
   import CalendarAgendaView from "$lib/components/timeline/CalendarAgendaView.svelte";
   import { onMount } from "svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   onMount(() => {
     void graph.init();
@@ -16,7 +17,11 @@
   });
 
   const handleSelectEntry = (entry: { entityId: string }) => {
-    vault.selectedEntityId = entry.entityId;
+    if (window.innerWidth < 768) {
+      modalUIStore.openZenMode(entry.entityId);
+    } else {
+      vault.selectedEntityId = entry.entityId;
+    }
   };
 </script>
 
