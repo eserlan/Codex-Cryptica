@@ -11,6 +11,10 @@ export interface GDriveSyncDependencies {
   getOpfsHandle: (
     vaultId: string,
   ) => Promise<FileSystemDirectoryHandle | undefined>;
+  /**
+   * Returns the current time in milliseconds.
+   */
+  now?: () => number;
 }
 
 /**
@@ -34,14 +38,18 @@ export class GDriveSyncService {
       this.channel = new BroadcastChannel("codex_gdrive_sync_guard");
       this.channel.onmessage = (msg) => {
         if (msg.data.type === "SYNC_START") {
-          this.lastTabSync = Date.now();
+          this.lastTabSync = this.deps.now ? this.deps.now() : Date.now();
         }
       };
     }
   }
 
+  private getNow(): number {
+    return this.deps.now ? this.deps.now() : Date.now();
+  }
+
   private isAnotherTabSyncing(): boolean {
-    return Date.now() - this.lastTabSync < 30000; // 30s grace period
+    return this.getNow() - this.lastTabSync < 30000; // 30s grace period
   }
 
   /**
@@ -73,7 +81,7 @@ export class GDriveSyncService {
       type: "SYNC:DRIVE_SYNC_STARTED",
       domain: "sync",
       payload: { vaultId, direction: "push" },
-      metadata: { timestamp: Date.now(), vaultId },
+      metadata: { timestamp: this.getNow(), vaultId },
     });
 
     try {
@@ -93,7 +101,7 @@ export class GDriveSyncService {
           type: "SYNC:DRIVE_SYNC_FAILED",
           domain: "sync",
           payload: { vaultId, error: result.error },
-          metadata: { timestamp: Date.now(), vaultId },
+          metadata: { timestamp: this.getNow(), vaultId },
         });
         throw new Error(result.error);
       } else {
@@ -106,7 +114,7 @@ export class GDriveSyncService {
             uploaded: result.created.length + result.updated.length,
             failed: result.failed.length,
           },
-          metadata: { timestamp: Date.now(), vaultId },
+          metadata: { timestamp: this.getNow(), vaultId },
         });
         return result;
       }
@@ -115,7 +123,7 @@ export class GDriveSyncService {
         type: "SYNC:DRIVE_SYNC_FAILED",
         domain: "sync",
         payload: { vaultId, error: error.message },
-        metadata: { timestamp: Date.now(), vaultId },
+        metadata: { timestamp: this.getNow(), vaultId },
       });
       throw error;
     } finally {
@@ -152,7 +160,7 @@ export class GDriveSyncService {
       type: "SYNC:DRIVE_SYNC_STARTED",
       domain: "sync",
       payload: { vaultId, direction: "pull" },
-      metadata: { timestamp: Date.now(), vaultId },
+      metadata: { timestamp: this.getNow(), vaultId },
     });
 
     try {
@@ -171,7 +179,7 @@ export class GDriveSyncService {
           type: "SYNC:DRIVE_SYNC_FAILED",
           domain: "sync",
           payload: { vaultId, error: result.error },
-          metadata: { timestamp: Date.now(), vaultId },
+          metadata: { timestamp: this.getNow(), vaultId },
         });
         throw new Error(result.error);
       } else {
@@ -184,7 +192,7 @@ export class GDriveSyncService {
             downloaded: result.created.length + result.updated.length,
             failed: result.failed.length,
           },
-          metadata: { timestamp: Date.now(), vaultId },
+          metadata: { timestamp: this.getNow(), vaultId },
         });
         return result;
       }
@@ -193,7 +201,7 @@ export class GDriveSyncService {
         type: "SYNC:DRIVE_SYNC_FAILED",
         domain: "sync",
         payload: { vaultId, error: error.message },
-        metadata: { timestamp: Date.now(), vaultId },
+        metadata: { timestamp: this.getNow(), vaultId },
       });
       throw error;
     } finally {
