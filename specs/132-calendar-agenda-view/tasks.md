@@ -1,5 +1,7 @@
 # Tasks: Calendar / Agenda View for Events
 
+**Status**: All tasks complete. Branch merged to `staging` 2026-06-19.
+
 **Input**: Design documents from `/specs/132-calendar-agenda-view/`  
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/calendar-view.md](./contracts/calendar-view.md), [quickstart.md](./quickstart.md)
 
@@ -183,6 +185,24 @@
 - [x] T056 [US5] Run User Story 5 verification: `bun run --filter web test -- src/lib/components/timeline`, `bun run --filter '*' lint:types`
 
 **Checkpoint**: Mobile users can browse and filter the calendar without the filter bar consuming vertical space by default.
+
+---
+
+---
+
+## Phase 10: Beyond-Spec Additions (shipped in branch)
+
+These were not in the original spec but were added during implementation and are live in staging.
+
+- [x] T057 Add `epochWeekday?: number` to `WorldCalendar` in `packages/chronology-engine/src/types.ts`; set `epochWeekday: 1` in `DEFAULT_CALENDAR`; use it in `buildCalendarMonth` to correctly anchor world-calendar weekday columns. Add 4 `calendar-view` tests covering this.
+- [x] T058 Resolve entity thumbnail in `TimelineEntryItem.svelte` via `vault.resolveImageUrl()` with stale-flag `$effect` (same pattern as `EntityCard`); replace icon placeholder with `background-image` div.
+- [x] T059 Open zen mode on mobile entity tap (`window.innerWidth < 768`) in `TimelineEntryItem.svelte`, `CalendarMonthView.svelte`, `CalendarAgendaView.svelte`, and `apps/web/src/routes/(app)/timeline/+page.svelte`.
+- [x] T060 Fix FR-012 race condition: `await calendarStore.init()` before `timelineStore.init()` in `+page.svelte`, `FrontPage.svelte`, and the `vault-switched` handler in `app-init.ts`.
+- [x] T061 Wire `vault-switched` event in `app-init.ts` to reset and re-initialize `timelineStore` (`resetVaultGuard()` + `init()`) after `calendarStore.init()` resolves.
+- [x] T062 Compact mobile calendar grid: `gap-0`, `rounded-none`, `min-h-16` cells; suppress event-type label and "N events" count on mobile; desktop layout unchanged.
+- [x] T063 Hide horizontal timeline toggle on mobile (`hidden md:flex`); fall back to `VerticalTimeline` when `viewMode === "horizontal"` on small screens.
+- [x] T064 Replace filter dropdowns with explorer-style icon-toggle UI in `TimelineFilterBar.svelte`: icon buttons per category with count badges, label pills, undated toggle — same visual pattern as `EntityListFilterBar`. Update `TimelineStore` to `typeFilters: Set<string>` and `labelFilters: Set<string>` (multi-select).
+- [x] T065 Remove embedded `World Calendar` section from `FrontPage.svelte` (added during T037, removed post-review as it added noise without value on mobile).
 
 ---
 

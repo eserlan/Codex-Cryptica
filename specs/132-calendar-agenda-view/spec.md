@@ -2,8 +2,26 @@
 
 **Feature Branch**: `132-calendar-agenda-view`
 **Created**: 2026-06-17
-**Status**: Draft
+**Merged**: 2026-06-19 → `staging`
+**Status**: Shipped
 **Input**: User description: "https://github.com/eserlan/Codex-Cryptica/issues/1408"
+
+## Implementation Notes (post-merge)
+
+### Deviations from spec
+
+- **FR-009 (world front-page calendar section)**: The embedded `World Calendar` section was removed from `FrontPage.svelte` after initial implementation — it added visual noise on mobile without enough value. The chronology route and sidebar activity bar entry remain as specified.
+- **Filter state shape**: `CalendarFilterState.entityType: string|null` and `labelIds: string[]` were implemented as `typeFilters: Set<string>` and `labelFilters: Set<string>` to support multi-select from day one (same pattern as `EntityListFilterBar`).
+
+### Beyond-spec additions shipped in this branch
+
+- **`epochWeekday` on `WorldCalendar`**: New optional field anchoring the epoch day 0 to a specific weekday column, enabling correct grid alignment for custom fantasy calendars. `DEFAULT_CALENDAR` sets `epochWeekday: 1` (Monday). Exported from `chronology-engine`.
+- **Entity thumbnail in `TimelineEntryItem`**: Resolved via `vault.resolveImageUrl()` with a stale-flag `$effect`, same pattern as `EntityCard`. Replaces the icon placeholder.
+- **Zen mode on mobile entity tap**: Tapping a timeline/calendar entry on a viewport `< 768px` calls `modalUIStore.openZenMode(entityId)` instead of setting `vault.selectedEntityId` (the entity panel is unusable on mobile). Applies in `TimelineEntryItem`, `CalendarMonthView`, `CalendarAgendaView`, and the timeline route.
+- **FR-012 race condition fix**: `calendarStore.init()` reads `presentYear` from IndexedDB asynchronously. All three call sites (`+page.svelte`, `FrontPage.svelte`, and `app-init.ts` vault-switched handler) now `await calendarStore.init()` before calling `timelineStore.init()`.
+- **Vault-switched handler**: `app-init.ts` now listens to `vault-switched` and re-initializes both `calendarStore` and `timelineStore` (with `resetVaultGuard()`) so FR-012 resolves against the new vault's entities and settings.
+- **Compact mobile calendar grid**: Month grid uses `gap-0`, `rounded-none`, `min-h-16` cells, and suppressed type labels on small screens (`< sm`). Desktop layout is unchanged.
+- **Horizontal timeline hidden on mobile**: The Bands toggle button is `hidden md:flex`; if the mode is already `horizontal` on a small screen the vertical timeline renders instead.
 
 ## User Scenarios & Testing _(mandatory)_
 

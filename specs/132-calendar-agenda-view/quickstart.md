@@ -44,6 +44,8 @@ bun run --filter '*' test -- --changed
 
 ## 5. Manual verification log
 
+### Initial smoke (June 18, 2026)
+
 Manual smoke verification was completed on June 18, 2026 against the local dev server at `http://localhost:5175` using Playwright CLI with seeded demo events.
 
 Timeline route: `http://localhost:5175/timeline?demo=fantasy`
@@ -51,16 +53,25 @@ Timeline route: `http://localhost:5175/timeline?demo=fantasy`
 - June 18, 2026 rendered four seeded events in the month grid, with three visible cards and a `+1 more` overflow control.
 - Month navigation refreshed in place without a reload. Measured DOM update time was ~101 ms moving to July 2026 and ~100 ms moving back to June 2026.
 - Agenda mode showed exact-dated groups plus an `Undated/Approximate` section containing the approximate `Rumored Eclipse` entry.
-- With filters `type=event`, `label=royal`, and `related=The Gilded Hand`, only `Banner Procession`, `Royal Coronation`, and `Harvest Accord` remained visible. `Heirloom Recovery` and `War Council` were correctly excluded, confirming AND semantics.
-- After clearing filters and enabling `Include Undated Entries`, the undated `Lost Ledger` entry appeared without errors.
-- Selecting `Royal Coronation` from agenda mode set `window.vault.selectedEntityId` to `calendar-crowd-1`, confirming the existing detail-selection flow.
+- With icon-toggle filters `type=event`, `label=royal`, and `related=The Gilded Hand` active simultaneously, only `Banner Procession`, `Royal Coronation`, and `Harvest Accord` remained visible, confirming AND semantics across `typeFilters` and `labelFilters` Sets.
+- After clearing filters and enabling the undated toggle, the undated `Lost Ledger` entry appeared without errors.
+- Selecting `Royal Coronation` from agenda mode at desktop width set `window.vault.selectedEntityId` to `calendar-crowd-1`.
+- At `< 768px` viewport width, tapping `Royal Coronation` opened zen mode (`modalUIStore.openZenMode`) instead.
+- Entity thumbnails resolved and displayed in `TimelineEntryItem` entries.
+- Filter bar collapsed by default on mobile; active-filter dot badge appeared when filters were set with the bar collapsed.
+- FR-012 priority chain verified: setting vault `presentYear` caused the calendar to open to that year; unsetting it fell back to the real-world date.
 
 Front page route: `http://localhost:5175/vault/default?demo=fantasy`
 
-- The `World Calendar` section rendered the same crowded June 2026 day with the `+1 more` overflow control.
-- Front page month navigation advanced to July 2026 in ~104 ms and returned to June correctly.
-- Selecting `Royal Coronation` from the front-page calendar also set `window.vault.selectedEntityId` to `calendar-crowd-1`.
+- The embedded `World Calendar` section was present after initial implementation but was subsequently removed (see spec deviation note). Front page no longer includes the calendar widget.
 
 Known runtime noise during manual testing:
 
 - Browser console showed existing third-party/demo asset issues unrelated to this feature: Cloudflare RUM CORS failures and demo image fetch errors.
+
+### Post-merge additions verified (June 18–19, 2026)
+
+- `epochWeekday: 1` on `DEFAULT_CALENDAR` confirmed June 2026 grid starts on Monday column. All 4 new `chronology-engine` week-layout tests pass.
+- Vault-switch flow: switching vaults re-resolves FR-012 against the new vault's entities and `presentYear` setting.
+- Horizontal timeline Bands button hidden on mobile; vertical timeline renders as fallback when mode is `horizontal` on small screens.
+- Compact mobile calendar grid: no gaps between cells, sharp corners, reduced cell height (`min-h-16`). Desktop layout unchanged.
