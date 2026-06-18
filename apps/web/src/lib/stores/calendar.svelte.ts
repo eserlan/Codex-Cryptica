@@ -1,10 +1,28 @@
 import { DEFAULT_CALENDAR } from "chronology-engine";
-import type { WorldCalendar, CalendarSnapshot } from "chronology-engine";
+import type {
+  CalendarCurrentDateSource,
+  CalendarSnapshot,
+  WorldCalendar,
+} from "chronology-engine";
 import { vault } from "./vault.svelte";
 import { getDB } from "../utils/idb";
 
 export class CalendarStore {
   config = $state<WorldCalendar>({ ...DEFAULT_CALENDAR, revision: 1 });
+
+  /**
+   * The vault-level "current year" used as FR-012 tier-2 fallback.
+   * Reads from `config.presentYear` which is the persisted field in WorldCalendar.
+   */
+  get currentYear(): number | null {
+    return this.config.presentYear ?? null;
+  }
+
+  /**
+   * Cached resolved current-date result. Updated by the timeline store on init
+   * so all surfaces share the same starting point.
+   */
+  calendarCurrentDate = $state<CalendarCurrentDateSource | null>(null);
 
   constructor() {
     // Initialized by vault switch

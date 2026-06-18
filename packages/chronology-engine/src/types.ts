@@ -143,3 +143,31 @@ export interface AgendaSection {
   label: string;
   entries: CalendarEventEntry[];
 }
+
+/**
+ * Which tier of the FR-012 priority chain resolved the calendar's current date.
+ */
+export type CalendarCurrentDateSourceKind =
+  | "entity"
+  | "vaultSetting"
+  | "realWorld";
+
+/**
+ * Resolved output of the FR-012 priority chain.
+ * Exposed as `calendarCurrentDate` from `calendar.svelte.ts`.
+ */
+export interface CalendarCurrentDateSource {
+  source: CalendarCurrentDateSourceKind;
+  /** Resolved year/month; `day` is absent when source is `"vaultSetting"`. */
+  date: { year: number; month: number; day?: number };
+  /** Entity that provided the date when source is `"entity"`; null otherwise. */
+  entityId: string | null;
+}
+
+/**
+ * Vault-level calendar preferences (persisted subset surfaced to FR-012).
+ * A `null` currentYear means the user has not configured one.
+ */
+export interface VaultCalendarSettings {
+  currentYear: number | null;
+}

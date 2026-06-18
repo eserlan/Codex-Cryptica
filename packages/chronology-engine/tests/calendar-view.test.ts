@@ -4,6 +4,7 @@ import {
   buildAgendaSections,
   buildCalendarMonth,
   filterCalendarEntries,
+  resolveCalendarCurrentDate,
   type CalendarEventEntry,
 } from "../src";
 
@@ -176,5 +177,94 @@ describe("calendar-view helpers", () => {
       "Undated/Approximate",
     ]);
     expect(sections[2]?.entries[0]?.title).toBe("Approximate Event");
+  });
+});
+
+// T044: tests for resolveCalendarCurrentDate (FR-012)
+describe("resolveCalendarCurrentDate", () => {
+  it("resolves from an entity titled 'current date' with an exact date", () => {
+    const entities = [
+      {
+        id: "entity-cd",
+        title: "Current Date",
+        exactDate: { year: 1490, month: 3, day: 15 },
+        dateKind: "exact",
+        createdAt: "2024-01-01T00:00:00Z",
+      },
+    ];
+    const result = resolveCalendarCurrentDate(entities, { currentYear: null });
+    expect(result.source).toBe("entity");
+    expect(result.date).toEqual({ year: 1490, month: 3, day: 15 });
+    expect(result.entityId).toBe("entity-cd");
+  });
+
+  it("resolves 'today' title as entity source", () => {
+    const entities = [
+      {
+        id: "entity-today",
+        title: "Today",
+        exactDate: { year: 900, month: 1, day: 1 },
+        dateKind: "exact",
+        createdAt: "2024-01-01T00:00:00Z",
+      },
+    ];
+    const result = resolveCalendarCurrentDate(entities, { currentYear: null });
+    expect(result.source).toBe("entity");
+    expect(result.date.year).toBe(900);
+  });
+
+  it("falls through to vaultSetting when no matching entity exists", () => {
+    const result = resolveCalendarCurrentDate([], { currentYear: 1350 });
+    expect(result.source).toBe("vaultSetting");
+    expect(result.date.year).toBe(1350);
+    expect(result.date.month).toBe(1);
+    expect(result.date.day).toBeUndefined();
+    expect(result.entityId).toBeNull();
+  });
+
+  it("falls through to realWorld when neither entity nor vaultSetting exists", () => {
+    const result = resolveCalendarCurrentDate([], { currentYear: null });
+    expect(result.source).toBe("realWorld");
+    const now = new Date();
+    expect(result.date.year).toBe(now.getFullYear());
+    expect(result.date.month).toBe(now.getMonth() + 1);
+    expect(result.date.day).toBe(now.getDate());
+    expect(result.entityId).toBeNull();
+  });
+
+  it("picks the oldest entity when multiple titles match", () => {
+    const entities = [
+      {
+        id: "newer",
+        title: "Current Date",
+        exactDate: { year: 500, month: 6, day: 1 },
+        dateKind: "exact",
+        createdAt: "2025-01-01T00:00:00Z",
+      },
+      {
+        id: "oldest",
+        title: "current date",
+        exactDate: { year: 200, month: 2, day: 10 },
+        dateKind: "exact",
+        createdAt: "2020-01-01T00:00:00Z",
+      },
+    ];
+    const result = resolveCalendarCurrentDate(entities, { currentYear: null });
+    expect(result.entityId).toBe("oldest");
+    expect(result.date.year).toBe(200);
+  });
+
+  it("ignores entity title matches that have no exact date", () => {
+    const entities = [
+      {
+        id: "approx",
+        title: "present day",
+        exactDate: undefined,
+        dateKind: "approximate",
+        createdAt: "2024-01-01T00:00:00Z",
+      },
+    ];
+    const result = resolveCalendarCurrentDate(entities, { currentYear: 1200 });
+    expect(result.source).toBe("vaultSetting");
   });
 });

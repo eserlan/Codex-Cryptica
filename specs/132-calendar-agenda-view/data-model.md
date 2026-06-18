@@ -40,13 +40,13 @@ Row model for the month grid.
 
 Presentation model for one visible day cell.
 
-| Field            | Type                                           | Description                                            | Validation |
-| ---------------- | ---------------------------------------------- | ------------------------------------------------------ | ---------- |
-| `date`           | `{ year: number; month: number; day: number }` | Exact day represented by the cell                      | Required   |
-| `inCurrentMonth` | `boolean`                                      | Whether the day belongs to the visible month           | Required   |
-| `entries`        | `CalendarEventEntry[]`                         | Exact-date entries shown inline for this day           | Required   |
-| `overflowCount`  | `number`                                       | Number of hidden entries behind the overflow control   | `>= 0`     |
-| `isToday`        | `boolean`                                      | Optional current-date highlight for future enhancement | Derived    |
+| Field            | Type                                           | Description                                                                               | Validation |
+| ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------- |
+| `date`           | `{ year: number; month: number; day: number }` | Exact day represented by the cell                                                         | Required   |
+| `inCurrentMonth` | `boolean`                                      | Whether the day belongs to the visible month                                              | Required   |
+| `entries`        | `CalendarEventEntry[]`                         | Exact-date entries shown inline for this day                                              | Required   |
+| `overflowCount`  | `number`                                       | Number of hidden entries behind the overflow control                                      | `>= 0`     |
+| `isToday`        | `boolean`                                      | Whether this day matches `calendarCurrentDate` (see FR-012); drives the "today" highlight | Derived    |
 
 ## AgendaSection
 
@@ -62,14 +62,40 @@ Grouped list structure for agenda mode.
 
 Reactive UI state controlling which entries remain visible.
 
-| Field                       | Type                     | Description                              | Validation                         |
-| --------------------------- | ------------------------ | ---------------------------------------- | ---------------------------------- |
-| `worldId`                   | `string \| null`         | Current world scope                      | Must match current world context   |
-| `entityType`                | `string \| null`         | Optional category filter                 | Existing category ids only         |
-| `labelIds`                  | `string[]`               | Optional label-based filters             | Uses existing label values         |
-| `relatedEntityIds`          | `string[]`               | Optional related-entity filters          | Existing entity ids only           |
-| `mode`                      | `"calendar" \| "agenda"` | Active chronology presentation           | Required                           |
-| `includeUndatedApproximate` | `boolean`                | Agenda-only visibility toggle if exposed | Defaults to `true` for agenda mode |
+| Field                       | Type                              | Description                                | Validation                                                 |
+| --------------------------- | --------------------------------- | ------------------------------------------ | ---------------------------------------------------------- |
+| `worldId`                   | `string \| null`                  | Current world scope                        | Must match current world context                           |
+| `entityType`                | `string \| null`                  | Optional category filter                   | Existing category ids only                                 |
+| `labelIds`                  | `string[]`                        | Optional label-based filters               | Uses existing label values                                 |
+| `relatedEntityIds`          | `string[]`                        | Optional related-entity filters            | Existing entity ids only                                   |
+| `mode`                      | `"calendar" \| "agenda"`          | Active chronology presentation             | Required                                                   |
+| `includeUndatedApproximate` | `boolean`                         | Agenda-only visibility toggle if exposed   | Defaults to `true` for agenda mode                         |
+| `activeMonth`               | `{ year: number; month: number }` | Month currently displayed in the grid      | Initialized from `calendarCurrentDate`                     |
+| `filterBarCollapsed`        | `boolean`                         | Whether the filter bar is hidden on mobile | Defaults to `true` on mobile viewports; ignored on desktop |
+
+## CalendarCurrentDateSource
+
+Resolved output of the FR-012 priority chain. Consumed by `calendar.svelte.ts` and exposed as `calendarCurrentDate`.
+
+| Field      | Type                                            | Description                                                           | Validation       |
+| ---------- | ----------------------------------------------- | --------------------------------------------------------------------- | ---------------- |
+| `source`   | `"entity" \| "vaultSetting" \| "realWorld"`     | Which tier of the priority chain resolved the date                    | Required         |
+| `date`     | `{ year: number; month: number; day?: number }` | Resolved date triple; `day` is absent when source is `"vaultSetting"` | Required         |
+| `entityId` | `string \| null`                                | Entity that provided the date when `source === "entity"`              | `null` otherwise |
+
+**Priority chain** (FR-012):
+
+1. Scan active world entities for a title matching `["current date", "today", "present day", "current day", "now"]` (case-insensitive) that has an exact date → `source: "entity"`.
+2. Read `currentYear` from `VaultCalendarSettings`; if set → `source: "vaultSetting"`, open to January of that year, `day` omitted.
+3. Fall back to `new Date()` → `source: "realWorld"`.
+
+## VaultCalendarSettings
+
+Persisted per-vault calendar preferences stored in `apps/web/src/lib/stores/calendar.svelte.ts` via IndexedDB.
+
+| Field         | Type             | Description                                                     | Validation         |
+| ------------- | ---------------- | --------------------------------------------------------------- | ------------------ |
+| `currentYear` | `number \| null` | Vault-defined "current year" used as the FR-012 tier-2 fallback | `null` means unset |
 
 ## Relationships
 
@@ -82,8 +108,11 @@ Reactive UI state controlling which entries remain visible.
 ## State Transitions
 
 1. Vault/world context loads existing entities.
-2. App layer derives `CalendarEventEntry` items from eligible entities.
-3. Filter state narrows the visible entry set using AND semantics across active filters.
-4. Exact-date entries are shaped into a `CalendarMonth` grid for the selected month.
-5. Agenda mode groups entries into ordered `AgendaSection` lists plus an `Undated/Approximate` section.
-6. Selecting an entry routes the user into the existing entity detail experience.
+2. `calendar.svelte.ts` runs the FR-012 priority chain to resolve `calendarCurrentDate` (`"entity"` → `"vaultSetting"` → `"realWorld"`).
+3. App layer derives `CalendarEventEntry` items from eligible entities.
+4. Filter state narrows the visible entry set using AND semantics across active filters.
+5. `activeMonth` in `CalendarFilterState` is initialized from `calendarCurrentDate`; month navigation updates it independently.
+6. Exact-date entries are shaped into a `CalendarMonth` grid for the selected month.
+7. Agenda mode groups entries into ordered `AgendaSection` lists plus an `Undated/Approximate` section.
+8. `CalendarDayCell.isToday` is set when the cell date matches `calendarCurrentDate` (all three fields present).
+9. Selecting an entry routes the user into the existing entity detail experience.

@@ -145,7 +145,46 @@
 
 ---
 
-## Dependencies & Execution Order
+## Phase 8: Current Date Derivation (FR-012)
+
+**Purpose**: Implement the three-level priority chain that determines the month the calendar opens to.
+
+**⚠️ NEW REQUIREMENT** — Added 2026-06-18. All T04x tasks below are pending.
+
+- [x] T044 [P] Add failing tests for `resolveCalendarCurrentDate` priority chain in `packages/chronology-engine/tests/calendar-view.test.ts`
+- [x] T045 [P] Add failing store tests for `calendarCurrentDate` reactive derivation and `activeMonth` initialization from it in `apps/web/src/lib/stores/calendar.svelte.ts`
+- [x] T046 Implement `resolveCalendarCurrentDate(entities, settings): CalendarCurrentDateSource` pure helper in `packages/chronology-engine/src/calendar-view.ts` and export from `packages/chronology-engine/src/index.ts`
+- [x] T047 Extend `apps/web/src/lib/stores/calendar.svelte.ts` to expose reactive `calendarCurrentDate` using `resolveCalendarCurrentDate`, consuming active world entities and `VaultCalendarSettings.currentYear`
+- [x] T048 Wire `calendarCurrentDate` into `apps/web/src/lib/stores/timeline.svelte.ts` so `activeMonth` initializes from the resolved value on mount
+- [x] T049 Update `CalendarDayCell` rendering in `apps/web/src/lib/components/timeline/CalendarMonthView.svelte` to set `isToday` when the cell date matches a full `calendarCurrentDate` triple
+- [x] T050 Run FR-012 verification: `bun run --filter chronology-engine test`, `bun run --filter web test -- src/lib/stores/calendar`, `bun run --filter '*' lint:types`
+
+---
+
+## Phase 9: User Story 5 - Collapsible Filter Bar on Mobile (FR-013)
+
+**Purpose**: Let mobile users hide the filter bar to reclaim vertical space for the calendar grid or agenda list.
+
+**⚠️ NEW REQUIREMENT** — Added 2026-06-18. All T05x tasks below are pending.
+
+### Tests for User Story 5
+
+- [x] T051 [P] [US5] Add failing component tests for filter bar collapsed-by-default on mobile viewport, expand/collapse toggle interaction, and active-filter indicator visibility when collapsed in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+- [x] T052 [P] [US5] Add failing tests confirming the collapse control is not rendered at desktop viewport widths in `apps/web/src/lib/components/timeline/CalendarViews.test.ts`
+
+### Implementation for User Story 5
+
+- [x] T053 [US5] Add `filterBarCollapsed: boolean` to the timeline/calendar filter state in `apps/web/src/lib/stores/timeline.svelte.ts`, defaulting to `true` when a mobile-width media query matches on mount
+- [x] T054 [US5] Update `apps/web/src/lib/components/timeline/TimelineFilterBar.svelte` to:
+  - render a toggle button (mobile only, hidden via Tailwind responsive prefix) that flips `filterBarCollapsed`
+  - apply `hidden` / `block` classes to the filter bar body based on `filterBarCollapsed`
+  - show an active-filter badge or icon change on the toggle button when any filter is active and the bar is collapsed
+- [x] T055 [US5] Ensure that resizing from mobile to desktop clears `filterBarCollapsed` (snap-to-expanded at the desktop breakpoint)
+- [x] T056 [US5] Run User Story 5 verification: `bun run --filter web test -- src/lib/components/timeline`, `bun run --filter '*' lint:types`
+
+**Checkpoint**: Mobile users can browse and filter the calendar without the filter bar consuming vertical space by default.
+
+---
 
 ### Phase Dependencies
 
@@ -156,6 +195,8 @@
 - **User Story 3 (Phase 5)**: Depends on Foundational and benefits from US1 rendering/state work.
 - **User Story 4 (Phase 6)**: Depends on Foundational and shares UI/store work from US1 and filter behavior from US3.
 - **Polish (Phase 7)**: Depends on all desired user stories being complete.
+- **FR-012 / Phase 8**: Depends on Foundational; can run in parallel with US1–US4 stories. Requires `calendar.svelte.ts` and `chronology-engine` changes from Phase 2.
+- **FR-013 / Phase 9 (US5)**: Depends on Phase 5 (US3) for the filter bar component; can run after US3 is complete.
 
 ### User Story Dependencies
 

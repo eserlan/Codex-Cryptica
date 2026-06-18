@@ -47,3 +47,12 @@
 - **Alternatives considered**:
   - Infer a nearest day or month bucket: rejected because it misrepresents uncertain chronology.
   - Show approximate entries in separate month-cell buckets: rejected because it complicates the first release with limited extra value.
+
+## Decision 7: Derive the calendar's "current date" from a three-level priority chain (FR-012)
+
+- **Decision**: When the calendar opens, it resolves its starting date using: (1) an active-world vault entity whose title matches a controlled set (`"current date"`, `"today"`, `"present day"`, `"current day"`, `"now"`) and has an exact date; (2) the vault's `currentYear` setting in `calendar.svelte.ts`; (3) real-world `new Date()`.
+- **Rationale**: Worldbuilders often track an in-world "present day" as a named entity, and a vault-level year setting is already a lightweight way to anchor chronology. Falling through to the real-world date guarantees the calendar always opens somewhere useful without requiring any configuration. All three tiers are read-only at derivation time; no new schema fields or entity types are introduced.
+- **Alternatives considered**:
+  - Always open to real-world date: rejected because it is meaningless for fantasy or historical worlds.
+  - Require explicit user configuration: rejected because it adds friction and the entity-title lookup is zero-config for users who already track a "current date" node.
+  - Use only the vault year setting: rejected because it forces manual maintenance even when a "current date" entity exists.

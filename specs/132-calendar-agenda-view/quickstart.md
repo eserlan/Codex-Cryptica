@@ -17,7 +17,7 @@
    - entry click opening the existing detail view
 4. Extend `apps/web/src/lib/stores/timeline.svelte.ts` to derive world-scoped calendar entries and consume the chronology helpers.
 5. Add Svelte UI components for month view, agenda view, and overflow interaction under `apps/web/src/lib/components/timeline/`.
-6. Integrate the feature into the existing timeline route and world detail/front-page entry point.
+6. Integrate the feature into the existing timeline route, the world detail/front-page entry point, and the sidebar activity bar (`apps/web/src/lib/components/layout/ActivityBar.svelte`) — which already includes a Timeline nav item using `icon-[lucide--calendar-days]` that links to the `/timeline` route.
 7. Update help content in `apps/web/src/lib/content/help/chronology.md`.
 
 ## 3. Validation commands

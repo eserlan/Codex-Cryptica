@@ -68,6 +68,8 @@ apps/web/src/
 │   │   │   ├── CalendarDayOverflow.svelte
 │   │   │   ├── TimelineFilterBar.svelte
 │   │   │   └── *.test.ts
+│   │   ├── layout/
+│   │   │   └── ActivityBar.svelte      # Timeline icon (lucide--calendar-days) linking /timeline
 │   │   └── world/
 │   │       ├── FrontPage.svelte
 │   │       └── front-page/
@@ -129,7 +131,7 @@ No constitution violations.
 
 ### Phase 4: World Context And Help
 
-- Surface the calendar experience in both required locations from the spec: the existing chronology route and a dedicated calendar section on the world front page/dashboard.
+- Surface the calendar experience in all three required locations from the spec: the existing chronology route, a dedicated calendar section on the world front page/dashboard, and a Timeline nav icon (`lucide--calendar-days`) in the sidebar activity bar (`apps/web/src/lib/components/layout/ActivityBar.svelte`) that links directly to the chronology route.
 - Update chronology help content and empty-state copy so users understand exact-date limits and undated handling.
 
 ### Phase 5: Verification

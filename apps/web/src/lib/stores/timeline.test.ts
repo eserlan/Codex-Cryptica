@@ -131,6 +131,7 @@ function createStore() {
     },
     calendarStore: {
       config: { ...DEFAULT_CALENDAR, revision: 1 },
+      calendarCurrentDate: null,
     },
   });
 
@@ -272,7 +273,10 @@ describe("resolveExactDate edge cases (via calendarEntries)", () => {
         status: "idle",
       },
       graph: { eras: [] },
-      calendarStore: { config: { ...DEFAULT_CALENDAR, revision: 1 } },
+      calendarStore: {
+        config: { ...DEFAULT_CALENDAR, revision: 1 },
+        calendarCurrentDate: null,
+      },
     });
     return store;
   }

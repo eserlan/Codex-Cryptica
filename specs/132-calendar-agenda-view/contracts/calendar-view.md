@@ -88,6 +88,7 @@ Expected UI behavior:
 - Day cells show a fixed number of inline events and an interactive overflow control when needed.
 - Agenda view shows chronologically ordered sections and includes an `Undated/Approximate` section.
 - Empty states are shown when no entries match the active filters or month/range.
+- On mobile viewports the filter bar is collapsed by default and toggled by a visible control. When active filters are set and the bar is collapsed, the toggle MUST show an active-filter indicator. On desktop the filter bar is always visible and the collapse control is not rendered.
 
 ## 3. Test contract
 
@@ -106,3 +107,5 @@ Required web tests:
 - clicking/tapping an entry opens the existing detail view
 - empty states render when no matching events exist
 - overflow controls reveal hidden events accessibly
+- on mobile viewports the filter bar is collapsed by default and the toggle expands/collapses it without horizontal overflow
+- when active filters are set and the bar is collapsed, the toggle control shows an active-filter indicator

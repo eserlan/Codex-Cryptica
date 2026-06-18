@@ -2,6 +2,7 @@ import {
   buildAgendaSections,
   buildCalendarMonth,
   calendarEngine,
+  resolveCalendarCurrentDate,
   type AgendaSection,
   type CalendarEventEntry,
   type CalendarExactDate,
@@ -35,7 +36,7 @@ interface TimelineStoreDependencies {
     "allEntities" | "entities" | "activeVaultId" | "status"
   >;
   graph: Pick<typeof graph, "eras">;
-  calendarStore: Pick<CalendarStore, "config">;
+  calendarStore: Pick<CalendarStore, "config" | "calendarCurrentDate">;
 }
 
 function isLegacyDate(
@@ -151,6 +152,8 @@ export class TimelineStore {
   selectedLabel = $state<string | null>(null);
   selectedRelatedEntityId = $state<string | null>(null);
   maxVisiblePerDay = $state(3);
+  /** FR-013: filter bar is collapsed by default on mobile. */
+  filterBarCollapsed = $state(true);
 
   constructor(
     private readonly deps: TimelineStoreDependencies = {
@@ -356,13 +359,36 @@ export class TimelineStore {
     const currentVaultId = this.deps.vault.activeVaultId ?? "";
     if (this.#initializedForVault === currentVaultId && currentVaultId !== "")
       return;
-    if (this.filteredCalendarEntries.length === 0) return;
-    const firstExactEntry = this.filteredCalendarEntries.find(
-      (entry) => entry.dateKind === "exact" && entry.exactDate,
-    );
-    if (!firstExactEntry?.exactDate) return;
-    this.activeYear = firstExactEntry.exactDate.year;
-    this.activeMonth = firstExactEntry.exactDate.month;
+
+    // Build the minimal entity shape required by the pure FR-012 resolver
+    const entities = this.deps.vault.allEntities.map((e) => {
+      const primaryDate = e.date ?? e.start_date ?? e.end_date ?? undefined;
+      const exactDate = primaryDate
+        ? (resolveExactDate(primaryDate, this.deps.calendarStore.config) ??
+          undefined)
+        : undefined;
+      return {
+        id: e.id,
+        title: e.title,
+        exactDate,
+        dateKind: exactDate ? "exact" : primaryDate ? "approximate" : "missing",
+        createdAt: (e as Record<string, unknown>).createdAt as
+          | string
+          | undefined,
+      };
+    });
+
+    const settings = {
+      currentYear: this.deps.calendarStore.config.presentYear ?? null,
+    };
+
+    const resolved = resolveCalendarCurrentDate(entities, settings);
+
+    // Persist the result on the calendar store so other surfaces share it
+    this.deps.calendarStore.calendarCurrentDate = resolved;
+
+    this.activeYear = resolved.date.year;
+    this.activeMonth = resolved.date.month;
     this.#initializedForVault = currentVaultId;
   }
 
@@ -407,6 +433,21 @@ export class TimelineStore {
     this.selectedLabel = null;
     this.selectedRelatedEntityId = null;
     this.includeUndated = false;
+  }
+
+  /** FR-013: toggle the mobile filter-bar collapsed state. */
+  toggleFilterBar() {
+    this.filterBarCollapsed = !this.filterBarCollapsed;
+  }
+
+  /** FR-013: true when any filter is active. */
+  get hasActiveFilters(): boolean {
+    return !!(
+      this.filterType ||
+      this.selectedLabel ||
+      this.selectedRelatedEntityId ||
+      this.includeUndated
+    );
   }
 
   toggleViewMode() {

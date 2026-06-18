@@ -1,10 +1,12 @@
 import { calendarEngine } from "./engine";
 import type {
   AgendaSection,
+  CalendarCurrentDateSource,
   CalendarDayCell,
   CalendarEventEntry,
   CalendarFilterInput,
   CalendarMonthViewModel,
+  VaultCalendarSettings,
   WorldCalendar,
 } from "./types";
 
@@ -208,4 +210,89 @@ export function buildAgendaSections(
   }
 
   return sections;
+}
+
+/**
+ * Controlled set of entity title tokens that indicate "the current in-world date".
+ * Matching is case-insensitive and whole-title only.
+ */
+const CURRENT_DATE_TITLES = new Set([
+  "current date",
+  "today",
+  "present day",
+  "current day",
+  "now",
+]);
+
+/**
+ * Minimal shape required from an entity for the FR-012 entity-title lookup.
+ * Decoupled from the full vault Entity type so the helper stays store-agnostic.
+ */
+export interface CurrentDateEntity {
+  id: string;
+  title: string;
+  exactDate?: { year: number; month: number; day: number };
+  dateKind?: string;
+  /** ISO 8601 creation timestamp used for stable tie-breaking. */
+  createdAt?: string;
+}
+
+/**
+ * Resolve the calendar's opening "current date" using the FR-012 priority chain:
+ *  1. Entity title match — first exact-date entity whose title is in CURRENT_DATE_TITLES
+ *  2. Vault current-year setting — open to January of that year (day absent)
+ *  3. Real-world date fallback — use new Date()
+ */
+export function resolveCalendarCurrentDate(
+  entities: CurrentDateEntity[],
+  settings: VaultCalendarSettings,
+): CalendarCurrentDateSource {
+  // Tier 1: entity title match
+  const candidates = entities
+    .filter(
+      (e) =>
+        e.dateKind === "exact" &&
+        e.exactDate !== undefined &&
+        CURRENT_DATE_TITLES.has(e.title.trim().toLowerCase()),
+    )
+    .sort((a, b) => {
+      // Oldest first for stable tie-breaking
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return aTime - bTime;
+    });
+
+  if (candidates.length > 0 && candidates[0].exactDate) {
+    const entity = candidates[0];
+    return {
+      source: "entity",
+      date: {
+        year: entity.exactDate!.year,
+        month: entity.exactDate!.month,
+        day: entity.exactDate!.day,
+      },
+      entityId: entity.id,
+    };
+  }
+
+  // Tier 2: vault current-year setting
+  if (settings.currentYear !== null && settings.currentYear !== undefined) {
+    return {
+      source: "vaultSetting",
+      date: { year: settings.currentYear, month: 1 },
+      entityId: null,
+    };
+  }
+
+  // Tier 3: real-world date
+  const now = new Date();
+  return {
+    source: "realWorld",
+    date: {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      day: now.getDate(),
+    },
+    entityId: null,
+  };
 }

@@ -71,8 +71,32 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 
 ---
 
+### User Story 5 - Collapse the Filter Bar on Mobile (Priority: P2)
+
+A user on a phone collapses the filter bar to free up vertical space for the calendar grid or agenda list, then expands it again when they need to change filters.
+
+**Why this priority**: The filter bar takes up significant vertical real estate on small screens. Hiding it by default or on demand lets the grid or agenda fill the screen, which is the primary interaction surface.
+
+**Independent Test**: Can be tested at a mobile viewport width by toggling the filter bar collapse control and verifying the bar disappears and reappears without layout shift in the grid or agenda.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user is on a mobile-sized viewport, **When** they open the calendar or agenda view, **Then** the filter bar is collapsed by default.
+2. **Given** the filter bar is collapsed, **When** the user taps the expand control, **Then** the filter bar slides into view and the grid/agenda reflows without horizontal overflow.
+3. **Given** the filter bar is expanded, **When** the user taps the collapse control, **Then** the filter bar hides and the grid/agenda expands to fill the reclaimed space.
+4. **Given** the filter bar is collapsed and active filters are set, **When** the user views the page, **Then** a visible indicator (e.g., a badge or dot) signals that filters are active even though the bar is hidden.
+5. **Given** a user is on a desktop-sized viewport, **When** they view the calendar, **Then** the filter bar is always visible and the collapse control is not shown.
+
+---
+
 ### Edge Cases
 
+- What happens when the vault has no "current date" entity and no vault year setting?
+- The calendar falls back to the real-world date via `new Date()` as the final step in the FR-012 priority chain.
+- What is the matching rule for entity title lookup?
+- Title matching is case-insensitive and strips leading/trailing whitespace. It matches the whole title against the set `["current date", "today", "present day", "current day", "now"]`. The first matched entity (sorted by creation date, oldest first) wins. If multiple entities match, the oldest is preferred for stability.
+- What happens if the user resizes from mobile to desktop while the filter bar is collapsed?
+- The filter bar snaps to expanded state automatically at the desktop breakpoint; the collapsed state is only relevant at mobile widths.
 - What happens when an event has no date or an approximate/fuzzy date?
 - Events with approximate or missing dates do not appear in exact month-grid day cells; they remain accessible in agenda view under an "Undated/Approximate" grouping.
 - How does the calendar handle events spanning multiple days?
@@ -94,9 +118,15 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 - **FR-006**: System MUST handle dates with approximate or missing values gracefully: these events MUST NOT be placed into exact day cells in the month grid, and they MUST remain accessible in agenda view under an "Undated/Approximate" grouping with their uncertainty indicated.
 - **FR-007**: System MUST show an empty state when no events match the current view or filters.
 - **FR-008**: The calendar view MUST be scoped to the currently-viewed world; events from other worlds do not appear unless the user navigates to that world.
-- **FR-009**: System MUST surface the calendar view in two places: the existing chronology route and a dedicated calendar section on the world front page/dashboard for the currently-viewed world.
+- **FR-009**: System MUST surface the calendar view in three places: the existing chronology route, a dedicated calendar section on the world front page/dashboard for the currently-viewed world, and a **Timeline icon** (`lucide--calendar-days`) in the sidebar activity bar that links directly to the chronology route.
 - **FR-010**: Events with dates on the same day MUST all be accessible through a crowded-cell overflow pattern that shows a fixed number of inline events plus an interactive control that reveals the full list for that date.
 - **FR-011**: When two or more events share the same exact date and time, the system MUST present them in a stable deterministic order, using title-based ordering when no more specific chronology field distinguishes them.
+- **FR-012**: The calendar MUST derive its initial "current date" (the month and day it opens to) using the following priority chain:
+  1. **Entity title match** — search the active world's vault entities for one whose title matches `"current date"`, `"today"`, `"present day"`, or similar (case-insensitive, fuzzy). If found and the entity has an exact date, that date is used.
+  2. **Vault current-year setting** — if no matching entity is found, read the vault-level `currentYear` setting (or equivalent) stored in the calendar settings store. If set, the calendar opens to January of that year.
+  3. **Real-world calendar** — if neither source is available, fall back to the real-world current date (`new Date()`).
+     The resolution result MUST be surfaced as a reactive `calendarCurrentDate` value in `apps/web/src/lib/stores/calendar.svelte.ts` so other surfaces (world front page, activity bar entry) inherit the same starting point.
+- **FR-013**: On mobile-sized viewports, the filter bar MUST be collapsible. Collapsed is the default state on mobile. The collapsed/expanded state MUST be toggled by a visible control. When active filters are set and the bar is collapsed, the toggle control MUST show a visible indicator (e.g., a badge or icon change) so users know filters are active. On desktop-sized viewports the filter bar is always visible and the collapse control is not rendered.
 
 ### Key Entities
 
@@ -114,6 +144,7 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 - **SC-004**: The calendar correctly places events on the right dates for 100% of events with valid dates.
 - **SC-005**: Users with 0 events see a helpful empty state with a prompt to create events.
 - **SC-006**: The view is usable on mobile screen sizes (no horizontal scroll, tappable targets).
+- **SC-007**: On mobile, the filter bar is collapsed by default; toggling it expands or collapses without horizontal overflow and the active-filter indicator is visible when filters are set.
 
 ## Clarifications
 
@@ -125,12 +156,17 @@ A user switches to an agenda (list) view that shows upcoming or past events in c
 - Q: How should multi-day events be displayed in this version? → A: Show them on their start date only in v1.
 - Q: For FR-003, what should happen when a user clicks a calendar event entry? → A: Open the existing related entity or event detail view used elsewhere in the app.
 - Q: For crowded day cells, how should overflow events be accessed? → A: Show a fixed count plus an interactive "+N more" control that reveals the full list for that date.
-- Q: For FR-009, where should the calendar be surfaced in the app? → A: In the existing chronology route and as a dedicated calendar section on the world front page/dashboard.
+- Q: For FR-009, where should the calendar be surfaced in the app? → A: In three places: the existing chronology route, as a dedicated calendar section on the world front page/dashboard, and via a Timeline icon (`lucide--calendar-days`) in the sidebar activity bar linking to the chronology route. The activity bar entry is implemented in `apps/web/src/lib/components/layout/ActivityBar.svelte`.
 - Q: How should events with the same exact date and time be ordered? → A: Keep a stable deterministic order using title-based ordering when nothing else distinguishes them.
+- Q: How should the calendar determine which month and day it opens to? → A: Use the three-level priority defined in FR-012: (1) a vault entity whose title matches "current date" / "today" / "present day" / etc. and has an exact date; (2) the vault's `currentYear` setting; (3) real-world `new Date()`. The resolved value is stored as `calendarCurrentDate` in `calendar.svelte.ts`.
+- Q: Should the collapsible filter bar apply to desktop as well as mobile? → A: Mobile only. On desktop the filter bar is always visible; the collapse control is not rendered at desktop widths.
+- Q: What should the active-filter indicator look like when the filter bar is collapsed on mobile? → A: A badge or icon change on the toggle control is sufficient; the exact visual is left to the implementation but MUST be tappable and perceivable without the filter bar open.
 
 ## Assumptions
 
 - Fantasy calendar systems (custom month/day names) are **out of scope** for this version; the calendar uses the existing date/event data model, which stores Gregorian-compatible dates.
+- The entity-title lookup for FR-012 is a read-only scan; no new entity type or schema field is introduced.
+- If the vault `currentYear` setting resolves, the calendar opens to January of that year with no specific day highlighted; the "today" highlight in `CalendarDayCell.isToday` is only set when the final resolution produces a full year-month-day triple.
 - The existing entity/event data model already has date fields on event entities; this feature reads from that model rather than introducing a new schema.
 - Multi-day spanning events are treated as appearing on their start date only in v1; spanning display can be a follow-on.
 - The year/era overview mentioned in the issue is deferred; v1 ships month view + agenda view.

@@ -4,6 +4,7 @@
     CalendarMonthViewModel,
   } from "chronology-engine";
   import CalendarDayOverflow from "./CalendarDayOverflow.svelte";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
 
   const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -14,6 +15,17 @@
     month: CalendarMonthViewModel;
     onSelect: (entry: CalendarEventEntry) => void;
   } = $props();
+
+  /** True when this day cell matches the FR-012 resolved current date (all three fields). */
+  function isToday(year: number, monthNum: number, day: number): boolean {
+    const cur = calendarStore.calendarCurrentDate;
+    if (!cur || cur.date.day === undefined) return false;
+    return (
+      cur.date.year === year &&
+      cur.date.month === monthNum &&
+      cur.date.day === day
+    );
+  }
 
   function dayLabel(year: number, monthNumber: number, day: number): string {
     return new Date(year, monthNumber - 1, day).toLocaleDateString("en-US", {
@@ -48,11 +60,16 @@
           <div class="flex items-center justify-between gap-2">
             <span
               class={[
-                "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
-                day.inCurrentMonth
-                  ? "bg-theme-primary/12 text-theme-text"
-                  : "bg-theme-bg/50 text-theme-muted",
+                "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors",
+                isToday(day.date.year, day.date.month, day.date.day)
+                  ? "bg-theme-primary text-theme-bg ring-2 ring-theme-primary/40"
+                  : day.inCurrentMonth
+                    ? "bg-theme-primary/12 text-theme-text"
+                    : "bg-theme-bg/50 text-theme-muted",
               ]}
+              aria-current={isToday(day.date.year, day.date.month, day.date.day)
+                ? "date"
+                : undefined}
             >
               {day.date.day}
             </span>
