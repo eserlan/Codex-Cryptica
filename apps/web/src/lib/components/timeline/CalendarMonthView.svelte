@@ -37,31 +37,31 @@
   }
 </script>
 
-<div class="flex flex-col gap-3" data-testid="calendar-month-view">
+<div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">
   <div
-    class="grid grid-cols-7 gap-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-theme-muted"
+    class="grid grid-cols-7 gap-0 sm:gap-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-theme-muted"
   >
     {#each weekdayLabels as label (label)}
-      <div class="rounded-full px-2 py-1">{label}</div>
+      <div class="px-1 py-1 sm:rounded-full sm:px-2">{label}</div>
     {/each}
   </div>
 
-  <div class="grid grid-cols-7 gap-2 [container-type:inline-size]">
+  <div class="grid grid-cols-7 gap-0 sm:gap-2 [container-type:inline-size]">
     {#each month.weeks as week, weekIndex (`week-${weekIndex}`)}
       {#each week.days as day (`${day.date.year}-${day.date.month}-${day.date.day}`)}
         <section
           class={[
-            "flex min-h-28 flex-col gap-2 rounded-2xl border p-2 align-top sm:min-h-32 sm:p-3",
+            "flex min-h-16 flex-col gap-1 border p-1 align-top rounded-none sm:rounded-2xl sm:min-h-32 sm:gap-2 sm:p-3",
             day.inCurrentMonth
               ? "border-theme-border bg-theme-surface/70"
               : "border-theme-border/50 bg-theme-bg/35 text-theme-muted/70",
           ]}
           aria-label={dayLabel(day.date.year, day.date.month, day.date.day)}
         >
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center justify-between gap-1">
             <span
               class={[
-                "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-colors",
+                "inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors sm:h-7 sm:w-7 sm:text-xs",
                 isToday(day.date.year, day.date.month, day.date.day)
                   ? "bg-theme-primary text-theme-bg ring-2 ring-theme-primary/40"
                   : day.inCurrentMonth
@@ -76,27 +76,27 @@
             </span>
             {#if day.entries.length + day.hiddenEntries.length > 0}
               <span
-                class="text-[9px] uppercase tracking-[0.16em] text-theme-muted"
+                class="hidden text-[9px] uppercase tracking-[0.16em] text-theme-muted sm:inline"
               >
                 {day.entries.length + day.hiddenEntries.length} events
               </span>
             {/if}
           </div>
 
-          <div class="flex flex-1 flex-col gap-1">
+          <div class="flex flex-1 flex-col gap-0.5 sm:gap-1">
             {#each day.entries as entry (entry.entityId + entry.title)}
               <button
                 type="button"
-                class="rounded-xl border border-theme-primary/18 bg-theme-primary/8 px-2 py-1.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14"
+                class="rounded-none border border-theme-primary/18 bg-theme-primary/8 px-1 py-0.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14 sm:rounded-xl sm:px-2 sm:py-1.5"
                 onclick={() => onSelect(entry)}
               >
                 <span
-                  class="block truncate text-[11px] font-bold text-theme-text"
+                  class="block truncate text-[9px] font-bold text-theme-text sm:text-[11px]"
                 >
                   {entry.title}
                 </span>
                 <span
-                  class="block truncate text-[9px] uppercase tracking-[0.16em] text-theme-muted"
+                  class="hidden truncate text-[9px] uppercase tracking-[0.16em] text-theme-muted sm:block"
                 >
                   {entry.entityType}
                 </span>
