@@ -99,20 +99,17 @@ describe("settlementConfig", () => {
   });
 
   it("has all genre pools for every keyed property", () => {
-    const genres = [
-      "Fantasy",
-      "Cyberpunk",
-      "Sci-Fi",
-      "Post-Apocalyptic",
-      "Modern",
-      "Horror",
-    ];
-    for (const genre of genres) {
+    for (const genre of settlementConfig.genres) {
+      expect(settlementConfig.sizesByGenre[genre]).toBeDefined();
       expect(settlementConfig.environmentsByGenre[genre]).toBeDefined();
       expect(settlementConfig.primaryFunctionsByGenre[genre]).toBeDefined();
       expect(settlementConfig.tonesByGenre[genre]).toBeDefined();
       expect(settlementConfig.mainTensionsByGenre[genre]).toBeDefined();
       expect(settlementConfig.authorityTypesByGenre[genre]).toBeDefined();
+      expect(settlementConfig.notableLocationsByGenre[genre]).toBeDefined();
+      expect(settlementConfig.factionsByGenre[genre]).toBeDefined();
+      expect(settlementConfig.namePrefixesByGenre[genre]).toBeDefined();
+      expect(settlementConfig.nameSuffixesByGenre[genre]).toBeDefined();
     }
   });
 });
