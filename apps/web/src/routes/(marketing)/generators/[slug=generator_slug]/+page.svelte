@@ -35,6 +35,7 @@
     pantheonConfig,
     themeIdToLabel,
     themeToQuestGenre,
+    pickFrom,
     type GeneratorOutput,
   } from "$lib/services/seo/generator-engine";
 
@@ -882,6 +883,37 @@
         inputClass={selectClass}
         customPlaceholder="Enter a custom tension"
       />
+
+      <button
+        type="button"
+        class="mt-1 w-full rounded-lg border border-theme-border/60 bg-theme-bg/40 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-muted transition hover:border-theme-primary/60 hover:text-theme-primary"
+        onclick={() => {
+          const g = settlement.genre;
+          const sizes =
+            settlementConfig.sizesByGenre[g] ??
+            settlementConfig.sizesByGenre["Fantasy"];
+          settlement.size = pickFrom(sizes).name;
+          settlement.environment = pickFrom(
+            settlementConfig.environmentsByGenre[g] ??
+              settlementConfig.environmentsByGenre["Fantasy"],
+          );
+          settlement.primaryFunction = pickFrom(
+            settlementConfig.primaryFunctionsByGenre[g] ??
+              settlementConfig.primaryFunctionsByGenre["Fantasy"],
+          );
+          settlement.tone = pickFrom(
+            settlementConfig.tonesByGenre[g] ??
+              settlementConfig.tonesByGenre["Fantasy"],
+          );
+          settlement.mainTension = pickFrom(
+            settlementConfig.mainTensionsByGenre[g] ??
+              settlementConfig.mainTensionsByGenre["Fantasy"],
+          );
+          trigger();
+        }}
+      >
+        Surprise me
+      </button>
     {:else if data.slug === "magic-item" || data.slug === "item"}
       <SelectWithCustomOption
         id="item-type-select"
