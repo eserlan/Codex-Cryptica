@@ -248,4 +248,36 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(copyBtn?.querySelector(".icon-\\[lucide--copy\\]")).toBeTruthy();
     });
   });
+
+  describe("Generated content sanitization", () => {
+    it("sanitizes unsafe HTML from generated content before rendering", () => {
+      const mockGenerate = vi.fn().mockResolvedValue({});
+      const initialDraft = {
+        type: "character" as const,
+        title: "Unsafe Draft",
+        content:
+          '- **Tone**: <img src="x" onerror="alert(1)"><script>alert(1)</script>',
+        lore: "",
+        labels: ["security"],
+        status: "draft" as const,
+      };
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          pageTitle: "Security Test",
+          metaDescription: "Security test.",
+          canonicalPath: "/generators/npc",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft,
+        },
+      });
+
+      expect(container.querySelector("script")).toBeNull();
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector("[onerror]")).toBeNull();
+      expect(container.innerHTML).not.toContain("<script>alert(1)</script>");
+      expect(container.textContent).toContain("Tone");
+    });
+  });
 });

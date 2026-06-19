@@ -1,5 +1,6 @@
 <script lang="ts">
   import { pantheonConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     mode = $bindable("single"),
@@ -31,109 +32,124 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+
+  const modeChoices = [
+    { value: "single", label: "Single Deity / Spirit" },
+    { value: "pantheon", label: "Pantheon" },
+  ] as const;
 </script>
 
 <div class="flex flex-col gap-1.5">
   <label for="pantheon-mode-select" class={labelClass}>Generate target</label>
-  <select id="pantheon-mode-select" bind:value={mode} class={selectClass}>
-    <option value="single">Single Deity / Spirit</option>
-    <option value="pantheon">Pantheon</option>
-  </select>
-</div>
-
-{#if mode === "pantheon"}
-  <div class="flex flex-col gap-1.5">
-    <label for="pantheon-size-select" class={labelClass}>Pantheon Size</label>
-    <select id="pantheon-size-select" bind:value={size} class={selectClass}>
-      {#each pantheonConfig.sizes as s (s.value)}
-        <option value={s.value}>{s.label}</option>
-      {/each}
-    </select>
-  </div>
-
-  <div class="flex flex-col gap-1.5">
-    <label for="pantheon-width-select" class={labelClass}
-      >Pantheon Focus / Width</label
-    >
-    <select id="pantheon-width-select" bind:value={width} class={selectClass}>
-      {#each pantheonConfig.widths as w (w.value)}
-        <option value={w.value}>{w.label}</option>
-      {/each}
-    </select>
-  </div>
-{/if}
-
-<div class="flex flex-col gap-1.5">
-  <label for="pantheon-genre-select" class={labelClass}>Genre / Theme</label>
-  <select id="pantheon-genre-select" bind:value={genre} class={selectClass}>
-    {#each pantheonConfig.genres as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
-
-{#if mode === "single"}
-  <div class="flex flex-col gap-1.5">
-    <label for="pantheon-type-select" class={labelClass}>Divine Type</label>
-    <select
-      id="pantheon-type-select"
-      bind:value={divineType}
-      class={selectClass}
-    >
-      {#each pantheonConfig.divineTypes as t (t)}
-        <option value={t}>{t}</option>
-      {/each}
-    </select>
-  </div>
-{/if}
-
-<div class="flex flex-col gap-1.5">
-  <label for="pantheon-domain-select" class={labelClass}>Primary Domain</label>
-  <select id="pantheon-domain-select" bind:value={domain} class={selectClass}>
-    {#each pantheonConfig.domains as d (d)}
-      <option value={d}>{d}</option>
-    {/each}
-  </select>
-</div>
-
-<div class="flex flex-col gap-1.5">
-  <label for="pantheon-tone-select" class={labelClass}>Tone</label>
-  <select id="pantheon-tone-select" bind:value={tone} class={selectClass}>
-    {#each pantheonConfig.tones as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
-
-<div class="flex flex-col gap-1.5">
-  <label for="pantheon-worshippers-select" class={labelClass}>Worshippers</label
-  >
   <select
-    id="pantheon-worshippers-select"
-    bind:value={worshippers}
+    id="pantheon-mode-select"
+    bind:value={mode}
     class={selectClass}
   >
-    {#each pantheonConfig.worshippers as w (w)}
-      <option value={w}>{w}</option>
+    {#each modeChoices as choice (choice.value)}
+      <option value={choice.value}>{choice.label}</option>
     {/each}
   </select>
 </div>
 
 {#if mode === "pantheon"}
-  <div class="flex flex-col gap-1.5">
-    <label for="pantheon-conflict-select" class={labelClass}
-      >Conflict Theme</label
-    >
-    <select
-      id="pantheon-conflict-select"
-      bind:value={conflictTheme}
-      class={selectClass}
-    >
-      {#each pantheonConfig.conflictThemes as c (c)}
-        <option value={c}>{c}</option>
-      {/each}
-    </select>
-  </div>
+  <SelectWithCustomOption
+    id="pantheon-size-select"
+    label="Pantheon Size"
+    bind:value={size}
+    choices={pantheonConfig.sizes.map((s: { value: string; label: string }) => ({
+      value: s.value,
+      label: s.label,
+    }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom pantheon size"
+  />
+
+  <SelectWithCustomOption
+    id="pantheon-width-select"
+    label="Pantheon Focus / Width"
+    bind:value={width}
+    choices={pantheonConfig.widths.map((w: { value: string; label: string }) => ({
+      value: w.value,
+      label: w.label,
+    }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom pantheon width"
+  />
+{/if}
+
+<SelectWithCustomOption
+  id="pantheon-genre-select"
+  label="Genre / Theme"
+  bind:value={genre}
+  choices={pantheonConfig.genres.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom genre or theme"
+/>
+
+{#if mode === "single"}
+  <SelectWithCustomOption
+    id="pantheon-type-select"
+    label="Divine Type"
+    bind:value={divineType}
+    choices={pantheonConfig.divineTypes.map((t: string) => ({ value: t, label: t }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom divine type"
+  />
+{/if}
+
+<SelectWithCustomOption
+  id="pantheon-domain-select"
+  label="Primary Domain"
+  bind:value={domain}
+  choices={pantheonConfig.domains.map((d: string) => ({ value: d, label: d }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom primary domain"
+/>
+
+<SelectWithCustomOption
+  id="pantheon-tone-select"
+  label="Tone"
+  bind:value={tone}
+  choices={pantheonConfig.tones.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom tone"
+/>
+
+<SelectWithCustomOption
+  id="pantheon-worshippers-select"
+  label="Worshippers"
+  bind:value={worshippers}
+  choices={pantheonConfig.worshippers.map((w: string) => ({ value: w, label: w }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter custom worshippers"
+/>
+
+{#if mode === "pantheon"}
+  <SelectWithCustomOption
+    id="pantheon-conflict-select"
+    label="Conflict Theme"
+    bind:value={conflictTheme}
+    choices={pantheonConfig.conflictThemes.map((c: string) => ({ value: c, label: c }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom conflict theme"
+  />
 {/if}
 
 <div class="flex flex-col gap-1.5">
