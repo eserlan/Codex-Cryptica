@@ -56,6 +56,11 @@ export const factionConfig = {
     "Criminal Syndicate",
     "Rebel Cell",
     "Arcane Circle",
+    "Guild Cartel",
+    "Airship Consortium",
+    "Aetheric Research Order",
+    "Imperial Intelligence Bureau",
+    "Underclass Rebel Cell",
   ],
   scopes: [
     "Local district",

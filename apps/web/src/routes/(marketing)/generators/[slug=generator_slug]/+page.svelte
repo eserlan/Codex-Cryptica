@@ -455,6 +455,7 @@
     Horror: "Vampire / Gothic Noir",
     "Post-Apocalyptic": "Post-Apocalyptic",
     Western: "Western / Frontier",
+    Steampunk: "Steampunk",
   };
 
   // Read localStorage at init time for slugs that respect the stored theme.
