@@ -90,6 +90,9 @@ describe("buildQuestPrompt", () => {
     expect(questConfig.rewardsByTheme["Western / Frontier"]).toContain(
       "Bounty gold plus a sheriff's favor",
     );
+    expect(questConfig.threatsByTheme["Western / Frontier"]).toContain(
+      "Outlaw Gang",
+    );
     expect(questConfig.threatsByTheme["Post-Apocalyptic"]).toContain(
       "Raider Warlord",
     );

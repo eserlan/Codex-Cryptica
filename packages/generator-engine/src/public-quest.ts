@@ -252,6 +252,14 @@ export const questConfig = {
       "Rogue Automaton",
       "Plague Outbreak",
     ],
+    "Western / Frontier": [
+      "Outlaw Gang",
+      "Corrupt Sheriff",
+      "Railroad Baron",
+      "Rival Claim Jumper",
+      "Bounty Hunter Turned Predator",
+      "Desperate Homesteaders",
+    ],
   } as Record<string, string[]>,
   hooks: [
     "A local official offers a reward to find a missing heir before a rival claims the title.",
