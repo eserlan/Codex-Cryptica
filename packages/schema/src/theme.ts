@@ -595,6 +595,52 @@ export const THEMES = {
       graph_loading: "Initialising Tactical Network...",
     },
   },
+  western: {
+    id: "western",
+    name: "Frontier Town",
+    description:
+      "Western, cowboys, outlaws, saloons, frontier homesteads, and trails under a wide desert sun.",
+    tokens: {
+      primary: "#8c5a3c",
+      secondary: "#5c4033",
+      background: "#f5ece1",
+      surface: "#eaddcc",
+      text: "#3d2a1f",
+      border: "rgba(140, 90, 60, 0.4)",
+      accent: "#d48227",
+      fontHeader: "'Alegreya', serif",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "4px",
+      texture: "parchment.svg",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#8c5a3c",
+    },
+    jargon: {
+      vault: "Logbook",
+      entity: "Record",
+      entity_plural: "Records",
+      save: "Secure",
+      delete: "Bury",
+      new: "Draft",
+      syncing: "Stashing",
+      search: "Track",
+      lore_header: "Frontier Lore",
+      lore_secrets: "Bounties & Whispers",
+      chronicle_header: "Trail Log",
+      connections_header: "Ties",
+      tab_status: "Status",
+      tab_lore: "Dossier",
+      tab_inventory: "Stash",
+      blog_entry: "Frontier Dispatch",
+      blog_action: "Read Dispatch",
+      graph_loading: "Mapping the Trail...",
+    },
+  },
 } as const satisfies Record<string, StylingTemplate>;
 
 export const FANTASY_DARK: StylingTemplate = {
@@ -856,6 +902,34 @@ export const LANCER_LIGHT: StylingTemplate = {
     edgeColor: "#1d4ed8",
   },
   jargon: THEMES.lancer.jargon,
+};
+
+export const WESTERN_DARK: StylingTemplate = {
+  id: "western_dark",
+  name: "Midnight Saloon",
+  description:
+    "Gunslingers, cardsharps, and dark secrets by a saloon oil lamp; the dark counterpart to Frontier Town.",
+  tokens: {
+    primary: "#d48227",
+    secondary: "#a0785a",
+    background: "#1a120c",
+    surface: "#2b1e15",
+    text: "#f0e6dc",
+    border: "rgba(212, 130, 39, 0.3)",
+    accent: "#e6994d",
+    fontHeader: "'Alegreya', serif",
+    fontBody: "'Inter', sans-serif",
+    borderRadius: "4px",
+    texture: "leather.svg",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#a0785a",
+  },
+  jargon: THEMES.western.jargon,
 };
 
 export const DEFAULT_THEME = THEMES.workspace;

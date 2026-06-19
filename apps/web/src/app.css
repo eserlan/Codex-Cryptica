@@ -243,6 +243,8 @@
   [data-theme="fallout"]          { --color-text-muted: #78c900; --color-text-dim: #4ade80; }
   [data-theme="starwars"]         { --color-text-muted: #94a3b8; --color-text-dim: #64748b; }
   [data-theme="startrek"]         { --color-text-muted: #d1d5db; --color-text-dim: #9ca3af; }
+  [data-theme="western"]        { --color-text-muted: #8c5a3c; --color-text-dim: #5c4033; }
+  [data-theme="western_dark"]   { --color-text-muted: #a0785a; --color-text-dim: #805c43; }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;
@@ -261,7 +263,8 @@
   [data-theme="horror"],
   [data-theme="fallout"],
   [data-theme="starwars"],
-  [data-theme="startrek"] {
+  [data-theme="startrek"],
+  [data-theme="western_dark"] {
     --frontpage-vignette: radial-gradient(circle at top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.85)), linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
   }
 

@@ -182,6 +182,13 @@
         "Vampire clans, gothic factions, undead NPCs, and dark quest hooks for horror campaigns.",
       icon: "icon-[lucide--moon]",
     },
+    {
+      href: "/generators/western",
+      label: "Western Hub",
+      summary:
+        "Cowboys and outlaws, frontier towns, dusty saloons, and wild quest hooks.",
+      icon: "icon-[game-icons--western-hat]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);

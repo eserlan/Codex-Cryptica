@@ -262,6 +262,26 @@
         surpriseMeCard,
       ],
     },
+    western: {
+      label: "Western",
+      localStorageId: "western",
+      eyebrow: "Six-Guns, Trails & Dust",
+      intro:
+        "Dusty borderlands, rowdy saloons, and dangerous outlaws. Generate frontier settlements, bounty quests, gunslinger NPCs, and rail-baron factions for your Western campaign — all pre-tuned to the genre.",
+      metaTitle:
+        "Western RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free Western RPG generators for tabletop GMs. Create gunslinger NPCs, outlaws, saloons, settlements, quest hooks, and names for your frontier campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build frontier outposts and ghost towns with sheriff departments, outlaw camps, and gold claims.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
   };
 
   const config = $derived(themeConfig[data.theme]);

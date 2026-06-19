@@ -193,6 +193,7 @@
     "Sci-Fi / Space Opera": "scifi",
     "Modern Conspiracy": "modern",
     "Post-Apocalyptic": "apocalyptic",
+    "Western / Frontier": "western",
   };
 
   const activeThemeId = $derived(themeMap[theme] || "workspace");

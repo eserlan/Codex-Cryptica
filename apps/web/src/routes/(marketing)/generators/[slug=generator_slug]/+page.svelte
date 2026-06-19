@@ -48,6 +48,7 @@
     "post-apocalyptic": "Post-Apocalyptic Hub",
     modern: "Modern Hub",
     vampire: "Vampire Hub",
+    western: "Western Hub",
   };
 
   const backHref = $derived(
@@ -452,7 +453,7 @@
     Modern: "Modern Conspiracy",
     Horror: "Vampire / Gothic Noir",
     "Post-Apocalyptic": "Post-Apocalyptic",
-    Western: "Modern Conspiracy",
+    Western: "Western / Frontier",
   };
 
   // Read localStorage at init time for slugs that respect the stored theme.

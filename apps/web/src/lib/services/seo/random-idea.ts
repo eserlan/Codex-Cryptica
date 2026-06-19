@@ -30,6 +30,7 @@ export const themeToHubGenre: Record<string, string> = {
   "Sci-Fi / Space Opera": "Sci-Fi",
   "Modern Conspiracy": "Modern",
   "Post-Apocalyptic": "Post-Apocalyptic",
+  "Western / Frontier": "Western",
 };
 
 export function pickRandomIdeaTheme(

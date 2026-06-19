@@ -43,6 +43,7 @@ describe("shouldSyncGeneratorTheme", () => {
       "Post-Apocalyptic",
     );
     expect(resolveHubGeneratorGenre("vampire")).toBe("Horror");
+    expect(resolveHubGeneratorGenre("western")).toBe("Western");
   });
 
   it("returns null for missing or unknown hub themes", () => {
