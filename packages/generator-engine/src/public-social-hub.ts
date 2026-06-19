@@ -109,6 +109,7 @@ export const socialHubConfig = {
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
+    "Lancer",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -174,6 +175,13 @@ export const socialHubConfig = {
       "Engine-District Pub",
       "Sky-Dock Canteen",
       "Guild Factor's Parlour",
+    ],
+    Lancer: [
+      "Mech Bay Canteen",
+      "Outpost Transit Bar",
+      "Union Admin Mess Hall",
+      "Pilot's Debrief Lounge",
+      "Colonial Settlement Common Room",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -256,6 +264,13 @@ export const socialHubConfig = {
       "Sky-dock workers and airship crew",
       "Off-duty imperial constables",
       "Underclass agitators in disguise",
+    ],
+    Lancer: [
+      "Off-duty mech pilots and crew chiefs",
+      "Union administrators and logistics staff",
+      "Colonial settlers and outpost workers",
+      "Mercenary contractors between jobs",
+      "NHP handlers on downtime protocols",
     ],
     Western: [
       "Cowboys and drifters",

@@ -106,6 +106,7 @@ export const nationConfig = {
     "Post-Apocalyptic",
     "Western",
     "Steampunk",
+    "Lancer",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -180,6 +181,13 @@ export const nationConfig = {
       "Aetheric Protectorate",
       "Colonial Administration",
       "Airship Sovereignty",
+    ],
+    Lancer: [
+      "Union Administrative Zone",
+      "Colonial Provisional Authority",
+      "Heterodox Mech Sovereignty",
+      "Corporate Extraction Concession",
+      "Liberation Council Territory",
     ],
   } as Record<string, string[]>,
   governmentStyles: [

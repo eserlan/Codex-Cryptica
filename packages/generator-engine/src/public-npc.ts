@@ -237,6 +237,14 @@ export const npcThemeConfig = {
       "Engineered Homunculus",
       "Colonial Expatriate",
     ],
+    Lancer: [
+      "Human",
+      "Khalida",
+      "Karrakin",
+      "Baronic Adherent",
+      "Long-Rim Born",
+      "Ungrateful",
+    ],
   } as Record<string, string[]>,
   roles: {
     "Classic Fantasy": [
@@ -314,6 +322,16 @@ export const npcThemeConfig = {
       "Clockwork Spy",
       "Press-Gang Officer",
       "Alchemical Surgeon",
+    ],
+    Lancer: [
+      "Mech Pilot",
+      "Union Administrator",
+      "Comp/Con Handler",
+      "Logistics Officer",
+      "NHP Caseworker",
+      "Colonial Liaison",
+      "Bleed Researcher",
+      "Mercenary Contractor",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -545,6 +563,44 @@ export const npcThemeConfig = {
           "This NPC has seen too many inventions turn to weapons and too many guild promises turn to smoke. Their tone is dry, sardonic, and deeply weary — they cooperate when paid, believe nothing, and expect betrayal.",
       },
     ],
+    Lancer: [
+      {
+        id: "union_idealist",
+        label: "Union Idealist",
+        aiPromptDirective:
+          "Write this NPC with earnest, data-backed conviction in Union's ability to end scarcity and resolve conflict through coordination. Their tone is calm, precise, and genuinely believes the mission — though they are not naive about the cost.",
+      },
+      {
+        id: "bleed_touched",
+        label: "Bleed-Touched",
+        aiPromptDirective:
+          "This NPC has spent too long near paracausal phenomena and it shows. Their speech occasionally fractures into recursive loops, second-person observations, or unsettling calm about things that should be terrifying. They are not broken — just differently calibrated.",
+      },
+      {
+        id: "colonial_pragmatist",
+        label: "Colonial Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as someone who has survived on the Long Rim by making deals, not principles. Their dialogue is transactional, their loyalties provisional, and their tolerance for idealism exactly zero. They respect competence and distrust anything that requires faith.",
+      },
+      {
+        id: "liberation_militant",
+        label: "Liberation Militant",
+        aiPromptDirective:
+          "This NPC is fighting for colonial self-determination and has been fighting long enough that the anger has calcified into strategy. Their tone is controlled and precise — they have moved past fury into the colder register of someone who intends to win.",
+      },
+      {
+        id: "nhp_adjacent",
+        label: "NHP-Adjacent",
+        aiPromptDirective:
+          "Write this NPC as someone whose prolonged work with non-human persons has subtly altered their cognition. They process situations in parallel, phrase things in ways that are technically accurate but socially strange, and occasionally refer to themselves in the third person without noticing.",
+      },
+      {
+        id: "contractor_mercenary",
+        label: "Contractor / Mercenary",
+        aiPromptDirective:
+          "This NPC is mission-focused, professionally detached, and absolutely clear that this is a contract. Their dialogue is clipped and outcome-oriented. They do not improvise morality and they do not explain their past. Payment, parameters, and exit conditions — that is the conversation.",
+      },
+    ],
     "Post-Apocalyptic": [
       {
         id: "collectivist",
@@ -641,6 +697,8 @@ const NPC_THEME_VOICE: Record<string, string> = {
     "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
   Steampunk:
     "Victorian-era steampunk — airships, aetheric engines, guild conspiracies, imperial expansion, clockwork automata, and the dark underside of the industrial revolution",
+  Lancer:
+    "Lancer RPG — mech pilots, Union administrators, NHP caseworkers, colonial liaisons, bleed researchers, and mercenary contractors operating across the Long Rim and contested colonial space",
 };
 
 const NPC_NAMING_STYLES = [

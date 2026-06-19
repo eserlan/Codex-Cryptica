@@ -241,6 +241,26 @@
         surpriseMeCard,
       ],
     },
+    lancer: {
+      label: "Lancer",
+      localStorageId: "lancer",
+      eyebrow: "Mechs, Pilots & the Long Rim",
+      intro:
+        "Bleed runs hot and the Long Rim doesn't wait. Build Union operatives, heterodox mech corps, frontier outpost factions, and NHP-adjacent NPCs for your Lancer campaign — every generator is tuned to the cockpit-terminal aesthetic and the weight of post-scarcity warfare.",
+      metaTitle:
+        "Lancer RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free Lancer RPG generators for tabletop GMs. Create mech pilots, Union factions, frontier outpost settlements, quest hooks, and names for your Lancer campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
     steampunk: {
       label: "Steampunk",
       localStorageId: "steampunk",

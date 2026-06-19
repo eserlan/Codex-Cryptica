@@ -12,7 +12,8 @@ export type ThemeSlug =
   | "modern"
   | "vampire"
   | "western"
-  | "steampunk";
+  | "steampunk"
+  | "lancer";
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {
     throw error(404, "Theme not found");
@@ -29,4 +30,5 @@ export const entries: EntryGenerator = () => [
   { theme: "vampire" },
   { theme: "western" },
   { theme: "steampunk" },
+  { theme: "lancer" },
 ];

@@ -64,6 +64,12 @@
     vampire: "Horror",
     western: "Western",
     steampunk: "Steampunk",
+    lancer: "Lancer",
+  };
+
+  // Genres not supported by the settlement generator are mapped to the nearest equivalent.
+  const SETTLEMENT_GENRE_FOR_HUB: Record<string, string> = {
+    Lancer: "Sci-Fi",
   };
 
   function shouldSyncGeneratorTheme(s: string) {
@@ -114,6 +120,7 @@
     vampire: "Vampire Hub",
     western: "Western Hub",
     steampunk: "Steampunk Hub",
+    lancer: "Lancer Hub",
   };
 
   const backHref = $derived(
@@ -381,7 +388,10 @@
     campaignContext: "",
   });
 
-  const settlementGenre = initialHubGenre ?? "Fantasy";
+  const settlementGenre =
+    (initialHubGenre
+      ? (SETTLEMENT_GENRE_FOR_HUB[initialHubGenre] ?? initialHubGenre)
+      : null) ?? "Fantasy";
   const settlementSizes =
     settlementConfig.sizesByGenre[settlementGenre] ??
     settlementConfig.sizesByGenre["Fantasy"];
@@ -518,6 +528,21 @@
     "Post-Apocalyptic": "Post-Apocalyptic",
     Western: "Western / Frontier",
     Steampunk: "Steampunk",
+    Lancer: "Lancer",
+  };
+
+  // Maps hub URL slugs to stored theme IDs (hub slugs differ from theme ids
+  // in several cases, e.g. "sci-fi" → "scifi", "vampire" → "horror").
+  const HUB_SLUG_TO_THEME_ID: Record<string, string> = {
+    fantasy: "fantasy",
+    cyberpunk: "cyberpunk",
+    "sci-fi": "scifi",
+    "post-apocalyptic": "apocalyptic",
+    modern: "modern",
+    vampire: "horror",
+    western: "western",
+    steampunk: "steampunk",
+    lancer: "lancer",
   };
 
   const SLUGS_USING_STORED_THEME = new Set([
@@ -533,7 +558,7 @@
   // For themed URL: seed from hub slug. For flat URL: read localStorage.
   const _initialSlug = untrack(() => slug);
   const _initStoredThemeId =
-    _initialUrlHubTheme ??
+    (_initialUrlHubTheme ? HUB_SLUG_TO_THEME_ID[_initialUrlHubTheme] : null) ??
     (browser && SLUGS_USING_STORED_THEME.has(_initialSlug)
       ? localStorage.getItem("codex-cryptica-active-theme")
       : null);
@@ -578,7 +603,10 @@
       return;
     }
     if (slug === "settlement") {
-      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      const rawHubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      const hubGenre = rawHubGenre
+        ? (SETTLEMENT_GENRE_FOR_HUB[rawHubGenre] ?? rawHubGenre)
+        : null;
       if (hubGenre) {
         settlement.genre = hubGenre;
         const sizes =
