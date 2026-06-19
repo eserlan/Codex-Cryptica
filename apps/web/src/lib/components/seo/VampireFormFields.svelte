@@ -1,5 +1,6 @@
 <script lang="ts">
   import { vampireConfig } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     archetype = $bindable(vampireConfig.archetypes[0]),
@@ -31,71 +32,59 @@
   const weaknessHint = $derived(getParenthetical(weakness));
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="vampire-archetype-select" class={labelClass}
-    >Choose their nature</label
-  >
-  <select
-    id="vampire-archetype-select"
-    name="vampire_archetype"
-    bind:value={archetype}
-    class={selectClass}
-  >
-    {#each vampireConfig.archetypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="vampire-archetype-select"
+  name="vampire_archetype"
+  label="Choose their nature"
+  bind:value={archetype}
+  choices={vampireConfig.archetypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom nature"
+/>
+
+<SelectWithCustomOption
+  id="vampire-bloodline-select"
+  name="vampire_bloodline"
+  label="Choose their bloodline"
+  bind:value={bloodline}
+  choices={vampireConfig.bloodlines.map((b: string) => ({ value: b, label: b }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom bloodline"
+/>
 
 <div class="flex flex-col gap-1.5">
-  <label for="vampire-bloodline-select" class={labelClass}
-    >Choose their bloodline</label
-  >
-  <select
-    id="vampire-bloodline-select"
-    name="vampire_bloodline"
-    bind:value={bloodline}
-    class={selectClass}
-  >
-    {#each vampireConfig.bloodlines as b (b)}
-      <option value={b}>{b}</option>
-    {/each}
-  </select>
-</div>
-
-<div class="flex flex-col gap-1.5">
-  <label for="vampire-feeding-select" class={labelClass}
-    >Choose how they feed</label
-  >
-  <select
+  <SelectWithCustomOption
     id="vampire-feeding-select"
     name="vampire_feeding"
+    label="Choose how they feed"
     bind:value={feedingHabit}
-    class={selectClass}
-  >
-    {#each vampireConfig.feedingHabits as f (f)}
-      <option value={f}>{f}</option>
-    {/each}
-  </select>
+    choices={vampireConfig.feedingHabits.map((f: string) => ({ value: f, label: f }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom feeding habit"
+  />
   {#if feedingHint}
     <p class={hintClass}>{feedingHint}</p>
   {/if}
 </div>
 
 <div class="flex flex-col gap-1.5">
-  <label for="vampire-weakness-select" class={labelClass}
-    >Choose their weakness</label
-  >
-  <select
+  <SelectWithCustomOption
     id="vampire-weakness-select"
     name="vampire_weakness"
+    label="Choose their weakness"
     bind:value={weakness}
-    class={selectClass}
-  >
-    {#each vampireConfig.weaknesses as w (w)}
-      <option value={w}>{w}</option>
-    {/each}
-  </select>
+    choices={vampireConfig.weaknesses.map((w: string) => ({ value: w, label: w }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom weakness"
+  />
   {#if weaknessHint}
     <p class={hintClass}>{weaknessHint}</p>
   {/if}

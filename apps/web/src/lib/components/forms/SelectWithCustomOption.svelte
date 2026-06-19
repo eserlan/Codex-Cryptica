@@ -1,4 +1,6 @@
 <script lang="ts">
+  const DEFAULT_MAX_CUSTOM_LENGTH = 120;
+
   interface Choice {
     value: string;
     label: string;
@@ -17,6 +19,7 @@
     customLabel?: string;
     customPlaceholder?: string;
     ownOptionLabel?: string;
+    maxCustomLength?: number;
     describedBy?: string;
     onvaluechange?: (value: string) => void;
   }
@@ -36,12 +39,14 @@
     customLabel,
     customPlaceholder = "Enter your own option",
     ownOptionLabel = "Own option",
+    maxCustomLength = DEFAULT_MAX_CUSTOM_LENGTH,
     describedBy,
     onvaluechange,
   }: Props = $props();
 
   const builtInValues = $derived(choices.map((choice) => choice.value));
   let customSelected = $state(false);
+  let lastAcceptedCustomValue = $state("");
   const isCustom = $derived(
     customSelected || (value.length > 0 && !builtInValues.includes(value)),
   );
@@ -51,6 +56,20 @@
   );
   const inputId = $derived(`${id}-custom`);
   const customFieldLabel = $derived(customLabel ?? `${label} (Own option)`);
+
+  function handleCustomInput(event: Event) {
+    const input = event.currentTarget as HTMLInputElement | null;
+    if (!input) return;
+    const nextValue = input.value;
+    if (nextValue.length > maxCustomLength) {
+      value = lastAcceptedCustomValue;
+      input.value = lastAcceptedCustomValue;
+      return;
+    }
+    value = nextValue;
+    lastAcceptedCustomValue = nextValue;
+    onvaluechange?.(value);
+  }
 
   function handleSelectChange(event: Event) {
     const nextValue = (event.currentTarget as HTMLSelectElement).value;
@@ -64,6 +83,7 @@
     }
     customSelected = false;
     value = nextValue;
+    lastAcceptedCustomValue = nextValue;
     onvaluechange?.(value);
   }
 </script>
@@ -92,11 +112,12 @@
         id={inputId}
         type="text"
         bind:value
-        oninput={() => onvaluechange?.(value)}
+        oninput={handleCustomInput}
         {disabled}
         aria-describedby={describedBy}
         class={inputClass}
         placeholder={customPlaceholder}
+        maxlength={maxCustomLength}
       />
     </div>
   {/if}

@@ -4,6 +4,7 @@
     factionConfig,
     pickFrom,
   } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     theme = $bindable(factionConfig.themes[0]),
@@ -58,72 +59,82 @@
   });
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="quest-theme-select" class={labelClass}>Choose a vibe</label>
-  <select id="quest-theme-select" bind:value={theme} class={selectClass}>
-    {#each factionConfig.themes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="quest-theme-select"
+  label="Choose a vibe"
+  bind:value={theme}
+  choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom vibe"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="tone-select" class={labelClass}>Tone</label>
-  <select id="tone-select" bind:value={tone} class={selectClass}>
-    {#each activeTones as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="tone-select"
+  label="Tone"
+  bind:value={tone}
+  choices={activeTones.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom tone"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="scope-select" class={labelClass}>Scope</label>
-  <select id="scope-select" bind:value={scope} class={selectClass}>
-    {#each activeScopes as s (s)}
-      <option value={s}>{s}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="scope-select"
+  label="Scope"
+  bind:value={scope}
+  choices={activeScopes.map((s: string) => ({ value: s, label: s }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom scope"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="location-type-select" class={labelClass}>Location Type</label>
-  <select
-    id="location-type-select"
-    bind:value={locationType}
-    class={selectClass}
-  >
-    {#each activeLocationTypes as l (l)}
-      <option value={l}>{l}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="location-type-select"
+  label="Location Type"
+  bind:value={locationType}
+  choices={activeLocationTypes.map((l: string) => ({ value: l, label: l }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom location type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="threat-select" class={labelClass}>Main Threat</label>
-  <select id="threat-select" bind:value={threat} class={selectClass}>
-    {#each activeThreats as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="threat-select"
+  label="Main Threat"
+  bind:value={threat}
+  choices={activeThreats.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom main threat"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="twist-select" class={labelClass}>Twist</label>
-  <select id="twist-select" bind:value={twist} class={selectClass}>
-    {#each questConfig.twists as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="twist-select"
+  label="Twist"
+  bind:value={twist}
+  choices={questConfig.twists.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom twist"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="reward-select" class={labelClass}>Reward</label>
-  <select id="reward-select" bind:value={reward} class={selectClass}>
-    {#each activeRewards as r (r)}
-      <option value={r}>{r}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="reward-select"
+  label="Reward"
+  bind:value={reward}
+  choices={activeRewards.map((r: string) => ({ value: r, label: r }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom reward"
+/>
 
 <div class="pt-2 flex justify-end">
   <button

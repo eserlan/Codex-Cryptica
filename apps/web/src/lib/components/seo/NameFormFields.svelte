@@ -3,6 +3,7 @@
     nameGeneratorConfig,
     factionConfig,
   } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     theme = $bindable(factionConfig.themes[0]),
@@ -38,42 +39,50 @@
 </script>
 
 {#if showTheme}
-  <div class="flex flex-col gap-1.5">
-    <label for="name-theme-select" class={labelClass}>Choose a vibe</label>
-    <select id="name-theme-select" bind:value={theme} class={selectClass}>
-      {#each factionConfig.themes as t (t)}
-        <option value={t}>{t}</option>
-      {/each}
-    </select>
-  </div>
+  <SelectWithCustomOption
+    id="name-theme-select"
+    label="Choose a vibe"
+    bind:value={theme}
+    choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
+    className="flex flex-col gap-1.5"
+    labelClass={labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom vibe"
+  />
 {/if}
 
-<div class="flex flex-col gap-1.5">
-  <label for="culture-select" class={labelClass}>Culture / Style</label>
-  <select id="culture-select" bind:value={culture} class={selectClass}>
-    {#each activeCultures as c (c)}
-      <option value={c}>{c}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="culture-select"
+  label="Culture / Style"
+  bind:value={culture}
+  choices={activeCultures.map((c: string) => ({ value: c, label: c }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom culture or style"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="gender-select" class={labelClass}>Gender / Presentation</label>
-  <select id="gender-select" bind:value={gender} class={selectClass}>
-    {#each nameGeneratorConfig.genders as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="gender-select"
+  label="Gender / Presentation"
+  bind:value={gender}
+  choices={nameGeneratorConfig.genders.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom gender or presentation"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="name-type-select" class={labelClass}>Name Type</label>
-  <select id="name-type-select" bind:value={nameType} class={selectClass}>
-    {#each nameGeneratorConfig.nameTypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="name-type-select"
+  label="Name Type"
+  bind:value={nameType}
+  choices={nameGeneratorConfig.nameTypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom name type"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="name-context" class={labelClass}>Optional Context</label>

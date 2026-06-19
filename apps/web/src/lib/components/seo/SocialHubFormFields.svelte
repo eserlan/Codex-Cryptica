@@ -3,6 +3,7 @@
     socialHubConfig,
     pickFrom,
   } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     genre = $bindable(socialHubConfig.genres[0]),
@@ -53,54 +54,60 @@
   });
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="hub-genre-select" class={labelClass}>Genre / Setting</label>
-  <select id="hub-genre-select" bind:value={genre} class={selectClass}>
-    {#each socialHubConfig.genres as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="hub-genre-select"
+  label="Genre / Setting"
+  bind:value={genre}
+  choices={socialHubConfig.genres.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom genre or setting"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="hub-venue-select" class={labelClass}>Venue type</label>
-  <select id="hub-venue-select" bind:value={venueType} class={selectClass}>
-    {#each venueTypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="hub-venue-select"
+  label="Venue type"
+  bind:value={venueType}
+  choices={venueTypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom venue type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="hub-atmosphere-select" class={labelClass}>Atmosphere</label>
-  <select
-    id="hub-atmosphere-select"
-    bind:value={atmosphere}
-    class={selectClass}
-  >
-    {#each socialHubConfig.atmospheres as a (a)}
-      <option value={a}>{a}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="hub-atmosphere-select"
+  label="Atmosphere"
+  bind:value={atmosphere}
+  choices={socialHubConfig.atmospheres.map((a: string) => ({ value: a, label: a }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom atmosphere"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="hub-wealth-select" class={labelClass}>Wealth level</label>
-  <select id="hub-wealth-select" bind:value={wealthLevel} class={selectClass}>
-    {#each socialHubConfig.wealthLevels as w (w)}
-      <option value={w}>{w}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="hub-wealth-select"
+  label="Wealth level"
+  bind:value={wealthLevel}
+  choices={socialHubConfig.wealthLevels.map((w: string) => ({ value: w, label: w }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom wealth level"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="hub-clientele-select" class={labelClass}>Primary clientele</label>
-  <select id="hub-clientele-select" bind:value={clientele} class={selectClass}>
-    {#each clienteles as c (c)}
-      <option value={c}>{c}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="hub-clientele-select"
+  label="Primary clientele"
+  bind:value={clientele}
+  choices={clienteles.map((c: string) => ({ value: c, label: c }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter custom primary clientele"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="hub-context" class={labelClass}>Campaign context (optional)</label

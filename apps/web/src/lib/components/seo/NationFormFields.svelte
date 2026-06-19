@@ -1,5 +1,6 @@
 <script lang="ts">
   import { nationConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     genre = $bindable(nationConfig.genres[0]),
@@ -38,58 +39,60 @@
   });
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="nation-genre-select" class={labelClass}>Genre / Setting</label>
-  <select id="nation-genre-select" bind:value={genre} class={selectClass}>
-    {#each nationConfig.genres as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="nation-genre-select"
+  label="Genre / Setting"
+  bind:value={genre}
+  choices={nationConfig.genres.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom genre or setting"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="nation-polity-select" class={labelClass}>Polity type</label>
-  <select id="nation-polity-select" bind:value={polityType} class={selectClass}>
-    {#each polityTypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="nation-polity-select"
+  label="Polity type"
+  bind:value={polityType}
+  choices={polityTypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom polity type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="nation-govt-select" class={labelClass}>Government style</label>
-  <select
-    id="nation-govt-select"
-    bind:value={governmentStyle}
-    class={selectClass}
-  >
-    {#each nationConfig.governmentStyles as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="nation-govt-select"
+  label="Government style"
+  bind:value={governmentStyle}
+  choices={nationConfig.governmentStyles.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom government style"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="nation-scale-select" class={labelClass}>Scale</label>
-  <select id="nation-scale-select" bind:value={scale} class={selectClass}>
-    {#each nationConfig.scales as s (s)}
-      <option value={s}>{s}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="nation-scale-select"
+  label="Scale"
+  bind:value={scale}
+  choices={nationConfig.scales.map((s: string) => ({ value: s, label: s }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom scale"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="nation-conflict-select" class={labelClass}>Conflict level</label>
-  <select
-    id="nation-conflict-select"
-    bind:value={conflictLevel}
-    class={selectClass}
-  >
-    {#each nationConfig.conflictLevels as c (c)}
-      <option value={c}>{c}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="nation-conflict-select"
+  label="Conflict level"
+  bind:value={conflictLevel}
+  choices={nationConfig.conflictLevels.map((c: string) => ({ value: c, label: c }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom conflict level"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="nation-context" class={labelClass}
