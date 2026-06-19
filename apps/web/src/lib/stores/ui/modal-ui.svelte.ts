@@ -357,6 +357,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v8__";
+const KEY = "__codex_modal_ui_store__v9__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

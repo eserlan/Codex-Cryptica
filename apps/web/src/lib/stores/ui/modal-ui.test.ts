@@ -154,6 +154,29 @@ describe("ModalUIStore", () => {
     });
   });
 
+  it("requestCreateEntity sets pendingCreateEntity and clears date when none given", () => {
+    const store = new ModalUIStore();
+    store.requestCreateEntity();
+    expect(store.pendingCreateEntity).toBe(true);
+    expect(store.pendingCreateDate).toBeNull();
+  });
+
+  it("requestCreateEntity sets pendingCreateDate when a date is provided", () => {
+    const store = new ModalUIStore();
+    const date = { year: 1423, month: 7, day: 15 };
+    store.requestCreateEntity(date);
+    expect(store.pendingCreateEntity).toBe(true);
+    expect(store.pendingCreateDate).toEqual(date);
+  });
+
+  it("requestCreateEntity treats explicit null as no date", () => {
+    const store = new ModalUIStore();
+    store.pendingCreateDate = { year: 1, month: 1, day: 1 };
+    store.requestCreateEntity(null);
+    expect(store.pendingCreateDate).toBeNull();
+    expect(store.pendingCreateEntity).toBe(true);
+  });
+
   it("handles revision dialog", () => {
     const store = new ModalUIStore();
     expect(store.revisionDialog).toEqual({
