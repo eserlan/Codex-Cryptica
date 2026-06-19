@@ -5,7 +5,12 @@
   } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
   import CalendarDayOverflow from "./CalendarDayOverflow.svelte";
+  import GraphTooltip from "$lib/components/graph/GraphTooltip.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { onDestroy } from "svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -84,9 +89,32 @@
     return `${monthName} ${day}, ${year}`;
   }
 
+  let hoveredEntityId = $state<string | null>(null);
+  let hoverPos = $state<{ x: number; y: number } | null>(null);
+  const hoveredEntity = $derived(
+    hoveredEntityId ? (vault.entities[hoveredEntityId] ?? null) : null,
+  );
+
+  function setHover(entityId: string, e: MouseEvent) {
+    hoveredEntityId = entityId;
+    hoverPos = { x: e.clientX, y: e.clientY };
+  }
+  function clearHover() {
+    hoveredEntityId = null;
+    hoverPos = null;
+  }
+
   function dayKey(year: number, month: number, day: number): string {
     return `${year}-${month}-${day}`;
   }
+
+  const entryHandlers = createEntryClickHandlers(
+    (entry) => onSelect(entry),
+    (id) => modalUIStore.openZenMode(id),
+  );
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    entryHandlers;
+  onDestroy(() => entryHandlers.dispose());
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -194,7 +222,11 @@
               <button
                 type="button"
                 class="rounded-none border border-theme-primary/18 bg-theme-primary/8 px-1 py-0.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14 sm:rounded-xl sm:px-2 sm:py-1.5"
-                onclick={() => onSelect(entry)}
+                onclick={() => handleEntryClick(entry)}
+                ondblclick={() => handleEntryDblClick(entry.entityId)}
+                onmouseenter={(e) => setHover(entry.entityId, e)}
+                onmousemove={(e) => setHover(entry.entityId, e)}
+                onmouseleave={clearHover}
               >
                 <span
                   class="block truncate text-[9px] font-bold text-theme-text sm:text-[11px]"
@@ -214,6 +246,8 @@
                 entries={day.hiddenEntries}
                 label={dayLabel(day.date.year, day.date.month, day.date.day)}
                 {onSelect}
+                onEntryHover={setHover}
+                onEntryLeave={clearHover}
               />
             {/if}
           </div>
@@ -222,3 +256,5 @@
     {/each}
   </div>
 </div>
+
+<GraphTooltip {hoveredEntity} hoverPosition={hoverPos} />

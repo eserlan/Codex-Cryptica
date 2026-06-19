@@ -1,5 +1,7 @@
 # Tasks: Calendar / Agenda View for Events
 
+**Status**: All tasks complete. Branch merged to `staging` 2026-06-19.
+
 **Input**: Design documents from `/specs/132-calendar-agenda-view/`  
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/calendar-view.md](./contracts/calendar-view.md), [quickstart.md](./quickstart.md)
 
@@ -183,6 +185,42 @@
 - [x] T056 [US5] Run User Story 5 verification: `bun run --filter web test -- src/lib/components/timeline`, `bun run --filter '*' lint:types`
 
 **Checkpoint**: Mobile users can browse and filter the calendar without the filter bar consuming vertical space by default.
+
+---
+
+## Phase 10: Beyond-Spec Additions (shipped in branch)
+
+These were not in the original spec but were added during implementation and are live in staging.
+
+- [x] T057 Add `epochWeekday?: number` to `WorldCalendar` in `packages/chronology-engine/src/types.ts`; set `epochWeekday: 1` in `DEFAULT_CALENDAR`; use it in `buildCalendarMonth` to correctly anchor world-calendar weekday columns. Add 4 `calendar-view` tests covering this.
+- [x] T058 Resolve entity thumbnail in `TimelineEntryItem.svelte` via `vault.resolveImageUrl()` with stale-flag `$effect` (same pattern as `EntityCard`); replace icon placeholder with `background-image` div.
+- [x] T059 Open zen mode on mobile entity tap (`window.innerWidth < 768`) in `TimelineEntryItem.svelte`, `CalendarMonthView.svelte`, `CalendarAgendaView.svelte`, and `apps/web/src/routes/(app)/timeline/+page.svelte`.
+- [x] T060 Fix FR-012 race condition: `await calendarStore.init()` before `timelineStore.init()` in `+page.svelte`, `FrontPage.svelte`, and the `vault-switched` handler in `app-init.ts`.
+- [x] T061 Wire `vault-switched` event in `app-init.ts` to reset and re-initialize `timelineStore` (`resetVaultGuard()` + `init()`) after `calendarStore.init()` resolves.
+- [x] T062 Compact mobile calendar grid: `gap-0`, `rounded-none`, `min-h-16` cells; suppress event-type label and "N events" count on mobile; desktop layout unchanged.
+- [x] T063 Hide horizontal timeline toggle on mobile (`hidden md:flex`); fall back to `VerticalTimeline` when `viewMode === "horizontal"` on small screens.
+- [x] T064 Replace filter dropdowns with explorer-style icon-toggle UI in `TimelineFilterBar.svelte`: icon buttons per category with count badges, label pills, undated toggle — same visual pattern as `EntityListFilterBar`. Update `TimelineStore` to `typeFilters: Set<string>` and `labelFilters: Set<string>` (multi-select).
+- [x] T065 Remove embedded `World Calendar` section from `FrontPage.svelte` (added during T037, removed post-review as it added noise without value on mobile).
+
+---
+
+## Phase 11: Calendar UX Enhancements (FR-016–019)
+
+**Purpose**: Power-user interactions — year wheel, hover tooltip, sidebar date jump, and double-click zen mode — shipped on branch `feat/year-wheel-picker-clean` (PR #1422, targeting `staging`).
+
+**⚠️ SHIPPED** — Added 2026-06-19. All tasks completed.
+
+- [x] T068 [FR-016] Implement `YearWheelPicker.svelte` — iOS drum-scroll year selector opened from the active-month title button; confirm via Go button, highlighted-year click, or Enter; cancel via Cancel or Escape; close on backdrop click; `apps/web/src/lib/components/timeline/YearWheelPicker.svelte`
+- [x] T069 [FR-016] `years` array derived reactively from bound `year` prop; `$effect` syncs `selectedYear` and scroll position when `year` changes externally; dialog element focused on open for keyboard support; `onDestroy` clears scroll-end timer
+- [x] T070 [FR-016] Write `YearWheelPicker.test.ts` — 5 tests covering render, Cancel, Go, Escape, Enter, and highlighted-year-click confirm paths; `apps/web/src/lib/components/timeline/YearWheelPicker.test.ts`
+- [x] T071 [FR-014] Wire drag-and-drop onto `CalendarMonthView` day cells: `ondragover`, `ondragenter`, `ondragleave`, `ondrop` handlers in `CalendarMonthView.svelte`; drop priority logic in `+page.svelte` `handleDropEntity`
+- [x] T072 [FR-017] Add hover tooltip to `CalendarMonthView.svelte` and `CalendarDayOverflow.svelte` via `GraphTooltip` component; `onEntryHover`/`onEntryLeave` callbacks thread through overflow popup
+- [x] T073 [FR-018] Extend `DetailTabs.svelte` with `onDateClick?: (year, month) => void` prop and `getNavigableDate()` helper resolving both `TemporalMetadata` (`.month`) and `DateSelection` (`.unitId` via `calendarEngine.getMonths()`); render clickable calendar-search icon next to date text when prop is provided
+- [x] T074 [FR-018] Thread `onDateClick` through `EntityDetailPanel.svelte` and wire it in `+page.svelte` to set `timelineStore.activeYear` / `timelineStore.activeMonth`
+- [x] T075 [FR-018] Write `DetailTabs.navigate.test.ts` — 7 tests covering no-button-without-dates, no-button-without-callback, legacy date, DateSelection unitId, unknown unitId fallback, and start_date priority; `apps/web/src/lib/components/entity-detail/DetailTabs.navigate.test.ts`
+- [x] T076 [FR-019] Add 220 ms click/dblclick debounce; extract shared factory `createEntryClickHandlers(onSingleClick, onDoubleClick)` with `dispose()` teardown into `apps/web/src/lib/components/timeline/entry-click.ts`; apply in `CalendarMonthView.svelte`, `CalendarAgendaView.svelte`, `CalendarDayOverflow.svelte`; call `dispose()` in `onDestroy` in each component
+- [x] T077 Apply theme texture overlay (`--bg-texture-overlay`) to calendar page root div; replace hardcoded colours with semantic Tailwind tokens throughout calendar components
+- [x] T078 Update `help-content.ts` hint for `world-chronology` to document year wheel picker, drag-to-set-date, click-date-to-navigate, double-click-for-zen-mode, and include-undated toggle
 
 ---
 

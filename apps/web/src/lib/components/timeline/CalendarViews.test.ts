@@ -150,10 +150,13 @@ describe("Calendar month and agenda views", () => {
     );
     expect(screen.getByText("Afterparty")).toBeTruthy();
 
+    vi.useFakeTimers();
     await fireEvent.click(screen.getByText("Afterparty"));
+    vi.advanceTimersByTime(220);
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ entityId: "event-2" }),
     );
+    vi.useRealTimers();
   });
 
   it("navigates to the next month on a left swipe", async () => {
