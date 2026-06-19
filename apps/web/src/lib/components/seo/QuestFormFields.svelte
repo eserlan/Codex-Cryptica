@@ -48,14 +48,26 @@
   const activeRewards = $derived(
     questConfig.rewardsByTheme[theme] ?? questConfig.rewards,
   );
+  const builtInTones = questConfig.tones;
+  const builtInScopes = questConfig.scopes;
+  const builtInLocationTypes = questConfig.locationTypes;
+  const builtInThreats = questConfig.threats;
+  const builtInRewards = questConfig.rewards;
 
   $effect(() => {
-    if (!activeTones.includes(tone)) tone = activeTones[0];
-    if (!activeScopes.includes(scope)) scope = activeScopes[0];
-    if (!activeLocationTypes.includes(locationType))
+    if (builtInTones.includes(tone) && !activeTones.includes(tone))
+      tone = activeTones[0];
+    if (builtInScopes.includes(scope) && !activeScopes.includes(scope))
+      scope = activeScopes[0];
+    if (
+      builtInLocationTypes.includes(locationType) &&
+      !activeLocationTypes.includes(locationType)
+    )
       locationType = activeLocationTypes[0];
-    if (!activeThreats.includes(threat)) threat = activeThreats[0];
-    if (!activeRewards.includes(reward)) reward = activeRewards[0];
+    if (builtInThreats.includes(threat) && !activeThreats.includes(threat))
+      threat = activeThreats[0];
+    if (builtInRewards.includes(reward) && !activeRewards.includes(reward))
+      reward = activeRewards[0];
   });
 </script>
 

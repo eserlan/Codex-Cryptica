@@ -1,5 +1,12 @@
 import { renderMarkdown as renderMd } from "$lib/utils/markdown";
 
+function escapeGeneratorHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export function replaceEmojisWithIcons(htmlStr: string): string {
   return htmlStr
     .replace(
@@ -75,8 +82,9 @@ export function renderGeneratorMarkdown(
   value: string,
   variant: "default" | "names" = "default",
 ): string {
+  const safeValue = escapeGeneratorHtml(value);
   return renderMd(
-    value
+    safeValue
       // bold-key variant: "- **Key**: value" or "* **Key**: value"
       .replace(/^[*-] \*\*(.*?)\*\*: (.*)$/gm, (_, k, v) =>
         labelValueHtml(k, v, variant),

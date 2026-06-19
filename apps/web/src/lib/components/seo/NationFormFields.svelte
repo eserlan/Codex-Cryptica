@@ -31,9 +31,15 @@
     nationConfig.polityTypesByGenre[genre] ??
       nationConfig.polityTypesByGenre["Fantasy"],
   );
+  const builtInPolityTypes = Object.values(
+    nationConfig.polityTypesByGenre,
+  ).flat();
 
   $effect(() => {
-    if (!polityTypes.includes(polityType)) {
+    if (
+      builtInPolityTypes.includes(polityType) &&
+      !polityTypes.includes(polityType)
+    ) {
       polityType = polityTypes[0];
     }
   });

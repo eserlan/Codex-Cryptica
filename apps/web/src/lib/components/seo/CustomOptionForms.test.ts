@@ -12,67 +12,100 @@ import PantheonFormFields from "./PantheonFormFields.svelte";
 import NameFormFields from "./NameFormFields.svelte";
 
 describe("Custom option forms", () => {
-  it("quest fields reveal a custom input", async () => {
+  async function expectCustomValuePersists(
+    fieldLabel: string,
+    customLabel: string,
+    customValue: string,
+  ) {
+    await fireEvent.change(screen.getByLabelText(fieldLabel), {
+      target: { value: "__custom__" },
+    });
+    const input = screen.getByLabelText(customLabel) as HTMLInputElement;
+    await fireEvent.input(input, {
+      target: { value: customValue },
+    });
+    expect(input.value).toBe(customValue);
+  }
+
+  it("quest fields keep a typed custom value", async () => {
     render(QuestFormFields);
-    await fireEvent.change(screen.getByLabelText("Tone"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Tone (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Tone",
+      "Tone (Own option)",
+      "Quiet dread",
+    );
   });
 
-  it("kingdom fields reveal a custom input", async () => {
+  it("kingdom fields keep a typed custom value", async () => {
     render(KingdomFormFields);
-    await fireEvent.change(screen.getByLabelText("Polity type"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Polity type (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Polity type",
+      "Polity type (Own option)",
+      "Merchant protectorate",
+    );
   });
 
-  it("nation fields reveal a custom input", async () => {
+  it("nation fields keep a typed custom value", async () => {
     render(NationFormFields);
-    await fireEvent.change(screen.getByLabelText("Genre / Setting"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Genre / Setting (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Polity type",
+      "Polity type (Own option)",
+      "Orbital republic",
+    );
   });
 
-  it("social hub fields reveal a custom input", async () => {
+  it("social hub fields keep a typed custom value", async () => {
     render(SocialHubFormFields);
-    await fireEvent.change(screen.getByLabelText("Venue type"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Venue type (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Venue type",
+      "Venue type (Own option)",
+      "Memory barge",
+    );
   });
 
-  it("tavern fields reveal a custom input", async () => {
+  it("tavern fields keep a typed custom value", async () => {
     render(TavernFormFields);
-    await fireEvent.change(screen.getByLabelText("Tavern type"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Tavern type (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Tavern type",
+      "Tavern type (Own option)",
+      "Moonwell den",
+    );
   });
 
-  it("vampire fields reveal a custom input", async () => {
+  it("vampire fields keep a typed custom value", async () => {
     render(VampireFormFields);
-    await fireEvent.change(screen.getByLabelText("Choose their bloodline"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Choose their bloodline (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Choose their bloodline",
+      "Choose their bloodline (Own option)",
+      "Ashen court",
+    );
   });
 
-  it("pantheon fields reveal a custom input", async () => {
+  it("pantheon fields keep a typed custom value", async () => {
     render(PantheonFormFields);
-    await fireEvent.change(screen.getByLabelText("Primary Domain"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Primary Domain (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Primary Domain",
+      "Primary Domain (Own option)",
+      "Thresholds and tides",
+    );
   });
 
-  it("name fields reveal a custom input", async () => {
+  it("name fields keep a typed custom value", async () => {
     render(NameFormFields);
-    await fireEvent.change(screen.getByLabelText("Culture / Style"), {
-      target: { value: "__custom__" },
-    });
-    expect(screen.getByLabelText("Culture / Style (Own option)")).toBeTruthy();
+    await expectCustomValuePersists(
+      "Culture / Style",
+      "Culture / Style (Own option)",
+      "Basalt chant",
+    );
+  });
+
+  it("pantheon generate target remains a constrained select", () => {
+    render(PantheonFormFields);
+    const select = screen.getByLabelText(
+      "Generate target",
+    ) as HTMLSelectElement;
+    expect(
+      Array.from(select.options).some((option) => option.text === "Own option"),
+    ).toBe(false);
   });
 });

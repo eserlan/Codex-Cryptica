@@ -32,21 +32,25 @@
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
-</script>
 
-<SelectWithCustomOption
-  id="pantheon-mode-select"
-  label="Generate target"
-  bind:value={mode}
-  choices={[
+  const modeChoices = [
     { value: "single", label: "Single Deity / Spirit" },
     { value: "pantheon", label: "Pantheon" },
-  ]}
-  className="flex flex-col gap-1.5"
-  labelClass={labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom generate target"
-/>
+  ] as const;
+</script>
+
+<div class="flex flex-col gap-1.5">
+  <label for="pantheon-mode-select" class={labelClass}>Generate target</label>
+  <select
+    id="pantheon-mode-select"
+    bind:value={mode}
+    class={selectClass}
+  >
+    {#each modeChoices as choice (choice.value)}
+      <option value={choice.value}>{choice.label}</option>
+    {/each}
+  </select>
+</div>
 
 {#if mode === "pantheon"}
   <SelectWithCustomOption

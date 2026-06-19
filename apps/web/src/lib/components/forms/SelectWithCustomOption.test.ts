@@ -83,4 +83,30 @@ describe("SelectWithCustomOption", () => {
     expect(customInput.value).toBe("Short value");
     expect(customInput.getAttribute("maxlength")).toBe("12");
   });
+
+  it("resets the oversized fallback when entering custom mode from a built-in value", async () => {
+    render(SelectWithCustomOption, {
+      props: {
+        id: "ancestry",
+        label: "Ancestry",
+        value: "Elf",
+        choices,
+        maxCustomLength: 8,
+      },
+    });
+
+    const select = screen.getByLabelText("Ancestry") as HTMLSelectElement;
+    await fireEvent.change(select, { target: { value: "__custom__" } });
+
+    const customInput = screen.getByLabelText(
+      "Ancestry (Own option)",
+    ) as HTMLInputElement;
+
+    await fireEvent.input(customInput, {
+      target: { value: "This is too long" },
+    });
+
+    expect(customInput.value).toBe("");
+    expect(select.value).toBe("__custom__");
+  });
 });

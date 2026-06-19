@@ -32,9 +32,11 @@
           nameGeneratorConfig.cultures)
       : nameGeneratorConfig.cultures,
   );
+  const builtInCultures = nameGeneratorConfig.cultures;
 
   $effect(() => {
-    if (!activeCultures.includes(culture)) culture = activeCultures[0];
+    if (builtInCultures.includes(culture) && !activeCultures.includes(culture))
+      culture = activeCultures[0];
   });
 </script>
 

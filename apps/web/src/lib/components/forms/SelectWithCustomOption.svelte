@@ -75,6 +75,7 @@
     const nextValue = (event.currentTarget as HTMLSelectElement).value;
     if (nextValue === CUSTOM_VALUE) {
       customSelected = true;
+      lastAcceptedCustomValue = builtInValues.includes(value) ? "" : value;
       if (builtInValues.includes(value)) {
         value = "";
         onvaluechange?.(value);

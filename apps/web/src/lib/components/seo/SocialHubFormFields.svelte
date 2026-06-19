@@ -40,15 +40,27 @@
     socialHubConfig.clientelesByGenre[genre] ??
       socialHubConfig.clientelesByGenre["Fantasy"],
   );
+  const builtInVenueTypes = Object.values(
+    socialHubConfig.venueTypesByGenre,
+  ).flat();
+  const builtInClienteles = Object.values(
+    socialHubConfig.clientelesByGenre,
+  ).flat();
 
   $effect(() => {
-    if (!venueTypes.includes(venueType)) {
+    if (
+      builtInVenueTypes.includes(venueType) &&
+      !venueTypes.includes(venueType)
+    ) {
       venueType = venueTypes[0];
     }
   });
 
   $effect(() => {
-    if (!clienteles.includes(clientele)) {
+    if (
+      builtInClienteles.includes(clientele) &&
+      !clienteles.includes(clientele)
+    ) {
       clientele = clienteles[0];
     }
   });
