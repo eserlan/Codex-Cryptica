@@ -42,6 +42,7 @@ export const themeToQuestGenre: Record<string, string> = {
   "Post-Apocalyptic": "Post-Apocalyptic",
   "Western / Frontier": "Western",
   Steampunk: "Steampunk",
+  Lancer: "Lancer",
 };
 
 export const questConfig = {
@@ -52,6 +53,7 @@ export const questConfig = {
     "Horror",
     "Comedy",
     "Steampunk",
+    "Lancer",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -93,6 +95,7 @@ export const questConfig = {
       "Lawless",
     ],
     Steampunk: ["Intriguing", "Tense", "Grandiose", "Cynical", "Adventurous"],
+    Lancer: ["Tense", "Bleak", "Desperate", "Clinical", "High-Octane"],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -132,6 +135,11 @@ export const questConfig = {
       "Territory-scale (frontier)",
     ],
     Steampunk: ["Local (district / borough)", "City-wide", "Imperial-scale"],
+    Lancer: [
+      "Local (outpost / installation)",
+      "Sector-wide (colonial theatre)",
+      "Union-scale (interstellar mandate)",
+    ],
   } as Record<string, string[]>,
   locationTypes: [
     "Ancient Dungeon",
@@ -206,6 +214,14 @@ export const questConfig = {
       "Imperial Dirigible",
       "Smog-Shrouded Tenement",
     ],
+    Lancer: [
+      "Mech Hangar",
+      "Bleed Zone Perimeter",
+      "Colonial Outpost",
+      "Union Administrative Hub",
+      "NHP Containment Facility",
+      "Debris Field Salvage Site",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -279,6 +295,14 @@ export const questConfig = {
       "Sabotaged Aetheric Engine",
       "Rival Inventor",
       "Press-Gang Operation",
+    ],
+    Lancer: [
+      "Cascaded NHP",
+      "Corporate Extraction Force",
+      "Colonial Insurgency",
+      "Bleed Incursion",
+      "Union Oversight Audit",
+      "Rival Mech Lance",
     ],
   } as Record<string, string[]>,
   hooks: [
@@ -377,6 +401,14 @@ export const questConfig = {
       "A prototype engine component from the site",
       "Intel on a guild conspiracy",
       "Safe passage on a consortium airship",
+    ],
+    Lancer: [
+      "Manna plus a Union logistics contact",
+      "Salvage rights to a downed mech frame",
+      "Access to a restricted NHP consultation archive",
+      "Prototype licensed gear from the site",
+      "Intel on a corporate extraction operation",
+      "Union operational clearance for the next mission",
     ],
   } as Record<string, string[]>,
 };

@@ -47,6 +47,7 @@ export const factionConfig = {
     "Post-Apocalyptic",
     "Western / Frontier",
     "Steampunk",
+    "Lancer",
   ],
   types: [
     "Merchant Guild",
@@ -61,6 +62,11 @@ export const factionConfig = {
     "Aetheric Research Order",
     "Imperial Intelligence Bureau",
     "Underclass Rebel Cell",
+    "Union Rapid Response Unit",
+    "Heterodox Mech Corps",
+    "NHP Research Consortium",
+    "Colonial Liberation Front",
+    "Corporate Extraction Crew",
   ],
   scopes: [
     "Local district",
@@ -121,6 +127,8 @@ export const themeIdToLabel: Record<string, string> = {
   western_dark: "Western / Frontier",
   steampunk: "Steampunk",
   steampunk_dark: "Steampunk",
+  lancer: "Lancer",
+  lancer_light: "Lancer",
 };
 
 export const vampireConfig = {
@@ -206,6 +214,8 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
   Steampunk:
     "Victorian-era steampunk — guild cartels, airship consortiums, aetheric research orders, press-gang syndicates, imperial intelligence bureaux, and underclass rebel cells",
+  Lancer:
+    "Lancer RPG — Union rapid-response units, heterodox mech corps, NHP research consortiums, colonial liberation fronts, and corporate extraction crews operating across the Long Rim",
 };
 
 const FACTION_NAMING_STYLES = [
@@ -341,6 +351,31 @@ function factionBase(type: string, rng: Rng = defaultRng): string {
       "A disused engine hall in the smog district where census officers rarely venture",
       "A network of tenement rooftops connected by signal lantern protocols",
     ],
+    "Union Rapid Response Unit": [
+      "A hardened forward operating base embedded in a contested colonial settlement",
+      "A Union frigate holding geosynchronous orbit as a mobile command platform",
+      "A decommissioned administrative compound repurposed under emergency Union charter",
+    ],
+    "Heterodox Mech Corps": [
+      "An unregistered hangar on the Long Rim operating under a shell licensing agreement",
+      "A salvage yard whose mech repair bays double as an unofficial tactical staging ground",
+      "A mobile barge convoy that keeps no fixed port and answers no flag",
+    ],
+    "NHP Research Consortium": [
+      "A shielded research station in a low-traffic transit corridor with restricted docking access",
+      "A distributed server architecture spread across three systems under academic charter",
+      "A sealed laboratory embedded within a Union university campus under dual-key access protocols",
+    ],
+    "Colonial Liberation Front": [
+      "A network of sympathiser safe houses spread across a colonial outpost's residential district",
+      "A fortified position in a contested bleed zone where Union authority is ambiguous",
+      "A mobile cell structure with no fixed base and rotating comms encryption",
+    ],
+    "Corporate Extraction Crew": [
+      "A legitimately registered subsidiary operating under a Union commercial licence",
+      "A contracted security compound adjacent to a resource extraction site",
+      "A private orbital platform registered to a shell entity in a non-Union jurisdiction",
+    ],
   };
   return pickFrom(
     map[type] ?? [
@@ -463,6 +498,31 @@ function factionResource(type: string, rng: Rng = defaultRng): string {
       "A verified pamphlet and broadsheet distribution network that reaches every engine-district tenement",
       "Contacts embedded in the factory floor, the census office, and the guild apprentice registry",
       "Secure courier routes through the smog tunnels that move people, messages, and contraband past company checkpoints",
+    ],
+    "Union Rapid Response Unit": [
+      "Union-backed supply chains, medical infrastructure, and legal authority that no colonial faction can legally refuse",
+      "Rapid deployment assets — carriers, mechs, and specialist personnel — that can be on-site within hours of authorisation",
+      "The legal standing to classify, commandeer, and redefine the operational context of any contested situation",
+    ],
+    "Heterodox Mech Corps": [
+      "Unlicensed mech frames jury-rigged from salvage, running subsystems that Union doesn't officially recognise",
+      "A roster of pilots with bleed tolerance above standard clearance and no intention of disclosing it",
+      "Supply contracts with three different factions, none of whom know about the other two",
+    ],
+    "NHP Research Consortium": [
+      "Cascaded NHP assets operating at the legal edge of Union containment protocols",
+      "Proprietary data on non-human cognition that no other institution in the sector has replicated",
+      "Leverage over every organisation that has ever quietly used their NHP consultation services",
+    ],
+    "Colonial Liberation Front": [
+      "Deep roots in the local population — every safe house, every supply cache, every sympathiser is a local",
+      "Firsthand knowledge of Union administrative failures that make for devastating public documentation",
+      "Enough field-stripped and improvised hardware to make any contested zone expensive to hold",
+    ],
+    "Corporate Extraction Crew": [
+      "Proprietary extraction technology and the contracts that legally entitle them to use it",
+      "A Union-adjacent legal team whose job is to ensure every operation remains just inside the line",
+      "Leverage over the colonial administrator who approved the contract in the first place",
     ],
   };
   return pickFrom(

@@ -195,6 +195,7 @@
     "Post-Apocalyptic": "apocalyptic",
     "Western / Frontier": "western",
     Steampunk: "steampunk",
+    Lancer: "lancer",
   };
 
   const activeThemeId = $derived(themeMap[theme] || "workspace");

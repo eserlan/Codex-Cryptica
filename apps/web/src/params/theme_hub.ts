@@ -9,6 +9,7 @@ export const VALID_HUB_THEMES = new Set([
   "vampire",
   "western",
   "steampunk",
+  "lancer",
 ]);
 
 export const match: ParamMatcher = (param) => VALID_HUB_THEMES.has(param);
