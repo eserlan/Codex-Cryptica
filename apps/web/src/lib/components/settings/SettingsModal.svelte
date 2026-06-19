@@ -96,14 +96,14 @@
 
 {#if modalUIStore.showSettings}
   <!-- Backdrop -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="fixed inset-0 bg-black/80 z-[100] backdrop-blur-sm"
+  <button
+    type="button"
+    aria-label="Close Settings"
+    class="fixed inset-0 w-full h-full bg-black/80 z-[100] backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
     onclick={close}
     onkeydown={(e) => e.key === "Escape" && close()}
-    role="presentation"
     transition:fade
-  ></div>
+  ></button>
 
   <div
     bind:this={modalElement}
