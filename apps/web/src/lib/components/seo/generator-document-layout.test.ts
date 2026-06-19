@@ -272,13 +272,49 @@ Owes the thieves' guild a debt.`,
     expect(tavern.lore).not.toContain("**Immediate Hook**");
   });
 
+  it("moves Current Tension and Adventure Hooks to center for rpg-location", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "location",
+      title: "Ashveil Crossing",
+      content:
+        "## Core Concept\nA river town built on stilts.\n\n## First Impression\nMud and the smell of fish.",
+      lore: `### GM Reference Information
+- **Scale**: Town (500–5,000 inhabitants)
+- **Genre / Setting**: Fantasy
+
+### Points of Interest
+- **📍 The Rusty Anchor**: Heart of local gossip.
+
+### Controlling Factions
+- **👥 The Iron Shield Guard**: Enforces order.
+
+### Current Tension
+The mayor is skimming grain taxes and the harvest is already short.
+
+### Adventure Hooks
+- A merchant's cart was robbed on the south road.
+- The guard captain wants help covering up a death.`,
+      labels: ["rpg-location", "imported-draft"],
+      status: "active",
+    });
+
+    expect(layout.content).toContain("## Core Concept");
+    expect(layout.content).toContain("### Current Tension");
+    expect(layout.content).toContain("### Adventure Hooks");
+    expect(layout.lore).toContain("### GM Reference Information");
+    expect(layout.lore).toContain("### Points of Interest");
+    expect(layout.lore).toContain("### Controlling Factions");
+    expect(layout.lore).not.toContain("### Current Tension");
+    expect(layout.lore).not.toContain("### Adventure Hooks");
+  });
+
   it("leaves generators without a layout rule unchanged", () => {
     const layout = getGeneratorDocumentLayout({
       type: "location",
       title: "Bellfork",
       content: "### Description\nA river town built on stilts.",
-      lore: "### GM Reference Information\n- **Size**: Town\n\n### Points of Interest\n- **The Drowned Bell**: A flooded chapel.",
-      labels: ["rpg-location", "imported-draft"],
+      lore: "### Some Unknown Section\n- **Size**: Town\n\n### Another Unknown\n- **The Drowned Bell**: A flooded chapel.",
+      labels: ["some-unknown-label", "imported-draft"],
       status: "active",
     });
 
@@ -286,7 +322,7 @@ Owes the thieves' guild a debt.`,
       "### Description\nA river town built on stilts.",
     );
     expect(layout.lore).toBe(
-      "### GM Reference Information\n- **Size**: Town\n\n### Points of Interest\n- **The Drowned Bell**: A flooded chapel.",
+      "### Some Unknown Section\n- **Size**: Town\n\n### Another Unknown\n- **The Drowned Bell**: A flooded chapel.",
     );
   });
 
