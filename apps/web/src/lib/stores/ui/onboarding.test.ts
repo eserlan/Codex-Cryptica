@@ -25,8 +25,7 @@ describe("OnboardingStore", () => {
   });
 
   it("initializes from persistence", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(12345 + 1000)); // 1 second after dismissal
+    const mockGetNow = () => 12345 + 1000; // 1 second after dismissal
 
     const mockStorage = {
       getItem: vi.fn((key: string) => {
@@ -40,7 +39,7 @@ describe("OnboardingStore", () => {
       removeItem: vi.fn(),
     };
     const persistence = new UIPersistence({ storage: mockStorage });
-    const store = new OnboardingStore(persistence);
+    const store = new OnboardingStore(persistence, mockGetNow);
 
     expect(store.skipWelcomeScreen).toBe(true);
     expect(store.dismissedLandingPage).toBe(true);
@@ -48,8 +47,6 @@ describe("OnboardingStore", () => {
     expect(store.worldPageDismissedAt).toBe(12345);
     expect(store.lastSeenVersion).toBe("v1.0.0");
     expect(store.isLandingPageVisible).toBe(false);
-
-    vi.useRealTimers();
   });
 
   it("markVersionAsSeen updates state and persists", () => {
@@ -104,13 +101,15 @@ describe("OnboardingStore", () => {
   });
 
   it("dismissWorldPage and restoreWorldPage work correctly", () => {
+    const mockGetNow = () => 100000;
+
     const mockStorage = {
       getItem: vi.fn().mockReturnValue(null),
       setItem: vi.fn(),
       removeItem: vi.fn(),
     };
     const persistence = new UIPersistence({ storage: mockStorage });
-    const store = new OnboardingStore(persistence);
+    const store = new OnboardingStore(persistence, mockGetNow);
 
     store.dismissWorldPage();
     expect(store.dismissedWorldPage).toBe(true);
