@@ -11,13 +11,16 @@ describe("Generator Theme Hub Route", () => {
       "modern",
       "vampire",
       "western",
+      "steampunk",
     ])("should load valid theme: %s", (theme) => {
       const res = load({ params: { theme } } as any) as any;
       expect(res.theme).toBe(theme);
     });
 
     it("should throw 404 for unknown theme", () => {
-      expect(() => load({ params: { theme: "steampunk" } } as any)).toThrow();
+      expect(() =>
+        load({ params: { theme: "unknown-theme" } } as any),
+      ).toThrow();
     });
 
     it("should throw 404 for empty theme", () => {
@@ -26,7 +29,7 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 7 theme slugs", () => {
+    it("should return all 8 theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([
         { theme: "fantasy" },
@@ -36,6 +39,7 @@ describe("Generator Theme Hub Route", () => {
         { theme: "modern" },
         { theme: "vampire" },
         { theme: "western" },
+        { theme: "steampunk" },
       ]);
     });
   });

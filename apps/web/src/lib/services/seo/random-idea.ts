@@ -31,6 +31,7 @@ export const themeToHubGenre: Record<string, string> = {
   "Modern Conspiracy": "Modern",
   "Post-Apocalyptic": "Post-Apocalyptic",
   "Western / Frontier": "Western",
+  Steampunk: "Steampunk",
 };
 
 export function pickRandomIdeaTheme(
