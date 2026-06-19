@@ -98,8 +98,12 @@
             ? 0.3
             : 1};"
           onclick={() => {
-            selectedYear = y;
-            scrollTo(y);
+            if (y === selectedYear) {
+              confirm();
+            } else {
+              selectedYear = y;
+              scrollTo(y);
+            }
           }}
         >
           {y}
