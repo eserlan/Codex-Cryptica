@@ -333,6 +333,7 @@
       settlementConfig.tonesByGenre["Fantasy"])[0],
     mainTension: (settlementConfig.mainTensionsByGenre[settlementGenre] ??
       settlementConfig.mainTensionsByGenre["Fantasy"])[0],
+    campaignContext: "",
   });
 
   let magicItem = $state({
@@ -883,6 +884,27 @@
         inputClass={selectClass}
         customPlaceholder="Enter a custom tension"
       />
+
+      <div class="flex flex-col gap-1.5">
+        <label for="settlement-context" class={labelClass}
+          >Campaign context (optional)</label
+        >
+        <textarea
+          id="settlement-context"
+          bind:value={settlement.campaignContext}
+          maxlength="240"
+          rows="4"
+          aria-describedby="settlement-context-help"
+          class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+        ></textarea>
+        <p
+          id="settlement-context-help"
+          class="text-[10px] text-theme-text/60 leading-relaxed"
+        >
+          Add a region name, nearby factions, or ongoing conflict to aim the
+          result at your world.
+        </p>
+      </div>
 
       <div class="pt-2 flex justify-end">
         <button

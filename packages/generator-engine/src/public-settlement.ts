@@ -977,6 +977,7 @@ export interface SettlementGeneratorOptions {
   primaryFunction?: string;
   tone?: string;
   mainTension?: string;
+  campaignContext?: string;
   /** @deprecated Use primaryFunction instead. Kept for backwards compatibility. */
   economy?: string;
 }
@@ -1087,6 +1088,7 @@ Return a valid JSON object matching this structure exactly:
 }
 ${NAME_BAN_PROMPT}
 ${sessionContext}
+${options.campaignContext?.trim() ? `Campaign context from the user: ${options.campaignContext.trim()}` : ""}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
 
   return {
