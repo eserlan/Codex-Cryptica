@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AgendaSection, CalendarEventEntry } from "chronology-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   let {
     sections,
@@ -10,23 +11,8 @@
     onSelect: (entry: CalendarEventEntry) => void;
   } = $props();
 
-  let clickTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function handleEntryClick(entry: CalendarEventEntry) {
-    if (clickTimer !== null) return;
-    clickTimer = setTimeout(() => {
-      clickTimer = null;
-      onSelect(entry);
-    }, 220);
-  }
-
-  function handleEntryDblClick(entityId: string) {
-    if (clickTimer !== null) {
-      clearTimeout(clickTimer);
-      clickTimer = null;
-    }
-    modalUIStore.openZenMode(entityId);
-  }
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    createEntryClickHandlers(onSelect, (id) => modalUIStore.openZenMode(id));
 </script>
 
 <div class="flex flex-col gap-4" data-testid="calendar-agenda-view">

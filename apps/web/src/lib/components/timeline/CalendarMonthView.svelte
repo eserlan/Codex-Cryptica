@@ -9,6 +9,7 @@
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -65,23 +66,8 @@
     return `${year}-${month}-${day}`;
   }
 
-  let clickTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function handleEntryClick(entry: CalendarEventEntry) {
-    if (clickTimer !== null) return;
-    clickTimer = setTimeout(() => {
-      clickTimer = null;
-      onSelect(entry);
-    }, 220);
-  }
-
-  function handleEntryDblClick(entityId: string) {
-    if (clickTimer !== null) {
-      clearTimeout(clickTimer);
-      clickTimer = null;
-    }
-    modalUIStore.openZenMode(entityId);
-  }
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    createEntryClickHandlers(onSelect, (id) => modalUIStore.openZenMode(id));
 </script>
 
 <div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">

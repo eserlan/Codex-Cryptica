@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { CalendarEventEntry } from "chronology-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   let {
     entries,
@@ -18,25 +19,17 @@
 
   let isOpen = $state(false);
 
-  let clickTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function handleEntryClick(entry: CalendarEventEntry) {
-    if (clickTimer !== null) return;
-    clickTimer = setTimeout(() => {
-      clickTimer = null;
-      isOpen = false;
-      onSelect(entry);
-    }, 220);
-  }
-
-  function handleEntryDblClick(entityId: string) {
-    if (clickTimer !== null) {
-      clearTimeout(clickTimer);
-      clickTimer = null;
-    }
-    isOpen = false;
-    modalUIStore.openZenMode(entityId);
-  }
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    createEntryClickHandlers(
+      (entry) => {
+        isOpen = false;
+        onSelect(entry);
+      },
+      (id) => {
+        isOpen = false;
+        modalUIStore.openZenMode(id);
+      },
+    );
 </script>
 
 <div class="relative">
