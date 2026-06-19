@@ -118,6 +118,14 @@ const LAYOUT_RULES: LayoutRule[] = [
       heading: "Secrets & Hooks",
     },
   },
+  {
+    label: "rpg-location",
+    railSections: new Set([
+      "GM Reference Information",
+      "Points of Interest",
+      "Controlling Factions",
+    ]),
+  },
 ];
 
 interface MarkdownSection {
