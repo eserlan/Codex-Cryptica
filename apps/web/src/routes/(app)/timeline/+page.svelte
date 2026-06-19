@@ -193,6 +193,8 @@
                 month={timelineStore.calendarMonthView}
                 onSelect={handleSelectEntry}
                 onDropEntity={handleDropEntity}
+                onNextMonth={() => timelineStore.nextMonth()}
+                onPrevMonth={() => timelineStore.previousMonth()}
               />
             </div>
           {:else if timelineStore.viewMode === "agenda"}

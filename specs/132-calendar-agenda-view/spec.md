@@ -104,6 +104,21 @@ A user drags an entity from the Entity Explorer and drops it onto a specific dat
 
 ---
 
+### User Story 7 - Swipe to Navigate Months on Mobile (Priority: P2)
+
+A user views the calendar on a touch device and swipes left or right to move to the next or previous month.
+
+**Why this priority**: Swipe gestures are native and highly expected interactions on mobile devices.
+
+**Independent Test**: Can be tested on a mobile viewport with touch simulation by swiping horizontally on the calendar grid and verifying the month changes.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user is viewing the calendar on a touch-enabled device, **When** they swipe left across the calendar grid, **Then** the calendar navigates to the next month.
+2. **Given** a user is viewing the calendar on a touch-enabled device, **When** they swipe right across the calendar grid, **Then** the calendar navigates to the previous month.
+
+---
+
 ### Edge Cases
 
 - What happens when the vault has no "current date" entity and no vault year setting?
@@ -143,6 +158,7 @@ A user drags an entity from the Entity Explorer and drops it onto a specific dat
      The resolution result MUST be surfaced as a reactive `calendarCurrentDate` value in `apps/web/src/lib/stores/calendar.svelte.ts` so other surfaces (world front page, activity bar entry) inherit the same starting point.
 - **FR-013**: On mobile-sized viewports, the filter bar MUST be collapsible. Collapsed is the default state on mobile. The collapsed/expanded state MUST be toggled by a visible control. When active filters are set and the bar is collapsed, the toggle control MUST show a visible indicator (e.g., a badge or icon change) so users know filters are active. On desktop-sized viewports the filter bar is always visible and the collapse control is not rendered.
 - **FR-014**: System MUST allow users to drag an entity from the Entity Explorer and drop it onto a date in the calendar month grid to assign or update its date.
+- **FR-015**: System MUST support horizontal touch swipe gestures on mobile devices to navigate between previous and next months in the calendar view.
 
 ### Key Entities
 
@@ -162,6 +178,7 @@ A user drags an entity from the Entity Explorer and drops it onto a specific dat
 - **SC-006**: The view is usable on mobile screen sizes (no horizontal scroll, tappable targets).
 - **SC-007**: On mobile, the filter bar is collapsed by default; toggling it expands or collapses without horizontal overflow and the active-filter indicator is visible when filters are set.
 - **SC-008**: Users can drag an entity and drop it onto a date cell in the calendar to assign that date to the entity.
+- **SC-009**: Users on touch devices can swipe left to go to the next month and swipe right to go to the previous month.
 
 ## Clarifications
 
