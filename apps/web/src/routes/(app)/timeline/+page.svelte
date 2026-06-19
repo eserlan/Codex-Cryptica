@@ -226,6 +226,10 @@
         <EntityDetailPanel
           entity={selectedEntity}
           onClose={() => (vault.selectedEntityId = null)}
+          onDateClick={(year: number, month: number) => {
+            timelineStore.activeYear = year;
+            timelineStore.activeMonth = month;
+          }}
         />
       </div>
     {/if}

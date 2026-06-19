@@ -8,6 +8,7 @@
   import GraphTooltip from "$lib/components/graph/GraphTooltip.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -165,6 +166,7 @@
                 type="button"
                 class="rounded-none border border-theme-primary/18 bg-theme-primary/8 px-1 py-0.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14 sm:rounded-xl sm:px-2 sm:py-1.5"
                 onclick={() => onSelect(entry)}
+                ondblclick={() => modalUIStore.openZenMode(entry.entityId)}
                 onmouseenter={(e) => setHover(entry.entityId, e)}
                 onmousemove={(e) => setHover(entry.entityId, e)}
                 onmouseleave={clearHover}
