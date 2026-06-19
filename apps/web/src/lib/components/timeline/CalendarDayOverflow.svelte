@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CalendarEventEntry } from "chronology-engine";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     entries,
@@ -49,6 +50,7 @@
               isOpen = false;
               onSelect(entry);
             }}
+            ondblclick={() => modalUIStore.openZenMode(entry.entityId)}
             onmouseenter={(e) => onEntryHover?.(entry.entityId, e)}
             onmousemove={(e) => onEntryHover?.(entry.entityId, e)}
             onmouseleave={() => onEntryLeave?.()}

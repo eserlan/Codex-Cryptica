@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AgendaSection, CalendarEventEntry } from "chronology-engine";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
     sections,
@@ -34,6 +35,7 @@
               type="button"
               class="flex flex-col gap-1 rounded-2xl border border-theme-border bg-theme-bg/40 px-3 py-3 text-left transition hover:border-theme-primary hover:bg-theme-primary/8"
               onclick={() => onSelect(entry)}
+              ondblclick={() => modalUIStore.openZenMode(entry.entityId)}
             >
               <div class="flex items-start justify-between gap-3">
                 <span class="text-sm font-bold text-theme-text">

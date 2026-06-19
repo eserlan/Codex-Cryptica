@@ -85,12 +85,13 @@
 >
   <!-- Header / Controls -->
   <div
-    class="p-4 border-b border-green-900/30 bg-[#0c0c0c] flex flex-wrap items-center justify-between gap-4"
+    class="p-4 border-b border-theme-border bg-theme-surface flex flex-wrap items-center justify-between gap-4"
   >
     <div class="flex items-center gap-3">
-      <span class="icon-[lucide--calendar-days] text-green-500 w-6 h-6"></span>
+      <span class="icon-[lucide--calendar-days] text-theme-primary w-6 h-6"
+      ></span>
       <h2
-        class="text-xl font-bold text-gray-100 font-mono tracking-wider uppercase font-header"
+        class="text-xl font-bold text-theme-text font-mono tracking-wider uppercase font-header"
       >
         World Chronology
       </h2>
@@ -98,7 +99,7 @@
 
     <div class="flex items-center gap-4">
       <TimelineFilterBar />
-      <div class="h-6 w-px bg-green-900/30 mx-2"></div>
+      <div class="h-6 w-px bg-theme-border mx-2"></div>
       <TimelineLayoutToggle />
     </div>
   </div>
@@ -113,10 +114,10 @@
         >
           <div class="flex flex-col items-center gap-3">
             <span
-              class="icon-[lucide--loader-2] w-10 h-10 text-green-500 animate-spin"
+              class="icon-[lucide--loader-2] w-10 h-10 text-theme-primary animate-spin"
             ></span>
             <span
-              class="text-xs font-mono text-green-700 uppercase tracking-[0.2em]"
+              class="text-xs font-mono text-theme-muted uppercase tracking-[0.2em]"
               >Synchronizing Timeline...</span
             >
           </div>
@@ -127,14 +128,15 @@
         <div
           class="h-full flex flex-col items-center justify-center text-center p-8 space-y-4"
         >
-          <span class="icon-[lucide--calendar-search] w-16 h-16 text-zinc-800"
+          <span
+            class="icon-[lucide--calendar-search] w-16 h-16 text-theme-border"
           ></span>
           <h3
-            class="text-zinc-500 font-bold uppercase font-header tracking-widest"
+            class="text-theme-muted font-bold uppercase font-header tracking-widest"
           >
             No Matching Events
           </h3>
-          <p class="text-xs text-zinc-600 max-w-sm leading-relaxed">
+          <p class="text-xs text-theme-muted/70 max-w-sm leading-relaxed">
             Add dated events or clear your filters to see the calendar fill in.
             Approximate and undated entries appear in agenda mode when
             available.

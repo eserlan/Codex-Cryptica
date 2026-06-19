@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, onDestroy, tick } from "svelte";
 
   let {
     year = $bindable(),
@@ -21,6 +21,8 @@
   let drum = $state<HTMLElement>();
   let selectedYear = $state(year);
   let scrollEndTimer: ReturnType<typeof setTimeout>;
+
+  onDestroy(() => clearTimeout(scrollEndTimer));
 
   onMount(async () => {
     await tick();
@@ -71,6 +73,7 @@
   class="flex flex-col items-center rounded-2xl border border-theme-border bg-theme-surface shadow-2xl shadow-black/40 overflow-hidden w-36"
   role="dialog"
   aria-label="Select year"
+  tabindex="-1"
   onkeydown={onKeydown}
 >
   <!-- gradient masks -->
