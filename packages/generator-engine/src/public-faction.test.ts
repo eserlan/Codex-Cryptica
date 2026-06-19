@@ -67,6 +67,16 @@ describe("buildFactionPrompt", () => {
     const { resolved } = buildFactionPrompt({}, "", seededRng(1));
     expect(resolved.theme).toBe(factionConfig.themes[0]);
   });
+
+  it("uses the Western / Frontier theme voice", () => {
+    const { systemInstruction, userMessage } = buildFactionPrompt(
+      { theme: "Western / Frontier" },
+      "",
+      seededRng(1),
+    );
+    expect(systemInstruction).toContain("weird west or classic frontier");
+    expect(userMessage).toContain("- Theme/Genre: Western / Frontier");
+  });
 });
 
 describe("parseFactionResponse", () => {

@@ -24,6 +24,7 @@ const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   "post-apocalyptic": "Post-Apocalyptic",
   modern: "Modern",
   vampire: "Horror",
+  western: "Western",
 };
 
 export function shouldSyncGeneratorTheme(slug: string) {

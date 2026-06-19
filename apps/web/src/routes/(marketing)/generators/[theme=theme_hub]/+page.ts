@@ -10,7 +10,8 @@ export type ThemeSlug =
   | "sci-fi"
   | "post-apocalyptic"
   | "modern"
-  | "vampire";
+  | "vampire"
+  | "western";
 
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {
@@ -26,4 +27,5 @@ export const entries: EntryGenerator = () => [
   { theme: "post-apocalyptic" },
   { theme: "modern" },
   { theme: "vampire" },
+  { theme: "western" },
 ];

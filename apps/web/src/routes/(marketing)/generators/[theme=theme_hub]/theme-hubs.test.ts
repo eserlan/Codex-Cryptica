@@ -10,6 +10,7 @@ describe("Generator Theme Hub Route", () => {
       "post-apocalyptic",
       "modern",
       "vampire",
+      "western",
     ])("should load valid theme: %s", (theme) => {
       const res = load({ params: { theme } } as any) as any;
       expect(res.theme).toBe(theme);
@@ -25,7 +26,7 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 6 theme slugs", () => {
+    it("should return all 7 theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([
         { theme: "fantasy" },
@@ -34,6 +35,7 @@ describe("Generator Theme Hub Route", () => {
         { theme: "post-apocalyptic" },
         { theme: "modern" },
         { theme: "vampire" },
+        { theme: "western" },
       ]);
     });
   });

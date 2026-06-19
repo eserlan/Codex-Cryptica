@@ -15,6 +15,7 @@ const themes = [
   },
   { slug: "modern", h1: "Modern RPG Generators", localStorageId: "modern" },
   { slug: "vampire", h1: "Vampire RPG Generators", localStorageId: "horror" },
+  { slug: "western", h1: "Western RPG Generators", localStorageId: "western" },
 ];
 
 test.describe("Generator Theme Hubs", () => {
@@ -94,6 +95,15 @@ test.describe("Generator Theme Hubs", () => {
     page,
   }) => {
     await page.goto("/generators/cyberpunk");
+
+    // Wait for the theme to be applied to ensure any async vault initialization has settled
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          localStorage.getItem("codex-cryptica-active-theme"),
+        ),
+      )
+      .toBe("cyberpunk");
 
     const firstCard = page.locator("ul > li > a").first();
     const href = await firstCard.getAttribute("href");

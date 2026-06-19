@@ -223,6 +223,13 @@ export const npcThemeConfig = {
       "Vault Dweller",
       "Wasteland Nomad",
     ],
+    "Western / Frontier": [
+      "Human",
+      "Frontier Pioneer",
+      "Outlaw Scout",
+      "Town Native",
+      "Homesteader",
+    ],
   } as Record<string, string[]>,
   roles: {
     "Classic Fantasy": [
@@ -279,6 +286,17 @@ export const npcThemeConfig = {
       "Cult Enforcer",
       "Scout",
       "Mechanic",
+    ],
+    "Western / Frontier": [
+      "Gunslinger",
+      "Sheriff",
+      "Bounty Hunter",
+      "Outlaw",
+      "Prospector",
+      "Saloon Keeper",
+      "Homesteader",
+      "Railroad Agent",
+      "Town Doctor",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -510,6 +528,44 @@ export const npcThemeConfig = {
           "Write this character with a resilient, hopeful, and idealistic tone. Despite the harsh wasteland environment, they emphasize laws, education, historical recovery, and long-term societal rebuilding.",
       },
     ],
+    "Western / Frontier": [
+      {
+        id: "code_of_the_west",
+        label: "Code of the West",
+        aiPromptDirective:
+          "Write this NPC with a strict personal code of frontier honor. They value hospitality, keep their word, and never shoot an unarmed person or strike from behind.",
+      },
+      {
+        id: "law_and_order",
+        label: "Law and Order",
+        aiPromptDirective:
+          "This NPC is dedicated to bringing civilization and written law to the wild frontier. They respect badges, deeds, and formal authority, rejecting vigilante actions.",
+      },
+      {
+        id: "frontier_pragmatist",
+        label: "Frontier Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as a practical survivor who knows the frontier doesn't care about rules. They make decisions based on water, ammo, and winter prep, avoiding ideological fights.",
+      },
+      {
+        id: "desperados_greed",
+        label: "Desperado's Greed",
+        aiPromptDirective:
+          "This NPC is an outlaw driven by quick gold, land claims, or pure self-interest. They are ruthless, slippery, and willing to sell out partners if the price is right.",
+      },
+      {
+        id: "vigilante_justice",
+        label: "Vigilante Justice",
+        aiPromptDirective:
+          "Write this character with a burning desire for eye-for-an-eye justice. They believe the formal law is corrupt or weak, taking punishment into their own hands.",
+      },
+      {
+        id: "merciful_pioneer",
+        label: "Merciful Pioneer",
+        aiPromptDirective:
+          "This NPC prioritizes the survival and community of the settlement. They offer shelter to travelers, share rations, and seek to resolve frontier conflicts without bloodshed.",
+      },
+    ],
   } as Record<string, MoralityAnchor[]>,
 };
 
@@ -526,6 +582,8 @@ const NPC_THEME_VOICE: Record<string, string> = {
     "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
   "Post-Apocalyptic":
     "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+  "Western / Frontier":
+    "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
 };
 
 const NPC_NAMING_STYLES = [

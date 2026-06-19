@@ -40,6 +40,7 @@ export const themeToQuestGenre: Record<string, string> = {
   "Sci-Fi / Space Opera": "Sci-Fi",
   "Modern Conspiracy": "Political Intrigue",
   "Post-Apocalyptic": "Post-Apocalyptic",
+  "Western / Frontier": "Western",
 };
 
 export const questConfig = {
@@ -82,6 +83,13 @@ export const questConfig = {
       "Defiant",
       "Melancholic",
     ],
+    "Western / Frontier": [
+      "Gritty",
+      "Heroic",
+      "Melancholic",
+      "Tense",
+      "Lawless",
+    ],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -114,6 +122,11 @@ export const questConfig = {
       "Local (settlement / zone)",
       "Regional (wasteland)",
       "Civilisation-scale",
+    ],
+    "Western / Frontier": [
+      "Local (homestead / saloon)",
+      "Town-wide (boomtown)",
+      "Territory-scale (frontier)",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -172,6 +185,14 @@ export const questConfig = {
       "Irradiated Zone",
       "Raider Stronghold",
       "Pre-War Archive",
+    ],
+    "Western / Frontier": [
+      "Dusty Boomtown",
+      "Abandoned Gold Mine",
+      "Remote Homestead",
+      "Canyon Hideout",
+      "Frontier Fort",
+      "Railroad Station",
     ],
   } as Record<string, string[]>,
   threats: [
@@ -312,6 +333,14 @@ export const questConfig = {
       "Salvage rights to the site",
       "Intel on a raider stronghold",
       "Loyalty from a survivor faction",
+    ],
+    "Western / Frontier": [
+      "Bounty gold plus a sheriff's favor",
+      "Deed to a land claim or saloon",
+      "Access to safe-passage routes",
+      "Custom frontier gear or weapon",
+      "Intel on an outlaw gang's stash",
+      "Loyalty of a frontier community",
     ],
   } as Record<string, string[]>,
 };

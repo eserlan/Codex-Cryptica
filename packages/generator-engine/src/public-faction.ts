@@ -45,6 +45,7 @@ export const factionConfig = {
     "Sci-Fi / Space Opera",
     "Modern Conspiracy",
     "Post-Apocalyptic",
+    "Western / Frontier",
   ],
   types: [
     "Merchant Guild",
@@ -110,6 +111,8 @@ export const themeIdToLabel: Record<string, string> = {
   modern_dark: "Modern Conspiracy",
   apocalyptic: "Post-Apocalyptic",
   apocalyptic_light: "Post-Apocalyptic",
+  western: "Western / Frontier",
+  western_dark: "Western / Frontier",
 };
 
 export const vampireConfig = {
@@ -191,6 +194,8 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
   "Post-Apocalyptic":
     "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+  "Western / Frontier":
+    "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
 };
 
 const FACTION_NAMING_STYLES = [
