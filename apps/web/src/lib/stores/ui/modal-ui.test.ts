@@ -130,6 +130,7 @@ describe("ModalUIStore", () => {
       launchMode: "workspace",
       sourceEntityId: null,
       generatorId: "npc",
+      prefillDate: null,
     });
     store.closeGeneratorWorkflow();
     expect(store.generatorWorkflow.open).toBe(false);
@@ -151,6 +152,7 @@ describe("ModalUIStore", () => {
       launchMode: "contextual",
       sourceEntityId: "src-42",
       generatorId: "faction",
+      prefillDate: null,
     });
   });
 

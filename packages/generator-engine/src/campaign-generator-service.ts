@@ -299,6 +299,7 @@ export class CampaignGeneratorService {
         content: draft.summary,
         lore: draft.lore,
         labels: draft.labels,
+        ...(request.start_date ? { start_date: request.start_date } : {}),
       },
     );
     let relationshipCreated = false;

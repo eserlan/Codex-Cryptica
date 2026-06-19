@@ -177,20 +177,26 @@ export class ModalUIStore {
     launchMode: "workspace" | "contextual";
     sourceEntityId: string | null;
     generatorId: string | null;
+    prefillDate?: { year: number; month: number; day: number } | null;
   }>({
     open: false,
     launchMode: "workspace",
     sourceEntityId: null,
     generatorId: null,
+    prefillDate: null,
   });
 
   /** Open the unified generator workflow from the campaign workspace. */
-  openGeneratorWorkflow(generatorId: string | null = null) {
+  openGeneratorWorkflow(
+    generatorId: string | null = null,
+    prefillDate: { year: number; month: number; day: number } | null = null,
+  ) {
     this.generatorWorkflow = {
       open: true,
       launchMode: "workspace",
       sourceEntityId: null,
       generatorId,
+      prefillDate,
     };
   }
 
@@ -204,6 +210,7 @@ export class ModalUIStore {
       launchMode: "contextual",
       sourceEntityId,
       generatorId,
+      prefillDate: null,
     };
   }
 
@@ -213,6 +220,7 @@ export class ModalUIStore {
       launchMode: "workspace",
       sourceEntityId: null,
       generatorId: null,
+      prefillDate: null,
     };
   }
 

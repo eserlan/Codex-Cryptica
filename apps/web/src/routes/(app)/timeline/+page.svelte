@@ -206,7 +206,7 @@
                 onSelect={handleSelectEntry}
                 onDropEntity={handleDropEntity}
                 onCreateAtDate={(date) =>
-                  modalUIStore.requestCreateEntity(date)}
+                  modalUIStore.openGeneratorWorkflow("event", date)}
                 onNextMonth={() => timelineStore.nextMonth()}
                 onPrevMonth={() => timelineStore.previousMonth()}
               />
