@@ -5,7 +5,12 @@
   } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
   import CalendarDayOverflow from "./CalendarDayOverflow.svelte";
+  import GraphTooltip from "$lib/components/graph/GraphTooltip.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { onDestroy } from "svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -13,6 +18,8 @@
     month,
     onSelect,
     onDropEntity,
+    onNextMonth,
+    onPrevMonth,
   }: {
     month: CalendarMonthViewModel;
     onSelect: (entry: CalendarEventEntry) => void;
@@ -20,9 +27,48 @@
       entityId: string,
       date: { year: number; month: number; day: number },
     ) => void;
+    onNextMonth?: () => void;
+    onPrevMonth?: () => void;
   } = $props();
 
   let dragOverDay = $state<string | null>(null);
+
+  let touchStartX = $state(0);
+  let touchStartY = $state(0);
+  let touchEndX = $state(0);
+  let touchEndY = $state(0);
+
+  function handleTouchStart(e: TouchEvent) {
+    const touch = e.changedTouches[0];
+    touchStartX = touch?.clientX ?? 0;
+    touchStartY = touch?.clientY ?? 0;
+  }
+
+  function handleTouchEnd(e: TouchEvent) {
+    const touch = e.changedTouches[0];
+    touchEndX = touch?.clientX ?? 0;
+    touchEndY = touch?.clientY ?? 0;
+    handleSwipe();
+  }
+
+  function handleSwipe() {
+    const minSwipeDistance = 50;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    if (
+      Math.abs(deltaX) <= minSwipeDistance ||
+      Math.abs(deltaX) <= Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    if (deltaX > 0) {
+      onPrevMonth?.();
+    } else {
+      onNextMonth?.();
+    }
+  }
 
   /** True when this day cell matches the FR-012 resolved current date (all three fields). */
   function isToday(year: number, monthNum: number, day: number): boolean {
@@ -43,12 +89,41 @@
     return `${monthName} ${day}, ${year}`;
   }
 
+  let hoveredEntityId = $state<string | null>(null);
+  let hoverPos = $state<{ x: number; y: number } | null>(null);
+  const hoveredEntity = $derived(
+    hoveredEntityId ? (vault.entities[hoveredEntityId] ?? null) : null,
+  );
+
+  function setHover(entityId: string, e: MouseEvent) {
+    hoveredEntityId = entityId;
+    hoverPos = { x: e.clientX, y: e.clientY };
+  }
+  function clearHover() {
+    hoveredEntityId = null;
+    hoverPos = null;
+  }
+
   function dayKey(year: number, month: number, day: number): string {
     return `${year}-${month}-${day}`;
   }
+
+  const entryHandlers = createEntryClickHandlers(
+    (entry) => onSelect(entry),
+    (id) => modalUIStore.openZenMode(id),
+  );
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    entryHandlers;
+  onDestroy(() => entryHandlers.dispose());
 </script>
 
-<div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex flex-col gap-0 sm:gap-3"
+  data-testid="calendar-month-view"
+  ontouchstart={handleTouchStart}
+  ontouchend={handleTouchEnd}
+>
   <div
     class="grid grid-cols-7 gap-0 sm:gap-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-theme-muted"
   >
@@ -147,7 +222,11 @@
               <button
                 type="button"
                 class="rounded-none border border-theme-primary/18 bg-theme-primary/8 px-1 py-0.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14 sm:rounded-xl sm:px-2 sm:py-1.5"
-                onclick={() => onSelect(entry)}
+                onclick={() => handleEntryClick(entry)}
+                ondblclick={() => handleEntryDblClick(entry.entityId)}
+                onmouseenter={(e) => setHover(entry.entityId, e)}
+                onmousemove={(e) => setHover(entry.entityId, e)}
+                onmouseleave={clearHover}
               >
                 <span
                   class="block truncate text-[9px] font-bold text-theme-text sm:text-[11px]"
@@ -167,6 +246,8 @@
                 entries={day.hiddenEntries}
                 label={dayLabel(day.date.year, day.date.month, day.date.day)}
                 {onSelect}
+                onEntryHover={setHover}
+                onEntryLeave={clearHover}
               />
             {/if}
           </div>
@@ -175,3 +256,5 @@
     {/each}
   </div>
 </div>
+
+<GraphTooltip {hoveredEntity} hoverPosition={hoverPos} />

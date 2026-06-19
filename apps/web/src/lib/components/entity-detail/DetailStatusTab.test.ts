@@ -11,6 +11,12 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
     defaultVisibility: "public",
+    allEntities: [
+      { id: "target-1", title: "Target 1" },
+      { id: "source-1", title: "Source 1" },
+      { id: "parent-entity", title: "Parent Entity" },
+      { id: "child-entity", title: "Child Entity", parent: "entity-1" },
+    ],
     entities: {
       "target-1": { id: "target-1", title: "Target 1" },
       "source-1": { id: "source-1", title: "Source 1" },

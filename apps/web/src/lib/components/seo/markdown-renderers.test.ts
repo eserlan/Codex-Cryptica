@@ -61,6 +61,18 @@ describe("renderGeneratorMarkdown", () => {
     expect(result).toContain("Age");
     expect(result).toContain("42");
   });
+
+  it("escapes raw HTML before rendering generator output", () => {
+    const input = '- **Tone**: <img src="x" onerror="alert(1)"><script>alert(1)</script>';
+    const result = renderGeneratorMarkdown(input, "default");
+    const container = document.createElement("div");
+    container.innerHTML = result;
+    expect(result).not.toContain("<script>");
+    expect(result).toContain("&lt;img");
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("[onerror]")).toBeNull();
+  });
 });
 
 describe("renderGeneratorLore", () => {

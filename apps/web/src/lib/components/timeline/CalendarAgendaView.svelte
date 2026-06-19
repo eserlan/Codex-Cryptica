@@ -1,5 +1,8 @@
 <script lang="ts">
   import type { AgendaSection, CalendarEventEntry } from "chronology-engine";
+  import { onDestroy } from "svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   let {
     sections,
@@ -8,6 +11,14 @@
     sections: AgendaSection[];
     onSelect: (entry: CalendarEventEntry) => void;
   } = $props();
+
+  const entryHandlers = createEntryClickHandlers(
+    (entry) => onSelect(entry),
+    (id) => modalUIStore.openZenMode(id),
+  );
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    entryHandlers;
+  onDestroy(() => entryHandlers.dispose());
 </script>
 
 <div class="flex flex-col gap-4" data-testid="calendar-agenda-view">
@@ -33,7 +44,8 @@
             <button
               type="button"
               class="flex flex-col gap-1 rounded-2xl border border-theme-border bg-theme-bg/40 px-3 py-3 text-left transition hover:border-theme-primary hover:bg-theme-primary/8"
-              onclick={() => onSelect(entry)}
+              onclick={() => handleEntryClick(entry)}
+              ondblclick={() => handleEntryDblClick(entry.entityId)}
             >
               <div class="flex items-start justify-between gap-3">
                 <span class="text-sm font-bold text-theme-text">

@@ -49,6 +49,8 @@ vi.mock("$lib/stores/vault.svelte", () => {
     },
   };
 
+  const mockAllEntities = Object.values(mockEntities);
+
   const mockInbound: Record<string, any[]> = {
     "entity-1": [
       {
@@ -75,6 +77,7 @@ vi.mock("$lib/stores/vault.svelte", () => {
   return {
     vault: {
       isGuest: false,
+      allEntities: mockAllEntities,
       entities: mockEntities,
       inboundConnections: mockInbound,
       labelIndex: [],

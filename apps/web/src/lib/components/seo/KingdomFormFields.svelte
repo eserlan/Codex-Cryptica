@@ -1,5 +1,6 @@
 <script lang="ts">
   import { kingdomConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
     polityType = $bindable(kingdomConfig.polityTypes[0]),
@@ -27,71 +28,71 @@
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="kingdom-polity-select" class={labelClass}>Polity type</label>
-  <select
-    id="kingdom-polity-select"
-    bind:value={polityType}
-    class={selectClass}
-  >
-    {#each kingdomConfig.polityTypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="kingdom-polity-select"
+  label="Polity type"
+  bind:value={polityType}
+  choices={kingdomConfig.polityTypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom polity type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="kingdom-govt-select" class={labelClass}>Government style</label>
-  <select
-    id="kingdom-govt-select"
-    bind:value={governmentStyle}
-    class={selectClass}
-  >
-    {#each kingdomConfig.governmentStyles as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="kingdom-govt-select"
+  label="Government style"
+  bind:value={governmentStyle}
+  choices={kingdomConfig.governmentStyles.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom government style"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="kingdom-geo-select" class={labelClass}>Geography</label>
-  <select id="kingdom-geo-select" bind:value={geography} class={selectClass}>
-    {#each kingdomConfig.geographies as g (g)}
-      <option value={g}>{g}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="kingdom-geo-select"
+  label="Geography"
+  bind:value={geography}
+  choices={kingdomConfig.geographies.map((g: string) => ({ value: g, label: g }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom geography"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="kingdom-scale-select" class={labelClass}>Scale</label>
-  <select id="kingdom-scale-select" bind:value={scale} class={selectClass}>
-    {#each kingdomConfig.scales as s (s)}
-      <option value={s}>{s}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="kingdom-scale-select"
+  label="Scale"
+  bind:value={scale}
+  choices={kingdomConfig.scales.map((s: string) => ({ value: s, label: s }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom scale"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="kingdom-conflict-select" class={labelClass}>Conflict level</label>
-  <select
-    id="kingdom-conflict-select"
-    bind:value={conflictLevel}
-    class={selectClass}
-  >
-    {#each kingdomConfig.conflictLevels as c (c)}
-      <option value={c}>{c}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="kingdom-conflict-select"
+  label="Conflict level"
+  bind:value={conflictLevel}
+  choices={kingdomConfig.conflictLevels.map((c: string) => ({ value: c, label: c }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom conflict level"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="kingdom-magic-select" class={labelClass}>Magic level</label>
-  <select id="kingdom-magic-select" bind:value={magicLevel} class={selectClass}>
-    {#each kingdomConfig.magicLevels as m (m)}
-      <option value={m}>{m}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="kingdom-magic-select"
+  label="Magic level"
+  bind:value={magicLevel}
+  choices={kingdomConfig.magicLevels.map((m: string) => ({ value: m, label: m }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom magic level"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="kingdom-context" class={labelClass}

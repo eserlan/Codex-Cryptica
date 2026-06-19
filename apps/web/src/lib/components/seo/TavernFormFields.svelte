@@ -3,6 +3,7 @@
     socialHubConfig,
     pickFrom,
   } from "$lib/services/seo/generator-engine";
+  import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   const fantasyVenueTypes = socialHubConfig.venueTypesByGenre["Fantasy"];
   const fantasyClienteles = socialHubConfig.clientelesByGenre["Fantasy"];
@@ -31,70 +32,60 @@
     "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
 </script>
 
-<div class="flex flex-col gap-1.5">
-  <label for="tavern-type-select" class={labelClass}>Tavern type</label>
-  <select id="tavern-type-select" bind:value={type} class={selectClass}>
-    {#each fantasyVenueTypes as t (t)}
-      <option value={t}>{t}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="tavern-type-select"
+  label="Tavern type"
+  bind:value={type}
+  choices={fantasyVenueTypes.map((t: string) => ({ value: t, label: t }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom tavern type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="tavern-atmosphere-select" class={labelClass}>Atmosphere</label>
-  <select
-    id="tavern-atmosphere-select"
-    bind:value={atmosphere}
-    class={selectClass}
-  >
-    {#each socialHubConfig.atmospheres as a (a)}
-      <option value={a}>{a}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="tavern-atmosphere-select"
+  label="Atmosphere"
+  bind:value={atmosphere}
+  choices={socialHubConfig.atmospheres.map((a: string) => ({ value: a, label: a }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom atmosphere"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="tavern-settlement-select" class={labelClass}
-    >Settlement type</label
-  >
-  <select
-    id="tavern-settlement-select"
-    bind:value={settlementType}
-    class={selectClass}
-  >
-    {#each socialHubConfig.settlementTypes as s (s)}
-      <option value={s}>{s}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="tavern-settlement-select"
+  label="Settlement type"
+  bind:value={settlementType}
+  choices={socialHubConfig.settlementTypes.map((s: string) => ({ value: s, label: s }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom settlement type"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="tavern-wealth-select" class={labelClass}>Wealth level</label>
-  <select
-    id="tavern-wealth-select"
-    bind:value={wealthLevel}
-    class={selectClass}
-  >
-    {#each socialHubConfig.wealthLevels as w (w)}
-      <option value={w}>{w}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="tavern-wealth-select"
+  label="Wealth level"
+  bind:value={wealthLevel}
+  choices={socialHubConfig.wealthLevels.map((w: string) => ({ value: w, label: w }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter a custom wealth level"
+/>
 
-<div class="flex flex-col gap-1.5">
-  <label for="tavern-clientele-select" class={labelClass}
-    >Primary clientele</label
-  >
-  <select
-    id="tavern-clientele-select"
-    bind:value={clientele}
-    class={selectClass}
-  >
-    {#each fantasyClienteles as c (c)}
-      <option value={c}>{c}</option>
-    {/each}
-  </select>
-</div>
+<SelectWithCustomOption
+  id="tavern-clientele-select"
+  label="Primary clientele"
+  bind:value={clientele}
+  choices={fantasyClienteles.map((c: string) => ({ value: c, label: c }))}
+  className="flex flex-col gap-1.5"
+  labelClass={labelClass}
+  inputClass={selectClass}
+  customPlaceholder="Enter custom primary clientele"
+/>
 
 <div class="flex flex-col gap-1.5">
   <label for="tavern-context" class={labelClass}

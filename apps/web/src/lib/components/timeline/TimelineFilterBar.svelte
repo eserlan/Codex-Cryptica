@@ -128,24 +128,22 @@
       {/if}
     {/each}
 
-    {#if timelineStore.availableLabels.length > 0}
-      <div class="w-px h-3.5 bg-theme-border mx-0.5 opacity-50"></div>
+    <div class="w-px h-3.5 bg-theme-border mx-0.5 opacity-50"></div>
 
-      <!-- Undated toggle -->
-      <button
-        type="button"
-        onclick={() =>
-          (timelineStore.includeUndated = !timelineStore.includeUndated)}
-        title="Include undated entries"
-        aria-label="Include undated entries"
-        aria-pressed={timelineStore.includeUndated}
-        class="flex items-center justify-center p-1.5 {iconToggleClass(
-          timelineStore.includeUndated,
-        )}"
-      >
-        <span class="icon-[lucide--calendar-x-2] w-3.5 h-3.5"></span>
-      </button>
-    {/if}
+    <!-- Undated toggle -->
+    <button
+      type="button"
+      onclick={() =>
+        (timelineStore.includeUndated = !timelineStore.includeUndated)}
+      title="Include undated entries"
+      aria-label="Include undated entries"
+      aria-pressed={timelineStore.includeUndated}
+      class="flex items-center justify-center p-1.5 {iconToggleClass(
+        timelineStore.includeUndated,
+      )}"
+    >
+      <span class="icon-[lucide--calendar-x-2] w-3.5 h-3.5"></span>
+    </button>
   </div>
 
   <!-- Label pills (shown when labels exist) -->

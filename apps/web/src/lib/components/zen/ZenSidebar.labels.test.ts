@@ -8,6 +8,7 @@ import { vault } from "$lib/stores/vault.svelte";
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
+    allEntities: [],
     entities: {},
     inboundConnections: {},
     labelIndex: [],
