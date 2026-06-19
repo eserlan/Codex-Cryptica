@@ -1,130 +1,138 @@
-# CI/CD Deployment Architecture
+# CI and Deployment
 
-This document describes the automated build and deployment pipeline for Codex Cryptica.
+This document is a high-level map of the current CI and deployment flow for Codex Cryptica.
+
+The source of truth is the workflow files in [`.github/workflows`](/home/espen/proj/Codex-Arcana/.github/workflows). If this document and a workflow disagree, the workflow wins.
 
 ## Overview
 
-Codex Cryptica uses **Cloudflare Pages** for hosting with an **artifact promotion** model. The application is built once on staging, and that exact same build artifact is promoted to production — no rebuilds, no drift.
+The web app uses a staged promotion model on Cloudflare Pages:
 
-- **Production:** `codexcryptica.com`
-- **Staging:** `staging.codexcryptica.com`
+1. Pull requests build, test, and create preview deployments.
+2. Pushes to `staging` build, test, deploy to the staging environment, and upload a promotable `staging-dist` artifact.
+3. Production deploys are performed by manually promoting a successful staging artifact.
+4. After a successful production promotion, `staging` is merged back into `main`, the web version is bumped on `main`, and the release workflow is triggered.
 
-## The Deployment Pipeline
+## Main Workflows
 
-### 1. Feature → Preview (Verification)
+### `deploy.yml`
 
-```mermaid
-flowchart LR
-  A[Feature branch] --> B[PR targeting staging]
-  B --> C[Build + Test]
-  C --> D[Deploy Preview]
-  D --> E[Unique Preview URL]
-```
+Purpose:
+- Runs type-checking, linting, tests, and the web build.
+- Deploys preview environments for pull requests.
+- Deploys the staging environment on pushes to `staging`.
+- Uploads the `staging-dist` artifact used for production promotion.
 
-1. Open a Pull Request targeting the `staging` branch.
-2. The [`deploy.yml`](.github/workflows/deploy.yml) workflow triggers on `pull_request`:
-   - Installs dependencies, runs lint and tests.
-   - Builds the application.
-   - Deploys a **Preview** to Cloudflare Pages.
-   - Cloudflare automatically adds a comment to the PR with a unique preview URL.
-3. Review the preview and ensure everything works as expected.
+Triggers:
+- `pull_request` targeting `main` or `staging`
+- `push` to `staging`
+- `workflow_dispatch`
 
-### 2. Merge → Staging (Shared Environment)
+Notes:
+- PR previews comment back on the PR with preview, bundle report, and coverage links.
+- Docs-only changes are ignored by this workflow.
+- The staging deploy publishes to the Cloudflare Pages `staging` branch.
 
-Once the PR is approved and manually merged:
+### `promote-to-prod.yml`
 
-1. `deploy.yml` triggers on `push` to the `staging` branch.
-2. It deploys the build to `staging.codexcryptica.com`.
-3. It uploads a **staging artifact** (`staging-dist`) with 30-day retention for production promotion.
+Purpose:
+- Promotes a previously successful staging artifact to production without rebuilding from a different commit.
 
-> [!IMPORTANT]
-> To support the "artifact promotion" model, staging builds must be production-ready. We bake production URLs (`codexcryptica.com`) and indexing directives into the staging build to ensure the promoted artifact is correct for the live site. To prevent staging from being indexed, use Cloudflare-level overrides (headers or workers) rather than build-time environment variables.
+Trigger:
+- Manual `workflow_dispatch`
 
-### 2. Staging → Production (Artifact Promotion)
+Behavior:
+- Uses the latest successful `Deploy to Cloudflare Pages` run on `staging`, unless a specific staging run ID is supplied.
+- Downloads the `staging-dist` artifact from that run.
+- Deploys that exact artifact to the Cloudflare Pages `main` branch.
+- Sends a production deployment notification after success.
 
-```mermaid
-flowchart LR
-  A[Promote to Prod] --> B[Download staging artifact]
-  B --> C[Deploy same build to prod]
-  C --> D[codexcryptica.com]
-  D --> E[Discord notification]
-```
+Why this exists:
+- Production receives the same built output that already passed staging.
+- The promotion step avoids drift between staging validation and production deployment.
 
-Production uses a **manual promotion workflow** — there is no automatic promotion from staging to production.
+### `merge-staging-to-main.yml`
 
-**To promote:**
+Purpose:
+- Reconciles Git history after production promotion.
 
-1. Go to **Actions** → **Promote Staging to Production**
-2. Click **Run workflow**
-3. Optionally specify a staging run ID (leave blank to use the latest successful staging deployment)
-4. Click **Run workflow**
+Trigger:
+- Automatic `workflow_run` after `Promote Staging to Production` completes successfully
 
-The promotion workflow:
+Behavior:
+- Merges `origin/staging` into `main`
+- Bumps the web app version and service worker cache on `main`
+- Pushes the bump commit
+- Triggers `release.yml`
+- Sends a Discord notification
 
-- Finds the latest successful staging deployment (or the specific run you provided)
-- Downloads the exact `staging-dist` artifact from that run
-- Deploys it to Cloudflare Pages on the production branch
-- Sends a notification to the Discord prod-deployment channel with the source run link
+Important detail:
+- This workflow updates `main` after production promotion. Production deployment itself is still done from the promoted staging artifact, not from a fresh `main` build.
 
-**Artifact retention:** Staging build artifacts are kept for 30 days. If you need to promote an older build, re-run the staging deployment for that commit first.
+### `release.yml`
 
-## Workflow Files
+Purpose:
+- Creates a GitHub release for major or minor web version bumps.
 
-| File                                                                       | Purpose                                                            |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [`deploy.yml`](.github/workflows/deploy.yml)                               | Build + deploy on push to `main` or `staging`                      |
-| [`promote-to-prod.yml`](.github/workflows/promote-to-prod.yml)             | Manual promotion of staging artifact to production                 |
-| [`auto-merge-staging.yml`](.github/workflows/auto-merge-staging.yml)       | Auto-enables merge for staging-targeted PRs                        |
-| [`auto-bump-web-version.yml`](.github/workflows/auto-bump-web-version.yml) | Auto-increments `apps/web/package.json` version on merge to `main` |
-| [`release.yml`](.github/workflows/release.yml)                             | Creates GitHub releases for major/minor version bumps              |
+Trigger:
+- Manual `workflow_dispatch`
+
+Behavior:
+- Checks whether the current version bump is a major/minor release
+- Builds the app
+- Creates a portable zip artifact
+- Publishes a GitHub release
+- Sends a release notification
+
+In practice:
+- This is typically triggered by automation after the post-promotion version bump.
+
+### `auto-bump-web-version.yml`
+
+Purpose:
+- Bumps the web version after a PR merged directly into `main`.
+
+Trigger:
+- `pull_request_target` closed on `main`, when the PR was merged
+
+Behavior:
+- Bumps versioned web files
+- Commits and pushes the bump
+- Triggers `deploy.yml` on `main`
+- Triggers `release.yml` on `main`
+
+Important detail:
+- `deploy.yml` does not auto-run on pushes to `main`, but this workflow can dispatch it manually when needed.
 
 ## Branch Flow
 
-```
-Feature branch → PR → staging (auto-merge) → staging.codexcryptica.com
-                                                    ↓
-                                    [Promote to Prod] button
-                                                    ↓
-                                              codexcryptica.com
-```
+Typical feature flow:
 
-## Environment Variables
+1. Open a PR against `staging` or `main`.
+2. CI runs through `deploy.yml`.
+3. If the PR is open, a preview deployment is created.
+4. If changes land on `staging`, staging is deployed and a promotable artifact is stored.
+5. When ready, run `promote-to-prod.yml` to push that staging artifact to production.
+6. On successful promotion, `merge-staging-to-main.yml` merges `staging` into `main`, bumps version metadata, and triggers release automation.
 
-The following secrets must be configured in GitHub repository settings:
+## Operational Guidance
 
-| Secret                             | Purpose                                                                      |
-| ---------------------------------- | ---------------------------------------------------------------------------- |
-| `VITE_GOOGLE_CLIENT_ID`            | OAuth client ID                                                              |
-| `VITE_GEMINI_API_KEY`              | API key for the Lore Oracle                                                  |
-| `VITE_SHARED_GEMINI_KEY`           | Shared API key for the basic/lite model tier                                 |
-| `CLOUDFLARE_ACCOUNT_ID`            | Cloudflare account ID                                                        |
-| `CLOUDFLARE_API_TOKEN`             | Cloudflare API token with Pages deploy permissions                           |
-| `DISCORD_WEBHOOK_URL_PROD_DEPLOY`  | Webhook URL for the prod-deployment Discord channel                          |
-| `VITE_DISCORD_WEBHOOK_URL_RELEASE` | Webhook URL for the release Discord channel (used for staging notifications) |
+Use this model when reasoning about incidents or release work:
 
-## Concurrency
+- Preview issue: check `deploy.yml` on the PR run.
+- Staging issue: check the latest `deploy.yml` run on `staging`.
+- Production issue after promotion: check `promote-to-prod.yml`, then `merge-staging-to-main.yml`.
+- Missing or unexpected release: check `release.yml` and the version-bump workflows.
 
-The `deploy.yml` workflow uses `concurrency: cloudflare-pages` with `cancel-in-progress: true`. This means:
+## Related Workflows
 
-- If multiple pushes happen in quick succession, only the latest build + deploy runs
-- You may see "Cancelled" runs in the Actions tab — this is normal
+The repository also contains adjacent workflows that are not the primary web CI/deployment path, including:
 
-The `promote-to-prod.yml` workflow does **not** cancel in-progress promotions to prevent accidental double-deploys.
+- `deploy-blog-content.yml`
+- `deploy-worker.yml`
+- `notify-release.yml`
+- `base-branch-guard.yml`
+- `lockfile-sync.yml`
+- `daily-e2e.yml`
 
-## Troubleshooting
-
-**Staging deployed but promotion fails:**
-
-1. Check that the staging build artifact exists (Actions → staging run → Artifacts)
-2. Artifacts expire after 30 days; re-run the staging deploy if needed
-
-**Production deploy didn't update the site:**
-
-1. Check the **Actions** tab for the latest "Deploy to Cloudflare Pages" or "Promote Staging to Production" run
-2. If it failed, check the deploy step for Cloudflare API errors
-3. If it was cancelled, a newer push superseded it — wait for the latest run to finish
-
-**Staging notification went to the wrong Discord channel:**
-
-- Staging notifications use `VITE_DISCORD_WEBHOOK_URL_RELEASE`
-- Production notifications use `DISCORD_WEBHOOK_URL_PROD_DEPLOY`
+These may affect release operations around the edges, but they are not the main staged web deployment chain described above.
