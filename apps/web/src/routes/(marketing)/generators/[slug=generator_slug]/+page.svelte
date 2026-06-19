@@ -886,7 +886,8 @@
 
       <button
         type="button"
-        class="mt-1 w-full rounded-lg border border-theme-border/60 bg-theme-bg/40 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-muted transition hover:border-theme-primary/60 hover:text-theme-primary"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+        title="Randomize all options and generate a draft from the result"
         onclick={() => {
           const g = settlement.genre;
           const sizes =
@@ -912,7 +913,8 @@
           trigger();
         }}
       >
-        Surprise me
+        <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+        Surprise Me
       </button>
     {:else if data.slug === "magic-item" || data.slug === "item"}
       <SelectWithCustomOption
