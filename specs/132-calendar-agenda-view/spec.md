@@ -145,6 +145,11 @@ A user on a phone collapses the filter bar to free up vertical space for the cal
   3. **Real-world calendar** — if neither source is available, fall back to the real-world current date (`new Date()`).
      The resolution result MUST be surfaced as a reactive `calendarCurrentDate` value in `apps/web/src/lib/stores/calendar.svelte.ts` so other surfaces (world front page, activity bar entry) inherit the same starting point.
 - **FR-013**: On mobile-sized viewports, the filter bar MUST be collapsible. Collapsed is the default state on mobile. The collapsed/expanded state MUST be toggled by a visible control. When active filters are set and the bar is collapsed, the toggle control MUST show a visible indicator (e.g., a badge or icon change) so users know filters are active. On desktop-sized viewports the filter bar is always visible and the collapse control is not rendered.
+- **FR-014**: Users MUST be able to jump directly to any year by clicking the active-month title in calendar view. Clicking the title opens a drum-scroll year picker; users can drag to spin to any year, then confirm with a Go button or by clicking the highlighted year, or cancel with Cancel or Escape. The picker MUST close without changing the active year when the user cancels.
+- **FR-015**: Users MUST be able to set or update an entity's start or end date by dragging an entity card from the explorer panel onto a calendar day cell. The drop logic MUST apply the following priority: (1) if the entity has no start date, set start date; (2) else if no end date, set end date; (3) else if the dropped date is earlier than the existing start date, replace start date; (4) else if the dropped date is later than the existing end date, replace end date.
+- **FR-016**: Hovering over any calendar entry (month grid or overflow popup) MUST display a tooltip preview showing the entity's detail using the same `GraphTooltip` component as graph view.
+- **FR-017**: When the entity sidebar is open in calendar view and the selected entity has a date, the date displayed in the sidebar MUST include a clickable control that navigates the calendar to the year and month of that date. This MUST resolve both legacy `TemporalMetadata` (`.month` field) and modern `DateSelection` (`.unitId` resolved via `calendarEngine.getMonths()`) date formats.
+- **FR-018**: Double-clicking a calendar entry MUST open that entity in zen mode. Single-clicking MUST open the entity sidebar panel (or zen mode on mobile). To prevent the two gestures from conflicting, a single click MUST be debounced for 220 ms; if a second click arrives within that window the pending single-click action is cancelled and the double-click (zen mode) action fires instead.
 
 ### Key Entities
 
@@ -163,6 +168,10 @@ A user on a phone collapses the filter bar to free up vertical space for the cal
 - **SC-005**: Users with 0 events see a helpful empty state with a prompt to create events.
 - **SC-006**: The view is usable on mobile screen sizes (no horizontal scroll, tappable targets).
 - **SC-007**: On mobile, the filter bar is collapsed by default; toggling it expands or collapses without horizontal overflow and the active-filter indicator is visible when filters are set.
+- **SC-008**: Users can jump to any arbitrary year via the wheel picker without navigating month-by-month.
+- **SC-009**: Dragging an entity from the explorer onto a calendar day cell updates the entity's date without any modal or confirmation dialog.
+- **SC-010**: Double-clicking a calendar entry opens zen mode; a subsequent single click (after zen mode is closed) opens the sidebar — neither action triggers the other.
+- **SC-011**: Clicking a date link in the sidebar navigates the calendar to the correct month for both legacy and modern date formats.
 
 ## Clarifications
 
@@ -179,6 +188,14 @@ A user on a phone collapses the filter bar to free up vertical space for the cal
 - Q: How should the calendar determine which month and day it opens to? → A: Use the three-level priority defined in FR-012: (1) a vault entity whose title matches "current date" / "today" / "present day" / etc. and has an exact date; (2) the vault's `currentYear` setting; (3) real-world `new Date()`. The resolved value is stored as `calendarCurrentDate` in `calendar.svelte.ts`.
 - Q: Should the collapsible filter bar apply to desktop as well as mobile? → A: Mobile only. On desktop the filter bar is always visible; the collapse control is not rendered at desktop widths.
 - Q: What should the active-filter indicator look like when the filter bar is collapsed on mobile? → A: A badge or icon change on the toggle control is sufficient; the exact visual is left to the implementation but MUST be tappable and perceivable without the filter bar open.
+
+### Session 2026-06-19
+
+- Q: For FR-014, should the year picker support fantasy calendar systems? → A: No; the picker spins through integer years only, using `timelineStore.activeYear` as the bindable value. Calendar configuration is unchanged.
+- Q: For FR-015, what if the entity already has both start and end dates and the dropped date falls between them? → A: No update is made — the date is already within the covered range. Only boundary extension (earlier than start, later than end) or initial assignment (no start, no end) triggers a write.
+- Q: For FR-016, does the tooltip appear on touch devices? → A: Hover-based tooltip is desktop-only (`onmouseenter`/`onmouseleave`); touch devices rely on tap-to-open-sidebar.
+- Q: For FR-017, what should happen if `calendarEngine.getMonths()` does not contain the `unitId`? → A: Fall back to month 1 rather than throwing; the calendar navigates to January of the correct year.
+- Q: For FR-018, is the 220 ms debounce delay user-configurable? → A: No; it is a fixed constant (`DBLCLICK_DELAY = 220`) in `entry-click.ts`.
 
 ## Assumptions
 

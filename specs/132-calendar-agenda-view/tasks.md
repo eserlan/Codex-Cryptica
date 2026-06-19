@@ -206,6 +206,26 @@ These were not in the original spec but were added during implementation and are
 
 ---
 
+## Phase 11: Calendar UX Enhancements (FR-014–018)
+
+**Purpose**: Power-user interactions — year wheel, drag-to-date, hover tooltip, sidebar date jump, and double-click zen mode — shipped on branch `feat/year-wheel-picker` (PR #1420, targeting `132-calendar-agenda-view`).
+
+**⚠️ SHIPPED** — Added 2026-06-19. All tasks completed.
+
+- [x] T068 [FR-014] Implement `YearWheelPicker.svelte` — iOS drum-scroll year selector opened from the active-month title button; confirm via Go button, highlighted-year click, or Enter; cancel via Cancel or Escape; close on backdrop click; `apps/web/src/lib/components/timeline/YearWheelPicker.svelte`
+- [x] T069 [FR-014] `years` array derived reactively from bound `year` prop; `$effect` syncs `selectedYear` and scroll position when `year` changes externally; dialog element focused on open for keyboard support; `onDestroy` clears scroll-end timer
+- [x] T070 [FR-014] Write `YearWheelPicker.test.ts` — 5 tests covering render, Cancel, Go, Escape, Enter, and highlighted-year-click confirm paths; `apps/web/src/lib/components/timeline/YearWheelPicker.test.ts`
+- [x] T071 [FR-015] Wire drag-and-drop onto `CalendarMonthView` day cells: `ondragover`, `ondragenter`, `ondragleave`, `ondrop` handlers in `CalendarMonthView.svelte`; drop priority logic in `+page.svelte` `handleDropEntity`
+- [x] T072 [FR-016] Add hover tooltip to `CalendarMonthView.svelte` and `CalendarDayOverflow.svelte` via `GraphTooltip` component; `onEntryHover`/`onEntryLeave` callbacks thread through overflow popup
+- [x] T073 [FR-017] Extend `DetailTabs.svelte` with `onDateClick?: (year, month) => void` prop and `getNavigableDate()` helper resolving both `TemporalMetadata` (`.month`) and `DateSelection` (`.unitId` via `calendarEngine.getMonths()`); render clickable calendar-search icon next to date text when prop is provided
+- [x] T074 [FR-017] Thread `onDateClick` through `EntityDetailPanel.svelte` and wire it in `+page.svelte` to set `timelineStore.activeYear` / `timelineStore.activeMonth`
+- [x] T075 [FR-017] Write `DetailTabs.navigate.test.ts` — 7 tests covering no-button-without-dates, no-button-without-callback, legacy date, DateSelection unitId, unknown unitId fallback, and start_date priority; `apps/web/src/lib/components/entity-detail/DetailTabs.navigate.test.ts`
+- [x] T076 [FR-018] Add 220 ms click/dblclick debounce; extract shared factory `createEntryClickHandlers(onSingleClick, onDoubleClick)` with `dispose()` teardown into `apps/web/src/lib/components/timeline/entry-click.ts`; apply in `CalendarMonthView.svelte`, `CalendarAgendaView.svelte`, `CalendarDayOverflow.svelte`; call `dispose()` in `onDestroy` in each component
+- [x] T077 Apply theme texture overlay (`--bg-texture-overlay`) to calendar page root div; replace hardcoded colours with semantic Tailwind tokens throughout calendar components
+- [x] T078 Update `help-content.ts` hint for `world-chronology` to document year wheel picker, drag-to-set-date, click-date-to-navigate, double-click-for-zen-mode, and include-undated toggle
+
+---
+
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies; can begin immediately.
