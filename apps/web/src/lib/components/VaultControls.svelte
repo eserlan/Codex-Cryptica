@@ -38,12 +38,14 @@
   // skip here so the flag isn't consumed before the layout effect runs.
   $effect(() => {
     if (modalUIStore.pendingCreateEntity && !layoutUIStore.isMobile) {
-      prefillStartDate = modalUIStore.pendingCreateDate;
-      modalUIStore.pendingCreateDate = null;
       modalUIStore.pendingCreateEntity = false;
       if (!vault.isGuest) {
+        prefillStartDate = modalUIStore.pendingCreateDate;
+        modalUIStore.pendingCreateDate = null;
         createError = null;
         showForm = true;
+      } else {
+        modalUIStore.pendingCreateDate = null;
       }
     }
   });
@@ -575,7 +577,8 @@
         <div
           class="flex items-center gap-1.5 rounded px-2 py-1 text-[10px] bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
         >
-          <span class="icon-[lucide--calendar] h-3 w-3"></span>
+          <span class="icon-[lucide--calendar] h-3 w-3" aria-hidden="true"
+          ></span>
           Start date: {prefillStartDate.year}-{String(
             prefillStartDate.month,
           ).padStart(2, "0")}-{String(prefillStartDate.day).padStart(2, "0")}

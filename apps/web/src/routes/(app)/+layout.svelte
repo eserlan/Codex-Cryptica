@@ -409,6 +409,7 @@
   $effect(() => {
     if (modalUIStore.pendingCreateEntity && layoutUIStore.isMobile) {
       modalUIStore.pendingCreateEntity = false;
+      modalUIStore.pendingCreateDate = null;
       modalUIStore.showMobileCreateSheet = true;
     }
   });
