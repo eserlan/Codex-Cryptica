@@ -20,6 +20,7 @@
     editType = $bindable(),
     idPrefix,
     canGuestEdit = false,
+    onDateClick,
   } = $props<{
     entity: Entity;
     activeTab: EntityDetailTab;
@@ -27,7 +28,23 @@
     editType: string;
     idPrefix: string;
     canGuestEdit?: boolean;
+    onDateClick?: (year: number, month: number) => void;
   }>();
+
+  function getNavigableDate(): { year: number; month: number } | null {
+    const d = entity.start_date ?? entity.date ?? entity.end_date;
+    if (!d || d.year === undefined) return null;
+    if ("precision" in d && d.unitId) {
+      const months = calendarEngine.getMonths(calendarStore.config);
+      const idx = months.findIndex((m) => m.id === d.unitId);
+      return { year: d.year, month: idx >= 0 ? idx + 1 : 1 };
+    }
+    const month =
+      "month" in d && (d as { month?: number }).month !== undefined
+        ? (d as { month?: number }).month!
+        : 1;
+    return { year: d.year, month };
+  }
 
   let tabIds = $derived.by(() => createEntityDetailTabIds(idPrefix).tabIds);
   let panelIds = $derived.by(() => createEntityDetailTabIds(idPrefix).panelIds);
@@ -120,7 +137,23 @@
       style:color="var(--theme-meta-text)"
     >
       {entity.type}{#if dateText}
-        <span class="font-mono font-normal normal-case ml-2">({dateText})</span>
+        {@const _nav = onDateClick ? getNavigableDate() : null}
+        {#if _nav}
+          <button
+            type="button"
+            class="font-mono font-normal normal-case ml-2 hover:text-theme-primary transition-colors cursor-pointer"
+            title="Go to this date in the calendar"
+            onclick={() => onDateClick!(_nav.year, _nav.month)}
+            >({dateText}
+            <span
+              class="icon-[lucide--calendar-search] inline-block h-3 w-3 align-middle opacity-60"
+            ></span>)</button
+          >
+        {:else}
+          <span class="font-mono font-normal normal-case ml-2"
+            >({dateText})</span
+          >
+        {/if}
       {/if}
     </div>
   {/if}

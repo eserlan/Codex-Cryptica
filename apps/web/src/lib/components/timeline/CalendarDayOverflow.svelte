@@ -1,17 +1,38 @@
 <script lang="ts">
   import type { CalendarEventEntry } from "chronology-engine";
+  import { onDestroy } from "svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { createEntryClickHandlers } from "./entry-click";
 
   let {
     entries,
     label,
     onSelect,
+    onEntryHover,
+    onEntryLeave,
   }: {
     entries: CalendarEventEntry[];
     label: string;
     onSelect: (entry: CalendarEventEntry) => void;
+    onEntryHover?: (entityId: string, e: MouseEvent) => void;
+    onEntryLeave?: () => void;
   } = $props();
 
   let isOpen = $state(false);
+
+  const entryHandlers = createEntryClickHandlers(
+    (entry) => {
+      isOpen = false;
+      onSelect(entry);
+    },
+    (id) => {
+      isOpen = false;
+      modalUIStore.openZenMode(id);
+    },
+  );
+  const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
+    entryHandlers;
+  onDestroy(() => entryHandlers.dispose());
 </script>
 
 <div class="relative">
@@ -41,10 +62,11 @@
           <button
             type="button"
             class="rounded-xl px-2 py-2 text-left text-xs text-theme-text transition hover:bg-theme-primary/10 hover:text-theme-primary"
-            onclick={() => {
-              isOpen = false;
-              onSelect(entry);
-            }}
+            onclick={() => handleEntryClick(entry)}
+            ondblclick={() => handleEntryDblClick(entry.entityId)}
+            onmouseenter={(e) => onEntryHover?.(entry.entityId, e)}
+            onmousemove={(e) => onEntryHover?.(entry.entityId, e)}
+            onmouseleave={() => onEntryLeave?.()}
           >
             <span class="block font-bold">{entry.title}</span>
             <span

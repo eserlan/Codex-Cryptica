@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onDestroy, tick } from "svelte";
 
   let {
     year = $bindable(),
@@ -13,20 +13,28 @@
   const VISIBLE = 5;
   const RANGE = 300;
 
-  const years = Array.from(
-    { length: RANGE * 2 + 1 },
-    (_, i) => year - RANGE + i,
+  // Recompute when year changes so the list stays centred on the current year.
+  const years = $derived(
+    Array.from({ length: RANGE * 2 + 1 }, (_, i) => year - RANGE + i),
   );
 
   let drum = $state<HTMLElement>();
+  let dialogEl = $state<HTMLElement>();
   let selectedYear = $state(year);
   let scrollEndTimer: ReturnType<typeof setTimeout>;
 
-  onMount(async () => {
-    await tick();
-    if (!drum) return;
-    const idx = years.indexOf(selectedYear);
-    drum.scrollTop = idx * ITEM_HEIGHT;
+  onDestroy(() => clearTimeout(scrollEndTimer));
+
+  // Sync selectedYear + scroll position whenever the bound year prop changes
+  // (e.g. external navigation while the picker is open). year is always at
+  // index RANGE in the derived years array, so the scroll offset is constant.
+  $effect(() => {
+    const target = year;
+    selectedYear = target;
+    tick().then(() => {
+      dialogEl?.focus();
+      if (drum) drum.scrollTop = RANGE * ITEM_HEIGHT;
+    });
   });
 
   function onScroll() {
@@ -68,9 +76,11 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
+  bind:this={dialogEl}
   class="flex flex-col items-center rounded-2xl border border-theme-border bg-theme-surface shadow-2xl shadow-black/40 overflow-hidden w-36"
   role="dialog"
   aria-label="Select year"
+  tabindex="-1"
   onkeydown={onKeydown}
 >
   <!-- gradient masks -->
@@ -98,8 +108,12 @@
             ? 0.3
             : 1};"
           onclick={() => {
-            selectedYear = y;
-            scrollTo(y);
+            if (y === selectedYear) {
+              confirm();
+            } else {
+              selectedYear = y;
+              scrollTo(y);
+            }
           }}
         >
           {y}

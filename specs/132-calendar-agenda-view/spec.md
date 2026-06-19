@@ -2,8 +2,26 @@
 
 **Feature Branch**: `132-calendar-agenda-view`
 **Created**: 2026-06-17
-**Status**: Draft
+**Merged**: 2026-06-19 → `staging`
+**Status**: Shipped
 **Input**: User description: "https://github.com/eserlan/Codex-Cryptica/issues/1408"
+
+## Implementation Notes (post-merge)
+
+### Deviations from spec
+
+- **FR-009 (world front-page calendar section)**: The embedded `World Calendar` section was removed from `FrontPage.svelte` after initial implementation — it added visual noise on mobile without enough value. The chronology route and sidebar activity bar entry remain as specified.
+- **Filter state shape**: `CalendarFilterState.entityType: string|null` and `labelIds: string[]` were implemented as `typeFilters: Set<string>` and `labelFilters: Set<string>` to support multi-select from day one (same pattern as `EntityListFilterBar`).
+
+### Beyond-spec additions shipped in this branch
+
+- **`epochWeekday` on `WorldCalendar`**: New optional field anchoring the epoch day 0 to a specific weekday column, enabling correct grid alignment for custom fantasy calendars. `DEFAULT_CALENDAR` sets `epochWeekday: 1` (Monday). Exported from `chronology-engine`.
+- **Entity thumbnail in `TimelineEntryItem`**: Resolved via `vault.resolveImageUrl()` with a stale-flag `$effect`, same pattern as `EntityCard`. Replaces the icon placeholder.
+- **Zen mode on mobile entity tap**: Tapping a timeline/calendar entry on a viewport `< 768px` calls `modalUIStore.openZenMode(entityId)` instead of setting `vault.selectedEntityId` (the entity panel is unusable on mobile). Applies in `TimelineEntryItem`, `CalendarMonthView`, `CalendarAgendaView`, and the timeline route.
+- **FR-012 race condition fix**: `calendarStore.init()` reads `presentYear` from IndexedDB asynchronously. All three call sites (`+page.svelte`, `FrontPage.svelte`, and `app-init.ts` vault-switched handler) now `await calendarStore.init()` before calling `timelineStore.init()`.
+- **Vault-switched handler**: `app-init.ts` now listens to `vault-switched` and re-initializes both `calendarStore` and `timelineStore` (with `resetVaultGuard()`) so FR-012 resolves against the new vault's entities and settings.
+- **Compact mobile calendar grid**: Month grid uses `gap-0`, `rounded-none`, `min-h-16` cells, and suppressed type labels on small screens (`< sm`). Desktop layout is unchanged.
+- **Horizontal timeline hidden on mobile**: The Bands toggle button is `hidden md:flex`; if the mode is already `horizontal` on a small screen the vertical timeline renders instead.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -118,7 +136,6 @@ A user views the calendar on a touch device and swipes left or right to move to 
 2. **Given** a user is viewing the calendar on a touch-enabled device, **When** they swipe right across the calendar grid, **Then** the calendar navigates to the previous month.
 
 ---
-
 ### Edge Cases
 
 - What happens when the vault has no "current date" entity and no vault year setting?
@@ -157,8 +174,12 @@ A user views the calendar on a touch device and swipes left or right to move to 
   3. **Real-world calendar** — if neither source is available, fall back to the real-world current date (`new Date()`).
      The resolution result MUST be surfaced as a reactive `calendarCurrentDate` value in `apps/web/src/lib/stores/calendar.svelte.ts` so other surfaces (world front page, activity bar entry) inherit the same starting point.
 - **FR-013**: On mobile-sized viewports, the filter bar MUST be collapsible. Collapsed is the default state on mobile. The collapsed/expanded state MUST be toggled by a visible control. When active filters are set and the bar is collapsed, the toggle control MUST show a visible indicator (e.g., a badge or icon change) so users know filters are active. On desktop-sized viewports the filter bar is always visible and the collapse control is not rendered.
-- **FR-014**: System MUST allow users to drag an entity from the Entity Explorer and drop it onto a date in the calendar month grid to assign or update its date.
+- **FR-014**: Users MUST be able to set or update an entity's start or end date by dragging an entity card from the explorer panel onto a calendar day cell. The drop logic MUST apply the following priority: (1) if the entity has no start date, set start date; (2) else if no end date, set end date; (3) else if the dropped date is earlier than the existing start date, replace start date; (4) else if the dropped date is later than the existing end date, replace end date.
 - **FR-015**: System MUST support horizontal touch swipe gestures on mobile devices to navigate between previous and next months in the calendar view.
+- **FR-016**: Users MUST be able to jump directly to any year by clicking the active-month title in calendar view. Clicking the title opens a drum-scroll year picker; users can drag to spin to any year, then confirm with a Go button or by clicking the highlighted year, or cancel with Cancel or Escape. The picker MUST close without changing the active year when the user cancels.
+- **FR-017**: Hovering over any calendar entry (month grid or overflow popup) MUST display a tooltip preview showing the entity's detail using the same `GraphTooltip` component as graph view.
+- **FR-018**: When the entity sidebar is open in calendar view and the selected entity has a date, the date displayed in the sidebar MUST include a clickable control that navigates the calendar to the year and month of that date. This MUST resolve both legacy `TemporalMetadata` (`.month` field) and modern `DateSelection` (`.unitId` resolved via `calendarEngine.getMonths()`) date formats.
+- **FR-019**: Double-clicking a calendar entry MUST open that entity in zen mode. Single-clicking MUST open the entity sidebar panel (or zen mode on mobile). To prevent the two gestures from conflicting, a single click MUST be debounced for 220 ms; if a second click arrives within that window the pending single-click action is cancelled and the double-click (zen mode) action fires instead.
 
 ### Key Entities
 
@@ -179,6 +200,9 @@ A user views the calendar on a touch device and swipes left or right to move to 
 - **SC-007**: On mobile, the filter bar is collapsed by default; toggling it expands or collapses without horizontal overflow and the active-filter indicator is visible when filters are set.
 - **SC-008**: Users can drag an entity and drop it onto a date cell in the calendar to assign that date to the entity.
 - **SC-009**: Users on touch devices can swipe left to go to the next month and swipe right to go to the previous month.
+- **SC-010**: Users can jump to any arbitrary year via the wheel picker without navigating month-by-month.
+- **SC-011**: Double-clicking a calendar entry opens zen mode; a subsequent single click (after zen mode is closed) opens the sidebar — neither action triggers the other.
+- **SC-012**: Clicking a date link in the sidebar navigates the calendar to the correct month for both legacy and modern date formats.
 
 ## Clarifications
 
@@ -195,6 +219,14 @@ A user views the calendar on a touch device and swipes left or right to move to 
 - Q: How should the calendar determine which month and day it opens to? → A: Use the three-level priority defined in FR-012: (1) a vault entity whose title matches "current date" / "today" / "present day" / etc. and has an exact date; (2) the vault's `currentYear` setting; (3) real-world `new Date()`. The resolved value is stored as `calendarCurrentDate` in `calendar.svelte.ts`.
 - Q: Should the collapsible filter bar apply to desktop as well as mobile? → A: Mobile only. On desktop the filter bar is always visible; the collapse control is not rendered at desktop widths.
 - Q: What should the active-filter indicator look like when the filter bar is collapsed on mobile? → A: A badge or icon change on the toggle control is sufficient; the exact visual is left to the implementation but MUST be tappable and perceivable without the filter bar open.
+
+### Session 2026-06-19
+
+- Q: For FR-014, what if the entity already has both start and end dates and the dropped date falls between them? → A: No update is made — the date is already within the covered range. Only boundary extension (earlier than start, later than end) or initial assignment (no start, no end) triggers a write.
+- Q: For FR-016, should the year picker support fantasy calendar systems? → A: No; the picker spins through integer years only, using `timelineStore.activeYear` as the bindable value. Calendar configuration is unchanged.
+- Q: For FR-017, does the tooltip appear on touch devices? → A: Hover-based tooltip is desktop-only (`onmouseenter`/`onmouseleave`); touch devices rely on tap-to-open-sidebar.
+- Q: For FR-018, what should happen if `calendarEngine.getMonths()` does not contain the `unitId`? → A: Fall back to month 1 rather than throwing; the calendar navigates to January of the correct year.
+- Q: For FR-019, is the 220 ms debounce delay user-configurable? → A: No; it is a fixed constant (`DBLCLICK_DELAY = 220`) in `entry-click.ts`.
 
 ## Assumptions
 

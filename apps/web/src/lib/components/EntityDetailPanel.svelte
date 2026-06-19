@@ -27,9 +27,14 @@
   } from "$lib/stores/ui/layout-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
-  let { entity: _entity, onClose } = $props<{
+  let {
+    entity: _entity,
+    onClose,
+    onDateClick,
+  } = $props<{
     entity: Entity | null;
     onClose: () => void;
+    onDateClick?: (year: number, month: number) => void;
   }>();
 
   const tabInstanceId = $props.id();
@@ -438,6 +443,7 @@
                 bind:editType
                 idPrefix={tabInstanceId}
                 {canGuestEdit}
+                {onDateClick}
               />
             </div>
 
