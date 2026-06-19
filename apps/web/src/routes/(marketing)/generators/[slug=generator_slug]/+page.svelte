@@ -15,7 +15,10 @@
   import NameFormFields from "$lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "$lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "$lib/components/seo/PantheonFormFields.svelte";
-  import { shouldSyncGeneratorTheme } from "./generator-theme";
+  import {
+    resolveHubGeneratorGenre,
+    shouldSyncGeneratorTheme,
+  } from "./generator-theme";
   import {
     generatorEngine,
     npcConfig,
@@ -54,6 +57,7 @@
   const backLabel = $derived(
     (hubContext.theme && HUB_LABELS[hubContext.theme]) ?? "All generators",
   );
+  const initialHubGenre = resolveHubGeneratorGenre(hubContext.theme);
 
   type SlugMetaEntry = {
     pageTitle: string;
@@ -361,8 +365,11 @@
   });
 
   let nation = $state({
-    genre: nationConfig.genres[0],
-    polityType: nationConfig.polityTypesByGenre[nationConfig.genres[0]][0],
+    genre: initialHubGenre ?? nationConfig.genres[0],
+    polityType:
+      nationConfig.polityTypesByGenre[
+        initialHubGenre ?? nationConfig.genres[0]
+      ][0],
     governmentStyle: nationConfig.governmentStyles[0],
     scale: nationConfig.scales[2],
     conflictLevel: nationConfig.conflictLevels[0],
@@ -370,11 +377,17 @@
   });
 
   let socialHub = $state({
-    genre: socialHubConfig.genres[0],
-    venueType: socialHubConfig.venueTypesByGenre[socialHubConfig.genres[0]][0],
+    genre: initialHubGenre ?? socialHubConfig.genres[0],
+    venueType:
+      socialHubConfig.venueTypesByGenre[
+        initialHubGenre ?? socialHubConfig.genres[0]
+      ][0],
     atmosphere: socialHubConfig.atmospheres[0],
     wealthLevel: socialHubConfig.wealthLevels[2],
-    clientele: socialHubConfig.clientelesByGenre[socialHubConfig.genres[0]][0],
+    clientele:
+      socialHubConfig.clientelesByGenre[
+        initialHubGenre ?? socialHubConfig.genres[0]
+      ][0],
     campaignContext: "",
   });
 
@@ -478,10 +491,14 @@
   onMount(() => {
     // Genre-driven generators derive their theme from the genre dropdown, not localStorage
     if (data.slug === "nation") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre) nation.genre = hubGenre;
       activeTheme = socialHubGenreToTheme[nation.genre] ?? "Classic Fantasy";
       return;
     }
     if (data.slug === "social-hub") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre) socialHub.genre = hubGenre;
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
       return;
     }

@@ -17,6 +17,20 @@ const GENERATOR_SLUGS = new Set([
   "god-generator",
 ]);
 
+const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
+  fantasy: "Fantasy",
+  cyberpunk: "Cyberpunk",
+  "sci-fi": "Sci-Fi",
+  "post-apocalyptic": "Post-Apocalyptic",
+  modern: "Modern",
+  vampire: "Horror",
+};
+
 export function shouldSyncGeneratorTheme(slug: string) {
   return GENERATOR_SLUGS.has(slug);
+}
+
+export function resolveHubGeneratorGenre(theme: string | null): string | null {
+  if (!theme) return null;
+  return HUB_THEME_TO_GENERATOR_GENRE[theme] ?? null;
 }
