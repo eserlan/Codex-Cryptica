@@ -13,6 +13,8 @@
     month,
     onSelect,
     onDropEntity,
+    onNextMonth,
+    onPrevMonth,
   }: {
     month: CalendarMonthViewModel;
     onSelect: (entry: CalendarEventEntry) => void;
@@ -20,9 +22,33 @@
       entityId: string,
       date: { year: number; month: number; day: number },
     ) => void;
+    onNextMonth?: () => void;
+    onPrevMonth?: () => void;
   } = $props();
 
   let dragOverDay = $state<string | null>(null);
+
+  let touchStartX = $state(0);
+  let touchEndX = $state(0);
+
+  function handleTouchStart(e: TouchEvent) {
+    touchStartX = e.changedTouches[0].screenX;
+  }
+
+  function handleTouchEnd(e: TouchEvent) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }
+
+  function handleSwipe() {
+    const minSwipeDistance = 50;
+    const diff = touchEndX - touchStartX;
+    if (diff > minSwipeDistance) {
+      onPrevMonth?.();
+    } else if (diff < -minSwipeDistance) {
+      onNextMonth?.();
+    }
+  }
 
   /** True when this day cell matches the FR-012 resolved current date (all three fields). */
   function isToday(year: number, monthNum: number, day: number): boolean {
@@ -48,7 +74,13 @@
   }
 </script>
 
-<div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex flex-col gap-0 sm:gap-3"
+  data-testid="calendar-month-view"
+  ontouchstart={handleTouchStart}
+  ontouchend={handleTouchEnd}
+>
   <div
     class="grid grid-cols-7 gap-0 sm:gap-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-theme-muted"
   >
