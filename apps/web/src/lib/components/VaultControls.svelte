@@ -13,6 +13,7 @@
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
+  import { tick } from "svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -32,6 +33,7 @@
     month: number;
     day: number;
   } | null>(null);
+  let titleInputEl = $state<HTMLInputElement | null>(null);
 
   // Open the create form when an empty-state CTA requests it.
   // On mobile, the layout intercepts this flag first and opens a bottom sheet;
@@ -44,6 +46,7 @@
         modalUIStore.pendingCreateDate = null;
         createError = null;
         showForm = true;
+        tick().then(() => titleInputEl?.focus());
       } else {
         modalUIStore.pendingCreateDate = null;
       }
@@ -551,6 +554,7 @@
         : 'flex-wrap'} gap-2 p-3 bg-chrome-surface rounded border border-chrome-border animate-in slide-in-from-top-2 fade-in"
     >
       <input
+        bind:this={titleInputEl}
         bind:value={newTitle}
         aria-label={`New ${themeStore.jargon.entity} Title`}
         placeholder={`${themeStore.jargon.entity} Title...`}

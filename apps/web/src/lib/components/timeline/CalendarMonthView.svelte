@@ -12,6 +12,8 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { createEntryClickHandlers } from "./entry-click";
 
+  const CELL_DBLCLICK_DELAY = 260;
+
   const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   let {
@@ -121,6 +123,30 @@
   const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
     entryHandlers;
   onDestroy(() => entryHandlers.dispose());
+
+  // Per-cell click counters for reliable double-click detection on <section>
+  // elements (native ondblclick is unreliable on non-interactive elements).
+  const cellTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  onDestroy(() => cellTimers.forEach(clearTimeout));
+
+  function handleCellClick(
+    e: MouseEvent,
+    key: string,
+    date: { year: number; month: number; day: number },
+  ) {
+    if (!onCreateAtDate) return;
+    const target = e.target instanceof Element ? e.target : null;
+    if (target?.closest("[data-entry]") || target?.closest("[data-overflow]"))
+      return;
+    if (cellTimers.has(key)) {
+      clearTimeout(cellTimers.get(key)!);
+      cellTimers.delete(key);
+      onCreateAtDate(date);
+    } else {
+      const t = setTimeout(() => cellTimers.delete(key), CELL_DBLCLICK_DELAY);
+      cellTimers.set(key, t);
+    }
+  }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -184,16 +210,14 @@
               });
             }
           }}
-          ondblclick={(e) => {
-            if (!onCreateAtDate || !day.date.day) return;
-            const target = e.target as Element;
-            if (target.closest("[data-entry]")) return;
-            onCreateAtDate({
-              year: day.date.year,
-              month: day.date.month,
-              day: day.date.day,
-            });
-          }}
+          onclick={day.date.day && day.inCurrentMonth
+            ? (e) =>
+                handleCellClick(e, key, {
+                  year: day.date.year,
+                  month: day.date.month,
+                  day: day.date.day!,
+                })
+            : undefined}
         >
           {#if isDropTarget}
             <div
