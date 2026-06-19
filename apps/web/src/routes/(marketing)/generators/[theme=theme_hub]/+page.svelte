@@ -438,7 +438,9 @@
       {#each config.cards as card (card.slug)}
         <li>
           <a
-            href="{cleanBase}/generators/{card.slug}"
+            href="{cleanBase}/generators/{card.slug === 'random'
+              ? card.slug
+              : `${data.theme}/${card.slug}`}"
             onclick={() => {
               themeStore.setTheme(config.localStorageId);
               hubContext.set(data.theme);
