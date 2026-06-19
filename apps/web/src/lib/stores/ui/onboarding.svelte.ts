@@ -6,6 +6,7 @@ import {
 
 export class OnboardingStore {
   private persistence: UIPersistence;
+  private getNow: () => number;
 
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
@@ -15,8 +16,12 @@ export class OnboardingStore {
   showChangelog = $state(false);
   dismissedMobileGraphCoachMarks = $state(false);
 
-  constructor(persistence: UIPersistence = new DefaultPersistence()) {
+  constructor(
+    persistence: UIPersistence = new DefaultPersistence(),
+    getNow: () => number = Date.now,
+  ) {
     this.persistence = persistence;
+    this.getNow = getNow;
 
     this.skipWelcomeScreen = this.persistence.read(
       UI_STORAGE_KEYS.SKIP_LANDING,
@@ -35,7 +40,7 @@ export class OnboardingStore {
       null,
     );
     if (worldDismissed !== null) {
-      const now = Date.now();
+      const now = this.getNow();
       if (Number.isNaN(worldDismissed) || worldDismissed > now) {
         this.persistence.remove(UI_STORAGE_KEYS.WORLD_PAGE_DISMISSED_AT);
       } else if (now - worldDismissed < 24 * 60 * 60 * 1000) {
@@ -81,7 +86,7 @@ export class OnboardingStore {
 
   dismissWorldPage() {
     this.dismissedWorldPage = true;
-    const now = Date.now();
+    const now = this.getNow();
     this.worldPageDismissedAt = now;
     this.persistence.write(
       UI_STORAGE_KEYS.WORLD_PAGE_DISMISSED_AT,
