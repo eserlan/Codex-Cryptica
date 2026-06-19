@@ -163,6 +163,11 @@
                   </button>
 
                   {#if showYearPicker}
+                    <div
+                      class="fixed inset-0 z-40"
+                      role="presentation"
+                      onclick={() => (showYearPicker = false)}
+                    ></div>
                     <div class="absolute left-0 top-full mt-2 z-50">
                       <YearWheelPicker
                         bind:year={timelineStore.activeYear}
