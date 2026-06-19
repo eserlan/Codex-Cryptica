@@ -1,7 +1,7 @@
 <script lang="ts">
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { isEntityVisible } from "schema";
+  import { isEntityVisible, type Entity } from "schema";
   import GuestChatBubble from "./GuestChatBubble.svelte";
   import { tick } from "svelte";
 
@@ -9,7 +9,7 @@
   // ⚡ Bolt Optimization: Replace Object.values(vault.entities) and .filter with an imperative
   // loop over vault.allEntities to prevent array allocation on every keystroke/reactivity tick.
   const enabledCharacters = $derived.by(() => {
-    const results = [];
+    const results: Entity[] = [];
     const entities = vault.allEntities || [];
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
