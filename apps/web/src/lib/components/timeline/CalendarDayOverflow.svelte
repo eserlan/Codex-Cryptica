@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CalendarEventEntry } from "chronology-engine";
+  import { onDestroy } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { createEntryClickHandlers } from "./entry-click";
 
@@ -19,17 +20,19 @@
 
   let isOpen = $state(false);
 
+  const entryHandlers = createEntryClickHandlers(
+    (entry) => {
+      isOpen = false;
+      onSelect(entry);
+    },
+    (id) => {
+      isOpen = false;
+      modalUIStore.openZenMode(id);
+    },
+  );
   const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
-    createEntryClickHandlers(
-      (entry) => {
-        isOpen = false;
-        onSelect(entry);
-      },
-      (id) => {
-        isOpen = false;
-        modalUIStore.openZenMode(id);
-      },
-    );
+    entryHandlers;
+  onDestroy(() => entryHandlers.dispose());
 </script>
 
 <div class="relative">

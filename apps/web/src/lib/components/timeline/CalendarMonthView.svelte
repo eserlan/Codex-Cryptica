@@ -8,6 +8,7 @@
   import GraphTooltip from "$lib/components/graph/GraphTooltip.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { onDestroy } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { createEntryClickHandlers } from "./entry-click";
 
@@ -66,11 +67,13 @@
     return `${year}-${month}-${day}`;
   }
 
+  const entryHandlers = createEntryClickHandlers(
+    (entry) => onSelect(entry),
+    (id) => modalUIStore.openZenMode(id),
+  );
   const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
-    createEntryClickHandlers(
-      (entry) => onSelect(entry),
-      (id) => modalUIStore.openZenMode(id),
-    );
+    entryHandlers;
+  onDestroy(() => entryHandlers.dispose());
 </script>
 
 <div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">

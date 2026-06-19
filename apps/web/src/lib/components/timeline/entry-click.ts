@@ -8,7 +8,7 @@ const DBLCLICK_DELAY = 220;
  * second click arrives within that window the timer is cancelled and the
  * dblclick action fires instead.
  *
- * Pass side-effects (e.g. closing a popup) inside the callbacks themselves.
+ * Call dispose() in onDestroy to cancel any pending timer on component teardown.
  */
 export function createEntryClickHandlers(
   onSingleClick: (entry: CalendarEventEntry) => void,
@@ -30,6 +30,12 @@ export function createEntryClickHandlers(
         timer = null;
       }
       onDoubleClick(entityId);
+    },
+    dispose() {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
     },
   };
 }
