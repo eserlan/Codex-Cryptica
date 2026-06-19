@@ -102,6 +102,7 @@
     class="fixed inset-0 w-full h-full bg-black/80 z-[100] backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
     onclick={close}
     onkeydown={(e) => e.key === "Escape" && close()}
+    onpointerdown={(e) => e.preventDefault()}
     transition:fade
   ></button>
 

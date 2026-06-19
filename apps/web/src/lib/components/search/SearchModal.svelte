@@ -278,6 +278,8 @@
       class="{dialogClass} relative z-10"
       role="dialog"
       aria-modal="true"
+      tabindex="-1"
+      onkeydown={handleKeydown}
     >
       <!-- Input Header -->
       <div class="p-4 border-b border-chrome-border">
