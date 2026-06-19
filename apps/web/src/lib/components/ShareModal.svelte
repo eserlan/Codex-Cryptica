@@ -75,19 +75,22 @@
 
 <svelte:window onkeydown={onKeyDown} />
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
-  class="fixed inset-0 bg-black/80 flex items-center justify-center z-[90] p-4"
-  onclick={close}
+  class="fixed inset-0 flex items-center justify-center z-[90] p-4"
 >
+  <!-- Backdrop -->
+  <button
+    type="button"
+    aria-label="Close dialog"
+    class="absolute inset-0 w-full h-full bg-black/80 focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
+    onclick={close}
+  ></button>
   <div
     role="dialog"
     aria-modal="true"
     aria-labelledby="share-modal-title"
     tabindex="-1"
-    class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
-    onclick={(e) => e.stopPropagation()}
+    class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300 z-10"
   >
     <button
       class="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors"
