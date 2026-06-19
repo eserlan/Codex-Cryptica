@@ -89,6 +89,21 @@ A user on a phone collapses the filter bar to free up vertical space for the cal
 
 ---
 
+### User Story 6 - Drag and Drop Entities to Calendar (Priority: P2)
+
+A user drags an entity from the Entity Explorer and drops it onto a specific date in the calendar month grid to quickly assign or update the date for that entity.
+
+**Why this priority**: Drag and drop provides a highly intuitive and frictionless way to build a timeline, rather than manually typing dates into forms.
+
+**Independent Test**: Can be tested by opening the Entity Explorer alongside the calendar, dragging an entity, and dropping it on a date cell to verify the entity's date is updated.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user is viewing the calendar month grid and has the Entity Explorer open, **When** they drag an entity over a valid date cell, **Then** the date cell visually indicates it is a valid drop target.
+2. **Given** a user has dragged an entity over a date cell, **When** they drop the entity, **Then** the entity's date is updated to match the target cell and it immediately appears on the calendar.
+
+---
+
 ### Edge Cases
 
 - What happens when the vault has no "current date" entity and no vault year setting?
@@ -127,6 +142,7 @@ A user on a phone collapses the filter bar to free up vertical space for the cal
   3. **Real-world calendar** — if neither source is available, fall back to the real-world current date (`new Date()`).
      The resolution result MUST be surfaced as a reactive `calendarCurrentDate` value in `apps/web/src/lib/stores/calendar.svelte.ts` so other surfaces (world front page, activity bar entry) inherit the same starting point.
 - **FR-013**: On mobile-sized viewports, the filter bar MUST be collapsible. Collapsed is the default state on mobile. The collapsed/expanded state MUST be toggled by a visible control. When active filters are set and the bar is collapsed, the toggle control MUST show a visible indicator (e.g., a badge or icon change) so users know filters are active. On desktop-sized viewports the filter bar is always visible and the collapse control is not rendered.
+- **FR-014**: System MUST allow users to drag an entity from the Entity Explorer and drop it onto a date in the calendar month grid to assign or update its date.
 
 ### Key Entities
 
@@ -145,6 +161,7 @@ A user on a phone collapses the filter bar to free up vertical space for the cal
 - **SC-005**: Users with 0 events see a helpful empty state with a prompt to create events.
 - **SC-006**: The view is usable on mobile screen sizes (no horizontal scroll, tappable targets).
 - **SC-007**: On mobile, the filter bar is collapsed by default; toggling it expands or collapses without horizontal overflow and the active-filter indicator is visible when filters are set.
+- **SC-008**: Users can drag an entity and drop it onto a date cell in the calendar to assign that date to the entity.
 
 ## Clarifications
 
