@@ -5,10 +5,14 @@
     entries,
     label,
     onSelect,
+    onEntryHover,
+    onEntryLeave,
   }: {
     entries: CalendarEventEntry[];
     label: string;
     onSelect: (entry: CalendarEventEntry) => void;
+    onEntryHover?: (entityId: string, e: MouseEvent) => void;
+    onEntryLeave?: () => void;
   } = $props();
 
   let isOpen = $state(false);
@@ -45,6 +49,9 @@
               isOpen = false;
               onSelect(entry);
             }}
+            onmouseenter={(e) => onEntryHover?.(entry.entityId, e)}
+            onmousemove={(e) => onEntryHover?.(entry.entityId, e)}
+            onmouseleave={() => onEntryLeave?.()}
           >
             <span class="block font-bold">{entry.title}</span>
             <span
