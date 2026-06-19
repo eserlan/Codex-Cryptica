@@ -29,23 +29,38 @@
   let dragOverDay = $state<string | null>(null);
 
   let touchStartX = $state(0);
+  let touchStartY = $state(0);
   let touchEndX = $state(0);
+  let touchEndY = $state(0);
 
   function handleTouchStart(e: TouchEvent) {
-    touchStartX = e.changedTouches[0].screenX;
+    const touch = e.changedTouches[0];
+    touchStartX = touch?.clientX ?? 0;
+    touchStartY = touch?.clientY ?? 0;
   }
 
   function handleTouchEnd(e: TouchEvent) {
-    touchEndX = e.changedTouches[0].screenX;
+    const touch = e.changedTouches[0];
+    touchEndX = touch?.clientX ?? 0;
+    touchEndY = touch?.clientY ?? 0;
     handleSwipe();
   }
 
   function handleSwipe() {
     const minSwipeDistance = 50;
-    const diff = touchEndX - touchStartX;
-    if (diff > minSwipeDistance) {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    if (
+      Math.abs(deltaX) <= minSwipeDistance ||
+      Math.abs(deltaX) <= Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    if (deltaX > 0) {
       onPrevMonth?.();
-    } else if (diff < -minSwipeDistance) {
+    } else {
       onNextMonth?.();
     }
   }

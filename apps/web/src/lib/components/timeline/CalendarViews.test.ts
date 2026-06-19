@@ -18,6 +18,29 @@ const exactEntry = {
   labels: ["royal"],
 };
 
+const singleWeekMonth = {
+  year: 2026,
+  month: 6,
+  title: "June 2026",
+  weeks: [
+    {
+      days: Array.from({ length: 7 }, (_, index) => ({
+        date: { year: 2026, month: 6, day: index + 15 },
+        inCurrentMonth: true,
+        entries: index === 3 ? [exactEntry] : [],
+        overflowCount: 0,
+        hiddenEntries: [],
+      })),
+    },
+  ],
+};
+
+function touchEventPayload(x: number, y: number) {
+  return {
+    changedTouches: [{ clientX: x, clientY: y }],
+  };
+}
+
 describe("Calendar month and agenda views", () => {
   it("renders exact-dated entries in their month cell", () => {
     render(CalendarMonthView, {
@@ -131,6 +154,60 @@ describe("Calendar month and agenda views", () => {
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ entityId: "event-2" }),
     );
+  });
+
+  it("navigates to the next month on a left swipe", async () => {
+    const onNextMonth = vi.fn();
+    const onPrevMonth = vi.fn();
+    const { getByTestId } = render(CalendarMonthView, {
+      month: singleWeekMonth,
+      onSelect: vi.fn(),
+      onNextMonth,
+      onPrevMonth,
+    });
+
+    const monthView = getByTestId("calendar-month-view");
+    await fireEvent.touchStart(monthView, touchEventPayload(200, 50));
+    await fireEvent.touchEnd(monthView, touchEventPayload(120, 55));
+
+    expect(onNextMonth).toHaveBeenCalledTimes(1);
+    expect(onPrevMonth).not.toHaveBeenCalled();
+  });
+
+  it("navigates to the previous month on a right swipe", async () => {
+    const onNextMonth = vi.fn();
+    const onPrevMonth = vi.fn();
+    const { getByTestId } = render(CalendarMonthView, {
+      month: singleWeekMonth,
+      onSelect: vi.fn(),
+      onNextMonth,
+      onPrevMonth,
+    });
+
+    const monthView = getByTestId("calendar-month-view");
+    await fireEvent.touchStart(monthView, touchEventPayload(120, 50));
+    await fireEvent.touchEnd(monthView, touchEventPayload(200, 45));
+
+    expect(onPrevMonth).toHaveBeenCalledTimes(1);
+    expect(onNextMonth).not.toHaveBeenCalled();
+  });
+
+  it("does not navigate on a primarily vertical gesture", async () => {
+    const onNextMonth = vi.fn();
+    const onPrevMonth = vi.fn();
+    const { getByTestId } = render(CalendarMonthView, {
+      month: singleWeekMonth,
+      onSelect: vi.fn(),
+      onNextMonth,
+      onPrevMonth,
+    });
+
+    const monthView = getByTestId("calendar-month-view");
+    await fireEvent.touchStart(monthView, touchEventPayload(160, 40));
+    await fireEvent.touchEnd(monthView, touchEventPayload(220, 170));
+
+    expect(onNextMonth).not.toHaveBeenCalled();
+    expect(onPrevMonth).not.toHaveBeenCalled();
   });
 
   it("renders agenda sections including undated or approximate entries", () => {
