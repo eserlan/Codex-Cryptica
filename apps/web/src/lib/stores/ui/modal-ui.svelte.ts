@@ -22,6 +22,13 @@ export class ModalUIStore {
   // (not a counter) because on mobile VaultControls mounts only after the
   // drawer opens, so it must be able to consume a request raised pre-mount.
   pendingCreateEntity = $state(false);
+  // Optional date to pre-fill start_date when pendingCreateEntity is raised
+  // from a calendar double-click. Cleared when the flag is consumed.
+  pendingCreateDate = $state<{
+    year: number;
+    month: number;
+    day: number;
+  } | null>(null);
 
   // Mobile-only bottom sheet for creating entities
   showMobileCreateSheet = $state(false);
@@ -209,7 +216,10 @@ export class ModalUIStore {
     };
   }
 
-  requestCreateEntity() {
+  requestCreateEntity(
+    date?: { year: number; month: number; day: number } | null,
+  ) {
+    this.pendingCreateDate = date ?? null;
     this.pendingCreateEntity = true;
   }
 

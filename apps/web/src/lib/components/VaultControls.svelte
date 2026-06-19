@@ -27,11 +27,19 @@
   let useTemplate = $state(true);
   let draftContent = $state("");
 
+  let prefillStartDate = $state<{
+    year: number;
+    month: number;
+    day: number;
+  } | null>(null);
+
   // Open the create form when an empty-state CTA requests it.
   // On mobile, the layout intercepts this flag first and opens a bottom sheet;
   // skip here so the flag isn't consumed before the layout effect runs.
   $effect(() => {
     if (modalUIStore.pendingCreateEntity && !layoutUIStore.isMobile) {
+      prefillStartDate = modalUIStore.pendingCreateDate;
+      modalUIStore.pendingCreateDate = null;
       modalUIStore.pendingCreateEntity = false;
       if (!vault.isGuest) {
         createError = null;
@@ -148,10 +156,12 @@
       const id = await vault.createEntity(newType, newTitle, {
         content: resolvedContent,
         lore: resolvedLore,
+        ...(prefillStartDate ? { start_date: prefillStartDate } : {}),
       });
       vault.selectedEntityId = id;
       newTitle = "";
       draftContent = "";
+      prefillStartDate = null;
       showForm = false;
     } catch (err: unknown) {
       console.error(err);
@@ -392,6 +402,7 @@
             } else {
               draftContent = "";
               newTitle = "";
+              prefillStartDate = null;
             }
           }}
           data-testid="new-entity-button"
@@ -559,6 +570,17 @@
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
+
+      {#if prefillStartDate}
+        <div
+          class="flex items-center gap-1.5 rounded px-2 py-1 text-[10px] bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
+        >
+          <span class="icon-[lucide--calendar] h-3 w-3"></span>
+          Start date: {prefillStartDate.year}-{String(
+            prefillStartDate.month,
+          ).padStart(2, "0")}-{String(prefillStartDate.day).padStart(2, "0")}
+        </div>
+      {/if}
 
       <label
         class="flex items-center gap-2 cursor-pointer group select-none text-[10px] md:text-xs text-chrome-muted hover:text-chrome-text {isVertical

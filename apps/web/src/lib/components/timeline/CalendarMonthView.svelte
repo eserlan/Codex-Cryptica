@@ -18,6 +18,7 @@
     month,
     onSelect,
     onDropEntity,
+    onCreateAtDate,
     onNextMonth,
     onPrevMonth,
   }: {
@@ -27,6 +28,11 @@
       entityId: string,
       date: { year: number; month: number; day: number },
     ) => void;
+    onCreateAtDate?: (date: {
+      year: number;
+      month: number;
+      day: number;
+    }) => void;
     onNextMonth?: () => void;
     onPrevMonth?: () => void;
   } = $props();
@@ -178,6 +184,16 @@
               });
             }
           }}
+          ondblclick={(e) => {
+            if (!onCreateAtDate || !day.date.day) return;
+            const target = e.target as Element;
+            if (target.closest("[data-entry]")) return;
+            onCreateAtDate({
+              year: day.date.year,
+              month: day.date.month,
+              day: day.date.day,
+            });
+          }}
         >
           {#if isDropTarget}
             <div
@@ -221,6 +237,7 @@
             {#each day.entries as entry (entry.entityId + entry.title)}
               <button
                 type="button"
+                data-entry
                 class="rounded-none border border-theme-primary/18 bg-theme-primary/8 px-1 py-0.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14 sm:rounded-xl sm:px-2 sm:py-1.5"
                 onclick={() => handleEntryClick(entry)}
                 ondblclick={() => handleEntryDblClick(entry.entityId)}

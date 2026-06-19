@@ -205,6 +205,8 @@
                 month={timelineStore.calendarMonthView}
                 onSelect={handleSelectEntry}
                 onDropEntity={handleDropEntity}
+                onCreateAtDate={(date) =>
+                  modalUIStore.requestCreateEntity(date)}
                 onNextMonth={() => timelineStore.nextMonth()}
                 onPrevMonth={() => timelineStore.previousMonth()}
               />
