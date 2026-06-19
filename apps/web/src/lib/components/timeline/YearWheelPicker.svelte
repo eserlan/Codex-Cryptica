@@ -21,9 +21,11 @@
   let drum = $state<HTMLElement>();
   let dialogEl = $state<HTMLElement>();
   let selectedYear = $state(year);
-  let scrollEndTimer: ReturnType<typeof setTimeout>;
+  let scrollEndTimer: ReturnType<typeof setTimeout> | null = null;
 
-  onDestroy(() => clearTimeout(scrollEndTimer));
+  onDestroy(() => {
+    if (scrollEndTimer !== null) clearTimeout(scrollEndTimer);
+  });
 
   // Sync selectedYear + scroll position whenever the bound year prop changes
   // (e.g. external navigation while the picker is open). year is always at
@@ -38,7 +40,7 @@
   });
 
   function onScroll() {
-    clearTimeout(scrollEndTimer);
+    if (scrollEndTimer !== null) clearTimeout(scrollEndTimer);
     scrollEndTimer = setTimeout(() => {
       if (!drum) return;
       const idx = Math.round(drum.scrollTop / ITEM_HEIGHT);
