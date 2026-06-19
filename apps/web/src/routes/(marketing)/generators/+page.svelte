@@ -189,6 +189,13 @@
         "Cowboys and outlaws, frontier towns, dusty saloons, and wild quest hooks.",
       icon: "icon-[game-icons--western-hat]",
     },
+    {
+      href: "/generators/steampunk",
+      label: "Steampunk Hub",
+      summary:
+        "Guild conspiracies, airship factions, aetheric NPCs, and industrial quest hooks for steampunk campaigns.",
+      icon: "icon-[lucide--cog]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);

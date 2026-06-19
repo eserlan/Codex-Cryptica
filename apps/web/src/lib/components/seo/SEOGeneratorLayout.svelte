@@ -194,6 +194,7 @@
     "Modern Conspiracy": "modern",
     "Post-Apocalyptic": "apocalyptic",
     "Western / Frontier": "western",
+    Steampunk: "steampunk",
   };
 
   const activeThemeId = $derived(themeMap[theme] || "workspace");

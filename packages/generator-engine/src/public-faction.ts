@@ -46,6 +46,7 @@ export const factionConfig = {
     "Modern Conspiracy",
     "Post-Apocalyptic",
     "Western / Frontier",
+    "Steampunk",
   ],
   types: [
     "Merchant Guild",
@@ -113,6 +114,8 @@ export const themeIdToLabel: Record<string, string> = {
   apocalyptic_light: "Post-Apocalyptic",
   western: "Western / Frontier",
   western_dark: "Western / Frontier",
+  steampunk: "Steampunk",
+  steampunk_dark: "Steampunk",
 };
 
 export const vampireConfig = {
@@ -196,6 +199,8 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
   "Western / Frontier":
     "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
+  Steampunk:
+    "Victorian-era steampunk — guild cartels, airship consortiums, aetheric research orders, press-gang syndicates, imperial intelligence bureaux, and underclass rebel cells",
 };
 
 const FACTION_NAMING_STYLES = [
@@ -306,6 +311,31 @@ function factionBase(type: string, rng: Rng = defaultRng): string {
       "A fortified hilltop site with sightlines across three days of travel in every direction",
       "A network of underground bunkers connected by service tunnels from before the collapse",
     ],
+    "Guild Cartel": [
+      "A chartered Guildhall whose brass-plated doors are sealed by imperial writ",
+      "A foundry complex whose steam vents obscure the entrances to private meeting chambers",
+      "A bonded patent office whose archive vaults hold the licensing papers for half the city's industry",
+    ],
+    "Airship Consortium": [
+      "A mooring tower compound above the cloud line, accessible only by scheduled dirigible",
+      "A registered sky-dock with private bays where manifests are submitted only to consortium ledgers",
+      "A floating platform anchored above international waters where no city ordinance applies",
+    ],
+    "Aetheric Research Order": [
+      "A sealed laboratory annexe beneath the Imperial Institute of Applied Sciences",
+      "A decommissioned clocktower whose upper floors have been warded against surveillance",
+      "A private scholarly estate whose library holds restricted aetheric formulae under charter lock",
+    ],
+    "Imperial Intelligence Bureau": [
+      "A nondescript government building whose sub-basement floors appear on no architectural plan",
+      "A chain of post offices operating under Crown warrant with encrypted dispatch infrastructure",
+      "An embassy anteroom operating under diplomatic immunity with unrestricted cipher access",
+    ],
+    "Underclass Rebel Cell": [
+      "A print shop running two sets of accounts behind a false boiler room wall",
+      "A disused engine hall in the smog district where census officers rarely venture",
+      "A network of tenement rooftops connected by signal lantern protocols",
+    ],
   };
   return pickFrom(
     map[type] ?? [
@@ -403,6 +433,31 @@ function factionResource(type: string, rng: Rng = defaultRng): string {
       "Clean water, food stockpiles, and medical supplies — distributed exclusively to the faithful",
       "A coherent ideology that provides meaning in a world without institutions",
       "Armed enforcers who believe completely in what they are protecting",
+    ],
+    "Guild Cartel": [
+      "Imperial patent licences and the legal authority to shut down any non-licensed operation in the city",
+      "Exclusive access to aetheric components that no independent artificer can source elsewhere",
+      "A bonded ledger of guild debts and performance bonds that constitute leverage over every major manufacturer",
+    ],
+    "Airship Consortium": [
+      "Control over the only viable air-freight routes connecting the major industrial cities",
+      "A fleet of armed courier vessels whose cargo manifests are never opened by customs officers",
+      "Exclusive mooring rights at key aetheric refuelling stations across the continent",
+    ],
+    "Aetheric Research Order": [
+      "Proprietary aetheric formulae that determine what weapons, engines, and medicines the Empire can produce",
+      "A sealed research archive whose contents the Imperial Ministry does not fully understand but cannot afford to lose",
+      "Controlled access to refined aetheric ore — the fuel for every advanced engine in the known world",
+    ],
+    "Imperial Intelligence Bureau": [
+      "Surveillance infrastructure covering telegram traffic, financial ledgers, and courier routes across the Empire",
+      "Classified leverage on every significant guild factor, colonial administrator, and opposition figure",
+      "The legal authority to classify, seal, and deny — which is effectively the power to erase inconvenient events",
+    ],
+    "Underclass Rebel Cell": [
+      "A verified pamphlet and broadsheet distribution network that reaches every engine-district tenement",
+      "Contacts embedded in the factory floor, the census office, and the guild apprentice registry",
+      "Secure courier routes through the smog tunnels that move people, messages, and contraband past company checkpoints",
     ],
   };
   return pickFrom(

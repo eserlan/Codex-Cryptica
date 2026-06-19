@@ -48,7 +48,8 @@
     "post-apocalyptic": "Post-Apocalyptic Hub",
     modern: "Modern Hub",
     vampire: "Vampire Hub",
-    western: "Western Hub",
+      western: "Western Hub",
+      steampunk: "Steampunk Hub",
   };
 
   const backHref = $derived(

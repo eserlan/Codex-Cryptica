@@ -241,6 +241,26 @@
         surpriseMeCard,
       ],
     },
+    steampunk: {
+      label: "Steampunk",
+      localStorageId: "steampunk",
+      eyebrow: "Brass, Aether & Empire",
+      intro:
+        "Gears grind, furnaces roar, and empires expand on the backs of the engine-workers. Build airship consortiums, guild conspiracies, aetheric laboratories, and desperate underclass rebels for your steampunk campaign — every generator is tuned to the smoke and brass of the industrial age.",
+      metaTitle:
+        "Steampunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free steampunk RPG generators for tabletop GMs. Create artificers, guild factions, airship settlements, quest hooks, and names for your steampunk campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build industrial boroughs, sky-dock towns, and smog-shrouded districts with guild factions, aetheric hazards, and working-class tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
     vampire: {
       label: "Vampire",
       localStorageId: "horror",

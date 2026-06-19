@@ -230,6 +230,13 @@ export const npcThemeConfig = {
       "Town Native",
       "Homesteader",
     ],
+    Steampunk: [
+      "Human",
+      "Clockwork Augmented",
+      "Aetheric Sensitive",
+      "Engineered Homunculus",
+      "Colonial Expatriate",
+    ],
   } as Record<string, string[]>,
   roles: {
     "Classic Fantasy": [
@@ -297,6 +304,16 @@ export const npcThemeConfig = {
       "Homesteader",
       "Railroad Agent",
       "Town Doctor",
+    ],
+    Steampunk: [
+      "Artificer",
+      "Sky Pilot",
+      "Engine Wright",
+      "Guild Factor",
+      "Aetheric Scholar",
+      "Clockwork Spy",
+      "Press-Gang Officer",
+      "Alchemical Surgeon",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -490,6 +507,44 @@ export const npcThemeConfig = {
           "Write this character with a charming, highly collected, and disarming social facade. Beneath this exterior, their dialogue and actions are driven entirely by cold, calculated personal advancement.",
       },
     ],
+    Steampunk: [
+      {
+        id: "empire_loyalist",
+        label: "Empire Loyalist",
+        aiPromptDirective:
+          "Write this NPC with the clipped, bureaucratic confidence of an imperial functionary. They cite regulations, uphold the Guild Compact, and view progress as the Empire's divine right — dissent is a problem to be managed.",
+      },
+      {
+        id: "guild_pragmatist",
+        label: "Guild Pragmatist",
+        aiPromptDirective:
+          "This NPC is entirely transactional — contracts, patents, and profit margins are their moral compass. Their dialogue is precise, mercantile, and peppered with technical jargon. They respect competence, nothing else.",
+      },
+      {
+        id: "aetheric_visionary",
+        label: "Aetheric Visionary",
+        aiPromptDirective:
+          "Write this NPC with the fervent certainty of an inventor who believes progress will save humanity. Their speech is excited, technical, and slightly unhinged — they see every person as either a collaborator or an obstacle.",
+      },
+      {
+        id: "underclass_rebel",
+        label: "Underclass Rebel",
+        aiPromptDirective:
+          "This character speaks with raw, soot-stained fury. They have worked the furnaces, breathed the smog, and watched the guilds profit while the engine-workers died. Their language is blunt, conspiratorial, and resentful.",
+      },
+      {
+        id: "aristocratic_schemer",
+        label: "Aristocratic Schemer",
+        aiPromptDirective:
+          "Write this NPC with the polished, veiled menace of old money adapting to a new world. They attend every salon, fund every expedition, and ensure every innovation serves their dynasty. Nothing they say is without subtext.",
+      },
+      {
+        id: "clockwork_cynic",
+        label: "Clockwork Cynic",
+        aiPromptDirective:
+          "This NPC has seen too many inventions turn to weapons and too many guild promises turn to smoke. Their tone is dry, sardonic, and deeply weary — they cooperate when paid, believe nothing, and expect betrayal.",
+      },
+    ],
     "Post-Apocalyptic": [
       {
         id: "collectivist",
@@ -584,6 +639,8 @@ const NPC_THEME_VOICE: Record<string, string> = {
     "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
   "Western / Frontier":
     "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
+  Steampunk:
+    "Victorian-era steampunk — airships, aetheric engines, guild conspiracies, imperial expansion, clockwork automata, and the dark underside of the industrial revolution",
 };
 
 const NPC_NAMING_STYLES = [

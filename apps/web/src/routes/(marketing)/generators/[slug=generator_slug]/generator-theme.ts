@@ -25,6 +25,7 @@ const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
   modern: "Modern",
   vampire: "Horror",
   western: "Western",
+  steampunk: "Steampunk",
 };
 
 export function shouldSyncGeneratorTheme(slug: string) {
