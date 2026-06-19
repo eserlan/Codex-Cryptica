@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { shouldSyncGeneratorTheme } from "./generator-theme";
+import {
+  resolveHubGeneratorGenre,
+  shouldSyncGeneratorTheme,
+} from "./generator-theme";
 
 describe("shouldSyncGeneratorTheme", () => {
   it("syncs every generator route into the CFF theme store", () => {
@@ -29,5 +32,21 @@ describe("shouldSyncGeneratorTheme", () => {
 
   it("does not sync unknown slugs", () => {
     expect(shouldSyncGeneratorTheme("not-a-generator")).toBe(false);
+  });
+
+  it("maps hub themes to genre-driven generator defaults", () => {
+    expect(resolveHubGeneratorGenre("fantasy")).toBe("Fantasy");
+    expect(resolveHubGeneratorGenre("modern")).toBe("Modern");
+    expect(resolveHubGeneratorGenre("cyberpunk")).toBe("Cyberpunk");
+    expect(resolveHubGeneratorGenre("sci-fi")).toBe("Sci-Fi");
+    expect(resolveHubGeneratorGenre("post-apocalyptic")).toBe(
+      "Post-Apocalyptic",
+    );
+    expect(resolveHubGeneratorGenre("vampire")).toBe("Horror");
+  });
+
+  it("returns null for missing or unknown hub themes", () => {
+    expect(resolveHubGeneratorGenre(null)).toBeNull();
+    expect(resolveHubGeneratorGenre("unknown")).toBeNull();
   });
 });
