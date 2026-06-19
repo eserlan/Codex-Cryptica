@@ -79,7 +79,10 @@
   />
 </svelte:head>
 
-<div class="h-full flex flex-col bg-theme-bg overflow-hidden">
+<div
+  class="h-full flex flex-col bg-theme-bg overflow-hidden"
+  style:background-image="var(--bg-texture-overlay)"
+>
   <!-- Header / Controls -->
   <div
     class="p-4 border-b border-green-900/30 bg-[#0c0c0c] flex flex-wrap items-center justify-between gap-4"
