@@ -67,7 +67,10 @@
   }
 
   const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
-    createEntryClickHandlers(onSelect, (id) => modalUIStore.openZenMode(id));
+    createEntryClickHandlers(
+      (entry) => onSelect(entry),
+      (id) => modalUIStore.openZenMode(id),
+    );
 </script>
 
 <div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">

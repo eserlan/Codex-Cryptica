@@ -12,7 +12,10 @@
   } = $props();
 
   const { handleClick: handleEntryClick, handleDblClick: handleEntryDblClick } =
-    createEntryClickHandlers(onSelect, (id) => modalUIStore.openZenMode(id));
+    createEntryClickHandlers(
+      (entry) => onSelect(entry),
+      (id) => modalUIStore.openZenMode(id),
+    );
 </script>
 
 <div class="flex flex-col gap-4" data-testid="calendar-agenda-view">
