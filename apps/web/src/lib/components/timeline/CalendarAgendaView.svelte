@@ -9,6 +9,24 @@
     sections: AgendaSection[];
     onSelect: (entry: CalendarEventEntry) => void;
   } = $props();
+
+  let clickTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function handleEntryClick(entry: CalendarEventEntry) {
+    if (clickTimer !== null) return;
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      onSelect(entry);
+    }, 220);
+  }
+
+  function handleEntryDblClick(entityId: string) {
+    if (clickTimer !== null) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+    modalUIStore.openZenMode(entityId);
+  }
 </script>
 
 <div class="flex flex-col gap-4" data-testid="calendar-agenda-view">
@@ -34,8 +52,8 @@
             <button
               type="button"
               class="flex flex-col gap-1 rounded-2xl border border-theme-border bg-theme-bg/40 px-3 py-3 text-left transition hover:border-theme-primary hover:bg-theme-primary/8"
-              onclick={() => onSelect(entry)}
-              ondblclick={() => modalUIStore.openZenMode(entry.entityId)}
+              onclick={() => handleEntryClick(entry)}
+              ondblclick={() => handleEntryDblClick(entry.entityId)}
             >
               <div class="flex items-start justify-between gap-3">
                 <span class="text-sm font-bold text-theme-text">

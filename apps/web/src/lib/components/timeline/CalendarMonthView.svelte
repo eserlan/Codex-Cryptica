@@ -64,6 +64,24 @@
   function dayKey(year: number, month: number, day: number): string {
     return `${year}-${month}-${day}`;
   }
+
+  let clickTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function handleEntryClick(entry: CalendarEventEntry) {
+    if (clickTimer !== null) return;
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      onSelect(entry);
+    }, 220);
+  }
+
+  function handleEntryDblClick(entityId: string) {
+    if (clickTimer !== null) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+    modalUIStore.openZenMode(entityId);
+  }
 </script>
 
 <div class="flex flex-col gap-0 sm:gap-3" data-testid="calendar-month-view">
@@ -165,8 +183,8 @@
               <button
                 type="button"
                 class="rounded-none border border-theme-primary/18 bg-theme-primary/8 px-1 py-0.5 text-left transition hover:border-theme-primary/45 hover:bg-theme-primary/14 sm:rounded-xl sm:px-2 sm:py-1.5"
-                onclick={() => onSelect(entry)}
-                ondblclick={() => modalUIStore.openZenMode(entry.entityId)}
+                onclick={() => handleEntryClick(entry)}
+                ondblclick={() => handleEntryDblClick(entry.entityId)}
                 onmouseenter={(e) => setHover(entry.entityId, e)}
                 onmousemove={(e) => setHover(entry.entityId, e)}
                 onmouseleave={clearHover}

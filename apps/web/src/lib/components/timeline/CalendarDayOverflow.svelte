@@ -17,6 +17,26 @@
   } = $props();
 
   let isOpen = $state(false);
+
+  let clickTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function handleEntryClick(entry: CalendarEventEntry) {
+    if (clickTimer !== null) return;
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      isOpen = false;
+      onSelect(entry);
+    }, 220);
+  }
+
+  function handleEntryDblClick(entityId: string) {
+    if (clickTimer !== null) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+    isOpen = false;
+    modalUIStore.openZenMode(entityId);
+  }
 </script>
 
 <div class="relative">
@@ -46,11 +66,8 @@
           <button
             type="button"
             class="rounded-xl px-2 py-2 text-left text-xs text-theme-text transition hover:bg-theme-primary/10 hover:text-theme-primary"
-            onclick={() => {
-              isOpen = false;
-              onSelect(entry);
-            }}
-            ondblclick={() => modalUIStore.openZenMode(entry.entityId)}
+            onclick={() => handleEntryClick(entry)}
+            ondblclick={() => handleEntryDblClick(entry.entityId)}
             onmouseenter={(e) => onEntryHover?.(entry.entityId, e)}
             onmousemove={(e) => onEntryHover?.(entry.entityId, e)}
             onmouseleave={() => onEntryLeave?.()}
