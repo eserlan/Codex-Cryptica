@@ -114,13 +114,13 @@
     },
     settlement: {
       pageTitle:
-        "Settlement Generator | Free Fantasy RPG Town Tool | Codex Cryptica",
+        "Settlement Generator | RPG Inhabited Place Creator | Codex Cryptica",
       metaDescription:
-        "Generate fantasy RPG settlements with economy, geography, power structure, and adventure hooks. Copy the draft or save it into your local campaign vault.",
+        "Generate campaign-ready settlements, districts, colonies, and communities for any RPG genre. Set the function, environment, tone, and tension — get a place with a reason to exist and a problem worth solving.",
       introTitle: "Settlement Generator",
       eyebrow: "Settlement Generator",
       introText:
-        "Create a campaign-ready fantasy settlement with an economy, power structure, notable locations, and adventure hook. Works without login.",
+        "Generate an inhabited place that answers three questions: why does it exist, who really controls it, and what is about to go wrong. Works for any genre — fantasy, cyberpunk, sci-fi, horror, post-apocalyptic, and more.",
       canonicalPath: "/generators/settlement",
     },
     "magic-item": {
@@ -316,9 +316,22 @@
     campaignContext: "",
   });
 
+  const settlementGenre = initialHubGenre ?? "Fantasy";
+  const settlementSizes =
+    settlementConfig.sizesByGenre[settlementGenre] ??
+    settlementConfig.sizesByGenre["Fantasy"];
   let settlement = $state({
-    size: settlementConfig.sizes[2].name,
-    economy: settlementConfig.economies[0],
+    genre: settlementGenre,
+    size: settlementSizes[2].name,
+    environment: (settlementConfig.environmentsByGenre[settlementGenre] ??
+      settlementConfig.environmentsByGenre["Fantasy"])[0],
+    primaryFunction: (settlementConfig.primaryFunctionsByGenre[
+      settlementGenre
+    ] ?? settlementConfig.primaryFunctionsByGenre["Fantasy"])[0],
+    tone: (settlementConfig.tonesByGenre[settlementGenre] ??
+      settlementConfig.tonesByGenre["Fantasy"])[0],
+    mainTension: (settlementConfig.mainTensionsByGenre[settlementGenre] ??
+      settlementConfig.mainTensionsByGenre["Fantasy"])[0],
   });
 
   let magicItem = $state({
@@ -500,6 +513,30 @@
       const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
       if (hubGenre) socialHub.genre = hubGenre;
       activeTheme = socialHubGenreToTheme[socialHub.genre] ?? "Classic Fantasy";
+      return;
+    }
+    if (data.slug === "settlement") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre) {
+        settlement.genre = hubGenre;
+        const sizes =
+          settlementConfig.sizesByGenre[hubGenre] ??
+          settlementConfig.sizesByGenre["Fantasy"];
+        settlement.size = sizes[2].name;
+        settlement.environment = (settlementConfig.environmentsByGenre[
+          hubGenre
+        ] ?? settlementConfig.environmentsByGenre["Fantasy"])[0];
+        settlement.primaryFunction = (settlementConfig.primaryFunctionsByGenre[
+          hubGenre
+        ] ?? settlementConfig.primaryFunctionsByGenre["Fantasy"])[0];
+        settlement.tone = (settlementConfig.tonesByGenre[hubGenre] ??
+          settlementConfig.tonesByGenre["Fantasy"])[0];
+        settlement.mainTension = (settlementConfig.mainTensionsByGenre[
+          hubGenre
+        ] ?? settlementConfig.mainTensionsByGenre["Fantasy"])[0];
+      }
+      activeTheme =
+        socialHubGenreToTheme[settlement.genre] ?? "Classic Fantasy";
       return;
     }
     if (data.slug === "vampire-clan") {
@@ -763,39 +800,99 @@
     {:else if data.slug === "settlement"}
       <SelectWithCustomOption
         id="size-select"
-        label="Settlement Size"
+        label="Scale"
         bind:value={settlement.size}
-        choices={settlementConfig.sizes.map((s: { name: string; range: string }) => ({
+        choices={(
+          settlementConfig.sizesByGenre[settlement.genre] ??
+          settlementConfig.sizesByGenre["Fantasy"]
+        ).map((s: { name: string; range: string }) => ({
           value: s.name,
           label: `${s.name} (${s.range})`,
         }))}
         className="flex flex-col gap-1.5"
-        labelClass={labelClass}
+        {labelClass}
         inputClass={selectClass}
-        customPlaceholder="Enter a custom settlement size"
+        customPlaceholder="Enter a custom scale"
       />
 
       <SelectWithCustomOption
-        id="economy-select"
-        label="Primary Economy"
-        bind:value={settlement.economy}
-        choices={settlementConfig.economies.map((e: string) => ({
+        id="environment-select"
+        label="Environment"
+        bind:value={settlement.environment}
+        choices={(
+          settlementConfig.environmentsByGenre[settlement.genre] ??
+          settlementConfig.environmentsByGenre["Fantasy"]
+        ).map((e: string) => ({
           value: e,
           label: e,
         }))}
         className="flex flex-col gap-1.5"
-        labelClass={labelClass}
+        {labelClass}
         inputClass={selectClass}
-        customPlaceholder="Enter a custom primary economy"
+        customPlaceholder="Enter a custom environment"
+      />
+
+      <SelectWithCustomOption
+        id="function-select"
+        label="Primary Function"
+        bind:value={settlement.primaryFunction}
+        choices={(
+          settlementConfig.primaryFunctionsByGenre[settlement.genre] ??
+          settlementConfig.primaryFunctionsByGenre["Fantasy"]
+        ).map((f: string) => ({
+          value: f,
+          label: f,
+        }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom function"
+      />
+
+      <SelectWithCustomOption
+        id="tone-select"
+        label="Tone"
+        bind:value={settlement.tone}
+        choices={(
+          settlementConfig.tonesByGenre[settlement.genre] ??
+          settlementConfig.tonesByGenre["Fantasy"]
+        ).map((t: string) => ({
+          value: t,
+          label: t,
+        }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom tone"
+      />
+
+      <SelectWithCustomOption
+        id="tension-select"
+        label="Dominant Tension"
+        bind:value={settlement.mainTension}
+        choices={(
+          settlementConfig.mainTensionsByGenre[settlement.genre] ??
+          settlementConfig.mainTensionsByGenre["Fantasy"]
+        ).map((t: string) => ({
+          value: t,
+          label: t,
+        }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom tension"
       />
     {:else if data.slug === "magic-item" || data.slug === "item"}
       <SelectWithCustomOption
         id="item-type-select"
         label="Item Type"
         bind:value={magicItem.type}
-        choices={magicItemConfig.types.map((t: string) => ({ value: t, label: t }))}
+        choices={magicItemConfig.types.map((t: string) => ({
+          value: t,
+          label: t,
+        }))}
         className="flex flex-col gap-1.5"
-        labelClass={labelClass}
+        {labelClass}
         inputClass={selectClass}
         customPlaceholder="Enter a custom item type"
       />
@@ -804,9 +901,12 @@
         id="rarity-select"
         label="Rarity"
         bind:value={magicItem.rarity}
-        choices={magicItemConfig.rarities.map((r: string) => ({ value: r, label: r }))}
+        choices={magicItemConfig.rarities.map((r: string) => ({
+          value: r,
+          label: r,
+        }))}
         className="flex flex-col gap-1.5"
-        labelClass={labelClass}
+        {labelClass}
         inputClass={selectClass}
         customPlaceholder="Enter a custom rarity"
       />
