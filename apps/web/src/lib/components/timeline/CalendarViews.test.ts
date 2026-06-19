@@ -159,6 +159,25 @@ describe("Calendar month and agenda views", () => {
     vi.useRealTimers();
   });
 
+  it("requests event creation when a day cell is double-clicked", async () => {
+    const onCreateAtDate = vi.fn();
+    render(CalendarMonthView, {
+      month: singleWeekMonth,
+      onSelect: vi.fn(),
+      onCreateAtDate,
+    });
+
+    const dayCell = screen.getByLabelText("June 18, 2026");
+    await fireEvent.click(dayCell);
+    await fireEvent.click(dayCell);
+
+    expect(onCreateAtDate).toHaveBeenCalledWith({
+      year: 2026,
+      month: 6,
+      day: 18,
+    });
+  });
+
   it("navigates to the next month on a left swipe", async () => {
     const onNextMonth = vi.fn();
     const onPrevMonth = vi.fn();
