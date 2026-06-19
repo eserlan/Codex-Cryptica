@@ -155,14 +155,22 @@
   // ─── Actions ──────────────────────────────────────────────────────────────
 
   function buildVaultSummaries(): VaultEntitySummary[] {
-    return Object.values(vault.entities)
-      .filter((e) => e.id !== entity.id)
-      .slice(0, 30)
-      .map((e) => ({
-        title: e.title,
-        type: e.type,
-        summary: (e.content ?? "").slice(0, 150),
-      }));
+    // ⚡ Bolt Optimization: Replace Object.values().filter().slice().map() with an imperative
+    // loop and early exit to avoid intermediate array allocations and full dataset processing.
+    const summaries: VaultEntitySummary[] = [];
+    const allEntities = vault.allEntities || [];
+    for (let i = 0; i < allEntities.length; i++) {
+      const e = allEntities[i];
+      if (e.id !== entity.id) {
+        summaries.push({
+          title: e.title,
+          type: e.type,
+          summary: (e.content ?? "").slice(0, 150),
+        });
+        if (summaries.length >= 30) break;
+      }
+    }
+    return summaries;
   }
 
   async function handleGenerate() {

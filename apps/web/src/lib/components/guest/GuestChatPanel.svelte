@@ -1,23 +1,32 @@
 <script lang="ts">
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { isEntityVisible } from "schema";
+  import { isEntityVisible, type Entity } from "schema";
   import GuestChatBubble from "./GuestChatBubble.svelte";
   import { tick } from "svelte";
 
   // Filter characters that are both visible and enabled for guest chat
-  const enabledCharacters = $derived(
-    Object.values(vault.entities || {}).filter(
-      (e) =>
+  // ⚡ Bolt Optimization: Replace Object.values(vault.entities) and .filter with an imperative
+  // loop over vault.allEntities to prevent array allocation on every keystroke/reactivity tick.
+  const enabledCharacters = $derived.by(() => {
+    const results: Entity[] = [];
+    const entities = vault.allEntities || [];
+    for (let i = 0; i < entities.length; i++) {
+      const e = entities[i];
+      if (
         e.type === "character" &&
         e.guestChatConfig?.isEnabled &&
         !!e.guestChatConfig.extraInstructions?.trim() &&
         isEntityVisible(e, {
           sharedMode: vault.isGuest,
           defaultVisibility: vault.defaultVisibility,
-        }),
-    ),
-  );
+        })
+      ) {
+        results.push(e);
+      }
+    }
+    return results;
+  });
 
   let activeCharacter = $derived(
     enabledCharacters.find((c) => c.id === guestChatStore.activeCharacterId) ||

@@ -137,3 +137,8 @@
 
 **Learning:** In Svelte components using $derived blocks, chaining array methods like `Object.values(obj).flatMap(...)` causes significant O(N) overhead during reactive updates due to multiple intermediate array allocations.
 **Action:** Replace `Object.values().flatMap(...)` with imperative loops using pre-cached array indexes (like `titleAndAliasIndex` mapped on the store) inside `$derived.by(() => { ... })` to reduce garbage collection pressure.
+
+## 2026-06-25 - [Performance Insight: Refactoring Object.values(vault.entities) to pre-cached vault.allEntities]
+
+**Learning:** Invoking `Object.values(vault.entities)` in component `$derived` blocks or hot functions triggers an `O(N)` object keys iteration and creates a new intermediate array on every evaluation. When `vault.entities` is large, this leads to significant redundant memory allocations and garbage collection pauses. While some components started caching arrays natively via the Store (`vault.allEntities`), many continued allocating `Object.values` inline. Also, chaining `.filter().slice().map()` or just `.filter()` onto those inline values causes even more intermediate allocations.
+**Action:** Always replace `Object.values(vault.entities)` with `vault.allEntities` in Svelte components. For chained array operations (like `.filter().slice()`), use an imperative `for...of` or `for (let i = 0; i < allEntities.length; i++)` loop with `break` limits to avoid redundant array creation and full dataset traversal.
