@@ -641,6 +641,51 @@ export const THEMES = {
       graph_loading: "Mapping the Trail...",
     },
   },
+  steampunk: {
+    id: "steampunk",
+    name: "Brass & Aether",
+    description:
+      "Victorian-era industrialism, guild conspiracies, aetheric engines, airships, and the dark underside of mechanical progress.",
+    tokens: {
+      primary: "#c9921a",
+      secondary: "#d4a852",
+      background: "#0d0b08",
+      surface: "#1a1510",
+      text: "#e8dcc8",
+      border: "rgba(201, 146, 26, 0.35)",
+      accent: "#b34b1a",
+      fontHeader: "'Spectral', serif",
+      fontBody: "'Spectral', serif",
+      texture: "rust.svg",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 2,
+      edgeWidth: 1,
+      edgeColor: "#7a5c12",
+    },
+    jargon: {
+      vault: "Schematics Vault",
+      entity: "Blueprint",
+      entity_plural: "Blueprints",
+      save: "Engrave",
+      delete: "Smelt",
+      new: "Draft",
+      syncing: "Calibrating",
+      search: "Survey",
+      lore_header: "Technical Dossier",
+      lore_secrets: "Sealed Schematics & Guild Secrets",
+      chronicle_header: "Expedition Log",
+      connections_header: "Contacts & Contracts",
+      tab_status: "Vitals",
+      tab_lore: "Dossier",
+      tab_inventory: "Equipment",
+      blog_entry: "Field Report",
+      blog_action: "File Report",
+      graph_loading: "Calibrating Aetheric Network...",
+    },
+  },
 } as const satisfies Record<string, StylingTemplate>;
 
 export const FANTASY_DARK: StylingTemplate = {
@@ -930,6 +975,33 @@ export const WESTERN_DARK: StylingTemplate = {
     edgeColor: "#a0785a",
   },
   jargon: THEMES.western.jargon,
+};
+
+export const STEAMPUNK_DARK: StylingTemplate = {
+  id: "steampunk_dark",
+  name: "Midnight Foundry",
+  description:
+    "Steampunk industrialism in a deep coal-black variant — soot, shadow, and smouldering copper.",
+  tokens: {
+    primary: "#d4a852",
+    secondary: "#c9921a",
+    background: "#070503",
+    surface: "#110e09",
+    text: "#f0e8d5",
+    border: "rgba(212, 168, 82, 0.3)",
+    accent: "#c05e1a",
+    fontHeader: "'Spectral', serif",
+    fontBody: "'Spectral', serif",
+    texture: "rust.svg",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 2,
+    edgeWidth: 1,
+    edgeColor: "#7a5c12",
+  },
+  jargon: THEMES.steampunk.jargon,
 };
 
 export const DEFAULT_THEME = THEMES.workspace;

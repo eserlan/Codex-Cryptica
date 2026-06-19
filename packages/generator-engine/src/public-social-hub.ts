@@ -108,6 +108,7 @@ export const socialHubConfig = {
     "Horror",
     "Post-Apocalyptic",
     "Western",
+    "Steampunk",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -166,6 +167,13 @@ export const socialHubConfig = {
       "Trading Post",
       "Roadhouse",
       "Gambling Parlour",
+    ],
+    Steampunk: [
+      "Aetheric Lounge",
+      "Artificers' Club",
+      "Engine-District Pub",
+      "Sky-Dock Canteen",
+      "Guild Factor's Parlour",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -241,6 +249,13 @@ export const socialHubConfig = {
       "Cult members",
       "Mercenaries",
       "Settlers and refugees",
+    ],
+    Steampunk: [
+      "Artificers and engine-wrights",
+      "Guild factors and patent brokers",
+      "Sky-dock workers and airship crew",
+      "Off-duty imperial constables",
+      "Underclass agitators in disguise",
     ],
     Western: [
       "Cowboys and drifters",

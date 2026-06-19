@@ -41,6 +41,7 @@ export const themeToQuestGenre: Record<string, string> = {
   "Modern Conspiracy": "Political Intrigue",
   "Post-Apocalyptic": "Post-Apocalyptic",
   "Western / Frontier": "Western",
+  Steampunk: "Steampunk",
 };
 
 export const questConfig = {
@@ -50,6 +51,7 @@ export const questConfig = {
     "Political Intrigue",
     "Horror",
     "Comedy",
+    "Steampunk",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -90,6 +92,7 @@ export const questConfig = {
       "Tense",
       "Lawless",
     ],
+    Steampunk: ["Intriguing", "Tense", "Grandiose", "Cynical", "Adventurous"],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -128,6 +131,7 @@ export const questConfig = {
       "Town-wide (boomtown)",
       "Territory-scale (frontier)",
     ],
+    Steampunk: ["Local (district / borough)", "City-wide", "Imperial-scale"],
   } as Record<string, string[]>,
   locationTypes: [
     "Ancient Dungeon",
@@ -194,6 +198,14 @@ export const questConfig = {
       "Frontier Fort",
       "Railroad Station",
     ],
+    Steampunk: [
+      "Airship Dock",
+      "Factory Floor",
+      "Aetheric Laboratory",
+      "Guild Vault",
+      "Imperial Dirigible",
+      "Smog-Shrouded Tenement",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -259,6 +271,14 @@ export const questConfig = {
       "Rival Claim Jumper",
       "Bounty Hunter Turned Predator",
       "Desperate Homesteaders",
+    ],
+    Steampunk: [
+      "Rogue Automaton",
+      "Guild Conspiracy",
+      "Imperial Suppression Force",
+      "Sabotaged Aetheric Engine",
+      "Rival Inventor",
+      "Press-Gang Operation",
     ],
   } as Record<string, string[]>,
   hooks: [
@@ -349,6 +369,14 @@ export const questConfig = {
       "Custom frontier gear or weapon",
       "Intel on an outlaw gang's stash",
       "Loyalty of a frontier community",
+    ],
+    Steampunk: [
+      "Coin plus a guild factor's letter of introduction",
+      "Patent licence to a useful device",
+      "Access to a restricted aetheric archive",
+      "A prototype engine component from the site",
+      "Intel on a guild conspiracy",
+      "Safe passage on a consortium airship",
     ],
   } as Record<string, string[]>,
 };

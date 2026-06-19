@@ -48,7 +48,8 @@
     "post-apocalyptic": "Post-Apocalyptic Hub",
     modern: "Modern Hub",
     vampire: "Vampire Hub",
-    western: "Western Hub",
+      western: "Western Hub",
+      steampunk: "Steampunk Hub",
   };
 
   const backHref = $derived(
@@ -454,6 +455,7 @@
     Horror: "Vampire / Gothic Noir",
     "Post-Apocalyptic": "Post-Apocalyptic",
     Western: "Western / Frontier",
+    Steampunk: "Steampunk",
   };
 
   // Read localStorage at init time for slugs that respect the stored theme.

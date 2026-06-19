@@ -105,6 +105,7 @@ export const nationConfig = {
     "Horror",
     "Post-Apocalyptic",
     "Western",
+    "Steampunk",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -172,6 +173,13 @@ export const nationConfig = {
       "Railroad Authority",
       "Outlaw Republic",
       "Native Nation",
+    ],
+    Steampunk: [
+      "Industrial Empire",
+      "Guild Confederacy",
+      "Aetheric Protectorate",
+      "Colonial Administration",
+      "Airship Sovereignty",
     ],
   } as Record<string, string[]>,
   governmentStyles: [
