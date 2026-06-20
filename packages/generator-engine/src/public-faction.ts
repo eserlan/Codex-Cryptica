@@ -48,6 +48,7 @@ export const factionConfig = {
     "Western / Frontier",
     "Steampunk",
     "Lancer",
+    "Optimistic Exploration Sci-Fi",
   ],
   types: [
     "Merchant Guild",
@@ -67,6 +68,10 @@ export const factionConfig = {
     "NHP Research Consortium",
     "Colonial Liberation Front",
     "Corporate Extraction Crew",
+    "Federated Science Directorate",
+    "Planetary Council",
+    "Border System Power",
+    "Splinter Ideological Movement",
   ],
   scopes: [
     "Local district",
@@ -129,6 +134,8 @@ export const themeIdToLabel: Record<string, string> = {
   steampunk_dark: "Steampunk",
   lancer: "Lancer",
   lancer_light: "Lancer",
+  "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
+  "optimistic-exploration-sci-fi_dark": "Optimistic Exploration Sci-Fi",
 };
 
 export const vampireConfig = {
@@ -216,6 +223,8 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "Victorian-era steampunk — guild cartels, airship consortiums, aetheric research orders, press-gang syndicates, imperial intelligence bureaux, and underclass rebel cells",
   Lancer:
     "Lancer RPG — Union rapid-response units, heterodox mech corps, NHP research consortiums, colonial liberation fronts, and corporate extraction crews operating across the Long Rim",
+  "Optimistic Exploration Sci-Fi":
+    "optimistic exploration sci-fi — federated councils, scientific directorates, peaceful integration, and complex diplomatic tension over ethical principles",
 };
 
 const FACTION_NAMING_STYLES = [

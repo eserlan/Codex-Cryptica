@@ -322,6 +322,26 @@
         surpriseMeCard,
       ],
     },
+    "optimistic-exploration-sci-fi": {
+      label: "Optimistic Sci-Fi",
+      localStorageId: "optimistic-exploration-sci-fi",
+      eyebrow: "Diplomacy, Discovery & the Stars",
+      intro:
+        "Draft diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded.",
+      metaTitle:
+        "Optimistic Sci-Fi RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free optimistic sci-fi RPG generators for tabletop GMs. Create diplomatic officers, scientific factions, space station hubs, quest hooks, and names for your campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
   };
 
   const config = $derived(themeConfig[data.theme]);

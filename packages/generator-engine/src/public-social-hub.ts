@@ -110,6 +110,7 @@ export const socialHubConfig = {
     "Western",
     "Steampunk",
     "Lancer",
+    "Optimistic Exploration Sci-Fi",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -182,6 +183,13 @@ export const socialHubConfig = {
       "Union Admin Mess Hall",
       "Pilot's Debrief Lounge",
       "Colonial Settlement Common Room",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starship Observation Lounge",
+      "Space Station Promenade",
+      "Embassy Reception Hall",
+      "Planetary Academy Campus",
+      "Frontier Research Outpost Canteen",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -278,6 +286,14 @@ export const socialHubConfig = {
       "Outlaws and bounty hunters",
       "Townsfolk",
       "Railroad workers",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Off-duty officers",
+      "Visiting alien diplomats",
+      "Research scientists",
+      "Civilian colonists",
+      "Exchange students",
+      "Stellar cartographers",
     ],
   } as Record<string, string[]>,
   troubles: [

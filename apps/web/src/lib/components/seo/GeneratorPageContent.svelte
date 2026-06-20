@@ -65,6 +65,7 @@
     western: "Western",
     steampunk: "Steampunk",
     lancer: "Lancer",
+    "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
   };
 
   // Genres not supported by the settlement generator are mapped to the nearest equivalent.
@@ -121,6 +122,7 @@
     western: "Western Hub",
     steampunk: "Steampunk Hub",
     lancer: "Lancer Hub",
+    "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi Hub",
   };
 
   const backHref = $derived(
@@ -543,6 +545,7 @@
     western: "western",
     steampunk: "steampunk",
     lancer: "lancer",
+    "optimistic-exploration-sci-fi": "startrek",
   };
 
   const SLUGS_USING_STORED_THEME = new Set([

@@ -47,6 +47,7 @@ export const settlementConfig = {
     "Horror",
     "Western",
     "Steampunk",
+    "Optimistic Exploration Sci-Fi",
   ],
 
   sizesByGenre: {
@@ -208,6 +209,24 @@ export const settlementConfig = {
         pointsOfInterestCount: 4,
       },
     ],
+    "Optimistic Exploration Sci-Fi": [
+      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 1 },
+      {
+        name: "Station",
+        range: "200–2,000 personnel",
+        pointsOfInterestCount: 2,
+      },
+      {
+        name: "Colony",
+        range: "2,000–20,000 inhabitants",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Core World City",
+        range: "50,000+ inhabitants",
+        pointsOfInterestCount: 4,
+      },
+    ],
   } as Record<
     string,
     { name: string; range: string; pointsOfInterestCount: number }[]
@@ -287,6 +306,13 @@ export const settlementConfig = {
       "Coastal smog district",
       "Mountain factory town",
       "Imperial canal port",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Class M Planet",
+      "Asteroid Belt",
+      "Gas Giant Atmosphere",
+      "Binary Star System",
+      "Nebula Edge",
     ],
   } as Record<string, string[]>,
 
@@ -371,6 +397,13 @@ export const settlementConfig = {
       "Imperial administration post",
       "Smuggling harbour",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Scientific Research",
+      "Diplomatic Hub",
+      "Fleet Resupply",
+      "Agricultural Breadbasket",
+      "First Contact Staging Area",
+    ],
   } as Record<string, string[]>,
 
   tonesByGenre: {
@@ -437,6 +470,13 @@ export const settlementConfig = {
       "Clockwork and eccentric",
       "Imperial and bureaucratic",
       "Rebellious and inventive",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Utopian",
+      "Curious",
+      "Bureaucratic",
+      "Pioneering",
+      "Tense",
     ],
   } as Record<string, string[]>,
 
@@ -519,6 +559,13 @@ export const settlementConfig = {
       "Guild power struggle",
       "Airship piracy",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Threat of a border skirmish",
+      "A failing planetary life support system",
+      "A diplomatic breakdown between two alien delegations",
+      "A mysterious viral outbreak in the medical bay",
+      "Sabotage of the main warp reactor",
+    ],
   } as Record<string, string[]>,
 
   authorityTypesByGenre: {
@@ -594,6 +641,13 @@ export const settlementConfig = {
       "Elected alderman",
       "Criminal boss",
       "Inventor-patriarch",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Station Commander",
+      "Planetary Governor",
+      "Science Director",
+      "Fleet Admiral",
+      "Ambassador",
     ],
   } as Record<string, string[]>,
 
@@ -686,6 +740,14 @@ export const settlementConfig = {
       "Imperial Tax Office",
       "Underground Press",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "The Promenade",
+      "Main Engineering",
+      "Astrophysics Lab",
+      "Diplomatic Quarters",
+      "The Arboretum",
+      "Shuttlebay",
+    ],
   } as Record<string, string[]>,
 
   factionsByGenre: {
@@ -751,6 +813,14 @@ export const settlementConfig = {
       "The Inventor's Guild",
       "The Smoke Brotherhood",
       "The Underground Press",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starfleet equivalent",
+      "Romulan equivalent",
+      "Klingon equivalent",
+      "Maquis equivalent",
+      "Section 31 equivalent",
+      "Orion Syndicate equivalent",
     ],
   } as Record<string, string[]>,
 
@@ -835,6 +905,14 @@ export const settlementConfig = {
       "Brassfall",
       "Sootmere",
       "Forgegate",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Astra",
+      "Nova",
+      "Celestia",
+      "Sirius",
+      "Orion",
+      "Vega",
     ],
   } as Record<string, string[]>,
 
@@ -928,6 +1006,14 @@ export const settlementConfig = {
       " Yard",
       " Forge",
       " Quay",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      " Station",
+      " Base",
+      " Prime",
+      " Outpost",
+      " Colony",
+      " Hub",
     ],
   } as Record<string, string[]>,
 

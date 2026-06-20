@@ -43,6 +43,7 @@ export const themeToQuestGenre: Record<string, string> = {
   "Western / Frontier": "Western",
   Steampunk: "Steampunk",
   Lancer: "Lancer",
+  "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
 };
 
 export const questConfig = {
@@ -54,6 +55,7 @@ export const questConfig = {
     "Comedy",
     "Steampunk",
     "Lancer",
+    "Optimistic Exploration Sci-Fi",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -96,6 +98,13 @@ export const questConfig = {
     ],
     Steampunk: ["Intriguing", "Tense", "Grandiose", "Cynical", "Adventurous"],
     Lancer: ["Tense", "Bleak", "Desperate", "Clinical", "High-Octane"],
+    "Optimistic Exploration Sci-Fi": [
+      "Curious",
+      "Diplomatic",
+      "Philosophical",
+      "Tense",
+      "Utopian",
+    ],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -139,6 +148,11 @@ export const questConfig = {
       "Local (outpost / installation)",
       "Sector-wide (colonial theatre)",
       "Union-scale (interstellar mandate)",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Local (research outpost)",
+      "System-wide (diplomatic dispute)",
+      "Galaxy-spanning (precursor threat)",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -222,6 +236,14 @@ export const questConfig = {
       "NHP Containment Facility",
       "Debris Field Salvage Site",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starship Bridge",
+      "Alien Ruins",
+      "Embassy Station",
+      "Research Vessel",
+      "Neutral Planet Surface",
+      "Spatial Anomaly Edge",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -303,6 +325,14 @@ export const questConfig = {
       "Bleed Incursion",
       "Union Oversight Audit",
       "Rival Mech Lance",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Misunderstood Alien Lifeform",
+      "Rogue Artificial Intelligence",
+      "Unstable Subspace Phenomenon",
+      "Hostile Splinter Faction",
+      "Ancient Planetary Defense System",
+      "Temporal Distortion",
     ],
   } as Record<string, string[]>,
   hooks: [
@@ -409,6 +439,14 @@ export const questConfig = {
       "Prototype licensed gear from the site",
       "Intel on a corporate extraction operation",
       "Union operational clearance for the next mission",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Federation comms clearance",
+      "Access to precursor databanks",
+      "A permanent diplomatic envoy assignment",
+      "Advanced sensor upgrades",
+      "Safe passage through neutral space",
+      "Alliance with a newly discovered species",
     ],
   } as Record<string, string[]>,
 };
