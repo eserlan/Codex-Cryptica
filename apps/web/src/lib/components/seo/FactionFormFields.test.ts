@@ -14,18 +14,38 @@ vi.mock("$lib/services/seo/generator-engine", () => ({
       "Modern Conspiracy",
       "Post-Apocalyptic",
     ],
-    types: [
-      "Merchant Guild",
-      "Secret Society",
-      "Mercenary Company",
-      "Temple Order",
-      "Criminal Syndicate",
-      "Rebel Cell",
-      "Arcane Circle",
-    ],
-    scopes: ["Local district", "Single city"],
+    typesByTheme: {
+      "Classic Fantasy": ["Merchant Guild", "Secret Society", "Arcane Circle"],
+      "Post-Apocalyptic": [
+        "Scavenger Clan",
+        "Raider Warband",
+        "Survivor Collective",
+      ],
+      "Cyberpunk / Corporate": ["Corporate Division", "Hacker Collective"],
+      "Vampire / Gothic Noir": ["Occult Coven", "Criminal Syndicate"],
+      "Sci-Fi / Space Opera": ["Planetary Council", "Resistance Cell"],
+      "Modern Conspiracy": ["Secret Society", "Intelligence Bureau"],
+    },
+    scopesByTheme: {
+      "Classic Fantasy": ["Local district", "Single city"],
+      "Post-Apocalyptic": ["Single settlement", "Wasteland outpost cluster"],
+      "Cyberpunk / Corporate": ["Single arcology block", "City megaplex"],
+      "Vampire / Gothic Noir": [
+        "Single city underbelly",
+        "Hidden manor & surrounds",
+      ],
+      "Sci-Fi / Space Opera": ["Single station or colony", "Planetary surface"],
+      "Modern Conspiracy": ["City borough", "Metropolitan area"],
+    },
+    goalsByTheme: {
+      "Classic Fantasy": ["Goal"],
+      "Post-Apocalyptic": ["Wasteland Goal"],
+      "Cyberpunk / Corporate": ["Corp Goal"],
+      "Vampire / Gothic Noir": ["Gothic Goal"],
+      "Sci-Fi / Space Opera": ["Sci-Fi Goal"],
+      "Modern Conspiracy": ["Conspiracy Goal"],
+    },
     alignments: ["Pragmatic and profit-driven"],
-    goals: ["Goal"],
     conflicts: ["Conflict"],
     hooks: ["Hook"],
   },
@@ -86,6 +106,8 @@ describe("FactionFormFields Theme Swapping", () => {
     const typeSelect = screen.getByLabelText("Choose what they are");
     await fireEvent.change(typeSelect, { target: { value: "__custom__" } });
 
-    expect(screen.getByLabelText("Choose what they are (Own option)")).toBeTruthy();
+    expect(
+      screen.getByLabelText("Choose what they are (Own option)"),
+    ).toBeTruthy();
   });
 });
