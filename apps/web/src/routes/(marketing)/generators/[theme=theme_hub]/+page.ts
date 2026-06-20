@@ -13,7 +13,8 @@ export type ThemeSlug =
   | "vampire"
   | "western"
   | "steampunk"
-  | "lancer";
+  | "lancer"
+  | "space-opera-resistance";
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {
     throw error(404, "Theme not found");
@@ -31,4 +32,5 @@ export const entries: EntryGenerator = () => [
   { theme: "western" },
   { theme: "steampunk" },
   { theme: "lancer" },
+  { theme: "space-opera-resistance" },
 ];

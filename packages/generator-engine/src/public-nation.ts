@@ -107,6 +107,7 @@ export const nationConfig = {
     "Western",
     "Steampunk",
     "Lancer",
+    "Space Opera Resistance",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -188,6 +189,13 @@ export const nationConfig = {
       "Heterodox Mech Sovereignty",
       "Corporate Extraction Concession",
       "Liberation Council Territory",
+    ],
+    "Space Opera Resistance": [
+      "Galactic Empire",
+      "Planetary Republic",
+      "Occupied Territory",
+      "Federated System",
+      "Rebel Alliance",
     ],
   } as Record<string, string[]>,
   governmentStyles: [

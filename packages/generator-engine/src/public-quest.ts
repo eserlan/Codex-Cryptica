@@ -43,6 +43,7 @@ export const themeToQuestGenre: Record<string, string> = {
   "Western / Frontier": "Western",
   Steampunk: "Steampunk",
   Lancer: "Lancer",
+  "Space Opera Resistance": "Space Fantasy",
 };
 
 export const questConfig = {
@@ -54,6 +55,7 @@ export const questConfig = {
     "Comedy",
     "Steampunk",
     "Lancer",
+    "Space Fantasy",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -96,6 +98,7 @@ export const questConfig = {
     ],
     Steampunk: ["Intriguing", "Tense", "Grandiose", "Cynical", "Adventurous"],
     Lancer: ["Tense", "Bleak", "Desperate", "Clinical", "High-Octane"],
+    "Space Opera Resistance": ["Heroic", "Desperate", "Pulpy", "Epic", "Tense"],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -139,6 +142,11 @@ export const questConfig = {
       "Local (outpost / installation)",
       "Sector-wide (colonial theatre)",
       "Union-scale (interstellar mandate)",
+    ],
+    "Space Opera Resistance": [
+      "Local (cantina / spaceport)",
+      "Planetary (occupied world / system)",
+      "Galactic (imperial-scale / rebellion)",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -222,6 +230,14 @@ export const questConfig = {
       "NHP Containment Facility",
       "Debris Field Salvage Site",
     ],
+    "Space Opera Resistance": [
+      "Smuggler Cantina",
+      "Imperial Detention Block",
+      "Hidden Rebel Base",
+      "Ancient Mystic Temple",
+      "Desert Moisture Farm",
+      "Orbital Battle Station",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -303,6 +319,14 @@ export const questConfig = {
       "Bleed Incursion",
       "Union Oversight Audit",
       "Rival Mech Lance",
+    ],
+    "Space Opera Resistance": [
+      "Imperial Inquisitor",
+      "Ruthless Bounty Hunter",
+      "Syndicate Crime Boss",
+      "Betrayal from Within",
+      "Imperial Strike Fleet",
+      "Ancient Dark Mystic",
     ],
   } as Record<string, string[]>,
   hooks: [
@@ -409,6 +433,14 @@ export const questConfig = {
       "Prototype licensed gear from the site",
       "Intel on a corporate extraction operation",
       "Union operational clearance for the next mission",
+    ],
+    "Space Opera Resistance": [
+      "Credits and a smuggler's favor",
+      "Coordinates to a hidden hyper-route",
+      "An ancient mystic relic or crystal",
+      "Stolen imperial clearance codes",
+      "Intel on a critical imperial weakness",
+      "A heavily modified blockade runner",
     ],
   } as Record<string, string[]>,
 };

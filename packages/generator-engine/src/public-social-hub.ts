@@ -110,6 +110,7 @@ export const socialHubConfig = {
     "Western",
     "Steampunk",
     "Lancer",
+    "Space Opera Resistance",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -182,6 +183,13 @@ export const socialHubConfig = {
       "Union Admin Mess Hall",
       "Pilot's Debrief Lounge",
       "Colonial Settlement Common Room",
+    ],
+    "Space Opera Resistance": [
+      "Smuggler's Cantina",
+      "Underground Resistance Hub",
+      "Imperial Officers' Club",
+      "Scrap-Town Bar",
+      "Spaceport Transit Lounge",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -278,6 +286,13 @@ export const socialHubConfig = {
       "Outlaws and bounty hunters",
       "Townsfolk",
       "Railroad workers",
+    ],
+    "Space Opera Resistance": [
+      "Rebel spies and informants",
+      "Off-duty imperial officers and stormtroopers",
+      "Smugglers and bounty hunters",
+      "Mystic order exiles in hiding",
+      "Scrap workers and frontier traders",
     ],
   } as Record<string, string[]>,
   troubles: [
