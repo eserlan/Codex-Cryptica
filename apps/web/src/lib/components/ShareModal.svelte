@@ -75,9 +75,7 @@
 
 <svelte:window onkeydown={onKeyDown} />
 
-<div
-  class="fixed inset-0 flex items-center justify-center z-[90] p-4"
->
+<div class="fixed inset-0 flex items-center justify-center z-[90] p-4">
   <!-- Backdrop -->
   <button
     type="button"

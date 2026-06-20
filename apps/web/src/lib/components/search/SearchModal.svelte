@@ -257,7 +257,6 @@
       selectedEl.scrollIntoView({ block: "nearest" });
     }
   };
-
 </script>
 
 {#if searchStore.isOpen}

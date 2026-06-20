@@ -19,6 +19,9 @@ export class GuestStore {
   guestInfo = $state<GuestInfo | null>(null);
   guestRoster = $state<Record<string, GuestSession>>({});
 
+  // ⚡ Bolt Optimization: Pre-cached array of guests to avoid repeated Object.values allocations in reactive blocks
+  allGuests = $derived.by(() => Object.values(this.guestRoster));
+
   constructor(
     initialInfo: GuestInfo | null = null,
     initialRoster: Record<string, GuestSession> = {},
