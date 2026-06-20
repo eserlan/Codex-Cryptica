@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <!--
+    Cyberpunk "Neon Night" surface texture. Tiles seamlessly at 256px.
+    Sits under the theme's ~50% colour overlay (bg-texture-overlay), so the
+    visible neon elements use fairly high opacity to read through the wash on a
+    near-black background. Effects: faint grid + scanlines + glitch blocks +
+    circuit traces with nodes.
+  -->
+
+  <!-- Faint neon grid. Lines at 0/64/128/192 (the 256 edge is the next tile's
+       0) so the grid stays evenly spaced across tile boundaries. -->
+  <g stroke="#22d3ee" stroke-width="1" opacity="0.16">
+    <path d="M0 0V256 M64 0V256 M128 0V256 M192 0V256"/>
+    <path d="M0 0H256 M0 64H256 M0 128H256 M0 192H256"/>
+  </g>
+
+  <!-- Scanlines: 1px dark lines every 4px (256/4 = 64 → clean repeat). Subtle
+       CRT banding, most visible on the lighter panel surfaces. -->
+  <g fill="#000000" opacity="0.12">
+    <rect width="256" height="1" y="0"/><rect width="256" height="1" y="4"/>
+    <rect width="256" height="1" y="8"/><rect width="256" height="1" y="12"/>
+    <rect width="256" height="1" y="16"/><rect width="256" height="1" y="20"/>
+    <rect width="256" height="1" y="24"/><rect width="256" height="1" y="28"/>
+    <rect width="256" height="1" y="32"/><rect width="256" height="1" y="36"/>
+    <rect width="256" height="1" y="40"/><rect width="256" height="1" y="44"/>
+    <rect width="256" height="1" y="48"/><rect width="256" height="1" y="52"/>
+    <rect width="256" height="1" y="56"/><rect width="256" height="1" y="60"/>
+    <rect width="256" height="1" y="64"/><rect width="256" height="1" y="68"/>
+    <rect width="256" height="1" y="72"/><rect width="256" height="1" y="76"/>
+    <rect width="256" height="1" y="80"/><rect width="256" height="1" y="84"/>
+    <rect width="256" height="1" y="88"/><rect width="256" height="1" y="92"/>
+    <rect width="256" height="1" y="96"/><rect width="256" height="1" y="100"/>
+    <rect width="256" height="1" y="104"/><rect width="256" height="1" y="108"/>
+    <rect width="256" height="1" y="112"/><rect width="256" height="1" y="116"/>
+    <rect width="256" height="1" y="120"/><rect width="256" height="1" y="124"/>
+    <rect width="256" height="1" y="128"/><rect width="256" height="1" y="132"/>
+    <rect width="256" height="1" y="136"/><rect width="256" height="1" y="140"/>
+    <rect width="256" height="1" y="144"/><rect width="256" height="1" y="148"/>
+    <rect width="256" height="1" y="152"/><rect width="256" height="1" y="156"/>
+    <rect width="256" height="1" y="160"/><rect width="256" height="1" y="164"/>
+    <rect width="256" height="1" y="168"/><rect width="256" height="1" y="172"/>
+    <rect width="256" height="1" y="176"/><rect width="256" height="1" y="180"/>
+    <rect width="256" height="1" y="184"/><rect width="256" height="1" y="188"/>
+    <rect width="256" height="1" y="192"/><rect width="256" height="1" y="196"/>
+    <rect width="256" height="1" y="200"/><rect width="256" height="1" y="204"/>
+    <rect width="256" height="1" y="208"/><rect width="256" height="1" y="212"/>
+    <rect width="256" height="1" y="216"/><rect width="256" height="1" y="220"/>
+    <rect width="256" height="1" y="224"/><rect width="256" height="1" y="228"/>
+    <rect width="256" height="1" y="232"/><rect width="256" height="1" y="236"/>
+    <rect width="256" height="1" y="240"/><rect width="256" height="1" y="244"/>
+    <rect width="256" height="1" y="248"/><rect width="256" height="1" y="252"/>
+  </g>
+
+  <!-- Circuit traces: thin right-angled runs with terminal nodes. Kept clear of
+       the tile edges so they don't clip awkwardly at the seam. -->
+  <g fill="none" stroke="#22d3ee" stroke-width="1.4" opacity="0.5">
+    <path d="M24 150 L24 178 L72 178 L72 158"/>
+    <path d="M210 56 L210 96 L160 96 L160 120"/>
+    <path d="M96 40 L140 40 L140 70"/>
+  </g>
+  <!-- A magenta trace for colour variety. -->
+  <path d="M30 80 L30 50 L80 50" fill="none" stroke="#f472b6" stroke-width="1.4" opacity="0.42"/>
+  <g fill="#22d3ee" opacity="0.62">
+    <circle cx="24" cy="150" r="2.4"/>
+    <circle cx="72" cy="158" r="2.4"/>
+    <circle cx="210" cy="56" r="2.4"/>
+    <circle cx="160" cy="120" r="2.4"/>
+    <circle cx="96" cy="40" r="2.4"/>
+  </g>
+  <circle cx="80" cy="50" r="2.4" fill="#f472b6" opacity="0.55"/>
+
+  <!-- Glitch blocks: a few offset neon bars, magenta + cyan + amber. -->
+  <rect x="40" y="92" width="16" height="5" fill="#f472b6" opacity="0.5"/>
+  <rect x="168" y="30" width="11" height="4" fill="#22d3ee" opacity="0.48"/>
+  <rect x="112" y="208" width="20" height="6" fill="#f472b6" opacity="0.42"/>
+  <rect x="196" y="172" width="13" height="4" fill="#facc15" opacity="0.42"/>
+  <rect x="60" y="224" width="9" height="4" fill="#22d3ee" opacity="0.48"/>
+</svg>
