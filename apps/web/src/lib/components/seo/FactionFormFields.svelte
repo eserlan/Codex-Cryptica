@@ -72,6 +72,15 @@
       "Mercenary Company",
       "Street Gang Alliance",
     ],
+    Steampunk: [
+      "Guild Cartel",
+      "Airship Consortium",
+      "Aetheric Research Order",
+      "Imperial Intelligence Bureau",
+      "Underclass Rebel Cell",
+      "Secret Society",
+      "Merchant Guild",
+    ],
   };
 
   const availableTypes = $derived(thematicTypes[theme] || factionConfig.types);
@@ -82,7 +91,12 @@
   );
 
   $effect(() => {
-    if (theme && type && knownTypes.includes(type) && !availableTypes.includes(type)) {
+    if (
+      theme &&
+      type &&
+      knownTypes.includes(type) &&
+      !availableTypes.includes(type)
+    ) {
       type = availableTypes[0] || factionConfig.types[0];
     }
   });
@@ -95,7 +109,7 @@
   bind:value={theme}
   choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom vibe"
 />
@@ -107,7 +121,7 @@
   bind:value={type}
   choices={availableTypes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom faction type"
 />
@@ -119,7 +133,7 @@
   bind:value={scope}
   choices={factionConfig.scopes.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom scale"
 />
@@ -129,9 +143,12 @@
   name="faction_alignment"
   label="Choose their morality"
   bind:value={alignment}
-  choices={factionConfig.alignments.map((a: string) => ({ value: a, label: a }))}
+  choices={factionConfig.alignments.map((a: string) => ({
+    value: a,
+    label: a,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom morality"
 />
