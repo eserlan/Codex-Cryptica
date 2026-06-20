@@ -5,7 +5,7 @@
   let {
     theme = $bindable(factionConfig.themes[0]),
     type = $bindable(factionConfig.typesByTheme["Classic Fantasy"][0]),
-    scope = $bindable(factionConfig.scopes[1]),
+    scope = $bindable(factionConfig.scopesByTheme["Classic Fantasy"][1]),
     alignment = $bindable(factionConfig.alignments[0]),
     campaignContext = $bindable(""),
     onSurprise = undefined,
@@ -30,6 +30,13 @@
   const knownTypes = $derived(
     Array.from(new Set(Object.values(factionConfig.typesByTheme).flat())),
   );
+  const availableScopes = $derived(
+    factionConfig.scopesByTheme[theme] ??
+      factionConfig.scopesByTheme["Classic Fantasy"],
+  );
+  const knownScopes = $derived(
+    Array.from(new Set(Object.values(factionConfig.scopesByTheme).flat())),
+  );
 
   $effect(() => {
     if (
@@ -39,6 +46,17 @@
       !availableTypes.includes(type)
     ) {
       type = availableTypes[0];
+    }
+  });
+
+  $effect(() => {
+    if (
+      theme &&
+      scope &&
+      knownScopes.includes(scope) &&
+      !availableScopes.includes(scope)
+    ) {
+      scope = availableScopes[1] ?? availableScopes[0];
     }
   });
 </script>
@@ -72,7 +90,7 @@
   name="faction_scope"
   label="Choose their scale"
   bind:value={scope}
-  choices={factionConfig.scopes.map((s: string) => ({ value: s, label: s }))}
+  choices={availableScopes.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
   {labelClass}
   inputClass={selectClass}
@@ -125,9 +143,7 @@
         factionConfig.typesByTheme["Classic Fantasy"];
       type = types[Math.floor(Math.random() * types.length)];
       scope =
-        factionConfig.scopes[
-          Math.floor(Math.random() * factionConfig.scopes.length)
-        ];
+        availableScopes[Math.floor(Math.random() * availableScopes.length)];
       alignment =
         factionConfig.alignments[
           Math.floor(Math.random() * factionConfig.alignments.length)

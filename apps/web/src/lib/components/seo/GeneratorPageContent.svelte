@@ -420,7 +420,7 @@
   let faction = $state({
     theme: factionConfig.themes[0],
     type: factionConfig.typesByTheme["Classic Fantasy"][0],
-    scope: factionConfig.scopes[1],
+    scope: factionConfig.scopesByTheme["Classic Fantasy"][1],
     alignment: factionConfig.alignments[0],
     campaignContext: "",
   });
