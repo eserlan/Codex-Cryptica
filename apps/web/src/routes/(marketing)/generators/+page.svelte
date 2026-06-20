@@ -182,6 +182,34 @@
         "Vampire clans, gothic factions, undead NPCs, and dark quest hooks for horror campaigns.",
       icon: "icon-[lucide--moon]",
     },
+    {
+      href: "/generators/western",
+      label: "Western Hub",
+      summary:
+        "Cowboys and outlaws, frontier towns, dusty saloons, and wild quest hooks.",
+      icon: "icon-[game-icons--western-hat]",
+    },
+    {
+      href: "/generators/steampunk",
+      label: "Steampunk Hub",
+      summary:
+        "Guild conspiracies, airship factions, aetheric NPCs, and industrial quest hooks for steampunk campaigns.",
+      icon: "icon-[lucide--cog]",
+    },
+    {
+      href: "/generators/lancer",
+      label: "Lancer Hub",
+      summary:
+        "Mech pilots, Union factions, frontier outpost settlements, and bleed-touched NPCs for Lancer campaigns.",
+      icon: "icon-[lucide--hexagon]",
+    },
+    {
+      href: "/generators/optimistic-exploration-sci-fi",
+      label: "Optimistic Sci-Fi Hub",
+      summary:
+        "Diplomatic officers, scientific factions, space station hubs, and first-contact quest hooks for optimistic space opera campaigns.",
+      icon: "icon-[lucide--rocket]",
+    },
   ];
 
   const allItems = generators.flatMap((s) => s.items);

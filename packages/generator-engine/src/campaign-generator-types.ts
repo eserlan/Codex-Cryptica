@@ -154,6 +154,7 @@ export interface DraftSaveRequest {
   draft: GeneratedDraft;
   createRelationship: boolean;
   relationshipLabel?: string;
+  start_date?: { year: number; month: number; day: number };
 }
 
 export interface DraftSaveResult {

@@ -22,6 +22,13 @@ export class ModalUIStore {
   // (not a counter) because on mobile VaultControls mounts only after the
   // drawer opens, so it must be able to consume a request raised pre-mount.
   pendingCreateEntity = $state(false);
+  // Optional date to pre-fill start_date when pendingCreateEntity is raised
+  // from a calendar double-click. Cleared when the flag is consumed.
+  pendingCreateDate = $state<{
+    year: number;
+    month: number;
+    day: number;
+  } | null>(null);
 
   // Mobile-only bottom sheet for creating entities
   showMobileCreateSheet = $state(false);
@@ -170,20 +177,26 @@ export class ModalUIStore {
     launchMode: "workspace" | "contextual";
     sourceEntityId: string | null;
     generatorId: string | null;
+    prefillDate?: { year: number; month: number; day: number } | null;
   }>({
     open: false,
     launchMode: "workspace",
     sourceEntityId: null,
     generatorId: null,
+    prefillDate: null,
   });
 
   /** Open the unified generator workflow from the campaign workspace. */
-  openGeneratorWorkflow(generatorId: string | null = null) {
+  openGeneratorWorkflow(
+    generatorId: string | null = null,
+    prefillDate: { year: number; month: number; day: number } | null = null,
+  ) {
     this.generatorWorkflow = {
       open: true,
       launchMode: "workspace",
       sourceEntityId: null,
       generatorId,
+      prefillDate,
     };
   }
 
@@ -197,6 +210,7 @@ export class ModalUIStore {
       launchMode: "contextual",
       sourceEntityId,
       generatorId,
+      prefillDate: null,
     };
   }
 
@@ -206,10 +220,14 @@ export class ModalUIStore {
       launchMode: "workspace",
       sourceEntityId: null,
       generatorId: null,
+      prefillDate: null,
     };
   }
 
-  requestCreateEntity() {
+  requestCreateEntity(
+    date?: { year: number; month: number; day: number } | null,
+  ) {
+    this.pendingCreateDate = date ?? null;
     this.pendingCreateEntity = true;
   }
 
@@ -347,6 +365,6 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v8__";
+const KEY = "__codex_modal_ui_store__v9__";
 export const modalUIStore: ModalUIStore =
   (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());

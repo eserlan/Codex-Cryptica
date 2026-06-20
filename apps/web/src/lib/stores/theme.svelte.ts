@@ -13,6 +13,8 @@ import {
   STARWARS_LIGHT,
   STARTREK_LIGHT,
   LANCER_LIGHT,
+  WESTERN_DARK,
+  STEAMPUNK_DARK,
 } from "schema";
 import type {
   StylingTemplate,
@@ -76,6 +78,10 @@ export class ThemeStore {
           return FANTASY_DARK;
         case "modern":
           return MODERN_DARK;
+        case "western":
+          return WESTERN_DARK;
+        case "steampunk":
+          return STEAMPUNK_DARK;
         default:
           return (THEMES as any)[id] || DEFAULT_THEME;
       }
@@ -103,6 +109,10 @@ export class ThemeStore {
           return STARTREK_LIGHT;
         case "lancer":
           return LANCER_LIGHT;
+        case "western":
+          return THEMES.western;
+        case "steampunk":
+          return THEMES.steampunk;
         default:
           return DEFAULT_THEME;
       }

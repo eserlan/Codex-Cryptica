@@ -45,6 +45,11 @@ export const factionConfig = {
     "Sci-Fi / Space Opera",
     "Modern Conspiracy",
     "Post-Apocalyptic",
+    "Western / Frontier",
+    "Steampunk",
+    "Lancer",
+    "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
   types: [
     "Merchant Guild",
@@ -54,6 +59,26 @@ export const factionConfig = {
     "Criminal Syndicate",
     "Rebel Cell",
     "Arcane Circle",
+    "Guild Cartel",
+    "Airship Consortium",
+    "Aetheric Research Order",
+    "Imperial Intelligence Bureau",
+    "Underclass Rebel Cell",
+    "Union Rapid Response Unit",
+    "Heterodox Mech Corps",
+    "NHP Research Consortium",
+    "Colonial Liberation Front",
+    "Corporate Extraction Crew",
+    "Imperial Authority",
+    "Mystic Order",
+    "Smuggler Syndicate",
+    "Imperial Fleet",
+    "Resistance Cell",
+    "Planetary Guild",
+    "Federated Science Directorate",
+    "Planetary Council",
+    "Border System Power",
+    "Splinter Ideological Movement",
   ],
   scopes: [
     "Local district",
@@ -110,6 +135,14 @@ export const themeIdToLabel: Record<string, string> = {
   modern_dark: "Modern Conspiracy",
   apocalyptic: "Post-Apocalyptic",
   apocalyptic_light: "Post-Apocalyptic",
+  western: "Western / Frontier",
+  western_dark: "Western / Frontier",
+  steampunk: "Steampunk",
+  steampunk_dark: "Steampunk",
+  lancer: "Lancer",
+  lancer_light: "Lancer",
+  "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
+  "optimistic-exploration-sci-fi_dark": "Optimistic Exploration Sci-Fi",
 };
 
 export const vampireConfig = {
@@ -191,6 +224,16 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
   "Post-Apocalyptic":
     "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+  "Western / Frontier":
+    "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
+  Steampunk:
+    "Victorian-era steampunk — guild cartels, airship consortiums, aetheric research orders, press-gang syndicates, imperial intelligence bureaux, and underclass rebel cells",
+  Lancer:
+    "Lancer RPG — Union rapid-response units, heterodox mech corps, NHP research consortiums, colonial liberation fronts, and corporate extraction crews operating across the Long Rim",
+  "Space Opera Resistance":
+    "pulpy galactic rebellion — rebel cells, imperial authorities, smuggler syndicates, ancient mystic orders, frontier guilds, and imperial fleets operating across desert worlds and occupied systems",
+  "Optimistic Exploration Sci-Fi":
+    "optimistic exploration sci-fi — federated councils, scientific directorates, peaceful integration, and complex diplomatic tension over ethical principles",
 };
 
 const FACTION_NAMING_STYLES = [
@@ -301,6 +344,86 @@ function factionBase(type: string, rng: Rng = defaultRng): string {
       "A fortified hilltop site with sightlines across three days of travel in every direction",
       "A network of underground bunkers connected by service tunnels from before the collapse",
     ],
+    "Guild Cartel": [
+      "A chartered Guildhall whose brass-plated doors are sealed by imperial writ",
+      "A foundry complex whose steam vents obscure the entrances to private meeting chambers",
+      "A bonded patent office whose archive vaults hold the licensing papers for half the city's industry",
+    ],
+    "Airship Consortium": [
+      "A mooring tower compound above the cloud line, accessible only by scheduled dirigible",
+      "A registered sky-dock with private bays where manifests are submitted only to consortium ledgers",
+      "A floating platform anchored above international waters where no city ordinance applies",
+    ],
+    "Aetheric Research Order": [
+      "A sealed laboratory annexe beneath the Imperial Institute of Applied Sciences",
+      "A decommissioned clocktower whose upper floors have been warded against surveillance",
+      "A private scholarly estate whose library holds restricted aetheric formulae under charter lock",
+    ],
+    "Imperial Intelligence Bureau": [
+      "A nondescript government building whose sub-basement floors appear on no architectural plan",
+      "A chain of post offices operating under Crown warrant with encrypted dispatch infrastructure",
+      "An embassy anteroom operating under diplomatic immunity with unrestricted cipher access",
+    ],
+    "Underclass Rebel Cell": [
+      "A print shop running two sets of accounts behind a false boiler room wall",
+      "A disused engine hall in the smog district where census officers rarely venture",
+      "A network of tenement rooftops connected by signal lantern protocols",
+    ],
+    "Union Rapid Response Unit": [
+      "A hardened forward operating base embedded in a contested colonial settlement",
+      "A Union frigate holding geosynchronous orbit as a mobile command platform",
+      "A decommissioned administrative compound repurposed under emergency Union charter",
+    ],
+    "Heterodox Mech Corps": [
+      "An unregistered hangar on the Long Rim operating under a shell licensing agreement",
+      "A salvage yard whose mech repair bays double as an unofficial tactical staging ground",
+      "A mobile barge convoy that keeps no fixed port and answers no flag",
+    ],
+    "NHP Research Consortium": [
+      "A shielded research station in a low-traffic transit corridor with restricted docking access",
+      "A distributed server architecture spread across three systems under academic charter",
+      "A sealed laboratory embedded within a Union university campus under dual-key access protocols",
+    ],
+    "Colonial Liberation Front": [
+      "A network of sympathiser safe houses spread across a colonial outpost's residential district",
+      "A fortified position in a contested bleed zone where Union authority is ambiguous",
+      "A mobile cell structure with no fixed base and rotating comms encryption",
+    ],
+    "Corporate Extraction Crew": [
+      "A legitimately registered subsidiary operating under a Union commercial licence",
+      "A contracted security compound adjacent to a resource extraction site",
+      "A private orbital platform registered to a shell entity in a non-Union jurisdiction",
+    ],
+    "Imperial Authority": [
+      "A gleaming sector-command spire projecting force across the capital city",
+      "A fortified garrison built on the ruins of the planet's previous democratic parliament",
+      "A mobile orbital command station enforcing blockades and custom checks",
+    ],
+    "Mystic Order": [
+      "An ancient, hidden temple carved into the cliffs of a remote desert world",
+      "A meditation chamber disguised as a humble merchant's quarters",
+      "The ruins of a once-great academy now swallowed by the jungle",
+    ],
+    "Smuggler Syndicate": [
+      "A crowded, lawless cantina built into a hollowed-out asteroid",
+      "A modular docking bay that constantly changes configuration to confuse inspectors",
+      "A rusted freighter graveyard that hides a fully operational black market",
+    ],
+    "Imperial Fleet": [
+      "A massive dreadnought hanging ominously in the sky above the colony",
+      "A sprawling orbital shipyard strictly off-limits to civilian traffic",
+      "A blockade flotilla enforcing a quarantine over a restive system",
+    ],
+    "Resistance Cell": [
+      "A subterranean bunker beneath a bustling starport",
+      "A repurposed deep-space communications relay hiding in plain sight",
+      "A makeshift camp hidden within the wreckage of an old capital ship",
+    ],
+    "Planetary Guild": [
+      "A massive industrial processing plant where laborers toil under heavy surveillance",
+      "The polished halls of a merchant consortium that dictates planetary trade laws",
+      "A tightly guarded mining colony built into the ice of a frozen moon",
+    ],
   };
   return pickFrom(
     map[type] ?? [
@@ -398,6 +521,86 @@ function factionResource(type: string, rng: Rng = defaultRng): string {
       "Clean water, food stockpiles, and medical supplies — distributed exclusively to the faithful",
       "A coherent ideology that provides meaning in a world without institutions",
       "Armed enforcers who believe completely in what they are protecting",
+    ],
+    "Guild Cartel": [
+      "Imperial patent licences and the legal authority to shut down any non-licensed operation in the city",
+      "Exclusive access to aetheric components that no independent artificer can source elsewhere",
+      "A bonded ledger of guild debts and performance bonds that constitute leverage over every major manufacturer",
+    ],
+    "Airship Consortium": [
+      "Control over the only viable air-freight routes connecting the major industrial cities",
+      "A fleet of armed courier vessels whose cargo manifests are never opened by customs officers",
+      "Exclusive mooring rights at key aetheric refuelling stations across the continent",
+    ],
+    "Aetheric Research Order": [
+      "Proprietary aetheric formulae that determine what weapons, engines, and medicines the Empire can produce",
+      "A sealed research archive whose contents the Imperial Ministry does not fully understand but cannot afford to lose",
+      "Controlled access to refined aetheric ore — the fuel for every advanced engine in the known world",
+    ],
+    "Imperial Intelligence Bureau": [
+      "Surveillance infrastructure covering telegram traffic, financial ledgers, and courier routes across the Empire",
+      "Classified leverage on every significant guild factor, colonial administrator, and opposition figure",
+      "The legal authority to classify, seal, and deny — which is effectively the power to erase inconvenient events",
+    ],
+    "Underclass Rebel Cell": [
+      "A verified pamphlet and broadsheet distribution network that reaches every engine-district tenement",
+      "Contacts embedded in the factory floor, the census office, and the guild apprentice registry",
+      "Secure courier routes through the smog tunnels that move people, messages, and contraband past company checkpoints",
+    ],
+    "Union Rapid Response Unit": [
+      "Union-backed supply chains, medical infrastructure, and legal authority that no colonial faction can legally refuse",
+      "Rapid deployment assets — carriers, mechs, and specialist personnel — that can be on-site within hours of authorisation",
+      "The legal standing to classify, commandeer, and redefine the operational context of any contested situation",
+    ],
+    "Heterodox Mech Corps": [
+      "Unlicensed mech frames jury-rigged from salvage, running subsystems that Union doesn't officially recognise",
+      "A roster of pilots with bleed tolerance above standard clearance and no intention of disclosing it",
+      "Supply contracts with three different factions, none of whom know about the other two",
+    ],
+    "NHP Research Consortium": [
+      "Cascaded NHP assets operating at the legal edge of Union containment protocols",
+      "Proprietary data on non-human cognition that no other institution in the sector has replicated",
+      "Leverage over every organisation that has ever quietly used their NHP consultation services",
+    ],
+    "Colonial Liberation Front": [
+      "Deep roots in the local population — every safe house, every supply cache, every sympathiser is a local",
+      "Firsthand knowledge of Union administrative failures that make for devastating public documentation",
+      "Enough field-stripped and improvised hardware to make any contested zone expensive to hold",
+    ],
+    "Corporate Extraction Crew": [
+      "Proprietary extraction technology and the contracts that legally entitle them to use it",
+      "A Union-adjacent legal team whose job is to ensure every operation remains just inside the line",
+      "Leverage over the colonial administrator who approved the contract in the first place",
+    ],
+    "Imperial Authority": [
+      "Absolute legal authority and the overwhelming military force required to back it up",
+      "An expansive network of informants, spies, and surveillance drones",
+      "Control over the planetary defense grid and all orbital traffic",
+    ],
+    "Mystic Order": [
+      "Ancient texts, relics, and lost techniques of an energy-manipulating discipline",
+      "A hidden network of sympathizers who revere the old ways",
+      "Deeply honed intuition and combat skills that defy modern weaponry",
+    ],
+    "Smuggler Syndicate": [
+      "Secret hyper-routes and hyperdrive modifications that bypass imperial checkpoints",
+      "Counterfeit clearance codes and bribed imperial customs officials",
+      "A vast fleet of unregistered, heavily modified blockade runners",
+    ],
+    "Imperial Fleet": [
+      "Capital ships capable of glassing a continent from orbit",
+      "Endless waves of disciplined troopers and standardized fighter squadrons",
+      "Complete control over interstellar communications relays",
+    ],
+    "Resistance Cell": [
+      "Stolen imperial codes, intercepted transmissions, and encrypted frequencies",
+      "The fierce loyalty of the oppressed populace who provide safe harbor",
+      "Sabotage equipment, stolen ordnance, and a willingness to die for the cause",
+    ],
+    "Planetary Guild": [
+      "Exclusive control over the extraction and refinement of a rare hyper-fuel",
+      "Deep pockets and the ability to lobby or bribe imperial governors",
+      "A monopoly on off-world transport for civilian goods",
     ],
   };
   return pickFrom(

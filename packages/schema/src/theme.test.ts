@@ -13,6 +13,7 @@ import {
   STARWARS_LIGHT,
   STARTREK_LIGHT,
   LANCER_LIGHT,
+  WESTERN_DARK,
   StylingTemplateSchema,
 } from "./theme";
 
@@ -47,7 +48,7 @@ describe("Theme Schema & Definitions", () => {
     expect(fantasy.graph.edgeWidth).toBeLessThanOrEqual(2); // Reduced from 3
   });
 
-  it("defines light and dark counterparts for all 10 world themes", () => {
+  it("defines light and dark counterparts for all 11 world themes", () => {
     const counterparts: Record<string, { light: any; dark: any }> = {
       workspace: { light: THEMES.workspace, dark: WORKSPACE_DARK },
       scifi: { light: SCIFI_LIGHT, dark: THEMES.scifi },
@@ -60,6 +61,7 @@ describe("Theme Schema & Definitions", () => {
       starwars: { light: STARWARS_LIGHT, dark: THEMES.starwars },
       startrek: { light: STARTREK_LIGHT, dark: THEMES.startrek },
       lancer: { light: LANCER_LIGHT, dark: THEMES.lancer },
+      western: { light: THEMES.western, dark: WESTERN_DARK },
     };
 
     for (const [key, pair] of Object.entries(counterparts)) {
@@ -67,11 +69,17 @@ describe("Theme Schema & Definitions", () => {
       expect(pair.dark).toBeDefined();
 
       const expectedLightId =
-        key === "workspace" || key === "fantasy" || key === "modern"
+        key === "workspace" ||
+        key === "fantasy" ||
+        key === "modern" ||
+        key === "western"
           ? key
           : `${key}_light`;
       const expectedDarkId =
-        key === "workspace" || key === "fantasy" || key === "modern"
+        key === "workspace" ||
+        key === "fantasy" ||
+        key === "modern" ||
+        key === "western"
           ? `${key}_dark`
           : key;
 

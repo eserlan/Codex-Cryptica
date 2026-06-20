@@ -258,26 +258,29 @@
     }
   };
 
-  const handleBackdropClick = (event: MouseEvent) => {
-    if (event.target === event.currentTarget) {
-      searchStore.close();
-    }
-  };
 </script>
 
 {#if searchStore.isOpen}
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class={overlayClass}
-    onclick={handleBackdropClick}
-    onkeydown={(e) => e.key === "Escape" && searchStore.close()}
-    role="dialog"
-    aria-modal="true"
-    tabindex="-1"
     data-testid="search-modal"
     data-layout={hasLeftSidebar || hasEntityPanel ? "main" : "global"}
   >
-    <div class={dialogClass}>
+    <button
+      type="button"
+      aria-label="Close search"
+      class="absolute inset-0 w-full h-full bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
+      onclick={searchStore.close}
+      onkeydown={(e) => e.key === "Escape" && searchStore.close()}
+      tabindex="-1"
+    ></button>
+    <div
+      class="{dialogClass} relative z-10"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      onkeydown={handleKeydown}
+    >
       <!-- Input Header -->
       <div class="p-4 border-b border-chrome-border">
         <div class="relative">
