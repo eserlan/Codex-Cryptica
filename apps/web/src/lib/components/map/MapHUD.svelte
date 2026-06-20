@@ -56,7 +56,7 @@
             broadcastActiveMapSync: () => p2pHost.broadcastActiveMapSync(),
           })}
       >
-        {#each Object.values(vault.maps) as map (map.id)}
+        {#each vault.allMaps as map (map.id)}
           <option value={map.id}>
             {map.isWorldMap ? "★ " : ""}{map.name}
           </option>
