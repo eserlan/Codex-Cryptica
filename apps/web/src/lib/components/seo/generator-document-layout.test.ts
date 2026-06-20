@@ -198,19 +198,19 @@ Owes the thieves' guild a debt.`,
     });
 
     expect(layout.content).toContain("### Who they are");
-    expect(layout.content).toContain("### Personality");
     expect(layout.content).toContain("### Faction Connection");
     expect(layout.content).toContain("### Secrets & Hooks");
     expect(layout.content).toContain("**Secret**: He never actually left");
     expect(layout.content).toContain("**Immediate Hook**: He needs a lock");
-    // Rail keeps only the compact at-a-glance facts
+    expect(layout.content).not.toContain("### Personality");
+    // Rail keeps compact at-a-glance facts and personality
     expect(layout.lore).toContain("### At a Glance");
     expect(layout.lore).toContain("**Ancestry**");
     expect(layout.lore).toContain("**Role**");
     expect(layout.lore).toContain("**Moral Stance**");
     expect(layout.lore).not.toContain("**Secret**");
     expect(layout.lore).not.toContain("**Immediate Hook**");
-    expect(layout.lore).not.toContain("### Personality");
+    expect(layout.lore).toContain("### Personality");
     expect(layout.lore).not.toContain("### Faction Connection");
   });
 

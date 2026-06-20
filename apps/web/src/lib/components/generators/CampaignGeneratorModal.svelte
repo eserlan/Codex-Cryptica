@@ -246,6 +246,7 @@
             workflow.launchMode === "contextual" ? "related" : undefined,
         },
         createRelationship,
+        ...(workflow.prefillDate ? { start_date: workflow.prefillDate } : {}),
       });
       // Auto-wire the AI's suggested connections to existing entities (matched
       // by exact, case-insensitive title). These live on the skeleton, so they

@@ -16,6 +16,11 @@
   let createError = $state<string | null>(null);
   let useTemplate = $state(true);
   let inputEl = $state<HTMLInputElement | undefined>();
+  let prefillStartDate = $state<{
+    year: number;
+    month: number;
+    day: number;
+  } | null>(null);
 
   // Consume draft from proposer (e.g. AI-suggested entity), including body content
   $effect(() => {
@@ -39,11 +44,14 @@
   // Autofocus input when sheet opens; reset all fields on close
   $effect(() => {
     if (modalUIStore.showMobileCreateSheet) {
+      prefillStartDate = modalUIStore.pendingCreateDate;
       setTimeout(() => inputEl?.focus(), 100);
     } else {
       newTitle = "";
       draftContent = "";
       createError = null;
+      prefillStartDate = null;
+      modalUIStore.pendingCreateDate = null;
     }
   });
 
@@ -83,6 +91,7 @@
       const id = await vault.createEntity(newType, newTitle, {
         content: resolvedContent,
         lore: resolvedLore,
+        ...(prefillStartDate ? { start_date: prefillStartDate } : {}),
       });
       vault.selectedEntityId = id;
       close();
@@ -210,6 +219,18 @@
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
+
+      {#if prefillStartDate}
+        <div
+          class="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
+        >
+          <span class="icon-[lucide--calendar] h-3.5 w-3.5" aria-hidden="true"
+          ></span>
+          Start date: {prefillStartDate.year}-{String(
+            prefillStartDate.month,
+          ).padStart(2, "0")}-{String(prefillStartDate.day).padStart(2, "0")}
+        </div>
+      {/if}
 
       <label
         class="flex items-center gap-3 cursor-pointer select-none text-sm text-chrome-muted"

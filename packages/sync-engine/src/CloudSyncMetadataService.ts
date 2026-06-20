@@ -6,7 +6,10 @@ import { SyncRegistry } from "./SyncRegistry";
  * Wraps SyncRegistry to provide a higher-level API for connection management.
  */
 export class CloudSyncMetadataService {
-  constructor(private readonly registry: SyncRegistry) {}
+  constructor(
+    private readonly registry: SyncRegistry,
+    private readonly now: () => number = Date.now,
+  ) {}
 
   /**
    * Retrieves metadata for a specific vault.
@@ -41,7 +44,7 @@ export class CloudSyncMetadataService {
 
     await this.saveMetadata({
       ...existing,
-      lastSyncTime: Date.now(),
+      lastSyncTime: this.now(),
       lastSyncToken: token || existing.lastSyncToken,
     });
   }

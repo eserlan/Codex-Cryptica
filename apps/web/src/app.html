@@ -65,7 +65,7 @@
 			document.documentElement.dataset.appAppearanceChoice = appearance;
 
 			let storedTheme = (localStorage.getItem("codex-cryptica-active-theme") || "workspace").replace(/_(light|dark)$/, "");
-			const baseThemes = ["workspace", "fantasy", "modern", "scifi", "cyberpunk", "apocalyptic", "horror", "fallout", "starwars", "startrek"];
+			const baseThemes = ["workspace", "fantasy", "modern", "scifi", "cyberpunk", "apocalyptic", "horror", "fallout", "starwars", "startrek", "western"];
 			if (!baseThemes.includes(storedTheme)) {
 				storedTheme = "workspace";
 			}
@@ -78,6 +78,7 @@
 				if (storedTheme === "workspace") theme = "workspace_dark";
 				else if (storedTheme === "fantasy") theme = "fantasy_dark";
 				else if (storedTheme === "modern") theme = "modern_dark";
+				else if (storedTheme === "western") theme = "western_dark";
 			} else {
 				if (storedTheme === "scifi") theme = "scifi_light";
 				else if (storedTheme === "cyberpunk") theme = "cyberpunk_light";
@@ -108,7 +109,9 @@
 				starwars:        { bg: "#000000", surface: "#0F172A", text: "#E2E8F0", primary: "#FFE81F", secondary: "#cbd5e1", border: "rgba(74, 144, 226, 0.5)",        muted: "#94a3b8", dim: "#64748b" },
 				starwars_light:  { bg: "#f5f0e3", surface: "#fbf6e8", text: "#292524", primary: "#1e3a8a", secondary: "#1d4ed8", border: "rgba(30, 58, 138, 0.3)",         muted: "#3b4c6b", dim: "#475569" },
 				startrek:        { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#fbcfe8", border: "rgba(255, 153, 0, 0.4)",          muted: "#d1d5db", dim: "#9ca3af" },
-				startrek_light:  { bg: "#f1f4f6", surface: "#ffffff", text: "#1e293b", primary: "#c2410c", secondary: "#ea580c", border: "rgba(194, 65, 12, 0.3)",          muted: "#7c3d17", dim: "#c2410c" }
+				startrek_light:  { bg: "#f1f4f6", surface: "#ffffff", text: "#1e293b", primary: "#c2410c", secondary: "#ea580c", border: "rgba(194, 65, 12, 0.3)",          muted: "#7c3d17", dim: "#c2410c" },
+				western:         { bg: "#f5ece1", surface: "#eaddcc", text: "#3d2a1f", primary: "#8c5a3c", secondary: "#5c4033", border: "rgba(140, 90, 60, 0.4)",  texture: "parchment.svg", muted: "#8c5a3c", dim: "#5c4033" },
+				western_dark:    { bg: "#1a120c", surface: "#2b1e15", text: "#f0e6dc", primary: "#d48227", secondary: "#a0785a", border: "rgba(212, 130, 39, 0.3)", texture: "leather.svg",   muted: "#a0785a", dim: "#805c43" }
 			};
 
 			if (theme && themes[theme]) {

@@ -93,6 +93,18 @@ describe("buildNpcPrompt", () => {
     expect(userMessage).toContain(morality.aiPromptDirective);
   });
 
+  it("uses the Western / Frontier morality anchors and voice", () => {
+    const morality = npcThemeConfig.moralities["Western / Frontier"][0];
+    const { systemInstruction, userMessage } = buildNpcPrompt(
+      { theme: "Western / Frontier", alignment: morality.id },
+      "",
+      seededRng(2),
+    );
+    expect(systemInstruction).toContain("weird west or classic frontier");
+    expect(userMessage).toContain(`- Moral Stance: ${morality.label}`);
+    expect(userMessage).toContain(morality.aiPromptDirective);
+  });
+
   it("falls back to a generic voice for an unknown theme", () => {
     const { systemInstruction } = buildNpcPrompt(
       { theme: "Nonsense" },

@@ -13,6 +13,7 @@
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
+  import { tick } from "svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -27,6 +28,13 @@
   let useTemplate = $state(true);
   let draftContent = $state("");
 
+  let prefillStartDate = $state<{
+    year: number;
+    month: number;
+    day: number;
+  } | null>(null);
+  let titleInputEl = $state<HTMLInputElement | null>(null);
+
   // Open the create form when an empty-state CTA requests it.
   // On mobile, the layout intercepts this flag first and opens a bottom sheet;
   // skip here so the flag isn't consumed before the layout effect runs.
@@ -34,8 +42,13 @@
     if (modalUIStore.pendingCreateEntity && !layoutUIStore.isMobile) {
       modalUIStore.pendingCreateEntity = false;
       if (!vault.isGuest) {
+        prefillStartDate = modalUIStore.pendingCreateDate;
+        modalUIStore.pendingCreateDate = null;
         createError = null;
         showForm = true;
+        tick().then(() => titleInputEl?.focus());
+      } else {
+        modalUIStore.pendingCreateDate = null;
       }
     }
   });
@@ -148,10 +161,12 @@
       const id = await vault.createEntity(newType, newTitle, {
         content: resolvedContent,
         lore: resolvedLore,
+        ...(prefillStartDate ? { start_date: prefillStartDate } : {}),
       });
       vault.selectedEntityId = id;
       newTitle = "";
       draftContent = "";
+      prefillStartDate = null;
       showForm = false;
     } catch (err: unknown) {
       console.error(err);
@@ -392,6 +407,7 @@
             } else {
               draftContent = "";
               newTitle = "";
+              prefillStartDate = null;
             }
           }}
           data-testid="new-entity-button"
@@ -538,6 +554,7 @@
         : 'flex-wrap'} gap-2 p-3 bg-chrome-surface rounded border border-chrome-border animate-in slide-in-from-top-2 fade-in"
     >
       <input
+        bind:this={titleInputEl}
         bind:value={newTitle}
         aria-label={`New ${themeStore.jargon.entity} Title`}
         placeholder={`${themeStore.jargon.entity} Title...`}
@@ -559,6 +576,18 @@
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
+
+      {#if prefillStartDate}
+        <div
+          class="flex items-center gap-1.5 rounded px-2 py-1 text-[10px] bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
+        >
+          <span class="icon-[lucide--calendar] h-3 w-3" aria-hidden="true"
+          ></span>
+          Start date: {prefillStartDate.year}-{String(
+            prefillStartDate.month,
+          ).padStart(2, "0")}-{String(prefillStartDate.day).padStart(2, "0")}
+        </div>
+      {/if}
 
       <label
         class="flex items-center gap-2 cursor-pointer group select-none text-[10px] md:text-xs text-chrome-muted hover:text-chrome-text {isVertical

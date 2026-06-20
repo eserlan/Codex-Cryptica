@@ -3,7 +3,7 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { fade, slide } from "svelte/transition";
 
-  const guests = $derived(Object.values(guestStore.guestRoster));
+  const guests = $derived(guestStore.allGuests);
   const hasGuests = $derived(guests.length > 0);
 </script>
 
