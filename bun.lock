@@ -40,7 +40,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.26.24",
+      "version": "0.26.27",
       "dependencies": {
         "@codex/canvas-engine": "workspace:*",
         "@codex/events": "workspace:*",
