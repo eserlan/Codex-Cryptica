@@ -413,14 +413,14 @@
   });
 
   let magicItem = $state({
-    type: magicItemConfig.types[0],
+    type: magicItemConfig.typesByTheme["Classic Fantasy"][0],
     rarity: magicItemConfig.rarities[1],
   });
 
   let faction = $state({
     theme: factionConfig.themes[0],
-    type: factionConfig.types[0],
-    scope: factionConfig.scopes[1],
+    type: factionConfig.typesByTheme["Classic Fantasy"][0],
+    scope: factionConfig.scopesByTheme["Classic Fantasy"][1],
     alignment: factionConfig.alignments[0],
     campaignContext: "",
   });
@@ -1034,10 +1034,12 @@
         id="item-type-select"
         label="Item Type"
         bind:value={magicItem.type}
-        choices={magicItemConfig.types.map((t: string) => ({
-          value: t,
-          label: t,
-        }))}
+        choices={magicItemConfig.typesByTheme["Classic Fantasy"].map(
+          (t: string) => ({
+            value: t,
+            label: t,
+          }),
+        )}
         className="flex flex-col gap-1.5"
         {labelClass}
         inputClass={selectClass}
