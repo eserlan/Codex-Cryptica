@@ -108,6 +108,7 @@ export const nationConfig = {
     "Steampunk",
     "Lancer",
     "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -196,6 +197,13 @@ export const nationConfig = {
       "Occupied Territory",
       "Federated System",
       "Rebel Alliance",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "United Planetary Federation",
+      "Democratic Star Union",
+      "Scientific Directorate",
+      "Allied Worlds Council",
+      "Neutral System Alliance",
     ],
   } as Record<string, string[]>,
   governmentStyles: [

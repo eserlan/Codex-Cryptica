@@ -48,6 +48,7 @@ export const settlementConfig = {
     "Western",
     "Steampunk",
     "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
 
   sizesByGenre: {
@@ -227,6 +228,24 @@ export const settlementConfig = {
         pointsOfInterestCount: 4,
       },
     ],
+    "Optimistic Exploration Sci-Fi": [
+      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 1 },
+      {
+        name: "Station",
+        range: "200–2,000 personnel",
+        pointsOfInterestCount: 2,
+      },
+      {
+        name: "Colony",
+        range: "2,000–20,000 inhabitants",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Core World City",
+        range: "50,000+ inhabitants",
+        pointsOfInterestCount: 4,
+      },
+    ],
   } as Record<
     string,
     { name: string; range: string; pointsOfInterestCount: number }[]
@@ -309,11 +328,18 @@ export const settlementConfig = {
     ],
     "Space Opera Resistance": [
       "Desert wasteland",
-      "Ice moon surface",
-      "Dense jungle canopy",
-      "Asteroid field",
-      "Gas giant atmospheric platform",
-      "Urban ecumenopolis lower levels",
+      "Ice planet",
+      "Jungle moon",
+      "Gas giant orbit",
+      "Asteroid belt",
+      "Volcanic world",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Class M Planet",
+      "Asteroid Belt",
+      "Gas Giant Atmosphere",
+      "Binary Star System",
+      "Nebula Edge",
     ],
   } as Record<string, string[]>,
 
@@ -407,6 +433,13 @@ export const settlementConfig = {
       "Spice mining facility",
       "Ancient temple ruins",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Scientific Research",
+      "Diplomatic Hub",
+      "Fleet Resupply",
+      "Agricultural Breadbasket",
+      "First Contact Staging Area",
+    ],
   } as Record<string, string[]>,
 
   tonesByGenre: {
@@ -480,6 +513,13 @@ export const settlementConfig = {
       "Desolate and lonely",
       "Ancient and mystical",
       "Lawless and chaotic",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Utopian",
+      "Curious",
+      "Bureaucratic",
+      "Pioneering",
+      "Tense",
     ],
   } as Record<string, string[]>,
 
@@ -570,6 +610,13 @@ export const settlementConfig = {
       "Blockade causing starvation",
       "Bounty hunters searching the streets",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Threat of a border skirmish",
+      "A failing planetary life support system",
+      "A diplomatic breakdown between two alien delegations",
+      "A mysterious viral outbreak in the medical bay",
+      "Sabotage of the main warp reactor",
+    ],
   } as Record<string, string[]>,
 
   authorityTypesByGenre: {
@@ -653,6 +700,13 @@ export const settlementConfig = {
       "Corrupt Prefect",
       "Mystic Elder",
       "Frontier Mayor",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Station Commander",
+      "Planetary Governor",
+      "Science Director",
+      "Fleet Admiral",
+      "Ambassador",
     ],
   } as Record<string, string[]>,
 
@@ -755,6 +809,14 @@ export const settlementConfig = {
       "Rebel Command Center",
       "Bounty Hunter Guildhouse",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "The Promenade",
+      "Main Engineering",
+      "Astrophysics Lab",
+      "Diplomatic Quarters",
+      "The Arboretum",
+      "Shuttlebay",
+    ],
   } as Record<string, string[]>,
 
   factionsByGenre: {
@@ -827,6 +889,14 @@ export const settlementConfig = {
       "The Crimson Syndicate",
       "The Mystic Order Vanguard",
       "The Bounty Hunter Guild",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starfleet equivalent",
+      "Romulan equivalent",
+      "Klingon equivalent",
+      "Maquis equivalent",
+      "Section 31 equivalent",
+      "Orion Syndicate equivalent",
     ],
   } as Record<string, string[]>,
 
@@ -921,6 +991,14 @@ export const settlementConfig = {
       "Manda",
       "Danto",
       "Yav",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Astra",
+      "Nova",
+      "Celestia",
+      "Sirius",
+      "Orion",
+      "Vega",
     ],
   } as Record<string, string[]>,
 
@@ -1024,6 +1102,14 @@ export const settlementConfig = {
       " Enclave",
       " City",
       " Port",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      " Station",
+      " Base",
+      " Prime",
+      " Outpost",
+      " Colony",
+      " Hub",
     ],
   } as Record<string, string[]>,
 

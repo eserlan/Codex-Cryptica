@@ -33,6 +33,7 @@ export const themeToHubGenre: Record<string, string> = {
   "Western / Frontier": "Western",
   Steampunk: "Steampunk",
   Lancer: "Lancer",
+  "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
 };
 
 export function pickRandomIdeaTheme(

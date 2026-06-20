@@ -44,6 +44,7 @@ export const themeToQuestGenre: Record<string, string> = {
   Steampunk: "Steampunk",
   Lancer: "Lancer",
   "Space Opera Resistance": "Space Fantasy",
+  "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
 };
 
 export const questConfig = {
@@ -56,6 +57,7 @@ export const questConfig = {
     "Steampunk",
     "Lancer",
     "Space Fantasy",
+    "Optimistic Exploration Sci-Fi",
   ],
   tones: ["Heroic", "Gritty", "Mysterious", "Comedic", "Tragic"],
   tonesByTheme: {
@@ -99,6 +101,13 @@ export const questConfig = {
     Steampunk: ["Intriguing", "Tense", "Grandiose", "Cynical", "Adventurous"],
     Lancer: ["Tense", "Bleak", "Desperate", "Clinical", "High-Octane"],
     "Space Opera Resistance": ["Heroic", "Desperate", "Pulpy", "Epic", "Tense"],
+    "Optimistic Exploration Sci-Fi": [
+      "Curious",
+      "Diplomatic",
+      "Philosophical",
+      "Tense",
+      "Utopian",
+    ],
   } as Record<string, string[]>,
   scopes: [
     "Local (village / district)",
@@ -147,6 +156,11 @@ export const questConfig = {
       "Local (cantina / spaceport)",
       "Planetary (occupied world / system)",
       "Galactic (imperial-scale / rebellion)",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Local (research outpost)",
+      "System-wide (diplomatic dispute)",
+      "Galaxy-spanning (precursor threat)",
     ],
   } as Record<string, string[]>,
   locationTypes: [
@@ -238,6 +252,14 @@ export const questConfig = {
       "Desert Moisture Farm",
       "Orbital Battle Station",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starship Bridge",
+      "Alien Ruins",
+      "Embassy Station",
+      "Precursor Vault",
+      "Research Laboratory",
+      "Terraforming Colony",
+    ],
   } as Record<string, string[]>,
   threats: [
     "Monstrous Creature",
@@ -327,6 +349,14 @@ export const questConfig = {
       "Betrayal from Within",
       "Imperial Strike Fleet",
       "Ancient Dark Mystic",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Misunderstood Alien Lifeform",
+      "Rogue Artificial Intelligence",
+      "Unstable Subspace Phenomenon",
+      "Hostile Splinter Faction",
+      "Ancient Planetary Defense System",
+      "Temporal Distortion",
     ],
   } as Record<string, string[]>,
   hooks: [
@@ -441,6 +471,14 @@ export const questConfig = {
       "Stolen imperial clearance codes",
       "Intel on a critical imperial weakness",
       "A heavily modified blockade runner",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Federation comms clearance",
+      "Access to precursor databanks",
+      "A permanent diplomatic envoy assignment",
+      "Advanced sensor upgrades",
+      "Safe passage through neutral space",
+      "Alliance with a newly discovered species",
     ],
   } as Record<string, string[]>,
 };

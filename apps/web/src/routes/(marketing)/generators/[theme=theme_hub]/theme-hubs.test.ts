@@ -13,6 +13,7 @@ describe("Generator Theme Hub Route", () => {
       "western",
       "steampunk",
       "lancer",
+      "optimistic-exploration-sci-fi",
     ])("should load valid theme: %s", (theme) => {
       const res = load({ params: { theme } } as any) as any;
       expect(res.theme).toBe(theme);
@@ -30,7 +31,7 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 9 theme slugs", () => {
+    it("should return all 10 theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([
         { theme: "fantasy" },
@@ -42,6 +43,7 @@ describe("Generator Theme Hub Route", () => {
         { theme: "western" },
         { theme: "steampunk" },
         { theme: "lancer" },
+        { theme: "optimistic-exploration-sci-fi" },
       ]);
     });
   });

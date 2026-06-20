@@ -111,6 +111,7 @@ export const socialHubConfig = {
     "Steampunk",
     "Lancer",
     "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
   venueTypesByGenre: {
     Fantasy: [
@@ -190,6 +191,13 @@ export const socialHubConfig = {
       "Imperial Officers' Club",
       "Scrap-Town Bar",
       "Spaceport Transit Lounge",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starship Observation Lounge",
+      "Space Station Promenade",
+      "Embassy Reception Hall",
+      "Planetary Academy Campus",
+      "Frontier Research Outpost Canteen",
     ],
   } as Record<string, string[]>,
   atmospheres: [
@@ -293,6 +301,14 @@ export const socialHubConfig = {
       "Smugglers and bounty hunters",
       "Mystic order exiles in hiding",
       "Scrap workers and frontier traders",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Off-duty officers",
+      "Visiting alien diplomats",
+      "Research scientists",
+      "Civilian colonists",
+      "Exchange students",
+      "Stellar cartographers",
     ],
   } as Record<string, string[]>,
   troubles: [

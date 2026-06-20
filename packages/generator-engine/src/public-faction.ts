@@ -49,6 +49,7 @@ export const factionConfig = {
     "Steampunk",
     "Lancer",
     "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
   types: [
     "Merchant Guild",
@@ -74,6 +75,10 @@ export const factionConfig = {
     "Imperial Fleet",
     "Resistance Cell",
     "Planetary Guild",
+    "Federated Science Directorate",
+    "Planetary Council",
+    "Border System Power",
+    "Splinter Ideological Movement",
   ],
   scopes: [
     "Local district",
@@ -136,6 +141,8 @@ export const themeIdToLabel: Record<string, string> = {
   steampunk_dark: "Steampunk",
   lancer: "Lancer",
   lancer_light: "Lancer",
+  "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
+  "optimistic-exploration-sci-fi_dark": "Optimistic Exploration Sci-Fi",
 };
 
 export const vampireConfig = {
@@ -225,6 +232,8 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "Lancer RPG — Union rapid-response units, heterodox mech corps, NHP research consortiums, colonial liberation fronts, and corporate extraction crews operating across the Long Rim",
   "Space Opera Resistance":
     "pulpy galactic rebellion — rebel cells, imperial authorities, smuggler syndicates, ancient mystic orders, frontier guilds, and imperial fleets operating across desert worlds and occupied systems",
+  "Optimistic Exploration Sci-Fi":
+    "optimistic exploration sci-fi — federated councils, scientific directorates, peaceful integration, and complex diplomatic tension over ethical principles",
 };
 
 const FACTION_NAMING_STYLES = [
