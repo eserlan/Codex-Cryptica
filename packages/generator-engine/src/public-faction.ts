@@ -64,19 +64,25 @@ export const factionConfig = {
     "Aetheric Research Order",
     "Imperial Intelligence Bureau",
     "Underclass Rebel Cell",
+    "Mystic Order",
+    "Smuggler Syndicate",
+    "Resistance Cell",
+    "Planetary Guild",
+    "Federated Science Directorate",
+    "Planetary Council",
+    "Border System Power",
+    "Splinter Ideological Movement",
+  ],
+  lancerTypes: [
     "Union Rapid Response Unit",
     "Heterodox Mech Corps",
     "NHP Research Consortium",
     "Colonial Liberation Front",
     "Corporate Extraction Crew",
     "Imperial Authority",
-    "Mystic Order",
     "Smuggler Syndicate",
     "Imperial Fleet",
     "Resistance Cell",
-    "Planetary Guild",
-    "Federated Science Directorate",
-    "Planetary Council",
     "Border System Power",
     "Splinter Ideological Movement",
   ],
@@ -640,9 +646,15 @@ function resolveFaction(
   options: FactionGeneratorOptions,
   rng: Rng,
 ): ResolvedFaction {
+  const theme = options.theme || factionConfig.themes[0];
   return {
-    theme: options.theme || factionConfig.themes[0],
-    factionType: options.type || pickFrom(factionConfig.types, rng),
+    theme,
+    factionType:
+      options.type ||
+      pickFrom(
+        theme === "Lancer" ? factionConfig.lancerTypes : factionConfig.types,
+        rng,
+      ),
     scope: options.scope || pickFrom(factionConfig.scopes, rng),
     alignment: options.alignment || pickFrom(factionConfig.alignments, rng),
     campaignContext: options.campaignContext?.trim() || undefined,
