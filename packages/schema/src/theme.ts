@@ -109,6 +109,7 @@ export const WORKSPACE_DARK: StylingTemplate = {
     text: "#f5f5f4",
     border: "rgba(68, 64, 60, 1)",
     accent: "#c8973a",
+    texture: "workspace_grain.svg",
     fontHeader: "'Fraunces', serif",
     fontBody: "'Inter', sans-serif",
     borderRadius: "8px",
@@ -136,6 +137,7 @@ export const THEMES = {
       text: "#1c1917",
       border: "rgba(231, 229, 228, 1)",
       accent: "#c8973a",
+      texture: "workspace_grain.svg",
       fontHeader: "'Fraunces', serif",
       fontBody: "'Inter', sans-serif",
       borderRadius: "8px",
@@ -161,6 +163,7 @@ export const THEMES = {
       text: "#86efac",
       border: "rgba(22, 163, 74, 0.5)",
       accent: "#a855f7",
+      texture: "scifi_grid.svg",
       fontHeader: "'Orbitron', sans-serif",
       fontBody: "'Inter', sans-serif",
     },
@@ -266,6 +269,7 @@ export const THEMES = {
       text: "#0f172a",
       border: "rgba(203, 213, 225, 1)",
       accent: "#4f46e5",
+      texture: "modern_dots.svg",
       fontHeader: "'Inter', sans-serif",
       fontBody: "'Inter', sans-serif",
     },
@@ -476,6 +480,7 @@ export const THEMES = {
       text: "#E2E8F0", // Starlight White
       border: "rgba(74, 144, 226, 0.5)", // Lightsaber Blue
       accent: "#EF4444", // Sith Red
+      texture: "holocron.svg",
       fontHeader: "'Orbitron', sans-serif",
       fontBody: "'Inter', sans-serif",
     },
@@ -520,6 +525,7 @@ export const THEMES = {
       text: "#FFFFFF", // Standard White
       border: "rgba(255, 153, 0, 0.4)", // Orange Glow
       accent: "#FF3333", // Vulcan Red
+      texture: "stellar_map.svg",
       fontHeader: "'Orbitron', sans-serif",
       fontBody: "'Inter', sans-serif",
     },
@@ -564,6 +570,7 @@ export const THEMES = {
       text: "#c8e6f0", // Pale blue-white
       border: "rgba(34, 211, 238, 0.22)",
       accent: "#f97316", // Safety orange
+      texture: "tactical_hud.svg",
       fontHeader: "'Share Tech Mono', monospace",
       fontBody: "'Inter', sans-serif",
       borderRadius: "2px",
@@ -700,6 +707,7 @@ export const THEMES = {
       text: "#f8fafc",
       border: "rgba(234, 179, 8, 0.4)",
       accent: "#ef4444",
+      texture: "resistance_console.svg",
       fontHeader: "'Orbitron', sans-serif",
       fontBody: "'Inter', sans-serif",
       borderRadius: "2px",
@@ -774,6 +782,7 @@ export const MODERN_DARK: StylingTemplate = {
     text: "#f4f4f5",
     border: "rgba(96, 165, 250, 0.3)",
     accent: "#a78bfa",
+    texture: "modern_dots.svg",
     fontHeader: "'Inter', sans-serif",
     fontBody: "'Inter', sans-serif",
   },
@@ -800,6 +809,7 @@ export const SCIFI_LIGHT: StylingTemplate = {
     text: "#14532d",
     border: "rgba(21, 128, 61, 0.3)",
     accent: "#7e22ce",
+    texture: "scifi_grid.svg",
     fontHeader: "'Orbitron', sans-serif",
     fontBody: "'Inter', sans-serif",
   },
@@ -879,6 +889,7 @@ export const HORROR_LIGHT: StylingTemplate = {
     text: "#1c1917",
     border: "rgba(127, 29, 29, 0.25)",
     accent: "#581c87",
+    texture: "autopsy_smudge.svg",
     fontHeader: "'Spectral', serif",
     fontBody: "'Spectral', serif",
     borderRadius: "0px",
@@ -905,6 +916,7 @@ export const FALLOUT_LIGHT: StylingTemplate = {
     text: "#292524",
     border: "rgba(30, 64, 175, 0.3)",
     accent: "#d97706",
+    texture: "vault_blueprint.svg",
     fontHeader: "'Share Tech Mono', monospace",
     fontBody: "'Share Tech Mono', monospace",
   },
@@ -931,6 +943,7 @@ export const STARWARS_LIGHT: StylingTemplate = {
     text: "#292524",
     border: "rgba(30, 58, 138, 0.3)",
     accent: "#b45309",
+    texture: "holocron.svg",
     fontHeader: "'Orbitron', sans-serif",
     fontBody: "'Inter', sans-serif",
   },
@@ -956,6 +969,7 @@ export const STARTREK_LIGHT: StylingTemplate = {
     text: "#1e293b",
     border: "rgba(194, 65, 12, 0.3)",
     accent: "#6d28d9",
+    texture: "stellar_map.svg",
     fontHeader: "'Orbitron', sans-serif",
     fontBody: "'Inter', sans-serif",
   },
@@ -982,6 +996,7 @@ export const LANCER_LIGHT: StylingTemplate = {
     text: "#1e2d42", // Slate navy
     border: "rgba(29, 78, 216, 0.25)",
     accent: "#ea580c", // Orange hazard stripe
+    texture: "tactical_hud.svg",
     fontHeader: "'Share Tech Mono', monospace",
     fontBody: "'Inter', sans-serif",
     borderRadius: "2px",
@@ -1064,6 +1079,7 @@ export const SPACE_OPERA_RESISTANCE_DARK: StylingTemplate = {
     text: "#e2e8f0",
     border: "rgba(239, 68, 68, 0.3)",
     accent: "#eab308",
+    texture: "resistance_console.svg",
     fontHeader: "'Orbitron', sans-serif",
     fontBody: "'Inter', sans-serif",
     borderRadius: "0px",

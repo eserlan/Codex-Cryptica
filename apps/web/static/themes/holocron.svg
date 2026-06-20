@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <!-- Stars -->
+  <g fill="#ffffff" opacity="0.25">
+    <circle cx="20" cy="40" r="0.75"/>
+    <circle cx="45" cy="180" r="1"/>
+    <circle cx="70" cy="95" r="0.75"/>
+    <circle cx="90" cy="220" r="1.2"/>
+    <circle cx="110" cy="30" r="0.75"/>
+    <circle cx="150" cy="210" r="0.75"/>
+    <circle cx="180" cy="50" r="1.5"/>
+    <circle cx="210" cy="160" r="0.75"/>
+    <circle cx="230" cy="85" r="1"/>
+    <circle cx="235" cy="230" r="0.5"/>
+    <circle cx="140" cy="90" r="0.75"/>
+    <circle cx="35" cy="120" r="0.75"/>
+    <circle cx="165" cy="150" r="1.2"/>
+    <circle cx="85" cy="140" r="0.5"/>
+    <circle cx="195" cy="110" r="0.75"/>
+    <circle cx="120" cy="175" r="1"/>
+  </g>
+  
+  <!-- Circular Orbits -->
+  <g fill="none" stroke="#4A90E2" stroke-width="0.8" opacity="0.15">
+    <circle cx="128" cy="128" r="64"/>
+    <circle cx="128" cy="128" r="96" stroke-dasharray="4,8"/>
+    <circle cx="128" cy="128" r="32" stroke="#FFE81F" stroke-dasharray="2,2" opacity="0.7"/>
+  </g>
+
+  <!-- Geometric Compass Lines -->
+  <g stroke="#4A90E2" stroke-width="0.5" opacity="0.12">
+    <!-- Horizontal/Vertical axes -->
+    <line x1="0" y1="128" x2="256" y2="128"/>
+    <line x1="128" y1="0" x2="128" y2="256"/>
+    <!-- Diagonal axes -->
+    <line x1="0" y1="0" x2="256" y2="256" stroke-dasharray="3,6"/>
+    <line x1="256" y1="0" x2="0" y2="256" stroke-dasharray="3,6"/>
+  </g>
+
+  <!-- Central Compass Detail -->
+  <polygon points="128,118 131,125 138,128 131,131 128,138 125,131 118,128 125,125" fill="#FFE81F" opacity="0.15"/>
+</svg>

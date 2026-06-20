@@ -14,6 +14,7 @@ import {
   STARTREK_LIGHT,
   LANCER_LIGHT,
   WESTERN_DARK,
+  SPACE_OPERA_RESISTANCE_DARK,
   StylingTemplateSchema,
 } from "./theme";
 
@@ -92,6 +93,60 @@ describe("Theme Schema & Definitions", () => {
 
       // Verify jargon is identical
       expect(pair.light.jargon).toEqual(pair.dark.jargon);
+    }
+  });
+
+  it("assigns the correct SVG textures to the 16 target themes", () => {
+    const expectedTextures: Record<string, string> = {
+      workspace: "workspace_grain.svg",
+      workspace_dark: "workspace_grain.svg",
+      scifi: "scifi_grid.svg",
+      scifi_light: "scifi_grid.svg",
+      modern: "modern_dots.svg",
+      modern_dark: "modern_dots.svg",
+      starwars: "holocron.svg",
+      starwars_light: "holocron.svg",
+      startrek: "stellar_map.svg",
+      startrek_light: "stellar_map.svg",
+      lancer: "tactical_hud.svg",
+      lancer_light: "tactical_hud.svg",
+      "space-opera-resistance": "resistance_console.svg",
+      "space-opera-resistance_dark": "resistance_console.svg",
+      horror_light: "autopsy_smudge.svg",
+      fallout_light: "vault_blueprint.svg",
+    };
+
+    const themesMap: Record<string, any> = {
+      workspace: THEMES.workspace,
+      workspace_dark: WORKSPACE_DARK,
+      scifi: THEMES.scifi,
+      scifi_light: SCIFI_LIGHT,
+      modern: THEMES.modern,
+      modern_dark: MODERN_DARK,
+      starwars: THEMES.starwars,
+      starwars_light: STARWARS_LIGHT,
+      startrek: THEMES.startrek,
+      startrek_light: STARTREK_LIGHT,
+      lancer: THEMES.lancer,
+      lancer_light: LANCER_LIGHT,
+      "space-opera-resistance": THEMES["space-opera-resistance"],
+      "space-opera-resistance_dark": SPACE_OPERA_RESISTANCE_DARK,
+      horror_light: HORROR_LIGHT,
+      fallout_light: FALLOUT_LIGHT,
+    };
+
+    for (const [id, texture] of Object.entries(expectedTextures)) {
+      const theme = themesMap[id];
+      expect(theme).toBeDefined();
+      expect(theme.tokens.texture).toBe(texture);
+
+      // Expected success path: ends with .svg
+      expect(texture.endsWith(".svg")).toBe(true);
+
+      // Negative path: should not contain directory traversal paths
+      expect(texture).not.toContain("/");
+      expect(texture).not.toContain("\\");
+      expect(texture).not.toContain("..");
     }
   });
 });
