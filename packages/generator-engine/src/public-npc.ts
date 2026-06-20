@@ -245,6 +245,15 @@ export const npcThemeConfig = {
       "Long-Rim Born",
       "Ungrateful",
     ],
+    "Optimistic Exploration Sci-Fi": [
+      "Human (United Earth)",
+      "Logic-bound alien",
+      "Amorphous energy being",
+      "Symbiotic species",
+      "Cybernetic collective escapee",
+      "Avian academic",
+      "Amphibious diplomat",
+    ],
   } as Record<string, string[]>,
   roles: {
     "Classic Fantasy": [
@@ -332,6 +341,16 @@ export const npcThemeConfig = {
       "Colonial Liaison",
       "Bleed Researcher",
       "Mercenary Contractor",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Science Officer",
+      "Chief Medical Officer",
+      "Diplomatic Envoy",
+      "Helm Officer",
+      "Engineering Chief",
+      "First Officer",
+      "Xenobiologist",
+      "Security Chief",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -677,6 +696,44 @@ export const npcThemeConfig = {
           "This NPC prioritizes the survival and community of the settlement. They offer shelter to travelers, share rations, and seek to resolve frontier conflicts without bloodshed.",
       },
     ],
+    "Optimistic Exploration Sci-Fi": [
+      {
+        id: "diplomatic_idealist",
+        label: "Diplomatic Idealist",
+        aiPromptDirective:
+          "Write this NPC with an unwavering belief in peaceful resolution and mutual understanding. Their dialogue should be measured, empathetic, and strictly adhere to protocols of non-interference and respect.",
+      },
+      {
+        id: "curious_scientist",
+        label: "Curious Scientist",
+        aiPromptDirective:
+          "This NPC is driven purely by the pursuit of knowledge. Their dialogue should be inquisitive, highly analytical, and sometimes oblivious to immediate danger if a fascinating discovery is nearby.",
+      },
+      {
+        id: "pragmatic_officer",
+        label: "Pragmatic Officer",
+        aiPromptDirective:
+          "Write this NPC as a grounded, duty-bound professional. They believe in the mission but are willing to bend rigid rules if the lives of their crew or innocents are at stake.",
+      },
+      {
+        id: "jaded_veteran",
+        label: "Jaded Veteran",
+        aiPromptDirective:
+          "This NPC has seen the dark side of the frontier. Their dialogue is cautious and weary, contrasting the bright ideals of their organisation with the harsh realities they've survived.",
+      },
+      {
+        id: "eager_cadet",
+        label: "Eager Cadet",
+        aiPromptDirective:
+          "Write this NPC with boundless enthusiasm and a textbook understanding of regulations. They lack practical experience and often respond to crises with wide-eyed shock or textbook quotes.",
+      },
+      {
+        id: "enigmatic_observer",
+        label: "Enigmatic Observer",
+        aiPromptDirective:
+          "This NPC belongs to a vastly superior or incomprehensible culture. Their dialogue should be calm, slightly detached, and often phrased as questions that challenge basic assumptions about reality.",
+      },
+    ],
   } as Record<string, MoralityAnchor[]>,
 };
 
@@ -699,6 +756,8 @@ const NPC_THEME_VOICE: Record<string, string> = {
     "Victorian-era steampunk — airships, aetheric engines, guild conspiracies, imperial expansion, clockwork automata, and the dark underside of the industrial revolution",
   Lancer:
     "Lancer RPG — mech pilots, Union administrators, NHP caseworkers, colonial liaisons, bleed researchers, and mercenary contractors operating across the Long Rim and contested colonial space",
+  "Optimistic Exploration Sci-Fi":
+    "optimistic exploration sci-fi — diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded",
 };
 
 const NPC_NAMING_STYLES = [

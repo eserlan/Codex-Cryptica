@@ -201,7 +201,14 @@
       label: "Lancer Hub",
       summary:
         "Mech pilots, Union factions, frontier outpost settlements, and bleed-touched NPCs for Lancer campaigns.",
-      icon: "icon-[lucide--cpu]",
+      icon: "icon-[lucide--hexagon]",
+    },
+    {
+      href: "/generators/optimistic-exploration-sci-fi",
+      label: "Optimistic Sci-Fi Hub",
+      summary:
+        "Diplomatic officers, scientific factions, space station hubs, and first-contact quest hooks for optimistic space opera campaigns.",
+      icon: "icon-[lucide--rocket]",
     },
   ];
 
