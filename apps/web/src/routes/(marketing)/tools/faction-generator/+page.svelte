@@ -16,7 +16,7 @@
       theme = themeIdToLabel[stored];
     }
   });
-  let type = $state(factionConfig.types[0]);
+  let type = $state(factionConfig.typesByTheme["Classic Fantasy"][0]);
   let scope = $state(factionConfig.scopes[1]);
   let alignment = $state(factionConfig.alignments[0]);
   let campaignContext = $state("");

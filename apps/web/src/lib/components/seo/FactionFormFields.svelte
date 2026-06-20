@@ -4,7 +4,7 @@
 
   let {
     theme = $bindable(factionConfig.themes[0]),
-    type = $bindable(factionConfig.types[0]),
+    type = $bindable(factionConfig.typesByTheme["Classic Fantasy"][0]),
     scope = $bindable(factionConfig.scopes[1]),
     alignment = $bindable(factionConfig.alignments[0]),
     campaignContext = $bindable(""),
@@ -23,67 +23,22 @@
   const labelClass =
     "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
 
-  const thematicTypes: Record<string, string[]> = {
-    "Classic Fantasy": [
-      "Temple Order",
-      "Arcane Circle",
-      "Merchant Guild",
-      "Secret Society",
-      "Mercenary Company",
-      "Criminal Syndicate",
-      "Rebel Cell",
-    ],
-    "Cyberpunk / Corporate": [
-      "Megacorporation Megagroup",
-      "Corporate Syndicate",
-      "Rebel Cell",
-      "Hacker Collective",
-      "Street Gang Alliance",
-      "Secret Society",
-      "Mercenary Company",
-    ],
-    "Vampire / Gothic Noir": [
-      "Vampire Coven",
-      "Arcane Circle",
-      "Temple Order",
-      "Inquisition Watch",
-      "Secret Society",
-      "Criminal Syndicate",
-    ],
-    "Sci-Fi / Space Opera": [
-      "Megacorporation Megagroup",
-      "Stellar Federation Alliance",
-      "Rebel Cell",
-      "Mercenary Company",
-      "Merchant Guild",
-      "Secret Society",
-    ],
-    "Modern Conspiracy": [
-      "Secret Society",
-      "Intelligence Agency",
-      "Criminal Syndicate",
-      "Corporate Syndicate",
-      "Hacker Collective",
-    ],
-    "Post-Apocalyptic": [
-      "Scavenger Tribe",
-      "Rebel Cell",
-      "Wasteland Cult",
-      "Mercenary Company",
-      "Street Gang Alliance",
-    ],
-  };
-
-  const availableTypes = $derived(thematicTypes[theme] || factionConfig.types);
+  const availableTypes = $derived(
+    factionConfig.typesByTheme[theme] ??
+      factionConfig.typesByTheme["Classic Fantasy"],
+  );
   const knownTypes = $derived(
-    Array.from(
-      new Set([...factionConfig.types, ...Object.values(thematicTypes).flat()]),
-    ),
+    Array.from(new Set(Object.values(factionConfig.typesByTheme).flat())),
   );
 
   $effect(() => {
-    if (theme && type && knownTypes.includes(type) && !availableTypes.includes(type)) {
-      type = availableTypes[0] || factionConfig.types[0];
+    if (
+      theme &&
+      type &&
+      knownTypes.includes(type) &&
+      !availableTypes.includes(type)
+    ) {
+      type = availableTypes[0];
     }
   });
 </script>
@@ -95,7 +50,7 @@
   bind:value={theme}
   choices={factionConfig.themes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom vibe"
 />
@@ -107,7 +62,7 @@
   bind:value={type}
   choices={availableTypes.map((t: string) => ({ value: t, label: t }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom faction type"
 />
@@ -119,7 +74,7 @@
   bind:value={scope}
   choices={factionConfig.scopes.map((s: string) => ({ value: s, label: s }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom scale"
 />
@@ -129,9 +84,12 @@
   name="faction_alignment"
   label="Choose their morality"
   bind:value={alignment}
-  choices={factionConfig.alignments.map((a: string) => ({ value: a, label: a }))}
+  choices={factionConfig.alignments.map((a: string) => ({
+    value: a,
+    label: a,
+  }))}
   className="flex flex-col gap-1.5"
-  labelClass={labelClass}
+  {labelClass}
   inputClass={selectClass}
   customPlaceholder="Enter a custom morality"
 />
@@ -162,7 +120,9 @@
   <button
     type="button"
     onclick={() => {
-      const types = thematicTypes[theme] || factionConfig.types;
+      const types =
+        factionConfig.typesByTheme[theme] ??
+        factionConfig.typesByTheme["Classic Fantasy"];
       type = types[Math.floor(Math.random() * types.length)];
       scope =
         factionConfig.scopes[
