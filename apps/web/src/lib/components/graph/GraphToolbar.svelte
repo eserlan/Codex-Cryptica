@@ -64,7 +64,7 @@
   );
 
   const activeGuests = $derived.by(() =>
-    Object.values(guestStore.guestRoster).sort(
+    guestStore.allGuests.toSorted(
       (a, b) => a.joinedAt - b.joinedAt,
     ),
   );

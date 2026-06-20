@@ -14,7 +14,7 @@
     mapStore.isGMMode && !sessionModeStore.isGuestMode,
   );
   const guests = $derived.by(() =>
-    Object.values(guestStore.guestRoster).sort((a, b) =>
+    guestStore.allGuests.toSorted((a, b) =>
       a.displayName.localeCompare(b.displayName),
     ),
   );
