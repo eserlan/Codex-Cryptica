@@ -17,7 +17,7 @@ vi.mock("$lib/services/seo/generator-engine", () => ({
     typesByTheme: {
       "Classic Fantasy": ["Merchant Guild", "Secret Society", "Arcane Circle"],
       "Post-Apocalyptic": [
-        "Scavenger Clan",
+        "Scavenger Tribe",
         "Raider Warband",
         "Survivor Collective",
       ],
