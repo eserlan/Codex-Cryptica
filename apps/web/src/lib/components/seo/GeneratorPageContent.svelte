@@ -628,8 +628,12 @@
           hubGenre
         ] ?? settlementConfig.mainTensionsByGenre["Fantasy"])[0];
       }
+      // Use raw hub genre (before settlement remapping) so e.g. Lancer hub
+      // keeps Lancer theming even though settlement.genre is mapped to Sci-Fi.
       activeTheme =
-        socialHubGenreToTheme[settlement.genre] ?? "Classic Fantasy";
+        (rawHubGenre ? socialHubGenreToTheme[rawHubGenre] : "") ||
+        socialHubGenreToTheme[settlement.genre] ||
+        "Classic Fantasy";
       return;
     }
     if (slug === "vampire-clan") {
