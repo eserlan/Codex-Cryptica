@@ -141,6 +141,8 @@ export const themeIdToLabel: Record<string, string> = {
   steampunk_dark: "Steampunk",
   lancer: "Lancer",
   lancer_light: "Lancer",
+  startrek: "Optimistic Exploration Sci-Fi",
+  startrek_light: "Optimistic Exploration Sci-Fi",
   "optimistic-exploration-sci-fi": "Optimistic Exploration Sci-Fi",
   "optimistic-exploration-sci-fi_dark": "Optimistic Exploration Sci-Fi",
 };

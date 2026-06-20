@@ -344,7 +344,7 @@
     },
     "optimistic-exploration-sci-fi": {
       label: "Optimistic Sci-Fi",
-      localStorageId: "optimistic-exploration-sci-fi",
+      localStorageId: "startrek",
       eyebrow: "Diplomacy, Discovery & the Stars",
       intro:
         "Draft diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded.",
