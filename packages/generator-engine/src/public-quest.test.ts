@@ -79,6 +79,20 @@ describe("buildQuestPrompt", () => {
 
   it("keeps the public theme mapping", () => {
     expect(themeToQuestGenre["Cyberpunk / Corporate"]).toBe("Cyberpunk");
+    expect(themeToQuestGenre["Western / Frontier"]).toBe("Western");
+    expect(questConfig.tonesByTheme["Western / Frontier"]).toContain("Lawless");
+    expect(questConfig.scopesByTheme["Western / Frontier"]).toContain(
+      "Territory-scale (frontier)",
+    );
+    expect(questConfig.locationTypesByTheme["Western / Frontier"]).toContain(
+      "Dusty Boomtown",
+    );
+    expect(questConfig.rewardsByTheme["Western / Frontier"]).toContain(
+      "Bounty gold plus a sheriff's favor",
+    );
+    expect(questConfig.threatsByTheme["Western / Frontier"]).toContain(
+      "Outlaw Gang",
+    );
     expect(questConfig.threatsByTheme["Post-Apocalyptic"]).toContain(
       "Raider Warlord",
     );

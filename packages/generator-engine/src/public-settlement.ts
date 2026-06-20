@@ -47,6 +47,8 @@ export const settlementConfig = {
     "Horror",
     "Western",
     "Steampunk",
+    "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
 
   sizesByGenre: {
@@ -208,6 +210,42 @@ export const settlementConfig = {
         pointsOfInterestCount: 4,
       },
     ],
+    "Space Opera Resistance": [
+      { name: "Hidden Base", range: "50–500 rebels", pointsOfInterestCount: 1 },
+      {
+        name: "Colony",
+        range: "500–5,000 inhabitants",
+        pointsOfInterestCount: 2,
+      },
+      {
+        name: "Spaceport City",
+        range: "5,000–50,000 inhabitants",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Imperial Capital",
+        range: "50,000+ inhabitants",
+        pointsOfInterestCount: 4,
+      },
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      { name: "Outpost", range: "20–200 personnel", pointsOfInterestCount: 1 },
+      {
+        name: "Station",
+        range: "200–2,000 personnel",
+        pointsOfInterestCount: 2,
+      },
+      {
+        name: "Colony",
+        range: "2,000–20,000 inhabitants",
+        pointsOfInterestCount: 3,
+      },
+      {
+        name: "Core World City",
+        range: "50,000+ inhabitants",
+        pointsOfInterestCount: 4,
+      },
+    ],
   } as Record<
     string,
     { name: string; range: string; pointsOfInterestCount: number }[]
@@ -287,6 +325,21 @@ export const settlementConfig = {
       "Coastal smog district",
       "Mountain factory town",
       "Imperial canal port",
+    ],
+    "Space Opera Resistance": [
+      "Desert wasteland",
+      "Ice planet",
+      "Jungle moon",
+      "Gas giant orbit",
+      "Asteroid belt",
+      "Volcanic world",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Class M Planet",
+      "Asteroid Belt",
+      "Gas Giant Atmosphere",
+      "Binary Star System",
+      "Nebula Edge",
     ],
   } as Record<string, string[]>,
 
@@ -371,6 +424,22 @@ export const settlementConfig = {
       "Imperial administration post",
       "Smuggling harbour",
     ],
+    "Space Opera Resistance": [
+      "Smuggler haven",
+      "Imperial garrison",
+      "Moisture farm",
+      "Rebel listening post",
+      "Scrap yard and salvage",
+      "Spice mining facility",
+      "Ancient temple ruins",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Scientific Research",
+      "Diplomatic Hub",
+      "Fleet Resupply",
+      "Agricultural Breadbasket",
+      "First Contact Staging Area",
+    ],
   } as Record<string, string[]>,
 
   tonesByGenre: {
@@ -437,6 +506,20 @@ export const settlementConfig = {
       "Clockwork and eccentric",
       "Imperial and bureaucratic",
       "Rebellious and inventive",
+    ],
+    "Space Opera Resistance": [
+      "Oppressive and militarised",
+      "Scrappy and defiant",
+      "Desolate and lonely",
+      "Ancient and mystical",
+      "Lawless and chaotic",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Utopian",
+      "Curious",
+      "Bureaucratic",
+      "Pioneering",
+      "Tense",
     ],
   } as Record<string, string[]>,
 
@@ -519,6 +602,21 @@ export const settlementConfig = {
       "Guild power struggle",
       "Airship piracy",
     ],
+    "Space Opera Resistance": [
+      "Imperial crackdown imminent",
+      "Syndicate gang war",
+      "Rebel cell compromised",
+      "Ancient weapon discovered",
+      "Blockade causing starvation",
+      "Bounty hunters searching the streets",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Threat of a border skirmish",
+      "A failing planetary life support system",
+      "A diplomatic breakdown between two alien delegations",
+      "A mysterious viral outbreak in the medical bay",
+      "Sabotage of the main warp reactor",
+    ],
   } as Record<string, string[]>,
 
   authorityTypesByGenre: {
@@ -594,6 +692,21 @@ export const settlementConfig = {
       "Elected alderman",
       "Criminal boss",
       "Inventor-patriarch",
+    ],
+    "Space Opera Resistance": [
+      "Imperial Governor",
+      "Syndicate Boss",
+      "Rebel General",
+      "Corrupt Prefect",
+      "Mystic Elder",
+      "Frontier Mayor",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Station Commander",
+      "Planetary Governor",
+      "Science Director",
+      "Fleet Admiral",
+      "Ambassador",
     ],
   } as Record<string, string[]>,
 
@@ -686,6 +799,24 @@ export const settlementConfig = {
       "Imperial Tax Office",
       "Underground Press",
     ],
+    "Space Opera Resistance": [
+      "The Cantina",
+      "Imperial Garrison Headquarters",
+      "Smuggler's Docking Bay",
+      "Hidden Mystic Shrine",
+      "Jawa-style Scrap Market",
+      "Planetary Shield Generator",
+      "Rebel Command Center",
+      "Bounty Hunter Guildhouse",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "The Promenade",
+      "Main Engineering",
+      "Astrophysics Lab",
+      "Diplomatic Quarters",
+      "The Arboretum",
+      "Shuttlebay",
+    ],
   } as Record<string, string[]>,
 
   factionsByGenre: {
@@ -751,6 +882,21 @@ export const settlementConfig = {
       "The Inventor's Guild",
       "The Smoke Brotherhood",
       "The Underground Press",
+    ],
+    "Space Opera Resistance": [
+      "The Imperial Legion",
+      "The Rebel Alliance Cell",
+      "The Crimson Syndicate",
+      "The Mystic Order Vanguard",
+      "The Bounty Hunter Guild",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Starfleet equivalent",
+      "Romulan equivalent",
+      "Klingon equivalent",
+      "Maquis equivalent",
+      "Section 31 equivalent",
+      "Orion Syndicate equivalent",
     ],
   } as Record<string, string[]>,
 
@@ -835,6 +981,24 @@ export const settlementConfig = {
       "Brassfall",
       "Sootmere",
       "Forgegate",
+    ],
+    "Space Opera Resistance": [
+      "Mos",
+      "Tatoo",
+      "Aldera",
+      "Kash",
+      "Coru",
+      "Manda",
+      "Danto",
+      "Yav",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Astra",
+      "Nova",
+      "Celestia",
+      "Sirius",
+      "Orion",
+      "Vega",
     ],
   } as Record<string, string[]>,
 
@@ -928,6 +1092,24 @@ export const settlementConfig = {
       " Yard",
       " Forge",
       " Quay",
+    ],
+    "Space Opera Resistance": [
+      " Eisley",
+      " Prime",
+      " Base",
+      " Outpost",
+      " Station",
+      " Enclave",
+      " City",
+      " Port",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      " Station",
+      " Base",
+      " Prime",
+      " Outpost",
+      " Colony",
+      " Hub",
     ],
   } as Record<string, string[]>,
 
@@ -1141,6 +1323,8 @@ const FIRST_IMPRESSION_BY_GENRE: Record<string, string> = {
     "Dust. Heat. The creak of a sign. A town that watches strangers ride in and makes no move to welcome them.",
   Steampunk:
     "Smoke stacks, the clank of pistons, and the acrid smell of coal tar. The city never quite stops moving.",
+  "Space Opera Resistance":
+    "The roar of a shuttle taking off, the chatter of alien tongues, and the ever-present gaze of imperial stormtroopers on patrol.",
 };
 
 const CORE_CONCEPT_TEMPLATE = (

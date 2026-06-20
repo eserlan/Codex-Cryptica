@@ -38,6 +38,7 @@
 <div class="relative">
   <button
     type="button"
+    data-overflow
     class="rounded-full border border-theme-border bg-theme-bg/60 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
     aria-expanded={isOpen}
     aria-label={`Show more events for ${label}`}

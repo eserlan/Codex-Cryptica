@@ -223,6 +223,45 @@ export const npcThemeConfig = {
       "Vault Dweller",
       "Wasteland Nomad",
     ],
+    "Western / Frontier": [
+      "Human",
+      "Frontier Pioneer",
+      "Outlaw Scout",
+      "Town Native",
+      "Homesteader",
+    ],
+    Steampunk: [
+      "Human",
+      "Clockwork Augmented",
+      "Aetheric Sensitive",
+      "Engineered Homunculus",
+      "Colonial Expatriate",
+    ],
+    Lancer: [
+      "Human",
+      "Khalida",
+      "Karrakin",
+      "Baronic Adherent",
+      "Long-Rim Born",
+      "Ungrateful",
+    ],
+    "Space Opera Resistance": [
+      "Human",
+      "Alien Smuggler",
+      "Frontier Native",
+      "Liberated Android",
+      "Imperial Defector",
+      "Ancient Mystic",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Human (United Earth)",
+      "Logic-bound alien",
+      "Amorphous energy being",
+      "Symbiotic species",
+      "Cybernetic collective escapee",
+      "Avian academic",
+      "Amphibious diplomat",
+    ],
   } as Record<string, string[]>,
   roles: {
     "Classic Fantasy": [
@@ -279,6 +318,57 @@ export const npcThemeConfig = {
       "Cult Enforcer",
       "Scout",
       "Mechanic",
+    ],
+    "Western / Frontier": [
+      "Gunslinger",
+      "Sheriff",
+      "Bounty Hunter",
+      "Outlaw",
+      "Prospector",
+      "Saloon Keeper",
+      "Homesteader",
+      "Railroad Agent",
+      "Town Doctor",
+    ],
+    Steampunk: [
+      "Artificer",
+      "Sky Pilot",
+      "Engine Wright",
+      "Guild Factor",
+      "Aetheric Scholar",
+      "Clockwork Spy",
+      "Press-Gang Officer",
+      "Alchemical Surgeon",
+    ],
+    Lancer: [
+      "Mech Pilot",
+      "Union Administrator",
+      "Comp/Con Handler",
+      "Logistics Officer",
+      "NHP Caseworker",
+      "Colonial Liaison",
+      "Bleed Researcher",
+      "Mercenary Contractor",
+    ],
+    "Space Opera Resistance": [
+      "Rebel Pilot",
+      "Smuggler Captain",
+      "Mystic Warrior",
+      "Resistance Leader",
+      "Imperial Officer",
+      "Bounty Hunter",
+      "Underworld Fixer",
+      "Defector Operative",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "Science Officer",
+      "Chief Medical Officer",
+      "Diplomatic Envoy",
+      "Helm Officer",
+      "Engineering Chief",
+      "First Officer",
+      "Xenobiologist",
+      "Security Chief",
     ],
   } as Record<string, string[]>,
   moralities: {
@@ -472,6 +562,120 @@ export const npcThemeConfig = {
           "Write this character with a charming, highly collected, and disarming social facade. Beneath this exterior, their dialogue and actions are driven entirely by cold, calculated personal advancement.",
       },
     ],
+    Steampunk: [
+      {
+        id: "empire_loyalist",
+        label: "Empire Loyalist",
+        aiPromptDirective:
+          "Write this NPC with the clipped, bureaucratic confidence of an imperial functionary. They cite regulations, uphold the Guild Compact, and view progress as the Empire's divine right — dissent is a problem to be managed.",
+      },
+      {
+        id: "guild_pragmatist",
+        label: "Guild Pragmatist",
+        aiPromptDirective:
+          "This NPC is entirely transactional — contracts, patents, and profit margins are their moral compass. Their dialogue is precise, mercantile, and peppered with technical jargon. They respect competence, nothing else.",
+      },
+      {
+        id: "aetheric_visionary",
+        label: "Aetheric Visionary",
+        aiPromptDirective:
+          "Write this NPC with the fervent certainty of an inventor who believes progress will save humanity. Their speech is excited, technical, and slightly unhinged — they see every person as either a collaborator or an obstacle.",
+      },
+      {
+        id: "underclass_rebel",
+        label: "Underclass Rebel",
+        aiPromptDirective:
+          "This character speaks with raw, soot-stained fury. They have worked the furnaces, breathed the smog, and watched the guilds profit while the engine-workers died. Their language is blunt, conspiratorial, and resentful.",
+      },
+      {
+        id: "aristocratic_schemer",
+        label: "Aristocratic Schemer",
+        aiPromptDirective:
+          "Write this NPC with the polished, veiled menace of old money adapting to a new world. They attend every salon, fund every expedition, and ensure every innovation serves their dynasty. Nothing they say is without subtext.",
+      },
+      {
+        id: "clockwork_cynic",
+        label: "Clockwork Cynic",
+        aiPromptDirective:
+          "This NPC has seen too many inventions turn to weapons and too many guild promises turn to smoke. Their tone is dry, sardonic, and deeply weary — they cooperate when paid, believe nothing, and expect betrayal.",
+      },
+    ],
+    Lancer: [
+      {
+        id: "union_idealist",
+        label: "Union Idealist",
+        aiPromptDirective:
+          "Write this NPC with earnest, data-backed conviction in Union's ability to end scarcity and resolve conflict through coordination. Their tone is calm, precise, and genuinely believes the mission — though they are not naive about the cost.",
+      },
+      {
+        id: "bleed_touched",
+        label: "Bleed-Touched",
+        aiPromptDirective:
+          "This NPC has spent too long near paracausal phenomena and it shows. Their speech occasionally fractures into recursive loops, second-person observations, or unsettling calm about things that should be terrifying. They are not broken — just differently calibrated.",
+      },
+      {
+        id: "colonial_pragmatist",
+        label: "Colonial Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as someone who has survived on the Long Rim by making deals, not principles. Their dialogue is transactional, their loyalties provisional, and their tolerance for idealism exactly zero. They respect competence and distrust anything that requires faith.",
+      },
+      {
+        id: "liberation_militant",
+        label: "Liberation Militant",
+        aiPromptDirective:
+          "This NPC is fighting for colonial self-determination and has been fighting long enough that the anger has calcified into strategy. Their tone is controlled and precise — they have moved past fury into the colder register of someone who intends to win.",
+      },
+      {
+        id: "nhp_adjacent",
+        label: "NHP-Adjacent",
+        aiPromptDirective:
+          "Write this NPC as someone whose prolonged work with non-human persons has subtly altered their cognition. They process situations in parallel, phrase things in ways that are technically accurate but socially strange, and occasionally refer to themselves in the third person without noticing.",
+      },
+      {
+        id: "contractor_mercenary",
+        label: "Contractor / Mercenary",
+        aiPromptDirective:
+          "This NPC is mission-focused, professionally detached, and absolutely clear that this is a contract. Their dialogue is clipped and outcome-oriented. They do not improvise morality and they do not explain their past. Payment, parameters, and exit conditions — that is the conversation.",
+      },
+    ],
+    "Space Opera Resistance": [
+      {
+        id: "rebel_idealist",
+        label: "Rebel Idealist",
+        aiPromptDirective:
+          "Write this NPC with unshakeable faith in the rebellion and the triumph of freedom over tyranny. They speak with passion and hope, willing to sacrifice everything for the cause.",
+      },
+      {
+        id: "cynical_smuggler",
+        label: "Cynical Smuggler",
+        aiPromptDirective:
+          "This NPC masks their reluctance to do the right thing with a layer of sarcasm and focus on profit. They constantly talk about getting paid, but will begrudgingly do the moral thing when pushed.",
+      },
+      {
+        id: "mystic_mentor",
+        label: "Mystic Mentor",
+        aiPromptDirective:
+          "Write this NPC with calm, cryptic wisdom. They belong to an ancient, mystical order and use metaphors about energy, destiny, and the balance of the universe rather than direct instructions.",
+      },
+      {
+        id: "imperial_loyalist",
+        label: "Imperial Loyalist",
+        aiPromptDirective:
+          "This NPC speaks with the cold authority of an overwhelming imperial force. They value order, fear, and absolute obedience, viewing freedom as chaotic and destructive.",
+      },
+      {
+        id: "ruthless_syndicate",
+        label: "Ruthless Syndicate Boss",
+        aiPromptDirective:
+          "Write this NPC as a dangerous underworld figure who sees the galactic conflict purely as an opportunity. They speak softly with implicit threats and demand absolute leverage in any deal.",
+      },
+      {
+        id: "broken_veteran",
+        label: "Broken Veteran",
+        aiPromptDirective:
+          "This NPC has seen too many battles and lost too many friends. Their tone is weary and fatalistic. They offer tactical wisdom but no illusions about the heavy cost of war.",
+      },
+    ],
     "Post-Apocalyptic": [
       {
         id: "collectivist",
@@ -510,6 +714,82 @@ export const npcThemeConfig = {
           "Write this character with a resilient, hopeful, and idealistic tone. Despite the harsh wasteland environment, they emphasize laws, education, historical recovery, and long-term societal rebuilding.",
       },
     ],
+    "Western / Frontier": [
+      {
+        id: "code_of_the_west",
+        label: "Code of the West",
+        aiPromptDirective:
+          "Write this NPC with a strict personal code of frontier honor. They value hospitality, keep their word, and never shoot an unarmed person or strike from behind.",
+      },
+      {
+        id: "law_and_order",
+        label: "Law and Order",
+        aiPromptDirective:
+          "This NPC is dedicated to bringing civilization and written law to the wild frontier. They respect badges, deeds, and formal authority, rejecting vigilante actions.",
+      },
+      {
+        id: "frontier_pragmatist",
+        label: "Frontier Pragmatist",
+        aiPromptDirective:
+          "Write this NPC as a practical survivor who knows the frontier doesn't care about rules. They make decisions based on water, ammo, and winter prep, avoiding ideological fights.",
+      },
+      {
+        id: "desperados_greed",
+        label: "Desperado's Greed",
+        aiPromptDirective:
+          "This NPC is an outlaw driven by quick gold, land claims, or pure self-interest. They are ruthless, slippery, and willing to sell out partners if the price is right.",
+      },
+      {
+        id: "vigilante_justice",
+        label: "Vigilante Justice",
+        aiPromptDirective:
+          "Write this character with a burning desire for eye-for-an-eye justice. They believe the formal law is corrupt or weak, taking punishment into their own hands.",
+      },
+      {
+        id: "merciful_pioneer",
+        label: "Merciful Pioneer",
+        aiPromptDirective:
+          "This NPC prioritizes the survival and community of the settlement. They offer shelter to travelers, share rations, and seek to resolve frontier conflicts without bloodshed.",
+      },
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      {
+        id: "diplomatic_idealist",
+        label: "Diplomatic Idealist",
+        aiPromptDirective:
+          "Write this NPC with an unwavering belief in peaceful resolution and mutual understanding. Their dialogue should be measured, empathetic, and strictly adhere to protocols of non-interference and respect.",
+      },
+      {
+        id: "curious_scientist",
+        label: "Curious Scientist",
+        aiPromptDirective:
+          "This NPC is driven purely by the pursuit of knowledge. Their dialogue should be inquisitive, highly analytical, and sometimes oblivious to immediate danger if a fascinating discovery is nearby.",
+      },
+      {
+        id: "pragmatic_officer",
+        label: "Pragmatic Officer",
+        aiPromptDirective:
+          "Write this NPC as a grounded, duty-bound professional. They believe in the mission but are willing to bend rigid rules if the lives of their crew or innocents are at stake.",
+      },
+      {
+        id: "jaded_veteran",
+        label: "Jaded Veteran",
+        aiPromptDirective:
+          "This NPC has seen the dark side of the frontier. Their dialogue is cautious and weary, contrasting the bright ideals of their organisation with the harsh realities they've survived.",
+      },
+      {
+        id: "eager_cadet",
+        label: "Eager Cadet",
+        aiPromptDirective:
+          "Write this NPC with boundless enthusiasm and a textbook understanding of regulations. They lack practical experience and often respond to crises with wide-eyed shock or textbook quotes.",
+      },
+      {
+        id: "enigmatic_observer",
+        label: "Enigmatic Observer",
+        aiPromptDirective:
+          "This NPC belongs to a vastly superior or incomprehensible culture. Their dialogue should be calm, slightly detached, and often phrased as questions that challenge basic assumptions about reality.",
+      },
+    ],
   } as Record<string, MoralityAnchor[]>,
 };
 
@@ -526,6 +806,16 @@ const NPC_THEME_VOICE: Record<string, string> = {
     "modern-day thriller — intelligence agencies, secret societies, corporate conspiracies, hidden influence networks",
   "Post-Apocalyptic":
     "post-apocalyptic survival — scavenger tribes, wasteland cults, resource wars, collapsed civilisation, desperate factions",
+  "Western / Frontier":
+    "weird west or classic frontier — outlaws, lawmen, boomtowns, gold rushes, and harsh survival on the edge of civilization",
+  Steampunk:
+    "Victorian-era steampunk — airships, aetheric engines, guild conspiracies, imperial expansion, clockwork automata, and the dark underside of the industrial revolution",
+  Lancer:
+    "Lancer RPG — mech pilots, Union administrators, NHP caseworkers, colonial liaisons, bleed researchers, and mercenary contractors operating across the Long Rim and contested colonial space",
+  "Space Opera Resistance":
+    "pulpy galactic rebellion — ancient mystical orders, frontier planets, smugglers, imperial fleets, desert worlds, and desperate heroic missions against overwhelming tyranny",
+  "Optimistic Exploration Sci-Fi":
+    "optimistic exploration sci-fi — diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded",
 };
 
 const NPC_NAMING_STYLES = [

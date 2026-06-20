@@ -10,13 +10,19 @@ describe("Generator Theme Hub Route", () => {
       "post-apocalyptic",
       "modern",
       "vampire",
+      "western",
+      "steampunk",
+      "lancer",
+      "optimistic-exploration-sci-fi",
     ])("should load valid theme: %s", (theme) => {
       const res = load({ params: { theme } } as any) as any;
       expect(res.theme).toBe(theme);
     });
 
     it("should throw 404 for unknown theme", () => {
-      expect(() => load({ params: { theme: "steampunk" } } as any)).toThrow();
+      expect(() =>
+        load({ params: { theme: "unknown-theme" } } as any),
+      ).toThrow();
     });
 
     it("should throw 404 for empty theme", () => {
@@ -25,7 +31,7 @@ describe("Generator Theme Hub Route", () => {
   });
 
   describe("entries", () => {
-    it("should return all 6 theme slugs", () => {
+    it("should return all 10 theme slugs", () => {
       const res = (entries as any)();
       expect(res).toEqual([
         { theme: "fantasy" },
@@ -34,6 +40,10 @@ describe("Generator Theme Hub Route", () => {
         { theme: "post-apocalyptic" },
         { theme: "modern" },
         { theme: "vampire" },
+        { theme: "western" },
+        { theme: "steampunk" },
+        { theme: "lancer" },
+        { theme: "optimistic-exploration-sci-fi" },
       ]);
     });
   });

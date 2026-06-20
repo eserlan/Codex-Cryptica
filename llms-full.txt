@@ -25,8 +25,14 @@ Chat with the AI about your world. Ask questions, brainstorm ideas, or get help 
 ### Oracle Connection Modes
 The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.
 
+### Oracle Memory
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed — replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on Google's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
+
 ### Visual Graph
 Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.
+
+### World Chronology
+Browse your world's history in Calendar mode (month grid) or Agenda mode (chronological list). The calendar shows your world's own year — use Previous / Next to navigate months, or click the month title to jump straight to a year with the scroll picker. Click an entry to open it in the detail panel; double-click to open it full-screen. Double-click an empty area of any date cell to open the entity creation form with that date pre-filled as the start date. Drag an entity from the left sidebar onto any calendar day to set its start or end date. If an entity has a date, click that date text in the detail panel to jump the calendar straight to it. Approximate and undated events appear only in Agenda mode under 'Undated/Approximate'. Use the Type, Label, and 'include undated' toggles to narrow what's visible.
 
 ### World Front Page
 Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.
@@ -138,6 +144,9 @@ When reading an entity's content or lore, names of other vault entities are auto
 
 ### Guest Character Chat
 Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors.
+
+### Campaign Generators
+Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.
 
 
 ## Help Documentation
@@ -383,6 +392,42 @@ Image generation uses Art Direction from your world before falling back to shipp
 
 ---
 
+### IN-APP CAMPAIGN GENERATORS
+
+The **Campaign Generators** let you create NPCs, factions, settlements, and magic items directly inside your active campaign vault. Every draft is previewed before it touches your data — no surprise saves.
+
+### How to Open the Generator
+
+- Click the **wand icon** in the vault toolbar at the top of the entity list.
+- On mobile, tap the **plus menu** and choose **Generate**.
+- From any entity's detail panel, use the **Generate Related** button to open the generator pre-loaded with that entity as context.
+
+### Configuring a Generator
+
+1. Pick a generator type: **NPC**, **Faction**, **Settlement**, or **Magic Item**.
+2. Adjust any available options (race, type, rarity, etc.).
+3. Click **Generate** to produce a draft. With AI enabled, the Oracle writes the draft for you; if AI is unavailable or turned off, generators fall back to a built-in local template — so you always get a result, no AI key required.
+
+### Reviewing and Saving
+
+After generation you see a **review screen** showing the full draft. You can:
+
+- Edit the title, type, summary, lore, and labels before committing.
+- Toggle **Link to source entity** to automatically create a connection when launched from an entity's context.
+- Click **Save to Vault** to create the entity, or **Back** to refine the configuration.
+
+Nothing is written to your vault until you click **Save to Vault**.
+
+### Contextual Generation
+
+When the generator is opened from an entity's detail panel, it automatically includes that entity's name and a summary of its immediate neighbors as generation context. This grounds the new entity in your existing lore without sending your full vault to any server.
+
+### Privacy
+
+When AI generation is enabled, your instruction plus a small, bounded slice of relevant lore (the source entity and its immediate neighbours) is sent to the Lore Oracle to write the draft — your **full vault is never sent**. If you use the free system proxy, that chat context is briefly retained server-side to power Oracle Memory and then expires (see the Oracle Memory help). Prefer to keep everything on your device? Turn AI off (or use a custom API key): generators then run entirely locally from built-in templates, and no content leaves your device.
+
+---
+
 ### GENERATING RELATED ENTITIES
 
 The **Generate Related** feature allows you to quickly expand your campaign setting by generating new entities grounded in your existing lore. Instead of generating ideas in a vacuum, this feature compiles context from the current entity and its direct first-degree neighbors in your connection graph.
@@ -487,7 +532,7 @@ Sometimes duplicate entities appear, especially after importing content. The **M
 
 ### CUSTOM CHRONOLOGY
 
-Codex Cryptica allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
+Codex Cryptica lets you shape time for your campaign world and then browse it in a way that fits the moment. Use the month calendar for day-by-day history, switch to the agenda view for a clean running list, or keep the classic timeline when you want a broader sweep.
 
 ## The Date Picker
 
@@ -525,7 +570,27 @@ In the **Vault Settings**, you can fully customize your world's calendar:
 
 ## Linear Time Mapping
 
-Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly on the **World Timeline**.
+Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly across the **World Timeline**, **Calendar**, and **Agenda** views.
+
+## Calendar And Agenda Views
+
+Open the chronology route to switch between four ways of browsing history:
+
+- **Calendar** shows exact-dated events in a month grid.
+- **Agenda** groups events in chronological order and keeps `Undated/Approximate` entries visible.
+- **Timeline** and **Bands** keep the earlier vertical and horizontal chronology layouts available.
+
+The calendar and agenda views support the same core filters:
+
+- **Type** narrows entries by entity type.
+- **Label** narrows entries by metadata labels.
+- **Related** narrows entries by linked factions, characters, regions, or other connected entities.
+
+When multiple filters are active, an event must match all of them to remain visible.
+
+## Handling Approximate Dates
+
+Approximate or incomplete dates are intentionally kept out of exact day cells in the month grid. You can still find them in the **Agenda** view under **Undated/Approximate**.
 
 ---
 

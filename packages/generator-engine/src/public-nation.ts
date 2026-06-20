@@ -105,6 +105,10 @@ export const nationConfig = {
     "Horror",
     "Post-Apocalyptic",
     "Western",
+    "Steampunk",
+    "Lancer",
+    "Space Opera Resistance",
+    "Optimistic Exploration Sci-Fi",
   ],
   polityTypesByGenre: {
     Fantasy: [
@@ -172,6 +176,34 @@ export const nationConfig = {
       "Railroad Authority",
       "Outlaw Republic",
       "Native Nation",
+    ],
+    Steampunk: [
+      "Industrial Empire",
+      "Guild Confederacy",
+      "Aetheric Protectorate",
+      "Colonial Administration",
+      "Airship Sovereignty",
+    ],
+    Lancer: [
+      "Union Administrative Zone",
+      "Colonial Provisional Authority",
+      "Heterodox Mech Sovereignty",
+      "Corporate Extraction Concession",
+      "Liberation Council Territory",
+    ],
+    "Space Opera Resistance": [
+      "Galactic Empire",
+      "Planetary Republic",
+      "Occupied Territory",
+      "Federated System",
+      "Rebel Alliance",
+    ],
+    "Optimistic Exploration Sci-Fi": [
+      "United Planetary Federation",
+      "Democratic Star Union",
+      "Scientific Directorate",
+      "Allied Worlds Council",
+      "Neutral System Alliance",
     ],
   } as Record<string, string[]>,
   governmentStyles: [

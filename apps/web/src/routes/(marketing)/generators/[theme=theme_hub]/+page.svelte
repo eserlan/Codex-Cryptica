@@ -241,6 +241,46 @@
         surpriseMeCard,
       ],
     },
+    lancer: {
+      label: "Lancer",
+      localStorageId: "lancer",
+      eyebrow: "Mechs, Pilots & the Long Rim",
+      intro:
+        "Bleed runs hot and the Long Rim doesn't wait. Build Union operatives, heterodox mech corps, frontier outpost factions, and NHP-adjacent NPCs for your Lancer campaign — every generator is tuned to the cockpit-terminal aesthetic and the weight of post-scarcity warfare.",
+      metaTitle:
+        "Lancer RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free Lancer RPG generators for tabletop GMs. Create mech pilots, Union factions, frontier outpost settlements, quest hooks, and names for your Lancer campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
+    steampunk: {
+      label: "Steampunk",
+      localStorageId: "steampunk",
+      eyebrow: "Brass, Aether & Empire",
+      intro:
+        "Gears grind, furnaces roar, and empires expand on the backs of the engine-workers. Build airship consortiums, guild conspiracies, aetheric laboratories, and desperate underclass rebels for your steampunk campaign — every generator is tuned to the smoke and brass of the industrial age.",
+      metaTitle:
+        "Steampunk RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free steampunk RPG generators for tabletop GMs. Create artificers, guild factions, airship settlements, quest hooks, and names for your steampunk campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build industrial boroughs, sky-dock towns, and smog-shrouded districts with guild factions, aetheric hazards, and working-class tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
     vampire: {
       label: "Vampire",
       localStorageId: "horror",
@@ -256,6 +296,66 @@
         ...sharedCards(
           "Domain Generator",
           "Build vampire domains, gothic districts, and Elysiums with power brokers, hunting grounds, and dark secrets.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
+    western: {
+      label: "Western",
+      localStorageId: "western",
+      eyebrow: "Six-Guns, Trails & Dust",
+      intro:
+        "Dusty borderlands, rowdy saloons, and dangerous outlaws. Generate frontier settlements, bounty quests, gunslinger NPCs, and rail-baron factions for your Western campaign — all pre-tuned to the genre.",
+      metaTitle:
+        "Western RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free Western RPG generators for tabletop GMs. Create gunslinger NPCs, outlaws, saloons, settlements, quest hooks, and names for your frontier campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build frontier outposts and ghost towns with sheriff departments, outlaw camps, and gold claims.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
+    "space-opera-resistance": {
+      label: "Space Opera Resistance",
+      localStorageId: "space-opera-resistance",
+      eyebrow: "Rebellion & Imperial Might",
+      intro:
+        "Fight the empire or maintain order in the galaxy. Generate hidden rebel bases, imperial capital cities, oppressive factions, and thrilling space opera quests for your campaign.",
+      metaTitle:
+        "Space Opera Resistance RPG Generators — Faction, Settlement, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free Space Opera Resistance RPG generators for tabletop GMs. Create rebel bases, imperial capitals, smuggling factions, and quest hooks. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
+    "optimistic-exploration-sci-fi": {
+      label: "Optimistic Sci-Fi",
+      localStorageId: "optimistic-exploration-sci-fi",
+      eyebrow: "Diplomacy, Discovery & the Stars",
+      intro:
+        "Draft diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded.",
+      metaTitle:
+        "Optimistic Sci-Fi RPG Generators — NPC, Faction, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free optimistic sci-fi RPG generators for tabletop GMs. Create diplomatic officers, scientific factions, space station hubs, quest hooks, and names for your campaign. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
         socialHubCard,
         nationCard,
@@ -398,7 +498,9 @@
       {#each config.cards as card (card.slug)}
         <li>
           <a
-            href="{cleanBase}/generators/{card.slug}"
+            href="{cleanBase}/generators/{card.slug === 'random'
+              ? card.slug
+              : `${data.theme}/${card.slug}`}"
             onclick={() => {
               themeStore.setTheme(config.localStorageId);
               hubContext.set(data.theme);

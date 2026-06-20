@@ -40,7 +40,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "npc-generator",
-    railSections: new Set(["At a Glance"]),
+    railSections: new Set(["At a Glance", "Personality"]),
     documentBullets: {
       labels: new Set(["Secret", "Immediate Hook"]),
       heading: "Secrets & Hooks",

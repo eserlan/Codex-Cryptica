@@ -30,6 +30,11 @@ export const themeToHubGenre: Record<string, string> = {
   "Sci-Fi / Space Opera": "Sci-Fi",
   "Modern Conspiracy": "Modern",
   "Post-Apocalyptic": "Post-Apocalyptic",
+  "Western / Frontier": "Western",
+  Steampunk: "Steampunk",
+  Lancer: "Lancer",
+  "Optimistic Exploration Sci-Fi": "Optimistic Exploration Sci-Fi",
+  "Space Opera Resistance": "Space Opera Resistance",
 };
 
 export function pickRandomIdeaTheme(

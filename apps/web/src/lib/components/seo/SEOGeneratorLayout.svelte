@@ -193,6 +193,10 @@
     "Sci-Fi / Space Opera": "scifi",
     "Modern Conspiracy": "modern",
     "Post-Apocalyptic": "apocalyptic",
+    "Western / Frontier": "western",
+    Steampunk: "steampunk",
+    Lancer: "lancer",
+    "Optimistic Exploration Sci-Fi": "startrek",
   };
 
   const activeThemeId = $derived(themeMap[theme] || "workspace");
