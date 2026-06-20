@@ -245,6 +245,14 @@ export const npcThemeConfig = {
       "Long-Rim Born",
       "Ungrateful",
     ],
+    "Space Opera Resistance": [
+      "Human",
+      "Alien Smuggler",
+      "Frontier Native",
+      "Liberated Android",
+      "Imperial Defector",
+      "Ancient Mystic",
+    ],
     "Optimistic Exploration Sci-Fi": [
       "Human (United Earth)",
       "Logic-bound alien",
@@ -341,6 +349,16 @@ export const npcThemeConfig = {
       "Colonial Liaison",
       "Bleed Researcher",
       "Mercenary Contractor",
+    ],
+    "Space Opera Resistance": [
+      "Rebel Pilot",
+      "Smuggler Captain",
+      "Mystic Warrior",
+      "Resistance Leader",
+      "Imperial Officer",
+      "Bounty Hunter",
+      "Underworld Fixer",
+      "Defector Operative",
     ],
     "Optimistic Exploration Sci-Fi": [
       "Science Officer",
@@ -620,6 +638,44 @@ export const npcThemeConfig = {
           "This NPC is mission-focused, professionally detached, and absolutely clear that this is a contract. Their dialogue is clipped and outcome-oriented. They do not improvise morality and they do not explain their past. Payment, parameters, and exit conditions — that is the conversation.",
       },
     ],
+    "Space Opera Resistance": [
+      {
+        id: "rebel_idealist",
+        label: "Rebel Idealist",
+        aiPromptDirective:
+          "Write this NPC with unshakeable faith in the rebellion and the triumph of freedom over tyranny. They speak with passion and hope, willing to sacrifice everything for the cause.",
+      },
+      {
+        id: "cynical_smuggler",
+        label: "Cynical Smuggler",
+        aiPromptDirective:
+          "This NPC masks their reluctance to do the right thing with a layer of sarcasm and focus on profit. They constantly talk about getting paid, but will begrudgingly do the moral thing when pushed.",
+      },
+      {
+        id: "mystic_mentor",
+        label: "Mystic Mentor",
+        aiPromptDirective:
+          "Write this NPC with calm, cryptic wisdom. They belong to an ancient, mystical order and use metaphors about energy, destiny, and the balance of the universe rather than direct instructions.",
+      },
+      {
+        id: "imperial_loyalist",
+        label: "Imperial Loyalist",
+        aiPromptDirective:
+          "This NPC speaks with the cold authority of an overwhelming imperial force. They value order, fear, and absolute obedience, viewing freedom as chaotic and destructive.",
+      },
+      {
+        id: "ruthless_syndicate",
+        label: "Ruthless Syndicate Boss",
+        aiPromptDirective:
+          "Write this NPC as a dangerous underworld figure who sees the galactic conflict purely as an opportunity. They speak softly with implicit threats and demand absolute leverage in any deal.",
+      },
+      {
+        id: "broken_veteran",
+        label: "Broken Veteran",
+        aiPromptDirective:
+          "This NPC has seen too many battles and lost too many friends. Their tone is weary and fatalistic. They offer tactical wisdom but no illusions about the heavy cost of war.",
+      },
+    ],
     "Post-Apocalyptic": [
       {
         id: "collectivist",
@@ -756,6 +812,8 @@ const NPC_THEME_VOICE: Record<string, string> = {
     "Victorian-era steampunk — airships, aetheric engines, guild conspiracies, imperial expansion, clockwork automata, and the dark underside of the industrial revolution",
   Lancer:
     "Lancer RPG — mech pilots, Union administrators, NHP caseworkers, colonial liaisons, bleed researchers, and mercenary contractors operating across the Long Rim and contested colonial space",
+  "Space Opera Resistance":
+    "pulpy galactic rebellion — ancient mystical orders, frontier planets, smugglers, imperial fleets, desert worlds, and desperate heroic missions against overwhelming tyranny",
   "Optimistic Exploration Sci-Fi":
     "optimistic exploration sci-fi — diplomatic starships, scientific missions, federated worlds, first-contact stories, academy-trained officers, and conflicts where ideals are tested rather than discarded",
 };

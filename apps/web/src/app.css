@@ -247,6 +247,8 @@
   [data-theme="western_dark"]   { --color-text-muted: #a0785a; --color-text-dim: #805c43; }
   [data-theme="steampunk"]        { --color-text-muted: #b8a070; --color-text-dim: #8a7050; }
   [data-theme="steampunk_dark"]   { --color-text-muted: #c8b080; --color-text-dim: #9a8060; }
+  [data-theme="space-opera-resistance"]        { --color-text-muted: #94a3b8; --color-text-dim: #64748b; }
+  [data-theme="space-opera-resistance_dark"]   { --color-text-muted: #64748b; --color-text-dim: #475569; }
 
   html[data-app-appearance="neutral-dark"] {
     --chrome-bg: #1c1917;
@@ -268,7 +270,9 @@
   [data-theme="startrek"],
   [data-theme="western_dark"],
   [data-theme="steampunk"],
-  [data-theme="steampunk_dark"] {
+  [data-theme="steampunk_dark"],
+  [data-theme="space-opera-resistance"],
+  [data-theme="space-opera-resistance_dark"] {
     --frontpage-vignette: radial-gradient(circle at top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.85)), linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.7));
   }
 

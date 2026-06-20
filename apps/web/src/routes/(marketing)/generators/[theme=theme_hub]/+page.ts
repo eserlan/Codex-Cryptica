@@ -14,6 +14,7 @@ export type ThemeSlug =
   | "western"
   | "steampunk"
   | "lancer"
+  | "space-opera-resistance"
   | "optimistic-exploration-sci-fi";
 export const load: PageLoad = ({ params }) => {
   if (!VALID_HUB_THEMES.has(params.theme)) {
@@ -32,5 +33,6 @@ export const entries: EntryGenerator = () => [
   { theme: "western" },
   { theme: "steampunk" },
   { theme: "lancer" },
+  { theme: "space-opera-resistance" },
   { theme: "optimistic-exploration-sci-fi" },
 ];

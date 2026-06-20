@@ -107,6 +107,7 @@ export const nationConfig = {
     "Western",
     "Steampunk",
     "Lancer",
+    "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
   ],
   polityTypesByGenre: {
@@ -189,6 +190,13 @@ export const nationConfig = {
       "Heterodox Mech Sovereignty",
       "Corporate Extraction Concession",
       "Liberation Council Territory",
+    ],
+    "Space Opera Resistance": [
+      "Galactic Empire",
+      "Planetary Republic",
+      "Occupied Territory",
+      "Federated System",
+      "Rebel Alliance",
     ],
     "Optimistic Exploration Sci-Fi": [
       "United Planetary Federation",

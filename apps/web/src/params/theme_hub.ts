@@ -10,6 +10,7 @@ export const VALID_HUB_THEMES = new Set([
   "western",
   "steampunk",
   "lancer",
+  "space-opera-resistance",
   "optimistic-exploration-sci-fi",
 ]);
 

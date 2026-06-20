@@ -686,6 +686,51 @@ export const THEMES = {
       graph_loading: "Calibrating Aetheric Network...",
     },
   },
+  "space-opera-resistance": {
+    id: "space-opera-resistance",
+    name: "Galactic Resistance",
+    description:
+      "Space opera rebellion, imperial fleets, ancient mystics, and frontier outposts.",
+    tokens: {
+      primary: "#eab308",
+      secondary: "#fef08a",
+      background: "#020617",
+      surface: "#0f172a",
+      text: "#f8fafc",
+      border: "rgba(234, 179, 8, 0.4)",
+      accent: "#ef4444",
+      fontHeader: "'Orbitron', sans-serif",
+      fontBody: "'Inter', sans-serif",
+      borderRadius: "2px",
+    },
+    graph: {
+      nodeShape: "ellipse",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#334155",
+    },
+    jargon: {
+      vault: "Datacron",
+      entity: "Intel",
+      entity_plural: "Intel",
+      save: "Encrypt",
+      delete: "Purge",
+      new: "Initialize",
+      syncing: "Transmitting",
+      search: "Scan",
+      lore_header: "Rebellion Archives",
+      lore_secrets: "Classified Imperial Data",
+      chronicle_header: "Mission Logs",
+      connections_header: "Network",
+      tab_status: "Vitals",
+      tab_lore: "Dossier",
+      tab_inventory: "Cargo",
+      blog_entry: "Intercepted Transmission",
+      blog_action: "Decode Transmission",
+      graph_loading: "Accessing Imperial Network...",
+    },
+  },
 } as const satisfies Record<string, StylingTemplate>;
 
 export const FANTASY_DARK: StylingTemplate = {
@@ -1002,6 +1047,33 @@ export const STEAMPUNK_DARK: StylingTemplate = {
     edgeColor: "#7a5c12",
   },
   jargon: THEMES.steampunk.jargon,
+};
+
+export const SPACE_OPERA_RESISTANCE_DARK: StylingTemplate = {
+  id: "space-opera-resistance_dark",
+  name: "Imperial Dreadnought",
+  description:
+    "Dark, oppressive imperial dreadnought styling — steel grays, warning reds, and shadow.",
+  tokens: {
+    primary: "#ef4444",
+    secondary: "#b91c1c",
+    background: "#000000",
+    surface: "#09090b",
+    text: "#e2e8f0",
+    border: "rgba(239, 68, 68, 0.3)",
+    accent: "#eab308",
+    fontHeader: "'Orbitron', sans-serif",
+    fontBody: "'Inter', sans-serif",
+    borderRadius: "0px",
+  },
+  graph: {
+    nodeShape: "ellipse",
+    edgeStyle: "solid",
+    nodeBorderWidth: 1,
+    edgeWidth: 1,
+    edgeColor: "#1e293b",
+  },
+  jargon: THEMES["space-opera-resistance"].jargon,
 };
 
 export const DEFAULT_THEME = THEMES.workspace;

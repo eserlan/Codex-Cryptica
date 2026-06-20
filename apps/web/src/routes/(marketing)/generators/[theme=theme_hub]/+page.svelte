@@ -322,6 +322,26 @@
         surpriseMeCard,
       ],
     },
+    "space-opera-resistance": {
+      label: "Space Opera Resistance",
+      localStorageId: "space-opera-resistance",
+      eyebrow: "Rebellion & Imperial Might",
+      intro:
+        "Fight the empire or maintain order in the galaxy. Generate hidden rebel bases, imperial capital cities, oppressive factions, and thrilling space opera quests for your campaign.",
+      metaTitle:
+        "Space Opera Resistance RPG Generators — Faction, Settlement, Quest & More | Codex Cryptica",
+      metaDescription:
+        "Free Space Opera Resistance RPG generators for tabletop GMs. Create rebel bases, imperial capitals, smuggling factions, and quest hooks. No login required.",
+      cards: [
+        ...sharedCards(
+          "Settlement Generator",
+          "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
+        ),
+        socialHubCard,
+        nationCard,
+        surpriseMeCard,
+      ],
+    },
     "optimistic-exploration-sci-fi": {
       label: "Optimistic Sci-Fi",
       localStorageId: "optimistic-exploration-sci-fi",

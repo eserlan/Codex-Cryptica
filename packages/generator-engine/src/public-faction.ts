@@ -48,6 +48,7 @@ export const factionConfig = {
     "Western / Frontier",
     "Steampunk",
     "Lancer",
+    "Space Opera Resistance",
     "Optimistic Exploration Sci-Fi",
   ],
   types: [
@@ -68,6 +69,12 @@ export const factionConfig = {
     "NHP Research Consortium",
     "Colonial Liberation Front",
     "Corporate Extraction Crew",
+    "Imperial Authority",
+    "Mystic Order",
+    "Smuggler Syndicate",
+    "Imperial Fleet",
+    "Resistance Cell",
+    "Planetary Guild",
     "Federated Science Directorate",
     "Planetary Council",
     "Border System Power",
@@ -223,6 +230,8 @@ const FACTION_THEME_VOICE: Record<string, string> = {
     "Victorian-era steampunk — guild cartels, airship consortiums, aetheric research orders, press-gang syndicates, imperial intelligence bureaux, and underclass rebel cells",
   Lancer:
     "Lancer RPG — Union rapid-response units, heterodox mech corps, NHP research consortiums, colonial liberation fronts, and corporate extraction crews operating across the Long Rim",
+  "Space Opera Resistance":
+    "pulpy galactic rebellion — rebel cells, imperial authorities, smuggler syndicates, ancient mystic orders, frontier guilds, and imperial fleets operating across desert worlds and occupied systems",
   "Optimistic Exploration Sci-Fi":
     "optimistic exploration sci-fi — federated councils, scientific directorates, peaceful integration, and complex diplomatic tension over ethical principles",
 };
@@ -385,6 +394,36 @@ function factionBase(type: string, rng: Rng = defaultRng): string {
       "A contracted security compound adjacent to a resource extraction site",
       "A private orbital platform registered to a shell entity in a non-Union jurisdiction",
     ],
+    "Imperial Authority": [
+      "A gleaming sector-command spire projecting force across the capital city",
+      "A fortified garrison built on the ruins of the planet's previous democratic parliament",
+      "A mobile orbital command station enforcing blockades and custom checks",
+    ],
+    "Mystic Order": [
+      "An ancient, hidden temple carved into the cliffs of a remote desert world",
+      "A meditation chamber disguised as a humble merchant's quarters",
+      "The ruins of a once-great academy now swallowed by the jungle",
+    ],
+    "Smuggler Syndicate": [
+      "A crowded, lawless cantina built into a hollowed-out asteroid",
+      "A modular docking bay that constantly changes configuration to confuse inspectors",
+      "A rusted freighter graveyard that hides a fully operational black market",
+    ],
+    "Imperial Fleet": [
+      "A massive dreadnought hanging ominously in the sky above the colony",
+      "A sprawling orbital shipyard strictly off-limits to civilian traffic",
+      "A blockade flotilla enforcing a quarantine over a restive system",
+    ],
+    "Resistance Cell": [
+      "A subterranean bunker beneath a bustling starport",
+      "A repurposed deep-space communications relay hiding in plain sight",
+      "A makeshift camp hidden within the wreckage of an old capital ship",
+    ],
+    "Planetary Guild": [
+      "A massive industrial processing plant where laborers toil under heavy surveillance",
+      "The polished halls of a merchant consortium that dictates planetary trade laws",
+      "A tightly guarded mining colony built into the ice of a frozen moon",
+    ],
   };
   return pickFrom(
     map[type] ?? [
@@ -532,6 +571,36 @@ function factionResource(type: string, rng: Rng = defaultRng): string {
       "Proprietary extraction technology and the contracts that legally entitle them to use it",
       "A Union-adjacent legal team whose job is to ensure every operation remains just inside the line",
       "Leverage over the colonial administrator who approved the contract in the first place",
+    ],
+    "Imperial Authority": [
+      "Absolute legal authority and the overwhelming military force required to back it up",
+      "An expansive network of informants, spies, and surveillance drones",
+      "Control over the planetary defense grid and all orbital traffic",
+    ],
+    "Mystic Order": [
+      "Ancient texts, relics, and lost techniques of an energy-manipulating discipline",
+      "A hidden network of sympathizers who revere the old ways",
+      "Deeply honed intuition and combat skills that defy modern weaponry",
+    ],
+    "Smuggler Syndicate": [
+      "Secret hyper-routes and hyperdrive modifications that bypass imperial checkpoints",
+      "Counterfeit clearance codes and bribed imperial customs officials",
+      "A vast fleet of unregistered, heavily modified blockade runners",
+    ],
+    "Imperial Fleet": [
+      "Capital ships capable of glassing a continent from orbit",
+      "Endless waves of disciplined troopers and standardized fighter squadrons",
+      "Complete control over interstellar communications relays",
+    ],
+    "Resistance Cell": [
+      "Stolen imperial codes, intercepted transmissions, and encrypted frequencies",
+      "The fierce loyalty of the oppressed populace who provide safe harbor",
+      "Sabotage equipment, stolen ordnance, and a willingness to die for the cause",
+    ],
+    "Planetary Guild": [
+      "Exclusive control over the extraction and refinement of a rare hyper-fuel",
+      "Deep pockets and the ability to lobby or bribe imperial governors",
+      "A monopoly on off-world transport for civilian goods",
     ],
   };
   return pickFrom(
