@@ -11,7 +11,7 @@ describe("CloudSyncMetadataService", () => {
       putCloudMetadata: vi.fn(),
       deleteCloudMetadata: vi.fn(),
     };
-    service = new CloudSyncMetadataService(mockRegistry);
+    service = new CloudSyncMetadataService(mockRegistry, () => 150000);
   });
 
   it("should get metadata", async () => {
@@ -36,17 +36,13 @@ describe("CloudSyncMetadataService", () => {
     const meta = { vaultId: "v1", remoteFolderId: "f1", lastSyncTime: 100 };
     mockRegistry.getCloudMetadata.mockResolvedValue(meta);
 
-    const start = Date.now();
     await service.updateLastSync("v1", "new-token");
 
     expect(mockRegistry.putCloudMetadata).toHaveBeenCalledWith(
       expect.objectContaining({
-        lastSyncTime: expect.any(Number),
+        lastSyncTime: 150000,
         lastSyncToken: "new-token",
       }),
     );
-
-    const call = mockRegistry.putCloudMetadata.mock.calls[0][0];
-    expect(call.lastSyncTime).toBeGreaterThanOrEqual(start);
   });
 });

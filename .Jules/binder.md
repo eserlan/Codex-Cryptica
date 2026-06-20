@@ -5,3 +5,7 @@
 ## 2026-06-18 - Time injection needs to evaluate on demand
 **Learning:** When injecting time dependencies (e.g., `Date.now()`), evaluating it once and storing it in a local variable before asynchronous operations (like `await`) will cause subsequent logic or events to use stale timestamps.
 **Action:** Always use a helper method (e.g., `getNow()`) to fetch the injected time exactly at the moment it is needed.
+
+## 2024-05-18 - CloudSyncMetadataService Clock Injection
+**Learning:** Hardcoded `Date.now()` inside business logic classes (like CloudSyncMetadataService) forces tests to use imprecise assertions like `toBeGreaterThanOrEqual` and relies on time-sensitive local variables.
+**Action:** Inject `now: () => number = Date.now` as an optional constructor dependency for stateful services, allowing tests to pass a frozen time function (`() => 150000`) and assert exact outcomes deterministically without global monkey-patching.
