@@ -5,6 +5,7 @@ import {
   getLayoutCollisionSize,
   LayoutManager,
   removeOverlaps,
+  type LayoutRequest,
 } from "./LayoutManager";
 import type { Core } from "cytoscape";
 
@@ -833,6 +834,62 @@ describe("LayoutManager", () => {
     // Origin check must trigger force layout even though pendingCount === 0
     expect(capturedPostMessage).not.toBeNull();
     expect(capturedPostMessage.options.randomize).toBe(true);
+  });
+
+  describe("LayoutRequest call shape (T9 dual-run)", () => {
+    const baseOptions = {
+      timelineMode: false,
+      timelineAxis: "x" as const,
+      timelineScale: 1,
+      orbitMode: false,
+      centralNodeId: null,
+      stableLayout: true,
+      isGuest: false,
+    };
+
+    it("accepts LayoutRequest and dispatches to force layout when reason triggers randomize", async () => {
+      // "Mode Change Effect" sets randomize=true → bypasses fit-only → hits worker
+      const req: LayoutRequest = {
+        reason: "Mode Change Effect",
+        isForced: true,
+      };
+      await layoutManager.apply(req, {
+        ...baseOptions,
+        timelineMode: false,
+        orbitMode: false,
+      });
+      expect(capturedPostMessage).not.toBeNull();
+    });
+
+    it("accepts LayoutRequest and dispatches to fit-only path for stable incremental updates", async () => {
+      const onStop = vi.fn();
+      const req: LayoutRequest = { reason: "Elements Update" };
+      await layoutManager.apply(req, { ...baseOptions, onLayoutStop: onStop });
+      // fit-only: no worker message, animate fires (cy.animate mock calls complete)
+      expect(capturedPostMessage).toBeNull();
+    });
+
+    it("reseed=true forces randomize regardless of stable layout", async () => {
+      const req: LayoutRequest = {
+        reason: "UI Redraw Button",
+        reseed: true,
+        isForced: true,
+      };
+      await layoutManager.apply(req, baseOptions);
+      expect(capturedPostMessage?.options.randomize).toBe(true);
+    });
+
+    it("viewport override is applied to options", async () => {
+      const onStop = vi.fn();
+      const req: LayoutRequest = {
+        reason: "Elements Update",
+        viewport: "preserve",
+      };
+      await layoutManager.apply(req, { ...baseOptions, onLayoutStop: onStop });
+      // preserve path: no worker message fired (fit-only), onStop called via cy.stop()
+      expect(capturedPostMessage).toBeNull();
+      expect(mockCy.stop).toHaveBeenCalled();
+    });
   });
 });
 
