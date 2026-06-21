@@ -24,6 +24,26 @@ import type { LocalEntity } from "$lib/stores/vault/types";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
+/**
+ * Pure viewport-policy resolver — no class state, fully unit-testable.
+ * Returns "preserve" when the camera should stay put; "fit" when it should
+ * re-frame. T11 will inline this into LayoutRequest.viewport at each call site.
+ */
+export function resolveViewport(
+  isInitial: boolean,
+  reason: string,
+  reseed: boolean,
+  hasNewNodes: boolean,
+  hasRemovedNodes: boolean,
+  stableLayout: boolean,
+): "preserve" | "fit" {
+  if (isInitial || !stableLayout) return "fit";
+  if (reason === "Window Resize" && !reseed) return "preserve";
+  if (reason === "Elements Update" && !hasNewNodes && !hasRemovedNodes)
+    return "preserve";
+  return "fit";
+}
+
 export interface GraphViewDependencies {
   graph: typeof graphStore;
   vault: typeof vaultStore;
@@ -285,13 +305,15 @@ export class GraphViewController {
     randomizeForced: boolean,
     hasNewNodes: boolean,
     hasRemovedNodes: boolean,
-  ): "preserve" | "fit" => {
-    if (isInitial || !this.deps.graph.stableLayout) return "fit";
-    if (caller === "Window Resize" && !randomizeForced) return "preserve";
-    if (caller === "Elements Update" && !hasNewNodes && !hasRemovedNodes)
-      return "preserve";
-    return "fit";
-  };
+  ): "preserve" | "fit" =>
+    resolveViewport(
+      isInitial,
+      caller,
+      randomizeForced,
+      hasNewNodes,
+      hasRemovedNodes,
+      this.deps.graph.stableLayout,
+    );
 
   applyCurrentLayout = async (
     isInitial = false,
