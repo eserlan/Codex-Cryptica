@@ -1,32 +1,123 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
-    <!-- Corner Angle Brackets -->
-    <g stroke="#22d3ee" stroke-width="1.2" fill="none" opacity="0.2">
-      <path d="M 0 16 V 0 H 16"/>
-      <path d="M 256 16 V 0 H 240"/>
-      <path d="M 0 240 V 256 H 16"/>
-      <path d="M 256 240 V 256 H 240"/>
-    </g>
+  <!--
+    Lancer "Cockpit Terminal" surface texture. Tiles seamlessly at 256px.
+    Sits under the theme's ~50% colour overlay (bg-texture-overlay) on a
+    near-black navy background (#0b0f17). Union cyan (#22d3ee) primary,
+    safety orange (#f97316) accent. Layers: fine square grid + scanlines +
+    angular circuit traces with nodes + HUD bracket clusters + targeting
+    cross + hazard marks + data readout fragments.
+  -->
 
-    <!-- Hexagonal HUD/Tracking Brackets (Center 128,128) -->
-    <g stroke="#22d3ee" stroke-width="1" fill="none" opacity="0.15">
-      <!-- Left HUD bracket -->
-      <path d="M 80 100 L 70 110 V 146 L 80 156"/>
-      <!-- Right HUD bracket -->
-      <path d="M 176 100 L 186 110 V 146 L 176 156"/>
-      
-      <!-- Central Target Box -->
-      <rect x="123" y="123" width="10" height="10" stroke-dasharray="2,2"/>
-    </g>
+  <!-- Fine square grid at 32px intervals. Evenly divisible into 256 so
+       seams are invisible across tile boundaries. -->
+  <g stroke="#22d3ee" stroke-width="0.5" opacity="0.12">
+    <path d="M0 0V256 M32 0V256 M64 0V256 M96 0V256 M128 0V256 M160 0V256 M192 0V256 M224 0V256"/>
+    <path d="M0 0H256 M0 32H256 M0 64H256 M0 96H256 M0 128H256 M0 160H256 M0 192H256 M0 224H256"/>
+  </g>
 
-    <!-- Flight chevron indicators -->
-    <g stroke="#f97316" stroke-width="1.2" fill="none" opacity="0.25">
-      <path d="M 128 70 L 122 76 M 128 70 L 134 76"/>
-      <path d="M 128 186 L 122 180 M 128 186 L 134 180"/>
-    </g>
+  <!-- Scanlines: 1px every 4px (64 lines per tile = clean repeat). -->
+  <g fill="#000000" opacity="0.10">
+    <rect width="256" height="1" y="0"/><rect width="256" height="1" y="4"/>
+    <rect width="256" height="1" y="8"/><rect width="256" height="1" y="12"/>
+    <rect width="256" height="1" y="16"/><rect width="256" height="1" y="20"/>
+    <rect width="256" height="1" y="24"/><rect width="256" height="1" y="28"/>
+    <rect width="256" height="1" y="32"/><rect width="256" height="1" y="36"/>
+    <rect width="256" height="1" y="40"/><rect width="256" height="1" y="44"/>
+    <rect width="256" height="1" y="48"/><rect width="256" height="1" y="52"/>
+    <rect width="256" height="1" y="56"/><rect width="256" height="1" y="60"/>
+    <rect width="256" height="1" y="64"/><rect width="256" height="1" y="68"/>
+    <rect width="256" height="1" y="72"/><rect width="256" height="1" y="76"/>
+    <rect width="256" height="1" y="80"/><rect width="256" height="1" y="84"/>
+    <rect width="256" height="1" y="88"/><rect width="256" height="1" y="92"/>
+    <rect width="256" height="1" y="96"/><rect width="256" height="1" y="100"/>
+    <rect width="256" height="1" y="104"/><rect width="256" height="1" y="108"/>
+    <rect width="256" height="1" y="112"/><rect width="256" height="1" y="116"/>
+    <rect width="256" height="1" y="120"/><rect width="256" height="1" y="124"/>
+    <rect width="256" height="1" y="128"/><rect width="256" height="1" y="132"/>
+    <rect width="256" height="1" y="136"/><rect width="256" height="1" y="140"/>
+    <rect width="256" height="1" y="144"/><rect width="256" height="1" y="148"/>
+    <rect width="256" height="1" y="152"/><rect width="256" height="1" y="156"/>
+    <rect width="256" height="1" y="160"/><rect width="256" height="1" y="164"/>
+    <rect width="256" height="1" y="168"/><rect width="256" height="1" y="172"/>
+    <rect width="256" height="1" y="176"/><rect width="256" height="1" y="180"/>
+    <rect width="256" height="1" y="184"/><rect width="256" height="1" y="188"/>
+    <rect width="256" height="1" y="192"/><rect width="256" height="1" y="196"/>
+    <rect width="256" height="1" y="200"/><rect width="256" height="1" y="204"/>
+    <rect width="256" height="1" y="208"/><rect width="256" height="1" y="212"/>
+    <rect width="256" height="1" y="216"/><rect width="256" height="1" y="220"/>
+    <rect width="256" height="1" y="224"/><rect width="256" height="1" y="228"/>
+    <rect width="256" height="1" y="232"/><rect width="256" height="1" y="236"/>
+    <rect width="256" height="1" y="240"/><rect width="256" height="1" y="244"/>
+    <rect width="256" height="1" y="248"/><rect width="256" height="1" y="252"/>
+  </g>
 
-    <!-- HUD Tech readouts -->
-    <g fill="#22d3ee" font-family="monospace" font-size="7" opacity="0.12">
-      <text x="18" y="28">SEC.LOC // 88-A</text>
-      <text x="178" y="235">ACTIVE // HUD</text>
-    </g>
-  </svg>
+  <!-- Circuit traces: angular right-angle runs like mech internal wiring. -->
+  <g fill="none" stroke="#22d3ee" stroke-width="1.4" opacity="0.45">
+    <path d="M16 48 H56 V80 H96"/>
+    <path d="M200 32 V64 H160 V96"/>
+    <path d="M32 192 H80 V224"/>
+    <path d="M176 160 H224 V208"/>
+  </g>
+  <!-- Orange accent trace -->
+  <path d="M112 200 V228 H160" fill="none" stroke="#f97316" stroke-width="1.4" opacity="0.38"/>
+
+  <!-- Terminal nodes at trace endpoints and junctions. -->
+  <g fill="#22d3ee" opacity="0.55">
+    <circle cx="16" cy="48" r="2.5"/>
+    <circle cx="96" cy="80" r="2.5"/>
+    <circle cx="200" cy="32" r="2.5"/>
+    <circle cx="160" cy="96" r="2.5"/>
+    <circle cx="32" cy="192" r="2.5"/>
+    <circle cx="176" cy="160" r="2.5"/>
+    <circle cx="224" cy="208" r="2.5"/>
+  </g>
+  <circle cx="112" cy="200" r="2.5" fill="#f97316" opacity="0.50"/>
+
+  <!-- HUD bracket cluster — top-left quadrant. -->
+  <g stroke="#22d3ee" stroke-width="1.2" fill="none" opacity="0.28">
+    <path d="M44 20 H28 V36"/>
+    <path d="M28 60 V76 H44"/>
+  </g>
+
+  <!-- Targeting cross at tile centre (128,128). -->
+  <g stroke="#22d3ee" stroke-width="0.8" fill="none" opacity="0.25">
+    <path d="M110 128 H118 M138 128 H146"/>
+    <path d="M128 110 V118 M128 138 V146"/>
+    <rect x="123" y="123" width="10" height="10" stroke-dasharray="2,2"/>
+  </g>
+
+  <!-- HUD bracket cluster — bottom-right quadrant. -->
+  <g stroke="#22d3ee" stroke-width="1.2" fill="none" opacity="0.28">
+    <path d="M212 180 H228 V196"/>
+    <path d="M228 220 V236 H212"/>
+  </g>
+
+  <!-- HUD chevron bracket — top-right. -->
+  <g stroke="#22d3ee" stroke-width="1.2" fill="none" opacity="0.20">
+    <path d="M196 44 L206 34 H220"/>
+    <path d="M220 60 H206 L196 70"/>
+  </g>
+
+  <!-- Safety orange chevron pair (hazard accent). -->
+  <g stroke="#f97316" stroke-width="1.5" fill="none" opacity="0.30">
+    <path d="M62 134 L70 126 L78 134"/>
+    <path d="M62 142 L70 134 L78 142"/>
+  </g>
+
+  <!-- Hazard stripe block — small, offset from brackets. -->
+  <rect x="144" y="64" width="22" height="4" fill="#f97316" opacity="0.22"/>
+  <rect x="144" y="72" width="22" height="4" fill="#f97316" opacity="0.12"/>
+
+  <!-- Data readout text fragments (tiny monospace, very low opacity). -->
+  <g fill="#22d3ee" font-family="monospace" font-size="6" opacity="0.18">
+    <text x="100" y="44">SYS:OK // 4.2G</text>
+    <text x="12" y="110">LOC:A7 // ACTIVE</text>
+    <text x="146" y="252">MECH.ID // NHP-02</text>
+  </g>
+
+  <!-- Glitch/damage accent bars — cyan and orange. -->
+  <rect x="88" y="164" width="14" height="4" fill="#f97316" opacity="0.35"/>
+  <rect x="36" y="236" width="10" height="3" fill="#22d3ee" opacity="0.42"/>
+  <rect x="188" y="112" width="12" height="4" fill="#f97316" opacity="0.28"/>
+  <rect x="152" y="188" width="8" height="3" fill="#22d3ee" opacity="0.38"/>
+</svg>
