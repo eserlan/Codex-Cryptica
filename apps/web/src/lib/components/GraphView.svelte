@@ -142,7 +142,10 @@
 
     if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleTimeline();
-      controller.applyCurrentLayout(false, true, "Keyboard Shortcut (T)");
+      controller.applyCurrentLayout({
+        reason: "Keyboard Shortcut (T)",
+        isForced: true,
+      });
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (!vault.isGuest) {

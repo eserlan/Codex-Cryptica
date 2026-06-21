@@ -2,20 +2,18 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
+  import type { LayoutRequest } from "graph-engine";
 
-  interface LayoutTrigger {
-    (isInitial?: boolean, isForced?: boolean, caller?: string): void;
-  }
-  let { onApply } = $props<{ onApply?: LayoutTrigger }>();
+  let { onApply } = $props<{ onApply?: (req: LayoutRequest) => void }>();
 
   const toggle = () => {
     graph.toggleTimeline();
-    if (onApply) onApply(false, true, "Timeline Toggle"); // Force layout override
+    onApply?.({ reason: "Timeline Toggle", isForced: true });
   };
 
   const setAxis = (axis: "x" | "y") => {
     graph.setTimelineAxis(axis);
-    if (onApply) onApply(false, true, "Timeline Axis Switch"); // Force layout override
+    onApply?.({ reason: "Timeline Axis Switch", isForced: true });
   };
 
   // ⚡ Bolt Optimization: Calculate min and max in a single pass over the entities.
@@ -113,7 +111,7 @@
         max="1000"
         step="50"
         bind:value={graph.timelineScale}
-        onchange={onApply}
+        onchange={() => onApply?.({ reason: "Timeline Scale" })}
         aria-label="Timeline Scale"
         class="w-16 sm:w-20 h-1 bg-theme-border rounded-lg appearance-none cursor-pointer accent-timeline-primary focus:outline-none focus:ring-2 focus:ring-theme-primary focus:ring-offset-1 focus:ring-offset-theme-surface"
       />

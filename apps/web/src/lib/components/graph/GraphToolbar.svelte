@@ -10,16 +10,12 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import type { LayoutRequest } from "graph-engine";
 
   let { cy, isLayoutRunning, onApplyLayout, selectedCount } = $props<{
     cy: Core | undefined;
     isLayoutRunning: boolean;
-    onApplyLayout: (
-      isInitial?: boolean,
-      isForced?: boolean,
-      caller?: string,
-      randomizeForced?: boolean,
-    ) => Promise<void>;
+    onApplyLayout: (req: LayoutRequest) => Promise<void>;
     selectedCount: number;
   }>();
 
@@ -64,9 +60,7 @@
   );
 
   const activeGuests = $derived.by(() =>
-    guestStore.allGuests.toSorted(
-      (a, b) => a.joinedAt - b.joinedAt,
-    ),
+    guestStore.allGuests.toSorted((a, b) => a.joinedAt - b.joinedAt),
   );
 
   const guestPanelHeight = $derived(
@@ -93,10 +87,8 @@
     <div class="h-6 w-px bg-theme-border/30 mx-1 flex-shrink-0"></div>
   {/if}
   <TimelineControls
-    onApply={(isInitial, isForced, caller) => {
-      void onApplyLayout(isInitial, isForced, caller).catch((e: any) =>
-        console.error(e),
-      );
+    onApply={(req) => {
+      void onApplyLayout(req).catch((e: any) => console.error(e));
       closeMenuIfMobile();
     }}
   />
@@ -168,9 +160,11 @@
     <button
       class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
       onclick={() => {
-        void onApplyLayout(false, true, "UI Redraw Button", true).catch(
-          (e: any) => console.error(e),
-        );
+        void onApplyLayout({
+          reason: "UI Redraw Button",
+          isForced: true,
+          reseed: true,
+        }).catch((e: any) => console.error(e));
         closeMenuIfMobile();
       }}
       title="Redraw Layout"

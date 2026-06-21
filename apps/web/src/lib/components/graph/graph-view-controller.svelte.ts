@@ -6,6 +6,7 @@ import {
   GraphImageManager,
   setupGraphEvents,
   syncGraphElements,
+  type LayoutRequest,
 } from "graph-engine";
 import { isTemporalMetadataEqual } from "$lib/utils/comparison";
 import type { graph as graphStore } from "$lib/stores/graph.svelte";
@@ -299,33 +300,21 @@ export class GraphViewController {
    * the user's pan/zoom; structural changes (new/removed nodes), mode
    * changes, explicit Fit/Redraw, and orientation changes still fit.
    */
-  private resolveViewportPolicy = (
-    isInitial: boolean,
-    caller: string,
-    randomizeForced: boolean,
-    hasNewNodes: boolean,
-    hasRemovedNodes: boolean,
-  ): "preserve" | "fit" =>
-    resolveViewport(
+  applyCurrentLayout = async (req: LayoutRequest) => {
+    if (!this.layoutManager) return;
+
+    const isInitial = req.isInitial ?? false;
+    const viewport = resolveViewport(
       isInitial,
-      caller,
-      randomizeForced,
-      hasNewNodes,
-      hasRemovedNodes,
+      req.reason,
+      req.reseed ?? false,
+      req.hasNewNodes ?? false,
+      req.hasRemovedNodes ?? false,
       this.deps.graph.stableLayout,
     );
 
-  applyCurrentLayout = async (
-    isInitial = false,
-    isForced = false,
-    caller = "unknown",
-    randomizeForced = false,
-    hasNewNodes = false,
-    hasRemovedNodes = false,
-  ) => {
-    if (!this.layoutManager) return;
-
     await this.layoutManager.apply(
+      { ...req, viewport },
       {
         timelineMode: this.deps.graph.timelineMode,
         timelineAxis: this.deps.graph.timelineAxis,
@@ -335,20 +324,13 @@ export class GraphViewController {
         stableLayout: this.deps.graph.stableLayout,
         isGuest: this.deps.vault.isGuest,
         isMobile: this.deps.layoutUIStore.isMobile,
-        viewportPolicy: this.resolveViewportPolicy(
-          isInitial,
-          caller,
-          randomizeForced,
-          hasNewNodes,
-          hasRemovedNodes,
-        ),
         onLayoutStart: () => {
           this.isLayoutRunning = true;
         },
         onLayoutComputed: (ms) => {
           this.deps.debugStore.log(`Layout: ${ms}ms`, {
             nodes: this.deps.graph.stats.nodeCount,
-            caller,
+            caller: req.reason,
           });
         },
         onLayoutStop: () => {
@@ -367,11 +349,6 @@ export class GraphViewController {
           }
         },
       },
-      isInitial,
-      isForced,
-      caller,
-      randomizeForced,
-      hasNewNodes,
     );
   };
 
@@ -391,9 +368,13 @@ export class GraphViewController {
           this.deps.debugStore.log(
             `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
           );
-          this.applyCurrentLayout(false, true, "Window Resize", true);
+          this.applyCurrentLayout({
+            reason: "Window Resize",
+            isForced: true,
+            reseed: true,
+          });
         } else {
-          this.applyCurrentLayout(false, false, "Window Resize", false);
+          this.applyCurrentLayout({ reason: "Window Resize" });
         }
 
         this.lastOrientation = currentOrientation;
@@ -429,14 +410,13 @@ export class GraphViewController {
           hasNewNodes,
           hasRemovedNodes,
         ) => {
-          this.applyCurrentLayout(
+          this.applyCurrentLayout({
+            reason: caller,
             isInitial,
             isForced,
-            caller,
-            false,
             hasNewNodes,
             hasRemovedNodes,
-          );
+          });
         },
       });
     }
@@ -539,7 +519,11 @@ export class GraphViewController {
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
-      this.applyCurrentLayout(true, true, "Load Finalized");
+      this.applyCurrentLayout({
+        reason: "Load Finalized",
+        isInitial: true,
+        isForced: true,
+      });
     }
   };
 
@@ -548,7 +532,7 @@ export class GraphViewController {
       this.cy &&
       (this.loadPhase === "finalized" || this.loadPhase === "ready")
     ) {
-      this.applyCurrentLayout(false, true, "Mode Change Effect");
+      this.applyCurrentLayout({ reason: "Mode Change Effect", isForced: true });
     }
   };
 }
