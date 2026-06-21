@@ -150,6 +150,11 @@ describe("LayoutManager", () => {
 
     await layoutManager.apply(
       {
+        reason: "Mode Change Effect",
+        isInitial: false,
+        isForced: false,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -158,9 +163,6 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      false,
-      false,
-      "Mode Change Effect",
     );
 
     expect(capturedPostMessage?.options.randomize).toBe(true);
@@ -193,6 +195,13 @@ describe("LayoutManager", () => {
 
     await layoutManager.apply(
       {
+        reason: "Elements Update",
+        isInitial: false,
+        isForced: false,
+        reseed: false,
+        hasNewNodes: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -201,11 +210,6 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      false,
-      false,
-      "Elements Update",
-      false,
-      true, // hasNewNodes = true
     );
 
     // stableLayout=true → fit-only; worker must NOT be called
@@ -218,6 +222,11 @@ describe("LayoutManager", () => {
 
     await layoutManager.apply(
       {
+        reason: "Elements Update",
+        isInitial: false,
+        isForced: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -228,9 +237,6 @@ describe("LayoutManager", () => {
         viewportPolicy: "preserve",
         onLayoutStop,
       },
-      false,
-      true,
-      "Elements Update",
     );
 
     // fit-only path with preserve policy: no worker, no fit animation, and
@@ -245,6 +251,11 @@ describe("LayoutManager", () => {
   it("should still fit when viewportPolicy is fit on the stable path", async () => {
     await layoutManager.apply(
       {
+        reason: "Elements Update",
+        isInitial: false,
+        isForced: false,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -254,9 +265,6 @@ describe("LayoutManager", () => {
         isGuest: false,
         viewportPolicy: "fit",
       },
-      false,
-      false,
-      "Elements Update",
     );
 
     expect(mockCy.animate).toHaveBeenCalled();
@@ -266,15 +274,18 @@ describe("LayoutManager", () => {
     mockCy.width.mockReturnValue(1200);
     mockCy.height.mockReturnValue(800); // AR = 1.5 (Landscape)
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+    );
 
     expect(capturedPostMessage?.options.gravity).toBeLessThanOrEqual(0.12);
   });
@@ -283,29 +294,35 @@ describe("LayoutManager", () => {
     mockCy.width.mockReturnValue(800);
     mockCy.height.mockReturnValue(1200); // AR = 0.66 (Portrait)
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+    );
 
     expect(capturedPostMessage?.options.gravity).toBeGreaterThan(0.005);
   });
 
   it("should give force layouts room to spread out", async () => {
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+    );
 
     expect(capturedPostMessage?.options.boundingBox).toEqual({
       x1: -2400,
@@ -318,26 +335,11 @@ describe("LayoutManager", () => {
   it("should use fit-only for forced updates when stableLayout is true", async () => {
     await layoutManager.apply(
       {
-        timelineMode: false,
-        timelineAxis: "x",
-        timelineScale: 1,
-        orbitMode: false,
-        centralNodeId: null,
-        stableLayout: true,
-        isGuest: false,
+        reason: "External Update",
+        isInitial: false,
+        isForced: true,
+        reseed: true,
       },
-      false,
-      true,
-      "External Update",
-      true,
-    );
-    // stableLayout=true + non-redraw forced update → fit-only; worker must NOT be called
-    expect(capturedPostMessage).toBeNull();
-    expect(mockCy.animate).toHaveBeenCalled();
-  });
-
-  it("should randomize when the UI redraw button requests a fresh solve", async () => {
-    await layoutManager.apply(
       {
         timelineMode: false,
         timelineAxis: "x",
@@ -347,10 +349,29 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      false,
-      true,
-      "UI Redraw Button",
-      true,
+    );
+    // stableLayout=true + non-redraw forced update → fit-only; worker must NOT be called
+    expect(capturedPostMessage).toBeNull();
+    expect(mockCy.animate).toHaveBeenCalled();
+  });
+
+  it("should randomize when the UI redraw button requests a fresh solve", async () => {
+    await layoutManager.apply(
+      {
+        reason: "UI Redraw Button",
+        isInitial: false,
+        isForced: true,
+        reseed: true,
+      },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
     );
     expect(capturedPostMessage?.options.randomize).toBe(true);
     expect(capturedPostMessage?.nodes[0].position).not.toEqual({
@@ -362,6 +383,12 @@ describe("LayoutManager", () => {
   it("should randomize when stableLayout is off and randomizeForced is true", async () => {
     await layoutManager.apply(
       {
+        reason: "UI Redraw Button",
+        isInitial: false,
+        isForced: true,
+        reseed: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -370,10 +397,6 @@ describe("LayoutManager", () => {
         stableLayout: false,
         isGuest: false,
       },
-      false,
-      true,
-      "UI Redraw Button",
-      true,
     );
     expect(capturedPostMessage?.options.randomize).toBe(true);
     expect(capturedPostMessage?.nodes[0].position).not.toEqual({
@@ -391,6 +414,12 @@ describe("LayoutManager", () => {
 
     await layoutManager.apply(
       {
+        reason: "UI Redraw Button",
+        isInitial: false,
+        isForced: true,
+        reseed: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -399,10 +428,6 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      false,
-      true,
-      "UI Redraw Button",
-      true,
     );
 
     expect(capturedPostMessage?.nodes[0].position).not.toEqual(
@@ -435,15 +460,18 @@ describe("LayoutManager", () => {
       },
     ]);
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+    );
 
     expect(capturedPostMessage?.nodes[0].data._w).toBeGreaterThan(
       capturedPostMessage?.nodes[1].data._w,
@@ -454,31 +482,37 @@ describe("LayoutManager", () => {
   });
 
   it("should call resize on apply", async () => {
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: true,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: true,
+      },
+    );
     expect(mockCy.resize).toHaveBeenCalled();
   });
 
   it("should stop redraw when the fit animation completes", async () => {
     const onLayoutStop = vi.fn();
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      },
+    );
 
     expect(mockCy.animate).toHaveBeenCalled();
     expect(onLayoutStop).toHaveBeenCalledTimes(1);
@@ -497,16 +531,19 @@ describe("LayoutManager", () => {
       mockCy.animate.mockImplementation(() => {});
       const onLayoutStop = vi.fn();
 
-      await layoutManager.apply({
-        timelineMode: false,
-        timelineAxis: "x",
-        timelineScale: 1,
-        orbitMode: false,
-        centralNodeId: null,
-        stableLayout: false,
-        isGuest: false,
-        onLayoutStop,
-      });
+      await layoutManager.apply(
+        { reason: "unknown" },
+        {
+          timelineMode: false,
+          timelineAxis: "x",
+          timelineScale: 1,
+          orbitMode: false,
+          centralNodeId: null,
+          stableLayout: false,
+          isGuest: false,
+          onLayoutStop,
+        },
+      );
 
       expect(onLayoutStop).not.toHaveBeenCalled();
       await new Promise((resolve) => originalSetTimeout(resolve, 10));
@@ -521,16 +558,19 @@ describe("LayoutManager", () => {
     layoutManager = new LayoutManager(mockCy as unknown as Core);
     const onLayoutStop = vi.fn();
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      },
+    );
 
     expect(mockCy.animate).not.toHaveBeenCalled();
     expect(onLayoutStop).toHaveBeenCalledTimes(1);
@@ -550,16 +590,19 @@ describe("LayoutManager", () => {
       layoutManager = new LayoutManager(mockCy as unknown as Core);
       const onLayoutStop = vi.fn();
 
-      const applyPromise = layoutManager.apply({
-        timelineMode: false,
-        timelineAxis: "x",
-        timelineScale: 1,
-        orbitMode: false,
-        centralNodeId: null,
-        stableLayout: false,
-        isGuest: false,
-        onLayoutStop,
-      });
+      const applyPromise = layoutManager.apply(
+        { reason: "unknown" },
+        {
+          timelineMode: false,
+          timelineAxis: "x",
+          timelineScale: 1,
+          orbitMode: false,
+          centralNodeId: null,
+          stableLayout: false,
+          isGuest: false,
+          onLayoutStop,
+        },
+      );
 
       await new Promise((resolve) => originalSetTimeout(resolve, 10));
       await applyPromise;
@@ -576,16 +619,19 @@ describe("LayoutManager", () => {
     layoutManager = new LayoutManager(mockCy as unknown as Core);
     const onLayoutStop = vi.fn();
 
-    const applyPromise = layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onLayoutStop,
-    });
+    const applyPromise = layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutStop,
+      },
+    );
 
     layoutManager.stop();
     await applyPromise;
@@ -597,6 +643,10 @@ describe("LayoutManager", () => {
   it("should fit nodes if isGuest and isInitial", async () => {
     await layoutManager.apply(
       {
+        reason: "unknown",
+        isInitial: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -605,7 +655,6 @@ describe("LayoutManager", () => {
         stableLayout: false,
         isGuest: true,
       },
-      true,
     );
     expect(mockCy.fit).toHaveBeenCalled();
   });
@@ -616,6 +665,10 @@ describe("LayoutManager", () => {
 
     await layoutManager.apply(
       {
+        reason: "unknown",
+        isInitial: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -625,7 +678,6 @@ describe("LayoutManager", () => {
         isGuest: true,
         isMobile: true,
       },
-      true,
     );
 
     expect(mockCy.fit).toHaveBeenCalled();
@@ -686,16 +738,19 @@ describe("LayoutManager", () => {
     (globalThis as any).Worker = FormatWorker as any;
     layoutManager = new LayoutManager(mockCy as unknown as Core);
 
-    await layoutManager.apply({
-      timelineMode: false,
-      timelineAxis: "x",
-      timelineScale: 1,
-      orbitMode: false,
-      centralNodeId: null,
-      stableLayout: false,
-      isGuest: false,
-      onPositionsUpdated,
-    });
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onPositionsUpdated,
+      },
+    );
 
     expect(onPositionsUpdated).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -733,6 +788,10 @@ describe("LayoutManager", () => {
 
     await layoutManager.apply(
       {
+        reason: "unknown",
+        isInitial: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -741,7 +800,6 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      true, // isInitial = true
     );
 
     // Force layout path must be taken — worker receives a postMessage
@@ -775,6 +833,10 @@ describe("LayoutManager", () => {
     capturedPostMessage = null;
     await layoutManager.apply(
       {
+        reason: "unknown",
+        isInitial: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -783,7 +845,6 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      true, // isInitial = true
     );
 
     // Fit-only path: no worker call
@@ -820,6 +881,10 @@ describe("LayoutManager", () => {
     capturedPostMessage = null;
     await layoutManager.apply(
       {
+        reason: "unknown",
+        isInitial: true,
+      },
+      {
         timelineMode: false,
         timelineAxis: "x",
         timelineScale: 1,
@@ -828,7 +893,6 @@ describe("LayoutManager", () => {
         stableLayout: true,
         isGuest: false,
       },
-      true, // isInitial = true
     );
 
     // Origin check must trigger force layout even though pendingCount === 0
