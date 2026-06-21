@@ -539,13 +539,14 @@ export class ThemeStore {
     root.style.setProperty("--theme-border-radius", radius);
 
     if (tokens.texture) {
+      const alpha = tokens.textureOverlayAlpha ?? "80";
       root.style.setProperty(
         "--bg-texture",
         `url('/themes/${tokens.texture}')`,
       );
       root.style.setProperty(
         "--bg-texture-overlay",
-        `linear-gradient(${tokens.background}80, ${tokens.background}80), url('/themes/${tokens.texture}')`,
+        `linear-gradient(${tokens.background}${alpha}, ${tokens.background}${alpha}), url('/themes/${tokens.texture}')`,
       );
     } else {
       root.style.setProperty("--bg-texture", "none");
