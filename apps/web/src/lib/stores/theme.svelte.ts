@@ -527,8 +527,9 @@ export class ThemeStore {
     let glow = "none";
     if (theme.id === "cyberpunk") glow = `0 0 15px ${tokens.primary}44`;
     if (theme.id === "horror") glow = `0 0 20px ${tokens.primary}33`;
-    // Warm candlelight/arcane glow using the gold accent — evokes magic without neon
     if (theme.id === "fantasy") glow = `0 0 14px ${tokens.accent}44`;
+    // Phosphor bloom: neon green bleeds into surrounding glass like a real CRT tube
+    if (theme.id === "fallout") glow = `0 0 18px ${tokens.primary}55, 0 0 6px ${tokens.primary}33`;
     root.style.setProperty("--theme-glow", glow);
 
     let radius = "2px"; // Gothic/Terminal default
@@ -544,9 +545,14 @@ export class ThemeStore {
         "--bg-texture",
         `url('/themes/${tokens.texture}')`,
       );
+      // CRT vignette: radial dark-edge gradient layered above the scanline texture
+      const vignette =
+        theme.id === "fallout"
+          ? `radial-gradient(ellipse at center, transparent 55%, ${tokens.background}CC 100%), `
+          : "";
       root.style.setProperty(
         "--bg-texture-overlay",
-        `linear-gradient(${tokens.background}${alpha}, ${tokens.background}${alpha}), url('/themes/${tokens.texture}')`,
+        `${vignette}linear-gradient(${tokens.background}${alpha}, ${tokens.background}${alpha}), url('/themes/${tokens.texture}')`,
       );
       root.style.setProperty(
         "--theme-card-backdrop",

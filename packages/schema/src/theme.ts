@@ -442,6 +442,7 @@ export const THEMES = {
       fontHeader: "'Share Tech Mono', monospace",
       fontBody: "'Share Tech Mono', monospace",
       texture: "crt.svg",
+      textureOverlayAlpha: "60",
     },
     graph: {
       nodeShape: "ellipse",

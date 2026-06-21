@@ -1,19 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
-  <filter id="crt">
-    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="1" stitchTiles="stitch"/>
-    <feColorMatrix type="matrix" values="0 0 0 0 0.22
-                                         0 0 0 0 1
-                                         0 0 0 0 0.08
-                                         0 0 0 0.08 0"/>
-  </filter>
-  <rect width="100%" height="100%" filter="url(#crt)"/>
-  <!-- Scanlines -->
-  <rect width="100%" height="2" y="0" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="4" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="8" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="12" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="16" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="20" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="24" fill="rgba(0,0,0,0.15)"/>
-  <rect width="100%" height="2" y="28" fill="rgba(0,0,0,0.15)"/>
+  <defs>
+    <!-- 1px dark band every 4px — covers the full 256px tile via pattern. -->
+    <pattern id="sl" x="0" y="0" width="256" height="4" patternUnits="userSpaceOnUse">
+      <rect width="256" height="1" fill="rgba(0,0,0,0.10)"/>
+    </pattern>
+    <!-- Phosphor turbulence: fine-grain noise of an aging CRT phosphor coat. -->
+    <filter id="phosphor" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.70" numOctaves="1" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.22
+                                           0 0 0 0 1.00
+                                           0 0 0 0 0.08
+                                           0 0 0 0 0.05 0"/>
+    </filter>
+  </defs>
+
+  <!-- Green-tinted phosphor grain. -->
+  <rect width="100%" height="100%" filter="url(#phosphor)"/>
+
+  <!-- Interlaced scanlines across the full tile height. -->
+  <rect width="100%" height="100%" fill="url(#sl)"/>
 </svg>
