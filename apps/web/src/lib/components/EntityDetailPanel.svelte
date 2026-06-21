@@ -381,7 +381,7 @@
       <div
         class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg overscroll-contain"
         style:background-color="var(--theme-panel-muted)"
-        style="background-image: var(--bg-texture-overlay); touch-action: pan-y; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;"
+        style="background-image: var(--bg-texture-overlay); backdrop-filter: var(--theme-card-backdrop, none); touch-action: pan-y; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;"
       >
         {#key activeEntity.id}
           <div

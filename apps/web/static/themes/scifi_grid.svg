@@ -1,26 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
   <!--
     Sci-Fi Terminal surface texture. Tiles seamlessly at 256px.
-    Sits under the theme's ~50% colour overlay on a near-black background
-    (#050505). Terminal green (#4ade80) primary, purple (#a855f7) accent.
+    Sits under the theme's colour overlay on a near-black background (#050505).
+    Uses dark desaturated forest green (#1a5c35) so the grid reads as a
+    structural whisper rather than a glowing UI element.
     Layers: fine grid + sub-grid + scanlines + circuit traces with nodes +
-    crosshair markers + data readout fragments + glitch accent bars.
+    crosshair markers. All purple accents and glitch bars removed.
   -->
 
-  <!-- Main grid at 64px. Evenly divisible into 256. -->
-  <g stroke="#4ade80" stroke-width="1" opacity="0.45">
+  <!-- Main grid at 64px. -->
+  <g stroke="#1a5c35" stroke-width="0.8" opacity="0.40">
     <path d="M0 0V256 M64 0V256 M128 0V256 M192 0V256"/>
     <path d="M0 0H256 M0 64H256 M0 128H256 M0 192H256"/>
   </g>
 
-  <!-- Sub-grid at 32px, dashed, even fainter. -->
-  <g stroke="#4ade80" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.22">
+  <!-- Sub-grid at 32px, dashed, fainter. -->
+  <g stroke="#1a5c35" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.18">
     <path d="M32 0V256 M96 0V256 M160 0V256 M224 0V256"/>
     <path d="M0 32H256 M0 96H256 M0 160H256 M0 224H256"/>
   </g>
 
-  <!-- Scanlines: 1px every 4px (64 lines per tile = clean repeat). -->
-  <g fill="#000000" opacity="0.10">
+  <!-- Scanlines: 1px every 4px. -->
+  <g fill="#000000" opacity="0.08">
     <rect width="256" height="1" y="0"/><rect width="256" height="1" y="4"/>
     <rect width="256" height="1" y="8"/><rect width="256" height="1" y="12"/>
     <rect width="256" height="1" y="16"/><rect width="256" height="1" y="20"/>
@@ -55,50 +56,28 @@
     <rect width="256" height="1" y="248"/><rect width="256" height="1" y="252"/>
   </g>
 
-  <!-- Circuit traces: angular right-angle runs like data bus routing. -->
-  <g fill="none" stroke="#4ade80" stroke-width="2" opacity="0.80">
+  <!-- Circuit traces: angular right-angle runs. -->
+  <g fill="none" stroke="#1a5c35" stroke-width="1.4" opacity="0.55">
     <path d="M20 56 H64 V88 H104"/>
     <path d="M192 24 V64 H152 V96"/>
     <path d="M24 184 H72 V216"/>
     <path d="M168 152 H220 V200"/>
   </g>
-  <!-- Purple accent trace. -->
-  <path d="M104 196 V228 H156" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.80"/>
 
   <!-- Terminal nodes at trace endpoints and junctions. -->
-  <g fill="#4ade80" opacity="0.90">
-    <circle cx="20" cy="56" r="3.5"/>
-    <circle cx="104" cy="88" r="3.5"/>
-    <circle cx="192" cy="24" r="3.5"/>
-    <circle cx="152" cy="96" r="3.5"/>
-    <circle cx="24" cy="184" r="3.5"/>
-    <circle cx="168" cy="152" r="3.5"/>
-    <circle cx="220" cy="200" r="3.5"/>
+  <g fill="#1a5c35" opacity="0.65">
+    <circle cx="20" cy="56" r="3"/>
+    <circle cx="104" cy="88" r="3"/>
+    <circle cx="192" cy="24" r="3"/>
+    <circle cx="152" cy="96" r="3"/>
+    <circle cx="24" cy="184" r="3"/>
+    <circle cx="168" cy="152" r="3"/>
+    <circle cx="220" cy="200" r="3"/>
   </g>
-  <circle cx="104" cy="196" r="3.5" fill="#a855f7" opacity="0.90"/>
 
-  <!-- Crosshair markers at grid intersections. -->
-  <g stroke="#4ade80" stroke-width="1.2" opacity="0.55">
-    <!-- Centre (128,128) -->
+  <!-- Crosshair at tile centre (128,128) — very faint. -->
+  <g stroke="#1a5c35" stroke-width="0.8" opacity="0.22">
     <path d="M120 128 H112 M136 128 H144 M128 120 V112 M128 136 V144"/>
     <rect x="124" y="124" width="8" height="8" fill="none" stroke-dasharray="2,2"/>
-    <!-- Top-right (192,64) -->
-    <path d="M186 64 H180 M198 64 H204 M192 58 V52 M192 70 V76"/>
-    <!-- Bottom-left (64,192) -->
-    <path d="M58 192 H52 M70 192 H76 M64 186 V180 M64 198 V204"/>
   </g>
-
-  <!-- Data readout text fragments (tiny monospace). -->
-  <g fill="#4ade80" font-family="monospace" font-size="6" opacity="0.40">
-    <text x="108" y="44">SYS:ONLINE // v4.2</text>
-    <text x="10" y="112">NODE:07 // ACTIVE</text>
-    <text x="140" y="250">DATA // STREAM:OK</text>
-  </g>
-
-  <!-- Glitch accent bars — green and purple. -->
-  <rect x="40" y="92" width="16" height="5" fill="#a855f7" opacity="0.85"/>
-  <rect x="164" y="32" width="12" height="5" fill="#4ade80" opacity="0.80"/>
-  <rect x="200" y="168" width="18" height="5" fill="#a855f7" opacity="0.80"/>
-  <rect x="76" y="228" width="10" height="4" fill="#4ade80" opacity="0.80"/>
-  <rect x="136" y="144" width="14" height="5" fill="#a855f7" opacity="0.80"/>
 </svg>
