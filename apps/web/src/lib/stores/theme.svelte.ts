@@ -548,9 +548,14 @@ export class ThemeStore {
         "--bg-texture-overlay",
         `linear-gradient(${tokens.background}${alpha}, ${tokens.background}${alpha}), url('/themes/${tokens.texture}')`,
       );
+      root.style.setProperty(
+        "--theme-card-backdrop",
+        tokens.textureOverlayAlpha ? "blur(4px)" : "none",
+      );
     } else {
       root.style.setProperty("--bg-texture", "none");
       root.style.setProperty("--bg-texture-overlay", "none");
+      root.style.setProperty("--theme-card-backdrop", "none");
     }
   }
 }
