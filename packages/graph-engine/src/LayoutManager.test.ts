@@ -212,6 +212,95 @@ describe("LayoutManager", () => {
     expect(mockCy.animate).toHaveBeenCalled();
   });
 
+  it("runs a real force layout on initial load when every node is unplaced (no saved coords)", async () => {
+    // Demo / coordinate-less load: all nodes sit on phyllotaxis spiral seeds
+    // and are still .pending-layout. Fit-only would just reveal that spiral, so
+    // the initial pass must run the worker (with randomize) to spread them out.
+    const spiralPositions = [
+      { x: 120, y: -340 },
+      { x: -260, y: 410 },
+    ];
+    const allPending: any = {
+      nonempty: vi.fn().mockReturnValue(true),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 2,
+    };
+    const nodes = makeNodes(spiralPositions);
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(allPending);
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? allPending : nodes,
+    );
+
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      true, // isInitial
+      true, // isForced
+      "Load Finalized",
+    );
+
+    // Worker must run with randomize=true — not the fit-only shortcut.
+    expect(capturedPostMessage).not.toBeNull();
+    expect(capturedPostMessage?.options.randomize).toBe(true);
+  });
+
+  it("keeps fit-only on initial load when nodes already have saved positions", async () => {
+    // Returning user: nodes carry coordinates and none are pending. The initial
+    // pass must preserve them via fit-only and not re-solve.
+    const placedPositions = [
+      { x: 100, y: 100 },
+      { x: 200, y: 200 },
+    ];
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+    const nodes = makeNodes(placedPositions);
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : nodes,
+    );
+
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      true, // isInitial
+      true, // isForced
+      "Load Finalized",
+    );
+
+    // No pending nodes → fit-only; worker must NOT be called.
+    expect(capturedPostMessage).toBeNull();
+    expect(mockCy.animate).toHaveBeenCalled();
+  });
+
   it("should keep the camera still for preserve-policy stable updates", async () => {
     const onLayoutStop = vi.fn();
 

@@ -448,6 +448,18 @@ export class LayoutManager {
       randomize = true;
     }
 
+    // Initial bulk load with no saved coordinates (e.g. demo vaults): every
+    // node is still .pending-layout sitting on its phyllotaxis spiral seed.
+    // The clump check above misses this because spiral seeds aren't at origin,
+    // so without this the fit-only path below would just reveal the raw spiral
+    // and a coordinate-less vault would need a manual Redraw to spread out.
+    if (!randomize && isInitial && cyNodes.length > 1) {
+      const pendingCount = this.cy.nodes(".pending-layout").length;
+      if (pendingCount === cyNodes.length) {
+        randomize = true;
+      }
+    }
+
     const isManualRedraw = caller === "UI Redraw Button" && isForced;
     const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
@@ -608,6 +620,14 @@ export class LayoutManager {
     );
 
     if (!positions || this.cy.destroyed()) {
+      // Don't strand unplaced nodes invisible if the solve failed/timed out —
+      // reveal them at their seed positions as a last resort (better a spiral
+      // than a blank graph). Without this, routing coordinate-less initial
+      // loads through the worker could hide them on failure.
+      if (!this.cy.destroyed()) {
+        this.cy.nodes().removeData("isPendingLayout");
+        this.cy.nodes(".pending-layout").removeClass("pending-layout");
+      }
       options.onLayoutStop?.();
       return;
     }
