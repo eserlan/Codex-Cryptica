@@ -22,6 +22,8 @@ import {
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
 
+export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
+
 export interface GraphViewDependencies {
   graph: typeof graphStore;
   vault: typeof vaultStore;
@@ -56,6 +58,8 @@ export class GraphViewController {
   _layoutReady = $state(false);
   initialLoaded = $state(false);
   didFinalizeLoad = $state(false);
+
+  loadPhase = $state<LoadPhase>("idle");
 
   private nodeSelectTimer: number | null = null;
   private readonly NODE_SELECT_DELAY_MS = 300;
@@ -335,6 +339,7 @@ export class GraphViewController {
           this.graphVisible = true;
           if (isInitial) {
             this._layoutReady = true;
+            this.reconcileLoadPhase();
           }
         },
         onPositionsUpdated: (updates) => {
@@ -381,6 +386,22 @@ export class GraphViewController {
     }, 250);
   };
 
+  reconcileLoadPhase = () => {
+    const derived: LoadPhase = !this.initialLoaded
+      ? "idle"
+      : !this.didFinalizeLoad
+        ? "elements"
+        : !this._layoutReady
+          ? "finalized"
+          : "ready";
+    if (import.meta.env.DEV && this.loadPhase !== derived) {
+      this.deps.debugStore.log(
+        `[GraphView] LoadPhase corrected: ${this.loadPhase} → ${derived}`,
+      );
+    }
+    this.loadPhase = derived;
+  };
+
   private clearNodeSelectTimer = () => {
     if (this.nodeSelectTimer !== null) {
       clearTimeout(this.nodeSelectTimer);
@@ -402,6 +423,7 @@ export class GraphViewController {
         onFirstElements: () => {
           this.initialLoaded = true;
           this.graphVisible = true;
+          this.reconcileLoadPhase();
         },
         onLayoutUpdate: (
           isInitial,
@@ -510,6 +532,7 @@ export class GraphViewController {
     ) {
       this.initialLoaded = false;
       this.didFinalizeLoad = false;
+      this.reconcileLoadPhase();
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
@@ -525,6 +548,7 @@ export class GraphViewController {
       !this.didFinalizeLoad
     ) {
       this.didFinalizeLoad = true;
+      this.reconcileLoadPhase();
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
