@@ -1,5 +1,6 @@
 import type { Core } from "cytoscape";
 import type { GraphNode, GraphEdge } from "../transformer";
+import type { LayoutRequest } from "../LayoutManager";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
@@ -16,13 +17,7 @@ export interface SyncOptions {
   labelFilterMode?: "AND" | "OR";
   activeCategories?: Set<string>;
   onFirstElements?: () => void;
-  onLayoutUpdate?: (
-    isInitial: boolean,
-    isForced: boolean,
-    caller: string,
-    hasNewNodes?: boolean,
-    hasRemovedNodes?: boolean,
-  ) => void;
+  onLayoutUpdate?: (req: LayoutRequest) => void;
 }
 
 const isNodeRendered = (node: any) =>
@@ -300,13 +295,12 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         // Edge churn (e.g. lore edits rewriting wiki-links) removes elements
         // without removing nodes — callers use this to keep the camera still.
         const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
-        options.onLayoutUpdate?.(
-          false,
-          force,
-          "Elements Update",
+        options.onLayoutUpdate?.({
+          reason: "Elements Update",
+          isForced: force,
           hasNewNodes,
           hasRemovedNodes,
-        );
+        });
       }
     }
   } catch (err) {

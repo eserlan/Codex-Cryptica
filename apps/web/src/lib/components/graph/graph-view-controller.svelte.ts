@@ -403,20 +403,8 @@ export class GraphViewController {
         onFirstElements: () => {
           this.loadPhase = "elements";
         },
-        onLayoutUpdate: (
-          isInitial,
-          isForced,
-          caller,
-          hasNewNodes,
-          hasRemovedNodes,
-        ) => {
-          this.applyCurrentLayout({
-            reason: caller,
-            isInitial,
-            isForced,
-            hasNewNodes,
-            hasRemovedNodes,
-          });
+        onLayoutUpdate: (req) => {
+          this.applyCurrentLayout(req);
         },
       });
     }
