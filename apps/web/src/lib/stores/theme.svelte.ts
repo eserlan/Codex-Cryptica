@@ -550,7 +550,7 @@ export class ThemeStore {
       );
       root.style.setProperty(
         "--theme-card-backdrop",
-        tokens.textureOverlayAlpha ? "blur(4px)" : "none",
+        tokens.textureCardBlur ? `blur(${tokens.textureCardBlur})` : "none",
       );
     } else {
       root.style.setProperty("--bg-texture", "none");
