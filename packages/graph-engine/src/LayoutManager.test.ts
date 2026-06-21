@@ -707,6 +707,133 @@ describe("LayoutManager", () => {
     );
     expect(node1.position).toHaveBeenCalledWith({ x: 50, y: 50 });
   });
+
+  // ─── needsSolve / unplaced-node checks ─────────────────────────────────────
+
+  it("runs a real force layout on initial load when every node is unplaced", async () => {
+    // All nodes have .pending-layout (pendingCount === total) — fresh vault
+    const pendingNodes = makeNodes([
+      { x: 10, y: 20 },
+      { x: 30, y: 40 },
+    ]);
+    (pendingNodes as any).length = 2;
+    (pendingNodes as any).removeData = vi.fn();
+    (pendingNodes as any).removeClass = vi.fn();
+    (pendingNodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (pendingNodes as any).not = vi.fn().mockReturnValue({
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      length: 0,
+    });
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? pendingNodes : pendingNodes,
+    );
+
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      true, // isInitial = true
+    );
+
+    // Force layout path must be taken — worker receives a postMessage
+    expect(capturedPostMessage).not.toBeNull();
+  });
+
+  it("keeps fit-only on initial load when nodes already have saved positions", async () => {
+    // No .pending-layout nodes; positions are spread (not at origin)
+    const placedNodes = makeNodes([
+      { x: 100, y: 200 },
+      { x: 300, y: 400 },
+    ]);
+    (placedNodes as any).length = 2;
+    (placedNodes as any).removeData = vi.fn();
+    (placedNodes as any).removeClass = vi.fn();
+    (placedNodes as any).nonempty = vi.fn().mockReturnValue(true);
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+    (placedNodes as any).not = vi.fn().mockReturnValue(emptyPending);
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : placedNodes,
+    );
+
+    capturedPostMessage = null;
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      true, // isInitial = true
+    );
+
+    // Fit-only path: no worker call
+    expect(capturedPostMessage).toBeNull();
+    expect(mockCy.animate).toHaveBeenCalled();
+  });
+
+  it("runs a real force layout when all nodes are at origin with valid coords (no pending-layout class)", async () => {
+    // Legacy vault: all nodes saved at (0,0) — hasValidCoords path in transformer
+    // means they get placed at origin WITHOUT .pending-layout, so pendingCount===0
+    // but nodesAtOrigin===total. The origin check must catch this.
+    const originNodes = makeNodes([
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+    (originNodes as any).length = 2;
+    (originNodes as any).removeData = vi.fn();
+    (originNodes as any).removeClass = vi.fn();
+    (originNodes as any).nonempty = vi.fn().mockReturnValue(true);
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0, // pendingCount === 0
+    };
+    (originNodes as any).not = vi.fn().mockReturnValue(emptyPending);
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : originNodes,
+    );
+
+    capturedPostMessage = null;
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      true, // isInitial = true
+    );
+
+    // Origin check must trigger force layout even though pendingCount === 0
+    expect(capturedPostMessage).not.toBeNull();
+    expect(capturedPostMessage.options.randomize).toBe(true);
+  });
 });
 
 describe("getLayoutCollisionSize", () => {
