@@ -508,21 +508,7 @@ export class LayoutManager {
       pendingNodes.removeClass("pending-layout");
 
       // Position persistence for newly placed nodes
-      if (!options.isGuest && pendingNodes.nonempty()) {
-        const updates: Record<string, Partial<any>> = {};
-        pendingNodes.forEach((node) => {
-          const pos = node.position();
-          updates[node.id()] = {
-            metadata: {
-              coordinates: {
-                x: Math.round(pos.x),
-                y: Math.round(pos.y),
-              },
-            },
-          };
-        });
-        options.onPositionsUpdated?.(updates);
-      }
+      this.persistPositions(pendingNodes, options);
 
       if (options.viewportPolicy === "preserve") {
         // Halt any in-flight fit animation from a previous layout pass —
@@ -642,21 +628,24 @@ export class LayoutManager {
     this.animateFitAndStop(options, "ease-out-quad");
 
     // Position persistence
-    if (!options.isGuest) {
-      const updates: Record<string, Partial<Entity>> = {};
-      this.cy.nodes().forEach((node) => {
-        const pos = node.position();
-        updates[node.id()] = {
-          metadata: {
-            coordinates: {
-              x: Math.round(pos.x),
-              y: Math.round(pos.y),
-            },
-          },
-        };
-      });
-      options.onPositionsUpdated?.(updates);
-    }
+    this.persistPositions(this.cy.nodes(), options);
+  }
+
+  private persistPositions(
+    nodes: ReturnType<Core["nodes"]>,
+    options: Pick<LayoutOptions, "isGuest" | "onPositionsUpdated">,
+  ): void {
+    if (options.isGuest || nodes.length === 0) return;
+    const updates: Record<string, Partial<Entity>> = {};
+    nodes.forEach((node) => {
+      const pos = node.position();
+      updates[node.id()] = {
+        metadata: {
+          coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+        },
+      };
+    });
+    options.onPositionsUpdated?.(updates);
   }
 
   stop() {
