@@ -40,7 +40,7 @@ export class GraphViewController {
   imageManager = $state<GraphImageManager | undefined>();
 
   isLayoutRunning = $state(false);
-  graphVisible = $state(false);
+  graphVisible = $derived(this.cy !== undefined);
   selectedCount = $state(0);
 
   hoveredEntityId = $state<string | null>(null);
@@ -192,9 +192,8 @@ export class GraphViewController {
         },
       });
 
-      this.graphVisible = true;
       this.deps.debugStore.log(
-        "[GraphViewController] Init successful, graphVisible set to true",
+        "[GraphViewController] Init successful, cy initialized",
       );
       this.setupEventListeners();
     } catch (err) {
@@ -332,7 +331,6 @@ export class GraphViewController {
         },
         onLayoutStop: () => {
           this.isLayoutRunning = false;
-          this.graphVisible = true;
           if (isInitial) {
             this.loadPhase = "ready";
           }
@@ -401,7 +399,6 @@ export class GraphViewController {
         activeCategories: this.deps.graph.activeCategories,
         onFirstElements: () => {
           this.loadPhase = "elements";
-          this.graphVisible = true;
         },
         onLayoutUpdate: (
           isInitial,
@@ -420,9 +417,6 @@ export class GraphViewController {
           );
         },
       });
-    }
-    if (this.loadPhase !== "idle" && !this.graphVisible) {
-      this.graphVisible = true;
     }
   };
 
