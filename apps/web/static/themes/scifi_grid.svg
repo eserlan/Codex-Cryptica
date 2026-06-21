@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <!-- Grid Lines (Main divisions at 128px) -->
+  <g stroke="#4ade80" stroke-width="1" opacity="0.12">
+    <path d="M 0 0 H 256 M 0 128 H 256 M 0 0 V 256 M 128 0 V 256"/>
+  </g>
+  
+  <!-- Subtle Sub-grid Lines (divisions at 64px) -->
+  <g stroke="#4ade80" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.08">
+    <path d="M 0 64 H 256 M 0 192 H 256 M 64 0 V 256 M 192 0 V 256"/>
+  </g>
+
+  <!-- Horizontal Scanlines (every 4px) -->
+  <g fill="#000000" opacity="0.06">
+    <rect width="256" height="1" y="0"/><rect width="256" height="1" y="4"/>
+    <rect width="256" height="1" y="8"/><rect width="256" height="1" y="12"/>
+    <rect width="256" height="1" y="16"/><rect width="256" height="1" y="20"/>
+    <rect width="256" height="1" y="24"/><rect width="256" height="1" y="28"/>
+    <rect width="256" height="1" y="32"/><rect width="256" height="1" y="36"/>
+    <rect width="256" height="1" y="40"/><rect width="256" height="1" y="44"/>
+    <rect width="256" height="1" y="48"/><rect width="256" height="1" y="52"/>
+    <rect width="256" height="1" y="56"/><rect width="256" height="1" y="60"/>
+    <rect width="256" height="1" y="64"/><rect width="256" height="1" y="68"/>
+    <rect width="256" height="1" y="72"/><rect width="256" height="1" y="76"/>
+    <rect width="256" height="1" y="80"/><rect width="256" height="1" y="84"/>
+    <rect width="256" height="1" y="88"/><rect width="256" height="1" y="92"/>
+    <rect width="256" height="1" y="96"/><rect width="256" height="1" y="100"/>
+    <rect width="256" height="1" y="104"/><rect width="256" height="1" y="108"/>
+    <rect width="256" height="1" y="112"/><rect width="256" height="1" y="116"/>
+    <rect width="256" height="1" y="120"/><rect width="256" height="1" y="124"/>
+    <rect width="256" height="1" y="128"/><rect width="256" height="1" y="132"/>
+    <rect width="256" height="1" y="136"/><rect width="256" height="1" y="140"/>
+    <rect width="256" height="1" y="144"/><rect width="256" height="1" y="148"/>
+    <rect width="256" height="1" y="152"/><rect width="256" height="1" y="156"/>
+    <rect width="256" height="1" y="160"/><rect width="256" height="1" y="164"/>
+    <rect width="256" height="1" y="168"/><rect width="256" height="1" y="172"/>
+    <rect width="256" height="1" y="176"/><rect width="256" height="1" y="180"/>
+    <rect width="256" height="1" y="184"/><rect width="256" height="1" y="188"/>
+    <rect width="256" height="1" y="192"/><rect width="256" height="1" y="196"/>
+    <rect width="256" height="1" y="200"/><rect width="256" height="1" y="204"/>
+    <rect width="256" height="1" y="208"/><rect width="256" height="1" y="212"/>
+    <rect width="256" height="1" y="216"/><rect width="256" height="1" y="220"/>
+    <rect width="256" height="1" y="224"/><rect width="256" height="1" y="228"/>
+    <rect width="256" height="1" y="232"/><rect width="256" height="1" y="236"/>
+    <rect width="256" height="1" y="240"/><rect width="256" height="1" y="244"/>
+    <rect width="256" height="1" y="248"/><rect width="256" height="1" y="252"/>
+  </g>
+
+  <!-- Alignment Crosshairs "+" at coordinate intersections -->
+  <g stroke="#4ade80" stroke-width="1.2" opacity="0.25">
+    <!-- Corner (0,0) and matching edges -->
+    <path d="M 0 4 V 0 H 4 M 0 0"/>
+    <path d="M 256 4 V 0 H 252"/>
+    <path d="M 0 252 V 256 H 4"/>
+    <path d="M 256 252 V 256 H 252"/>
+    
+    <!-- (128, 0) and matching bottom (128, 256) -->
+    <path d="M 128 4 V 0 M 124 0 H 132"/>
+    <path d="M 128 252 V 256 M 124 256 H 132"/>
+    
+    <!-- (0, 128) and matching right (256, 128) -->
+    <path d="M 0 128 H 4 M 0 124 V 132"/>
+    <path d="M 256 128 H 252 M 256 124 V 132"/>
+    
+    <!-- Center (128, 128) -->
+    <path d="M 128 122 V 134 M 122 128 H 134"/>
+  </g>
+</svg>

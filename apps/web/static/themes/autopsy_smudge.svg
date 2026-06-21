@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <!-- Charting Graph Paper Grid (Fine grid lines every 16px) -->
+  <g stroke="#7f1d1d" stroke-width="0.4" opacity="0.05">
+    <path d="M 0 16 H 256 M 0 32 H 256 M 0 48 H 256 M 0 80 H 256 M 0 96 H 256 M 0 112 H 256 M 0 144 H 256 M 0 160 H 256 M 0 176 H 256 M 0 208 H 256 M 0 224 H 256 M 0 240 H 256"/>
+    <path d="M 16 0 V 256 M 32 0 V 256 M 48 0 V 256 M 80 0 V 256 M 96 0 V 256 M 112 0 V 256 M 144 0 V 256 M 160 0 V 256 M 176 0 V 256 M 208 0 V 256 M 224 0 V 256 M 240 0 V 256"/>
+  </g>
+
+  <!-- Charting Graph Paper Grid (Major grid lines every 64px) -->
+  <g stroke="#7f1d1d" stroke-width="0.8" opacity="0.12">
+    <path d="M 0 0 H 256 M 0 64 H 256 M 0 128 H 256 M 0 192 H 256 M 0 256 H 256"/>
+    <path d="M 0 0 V 256 M 64 0 V 256 M 128 0 V 256 M 192 0 V 256 M 256 0 V 256"/>
+  </g>
+
+  <!-- Dried Blood/Liquid Organic Ring Stains in soft dark crimson -->
+  <!-- Ring Stain 1 -->
+  <path d="M 70 110 C 65 80, 120 75, 125 105 C 130 135, 75 140, 70 110" stroke="#7f1d1d" stroke-width="1.8" fill="none" opacity="0.16"/>
+  <path d="M 72 108 C 68 83, 118 78, 122 103 C 126 128, 77 133, 72 108" stroke="#7f1d1d" stroke-width="0.8" fill="none" opacity="0.1"/>
+  
+  <!-- Ring Stain 2 (Smudge) -->
+  <path d="M 180 180 C 160 170, 195 150, 200 175 C 205 200, 190 205, 180 180" stroke="#7f1d1d" stroke-width="2.2" fill="none" opacity="0.14"/>
+
+  <!-- Splattered Droplets (various sizes) -->
+  <g fill="#7f1d1d" opacity="0.15">
+    <circle cx="135" cy="120" r="1.5"/>
+    <circle cx="142" cy="115" r="0.75"/>
+    <circle cx="130" cy="132" r="1"/>
+    
+    <circle cx="55" cy="95" r="2"/>
+    <circle cx="48" cy="102" r="1"/>
+    
+    <circle cx="195" cy="145" r="1.5"/>
+    <circle cx="210" cy="190" r="2.5"/>
+    <circle cx="215" cy="182" r="0.75"/>
+    
+    <circle cx="95" cy="195" r="1.2"/>
+  </g>
+</svg>

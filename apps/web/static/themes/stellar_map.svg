@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <!-- Fine wireframe gridlines -->
+  <g stroke="#99CCFF" stroke-width="0.5" opacity="0.08">
+    <path d="M 0 0 H 256 M 0 64 H 256 M 0 128 H 256 M 0 192 H 256 M 0 256 H 256"/>
+    <path d="M 0 0 V 256 M 64 0 V 256 M 128 0 V 256 M 192 0 V 256 M 256 0 V 256"/>
+  </g>
+  
+  <!-- Concentric radar circles -->
+  <g fill="none" stroke="#FF9900" stroke-width="0.8" opacity="0.12">
+    <circle cx="128" cy="128" r="40"/>
+    <circle cx="128" cy="128" r="80"/>
+    <circle cx="128" cy="128" r="120" stroke-dasharray="3,6"/>
+  </g>
+
+  <!-- Degree ticks on the 80px circle -->
+  <g stroke="#FF9900" stroke-width="1.0" opacity="0.18">
+    <!-- N, S, E, W -->
+    <path d="M 128 44 V 52"/>
+    <path d="M 128 204 V 212"/>
+    <path d="M 44 128 H 52"/>
+    <path d="M 204 128 H 212"/>
+    
+    <!-- 45-degree diagonals -->
+    <path d="M 68 68 L 74 74"/>
+    <path d="M 188 68 L 182 74"/>
+    <path d="M 68 188 L 74 182"/>
+    <path d="M 188 188 L 182 182"/>
+  </g>
+
+  <!-- Degree marks (on the 120px outer sweep) -->
+  <g fill="#FF9900" opacity="0.15">
+    <circle cx="128" cy="8" r="1.5"/>
+    <circle cx="128" cy="248" r="1.5"/>
+    <circle cx="8" cy="128" r="1.5"/>
+    <circle cx="248" cy="128" r="1.5"/>
+  </g>
+</svg>

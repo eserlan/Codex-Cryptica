@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <!-- Plating Seams -->
+  <g stroke="#475569" stroke-width="1.2" opacity="0.25" fill="none">
+    <path d="M 0 96 H 256 M 0 192 H 256"/>
+    <path d="M 128 0 V 96 M 128 192 V 256"/>
+    <path d="M 64 96 V 192 M 192 96 V 192"/>
+  </g>
+
+  <!-- Rivet Dots (Radius 1.2, fill with slate/gray) -->
+  <g fill="#475569" opacity="0.22">
+    <!-- y = 96 seams -->
+    <circle cx="32" cy="90" r="1.2"/><circle cx="96" cy="90" r="1.2"/><circle cx="160" cy="90" r="1.2"/><circle cx="224" cy="90" r="1.2"/>
+    <circle cx="32" cy="102" r="1.2"/><circle cx="96" cy="102" r="1.2"/><circle cx="160" cy="102" r="1.2"/><circle cx="224" cy="102" r="1.2"/>
+    
+    <!-- y = 192 seams -->
+    <circle cx="32" cy="186" r="1.2"/><circle cx="96" cy="186" r="1.2"/><circle cx="160" cy="186" r="1.2"/><circle cx="224" cy="186" r="1.2"/>
+    <circle cx="32" cy="198" r="1.2"/><circle cx="96" cy="198" r="1.2"/><circle cx="160" cy="198" r="1.2"/><circle cx="224" cy="198" r="1.2"/>
+
+    <!-- x = 128 seams -->
+    <circle cx="122" cy="24" r="1.2"/><circle cx="122" cy="72" r="1.2"/><circle cx="134" cy="24" r="1.2"/><circle cx="134" cy="72" r="1.2"/>
+    <circle cx="122" cy="216" r="1.2"/><circle cx="122" cy="240" r="1.2"/><circle cx="134" cy="216" r="1.2"/><circle cx="134" cy="240" r="1.2"/>
+
+    <!-- x = 64 & 192 seams -->
+    <circle cx="58" cy="120" r="1.2"/><circle cx="58" cy="168" r="1.2"/><circle cx="70" cy="120" r="1.2"/><circle cx="70" cy="168" r="1.2"/>
+    <circle cx="186" cy="120" r="1.2"/><circle cx="186" cy="168" r="1.2"/><circle cx="198" cy="120" r="1.2"/><circle cx="198" cy="168" r="1.2"/>
+  </g>
+
+  <!-- Ventilation Grille in the center panel -->
+  <g fill="#0f172a" opacity="0.3">
+    <rect x="108" y="128" width="40" height="2" rx="1"/>
+    <rect x="108" y="134" width="40" height="2" rx="1"/>
+    <rect x="108" y="140" width="40" height="2" rx="1"/>
+    <rect x="108" y="146" width="40" height="2" rx="1"/>
+    <rect x="108" y="152" width="40" height="2" rx="1"/>
+    <rect x="108" y="158" width="40" height="2" rx="1"/>
+  </g>
+</svg>
