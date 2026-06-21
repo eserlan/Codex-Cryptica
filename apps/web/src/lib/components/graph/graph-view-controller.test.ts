@@ -183,7 +183,11 @@ describe("GraphViewController", () => {
     controller.handleVaultLoadFinalization();
 
     expect(controller.loadPhase).toBe<LoadPhase>("finalized");
-    expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
+    expect(applySpy).toHaveBeenCalledWith({
+      reason: "Load Finalized",
+      isInitial: true,
+      isForced: true,
+    });
   });
 
   describe("focus handoff", () => {
@@ -269,10 +273,11 @@ describe("GraphViewController", () => {
   });
 
   describe("viewport policy", () => {
+    // apply is now called as apply(request, options) — viewport lives on request
     const lastPolicy = () => {
       const apply = (controller.layoutManager as any).apply;
       const calls = apply.mock.calls;
-      return calls[calls.length - 1][0].viewportPolicy;
+      return calls[calls.length - 1][0].viewport;
     };
 
     beforeEach(async () => {
@@ -281,78 +286,73 @@ describe("GraphViewController", () => {
     });
 
     it("preserves the camera for edge-only element updates with stable layout", async () => {
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "Elements Update",
-        false,
-        false,
-        false,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("preserve");
     });
 
     it("fits when new nodes are added", async () => {
-      await controller.applyCurrentLayout(
-        false,
-        false,
-        "Elements Update",
-        false,
-        true,
-        false,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        hasNewNodes: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits when nodes are removed", async () => {
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "Elements Update",
-        false,
-        false,
-        true,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        isForced: true,
+        hasRemovedNodes: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("preserves the camera for plain window resizes", async () => {
-      await controller.applyCurrentLayout(false, false, "Window Resize", false);
+      await controller.applyCurrentLayout({ reason: "Window Resize" });
       expect(lastPolicy()).toBe("preserve");
     });
 
     it("fits on orientation-change resizes", async () => {
-      await controller.applyCurrentLayout(false, true, "Window Resize", true);
+      await controller.applyCurrentLayout({
+        reason: "Window Resize",
+        isForced: true,
+        reseed: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits when stable layout is off", async () => {
       deps.graph.stableLayout = false;
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "Elements Update",
-        false,
-        false,
-        false,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits on initial layout", async () => {
-      await controller.applyCurrentLayout(true, true, "Load Finalized");
+      await controller.applyCurrentLayout({
+        reason: "Load Finalized",
+        isInitial: true,
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits on mode changes and manual redraw", async () => {
-      await controller.applyCurrentLayout(false, true, "Mode Change Effect");
+      await controller.applyCurrentLayout({
+        reason: "Mode Change Effect",
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("fit");
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "UI Redraw Button",
-        true,
-      );
+      await controller.applyCurrentLayout({
+        reason: "UI Redraw Button",
+        isForced: true,
+        reseed: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
   });

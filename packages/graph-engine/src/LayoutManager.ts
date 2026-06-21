@@ -48,6 +48,8 @@ export interface LayoutRequest {
   isForced?: boolean;
   /** True when new nodes were added since the last layout. */
   hasNewNodes?: boolean;
+  /** True when nodes were removed since the last layout. */
+  hasRemovedNodes?: boolean;
 }
 
 function isLayoutRequest(
