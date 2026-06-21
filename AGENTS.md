@@ -59,6 +59,9 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4 (134-entity-navigation-history)
+- N/A (In-memory session state) (134-entity-navigation-history)
+
 - TypeScript 6.0.3 + Svelte 5 runes + SvelteKit, Tailwind 4 semantic tokens, existing `packages/chronology-engine`, existing `schema` types, existing vault/world/timeline stores (132-calendar-agenda-view)
 - Existing vault entity data plus browser-local IndexedDB-backed calendar settings via `apps/web/src/lib/stores/calendar.svelte.ts`; no new persistence format (132-calendar-agenda-view)
 

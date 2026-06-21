@@ -248,7 +248,14 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     title: "Pick Dates",
     content:
       "Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
-    icon: "icon-[lucide--calendar]",
+    icon: "icon-[lucide--settings-2]",
+  },
+  "keyboard-navigation": {
+    id: "keyboard-navigation",
+    title: "Keyboard Navigation",
+    content:
+      "Use `Shift+Left` and `Shift+Right` arrows to quickly navigate back and forward through your recently viewed entities. Navigation history is preserved during your session. Shortcuts are disabled while editing text or when modals are open.",
+    icon: "icon-[lucide--keyboard]",
   },
   "import-resume": {
     id: "import-resume",
