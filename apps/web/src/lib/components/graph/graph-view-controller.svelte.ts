@@ -524,12 +524,70 @@ export class GraphViewController {
       this.initialLoaded &&
       !this.didFinalizeLoad
     ) {
+      // Flip the guard synchronously so the driving $effect can't re-enter
+      // while we wait for the container below.
       this.didFinalizeLoad = true;
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
-      this.applyCurrentLayout(true, true, "Load Finalized");
+      // Defer the one-time initial layout until the container has settled to
+      // stable, non-zero dimensions. Running it mid-settle fits the camera to
+      // the wrong size — the graph then renders off-center/mis-scaled until a
+      // manual Redraw (which happens to run once sizing is done) corrects it.
+      void this.waitForStableContainer().then(() => {
+        if (this.isDestroyed || !this.cy) return;
+        this.applyCurrentLayout(true, true, "Load Finalized");
+      });
     }
+  };
+
+  /**
+   * Resolves once the graph container reports stable, non-zero dimensions —
+   * the same width/height across consecutive animation frames. Gating the
+   * initial layout on this avoids fitting against mid-settle dimensions, the
+   * cause of the "wrong layout on vault load / refresh" bug.
+   *
+   * Always resolves within `timeoutMs` (fallback) so a container that never
+   * reports a size — hidden view, exotic/test environment — can never hang the
+   * initial layout.
+   */
+  private waitForStableContainer = (timeoutMs = 500): Promise<void> => {
+    return new Promise((resolve) => {
+      const container = this.container;
+      if (!container || typeof requestAnimationFrame === "undefined") {
+        resolve();
+        return;
+      }
+      const start = performance.now();
+      let lastW = -1;
+      let lastH = -1;
+      let stableFrames = 0;
+      const check = () => {
+        if (this.isDestroyed) {
+          resolve();
+          return;
+        }
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        if (w > 0 && h > 0 && w === lastW && h === lastH) {
+          // Two consecutive identical non-zero frames = settled enough to fit.
+          if (++stableFrames >= 2) {
+            resolve();
+            return;
+          }
+        } else {
+          stableFrames = 0;
+          lastW = w;
+          lastH = h;
+        }
+        if (performance.now() - start >= timeoutMs) {
+          resolve();
+          return;
+        }
+        requestAnimationFrame(check);
+      };
+      requestAnimationFrame(check);
+    });
   };
 
   handleModeChange = () => {

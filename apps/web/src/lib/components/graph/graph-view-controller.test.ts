@@ -170,6 +170,16 @@ describe("GraphViewController", () => {
 
   it("should finalize load when vault becomes idle and initial elements are loaded", async () => {
     const container = document.createElement("div");
+    // Report stable, non-zero dimensions so the deferred initial layout's
+    // container-readiness gate resolves promptly.
+    Object.defineProperty(container, "clientWidth", {
+      value: 800,
+      configurable: true,
+    });
+    Object.defineProperty(container, "clientHeight", {
+      value: 600,
+      configurable: true,
+    });
     await controller.init(container, {});
 
     // Set up state
@@ -182,8 +192,36 @@ describe("GraphViewController", () => {
 
     controller.handleVaultLoadFinalization();
 
+    // The guard flips synchronously to prevent the driving effect re-entering.
     expect(controller.didFinalizeLoad).toBe(true);
-    expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
+
+    // The actual initial layout is deferred until the container reports stable
+    // dimensions (a few animation frames).
+    await vi.waitFor(() =>
+      expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized"),
+    );
+  });
+
+  it("still finalizes via the fallback timeout when the container never reports a size", async () => {
+    // A detached element reports 0×0, so the stable-dimension gate never
+    // settles — the fallback timeout must still run the initial layout so the
+    // graph can never hang blank.
+    const container = document.createElement("div");
+    await controller.init(container, {});
+
+    deps.vault.status = "idle";
+    controller.initialLoaded = true;
+    controller.didFinalizeLoad = false;
+
+    const applySpy = vi.spyOn(controller, "applyCurrentLayout");
+
+    controller.handleVaultLoadFinalization();
+
+    expect(controller.didFinalizeLoad).toBe(true);
+    await vi.waitFor(
+      () => expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized"),
+      { timeout: 2000 },
+    );
   });
 
   describe("focus handoff", () => {
