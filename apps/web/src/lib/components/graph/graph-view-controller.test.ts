@@ -175,17 +175,14 @@ describe("GraphViewController", () => {
     const container = document.createElement("div");
     await controller.init(container, {});
 
-    // Set up state
     deps.vault.status = "idle";
-    controller.initialLoaded = true;
-    controller.didFinalizeLoad = false;
+    controller.loadPhase = "elements";
 
-    // Spy on applyCurrentLayout
     const applySpy = vi.spyOn(controller, "applyCurrentLayout");
 
     controller.handleVaultLoadFinalization();
 
-    expect(controller.didFinalizeLoad).toBe(true);
+    expect(controller.loadPhase).toBe<LoadPhase>("finalized");
     expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
   });
 
@@ -229,40 +226,40 @@ describe("GraphViewController", () => {
     });
   });
 
-  describe("LoadPhase state machine (T1 shadow mode)", () => {
+  describe("LoadPhase state machine", () => {
     it("starts in idle phase", () => {
       expect(controller.loadPhase).toBe<LoadPhase>("idle");
     });
 
-    it("transitions to elements after reconcile with initialLoaded=true", () => {
-      controller.initialLoaded = true;
-      controller.reconcileLoadPhase();
-      expect(controller.loadPhase).toBe<LoadPhase>("elements");
+    it("transitions to elements when first graph elements arrive (onFirstElements)", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      deps.vault.status = "idle";
+      controller.loadPhase = "elements";
+      controller.handleVaultLoadFinalization();
+      expect(controller.loadPhase).toBe<LoadPhase>("finalized");
     });
 
     it("transitions to finalized when handleVaultLoadFinalization fires", async () => {
       const container = document.createElement("div");
       await controller.init(container, {});
       deps.vault.status = "idle";
-      controller.initialLoaded = true;
-      controller.didFinalizeLoad = false;
+      controller.loadPhase = "elements";
       controller.handleVaultLoadFinalization();
       expect(controller.loadPhase).toBe<LoadPhase>("finalized");
     });
 
-    it("transitions to ready after reconcile with all flags true", () => {
-      controller.initialLoaded = true;
-      controller.didFinalizeLoad = true;
-      controller._layoutReady = true;
-      controller.reconcileLoadPhase();
+    it("does not finalize if already past elements phase", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      deps.vault.status = "idle";
+      controller.loadPhase = "ready";
+      controller.handleVaultLoadFinalization();
       expect(controller.loadPhase).toBe<LoadPhase>("ready");
     });
 
-    it("resets to idle when handleVaultLoading clears flags", () => {
-      controller.initialLoaded = true;
-      controller.didFinalizeLoad = true;
-      controller.reconcileLoadPhase();
-      expect(controller.loadPhase).toBe<LoadPhase>("finalized");
+    it("resets to idle when handleVaultLoading clears state", () => {
+      controller.loadPhase = "finalized";
 
       deps.vault.status = "loading";
       deps.vault.allEntities = [];
