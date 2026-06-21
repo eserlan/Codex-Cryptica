@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { syncGraphElements } from "./useGraphSync";
 import type { Core } from "cytoscape";
+import type { LayoutRequest } from "../LayoutManager";
 
 function createMockNode(id: string, labels?: string[]) {
   return {
@@ -88,7 +89,7 @@ describe("syncGraphElements", () => {
   it("should remove existing graph items when the target element list is empty", () => {
     const existingNode = createMockNode("node1");
     mockCy.elements.mockReturnValue([existingNode]);
-    mockCy.collection.mockImplementation((els) => els);
+    mockCy.collection.mockImplementation((els: any) => els);
 
     syncGraphElements(mockCy as unknown as Core, {
       elements: [],
@@ -275,13 +276,12 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(
-      false,
-      true,
-      "Elements Update",
-      false,
-      true,
-    );
+    expect(onLayoutUpdate).toHaveBeenCalledWith<[LayoutRequest]>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: true,
+    });
   });
 
   it("should report edge-only removals with hasRemovedNodes=false", () => {
@@ -302,13 +302,12 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(
-      false,
-      true,
-      "Elements Update",
-      false,
-      false,
-    );
+    expect(onLayoutUpdate).toHaveBeenCalledWith<[LayoutRequest]>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: false,
+    });
   });
 
   it("should force layout on addition and pass hasNewNodes=true", () => {
@@ -323,13 +322,12 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(
-      false,
-      false,
-      "Elements Update",
-      true,
-      false,
-    );
+    expect(onLayoutUpdate).toHaveBeenCalledWith<[LayoutRequest]>({
+      reason: "Elements Update",
+      isForced: false,
+      hasNewNodes: true,
+      hasRemovedNodes: false,
+    });
   });
 
   it("should not trigger a relayout for edge-only additions", () => {
@@ -368,7 +366,6 @@ describe("syncGraphElements", () => {
 
       return {
         id: vi.fn().mockReturnValue(id),
-        hasClass: vi.fn().mockReturnValue(false),
         addClass: vi.fn((cls: string) => {
           if (cls === "filtered-out") state.filteredOut = true;
           if (cls === "category-filtered-out") state.categoryFilteredOut = true;
