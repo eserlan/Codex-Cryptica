@@ -410,6 +410,11 @@
   h5,
   h6 {
     font-family: var(--font-header-val);
+    text-shadow: var(--theme-text-glow, none);
+  }
+
+  .font-header {
+    text-shadow: var(--theme-text-glow, none);
   }
 
   /* Ensure icons inherit color and are transitionable */

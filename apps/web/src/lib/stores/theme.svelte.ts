@@ -532,6 +532,11 @@ export class ThemeStore {
     if (theme.id === "fallout") glow = `0 0 18px ${tokens.primary}55, 0 0 6px ${tokens.primary}33`;
     root.style.setProperty("--theme-glow", glow);
 
+    // Phosphor text-shadow for CRT header glow — bleeds light from characters into the screen glass
+    let textGlow = "none";
+    if (theme.id === "fallout") textGlow = `0 0 4px ${tokens.primary}80, 0 0 1px ${tokens.primary}`;
+    root.style.setProperty("--theme-text-glow", textGlow);
+
     let radius = "2px"; // Gothic/Terminal default
     if (theme.id === "modern") radius = "12px";
     if (theme.id === "fantasy") radius = "3px"; // Firmer, less app-like fantasy
