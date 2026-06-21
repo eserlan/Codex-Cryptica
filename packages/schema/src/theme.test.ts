@@ -96,12 +96,13 @@ describe("Theme Schema & Definitions", () => {
     }
   });
 
-  it("assigns the correct SVG textures to the 16 target themes", () => {
+  it("assigns the correct SVG textures to the target themes", () => {
     const expectedTextures: Record<string, string> = {
       workspace: "workspace_grain.svg",
       workspace_dark: "workspace_grain.svg",
       scifi: "scifi_grid.svg",
-      scifi_light: "scifi_grid.svg",
+      // scifi_light ("Starship Bridge", #1456) intentionally has no texture —
+      // a clean solid surface, asserted separately below.
       modern: "modern_dots.svg",
       modern_dark: "modern_dots.svg",
       starwars: "holocron.svg",
@@ -120,7 +121,6 @@ describe("Theme Schema & Definitions", () => {
       workspace: THEMES.workspace,
       workspace_dark: WORKSPACE_DARK,
       scifi: THEMES.scifi,
-      scifi_light: SCIFI_LIGHT,
       modern: THEMES.modern,
       modern_dark: MODERN_DARK,
       starwars: THEMES.starwars,
@@ -148,5 +148,8 @@ describe("Theme Schema & Definitions", () => {
       expect(texture).not.toContain("\\");
       expect(texture).not.toContain("..");
     }
+
+    // scifi_light is deliberately texture-free (clean Starship Bridge surface).
+    expect(SCIFI_LIGHT.tokens.texture).toBeUndefined();
   });
 });
