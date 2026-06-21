@@ -292,9 +292,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
     if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
-        const w = cy.width();
-        const h = cy.height();
-        cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
+        (cy as any).fit(undefined, 40);
       } else if (!isVaultLoading || initialLoaded) {
         // Preserve current positions for edge-only updates. This avoids a second
         // relayout when AI discovery adds connections right after creating a node.

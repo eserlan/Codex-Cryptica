@@ -51,9 +51,7 @@ describe("syncGraphElements", () => {
       }),
       batch: vi.fn((cb) => cb()),
       collection: vi.fn((els) => els),
-      width: vi.fn().mockReturnValue(1000),
-      height: vi.fn().mockReturnValue(800),
-      viewport: vi.fn(),
+      fit: vi.fn(),
       $id: vi.fn().mockReturnValue({
         nonempty: vi.fn().mockReturnValue(true),
         removeClass: vi.fn(),
