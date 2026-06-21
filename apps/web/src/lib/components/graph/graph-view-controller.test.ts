@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { tick } from "svelte";
-import { GraphViewController } from "./graph-view-controller.svelte";
+import {
+  GraphViewController,
+  type LoadPhase,
+} from "./graph-view-controller.svelte";
 
 // Mock graph-engine
 vi.mock("graph-engine", () => {
@@ -223,6 +226,48 @@ describe("GraphViewController", () => {
 
       expect(clearSpy).toHaveBeenCalledWith(999);
       expect((controller as any).nodeSelectTimer).toBeNull();
+    });
+  });
+
+  describe("LoadPhase state machine (T1 shadow mode)", () => {
+    it("starts in idle phase", () => {
+      expect(controller.loadPhase).toBe<LoadPhase>("idle");
+    });
+
+    it("transitions to elements after reconcile with initialLoaded=true", () => {
+      controller.initialLoaded = true;
+      controller.reconcileLoadPhase();
+      expect(controller.loadPhase).toBe<LoadPhase>("elements");
+    });
+
+    it("transitions to finalized when handleVaultLoadFinalization fires", async () => {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      deps.vault.status = "idle";
+      controller.initialLoaded = true;
+      controller.didFinalizeLoad = false;
+      controller.handleVaultLoadFinalization();
+      expect(controller.loadPhase).toBe<LoadPhase>("finalized");
+    });
+
+    it("transitions to ready after reconcile with all flags true", () => {
+      controller.initialLoaded = true;
+      controller.didFinalizeLoad = true;
+      controller._layoutReady = true;
+      controller.reconcileLoadPhase();
+      expect(controller.loadPhase).toBe<LoadPhase>("ready");
+    });
+
+    it("resets to idle when handleVaultLoading clears flags", () => {
+      controller.initialLoaded = true;
+      controller.didFinalizeLoad = true;
+      controller.reconcileLoadPhase();
+      expect(controller.loadPhase).toBe<LoadPhase>("finalized");
+
+      deps.vault.status = "loading";
+      deps.vault.allEntities = [];
+      controller.handleVaultLoading();
+      expect(controller.loadPhase).toBe<LoadPhase>("idle");
     });
   });
 
