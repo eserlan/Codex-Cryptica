@@ -464,64 +464,82 @@ export class LayoutManager {
     const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
     if (isFitOnly) {
-      this.cy.resize();
-
-      const pendingNodes = this.cy.nodes(".pending-layout");
-      if (pendingNodes.nonempty()) {
-        // Snap new nodes to sensible positions before revealing them so the
-        // viewport doesn't jump to include their far-away spiral seed positions.
-        const placedNodes = this.cy.nodes().not(pendingNodes);
-        let fallbackX = 0;
-        let fallbackY = 0;
-        if (placedNodes.nonempty()) {
-          placedNodes.forEach((n) => {
-            const p = n.position();
-            fallbackX += p.x;
-            fallbackY += p.y;
-          });
-          fallbackX /= placedNodes.length;
-          fallbackY /= placedNodes.length;
-        }
-
-        pendingNodes.forEach((node) => {
-          const neighbors = node.neighborhood().nodes().not(pendingNodes);
-          if (neighbors.nonempty()) {
-            let sumX = 0;
-            let sumY = 0;
-            neighbors.forEach((n) => {
-              const p = n.position();
-              sumX += p.x;
-              sumY += p.y;
-            });
-            node.position({
-              x: sumX / neighbors.length,
-              y: sumY / neighbors.length,
-            });
-          } else if (placedNodes.nonempty()) {
-            node.position({ x: fallbackX, y: fallbackY });
-          }
-          // If all nodes are new (initial load), keep spiral seed positions
-        });
-      }
-
-      this.cy.nodes().removeData("isPendingLayout");
-      pendingNodes.removeClass("pending-layout");
-
-      // Position persistence for newly placed nodes
-      this.persistPositions(pendingNodes, options);
-
-      if (options.viewportPolicy === "preserve") {
-        // Halt any in-flight fit animation from a previous layout pass —
-        // otherwise it would keep moving the camera after this update
-        // promised to preserve the viewport.
-        this.cy.stop();
-        options.onLayoutStop?.();
-      } else {
-        this.animateFitAndStop(options, "ease-out-cubic");
-      }
+      this.fitOnly(options);
       return;
     }
 
+    const manualRedrawRandomize =
+      caller === "UI Redraw Button" && isForced && randomizeForced;
+    const shouldRandomize =
+      randomize ||
+      manualRedrawRandomize ||
+      (isForced && randomizeForced && !options.stableLayout);
+
+    await this.solveAndFit(options, shouldRandomize);
+  }
+
+  private fitOnly(options: LayoutOptions): void {
+    this.cy.resize();
+
+    const pendingNodes = this.cy.nodes(".pending-layout");
+    if (pendingNodes.nonempty()) {
+      // Snap new nodes to sensible positions before revealing them so the
+      // viewport doesn't jump to include their far-away spiral seed positions.
+      const placedNodes = this.cy.nodes().not(pendingNodes);
+      let fallbackX = 0;
+      let fallbackY = 0;
+      if (placedNodes.nonempty()) {
+        placedNodes.forEach((n) => {
+          const p = n.position();
+          fallbackX += p.x;
+          fallbackY += p.y;
+        });
+        fallbackX /= placedNodes.length;
+        fallbackY /= placedNodes.length;
+      }
+
+      pendingNodes.forEach((node) => {
+        const neighbors = node.neighborhood().nodes().not(pendingNodes);
+        if (neighbors.nonempty()) {
+          let sumX = 0;
+          let sumY = 0;
+          neighbors.forEach((n) => {
+            const p = n.position();
+            sumX += p.x;
+            sumY += p.y;
+          });
+          node.position({
+            x: sumX / neighbors.length,
+            y: sumY / neighbors.length,
+          });
+        } else if (placedNodes.nonempty()) {
+          node.position({ x: fallbackX, y: fallbackY });
+        }
+        // If all nodes are new (initial load), keep spiral seed positions
+      });
+    }
+
+    this.cy.nodes().removeData("isPendingLayout");
+    pendingNodes.removeClass("pending-layout");
+
+    this.persistPositions(pendingNodes, options);
+
+    if (options.viewportPolicy === "preserve") {
+      // Halt any in-flight fit animation from a previous layout pass —
+      // otherwise it would keep moving the camera after this update
+      // promised to preserve the viewport.
+      this.cy.stop();
+      options.onLayoutStop?.();
+    } else {
+      this.animateFitAndStop(options, "ease-out-cubic");
+    }
+  }
+
+  private async solveAndFit(
+    options: LayoutOptions,
+    shouldRandomize: boolean,
+  ): Promise<void> {
+    const cyNodes = this.cy.nodes();
     const width = this.cy.width();
     const height = this.cy.height();
     const ar = width / height;
@@ -532,14 +550,6 @@ export class LayoutManager {
     const gravity = isLandscape
       ? Math.min(baseOptions.gravity, 0.12)
       : Math.min(baseOptions.gravity, 0.15);
-
-    // Don't randomize if the user has explicitly locked positions via stableLayout
-    const manualRedrawRandomize =
-      caller === "UI Redraw Button" && isForced && randomizeForced;
-    const shouldRandomize =
-      randomize ||
-      manualRedrawRandomize ||
-      (isForced && randomizeForced && !options.stableLayout);
 
     if (this.cy.destroyed()) {
       options.onLayoutStop?.();
@@ -627,7 +637,6 @@ export class LayoutManager {
 
     this.animateFitAndStop(options, "ease-out-quad");
 
-    // Position persistence
     this.persistPositions(this.cy.nodes(), options);
   }
 
