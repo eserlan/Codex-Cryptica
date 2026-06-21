@@ -223,11 +223,11 @@ Each phase is independently shippable and test-backed. Stop after Phase 2 and yo
 
 ---
 
-## 7. Open questions to resolve before coding
+## 7. Open questions — RESOLVED (T0 spike)
 
-1. Is the `nodesAtOrigin === count` check still reachable for any **non-pending** path, or fully superseded by `.pending-layout`? (Determines if P3 can delete it outright.)
-2. Does anything read the early `0.15` viewport (P5) — e.g. a screenshot/export path firing before finalize?
-3. Are any `caller` strings consumed for **telemetry/debug** (`debugStore.log("Layout: …", { caller })`, `controller.ts:328`)? If so, `LayoutRequest.reason` must preserve a stable label for those logs.
+1. **Is `nodesAtOrigin === count` reachable for any non-pending path?** → **YES.** A node with saved coords of exactly `{x:0, y:0}` takes the `hasValidCoords` path (`transformer.ts:194-199`) → positioned at origin, **not** `.pending-layout`. So a legacy/degenerate vault saved entirely at `(0,0)` is caught only by the origin scan. **Consequence:** T5 must **unify**, not delete — the origin case is distinct from the pending case.
+2. **Does anything read the early `0.15` viewport before finalize?** → **NO hard dependency.** Only the Minimap reflects it reactively (`Minimap.svelte:146-150`) and re-renders when finalize re-fits; no export/screenshot/image path captures the viewport (`GraphImageManager.sync` applies node images, not viewport). **Consequence:** T8 is safe — remove or replace with a no-anim fit.
+3. **Are any `caller` strings consumed for telemetry/debug?** → **YES.** `controller.ts:328-331` logs `debugStore.log("Layout: …", { nodes, caller })`. **Consequence:** T12 must keep a stable `reason` label feeding that log.
 
 ---
 
