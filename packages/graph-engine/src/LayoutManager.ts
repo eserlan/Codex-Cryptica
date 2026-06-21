@@ -30,6 +30,32 @@ export interface LayoutOptions {
   onPositionsUpdated?: (updates: Record<string, Partial<Entity>>) => void;
 }
 
+/**
+ * Structured alternative to the positional-boolean `apply` args.
+ * T11 will migrate all call sites to this shape; T12 will drop the
+ * legacy positional args entirely.
+ */
+export interface LayoutRequest {
+  /** Human-readable label used for telemetry / debug logs (replaces `caller`). */
+  reason: string;
+  /** Force fcose to re-randomize node positions (replaces `randomizeForced`). */
+  reseed?: boolean;
+  /** Camera policy for this pass — overrides the viewportPolicy in LayoutOptions when set. */
+  viewport?: "preserve" | "fit";
+  /** True on the first full layout pass after vault load. */
+  isInitial?: boolean;
+  /** True when the layout was explicitly requested (e.g. toolbar button). */
+  isForced?: boolean;
+  /** True when new nodes were added since the last layout. */
+  hasNewNodes?: boolean;
+}
+
+function isLayoutRequest(
+  arg: LayoutOptions | LayoutRequest,
+): arg is LayoutRequest {
+  return "reason" in arg;
+}
+
 const ORIENTATION_THRESHOLD = 1.2;
 const BASE_LAYOUT_WORKER_TIMEOUT_MS = 15000;
 const FIT_ANIMATION_TIMEOUT_MS = 1200;
@@ -295,14 +321,42 @@ export class LayoutManager {
     });
   }
 
+  async apply(request: LayoutRequest, options: LayoutOptions): Promise<void>;
   async apply(
     options: LayoutOptions,
-    isInitial = false,
+    isInitial?: boolean,
+    isForced?: boolean,
+    caller?: string,
+    randomizeForced?: boolean,
+    hasNewNodes?: boolean,
+  ): Promise<void>;
+  async apply(
+    optionsOrRequest: LayoutOptions | LayoutRequest,
+    isInitialOrOptions: boolean | LayoutOptions = false,
     isForced = false,
     caller = "unknown",
     randomizeForced = false,
     hasNewNodes = false,
   ) {
+    let options: LayoutOptions;
+    let isInitial: boolean;
+
+    if (isLayoutRequest(optionsOrRequest)) {
+      const req = optionsOrRequest;
+      options = isInitialOrOptions as LayoutOptions;
+      isInitial = req.isInitial ?? false;
+      isForced = req.isForced ?? false;
+      caller = req.reason;
+      randomizeForced = req.reseed ?? false;
+      hasNewNodes = req.hasNewNodes ?? false;
+      if (req.viewport !== undefined) {
+        options = { ...options, viewportPolicy: req.viewport };
+      }
+    } else {
+      options = optionsOrRequest;
+      isInitial = isInitialOrOptions as boolean;
+    }
+
     if (!this.cy || this.cy.destroyed()) return;
 
     if (this.currentLayout) {
