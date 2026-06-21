@@ -438,13 +438,25 @@ export class LayoutManager {
       !options.orbitMode;
     let randomize = isExitingTimeline || isExitingMode;
 
-    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them
+    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
+    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
+    // Both checks are kept intentionally:
+    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
+    //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
+    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
       if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
     });
-    if (!randomize && cyNodes.length > 1 && nodesAtOrigin === cyNodes.length) {
+    const pendingCount = this.cy.nodes(".pending-layout").length;
+
+    const needsSolve =
+      isInitial &&
+      cyNodes.length > 1 &&
+      (pendingCount === cyNodes.length || nodesAtOrigin === cyNodes.length);
+
+    if (!randomize && needsSolve) {
       randomize = true;
     }
 
