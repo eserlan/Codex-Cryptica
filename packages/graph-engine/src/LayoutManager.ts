@@ -52,12 +52,6 @@ export interface LayoutRequest {
   hasRemovedNodes?: boolean;
 }
 
-function isLayoutRequest(
-  arg: LayoutOptions | LayoutRequest,
-): arg is LayoutRequest {
-  return "reason" in arg;
-}
-
 const ORIENTATION_THRESHOLD = 1.2;
 const BASE_LAYOUT_WORKER_TIMEOUT_MS = 15000;
 const FIT_ANIMATION_TIMEOUT_MS = 1200;
@@ -323,40 +317,9 @@ export class LayoutManager {
     });
   }
 
-  async apply(request: LayoutRequest, options: LayoutOptions): Promise<void>;
-  async apply(
-    options: LayoutOptions,
-    isInitial?: boolean,
-    isForced?: boolean,
-    caller?: string,
-    randomizeForced?: boolean,
-    hasNewNodes?: boolean,
-  ): Promise<void>;
-  async apply(
-    optionsOrRequest: LayoutOptions | LayoutRequest,
-    isInitialOrOptions: boolean | LayoutOptions = false,
-    isForced = false,
-    caller = "unknown",
-    randomizeForced = false,
-    hasNewNodes = false,
-  ) {
-    let options: LayoutOptions;
-    let isInitial: boolean;
-
-    if (isLayoutRequest(optionsOrRequest)) {
-      const req = optionsOrRequest;
-      options = isInitialOrOptions as LayoutOptions;
-      isInitial = req.isInitial ?? false;
-      isForced = req.isForced ?? false;
-      caller = req.reason;
-      randomizeForced = req.reseed ?? false;
-      hasNewNodes = req.hasNewNodes ?? false;
-      if (req.viewport !== undefined) {
-        options = { ...options, viewportPolicy: req.viewport };
-      }
-    } else {
-      options = optionsOrRequest;
-      isInitial = isInitialOrOptions as boolean;
+  async apply(request: LayoutRequest, options: LayoutOptions): Promise<void> {
+    if (request.viewport !== undefined) {
+      options = { ...options, viewportPolicy: request.viewport };
     }
 
     if (!this.cy || this.cy.destroyed()) return;
@@ -394,6 +357,8 @@ export class LayoutManager {
         });
       }
 
+      const isInitial = request.isInitial ?? false;
+
       if (options.isGuest && isInitial) {
         this.cy.nodes().removeData("isPendingLayout");
         this.cy.nodes(".pending-layout").removeClass("pending-layout");
@@ -418,14 +383,7 @@ export class LayoutManager {
       } else if (options.orbitMode && options.centralNodeId) {
         await this.applyOrbitLayout(options, isInitial);
       } else {
-        await this.applyForceLayout(
-          options,
-          isInitial,
-          isForced,
-          caller,
-          randomizeForced,
-          hasNewNodes,
-        );
+        await this.applyForceLayout(options, request);
       }
     } catch (error) {
       console.error("[LayoutManager] Unexpected error in apply", error);
@@ -476,20 +434,18 @@ export class LayoutManager {
     }
   }
 
-  private async applyForceLayout(
-    options: LayoutOptions,
-    isInitial: boolean,
-    isForced: boolean,
-    caller: string,
-    randomizeForced = false,
-    _hasNewNodesParam = false,
-  ) {
+  private async applyForceLayout(options: LayoutOptions, req: LayoutRequest) {
+    const isInitial = req.isInitial ?? false;
+    const isForced = req.isForced ?? false;
+    const reason = req.reason;
+    const reseed = req.reseed ?? false;
+
     const cyNodes = this.cy.nodes();
 
     const isExitingTimeline =
-      caller === "Timeline Toggle" && !options.timelineMode;
+      reason === "Timeline Toggle" && !options.timelineMode;
     const isExitingMode =
-      caller === "Mode Change Effect" &&
+      reason === "Mode Change Effect" &&
       !options.timelineMode &&
       !options.orbitMode;
     let randomize = isExitingTimeline || isExitingMode;
@@ -516,7 +472,7 @@ export class LayoutManager {
       randomize = true;
     }
 
-    const isManualRedraw = caller === "UI Redraw Button" && isForced;
+    const isManualRedraw = reason === "UI Redraw Button" && isForced;
     const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
     if (isFitOnly) {
@@ -525,11 +481,11 @@ export class LayoutManager {
     }
 
     const manualRedrawRandomize =
-      caller === "UI Redraw Button" && isForced && randomizeForced;
+      reason === "UI Redraw Button" && isForced && reseed;
     const shouldRandomize =
       randomize ||
       manualRedrawRandomize ||
-      (isForced && randomizeForced && !options.stableLayout);
+      (isForced && reseed && !options.stableLayout);
 
     await this.solveAndFit(options, shouldRandomize);
   }
