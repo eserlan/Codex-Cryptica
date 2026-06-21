@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
   <!--
     Sci-Fi Terminal LIGHT surface texture. Tiles seamlessly at 256px.
-    Light background (#f0f4ec). Uses dark sage green (#15803d) at very low
-    opacity so lines read as a soft blueprint grid, not as UI elements.
-    No circuit traces, nodes, or glitch bars — lines only.
+    Light background (#f0f4ec). Uses primary green (#15803d) at visible
+    but subtle opacity so lines register as a soft blueprint grid.
+    No circuit traces, nodes, or glitch bars — clean grid only.
   -->
 
   <!-- Main grid at 64px. -->
-  <g stroke="#15803d" stroke-width="0.7" opacity="0.14">
+  <g stroke="#15803d" stroke-width="0.8" opacity="0.22">
     <path d="M0 0V256 M64 0V256 M128 0V256 M192 0V256"/>
     <path d="M0 0H256 M0 64H256 M0 128H256 M0 192H256"/>
   </g>
 
   <!-- Sub-grid at 32px, dashed. -->
-  <g stroke="#15803d" stroke-width="0.4" stroke-dasharray="2,4" opacity="0.07">
+  <g stroke="#15803d" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.10">
     <path d="M32 0V256 M96 0V256 M160 0V256 M224 0V256"/>
     <path d="M0 32H256 M0 96H256 M0 160H256 M0 224H256"/>
   </g>

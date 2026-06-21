@@ -814,7 +814,6 @@ export const SCIFI_LIGHT: StylingTemplate = {
     border: "rgba(21, 128, 61, 0.3)",
     accent: "#7e22ce",
     texture: "scifi_grid_light.svg",
-    textureOverlayAlpha: "F0",
     textureCardBlur: "6px",
     panelFill: "rgba(255, 255, 255, 0.95)",
     panelMuted: "rgba(240, 244, 236, 0.95)",
