@@ -55,10 +55,6 @@ export class GraphViewController {
     type: string;
   } | null>(null);
 
-  _layoutReady = $state(false);
-  initialLoaded = $state(false);
-  didFinalizeLoad = $state(false);
-
   loadPhase = $state<LoadPhase>("idle");
 
   private nodeSelectTimer: number | null = null;
@@ -338,13 +334,12 @@ export class GraphViewController {
           this.isLayoutRunning = false;
           this.graphVisible = true;
           if (isInitial) {
-            this._layoutReady = true;
-            this.reconcileLoadPhase();
+            this.loadPhase = "ready";
           }
         },
         onPositionsUpdated: (updates) => {
           const isReady =
-            this._layoutReady && this.deps.vault.status !== "loading";
+            this.loadPhase === "ready" && this.deps.vault.status !== "loading";
           if (!isInitial && isReady) {
             this.deps.vault.batchUpdate(
               updates as Record<string, Partial<LocalEntity>>,
@@ -386,22 +381,6 @@ export class GraphViewController {
     }, 250);
   };
 
-  reconcileLoadPhase = () => {
-    const derived: LoadPhase = !this.initialLoaded
-      ? "idle"
-      : !this.didFinalizeLoad
-        ? "elements"
-        : !this._layoutReady
-          ? "finalized"
-          : "ready";
-    if (import.meta.env.DEV && this.loadPhase !== derived) {
-      this.deps.debugStore.log(
-        `[GraphView] LoadPhase corrected: ${this.loadPhase} → ${derived}`,
-      );
-    }
-    this.loadPhase = derived;
-  };
-
   private clearNodeSelectTimer = () => {
     if (this.nodeSelectTimer !== null) {
       clearTimeout(this.nodeSelectTimer);
@@ -415,15 +394,14 @@ export class GraphViewController {
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
         vaultStatus: this.deps.vault.status,
-        initialLoaded: this.initialLoaded,
+        initialLoaded: this.loadPhase !== "idle",
         isTemporalMetadataEqual,
         activeLabels: this.deps.graph.activeLabels,
         labelFilterMode: this.deps.graph.labelFilterMode,
         activeCategories: this.deps.graph.activeCategories,
         onFirstElements: () => {
-          this.initialLoaded = true;
+          this.loadPhase = "elements";
           this.graphVisible = true;
-          this.reconcileLoadPhase();
         },
         onLayoutUpdate: (
           isInitial,
@@ -443,7 +421,7 @@ export class GraphViewController {
         },
       });
     }
-    if (this.initialLoaded && !this.graphVisible) {
+    if (this.loadPhase !== "idle" && !this.graphVisible) {
       this.graphVisible = true;
     }
   };
@@ -530,9 +508,7 @@ export class GraphViewController {
       this.deps.vault.status === "loading" &&
       this.deps.vault.allEntities.length === 0
     ) {
-      this.initialLoaded = false;
-      this.didFinalizeLoad = false;
-      this.reconcileLoadPhase();
+      this.loadPhase = "idle";
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
@@ -542,13 +518,8 @@ export class GraphViewController {
   };
 
   handleVaultLoadFinalization = () => {
-    if (
-      this.deps.vault.status === "idle" &&
-      this.initialLoaded &&
-      !this.didFinalizeLoad
-    ) {
-      this.didFinalizeLoad = true;
-      this.reconcileLoadPhase();
+    if (this.deps.vault.status === "idle" && this.loadPhase === "elements") {
+      this.loadPhase = "finalized";
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
@@ -557,7 +528,10 @@ export class GraphViewController {
   };
 
   handleModeChange = () => {
-    if (this.cy && this.didFinalizeLoad) {
+    if (
+      this.cy &&
+      (this.loadPhase === "finalized" || this.loadPhase === "ready")
+    ) {
       this.applyCurrentLayout(false, true, "Mode Change Effect");
     }
   };

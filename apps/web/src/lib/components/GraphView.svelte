@@ -220,8 +220,7 @@
   // Load Finalization
   $effect(() => {
     void vault.status;
-    void controller.initialLoaded;
-    void controller.didFinalizeLoad;
+    void controller.loadPhase;
     void controller.cy;
     untrack(() => controller.handleVaultLoadFinalization());
   });
