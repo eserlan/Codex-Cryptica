@@ -1,16 +1,14 @@
 <script lang="ts">
-  import { getNavigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
+  import { navigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { browser } from "$app/environment";
   import { beforeNavigate } from "$app/navigation";
 
-  const historyStore = getNavigationHistoryStore();
-
   $effect(() => {
     const id = vault?.selectedEntityId;
     if (id) {
-      historyStore.push(id);
+      navigationHistoryStore.push(id);
     }
   });
 
@@ -19,8 +17,8 @@
   export function tryNavigate(direction: "back" | "forward") {
     const newId =
       direction === "back"
-        ? historyStore.back(isValidEntity)
-        : historyStore.forward(isValidEntity);
+        ? navigationHistoryStore.back(isValidEntity)
+        : navigationHistoryStore.forward(isValidEntity);
 
     if (newId) {
       vault.selectedEntityId = newId;
@@ -66,13 +64,13 @@
   beforeNavigate((navigation) => {
     if (navigation.type === "popstate" && navigation.delta !== undefined) {
       if (navigation.delta < 0) {
-        const newId = historyStore.back(isValidEntity);
+        const newId = navigationHistoryStore.back(isValidEntity);
         if (newId) {
           navigation.cancel();
           vault.selectedEntityId = newId;
         }
       } else if (navigation.delta > 0) {
-        const newId = historyStore.forward(isValidEntity);
+        const newId = navigationHistoryStore.forward(isValidEntity);
         if (newId) {
           navigation.cancel();
           vault.selectedEntityId = newId;

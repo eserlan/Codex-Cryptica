@@ -57,6 +57,9 @@ vi.mock("../../lib/components/EntityDetailPanel.svelte", async () => ({
 vi.mock("../../lib/components/entity/EmbeddedEntityView.svelte", async () => ({
   default: (await import("./__tests__/EmbeddedEntityViewStub.svelte")).default,
 }));
+vi.mock("../../lib/components/guest/GuestChatPanel.svelte", async () => ({
+  default: (await import("./__tests__/EmbeddedEntityViewStub.svelte")).default, // reusing a stub
+}));
 
 describe("root +page.svelte — front page overlay keydown", () => {
   beforeAll(() => {
