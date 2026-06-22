@@ -98,7 +98,7 @@
   <!-- Backdrop -->
   <button
     type="button"
-    aria-label="Close Settings"
+    aria-label="Dismiss Settings Backdrop"
     class="fixed inset-0 w-full h-full bg-black/80 z-[100] backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-inset focus:outline-none cursor-default"
     onclick={close}
     onkeydown={(e) => e.key === "Escape" && close()}
