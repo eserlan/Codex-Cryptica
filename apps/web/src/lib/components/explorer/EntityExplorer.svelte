@@ -11,14 +11,13 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { focusEntity } from "$lib/stores/ui/navigation";
 
   function handleSelect(entity: Entity) {
     if (layoutUIStore.isEntityExplorerWorkspace) {
       if (layoutUIStore.focusedEntityId === entity.id) {
-        focusEntity(null);
+        layoutUIStore.clearEntityExplorerWorkspaceFocus();
       } else {
-        focusEntity(entity.id);
+        layoutUIStore.openEntityExplorerWorkspace(entity.id);
       }
       return;
     }

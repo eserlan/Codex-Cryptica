@@ -244,7 +244,7 @@ describe("+layout.svelte", () => {
     layoutUIStore.leftSidebarOpen = true;
     layoutUIStore.activeSidebarTool = "explorer";
     layoutUIStore.isWideViewport = true;
-    layoutUIStore.focusedEntityId = "entity-1";
+    layoutUIStore.openEntityExplorerWorkspace("entity-1");
 
     render(LayoutTestHost);
     await tick();
@@ -289,5 +289,40 @@ describe("+layout.svelte", () => {
     layoutUIStore.isWideViewport = false;
     await tick();
     expect(screen.queryByTestId("entity-explorer-workspace")).toBeNull();
+  });
+
+  it("returns to route content instead of full-page focus when Explorer closes after opening the workspace reader", async () => {
+    layoutUIStore.leftSidebarOpen = true;
+    layoutUIStore.activeSidebarTool = "explorer";
+    layoutUIStore.isWideViewport = true;
+    layoutUIStore.openEntityExplorerWorkspace("entity-1");
+
+    render(LayoutTestHost);
+    await tick();
+    expect(screen.getByTestId("entity-explorer-workspace")).toBeTruthy();
+
+    layoutUIStore.closeSidebar();
+    await tick();
+
+    expect(screen.queryByTestId("entity-explorer-workspace")).toBeNull();
+    expect(layoutUIStore.mainViewMode).toBe("visualization");
+    expect(layoutUIStore.focusedEntityId).toBeNull();
+    expect(screen.getByTestId("layout-children")).toBeTruthy();
+  });
+
+  it("marks route content inert while the Explorer workspace overlay is active", async () => {
+    layoutUIStore.leftSidebarOpen = true;
+    layoutUIStore.activeSidebarTool = "explorer";
+    layoutUIStore.isWideViewport = true;
+    layoutUIStore.openEntityExplorerWorkspace("entity-1");
+
+    render(LayoutTestHost);
+    await tick();
+
+    const routeContent = screen.getByTestId("layout-route-content");
+    expect(routeContent.getAttribute("aria-hidden")).toBe("true");
+    expect((routeContent as HTMLElement & { inert?: boolean }).inert).toBe(
+      true,
+    );
   });
 });

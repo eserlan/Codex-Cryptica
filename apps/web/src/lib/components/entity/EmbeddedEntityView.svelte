@@ -1,11 +1,16 @@
 <script lang="ts">
   import ZenView from "../zen/ZenView.svelte";
   import { fade } from "svelte/transition";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { focusEntity } from "$lib/stores/ui/navigation";
 
   let { entityId } = $props<{ entityId: string }>();
 
   function handleClose() {
+    if (layoutUIStore.isEntityExplorerWorkspace) {
+      layoutUIStore.clearEntityExplorerWorkspaceFocus();
+      return;
+    }
     focusEntity(null);
   }
 </script>
