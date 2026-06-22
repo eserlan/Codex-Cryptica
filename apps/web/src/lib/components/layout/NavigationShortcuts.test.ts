@@ -63,13 +63,26 @@ describe("NavigationShortcuts", () => {
     input.remove();
   });
 
-  it("should ignore shortcuts when neither Zen Mode nor Explorer focus is active", async () => {
+  it("should allow shortcuts in graph/canvas mode (no modal, no explorer restriction)", async () => {
     render(NavigationShortcuts);
 
-    // Default state: no zen mode, no explorer focus
+    // Default state: no zen mode, no explorer focus, no modal — nav is allowed everywhere now
+    await fireEvent.keyDown(window, { key: "ArrowLeft", shiftKey: true });
+
+    expect(historyStore.back).toHaveBeenCalled();
+  });
+
+  it("should ignore shortcuts when a non-zen modal is open", async () => {
+    render(NavigationShortcuts);
+
+    modalUIStore.showSettings = true;
+    modalUIStore.showZenMode = false;
+
     await fireEvent.keyDown(window, { key: "ArrowLeft", shiftKey: true });
 
     expect(historyStore.back).not.toHaveBeenCalled();
+
+    modalUIStore.showSettings = false;
   });
 
   it("should allow shortcuts when Zen Mode is open", async () => {
