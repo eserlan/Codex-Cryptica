@@ -15,7 +15,11 @@
 
   function handleSelect(entity: Entity) {
     if (layoutUIStore.isEntityExplorerWorkspace) {
-      focusEntity(entity.id);
+      if (layoutUIStore.focusedEntityId === entity.id) {
+        focusEntity(null);
+      } else {
+        focusEntity(entity.id);
+      }
       return;
     }
 
