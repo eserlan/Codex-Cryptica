@@ -18,10 +18,26 @@ describe("vtt-session", () => {
     vi.clearAllMocks();
   });
 
+  it("respects injected dependencies for id and time", () => {
+    const mockIdGenerator = { uuid: () => "mock-uuid" };
+    const mockClock = { now: () => 1234567890 };
+
+    const session = createEncounterSession(
+      "map-1",
+      undefined,
+      undefined,
+      { idGenerator: mockIdGenerator, clock: mockClock }
+    );
+
+    expect(session.id).toBe("mock-uuid");
+    expect(session.name).toBe("Encounter mock-uui");
+    expect(session.createdAt).toBe(1234567890);
+  });
+
   it("creates, sanitizes, and summarizes encounters", () => {
     const session = createEncounterSession(
       "map-1",
-      "enc-1" as any,
+      "enc-1",
       "Goblin Ambush",
     );
     session.tokens = {
@@ -80,7 +96,7 @@ describe("vtt-session", () => {
     });
 
     await service.saveEncounterSnapshot(
-      createEncounterSession("map-1", "enc-1" as any, "Goblin Ambush"),
+      createEncounterSession("map-1", "enc-1", "Goblin Ambush"),
     );
 
     expect(writeOpfsFile).toHaveBeenCalledWith(
@@ -94,7 +110,7 @@ describe("vtt-session", () => {
       new Blob(
         [
           JSON.stringify(
-            createEncounterSession("map-1", "enc-2" as any, "Ruined Gate"),
+            createEncounterSession("map-1", "enc-2", "Ruined Gate"),
           ),
         ],
         {
@@ -131,7 +147,7 @@ describe("vtt-session", () => {
         new Blob(
           [
             JSON.stringify(
-              createEncounterSession("map-1", "enc-3" as any, "Forest Ambush"),
+              createEncounterSession("map-1", "enc-3", "Forest Ambush"),
             ),
           ],
           {

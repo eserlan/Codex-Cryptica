@@ -163,12 +163,13 @@ describe("GraphViewController", () => {
     expect(batchSpy).toHaveBeenCalled();
   });
 
-  it("should handle vault loading state", () => {
+  it("should reset to idle when vault starts loading", () => {
     deps.vault.status = "loading";
     deps.vault.allEntities = [];
+    controller.loadPhase = "finalized";
 
-    controller.handleVaultLoading();
-    expect(true).toBe(true);
+    controller.reconcileLoadState();
+    expect(controller.loadPhase).toBe<LoadPhase>("idle");
   });
 
   it("should finalize load when vault becomes idle and initial elements are loaded", async () => {
@@ -180,10 +181,14 @@ describe("GraphViewController", () => {
 
     const applySpy = vi.spyOn(controller, "applyCurrentLayout");
 
-    controller.handleVaultLoadFinalization();
+    controller.reconcileLoadState();
 
     expect(controller.loadPhase).toBe<LoadPhase>("finalized");
-    expect(applySpy).toHaveBeenCalledWith(true, true, "Load Finalized");
+    expect(applySpy).toHaveBeenCalledWith({
+      reason: "Load Finalized",
+      isInitial: true,
+      isForced: true,
+    });
   });
 
   describe("focus handoff", () => {
@@ -231,21 +236,12 @@ describe("GraphViewController", () => {
       expect(controller.loadPhase).toBe<LoadPhase>("idle");
     });
 
-    it("transitions to elements when first graph elements arrive (onFirstElements)", async () => {
+    it("transitions to finalized when vault becomes idle and loadPhase is elements", async () => {
       const container = document.createElement("div");
       await controller.init(container, {});
       deps.vault.status = "idle";
       controller.loadPhase = "elements";
-      controller.handleVaultLoadFinalization();
-      expect(controller.loadPhase).toBe<LoadPhase>("finalized");
-    });
-
-    it("transitions to finalized when handleVaultLoadFinalization fires", async () => {
-      const container = document.createElement("div");
-      await controller.init(container, {});
-      deps.vault.status = "idle";
-      controller.loadPhase = "elements";
-      controller.handleVaultLoadFinalization();
+      controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("finalized");
     });
 
@@ -254,25 +250,25 @@ describe("GraphViewController", () => {
       await controller.init(container, {});
       deps.vault.status = "idle";
       controller.loadPhase = "ready";
-      controller.handleVaultLoadFinalization();
+      controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("ready");
     });
 
-    it("resets to idle when handleVaultLoading clears state", () => {
+    it("resets to idle when vault starts loading fresh", () => {
       controller.loadPhase = "finalized";
-
       deps.vault.status = "loading";
       deps.vault.allEntities = [];
-      controller.handleVaultLoading();
+      controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("idle");
     });
   });
 
   describe("viewport policy", () => {
+    // apply is now called as apply(request, options) — viewport lives on request
     const lastPolicy = () => {
       const apply = (controller.layoutManager as any).apply;
       const calls = apply.mock.calls;
-      return calls[calls.length - 1][0].viewportPolicy;
+      return calls[calls.length - 1][0].viewport;
     };
 
     beforeEach(async () => {
@@ -281,78 +277,73 @@ describe("GraphViewController", () => {
     });
 
     it("preserves the camera for edge-only element updates with stable layout", async () => {
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "Elements Update",
-        false,
-        false,
-        false,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("preserve");
     });
 
     it("fits when new nodes are added", async () => {
-      await controller.applyCurrentLayout(
-        false,
-        false,
-        "Elements Update",
-        false,
-        true,
-        false,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        hasNewNodes: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits when nodes are removed", async () => {
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "Elements Update",
-        false,
-        false,
-        true,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        isForced: true,
+        hasRemovedNodes: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("preserves the camera for plain window resizes", async () => {
-      await controller.applyCurrentLayout(false, false, "Window Resize", false);
+      await controller.applyCurrentLayout({ reason: "Window Resize" });
       expect(lastPolicy()).toBe("preserve");
     });
 
     it("fits on orientation-change resizes", async () => {
-      await controller.applyCurrentLayout(false, true, "Window Resize", true);
+      await controller.applyCurrentLayout({
+        reason: "Window Resize",
+        isForced: true,
+        reseed: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits when stable layout is off", async () => {
       deps.graph.stableLayout = false;
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "Elements Update",
-        false,
-        false,
-        false,
-      );
+      await controller.applyCurrentLayout({
+        reason: "Elements Update",
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits on initial layout", async () => {
-      await controller.applyCurrentLayout(true, true, "Load Finalized");
+      await controller.applyCurrentLayout({
+        reason: "Load Finalized",
+        isInitial: true,
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
 
     it("fits on mode changes and manual redraw", async () => {
-      await controller.applyCurrentLayout(false, true, "Mode Change Effect");
+      await controller.applyCurrentLayout({
+        reason: "Mode Change Effect",
+        isForced: true,
+      });
       expect(lastPolicy()).toBe("fit");
-      await controller.applyCurrentLayout(
-        false,
-        true,
-        "UI Redraw Button",
-        true,
-      );
+      await controller.applyCurrentLayout({
+        reason: "UI Redraw Button",
+        isForced: true,
+        reseed: true,
+      });
       expect(lastPolicy()).toBe("fit");
     });
   });

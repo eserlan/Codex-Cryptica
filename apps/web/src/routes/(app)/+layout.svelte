@@ -34,6 +34,7 @@
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
   import EntityExplorerWorkspace from "$lib/components/layout/EntityExplorerWorkspace.svelte";
+  import NavigationShortcuts from "$lib/components/layout/NavigationShortcuts.svelte";
 
   // Logic & Hooks
   import {
@@ -447,6 +448,7 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+<NavigationShortcuts />
 
 <div
   class="h-[var(--app-viewport-height)] bg-chrome-bg text-chrome-text flex flex-col font-body app-layout"

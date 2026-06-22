@@ -13,6 +13,7 @@ vi.mock("$app/state", () => ({
 }));
 vi.mock("$app/navigation", () => ({
   preloadCode: vi.fn().mockResolvedValue(undefined),
+  beforeNavigate: vi.fn(),
 }));
 vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
   default: function AppHeaderMock() {

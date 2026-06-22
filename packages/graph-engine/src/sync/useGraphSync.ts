@@ -1,5 +1,6 @@
 import type { Core } from "cytoscape";
 import type { GraphNode, GraphEdge } from "../transformer";
+import type { LayoutRequest } from "../LayoutManager";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
@@ -16,13 +17,7 @@ export interface SyncOptions {
   labelFilterMode?: "AND" | "OR";
   activeCategories?: Set<string>;
   onFirstElements?: () => void;
-  onLayoutUpdate?: (
-    isInitial: boolean,
-    isForced: boolean,
-    caller: string,
-    hasNewNodes?: boolean,
-    hasRemovedNodes?: boolean,
-  ) => void;
+  onLayoutUpdate?: (req: LayoutRequest) => void;
 }
 
 const isNodeRendered = (node: any) =>
@@ -71,6 +66,26 @@ const syncRenderedWeights = (
     }
   }
 };
+
+export function resolveLayoutTrigger(
+  isFirstElements: boolean,
+  hasDeletions: boolean,
+  hasNewNodes: boolean,
+  isVaultLoading: boolean,
+  initialLoaded: boolean,
+  elementsToRemove: { isNode: () => boolean }[],
+): LayoutRequest | null {
+  if (!hasNewNodes && !hasDeletions && !isFirstElements) return null;
+  if (isFirstElements) return null; // handled by onFirstElements + cy.fit
+  if (isVaultLoading && !initialLoaded) return null;
+  const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
+  return {
+    reason: "Elements Update",
+    isForced: hasDeletions,
+    hasNewNodes,
+    hasRemovedNodes,
+  };
+}
 
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const {
@@ -292,23 +307,17 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
     if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
-        const w = cy.width();
-        const h = cy.height();
-        cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
-      } else if (!isVaultLoading || initialLoaded) {
-        // Preserve current positions for edge-only updates. This avoids a second
-        // relayout when AI discovery adds connections right after creating a node.
-        const force = hasDeletions;
-        // Edge churn (e.g. lore edits rewriting wiki-links) removes elements
-        // without removing nodes — callers use this to keep the camera still.
-        const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
-        options.onLayoutUpdate?.(
-          false,
-          force,
-          "Elements Update",
+        (cy as any).fit(undefined, 40);
+      } else {
+        const req = resolveLayoutTrigger(
+          isFirstElements,
+          hasDeletions,
           hasNewNodes,
-          hasRemovedNodes,
+          isVaultLoading,
+          initialLoaded,
+          elementsToRemove,
         );
+        if (req) options.onLayoutUpdate?.(req);
       }
     }
   } catch (err) {

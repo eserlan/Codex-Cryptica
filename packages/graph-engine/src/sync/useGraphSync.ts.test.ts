@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { syncGraphElements } from "./useGraphSync";
+import { syncGraphElements, resolveLayoutTrigger } from "./useGraphSync";
 import type { Core } from "cytoscape";
+import type { LayoutRequest } from "../LayoutManager";
 
 function createMockNode(id: string, labels?: string[]) {
   return {
@@ -51,9 +52,7 @@ describe("syncGraphElements", () => {
       }),
       batch: vi.fn((cb) => cb()),
       collection: vi.fn((els) => els),
-      width: vi.fn().mockReturnValue(1000),
-      height: vi.fn().mockReturnValue(800),
-      viewport: vi.fn(),
+      fit: vi.fn(),
       $id: vi.fn().mockReturnValue({
         nonempty: vi.fn().mockReturnValue(true),
         removeClass: vi.fn(),
@@ -90,7 +89,7 @@ describe("syncGraphElements", () => {
   it("should remove existing graph items when the target element list is empty", () => {
     const existingNode = createMockNode("node1");
     mockCy.elements.mockReturnValue([existingNode]);
-    mockCy.collection.mockImplementation((els) => els);
+    mockCy.collection.mockImplementation((els: any) => els);
 
     syncGraphElements(mockCy as unknown as Core, {
       elements: [],
@@ -277,13 +276,12 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(
-      false,
-      true,
-      "Elements Update",
-      false,
-      true,
-    );
+    expect(onLayoutUpdate).toHaveBeenCalledWith<[LayoutRequest]>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: true,
+    });
   });
 
   it("should report edge-only removals with hasRemovedNodes=false", () => {
@@ -304,13 +302,12 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(
-      false,
-      true,
-      "Elements Update",
-      false,
-      false,
-    );
+    expect(onLayoutUpdate).toHaveBeenCalledWith<[LayoutRequest]>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: false,
+    });
   });
 
   it("should force layout on addition and pass hasNewNodes=true", () => {
@@ -325,13 +322,12 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(
-      false,
-      false,
-      "Elements Update",
-      true,
-      false,
-    );
+    expect(onLayoutUpdate).toHaveBeenCalledWith<[LayoutRequest]>({
+      reason: "Elements Update",
+      isForced: false,
+      hasNewNodes: true,
+      hasRemovedNodes: false,
+    });
   });
 
   it("should not trigger a relayout for edge-only additions", () => {
@@ -370,7 +366,6 @@ describe("syncGraphElements", () => {
 
       return {
         id: vi.fn().mockReturnValue(id),
-        hasClass: vi.fn().mockReturnValue(false),
         addClass: vi.fn((cls: string) => {
           if (cls === "filtered-out") state.filteredOut = true;
           if (cls === "category-filtered-out") state.categoryFilteredOut = true;
@@ -476,5 +471,68 @@ describe("syncGraphElements", () => {
     expect(node1.data).toHaveBeenCalledWith("weight", 0);
     expect(node2.data).toHaveBeenCalledWith("weight", 0);
     expect(node3.data).toHaveBeenCalledWith("weight", 0);
+  });
+});
+
+describe("resolveLayoutTrigger", () => {
+  const node = { isNode: () => true };
+  const edge = { isNode: () => false };
+
+  it("returns null when no change", () => {
+    expect(
+      resolveLayoutTrigger(false, false, false, false, true, []),
+    ).toBeNull();
+  });
+
+  it("returns null for isFirstElements (handled by onFirstElements path)", () => {
+    expect(
+      resolveLayoutTrigger(true, false, true, false, false, []),
+    ).toBeNull();
+  });
+
+  it("returns null when vault is loading and not yet initialLoaded", () => {
+    expect(
+      resolveLayoutTrigger(false, false, true, true, false, []),
+    ).toBeNull();
+  });
+
+  it("returns request with isForced=true and hasRemovedNodes=true on node deletion", () => {
+    const req = resolveLayoutTrigger(false, true, false, false, true, [node]);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: true,
+    });
+  });
+
+  it("returns request with hasRemovedNodes=false for edge-only deletion", () => {
+    const req = resolveLayoutTrigger(false, true, false, false, true, [edge]);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: false,
+    });
+  });
+
+  it("returns request with isForced=false and hasNewNodes=true on addition", () => {
+    const req = resolveLayoutTrigger(false, false, true, false, true, []);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: false,
+      hasNewNodes: true,
+      hasRemovedNodes: false,
+    });
+  });
+
+  it("fires when isVaultLoading=true but initialLoaded=true", () => {
+    const req = resolveLayoutTrigger(false, false, true, true, true, []);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: false,
+      hasNewNodes: true,
+      hasRemovedNodes: false,
+    });
   });
 });
