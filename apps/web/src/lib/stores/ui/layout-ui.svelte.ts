@@ -53,6 +53,7 @@ export class LayoutUIStore {
   private rightSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
   private cleanupWideWatch: (() => void) | null = null;
+  private workspaceFocusActive = $state(false);
 
   #leftSidebarOpen = $state(false);
   #activeSidebarTool = $state<SidebarTool>("none");
@@ -102,6 +103,21 @@ export class LayoutUIStore {
     );
   }
 
+  openEntityExplorerWorkspace(entityId: string) {
+    this.workspaceFocusActive = true;
+    this.focusedEntityId = entityId;
+    this.mainViewMode = "focus";
+  }
+
+  clearEntityExplorerWorkspaceFocus() {
+    if (!this.workspaceFocusActive) return;
+    this.workspaceFocusActive = false;
+    this.focusedEntityId = null;
+    if (this.mainViewMode === "focus") {
+      this.mainViewMode = "visualization";
+    }
+  }
+
   disconnect() {
     this.cleanupMobileWatch?.();
     this.cleanupMobileWatch = null;
@@ -125,6 +141,7 @@ export class LayoutUIStore {
   }
 
   closeSidebar() {
+    this.clearEntityExplorerWorkspaceFocus();
     this.leftSidebarOpen = false;
     this.activeSidebarTool = "none";
   }

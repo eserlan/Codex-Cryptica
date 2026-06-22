@@ -158,6 +158,23 @@ describe("LayoutUIStore", () => {
     expect(store.isEntityExplorerWorkspace).toBe(false);
   });
 
+  it("clears workspace focus when the Explorer sidebar closes", () => {
+    const store = new LayoutUIStore(new UIPersistence(), null);
+
+    store.leftSidebarOpen = true;
+    store.activeSidebarTool = "explorer";
+    store.isWideViewport = true;
+    store.openEntityExplorerWorkspace("entity-1");
+
+    expect(store.mainViewMode).toBe("focus");
+    expect(store.focusedEntityId).toBe("entity-1");
+
+    store.closeSidebar();
+
+    expect(store.mainViewMode).toBe("visualization");
+    expect(store.focusedEntityId).toBeNull();
+  });
+
   it("toggles workspace eligibility once per threshold crossing and stays disabled below 1280px", () => {
     const fakeViewport = viewport();
     const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
