@@ -47,15 +47,4 @@ export class NavigationHistoryStore {
   }
 }
 
-let instance: NavigationHistoryStore;
-
-export function createNavigationHistoryStore() {
-  if (!instance) {
-    instance = new NavigationHistoryStore();
-  }
-  return instance;
-}
-
-export function getNavigationHistoryStore() {
-  return instance;
-}
+export const navigationHistoryStore = new NavigationHistoryStore();
