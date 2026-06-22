@@ -30,6 +30,28 @@ export interface LayoutOptions {
   onPositionsUpdated?: (updates: Record<string, Partial<Entity>>) => void;
 }
 
+/**
+ * Structured alternative to the positional-boolean `apply` args.
+ * T11 will migrate all call sites to this shape; T12 will drop the
+ * legacy positional args entirely.
+ */
+export interface LayoutRequest {
+  /** Human-readable label used for telemetry / debug logs (replaces `caller`). */
+  reason: string;
+  /** Force fcose to re-randomize node positions (replaces `randomizeForced`). */
+  reseed?: boolean;
+  /** Camera policy for this pass — overrides the viewportPolicy in LayoutOptions when set. */
+  viewport?: "preserve" | "fit";
+  /** True on the first full layout pass after vault load. */
+  isInitial?: boolean;
+  /** True when the layout was explicitly requested (e.g. toolbar button). */
+  isForced?: boolean;
+  /** True when new nodes were added since the last layout. */
+  hasNewNodes?: boolean;
+  /** True when nodes were removed since the last layout. */
+  hasRemovedNodes?: boolean;
+}
+
 const ORIENTATION_THRESHOLD = 1.2;
 const BASE_LAYOUT_WORKER_TIMEOUT_MS = 15000;
 const FIT_ANIMATION_TIMEOUT_MS = 1200;
@@ -295,14 +317,11 @@ export class LayoutManager {
     });
   }
 
-  async apply(
-    options: LayoutOptions,
-    isInitial = false,
-    isForced = false,
-    caller = "unknown",
-    randomizeForced = false,
-    hasNewNodes = false,
-  ) {
+  async apply(request: LayoutRequest, options: LayoutOptions): Promise<void> {
+    if (request.viewport !== undefined) {
+      options = { ...options, viewportPolicy: request.viewport };
+    }
+
     if (!this.cy || this.cy.destroyed()) return;
 
     if (this.currentLayout) {
@@ -338,6 +357,8 @@ export class LayoutManager {
         });
       }
 
+      const isInitial = request.isInitial ?? false;
+
       if (options.isGuest && isInitial) {
         this.cy.nodes().removeData("isPendingLayout");
         this.cy.nodes(".pending-layout").removeClass("pending-layout");
@@ -362,14 +383,7 @@ export class LayoutManager {
       } else if (options.orbitMode && options.centralNodeId) {
         await this.applyOrbitLayout(options, isInitial);
       } else {
-        await this.applyForceLayout(
-          options,
-          isInitial,
-          isForced,
-          caller,
-          randomizeForced,
-          hasNewNodes,
-        );
+        await this.applyForceLayout(options, request);
       }
     } catch (error) {
       console.error("[LayoutManager] Unexpected error in apply", error);
@@ -420,110 +434,124 @@ export class LayoutManager {
     }
   }
 
-  private async applyForceLayout(
-    options: LayoutOptions,
-    isInitial: boolean,
-    isForced: boolean,
-    caller: string,
-    randomizeForced = false,
-    _hasNewNodesParam = false,
-  ) {
+  private async applyForceLayout(options: LayoutOptions, req: LayoutRequest) {
+    const isInitial = req.isInitial ?? false;
+    const isForced = req.isForced ?? false;
+    const reason = req.reason;
+    const reseed = req.reseed ?? false;
+
     const cyNodes = this.cy.nodes();
 
     const isExitingTimeline =
-      caller === "Timeline Toggle" && !options.timelineMode;
+      reason === "Timeline Toggle" && !options.timelineMode;
     const isExitingMode =
-      caller === "Mode Change Effect" &&
+      reason === "Mode Change Effect" &&
       !options.timelineMode &&
       !options.orbitMode;
     let randomize = isExitingTimeline || isExitingMode;
 
-    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them
+    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
+    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
+    // Both checks are kept intentionally:
+    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
+    //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
+    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
       if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
     });
-    if (!randomize && cyNodes.length > 1 && nodesAtOrigin === cyNodes.length) {
+    const pendingCount = this.cy.nodes(".pending-layout").length;
+
+    const needsSolve =
+      isInitial &&
+      cyNodes.length > 1 &&
+      (pendingCount === cyNodes.length || nodesAtOrigin === cyNodes.length);
+
+    if (!randomize && needsSolve) {
       randomize = true;
     }
 
-    const isManualRedraw = caller === "UI Redraw Button" && isForced;
+    const isManualRedraw = reason === "UI Redraw Button" && isForced;
     const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
     if (isFitOnly) {
-      this.cy.resize();
-
-      const pendingNodes = this.cy.nodes(".pending-layout");
-      if (pendingNodes.nonempty()) {
-        // Snap new nodes to sensible positions before revealing them so the
-        // viewport doesn't jump to include their far-away spiral seed positions.
-        const placedNodes = this.cy.nodes().not(pendingNodes);
-        let fallbackX = 0;
-        let fallbackY = 0;
-        if (placedNodes.nonempty()) {
-          placedNodes.forEach((n) => {
-            const p = n.position();
-            fallbackX += p.x;
-            fallbackY += p.y;
-          });
-          fallbackX /= placedNodes.length;
-          fallbackY /= placedNodes.length;
-        }
-
-        pendingNodes.forEach((node) => {
-          const neighbors = node.neighborhood().nodes().not(pendingNodes);
-          if (neighbors.nonempty()) {
-            let sumX = 0;
-            let sumY = 0;
-            neighbors.forEach((n) => {
-              const p = n.position();
-              sumX += p.x;
-              sumY += p.y;
-            });
-            node.position({
-              x: sumX / neighbors.length,
-              y: sumY / neighbors.length,
-            });
-          } else if (placedNodes.nonempty()) {
-            node.position({ x: fallbackX, y: fallbackY });
-          }
-          // If all nodes are new (initial load), keep spiral seed positions
-        });
-      }
-
-      this.cy.nodes().removeData("isPendingLayout");
-      pendingNodes.removeClass("pending-layout");
-
-      // Position persistence for newly placed nodes
-      if (!options.isGuest && pendingNodes.nonempty()) {
-        const updates: Record<string, Partial<any>> = {};
-        pendingNodes.forEach((node) => {
-          const pos = node.position();
-          updates[node.id()] = {
-            metadata: {
-              coordinates: {
-                x: Math.round(pos.x),
-                y: Math.round(pos.y),
-              },
-            },
-          };
-        });
-        options.onPositionsUpdated?.(updates);
-      }
-
-      if (options.viewportPolicy === "preserve") {
-        // Halt any in-flight fit animation from a previous layout pass —
-        // otherwise it would keep moving the camera after this update
-        // promised to preserve the viewport.
-        this.cy.stop();
-        options.onLayoutStop?.();
-      } else {
-        this.animateFitAndStop(options, "ease-out-cubic");
-      }
+      this.fitOnly(options);
       return;
     }
 
+    const manualRedrawRandomize =
+      reason === "UI Redraw Button" && isForced && reseed;
+    const shouldRandomize =
+      randomize ||
+      manualRedrawRandomize ||
+      (isForced && reseed && !options.stableLayout);
+
+    await this.solveAndFit(options, shouldRandomize);
+  }
+
+  private fitOnly(options: LayoutOptions): void {
+    this.cy.resize();
+
+    const pendingNodes = this.cy.nodes(".pending-layout");
+    if (pendingNodes.nonempty()) {
+      // Snap new nodes to sensible positions before revealing them so the
+      // viewport doesn't jump to include their far-away spiral seed positions.
+      const placedNodes = this.cy.nodes().not(pendingNodes);
+      let fallbackX = 0;
+      let fallbackY = 0;
+      if (placedNodes.nonempty()) {
+        placedNodes.forEach((n) => {
+          const p = n.position();
+          fallbackX += p.x;
+          fallbackY += p.y;
+        });
+        fallbackX /= placedNodes.length;
+        fallbackY /= placedNodes.length;
+      }
+
+      pendingNodes.forEach((node) => {
+        const neighbors = node.neighborhood().nodes().not(pendingNodes);
+        if (neighbors.nonempty()) {
+          let sumX = 0;
+          let sumY = 0;
+          neighbors.forEach((n) => {
+            const p = n.position();
+            sumX += p.x;
+            sumY += p.y;
+          });
+          node.position({
+            x: sumX / neighbors.length,
+            y: sumY / neighbors.length,
+          });
+        } else if (placedNodes.nonempty()) {
+          node.position({ x: fallbackX, y: fallbackY });
+        }
+        // If all nodes are new (initial load), keep spiral seed positions
+      });
+    }
+
+    this.cy.nodes().removeData("isPendingLayout");
+    pendingNodes.removeClass("pending-layout");
+
+    this.persistPositions(pendingNodes, options);
+
+    if (options.viewportPolicy === "preserve") {
+      // Halt any in-flight fit animation from a previous layout pass —
+      // otherwise it would keep moving the camera after this update
+      // promised to preserve the viewport.
+      this.cy.stop();
+      options.onLayoutStop?.();
+    } else {
+      this.animateFitAndStop(options, "ease-out-cubic");
+    }
+  }
+
+  private async solveAndFit(
+    options: LayoutOptions,
+    shouldRandomize: boolean,
+  ): Promise<void> {
+    const cyNodes = this.cy.nodes();
     const width = this.cy.width();
     const height = this.cy.height();
     const ar = width / height;
@@ -534,14 +562,6 @@ export class LayoutManager {
     const gravity = isLandscape
       ? Math.min(baseOptions.gravity, 0.12)
       : Math.min(baseOptions.gravity, 0.15);
-
-    // Don't randomize if the user has explicitly locked positions via stableLayout
-    const manualRedrawRandomize =
-      caller === "UI Redraw Button" && isForced && randomizeForced;
-    const shouldRandomize =
-      randomize ||
-      manualRedrawRandomize ||
-      (isForced && randomizeForced && !options.stableLayout);
 
     if (this.cy.destroyed()) {
       options.onLayoutStop?.();
@@ -629,22 +649,24 @@ export class LayoutManager {
 
     this.animateFitAndStop(options, "ease-out-quad");
 
-    // Position persistence
-    if (!options.isGuest) {
-      const updates: Record<string, Partial<Entity>> = {};
-      this.cy.nodes().forEach((node) => {
-        const pos = node.position();
-        updates[node.id()] = {
-          metadata: {
-            coordinates: {
-              x: Math.round(pos.x),
-              y: Math.round(pos.y),
-            },
-          },
-        };
-      });
-      options.onPositionsUpdated?.(updates);
-    }
+    this.persistPositions(this.cy.nodes(), options);
+  }
+
+  private persistPositions(
+    nodes: ReturnType<Core["nodes"]>,
+    options: Pick<LayoutOptions, "isGuest" | "onPositionsUpdated">,
+  ): void {
+    if (options.isGuest || nodes.length === 0) return;
+    const updates: Record<string, Partial<Entity>> = {};
+    nodes.forEach((node) => {
+      const pos = node.position();
+      updates[node.id()] = {
+        metadata: {
+          coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+        },
+      };
+    });
+    options.onPositionsUpdated?.(updates);
   }
 
   stop() {

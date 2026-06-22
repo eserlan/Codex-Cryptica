@@ -13,6 +13,15 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   function handleSelect(entity: Entity) {
+    if (layoutUIStore.isEntityExplorerWorkspace) {
+      if (layoutUIStore.focusedEntityId === entity.id) {
+        layoutUIStore.clearEntityExplorerWorkspaceFocus();
+      } else {
+        layoutUIStore.openEntityExplorerWorkspace(entity.id);
+      }
+      return;
+    }
+
     modalUIStore.openZenMode(entity.id);
     if (layoutUIStore.isMobile) layoutUIStore.closeSidebar();
   }

@@ -27,9 +27,29 @@ function storage(initial: Record<string, string> = {}) {
 }
 
 function viewport(overrides: Partial<UIViewport> = {}) {
-  const mediaListeners: Array<(event: { matches: boolean }) => void> = [];
+  const mediaListeners = new Map<
+    string,
+    Array<(event: { matches: boolean }) => void>
+  >();
+  const mediaState = new Map<string, boolean>();
+
+  const getListeners = (query: string) => {
+    let listeners = mediaListeners.get(query);
+    if (!listeners) {
+      listeners = [];
+      mediaListeners.set(query, listeners);
+    }
+    return listeners;
+  };
+
   return {
     mediaListeners,
+    emit(query: string, matches: boolean) {
+      mediaState.set(query, matches);
+      for (const listener of getListeners(query)) {
+        listener({ matches });
+      }
+    },
     viewport: {
       innerWidth: 1000,
       setTimeout: vi.fn((handler: () => void) => {
@@ -37,10 +57,10 @@ function viewport(overrides: Partial<UIViewport> = {}) {
         return 1;
       }),
       clearTimeout: vi.fn(),
-      matchMedia: vi.fn(() => ({
-        matches: false,
+      matchMedia: vi.fn((query: string) => ({
+        matches: mediaState.get(query) ?? false,
         addEventListener: vi.fn((_type, listener) => {
-          mediaListeners.push(listener);
+          getListeners(query).push(listener);
         }),
       })),
       ...overrides,
@@ -101,8 +121,84 @@ describe("LayoutUIStore", () => {
     const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
 
     expect(store.isMobile).toBe(false);
-    fakeViewport.mediaListeners[0]?.({ matches: true });
+    fakeViewport.emit("(max-width: 768px)", true);
     expect(store.isMobile).toBe(true);
+  });
+
+  it("tracks wide viewport media query changes and derives Explorer workspace eligibility", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    expect(store.isWideViewport).toBe(false);
+    expect(store.isEntityExplorerWorkspace).toBe(false);
+
+    store.leftSidebarOpen = true;
+    store.activeSidebarTool = "explorer";
+    expect(store.isEntityExplorerWorkspace).toBe(false);
+
+    fakeViewport.emit("(min-width: 1280px)", true);
+
+    expect(store.isWideViewport).toBe(true);
+    expect(store.isEntityExplorerWorkspace).toBe(true);
+  });
+
+  it("removes Explorer workspace eligibility when the sidebar closes or another tool becomes active", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    store.leftSidebarOpen = true;
+    store.activeSidebarTool = "explorer";
+    fakeViewport.emit("(min-width: 1280px)", true);
+    expect(store.isEntityExplorerWorkspace).toBe(true);
+
+    store.activeSidebarTool = "oracle";
+    expect(store.isEntityExplorerWorkspace).toBe(false);
+
+    store.activeSidebarTool = "explorer";
+    expect(store.isEntityExplorerWorkspace).toBe(true);
+
+    store.leftSidebarOpen = false;
+    expect(store.isEntityExplorerWorkspace).toBe(false);
+  });
+
+  it("clears workspace focus when the Explorer sidebar closes", () => {
+    const store = new LayoutUIStore(new UIPersistence(), null);
+
+    store.leftSidebarOpen = true;
+    store.activeSidebarTool = "explorer";
+    store.isWideViewport = true;
+    store.openEntityExplorerWorkspace("entity-1");
+
+    expect(store.mainViewMode).toBe("focus");
+    expect(store.focusedEntityId).toBe("entity-1");
+
+    store.closeSidebar();
+
+    expect(store.mainViewMode).toBe("visualization");
+    expect(store.focusedEntityId).toBeNull();
+  });
+
+  it("toggles workspace eligibility once per threshold crossing and stays disabled below 1280px", () => {
+    const fakeViewport = viewport();
+    const store = new LayoutUIStore(new UIPersistence(), fakeViewport.viewport);
+
+    store.leftSidebarOpen = true;
+    store.activeSidebarTool = "explorer";
+
+    const states = [store.isEntityExplorerWorkspace];
+    fakeViewport.emit("(min-width: 1280px)", true);
+    states.push(store.isEntityExplorerWorkspace);
+    fakeViewport.emit("(min-width: 1280px)", true);
+    states.push(store.isEntityExplorerWorkspace);
+    fakeViewport.emit("(min-width: 1280px)", false);
+    states.push(store.isEntityExplorerWorkspace);
+    fakeViewport.emit("(min-width: 1280px)", false);
+    states.push(store.isEntityExplorerWorkspace);
+
+    expect(states).toEqual([false, true, true, false, false]);
+    expect(
+      states.filter((state, index) => states[index - 1] !== state),
+    ).toEqual([false, true, false]);
   });
 
   it("persists VTT collapse state and increments find counter", () => {

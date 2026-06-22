@@ -1,5 +1,6 @@
 import type { Core } from "cytoscape";
 import type { GraphNode, GraphEdge } from "../transformer";
+import type { LayoutRequest } from "../LayoutManager";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
@@ -16,13 +17,7 @@ export interface SyncOptions {
   labelFilterMode?: "AND" | "OR";
   activeCategories?: Set<string>;
   onFirstElements?: () => void;
-  onLayoutUpdate?: (
-    isInitial: boolean,
-    isForced: boolean,
-    caller: string,
-    hasNewNodes?: boolean,
-    hasRemovedNodes?: boolean,
-  ) => void;
+  onLayoutUpdate?: (req: LayoutRequest) => void;
 }
 
 const isNodeRendered = (node: any) =>
@@ -72,218 +67,314 @@ const syncRenderedWeights = (
   }
 };
 
-export function syncGraphElements(cy: Core, options: SyncOptions) {
+/**
+ * Pass 1 — Reconcile existing elements against the target set.
+ * Partitions current cy elements into a reusable `elementMap` (kept) and
+ * `elementsToRemove` (stale), removing the stale ones in a single batch.
+ */
+function reconcileElements(
+  cy: Core,
+  elements: (GraphNode | GraphEdge)[],
+): { elementMap: Map<string, any>; elementsToRemove: any[] } {
+  const targetIds = new Set(elements.map((el) => el.data.id));
+  const elementMap = new Map<string, any>();
+  const elementsToRemove: any[] = [];
+
+  cy.elements().forEach((el) => {
+    const id = el.id();
+    if (!targetIds.has(id)) elementsToRemove.push(el);
+    else elementMap.set(id, el);
+  });
+
+  if (elementsToRemove.length > 0) cy.remove(cy.collection(elementsToRemove));
+
+  return { elementMap, elementsToRemove };
+}
+
+/**
+ * Pass 2 — Add elements present in the target set but absent from cy.
+ * New nodes are tagged `pending-layout` and seeded with any supplied position;
+ * edges are only added once both endpoints exist. Newly added elements are
+ * registered in `elementMap` so the data/filter pass can reach them.
+ */
+function addNewElements(
+  cy: Core,
+  elements: (GraphNode | GraphEdge)[],
+  elementMap: Map<string, any>,
+): { newNodes: GraphNode[] } {
+  const newNodes: GraphNode[] = [];
+  const newEdges: GraphEdge[] = [];
+  elements.forEach((el) => {
+    if (!elementMap.has(el.data.id)) {
+      if (!("source" in el.data)) {
+        newNodes.push(el as GraphNode);
+      } else {
+        newEdges.push(el as GraphEdge);
+      }
+    }
+  });
+
+  if (newNodes.length > 0 || newEdges.length > 0) {
+    if (newNodes.length > 0) {
+      // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
+      // This avoids N array iterations when applying initial node positions.
+      const newNodesMap = new Map();
+      for (let i = 0; i < newNodes.length; i++) {
+        if (!newNodesMap.has(newNodes[i].data.id)) {
+          newNodesMap.set(newNodes[i].data.id, newNodes[i]);
+        }
+      }
+
+      const addedNodes = cy.add(newNodes);
+      addedNodes.addClass("pending-layout");
+
+      addedNodes.forEach((n) => {
+        elementMap.set(n.id(), n);
+        const originalNode = newNodesMap.get(n.id());
+        if (originalNode && originalNode.position) {
+          n.position(originalNode.position);
+        }
+      });
+    }
+    const validEdges = newEdges.filter((edge) => {
+      const sourceId = edge.data.source!;
+      const targetId = edge.data.target!;
+      return cy && cy.$id(sourceId).nonempty() && cy.$id(targetId).nonempty();
+    });
+    if (validEdges.length > 0) {
+      cy.add(validEdges).forEach((e) => {
+        elementMap.set(e.id(), e);
+      });
+    }
+  }
+
+  return { newNodes };
+}
+
+/**
+ * Incremental data patch for a single element. Diffs `el.data` against the live
+ * cy node data and only writes the keys that actually changed (with bespoke
+ * equality for temporal metadata, arrays, coordinates and metadata objects),
+ * then strips keys that no longer exist.
+ */
+function patchElementData(
+  node: any,
+  el: GraphNode | GraphEdge,
+  isTemporalMetadataEqual: (a: any, b: any) => boolean,
+) {
+  const currentData = node.data();
+  const newData = el.data as Record<string, any>;
+  const patch: Record<string, any> = {};
+  let hasChanges = false;
+
+  for (const k in newData) {
+    if (k === "id" || !Object.hasOwn(newData, k)) continue;
+
+    // Bugfix: Do not re-apply isPendingLayout to existing nodes.
+    // This prevents nodes that were already placed by LayoutManager from
+    // becoming invisible just because Svelte hasn't saved their coordinates yet.
+    if (k === "isPendingLayout") continue;
+
+    const newVal = newData[k];
+    const curVal = currentData[k];
+    let isMatch = newVal === curVal;
+
+    if (!isMatch) {
+      if (
+        el.group === "nodes" &&
+        (k === "date" || k === "start_date" || k === "end_date")
+      )
+        isMatch = isTemporalMetadataEqual(newVal, curVal);
+      else if (Array.isArray(newVal))
+        isMatch =
+          Array.isArray(curVal) &&
+          newVal.length === curVal.length &&
+          newVal.every((v, i) => v === curVal[i]);
+      else if (
+        typeof newVal === "object" &&
+        newVal !== null &&
+        curVal !== null &&
+        typeof curVal === "object"
+      ) {
+        if (k === "coordinates")
+          isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
+        else if (k === "metadata")
+          isMatch =
+            !!curVal &&
+            newVal.coordinates?.x === curVal.coordinates?.x &&
+            newVal.coordinates?.y === curVal.coordinates?.y &&
+            newVal.isRevealed === curVal.isRevealed;
+      }
+    }
+
+    if (!isMatch) {
+      patch[k] = newVal;
+      hasChanges = true;
+    }
+  }
+
+  // Remove keys that no longer exist in newData (e.g. isPendingLayout)
+  for (const k in currentData) {
+    if (k !== "id" && !Object.hasOwn(newData, k)) {
+      // Bugfix: Do not strip internal cytoscape properties managed by other components
+      if (k === "resolvedImage") continue;
+
+      node.removeData(k);
+      // If the source image path is removed, clear the resolved image so ImageManager can clean up
+      if (k === "image" || k === "thumbnail") {
+        node.removeData("resolvedImage");
+      }
+    }
+  }
+
+  if (hasChanges) {
+    node.data(patch);
+    // If the image or thumbnail properties changed, clear the resolvedImage
+    // so that ImageManager is forced to re-fetch and apply the new one.
+    if ("image" in patch || "thumbnail" in patch) {
+      node.removeData("resolvedImage");
+    }
+  }
+}
+
+interface FilterContext {
+  /** Active labels, pre-lowercased once per sync. */
+  labels: string[];
+  labelFilterMode?: "AND" | "OR";
+  activeCategories?: Set<string>;
+  /** Reused scratch buffer for lowercasing node labels (avoids per-node allocation). */
+  lowerScratch: string[];
+}
+
+/**
+ * Apply category + label visibility classes to a single node. Edges are skipped.
+ */
+function applyFilterClasses(
+  node: any,
+  el: GraphNode | GraphEdge,
+  ctx: FilterContext,
+) {
+  if (el.group !== "nodes") return;
+  const { labels, labelFilterMode, activeCategories, lowerScratch } = ctx;
+
+  // Category Filter
+  if (activeCategories && activeCategories.size > 0) {
+    if (activeCategories.has(el.data.type as string)) {
+      node.removeClass("category-filtered-out");
+    } else {
+      node.addClass("category-filtered-out");
+    }
+  } else {
+    node.removeClass("category-filtered-out");
+  }
+
+  // Label Filter
+  if (labels.length > 0 && el.data.labels) {
+    const nodeLabels = el.data.labels as string[];
+    lowerScratch.length = nodeLabels.length;
+    for (let j = 0; j < nodeLabels.length; j++) {
+      lowerScratch[j] = nodeLabels[j].toLowerCase();
+    }
+
+    let hasMatch = false;
+    if (labelFilterMode === "AND") {
+      hasMatch = true;
+      for (let i = 0; i < labels.length; i++) {
+        if (!lowerScratch.includes(labels[i])) {
+          hasMatch = false;
+          break;
+        }
+      }
+    } else {
+      for (let i = 0; i < labels.length; i++) {
+        if (lowerScratch.includes(labels[i])) {
+          hasMatch = true;
+          break;
+        }
+      }
+    }
+
+    if (hasMatch) {
+      node.removeClass("filtered-out");
+    } else {
+      node.addClass("filtered-out");
+    }
+  } else if (labels.length > 0) {
+    node.addClass("filtered-out");
+  } else {
+    node.removeClass("filtered-out");
+  }
+}
+
+/**
+ * Pass 3 — Incremental data sync + filtering, in one cy.batch.
+ * Patches changed data and (re)applies visibility classes per element, then
+ * recomputes rendered edge weights from the now-filtered graph.
+ */
+function syncDataAndFilters(
+  cy: Core,
+  elements: (GraphNode | GraphEdge)[],
+  elementMap: Map<string, any>,
+  options: SyncOptions,
+) {
   const {
-    elements,
-    vaultStatus,
-    initialLoaded,
     isTemporalMetadataEqual,
     activeLabels,
     labelFilterMode,
     activeCategories,
   } = options;
+
+  cy.batch(() => {
+    const ctx: FilterContext = {
+      labels: activeLabels
+        ? Array.from(activeLabels).map((l) => l.toLowerCase())
+        : [],
+      labelFilterMode,
+      activeCategories,
+      lowerScratch: [],
+    };
+
+    elements.forEach((el) => {
+      const node = elementMap.get(el.data.id);
+      if (!node) return;
+
+      patchElementData(node, el, isTemporalMetadataEqual);
+      applyFilterClasses(node, el, ctx);
+    });
+
+    syncRenderedWeights(elementMap, elements);
+  });
+}
+
+export function resolveLayoutTrigger(
+  isFirstElements: boolean,
+  hasDeletions: boolean,
+  hasNewNodes: boolean,
+  isVaultLoading: boolean,
+  initialLoaded: boolean,
+  elementsToRemove: { isNode: () => boolean }[],
+): LayoutRequest | null {
+  if (!hasNewNodes && !hasDeletions && !isFirstElements) return null;
+  if (isFirstElements) return null; // handled by onFirstElements + cy.fit
+  if (isVaultLoading && !initialLoaded) return null;
+  const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
+  return {
+    reason: "Elements Update",
+    isForced: hasDeletions,
+    hasNewNodes,
+    hasRemovedNodes,
+  };
+}
+
+export function syncGraphElements(cy: Core, options: SyncOptions) {
+  const { elements, vaultStatus, initialLoaded } = options;
   const isVaultLoading = vaultStatus === "loading";
 
   try {
-    const targetIds = new Set(elements.map((el) => el.data.id));
-    const elementMap = new Map();
-    const elementsToRemove: any[] = [];
-
-    cy.elements().forEach((el) => {
-      const id = el.id();
-      if (!targetIds.has(id)) elementsToRemove.push(el);
-      else elementMap.set(id, el);
-    });
-
-    if (elementsToRemove.length > 0) cy.remove(cy.collection(elementsToRemove));
-
-    const newNodes: GraphNode[] = [];
-    const newEdges: GraphEdge[] = [];
-    elements.forEach((el) => {
-      if (!elementMap.has(el.data.id)) {
-        if (!("source" in el.data)) {
-          newNodes.push(el as GraphNode);
-        } else {
-          newEdges.push(el as GraphEdge);
-        }
-      }
-    });
-
-    if (newNodes.length > 0 || newEdges.length > 0) {
-      if (newNodes.length > 0) {
-        // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
-        // This avoids N array iterations when applying initial node positions.
-        const newNodesMap = new Map();
-        for (let i = 0; i < newNodes.length; i++) {
-          if (!newNodesMap.has(newNodes[i].data.id)) {
-            newNodesMap.set(newNodes[i].data.id, newNodes[i]);
-          }
-        }
-
-        const addedNodes = cy.add(newNodes);
-        addedNodes.addClass("pending-layout");
-
-        addedNodes.forEach((n) => {
-          elementMap.set(n.id(), n);
-          const originalNode = newNodesMap.get(n.id());
-          if (originalNode && originalNode.position) {
-            n.position(originalNode.position);
-          }
-        });
-      }
-      const validEdges = newEdges.filter((edge) => {
-        const sourceId = edge.data.source!;
-        const targetId = edge.data.target!;
-        return cy && cy.$id(sourceId).nonempty() && cy.$id(targetId).nonempty();
-      });
-      if (validEdges.length > 0) {
-        cy.add(validEdges).forEach((e) => {
-          elementMap.set(e.id(), e);
-        });
-      }
-    }
-
-    // Incremental Data Sync & Filtering
-    cy.batch(() => {
-      // Setup filtering context
-      const labels = activeLabels
-        ? Array.from(activeLabels).map((l) => l.toLowerCase())
-        : [];
-      const lowerScratch: string[] = [];
-
-      elements.forEach((el) => {
-        const node = elementMap.get(el.data.id);
-        if (!node) return;
-
-        // Sync Data
-        const currentData = node.data();
-        const newData = el.data as Record<string, any>;
-        const patch: Record<string, any> = {};
-        let hasChanges = false;
-
-        for (const k in newData) {
-          if (k === "id" || !Object.hasOwn(newData, k)) continue;
-
-          // Bugfix: Do not re-apply isPendingLayout to existing nodes.
-          // This prevents nodes that were already placed by LayoutManager from
-          // becoming invisible just because Svelte hasn't saved their coordinates yet.
-          if (k === "isPendingLayout") continue;
-
-          const newVal = newData[k];
-          const curVal = currentData[k];
-          let isMatch = newVal === curVal;
-
-          if (!isMatch) {
-            if (
-              el.group === "nodes" &&
-              (k === "date" || k === "start_date" || k === "end_date")
-            )
-              isMatch = isTemporalMetadataEqual(newVal, curVal);
-            else if (Array.isArray(newVal))
-              isMatch =
-                Array.isArray(curVal) &&
-                newVal.length === curVal.length &&
-                newVal.every((v, i) => v === curVal[i]);
-            else if (
-              typeof newVal === "object" &&
-              newVal !== null &&
-              curVal !== null &&
-              typeof curVal === "object"
-            ) {
-              if (k === "coordinates")
-                isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
-              else if (k === "metadata")
-                isMatch =
-                  !!curVal &&
-                  newVal.coordinates?.x === curVal.coordinates?.x &&
-                  newVal.coordinates?.y === curVal.coordinates?.y &&
-                  newVal.isRevealed === curVal.isRevealed;
-            }
-          }
-
-          if (!isMatch) {
-            patch[k] = newVal;
-            hasChanges = true;
-          }
-        }
-
-        // Remove keys that no longer exist in newData (e.g. isPendingLayout)
-        for (const k in currentData) {
-          if (k !== "id" && !Object.hasOwn(newData, k)) {
-            // Bugfix: Do not strip internal cytoscape properties managed by other components
-            if (k === "resolvedImage") continue;
-
-            node.removeData(k);
-            // If the source image path is removed, clear the resolved image so ImageManager can clean up
-            if (k === "image" || k === "thumbnail") {
-              node.removeData("resolvedImage");
-            }
-          }
-        }
-
-        if (hasChanges) {
-          node.data(patch);
-          // If the image or thumbnail properties changed, clear the resolvedImage
-          // so that ImageManager is forced to re-fetch and apply the new one.
-          if ("image" in patch || "thumbnail" in patch) {
-            node.removeData("resolvedImage");
-          }
-        }
-
-        // Apply Filtering Classes
-        if (el.group === "nodes") {
-          // Category Filter
-          if (activeCategories && activeCategories.size > 0) {
-            if (activeCategories.has(el.data.type as string)) {
-              node.removeClass("category-filtered-out");
-            } else {
-              node.addClass("category-filtered-out");
-            }
-          } else {
-            node.removeClass("category-filtered-out");
-          }
-
-          // Label Filter
-          if (labels.length > 0 && el.data.labels) {
-            const nodeLabels = el.data.labels as string[];
-            lowerScratch.length = nodeLabels.length;
-            for (let j = 0; j < nodeLabels.length; j++) {
-              lowerScratch[j] = nodeLabels[j].toLowerCase();
-            }
-
-            let hasMatch = false;
-            if (labelFilterMode === "AND") {
-              hasMatch = true;
-              for (let i = 0; i < labels.length; i++) {
-                if (!lowerScratch.includes(labels[i])) {
-                  hasMatch = false;
-                  break;
-                }
-              }
-            } else {
-              for (let i = 0; i < labels.length; i++) {
-                if (lowerScratch.includes(labels[i])) {
-                  hasMatch = true;
-                  break;
-                }
-              }
-            }
-
-            if (hasMatch) {
-              node.removeClass("filtered-out");
-            } else {
-              node.addClass("filtered-out");
-            }
-          } else if (labels.length > 0) {
-            node.addClass("filtered-out");
-          } else {
-            node.removeClass("filtered-out");
-          }
-        }
-      });
-
-      syncRenderedWeights(elementMap, elements);
-    });
+    // Pass 1: reconcile + remove stale. Pass 2: add new. Pass 3: patch data + filters.
+    const { elementMap, elementsToRemove } = reconcileElements(cy, elements);
+    const { newNodes } = addNewElements(cy, elements, elementMap);
+    syncDataAndFilters(cy, elements, elementMap, options);
 
     const isFirstElements = !initialLoaded && elements.length > 0;
     const hasDeletions = elementsToRemove.length > 0;
@@ -292,23 +383,17 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
     if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
-        const w = cy.width();
-        const h = cy.height();
-        cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
-      } else if (!isVaultLoading || initialLoaded) {
-        // Preserve current positions for edge-only updates. This avoids a second
-        // relayout when AI discovery adds connections right after creating a node.
-        const force = hasDeletions;
-        // Edge churn (e.g. lore edits rewriting wiki-links) removes elements
-        // without removing nodes — callers use this to keep the camera still.
-        const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
-        options.onLayoutUpdate?.(
-          false,
-          force,
-          "Elements Update",
+        (cy as any).fit(undefined, 40);
+      } else {
+        const req = resolveLayoutTrigger(
+          isFirstElements,
+          hasDeletions,
           hasNewNodes,
-          hasRemovedNodes,
+          isVaultLoading,
+          initialLoaded,
+          elementsToRemove,
         );
+        if (req) options.onLayoutUpdate?.(req);
       }
     }
   } catch (err) {

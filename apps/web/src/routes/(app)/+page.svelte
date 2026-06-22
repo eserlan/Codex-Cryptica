@@ -252,10 +252,11 @@
 <svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
 <div
-  class="h-[var(--app-content-height)] flex bg-chrome-bg text-chrome-text overflow-hidden relative"
+  class="flex h-full min-h-0 bg-chrome-bg text-chrome-text overflow-hidden relative"
+  data-testid="app-route-shell"
 >
   <div class="flex-1 relative overflow-hidden">
-    {#if layoutUIStore.mainViewMode === "focus" && layoutUIStore.focusedEntityId && EmbeddedEntityView}
+    {#if !layoutUIStore.isEntityExplorerWorkspace && layoutUIStore.mainViewMode === "focus" && layoutUIStore.focusedEntityId && EmbeddedEntityView}
       <EmbeddedEntityView entityId={layoutUIStore.focusedEntityId} />
     {:else if layoutUIStore.mainViewMode === "guest-chat" && GuestChatPanel}
       <div class="absolute inset-0 p-4 md:p-6 bg-chrome-bg">

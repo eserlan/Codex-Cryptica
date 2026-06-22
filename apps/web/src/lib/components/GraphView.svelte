@@ -142,7 +142,10 @@
 
     if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleTimeline();
-      controller.applyCurrentLayout(false, true, "Keyboard Shortcut (T)");
+      controller.applyCurrentLayout({
+        reason: "Keyboard Shortcut (T)",
+        isForced: true,
+      });
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (!vault.isGuest) {
@@ -195,11 +198,13 @@
     untrack(() => controller.handleModeChange());
   });
 
-  // Vault loading triggers
+  // Vault load state machine (loading reset + finalization in one effect)
   $effect(() => {
     void vault.status;
     void vault.allEntities.length;
-    untrack(() => controller.handleVaultLoading());
+    void controller.loadPhase;
+    void controller.cy;
+    untrack(() => controller.reconcileLoadState());
   });
 
   // Style sync
@@ -215,15 +220,6 @@
         });
       }
     }
-  });
-
-  // Load Finalization
-  $effect(() => {
-    void vault.status;
-    void controller.initialLoaded;
-    void controller.didFinalizeLoad;
-    void controller.cy;
-    untrack(() => controller.handleVaultLoadFinalization());
   });
 
   // Element Sync

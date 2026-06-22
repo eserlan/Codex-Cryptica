@@ -272,6 +272,9 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
+- TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4 (134-entity-navigation-history)
+- N/A (In-memory session state) (134-entity-navigation-history)
+
 - TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine` (129-seo-landing-pages)
 - `localStorage` (transient transfer), OPFS & IndexedDB (via vault stores) (129-seo-landing-pages)
 

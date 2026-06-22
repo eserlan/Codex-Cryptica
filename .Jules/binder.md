@@ -9,3 +9,7 @@
 ## 2024-05-18 - CloudSyncMetadataService Clock Injection
 **Learning:** Hardcoded `Date.now()` inside business logic classes (like CloudSyncMetadataService) forces tests to use imprecise assertions like `toBeGreaterThanOrEqual` and relies on time-sensitive local variables.
 **Action:** Inject `now: () => number = Date.now` as an optional constructor dependency for stateful services, allowing tests to pass a frozen time function (`() => 150000`) and assert exact outcomes deterministically without global monkey-patching.
+
+## 2024-06-22 - Inject dependencies into createEncounterSession
+ **Learning:** The `apps/web` application defines ambient runtime dependencies (e.g., `systemIdGenerator`, `systemClock`, `IdGenerator`, `Clock`) in `src/lib/utils/runtime-deps.ts`. These can be used as default parameter values to inject ID generation and time into session creation logic without breaking existing call sites.
+ **Action:** When injecting time and id dependencies into `createEncounterSession`, add a `deps` parameter at the end to maintain backward compatibility with `id` and `name` positional arguments.

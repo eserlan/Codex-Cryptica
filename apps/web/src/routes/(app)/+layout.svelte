@@ -33,6 +33,8 @@
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
+  import EntityExplorerWorkspace from "$lib/components/layout/EntityExplorerWorkspace.svelte";
+  import NavigationShortcuts from "$lib/components/layout/NavigationShortcuts.svelte";
 
   // Logic & Hooks
   import {
@@ -83,6 +85,12 @@
   );
   const isVttFullscreen = $derived(
     page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
+  );
+  const isEntityExplorerWorkspace = $derived(
+    !isPopup &&
+      !isVttFullscreen &&
+      !isZenPopout &&
+      layoutUIStore.isEntityExplorerWorkspace,
   );
 
   if (browser) {
@@ -440,6 +448,7 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+<NavigationShortcuts />
 
 <div
   class="h-[var(--app-viewport-height)] bg-chrome-bg text-chrome-text flex flex-col font-body app-layout"
@@ -467,8 +476,30 @@
         <SidebarPanelHost />
       {/if}
 
-      <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
-        {@render children()}
+      <main
+        class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
+        <div
+          class="min-h-0 min-w-0 flex-1 overflow-y-auto"
+          inert={(isEntityExplorerWorkspace &&
+            !!layoutUIStore.focusedEntityId) ||
+            undefined}
+          aria-hidden={(isEntityExplorerWorkspace &&
+            !!layoutUIStore.focusedEntityId) ||
+            undefined}
+          data-testid="layout-route-content"
+        >
+          {@render children()}
+        </div>
+
+        {#if isEntityExplorerWorkspace && layoutUIStore.focusedEntityId}
+          <div
+            class="absolute inset-0 z-[60] min-h-0 min-w-0 overflow-hidden bg-theme-bg"
+            data-testid="entity-explorer-workspace-overlay"
+          >
+            <EntityExplorerWorkspace entityId={layoutUIStore.focusedEntityId} />
+          </div>
+        {/if}
       </main>
     </div>
 

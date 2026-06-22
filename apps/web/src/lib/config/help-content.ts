@@ -248,7 +248,14 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     title: "Pick Dates",
     content:
       "Select dates seamlessly using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
-    icon: "icon-[lucide--calendar]",
+    icon: "icon-[lucide--settings-2]",
+  },
+  "keyboard-navigation": {
+    id: "keyboard-navigation",
+    title: "Keyboard Navigation",
+    content:
+      "Use `Shift+Left` and `Shift+Right` arrows to quickly navigate back and forward through your recently viewed entities. Navigation history is preserved during your session. Shortcuts are disabled while editing text or when modals are open.",
+    icon: "icon-[lucide--keyboard]",
   },
   "import-resume": {
     id: "import-resume",
@@ -338,7 +345,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down. On desktop widths of 1280px and above, keeping Entity Explorer open turns the main workspace into a side-by-side reader so you can select an entity on the left and read or edit it on the right. On smaller screens, selection keeps the existing full-screen Zen Mode behavior.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {
