@@ -1,3 +1,20 @@
+<!--
+Sync Impact Report
+- Version change: 1.2.0 -> 1.2.1
+- Modified principles: VI. Clean Implementation (validation commands now use Bun)
+- Added sections: None
+- Removed sections: None
+- Templates requiring updates:
+  - ✅ Verified .specify/templates/plan-template.md; no package-manager command reference.
+  - ✅ Verified .specify/templates/spec-template.md; no package-manager command reference.
+  - ✅ Verified .specify/templates/tasks-template.md; no package-manager command reference.
+  - ✅ Verified canonical .gemini/commands and mirrored .codex/commands; no
+    package-manager command reference requires synchronization.
+  - ✅ Verified AGENTS.md and README.md; README already uses Bun and AGENTS.md has
+    no conflicting validation command.
+- Follow-up TODOs: None
+-->
+
 # Codex-Arcana Constitution
 
 ## Core Principles
@@ -28,7 +45,7 @@ To maintain build integrity and code quality, AI agents MUST:
 
 1.  **Style Guide**: Adhere strictly to `@docs/STYLE_GUIDE.md` for all visual, behavioral, and architectural patterns (including Svelte 5 Runes, Tailwind 4 tokens, and Data Safety).
 2.  **Implementation Hygiene**: Prefix unused variables/parameters with `_` and ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
-3.  **Validation**: Every code change MUST be verified with `pnpm run lint` and `pnpm test` before considering the task complete.
+3.  **Validation**: Every code change MUST be verified with `bun run lint` and `bun run test` before considering the task complete.
 
 ### VII. User Documentation
 
@@ -67,4 +84,4 @@ To prevent user confusion and maintain conceptual clarity, the project converges
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.2.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-05-23
+**Version**: 1.2.1 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-06-22

@@ -33,6 +33,7 @@
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
   import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
+  import EntityExplorerWorkspace from "$lib/components/layout/EntityExplorerWorkspace.svelte";
 
   // Logic & Hooks
   import {
@@ -83,6 +84,12 @@
   );
   const isVttFullscreen = $derived(
     page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
+  );
+  const isEntityExplorerWorkspace = $derived(
+    !isPopup &&
+      !isVttFullscreen &&
+      !isZenPopout &&
+      layoutUIStore.isEntityExplorerWorkspace,
   );
 
   if (browser) {
@@ -467,8 +474,19 @@
         <SidebarPanelHost />
       {/if}
 
-      <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
-        {@render children()}
+      <main class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          {@render children()}
+        </div>
+
+        {#if isEntityExplorerWorkspace}
+          <div
+            class="absolute inset-0 z-30 min-h-0 min-w-0 overflow-hidden"
+            data-testid="entity-explorer-workspace-overlay"
+          >
+            <EntityExplorerWorkspace entityId={layoutUIStore.focusedEntityId} />
+          </div>
+        {/if}
       </main>
     </div>
 

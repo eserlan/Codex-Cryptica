@@ -52,6 +52,7 @@ export class LayoutUIStore {
   private leftSidebarSaveTimeout: number | null = null;
   private rightSidebarSaveTimeout: number | null = null;
   private cleanupMobileWatch: (() => void) | null = null;
+  private cleanupWideWatch: (() => void) | null = null;
 
   #leftSidebarOpen = $state(false);
   #activeSidebarTool = $state<SidebarTool>("none");
@@ -77,6 +78,7 @@ export class LayoutUIStore {
   mainViewMode = $state<MainViewMode>("visualization");
   focusedEntityId = $state<string | null>(null);
   isMobile = $state(false);
+  isWideViewport = $state(false);
   vttSidebarCollapsed = $state(false);
   vttChatSidebarCollapsed = $state(false);
   vttEntityListCollapsed = $state(false);
@@ -89,11 +91,22 @@ export class LayoutUIStore {
   ) {
     this.loadPersistedState();
     this.cleanupMobileWatch = this.watchMobileState();
+    this.cleanupWideWatch = this.watchWideViewportState();
+  }
+
+  get isEntityExplorerWorkspace() {
+    return (
+      this.isWideViewport &&
+      this.leftSidebarOpen &&
+      this.activeSidebarTool === "explorer"
+    );
   }
 
   disconnect() {
     this.cleanupMobileWatch?.();
     this.cleanupMobileWatch = null;
+    this.cleanupWideWatch?.();
+    this.cleanupWideWatch = null;
     if (this.leftSidebarSaveTimeout !== null) {
       this.viewport?.clearTimeout(this.leftSidebarSaveTimeout);
     }
@@ -213,17 +226,35 @@ export class LayoutUIStore {
     const mediaQuery = this.viewport?.matchMedia?.("(max-width: 768px)");
     if (!mediaQuery) return null;
     this.isMobile = mediaQuery.matches;
+    return this.watchMediaQuery(mediaQuery, (matches) => {
+      this.isMobile = matches;
+    });
+  }
 
+  private watchWideViewportState(): (() => void) | null {
+    const mediaQuery = this.viewport?.matchMedia?.("(min-width: 1280px)");
+    if (!mediaQuery) return null;
+    this.isWideViewport = mediaQuery.matches;
+    return this.watchMediaQuery(mediaQuery, (matches) => {
+      this.isWideViewport = matches;
+    });
+  }
+
+  private watchMediaQuery(
+    mediaQuery: MediaQueryListLike,
+    update: (matches: boolean) => void,
+  ): (() => void) | null {
     const handler = (event: { matches: boolean }) => {
-      this.isMobile = event.matches;
+      update(event.matches);
     };
 
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener("change", handler);
       return () => mediaQuery.removeEventListener?.("change", handler);
-    } else if ((mediaQuery as any).addListener) {
-      (mediaQuery as any).addListener(handler);
-      return () => (mediaQuery as any).removeListener?.(handler);
+    }
+    if (mediaQuery.addListener) {
+      mediaQuery.addListener(handler);
+      return () => mediaQuery.removeListener?.(handler);
     }
     return null;
   }
