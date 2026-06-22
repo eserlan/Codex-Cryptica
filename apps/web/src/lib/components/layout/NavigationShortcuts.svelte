@@ -4,15 +4,31 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { browser } from "$app/environment";
   import { beforeNavigate } from "$app/navigation";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
   $effect(() => {
-    const id = vault?.selectedEntityId;
+    const id = layoutUIStore.isEntityExplorerWorkspace
+      ? layoutUIStore.focusedEntityId
+      : modalUIStore.showZenMode
+        ? modalUIStore.zenModeEntityId
+        : vault?.selectedEntityId;
+
     if (id) {
       navigationHistoryStore.push(id);
     }
   });
 
   const isValidEntity = (id: string) => !!vault?.entities?.[id];
+
+  function applyNewEntity(newId: string) {
+    if (layoutUIStore.isEntityExplorerWorkspace) {
+      layoutUIStore.openEntityExplorerWorkspace(newId);
+    } else if (modalUIStore.showZenMode) {
+      modalUIStore.openZenMode(newId, modalUIStore.zenModeActiveTab);
+    } else {
+      vault.selectedEntityId = newId;
+    }
+  }
 
   export function tryNavigate(direction: "back" | "forward") {
     const newId =
@@ -21,7 +37,7 @@
         : navigationHistoryStore.forward(isValidEntity);
 
     if (newId) {
-      vault.selectedEntityId = newId;
+      applyNewEntity(newId);
     } else {
       if (browser) {
         if (direction === "back") {
@@ -51,6 +67,13 @@
         return;
       }
 
+      if (
+        layoutUIStore.isEntityExplorerWorkspace &&
+        !layoutUIStore.focusedEntityId
+      ) {
+        return;
+      }
+
       e.preventDefault();
 
       if (e.key === "ArrowLeft") {
@@ -67,13 +90,13 @@
         const newId = navigationHistoryStore.back(isValidEntity);
         if (newId) {
           navigation.cancel();
-          vault.selectedEntityId = newId;
+          applyNewEntity(newId);
         }
       } else if (navigation.delta > 0) {
         const newId = navigationHistoryStore.forward(isValidEntity);
         if (newId) {
           navigation.cancel();
-          vault.selectedEntityId = newId;
+          applyNewEntity(newId);
         }
       }
     }
