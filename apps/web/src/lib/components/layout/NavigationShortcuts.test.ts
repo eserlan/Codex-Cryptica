@@ -22,20 +22,20 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-const mockHistoryStore = {
-  past: [],
-  future: [],
-  push: vi.fn(),
-  back: vi.fn().mockReturnValue(null),
-  forward: vi.fn().mockReturnValue(null),
-};
-
 vi.mock("$lib/stores/navigation/NavigationHistoryStore.svelte", () => ({
-  getNavigationHistoryStore: () => mockHistoryStore,
+  navigationHistoryStore: {
+    past: [],
+    future: [],
+    push: vi.fn(),
+    back: vi.fn().mockReturnValue(null),
+    forward: vi.fn().mockReturnValue(null),
+  },
 }));
 
+import { navigationHistoryStore } from "$lib/stores/navigation/NavigationHistoryStore.svelte";
+
 describe("NavigationShortcuts", () => {
-  const historyStore = mockHistoryStore;
+  const historyStore = navigationHistoryStore as any;
 
   beforeEach(() => {
     historyStore.past = [];
