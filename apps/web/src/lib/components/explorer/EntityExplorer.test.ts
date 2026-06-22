@@ -54,7 +54,9 @@ describe("EntityExplorer", () => {
 
     await fireEvent.click(screen.getByTestId("entity-select"));
 
-    expect(focusEntity).toHaveBeenCalledWith("entity-1");
+    expect(layoutUIStore.focusedEntityId).toBe("entity-1");
+    expect(layoutUIStore.mainViewMode).toBe("focus");
+    expect(focusEntity).not.toHaveBeenCalled();
     expect(modalUIStore.openZenMode).not.toHaveBeenCalled();
   });
 
@@ -64,7 +66,9 @@ describe("EntityExplorer", () => {
 
     await fireEvent.click(screen.getByTestId("entity-open-zen"));
 
-    expect(focusEntity).toHaveBeenCalledWith("entity-1");
+    expect(layoutUIStore.focusedEntityId).toBe("entity-1");
+    expect(layoutUIStore.mainViewMode).toBe("focus");
+    expect(focusEntity).not.toHaveBeenCalled();
     expect(modalUIStore.openZenMode).not.toHaveBeenCalled();
   });
 

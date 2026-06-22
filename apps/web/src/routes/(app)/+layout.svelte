@@ -477,7 +477,12 @@
       {/if}
 
       <main class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <div
+          class="min-h-0 min-w-0 flex-1 overflow-y-auto"
+          inert={isEntityExplorerWorkspace || undefined}
+          aria-hidden={isEntityExplorerWorkspace || undefined}
+          data-testid="layout-route-content"
+        >
           {@render children()}
         </div>
 
