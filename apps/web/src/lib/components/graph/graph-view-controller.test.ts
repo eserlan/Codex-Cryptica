@@ -163,12 +163,13 @@ describe("GraphViewController", () => {
     expect(batchSpy).toHaveBeenCalled();
   });
 
-  it("should handle vault loading state", () => {
+  it("should reset to idle when vault starts loading", () => {
     deps.vault.status = "loading";
     deps.vault.allEntities = [];
+    controller.loadPhase = "finalized";
 
-    controller.handleVaultLoading();
-    expect(true).toBe(true);
+    controller.reconcileLoadState();
+    expect(controller.loadPhase).toBe<LoadPhase>("idle");
   });
 
   it("should finalize load when vault becomes idle and initial elements are loaded", async () => {
@@ -180,7 +181,7 @@ describe("GraphViewController", () => {
 
     const applySpy = vi.spyOn(controller, "applyCurrentLayout");
 
-    controller.handleVaultLoadFinalization();
+    controller.reconcileLoadState();
 
     expect(controller.loadPhase).toBe<LoadPhase>("finalized");
     expect(applySpy).toHaveBeenCalledWith({
@@ -235,21 +236,12 @@ describe("GraphViewController", () => {
       expect(controller.loadPhase).toBe<LoadPhase>("idle");
     });
 
-    it("transitions to elements when first graph elements arrive (onFirstElements)", async () => {
+    it("transitions to finalized when vault becomes idle and loadPhase is elements", async () => {
       const container = document.createElement("div");
       await controller.init(container, {});
       deps.vault.status = "idle";
       controller.loadPhase = "elements";
-      controller.handleVaultLoadFinalization();
-      expect(controller.loadPhase).toBe<LoadPhase>("finalized");
-    });
-
-    it("transitions to finalized when handleVaultLoadFinalization fires", async () => {
-      const container = document.createElement("div");
-      await controller.init(container, {});
-      deps.vault.status = "idle";
-      controller.loadPhase = "elements";
-      controller.handleVaultLoadFinalization();
+      controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("finalized");
     });
 
@@ -258,16 +250,15 @@ describe("GraphViewController", () => {
       await controller.init(container, {});
       deps.vault.status = "idle";
       controller.loadPhase = "ready";
-      controller.handleVaultLoadFinalization();
+      controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("ready");
     });
 
-    it("resets to idle when handleVaultLoading clears state", () => {
+    it("resets to idle when vault starts loading fresh", () => {
       controller.loadPhase = "finalized";
-
       deps.vault.status = "loading";
       deps.vault.allEntities = [];
-      controller.handleVaultLoading();
+      controller.reconcileLoadState();
       expect(controller.loadPhase).toBe<LoadPhase>("idle");
     });
   });
