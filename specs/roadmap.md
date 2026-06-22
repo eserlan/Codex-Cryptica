@@ -26,6 +26,14 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.27.0 — The Themed Generators & World Chronology Update (2026-06-22)
+
+- **Highlights**: Full calendar and agenda chronology view (mobile swipe navigation, year-wheel picker, double-click-to-create events); themed generator hubs and content packs for Western, Steampunk, Lancer, Space Opera, Optimistic Sci-Fi, Cyberpunk, and Vampire settings via nested `/generators/[theme]` routes; a dedicated Entity Explorer desktop workspace with navigation history and keyboard shortcuts; entity revision through the Gemini Interactions API; new/enhanced world textures and an authentic Pip-Boy CRT theme; and a re-engineered graph load pipeline (`LoadPhase` state machine + typed `LayoutRequest`) with a graph-controls/footer overlap fix.
+- **Associated Specifications**:
+  - [132-calendar-agenda-view](./132-calendar-agenda-view/spec.md) (World chronology calendar and agenda view)
+  - [133-entity-explorer-layout](./133-entity-explorer-layout/spec.md) (Entity Explorer desktop workspace)
+  - [134-entity-navigation-history](./134-entity-navigation-history/spec.md) (Entity navigation history and shortcuts)
+
 ### v0.26.3 — The Grounded Context-Aware Entity Creator Update (2026-05-30)
 
 - **Highlights**: Branch campaign settings organically using a new 'Generate Related' action that gathers the active entity and its first-degree graph neighbors to draft grounded entities, with outline templates integration, adaptive relationship suggestions, and automatic directed back-linking in the vault.
