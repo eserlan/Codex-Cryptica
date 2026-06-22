@@ -46,6 +46,7 @@ describe("EntityExplorer", () => {
     layoutUIStore.leftSidebarOpen = true;
     layoutUIStore.activeSidebarTool = "explorer";
     layoutUIStore.isWideViewport = false;
+    layoutUIStore.clearEntityExplorerWorkspaceFocus();
   });
 
   it("routes desktop selection through focus mode when the Explorer workspace is eligible", async () => {
