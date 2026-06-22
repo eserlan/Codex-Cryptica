@@ -89,6 +89,32 @@ function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
 export class DefaultGeneratorEngine {
   constructor(private clientManager = aiClientManager) {}
 
+  /**
+   * Shared AI-with-local-fallback flow for every generator (#1494). When AI is
+   * requested (`useAI !== false`) we try the AI path and, on any failure, fall
+   * back to the local tables while stamping `aiFallback` so the UI can surface a
+   * friendly "AI was unavailable" notice. When AI is not requested we go
+   * straight to local with no flag.
+   */
+  private async runWithAIFallback(
+    useAI: boolean | undefined,
+    aiAttempt: () => Promise<PublicGeneratorOutput>,
+    local: () => PublicGeneratorOutput,
+  ): Promise<GeneratorOutput> {
+    if (useAI !== false) {
+      try {
+        return toSeoOutput(await aiAttempt());
+      } catch (err) {
+        console.warn(
+          "AI generation failed, falling back to local tables:",
+          err,
+        );
+        return toSeoOutput({ ...local(), aiFallback: true });
+      }
+    }
+    return toSeoOutput(local());
+  }
+
   generateName(): string {
     return _generateName();
   }
@@ -103,8 +129,9 @@ export class DefaultGeneratorEngine {
     options: NpcGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...npcOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } = buildNpcPrompt(
           npcOptions,
           getSessionContext(),
@@ -116,15 +143,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseNpcResponse(text, npcOptions, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateNpcLocal(npcOptions));
+        return parseNpcResponse(text, npcOptions, resolved);
+      },
+      () => generateNpcLocal(npcOptions),
+    );
   }
 
   /** Faction generation delegates to the generator-engine package (#1351). */
@@ -132,8 +154,9 @@ export class DefaultGeneratorEngine {
     options: FactionGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...factionOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } = buildFactionPrompt(
           factionOptions,
           getSessionContext(),
@@ -145,15 +168,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseFactionResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateFactionLocal(factionOptions));
+        return parseFactionResponse(text, resolved);
+      },
+      () => generateFactionLocal(factionOptions),
+    );
   }
 
   /** Vampire clan generation delegates to the generator-engine package (#1351). */
@@ -161,8 +179,9 @@ export class DefaultGeneratorEngine {
     options: VampireGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...vampireOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } = buildVampirePrompt(
           vampireOptions,
           getSessionContext(),
@@ -174,15 +193,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseVampireResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateVampireLocal(vampireOptions));
+        return parseVampireResponse(text, resolved);
+      },
+      () => generateVampireLocal(vampireOptions),
+    );
   }
 
   /** Settlement generation delegates to the generator-engine package (#1351). */
@@ -190,8 +204,9 @@ export class DefaultGeneratorEngine {
     options: SettlementGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...settlementOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } =
           buildSettlementPrompt(settlementOptions, getSessionContext());
         const model = await this.clientManager.getModel(
@@ -201,15 +216,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseSettlementResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateSettlementLocal(settlementOptions));
+        return parseSettlementResponse(text, resolved);
+      },
+      () => generateSettlementLocal(settlementOptions),
+    );
   }
 
   /** Magic item generation delegates to the generator-engine package (#1351). */
@@ -217,8 +227,9 @@ export class DefaultGeneratorEngine {
     options: MagicItemGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...itemOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } =
           buildMagicItemPrompt(itemOptions, getSessionContext());
         const model = await this.clientManager.getModel(
@@ -228,23 +239,19 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseMagicItemResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateMagicItemLocal(itemOptions));
+        return parseMagicItemResponse(text, resolved);
+      },
+      () => generateMagicItemLocal(itemOptions),
+    );
   }
 
   async generateQuestHook(
     options: QuestGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...questOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } = buildQuestPrompt(
           questOptions,
           getSessionContext(),
@@ -256,15 +263,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseQuestResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateQuestLocal(questOptions));
+        return parseQuestResponse(text, resolved);
+      },
+      () => generateQuestLocal(questOptions),
+    );
   }
 
   /** Name generation delegates to the generator-engine package (#1351). */
@@ -272,8 +274,9 @@ export class DefaultGeneratorEngine {
     options: NamesGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...nameOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } =
           buildNamesPrompt(nameOptions);
         const model = await this.clientManager.getModel(
@@ -283,23 +286,19 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseNamesResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateNamesLocal(nameOptions));
+        return parseNamesResponse(text, resolved);
+      },
+      () => generateNamesLocal(nameOptions),
+    );
   }
 
   async generateSocialHub(
     options: SocialHubGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...hubOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage } = buildSocialHubPrompt(
           hubOptions,
           getSessionContext(),
@@ -311,23 +310,19 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseSocialHubResponse(text));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateSocialHubLocal(hubOptions));
+        return parseSocialHubResponse(text);
+      },
+      () => generateSocialHubLocal(hubOptions),
+    );
   }
 
   async generateTavern(
     options: TavernGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...tavernOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage } = buildTavernPrompt(
           tavernOptions,
           getSessionContext(),
@@ -339,23 +334,19 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseTavernResponse(text));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateTavernLocal(tavernOptions));
+        return parseTavernResponse(text);
+      },
+      () => generateTavernLocal(tavernOptions),
+    );
   }
 
   async generateKingdom(
     options: KingdomGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...kingdomOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage } = buildKingdomPrompt(
           kingdomOptions,
           getSessionContext(),
@@ -367,15 +358,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseKingdomResponse(text));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateKingdomLocal(kingdomOptions));
+        return parseKingdomResponse(text);
+      },
+      () => generateKingdomLocal(kingdomOptions),
+    );
   }
 
   /** Nation generation delegates to the generator-engine package (#1351). */
@@ -383,8 +369,9 @@ export class DefaultGeneratorEngine {
     options: NationGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...nationOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage } = buildNationPrompt(
           nationOptions,
           getSessionContext(),
@@ -396,15 +383,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parseNationResponse(text));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generateNationLocal(nationOptions));
+        return parseNationResponse(text);
+      },
+      () => generateNationLocal(nationOptions),
+    );
   }
 
   /** Pantheon generation delegates to the generator-engine package (#1351). */
@@ -412,8 +394,9 @@ export class DefaultGeneratorEngine {
     options: PantheonGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     const { useAI, ...pantheonOptions } = options;
-    if (useAI !== false) {
-      try {
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
         const { systemInstruction, userMessage, resolved } =
           buildPantheonPrompt(pantheonOptions, getSessionContext());
         const model = await this.clientManager.getModel(
@@ -423,15 +406,10 @@ export class DefaultGeneratorEngine {
         );
         const response = await model.generateContent(userMessage);
         const text = response.response.text().trim();
-        return toSeoOutput(parsePantheonResponse(text, resolved));
-      } catch (err) {
-        console.warn(
-          "AI generation failed, falling back to local tables:",
-          err,
-        );
-      }
-    }
-    return toSeoOutput(generatePantheonLocal(pantheonOptions));
+        return parsePantheonResponse(text, resolved);
+      },
+      () => generatePantheonLocal(pantheonOptions),
+    );
   }
 }
 

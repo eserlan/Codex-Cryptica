@@ -186,6 +186,31 @@
   let showSaveModal = $state(false);
   let redirectUrl = $state(`${cleanBase}/`);
 
+  // Offline awareness (#1494): generator pages still work offline using local
+  // tables, but AI Lore Co-Author mode requires the network. Seed from
+  // navigator.onLine and keep it in sync via window online/offline events.
+  let isOnline = $state(true);
+  // Effective AI mode: only when the user opted in *and* we're online. Drives
+  // both the generate call and the disabled state of the toggle.
+  const effectiveUseAI = $derived(isOnline && useAI);
+  // Dismissal flag for the "AI was unavailable, used local" notice; reset on
+  // each new generation so a later failure shows it again.
+  let aiFallbackDismissed = $state(false);
+
+  $effect(() => {
+    if (!browser) return;
+    isOnline = navigator.onLine;
+    const update = () => {
+      isOnline = navigator.onLine;
+    };
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  });
+
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
     "Cyberpunk / Corporate": "cyberpunk",
@@ -378,8 +403,9 @@
     isExampleDraft = false;
     isGenerating = true;
     errorMessage = null;
+    aiFallbackDismissed = false;
     try {
-      generatedData = await generate({ useAI });
+      generatedData = await generate({ useAI: effectiveUseAI });
       if (browser && window.innerWidth < 1024 && outputCard) {
         await tick();
         outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -690,6 +716,31 @@
       class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
+      {#if generatedData?.aiFallback && !aiFallbackDismissed}
+        <div
+          transition:fade={{ duration: 150 }}
+          class="mb-4 p-3 border border-amber-500/40 bg-amber-500/10 rounded-xl flex items-start gap-2.5"
+          role="status"
+          aria-live="polite"
+        >
+          <span
+            class="icon-[lucide--info] w-4 h-4 text-amber-500 shrink-0 mt-0.5"
+            aria-hidden="true"
+          ></span>
+          <p class="text-xs text-theme-text/80 leading-snug flex-grow">
+            AI generation was unavailable, so Codex created a local draft
+            instead.
+          </p>
+          <button
+            type="button"
+            onclick={() => (aiFallbackDismissed = true)}
+            class="text-theme-muted hover:text-theme-text transition-colors shrink-0"
+            aria-label="Dismiss notice"
+          >
+            <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+          </button>
+        </div>
+      {/if}
       <div
         class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
@@ -1106,6 +1157,32 @@
           </p>
         {/if}
 
+        {#if !isOnline}
+          <div
+            transition:fade={{ duration: 150 }}
+            class="mb-5 p-3 border border-theme-primary/30 bg-theme-primary/10 rounded-xl flex gap-2.5"
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              class="icon-[lucide--wifi-off] w-4 h-4 text-theme-primary shrink-0 mt-0.5"
+              aria-hidden="true"
+            ></span>
+            <div class="flex flex-col gap-1">
+              <p
+                class="text-[10px] font-bold uppercase tracking-wider font-header text-theme-primary"
+              >
+                Local Mode
+              </p>
+              <p class="text-[10px] text-theme-text/70 leading-snug">
+                You're offline. Codex will generate from built-in tables and
+                save drafts locally. Reconnect to use AI Lore Co-Author mode
+                again.
+              </p>
+            </div>
+          </div>
+        {/if}
+
         <form
           class="space-y-4"
           action={canonicalPath ? `${cleanBase}${canonicalPath}` : undefined}
@@ -1142,12 +1219,15 @@
                 type="checkbox"
                 id="ai-toggle"
                 bind:checked={useAI}
+                disabled={!isOnline}
                 aria-describedby="ai-toggle-hint"
-                class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0"
+                class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               />
               <label
                 for="ai-toggle"
-                class="text-[10px] font-bold uppercase tracking-wider text-theme-muted cursor-pointer flex items-center gap-1"
+                class="text-[10px] font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
+                  ? 'cursor-pointer'
+                  : 'opacity-50 cursor-not-allowed'}"
               >
                 <span
                   class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
@@ -1159,9 +1239,14 @@
               id="ai-toggle-hint"
               class="text-[9px] text-theme-muted/70 leading-snug pl-6"
             >
-              {useAI
-                ? "AI writes unique, rich lore on each generate."
-                : "Fast offline mode — local tables only, no AI."}
+              {#if !isOnline}
+                Offline: using fast local tables. Reconnect to enable AI Lore
+                Co-Author mode.
+              {:else if useAI}
+                AI writes unique, rich lore on each generate.
+              {:else}
+                Fast offline mode — local tables only, no AI.
+              {/if}
             </p>
           </div>
         </form>

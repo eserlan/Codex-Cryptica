@@ -22,6 +22,12 @@ export interface PublicGeneratorOutput {
   lore: string;
   labels: string[];
   status: "active" | "draft";
+  /**
+   * Set when AI generation was requested but failed and the engine fell back to
+   * local tables. Lets the UI surface a friendly "AI was unavailable" notice
+   * (#1494). Absent on ordinary AI or explicitly-local results.
+   */
+  aiFallback?: boolean;
 }
 
 /** First non-blank value, or the last one if all are blank. */
