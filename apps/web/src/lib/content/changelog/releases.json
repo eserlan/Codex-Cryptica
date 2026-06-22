@@ -1,5 +1,19 @@
 [
   {
+    "version": "0.27.0",
+    "title": "The Themed Generators & World Chronology Update",
+    "date": "2026-06-22",
+    "type": "minor",
+    "highlights": [
+      "Calendar & Agenda View: Explore your world's chronology in a full calendar and agenda layout, with mobile swipe-to-navigate, a year-wheel picker, and double-click a date cell to create a pre-filled event.",
+      "Themed Generator Hubs: Dedicated generator landing pages and content packs for Western, Steampunk, Lancer, Space Opera, Optimistic Sci-Fi, Cyberpunk, and Vampire settings, reachable via nested /generators/[theme] routes.",
+      "Entity Explorer Workspace: A dedicated desktop explorer workspace with entity navigation history and keyboard shortcuts for fast back-and-forth movement through your vault.",
+      "Entity Revision via Oracle: Revise existing entities through the Gemini Interactions API, keeping edits grounded in your established lore.",
+      "Theme Polish: New and enhanced world textures plus an authentic Pip-Boy CRT theme with scanlines, phosphor glow, and vignette.",
+      "Smoother Graph Loading: Re-engineered the graph load pipeline for more reliable layout and fixed graph controls overlapping the footer."
+    ]
+  },
+  {
     "version": "0.26.4",
     "title": "The In-App Campaign Generator Update",
     "date": "2026-06-14",
