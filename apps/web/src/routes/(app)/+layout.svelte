@@ -494,7 +494,7 @@
 
         {#if isEntityExplorerWorkspace && layoutUIStore.focusedEntityId}
           <div
-            class="absolute inset-0 z-30 min-h-0 min-w-0 overflow-hidden"
+            class="absolute inset-0 z-[60] min-h-0 min-w-0 overflow-hidden bg-theme-bg"
             data-testid="entity-explorer-workspace-overlay"
           >
             <EntityExplorerWorkspace entityId={layoutUIStore.focusedEntityId} />
