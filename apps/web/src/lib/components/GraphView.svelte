@@ -198,11 +198,13 @@
     untrack(() => controller.handleModeChange());
   });
 
-  // Vault loading triggers
+  // Vault load state machine (loading reset + finalization in one effect)
   $effect(() => {
     void vault.status;
     void vault.allEntities.length;
-    untrack(() => controller.handleVaultLoading());
+    void controller.loadPhase;
+    void controller.cy;
+    untrack(() => controller.reconcileLoadState());
   });
 
   // Style sync
@@ -218,14 +220,6 @@
         });
       }
     }
-  });
-
-  // Load Finalization
-  $effect(() => {
-    void vault.status;
-    void controller.loadPhase;
-    void controller.cy;
-    untrack(() => controller.handleVaultLoadFinalization());
   });
 
   // Element Sync

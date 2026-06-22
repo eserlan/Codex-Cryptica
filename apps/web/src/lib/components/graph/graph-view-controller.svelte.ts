@@ -487,22 +487,18 @@ export class GraphViewController {
     }
   };
 
-  handleVaultLoading = () => {
-    if (
-      this.deps.vault.status === "loading" &&
-      this.deps.vault.allEntities.length === 0
-    ) {
+  reconcileLoadState = () => {
+    const { status, allEntities } = this.deps.vault;
+    if (status === "loading" && allEntities.length === 0) {
       this.loadPhase = "idle";
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
             this.deps.vault.releaseImageUrl(path),
         } as any);
+      return;
     }
-  };
-
-  handleVaultLoadFinalization = () => {
-    if (this.deps.vault.status === "idle" && this.loadPhase === "elements") {
+    if (status === "idle" && this.loadPhase === "elements") {
       this.loadPhase = "finalized";
       this.deps.debugStore.log(
         "[GraphView] Vault load finalized, unlocking all updates.",
