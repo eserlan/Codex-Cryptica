@@ -18,6 +18,13 @@
 
   const views: NavItem[] = [
     {
+      id: "explorer",
+      icon: "icon-[lucide--database]",
+      label: "Entities",
+      title: "Entity Explorer",
+      action: () => layoutUIStore.toggleSidebarTool("explorer"),
+    },
+    {
       id: "graph",
       icon: "icon-[lucide--network]",
       label: "Graph",
@@ -49,13 +56,6 @@
 
   const tools = $derived.by<NavItem[]>(() => {
     const list: NavItem[] = [
-      {
-        id: "explorer",
-        icon: "icon-[lucide--database]",
-        label: "Entities",
-        title: "Entity Explorer",
-        action: () => layoutUIStore.toggleSidebarTool("explorer"),
-      },
       {
         id: "oracle",
         icon: "icon-[lucide--sparkles]",
@@ -94,7 +94,7 @@
   });
 
   const isViewActive = (item: NavItem) => {
-    if (!item.href) return false;
+    if (!item.href) return layoutUIStore.activeSidebarTool === item.id;
     if (item.id === "graph") return page.url.pathname === `${base}/`;
     return page.url.pathname.startsWith(item.href);
   };
@@ -110,28 +110,53 @@
   <!-- Main Views -->
   {#each views as view}
     {@const active = isViewActive(view)}
-    <a
-      href={view.href}
-      class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
-        ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
-        : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
-      aria-label={view.label}
-      title={view.title ?? view.label}
-      data-testid={`activity-bar-${view.id}`}
-    >
-      <span
-        class="{view.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
-        aria-hidden="true"
-      ></span>
+    {#if view.href}
+      <a
+        href={view.href}
+        class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+          ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
+          : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
+        aria-label={view.label}
+        title={view.title ?? view.label}
+        data-testid={`activity-bar-${view.id}`}
+      >
+        <span
+          class="{view.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
+          aria-hidden="true"
+        ></span>
 
-      {#if active}
-        <div
-          class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
-                 bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
-                 bg-chrome-accent rounded-t-full md:rounded-r-full md:rounded-t-none"
-        ></div>
-      {/if}
-    </a>
+        {#if active}
+          <div
+            class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
+                   bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
+                   bg-chrome-accent rounded-t-full md:rounded-r-full md:rounded-t-none"
+          ></div>
+        {/if}
+      </a>
+    {:else}
+      <button
+        onclick={view.action}
+        class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
+          ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'
+          : 'border-transparent text-chrome-muted hover:text-chrome-text hover:bg-chrome-muted/10'}"
+        aria-label={view.label}
+        title={view.title ?? view.label}
+        data-testid={`activity-bar-${view.id}`}
+      >
+        <span
+          class="{view.icon} w-5 h-5 transition-transform duration-200 group-hover:scale-110"
+          aria-hidden="true"
+        ></span>
+
+        {#if active}
+          <div
+            class="absolute md:left-0 md:top-1/2 md:-translate-y-1/2 md:w-1 md:h-6
+                   bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
+                   bg-chrome-accent rounded-t-full md:rounded-r-full md:rounded-t-none"
+          ></div>
+        {/if}
+      </button>
+    {/if}
   {/each}
 
   <!-- Separator -->

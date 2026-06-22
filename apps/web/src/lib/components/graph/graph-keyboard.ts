@@ -30,6 +30,20 @@ export async function handleGraphDeleteShortcut(
 ) {
   if (event.key !== "Delete" && event.key !== "Backspace") return false;
   if (isEditableTarget(document.activeElement)) return false;
+
+  // Prevent accidental deletes when keyboard focus is within a sidebar, modal, or overlay.
+  // This ensures 'Backspace' used for navigation or UI interaction doesn't delete graph nodes.
+  const active = document.activeElement;
+  if (active instanceof HTMLElement) {
+    if (
+      active.closest(
+        "aside, dialog, [role='dialog'], [role='complementary'], section[aria-label='Entity Explorer workspace']",
+      )
+    ) {
+      return false;
+    }
+  }
+
   if (deps.isGuest) return false;
 
   const selectedNodes = deps.cy?.$("node:selected") ?? [];
