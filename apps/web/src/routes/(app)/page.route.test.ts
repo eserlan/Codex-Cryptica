@@ -110,6 +110,15 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.getByText("Optional AI")).toBeTruthy();
   });
 
+  it("sizes the app route shell to its parent instead of recomputing viewport height", () => {
+    render(RoutePage);
+
+    const routeShell = screen.getByTestId("app-route-shell");
+    expect(routeShell.className).toContain("h-full");
+    expect(routeShell.className).toContain("min-h-0");
+    expect(routeShell.className).not.toContain("app-content-height");
+  });
+
   it("dismisses the overlay when Space is pressed directly on the overlay", async () => {
     render(RoutePage);
     const overlay = await waitFor(() =>
