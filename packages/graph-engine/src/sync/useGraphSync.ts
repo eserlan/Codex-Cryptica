@@ -67,6 +67,26 @@ const syncRenderedWeights = (
   }
 };
 
+export function resolveLayoutTrigger(
+  isFirstElements: boolean,
+  hasDeletions: boolean,
+  hasNewNodes: boolean,
+  isVaultLoading: boolean,
+  initialLoaded: boolean,
+  elementsToRemove: { isNode: () => boolean }[],
+): LayoutRequest | null {
+  if (!hasNewNodes && !hasDeletions && !isFirstElements) return null;
+  if (isFirstElements) return null; // handled by onFirstElements + cy.fit
+  if (isVaultLoading && !initialLoaded) return null;
+  const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
+  return {
+    reason: "Elements Update",
+    isForced: hasDeletions,
+    hasNewNodes,
+    hasRemovedNodes,
+  };
+}
+
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const {
     elements,
@@ -288,19 +308,16 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
       if (isFirstElements) {
         options.onFirstElements?.();
         (cy as any).fit(undefined, 40);
-      } else if (!isVaultLoading || initialLoaded) {
-        // Preserve current positions for edge-only updates. This avoids a second
-        // relayout when AI discovery adds connections right after creating a node.
-        const force = hasDeletions;
-        // Edge churn (e.g. lore edits rewriting wiki-links) removes elements
-        // without removing nodes — callers use this to keep the camera still.
-        const hasRemovedNodes = elementsToRemove.some((el) => el.isNode());
-        options.onLayoutUpdate?.({
-          reason: "Elements Update",
-          isForced: force,
+      } else {
+        const req = resolveLayoutTrigger(
+          isFirstElements,
+          hasDeletions,
           hasNewNodes,
-          hasRemovedNodes,
-        });
+          isVaultLoading,
+          initialLoaded,
+          elementsToRemove,
+        );
+        if (req) options.onLayoutUpdate?.(req);
       }
     }
   } catch (err) {

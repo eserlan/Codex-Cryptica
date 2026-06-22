@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { syncGraphElements } from "./useGraphSync";
+import { syncGraphElements, resolveLayoutTrigger } from "./useGraphSync";
 import type { Core } from "cytoscape";
 import type { LayoutRequest } from "../LayoutManager";
 
@@ -471,5 +471,68 @@ describe("syncGraphElements", () => {
     expect(node1.data).toHaveBeenCalledWith("weight", 0);
     expect(node2.data).toHaveBeenCalledWith("weight", 0);
     expect(node3.data).toHaveBeenCalledWith("weight", 0);
+  });
+});
+
+describe("resolveLayoutTrigger", () => {
+  const node = { isNode: () => true };
+  const edge = { isNode: () => false };
+
+  it("returns null when no change", () => {
+    expect(
+      resolveLayoutTrigger(false, false, false, false, true, []),
+    ).toBeNull();
+  });
+
+  it("returns null for isFirstElements (handled by onFirstElements path)", () => {
+    expect(
+      resolveLayoutTrigger(true, false, true, false, false, []),
+    ).toBeNull();
+  });
+
+  it("returns null when vault is loading and not yet initialLoaded", () => {
+    expect(
+      resolveLayoutTrigger(false, false, true, true, false, []),
+    ).toBeNull();
+  });
+
+  it("returns request with isForced=true and hasRemovedNodes=true on node deletion", () => {
+    const req = resolveLayoutTrigger(false, true, false, false, true, [node]);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: true,
+    });
+  });
+
+  it("returns request with hasRemovedNodes=false for edge-only deletion", () => {
+    const req = resolveLayoutTrigger(false, true, false, false, true, [edge]);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: true,
+      hasNewNodes: false,
+      hasRemovedNodes: false,
+    });
+  });
+
+  it("returns request with isForced=false and hasNewNodes=true on addition", () => {
+    const req = resolveLayoutTrigger(false, false, true, false, true, []);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: false,
+      hasNewNodes: true,
+      hasRemovedNodes: false,
+    });
+  });
+
+  it("fires when isVaultLoading=true but initialLoaded=true", () => {
+    const req = resolveLayoutTrigger(false, false, true, true, true, []);
+    expect(req).toEqual<LayoutRequest>({
+      reason: "Elements Update",
+      isForced: false,
+      hasNewNodes: true,
+      hasRemovedNodes: false,
+    });
   });
 });
