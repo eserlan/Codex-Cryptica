@@ -14,7 +14,11 @@
 
   function handleSelect(entity: Entity) {
     if (layoutUIStore.isEntityExplorerWorkspace) {
-      layoutUIStore.openEntityExplorerWorkspace(entity.id);
+      if (layoutUIStore.focusedEntityId === entity.id) {
+        layoutUIStore.clearEntityExplorerWorkspaceFocus();
+      } else {
+        layoutUIStore.openEntityExplorerWorkspace(entity.id);
+      }
       return;
     }
 

@@ -27,7 +27,10 @@ function storage(initial: Record<string, string> = {}) {
 }
 
 function viewport(overrides: Partial<UIViewport> = {}) {
-  const mediaListeners = new Map<string, Array<(event: { matches: boolean }) => void>>();
+  const mediaListeners = new Map<
+    string,
+    Array<(event: { matches: boolean }) => void>
+  >();
   const mediaState = new Map<string, boolean>();
 
   const getListeners = (query: string) => {
@@ -193,9 +196,9 @@ describe("LayoutUIStore", () => {
     states.push(store.isEntityExplorerWorkspace);
 
     expect(states).toEqual([false, true, true, false, false]);
-    expect(states.filter((state, index) => states[index - 1] !== state)).toEqual(
-      [false, true, false],
-    );
+    expect(
+      states.filter((state, index) => states[index - 1] !== state),
+    ).toEqual([false, true, false]);
   });
 
   it("persists VTT collapse state and increments find counter", () => {

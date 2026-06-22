@@ -259,6 +259,7 @@ describe("+layout.svelte", () => {
     layoutUIStore.leftSidebarOpen = true;
     layoutUIStore.activeSidebarTool = "explorer";
     layoutUIStore.isWideViewport = true;
+    layoutUIStore.openEntityExplorerWorkspace("entity-1");
 
     render(LayoutTestHost);
     await tick();
@@ -277,6 +278,7 @@ describe("+layout.svelte", () => {
   it("shows or hides the overlay once as the viewport crosses the desktop threshold", async () => {
     layoutUIStore.leftSidebarOpen = true;
     layoutUIStore.activeSidebarTool = "explorer";
+    layoutUIStore.openEntityExplorerWorkspace("entity-1");
 
     render(LayoutTestHost);
     await tick();
@@ -321,6 +323,8 @@ describe("+layout.svelte", () => {
 
     const routeContent = screen.getByTestId("layout-route-content");
     expect(routeContent.getAttribute("aria-hidden")).toBe("true");
-    expect((routeContent as HTMLElement & { inert?: boolean }).inert).toBe(true);
+    expect((routeContent as HTMLElement & { inert?: boolean }).inert).toBe(
+      true,
+    );
   });
 });

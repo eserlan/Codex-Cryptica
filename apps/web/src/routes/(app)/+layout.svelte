@@ -476,17 +476,23 @@
         <SidebarPanelHost />
       {/if}
 
-      <main class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <main
+        class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
         <div
           class="min-h-0 min-w-0 flex-1 overflow-y-auto"
-          inert={isEntityExplorerWorkspace || undefined}
-          aria-hidden={isEntityExplorerWorkspace || undefined}
+          inert={(isEntityExplorerWorkspace &&
+            !!layoutUIStore.focusedEntityId) ||
+            undefined}
+          aria-hidden={(isEntityExplorerWorkspace &&
+            !!layoutUIStore.focusedEntityId) ||
+            undefined}
           data-testid="layout-route-content"
         >
           {@render children()}
         </div>
 
-        {#if isEntityExplorerWorkspace}
+        {#if isEntityExplorerWorkspace && layoutUIStore.focusedEntityId}
           <div
             class="absolute inset-0 z-30 min-h-0 min-w-0 overflow-hidden"
             data-testid="entity-explorer-workspace-overlay"

@@ -50,19 +50,19 @@
   const tools = $derived.by<NavItem[]>(() => {
     const list: NavItem[] = [
       {
+        id: "explorer",
+        icon: "icon-[lucide--database]",
+        label: "Entities",
+        title: "Entity Explorer",
+        action: () => layoutUIStore.toggleSidebarTool("explorer"),
+      },
+      {
         id: "oracle",
         icon: "icon-[lucide--sparkles]",
         label: "Oracle",
         title:
           "Lore Oracle — optional AI assist. Ask for summaries, plot hooks, and connections when you choose. AI is an assistive layer, never required.",
         action: () => layoutUIStore.toggleSidebarTool("oracle"),
-      },
-      {
-        id: "explorer",
-        icon: "icon-[lucide--database]",
-        label: "Entities",
-        title: "Entity Explorer",
-        action: () => layoutUIStore.toggleSidebarTool("explorer"),
       },
       {
         id: "quicknote",
