@@ -1,0 +1,205 @@
+# API Contract: Guest Vault Snapshot API
+
+This OpenAPI 3.0 specification outlines the contract between the Codex Cryptica client application (host & guest) and the Cloudflare Workers backend proxy.
+
+```yaml
+openapi: 3.0.3
+info:
+  title: Codex Cryptica R2 Publishing Proxy API
+  description: Serverless endpoints on Cloudflare Workers sitting in front of Cloudflare R2 bucket for hosting read-only guest snapshot bundles and assets.
+  version: 1.0.0
+servers:
+  - url: https://oracle-proxy.espen-erlandsen.workers.dev
+    description: Production Worker Environment
+paths:
+  /api/publish-vault:
+    post:
+      summary: Publish or update a guest vault snapshot
+      description: Creates a new snapshot if publishId and writeToken are omitted. If they are provided in headers/query, it authenticates using the token and overwrites the existing bundle.
+      parameters:
+        - name: publishId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional publish ID of the snapshot to overwrite/update.
+      headers:
+        Authorization:
+          required: false
+          schema:
+            type: string
+          description: Bearer token containing the writeToken (required if publishId is provided).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestBundle'
+      responses:
+        '200':
+          description: Successful publish or update
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publishId:
+                    type: string
+                  writeToken:
+                    type: string
+                  publishedAt:
+                    type: string
+                    format: date-time
+                required:
+                  - publishId
+                  - writeToken
+                  - publishedAt
+        '401':
+          description: Unauthorized update attempt
+        '404':
+          description: Snapshot not found for specified publishId
+        '413':
+          description: Payload too large
+        '500':
+          description: Server error
+
+  /api/published/{publishId}/bundle:
+    get:
+      summary: Retrieve the published guest vault bundle
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully fetched bundle JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestBundle'
+        '404':
+          description: Published snapshot not found
+
+  /api/published/{publishId}/manifest:
+    get:
+      summary: Retrieve basic metadata of a published snapshot
+      description: Reads metadata from the R2 customMetadata headers, preventing a full download of the JSON bundle.
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully fetched metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publishId:
+                    type: string
+                  vaultTitle:
+                    type: string
+                  publishedAt:
+                    type: string
+                  entityCount:
+                    type: integer
+                required:
+                  - publishId
+                  - vaultTitle
+                  - publishedAt
+        '404':
+          description: Published snapshot not found
+
+  /api/published/{publishId}/assets/{assetId}:
+    post:
+      summary: Upload an asset for a published snapshot
+      description: Uploads a binary asset (image or map) associated with the published campaign. Authorized via writeToken.
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      headers:
+        Authorization:
+          required: true
+          schema:
+            type: string
+          description: Bearer token containing the writeToken.
+        Content-Type:
+          required: true
+          schema:
+            type: string
+          description: MIME type of the uploaded asset (e.g. image/webp).
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Asset successfully uploaded
+        '401':
+          description: Unauthorized
+        '404':
+          description: Bundle snapshot not found
+
+    get:
+      summary: Download an asset associated with a published snapshot
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved binary asset
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Asset not found
+
+  /api/published/{publishId}:
+    delete:
+      summary: Unpublish and delete the guest vault snapshot and all its assets
+      parameters:
+        - name: publishId
+          in: path
+          required: true
+          schema:
+            type: string
+      headers:
+        Authorization:
+          required: true
+          schema:
+            type: string
+          description: Bearer token containing the writeToken.
+      responses:
+        '200':
+          description: Snapshot and associated assets successfully deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Snapshot not found
+```

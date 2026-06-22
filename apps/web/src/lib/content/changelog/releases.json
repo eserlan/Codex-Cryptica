@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.28.0",
+    "title": "The Guest Vault Snapshot & Cloudflare R2 Publishing Update",
+    "date": "2026-06-22",
+    "type": "minor",
+    "highlights": [
+      "Published Guest Snapshots: Compile and publish a read-only, player-safe snapshot of your campaign lore to Cloudflare R2, letting players browse your world independently when you are offline.",
+      "GM Secret Redaction: The exporter automatically and physically removes GM secrets (lore and art direction fields) and redacts private links to hidden notes with [Redacted] placeholders.",
+      "Background Upload Sync: Snapshots compile and upload to R2 servers in the background with progress indicators, allowing you to close settings or continue worldbuilding instantly.",
+      "Published Worlds Dashboard: View, copy public URLs, publish updates, or unpublish your shared worlds from a central settings dashboard.",
+      "Guest History Tracking: The guest viewer tracks visited vaults locally and lists them on a landing page for one-click access, with self-healing 404 cleanup logic."
+    ]
+  },
+  {
     "version": "0.27.0",
     "title": "The Themed Generators & World Chronology Update",
     "date": "2026-06-22",

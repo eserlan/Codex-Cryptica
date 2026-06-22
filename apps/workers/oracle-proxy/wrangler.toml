@@ -48,3 +48,9 @@ head_sampling_rate = 1
 
 [ai]
 binding = "AI"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "codex-cryptica-statics"
+preview_bucket_name = "codex-cryptica-statics-local"
+

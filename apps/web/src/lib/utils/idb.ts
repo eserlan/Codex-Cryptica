@@ -1,8 +1,8 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
 import type { SyncEntry, OpfsStateEntry } from "@codex/sync-engine";
-import type { GuestChatTranscript } from "schema";
-
+import type { GuestChatTranscript, PublishRegistry } from "schema";
+// ... (rest of imports unchanged)
 export interface VaultRecord {
   id: string;
   name: string;
@@ -118,11 +118,15 @@ interface CodexDB extends DBSchema {
       "by-character": string;
     };
   };
+  publish_registry: {
+    key: string; // vaultId
+    value: PublishRegistry;
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 18 to support guest chat transcripts.
-export const DB_VERSION = 18;
+// DB_VERSION was bumped to 19 to support publish registry.
+export const DB_VERSION = 19;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>> | null = null;
 
@@ -210,6 +214,12 @@ export function getDB() {
             keyPath: "id",
           });
           store.createIndex("by-character", "characterId");
+        }
+
+        if (!db.objectStoreNames.contains("publish_registry")) {
+          db.createObjectStore("publish_registry", {
+            keyPath: "vaultId",
+          });
         }
       },
       blocked() {

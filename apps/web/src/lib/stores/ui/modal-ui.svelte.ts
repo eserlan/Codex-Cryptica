@@ -3,6 +3,7 @@ export type SettingsTab =
   | "intelligence"
   | "schema"
   | "theme"
+  | "publishing"
   | "about"
   | "help";
 

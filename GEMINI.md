@@ -3,6 +3,9 @@
 Auto-generated from all feature plans. Last updated: 2026-06-22
 
 ## Active Technologies
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility (135-guest-vault-r2)
+- Cloudflare R2 bucket (`codex-cryptica-statics`) for hosted files, IndexedDB (`PublishRegistry`) for local host settings (135-guest-vault-r2)
+- Cloudflare R2 bucket (`codex-cryptica-statics`) for hosted files, IndexedDB (`PublishRegistry`) for local host settings, `localStorage` (`GuestHistory`) for guest browser history (135-guest-vault-r2)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4 (134-entity-navigation-history)
 - N/A (In-memory session state) (134-entity-navigation-history)
@@ -206,12 +209,12 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+- 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
+- 135-guest-vault-r2: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Cloudflare Worker runtime (wrangler), FlexSearch, Svelte 5, Lucide-iconify utility
 
 - 134-entity-navigation-history: Added TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, Tailwind 4
 
-- 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
 
-- 129-seo-landing-pages: Added TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine`
 
 <!-- MANUAL ADDITIONS START -->
 
