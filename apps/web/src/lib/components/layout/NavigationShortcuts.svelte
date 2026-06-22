@@ -63,12 +63,14 @@
           (activeElement as HTMLElement).isContentEditable);
       if (isInput) return;
 
-      const inExplorerFocus =
-        layoutUIStore.isEntityExplorerWorkspace &&
-        !!layoutUIStore.focusedEntityId;
-      const inZenMode = !!modalUIStore?.showZenMode;
+      if (modalUIStore?.isAnyModalOpen && !modalUIStore?.showZenMode) {
+        return;
+      }
 
-      if (!inExplorerFocus && !inZenMode) {
+      if (
+        layoutUIStore.isEntityExplorerWorkspace &&
+        !layoutUIStore.focusedEntityId
+      ) {
         return;
       }
 
