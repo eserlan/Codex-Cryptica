@@ -4,6 +4,12 @@ import type {
   EncounterSnapshotSummary,
   Token,
 } from "../../types/vtt";
+import {
+  systemIdGenerator,
+  systemClock,
+  type IdGenerator,
+  type Clock,
+} from "../utils/runtime-deps";
 
 export interface VTTSessionServiceDeps {
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
@@ -15,12 +21,18 @@ function createEmptyFogMask(): string | null {
 
 export function createEncounterSession(
   mapId: string,
-  id = crypto.randomUUID(),
-  name = `Encounter ${id.slice(0, 8)}`,
+  id?: string,
+  name?: string,
+  deps: { idGenerator?: IdGenerator; clock?: Clock } = {},
 ): EncounterSession {
+  const idGen = deps.idGenerator ?? systemIdGenerator;
+  const clock = deps.clock ?? systemClock;
+  const actualId = id ?? idGen.uuid();
+  const actualName = name ?? `Encounter ${actualId.slice(0, 8)}`;
+
   return {
-    id,
-    name,
+    id: actualId,
+    name: actualName,
     mapId,
     mode: "exploration",
     tokens: {},
@@ -36,7 +48,7 @@ export function createEncounterSession(
       start: null,
       end: null,
     },
-    createdAt: Date.now(),
+    createdAt: clock.now(),
     savedAt: null,
     chatMessages: [],
     gridSize: 50,
