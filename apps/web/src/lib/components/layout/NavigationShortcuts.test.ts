@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent } from "@testing-library/svelte";
 import NavigationShortcuts from "./NavigationShortcuts.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -62,11 +63,10 @@ describe("NavigationShortcuts", () => {
     input.remove();
   });
 
-  it("should ignore shortcuts when a non-Zen modal is open", async () => {
+  it("should ignore shortcuts when neither Zen Mode nor Explorer focus is active", async () => {
     render(NavigationShortcuts);
 
-    modalUIStore.showSettings = true; // This sets isAnyModalOpen to true
-
+    // Default state: no zen mode, no explorer focus
     await fireEvent.keyDown(window, { key: "ArrowLeft", shiftKey: true });
 
     expect(historyStore.back).not.toHaveBeenCalled();
@@ -83,8 +83,32 @@ describe("NavigationShortcuts", () => {
     expect(historyStore.back).toHaveBeenCalled();
   });
 
-  it("should call tryNavigate on valid shortcut", async () => {
+  it("should allow shortcuts when Explorer Focus is active", async () => {
     render(NavigationShortcuts);
+
+    // Mock layout store property for isEntityExplorerWorkspace
+    Object.defineProperty(layoutUIStore, "isEntityExplorerWorkspace", {
+      get: () => true,
+      configurable: true,
+    });
+    layoutUIStore.focusedEntityId = "entity-1";
+
+    await fireEvent.keyDown(window, { key: "ArrowLeft", shiftKey: true });
+
+    expect(historyStore.back).toHaveBeenCalled();
+
+    // reset
+    Object.defineProperty(layoutUIStore, "isEntityExplorerWorkspace", {
+      get: () => false,
+      configurable: true,
+    });
+    layoutUIStore.focusedEntityId = null;
+  });
+
+  it("should call tryNavigate on valid shortcut when active", async () => {
+    render(NavigationShortcuts);
+
+    modalUIStore.showZenMode = true;
 
     await fireEvent.keyDown(window, { key: "ArrowLeft", shiftKey: true });
     expect(historyStore.back).toHaveBeenCalled();
