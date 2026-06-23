@@ -5,11 +5,12 @@
   import { vault } from "../../stores/vault.svelte";
   import type { MapInteractionManager } from "./map-interactions.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import type { MapPin } from "schema";
 
   let { interactions }: { interactions: MapInteractionManager } = $props();
 
   let selectedPin = $derived(
-    mapStore.pins.find((p) => p.id === interactions.selectedPinId),
+    mapStore.pins.find((p: MapPin) => p.id === interactions.selectedPinId),
   );
   let subMapForSelected = $derived(
     selectedPin?.entityId

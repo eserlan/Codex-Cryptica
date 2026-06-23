@@ -1,9 +1,11 @@
 import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
+import { getPublishTurnstileToken } from "./turnstile";
 
 export interface PublishingServiceDeps {
   fetch?: typeof fetch;
   baseUrl?: string;
+  getPublishTurnstileToken?: () => Promise<string>;
   getPublishRegistry: (vaultId: string) => Promise<PublishRegistry | undefined>;
   savePublishRegistry: (registry: PublishRegistry) => Promise<void>;
   deletePublishRegistry: (vaultId: string) => Promise<void>;
@@ -49,14 +51,17 @@ export class PublishingService {
   }
 
   private pathToAssetId(path: string): string {
-    return path.trim().replace(/^(\.\/|\/)/, "").replace(/[^a-zA-Z0-9.-]/g, "_");
+    return path
+      .trim()
+      .replace(/^(\.\/|\/)/, "")
+      .replace(/[^a-zA-Z0-9.-]/g, "_");
   }
 
   private async calculateHash(blob: Blob): Promise<string> {
     const buffer = await blob.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   private async resolveAsset(path: string) {
@@ -79,7 +84,10 @@ export class PublishingService {
         hash,
       };
     } catch (err) {
-      console.error(`[PublishingService] Failed to resolve asset ${path}:`, err);
+      console.error(
+        `[PublishingService] Failed to resolve asset ${path}:`,
+        err,
+      );
       return null;
     }
   }
@@ -106,10 +114,12 @@ export class PublishingService {
     const localPaths = new Set<string>();
     for (const e of bundle.entities) {
       if (e.image && this.isLocalPath(e.image)) localPaths.add(e.image);
-      if (e.thumbnail && this.isLocalPath(e.thumbnail)) localPaths.add(e.thumbnail);
+      if (e.thumbnail && this.isLocalPath(e.thumbnail))
+        localPaths.add(e.thumbnail);
     }
     for (const m of bundle.maps || []) {
-      if (m.assetPath && this.isLocalPath(m.assetPath)) localPaths.add(m.assetPath);
+      if (m.assetPath && this.isLocalPath(m.assetPath))
+        localPaths.add(m.assetPath);
     }
 
     return {
@@ -122,10 +132,14 @@ export class PublishingService {
       },
       excluded: {
         entityCount: entities.length - bundle.entities.length,
-        relationshipCount: (entities.reduce((acc: number, e: any) => acc + (e.connections?.length || 0), 0)) - bundle.relationships.length,
+        relationshipCount:
+          entities.reduce(
+            (acc: number, e: any) => acc + (e.connections?.length || 0),
+            0,
+          ) - bundle.relationships.length,
         mapCount: maps.length - (bundle.maps || []).length,
         canvasCount: canvases.length - (bundle.canvases || []).length,
-      }
+      },
     };
   }
 
@@ -147,7 +161,7 @@ export class PublishingService {
 
       // Identify referenced assets
       const localPaths = new Set<string>();
-      
+
       const tempBundle = GuestExporter.export({
         entities,
         defaultVisibility,
@@ -161,16 +175,24 @@ export class PublishingService {
 
       for (const e of tempBundle.entities) {
         if (e.image && this.isLocalPath(e.image)) localPaths.add(e.image);
-        if (e.thumbnail && this.isLocalPath(e.thumbnail)) localPaths.add(e.thumbnail);
+        if (e.thumbnail && this.isLocalPath(e.thumbnail))
+          localPaths.add(e.thumbnail);
       }
       for (const m of tempBundle.maps || []) {
-        if (m.assetPath && this.isLocalPath(m.assetPath)) localPaths.add(m.assetPath);
+        if (m.assetPath && this.isLocalPath(m.assetPath))
+          localPaths.add(m.assetPath);
       }
 
       this.statusMessage = `Resolving local assets (0/${localPaths.size})...`;
       this.progress = 5;
 
-      const assetsToUpload: Array<{ path: string; blob: Blob; mimeType: string; hash: string; assetId: string }> = [];
+      const assetsToUpload: Array<{
+        path: string;
+        blob: Blob;
+        mimeType: string;
+        hash: string;
+        assetId: string;
+      }> = [];
       let resolvedCount = 0;
 
       for (const path of localPaths) {
@@ -188,18 +210,42 @@ export class PublishingService {
       }
 
       // Check existing publish registry
-      const existingRegistry = this.publishedVaults[vaultId] || await this.deps.getPublishRegistry(vaultId);
+      const existingRegistry =
+        this.publishedVaults[vaultId] ||
+        (await this.deps.getPublishRegistry(vaultId));
       const isUpdate = !!existingRegistry;
       const publishId = existingRegistry?.publishId || "";
       const writeToken = existingRegistry?.writeToken || "";
 
       // Construct asset manifest
-      const assetManifest = assetsToUpload.map(a => ({
+      const assetManifest = assetsToUpload.map((a) => ({
         assetId: a.assetId,
         filename: a.path,
         mimeType: a.mimeType,
         hash: a.hash,
       }));
+
+      const fetcher = this.deps.fetch || fetch;
+      const baseUrl =
+        this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
+      let previousManifest: Array<{ assetId: string; hash?: string }> = [];
+
+      if (isUpdate && publishId) {
+        try {
+          const previousBundleResponse = await fetcher(
+            `${baseUrl}/api/published/${publishId}/bundle`,
+          );
+          if (previousBundleResponse.ok) {
+            const previousBundle = await previousBundleResponse.json();
+            previousManifest = previousBundle.assetManifest || [];
+          }
+        } catch (e) {
+          console.warn(
+            "[PublishingService] Failed to load previous manifest, uploading all assets",
+            e,
+          );
+        }
+      }
 
       this.statusMessage = "Compiling final guest bundle...";
       this.progress = 25;
@@ -208,7 +254,7 @@ export class PublishingService {
         entities,
         defaultVisibility,
         activeTheme: activeTheme ? $state.snapshot(activeTheme) : {},
-        publishId, 
+        publishId,
         vaultTitle: this.deps.vault.activeVaultRecord?.name || "Untitled World",
         publisherVersion: "1.0.0",
         maps,
@@ -219,11 +265,8 @@ export class PublishingService {
       this.statusMessage = "Uploading snapshot bundle...";
       this.progress = 30;
 
-      const fetcher = this.deps.fetch || fetch;
-      const baseUrl = this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
-      
-      const publishUrl = isUpdate 
-        ? `${baseUrl}/api/publish-vault?publishId=${publishId}` 
+      const publishUrl = isUpdate
+        ? `${baseUrl}/api/publish-vault?publishId=${publishId}`
         : `${baseUrl}/api/publish-vault`;
 
       const headers: Record<string, string> = {
@@ -231,6 +274,10 @@ export class PublishingService {
       };
       if (isUpdate && writeToken) {
         headers["Authorization"] = `Bearer ${writeToken}`;
+      } else {
+        headers["X-Turnstile-Token"] = await (
+          this.deps.getPublishTurnstileToken || getPublishTurnstileToken
+        )();
       }
 
       const response = await fetcher(publishUrl, {
@@ -241,7 +288,10 @@ export class PublishingService {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `Failed to upload bundle: ${response.statusText}`);
+        throw new Error(
+          errData?.error?.message ||
+            `Failed to upload bundle: ${response.statusText}`,
+        );
       }
 
       const result = await response.json();
@@ -256,38 +306,34 @@ export class PublishingService {
       let assetsToUploadFiltered = assetsToUpload;
       const assetsToDelete: string[] = [];
 
-      if (isUpdate && publishId) {
-        try {
-          const oldRes = await fetcher(`${baseUrl}/api/published/${publishId}/bundle`);
-          if (oldRes.ok) {
-            const oldBundle = await oldRes.json();
-            const oldManifest = oldBundle.assetManifest || [];
-            
-            assetsToUploadFiltered = assetsToUpload.filter(newAsset => {
-              const oldAsset = oldManifest.find((o: any) => o.assetId === newAsset.assetId);
-              return !oldAsset || oldAsset.hash !== newAsset.hash;
-            });
+      if (isUpdate) {
+        assetsToUploadFiltered = assetsToUpload.filter((newAsset) => {
+          const oldAsset = previousManifest.find(
+            (asset) => asset.assetId === newAsset.assetId,
+          );
+          return !oldAsset || oldAsset.hash !== newAsset.hash;
+        });
 
-            for (const oldAsset of oldManifest) {
-              const stillExists = assetManifest.some(n => n.assetId === oldAsset.assetId);
-              if (!stillExists) {
-                assetsToDelete.push(oldAsset.assetId);
-              }
-            }
+        for (const oldAsset of previousManifest) {
+          const stillExists = assetManifest.some(
+            (newAsset) => newAsset.assetId === oldAsset.assetId,
+          );
+          if (!stillExists) {
+            assetsToDelete.push(oldAsset.assetId);
           }
-        } catch (e) {
-          console.warn("[PublishingService] Failed to diff old assets, uploading all", e);
         }
       }
 
       let assetUploadIndex = 0;
       for (const asset of assetsToUploadFiltered) {
         this.statusMessage = `Uploading asset ${assetUploadIndex + 1}/${assetsToUploadFiltered.length}: ${asset.path.split("/").pop()}...`;
-        this.progress = 40 + Math.round((assetUploadIndex / assetsToUploadFiltered.length) * 40);
+        this.progress =
+          40 +
+          Math.round((assetUploadIndex / assetsToUploadFiltered.length) * 40);
 
         const assetUrl = `${baseUrl}/api/published/${newPublishId}/assets/${asset.assetId}`;
         const assetHeaders: Record<string, string> = {
-          "Authorization": `Bearer ${newWriteToken}`,
+          Authorization: `Bearer ${newWriteToken}`,
           "Content-Type": asset.mimeType,
           "X-Filename": asset.path.split("/").pop() || asset.assetId,
         };
@@ -299,7 +345,9 @@ export class PublishingService {
         });
 
         if (!assetResponse.ok) {
-          throw new Error(`Failed to upload asset ${asset.path}: ${assetResponse.statusText}`);
+          throw new Error(
+            `Failed to upload asset ${asset.path}: ${assetResponse.statusText}`,
+          );
         }
         assetUploadIndex++;
       }
@@ -309,13 +357,16 @@ export class PublishingService {
         for (const assetId of assetsToDelete) {
           const deleteUrl = `${baseUrl}/api/published/${newPublishId}/assets/${assetId}`;
           const deleteHeaders = {
-            "Authorization": `Bearer ${newWriteToken}`,
+            Authorization: `Bearer ${newWriteToken}`,
           };
           await fetcher(deleteUrl, {
             method: "DELETE",
             headers: deleteHeaders,
-          }).catch(err => {
-            console.warn(`[PublishingService] Failed to delete orphaned asset ${assetId}:`, err);
+          }).catch((err) => {
+            console.warn(
+              `[PublishingService] Failed to delete orphaned asset ${assetId}:`,
+              err,
+            );
           });
         }
       }
@@ -333,7 +384,7 @@ export class PublishingService {
       };
 
       await this.deps.savePublishRegistry(registry);
-      
+
       this.publishedVaults = {
         ...this.publishedVaults,
         [vaultId]: registry,
@@ -341,13 +392,19 @@ export class PublishingService {
 
       this.progress = 100;
       this.statusMessage = "World snapshot published successfully!";
-      this.deps.notificationStore.notify("World snapshot published successfully!", "success");
+      this.deps.notificationStore.notify(
+        "World snapshot published successfully!",
+        "success",
+      );
 
       return registry;
     } catch (err: any) {
       this.progress = 0;
       this.statusMessage = `Publish failed: ${err.message}`;
-      this.deps.notificationStore.notify(`Publish failed: ${err.message}`, "error");
+      this.deps.notificationStore.notify(
+        `Publish failed: ${err.message}`,
+        "error",
+      );
       throw err;
     } finally {
       this.isPublishing = false;
@@ -355,7 +412,9 @@ export class PublishingService {
   }
 
   async unpublish(vaultId: string): Promise<void> {
-    const existing = this.publishedVaults[vaultId] || await this.deps.getPublishRegistry(vaultId);
+    const existing =
+      this.publishedVaults[vaultId] ||
+      (await this.deps.getPublishRegistry(vaultId));
     if (!existing) {
       throw new Error("This campaign has not been published.");
     }
@@ -366,34 +425,44 @@ export class PublishingService {
 
     try {
       const fetcher = this.deps.fetch || fetch;
-      const baseUrl = this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
+      const baseUrl =
+        this.deps.baseUrl || "https://oracle-proxy.espen-erlandsen.workers.dev";
       const deleteUrl = `${baseUrl}/api/published/${existing.publishId}`;
 
       const response = await fetcher(deleteUrl, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${existing.writeToken}`,
+          Authorization: `Bearer ${existing.writeToken}`,
         },
       });
 
       if (!response.ok && response.status !== 404) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `Failed to delete remote snapshot: ${response.statusText}`);
+        throw new Error(
+          errData?.error?.message ||
+            `Failed to delete remote snapshot: ${response.statusText}`,
+        );
       }
 
       await this.deps.deletePublishRegistry(vaultId);
-      
+
       const newPublishedVaults = { ...this.publishedVaults };
       delete newPublishedVaults[vaultId];
       this.publishedVaults = newPublishedVaults;
 
       this.progress = 100;
       this.statusMessage = "World snapshot unpublished successfully.";
-      this.deps.notificationStore.notify("World snapshot unpublished successfully.", "success");
+      this.deps.notificationStore.notify(
+        "World snapshot unpublished successfully.",
+        "success",
+      );
     } catch (err: any) {
       this.progress = 0;
       this.statusMessage = `Unpublish failed: ${err.message}`;
-      this.deps.notificationStore.notify(`Unpublish failed: ${err.message}`, "error");
+      this.deps.notificationStore.notify(
+        `Unpublish failed: ${err.message}`,
+        "error",
+      );
       throw err;
     } finally {
       this.isPublishing = false;
@@ -412,19 +481,23 @@ export const publishingService: PublishingService =
   (globalThis as any)[KEY] ??
   ((globalThis as any)[KEY] = new PublishingService({
     getPublishRegistry: async (id) => {
-      const { getPublishRegistry } = await import("../../stores/vault/registry");
+      const { getPublishRegistry } =
+        await import("../../stores/vault/registry");
       return getPublishRegistry(id);
     },
     savePublishRegistry: async (registry) => {
-      const { savePublishRegistry } = await import("../../stores/vault/registry");
+      const { savePublishRegistry } =
+        await import("../../stores/vault/registry");
       return savePublishRegistry(registry);
     },
     deletePublishRegistry: async (id) => {
-      const { deletePublishRegistry } = await import("../../stores/vault/registry");
+      const { deletePublishRegistry } =
+        await import("../../stores/vault/registry");
       return deletePublishRegistry(id);
     },
     listPublishRegistries: async () => {
-      const { listPublishRegistries } = await import("../../stores/vault/registry");
+      const { listPublishRegistries } =
+        await import("../../stores/vault/registry");
       return listPublishRegistries();
     },
     vault,
@@ -433,4 +506,3 @@ export const publishingService: PublishingService =
     themeStore,
     notificationStore,
   }));
-

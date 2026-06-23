@@ -13,7 +13,7 @@ export class GuestVaultStore {
   activeTheme = $state<any>({});
 
   entitiesMap = $derived.by(() => {
-    const map: Record<string, Entity> = {};
+    const map: Record<string, Entity> = Object.create(null);
     for (const e of this.entities) {
       map[e.id] = e;
     }
@@ -35,7 +35,7 @@ export class GuestVaultStore {
         const ids = r.result || [];
         ids.forEach((id: any) => matchedIds.add(id.toString()));
       });
-      return this.entities.filter(e => matchedIds.has(e.id));
+      return this.entities.filter((e) => matchedIds.has(e.id));
     } catch (err) {
       console.error("[GuestVaultStore] Search failed:", err);
       return [];
@@ -70,7 +70,10 @@ export class GuestVaultStore {
           title: entity.title,
           content: entity.content || "",
           lore: entity.lore || "",
-          keywords: (entity.labels || []).join(" ") + " " + (entity.aliases || []).join(" "),
+          keywords:
+            (entity.labels || []).join(" ") +
+            " " +
+            (entity.aliases || []).join(" "),
         });
       }
     } catch (err) {
@@ -84,9 +87,12 @@ export class GuestVaultStore {
       return path;
     }
     const cleanPath = path.trim().replace(/^(\.\/|\/)/, "");
-    
+
     const asset = this.assetManifest.find(
-      a => a.filename === cleanPath || a.filename === path || a.assetId === cleanPath
+      (a) =>
+        a.filename === cleanPath ||
+        a.filename === path ||
+        a.assetId === cleanPath,
     );
     if (asset) {
       const baseUrl = "https://oracle-proxy.espen-erlandsen.workers.dev";

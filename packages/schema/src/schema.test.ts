@@ -13,7 +13,6 @@ import {
   GuestBundleSchema,
 } from "./publishing";
 
-
 describe("Entity Schema Validation", () => {
   it("should validate a correct entity", () => {
     const validEntity = {
@@ -410,7 +409,7 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
             assetId: "asset-1",
             filename: "map.png",
             mimeType: "image/png",
-            hash: "hash-123",
+            hash: "a3f1c9c7f20f1df4d1b24c97ca7e6c84e721d99794065f9675b6a6c437f8f0f2",
           },
         ],
       };
@@ -419,4 +418,3 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
     });
   });
 });
-

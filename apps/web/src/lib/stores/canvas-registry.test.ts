@@ -167,7 +167,7 @@ describe("CanvasRegistryStore", () => {
       expect(canvasRegistry.allCanvases[0].nodes).toHaveLength(3);
 
       const nodes = canvasRegistry.allCanvases[0].nodes;
-      expect(nodes.map((n) => n.entityId)).toEqual([
+      expect(nodes.map((n: { entityId: string }) => n.entityId)).toEqual([
         "entity-1",
         "entity-2",
         "entity-3",
@@ -233,7 +233,10 @@ describe("CanvasRegistryStore", () => {
       expect(result).not.toBeNull();
       expect(result?.name).toBe("2 entities");
       const nodes = canvasRegistry.allCanvases[0].nodes;
-      expect(nodes.map((n) => n.entityId)).toEqual(["entity-1", "entity-2"]);
+      expect(nodes.map((n: { entityId: string }) => n.entityId)).toEqual([
+        "entity-1",
+        "entity-2",
+      ]);
 
       // Verify spread
       expect(nodes[0].position.x).toBe(400);
@@ -249,7 +252,9 @@ describe("CanvasRegistryStore", () => {
 
       expect(result).not.toBeNull();
       expect(
-        canvasRegistry.allCanvases[0].nodes.map((n) => n.entityId),
+        canvasRegistry.allCanvases[0].nodes.map(
+          (n: { entityId: string }) => n.entityId,
+        ),
       ).toEqual(["entity-1", "entity-2"]);
     });
 

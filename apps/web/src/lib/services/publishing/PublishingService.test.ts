@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { PublishingService, type PublishingServiceDeps } from "./PublishingService.svelte";
-
+import {
+  PublishingService,
+  type PublishingServiceDeps,
+} from "./PublishingService.svelte";
 
 describe("PublishingService", () => {
   let deps: PublishingServiceDeps;
@@ -29,23 +31,45 @@ describe("PublishingService", () => {
     deps = {
       fetch: mockFetch,
       baseUrl: "https://mock-proxy.local",
+      getPublishTurnstileToken: vi.fn().mockResolvedValue("turnstile-token"),
       getPublishRegistry: async (id) => registryStore[id],
-      savePublishRegistry: async (reg) => { registryStore[reg.vaultId] = reg; },
-      deletePublishRegistry: async (id) => { delete registryStore[id]; },
+      savePublishRegistry: async (reg) => {
+        registryStore[reg.vaultId] = reg;
+      },
+      deletePublishRegistry: async (id) => {
+        delete registryStore[id];
+      },
       listPublishRegistries: async () => Object.values(registryStore),
       vault: {
         activeVaultId: "vault-1",
         activeVaultRecord: { name: "Test Vault" },
         defaultVisibility: "visible",
         allEntities: [
-          { id: "e1", title: "Public Note", status: "active", content: "Public" },
-          { id: "e2", title: "Secret Note", status: "active", labels: ["hidden"], content: "Secret" },
+          {
+            id: "e1",
+            title: "Public Note",
+            status: "active",
+            content: "Public",
+          },
+          {
+            id: "e2",
+            title: "Secret Note",
+            status: "active",
+            labels: ["hidden"],
+            content: "Secret",
+          },
         ],
         resolveImageUrl: vi.fn().mockResolvedValue("blob:uuid-1"),
       },
       mapRegistry: {
         allMaps: [
-          { id: "map-1", name: "Public Map", playerVisible: true, assetPath: "maps/public.webp", pins: [] },
+          {
+            id: "map-1",
+            name: "Public Map",
+            playerVisible: true,
+            assetPath: "maps/public.webp",
+            pins: [],
+          },
           { id: "map-2", name: "Private Map", playerVisible: false, pins: [] },
         ],
       },
@@ -111,8 +135,33 @@ describe("PublishingService", () => {
     expect(service.publishedVaults["vault-1"]).toBeDefined();
     expect(deps.notificationStore.notify).toHaveBeenCalledWith(
       "World snapshot published successfully!",
-      "success"
+      "success",
     );
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://mock-proxy.local/api/publish-vault",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "X-Turnstile-Token": "turnstile-token",
+        }),
+      }),
+    );
+  });
+
+  it("should not create a snapshot when verification fails", async () => {
+    deps.mapRegistry.allMaps = [];
+    deps.getPublishTurnstileToken = vi
+      .fn()
+      .mockRejectedValue(new Error("Verification failed."));
+    const service = new PublishingService(deps);
+
+    await expect(service.publish("vault-1")).rejects.toThrow(
+      "Verification failed.",
+    );
+    expect(
+      mockFetch.mock.calls.some(([url]: [string]) =>
+        url.includes("/api/publish-vault"),
+      ),
+    ).toBe(false);
   });
 
   it("should unpublish a campaign successfully", async () => {
@@ -127,15 +176,102 @@ describe("PublishingService", () => {
     const service = new PublishingService(deps);
     await service.loadRegistries();
 
-    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
 
     await service.unpublish("vault-1");
 
     expect(mockFetch).toHaveBeenCalledWith(
       "https://mock-proxy.local/api/published/snapshot-123",
-      expect.objectContaining({ method: "DELETE" })
+      expect.objectContaining({ method: "DELETE" }),
     );
     expect(registryStore["vault-1"]).toBeUndefined();
     expect(service.publishedVaults["vault-1"]).toBeUndefined();
+  });
+
+  it("uploads changed assets during a publish update", async () => {
+    registryStore["vault-1"] = {
+      vaultId: "vault-1",
+      publishId: "snapshot-123",
+      writeToken: "token-123",
+      publishedAt: "2026-06-22T21:00:00Z",
+      stats: { entityCount: 1, relationshipCount: 0, assetCount: 1 },
+    };
+
+    deps.vault.allEntities = [
+      {
+        id: "e1",
+        title: "Public Note",
+        status: "active",
+        content: "Public",
+        image: "images/public.webp",
+      },
+    ];
+
+    const mockBlob = new Blob(["new image data"], { type: "image/webp" });
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.startsWith("blob:")) {
+        return { ok: true, blob: async () => mockBlob };
+      }
+      if (
+        url === "https://mock-proxy.local/api/published/snapshot-123/bundle"
+      ) {
+        return {
+          ok: true,
+          json: async () => ({
+            assetManifest: [
+              {
+                assetId: "images_public.webp",
+                filename: "images/public.webp",
+                mimeType: "image/webp",
+                hash: "outdated-hash",
+              },
+            ],
+          }),
+        };
+      }
+      if (
+        url ===
+        "https://mock-proxy.local/api/publish-vault?publishId=snapshot-123"
+      ) {
+        return {
+          ok: true,
+          json: async () => ({
+            publishId: "snapshot-123",
+            writeToken: "token-123",
+            publishedAt: "2026-06-22T22:30:00Z",
+          }),
+        };
+      }
+      if (
+        url ===
+        "https://mock-proxy.local/api/published/snapshot-123/assets/images_public.webp"
+      ) {
+        return { ok: true, json: async () => ({ success: true }) };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const service = new PublishingService(deps);
+    await service.publish("vault-1");
+
+    expect(
+      mockFetch.mock.calls.some(
+        ([url]: [string]) =>
+          url === "https://mock-proxy.local/api/published/snapshot-123/bundle",
+      ),
+    ).toBe(true);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://mock-proxy.local/api/published/snapshot-123/assets/images_public.webp",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer token-123",
+          "Content-Type": "image/webp",
+        }),
+      }),
+    );
   });
 });

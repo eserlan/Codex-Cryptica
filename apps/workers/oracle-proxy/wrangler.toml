@@ -21,6 +21,7 @@ ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS = "false"
 
 # Secrets (must be set via `wrangler secret put`)
 # - GEMINI_API_KEY: Your Google Gemini API key
+# - TURNSTILE_SECRET_KEY: Server-side secret for publish verification
 
 # Development configuration
 [dev]
@@ -54,3 +55,18 @@ binding = "BUCKET"
 bucket_name = "codex-cryptica-statics"
 preview_bucket_name = "codex-cryptica-statics-local"
 
+[[ratelimits]]
+name = "PUBLISH_CREATE_RATE_LIMITER"
+namespace_id = "1351"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "PUBLISH_WRITE_RATE_LIMITER"
+namespace_id = "1352"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60

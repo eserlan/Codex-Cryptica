@@ -126,7 +126,10 @@ export class VaultStore {
   }
   get inboundConnections() {
     if (sessionModeStore.isGuestMode) {
-      const newInboundMap: Record<string, { sourceId: string; connection: any }[]> = {};
+      const newInboundMap: Record<
+        string,
+        { sourceId: string; connection: any }[]
+      > = Object.create(null);
       for (const rel of guestVault.relationships) {
         if (!newInboundMap[rel.targetId]) {
           newInboundMap[rel.targetId] = [];
@@ -175,7 +178,7 @@ export class VaultStore {
   }
   get maps() {
     if (sessionModeStore.isGuestMode) {
-      const record: Record<string, any> = {};
+      const record: Record<string, any> = Object.create(null);
       for (const m of guestVault.maps) {
         record[m.id] = m;
       }
@@ -191,7 +194,7 @@ export class VaultStore {
   }
   get canvases() {
     if (sessionModeStore.isGuestMode) {
-      const record: Record<string, any> = {};
+      const record: Record<string, any> = Object.create(null);
       for (const c of guestVault.canvases) {
         record[c.id] = c;
       }
@@ -327,7 +330,7 @@ export class VaultStore {
         await this.serviceRegistry.ensureInitialized();
       },
       clearStorageCache: () => this.storageManager.clearCache(),
-      getEntities: () => this.entities,
+      getEntities: () => this.entityStore.entities,
       setDemoVaultName: (n) => (this.demoVaultName = n),
       setInitialized: (v) => (this.isInitialized = v),
       rebuildEntityIndexes: () => {
@@ -519,7 +522,10 @@ export class VaultStore {
 
   // --- Asset Management (Delegated) ---
 
-  resolveImageUrl(path: string, fetcher?: (path: string) => Promise<Blob>): Promise<string> {
+  resolveImageUrl(
+    path: string,
+    fetcher?: (path: string) => Promise<Blob>,
+  ): Promise<string> {
     if (sessionModeStore.isGuestMode) {
       return Promise.resolve(guestVault.resolveImageUrl(path) || "");
     }

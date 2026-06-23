@@ -582,7 +582,7 @@ export class MapStore {
     if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
     const map = vault.maps[this.activeMapId];
     if (map) {
-      map.pins = map.pins.map((p) =>
+      map.pins = map.pins.map((p: MapPin) =>
         p.id === pinId ? { ...p, coordinates } : p,
       );
     }
@@ -595,13 +595,13 @@ export class MapStore {
 
     const map = vault.maps[this.activeMapId];
     if (map) {
-      map.pins = map.pins.filter((p) => p.id !== pinId);
+      map.pins = map.pins.filter((p: MapPin) => p.id !== pinId);
       await vault.saveMaps();
     }
   }
 
   jumpToPin(pinId: string) {
-    const pin = this.pins.find((p) => p.id === pinId);
+    const pin = this.pins.find((p: MapPin) => p.id === pinId);
     if (pin) {
       // Use a balanced zoom level for inspection
       const zoom = Math.max(1.2, this.viewport.zoom);

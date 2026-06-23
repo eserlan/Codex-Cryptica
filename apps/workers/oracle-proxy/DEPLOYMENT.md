@@ -28,12 +28,17 @@ cd apps/workers/oracle-proxy
 wrangler deploy
 ```
 
-### Step 4: Set the API Key Secret
+### Step 4: Set Worker Secrets
 
 ```bash
 wrangler secret put GEMINI_API_KEY
 # Paste your Google Gemini API key when prompted
+
+wrangler secret put TURNSTILE_SECRET_KEY
+# Paste the secret for the Turnstile widget used to create guest snapshots
 ```
+
+For widget creation, web environment configuration, quotas, and testing, see [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md).
 
 ### Step 5: Verify Deployment
 
@@ -139,6 +144,10 @@ Or set via Wrangler:
 ```bash
 wrangler secret put ALLOWED_ORIGINS
 ```
+
+### Guest Snapshot Verification
+
+See [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md). This Worker only needs `TURNSTILE_SECRET_KEY`; `PUBLIC_TURNSTILE_SITE_KEY` belongs in the web deployment environment.
 
 ### Worker Name
 

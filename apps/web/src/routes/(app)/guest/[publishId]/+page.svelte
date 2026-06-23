@@ -6,7 +6,10 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { addGuestHistory, removeGuestHistory } from "$lib/services/publishing/guest-history";
+  import {
+    addGuestHistory,
+    removeGuestHistory,
+  } from "$lib/services/publishing/guest-history";
   import { base } from "$app/paths";
   import GraphView from "$lib/components/GraphView.svelte";
   import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
@@ -17,6 +20,7 @@
 
   let loading = $state(true);
   let errorMsg = $state<string | null>(null);
+  let previousThemeId = $state<string | null>(null);
 
   // Get selected entity in guest mode
   let selectedEntity = $derived.by(() => {
@@ -40,13 +44,14 @@
     if (data.bundle) {
       try {
         // 1. Force guest mode
+        previousThemeId = themeStore.worldThemeId;
         sessionModeStore.isGuestMode = true;
 
         // 2. Load the bundle into our reactive guest vault
         await guestVault.loadBundle(data.bundle);
 
         // 3. Apply the host's campaign theme
-        if (data.bundle.activeTheme?.id) {
+        if (typeof data.bundle.activeTheme?.id === "string") {
           await themeStore.setTheme(data.bundle.activeTheme.id);
         }
 
@@ -67,41 +72,68 @@
   onDestroy(() => {
     sessionModeStore.isGuestMode = false;
     guestVault.clear();
+    if (vault.activeVaultId) {
+      void themeStore.loadForVault(vault.activeVaultId);
+    } else if (previousThemeId) {
+      void themeStore.setTheme(previousThemeId);
+    }
   });
 </script>
 
 <svelte:head>
   {#if data.bundle}
     <title>{data.bundle.vaultTitle} — Codex Cryptica Guest View</title>
-    <meta name="description" content="Browse the public world lore of {data.bundle.vaultTitle} shared via Codex Cryptica." />
+    <meta
+      name="description"
+      content="Browse the public world lore of {data.bundle
+        .vaultTitle} shared via Codex Cryptica."
+    />
   {:else}
     <title>Guest Vault — Codex Cryptica</title>
   {/if}
 </svelte:head>
 
-<div class="flex h-full w-full min-h-0 bg-chrome-bg text-chrome-text overflow-hidden relative">
+<div
+  class="flex h-full w-full min-h-0 bg-chrome-bg text-chrome-text overflow-hidden relative"
+>
   {#if loading}
     <!-- Full-screen Loading State -->
-    <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-theme-bg/95 backdrop-blur-sm transition-all duration-300">
+    <div
+      class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-theme-bg/95 backdrop-blur-sm transition-all duration-300"
+    >
       <div class="flex flex-col items-center space-y-4">
         <!-- Spinner -->
-        <div class="h-10 w-10 animate-spin rounded-full border-4 border-theme-muted border-t-theme-primary"></div>
-        <p class="font-mono text-sm text-theme-primary tracking-widest uppercase animate-pulse">
-          {themeStore.resolveJargon("loading_vault") || "Loading Shared World..."}
+        <div
+          class="h-10 w-10 animate-spin rounded-full border-4 border-theme-muted border-t-theme-primary"
+        ></div>
+        <p
+          class="font-mono text-sm text-theme-primary tracking-widest uppercase animate-pulse"
+        >
+          {themeStore.resolveJargon("loading_vault") ||
+            "Loading Shared World..."}
         </p>
       </div>
     </div>
   {:else if errorMsg}
     <!-- Error View -->
-    <div class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-theme-bg/98" style:background-image="var(--bg-texture-overlay)">
-      <div class="w-full max-w-md p-6 rounded-xl border border-theme-accent/30 bg-theme-surface/80 backdrop-blur shadow-2xl flex flex-col items-center text-center space-y-6">
+    <div
+      class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-theme-bg/98"
+      style:background-image="var(--bg-texture-overlay)"
+    >
+      <div
+        class="w-full max-w-md p-6 rounded-xl border border-theme-accent/30 bg-theme-surface/80 backdrop-blur shadow-2xl flex flex-col items-center text-center space-y-6"
+      >
         <!-- Error Icon -->
-        <div class="h-16 w-16 rounded-full bg-theme-accent/10 flex items-center justify-center text-theme-accent">
+        <div
+          class="h-16 w-16 rounded-full bg-theme-accent/10 flex items-center justify-center text-theme-accent"
+        >
           <span class="icon-[lucide--alert-triangle] h-8 w-8"></span>
         </div>
 
         <div class="space-y-2">
-          <h2 class="text-xl font-bold tracking-tight text-theme-primary">Snapshot Unavailable</h2>
+          <h2 class="text-xl font-bold tracking-tight text-theme-primary">
+            Snapshot Unavailable
+          </h2>
           <p class="text-sm text-theme-muted">{errorMsg}</p>
         </div>
 

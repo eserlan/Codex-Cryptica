@@ -136,6 +136,10 @@ curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
 - Handled by Google Gemini API quotas
 - Consider adding Cloudflare rate limiting for production
 
+### Guest Snapshot Publishing
+
+Creating a new guest snapshot requires a server-validated Cloudflare Turnstile token. This Worker stores `TURNSTILE_SECRET_KEY`; the web deployment uses `PUBLIC_TURNSTILE_SITE_KEY`. See [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md) for the full setup. Published assets are restricted to verified PNG, JPEG, WebP, and AVIF image data.
+
 ## Troubleshooting
 
 ### Worker Returns 403

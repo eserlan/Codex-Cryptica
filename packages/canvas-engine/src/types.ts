@@ -53,7 +53,7 @@ export const CanvasSchema = z.object({
   nodes: z.array(CanvasNodeSchema),
   edges: z.array(CanvasEdgeSchema),
   lastModified: z.number().optional(),
-  playerVisible: z.boolean().optional().default(false),
+  playerVisible: z.boolean().optional(),
 });
 
 export type CanvasNode = z.infer<typeof CanvasNodeSchema>;

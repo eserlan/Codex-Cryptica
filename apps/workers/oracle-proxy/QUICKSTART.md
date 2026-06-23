@@ -77,10 +77,13 @@ curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
 
 ## Environment Variables
 
-| Variable          | Type   | Required | Default                                |
-| ----------------- | ------ | -------- | -------------------------------------- |
-| `GEMINI_API_KEY`  | Secret | ✅       | None                                   |
-| `ALLOWED_ORIGINS` | Var    | ⚠️       | codex-cryptica.com, staging, pages.dev |
+| Variable               | Type   | Required | Default                                          |
+| ---------------------- | ------ | -------- | ------------------------------------------------ |
+| `GEMINI_API_KEY`       | Secret | ✅       | None                                             |
+| `ALLOWED_ORIGINS`      | Var    | ⚠️       | codex-cryptica.com, staging, pages.dev           |
+| `TURNSTILE_SECRET_KEY` | Secret | ✅       | Server-side verification for new guest snapshots |
+
+For Turnstile widget setup and web environment configuration, see [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md).
 
 ---
 

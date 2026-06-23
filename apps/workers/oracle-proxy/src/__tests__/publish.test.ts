@@ -1,15 +1,26 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import worker from "../index";
 
 class MockR2Bucket {
-  store = new Map<string, { body: ArrayBuffer | string; customMetadata?: Record<string, string>; contentType?: string }>();
+  store = new Map<
+    string,
+    {
+      body: ArrayBuffer | string;
+      customMetadata?: Record<string, string>;
+      contentType?: string;
+    }
+  >();
 
   async head(key: string) {
     const item = this.store.get(key);
     if (!item) return null;
     return {
       customMetadata: item.customMetadata,
-      httpMetadata: { contentType: item.contentType }
+      httpMetadata: { contentType: item.contentType },
+      size:
+        typeof item.body === "string"
+          ? new TextEncoder().encode(item.body).byteLength
+          : item.body.byteLength,
     };
   }
 
@@ -17,9 +28,16 @@ class MockR2Bucket {
     const item = this.store.get(key);
     if (!item) return null;
     return {
-      body: typeof item.body === "string" ? new TextEncoder().encode(item.body) : item.body,
+      body:
+        typeof item.body === "string"
+          ? new TextEncoder().encode(item.body)
+          : item.body,
       customMetadata: item.customMetadata,
-      httpMetadata: { contentType: item.contentType }
+      httpMetadata: { contentType: item.contentType },
+      size:
+        typeof item.body === "string"
+          ? new TextEncoder().encode(item.body).byteLength
+          : item.body.byteLength,
     };
   }
 
@@ -35,7 +53,7 @@ class MockR2Bucket {
     this.store.set(key, {
       body: bodyData,
       customMetadata: options?.customMetadata,
-      contentType: options?.contentType
+      contentType: options?.contentType,
     });
     return {};
   }
@@ -47,15 +65,21 @@ class MockR2Bucket {
 
   async list(options?: { prefix?: string; cursor?: string }) {
     const prefix = options?.prefix || "";
-    const objects: { key: string }[] = [];
-    for (const key of this.store.keys()) {
+    const objects: { key: string; size: number }[] = [];
+    for (const [key, item] of this.store) {
       if (key.startsWith(prefix)) {
-        objects.push({ key });
+        objects.push({
+          key,
+          size:
+            typeof item.body === "string"
+              ? new TextEncoder().encode(item.body).byteLength
+              : item.body.byteLength,
+        });
       }
     }
     return {
       objects,
-      truncated: false
+      truncated: false,
     };
   }
 }
@@ -64,24 +88,69 @@ describe("R2 Publish Endpoints", () => {
   let bucket: MockR2Bucket;
   let env: any;
   const ctx = {} as ExecutionContext;
+  const originalFetch = globalThis.fetch;
+
+  function validBundle(overrides: Record<string, unknown> = {}) {
+    return {
+      schemaVersion: 1,
+      publishId: "",
+      vaultTitle: "Test World",
+      publishedAt: "2026-06-22T22:00:00Z",
+      publisherVersion: "1.0.0",
+      activeTheme: {},
+      entities: [
+        { id: "e1", type: "note", title: "Entity 1", status: "active" },
+      ],
+      relationships: [],
+      maps: [],
+      canvases: [],
+      assetManifest: [],
+      ...overrides,
+    };
+  }
 
   beforeEach(() => {
     bucket = new MockR2Bucket();
     env = {
       GEMINI_API_KEY: "test-key",
       BUCKET: bucket,
+      TURNSTILE_SECRET_KEY: "turnstile-secret",
     };
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            success: true,
+            hostname: "codexcryptica.com",
+            action: "publish_snapshot",
+          }),
+        ),
+    ) as typeof fetch;
   });
 
-  function createRequest(urlStr: string, method: string, body?: any, headers: Record<string, string> = {}) {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  function createRequest(
+    urlStr: string,
+    method: string,
+    body?: any,
+    headers: Record<string, string> = {},
+  ) {
     return new Request(urlStr, {
       method,
       headers: {
         "Content-Type": "application/json",
-        "Origin": "http://localhost:5173",
-        ...headers
+        Origin: "http://localhost:5173",
+        "X-Turnstile-Token": "valid-turnstile-token",
+        ...headers,
       },
-      body: body ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined
+      body: body
+        ? typeof body === "string"
+          ? body
+          : JSON.stringify(body)
+        : undefined,
     });
   }
 
@@ -89,27 +158,26 @@ describe("R2 Publish Endpoints", () => {
     const req = new Request("https://proxy.local/api/publish-vault", {
       method: "POST",
       headers: {
-        "Origin": "https://unauthorized-origin.com",
-        "Content-Type": "application/json"
+        Origin: "https://unauthorized-origin.com",
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ vaultTitle: "Blocked World" })
+      body: JSON.stringify({ vaultTitle: "Blocked World" }),
     });
     const res = await worker.fetch(req, env, ctx);
     expect(res.status).toBe(403);
   });
 
   it("should create a new snapshot on POST /api/publish-vault", async () => {
-    const bundle = {
-      vaultTitle: "Test World",
-      entities: [{ id: "e1", name: "Entity 1" }],
-      relationships: [],
-      assetManifest: []
-    };
-    const req = createRequest("https://proxy.local/api/publish-vault", "POST", bundle);
+    const bundle = validBundle();
+    const req = createRequest(
+      "https://proxy.local/api/publish-vault",
+      "POST",
+      bundle,
+    );
     const res = await worker.fetch(req, env, ctx);
     expect(res.status).toBe(200);
 
-    const data = await res.json() as any;
+    const data = (await res.json()) as any;
     expect(data.publishId).toBeDefined();
     expect(data.writeToken).toBeDefined();
     expect(data.publishedAt).toBeDefined();
@@ -129,37 +197,94 @@ describe("R2 Publish Endpoints", () => {
     expect(stored.customMetadata?.relationshipCount).toBe("0");
   });
 
+  it("should require a verified Turnstile token to create a snapshot", async () => {
+    const req = createRequest(
+      "https://proxy.local/api/publish-vault",
+      "POST",
+      validBundle(),
+      {
+        "X-Turnstile-Token": "",
+      },
+    );
+
+    const res = await worker.fetch(req, env, ctx);
+    expect(res.status).toBe(403);
+    expect(bucket.store.size).toBe(0);
+  });
+
+  it("should reject a bundle that does not match the guest snapshot schema", async () => {
+    const req = createRequest("https://proxy.local/api/publish-vault", "POST", {
+      vaultTitle: "Invalid World",
+      entities: [],
+    });
+
+    const res = await worker.fetch(req, env, ctx);
+    expect(res.status).toBe(400);
+    expect(bucket.store.size).toBe(0);
+  });
+
+  it("should enforce the publish creation rate limit", async () => {
+    env.PUBLISH_CREATE_RATE_LIMITER = {
+      limit: vi.fn(async () => ({ success: false })),
+    };
+    const res = await worker.fetch(
+      createRequest(
+        "https://proxy.local/api/publish-vault",
+        "POST",
+        validBundle(),
+      ),
+      env,
+      ctx,
+    );
+
+    expect(res.status).toBe(429);
+    expect(bucket.store.size).toBe(0);
+  });
+
   it("should reject publish if payload size exceeds 10MB limit", async () => {
     // Generate large content > 10MB
     const largeContent = "a".repeat(11 * 1024 * 1024);
-    const req = createRequest("https://proxy.local/api/publish-vault", "POST", largeContent);
+    const req = createRequest(
+      "https://proxy.local/api/publish-vault",
+      "POST",
+      largeContent,
+    );
     const res = await worker.fetch(req, env, ctx);
     expect(res.status).toBe(413);
   });
 
   it("should update an existing snapshot when authorized", async () => {
     // First publish
-    const initBundle = { vaultTitle: "World V1", entities: [] };
+    const initBundle = validBundle({ vaultTitle: "World V1", entities: [] });
     const res1 = await worker.fetch(
-      createRequest("https://proxy.local/api/publish-vault", "POST", initBundle),
+      createRequest(
+        "https://proxy.local/api/publish-vault",
+        "POST",
+        initBundle,
+      ),
       env,
-      ctx
+      ctx,
     );
-    const data1 = await res1.json() as any;
+    const data1 = (await res1.json()) as any;
     const publishId = data1.publishId;
     const writeToken = data1.writeToken;
 
     // Second publish (update) with correct writeToken in Authorization header
-    const updateBundle = { publishId, vaultTitle: "World V2", entities: [{ id: "1" }] };
+    const updateBundle = validBundle({ publishId, vaultTitle: "World V2" });
     const res2 = await worker.fetch(
-      createRequest(`https://proxy.local/api/publish-vault?publishId=${publishId}`, "POST", updateBundle, {
-        Authorization: `Bearer ${writeToken}`
-      }),
+      createRequest(
+        `https://proxy.local/api/publish-vault?publishId=${publishId}`,
+        "POST",
+        updateBundle,
+        {
+          Authorization: `Bearer ${writeToken}`,
+        },
+      ),
       env,
-      ctx
+      ctx,
     );
     expect(res2.status).toBe(200);
-    const data2 = await res2.json() as any;
+    const data2 = (await res2.json()) as any;
     expect(data2.isUpdate).toBe(true);
     expect(data2.publishId).toBe(publishId);
 
@@ -174,23 +299,36 @@ describe("R2 Publish Endpoints", () => {
 
   it("should reject update if unauthorized or invalid token", async () => {
     // First publish
-    const initBundle = { vaultTitle: "World V1", entities: [] };
+    const initBundle = validBundle({ vaultTitle: "World V1", entities: [] });
     const res1 = await worker.fetch(
-      createRequest("https://proxy.local/api/publish-vault", "POST", initBundle),
+      createRequest(
+        "https://proxy.local/api/publish-vault",
+        "POST",
+        initBundle,
+      ),
       env,
-      ctx
+      ctx,
     );
-    const data1 = await res1.json() as any;
+    const data1 = (await res1.json()) as any;
     const publishId = data1.publishId;
 
     // Attempt update with wrong writeToken
-    const updateBundle = { publishId, vaultTitle: "World V2", entities: [] };
+    const updateBundle = validBundle({
+      publishId,
+      vaultTitle: "World V2",
+      entities: [],
+    });
     const res2 = await worker.fetch(
-      createRequest(`https://proxy.local/api/publish-vault?publishId=${publishId}`, "POST", updateBundle, {
-        Authorization: `Bearer wrong-token`
-      }),
+      createRequest(
+        `https://proxy.local/api/publish-vault?publishId=${publishId}`,
+        "POST",
+        updateBundle,
+        {
+          Authorization: `Bearer wrong-token`,
+        },
+      ),
       env,
-      ctx
+      ctx,
     );
     expect(res2.status).toBe(401);
   });
@@ -198,14 +336,21 @@ describe("R2 Publish Endpoints", () => {
   it("should serve bundle on GET /api/published/:publishId/bundle", async () => {
     const publishId = "my-snapshot-id";
     const bundle = { publishId, vaultTitle: "Test World", entities: [] };
-    await bucket.put(`published/${publishId}/bundle.json`, JSON.stringify(bundle), {
-      contentType: "application/json"
-    });
+    await bucket.put(
+      `published/${publishId}/bundle.json`,
+      JSON.stringify(bundle),
+      {
+        contentType: "application/json",
+      },
+    );
 
     const res = await worker.fetch(
-      createRequest(`https://proxy.local/api/published/${publishId}/bundle`, "GET"),
+      createRequest(
+        `https://proxy.local/api/published/${publishId}/bundle`,
+        "GET",
+      ),
       env,
-      ctx
+      ctx,
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("application/json");
@@ -218,24 +363,31 @@ describe("R2 Publish Endpoints", () => {
   it("should serve manifest on GET /api/published/:publishId/manifest", async () => {
     const publishId = "my-snapshot-id";
     const bundle = { publishId, vaultTitle: "Test World", entities: [] };
-    await bucket.put(`published/${publishId}/bundle.json`, JSON.stringify(bundle), {
-      contentType: "application/json",
-      customMetadata: {
-        vaultTitle: "Test World",
-        publishedAt: "2026-06-22T22:00:00Z",
-        entityCount: "5",
-        relationshipCount: "10",
-        assetCount: "2"
-      }
-    });
+    await bucket.put(
+      `published/${publishId}/bundle.json`,
+      JSON.stringify(bundle),
+      {
+        contentType: "application/json",
+        customMetadata: {
+          vaultTitle: "Test World",
+          publishedAt: "2026-06-22T22:00:00Z",
+          entityCount: "5",
+          relationshipCount: "10",
+          assetCount: "2",
+        },
+      },
+    );
 
     const res = await worker.fetch(
-      createRequest(`https://proxy.local/api/published/${publishId}/manifest`, "GET"),
+      createRequest(
+        `https://proxy.local/api/published/${publishId}/manifest`,
+        "GET",
+      ),
       env,
-      ctx
+      ctx,
     );
     expect(res.status).toBe(200);
-    const manifest = await res.json() as any;
+    const manifest = (await res.json()) as any;
     expect(manifest.publishId).toBe(publishId);
     expect(manifest.vaultTitle).toBe("Test World");
     expect(manifest.entityCount).toBe(5);
@@ -248,27 +400,32 @@ describe("R2 Publish Endpoints", () => {
     const writeToken = "asset-secret-token";
     // Create the bundle first
     await bucket.put(`published/${publishId}/bundle.json`, "{}", {
-      customMetadata: { writeToken }
+      customMetadata: { writeToken },
     });
 
-    const assetData = new TextEncoder().encode("image-binary-data");
+    const assetData = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
     const res = await worker.fetch(
-      new Request(`https://proxy.local/api/published/${publishId}/assets/img-123`, {
-        method: "POST",
-        headers: {
-          "Origin": "http://localhost:5173",
-          "Authorization": `Bearer ${writeToken}`,
-          "Content-Type": "image/png",
-          "X-Filename": "logo.png"
+      new Request(
+        `https://proxy.local/api/published/${publishId}/assets/img-123`,
+        {
+          method: "POST",
+          headers: {
+            Origin: "http://localhost:5173",
+            Authorization: `Bearer ${writeToken}`,
+            "Content-Type": "image/png",
+            "X-Filename": "logo.png",
+          },
+          body: assetData,
         },
-        body: assetData
-      }),
+      ),
       env,
-      ctx
+      ctx,
     );
 
     expect(res.status).toBe(200);
-    const resData = await res.json() as any;
+    const resData = (await res.json()) as any;
     expect(resData.success).toBe(true);
 
     // Verify key in R2
@@ -276,7 +433,37 @@ describe("R2 Publish Endpoints", () => {
     expect(bucket.store.has(key)).toBe(true);
     const item = bucket.store.get(key)!;
     expect(item.contentType).toBe("image/png");
-    expect(item.customMetadata?.filename).toBe("logo.png");
+    expect(item.customMetadata?.filename).toBe("img-123");
+  });
+
+  it("should reject scriptable or mismatched asset content", async () => {
+    const publishId = "my-snapshot-id";
+    const writeToken = "asset-secret-token";
+    await bucket.put(`published/${publishId}/bundle.json`, "{}", {
+      customMetadata: { writeToken },
+    });
+
+    const res = await worker.fetch(
+      new Request(
+        `https://proxy.local/api/published/${publishId}/assets/unsafe`,
+        {
+          method: "POST",
+          headers: {
+            Origin: "http://localhost:5173",
+            Authorization: `Bearer ${writeToken}`,
+            "Content-Type": "text/html",
+          },
+          body: "<script>alert(1)</script>",
+        },
+      ),
+      env,
+      ctx,
+    );
+
+    expect(res.status).toBe(415);
+    expect(bucket.store.has(`published/${publishId}/assets/unsafe`)).toBe(
+      false,
+    );
   });
 
   it("should fetch asset on GET /api/published/:publishId/assets/:assetId", async () => {
@@ -287,18 +474,80 @@ describe("R2 Publish Endpoints", () => {
 
     await bucket.put(key, assetData, {
       contentType: "image/jpeg",
-      customMetadata: { mimeType: "image/jpeg", filename: "test.jpg" }
+      customMetadata: { mimeType: "image/jpeg", filename: "test.jpg" },
     });
 
     const res = await worker.fetch(
-      createRequest(`https://proxy.local/api/published/${publishId}/assets/${assetId}`, "GET"),
+      createRequest(
+        `https://proxy.local/api/published/${publishId}/assets/${assetId}`,
+        "GET",
+      ),
       env,
-      ctx
+      ctx,
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
+    expect(res.headers.get("Cache-Control")).toBe(
+      "public, max-age=31536000, immutable",
+    );
     expect(res.headers.get("Content-Type")).toBe("image/jpeg");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    const arrayBuffer = await res.arrayBuffer();
+    expect(new Uint8Array(arrayBuffer)).toEqual(new Uint8Array(assetData));
+  });
+
+  it("should allow reading a published bundle without an Origin header", async () => {
+    const publishId = "originless-snapshot";
+    await bucket.put(
+      `published/${publishId}/bundle.json`,
+      JSON.stringify({
+        publishId,
+        vaultTitle: "Read Only World",
+        entities: [],
+      }),
+      {
+        contentType: "application/json",
+      },
+    );
+
+    const res = await worker.fetch(
+      new Request(`https://proxy.local/api/published/${publishId}/bundle`, {
+        method: "GET",
+      }),
+      env,
+      ctx,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      publishId,
+      vaultTitle: "Read Only World",
+      entities: [],
+    });
+  });
+
+  it("should allow reading a published asset without an Origin header", async () => {
+    const publishId = "originless-snapshot";
+    const assetId = "img-123";
+    const assetData = new TextEncoder().encode("hello-image");
+
+    await bucket.put(`published/${publishId}/assets/${assetId}`, assetData, {
+      contentType: "image/jpeg",
+      customMetadata: { mimeType: "image/jpeg", filename: "test.jpg" },
+    });
+
+    const res = await worker.fetch(
+      new Request(
+        `https://proxy.local/api/published/${publishId}/assets/${assetId}`,
+        {
+          method: "GET",
+        },
+      ),
+      env,
+      ctx,
+    );
+
+    expect(res.status).toBe(200);
     const arrayBuffer = await res.arrayBuffer();
     expect(new Uint8Array(arrayBuffer)).toEqual(new Uint8Array(assetData));
   });
@@ -309,17 +558,22 @@ describe("R2 Publish Endpoints", () => {
 
     // Setup: bundle + 2 assets
     await bucket.put(`published/${publishId}/bundle.json`, "{}", {
-      customMetadata: { writeToken }
+      customMetadata: { writeToken },
     });
     await bucket.put(`published/${publishId}/assets/img1`, "img1-data");
     await bucket.put(`published/${publishId}/assets/img2`, "img2-data");
 
     const res = await worker.fetch(
-      createRequest(`https://proxy.local/api/published/${publishId}`, "DELETE", null, {
-        Authorization: `Bearer ${writeToken}`
-      }),
+      createRequest(
+        `https://proxy.local/api/published/${publishId}`,
+        "DELETE",
+        null,
+        {
+          Authorization: `Bearer ${writeToken}`,
+        },
+      ),
       env,
-      ctx
+      ctx,
     );
 
     expect(res.status).toBe(200);
@@ -337,16 +591,21 @@ describe("R2 Publish Endpoints", () => {
 
     // Setup: bundle + 1 asset
     await bucket.put(`published/${publishId}/bundle.json`, "{}", {
-      customMetadata: { writeToken }
+      customMetadata: { writeToken },
     });
     await bucket.put(`published/${publishId}/assets/img1`, "img1-data");
 
     const res = await worker.fetch(
-      createRequest(`https://proxy.local/api/published/${publishId}/assets/img1`, "DELETE", null, {
-        Authorization: `Bearer ${writeToken}`
-      }),
+      createRequest(
+        `https://proxy.local/api/published/${publishId}/assets/img1`,
+        "DELETE",
+        null,
+        {
+          Authorization: `Bearer ${writeToken}`,
+        },
+      ),
       env,
-      ctx
+      ctx,
     );
 
     expect(res.status).toBe(200);
@@ -357,4 +616,3 @@ describe("R2 Publish Endpoints", () => {
     expect(bucket.store.has(`published/${publishId}/assets/img1`)).toBe(false);
   });
 });
-
