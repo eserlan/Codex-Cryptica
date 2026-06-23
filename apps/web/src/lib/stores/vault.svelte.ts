@@ -39,6 +39,7 @@ import { VaultMessenger } from "./vault/messenger";
 import { VaultStorageManager } from "./vault/storage";
 import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "./guest-vault.svelte";
 
 export class VaultStore {
   // Reactive State
@@ -65,9 +66,15 @@ export class VaultStore {
 
   // Delegated Getters
   get entities() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.entitiesMap;
+    }
     return this.entityStore.entities;
   }
   get allEntities() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.entities;
+    }
     return this.entityStore.allEntities;
   }
   get titleAndAliasIndex() {
@@ -118,21 +125,81 @@ export class VaultStore {
     return this.syncStore.isDirty;
   }
   get inboundConnections() {
+    if (sessionModeStore.isGuestMode) {
+      const newInboundMap: Record<
+        string,
+        { sourceId: string; connection: any }[]
+      > = Object.create(null);
+      for (const rel of guestVault.relationships) {
+        if (!newInboundMap[rel.targetId]) {
+          newInboundMap[rel.targetId] = [];
+        }
+        newInboundMap[rel.targetId].push({
+          sourceId: rel.sourceId,
+          connection: {
+            target: rel.targetId,
+            type: rel.label || "neutral",
+            label: rel.label,
+          },
+        });
+      }
+      return newInboundMap;
+    }
     return this.entityStore.inboundConnections;
   }
   get labelIndex() {
+    if (sessionModeStore.isGuestMode) {
+      const labels = new Set<string>();
+      for (const e of guestVault.entities) {
+        if (e.labels) {
+          for (const l of e.labels) {
+            labels.add(l);
+          }
+        }
+      }
+      return Array.from(labels).sort();
+    }
     return this.entityStore.labelIndex;
   }
   get labelCounts() {
+    if (sessionModeStore.isGuestMode) {
+      const counts: Record<string, number> = {};
+      for (const e of guestVault.entities) {
+        if (e.labels) {
+          const uniqueLabels = new Set(e.labels);
+          for (const l of uniqueLabels) {
+            counts[l] = (counts[l] || 0) + 1;
+          }
+        }
+      }
+      return counts;
+    }
     return this.entityStore.labelCounts;
   }
   get maps() {
+    if (sessionModeStore.isGuestMode) {
+      const record: Record<string, any> = Object.create(null);
+      for (const m of guestVault.maps) {
+        record[m.id] = m;
+      }
+      return record;
+    }
     return mapRegistry.maps;
   }
   get allMaps() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.maps;
+    }
     return mapRegistry.allMaps;
   }
   get canvases() {
+    if (sessionModeStore.isGuestMode) {
+      const record: Record<string, any> = Object.create(null);
+      for (const c of guestVault.canvases) {
+        record[c.id] = c;
+      }
+      return record;
+    }
     return canvasRegistry.canvases;
   }
   get activeVaultId() {
@@ -142,6 +209,9 @@ export class VaultStore {
     return vaultRegistry.activeVaultRecord;
   }
   get vaultName() {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.vaultTitle;
+    }
     return vaultRegistry.vaultName;
   }
   get saveQueue() {
@@ -260,7 +330,7 @@ export class VaultStore {
         await this.serviceRegistry.ensureInitialized();
       },
       clearStorageCache: () => this.storageManager.clearCache(),
-      getEntities: () => this.entities,
+      getEntities: () => this.entityStore.entities,
       setDemoVaultName: (n) => (this.demoVaultName = n),
       setInitialized: (v) => (this.isInitialized = v),
       rebuildEntityIndexes: () => {
@@ -452,7 +522,13 @@ export class VaultStore {
 
   // --- Asset Management (Delegated) ---
 
-  resolveImageUrl(path: string, fetcher?: (path: string) => Promise<Blob>) {
+  resolveImageUrl(
+    path: string,
+    fetcher?: (path: string) => Promise<Blob>,
+  ): Promise<string> {
+    if (sessionModeStore.isGuestMode) {
+      return Promise.resolve(guestVault.resolveImageUrl(path) || "");
+    }
     return this.assetStore.resolveImageUrl(path, fetcher);
   }
   releaseImageUrl(path: string) {

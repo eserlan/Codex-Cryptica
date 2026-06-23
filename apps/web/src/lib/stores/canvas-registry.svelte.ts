@@ -8,6 +8,8 @@ import {
 import type { KeyedTaskQueue } from "@codex/vault-engine";
 import type { Canvas, CanvasNode } from "@codex/canvas-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
+import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "./guest-vault.svelte";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -17,7 +19,20 @@ export interface CanvasAddResult {
 }
 
 class CanvasRegistryStore {
-  canvases = $state<Record<string, Canvas>>({});
+  _canvases = $state<Record<string, Canvas>>({});
+  get canvases() {
+    if (sessionModeStore.isGuestMode) {
+      const record: Record<string, Canvas> = {};
+      for (const c of guestVault.canvases) {
+        record[c.id] = c;
+      }
+      return record;
+    }
+    return this._canvases;
+  }
+  set canvases(val: Record<string, Canvas>) {
+    this._canvases = val;
+  }
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isLoaded = $state(false);
   pendingEntities = $state<
@@ -25,11 +40,16 @@ class CanvasRegistryStore {
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
 
-  allCanvases = $derived(
-    Object.values(this.canvases).sort(
+  allCanvases = $derived.by(() => {
+    if (sessionModeStore.isGuestMode) {
+      return [...guestVault.canvases].sort(
+        (a, b) => (b.lastModified || 0) - (a.lastModified || 0),
+      );
+    }
+    return Object.values(this.canvases).sort(
       (a, b) => (b.lastModified || 0) - (a.lastModified || 0),
-    ),
-  );
+    );
+  });
 
   init(saveQueue: KeyedTaskQueue) {
     this.saveQueue = saveQueue;

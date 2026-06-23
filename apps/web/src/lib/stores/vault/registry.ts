@@ -1,6 +1,7 @@
 import { getDB, type VaultRecord } from "../../utils/idb";
 import { createVaultDir, deleteVaultDir, getVaultDir } from "../../utils/opfs";
 import { sanitizeId } from "../../utils/markdown";
+import type { PublishRegistry } from "schema";
 
 export { getVaultDir, createVaultDir };
 
@@ -125,4 +126,24 @@ export async function updateLastSavedToFolder(id: string): Promise<void> {
     // Trigger debounced refresh
     triggerRefresh();
   }
+}
+
+export async function getPublishRegistry(vaultId: string): Promise<PublishRegistry | undefined> {
+  const db = await getDB();
+  return await db.get("publish_registry", vaultId);
+}
+
+export async function savePublishRegistry(registry: PublishRegistry): Promise<void> {
+  const db = await getDB();
+  await db.put("publish_registry", registry);
+}
+
+export async function deletePublishRegistry(vaultId: string): Promise<void> {
+  const db = await getDB();
+  await db.delete("publish_registry", vaultId);
+}
+
+export async function listPublishRegistries(): Promise<PublishRegistry[]> {
+  const db = await getDB();
+  return await db.getAll("publish_registry");
 }

@@ -7,6 +7,11 @@ import {
   GuestChatConfigSchema,
   GuestChatTranscriptSchema,
 } from "./entity";
+import {
+  PublishRegistrySchema,
+  GuestHistorySchema,
+  GuestBundleSchema,
+} from "./publishing";
 
 describe("Entity Schema Validation", () => {
   it("should validate a correct entity", () => {
@@ -346,6 +351,70 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
         expect(result.data.guestChatConfig?.isEnabled).toBe(true);
         expect(result.data.guestChatConfig?.contextScope).toBe("public");
       }
+    });
+  });
+
+  describe("Publishing Schemas", () => {
+    it("should validate a correct PublishRegistry", () => {
+      const registry = {
+        vaultId: "v-1",
+        publishId: "pub-123",
+        writeToken: "token-abc",
+        publishedAt: "2026-06-22T22:00:00Z",
+        stats: {
+          entityCount: 15,
+          relationshipCount: 8,
+          assetCount: 3,
+        },
+      };
+      const result = PublishRegistrySchema.safeParse(registry);
+      expect(result.success).toBe(true);
+    });
+
+    it("should validate a correct GuestHistory", () => {
+      const history = {
+        publishId: "pub-123",
+        vaultTitle: "My Campaign",
+        lastAccessed: "2026-06-22T22:00:00Z",
+      };
+      const result = GuestHistorySchema.safeParse(history);
+      expect(result.success).toBe(true);
+    });
+
+    it("should validate a correct GuestBundle", () => {
+      const bundle = {
+        schemaVersion: 1,
+        publishId: "pub-123",
+        vaultTitle: "My Campaign",
+        publishedAt: "2026-06-22T22:00:00Z",
+        publisherVersion: "1.0.0",
+        activeTheme: { primaryColor: "#ffffff" },
+        entities: [
+          {
+            id: "entity-1",
+            type: "note",
+            title: "My Entity",
+          },
+        ],
+        relationships: [
+          {
+            id: "rel-1",
+            sourceId: "entity-1",
+            targetId: "entity-2",
+            label: "knows",
+          },
+        ],
+        assetManifest: [
+          {
+            assetId: "asset-1",
+            filename: "map.png",
+            mimeType: "image/png",
+            hash: "a3f1c9c7f20f1df4d1b24c97ca7e6c84e721d99794065f9675b6a6c437f8f0f2",
+          },
+        ],
+      };
+      const result = GuestBundleSchema.safeParse(bundle);
+      expect(result.success).toBe(true);
     });
   });
 });

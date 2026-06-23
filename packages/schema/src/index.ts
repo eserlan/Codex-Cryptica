@@ -10,3 +10,5 @@ export * from "./ai";
 export * from "./sync";
 export * from "./art-direction";
 export * from "./migrations";
+export * from "./publishing";
+

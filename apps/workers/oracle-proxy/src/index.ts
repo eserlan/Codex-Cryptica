@@ -11,12 +11,29 @@
  */
 
 import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+import {
+  handlePublishVault,
+  handleGetBundle,
+  handleGetManifest,
+  handleUploadAsset,
+  handleGetAsset,
+  handleDeleteVault,
+  handleDeleteAsset,
+} from "./publish";
 
 interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
   ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
   AI?: any;
+  BUCKET?: any; // R2Bucket
+  TURNSTILE_SECRET_KEY?: string;
+  PUBLISH_CREATE_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  PUBLISH_WRITE_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
 }
 
 // Allowed origins for CORS
@@ -41,7 +58,93 @@ export default {
       return handleCorsPreflight(request, env);
     }
 
-    // Only allow POST requests
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // Route R2 snapshot publishing endpoints
+    if (
+      pathname === "/api/publish-vault" ||
+      pathname.startsWith("/api/published/")
+    ) {
+      const origin = request.headers.get("Origin") || "";
+      const isReadOnlyPublishedRequest =
+        pathname.startsWith("/api/published/") && request.method === "GET";
+      if (!isReadOnlyPublishedRequest && !isOriginAllowed(origin, env)) {
+        return new Response("Forbidden", {
+          status: 403,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      const rateLimitResponse = await enforcePublishRateLimit(
+        request,
+        env,
+        pathname,
+      );
+      if (rateLimitResponse) return rateLimitResponse;
+
+      if (pathname === "/api/publish-vault") {
+        if (request.method === "POST") {
+          return handlePublishVault(request, env);
+        }
+        return new Response("Method not allowed", {
+          status: 405,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      const parts = pathname.split("/");
+      if (parts.length === 4) {
+        // /api/published/:publishId
+        if (request.method === "DELETE") {
+          return handleDeleteVault(request, env, parts[3]);
+        }
+        return new Response("Method not allowed", {
+          status: 405,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      if (parts.length === 5) {
+        // /api/published/:publishId/bundle or manifest
+        if (request.method === "GET") {
+          if (parts[4] === "bundle") {
+            return handleGetBundle(request, env, parts[3]);
+          }
+          if (parts[4] === "manifest") {
+            return handleGetManifest(request, env, parts[3]);
+          }
+        }
+        return new Response("Method not allowed", {
+          status: 405,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      if (parts.length === 6 && parts[4] === "assets") {
+        // /api/published/:publishId/assets/:assetId
+        if (request.method === "POST") {
+          return handleUploadAsset(request, env, parts[3], parts[5]);
+        }
+        if (request.method === "GET") {
+          return handleGetAsset(request, env, parts[3], parts[5]);
+        }
+        if (request.method === "DELETE") {
+          return handleDeleteAsset(request, env, parts[3], parts[5]);
+        }
+        return new Response("Method not allowed", {
+          status: 405,
+          headers: getCorsHeaders(request.headers, env),
+        });
+      }
+
+      return new Response("Not found", {
+        status: 404,
+        headers: getCorsHeaders(request.headers, env),
+      });
+    }
+
+    // Only allow POST requests for the fallback Oracle API
     if (request.method !== "POST") {
       return new Response("Method not allowed", {
         status: 405,
@@ -58,7 +161,6 @@ export default {
       });
     }
 
-    const url = new URL(request.url);
     if (url.pathname === "/v1/images/generations") {
       const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
       const limitResult = await checkRateLimit(ip);
@@ -527,7 +629,7 @@ async function handleInteraction(
 function handleCorsPreflight(request: Request, env: Env): Response {
   const headers = new Headers();
   const allowedHeaders = "Content-Type, Authorization, X-Requested-With";
-  const allowedMethods = "POST, OPTIONS";
+  const allowedMethods = "GET, POST, DELETE, OPTIONS";
 
   // Set CORS headers
   const origin = request.headers.get("Origin") || "";
@@ -560,6 +662,42 @@ function getCorsHeaders(
   }
 
   return headers;
+}
+
+async function enforcePublishRateLimit(
+  request: Request,
+  env: Env,
+  pathname: string,
+): Promise<Response | null> {
+  if (request.method === "GET" || request.method === "OPTIONS") return null;
+
+  const limiter =
+    pathname === "/api/publish-vault"
+      ? env.PUBLISH_CREATE_RATE_LIMITER
+      : env.PUBLISH_WRITE_RATE_LIMITER;
+  if (!limiter) return null;
+
+  const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
+  const publishId = pathname.split("/")[3] || "new";
+  const key = pathname === "/api/publish-vault" ? ip : `${ip}:${publishId}`;
+  const { success } = await limiter.limit({ key });
+  if (success) return null;
+
+  return new Response(
+    JSON.stringify({
+      error: {
+        message: "Too many publishing requests. Please try again later.",
+      },
+    }),
+    {
+      status: 429,
+      headers: {
+        ...getCorsHeaders(request.headers, env),
+        "Content-Type": "application/json",
+        "Retry-After": "60",
+      },
+    },
+  );
 }
 
 /**

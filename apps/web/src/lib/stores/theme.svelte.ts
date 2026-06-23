@@ -34,6 +34,8 @@ import {
 } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
+import { guestVault } from "./guest-vault.svelte";
+
 const STORAGE_KEY = "codex-cryptica-active-theme";
 const APPEARANCE_KEY = "codex-cryptica-app-appearance";
 const CONFIG_PATH = [".codex", "config.json"];
@@ -291,6 +293,13 @@ export class ThemeStore {
   async init() {
     if (!browser) return;
 
+    if (this.sessionModeStore.isGuestMode) {
+      if (guestVault.activeTheme?.id) {
+        await this.setTheme(guestVault.activeTheme.id);
+      }
+      return;
+    }
+
     // Use current active vault if available, otherwise fall back to localStorage
     const vault = await Promise.resolve(this.getVault());
     const activeVaultId = vault?.activeVaultId;
@@ -310,7 +319,7 @@ export class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || this.sessionModeStore.isDemoMode) return;
+    if (!browser || this.sessionModeStore.isDemoMode || this.sessionModeStore.isGuestMode) return;
 
     this.previewThemeId = null; // Clear any preview on vault switch
 

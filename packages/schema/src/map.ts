@@ -40,6 +40,7 @@ export const MapSchema = z.object({
   isWorldMap: z.boolean().optional(), // If true, this is the default map for the campaign
   pins: z.array(MapPinSchema),
   fogOfWar: MapMaskSchema.optional(),
+  playerVisible: z.boolean().optional(),
 });
 
 export type MapPin = z.infer<typeof MapPinSchema>;

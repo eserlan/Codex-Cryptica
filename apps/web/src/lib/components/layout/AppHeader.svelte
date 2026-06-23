@@ -9,6 +9,7 @@
   import { openFrontPage } from "./app-header-actions";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -21,6 +22,10 @@
   const isStaging = $derived(IS_STAGING || sessionModeStore.isStaging);
 
   const handleBrandClick = () => {
+    if (sessionModeStore.isGuestMode && guestVault.publishId) {
+      void goto(`${base}/guest/${guestVault.publishId}`);
+      return;
+    }
     openFrontPage();
     void goto(`${base}/`);
   };
@@ -124,20 +129,37 @@
 
     <!-- Desktop: Right Controls -->
     <div class="hidden md:flex items-center gap-4 shrink-0">
-      <DriveStatus />
-      <P2PStatus />
-      <VaultControls />
-      <button
-        class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
-          ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'
-          : 'border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent'} relative"
-        onclick={() => modalUIStore.toggleSettings("vault")}
-        title="Application Settings"
-        aria-label="Open Application Settings"
-        data-testid="settings-button"
-      >
-        <span class="w-5 h-5 icon-[lucide--settings]"></span>
-      </button>
+      {#if sessionModeStore.isGuestMode}
+        <span class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5">
+          <span class="icon-[lucide--eye] h-3.5 w-3.5"></span>
+          READ-ONLY GUEST
+        </span>
+        <button
+          class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all"
+          onclick={() => {
+            sessionModeStore.isGuestMode = false;
+            guestVault.clear();
+            void goto(`${base}/`);
+          }}
+        >
+          Exit Guest Mode
+        </button>
+      {:else}
+        <DriveStatus />
+        <P2PStatus />
+        <VaultControls />
+        <button
+          class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
+            ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'
+            : 'border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent'} relative"
+          onclick={() => modalUIStore.toggleSettings("vault")}
+          title="Application Settings"
+          aria-label="Open Application Settings"
+          data-testid="settings-button"
+        >
+          <span class="w-5 h-5 icon-[lucide--settings]"></span>
+        </button>
+      {/if}
     </div>
   </div>
 </header>

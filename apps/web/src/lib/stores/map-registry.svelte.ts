@@ -5,10 +5,30 @@ import { saveMapsToDisk, loadMapsFromDisk } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { guestVault } from "./guest-vault.svelte";
 
 class MapRegistryStore {
-  maps = $state<Record<string, Map>>({});
-  allMaps = $derived.by(() => Object.values(this.maps));
+  _maps = $state<Record<string, Map>>({});
+  get maps() {
+    if (sessionModeStore.isGuestMode) {
+      const record: Record<string, Map> = {};
+      for (const m of guestVault.maps) {
+        record[m.id] = m;
+      }
+      return record;
+    }
+    return this._maps;
+  }
+  set maps(val: Record<string, Map>) {
+    this._maps = val;
+  }
+
+  allMaps = $derived.by(() => {
+    if (sessionModeStore.isGuestMode) {
+      return guestVault.maps;
+    }
+    return Object.values(this.maps);
+  });
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   private saveQueue: KeyedTaskQueue | null = null;
 

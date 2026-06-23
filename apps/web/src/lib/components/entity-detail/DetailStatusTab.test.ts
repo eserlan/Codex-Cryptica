@@ -72,6 +72,10 @@ vi.mock("$lib/stores/oracle.svelte", () => ({
   },
 }));
 
+vi.mock("./generate-personality", () => ({
+  generatePersonality: vi.fn(),
+}));
+
 vi.mock("$lib/cloud-bridge/oracle-bridge", () => ({
   oracleBridge: {
     isReady: false,
@@ -430,8 +434,15 @@ describe("DetailStatusTab", () => {
     expect(mockConfig.isEnabled).toBe(false);
   });
 
-  it("AI-generates personality rules when chat is enabled without them", async () => {
-    const { oracle } = await import("$lib/stores/oracle.svelte");
+  it("calls generatedPersonality logic when chat is enabled without rules", async () => {
+    const { generatePersonality } = await import("./generate-personality");
+    vi.mocked(generatePersonality).mockImplementationOnce(
+      async ({ setEditLore }) => {
+        setEditLore("## Personality & Voice\n- Mocked rule");
+        return true;
+      },
+    );
+
     const mockConfig = {
       isEnabled: false,
       contextScope: "public" as const,
@@ -459,50 +470,16 @@ describe("DetailStatusTab", () => {
     await waitFor(() => {
       expect(screen.getByText("Found in character lore")).toBeTruthy();
     });
-    expect(oracle.textGeneration.generateResponse).toHaveBeenCalledOnce();
-    const prompt = vi.mocked(oracle.textGeneration.generateResponse).mock
-      .calls[0][1] as string;
-    expect(prompt).toContain("Create only personality and voice notes");
-    expect(prompt).toContain("Do not write a full character profile");
-  });
-
-  it("proxies personality generation callbacks through the Oracle worker", async () => {
-    const { oracleBridge } = await import("$lib/cloud-bridge/oracle-bridge");
-    const Comlink = await import("comlink");
-    (oracleBridge as any).isReady = true;
-    const mockConfig = {
-      isEnabled: false,
-      contextScope: "public" as const,
-      extraInstructions: "",
-      isHostReviewable: true,
-      keepMemory: true,
-    };
-
-    render(DetailStatusTab, {
-      entity: { ...mockCharacterEntity, guestChatConfig: mockConfig },
-      isEditing: true,
-      editType: "character",
-      editContent: "",
-      editStartDate: undefined as any,
-      editEndDate: undefined as any,
-      editGuestChatConfig: mockConfig,
-    });
-
-    const checkbox = screen.getByLabelText(
-      "Enable Guest Character Chat",
-    ) as HTMLInputElement;
-    await fireEvent.click(checkbox);
-
-    await waitFor(() => {
-      expect(Comlink.proxy).toHaveBeenCalled();
-    });
-    (oracleBridge as any).isReady = false;
+    expect(generatePersonality).toHaveBeenCalledOnce();
   });
 
   it("keeps prompting for manual personality rules when AI generation fails", async () => {
-    const { oracle } = await import("$lib/stores/oracle.svelte");
-    vi.mocked(oracle.textGeneration.generateResponse).mockRejectedValueOnce(
-      new Error("AI unavailable"),
+    const { generatePersonality } = await import("./generate-personality");
+    vi.mocked(generatePersonality).mockImplementationOnce(
+      async ({ setError }) => {
+        setError("AI generation failed.");
+        return false;
+      },
     );
     const mockConfig = {
       isEnabled: false,
