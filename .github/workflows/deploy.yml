@@ -148,6 +148,7 @@ jobs:
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_TURNSTILE_SITE_KEY: "0x4AAAAAADpp_w2_FPAdSQzQ"
         run: bun run build
 
       - name: Download coverage reports

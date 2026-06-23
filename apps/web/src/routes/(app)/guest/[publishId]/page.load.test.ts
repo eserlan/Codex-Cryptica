@@ -43,4 +43,23 @@ describe("guest bundle loader", () => {
     expect(result.status).toBe(400);
     expect(result.bundle).toBeNull();
   });
+
+  it("extracts UUID correctly from a slugified URL parameter", async () => {
+    const uuid = "54429d8e-252c-40da-ab66-f9d91cb9a4ad";
+    const slugified = `my-cool-vault-${uuid}`;
+    let fetchedUrl = "";
+
+    const result: any = await load({
+      params: { publishId: slugified },
+      fetch: async (url: string) => {
+        fetchedUrl = url;
+        return new Response(
+          JSON.stringify({ ...validBundle, publishId: uuid }),
+        );
+      },
+    } as any);
+
+    expect(fetchedUrl).toContain(uuid);
+    expect(result.publishId).toBe(uuid);
+  });
 });

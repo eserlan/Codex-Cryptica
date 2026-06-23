@@ -7,7 +7,9 @@ export const ssr = false;
 export const prerender = false;
 
 export const load: PageLoad = async ({ params, fetch }) => {
-  const { publishId } = params;
+  const rawParamId = params.publishId;
+  const publishId =
+    rawParamId.length >= 36 ? rawParamId.slice(-36) : rawParamId;
   const baseUrl = "https://oracle-proxy.espen-erlandsen.workers.dev";
   const url = `${baseUrl}/api/published/${publishId}/bundle`;
 

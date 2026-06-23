@@ -147,7 +147,7 @@ wrangler secret put ALLOWED_ORIGINS
 
 ### Guest Snapshot Verification
 
-See [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md). This Worker only needs `TURNSTILE_SECRET_KEY`; `PUBLIC_TURNSTILE_SITE_KEY` belongs in the web deployment environment.
+See [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md). This Worker only needs `TURNSTILE_SECRET_KEY`; `VITE_TURNSTILE_SITE_KEY` belongs in the web deployment environment.
 
 ### Worker Name
 

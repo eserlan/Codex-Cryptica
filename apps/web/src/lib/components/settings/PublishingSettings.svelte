@@ -39,10 +39,19 @@
     }
   }
 
+  const shareableUrl = $derived.by(() => {
+    if (!activeRegistry) return "";
+    const title = vault.activeVaultRecord?.name || "vault";
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    return `${window.location.origin}/guest/${slug ? slug + "-" : ""}${activeRegistry.publishId}`;
+  });
+
   function handleCopyLink() {
-    if (!activeRegistry) return;
-    const url = `${window.location.origin}/guest/${activeRegistry.publishId}`;
-    navigator.clipboard.writeText(url).then(
+    if (!shareableUrl) return;
+    navigator.clipboard.writeText(shareableUrl).then(
       () => {
         notificationStore.notify("Guest URL copied to clipboard!", "success");
       },
@@ -140,7 +149,7 @@
               id="shareable-link-input"
               type="text"
               readonly
-              value="{window.location.origin}/guest/{activeRegistry.publishId}"
+              value={shareableUrl}
               class="flex-1 bg-theme-bg/50 border border-theme-border px-3 py-2 text-sm rounded font-mono select-all text-theme-text/80 focus:outline-none"
             />
             <button

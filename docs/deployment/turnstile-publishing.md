@@ -16,7 +16,7 @@ The client executes Turnstile only after a user confirms publication. The widget
 Set the public site key in the web deployment environment:
 
 ```text
-PUBLIC_TURNSTILE_SITE_KEY=<site-key>
+VITE_TURNSTILE_SITE_KEY=<site-key>
 ```
 
 The site key is intentionally included in the browser build. Never place the secret in web environment variables, source files, or GitHub repository variables.

@@ -1,6 +1,6 @@
 import { browser } from "$app/environment";
 
-const PUBLIC_TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+const VITE_TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 declare global {
   interface Window {
@@ -52,7 +52,7 @@ function loadTurnstile(): Promise<NonNullable<Window["turnstile"]>> {
 
 /** Runs the invisible publication challenge only after the user confirms publishing. */
 export async function getPublishTurnstileToken(): Promise<string> {
-  if (!PUBLIC_TURNSTILE_SITE_KEY) {
+  if (!VITE_TURNSTILE_SITE_KEY) {
     throw new Error("Publishing verification is not configured.");
   }
 
@@ -73,7 +73,7 @@ export async function getPublishTurnstileToken(): Promise<string> {
     }, 30_000);
 
     widgetId = turnstile.render(container, {
-      sitekey: PUBLIC_TURNSTILE_SITE_KEY,
+      sitekey: VITE_TURNSTILE_SITE_KEY,
       execution: "execute",
       action: "publish_snapshot",
       callback: (token: string) => {

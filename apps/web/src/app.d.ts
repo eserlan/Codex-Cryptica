@@ -17,6 +17,7 @@ declare global {
 
 interface ImportMetaEnv {
   readonly VITE_STAGING: string;
+  readonly VITE_TURNSTILE_SITE_KEY?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

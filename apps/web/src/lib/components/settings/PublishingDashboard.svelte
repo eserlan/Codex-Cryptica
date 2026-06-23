@@ -27,8 +27,12 @@
     return vaultNames[vaultId] || "Unknown Campaign";
   }
 
-  function handleCopyLink(publishId: string) {
-    const url = `${window.location.origin}/guest/${publishId}`;
+  function handleCopyLink(publishId: string, title: string) {
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    const url = `${window.location.origin}/guest/${slug ? slug + "-" : ""}${publishId}`;
     navigator.clipboard.writeText(url).then(
       () => {
         notificationStore.notify("Guest URL copied to clipboard!", "success");
@@ -111,7 +115,7 @@
           <div class="flex items-center gap-2 justify-end">
             <button
               type="button"
-              onclick={() => handleCopyLink(item.publishId)}
+              onclick={() => handleCopyLink(item.publishId, title)}
               class="px-2.5 py-1.5 border border-theme-border hover:border-theme-primary hover:text-theme-primary text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
               title="Copy public link"
             >

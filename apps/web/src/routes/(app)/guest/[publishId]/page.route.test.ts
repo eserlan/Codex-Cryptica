@@ -5,6 +5,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "$lib/stores/guest-vault.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -46,13 +47,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
-  onboardingStore: {
-    dismissedWorldPage: true,
-    dismissLandingPage: vi.fn(),
-  },
-}));
-
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     mainViewMode: "graph",
@@ -88,10 +82,11 @@ describe("/guest/[publishId] page", () => {
     sessionModeStore.isGuestMode = false;
     (vault as any).activeVaultId = "vault-123";
     (themeStore as any).worldThemeId = "local-theme";
+    onboardingStore.restoreWorldPage();
     vi.clearAllMocks();
   });
 
-  it("restores the active vault theme when leaving guest mode", async () => {
+  it("keeps the guest session active when navigating within the app", async () => {
     const { unmount } = render(RoutePage, {
       data: {
         publishId: "published-1",
@@ -117,13 +112,13 @@ describe("/guest/[publishId] page", () => {
 
     unmount();
 
-    expect(sessionModeStore.isGuestMode).toBe(false);
-    expect(guestVault.clear).toHaveBeenCalled();
-    expect(themeStore.loadForVault).toHaveBeenCalledWith("vault-123");
+    expect(sessionModeStore.isGuestMode).toBe(true);
+    expect(guestVault.clear).not.toHaveBeenCalled();
+    expect(themeStore.loadForVault).not.toHaveBeenCalled();
     expect(themeStore.setTheme).toHaveBeenCalledTimes(1);
   });
 
-  it("falls back to the previous local theme when no active vault exists", async () => {
+  it("keeps the host theme when no local vault is active", async () => {
     (vault as any).activeVaultId = "";
 
     const { unmount } = render(RoutePage, {
@@ -150,7 +145,44 @@ describe("/guest/[publishId] page", () => {
 
     unmount();
 
-    expect(themeStore.loadForVault).not.toHaveBeenCalled();
-    expect(themeStore.setTheme).toHaveBeenLastCalledWith("local-theme");
+    expect(themeStore.setTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders FrontPage and allows it to be closed", async () => {
+    (guestVault as any).entities = [{ id: "e1" }];
+    const { getByTestId, queryByTestId, unmount } = render(RoutePage, {
+      data: {
+        publishId: "published-3",
+        status: 200,
+        error: null,
+        bundle: {
+          publishId: "published-3",
+          vaultTitle: "Shared World",
+          activeTheme: { id: "host-theme" },
+          entities: [{ id: "e1" }],
+          relationships: [],
+          maps: [],
+          canvases: [],
+          assetManifest: [],
+        },
+      } as any,
+    });
+
+    let closeBtn: HTMLElement;
+    await waitFor(() => {
+      closeBtn = getByTestId("close-front-page");
+      expect(closeBtn).toBeTruthy();
+    });
+
+    // Click it to close
+    closeBtn!.click();
+
+    await waitFor(() => {
+      expect(onboardingStore.dismissedWorldPage).toBe(true);
+      // Svelte automatically reactivity updates to remove the overlay
+      expect(queryByTestId("front-page-overlay")).toBeNull();
+    });
+
+    unmount();
   });
 });
