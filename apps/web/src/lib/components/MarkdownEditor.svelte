@@ -11,6 +11,7 @@
   import { TableCell } from "@tiptap/extension-table-cell";
   import { TableHeader } from "@tiptap/extension-table-header";
   import { EmbedExtension } from "./editor/EmbedExtension";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     createEntityAutoLinkExtension,
     ENTITY_INDEX_CHANGED_META,
@@ -198,6 +199,35 @@
     bind:this={element}
     class="tiptap-editor-wrapper flex-1"
     class:readonly={!editable}
+    onclick={(e) => {
+      const target = e.target as HTMLElement;
+      if (target && target.tagName === "IMG") {
+        const img = target as HTMLImageElement;
+        const rect = img.getBoundingClientRect();
+        modalUIStore.openLightbox(img.src, img.alt || "Image", {
+          x: rect.left,
+          y: rect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+      }
+    }}
+    onkeydown={(e) => {
+      if (e.key === "Enter") {
+        const target = e.target as HTMLElement;
+        if (target && target.tagName === "IMG") {
+          const img = target as HTMLImageElement;
+          const rect = img.getBoundingClientRect();
+          modalUIStore.openLightbox(img.src, img.alt || "Image", {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+          });
+        }
+      }
+    }}
+    role="presentation"
   ></div>
 </div>
 
@@ -246,6 +276,15 @@
   :global(.ProseMirror) {
     outline: none;
     height: 100%;
+  }
+
+  :global(.ProseMirror img) {
+    cursor: zoom-in;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  :global(.ProseMirror img:hover) {
+    transform: scale(1.02);
   }
 
   :global(.ProseMirror > :first-child) {
