@@ -29,8 +29,8 @@ describe("Themed Generator Route", () => {
   describe("entries", () => {
     it("returns a cross-product of all themes and slugs", () => {
       const res = (entries as any)();
-      // 11 themes × 16 slugs = 176 entries
-      expect(res).toHaveLength(11 * 16);
+      // 11 themes × 17 slugs = 187 entries
+      expect(res).toHaveLength(11 * 17);
     });
 
     it("includes lancer + npc", () => {
