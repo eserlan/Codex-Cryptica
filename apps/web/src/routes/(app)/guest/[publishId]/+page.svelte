@@ -164,7 +164,9 @@
         style:background-image="var(--bg-texture-overlay)"
         role="presentation"
       >
-        <FrontPage />
+        <FrontPage
+          onClose={() => (onboardingStore.dismissedWorldPage = true)}
+        />
       </div>
     {/if}
   {/if}
