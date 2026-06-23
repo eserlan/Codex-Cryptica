@@ -7,7 +7,6 @@
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { browser } from "$app/environment";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { SESSION_DRAFTS_KEY } from "$lib/services/seo/session-context";
@@ -1251,11 +1250,6 @@
                 Fast offline mode — local tables only, no AI.
               {/if}
             </p>
-            {#if browser}
-              <div class="pl-6 pt-1">
-                <FeatureHint hintId="generator-local-mode" />
-              </div>
-            {/if}
           </div>
         </form>
 
