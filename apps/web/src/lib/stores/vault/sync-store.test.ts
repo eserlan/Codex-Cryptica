@@ -825,6 +825,38 @@ describe("SyncStore", () => {
     });
   });
 
+  describe("loadPhase indicator", () => {
+    it("advances to 'parsing' during a cold load and resets to null afterwards", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+
+      let phaseDuringParse: string | null = null;
+      repository.loadFiles.mockImplementation(
+        async (_vId, _handle, onProgress) => {
+          // loadPhase should be "parsing" by the time the parse loop reports.
+          phaseDuringParse = (store as any).loadPhase;
+          repository.entities = { "entity-1": {} };
+          await onProgress({}, 1, 1, { "entity-1": {} });
+        },
+      );
+
+      expect(store.loadPhase).toBe(null);
+
+      await store.loadFiles(false); // Force full sync (cold load)
+
+      expect(phaseDuringParse).toBe("parsing");
+      expect(store.loadPhase).toBe(null);
+    });
+
+    it("resets loadPhase to null even when the load throws", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+      repository.loadFiles.mockRejectedValue(new Error("boom"));
+
+      await store.loadFiles(false);
+
+      expect(store.loadPhase).toBe(null);
+    });
+  });
+
   describe("loadPublishRegistry dep", () => {
     it("calls loadPublishRegistry alongside loadMaps and loadCanvases after OPFS sync", async () => {
       vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
