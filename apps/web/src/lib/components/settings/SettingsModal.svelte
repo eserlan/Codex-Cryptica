@@ -8,6 +8,7 @@
   import LabelSettings from "./LabelSettings.svelte";
   import HelpTab from "../help/HelpTab.svelte";
   import VaultSettings from "./VaultSettings.svelte";
+  import PublishingSettings from "./PublishingSettings.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { base } from "$app/paths";
   import { VERSION, CODENAME } from "$lib/config";
@@ -30,6 +31,11 @@
       id: "theme",
       label: "Theme",
       icon: "icon-[lucide--palette]",
+    },
+    {
+      id: "publishing",
+      label: "Publishing",
+      icon: "icon-[lucide--share-2]",
     },
     { id: "help", label: "Help", icon: "icon-[lucide--help-circle]" },
     { id: "about", label: "About", icon: "icon-[lucide--info]" },
@@ -407,6 +413,15 @@
               </p>
               <ThemeSelector />
             </section>
+          </div>
+        {:else if modalUIStore.activeSettingsTab === "publishing"}
+          <div
+            role="tabpanel"
+            id="settings-panel-publishing"
+            aria-labelledby="settings-tab-publishing"
+            class="space-y-6 max-w-3xl mx-auto font-body"
+          >
+            <PublishingSettings />
           </div>
         {:else if modalUIStore.activeSettingsTab === "help"}
           <div

@@ -4,6 +4,8 @@
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 
   interface NavItem {
@@ -16,36 +18,38 @@
     action?: () => void;
   }
 
-  const views: NavItem[] = [
-    {
-      id: "graph",
-      icon: "icon-[lucide--network]",
-      label: "Graph",
-      title: "Knowledge Graph",
-      href: `${base}/`,
-    },
-    {
-      id: "map",
-      icon: "icon-[lucide--compass]",
-      label: "Map",
-      title: "World Map",
-      href: `${base}/map`,
-    },
-    {
-      id: "canvas",
-      icon: "icon-[lucide--layout]",
-      label: "Canvas",
-      title: "Spatial Canvas",
-      href: `${base}/canvas`,
-    },
-    {
-      id: "timeline",
-      icon: "icon-[lucide--calendar-days]",
-      label: "Timeline",
-      title: "World Chronology",
-      href: `${base}/timeline`,
-    },
-  ];
+  const views = $derived.by<NavItem[]>(() => {
+    return [
+      {
+        id: "graph",
+        icon: "icon-[lucide--network]",
+        label: "Graph",
+        title: "Knowledge Graph",
+        href: sessionModeStore.isGuestMode && guestVault.publishId ? `${base}/guest/${guestVault.publishId}` : `${base}/`,
+      },
+      {
+        id: "map",
+        icon: "icon-[lucide--compass]",
+        label: "Map",
+        title: "World Map",
+        href: `${base}/map`,
+      },
+      {
+        id: "canvas",
+        icon: "icon-[lucide--layout]",
+        label: "Canvas",
+        title: "Spatial Canvas",
+        href: `${base}/canvas`,
+      },
+      {
+        id: "timeline",
+        icon: "icon-[lucide--calendar-days]",
+        label: "Timeline",
+        title: "World Chronology",
+        href: `${base}/timeline`,
+      },
+    ];
+  });
 
   const tools = $derived.by<NavItem[]>(() => {
     const list: NavItem[] = [

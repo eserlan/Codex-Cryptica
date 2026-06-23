@@ -7,6 +7,7 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { detectCycle } from "$lib/stores/vault/entities";
   import { vault } from "$lib/stores/vault.svelte";
+  import type { LocalEntity } from "$lib/stores/vault/types";
 
   let {
     entity,
@@ -105,7 +106,11 @@
       e.dataTransfer?.getData("application/x-codex-entity-id") ||
       e.dataTransfer?.getData("text/plain");
     if (draggedId && draggedId !== entity.id) {
-      const hasCycle = detectCycle(draggedId, entity.id, vault.entities);
+      const hasCycle = detectCycle(
+        draggedId,
+        entity.id,
+        vault.entities as Record<string, LocalEntity>,
+      );
       if (!hasCycle) {
         await vault.updateEntity(draggedId, { parent: entity.id });
       }

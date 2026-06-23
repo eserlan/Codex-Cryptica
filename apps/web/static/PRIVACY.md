@@ -32,6 +32,7 @@ Codex Cryptica does **not** include tracking pixels, third-party analytics (like
 
 - **Web Fonts:** We may load fonts from Google Fonts.
 - **Icons:** We use icon sets which are bundled with the application.
+- **Publishing Verification:** When you create a public guest snapshot, we use Cloudflare Turnstile to prevent automated abuse of the publishing service. Turnstile processes limited browser and network signals as described in the [Cloudflare Turnstile Privacy Addendum](https://www.cloudflare.com/turnstile-privacy-policy/).
 
 ## 6. Changes to this Policy
 

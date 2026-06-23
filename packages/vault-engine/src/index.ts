@@ -9,3 +9,4 @@ export * from "./services/ActivityService";
 export * from "./parser";
 export * from "./migrations/runner";
 export * from "./migrations/store";
+export * from "./services/GuestExporter";
