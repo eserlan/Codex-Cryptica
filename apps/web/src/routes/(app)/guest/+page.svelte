@@ -6,11 +6,22 @@
     removeGuestHistory,
     clearGuestHistory,
   } from "$lib/services/publishing/guest-history";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import type { GuestHistory } from "schema";
 
   let history = $state<GuestHistory[]>([]);
 
   onMount(() => {
+    if (sessionModeStore.isGuestMode) {
+      sessionModeStore.isGuestMode = false;
+      guestVault.clear();
+      if (vault.activeVaultId) {
+        void themeStore.loadForVault(vault.activeVaultId);
+      }
+    }
     loadHistory();
   });
 

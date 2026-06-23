@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -20,7 +20,6 @@
 
   let loading = $state(true);
   let errorMsg = $state<string | null>(null);
-  let previousThemeId = $state<string | null>(null);
 
   // Get selected entity in guest mode
   let selectedEntity = $derived.by(() => {
@@ -44,7 +43,6 @@
     if (data.bundle) {
       try {
         // 1. Force guest mode
-        previousThemeId = themeStore.worldThemeId;
         sessionModeStore.isGuestMode = true;
 
         // 2. Load the bundle into our reactive guest vault
@@ -66,16 +64,6 @@
     } else {
       errorMsg = "No bundle data received";
       loading = false;
-    }
-  });
-
-  onDestroy(() => {
-    sessionModeStore.isGuestMode = false;
-    guestVault.clear();
-    if (vault.activeVaultId) {
-      void themeStore.loadForVault(vault.activeVaultId);
-    } else if (previousThemeId) {
-      void themeStore.setTheme(previousThemeId);
     }
   });
 </script>
