@@ -377,7 +377,12 @@ export class SyncStore {
       this.setStatus("error");
       this.errorMessage = err.message;
     } finally {
-      this.loadPhase = null;
+      // Only clear the phase if this invocation is still the active one. A
+      // stale (aborted) load must not null out the phase of the newer load
+      // that superseded it — same guard the status reset below uses.
+      if (!signal.aborted) {
+        this.loadPhase = null;
+      }
       if (!signal.aborted) {
         await this.checkForConflicts(signal);
       }
