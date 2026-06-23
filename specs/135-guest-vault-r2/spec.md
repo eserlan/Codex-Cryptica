@@ -19,8 +19,9 @@
 - Q: How should the guest viewer decide which visual theme to render? → A: Option A: Host-Configured Campaign Theme: The guest viewer automatically applies the host's active campaign theme.
 - Q: How should the host client handle the upload process UI? → A: Option B: Background Service Sync: The upload runs in the background using service workers or async tasks, allowing the user to immediately close the tab.
 - Q: How should the unpublish action be confirmed by the GM? → A: Option A: Warning Confirmation Modal: Show a warning modal explaining that players will lose access before executing unpublish.
+- Q: How should the guest session behave when a user navigates away from the initial guest URL to view entities or maps? → A: Option A: Persistent Session State: The guest vault and `isGuestMode` flag remain active in memory while navigating within the app. The session is explicitly terminated when navigating back to the root `/guest` landing page.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Publish Guest Snapshot (Priority: P1)
 
@@ -51,6 +52,8 @@ As a player/guest, I want to open a shared guest link in my browser and view the
 1. **Given** a valid guest publish ID, **When** a player visits the guest URL, **Then** the application downloads the published JSON bundle and assets, rendering a responsive guest shell displaying the vault title.
 2. **Given** the guest viewer, **When** a player browses the interface, **Then** all editing features, buttons, AI generation actions, and admin settings are completely hidden or disabled.
 3. **Given** the published bundle, **When** the player searches or navigates, **Then** the search runs entirely in-browser over the published entities, and clicking relationship links navigates seamlessly between entities.
+4. **Given** an active guest session, **When** the player navigates to different entities or app views, **Then** the guest vault data remains loaded and the session remains in guest mode.
+5. **Given** an active guest session, **When** the player navigates back to the `/guest` landing page, **Then** the guest session is terminated, the guest vault is cleared, and the app restores the host's local vault state and theme.
 
 ---
 
@@ -96,7 +99,7 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
 
 **Acceptance Scenarios**:
 
-1. **Given** a guest opens a shared link `https://codexcryptica.com/guest/[publishId]` for the first time, **When** the bundle successfully loads, **Then** the app stores the `publishId`, `vaultTitle`, and current timestamp in the guest's local browser storage.
+1. **Given** a guest opens a shared link `https://codexcryptica.com/guest/[vault-slug]-[publishId]` for the first time, **When** the bundle successfully loads, **Then** the app stores the `publishId`, `vaultTitle`, and current timestamp in the guest's local browser storage.
 2. **Given** a guest visits the root guest URL or a landing page, **When** they have previous guest vault entries in local storage, **Then** the landing page displays a "Recent Shared Worlds" list.
 3. **Given** the recent vaults list, **When** the guest clicks a vault, **Then** the app navigates them to that guest vault viewer immediately.
 
@@ -110,7 +113,7 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
 - **Orphan/Unpublished URL access**: When a guest requests an invalid or expired URL, the app must show a clean error page rather than a blank screen or a JavaScript crash, and automatically remove the dead link from the guest's local history.
 - **Orphaned Assets in R2**: If a user updates their campaign, assets that are no longer referenced MUST be cleaned up automatically to avoid accumulating dangling files and leaks of recently restricted material.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -137,8 +140,10 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
 - **FR-021**: The exporter MUST include the campaign's active theme configuration in the snapshot bundle, and the guest viewer MUST automatically apply this theme upon loading the snapshot.
 - **FR-022**: The system MUST run the snapshot compilation and upload process in the background (using service workers or async tasks), allowing the user to continue using the application or close the tab without interrupting the upload, while showing a background progress notification in the UI.
 - **FR-023**: The unpublish action MUST trigger a confirmation modal warning the host that the snapshot will be permanently deleted from the cloud and players will lose access before sending the delete request to the server.
+- **FR-024**: The system MUST persist the active guest session (`isGuestMode` and guest vault data) in memory across navigations to other app routes (e.g., entity detail pages) so the guest can browse seamlessly.
+- **FR-025**: The system MUST terminate the guest session, clear the in-memory guest vault data, and restore the local host vault state and theme when the user navigates back to the root `/guest` landing page.
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
 - **PublishRegistry**: A local registry entry stored in the host's IndexedDB tracking published campaigns.
   - `vaultId`: Internal ID of the local vault (unique key).
@@ -162,7 +167,7 @@ As a guest browser (player), I want the app to remember guest vaults I have prev
   - `entities`: Array of sanitized public entities.
   - `relationships`: Array of sanitized public relationships.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

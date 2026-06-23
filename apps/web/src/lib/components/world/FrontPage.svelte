@@ -18,6 +18,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -87,6 +88,11 @@
   });
 
   $effect(() => {
+    if (sessionModeStore.isGuestMode) {
+      isWorldReady = true;
+      return;
+    }
+
     if (!activeVaultId) {
       isWorldReady = false;
       return;
