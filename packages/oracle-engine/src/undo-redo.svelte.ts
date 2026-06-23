@@ -1,9 +1,20 @@
 import type { UndoableAction } from "./types";
+import {
+  systemClock,
+  systemIdGenerator,
+  type Clock,
+  type IdGenerator,
+} from "./runtime";
 
 export class UndoRedoService {
   undoStack = $state<UndoableAction[]>([]);
   redoStack = $state<UndoableAction[]>([]);
   isUndoing = $state(false);
+
+  constructor(
+    private clock: Clock = systemClock,
+    private idGenerator: IdGenerator = systemIdGenerator,
+  ) {}
 
   pushUndoAction(
     description: string,
@@ -12,7 +23,7 @@ export class UndoRedoService {
     redo?: () => Promise<void>,
   ) {
     this.undoStack.push({
-      id: crypto.randomUUID(),
+      id: this.idGenerator.uuid(),
       messageId,
       description,
       undo,
@@ -21,7 +32,7 @@ export class UndoRedoService {
         (async () => {
           console.warn(`Redo not implemented for: ${description}`);
         }),
-      timestamp: Date.now(),
+      timestamp: this.clock.now(),
     });
 
     this.redoStack = [];
