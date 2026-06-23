@@ -338,15 +338,34 @@ export class PublishingService {
           "X-Filename": asset.path.split("/").pop() || asset.assetId,
         };
 
-        const assetResponse = await fetcher(assetUrl, {
-          method: "POST",
-          headers: assetHeaders,
-          body: asset.blob,
-        });
+        let retryCount = 0;
+        let assetResponse: Response | null = null;
 
-        if (!assetResponse.ok) {
+        while (retryCount < 3) {
+          assetResponse = await fetcher(assetUrl, {
+            method: "POST",
+            headers: assetHeaders,
+            body: asset.blob,
+          });
+
+          if (assetResponse.status === 429) {
+            retryCount++;
+            const retryAfter = assetResponse.headers.get("Retry-After");
+            const delay = retryAfter
+              ? parseInt(retryAfter, 10) * 1000
+              : 1000 * Math.pow(2, retryCount);
+            console.warn(
+              `[PublishingService] Rate limited (429) uploading ${asset.path}, retrying in ${delay}ms...`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          break;
+        }
+
+        if (!assetResponse || !assetResponse.ok) {
           throw new Error(
-            `Failed to upload asset ${asset.path}: ${assetResponse.statusText}`,
+            `Failed to upload asset ${asset.path}: ${assetResponse?.statusText || "Unknown error"}`,
           );
         }
         assetUploadIndex++;
