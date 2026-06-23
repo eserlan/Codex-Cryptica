@@ -87,6 +87,77 @@ describe("VaultIO", () => {
     warnSpy.mockRestore();
   });
 
+  describe("publish registry disk IO", () => {
+    const registry = {
+      vaultId: "v1",
+      publishId: "pub-123",
+      writeToken: "tok-abc",
+      publishedAt: "2026-06-23T00:00:00Z",
+      stats: { entityCount: 5, relationshipCount: 2, assetCount: 1 },
+    };
+
+    it("should save publish registry to disk", async () => {
+      await vaultIO.savePublishRegistryToDisk(mockVaultHandle, registry);
+      expect(writeOpfsFile).toHaveBeenCalledWith(
+        [".codex", "publish-registry.json"],
+        JSON.stringify(registry, null, 2),
+        mockVaultHandle,
+        "test-vault",
+      );
+    });
+
+    it("should load publish registry from disk", async () => {
+      const mockCodexDir = {
+        getFileHandle: vi.fn().mockResolvedValue({
+          getFile: vi.fn().mockResolvedValue({
+            text: vi.fn().mockResolvedValue(JSON.stringify(registry)),
+          }),
+        }),
+      };
+      mockVaultHandle.getDirectoryHandle.mockResolvedValue(mockCodexDir);
+
+      const result = await vaultIO.loadPublishRegistryFromDisk(mockVaultHandle);
+      expect(result).toMatchObject({
+        publishId: "pub-123",
+        writeToken: "tok-abc",
+      });
+    });
+
+    it("should return null when publish registry file does not exist", async () => {
+      mockVaultHandle.getDirectoryHandle.mockRejectedValue(
+        Object.assign(new Error("Not found"), { name: "NotFoundError" }),
+      );
+      const result = await vaultIO.loadPublishRegistryFromDisk(mockVaultHandle);
+      expect(result).toBeNull();
+    });
+
+    it("should delete publish registry from disk", async () => {
+      await vaultIO.deletePublishRegistryFromDisk(mockVaultHandle);
+      expect(deleteOpfsEntry).toHaveBeenCalledWith(
+        mockVaultHandle,
+        [".codex", "publish-registry.json"],
+        "test-vault",
+      );
+    });
+
+    it("should swallow NotFoundError on delete", async () => {
+      vi.mocked(deleteOpfsEntry).mockRejectedValue(
+        Object.assign(new Error("Not found"), { name: "NotFoundError" }),
+      );
+      await expect(
+        vaultIO.deletePublishRegistryFromDisk(mockVaultHandle),
+      ).resolves.toBeUndefined();
+    });
+
+    it("should warn on unexpected error during delete", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      vi.mocked(deleteOpfsEntry).mockRejectedValue(new Error("Unexpected"));
+      await vaultIO.deletePublishRegistryFromDisk(mockVaultHandle);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
+
   it("should save and delete canvas", async () => {
     await vaultIO.saveCanvasToDisk(mockVaultHandle, "c1", { nodes: [] });
     expect(writeOpfsFile).toHaveBeenCalledWith(

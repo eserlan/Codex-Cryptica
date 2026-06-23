@@ -274,4 +274,86 @@ describe("PublishingService", () => {
       }),
     );
   });
+
+  describe("loadFromVault", () => {
+    const diskRegistry = {
+      vaultId: "vault-1",
+      publishId: "disk-pub-999",
+      writeToken: "disk-tok-999",
+      publishedAt: "2026-06-23T12:00:00Z",
+      stats: { entityCount: 3, relationshipCount: 1, assetCount: 0 },
+    };
+
+    function makeMockHandle(registry: any) {
+      return {
+        getDirectoryHandle: vi.fn().mockResolvedValue({
+          getFileHandle: vi.fn().mockResolvedValue({
+            getFile: vi.fn().mockResolvedValue({
+              text: vi.fn().mockResolvedValue(JSON.stringify(registry)),
+            }),
+          }),
+        }),
+      } as unknown as FileSystemDirectoryHandle;
+    }
+
+    it("restores registry from disk when IDB has nothing", async () => {
+      const service = new PublishingService(deps);
+      const handle = makeMockHandle(diskRegistry);
+
+      await service.loadFromVault("vault-1", handle);
+
+      expect(registryStore["vault-1"]).toMatchObject({
+        publishId: "disk-pub-999",
+      });
+      expect(service.publishedVaults["vault-1"]).toMatchObject({
+        publishId: "disk-pub-999",
+      });
+    });
+
+    it("prefers disk registry when it is newer than IDB", async () => {
+      registryStore["vault-1"] = {
+        ...diskRegistry,
+        publishId: "old-pub",
+        publishedAt: "2026-06-22T00:00:00Z",
+      };
+      const service = new PublishingService(deps);
+      const handle = makeMockHandle(diskRegistry);
+
+      await service.loadFromVault("vault-1", handle);
+
+      expect(service.publishedVaults["vault-1"].publishId).toBe("disk-pub-999");
+    });
+
+    it("keeps IDB registry when it is newer than disk", async () => {
+      const newerIdb = {
+        ...diskRegistry,
+        publishId: "newer-pub",
+        publishedAt: "2026-06-24T00:00:00Z",
+      };
+      registryStore["vault-1"] = newerIdb;
+      const service = new PublishingService(deps);
+      const handle = makeMockHandle(diskRegistry);
+
+      await service.loadFromVault("vault-1", handle);
+
+      expect(
+        service.publishedVaults["vault-1"]?.publishId ?? newerIdb.publishId,
+      ).toBe("newer-pub");
+    });
+
+    it("does nothing when disk file is absent", async () => {
+      const service = new PublishingService(deps);
+      const handle = {
+        getDirectoryHandle: vi
+          .fn()
+          .mockRejectedValue(
+            Object.assign(new Error("Not found"), { name: "NotFoundError" }),
+          ),
+      } as unknown as FileSystemDirectoryHandle;
+
+      await service.loadFromVault("vault-1", handle);
+
+      expect(registryStore["vault-1"]).toBeUndefined();
+    });
+  });
 });
