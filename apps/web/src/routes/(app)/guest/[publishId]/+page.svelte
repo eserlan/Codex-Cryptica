@@ -20,6 +20,7 @@
 
   let loading = $state(true);
   let errorMsg = $state<string | null>(null);
+  let showFrontPage = $state(true);
 
   // Get selected entity in guest mode
   let selectedEntity = $derived.by(() => {
@@ -157,7 +158,7 @@
     {/if}
 
     <!-- Vault Front Page Overlay -->
-    {#if !onboardingStore.dismissedWorldPage && !selectedEntity && guestVault.entities.length > 0}
+    {#if !onboardingStore.dismissedWorldPage && showFrontPage && !selectedEntity && guestVault.entities.length > 0}
       <div
         data-testid="front-page-overlay"
         class="absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm"
@@ -165,7 +166,10 @@
         role="presentation"
       >
         <FrontPage
-          onClose={() => (onboardingStore.dismissedWorldPage = true)}
+          onClose={() => {
+            onboardingStore.dismissedWorldPage = true;
+            showFrontPage = false;
+          }}
         />
       </div>
     {/if}

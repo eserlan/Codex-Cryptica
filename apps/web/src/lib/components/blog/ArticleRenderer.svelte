@@ -33,7 +33,7 @@
 
 <article
   class="blog-content prose prose-invert max-w-none prose-p:text-theme-text/80 prose-headings:text-theme-text prose-a:text-theme-primary hover:prose-a:text-theme-primary/80 prose-strong:text-theme-text prose-code:text-theme-primary/90 prose-pre:bg-theme-surface prose-pre:border prose-pre:border-theme-border"
-  onclick={(e) => {
+  onclickcapture={(e) => {
     const target = e.target as HTMLElement;
     if (target && target.tagName === "IMG") {
       const img = target as HTMLImageElement;
@@ -46,7 +46,7 @@
       });
     }
   }}
-  onkeydown={(e) => {
+  onkeydowncapture={(e) => {
     if (e.key === "Enter") {
       const target = e.target as HTMLElement;
       if (target && target.tagName === "IMG") {

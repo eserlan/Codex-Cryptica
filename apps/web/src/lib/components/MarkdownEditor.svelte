@@ -199,7 +199,7 @@
     bind:this={element}
     class="tiptap-editor-wrapper flex-1"
     class:readonly={!editable}
-    onclick={(e) => {
+    onclickcapture={(e) => {
       const target = e.target as HTMLElement;
       if (target && target.tagName === "IMG") {
         const img = target as HTMLImageElement;
@@ -212,7 +212,7 @@
         });
       }
     }}
-    onkeydown={(e) => {
+    onkeydowncapture={(e) => {
       if (e.key === "Enter") {
         const target = e.target as HTMLElement;
         if (target && target.tagName === "IMG") {
