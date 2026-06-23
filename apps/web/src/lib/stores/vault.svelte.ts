@@ -109,6 +109,9 @@ export class VaultStore {
   get syncStats() {
     return this.syncStore.syncStats;
   }
+  get loadPhase() {
+    return this.syncStore.loadPhase;
+  }
   get hasConflictFiles() {
     return this.syncStore.hasConflictFiles;
   }
