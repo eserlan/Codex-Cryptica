@@ -10,6 +10,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { onlineStatus } from "$lib/stores/online.svelte";
   import { openImportWindow } from "$lib/stores/ui/navigation";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
@@ -176,18 +177,7 @@
     }
   };
 
-  let isOffline = $state(false);
-  $effect(() => {
-    if (typeof window === "undefined") return;
-    const updateStatus = () => (isOffline = !navigator.onLine);
-    window.addEventListener("online", updateStatus);
-    window.addEventListener("offline", updateStatus);
-    updateStatus();
-    return () => {
-      window.removeEventListener("online", updateStatus);
-      window.removeEventListener("offline", updateStatus);
-    };
-  });
+  const isOffline = $derived(!onlineStatus.current);
 </script>
 
 <div class="flex flex-col gap-2 font-sans">

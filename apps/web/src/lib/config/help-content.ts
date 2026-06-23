@@ -432,6 +432,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate NPCs, factions, settlements, and magic items directly inside your vault. Every draft is reviewed before saving — nothing is written until you confirm.",
     icon: "icon-[lucide--wand-2]",
   },
+  "generator-local-mode": {
+    id: "generator-local-mode",
+    title: "Generators Work Offline",
+    content:
+      "The generators always work, even without a connection. Offline, Codex builds drafts from its built-in tables and saves them on your device — this is Local Mode. The AI Lore Co-Author option writes richer, one-of-a-kind lore but needs the internet, so it's switched off until you reconnect. If the AI is ever unavailable mid-generation, Codex quietly falls back to a local draft and lets you know.",
+    icon: "icon-[lucide--wifi-off]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

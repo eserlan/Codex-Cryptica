@@ -796,14 +796,93 @@ export function generatePantheonLocal(
     const title = `${generatedDeityName}, the ${tone} ${divineType} of ${domain}`;
     const summary = `A powerful ${divineType.toLowerCase()} governing the forces of ${domain.toLowerCase()} with a ${tone.toLowerCase()} outlook.`;
 
+    const deityDescriptions = [
+      `The deity ${generatedDeityName} manifests as a striking presence aligned with ${domain.toLowerCase()}. Commonly depicted carrying ${randomSymbol.toLowerCase()}, their sacred icons can be found carved in old shrines.`,
+      `${generatedDeityName} is a ${divineType.toLowerCase()} whose presence is felt in the ${domain.toLowerCase()} of everyday life rather than dramatic revelation. Their symbol, ${randomSymbol.toLowerCase()}, appears in places of quiet devotion.`,
+      `Those who study ${generatedDeityName} disagree on what form this ${divineType.toLowerCase()} truly takes — only the domain of ${domain.toLowerCase()} is constant across all accounts. Their symbol, ${randomSymbol.toLowerCase()}, predates the oldest written records.`,
+      `${generatedDeityName} is not worshipped through fear but through recognition — this ${divineType.toLowerCase()} governs ${domain.toLowerCase()} because those forces existed before the deity and will outlast them. The symbol, ${randomSymbol.toLowerCase()}, reflects that ancient relationship.`,
+      `Temples to ${generatedDeityName} tend to be built where ${domain.toLowerCase()} is most immediately felt. Their symbol, ${randomSymbol.toLowerCase()}, marks places of significance to the faithful and warning to the uninitiated.`,
+    ] as const;
+
+    const divinePortfolios = [
+      `Followers look to ${generatedDeityName} for guidance in matters of ${domain.toLowerCase()}. The deity's tenets demand adhering to the laws of ${tone.toLowerCase()} harmony and resisting the temptations of rival entities.`,
+      `The portfolio of ${generatedDeityName} covers ${domain.toLowerCase()} in all its forms — the benign and the terrible alike. Followers are expected to embrace the full scope, not just the parts that are comfortable.`,
+      `${generatedDeityName}'s domain of ${domain.toLowerCase()} is interpreted differently across sects, but all agree that the deity's ${tone.toLowerCase()} nature shapes how that power is expressed and what price it demands.`,
+      `Devotion to ${generatedDeityName} is understood as submission to the truth of ${domain.toLowerCase()} rather than appeals for personal favor. The deity answers — but not always in ways the petitioner expected.`,
+      `The tenets of ${generatedDeityName} are less a moral code than an acknowledgment of how ${domain.toLowerCase()} works. The ${tone.toLowerCase()} framing sets the deity apart from others who govern similar forces.`,
+    ] as const;
+
+    const worshipDescriptions = [
+      `The worship of this ${divineType.toLowerCase()} is usually organized as a ${worshipperType.toLowerCase()}. Temples range from modest roadside altars to grand cathedrals built in urban centers.`,
+      `The ${worshipperType.toLowerCase()} that organises worship of ${generatedDeityName} maintains a careful distinction between public-facing practice and the rites reserved for the initiated.`,
+      `Practitioners form ${worshipperType.toLowerCase()} structures that vary significantly by region, but all share the core understanding that ${generatedDeityName} is not petitioned — they are engaged.`,
+      `The ${worshipperType.toLowerCase()} built around this deity tends to attract people who already live close to ${domain.toLowerCase()}. The formal hierarchy is secondary to the lived relationship.`,
+      `Organized worship takes the form of a ${worshipperType.toLowerCase()}, though splinter sects with divergent interpretations of the ${tone.toLowerCase()} doctrine have always complicated the official hierarchy.`,
+    ] as const;
+
+    const deitySecrets = [
+      `Holds a secret fear of their own power being forgotten by mortal hearts.`,
+      `Has been slowly losing influence to a younger divine force and is engineering a crisis to restore relevance.`,
+      `Once granted a mortal a boon that cannot be undone — and has been managing the consequences ever since.`,
+      `Made a bargain with another divine power that fundamentally compromises their stated domain.`,
+      `Their most devoted worshippers know something about the deity that the clergy actively suppresses.`,
+    ] as const;
+
+    const deityHooks = [
+      `A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.`,
+      `A sect claiming direct communication with ${generatedDeityName} has emerged, and the established clergy does not know whether to denounce or investigate them.`,
+      `The deity's symbol has started appearing in locations where no worshipper has been — scratched into walls, pressed into mud, burned into wood.`,
+      `A mortal has begun performing miracles attributed to ${generatedDeityName} without any priestly training. The temple wants to know why before the wrong people ask the same question.`,
+      `Something the deity is supposed to protect has gone missing. The clergy is keeping it quiet, but the silence itself is starting to draw attention.`,
+    ] as const;
+
+    const deityTaboos = [
+      `Damaging or defacing sacred symbols of ${domain.toLowerCase()} is believed to bring immediate bad fortune.`,
+      `To speak the deity's name in a place of violence is considered an invitation for consequence — not divine punishment exactly, but a shift in how things go.`,
+      `Worshippers of ${generatedDeityName} do not swear oaths in the deity's name. The deity's attention, once called, is not easily redirected.`,
+      `Those who mock the domain of ${domain.toLowerCase()} in earshot of a shrine are understood to be testing something. Most stop after the first incident.`,
+      `The one true taboo is acting against ${domain.toLowerCase()} while seeking the deity's blessing. The prayers are heard — but the hypocrisy is noted.`,
+    ] as const;
+
+    const deityAdventureHooks = [
+      [
+        `A high priest of the local ${worshipperType.toLowerCase()} hires the adventurers to recover a stolen relic.`,
+        `A heretical sect has arisen, claiming the deity demands a dark and forbidden sacrifice.`,
+      ],
+      [
+        `A dying worshipper gives the party a map and asks them to complete a pilgrimage they cannot finish. They do not explain what waits at the end.`,
+        `Two ${worshipperType.toLowerCase()} sects are escalating toward open conflict over an interpretation of scripture neither side will back down from.`,
+      ],
+      [
+        `The deity has gone silent — no answers to prayers, no signs, no miracles. The clergy wants to know why before the faithful notice.`,
+        `A relic associated with ${generatedDeityName} has been sold to a collector who has no idea what they have purchased.`,
+      ],
+      [
+        `The ${worshipperType.toLowerCase()} has received a vision that contradicts their founding doctrine. They need outside eyes before they decide what to do with it.`,
+        `Someone has been performing the ${randomHighlightRitual.toLowerCase()} incorrectly — and the results have been accumulating somewhere nearby.`,
+      ],
+      [
+        `A noble family is attempting to co-opt the ${worshipperType.toLowerCase()} for political purposes. The hierarchy is divided on whether to resist or accommodate.`,
+        `A ruin recently excavated near the capital contains evidence that ${generatedDeityName}'s history is not what the official texts claim.`,
+      ],
+    ] as const;
+
+    const deityDesc = pickFrom(deityDescriptions, rng);
+    const divinePort = pickFrom(divinePortfolios, rng);
+    const worshipDesc = pickFrom(worshipDescriptions, rng);
+    const deitySecret = pickFrom(deitySecrets, rng);
+    const deityHook = pickFrom(deityHooks, rng);
+    const deityTaboo = pickFrom(deityTaboos, rng);
+    const adventureHookPair = pickFrom(deityAdventureHooks, rng);
+
     let content = `### Deity Description
-The deity ${generatedDeityName} manifests as a striking presence aligned with ${domain.toLowerCase()}. Commonly depicted carrying ${randomSymbol.toLowerCase()}, their sacred icons can be found carved in old shrines.
+${deityDesc}
 
 ### Divine Portfolio
-Followers look to ${generatedDeityName} for guidance in matters of ${domain.toLowerCase()}. The deity's tenets demand adhering to the laws of ${tone.toLowerCase()} harmony and resisting the temptations of rival entities.
+${divinePort}
 
 ### Worship & Cults
-The worship of this ${divineType.toLowerCase()} is usually organized as a ${worshipperType.toLowerCase()}. Temples range from modest roadside altars to grand cathedrals built in urban centers.`;
+${worshipDesc}`;
 
     if (campaignContext) {
       content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the deity's worshippers have adapted to these circumstances, altering their rites accordingly.`;
@@ -814,19 +893,19 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
 - **✨ Primary Domain**: ${domain}
 - **👥 Worshippers**: ${worshipperType}
 - **📍 Sacred Symbol**: ${randomSymbol}
-- **📅 Secret**: Holds a secret fear of their own power being forgotten by mortal hearts.
-- **⚔ Immediate Hook**: A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.
+- **📅 Secret**: ${deitySecret}
+- **⚔ Immediate Hook**: ${deityHook}
 
 ### Rituals & Taboos
 - **Ritual**: ${randomHighlightRitual}
-- **Taboo**: Damaging or defacing sacred symbols of ${domain.toLowerCase()} is believed to bring immediate bad fortune.
+- **Taboo**: ${deityTaboo}
 
 ### Myths & Legends
 - **The Tale of Creation**: ${randomMyth}
 
 ### Adventure Hooks
-- A high priest of the local ${worshipperType.toLowerCase()} hires the adventurers to recover a stolen relic.
-- A heretical sect has arisen, claiming the deity demands a dark and forbidden sacrifice.`;
+- ${adventureHookPair[0]}
+- ${adventureHookPair[1]}`;
 
     return {
       type: "character",
@@ -852,8 +931,16 @@ The worship of this ${divineType.toLowerCase()} is usually organized as a ${wors
     generateName(rng),
   );
 
+  const pantheonOrigins = [
+    `According to legend, the deities of this pantheon were born from a single cosmic event. Under the theme of ${conflictTheme.toLowerCase()}, they divide the control of the cosmos between their spheres of influence.`,
+    `The oldest texts describe these deities emerging not at the beginning of time but at its first break — the moment when ${conflictTheme.toLowerCase()} entered the cosmos and forced a division of responsibility.`,
+    `These deities did not create the world. They arose from it, shaped by the theme of ${conflictTheme.toLowerCase()} that already ran through everything. Their domains reflect what the cosmos needed to be governed, not what they chose.`,
+    `The origin of this pantheon is disputed by the sects that follow it. What all accounts agree on is that the theme of ${conflictTheme.toLowerCase()} preceded the deities — they are its expression, not its authors.`,
+    `Myths describe these deities forming a compact in response to a threat the cosmos could not survive without cooperation. The theme of ${conflictTheme.toLowerCase()} is the scar that compact left on everything that followed.`,
+  ] as const;
+
   let content = `### Origin & Dogma
-According to legend, the deities of this pantheon were born from a single cosmic event. Under the theme of ${conflictTheme.toLowerCase()}, they divide the control of the cosmos between their spheres of influence.
+${pickFrom(pantheonOrigins, rng)}
 
 ### Pantheon Structure
 The pantheon consists of ${deityCount} deities:

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render } from "@testing-library/svelte";
+import { render, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { Snippet } from "svelte";
 import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
@@ -246,6 +246,84 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       );
       expect(copyBtn).toBeTruthy();
       expect(copyBtn?.querySelector(".icon-\\[lucide--copy\\]")).toBeTruthy();
+    });
+  });
+
+  describe("Offline Local Mode gating (#1494)", () => {
+    const originalOnLine = Object.getOwnPropertyDescriptor(
+      window.navigator,
+      "onLine",
+    );
+
+    afterEach(() => {
+      if (originalOnLine) {
+        Object.defineProperty(window.navigator, "onLine", originalOnLine);
+      }
+    });
+
+    function setOnline(value: boolean) {
+      Object.defineProperty(window.navigator, "onLine", {
+        configurable: true,
+        value,
+      });
+    }
+
+    // Provide an initialDraft so the on-mount auto-generate short-circuits and
+    // we only observe the explicit Generate-button call.
+    const seedDraft = {
+      type: "character" as const,
+      title: "Seed",
+      content: "seed",
+      lore: "",
+      labels: [],
+      status: "draft" as const,
+    };
+
+    it("forces useAI:false when offline even if the AI toggle is on", async () => {
+      setOnline(false);
+      const mockGenerate = vi.fn().mockResolvedValue(seedDraft);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      // Let onMount sync isOnline from navigator.onLine.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      mockGenerate.mockClear();
+
+      const button = container.querySelector(
+        "#generate-button",
+      ) as HTMLButtonElement;
+      await fireEvent.click(button);
+
+      expect(mockGenerate).toHaveBeenCalledWith({ useAI: false });
+    });
+
+    it("uses AI when online and the AI toggle is on (default)", async () => {
+      setOnline(true);
+      const mockGenerate = vi.fn().mockResolvedValue(seedDraft);
+
+      const { container } = render(SEOGeneratorLayout, {
+        props: {
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      mockGenerate.mockClear();
+
+      const button = container.querySelector(
+        "#generate-button",
+      ) as HTMLButtonElement;
+      await fireEvent.click(button);
+
+      expect(mockGenerate).toHaveBeenCalledWith({ useAI: true });
     });
   });
 

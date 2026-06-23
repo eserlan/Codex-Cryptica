@@ -113,6 +113,8 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("**Class / Archetype**: Wizard / Level 5");
       expect(res.lore).toContain("**Table Rating**: CR 3");
       expect(res.labels).toContain("custom-label");
+      // A successful AI generation must not be flagged as a fallback (#1494).
+      expect(res.aiFallback).toBeUndefined();
     });
 
     it("should fall back to local tables if AI call fails", async () => {
@@ -129,6 +131,21 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toContain("Dwarf");
       expect(res.content).toContain("Warrior");
       expect(res.lore).toContain("Lawful Good");
+      // AI was requested but failed, so the result is flagged so the UI can
+      // surface the "AI was unavailable" notice (#1494).
+      expect(res.aiFallback).toBe(true);
+    });
+
+    it("should not flag aiFallback when AI is not requested", async () => {
+      const res = await engine.generateNPC({
+        race: "Dwarf",
+        role: "Warrior",
+        alignment: "Lawful Good",
+        useAI: false,
+      });
+
+      expect(res.aiFallback).toBeUndefined();
+      expect(mockClientManager.getModel).not.toHaveBeenCalled();
     });
   });
 

@@ -1327,6 +1327,54 @@ const FIRST_IMPRESSION_BY_GENRE: Record<string, string> = {
     "The roar of a shuttle taking off, the chatter of alien tongues, and the ever-present gaze of imperial stormtroopers on patrol.",
 };
 
+const CORE_CONCEPT_VARIANTS = [
+  (
+    name: string,
+    size: string,
+    environment: string,
+    primaryFunction: string,
+    tone: string,
+    mainTension: string,
+  ) =>
+    `${name} is a ${size.toLowerCase()} built around ${primaryFunction.toLowerCase()} in a ${environment.toLowerCase()} setting. ${tone} in character, it draws people who need what it offers and repels those who threaten it. Beneath the surface, ${mainTension.toLowerCase()} is shaping everything.`,
+  (
+    name: string,
+    size: string,
+    environment: string,
+    primaryFunction: string,
+    tone: string,
+    mainTension: string,
+  ) =>
+    `${name} is a ${size.toLowerCase()} ${environment.toLowerCase()} settlement whose entire identity runs through ${primaryFunction.toLowerCase()}. The ${tone.toLowerCase()} atmosphere is partly genuine and partly maintained — and ${mainTension.toLowerCase()} is testing both.`,
+  (
+    name: string,
+    size: string,
+    environment: string,
+    primaryFunction: string,
+    tone: string,
+    mainTension: string,
+  ) =>
+    `A ${size.toLowerCase()} place shaped by ${environment.toLowerCase()} terrain and the demands of ${primaryFunction.toLowerCase()}, ${name} has the ${tone.toLowerCase()} quality of somewhere that knows what it is. What it does not know is how much longer that remains true, given ${mainTension.toLowerCase()}.`,
+  (
+    name: string,
+    size: string,
+    environment: string,
+    primaryFunction: string,
+    tone: string,
+    mainTension: string,
+  ) =>
+    `${name} exists because ${primaryFunction.toLowerCase()} required a permanent presence in this ${environment.toLowerCase()} location. It is ${size.toLowerCase()}, ${tone.toLowerCase()}, and quietly under strain: ${mainTension.toLowerCase()} runs through everything here.`,
+  (
+    name: string,
+    size: string,
+    environment: string,
+    primaryFunction: string,
+    tone: string,
+    mainTension: string,
+  ) =>
+    `Everything about ${name} — its ${size.toLowerCase()} scale, its ${environment.toLowerCase()} setting, its ${tone.toLowerCase()} reputation — traces back to ${primaryFunction.toLowerCase()}. And ${mainTension.toLowerCase()} threatens to unravel all of it.`,
+] as const;
+
 const CORE_CONCEPT_TEMPLATE = (
   name: string,
   size: string,
@@ -1334,8 +1382,16 @@ const CORE_CONCEPT_TEMPLATE = (
   primaryFunction: string,
   tone: string,
   mainTension: string,
+  rng: () => number,
 ) =>
-  `${name} is a ${size.toLowerCase()} built around ${primaryFunction.toLowerCase()} in a ${environment.toLowerCase()} setting. ${tone} in character, it draws people who need what it offers and repels those who threaten it. Beneath the surface, ${mainTension.toLowerCase()} is shaping everything.`;
+  CORE_CONCEPT_VARIANTS[Math.floor(rng() * CORE_CONCEPT_VARIANTS.length)](
+    name,
+    size,
+    environment,
+    primaryFunction,
+    tone,
+    mainTension,
+  );
 
 export function generateSettlementLocal(
   options: SettlementGeneratorOptions = {},
@@ -1368,14 +1424,22 @@ export function generateSettlementLocal(
   const firstImpression =
     FIRST_IMPRESSION_BY_GENRE[genre] ?? FIRST_IMPRESSION_BY_GENRE["Fantasy"];
 
+  const historyVariants = [
+    `${name} was established as a ${primaryFunction.toLowerCase()} and grew to serve that purpose above all else. The ${authorityType.toLowerCase()} has held power long enough for cracks to form. How those cracks spread is the story.`,
+    `The original reason for ${name}'s existence was ${primaryFunction.toLowerCase()}. Everything else — the layout, the social order, the current tensions — grew from that. The ${authorityType.toLowerCase()} that governs it inherited a settlement already shaped by decisions made before them.`,
+    `${name} predates its current ${authorityType.toLowerCase()} by enough time that the original arrangement and the current reality have diverged in ways nobody officially acknowledges.`,
+    `The settlement formed around ${primaryFunction.toLowerCase()} and has never fully outgrown that original purpose. The ${authorityType.toLowerCase()} manages what that purpose attracts — which is both the settlement's strength and its persistent vulnerability.`,
+    `Early records describe ${name} as a temporary installation. It became permanent when ${primaryFunction.toLowerCase()} proved too valuable to abandon. The ${authorityType.toLowerCase()} that solidified over time are a later development, and not everyone accepts their legitimacy equally.`,
+  ] as const;
+
   const content = `## Core Concept
-${CORE_CONCEPT_TEMPLATE(name, size, environment, primaryFunction, tone, mainTension)}
+${CORE_CONCEPT_TEMPLATE(name, size, environment, primaryFunction, tone, mainTension, rng)}
 
 ## First Impression
 ${firstImpression}
 
 ## History
-${name} was established as a ${primaryFunction.toLowerCase()} and grew to serve that purpose above all else. The ${authorityType.toLowerCase()} has held power long enough for cracks to form. How those cracks spread is the story.`;
+${historyVariants[Math.floor(rng() * historyVariants.length)]}`;
 
   const lore = `### GM Reference Information
 - **Scale**: ${size} (${population})

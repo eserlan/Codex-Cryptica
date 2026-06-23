@@ -1026,17 +1026,54 @@ export function generateFactionLocal(
 
   const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
 
+  const factionControlClosers = [
+    `Their reach is felt in every trade deal, guarded rumor, and carefully placed favor.`,
+    `Nothing moves through this ${scope.toLowerCase()} without them knowing about it — or taking a cut.`,
+    `They do not need to be visible to be powerful; their influence runs through the people who handle money, information, and access.`,
+    `The faction operates through proxies, debts, and well-timed silences rather than open displays of strength.`,
+    `Ask who benefits from the current arrangement in this ${scope.toLowerCase()} and the answer loops back to them.`,
+  ] as const;
+
+  const factionWantClosers = [
+    `Every action the faction takes, however charitable it appears, serves this underlying drive.`,
+    `Their apparent generosity, their public neutrality, their occasional concessions — all of it is navigation toward this goal.`,
+    `Understanding this is the key to predicting what they will do next and who they will sacrifice to do it.`,
+    `The faction has never lost sight of this, even when circumstances forced temporary retreats.`,
+    `Everything else — alliances, conflicts, charitable gestures — is positioning toward this end.`,
+  ] as const;
+
+  const factionDangerClosers = [
+    `Beyond their internal tensions, they will negotiate before striking — but they do not forget.`,
+    `What makes them dangerous is not the threat they represent today but the patience they have shown over years.`,
+    `They have survived worse. What they cannot survive is being underestimated by the wrong people at the wrong time.`,
+    `The faction does not escalate without cause. When they do, the response is disproportionate by design.`,
+    `They play long games. A slight that seems forgotten rarely is.`,
+  ] as const;
+
+  const factionHowToUse = [
+    (n: string) =>
+      `Bring ${n} into play when the party needs leverage, pressure, a sponsor, or a rival who can operate in daylight. They reward players who deal in favors and punish those who make public enemies.`,
+    (n: string) =>
+      `${n} works best as a recurring power — one the party keeps needing and never fully trusts. Let them be useful before revealing the full cost of their help.`,
+    (n: string) =>
+      `Use ${n} as the faction the party can never quite get ahead of. Every concession they win should quietly shift something else in the faction's favor.`,
+    (n: string) =>
+      `${n} is most effective when the party is not sure whether they are an ally, a tool, or a threat. Let that ambiguity persist as long as possible.`,
+    (n: string) =>
+      `Introduce ${n} through a representative, not the faction itself — let the players build a relationship before they understand what they have walked into.`,
+  ] as const;
+
   const content = `### What they control
-${name} is a ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. Their reach is felt in every trade deal, guarded rumor, and carefully placed favor.${campaignContext ? ` In ${campaignContext}, they already have fingers in the most contested disputes.` : ""}
+${name} is a ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. ${pickFrom(factionControlClosers, rng)}${campaignContext ? ` In ${campaignContext}, they already have fingers in the most contested disputes.` : ""}
 
 ### What they want
-${goal} Every action the faction takes, however charitable it appears, serves this underlying drive.
+${goal} ${pickFrom(factionWantClosers, rng)}
 
 ### Why they are dangerous
-${conflict} Beyond their internal tensions, they will negotiate before striking — but they do not forget.
+${conflict} ${pickFrom(factionDangerClosers, rng)}
 
 ### How to use them at the table
-Bring ${name} into play when the party needs leverage, pressure, a sponsor, or a rival who can operate in daylight. They reward players who deal in favors and punish those who make public enemies.`;
+${pickFrom(factionHowToUse, rng)(name)}`;
 
   const lore = `### At the Table
 - **📍 Base**: ${factionBase(factionType, rng)}
