@@ -366,17 +366,54 @@ export function generateNationLocal(
 
   const summary = `A ${resolved.conflictLevel.toLowerCase()} ${resolved.polityType.toLowerCase()} operating under ${resolved.governmentStyle.toLowerCase()}.`;
 
+  const capitalDescriptions = [
+    `Its centre of power, ${capitalName}, is where decisions are made and deals are struck.`,
+    `${capitalName} is the nerve centre — whoever controls the capital shapes what the rest of the ${resolved.polityType.toLowerCase()} experiences.`,
+    `The capital, ${capitalName}, projects authority outward. How much of that authority is real is a question only those inside can answer.`,
+    `${capitalName} holds the ${resolved.polityType.toLowerCase()} together institutionally. Whether it can hold it together politically is less certain.`,
+    `Power flows to ${capitalName} and is redistributed from there — imperfectly, unevenly, and with increasing friction.`,
+  ] as const;
+
+  const powerStructureClosers = [
+    `Those closest to power know the cracks are showing.`,
+    `The inner circle understands the situation more clearly than the public statements suggest.`,
+    `The people managing the crisis are the same people who caused it. That is not yet widely understood.`,
+    `The cracks are visible to anyone paying attention. Most people have decided not to pay attention.`,
+    `${leaderName}'s position looks stable from a distance. The view from inside is different.`,
+  ] as const;
+
+  const societyDescriptions = [
+    `The population lives under a state at ${resolved.conflictLevel.toLowerCase()}. Loyalty is shifting, old alliances are being renegotiated, and the ruling structure is projecting strength it may not have.`,
+    `Life at ${resolved.conflictLevel.toLowerCase()} means people have become good at reading the room — which official pronouncements to believe, which to discount, which to quietly plan around.`,
+    `The social order persists, but the terms have been renegotiated so many times under ${resolved.conflictLevel.toLowerCase()} conditions that the original compact is barely recognizable.`,
+    `At ${resolved.conflictLevel.toLowerCase()}, the gap between official narrative and lived experience has become something people navigate rather than question. That is either stability or suppression, depending on who you ask.`,
+    `The ruling structure has adapted to ${resolved.conflictLevel.toLowerCase()} by tightening its grip on information and loosening its grip on things that no longer matter. The population has noticed both.`,
+  ] as const;
+
+  const nationHowToUse = [
+    (n: string) =>
+      `Use ${n} as a campaign backdrop, the source of a mission, or the prize in a power struggle. The hidden problem gives any encounter with its institutions the potential to spiral.`,
+    (n: string) =>
+      `${n} works best as a setting that rewards engagement — the more the party learns, the more the official version of events diverges from what is actually happening.`,
+    (n: string) =>
+      `Use ${n} as the source of pressure on everything else in the campaign. Its problems do not stay inside its borders.`,
+    (n: string) =>
+      `${n} is most effective when the party has to choose a side, each of which has legitimate grievances and genuine flaws.`,
+    (n: string) =>
+      `Let the party see ${n} from the ground up — through its officials, its dissidents, and the people who have given up on both — before they understand the full picture.`,
+  ] as const;
+
   const content = `### The State
-${stateName} is a ${resolved.scale.toLowerCase()} ${resolved.polityType.toLowerCase()} under ${resolved.governmentStyle.toLowerCase()}. Its centre of power, ${capitalName}, is where decisions are made and deals are struck.${resolved.campaignContext ? ` In ${resolved.campaignContext}, it is a key player in the main conflict.` : ""}
+${stateName} is a ${resolved.scale.toLowerCase()} ${resolved.polityType.toLowerCase()} under ${resolved.governmentStyle.toLowerCase()}. ${pickFrom(capitalDescriptions, rng)}${resolved.campaignContext ? ` In ${resolved.campaignContext}, it is a key player in the main conflict.` : ""}
 
 ### Power Structure
-${leaderName} holds authority, but that authority is contested. ${trouble}. Those closest to power know the cracks are showing.
+${leaderName} holds authority, but that authority is contested. ${trouble}. ${pickFrom(powerStructureClosers, rng)}
 
 ### Society & Tensions
-The population lives under a state at ${resolved.conflictLevel.toLowerCase()}. Loyalty is shifting, old alliances are being renegotiated, and the ruling structure is projecting strength it may not have.
+${pickFrom(societyDescriptions, rng)}
 
 ### How to use it at the table
-Use ${stateName} as a campaign backdrop, the source of a mission, or the prize in a power struggle. The hidden problem gives any encounter with its institutions the potential to spiral.`;
+${pickFrom(nationHowToUse, rng)(stateName)}`;
 
   const lore = `### At a Glance
 - **Type**: ${resolved.polityType}

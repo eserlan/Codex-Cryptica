@@ -449,6 +449,11 @@ export interface GeneratorOutput {
   lore: string;
   labels: string[];
   status: "active" | "draft";
+  /**
+   * Set when AI generation was requested but failed and the engine fell back to
+   * local tables, so the layout can show a friendly notice (#1494).
+   */
+  aiFallback?: boolean;
 }
 
 /**

@@ -577,17 +577,41 @@ export function generateSocialHubLocal(
 
   const summary = `A ${resolved.atmosphere.toLowerCase()} ${resolved.venueType.toLowerCase()} serving ${resolved.clientele.toLowerCase()}.`;
 
+  const hubPeopleVariants = [
+    `The operator, ${ownerName}, runs a tight establishment. Regular faces include ${patron1}, a well-known local, and ${patron2}, who rarely speaks about where they sleep.`,
+    `${ownerName} keeps the place running through a combination of competence and deliberate incuriosity. ${patron1} has been coming here long enough to be furniture. ${patron2} arrived recently and has already become someone people notice.`,
+    `The regular crowd cycles around ${patron1}, who provides social continuity, and ${patron2}, whose presence here raises questions nobody has yet asked aloud. ${ownerName} manages both without appearing to manage either.`,
+    `${ownerName} knows more about the regulars than they let on. ${patron1} is one of the faces who makes the place feel safe. ${patron2} is one of the faces that does not quite fit — and ${ownerName} has noticed.`,
+    `Ask ${ownerName} about the regulars and you get polite generalities. Ask ${patron1} and you get opinions. Ask ${patron2} and they change the subject.`,
+  ] as const;
+
+  const hubTroubleClosers = [
+    `The operator is aware of enough to be nervous, but not enough to act.`,
+    `${ownerName} has chosen not to know more than necessary. That choice is becoming harder to maintain.`,
+    `The operator has noticed the signs and filed them under things that resolve themselves. They are starting to reconsider that policy.`,
+    `${ownerName} knows something is wrong. They do not know whether getting involved makes it better or makes them a target.`,
+    `The place's reputation for discretion is part of what allowed this to take root. ${ownerName} understands that.`,
+  ] as const;
+
+  const hubHowToUseVariants = [
+    `Use ${venueName} as a home base, an information hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`,
+    `${venueName} works best as a recurring location — somewhere the party keeps returning to, where the regulars remember them and the trouble keeps developing.`,
+    `Let the party treat ${venueName} as safe ground early. The hidden trouble is what eventually makes that assumption cost them something.`,
+    `Use ${venueName} to deliver information sideways — through regulars, overheard conversations, and things ${ownerName} says without quite saying.`,
+    `${venueName} is most effective as a place where the party feels comfortable and the GM knows they should not be.`,
+  ] as const;
+
   const content = `### The Place
 ${venueName} is a ${resolved.venueType.toLowerCase()} catering to ${resolved.clientele.toLowerCase()}. The atmosphere is ${resolved.atmosphere.toLowerCase()}, and the wealth level is ${resolved.wealthLevel.toLowerCase()}.${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the edge of the main conflict.` : ""}
 
 ### The People
-The operator, ${ownerName}, runs a tight establishment. Regular faces include ${patron1}, a well-known local, and ${patron2}, who rarely speaks about where they sleep.
+${pickFrom(hubPeopleVariants, rng)}
 
 ### The Trouble
-${trouble}. The operator is aware of enough to be nervous, but not enough to act.
+${trouble}. ${pickFrom(hubTroubleClosers, rng)}
 
 ### How to use it at the table
-Use ${venueName} as a home base, an information hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`;
+${pickFrom(hubHowToUseVariants, rng)}`;
 
   const lore = `### At a Glance
 - **Type**: ${resolved.venueType}
@@ -636,17 +660,41 @@ export function generateTavernLocal(
 
   const summary = `A ${resolved.atmosphere.toLowerCase()} ${resolved.tavernType.toLowerCase()} serving ${resolved.clientele.toLowerCase()} in a ${resolved.settlementType.toLowerCase()}.`;
 
+  const tavernPeopleVariants = [
+    `The owner, ${ownerName}, runs a tight establishment. Regular patrons include ${patron1}, a well-known local face, and ${patron2}, who rarely speaks about where they sleep.`,
+    `${ownerName} keeps order here through reputation as much as authority. ${patron1} has been a fixture long enough that their absence would be noticed. ${patron2} is newer and harder to read.`,
+    `Ask ${ownerName} about anything delicate and you get polished deflection. The regulars — ${patron1} in particular — have sharper answers if approached correctly. ${patron2} is the one nobody has quite figured out yet.`,
+    `${ownerName} manages the place and the people with equal competence. ${patron1} represents the reliable core of the regulars. ${patron2} is a recent addition who has already become a talking point.`,
+    `The owner is ${ownerName}, who knows when to ask questions and when not to. ${patron1} has been here long enough to remember how things used to be. ${patron2} showed up three weeks ago and the other regulars have already started watching them.`,
+  ] as const;
+
+  const tavernTroubleClosers = [
+    `The owner is aware of enough to be nervous, but not enough to act.`,
+    `${ownerName} has made a deliberate choice not to look too closely. That calculation is starting to shift.`,
+    `The owner has noticed something is wrong. The question is whether getting involved protects the establishment or endangers it.`,
+    `${ownerName} knows the signs of trouble and has been reading them for a week. They have not decided what to do about it yet.`,
+    `The trouble has been building long enough that ${ownerName} can no longer claim not to have seen it coming.`,
+  ] as const;
+
+  const tavernHowToUseVariants = [
+    `Use ${tavernName} as a home base, a rumour hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`,
+    `${tavernName} works best as a recurring location where the party builds relationships and the hidden trouble slowly becomes their problem.`,
+    `Let the party feel at home here before the trouble surfaces. The contrast between comfort and complication is the point.`,
+    `Use the regulars to deliver information naturally — what ${patron1} says offhand and what ${patron2} avoids saying are both useful.`,
+    `${tavernName} is the kind of place campaigns return to. Make it feel lived-in early, and the trouble will land harder when it arrives.`,
+  ] as const;
+
   const content = `### The Place
 ${tavernName} is a ${resolved.tavernType.toLowerCase()} in a ${resolved.settlementType.toLowerCase()}, catering to ${resolved.clientele.toLowerCase()}. The atmosphere is ${resolved.atmosphere.toLowerCase()}, and the wealth level is ${resolved.wealthLevel.toLowerCase()}.${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the edge of the main conflict.` : ""}
 
 ### The People
-The owner, ${ownerName}, runs a tight establishment. Regular patrons include ${patron1}, a well-known local face, and ${patron2}, who rarely speaks about where they sleep.
+${pickFrom(tavernPeopleVariants, rng)}
 
 ### The Trouble
-${trouble}. The owner is aware of enough to be nervous, but not enough to act.
+${trouble}. ${pickFrom(tavernTroubleClosers, rng)}
 
 ### How to use it at the table
-Use ${tavernName} as a home base, a rumour hub, or a pressure point. The trouble beneath the surface gives any visit the potential to escalate.`;
+${pickFrom(tavernHowToUseVariants, rng)}`;
 
   const lore = `### At a Glance
 - **Type**: ${resolved.tavernType}
