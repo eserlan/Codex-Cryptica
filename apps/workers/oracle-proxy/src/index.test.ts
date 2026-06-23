@@ -48,7 +48,8 @@ describe("Oracle Proxy Worker CORS", () => {
           method: "OPTIONS",
           headers: {
             Origin: "https://staging.codexcryptica.com",
-            "Access-Control-Request-Headers": "content-type,x-turnstile-token",
+            "Access-Control-Request-Headers":
+              "content-type,x-turnstile-token,x-filename",
           },
         },
       ),
@@ -59,6 +60,9 @@ describe("Oracle Proxy Worker CORS", () => {
     expect(response.status).toBe(204);
     expect(response.headers.get("Access-Control-Allow-Headers")).toContain(
       "X-Turnstile-Token",
+    );
+    expect(response.headers.get("Access-Control-Allow-Headers")).toContain(
+      "X-Filename",
     );
   });
 
