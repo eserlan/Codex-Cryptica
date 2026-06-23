@@ -7,6 +7,7 @@ import {
   SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
+import { generateShipLocal } from "./public-ship";
 
 /**
  * Generator id -> default vault category id.
@@ -20,6 +21,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   settlement: "location",
   "magic-item": "item",
   event: "event",
+  ship: "location",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -273,6 +275,7 @@ const EXEMPLARS: Record<GeneratorId, string> = {
   settlement: `{"title":"Greywick Landing","summary":"A half-sunk port town that thrives on what the tide drags back.","lore":"## Points of Interest\\nThe Drowned Market trades only at low tide; the rest of the day it is waist-deep in brine.\\n## Power Structure\\nA harbourmaster rules by controlling the only dry granary.\\n## Hook\\nA ship thought lost for a decade has drifted back into the bay — crewed, and silent.","labels":["Port Town","Coastal"],"connections":[{"targetTitle":"The Salt Concord","relationship":"controlled by"}]}`,
   "magic-item": `{"title":"The Ledger of Brine","summary":"A waterlogged tome that records debts no one remembers owing.","lore":"## History\\nKept by a drowned customs house, its pages re-ink themselves each tide.\\n## Power\\nName a debtor and the book reveals what they truly owe — and to whom.\\n## Cost\\nEach reading adds the reader's own name to a growing column at the back.","labels":["Cursed Tome","Uncommon"],"connections":[{"targetTitle":"Greywick Landing","relationship":"located in"}]}`,
   event: `{"title":"The Long Low Tide","summary":"The season the sea withdrew a mile and would not return.","lore":"## Summary\\nFor forty days the bay emptied, stranding ships and exposing what the water had hidden.\\n## Causes\\nNo one agrees — a broken pact, a sleeping leviathan, a curse called in.\\n## Consequences\\nSalvage made paupers rich and drowned the old harbour law in disputes.\\n## Hook\\nThe tide is beginning to recede again, and the old salvagers are sharpening their hooks.","labels":["Disaster","Maritime"],"connections":[{"targetTitle":"Greywick Landing","relationship":"struck"}]}`,
+  ship: `{"title":"CSV Meridian","summary":"A worn freighter that earns its living asking no questions — and keeping no honest records.","lore":"## Who Controls It\\nIndependent in name; in practice, whoever can pay the docking fees this month.\\n## Complication\\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts.\\n## Secret\\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\\n## Hook\\nThe Meridian is the only vessel in port that will run this route — but the crew wants something in return.","labels":["Freighter","Sci-Fi","Independent"],"connections":[{"targetTitle":"Harbour Authority","relationship":"flagged by"}]}`,
 };
 
 function exemplarBlock(id: GeneratorId): string {
@@ -334,6 +337,15 @@ ${OUTPUT_SCHEMA}
 ${exemplarBlock("event")}${groundingNote(request)}
 Place it correctly within the world's timeline (consistent with any campaign date and existing events).
 ${loreGuidance(request, "what happened, its causes, who and what was involved, its consequences, and a hook for the players")}`;
+}
+
+function shipPrompt(request: GeneratorRunRequest): string {
+  return `${contextChain(request)}
+
+Generate a campaign ship — a traversable vehicle that functions as location, faction asset, and adventure seed. Return ONLY a JSON object matching this schema:
+${OUTPUT_SCHEMA}
+${exemplarBlock("ship")}${groundingNote(request)}
+${loreGuidance(request, "the ship's role and condition, its owner and current mission, its dominant complication, its secret, its key zones, and at least two adventure hooks")}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -491,6 +503,23 @@ function generateEvent(request: GeneratorRunRequest): GeneratorOutput {
   };
 }
 
+function generateShip(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateShipLocal({
+    genre: optionString(request, "genre", "Sci-Fi"),
+    role: optionString(request, "role", ""),
+    scale: optionString(request, "scale", ""),
+    condition: optionString(request, "condition", ""),
+    tone: optionString(request, "tone", ""),
+  });
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+  };
+}
+
 const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
   npc: {
     id: "npc",
@@ -608,6 +637,49 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateEvent,
     mapOutputToDraft: mapOutputToDraft("event"),
     buildPrompt: eventPrompt,
+  },
+  ship: {
+    id: "ship",
+    label: "Ship",
+    description:
+      "Generate a ship for your campaign — location, faction asset, and adventure seed.",
+    entityType: GENERATOR_ENTITY_TYPE.ship,
+    defaultInstruction:
+      "A vessel with a clear role, a complication the crew is managing, and a secret discoverable through investigation — all woven into the world.",
+    icon: "lucide:rocket",
+    options: [
+      {
+        id: "genre",
+        label: "Genre",
+        control: "select",
+        choices: [
+          "Sci-Fi",
+          "Space Opera",
+          "Cyberpunk",
+          "Optimistic Exploration Sci-Fi",
+          "Space Opera Resistance",
+          "Lancer",
+          "Post-Apocalyptic",
+        ].map((g) => ({ value: g, label: g })),
+      },
+      {
+        id: "role",
+        label: "Role",
+        control: "select",
+        choices: [
+          "Freighter",
+          "Warship",
+          "Scout",
+          "Research Vessel",
+          "Colony Ship",
+          "Pirate Vessel",
+        ].map((r) => ({ value: r, label: r })),
+      },
+    ],
+    defaults: { genre: "Sci-Fi", role: "" },
+    generate: generateShip,
+    mapOutputToDraft: mapOutputToDraft("ship"),
+    buildPrompt: shipPrompt,
   },
 };
 

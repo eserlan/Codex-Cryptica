@@ -8,6 +8,8 @@
  */
 
 import { getGenerator } from "./campaign-generator-registry";
+import { generateShipLocal } from "./public-ship";
+import type { ShipGeneratorOptions } from "./public-ship";
 import type {
   GeneratedDraft,
   GeneratorRunRequest,
@@ -123,4 +125,11 @@ export function adaptVampire(
   const gen = getGenerator("faction");
   const req = baseReq("faction", options, themeId);
   return toPublic(gen.mapOutputToDraft(gen.generate(req), req));
+}
+
+/** Generate a Ship using the package's local generator. */
+export function adaptShip(
+  options: ShipGeneratorOptions = {},
+): PublicGeneratorOutput {
+  return generateShipLocal(options);
 }

@@ -11,7 +11,8 @@ export type GeneratorId =
   | "faction"
   | "settlement"
   | "magic-item"
-  | "event";
+  | "event"
+  | "ship";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -19,6 +20,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "settlement",
   "magic-item",
   "event",
+  "ship",
 ] as const;
 
 /** A user-configurable field for a generator. */
