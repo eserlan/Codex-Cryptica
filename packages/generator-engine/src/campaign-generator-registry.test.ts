@@ -42,6 +42,7 @@ describe("registry lookup", () => {
       "settlement",
       "magic-item",
       "event",
+      "ship",
     ]);
   });
 
@@ -425,6 +426,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       settlement: "location",
       "magic-item": "item",
       event: "event",
+      ship: "location",
     });
   });
 
