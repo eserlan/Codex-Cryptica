@@ -47,13 +47,6 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
-  onboardingStore: {
-    dismissedWorldPage: false,
-    dismissLandingPage: vi.fn(),
-  },
-}));
-
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
   layoutUIStore: {
     mainViewMode: "graph",
@@ -89,7 +82,7 @@ describe("/guest/[publishId] page", () => {
     sessionModeStore.isGuestMode = false;
     (vault as any).activeVaultId = "vault-123";
     (themeStore as any).worldThemeId = "local-theme";
-    (onboardingStore as any).dismissedWorldPage = false;
+    onboardingStore.restoreWorldPage();
     vi.clearAllMocks();
   });
 
@@ -175,16 +168,14 @@ describe("/guest/[publishId] page", () => {
       } as any,
     });
 
+    let closeBtn: HTMLElement;
     await waitFor(() => {
-      expect(guestVault.loadBundle).toHaveBeenCalled();
+      closeBtn = getByTestId("close-front-page");
+      expect(closeBtn).toBeTruthy();
     });
 
-    // The FrontPage stub should be present
-    const closeBtn = getByTestId("close-front-page");
-    expect(closeBtn).toBeTruthy();
-
     // Click it to close
-    closeBtn.click();
+    closeBtn!.click();
 
     await waitFor(() => {
       expect(onboardingStore.dismissedWorldPage).toBe(true);
