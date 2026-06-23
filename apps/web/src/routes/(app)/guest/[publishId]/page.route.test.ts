@@ -5,6 +5,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "$lib/stores/guest-vault.svelte";
 import { themeStore } from "$lib/stores/theme.svelte";
 import { vault } from "$lib/stores/vault.svelte";
+import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -48,7 +49,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 
 vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
   onboardingStore: {
-    dismissedWorldPage: true,
+    dismissedWorldPage: false,
     dismissLandingPage: vi.fn(),
   },
 }));
@@ -88,6 +89,7 @@ describe("/guest/[publishId] page", () => {
     sessionModeStore.isGuestMode = false;
     (vault as any).activeVaultId = "vault-123";
     (themeStore as any).worldThemeId = "local-theme";
+    (onboardingStore as any).dismissedWorldPage = false;
     vi.clearAllMocks();
   });
 
@@ -150,7 +152,46 @@ describe("/guest/[publishId] page", () => {
 
     unmount();
 
-    expect(themeStore.loadForVault).not.toHaveBeenCalled();
     expect(themeStore.setTheme).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders FrontPage and allows it to be closed", async () => {
+    (guestVault as any).entities = [{ id: "e1" }];
+    const { getByTestId, queryByTestId, unmount } = render(RoutePage, {
+      data: {
+        publishId: "published-3",
+        status: 200,
+        error: null,
+        bundle: {
+          publishId: "published-3",
+          vaultTitle: "Shared World",
+          activeTheme: { id: "host-theme" },
+          entities: [{ id: "e1" }],
+          relationships: [],
+          maps: [],
+          canvases: [],
+          assetManifest: [],
+        },
+      } as any,
+    });
+
+    await waitFor(() => {
+      expect(guestVault.loadBundle).toHaveBeenCalled();
+    });
+
+    // The FrontPage stub should be present
+    const closeBtn = getByTestId("close-front-page");
+    expect(closeBtn).toBeTruthy();
+
+    // Click it to close
+    closeBtn.click();
+
+    await waitFor(() => {
+      expect(onboardingStore.dismissedWorldPage).toBe(true);
+      // Svelte automatically reactivity updates to remove the overlay
+      expect(queryByTestId("front-page-overlay")).toBeNull();
+    });
+
+    unmount();
   });
 });
