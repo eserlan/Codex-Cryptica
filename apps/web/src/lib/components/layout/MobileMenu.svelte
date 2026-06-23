@@ -129,6 +129,21 @@
               >Canvas</span
             >
           </a>
+          <a
+            href="{base}/table"
+            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
+              `${base}/table`,
+            )
+              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
+              : 'text-theme-text'}"
+            onclick={close}
+          >
+            <span class="icon-[lucide--table] w-5 h-5"></span>
+            <span
+              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
+              >Table</span
+            >
+          </a>
         </div>
       </div>
 
