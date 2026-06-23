@@ -20,6 +20,7 @@ export {
   adaptMagicItem,
   adaptEvent,
   adaptVampire,
+  adaptShip,
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
@@ -119,6 +120,14 @@ export {
   type NamesGeneratorOptions,
   type NamesPrompt,
 } from "./public-names";
+export {
+  buildShipPrompt,
+  parseShipResponse,
+  generateShipLocal,
+  shipConfig,
+  type ShipGeneratorOptions,
+  type ShipPrompt,
+} from "./public-ship";
 export {
   CampaignGeneratorService,
   campaignGeneratorService,

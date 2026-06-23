@@ -37,6 +37,9 @@ import {
   buildNamesPrompt,
   parseNamesResponse,
   generateNamesLocal,
+  buildShipPrompt,
+  parseShipResponse,
+  generateShipLocal,
   type NpcGeneratorOptions,
   type MagicItemGeneratorOptions,
   type FactionGeneratorOptions,
@@ -49,6 +52,7 @@ import {
   type NationGeneratorOptions,
   type PantheonGeneratorOptions,
   type NamesGeneratorOptions,
+  type ShipGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
@@ -75,6 +79,7 @@ export { kingdomConfig } from "generator-engine";
 export { nationConfig } from "generator-engine";
 export { pantheonConfig } from "generator-engine";
 export { nameGeneratorConfig } from "generator-engine";
+export { shipConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -371,6 +376,25 @@ export class DefaultGeneratorEngine {
         return parsePantheonResponse(text, resolved);
       },
       () => generatePantheonLocal(pantheonOptions),
+    );
+  }
+
+  /** Ship generation delegates to the generator-engine package (#1500). */
+  async generateShip(
+    options: ShipGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...shipOptions } = options;
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildShipPrompt(
+          shipOptions,
+          getSessionContext(),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseShipResponse(text, resolved);
+      },
+      () => generateShipLocal(shipOptions),
     );
   }
 }

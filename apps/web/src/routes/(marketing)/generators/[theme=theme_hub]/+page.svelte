@@ -84,6 +84,14 @@
     icon: "icon-[lucide--globe]",
   };
 
+  const shipCard: GeneratorCard = {
+    slug: "ship-generator",
+    label: "Ship Generator",
+    summary:
+      "Generate a campaign-ready vessel — freighter, warship, scout, derelict, or colony ship — with crew, complication, secret, and hooks.",
+    icon: "icon-[lucide--rocket]",
+  };
+
   const tavernCard: GeneratorCard = {
     slug: "tavern",
     label: "Tavern Generator",
@@ -156,6 +164,7 @@
           "Draft villages, towns, and cities with guilds, power factions, notable locations, and hooks.",
         ),
         tavernCard,
+        shipCard,
         nationCard,
         ...fantasyOnlyCards,
         surpriseMeCard,
@@ -176,6 +185,7 @@
           "District Generator",
           "Build megacity districts with corps, gangs, fixers, black markets, and street-level tension.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,
@@ -196,6 +206,7 @@
           "Colony Generator",
           "Build space stations, frontier colonies, and alien outposts with factions, resources, and threats.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,
@@ -256,6 +267,7 @@
           "Settlement Generator",
           "Build frontier outposts, Union administrative hubs, and contested colony sites with mech bays, bleed zones, and factional tension.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,
@@ -276,6 +288,7 @@
           "Settlement Generator",
           "Build industrial boroughs, sky-dock towns, and smog-shrouded districts with guild factions, aetheric hazards, and working-class tension.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,
@@ -317,6 +330,7 @@
           "Settlement Generator",
           "Build frontier outposts and ghost towns with sheriff departments, outlaw camps, and gold claims.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,
@@ -337,6 +351,7 @@
           "Settlement Generator",
           "Build hidden rebel bases, imperial capital cities, and smuggling spaceports with factions, points of interest, and rising tension.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,
@@ -357,6 +372,7 @@
           "Settlement Generator",
           "Build research outposts, orbital stations, and core world cities with science directors, fleet admirals, and planetary governors.",
         ),
+        shipCard,
         socialHubCard,
         nationCard,
         surpriseMeCard,

@@ -29,6 +29,7 @@
     vampireConfig,
     nameGeneratorConfig,
     pantheonConfig,
+    shipConfig,
     themeIdToLabel,
     themeToQuestGenre,
     pickFrom,
@@ -53,6 +54,7 @@
     "dnd-npc",
     "pantheon-generator",
     "god-generator",
+    "ship-generator",
   ]);
 
   const HUB_THEME_TO_GENERATOR_GENRE: Record<string, string> = {
@@ -98,7 +100,8 @@
     | "fantasy-names"
     | "dnd-npc"
     | "pantheon-generator"
-    | "god-generator";
+    | "god-generator"
+    | "ship-generator";
 
   let {
     slug,
@@ -378,6 +381,44 @@
         "Design detailed single deities, ancestors, or abstract forces with portfolio, rituals, and myths. Works without login, then imports into your local vault.",
       canonicalPath: "/generators/god-generator",
     },
+    "ship-generator": {
+      pageTitle:
+        "RPG Ship Generator | Starships, Galleons & Vessels for Any Genre | Codex Cryptica",
+      metaDescription:
+        "Generate campaign-ready ships for any RPG genre — sci-fi starships, fantasy galleons, pirate sloops, steampunk airships, and more. Each vessel has a crew, a complication, and a secret. No login required.",
+      introTitle: "RPG Ship Generator",
+      eyebrow: "Ship Generator",
+      introText:
+        "Create a campaign-ready vessel for any RPG genre. Sci-fi starships, fantasy galleons, pirate sloops, steampunk airships — pick the role, scale, and condition and get a ship with a crew, a mission, a problem, and a secret.",
+      canonicalPath: "/generators/ship-generator",
+      faqs: [
+        {
+          question: "What does the ship generator create?",
+          answer:
+            "It generates a complete RPG ship — name, role, scale, condition, owner, current mission, crew type, dominant complication, hidden secret, key zones, and three adventure hooks. The result is immediately usable as a location, a quest seed, or a faction asset.",
+        },
+        {
+          question: "Does it work without an account?",
+          answer:
+            "Yes. Generate and copy ship notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+        },
+        {
+          question: "What genres does the ship generator support?",
+          answer:
+            "Sci-Fi, Space Opera, Cyberpunk, Optimistic Exploration Sci-Fi, Space Opera Resistance, Lancer, Post-Apocalyptic, Fantasy, Pirate / Age of Sail, Steampunk, Dark Fantasy, and Western (River & Rail). Each genre has its own roles, names, crew types, and complications.",
+        },
+        {
+          question: "Can I use it for D&D or fantasy RPGs?",
+          answer:
+            "Yes — select Fantasy for merchant galleons, war galleys, and arcane transports, or Pirate / Age of Sail for frigates, sloops, and buccaneers. The output is system-neutral and saves into any Codex vault as a location entity.",
+        },
+      ],
+      relatedLinks: [
+        { href: "/generators/faction", label: "Faction Generator" },
+        { href: "/generators/settlement", label: "Settlement Generator" },
+        { href: "/generators/npc", label: "NPC Generator" },
+      ],
+    },
   };
 
   const meta = $derived(slugMeta[slug]);
@@ -519,6 +560,34 @@
     campaignContext: "",
   });
 
+  const _shipInitialGenre = (() => {
+    const g = initialHubGenre;
+    if (!g) return "Sci-Fi";
+    if (g === "Cyberpunk") return "Cyberpunk";
+    if (g === "Post-Apocalyptic") return "Post-Apocalyptic";
+    if (g === "Lancer") return "Lancer";
+    if (g === "Space Opera Resistance") return "Space Opera Resistance";
+    if (g === "Optimistic Exploration Sci-Fi")
+      return "Optimistic Exploration Sci-Fi";
+    if (g === "Space Opera") return "Space Opera";
+    if (g === "Fantasy") return "Fantasy";
+    if (g === "Dark Fantasy") return "Dark Fantasy";
+    if (g === "Steampunk") return "Steampunk";
+    if (g === "Western") return "Western (River & Rail)";
+    if (g === "Horror") return "Dark Fantasy";
+    return "Sci-Fi";
+  })();
+
+  let ship = $state({
+    genre: _shipInitialGenre,
+    role: (shipConfig.rolesByGenre[_shipInitialGenre] ??
+      shipConfig.rolesByGenre["Sci-Fi"])[0],
+    scale: shipConfig.scales[2],
+    condition: shipConfig.conditions[2],
+    tone: shipConfig.tones[0],
+    campaignContext: "",
+  });
+
   const socialHubGenreToTheme: Record<string, string> = {
     Fantasy: "Classic Fantasy",
     "Dark Fantasy": "Vampire / Gothic Noir",
@@ -648,6 +717,32 @@
       activeTheme = "Classic Fantasy";
       return;
     }
+    if (slug === "ship-generator") {
+      const hubGenre = resolveHubGeneratorGenre(hubContext.theme);
+      if (hubGenre) {
+        const mapped = (() => {
+          if (hubGenre === "Cyberpunk") return "Cyberpunk";
+          if (hubGenre === "Post-Apocalyptic") return "Post-Apocalyptic";
+          if (hubGenre === "Lancer") return "Lancer";
+          if (hubGenre === "Space Opera Resistance")
+            return "Space Opera Resistance";
+          if (hubGenre === "Optimistic Exploration Sci-Fi")
+            return "Optimistic Exploration Sci-Fi";
+          if (hubGenre === "Space Opera") return "Space Opera";
+          if (hubGenre === "Fantasy") return "Fantasy";
+          if (hubGenre === "Dark Fantasy") return "Dark Fantasy";
+          if (hubGenre === "Steampunk") return "Steampunk";
+          if (hubGenre === "Western") return "Western (River & Rail)";
+          if (hubGenre === "Horror") return "Dark Fantasy";
+          return "Sci-Fi";
+        })();
+        ship.genre = mapped;
+        ship.role = (shipConfig.rolesByGenre[mapped] ??
+          shipConfig.rolesByGenre["Sci-Fi"])[0];
+      }
+      activeTheme = "Sci-Fi / Space Opera";
+      return;
+    }
     // For quest/npc/faction on flat URL: read localStorage.
     // On themed URL: urlHubTheme already seeded activeTheme above — skip.
     if (!urlHubTheme) {
@@ -699,6 +794,8 @@
       });
     } else if (slug === "pantheon-generator" || slug === "god-generator") {
       return generatorEngine.generatePantheon({ ...pantheon, useAI });
+    } else if (slug === "ship-generator") {
+      return generatorEngine.generateShip({ ...ship, useAI });
     } else {
       throw new Error(`No generator implemented for slug: ${slug}`);
     }
@@ -849,6 +946,17 @@
         "### Deity Description\nOros is depicted as a radiant figure carrying a shield of polished bronze. Their altars face the east.",
       lore: "### At a Glance\n- **Deity Type**: God\n- **Primary Domain**: Light\n- **Worshippers**: State Religion",
       labels: ["rpg-deity", "deity-generator", "imported-draft"],
+      status: "draft",
+    },
+    "ship-generator": {
+      type: "location",
+      title: "CSV Meridian",
+      summary:
+        "A worn freighter operating under a registry that does not quite hold up to scrutiny.",
+      content:
+        "## Core Concept\nThe Meridian is a small crew freighter in worn condition — functional, lived-in, and carrying more history than its logbook admits. Independent in name, it earns its living on routes other captains decline.\n\n## First Look\nThe approach is all geometry — hard angles, running lights on slow rotation, hull plating scarred by re-entry or something worse. The docking bay smells of recycled air and machine oil.\n\n## History\nThe Meridian has served as a freighter long enough that its original documentation no longer tells the whole story. The current operator holds the registration, though how that arrangement came about is a matter of some discretion.",
+      lore: "### Ship Profile\n- **Class**: Freighter / Small crew ship\n- **Condition**: Worn — lived-in, functional but showing age\n- **Owner / Affiliation**: Independent operator\n- **Current Mission**: Cargo delivery — manifest details undisclosed\n- **Crew Complement**: Mixed-species crew\n- **Tone**: Tense\n\n### Key Zones\n- **🚀 Cargo Hold**: The real story is in here — if you know how to look\n- **🚀 Bridge**: Small, cluttered, with a pilot who watches the rear sensors\n- **🚀 Crew Quarters**: Three bunks for four people; someone is sleeping in shifts\n\n### Complication\nThe cargo manifest lists machine parts. The hold contains neither machines nor parts. The crew is managing it, but the window is narrowing.\n\n### Secret\nThe ship was declared lost seven years ago. The captain has a very good reason for keeping it that way.\n\n### Adventure Hooks\n- The party learns the manifest is fiction — and they are the only ones who can act before the ship jumps\n- Someone on the docks knows the ship's real registration history and is selling that information\n- A faction needs something delivered to a location only the Meridian's captain knows how to reach",
+      labels: ["rpg-ship", "rpg-location", "ship-generator", "imported-draft"],
       status: "draft",
     },
   };
@@ -1168,6 +1276,116 @@
         bind:campaignContext={pantheon.campaignContext}
         onSurprise={trigger}
       />
+    {:else if slug === "ship-generator"}
+      <SelectWithCustomOption
+        id="ship-genre-select"
+        label="Genre"
+        bind:value={ship.genre}
+        choices={shipConfig.genres.map((g: string) => ({ value: g, label: g }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom genre"
+        onvaluechange={(g) => {
+          ship.role = (shipConfig.rolesByGenre[g] ??
+            shipConfig.rolesByGenre["Sci-Fi"])[0];
+        }}
+      />
+
+      <SelectWithCustomOption
+        id="ship-role-select"
+        label="Ship Role"
+        bind:value={ship.role}
+        choices={(
+          shipConfig.rolesByGenre[ship.genre] ??
+          shipConfig.rolesByGenre["Sci-Fi"]
+        ).map((r: string) => ({
+          value: r,
+          label: r,
+        }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom role"
+      />
+
+      <SelectWithCustomOption
+        id="ship-scale-select"
+        label="Scale"
+        bind:value={ship.scale}
+        choices={shipConfig.scales.map((s: string) => ({ value: s, label: s }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom scale"
+      />
+
+      <SelectWithCustomOption
+        id="ship-condition-select"
+        label="Condition"
+        bind:value={ship.condition}
+        choices={shipConfig.conditions.map((c: string) => ({
+          value: c,
+          label: c,
+        }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom condition"
+      />
+
+      <SelectWithCustomOption
+        id="ship-tone-select"
+        label="Tone"
+        bind:value={ship.tone}
+        choices={shipConfig.tones.map((t: string) => ({ value: t, label: t }))}
+        className="flex flex-col gap-1.5"
+        {labelClass}
+        inputClass={selectClass}
+        customPlaceholder="Enter a custom tone"
+      />
+
+      <div class="flex flex-col gap-1.5">
+        <label for="ship-context" class={labelClass}
+          >Campaign context (optional)</label
+        >
+        <textarea
+          id="ship-context"
+          bind:value={ship.campaignContext}
+          maxlength="240"
+          rows="4"
+          aria-describedby="ship-context-help"
+          class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+        ></textarea>
+        <p
+          id="ship-context-help"
+          class="text-[10px] text-theme-text/60 leading-relaxed"
+        >
+          Add a faction, system, conflict, or any detail to aim the ship at your
+          world.
+        </p>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+          title="Randomize all options and generate a draft from the result"
+          onclick={() => {
+            const g = ship.genre;
+            const roles =
+              shipConfig.rolesByGenre[g] ?? shipConfig.rolesByGenre["Sci-Fi"];
+            ship.role = pickFrom(roles);
+            ship.scale = pickFrom(shipConfig.scales);
+            ship.condition = pickFrom(shipConfig.conditions);
+            ship.tone = pickFrom(shipConfig.tones);
+            trigger();
+          }}
+        >
+          <span class="icon-[lucide--dices] w-3.5 h-3.5"></span>
+          Surprise Me
+        </button>
+      </div>
     {/if}
   {/snippet}
 </SEOGeneratorLayout>

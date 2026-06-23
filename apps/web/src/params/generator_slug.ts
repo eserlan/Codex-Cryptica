@@ -17,6 +17,7 @@ const validSlugs = new Set([
   "dnd-npc",
   "pantheon-generator",
   "god-generator",
+  "ship-generator",
   "random",
 ]);
 

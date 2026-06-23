@@ -21,6 +21,7 @@ const validSlugs = new Set([
   "dnd-npc",
   "pantheon-generator",
   "god-generator",
+  "ship-generator",
 ]);
 
 export const load: PageLoad = ({ params }) => {

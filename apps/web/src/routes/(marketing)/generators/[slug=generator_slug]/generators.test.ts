@@ -37,6 +37,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "dnd-npc" },
         { slug: "pantheon-generator" },
         { slug: "god-generator" },
+        { slug: "ship-generator" },
       ]);
     });
   });
