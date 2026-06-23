@@ -40,6 +40,28 @@ describe("Oracle Proxy Worker CORS", () => {
     expect(isOriginAllowed("http://127.0.0.1:9999", emptyEnv)).toBeTruthy();
   });
 
+  it("allows the Turnstile token header during publish preflight", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/publish-vault",
+        {
+          method: "OPTIONS",
+          headers: {
+            Origin: "https://staging.codexcryptica.com",
+            "Access-Control-Request-Headers": "content-type,x-turnstile-token",
+          },
+        },
+      ),
+      emptyEnv,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("Access-Control-Allow-Headers")).toContain(
+      "X-Turnstile-Token",
+    );
+  });
+
   it("treats ALLOWED_ORIGINS as an exact allowlist", () => {
     expect(
       isOriginAllowed("http://localhost:4173", {

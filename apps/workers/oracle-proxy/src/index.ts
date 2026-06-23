@@ -628,7 +628,8 @@ async function handleInteraction(
  */
 function handleCorsPreflight(request: Request, env: Env): Response {
   const headers = new Headers();
-  const allowedHeaders = "Content-Type, Authorization, X-Requested-With";
+  const allowedHeaders =
+    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token";
   const allowedMethods = "GET, POST, DELETE, OPTIONS";
 
   // Set CORS headers
