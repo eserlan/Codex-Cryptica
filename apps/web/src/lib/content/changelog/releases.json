@@ -1,15 +1,15 @@
 [
   {
     "version": "0.28.0",
-    "title": "The Guest Vault Snapshot & Cloudflare R2 Publishing Update",
+    "title": "Share Your World with Guests",
     "date": "2026-06-22",
     "type": "minor",
     "highlights": [
-      "Published Guest Snapshots: Compile and publish a read-only, player-safe snapshot of your campaign lore to Cloudflare R2, letting players browse your world independently when you are offline.",
-      "GM Secret Redaction: The exporter automatically and physically removes GM secrets (lore and art direction fields) and redacts private links to hidden notes with [Redacted] placeholders.",
-      "Background Upload Sync: Snapshots compile and upload to R2 servers in the background with progress indicators, allowing you to close settings or continue worldbuilding instantly.",
-      "Published Worlds Dashboard: View, copy public URLs, publish updates, or unpublish your shared worlds from a central settings dashboard.",
-      "Guest History Tracking: The guest viewer tracks visited vaults locally and lists them on a landing page for one-click access, with self-healing 404 cleanup logic."
+      "Share Your World: Create a read-only link so players can explore the parts of your campaign you choose to share, even when you are offline.",
+      "Keep GM Notes Private: GM-only notes, art direction, and links to hidden content are automatically excluded from shared worlds.",
+      "Publish Without Pausing: Publishing shows its progress in the background, so you can close Settings and keep worldbuilding.",
+      "Manage Shared Worlds: Copy a public link, update what guests can see, or unpublish a world from one place in Settings.",
+      "Find Worlds Again: Guest views remember recently visited worlds on the device for quick access."
     ]
   },
   {
