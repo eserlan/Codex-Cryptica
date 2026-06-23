@@ -19,6 +19,10 @@ export interface SyncStoreDependencies {
   ensureServicesInitialized: () => Promise<void>;
   loadMaps: (vaultId: string) => Promise<void>;
   loadCanvases: (vaultId: string) => Promise<void>;
+  loadPublishRegistry?: (
+    vaultId: string,
+    vaultHandle: FileSystemDirectoryHandle,
+  ) => Promise<void>;
   updateEntityCount: (vaultId: string, count: number) => Promise<void>;
   flushPendingSaves?: (timeoutMs?: number) => Promise<void>;
 }
@@ -345,6 +349,9 @@ export class SyncStore {
       await Promise.all([
         this.deps.loadMaps(vaultIdAtStart),
         this.deps.loadCanvases(vaultIdAtStart),
+        vaultDir && this.deps.loadPublishRegistry
+          ? this.deps.loadPublishRegistry(vaultIdAtStart, vaultDir)
+          : Promise.resolve(),
       ]);
 
       if (this._status === "loading") {

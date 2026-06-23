@@ -268,6 +268,11 @@ export class VaultStore {
       },
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
+      loadPublishRegistry: async (vId, handle) => {
+        const { publishingService } =
+          await import("../services/publishing/PublishingService.svelte");
+        await publishingService.loadFromVault(vId, handle);
+      },
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),
       flushPendingSaves: (timeoutMs) =>
