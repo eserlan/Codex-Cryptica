@@ -1,27 +1,11 @@
 <script lang="ts">
   import { driveStore } from "$lib/stores/drive.svelte";
-  import { onMount } from "svelte";
-  import { browser } from "$app/environment";
+  import { onlineStatus } from "$lib/stores/online.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
-  let isOnline = $state(true);
-
-  onMount(() => {
-    if (browser) {
-      isOnline = navigator.onLine;
-      const updateOnlineStatus = () => (isOnline = navigator.onLine);
-      window.addEventListener("online", updateOnlineStatus);
-      window.addEventListener("offline", updateOnlineStatus);
-      return () => {
-        window.removeEventListener("online", updateOnlineStatus);
-        window.removeEventListener("offline", updateOnlineStatus);
-      };
-    }
-  });
-
   const getStatusColor = () => {
-    if (!isOnline) return "text-chrome-muted grayscale";
+    if (!onlineStatus.current) return "text-chrome-muted grayscale";
     if (driveStore.status === "syncing")
       return "text-chrome-accent animate-pulse";
     if (driveStore.status === "error") return "text-red-500";
@@ -30,7 +14,7 @@
   };
 
   const getStatusLabel = () => {
-    if (!isOnline) return "Offline";
+    if (!onlineStatus.current) return "Offline";
     if (driveStore.status === "syncing") return "Syncing to Drive...";
     if (driveStore.status === "error")
       return `Drive Error: ${driveStore.errorMessage}`;

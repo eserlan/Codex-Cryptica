@@ -6,6 +6,8 @@
   import { tick, onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { onlineStatus } from "$lib/stores/online.svelte";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { browser } from "$app/environment";
   import { safeJsonLd } from "$lib/utils/json-ld";
   import { SESSION_DRAFTS_KEY } from "$lib/services/seo/session-context";
@@ -170,6 +172,13 @@
   ]);
 
   let isGenerating = $state(false);
+  // Separate flag for the on-mount seed draft so it never blocks (or is blocked
+  // by) an explicit user Generate (#1494 review follow-up).
+  let isAutoDrafting = $state(false);
+  // Once the user explicitly generates, the in-flight seed draft must not clobber
+  // their result if it resolves later.
+  let userGenerated = $state(false);
+  const isBusy = $derived(isGenerating || isAutoDrafting);
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
 
@@ -187,29 +196,13 @@
   let redirectUrl = $state(`${cleanBase}/`);
 
   // Offline awareness (#1494): generator pages still work offline using local
-  // tables, but AI Lore Co-Author mode requires the network. Seed from
-  // navigator.onLine and keep it in sync via window online/offline events.
-  let isOnline = $state(true);
-  // Effective AI mode: only when the user opted in *and* we're online. Drives
-  // both the generate call and the disabled state of the toggle.
-  const effectiveUseAI = $derived(isOnline && useAI);
+  // tables, but AI Lore Co-Author mode requires the network. Network status
+  // comes from the shared `onlineStatus` store (seeded at module load, so no
+  // post-mount "assumed online" flash).
+  const isOnline = $derived(onlineStatus.current);
   // Dismissal flag for the "AI was unavailable, used local" notice; reset on
   // each new generation so a later failure shows it again.
   let aiFallbackDismissed = $state(false);
-
-  $effect(() => {
-    if (!browser) return;
-    isOnline = navigator.onLine;
-    const update = () => {
-      isOnline = navigator.onLine;
-    };
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  });
 
   const themeMap: Record<string, string> = {
     "Classic Fantasy": "fantasy",
@@ -273,15 +266,18 @@
   });
 
   async function handleGenerateOnMount() {
-    if (isGenerating || generatedData) return;
-    isGenerating = true;
+    if (isAutoDrafting || generatedData) return;
+    isAutoDrafting = true;
     errorMessage = null;
     try {
-      generatedData = await generate({ useAI: false });
+      const draft = await generate({ useAI: false });
+      // The user may have triggered (or finished) an explicit generation while
+      // this seed draft was in flight; don't overwrite their result.
+      if (!userGenerated) generatedData = draft;
     } catch (err: any) {
       console.warn("Failed to generate initial draft:", err);
     } finally {
-      isGenerating = false;
+      isAutoDrafting = false;
     }
   }
 
@@ -400,12 +396,19 @@
   );
 
   async function handleGenerate() {
+    if (isGenerating) return;
     isExampleDraft = false;
+    userGenerated = true;
     isGenerating = true;
     errorMessage = null;
     aiFallbackDismissed = false;
+    // Use AI only when the user opted in *and* we're online. Read the live
+    // status at click time so a generation triggered before status settles
+    // still routes correctly (#1494).
+    const useAINow =
+      useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
-      generatedData = await generate({ useAI: effectiveUseAI });
+      generatedData = await generate({ useAI: useAINow });
       if (browser && window.innerWidth < 1024 && outputCard) {
         await tick();
         outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -719,12 +722,12 @@
       {#if generatedData?.aiFallback && !aiFallbackDismissed}
         <div
           transition:fade={{ duration: 150 }}
-          class="mb-4 p-3 border border-amber-500/40 bg-amber-500/10 rounded-xl flex items-start gap-2.5"
+          class="mb-4 p-3 border border-theme-warning/40 bg-theme-warning/10 rounded-xl flex items-start gap-2.5"
           role="status"
           aria-live="polite"
         >
           <span
-            class="icon-[lucide--info] w-4 h-4 text-amber-500 shrink-0 mt-0.5"
+            class="icon-[lucide--info] w-4 h-4 text-theme-warning shrink-0 mt-0.5"
             aria-hidden="true"
           ></span>
           <p class="text-xs text-theme-text/80 leading-snug flex-grow">
@@ -744,7 +747,7 @@
       <div
         class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
       >
-        {#if isGenerating}
+        {#if isBusy}
           <div
             in:fade={{ duration: 150 }}
             class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-theme-bg/70 backdrop-blur-[2px] rounded-2xl"
@@ -765,7 +768,7 @@
         {#if generatedData}
           <div
             in:fade={{ duration: 250 }}
-            class="flex flex-col flex-grow transition-opacity duration-300 {isGenerating
+            class="flex flex-col flex-grow transition-opacity duration-300 {isBusy
               ? 'opacity-40'
               : ''}"
           >
@@ -1196,13 +1199,13 @@
 
           <button
             type="submit"
-            disabled={isGenerating}
-            aria-busy={isGenerating}
+            disabled={isBusy}
+            aria-busy={isBusy}
             class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             id="generate-button"
             title="Generate a new draft using your current form inputs"
           >
-            {#if isGenerating}
+            {#if isBusy}
               <span
                 class="icon-[lucide--loader-2] animate-spin w-4 h-4"
                 aria-hidden="true"
@@ -1248,6 +1251,11 @@
                 Fast offline mode — local tables only, no AI.
               {/if}
             </p>
+            {#if browser}
+              <div class="pl-6 pt-1">
+                <FeatureHint hintId="generator-local-mode" />
+              </div>
+            {/if}
           </div>
         </form>
 
