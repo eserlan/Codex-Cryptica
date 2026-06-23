@@ -91,7 +91,7 @@ describe("/guest/[publishId] page", () => {
     vi.clearAllMocks();
   });
 
-  it("restores the active vault theme when leaving guest mode", async () => {
+  it("keeps the guest session active when navigating within the app", async () => {
     const { unmount } = render(RoutePage, {
       data: {
         publishId: "published-1",
@@ -117,13 +117,13 @@ describe("/guest/[publishId] page", () => {
 
     unmount();
 
-    expect(sessionModeStore.isGuestMode).toBe(false);
-    expect(guestVault.clear).toHaveBeenCalled();
-    expect(themeStore.loadForVault).toHaveBeenCalledWith("vault-123");
+    expect(sessionModeStore.isGuestMode).toBe(true);
+    expect(guestVault.clear).not.toHaveBeenCalled();
+    expect(themeStore.loadForVault).not.toHaveBeenCalled();
     expect(themeStore.setTheme).toHaveBeenCalledTimes(1);
   });
 
-  it("falls back to the previous local theme when no active vault exists", async () => {
+  it("keeps the host theme when no local vault is active", async () => {
     (vault as any).activeVaultId = "";
 
     const { unmount } = render(RoutePage, {
@@ -151,6 +151,6 @@ describe("/guest/[publishId] page", () => {
     unmount();
 
     expect(themeStore.loadForVault).not.toHaveBeenCalled();
-    expect(themeStore.setTheme).toHaveBeenLastCalledWith("local-theme");
+    expect(themeStore.setTheme).toHaveBeenCalledTimes(1);
   });
 });
