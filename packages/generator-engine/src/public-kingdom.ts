@@ -282,17 +282,46 @@ export function generateKingdomLocal(
 
   const summary = `A ${resolved.conflictLevel.toLowerCase()} ${resolved.polityType.toLowerCase()} set in ${resolved.geography.toLowerCase()}, ruled by a ${resolved.governmentStyle.toLowerCase()}.`;
 
+  const capitalRoles = [
+    `Its capital, ${capitalName}, serves as the seat of power and the heart of its culture.`,
+    `${capitalName}, the capital, is where the real decisions are made — usually behind closed doors.`,
+    `Power flows through ${capitalName}: whoever controls the capital controls the realm, and everyone knows it.`,
+    `The capital, ${capitalName}, is both the realm's showcase and its most contested ground.`,
+    `${capitalName} holds the realm together. Whether it can continue to do so is another question.`,
+  ] as const;
+
+  const societyDescriptions = [
+    `The population lives under the tension of a realm at ${resolved.conflictLevel.toLowerCase()}. Loyalty is currency, and old alliances are being quietly renegotiated. The ruling class projects stability but its grip is tested daily.`,
+    `Life for most people means navigating the gap between what the realm officially is and what it actually is. At ${resolved.conflictLevel.toLowerCase()}, that gap is wide enough to fall through.`,
+    `The people have learned to read the signs of a realm under strain. Prices shift, officials grow terse, and certain names stop appearing in public discourse. The current ${resolved.conflictLevel.toLowerCase()} is not invisible — it is just unspoken.`,
+    `Beneath the official order, the real social compact runs on favors, precedent, and carefully maintained fictions. A realm at ${resolved.conflictLevel.toLowerCase()} puts all three under pressure simultaneously.`,
+    `The ruling class has managed the realm's tensions long enough to be good at it. What they are not good at is admitting how much has changed.`,
+  ] as const;
+
+  const kingdomHowToUse = [
+    (n: string) =>
+      `Use ${n} as the political backdrop for a campaign, the origin of a patron, or the prize in a succession conflict. The hidden trouble gives any visit the potential to escalate into something bigger.`,
+    (n: string) =>
+      `${n} works best as a pressure cooker — a setting where every faction the party works with is also playing against every other. The hidden trouble is the thing that makes it personal.`,
+    (n: string) =>
+      `Drop the party into ${n} when you need a setting with genuine political weight. They should be able to solve immediate problems while making the underlying ones worse.`,
+    (n: string) =>
+      `Use ${n} as the backdrop for missions that seem self-contained but gradually reveal that everything connects to the realm's central crisis.`,
+    (n: string) =>
+      `${n} is most useful when the party has to choose a side — and every side has something genuinely worth supporting and something genuinely worth opposing.`,
+  ] as const;
+
   const content = `### The Realm
-${realmName} is a ${resolved.scale.toLowerCase()} ${resolved.polityType.toLowerCase()} occupying ${resolved.geography.toLowerCase()} terrain. Its capital, ${capitalName}, serves as the seat of power and the heart of its culture.${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the centre of the main conflict.` : ""}
+${realmName} is a ${resolved.scale.toLowerCase()} ${resolved.polityType.toLowerCase()} occupying ${resolved.geography.toLowerCase()} terrain. ${pickFrom(capitalRoles, rng)}${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the centre of the main conflict.` : ""}
 
 ### Government & Power
 ${rulerName} leads through a system of ${resolved.governmentStyle.toLowerCase()}. The realm's magic level is ${resolved.magicLevel.toLowerCase()}, which shapes both its military capability and its social order. ${trouble}.
 
 ### Society & Culture
-The population lives under the tension of a realm at ${resolved.conflictLevel.toLowerCase()}. Loyalty is currency, and old alliances are being quietly renegotiated. The ruling class projects stability but its grip is tested daily.
+${pickFrom(societyDescriptions, rng)}
 
 ### How to use it at the table
-Use ${realmName} as the political backdrop for a campaign, the origin of a patron, or the prize in a succession conflict. The hidden trouble gives any visit the potential to escalate into something bigger.`;
+${pickFrom(kingdomHowToUse, rng)(realmName)}`;
 
   const lore = `### At a Glance
 - **Polity Type**: ${resolved.polityType}

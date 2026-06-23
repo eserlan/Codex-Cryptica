@@ -437,8 +437,16 @@ export function generateMagicItemLocal(
   const property = pickFrom(themeProperties, rng);
   const history = pickFrom(themeHistories, rng);
 
+  const itemDescriptions = [
+    `The ${name} is a uniquely crafted ${itemType.toLowerCase()} that displays a high degree of precision in its construction. Made from materials rare to this region, it feels slightly warm or cool to the touch depending on the active wielder's alignment.`,
+    `The ${name} is a ${itemType.toLowerCase()} whose craftsmanship is immediately apparent — the joins are too clean, the balance too deliberate for ordinary work. It carries a faint resonance that is difficult to name and hard to ignore.`,
+    `The ${name} is a ${itemType.toLowerCase()} that has clearly outlasted its original owner. Wear patterns suggest heavy use, but the construction is intact. Something about it resists deterioration.`,
+    `At first glance the ${name} appears to be an ordinary ${itemType.toLowerCase()}. Closer inspection reveals subtle detailing that only makes sense once you understand what it does.`,
+    `The ${name} is a ${itemType.toLowerCase()} with an unsettling specificity of design — it was clearly made for a very particular purpose, and whoever holds it can feel that purpose even without knowing what it was.`,
+  ] as const;
+
   const content = `### Description
-The ${name} is a uniquely crafted ${itemType.toLowerCase()} that displays a high degree of precision in its construction. Made from materials rare to this region, it feels slightly warm or cool to the touch depending on the active wielder's alignment.`;
+${pickFrom(itemDescriptions, rng)}`;
 
   const lore = `### GM Reference Information
 - **Type**: ${itemType}

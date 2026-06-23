@@ -597,6 +597,25 @@ export function generateQuestLocal(
   const npcName = generateName(rng);
   const locationName = `The ${generateName(rng)} ${resolved.locationType}`;
 
+  const npcStakeVariants = [
+    `Their stated reason for hiring the party is credible enough, but their personal stake runs deeper than they admit.`,
+    `The official version of why they need the party is true as far as it goes. What they have not said is what makes it personal.`,
+    `They present a clear, reasonable case for the party's involvement. The part they omit is the part that matters most.`,
+    `Trustworthy enough to work with, not transparent enough to fully trust. Their investment in the outcome goes beyond what they have disclosed.`,
+    `The party's first impression of ${npcName} will be of someone straightforward. That impression is accurate in the ways that do not matter.`,
+  ] as const;
+
+  const threatVariants = [
+    `The central danger is a ${resolved.threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`,
+    `The threat is a ${resolved.threat.toLowerCase()} that has already shaped local behavior — people are routing around it, not reporting it, and quietly adjusting their plans.`,
+    `A ${resolved.threat.toLowerCase()} forms the core danger. The party will not be the first to notice it. They may be the first willing to do something about it.`,
+    `The central danger — a ${resolved.threat.toLowerCase()} — has been allowed to persist long enough that dealing with it now will create ripples beyond the immediate problem.`,
+    `At the center of this is a ${resolved.threat.toLowerCase()}. Its history in this place is longer than anyone has told the party yet.`,
+  ] as const;
+
+  const npcStake = pickFrom(npcStakeVariants, rng);
+  const threatDesc = pickFrom(threatVariants, rng);
+
   const content = `### The Hook
 ${hook}
 
@@ -604,26 +623,34 @@ ${resolved.campaignContext ? `### Campaign Fit\nThis quest ties into ${resolved.
 ${locationName} serves as the primary setting -- a ${resolved.locationType.toLowerCase()} shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
 
 ### Key NPC
-**${npcName}** is the immediate contact, patron, or obstacle. Their stated reason for hiring the party is credible enough, but their personal stake runs deeper than they admit.
+**${npcName}** is the immediate contact, patron, or obstacle. ${npcStake}
 
 ### Threat
-The central danger is a ${resolved.threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`;
+${threatDesc}`;
+
+  const rewardClosers = [
+    `Beyond its face value, it opens a door in the wider campaign: a contact, a route, or a secret the party could not otherwise reach.`,
+    `The reward is real. What it enables matters more than what it is worth.`,
+    `On its own terms it is fair. As a campaign asset, it is more valuable than it appears.`,
+    `The party earns something tangible — and inherits something they will not fully understand until later.`,
+    `Take the face value seriously. Then consider what having it changes about the party's position going forward.`,
+  ] as const;
 
   const lore = `### Core Fields
 - **📍 Setting**: ${locationName}, a ${resolved.locationType.toLowerCase()} shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
-- **📅 Threat**: A ${resolved.threat.toLowerCase()}, active long enough to leave evidence, earn fear, and create a power vacuum.
+- **📅 Threat**: ${threatDesc}
 
 ### Complication
 ${complication}
 
 ### Key NPC
-- **👤 ${npcName}**: The immediate contact, patron, or obstacle. Their stated reason for involving the party is credible, but their personal stake runs deeper than they admit.
+- **👤 ${npcName}**: The immediate contact, patron, or obstacle. ${npcStake}
 
 ### The Twist
 ${resolved.twist}. Reveal this only once the party is committed -- it should recast earlier scenes in a new light.
 
 ### Reward
-${resolved.reward}. Beyond its face value, it opens a door in the wider campaign: a contact, a route, or a secret the party could not otherwise reach.`;
+${resolved.reward}. ${pickFrom(rewardClosers, rng)}`;
 
   return {
     type: "event",
