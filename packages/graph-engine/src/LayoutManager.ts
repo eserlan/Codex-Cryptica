@@ -7,6 +7,7 @@ import {
   hasTimelineDate,
   type GraphNode,
 } from "./index";
+import { isLayoutCollinear } from "./geometry";
 
 export interface LayoutOptions {
   timelineMode: boolean;
@@ -27,7 +28,10 @@ export interface LayoutOptions {
   onLayoutStart?: () => void;
   onLayoutStop?: () => void;
   onLayoutComputed?: (durationMs: number) => void;
-  onPositionsUpdated?: (updates: Record<string, Partial<Entity>>) => void;
+  onPositionsUpdated?: (
+    updates: Record<string, Partial<Entity>>,
+    meta?: { healed?: boolean },
+  ) => void;
 }
 
 /**
@@ -96,6 +100,8 @@ function seededLayoutPosition(
     y: (Math.sin(angle) * distance) / aspectScale,
   };
 }
+
+export { isLayoutCollinear } from "./geometry";
 
 export function getLayoutCollisionSize(
   width: number,
@@ -456,19 +462,29 @@ export class LayoutManager {
     //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
     //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
     //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
+    const positions: { x: number; y: number }[] = [];
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
+      positions.push(p);
       if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
     });
     const pendingCount = this.cy.nodes(".pending-layout").length;
 
-    const needsSolve =
+    // Heal a degenerate "diagonal slash" — saved coords collapsed onto a line.
+    // This is checked on *every* force pass, not just the initial one: a vault
+    // switch reuses the cy instance and can run a non-initial incremental solve
+    // (or fit-only) over the persisted diagonal, which would preserve the slash.
+    // A legitimate fcose layout is never collinear, so forcing a randomized
+    // re-solve whenever we detect collinearity is safe across all paths.
+    const isDegenerateSlash = isLayoutCollinear(positions);
+
+    const needsInitialSolve =
       isInitial &&
       cyNodes.length > 1 &&
       (pendingCount === cyNodes.length || nodesAtOrigin === cyNodes.length);
 
-    if (!randomize && needsSolve) {
+    if (!randomize && (needsInitialSolve || isDegenerateSlash)) {
       randomize = true;
     }
 
@@ -487,7 +503,7 @@ export class LayoutManager {
       manualRedrawRandomize ||
       (isForced && reseed && !options.stableLayout);
 
-    await this.solveAndFit(options, shouldRandomize);
+    await this.solveAndFit(options, shouldRandomize, isDegenerateSlash);
   }
 
   private fitOnly(options: LayoutOptions): void {
@@ -550,6 +566,7 @@ export class LayoutManager {
   private async solveAndFit(
     options: LayoutOptions,
     shouldRandomize: boolean,
+    healed = false,
   ): Promise<void> {
     const cyNodes = this.cy.nodes();
     const width = this.cy.width();
@@ -649,12 +666,13 @@ export class LayoutManager {
 
     this.animateFitAndStop(options, "ease-out-quad");
 
-    this.persistPositions(this.cy.nodes(), options);
+    this.persistPositions(this.cy.nodes(), options, healed);
   }
 
   private persistPositions(
     nodes: ReturnType<Core["nodes"]>,
     options: Pick<LayoutOptions, "isGuest" | "onPositionsUpdated">,
+    healed = false,
   ): void {
     if (options.isGuest || nodes.length === 0) return;
     const updates: Record<string, Partial<Entity>> = {};
@@ -666,7 +684,7 @@ export class LayoutManager {
         },
       };
     });
-    options.onPositionsUpdated?.(updates);
+    options.onPositionsUpdated?.(updates, { healed });
   }
 
   stop() {

@@ -490,10 +490,11 @@ describe("resolveLayoutTrigger", () => {
     ).toBeNull();
   });
 
-  it("returns null when vault is loading and not yet initialLoaded", () => {
+  it("returns null when vault is loading regardless of initialLoaded", () => {
     expect(
       resolveLayoutTrigger(false, false, true, true, false, []),
     ).toBeNull();
+    expect(resolveLayoutTrigger(false, false, true, true, true, [])).toBeNull();
   });
 
   it("returns request with isForced=true and hasRemovedNodes=true on node deletion", () => {
@@ -518,16 +519,6 @@ describe("resolveLayoutTrigger", () => {
 
   it("returns request with isForced=false and hasNewNodes=true on addition", () => {
     const req = resolveLayoutTrigger(false, false, true, false, true, []);
-    expect(req).toEqual<LayoutRequest>({
-      reason: "Elements Update",
-      isForced: false,
-      hasNewNodes: true,
-      hasRemovedNodes: false,
-    });
-  });
-
-  it("fires when isVaultLoading=true but initialLoaded=true", () => {
-    const req = resolveLayoutTrigger(false, false, true, true, true, []);
     expect(req).toEqual<LayoutRequest>({
       reason: "Elements Update",
       isForced: false,
