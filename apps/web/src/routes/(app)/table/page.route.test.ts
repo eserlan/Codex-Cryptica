@@ -75,5 +75,8 @@ describe("/table page", () => {
     expect(screen.getByTestId("entity-table")).toBeTruthy();
     expect(screen.getByTestId("entity-table-count").textContent).toContain("2");
     expect(screen.getAllByTestId("entity-table-row")).toHaveLength(2);
+    expect(
+      screen.getByTestId("entity-table-connections-e1").textContent?.trim(),
+    ).toBe("0");
   });
 });

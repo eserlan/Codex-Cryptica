@@ -1,12 +1,19 @@
 import type { Entity } from "schema";
 
 /** Columns the Entity Table can be sorted by. */
-export type SortKey = "title" | "type" | "created" | "modified";
+export type SortKey = "title" | "type" | "connections" | "created" | "modified";
 export type SortDirection = "asc" | "desc";
 
 export interface SortState {
   key: SortKey;
   direction: SortDirection;
+}
+
+/** Directional connection counts for a single entity. */
+export interface ConnectionSummary {
+  inbound: number;
+  outbound: number;
+  total: number;
 }
 
 /** Resolve an entity's creation timestamp (epoch ms), if known. */
@@ -29,7 +36,11 @@ export function getEntityModifiedAt(entity: Entity): number | undefined {
  * sort last, regardless of direction, so cleanup gaps stay visible at the
  * bottom. Ties fall back to title order for stable, predictable output.
  */
-export function sortEntities(entities: Entity[], sort: SortState): Entity[] {
+export function sortEntities(
+  entities: Entity[],
+  sort: SortState,
+  connectionCounts: Record<string, ConnectionSummary> = {},
+): Entity[] {
   const dir = sort.direction === "asc" ? 1 : -1;
 
   return [...entities].sort((a, b) => {
@@ -49,6 +60,13 @@ export function sortEntities(entities: Entity[], sort: SortState): Entity[] {
     if (sort.key === "type") {
       const t = a.type.localeCompare(b.type);
       if (t !== 0) return t * dir;
+      return a.title.localeCompare(b.title);
+    }
+
+    if (sort.key === "connections") {
+      const countA = connectionCounts[a.id]?.total ?? 0;
+      const countB = connectionCounts[b.id]?.total ?? 0;
+      if (countA !== countB) return (countA - countB) * dir;
       return a.title.localeCompare(b.title);
     }
 

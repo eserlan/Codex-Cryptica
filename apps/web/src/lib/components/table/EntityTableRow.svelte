@@ -5,14 +5,20 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import { entitySnippet } from "./entityTableSnippet";
-  import { getEntityCreatedAt, getEntityModifiedAt } from "./entityTableSort";
+  import {
+    getEntityCreatedAt,
+    getEntityModifiedAt,
+    type ConnectionSummary,
+  } from "./entityTableSort";
 
   let {
     entity,
     vaultId,
+    connectionSummary,
   }: {
     entity: Entity;
     vaultId: string;
+    connectionSummary: ConnectionSummary;
   } = $props();
 
   const cat = $derived(categories.getCategory(entity.type));
@@ -79,6 +85,19 @@
       </span>
     {:else}
       <span class="text-xs text-theme-muted">{entity.type}</span>
+    {/if}
+  </td>
+
+  <!-- Connections -->
+  <td
+    class="px-3 py-2 align-top whitespace-nowrap text-xs text-theme-muted/90"
+    data-testid="entity-table-connections-{entity.id}"
+  >
+    <span class="font-medium text-theme-text">{connectionSummary.total}</span>
+    {#if connectionSummary.total > 0}
+      <span class="text-theme-muted">
+        {connectionSummary.inbound} in · {connectionSummary.outbound} out
+      </span>
     {/if}
   </td>
 

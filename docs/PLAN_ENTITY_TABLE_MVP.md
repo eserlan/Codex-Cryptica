@@ -19,6 +19,14 @@ Name · Type · Summary snippet · Tags/labels · Created · Updated
 
 Empty values render as `—`. Incomplete entities are never hidden.
 
+## Follow-up — Connection summary
+
+**Reference:** Original Entity Table issue [#1509](https://github.com/eserlan/Codex-Cryptica/issues/1509)
+
+Add one sortable **Connections** column. It shows the total number of valid relationships, followed by compact directional counts (`in · out`) when the total is non-zero. An entity with no relationships renders `0`, not `—`, so users can identify isolated entities.
+
+The table uses the existing `vault.inboundConnections` index and each entity's outgoing `connections`; it does not add graph navigation, filtering, editing, or separate inbound/outbound columns. This preserves the read-only overview scope of #1509 while exposing relationship density.
+
 ---
 
 ## Phase 1 — Route & navigation scaffold
