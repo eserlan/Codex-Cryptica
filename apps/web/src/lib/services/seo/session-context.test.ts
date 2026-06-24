@@ -103,7 +103,7 @@ describe("getSessionContext", () => {
     }
 
     const context = getSessionContext();
-    const lines = context.split("\\n");
+    const lines = context.split("\n");
     // Should be exactly 50 entities included
     const entityLines = lines.filter((l) => l.startsWith("- Item"));
     expect(entityLines.length).toBe(50);

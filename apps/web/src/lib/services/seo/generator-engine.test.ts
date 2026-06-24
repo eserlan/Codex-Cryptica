@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DefaultGeneratorEngine } from "./generator-engine";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "generator-engine";
+import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 
 describe("DefaultGeneratorEngine", () => {
   let mockClientManager: any;
@@ -1351,23 +1352,26 @@ describe("DefaultGeneratorEngine", () => {
     };
 
     afterEach(() => {
-      sessionStorage.removeItem("__codex_session_drafts");
+      sessionHubStore.clear();
+      sessionStorage.removeItem("SESSION_DRAFTS");
     });
 
     it("injects session hub drafts into the NPC prompt", async () => {
-      sessionStorage.setItem(
-        "__codex_session_drafts",
-        JSON.stringify([
-          {
-            type: "faction",
-            title: "The Iron Syndicate",
-            content:
-              "### Operations\nA merchants' guild controlling trade routes.",
-            labels: [],
-            status: "draft",
-          },
-        ]),
-      );
+      sessionHubStore.entities = [
+        {
+          id: "test-id",
+          type: "faction",
+          title: "The Iron Syndicate",
+          summary: "",
+          content:
+            "### Operations\nA merchants' guild controlling trade routes.",
+          labels: [],
+          status: "draft",
+          reuseEnabled: true,
+          pinned: false,
+          createdOrder: 1,
+        },
+      ];
       const { engine, captured } = captureEngine();
       await engine.generateNPC({ useAI: true });
       expect(captured.system + captured.user).toContain("The Iron Syndicate");
