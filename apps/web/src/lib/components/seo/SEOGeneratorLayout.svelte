@@ -3,19 +3,26 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { tick, onMount } from "svelte";
+  import { tick } from "svelte";
   import type { Snippet } from "svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { onlineStatus } from "$lib/stores/online.svelte";
   import { browser } from "$app/environment";
   import { safeJsonLd } from "$lib/utils/json-ld";
-  import { SESSION_DRAFTS_KEY } from "$lib/services/seo/session-context";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import {
     renderGeneratorMarkdown,
     renderGeneratorLore,
   } from "$lib/components/seo/markdown-renderers";
+  import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+  import SessionHubWidget from "./SessionHubWidget.svelte";
+  import ProvenanceBadge from "./ProvenanceBadge.svelte";
+  import {
+    getContextSelection,
+    computeProvenance,
+    type SessionEntity,
+  } from "generator-engine";
 
   let {
     canonicalPath,
@@ -35,7 +42,6 @@
     variant = "default",
     generateLabel = undefined,
     inputHint = "Set your inputs — your draft updates to the right",
-    onLinkToHub = undefined,
     backHref = undefined,
     backLabel = undefined,
   }: {
@@ -408,6 +414,35 @@
       useAI && (browser ? navigator.onLine : onlineStatus.current);
     try {
       generatedData = await generate({ useAI: useAINow });
+
+      if (generatedData) {
+        const content = generatedData.summary
+          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
+          : documentLayout.content;
+
+        const currentContext = $state.snapshot(contextSelection);
+
+        currentEntityId = sessionHubStore.addEntity({
+          type: generatedData.type,
+          title: generatedData.title,
+          summary: generatedData.summary,
+          content,
+          lore: documentLayout.lore,
+          labels: generatedData.labels,
+          status: generatedData.status,
+          reuseEnabled: true,
+          pinned: false,
+        });
+
+        const record = computeProvenance(
+          currentEntityId,
+          content + "\n" + (documentLayout.lore || ""),
+          currentContext.entities,
+          currentContext.trimmed,
+        );
+        sessionHubStore.addProvenance(record);
+      }
+
       if (browser && window.innerWidth < 1024 && outputCard) {
         await tick();
         outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -419,77 +454,40 @@
     }
   }
 
-  interface SessionDraft {
-    type: string;
-    title: string;
-    content: string;
-    lore?: string;
-    labels: string[];
-    status: string;
-  }
+  let selectedHubEntity = $state<SessionEntity | null>(null);
+  let currentEntityId = $state<string | null>(null);
+  const contextSelection = $derived(
+    getContextSelection(sessionHubStore.entities),
+  );
 
-  let sessionDrafts = $state<SessionDraft[]>([]);
-
-  onMount(() => {
+  function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
+    if (entitiesToSave.length === 0) return;
     try {
-      const stored = sessionStorage.getItem(SESSION_DRAFTS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          sessionDrafts = parsed;
+      const draftsToSave = entitiesToSave.map((e) => {
+        const prov = sessionHubStore.provenance[e.id];
+        let references: string[] | undefined;
+        if (prov && prov.usedEntityIds.length > 0) {
+          references = prov.usedEntityIds
+            .map(
+              (uid) =>
+                sessionHubStore.entities.find((en) => en.id === uid)?.title,
+            )
+            .filter((title): title is string => !!title);
         }
-      }
-    } catch {
-      // sessionStorage may be blocked (privacy mode) or hold invalid JSON
-    }
-  });
 
-  function saveSessionDrafts(newDrafts: SessionDraft[]) {
-    sessionDrafts = newDrafts;
-    try {
-      sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(newDrafts));
-    } catch {
-      // sessionStorage may be blocked; hub still works in-memory for this page
-    }
-  }
-
-  function addToSessionHub() {
-    if (!generatedData) return;
-    const content = generatedData.summary
-      ? `*${generatedData.summary}*\n\n${documentLayout.content}`
-      : documentLayout.content;
-    const newDraft: SessionDraft = {
-      type: generatedData.type,
-      title: generatedData.title,
-      content,
-      lore: documentLayout.lore,
-      labels: generatedData.labels,
-      status: generatedData.status,
-    };
-
-    const exists = sessionDrafts.some(
-      (d) => d.title.toLowerCase() === newDraft.title.toLowerCase(),
-    );
-    if (!exists) {
-      saveSessionDrafts([...sessionDrafts, newDraft]);
-    }
-    onLinkToHub?.();
-  }
-
-  function removeFromSessionHub(title: string) {
-    saveSessionDrafts(sessionDrafts.filter((d) => d.title !== title));
-  }
-
-  function clearSessionHub() {
-    saveSessionDrafts([]);
-  }
-
-  function handleSaveAllToCodex() {
-    if (sessionDrafts.length === 0) return;
-    try {
+        return {
+          type: e.type,
+          title: e.title,
+          content: e.content,
+          lore: e.lore,
+          labels: e.labels,
+          status: e.status,
+          references,
+        };
+      });
       localStorage.setItem(
         "__codex_pending_import",
-        JSON.stringify(sessionDrafts),
+        JSON.stringify(draftsToSave),
       );
       redirectUrl = `${cleanBase}/?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
       showSaveModal = true;
@@ -819,19 +817,6 @@
                     >
                       Save to Codex
                     </button>
-                    <button
-                      type="button"
-                      onclick={addToSessionHub}
-                      class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/45 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/10 transition-all flex items-center gap-1.5"
-                      id="add-to-hub-btn"
-                      title="Add this draft to the Session Hub to bundle several drafts before exporting"
-                    >
-                      <span
-                        class="icon-[lucide--link] w-3.5 h-3.5"
-                        aria-hidden="true"
-                      ></span>
-                      Link to Hub
-                    </button>
                   {/if}
                   <button
                     type="button"
@@ -944,9 +929,18 @@
           {#if generatedData}
             <div
               in:fade={{ duration: 250 }}
-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85"
+              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
+              'names'
+                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
+                : ''}"
             >
-              {@html renderGeneratorLore(documentLayout.lore, variant)}
+              {@html renderGeneratorMarkdown(documentLayout.content, variant)}
+              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
+                <ProvenanceBadge
+                  record={sessionHubStore.provenance[currentEntityId]}
+                  onSelect={(e) => (selectedHubEntity = e)}
+                />
+              {/if}
             </div>
           {:else}
             <div
@@ -964,87 +958,25 @@
         </div>
 
         <!-- Session Hub Widget -->
-        <div
-          class="p-5 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex-col gap-3 {variant ===
-          'names'
-            ? 'hidden'
-            : 'flex'}"
-        >
-          <div
-            class="flex items-center justify-between border-b border-theme-border/60 pb-2"
-          >
-            <h3
-              class="font-header font-bold text-xs uppercase tracking-wider text-theme-text/70"
+        {#if variant !== "names"}
+          <SessionHubWidget
+            onSelect={(entity) => (selectedHubEntity = entity)}
+            onSave={handleSaveHubToCodex}
+          />
+          {#if contextSelection.trimmed}
+            <div
+              class="mt-2 text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
             >
-              Session Hub
-            </h3>
-            {#if sessionDrafts.length > 0}
-              <button
-                type="button"
-                onclick={clearSessionHub}
-                class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300"
-              >
-                Clear
-              </button>
-            {/if}
-          </div>
-          {#if sessionDrafts.length === 0}
-            <p class="text-[10px] text-theme-muted leading-relaxed">
-              Generate drafts and click "Link to Hub" to build a connected
-              campaign vault before exporting.
-            </p>
-          {:else}
-            <ul class="space-y-2 max-h-[200px] overflow-y-auto">
-              {#each sessionDrafts as draft (draft.title)}
-                <li
-                  class="flex items-center justify-between gap-2 p-2 bg-theme-surface/45 border border-theme-border/30 rounded-lg text-xs"
-                >
-                  <span
-                    class="truncate font-medium text-theme-text/90 flex items-center gap-1.5"
-                  >
-                    {#if draft.type === "character"}
-                      <span
-                        class="icon-[lucide--user] w-3.5 h-3.5 text-theme-primary"
-                      ></span>
-                    {:else if draft.type === "faction"}
-                      <span
-                        class="icon-[lucide--flag] w-3.5 h-3.5 text-theme-primary"
-                      ></span>
-                    {:else if draft.type === "settlement" || draft.type === "location"}
-                      <span
-                        class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
-                      ></span>
-                    {:else if draft.type === "item"}
-                      <span
-                        class="icon-[lucide--sparkles] w-3.5 h-3.5 text-theme-primary"
-                      ></span>
-                    {:else}
-                      <span
-                        class="icon-[lucide--file-text] w-3.5 h-3.5 text-theme-primary"
-                      ></span>
-                    {/if}
-                    {draft.title}
-                  </span>
-                  <button
-                    type="button"
-                    onclick={() => removeFromSessionHub(draft.title)}
-                    class="text-theme-muted hover:text-rose-400 transition-colors flex-shrink-0"
-                    aria-label="Remove draft"
-                  >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-                  </button>
-                </li>
-              {/each}
-            </ul>
-            <button
-              type="button"
-              onclick={handleSaveAllToCodex}
-              class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center mt-1"
-            >
-              Save Hub to Codex ({sessionDrafts.length})
-            </button>
+              <span
+                class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"
+              ></span>
+              <p>
+                Some older unpinned context is omitted from prompts to manage AI
+                limits. Pin items to prioritize them.
+              </p>
+            </div>
           {/if}
-        </div>
+        {/if}
       </div>
     </div>
 
@@ -1367,6 +1299,74 @@
             class="w-full py-3 bg-theme-surface/50 border border-theme-border/60 text-theme-text font-bold uppercase font-header tracking-widest text-xs rounded-xl hover:bg-theme-surface transition-all"
           >
             Back to Generator
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Detail Review Modal -->
+  {#if selectedHubEntity}
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+      transition:fade={{ duration: 150 }}
+    >
+      <div
+        class="bg-theme-surface border border-theme-border max-w-2xl w-full max-h-[85vh] rounded-2xl shadow-xl flex flex-col text-left overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div
+          class="px-6 py-4 border-b border-theme-border/60 flex items-center justify-between bg-theme-surface/60"
+        >
+          <div class="flex items-center gap-3">
+            <span
+              class="text-[10px] uppercase tracking-wider text-theme-primary px-2 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20"
+              >{selectedHubEntity.type}</span
+            >
+            <h3 class="font-header font-bold text-xl text-theme-text">
+              {selectedHubEntity.title}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onclick={() => (selectedHubEntity = null)}
+            class="p-2 text-theme-muted hover:text-theme-text transition-colors"
+            aria-label="Close detail view"
+          >
+            <span class="icon-[lucide--x] w-5 h-5"></span>
+          </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto seo-md">
+          {#if selectedHubEntity.summary}
+            <p
+              class="italic text-theme-text/80 mb-4 pb-4 border-b border-theme-border/30"
+            >
+              {selectedHubEntity.summary}
+            </p>
+          {/if}
+          {@html renderGeneratorMarkdown(selectedHubEntity.content, "default")}
+
+          {#if selectedHubEntity.lore}
+            <div class="mt-6 pt-6 border-t border-theme-border/50">
+              <h4
+                class="font-header font-bold text-sm uppercase tracking-wider text-theme-primary mb-3"
+              >
+                At the Table
+              </h4>
+              {@html renderGeneratorLore(selectedHubEntity.lore, "default")}
+            </div>
+          {/if}
+        </div>
+
+        <div
+          class="px-6 py-4 border-t border-theme-border/60 bg-theme-surface/40 flex justify-end"
+        >
+          <button
+            type="button"
+            onclick={() => (selectedHubEntity = null)}
+            class="px-4 py-2 bg-theme-surface/60 border border-theme-border/60 text-theme-text font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-surface transition-all"
+          >
+            Close
           </button>
         </div>
       </div>

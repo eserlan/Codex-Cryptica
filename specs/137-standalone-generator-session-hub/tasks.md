@@ -15,7 +15,7 @@
 
 **Purpose**: Project initialization and validation of workspace dependencies.
 
-- [ ] T001 Verify project structures and package files in packages/generator-engine/package.json and apps/web/package.json
+- [x] T001 Verify project structures and package files in packages/generator-engine/package.json and apps/web/package.json
 
 ---
 
@@ -25,13 +25,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T002 [P] Implement context budgeting and title matching helpers in packages/generator-engine/src/session-hub-helpers.ts
-- [ ] T003 [P] Add unit tests for budgeting and matching helpers in packages/generator-engine/src/session-hub-helpers.test.ts
-- [ ] T004 [P] Export helpers in packages/generator-engine/src/index.ts
-- [ ] T005 Implement Svelte 5 store managing session-local drafts in apps/web/src/lib/stores/session-hub.svelte.ts
-- [ ] T006 Add unit tests for the session-hub store in apps/web/src/lib/stores/session-hub.svelte.test.ts
-- [ ] T007 Update pending import schema and logic to support connection mapping in apps/web/src/lib/services/seo/import-handler.ts
-- [ ] T008 Add unit tests for relationships import logic in apps/web/src/lib/services/seo/import-handler.test.ts
+- [x] T002 [P] Implement context budgeting and title matching helpers in packages/generator-engine/src/session-hub-helpers.ts
+- [x] T003 [P] Add unit tests for budgeting and matching helpers in packages/generator-engine/src/session-hub-helpers.test.ts
+- [x] T004 [P] Export helpers in packages/generator-engine/src/index.ts
+- [x] T005 Implement Svelte 5 store managing session-local drafts in apps/web/src/lib/stores/session-hub.svelte.ts
+- [x] T006 Add unit tests for the session-hub store in apps/web/src/lib/stores/session-hub.svelte.test.ts
+- [x] T007 Update pending import schema and logic to support connection mapping in apps/web/src/lib/services/seo/import-handler.ts
+- [x] T008 Add unit tests for relationships import logic in apps/web/src/lib/services/seo/import-handler.test.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -45,13 +45,13 @@
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Add unit tests for list rendering and item actions in apps/web/src/lib/components/seo/SessionHubWidget.test.ts
+- [x] T009 [P] [US1] Add unit tests for list rendering and item actions in apps/web/src/lib/components/seo/SessionHubWidget.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Create the session list UI widget in apps/web/src/lib/components/seo/SessionHubWidget.svelte
-- [ ] T011 [US1] Integrate session store and trigger auto-saving on generation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
-- [ ] T012 [US1] Implement detail review modal and navigation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+- [x] T010 [P] [US1] Create the session list UI widget in apps/web/src/lib/components/seo/SessionHubWidget.svelte
+- [x] T011 [US1] Integrate session store and trigger auto-saving on generation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+- [x] T012 [US1] Implement detail review modal and navigation in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
 
 **Checkpoint**: User Story 1 is functional and testable as the feature's MVP.
 
@@ -65,13 +65,10 @@
 
 ### Tests for User Story 2
 
-- [ ] T013 [P] [US2] Add unit test cases for prompt context formatting in apps/web/src/lib/services/seo/generator-engine.test.ts
-
-### Implementation for User Story 2
-
-- [ ] T014 [US2] Add checkbox toggles for reuse and pin settings to each item in apps/web/src/lib/components/seo/SessionHubWidget.svelte
-- [ ] T015 [US2] Retrieve and format active session context in apps/web/src/lib/services/seo/generator-engine.ts
-- [ ] T016 [US2] Render context budgeting trim warning notification in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+- [x] T013 [P] [US2] Add unit test cases for prompt context formatting in apps/web/src/lib/services/seo/generator-engine.test.ts
+- [x] T014 [US2] Add checkbox toggles for reuse and pin settings to each item in apps/web/src/lib/components/seo/SessionHubWidget.svelte
+- [x] T015 [US2] Retrieve and format active session context in apps/web/src/lib/services/seo/generator-engine.ts
+- [x] T016 [US2] Render context budgeting trim warning notification in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
 
 **Checkpoint**: Core context chaining behavior is complete.
 
@@ -85,12 +82,12 @@
 
 ### Tests for User Story 3
 
-- [ ] T017 [P] [US3] Add unit tests for provenance display and navigation triggers in apps/web/src/lib/components/seo/ProvenanceBadge.test.ts
+- [x] T017 [P] [US3] Add unit tests for provenance display and navigation triggers in apps/web/src/lib/components/seo/ProvenanceBadge.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T018 [P] [US3] Create the provenance badge component in apps/web/src/lib/components/seo/ProvenanceBadge.svelte
-- [ ] T019 [US3] Embed provenance badge in the result card layout in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
+- [x] T018 [P] [US3] Create the provenance badge component in apps/web/src/lib/components/seo/ProvenanceBadge.svelte
+- [x] T019 [US3] Embed provenance badge in the result card layout in apps/web/src/lib/components/seo/SEOGeneratorLayout.svelte
 
 **Checkpoint**: Connection provenance is visible and inspectable.
 
@@ -104,8 +101,8 @@
 
 ### Implementation for User Story 4
 
-- [ ] T020 [US4] Add selection checkboxes and action buttons to apps/web/src/lib/components/seo/SessionHubWidget.svelte
-- [ ] T021 [US4] Implement selection packaging and connection mapping in apps/web/src/lib/stores/session-hub.svelte.ts
+- [x] T020 [US4] Add selection checkboxes and action buttons to apps/web/src/lib/components/seo/SessionHubWidget.svelte
+- [x] T021 [US4] Implement selection packaging and connection mapping in apps/web/src/lib/stores/session-hub.svelte.ts
 
 **Checkpoint**: Multi-save capabilities and relationship preservation work end-to-end.
 
@@ -115,9 +112,9 @@
 
 **Purpose**: Styling, formatting, and final quality gates.
 
-- [ ] T022 Apply visual styling matching docs/STYLE_GUIDE.md to widgets in apps/web/src/lib/components/seo/SessionHubWidget.svelte
-- [ ] T023 Run Vitest test suites via bun run test in repository root
-- [ ] T024 Run code linting verification via bun run lint in repository root
+- [x] T022 Apply visual styling matching docs/STYLE_GUIDE.md to widgets in apps/web/src/lib/components/seo/SessionHubWidget.svelte
+- [x] T023 Run Vitest test suites via bun run test in repository root
+- [x] T024 Run code linting verification via bun run lint in repository root
 
 ---
 

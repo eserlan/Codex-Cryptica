@@ -18,6 +18,7 @@ export const ImportDraftSchema = z.object({
   lore: z.string().optional(),
   labels: z.array(z.string()).default(["imported-draft"]),
   status: z.enum(["active", "draft"]).default("active"),
+  references: z.array(z.string()).optional(),
 });
 
 export type ImportDraft = z.infer<typeof ImportDraftSchema>;
@@ -134,26 +135,45 @@ export class SeoImportService {
         this.storage.removeItem("__codex_pending_import");
       }
 
-      // Wire [[wiki links]] between imported entities
+      // Wire [[wiki links]] and explicit references between imported entities
       for (const draft of drafts) {
         const sourceId = titleToId.get(draft.title.toLowerCase());
-        if (!sourceId || !draft.content) continue;
+        if (!sourceId) continue;
 
-        const wikiLinkPattern = /\[\[([^\]]+)\]\]/g;
-        let match: RegExpExecArray | null;
-        while ((match = wikiLinkPattern.exec(draft.content)) !== null) {
-          const targetId = titleToId.get(match[1].toLowerCase());
-          if (targetId && targetId !== sourceId) {
-            try {
-              await this.vaultStore.addConnection(
-                sourceId,
-                targetId,
-                "references",
-                match[1],
-              );
-            } catch {
-              // Non-fatal: link wiring is best-effort
+        const targetsToConnect = new Map<string, string>(); // targetId -> label
+
+        // 1. Explicit references (from provenance)
+        if (draft.references) {
+          for (const refTitle of draft.references) {
+            const targetId = titleToId.get(refTitle.toLowerCase());
+            if (targetId && targetId !== sourceId) {
+              targetsToConnect.set(targetId, refTitle);
             }
+          }
+        }
+
+        // 2. Wiki links
+        if (draft.content) {
+          const wikiLinkPattern = /\[\[([^\]]+)\]\]/g;
+          let match: RegExpExecArray | null;
+          while ((match = wikiLinkPattern.exec(draft.content)) !== null) {
+            const targetId = titleToId.get(match[1].toLowerCase());
+            if (targetId && targetId !== sourceId) {
+              targetsToConnect.set(targetId, match[1]);
+            }
+          }
+        }
+
+        for (const [targetId, label] of targetsToConnect.entries()) {
+          try {
+            await this.vaultStore.addConnection(
+              sourceId,
+              targetId,
+              "references",
+              label,
+            );
+          } catch {
+            // Non-fatal: link wiring is best-effort
           }
         }
       }
