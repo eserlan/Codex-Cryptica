@@ -202,6 +202,7 @@
   $effect(() => {
     void vault.status;
     void vault.allEntities.length;
+    void vault.activeVaultId;
     void controller.loadPhase;
     void controller.cy;
     untrack(() => controller.reconcileLoadState());

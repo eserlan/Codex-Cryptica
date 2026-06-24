@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const originalWorker = globalThis.Worker;
 import {
   getLayoutCollisionSize,
+  isLayoutCollinear,
   LayoutManager,
   removeOverlaps,
   type LayoutRequest,
@@ -169,6 +170,69 @@ describe("LayoutManager", () => {
     expect(capturedPostMessage?.nodes[0].position).not.toEqual(
       persistedPositions[0],
     );
+  });
+
+  it("heals a degenerate slash on a non-initial pass by forcing randomize", async () => {
+    // 15 nodes collapsed onto y = x (a persisted diagonal). A non-initial
+    // Elements Update would normally solve incrementally (randomize=false) and
+    // preserve the slash; the collinearity heal must force a randomized solve.
+    const diagonal = Array.from({ length: 15 }, (_, i) => ({
+      x: i * 50,
+      y: i * 50,
+    }));
+    mockCy.nodes.mockReturnValue(makeNodes(diagonal));
+
+    await layoutManager.apply(
+      {
+        reason: "Elements Update",
+        isInitial: false,
+        isForced: true,
+        hasNewNodes: true,
+      },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+    );
+
+    expect(capturedPostMessage?.options.randomize).toBe(true);
+  });
+
+  it("persists a non-initial heal with the healed flag set", async () => {
+    const onPositionsUpdated = vi.fn();
+    const diagonal = Array.from({ length: 15 }, (_, i) => ({
+      x: i * 50,
+      y: i * 50,
+    }));
+    mockCy.nodes.mockReturnValue(makeNodes(diagonal));
+
+    await layoutManager.apply(
+      {
+        reason: "Elements Update",
+        isInitial: false,
+        isForced: true,
+        hasNewNodes: true,
+      },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onPositionsUpdated,
+      },
+    );
+
+    expect(onPositionsUpdated).toHaveBeenCalledWith(expect.any(Object), {
+      healed: true,
+    });
   });
 
   it("should use fit-only when stableLayout is true, even with new nodes", async () => {
@@ -760,6 +824,7 @@ describe("LayoutManager", () => {
           }),
         }),
       }),
+      { healed: false },
     );
     expect(node1.position).toHaveBeenCalledWith({ x: 50, y: 50 });
   });
@@ -1043,5 +1108,44 @@ describe("removeOverlaps", () => {
         expect(dist).toBeGreaterThanOrEqual(minDist - epsilon);
       }
     }
+  });
+});
+
+describe("isLayoutCollinear", () => {
+  const diagonal = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ x: i * 50, y: i * 50 + 1 }));
+
+  it("flags a degenerate y≈x diagonal slash", () => {
+    expect(isLayoutCollinear(diagonal(40))).toBe(true);
+  });
+
+  it("flags a near-collinear slash with slight jitter", () => {
+    const pts = Array.from({ length: 40 }, (_, i) => ({
+      x: i * 50,
+      y: i * 50 + (i % 2 === 0 ? 3 : -3),
+    }));
+    expect(isLayoutCollinear(pts)).toBe(true);
+  });
+
+  it("flags a vertical line (not just y=x)", () => {
+    const pts = Array.from({ length: 40 }, (_, i) => ({ x: 5, y: i * 50 }));
+    expect(isLayoutCollinear(pts)).toBe(true);
+  });
+
+  it("does not flag a healthy 2D spread", () => {
+    const pts = Array.from({ length: 40 }, (_, i) => ({
+      x: Math.cos(i) * 500,
+      y: Math.sin(i * 1.3) * 500,
+    }));
+    expect(isLayoutCollinear(pts)).toBe(false);
+  });
+
+  it("ignores small graphs that may legitimately be collinear", () => {
+    expect(isLayoutCollinear(diagonal(5))).toBe(false);
+  });
+
+  it("returns false for an all-coincident cloud (handled by all-at-origin path)", () => {
+    const pts = Array.from({ length: 40 }, () => ({ x: 0, y: 0 }));
+    expect(isLayoutCollinear(pts)).toBe(false);
   });
 });
